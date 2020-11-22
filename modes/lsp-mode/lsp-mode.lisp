@@ -627,21 +627,10 @@
   (handler-case (protocol:server-capabilities-references-provider (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
-(defun move-to-location-position (point position)
-  (etypecase position
-    (point
-     (move-point point position))
-    (lem.language-mode::xref-position
-     (move-to-line point (lem.language-mode::xref-position-line-number position))
-     (line-offset point 0 (lem.language-mode::xref-position-charpos position)))
-    (integer
-     (move-to-position point position))))
-
 (defun xref-location-to-content (location)
   (let* ((buffer (find-file-buffer (lem.language-mode:xref-location-filespec location) :temporary t))
          (point (buffer-point buffer)))
-    (move-to-location-position point
-                               (lem.language-mode:xref-location-position location))
+    (lem.language-mode::move-to-location-position point (lem.language-mode:xref-location-position location))
     (string-trim '(#\space #\tab) (line-string point))))
 
 (defun convert-references-response (value)

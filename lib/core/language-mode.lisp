@@ -234,6 +234,16 @@
 (defun make-position (line-number charpos)
   (make-xref-position :line-number line-number :charpos charpos))
 
+(defun move-to-location-position (point position)
+  (etypecase position
+    (point
+     (move-point point position))
+    (xref-position
+     (move-to-line point (xref-position-line-number position))
+     (line-offset point 0 (xref-position-charpos position)))
+    (integer
+     (move-to-position point position))))
+
 (defstruct xref-location
   (filespec nil :read-only t :type (or buffer string pathname))
   (position 1 :read-only t :type (or point xref-position integer))

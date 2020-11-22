@@ -20,6 +20,7 @@
            :json-null
            :json-true
            :json-false
+           :to-json-boolean
            :json-array
            :json-get
            :json-get*
@@ -208,14 +209,19 @@
 (defun json-null ()
   (json-backend-null *json-backend*))
 
-(defun json-true ()
-  (json-backend-true *json-backend*))
-
 (defun json-array (&rest args)
   (json-array-internal *json-backend* (apply #'vector args)))
 
+(defun json-true ()
+  (json-backend-true *json-backend*))
+
 (defun json-false ()
   (json-backend-false *json-backend*))
+
+(defun to-json-boolean (value)
+  (if value
+      (json-true)
+      (json-false)))
 
 (defun json-get (json key &optional default)
   (json-get-internal *json-backend* json key default))

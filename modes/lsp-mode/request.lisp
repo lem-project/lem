@@ -16,7 +16,9 @@
            :completion-request
            :signature-help
            :definition
-           :type-definition))
+           :type-definition
+           :implementation
+           :references))
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
@@ -132,13 +134,31 @@
                           null)))
 
 (defclass type-definition (request)
-  ((params :type protocol:definition-params))
+  ((params :type protocol:type-definition-params))
   (:default-initargs
    :method "textDocument/typeDefinition"
    :response-class-name '(or
                           protocol:location
                           (lem-lsp-mode/type:ts-array protocol:location)
                           (lem-lsp-mode/type:ts-array protocol:location-link)
+                          null)))
+
+(defclass implementation (request)
+  ((params :type protocol:implementation-params))
+  (:default-initargs
+   :method "textDocument/implementation"
+   :response-class-name '(or
+                          protocol:location
+                          (lem-lsp-mode/type:ts-array protocol:location)
+                          (lem-lsp-mode/type:ts-array protocol:location-link)
+                          null)))
+
+(defclass references (request)
+  ((parmas :type protocol:reference-params))
+  (:default-initargs
+   :method "textDocument/references"
+   :response-class-name '(or
+                          (lem-lsp-mode/type:ts-array protocol:location)
                           null)))
 
 ;;; TODO

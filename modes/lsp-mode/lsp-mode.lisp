@@ -54,6 +54,12 @@
              (lem-process:delete-process (server-info-process server-info)))
            *language-id-server-info-map*))
 
+;;;
+(defmacro with-jsonrpc-error (() &body body)
+  (with-unique-names (c)
+    `(handler-case (progn ,@body)
+       (jsonrpc/errors:jsonrpc-callback-error (,c)
+         (editor-error "~A" ,c)))))
 
 ;;;
 (defvar *workspaces* '())
@@ -203,6 +209,8 @@
                                          :prefix-search t))
   (setf (variable-value 'lem.language-mode:find-definitions-function)
         #'find-definitions)
+  (setf (variable-value 'lem.language-mode:find-references-function)
+        #'find-references)
   (dolist (character (get-completion-trigger-characters workspace))
     (setf (gethash character (workspace-trigger-characters workspace))
           (lambda (c)
@@ -558,10 +566,8 @@
                                       (make-text-document-position-arguments point))))))))
 
 (defun find-definitions (point)
-  (handler-case
-      (text-document/definition point)
-    (jsonrpc/errors:jsonrpc-callback-error (c)
-      (editor-error "~A" c))))
+  (with-jsonrpc-error ()
+    (text-document/definition point)))
 
 ;;; type definition
 
@@ -585,10 +591,85 @@
 
 (define-command lsp-type-definition () ()
   (let ((xref-locations
-          (handler-case (text-document/type-definition (current-point))
-            (jsonrpc/errors:jsonrpc-callback-error (c)
-              (editor-error "~A" c)))))
+          (with-jsonrpc-error ()
+            (text-document/type-definition (current-point)))))
     (lem.language-mode::show-locations xref-locations)))
+
+;;; implementation
+
+(defun provide-implementation-p (workspace)
+  (handler-case (protocol:server-capabilities-implementation-provider (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
+
+(defun convert-implementation-response (value)
+  (convert-definition-response value))
+
+(defun text-document/implementation (point)
+  (when-let ((workspace (get-workspace-from-point point)))
+    (when (provide-implementation-p workspace)
+      (convert-implementation-response
+       (request:lsp-call-method
+        (workspace-client workspace)
+        (make-instance 'request:implementation
+                       :params (apply #'make-instance
+                                      'protocol:type-definition-params
+                                      (make-text-document-position-arguments point))))))))
+
+(define-command lsp-implementation () ()
+  (let ((xref-locations
+          (with-jsonrpc-error ()
+            (text-document/implementation (current-point)))))
+    (lem.language-mode::show-locations xref-locations)))
+
+;;; references
+
+(defun provide-references-p (workspace)
+  (handler-case (protocol:server-capabilities-references-provider (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
+
+(defun move-to-location-position (point position)
+  (etypecase position
+    (point
+     (move-point point position))
+    (lem.language-mode::xref-position
+     (move-to-line point (lem.language-mode::xref-position-line-number position))
+     (line-offset point 0 (lem.language-mode::xref-position-charpos position)))
+    (integer
+     (move-to-position point position))))
+
+(defun xref-location-to-content (location)
+  (let* ((buffer (find-file-buffer (lem.language-mode:xref-location-filespec location) :temporary t))
+         (point (buffer-point buffer)))
+    (move-to-location-position point
+                               (lem.language-mode:xref-location-position location))
+    (string-trim '(#\space #\tab) (line-string point))))
+
+(defun convert-references-response (value)
+  (lem.language-mode:make-xref-references
+   :type nil
+   :locations (mapcar (lambda (location)
+                        (lem.language-mode:make-xref-location
+                         :filespec (lem.language-mode:xref-location-filespec location)
+                         :position (lem.language-mode:xref-location-position location)
+                         :content (xref-location-to-content location)))
+                      (convert-definition-response value))))
+
+(defun text-document/references (point &optional include-declaration)
+  (when-let ((workspace (get-workspace-from-point point)))
+    (when (provide-references-p workspace)
+      (convert-references-response
+       (request:lsp-call-method
+        (workspace-client workspace)
+        (make-instance 'request:references
+                       :params (apply #'make-instance
+                                      'protocol:reference-params
+                                      :context (make-instance 'protocol:reference-context
+                                                              :include-declaration (json:to-json-boolean
+                                                                                    include-declaration))
+                                      (make-text-document-position-arguments point))))))))
+
+(defun find-references (point)
+  (text-document/references point))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))
@@ -627,15 +708,16 @@
 
 
 #|
+Language Features
 - [X] completion
 - [ ] completion resolve
 - [X] hover
 - [X] signatureHelp
 - [ ] declaration
 - [X] definition
-- [ ] typeDefinition
-- [ ] implementation
-- [ ] references
+- [X] typeDefinition
+- [X] implementation
+- [X] references
 - [ ] documentHighlight
 - [ ] documentSymbol
 - [ ] codeAction
@@ -652,4 +734,7 @@
 - [ ] prepareRename
 - [ ] foldingRange
 - [ ] selectionRange
+
+- partialResult
+- workDoneProgress
 |#

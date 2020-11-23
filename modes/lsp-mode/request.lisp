@@ -22,7 +22,8 @@
            :type-definition
            :implementation
            :references
-           :document-highlight))
+           :document-highlight
+           :document-symbol))
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
@@ -201,6 +202,15 @@
    :method "textDocument/documentHighlight"
    :response-class-name '(or
                           (ts-array protocol:document-highlight)
+                          null)))
+
+(defclass document-symbol (request)
+  ((params :type protocol:document-symbol-params))
+  (:default-initargs
+   :method "textDocument/documentSymbol"
+   :response-class-name '(or
+                          (ts-array protocol:document-symbol)
+                          (ts-array protocol:symbol-information)
                           null)))
 
 ;;; TODO

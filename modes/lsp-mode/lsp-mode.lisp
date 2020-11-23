@@ -306,6 +306,15 @@
                  :version (buffer-version buffer)
                  :text (buffer-text buffer)))
 
+(defun make-text-document-identifier (buffer)
+  (make-instance
+   'protocol:text-document-identifier
+   :uri (buffer-uri buffer)))
+
+(defun make-text-document-position-arguments (point)
+  (list :text-document (make-text-document-identifier (point-buffer point))
+        :position (point-to-position point)))
+
 (defun text-document/did-open (buffer)
   (request:lsp-call-method
    (workspace-client (buffer-workspace buffer))
@@ -355,13 +364,6 @@
          (protocol:markup-content-value contents))
         (t
          "")))))
-
-(defun make-text-document-position-arguments (point)
-  (list
-   :text-document (make-instance
-                   'protocol:text-document-identifier
-                   :uri (buffer-uri (point-buffer point)))
-   :position (point-to-position point)))
 
 (defun provide-hover-p (workspace)
   (handler-case (protocol:server-capabilities-hover-provider
@@ -728,8 +730,15 @@
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
-(defun text-document/documentSymbol (point)
-  point)
+(defun text-document/document-symbol (buffer)
+  (when-let ((workspace (buffer-workspace buffer)))
+    (when (provide-document-symbol-p workspace)
+      (request:request
+       (workspace-client workspace)
+       (make-instance 'request:document-symbol
+                      :params (make-instance
+                               'protocol:document-symbol-params
+                               :text-document (make-text-document-identifier buffer)))))))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

@@ -542,7 +542,9 @@
                              (let ((name (symbolicate name #\. (symbolize var))))
                                (add-export name)
                                `(defparameter ,name ,value))))))
-      `(progn ,@forms))))
+      `(progn
+         (deftype ,(symbolize name) () t)
+         ,@forms))))
 
 (defmethod to-lisp ((enum enum))
   ;; TODO

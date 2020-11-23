@@ -16,6 +16,19 @@
 (lem-lsp-mode/project:local-nickname :client :lem-lsp-mode/client)
 (lem-lsp-mode/project:local-nickname :completion :lem.completion-mode)
 
+;;;
+(defmacro with-editor-thread (() &body body)
+  `(send-event
+    (lambda ()
+      ,@body
+      (redraw-display))))
+
+(defmacro lambda-with-editor-thread ((value) &body body)
+  `(lambda (,value)
+     (with-editor-thread ()
+       ,@body)))
+
+;;;
 (defparameter *client-capabilities-text*
   #.(uiop:read-file-string (asdf:system-relative-pathname :lem-lsp-mode "client-capabilities.json")))
 
@@ -351,7 +364,8 @@
    :position (point-to-position point)))
 
 (defun provide-hover-p (workspace)
-  (handler-case (protocol:server-capabilities-hover-provider (workspace-server-capabilities workspace))
+  (handler-case (protocol:server-capabilities-hover-provider
+                 (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
 (defun text-document/hover (point)
@@ -411,7 +425,8 @@
          nil)))
 
 (defun provide-completion-p (workspace)
-  (handler-case (protocol:server-capabilities-completion-provider (workspace-server-capabilities workspace))
+  (handler-case (protocol:server-capabilities-completion-provider
+                 (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
 (defun text-document/completion (point)
@@ -431,7 +446,8 @@
   (t :underline-p t))
 
 (defun provide-signature-help-p (workspace)
-  (handler-case (protocol:server-capabilities-signature-help-provider (workspace-server-capabilities workspace))
+  (handler-case (protocol:server-capabilities-signature-help-provider
+                 (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
 (defun display-signature-help (signature-help)
@@ -504,7 +520,8 @@
 ;;; declaration
 
 (defun provide-declaration-p (workspace)
-  (handler-case (protocol:server-capabilities-declaration-provider (workspace-server-capabilities workspace))
+  (handler-case (protocol:server-capabilities-declaration-provider
+                 (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
 (defun text-document/declaration (point)
@@ -515,7 +532,8 @@
 ;;; definition
 
 (defun provide-definition-p (workspace)
-  (handler-case (protocol:server-capabilities-definition-provider (workspace-server-capabilities workspace))
+  (handler-case (protocol:server-capabilities-definition-provider
+                 (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
 (defgeneric convert-location (location)
@@ -561,7 +579,8 @@
 ;;; type definition
 
 (defun provide-type-definition-p (workspace)
-  (handler-case (protocol:server-capabilities-type-definition-provider (workspace-server-capabilities workspace))
+  (handler-case (protocol:server-capabilities-type-definition-provider
+                 (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
 (defun convert-type-definition-response (value)
@@ -587,7 +606,8 @@
 ;;; implementation
 
 (defun provide-implementation-p (workspace)
-  (handler-case (protocol:server-capabilities-implementation-provider (workspace-server-capabilities workspace))
+  (handler-case (protocol:server-capabilities-implementation-provider
+                 (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
 (defun convert-implementation-response (value)
@@ -613,7 +633,8 @@
 ;;; references
 
 (defun provide-references-p (workspace)
-  (handler-case (protocol:server-capabilities-references-provider (workspace-server-capabilities workspace))
+  (handler-case (protocol:server-capabilities-references-provider
+                 (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
 (defun xref-location-to-content (location)
@@ -655,7 +676,8 @@
   (t :background "yellow4"))
 
 (defun provide-document-highlight-p (workspace)
-  (handler-case (protocol:server-capabilities-document-highlight-provider (workspace-server-capabilities workspace))
+  (handler-case (protocol:server-capabilities-document-highlight-provider
+                 (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
 (defvar *document-highlight-overlays* '())
@@ -677,17 +699,15 @@
 (defun text-document/document-highlight (point)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-document-highlight-p workspace)
-      (request:lsp-call-method
+      (request:request-async
        (workspace-client workspace)
        (make-instance 'request:document-highlight
-                      :callback (lambda (value)
-                                  (send-event (lambda ()
-                                                (display-document-highlights (point-buffer point)
-                                                                             value)
-                                                (redraw-display))))
                       :params (apply #'make-instance
                                      'protocol:document-highlight-params
-                                     (make-text-document-position-arguments point)))))))
+                                     (make-text-document-position-arguments point)))
+       (lambda-with-editor-thread (value)
+         (display-document-highlights (point-buffer point)
+                                      value))))))
 
 (define-command lsp-document-highlight () ()
   (when (mode-active-p (current-buffer) 'lsp-mode)
@@ -700,6 +720,16 @@
     (setf *document-highlight-idle-timer*
           (start-idle-timer 500 t #'lsp-document-highlight))
     (add-hook *post-command-hook* 'clear-document-highlight-overlays)))
+
+;;; document symbols
+
+(defun provide-document-symbol-p (workspace)
+  (handler-case (protocol:server-capabilities-document-symbol-provider
+                 (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
+
+(defun text-document/documentSymbol (point)
+  point)
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

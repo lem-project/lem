@@ -9,7 +9,8 @@
                 :client-connection)
   (:import-from :lem-lsp-mode/type
                 :ts-array)
-  (:export :lsp-call-method
+  (:export :request
+           :request-async
            :initialize-request
            :initialized-request
            :text-document-did-open
@@ -28,8 +29,6 @@
 
 (lem-lsp-mode/project:local-nickname :protocol :lem-lsp-mode/protocol)
 (lem-lsp-mode/project:local-nickname :utils :lem-lsp-mode/utils)
-
-(defgeneric lsp-call-method (client request))
 
 (defvar *log-stream* nil)
 (defvar *log-mutex* (bt:make-lock))
@@ -90,36 +89,27 @@
     :initarg :response-class-name
     :reader request-response-class-name)))
 
-(defclass async-request (abstract-request)
-  ((response-class-name
-    :initarg :response-class-name
-    :reader request-response-class-name)
-   (callback
-    :initarg :callback
-    :initform (alexandria:required-argument :callback)
-    :reader async-request-callback)))
-
 (defclass notification (abstract-request)
   ())
 
 (defun coerce-response (request response)
   (coerce-json response (request-response-class-name request)))
 
-(defmethod lsp-call-method (client (request request))
+(defmethod request (client (request request))
   (coerce-response request
                    (jsonrpc-call (client-connection client)
                                  (request-method request)
                                  (object-to-json (request-params request)))))
 
-(defmethod lsp-call-method (client (request async-request))
+(defmethod request-async (client (request request) callback)
   (jsonrpc-call-async (client-connection client)
                       (request-method request)
                       (object-to-json (request-params request))
                       (lambda (response)
-                        (funcall (async-request-callback request)
-                                 (coerce-response request response)))))
+                        (let ((value (coerce-response request response)))
+                          (funcall callback value)))))
 
-(defmethod lsp-call-method (client (request notification))
+(defmethod request (client (request notification))
   (jsonrpc-notify (client-connection client)
                   (request-method request)
                   (object-to-json (request-params request))))
@@ -205,7 +195,7 @@
                           (ts-array protocol:location)
                           null)))
 
-(defclass document-highlight (async-request)
+(defclass document-highlight (request)
   ((params :type protocol:document-highlight-params))
   (:default-initargs
    :method "textDocument/documentHighlight"

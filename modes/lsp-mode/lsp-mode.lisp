@@ -30,7 +30,10 @@
 
 ;;;
 (defparameter *client-capabilities-text*
-  #.(uiop:read-file-string (asdf:system-relative-pathname :lem-lsp-mode "client-capabilities.json")))
+  (load-time-value
+   (uiop:read-file-string
+    (asdf:system-relative-pathname :lem-lsp-mode
+                                   "client-capabilities.json"))))
 
 (defun client-capabilities ()
   (lem-lsp-mode/json-lsp-utils:coerce-json
@@ -725,10 +728,198 @@
 
 ;;; document symbols
 
+(define-attribute symbol-kind-file-attribute
+  (t :foreground "snow1"))
+
+(define-attribute symbol-kind-module-attribute
+  (t :foreground "firebrick"))
+
+(define-attribute symbol-kind-namespace-attribute
+  (t :foreground "dark orchid"))
+
+(define-attribute symbol-kind-package-attribute
+  (t :foreground "green"))
+
+(define-attribute symbol-kind-class-attribute
+  (t :foreground "bisque2"))
+
+(define-attribute symbol-kind-method-attribute
+  (t :foreground "MediumPurple2"))
+
+(define-attribute symbol-kind-property-attribute
+  (t :foreground "MistyRose4"))
+
+(define-attribute symbol-kind-field-attribute
+  (t :foreground "azure3"))
+
+(define-attribute symbol-kind-constructor-attribute
+  (t :foreground "LightSkyBlue3"))
+
+(define-attribute symbol-kind-enum-attribute
+  (t :foreground "LightCyan4"))
+
+(define-attribute symbol-kind-interface-attribute
+  (t :foreground "gray78"))
+
+(define-attribute symbol-kind-function-attribute
+  (t :foreground "LightSkyBlue"))
+
+(define-attribute symbol-kind-variable-attribute
+  (t :foreground "LightGoldenrod"))
+
+(define-attribute symbol-kind-constant-attribute
+  (t :foreground "yellow2"))
+
+(define-attribute symbol-kind-string-attribute
+  (t :foreground "green"))
+
+(define-attribute symbol-kind-number-attribute
+  (t :foreground "yellow"))
+
+(define-attribute symbol-kind-boolean-attribute
+  (t :foreground "honeydew3"))
+
+(define-attribute symbol-kind-array-attribute
+  (t :foreground "red"))
+
+(define-attribute symbol-kind-object-attribute
+  (t :foreground "PeachPuff4"))
+
+(define-attribute symbol-kind-key-attribute
+  (t :foreground "lime green"))
+
+(define-attribute symbol-kind-null-attribute
+  (t :foreground "gray"))
+
+(define-attribute symbol-kind-enum-membe-attribute
+  (t :foreground "PaleTurquoise4"))
+
+(define-attribute symbol-kind-struct-attribute
+  (t :foreground "turquoise4"))
+
+(define-attribute symbol-kind-event-attribute
+  (t :foreground "aquamarine1"))
+
+(define-attribute symbol-kind-operator-attribute
+  (t :foreground "SeaGreen3"))
+
+(define-attribute symbol-kind-type-attribute
+  (t :foreground "moccasin"))
+
+(defun preview-symbol-kind-colors ()
+  (let* ((buffer (make-buffer "symbol-kind-colors"))
+         (point (buffer-point buffer)))
+    (dolist (attribute
+             (list 'symbol-kind-file-attribute
+                   'symbol-kind-module-attribute
+                   'symbol-kind-namespace-attribute
+                   'symbol-kind-package-attribute
+                   'symbol-kind-class-attribute
+                   'symbol-kind-method-attribute
+                   'symbol-kind-property-attribute
+                   'symbol-kind-field-attribute
+                   'symbol-kind-constructor-attribute
+                   'symbol-kind-enum-attribute
+                   'symbol-kind-interface-attribute
+                   'symbol-kind-function-attribute
+                   'symbol-kind-variable-attribute
+                   'symbol-kind-constant-attribute
+                   'symbol-kind-string-attribute
+                   'symbol-kind-number-attribute
+                   'symbol-kind-boolean-attribute
+                   'symbol-kind-array-attribute
+                   'symbol-kind-object-attribute
+                   'symbol-kind-key-attribute
+                   'symbol-kind-null-attribute
+                   'symbol-kind-enum-membe-attribute
+                   'symbol-kind-struct-attribute
+                   'symbol-kind-event-attribute
+                   'symbol-kind-operator-attribute
+                   'symbol-kind-type-attribute))
+      (insert-string point (string-downcase attribute) :attribute attribute)
+      (insert-character point #\newline))))
+
 (defun provide-document-symbol-p (workspace)
   (handler-case (protocol:server-capabilities-document-symbol-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
+
+(defun symbol-kind-to-string-and-attribute (symbol-kind)
+  (switch (symbol-kind :test #'=)
+    (protocol:symbol-kind.file
+     (values "File" 'symbol-kind-file-attribute))
+    (protocol:symbol-kind.module
+     (values "Module" 'symbol-kind-module-attribute))
+    (protocol:symbol-kind.namespace
+     (values "Namespace" 'symbol-kind-namespace-attribute))
+    (protocol:symbol-kind.package
+     (values "Package" 'symbol-kind-package-attribute))
+    (protocol:symbol-kind.class
+     (values "Class" 'symbol-kind-class-attribute))
+    (protocol:symbol-kind.method
+     (values "Method" 'symbol-kind-method-attribute))
+    (protocol:symbol-kind.property
+     (values "Property" 'symbol-kind-property-attribute))
+    (protocol:symbol-kind.field
+     (values "Field" 'symbol-kind-field-attribute))
+    (protocol:symbol-kind.constructor
+     (values "Constructor" 'symbol-kind-constructor-attribute))
+    (protocol:symbol-kind.enum
+     (values "Enum" 'symbol-kind-enum-attribute))
+    (protocol:symbol-kind.interface
+     (values "Interface" 'symbol-kind-interface-attribute))
+    (protocol:symbol-kind.function
+     (values "Function" 'symbol-kind-function-attribute))
+    (protocol:symbol-kind.variable
+     (values "Variable" 'symbol-kind-variable-attribute))
+    (protocol:symbol-kind.constant
+     (values "Constant" 'symbol-kind-constant-attribute))
+    (protocol:symbol-kind.string
+     (values "String" 'symbol-kind-string-attribute))
+    (protocol:symbol-kind.number
+     (values "Number" 'symbol-kind-number-attribute))
+    (protocol:symbol-kind.boolean
+     (values "Boolean" 'symbol-kind-boolean-attribute))
+    (protocol:symbol-kind.array
+     (values "Array" 'symbol-kind-array-attribute))
+    (protocol:symbol-kind.object
+     (values "Object" 'symbol-kind-object-attribute))
+    (protocol:symbol-kind.key
+     (values "Key" 'symbol-kind-key-attribute))
+    (protocol:symbol-kind.null
+     (values "Null" 'symbol-kind-null-attribute))
+    (protocol:symbol-kind.enum-member
+     (values "EnumMember" 'symbol-kind-enum-member-attribute))
+    (protocol:symbol-kind.struct
+     (values "Struct" 'symbol-kind-struct-attribute))
+    (protocol:symbol-kind.event
+     (values "Event" 'symbol-kind-event-attribute))
+    (protocol:symbol-kind.operator
+     (values "Operator" 'symbol-kind-operator-attribute))
+    (protocol:symbol-kind.type-parameter
+     (values "TypeParameter" 'symbol-kind-type-attribute))))
+
+(defun append-document-symbol-item (sourcelist document-symbol nest-level)
+  (lem.sourcelist:append-sourcelist
+   sourcelist
+   (lambda (point)
+     (multiple-value-bind (kind-name attribute)
+         (symbol-kind-to-string-and-attribute (protocol:document-symbol-kind document-symbol))
+       (insert-string point (make-string (* 2 nest-level) :initial-element #\space))
+       (insert-string point (format nil "[~A]" kind-name) :attribute attribute)
+       (insert-character point #\space)
+       (insert-string point (protocol:document-symbol-name document-symbol))))
+   nil)
+  (utils:do-sequence
+      (document-symbol
+       (handler-case (protocol:document-symbol-children document-symbol)
+         (unbound-slot () nil)))
+    (append-document-symbol-item sourcelist document-symbol (1+ nest-level))))
+
+(defun display-document-symbol-response (value)
+  (lem.sourcelist:with-sourcelist (sourcelist "*Document Symbol*")
+    (utils:do-sequence (item value)
+      (append-document-symbol-item sourcelist item 0))))
 
 (defun text-document/document-symbol (buffer)
   (when-let ((workspace (buffer-workspace buffer)))

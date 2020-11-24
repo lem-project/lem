@@ -29,6 +29,9 @@
       "linkSupport":false
     },
     "references":{
+    },
+    "documentSymbol":{
+      "hierarchicalDocumentSymbolSupport":true
     }
   }
 }

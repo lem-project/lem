@@ -266,7 +266,7 @@
 
 (defun initialize (workspace)
   (let ((initialize-result
-          (request:lsp-call-method
+          (request:request
            (workspace-client workspace)
            (make-instance
             'request:initialize-request
@@ -285,8 +285,8 @@
   (values))
 
 (defun initialized (workspace)
-  (request:lsp-call-method (workspace-client workspace)
-                           (make-instance 'request:initialized-request)))
+  (request:request (workspace-client workspace)
+                   (make-instance 'request:initialized-request)))
 
 (defun point-to-position (point)
   (make-instance 'protocol:position
@@ -316,14 +316,14 @@
         :position (point-to-position point)))
 
 (defun text-document/did-open (buffer)
-  (request:lsp-call-method
+  (request:request
    (workspace-client (buffer-workspace buffer))
    (make-instance 'request:text-document-did-open
                   :params (make-instance 'protocol:did-open-text-document-params
                                          :text-document (buffer-to-text-document-item buffer)))))
 
 (defun text-document/did-change (buffer content-changes)
-  (request:lsp-call-method
+  (request:request
    (workspace-client (buffer-workspace buffer))
    (make-instance 'request:text-document-did-change
                   :params (make-instance 'protocol:did-change-text-document-params
@@ -374,7 +374,7 @@
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-hover-p workspace)
       (let ((result
-              (request:lsp-call-method
+              (request:request
                (workspace-client workspace)
                (make-instance 'request:hover-request
                               :params (apply #'make-instance
@@ -435,7 +435,7 @@
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-completion-p workspace)
       (convert-completion-response
-       (request:lsp-call-method
+       (request:request
         (workspace-client workspace)
         (make-instance 'request:completion-request
                        :params (apply #'make-instance
@@ -494,7 +494,7 @@
 (defun text-document/signature-help (point &optional signature-help-context)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-signature-help-p workspace)
-      (let ((result (request:lsp-call-method
+      (let ((result (request:request
                      (workspace-client workspace)
                      (make-instance 'request:signature-help
                                     :params (apply #'make-instance
@@ -567,7 +567,7 @@
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-definition-p workspace)
       (convert-definition-response
-       (request:lsp-call-method
+       (request:request
         (workspace-client workspace)
         (make-instance 'request:definition
                        :params (apply #'make-instance
@@ -592,7 +592,7 @@
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-type-definition-p workspace)
       (convert-type-definition-response
-       (request:lsp-call-method
+       (request:request
         (workspace-client workspace)
         (make-instance 'request:type-definition
                        :params (apply #'make-instance
@@ -619,7 +619,7 @@
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-implementation-p workspace)
       (convert-implementation-response
-       (request:lsp-call-method
+       (request:request
         (workspace-client workspace)
         (make-instance 'request:implementation
                        :params (apply #'make-instance
@@ -659,7 +659,7 @@
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-references-p workspace)
       (convert-references-response
-       (request:lsp-call-method
+       (request:request
         (workspace-client workspace)
         (make-instance 'request:references
                        :params (apply #'make-instance

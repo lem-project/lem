@@ -23,7 +23,7 @@
 (defvar *current-sourcelist-buffer* nil)
 
 (defstruct sourcelist
-  buffer
+  (buffer nil :read-only t :type buffer)
   temp-point
   (elements (make-array 0 :adjustable t :fill-pointer 0))
   (index -1))

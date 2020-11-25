@@ -900,7 +900,8 @@
      (values "TypeParameter" 'symbol-kind-type-attribute))))
 
 (defun append-document-symbol-item (sourcelist buffer document-symbol nest-level)
-  (let ((range (protocol:document-symbol-selection-range document-symbol)))
+  (let ((selection-range (protocol:document-symbol-selection-range document-symbol))
+        (range (protocol:document-symbol-range document-symbol)))
     (lem.sourcelist:append-sourcelist
      sourcelist
      (lambda (point)
@@ -913,7 +914,7 @@
      (lambda (set-buffer-fn)
        (funcall set-buffer-fn buffer)
        (let ((point (buffer-point buffer)))
-         (move-to-lsp-position point (protocol:range-start range))))
+         (move-to-lsp-position point (protocol:range-start selection-range))))
      :highlight-overlay-function (lambda (point)
                                    (with-point ((start point)
                                                 (end point))

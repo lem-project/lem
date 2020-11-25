@@ -89,31 +89,44 @@
                      (make-jump :get-location-function jump-function
                                 :get-highlight-overlay-function highlight-overlay-function))))))
 
-(defun jump-highlighting (&optional (point (current-point)))
+(defun get-highlight-overlay-default (point)
   (with-point ((start point)
                (end point))
-    (let ((overlay (make-overlay (back-to-indentation start)
-                                 (line-end end)
-                                 'jump-highlight)))
-      (start-timer 300 nil (lambda ()
-                             (delete-overlay overlay)) nil "jump-highlighting"))))
+    (make-overlay (back-to-indentation start)
+                  (line-end end)
+                  'jump-highlight)))
+
+(defun jump-highlighting (&optional (point (current-point)) jump)
+  (let ((overlay
+          (funcall (alexandria:if-let
+                       ((fn (and jump (jump-get-highlight-overlay-function jump))))
+                     fn
+                     #'get-highlight-overlay-default)
+                   point)))
+    (start-timer 100
+                 nil
+                 (lambda ()
+                   (delete-overlay overlay))
+                 nil
+                 "jump-highlighting")))
 
 (defun jump-current-element (index sourcelist)
-  (funcall (jump-get-location-function (aref (sourcelist-elements sourcelist) index))
-           (let ((buffer-name (sourcelist-buffer sourcelist)))
-             (lambda (buffer)
-               (with-point ((p (buffer-point buffer)))
-                 (let ((sourcelist-window
-                         (car (get-buffer-windows (get-buffer buffer-name)))))
-                   (unless sourcelist-window
-                     (let ((sourcelist-buffer (get-buffer buffer-name)))
-                       (setf sourcelist-window
-                             (display-buffer sourcelist-buffer))))
-                   (if (eq (current-window) sourcelist-window)
-                       (setf (current-window) (pop-to-buffer buffer))
-                       (switch-to-buffer buffer))
-                   (move-point (buffer-point buffer) p))))))
-  (jump-highlighting))
+  (let ((jump (aref (sourcelist-elements sourcelist) index)))
+    (funcall (jump-get-location-function jump)
+             (let ((buffer-name (sourcelist-buffer sourcelist)))
+               (lambda (buffer)
+                 (with-point ((p (buffer-point buffer)))
+                   (let ((sourcelist-window
+                           (car (get-buffer-windows (get-buffer buffer-name)))))
+                     (unless sourcelist-window
+                       (let ((sourcelist-buffer (get-buffer buffer-name)))
+                         (setf sourcelist-window
+                               (display-buffer sourcelist-buffer))))
+                     (if (eq (current-window) sourcelist-window)
+                         (setf (current-window) (pop-to-buffer buffer))
+                         (switch-to-buffer buffer))
+                     (move-point (buffer-point buffer) p))))))
+    (jump-highlighting (current-point) jump)))
 
 (define-key *global-keymap* "C-x n" 'sourcelist-next)
 (define-key *global-keymap* "C-x C-n" 'sourcelist-next)

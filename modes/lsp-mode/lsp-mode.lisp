@@ -899,6 +899,9 @@
     (protocol:symbol-kind.type-parameter
      (values "TypeParameter" 'symbol-kind-type-attribute))))
 
+(define-attribute document-symbol-detail-attribute
+  (t :foreground "gray"))
+
 (defun append-document-symbol-item (sourcelist buffer document-symbol nest-level)
   (let ((selection-range (protocol:document-symbol-selection-range document-symbol))
         (range (protocol:document-symbol-range document-symbol)))
@@ -910,7 +913,11 @@
          (insert-string point (make-string (* 2 nest-level) :initial-element #\space))
          (insert-string point (format nil "[~A]" kind-name) :attribute attribute)
          (insert-character point #\space)
-         (insert-string point (protocol:document-symbol-name document-symbol))))
+         (insert-string point (protocol:document-symbol-name document-symbol))
+         (insert-string point " ")
+         (when-let (detail (handler-case (protocol:document-symbol-detail document-symbol)
+                             (unbound-slot () nil)))
+           (insert-string point detail :attribute 'document-symbol-detail-attribute))))
      (lambda (set-buffer-fn)
        (funcall set-buffer-fn buffer)
        (let ((point (buffer-point buffer)))

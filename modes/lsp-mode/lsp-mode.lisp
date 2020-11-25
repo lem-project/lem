@@ -913,7 +913,14 @@
      (lambda (set-buffer-fn)
        (funcall set-buffer-fn buffer)
        (let ((point (buffer-point buffer)))
-         (move-to-lsp-position point (protocol:range-start range))))))
+         (move-to-lsp-position point (protocol:range-start range))))
+     :highlight-overlay-function (lambda (point)
+                                   (with-point ((start point)
+                                                (end point))
+                                     (make-overlay
+                                      (move-to-lsp-position start (protocol:range-start range))
+                                      (move-to-lsp-position end (protocol:range-end range))
+                                      'lem.sourcelist::jump-highlight)))))
   (utils:do-sequence
       (document-symbol
        (handler-case (protocol:document-symbol-children document-symbol)

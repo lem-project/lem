@@ -28,6 +28,10 @@
   (elements (make-array 0 :adjustable t :fill-pointer 0))
   (index -1))
 
+(defstruct jump
+  get-location-function
+  get-highlight-overlay-function)
+
 (defun get-sourcelist (buffer)
   (buffer-value buffer 'sourcelist))
 
@@ -51,7 +55,8 @@
         (setf (get-sourcelist buffer) sourcelist)
         (setf *current-sourcelist-buffer* buffer)))))
 
-(defmacro with-sourcelist ((var buffer-name &key focus (read-only-p t) (enable-undo-p nil)) &body body)
+(defmacro with-sourcelist ((var buffer-name &key focus (read-only-p t) (enable-undo-p nil))
+                           &body body)
   `(call-with-sourcelist ,buffer-name
                          (lambda (,var)
                            ,@body)
@@ -59,35 +64,42 @@
                          ,read-only-p
                          ,enable-undo-p))
 
-(defun append-jump-function (sourcelist start end jump-function)
+(defun append-jump (sourcelist jump)
+  (vector-push-extend jump (sourcelist-elements sourcelist)))
+
+(defun put-sourcelist-index (sourcelist start end)
   (put-text-property start end
                      'sourcelist
-                     (length (sourcelist-elements sourcelist)))
-  (vector-push-extend jump-function (sourcelist-elements sourcelist)))
+                     (length (sourcelist-elements sourcelist))))
 
-(defun append-sourcelist (sourcelist write-function jump-function)
+(defun append-jump-function (sourcelist start end jump-function)
+  (put-sourcelist-index sourcelist start end)
+  (append-jump sourcelist (make-jump :get-location-function jump-function)))
+
+(defun append-sourcelist (sourcelist write-function jump-function
+                          &key highlight-overlay-function)
   (let ((point *sourcelist-point*))
     (with-point ((start-point point :right-inserting))
       (funcall write-function point)
       (unless (start-line-p point)
         (insert-character point #\newline))
       (when jump-function
-        (append-jump-function sourcelist
-                              start-point
-                              point
-                              jump-function)))))
+        (put-sourcelist-index sourcelist start-point point)
+        (append-jump sourcelist
+                     (make-jump :get-location-function jump-function
+                                :get-highlight-overlay-function highlight-overlay-function))))))
 
 (defun jump-highlighting (&optional (point (current-point)))
   (with-point ((start point)
                (end point))
-    (let ((overlay (make-overlay (back-to-indentation start) (line-end end)
+    (let ((overlay (make-overlay (back-to-indentation start)
+                                 (line-end end)
                                  'jump-highlight)))
       (start-timer 300 nil (lambda ()
                              (delete-overlay overlay)) nil "jump-highlighting"))))
 
 (defun jump-current-element (index sourcelist)
-  (funcall (aref (sourcelist-elements sourcelist)
-                 index)
+  (funcall (jump-get-location-function (aref (sourcelist-elements sourcelist) index))
            (let ((buffer-name (sourcelist-buffer sourcelist)))
              (lambda (buffer)
                (with-point ((p (buffer-point buffer)))

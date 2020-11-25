@@ -899,27 +899,31 @@
     (protocol:symbol-kind.type-parameter
      (values "TypeParameter" 'symbol-kind-type-attribute))))
 
-(defun append-document-symbol-item (sourcelist document-symbol nest-level)
-  (lem.sourcelist:append-sourcelist
-   sourcelist
-   (lambda (point)
-     (multiple-value-bind (kind-name attribute)
-         (symbol-kind-to-string-and-attribute (protocol:document-symbol-kind document-symbol))
-       (insert-string point (make-string (* 2 nest-level) :initial-element #\space))
-       (insert-string point (format nil "[~A]" kind-name) :attribute attribute)
-       (insert-character point #\space)
-       (insert-string point (protocol:document-symbol-name document-symbol))))
-   nil)
+(defun append-document-symbol-item (sourcelist buffer document-symbol nest-level)
+  (let ((range (protocol:document-symbol-selection-range document-symbol)))
+    (lem.sourcelist:append-sourcelist
+     sourcelist
+     (lambda (point)
+       (multiple-value-bind (kind-name attribute)
+           (symbol-kind-to-string-and-attribute (protocol:document-symbol-kind document-symbol))
+         (insert-string point (make-string (* 2 nest-level) :initial-element #\space))
+         (insert-string point (format nil "[~A]" kind-name) :attribute attribute)
+         (insert-character point #\space)
+         (insert-string point (protocol:document-symbol-name document-symbol))))
+     (lambda (set-buffer-fn)
+       (funcall set-buffer-fn buffer)
+       (let ((point (buffer-point buffer)))
+         (move-to-lsp-position point (protocol:range-start range))))))
   (utils:do-sequence
       (document-symbol
        (handler-case (protocol:document-symbol-children document-symbol)
          (unbound-slot () nil)))
-    (append-document-symbol-item sourcelist document-symbol (1+ nest-level))))
+    (append-document-symbol-item sourcelist buffer document-symbol (1+ nest-level))))
 
-(defun display-document-symbol-response (value)
+(defun display-document-symbol-response (buffer value)
   (lem.sourcelist:with-sourcelist (sourcelist "*Document Symbol*")
     (utils:do-sequence (item value)
-      (append-document-symbol-item sourcelist item 0))))
+      (append-document-symbol-item sourcelist buffer item 0))))
 
 (defun text-document/document-symbol (buffer)
   (when-let ((workspace (buffer-workspace buffer)))
@@ -930,6 +934,11 @@
                       :params (make-instance
                                'protocol:document-symbol-params
                                :text-document (make-text-document-identifier buffer)))))))
+
+(define-command lsp-document-symbol () ()
+  (display-document-symbol-response
+   (current-buffer)
+   (text-document/document-symbol (current-buffer))))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))
@@ -979,7 +988,7 @@ Language Features
 - [X] implementation
 - [X] references
 - [X] documentHighlight
-- [ ] documentSymbol
+- [X] documentSymbol
 - [ ] codeAction
 - [ ] codeLens
 - [ ] codeLens resolve

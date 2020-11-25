@@ -23,7 +23,7 @@
 (defvar *current-sourcelist-buffer* nil)
 
 (defstruct sourcelist
-  buffer-name
+  buffer
   temp-point
   (elements (make-array 0 :adjustable t :fill-pointer 0))
   (index -1))
@@ -35,8 +35,8 @@
   (setf (buffer-value buffer 'sourcelist) sourcelist))
 
 (defun call-with-sourcelist (buffer-name function focus read-only-p enable-undo-p)
-  (let ((buffer (make-buffer buffer-name :read-only-p read-only-p :enable-undo-p enable-undo-p))
-        (sourcelist (make-sourcelist :buffer-name buffer-name)))
+  (let* ((buffer (make-buffer buffer-name :read-only-p read-only-p :enable-undo-p enable-undo-p))
+         (sourcelist (make-sourcelist :buffer buffer)))
     (with-buffer-read-only buffer nil
       (let ((*inhibit-read-only* t))
         (erase-buffer buffer)
@@ -88,7 +88,7 @@
 (defun jump-current-element (index sourcelist)
   (funcall (aref (sourcelist-elements sourcelist)
                  index)
-           (let ((buffer-name (sourcelist-buffer-name sourcelist)))
+           (let ((buffer-name (sourcelist-buffer sourcelist)))
              (lambda (buffer)
                (with-point ((p (buffer-point buffer)))
                  (let ((sourcelist-window

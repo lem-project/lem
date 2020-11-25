@@ -299,8 +299,8 @@
                  (exact 'operator ":")
                  (let ((value-type (parse-type-expression)))
                    (make-instance 'element
-                                  :name (token-string name)
-                                  :optional-p nil
+                                  :name (print (token-string name))
+                                  :optional-p t
                                   :read-only-p read-only-p
                                   :type (make-instance 'property-type
                                                        :key-type key-type

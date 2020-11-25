@@ -727,6 +727,8 @@
     (add-hook *post-command-hook* 'clear-document-highlight-overlays)))
 
 ;;; document symbols
+;; TODO
+;; - position順でソートする
 
 (define-attribute symbol-kind-file-attribute
   (t :foreground "snow1"))
@@ -954,6 +956,45 @@
   (display-document-symbol-response
    (current-buffer)
    (text-document/document-symbol (current-buffer))))
+
+;;; formatting
+(defun provide-formatting-p (workspace)
+  (handler-case (protocol:server-capabilities-document-formatting-provider
+                 (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
+
+(defun apply-text-edits (buffer text-edits)
+  (with-point ((start (buffer-point buffer) :left-inserting)
+               (end (buffer-point buffer) :left-inserting))
+    (utils:do-sequence (text-edit text-edits)
+      (let ((range (protocol:text-edit-range text-edit))
+            (new-text (protocol:text-edit-new-text text-edit)))
+        (move-to-lsp-position start (protocol:range-start range))
+        (move-to-lsp-position end (protocol:range-end range))
+        (delete-between-points start end)
+        (insert-string start new-text)))))
+
+(defun text-document/formatting (buffer)
+  (when-let ((workspace (buffer-workspace buffer)))
+    (when (provide-formatting-p workspace)
+      (apply-text-edits
+       buffer
+       (request:request
+        (workspace-client workspace)
+        (make-instance 'request:document-formatting
+                       :params (make-instance
+                                'protocol:document-formatting-params
+                                :text-document (make-text-document-identifier buffer)
+                                :options (make-instance
+                                          'protocol:formatting-options
+                                          :tab-size (variable-value 'tab-width)
+                                          :insert-spaces (not (variable-value 'indent-tabs-mode))
+                                          :trim-trailing-whitespace t
+                                          :insert-final-newline t
+                                          :trim-final-newlines t))))))))
+
+(define-command lsp-document-format () ()
+  (text-document/formatting (current-buffer)))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))

@@ -23,7 +23,8 @@
            :implementation
            :references
            :document-highlight
-           :document-symbol))
+           :document-symbol
+           :document-formatting))
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
@@ -211,6 +212,14 @@
    :response-class-name '(or
                           (ts-array protocol:document-symbol)
                           (ts-array protocol:symbol-information)
+                          null)))
+
+(defclass document-formatting (request)
+  ((params :type protocol:document-formatting-params))
+  (:default-initargs
+   :method "textDocument/formatting"
+   :response-class-name '(or
+                          (ts-array protocol:text-edit)
                           null)))
 
 ;;; TODO

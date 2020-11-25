@@ -978,7 +978,7 @@
                         (LEM-LSP-MODE/TYPE:TS-INTERFACE
                          ("uri" :TYPE
                           (LEM-LSP-MODE/TYPE:TS-OBJECT DOCUMENT-URI (LEM-LSP-MODE/TYPE:TS-ARRAY TEXT-EDIT))
-                          :OPTIONAL-P COMMON-LISP:NIL))
+                          :OPTIONAL-P COMMON-LISP:T))
                         :READER WORKSPACE-EDIT-CHANGES)
                        (DOCUMENT-CHANGES? :INITARG :DOCUMENT-CHANGES :DOCUMENTATION "*
 * Depending on the client capability `workspace.workspaceEdit.resourceOperations` document changes
@@ -2950,7 +2950,7 @@
 *
 * @since 3.15.0"
                         :TYPE COMMON-LISP:BOOLEAN :READER FORMATTING-OPTIONS-TRIM-FINAL-NEWLINES)
-                       (KEY :INITARG :KEY :DOCUMENTATION "*
+                       (KEY? :INITARG :KEY :DOCUMENTATION "*
 * Signature for further properties."
                         :TYPE
                         (LEM-LSP-MODE/TYPE:TS-OBJECT COMMON-LISP:STRING

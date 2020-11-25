@@ -105,6 +105,7 @@
 
 (define-key *global-keymap* "C-x n" 'sourcelist-next)
 (define-key *global-keymap* "C-x C-n" 'sourcelist-next)
+(define-key *global-keymap* "M-N" 'sourcelist-next)
 (define-command sourcelist-next () ()
   (when *current-sourcelist-buffer*
     (alexandria:when-let ((sourcelist (get-sourcelist *current-sourcelist-buffer*)))
@@ -116,6 +117,7 @@
 
 (define-key *global-keymap* "C-x p" 'sourcelist-previous)
 (define-key *global-keymap* "C-x C-p" 'sourcelist-previous)
+(define-key *global-keymap* "M-P" 'sourcelist-previous)
 (define-command sourcelist-previous () ()
   (when *current-sourcelist-buffer*
     (alexandria:when-let ((sourcelist (get-sourcelist *current-sourcelist-buffer*)))

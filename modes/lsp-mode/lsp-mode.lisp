@@ -958,6 +958,7 @@
    (text-document/document-symbol (current-buffer))))
 
 ;;; formatting
+
 (defun provide-formatting-p (workspace)
   (handler-case (protocol:server-capabilities-document-formatting-provider
                  (workspace-server-capabilities workspace))
@@ -987,8 +988,8 @@
                                 :text-document (make-text-document-identifier buffer)
                                 :options (make-instance
                                           'protocol:formatting-options
-                                          :tab-size (variable-value 'tab-width)
-                                          :insert-spaces (not (variable-value 'indent-tabs-mode))
+                                          :tab-size (variable-value 'tab-width :buffer buffer)
+                                          :insert-spaces (not (variable-value 'indent-tabs-mode :buffer buffer))
                                           :trim-trailing-whitespace t
                                           :insert-final-newline t
                                           :trim-final-newlines t))))))))
@@ -1052,7 +1053,7 @@ Language Features
 - [ ] documentLink resolve
 - [ ] documentColor
 - [ ] colorPresentation
-- [ ] formatting
+- [X] formatting
 - [ ] rangeFormatting
 - [ ] onTypeFormatting
 - [ ] rename

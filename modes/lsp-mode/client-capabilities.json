@@ -32,6 +32,10 @@
     },
     "documentSymbol":{
       "hierarchicalDocumentSymbolSupport":true
+    },
+    "formatting":{
+    }
+    "rangeFormatting":{
     }
   }
 }

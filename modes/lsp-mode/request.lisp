@@ -24,7 +24,8 @@
            :references
            :document-highlight
            :document-symbol
-           :document-formatting))
+           :document-formatting
+           :document-range-formatting))
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
@@ -218,6 +219,14 @@
   ((params :type protocol:document-formatting-params))
   (:default-initargs
    :method "textDocument/formatting"
+   :response-class-name '(or
+                          (ts-array protocol:text-edit)
+                          null)))
+
+(defclass document-range-formatting (request)
+  ((params :type protocol:document-range-formatting-params))
+  (:default-initargs
+   :method "textDocument/rangeFormatting"
    :response-class-name '(or
                           (ts-array protocol:text-edit)
                           null)))

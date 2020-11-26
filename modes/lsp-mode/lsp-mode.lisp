@@ -199,7 +199,7 @@
 
 (defun buffer-change-event-to-content-change-event (point arg)
   (labels ((inserting-content-change-event (string)
-             (let ((position (point-to-position point)))
+             (let ((position (point-to-lsp-position point)))
                (json:make-json :range (make-instance 'protocol:range
                                                      :start position
                                                      :end position)
@@ -209,8 +209,8 @@
              (with-point ((end point))
                (character-offset end count)
                (json:make-json :range (make-instance 'protocol:range
-                                                     :start (point-to-position point)
-                                                     :end (point-to-position end))
+                                                     :start (point-to-lsp-position point)
+                                                     :end (point-to-lsp-position end))
                                :range-length (count-characters point end)
                                :text ""))))
     (etypecase arg
@@ -291,7 +291,7 @@
   (request:request (workspace-client workspace)
                    (make-instance 'request:initialized-request)))
 
-(defun point-to-position (point)
+(defun point-to-lsp-position (point)
   (make-instance 'protocol:position
                  :line (1- (line-number-at-point point))
                  :character (point-charpos point)))
@@ -301,6 +301,11 @@
   (line-offset point
                (protocol:position-line position)
                (protocol:position-character position)))
+
+(defun make-lsp-range (start end)
+  (make-instance 'protocol:range
+                 :start (point-to-lsp-position start)
+                 :end (point-to-lsp-position end)))
 
 (defun buffer-to-text-document-item (buffer)
   (make-instance 'protocol:text-document-item
@@ -316,7 +321,7 @@
 
 (defun make-text-document-position-arguments (point)
   (list :text-document (make-text-document-identifier (point-buffer point))
-        :position (point-to-position point)))
+        :position (point-to-lsp-position point)))
 
 (defun text-document/did-open (buffer)
   (request:request
@@ -975,6 +980,15 @@
         (delete-between-points start end)
         (insert-string start new-text)))))
 
+(defun make-formatting-options (buffer)
+  (make-instance
+   'protocol:formatting-options
+   :tab-size (variable-value 'tab-width :buffer buffer)
+   :insert-spaces (not (variable-value 'indent-tabs-mode :buffer buffer))
+   :trim-trailing-whitespace t
+   :insert-final-newline t
+   :trim-final-newlines t))
+
 (defun text-document/formatting (buffer)
   (when-let ((workspace (buffer-workspace buffer)))
     (when (provide-formatting-p workspace)
@@ -986,16 +1000,38 @@
                        :params (make-instance
                                 'protocol:document-formatting-params
                                 :text-document (make-text-document-identifier buffer)
-                                :options (make-instance
-                                          'protocol:formatting-options
-                                          :tab-size (variable-value 'tab-width :buffer buffer)
-                                          :insert-spaces (not (variable-value 'indent-tabs-mode :buffer buffer))
-                                          :trim-trailing-whitespace t
-                                          :insert-final-newline t
-                                          :trim-final-newlines t))))))))
+                                :options (make-formatting-options buffer))))))))
 
 (define-command lsp-document-format () ()
   (text-document/formatting (current-buffer)))
+
+;;; range formatting
+
+;; WARNING: goplsでサポートされていないので動作未確認
+
+(defun provide-range-formatting-p (workspace)
+  (handler-case (protocol:server-capabilities-document-range-formatting-provider
+                 (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
+
+(defun text-document/range-formatting (start end)
+  (when (point< end start) (rotatef start end))
+  (let ((buffer (point-buffer start)))
+    (when-let ((workspace (buffer-workspace buffer)))
+      (when (provide-range-formatting-p workspace)
+        (apply-text-edits
+         buffer
+         (request:request
+          (workspace-client workspace)
+          (make-instance 'request:document-range-formatting
+                         :params (make-instance
+                                  'protocol:document-range-formatting-params
+                                  :text-document (make-text-document-identifier buffer)
+                                  :range (make-lsp-range start end)
+                                  :options (make-formatting-options buffer)))))))))
+
+(define-command lsp-document-range-format (start end) ("r")
+  (text-document/range-formatting start end))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))
@@ -1054,7 +1090,7 @@ Language Features
 - [ ] documentColor
 - [ ] colorPresentation
 - [X] formatting
-- [ ] rangeFormatting
+- [X] rangeFormatting
 - [ ] onTypeFormatting
 - [ ] rename
 - [ ] prepareRename

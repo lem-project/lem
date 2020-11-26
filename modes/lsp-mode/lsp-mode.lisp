@@ -267,30 +267,6 @@
                                            :language-id language-id)))))
       (assign-workspace-to-buffer buffer workspace))))
 
-(defun initialize (workspace)
-  (let ((initialize-result
-          (request:request
-           (workspace-client workspace)
-           (make-instance
-            'request:initialize-request
-            :params (make-instance
-                     'protocol:initialize-params
-                     :process-id (utils:get-pid)
-                     :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
-                     :root-uri (workspace-root-uri workspace)
-                     :capabilities (client-capabilities)
-                     :trace "off"
-                     :workspace-folders (json:json-null))))))
-    (setf (workspace-server-capabilities workspace)
-          (protocol:initialize-result-capabilities initialize-result))
-    (setf (workspace-server-info workspace)
-          (protocol:initialize-result-server-info initialize-result)))
-  (values))
-
-(defun initialized (workspace)
-  (request:request (workspace-client workspace)
-                   (make-instance 'request:initialized-request)))
-
 (defun point-to-lsp-position (point)
   (make-instance 'protocol:position
                  :line (1- (line-number-at-point point))
@@ -322,6 +298,34 @@
 (defun make-text-document-position-arguments (point)
   (list :text-document (make-text-document-identifier (point-buffer point))
         :position (point-to-lsp-position point)))
+
+;;; General Messages
+
+(defun initialize (workspace)
+  (let ((initialize-result
+          (request:request
+           (workspace-client workspace)
+           (make-instance
+            'request:initialize-request
+            :params (make-instance
+                     'protocol:initialize-params
+                     :process-id (utils:get-pid)
+                     :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
+                     :root-uri (workspace-root-uri workspace)
+                     :capabilities (client-capabilities)
+                     :trace "off"
+                     :workspace-folders (json:json-null))))))
+    (setf (workspace-server-capabilities workspace)
+          (protocol:initialize-result-capabilities initialize-result))
+    (setf (workspace-server-info workspace)
+          (protocol:initialize-result-server-info initialize-result)))
+  (values))
+
+(defun initialized (workspace)
+  (request:request (workspace-client workspace)
+                   (make-instance 'request:initialized-request)))
+
+;;; Text Synchronization
 
 (defun text-document/did-open (buffer)
   (request:request

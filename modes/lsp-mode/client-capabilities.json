@@ -5,6 +5,9 @@
     "synchronization":{
       "didSave": true
     },
+    "publishDiagnostics": {
+      "relatedInformation": true
+    },
     "completion":{
       "completionItem":{
       },

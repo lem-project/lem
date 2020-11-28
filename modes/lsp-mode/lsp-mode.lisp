@@ -250,6 +250,9 @@
 
 (defun initialize-workspace (workspace)
   (push workspace *workspaces*)
+  (jsonrpc:expose (client:client-connection (workspace-client workspace))
+                  "textDocument/publishDiagnostics"
+                  'text-document/publish-diagnostics)
   ;; initialize, initializedが失敗したときに、無効なworkspaceが残ってしまう問題があるかもしれない
   (initialize workspace)
   (initialized workspace)
@@ -412,6 +415,71 @@
    (make-instance 'request:text-document-did-close
                   :params (make-instance 'protocol:did-close-text-document-params
                                          :text-document (make-text-document-identifier buffer)))))
+
+;;; publishDiagnostics
+
+;; TODO
+;; - tagSupport
+;; - versionSupport
+
+(define-attribute diagnostic-error-attribute
+  (t :foreground "red" :underline-p t))
+
+(define-attribute diagnostic-warning-attribute
+  (t :foreground "orange" :underline-p t))
+
+(define-attribute diagnostic-information-attribute
+  (t :foreground "gray" :underline-p t))
+
+(define-attribute diagnostic-hint-attribute
+  (t :foreground "yellow" :underline-p t))
+
+(defun diagnostic-severity-attribute (diagnostic-severity)
+  (switch (diagnostic-severity :test #'=)
+    (protocol:diagnostic-severity.error
+     'diagnostic-error-attribute)
+    (protocol:diagnostic-severity.warning
+     'diagnostic-warning-attribute)
+    (protocol:diagnostic-severity.information
+     'diagnostic-information-attribute)
+    (protocol:diagnostic-severity.hint
+     'diagnostic-hint-attribute)))
+
+(defun buffer-diagnostic-overlays (buffer)
+  (buffer-value buffer 'diagnostic-overlays))
+
+(defun (setf buffer-diagnostic-overlays) (overlays buffer)
+  (setf (buffer-value buffer 'diagnostic-overlays) overlays))
+
+(defun clear-diagnostic-overlays (buffer)
+  (mapc #'delete-overlay (buffer-diagnostic-overlays buffer))
+  (setf (buffer-diagnostic-overlays buffer) '()))
+
+(defun highlight-diagnostic (buffer diagnostic)
+  (with-point ((start (buffer-point buffer))
+               (end (buffer-point buffer)))
+    (let ((range (protocol:diagnostic-range diagnostic)))
+      (move-to-lsp-position start (protocol:range-start range))
+      (move-to-lsp-position end (protocol:range-end range))
+      (let ((overlay (make-overlay start end
+                                   (handler-case (protocol:diagnostic-severity diagnostic)
+                                     (unbound-slot ()
+                                       'diagnostic-error-attribute)
+                                     (:no-error (severity)
+                                       (diagnostic-severity-attribute severity))))))
+        (overlay-put overlay 'diagnostic diagnostic)
+        (push overlay (buffer-diagnostic-overlays buffer))))))
+
+(defun highlight-diagnostics (params)
+  (when-let ((buffer (find-buffer-from-uri (protocol:publish-diagnostics-params-uri params))))
+    (clear-diagnostic-overlays buffer)
+    (utils:do-sequence (diagnostic (protocol:publish-diagnostics-params-diagnostics params))
+      (highlight-diagnostic buffer diagnostic))))
+
+(defun text-document/publish-diagnostics (params)
+  (request::do-request-log "textDocument/publishDiagnostics" params :from :server)
+  (let ((params (lem-lsp-mode/json-lsp-utils:coerce-json params 'protocol:publish-diagnostics-params)))
+    (send-event (lambda () (highlight-diagnostics params)))))
 
 ;;; hover
 

@@ -682,7 +682,10 @@
                           (put-text-property start p :attribute 'signature-help-active-parameter-attribute)))))))))
           (insert-character point #\space)
           (insert-character point #\newline)
-          (insert-string point (protocol:signature-information-documentation signature))))
+          (handler-case (protocol:signature-information-documentation signature)
+            (unbound-slot () nil)
+            (:no-error (documentation)
+              (insert-string point documentation)))))
       (buffer-start (buffer-point buffer))
       (message-buffer buffer))))
 

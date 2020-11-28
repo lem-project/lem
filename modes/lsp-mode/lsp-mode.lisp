@@ -1213,6 +1213,31 @@
 (define-command lsp-document-range-format (start end) ("r")
   (text-document/range-formatting start end))
 
+;;; onTypeFormatting
+
+;; TODO
+;; - バッファの初期化時にtext-document/on-type-formattingを呼び出すフックを追加する
+
+(defun provide-on-type-formatting-p (workspace)
+  (handler-case (protocol:server-capabilities-document-on-type-formatting-provider
+                 (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
+
+(defun text-document/on-type-formatting (point typed-character)
+  (when-let ((workspace (get-workspace-from-point point)))
+    (when (provide-on-type-formatting-p workspace)
+      (when-let ((response
+                  (with-jsonrpc-error ()
+                    (request:request
+                     (workspace-client workspace)
+                     (make-instance 'request:document-on-type-formatting
+                                    :params (apply #'make-instance
+                                                   'protocol:document-on-type-formatting-params
+                                                   :ch typed-character
+                                                   :options (make-formatting-options (point-buffer point))
+                                                   (make-text-document-position-arguments point)))))))
+        (apply-text-edits (point-buffer point) response)))))
+
 ;;; rename
 
 ;; TODO
@@ -1298,7 +1323,7 @@ Language Features
 - [ ] colorPresentation
 - [X] formatting
 - [X] rangeFormatting
-- [ ] onTypeFormatting
+- [X] onTypeFormatting
 - [X] rename
 - [ ] prepareRename
 - [ ] foldingRange

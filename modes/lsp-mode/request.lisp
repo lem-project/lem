@@ -28,6 +28,7 @@
            :document-symbol
            :document-formatting
            :document-range-formatting
+           :document-on-type-formatting
            :rename))
 (in-package :lem-lsp-mode/request)
 
@@ -243,6 +244,14 @@
   ((params :type protocol:document-range-formatting-params))
   (:default-initargs
    :method "textDocument/rangeFormatting"
+   :response-class-name '(or
+                          (ts-array protocol:text-edit)
+                          null)))
+
+(defclass document-on-type-formatting (request)
+  ((params :type protocol:document-on-type-formatting-params))
+  (:default-initargs
+   :method "textDocument/onTyepFormatting"
    :response-class-name '(or
                           (ts-array protocol:text-edit)
                           null)))

@@ -25,7 +25,8 @@
            :document-highlight
            :document-symbol
            :document-formatting
-           :document-range-formatting))
+           :document-range-formatting
+           :rename))
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
@@ -229,6 +230,14 @@
    :method "textDocument/rangeFormatting"
    :response-class-name '(or
                           (ts-array protocol:text-edit)
+                          null)))
+
+(defclass rename (request)
+  ((params :type protocol:rename-params))
+  (:default-initargs
+   :method "textDocument/rename"
+   :response-class-name '(or
+                          protocol:workspace-edit
                           null)))
 
 ;;; TODO

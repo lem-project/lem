@@ -34,8 +34,10 @@
       "hierarchicalDocumentSymbolSupport":true
     },
     "formatting":{
-    }
+    },
     "rangeFormatting":{
+    },
+    "rename":{
     }
   }
 }

@@ -299,6 +299,58 @@
   (list :text-document (make-text-document-identifier (point-buffer point))
         :position (point-to-lsp-position point)))
 
+(defun find-buffer-from-uri (uri)
+  (let ((pathname (utils:uri-to-pathname uri)))
+    (dolist (buffer (buffer-list))
+      (when (uiop:pathname-equal pathname (buffer-filename buffer))
+        (return buffer)))))
+
+(defun get-buffer-from-text-document-identifier (text-document-identifier)
+  (let ((uri (protocol:text-document-identifier-uri text-document-identifier)))
+    (find-buffer-from-uri uri)))
+
+(defun apply-text-edits (buffer text-edits)
+  (with-point ((start (buffer-point buffer) :left-inserting)
+               (end (buffer-point buffer) :left-inserting))
+    (utils:do-sequence (text-edit text-edits)
+      (let ((range (protocol:text-edit-range text-edit))
+            (new-text (protocol:text-edit-new-text text-edit)))
+        (move-to-lsp-position start (protocol:range-start range))
+        (move-to-lsp-position end (protocol:range-end range))
+        (delete-between-points start end)
+        (insert-string start new-text)))))
+
+(defgeneric apply-document-change (document-change))
+
+(defmethod apply-document-change ((document-change protocol:text-document-edit))
+  (let* ((buffer
+           (get-buffer-from-text-document-identifier
+            (protocol:text-document-edit-text-document document-change))))
+    (apply-text-edits buffer (protocol:text-document-edit-edits document-change))))
+
+(defmethod apply-document-change ((document-change protocol:create-file))
+  (error "createFile is not yet supported"))
+
+(defmethod apply-document-change ((document-change protocol:rename-file))
+  (error "renameFile is not yet supported"))
+
+(defmethod apply-document-change ((document-change protocol:delete-file))
+  (error "deleteFile is not yet supported"))
+
+(defun apply-workspace-edit (workspace)
+  (labels ((apply-document-changes (document-changes)
+             (utils:do-sequence (document-change document-changes)
+               (apply-document-change document-change)))
+           (apply-changes (changes)
+             (declare (ignore changes))
+             (error "Not yet implemented")))
+    (if-let ((document-changes (handler-case (protocol:workspace-edit-document-changes workspace)
+                                 (unbound-slot () nil))))
+      (apply-document-changes document-changes)
+      (when-let ((changes (handler-case (protocol:workspace-edit-changes workspace)
+                            (unbound-slot () nil))))
+        (apply-changes changes)))))
+
 ;;; General Messages
 
 (defun initialize (workspace)
@@ -736,6 +788,7 @@
     (add-hook *post-command-hook* 'clear-document-highlight-overlays)))
 
 ;;; document symbols
+
 ;; TODO
 ;; - position順でソートする
 
@@ -973,17 +1026,6 @@
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
-(defun apply-text-edits (buffer text-edits)
-  (with-point ((start (buffer-point buffer) :left-inserting)
-               (end (buffer-point buffer) :left-inserting))
-    (utils:do-sequence (text-edit text-edits)
-      (let ((range (protocol:text-edit-range text-edit))
-            (new-text (protocol:text-edit-new-text text-edit)))
-        (move-to-lsp-position start (protocol:range-start range))
-        (move-to-lsp-position end (protocol:range-end range))
-        (delete-between-points start end)
-        (insert-string start new-text)))))
-
 (defun make-formatting-options (buffer)
   (make-instance
    'protocol:formatting-options
@@ -1036,6 +1078,34 @@
 
 (define-command lsp-document-range-format (start end) ("r")
   (text-document/range-formatting start end))
+
+;;; rename
+
+;; TODO
+;; - prepareSupport
+
+(defun provide-rename-p (workspace)
+  (handler-case (protocol:server-capabilities-rename-provider
+                 (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
+
+(defun text-document/rename (point new-name)
+  (when-let ((workspace (get-workspace-from-point point)))
+    (when (provide-rename-p workspace)
+      (let ((response
+              (with-jsonrpc-error ()
+                (request:request
+                 (workspace-client workspace)
+                 (make-instance 'request:rename
+                                :params (apply #'make-instance
+                                               'protocol:rename-params
+                                               :new-name new-name
+                                               (make-text-document-position-arguments point)))))))
+        (when (typep response 'protocol:workspace-edit)
+          (apply-workspace-edit response))))))
+
+(define-command lsp-rename (new-name) ("sNew name: ")
+  (text-document/rename (current-point) new-name))
 
 ;;;
 (defvar *language-spec-table* (make-hash-table))
@@ -1096,11 +1166,12 @@ Language Features
 - [X] formatting
 - [X] rangeFormatting
 - [ ] onTypeFormatting
-- [ ] rename
+- [X] rename
 - [ ] prepareRename
 - [ ] foldingRange
 - [ ] selectionRange
 
+TODO
 - partialResult
 - workDoneProgress
 |#

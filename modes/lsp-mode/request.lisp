@@ -50,14 +50,17 @@
   (with-output-to-string (stream)
     (yason:encode params (yason:make-json-output-stream stream))))
 
-(defun do-request-log (method params)
-  (do-log "request: ~A ~A" method (pretty-json params)))
+(defun do-request-log (method params &key (from :client))
+  (check-type from (member :client :server))
+  (do-log "~:[<-~;->~] request: ~A ~A" (eq from :client) method (pretty-json params)))
 
-(defun do-response-log (response)
-  (do-log "response: ~A" (pretty-json response)))
+(defun do-response-log (response &key (from :client))
+  (check-type from (member :client :server))
+  (do-log "~:[->~;<-~] response: ~A" (eq from :client) (pretty-json response)))
 
-(defun do-error-response-log (condition)
-  (do-log "response: ~A" condition))
+(defun do-error-response-log (condition &key (from :client))
+  (check-type from (member :client :server))
+  (do-log "~:[->~;<-~] response: ~A" (eq from :client) condition))
 
 (defun jsonrpc-call (jsonrpc method params)
   (handler-bind ((jsonrpc/errors:jsonrpc-callback-error

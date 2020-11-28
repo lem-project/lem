@@ -510,11 +510,13 @@
                           :attribute 'lem.sourcelist:title-attribute)
            (insert-string point ":")
            (insert-string point
-                          (princ-to-string (lem.language-mode::xref-position-line-number (diagnostic-position diagnostic)))
+                          (princ-to-string (lem.language-mode::xref-position-line-number
+                                            (diagnostic-position diagnostic)))
                           :attribute 'lem.sourcelist:position-attribute)
            (insert-string point ":")
            (insert-string point
-                          (princ-to-string (lem.language-mode::xref-position-charpos (diagnostic-position diagnostic)))
+                          (princ-to-string (lem.language-mode::xref-position-charpos
+                                            (diagnostic-position diagnostic)))
                           :attribute 'lem.sourcelist:position-attribute)
            (insert-string point ":")
            (insert-string point (diagnostic-message diagnostic)))

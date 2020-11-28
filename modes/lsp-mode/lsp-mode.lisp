@@ -1280,9 +1280,6 @@
 (defun spec-mode (spec)
   (getf spec :mode))
 
-(defun spec-port (spec)
-  (getf spec :port))
-
 (defun spec-command (spec)
   (getf spec :command))
 
@@ -1297,8 +1294,7 @@
   :language-id "go"
   :root-uri-patterns '("go.mod")
   :command (lambda (port) `("gopls" "serve" "-port" ,(princ-to-string port)))
-  :mode :tcp
-  :port 12345)
+  :mode :tcp)
 
 
 #|

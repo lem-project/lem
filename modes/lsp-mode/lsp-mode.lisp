@@ -388,6 +388,12 @@
 
 ;;; Window
 
+;; TODO
+;; - window/showMessageRequest
+;; - window/logMessage
+;; - window/workDoneProgress/create
+;; - window/workDoenProgress/cancel
+
 (defun window/show-message (params)
   (request::do-request-log "window/showMessage" params :from :server)
   (let* ((params (json-lsp-utils:coerce-json params 'protocol:show-message-params))

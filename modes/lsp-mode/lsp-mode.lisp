@@ -254,6 +254,9 @@
   (jsonrpc:expose (client:client-connection (workspace-client workspace))
                   "textDocument/publishDiagnostics"
                   'text-document/publish-diagnostics)
+  (jsonrpc:expose (client:client-connection (workspace-client workspace))
+                  "window/showMessage"
+                  'window/show-message)
   ;; initialize, initializedが失敗したときに、無効なworkspaceが残ってしまう問題があるかもしれない
   (initialize workspace)
   (initialized workspace)
@@ -382,6 +385,27 @@
 (defun initialized (workspace)
   (request:request (workspace-client workspace)
                    (make-instance 'request:initialized-request)))
+
+;;; Window
+
+(defun window/show-message (params)
+  (request::do-request-log "window/showMessage" params :from :server)
+  (let* ((params (json-lsp-utils:coerce-json params 'protocol:show-message-params))
+         (text (format nil "~A: ~A"
+                       (switch ((protocol:show-message-params-type params) :test #'=)
+                         (protocol:message-type.error
+                          "Error")
+                         (protocol:message-type.warning
+                          "Warning")
+                         (protocol:message-type.info
+                          "Info")
+                         (protocol:message-type.log
+                          "Log"))
+                       (protocol:show-message-params-message params))))
+    (send-event (lambda ()
+                  (display-popup-message text
+                                         :gravity :top
+                                         :timeout 3)))))
 
 ;;; Text Synchronization
 

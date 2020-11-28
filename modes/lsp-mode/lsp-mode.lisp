@@ -228,6 +228,7 @@
 
 (defun assign-workspace-to-buffer (buffer workspace)
   (setf (buffer-workspace buffer) workspace)
+  (add-hook (variable-value 'kill-buffer-hook :buffer buffer) 'text-document/did-close)
   (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)
   (add-hook (variable-value 'self-insert-after-hook :buffer buffer) 'self-insert-hook)
   (setf (variable-value 'lem.language-mode:completion-spec)
@@ -395,6 +396,13 @@
                                                                        :version (buffer-version buffer)
                                                                        :uri (buffer-uri buffer))
                                          :content-changes content-changes))))
+
+(defun text-document/did-close (buffer)
+  (request:request
+   (workspace-client (buffer-workspace buffer))
+   (make-instance 'request:text-document-did-close
+                  :params (make-instance 'protocol:did-close-text-document-params
+                                         :text-document (make-text-document-identifier buffer)))))
 
 ;;; hover
 

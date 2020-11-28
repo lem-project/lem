@@ -3,6 +3,7 @@
   },
   "textDocument":{
     "synchronization":{
+      "didSave": true
     },
     "completion":{
       "completionItem":{

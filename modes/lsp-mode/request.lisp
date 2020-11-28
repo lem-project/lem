@@ -15,6 +15,7 @@
            :initialized-request
            :text-document-did-open
            :text-document-did-change
+           :text-document-did-save
            :text-document-did-close
            :hover-request
            :completion-request
@@ -140,6 +141,11 @@
   ((params :type protocol:did-change-text-document-params))
   (:default-initargs
    :method "textDocument/didChange"))
+
+(defclass text-document-did-save (notification)
+  ((params :type protocol:did-save-text-document-params))
+  (:default-initargs
+   :method "textDocument/didSave"))
 
 (defclass text-document-did-close (notification)
   ((params :type protocol:did-close-text-document-params))

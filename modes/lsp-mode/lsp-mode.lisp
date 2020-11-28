@@ -13,6 +13,7 @@
 (lem-lsp-mode/project:local-nickname :utils :lem-lsp-mode/utils)
 (lem-lsp-mode/project:local-nickname :request :lem-lsp-mode/request)
 (lem-lsp-mode/project:local-nickname :json :lem-lsp-mode/json)
+(lem-lsp-mode/project:local-nickname :json-lsp-utils :lem-lsp-mode/json-lsp-utils)
 (lem-lsp-mode/project:local-nickname :client :lem-lsp-mode/client)
 (lem-lsp-mode/project:local-nickname :completion :lem.completion-mode)
 
@@ -36,7 +37,7 @@
                                    "client-capabilities.json"))))
 
 (defun client-capabilities ()
-  (lem-lsp-mode/json-lsp-utils:coerce-json
+  (json-lsp-utils:coerce-json
    (yason:parse *client-capabilities-text*)
    'protocol:client-capabilities))
 
@@ -496,7 +497,7 @@
 
 (defun text-document/publish-diagnostics (params)
   (request::do-request-log "textDocument/publishDiagnostics" params :from :server)
-  (let ((params (lem-lsp-mode/json-lsp-utils:coerce-json params 'protocol:publish-diagnostics-params)))
+  (let ((params (json-lsp-utils:coerce-json params 'protocol:publish-diagnostics-params)))
     (send-event (lambda () (highlight-diagnostics params)))))
 
 (define-command lsp-document-diagnostics () ()

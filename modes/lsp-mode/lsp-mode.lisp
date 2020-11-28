@@ -1226,17 +1226,16 @@
 (defun text-document/rename (point new-name)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-rename-p workspace)
-      (let ((response
-              (with-jsonrpc-error ()
-                (request:request
-                 (workspace-client workspace)
-                 (make-instance 'request:rename
-                                :params (apply #'make-instance
-                                               'protocol:rename-params
-                                               :new-name new-name
-                                               (make-text-document-position-arguments point)))))))
-        (when (typep response 'protocol:workspace-edit)
-          (apply-workspace-edit response))))))
+      (when-let ((response
+                  (with-jsonrpc-error ()
+                    (request:request
+                     (workspace-client workspace)
+                     (make-instance 'request:rename
+                                    :params (apply #'make-instance
+                                                   'protocol:rename-params
+                                                   :new-name new-name
+                                                   (make-text-document-position-arguments point)))))))
+        (apply-workspace-edit response)))))
 
 (define-command lsp-rename (new-name) ("sNew name: ")
   (text-document/rename (current-point) new-name))

@@ -445,6 +445,11 @@
     (protocol:diagnostic-severity.hint
      'diagnostic-hint-attribute)))
 
+(defstruct diagnostic
+  buffer
+  position
+  message)
+
 (defun buffer-diagnostic-overlays (buffer)
   (buffer-value buffer 'diagnostic-overlays))
 
@@ -454,6 +459,15 @@
 (defun clear-diagnostic-overlays (buffer)
   (mapc #'delete-overlay (buffer-diagnostic-overlays buffer))
   (setf (buffer-diagnostic-overlays buffer) '()))
+
+(defun buffer-diagnostics (buffer)
+  (mapcar (lambda (overlay)
+            (overlay-get overlay 'diagnostic))
+          (buffer-diagnostic-overlays buffer)))
+
+(defun point-to-xref-position (point)
+  (lem.language-mode::make-xref-position :line-number (line-number-at-point point)
+                                         :charpos (point-charpos point)))
 
 (defun highlight-diagnostic (buffer diagnostic)
   (with-point ((start (buffer-point buffer))
@@ -467,7 +481,11 @@
                                        'diagnostic-error-attribute)
                                      (:no-error (severity)
                                        (diagnostic-severity-attribute severity))))))
-        (overlay-put overlay 'diagnostic diagnostic)
+        (overlay-put overlay
+                     'diagnostic
+                     (make-diagnostic :buffer buffer
+                                      :position (point-to-xref-position start)
+                                      :message (protocol:diagnostic-message diagnostic)))
         (push overlay (buffer-diagnostic-overlays buffer))))))
 
 (defun highlight-diagnostics (params)
@@ -480,6 +498,32 @@
   (request::do-request-log "textDocument/publishDiagnostics" params :from :server)
   (let ((params (lem-lsp-mode/json-lsp-utils:coerce-json params 'protocol:publish-diagnostics-params)))
     (send-event (lambda () (highlight-diagnostics params)))))
+
+(define-command lsp-document-diagnostics () ()
+  (when-let ((diagnostics (buffer-diagnostics (current-buffer))))
+    (lem.sourcelist:with-sourcelist (sourcelist "*Diagnostics*")
+      (dolist (diagnostic diagnostics)
+        (lem.sourcelist:append-sourcelist
+         sourcelist
+         (lambda (point)
+           (insert-string point (buffer-filename (diagnostic-buffer diagnostic))
+                          :attribute 'lem.sourcelist:title-attribute)
+           (insert-string point ":")
+           (insert-string point
+                          (princ-to-string (lem.language-mode::xref-position-line-number (diagnostic-position diagnostic)))
+                          :attribute 'lem.sourcelist:position-attribute)
+           (insert-string point ":")
+           (insert-string point
+                          (princ-to-string (lem.language-mode::xref-position-charpos (diagnostic-position diagnostic)))
+                          :attribute 'lem.sourcelist:position-attribute)
+           (insert-string point ":")
+           (insert-string point (diagnostic-message diagnostic)))
+         (let ((diagnostic diagnostic))
+           (lambda (set-buffer-fn)
+             (funcall set-buffer-fn (diagnostic-buffer diagnostic))
+             (lem.language-mode:move-to-xref-location-position
+              (buffer-point (diagnostic-buffer diagnostic))
+              (diagnostic-position diagnostic)))))))))
 
 ;;; hover
 

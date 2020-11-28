@@ -103,7 +103,7 @@
                      fn
                      #'get-highlight-overlay-default)
                    point)))
-    (start-timer 100
+    (start-timer 300
                  nil
                  (lambda ()
                    (delete-overlay overlay))

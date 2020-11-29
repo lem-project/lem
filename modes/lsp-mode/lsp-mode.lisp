@@ -60,9 +60,10 @@
                   (point (buffer-point buffer)))
              (buffer-end point)
              (insert-string point string))))
-    (let* ((port (lem-utils/socket:random-available-port))
-           (process (lem-process:run-process (funcall (spec-command spec) port)
-                                             :output-callback #'output-callback)))
+    (let* ((port (or (spec-port spec) (lem-utils/socket:random-available-port)))
+           (process (when (spec-command spec)
+                      (lem-process:run-process (funcall (spec-command spec) port)
+                                               :output-callback #'output-callback))))
       (make-server-info :process process :port port))))
 
 (defun get-running-server-info (spec)
@@ -77,7 +78,8 @@
 (defun quit-all-server-process ()
   (maphash (lambda (language-id server-info)
              (declare (ignore language-id))
-             (lem-process:delete-process (server-info-process server-info)))
+             (when-let (process (server-info-process server-info))
+               (lem-process:delete-process process)))
            *language-id-server-info-map*))
 
 ;;;
@@ -1313,6 +1315,9 @@
 
 (defun spec-command (spec)
   (getf spec :command))
+
+(defun spec-port (spec)
+  (getf spec :port))
 
 (defmacro def-language-spec (major-mode &rest plist)
   `(progn

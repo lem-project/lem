@@ -46,7 +46,8 @@
 
 (defstruct server-info
   port
-  process)
+  process
+  disposable)
 
 (defun server-process-buffer-name (spec)
   (format nil "*Lsp <~A>*" (spec-langauge-id spec)))
@@ -54,7 +55,7 @@
 (defun make-server-process-buffer (spec)
   (make-buffer (server-process-buffer-name spec)))
 
-(defun run-server (spec)
+(defmethod run-server-using-mode ((mode (eql :tcp)) spec)
   (flet ((output-callback (string)
            (let* ((buffer (make-server-process-buffer spec))
                   (point (buffer-point buffer)))
@@ -64,7 +65,17 @@
            (process (when (spec-command spec)
                       (lem-process:run-process (funcall (spec-command spec) port)
                                                :output-callback #'output-callback))))
-      (make-server-info :process process :port port))))
+      (make-server-info :process process
+                        :port port
+                        :disposable (lambda () (lem-process:delete-process process))))))
+
+(defmethod run-server-using-mode ((mode (eql :stdio)) spec)
+  (let ((process (async-process:create-process (spec-command spec) :nonblock nil)))
+    (make-server-info :process process
+                      :disposable (lambda () (async-process:delete-process process)))))
+
+(defun run-server (spec)
+  (run-server-using-mode (spec-mode spec) spec))
 
 (defun get-running-server-info (spec)
   (gethash (spec-langauge-id spec) *language-id-server-info-map*))
@@ -78,8 +89,8 @@
 (defun quit-all-server-process ()
   (maphash (lambda (language-id server-info)
              (declare (ignore language-id))
-             (when-let (process (server-info-process server-info))
-               (lem-process:delete-process process)))
+             (when-let ((disposable (server-info-disposable server-info)))
+               (funcall disposable)))
            *language-id-server-info-map*))
 
 ;;;
@@ -150,25 +161,23 @@
                                         (return t))))))
       (pathname directory)))
 
-(defgeneric make-client (client-params))
-
-(defstruct client-params)
-(defstruct (tcp-client-params (:include client-params)) port)
-
 (defun get-connected-port (spec)
   (let ((server-info (get-running-server-info spec)))
     (assert server-info)
     (server-info-port server-info)))
 
-(defun make-client-params-from-spec (spec)
-  (ecase (spec-mode spec)
-    (:tcp (make-tcp-client-params :port (get-connected-port spec)))))
+(defun get-spec-process (spec)
+  (let ((server-info (get-running-server-info spec)))
+    (assert server-info)
+    (server-info-process server-info)))
 
-(defmethod make-client ((client-params tcp-client-params))
-  (make-instance 'client:tcp-client :port (tcp-client-params-port client-params)))
+(defun make-client (spec)
+  (ecase (spec-mode spec)
+    (:tcp (make-instance 'client:tcp-client :port (get-connected-port spec)))
+    (:stdio (make-instance 'client:stdio-client :process (get-spec-process spec)))))
 
 (defun make-client-and-connect (spec)
-  (let ((client (make-client (make-client-params-from-spec spec))))
+  (let ((client (make-client spec)))
     (client:jsonrpc-connect client)
     client))
 
@@ -380,8 +389,11 @@
                      :workspace-folders (json:json-null))))))
     (setf (workspace-server-capabilities workspace)
           (protocol:initialize-result-capabilities initialize-result))
-    (setf (workspace-server-info workspace)
-          (protocol:initialize-result-server-info initialize-result)))
+    (handler-case (protocol:initialize-result-server-info initialize-result)
+      (unbound-slot () nil)
+      (:no-error (server-info)
+        (setf (workspace-server-info workspace)
+              server-info))))
   (values))
 
 (defun initialized (workspace)
@@ -1355,6 +1367,11 @@
   :command (lambda (port) `("gopls" "serve" "-port" ,(princ-to-string port)))
   :mode :tcp)
 
+(def-language-spec lem-js-mode:js-mode
+  :language-id "javascript"
+  :root-uri-patterns '("package.json" "tsconfig.json")
+  :command '("typescript-language-server" "--stdio")
+  :mode :stdio)
 
 #|
 Language Features

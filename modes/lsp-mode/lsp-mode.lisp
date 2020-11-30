@@ -253,9 +253,7 @@
         #'find-references)
   (dolist (character (get-completion-trigger-characters workspace))
     (setf (gethash character (workspace-trigger-characters workspace))
-          (lambda (c)
-            (declare (ignore c))
-            (lem.language-mode::complete-symbol))))
+          #'completion-with-trigger-character))
   (dolist (character (get-signature-help-trigger-characters workspace))
     (setf (gethash character (workspace-trigger-characters workspace))
           #'lsp-signature-help-with-trigger-character)))
@@ -704,6 +702,10 @@
                        :params (apply #'make-instance
                                       'protocol:completion-params
                                       (make-text-document-position-arguments point))))))))
+
+(defun completion-with-trigger-character (c)
+  (declare (ignore c))
+  (lem.language-mode::complete-symbol))
 
 ;;; signatureHelp
 

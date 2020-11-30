@@ -493,10 +493,23 @@
   (mapc #'delete-overlay (buffer-diagnostic-overlays buffer))
   (setf (buffer-diagnostic-overlays buffer) '()))
 
+(defun buffer-diagnostic-idle-timer (buffer)
+  (buffer-value buffer 'diagnostic-idle-timer))
+
+(defun (setf buffer-diagnostic-idle-timer) (idle-timer buffer)
+  (setf (buffer-value buffer 'diagnostic-idle-timer) idle-timer))
+
+(defun overlay-diagnostic (overlay)
+  (overlay-get overlay 'diagnostic))
+
 (defun buffer-diagnostics (buffer)
-  (mapcar (lambda (overlay)
-            (overlay-get overlay 'diagnostic))
-          (buffer-diagnostic-overlays buffer)))
+  (mapcar #'overlay-diagnostic (buffer-diagnostic-overlays buffer)))
+
+(defun reset-buffer-diagnostic (buffer)
+  (clear-diagnostic-overlays buffer)
+  (when-let (timer (buffer-diagnostic-idle-timer buffer))
+    (stop-timer timer)
+    (setf (buffer-diagnostic-idle-timer buffer) nil)))
 
 (defun point-to-xref-position (point)
   (lem.language-mode::make-xref-position :line-number (line-number-at-point point)
@@ -523,9 +536,19 @@
 
 (defun highlight-diagnostics (params)
   (when-let ((buffer (find-buffer-from-uri (protocol:publish-diagnostics-params-uri params))))
-    (clear-diagnostic-overlays buffer)
+    (reset-buffer-diagnostic buffer)
     (utils:do-sequence (diagnostic (protocol:publish-diagnostics-params-diagnostics params))
-      (highlight-diagnostic buffer diagnostic))))
+      (highlight-diagnostic buffer diagnostic))
+    (setf (buffer-diagnostic-idle-timer buffer)
+          (start-idle-timer 1000 t #'popup-diagnostic nil "lsp-diagnostic"))))
+
+(defun popup-diagnostic ()
+  (dolist (overlay (buffer-diagnostic-overlays (current-buffer)))
+    (when (point<= (overlay-start overlay)
+                   (current-point)
+                   (overlay-end overlay))
+      (message "~A" (diagnostic-message (overlay-diagnostic overlay)))
+      (return))))
 
 (defun text-document/publish-diagnostics (params)
   (request::do-request-log "textDocument/publishDiagnostics" params :from :server)
@@ -951,7 +974,7 @@
 (defun enable-document-highlight-idle-timer ()
   (unless *document-highlight-idle-timer*
     (setf *document-highlight-idle-timer*
-          (start-idle-timer 500 t #'lsp-document-highlight))
+          (start-idle-timer 500 t #'lsp-document-highlight nil "lsp-document-highlight"))
     (add-hook *post-command-hook* 'clear-document-highlight-overlays)))
 
 ;;; document symbols

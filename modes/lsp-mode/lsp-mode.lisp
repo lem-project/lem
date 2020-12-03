@@ -1463,7 +1463,7 @@ Language Features
 - [X] references
 - [X] documentHighlight
 - [X] documentSymbol
-- [ ] codeAction
+- [X] codeAction
 - [ ] codeLens
 - [ ] codeLens resolve
 - [ ] documentLink

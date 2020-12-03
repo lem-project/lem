@@ -809,6 +809,17 @@
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
+(defun definition-location-to-content (file location)
+  (let ((point (buffer-point (find-file-buffer file)))
+        (range (protocol:location-range location)))
+    (with-point ((start point)
+                 (end point))
+      (move-to-lsp-position start (protocol:range-start range))
+      (move-to-lsp-position end (protocol:range-end range))
+      (line-start start)
+      (line-end end)
+      (points-to-string start end))))
+
 (defgeneric convert-location (location)
   (:method ((location protocol:location))
     ;; TODO: end-positionも使い、定義位置への移動後のハイライトをstart/endの範囲にする
@@ -821,7 +832,8 @@
        :filespec file
        :position (lem.language-mode::make-position
                   (1+ (protocol:position-line start-position))
-                  (protocol:position-character start-position)))))
+                  (protocol:position-character start-position))
+       :content (definition-location-to-content file location))))
   (:method ((location protocol:location-link))
     (error "locationLink is unsupported")))
 

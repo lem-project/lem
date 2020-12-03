@@ -810,8 +810,9 @@
     (unbound-slot () nil)))
 
 (defun definition-location-to-content (file location)
-  (let ((point (buffer-point (find-file-buffer file)))
-        (range (protocol:location-range location)))
+  (when-let* ((buffer (find-file-buffer file))
+              (point (buffer-point buffer))
+              (range (protocol:location-range location)))
     (with-point ((start point)
                  (end point))
       (move-to-lsp-position start (protocol:range-start range))
@@ -828,23 +829,25 @@
            (uri (protocol:location-uri location))
            (file (utils:uri-to-pathname uri)))
       (declare (ignore end-position))
-      (lem.language-mode:make-xref-location
-       :filespec file
-       :position (lem.language-mode::make-position
-                  (1+ (protocol:position-line start-position))
-                  (protocol:position-character start-position))
-       :content (definition-location-to-content file location))))
+      (when (uiop:file-exists-p file)
+        (lem.language-mode:make-xref-location
+         :filespec file
+         :position (lem.language-mode::make-position
+                    (1+ (protocol:position-line start-position))
+                    (protocol:position-character start-position))
+         :content (definition-location-to-content file location)))))
   (:method ((location protocol:location-link))
     (error "locationLink is unsupported")))
 
 (defun convert-definition-response (value)
-  (cond ((typep value 'protocol:location)
-         (list (convert-location value)))
-        ((json:json-array-p value)
-         ;; TODO: location-link
-         (map 'list #'convert-location value))
-        (t
-         nil)))
+  (remove nil
+          (cond ((typep value 'protocol:location)
+                 (list (convert-location value)))
+                ((json:json-array-p value)
+                 ;; TODO: location-link
+                 (map 'list #'convert-location value))
+                (t
+                 nil))))
 
 (defun text-document/definition (point)
   (when-let ((workspace (get-workspace-from-point point)))
@@ -923,8 +926,9 @@
     (unbound-slot () nil)))
 
 (defun xref-location-to-content (location)
-  (let* ((buffer (find-file-buffer (lem.language-mode:xref-location-filespec location) :temporary t))
-         (point (buffer-point buffer)))
+  (when-let*
+      ((buffer (find-file-buffer (lem.language-mode:xref-location-filespec location) :temporary t))
+       (point (buffer-point buffer)))
     (lem.language-mode::move-to-location-position point (lem.language-mode:xref-location-position location))
     (string-trim '(#\space #\tab) (line-string point))))
 

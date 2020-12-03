@@ -1,7 +1,7 @@
 (defpackage :lem-base/errors
   (:use :cl)
   (:export :editor-condition
-           :directory-does-not-exit
+           :directory-does-not-exist
            :directory-does-not-exist-directory
            :read-only-error
            :editor-error

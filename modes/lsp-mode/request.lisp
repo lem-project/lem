@@ -17,6 +17,7 @@
            :text-document-did-change
            :text-document-did-save
            :text-document-did-close
+           :execute-command
            :hover-request
            :completion-request
            :signature-help
@@ -26,6 +27,7 @@
            :references
            :document-highlight
            :document-symbol
+           :code-action
            :document-formatting
            :document-range-formatting
            :document-on-type-formatting
@@ -156,6 +158,11 @@
   (:default-initargs
    :method "textDocument/didClose"))
 
+(defclass execute-command (request)
+  ((params :type protocol:execute-command-params))
+  (:default-initargs
+   :method "workspace/executeCommand"))
+
 (defclass hover-request (request)
   ((params :type protocol:hover-params))
   (:default-initargs
@@ -230,6 +237,15 @@
    :response-class-name '(or
                           (ts-array protocol:document-symbol)
                           (ts-array protocol:symbol-information)
+                          null)))
+
+(defclass code-action (request)
+  ((params :type protocol:code-action-params))
+  (:default-initargs
+   :method "textDocument/codeAction"
+   :response-class-name '(or
+                          protocol:command
+                          (ts-array protocol:code-action)
                           null)))
 
 (defclass document-formatting (request)

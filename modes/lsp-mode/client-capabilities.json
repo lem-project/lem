@@ -39,6 +39,8 @@
     "documentSymbol":{
       "hierarchicalDocumentSymbolSupport":true
     },
+    "codeAction":{
+    },
     "formatting":{
     },
     "rangeFormatting":{

@@ -1,11 +1,13 @@
 (defpackage :lem-lsp-mode/lsp-mode
   (:use :cl :lem :alexandria)
+  (:shadow :execute-command)
   (:import-from :lem-lsp-mode/json)
   (:import-from :lem-lsp-mode/json-lsp-utils)
   (:import-from :lem-lsp-mode/utils)
   (:import-from :lem-lsp-mode/protocol)
   (:import-from :lem-lsp-mode/request)
-  (:import-from :lem-lsp-mode/client))
+  (:import-from :lem-lsp-mode/client)
+  (:import-from :lem-lsp-mode/context-menu))
 (in-package :lem-lsp-mode/lsp-mode)
 
 (cl-package-locks:lock-package :lem-lsp-mode/lsp-mode)
@@ -16,6 +18,7 @@
 (lem-lsp-mode/project:local-nickname :json-lsp-utils :lem-lsp-mode/json-lsp-utils)
 (lem-lsp-mode/project:local-nickname :client :lem-lsp-mode/client)
 (lem-lsp-mode/project:local-nickname :completion :lem.completion-mode)
+(lem-lsp-mode/project:local-nickname :context-menu :lem-lsp-mode/context-menu)
 
 ;;;
 (defmacro with-editor-thread (() &body body)
@@ -355,17 +358,17 @@
 (defmethod apply-document-change ((document-change protocol:delete-file))
   (error "deleteFile is not yet supported"))
 
-(defun apply-workspace-edit (workspace)
+(defun apply-workspace-edit (workspace-edit)
   (labels ((apply-document-changes (document-changes)
              (utils:do-sequence (document-change document-changes)
                (apply-document-change document-change)))
            (apply-changes (changes)
              (declare (ignore changes))
              (error "Not yet implemented")))
-    (if-let ((document-changes (handler-case (protocol:workspace-edit-document-changes workspace)
+    (if-let ((document-changes (handler-case (protocol:workspace-edit-document-changes workspace-edit)
                                  (unbound-slot () nil))))
       (apply-document-changes document-changes)
-      (when-let ((changes (handler-case (protocol:workspace-edit-changes workspace)
+      (when-let ((changes (handler-case (protocol:workspace-edit-changes workspace-edit)
                             (unbound-slot () nil))))
         (apply-changes changes)))))
 
@@ -1222,6 +1225,78 @@
   (display-document-symbol-response
    (current-buffer)
    (text-document/document-symbol (current-buffer))))
+
+;;; code action
+;; TODO
+;; - codeAction.diagnostics
+;; - codeAction.isPreferred
+
+(defun provide-code-action-p (workspace)
+  (handler-case (protocol:server-capabilities-code-action-provider
+                 (workspace-server-capabilities workspace))
+    (unbound-slot () nil)))
+
+(defun execute-command (workspace command)
+  ;; TODO
+  ;; レスポンスを見てなんらかの処理をする必要がある
+  ;; この機能はgoplsで使われる事が今のところないので動作テストをできていない
+  (request:request
+   (workspace-client workspace)
+   (make-instance 'request:execute-command
+                  :params (make-instance 'protocol:execute-command-params
+                                         :command (protocol:command-command command)
+                                         :arguments (protocol:command-arguments command)))))
+
+(defun execute-code-action (workspace code-action)
+  (handler-case (protocol:code-action-edit code-action)
+    (unbound-slot () nil)
+    (:no-error (workspace-edit)
+      (apply-workspace-edit workspace-edit)))
+  (handler-case (protocol:code-action-command code-action)
+    (unbound-slot () nil)
+    (:no-error (command)
+      (execute-command workspace command))))
+
+(defun convert-code-actions (code-actions workspace)
+  (let ((items '()))
+    (utils:do-sequence (code-action code-actions)
+      (push (context-menu:make-item :label (protocol:code-action-title code-action)
+                                    :callback (curry #'execute-code-action workspace code-action))
+            items))
+    (nreverse items)))
+
+(defun text-document/code-action (point)
+  (flet ((point-to-line-range (point)
+           (with-point ((start point)
+                        (end point))
+             (line-start start)
+             (line-end end)
+             (make-lsp-range start end))))
+    (when-let ((workspace (get-workspace-from-point point)))
+      (when (provide-code-action-p workspace)
+        (request:request
+         (workspace-client workspace)
+         (make-instance
+          'request:code-action
+          :params (make-instance
+                   'protocol:code-action-params
+                   :text-document (make-text-document-identifier (point-buffer point))
+                   :range (point-to-line-range point)
+                   :context (make-instance 'protocol:code-action-context
+                                           :diagnostics (json:json-array)))))))))
+
+(define-command lsp-code-action () ()
+  (let ((response (text-document/code-action (current-point)))
+        (workspace (buffer-workspace (current-buffer))))
+    (cond ((typep response 'protocol:command)
+           (execute-command workspace response))
+          ((and (json:json-array-p response)
+                (not (length= response 0)))
+           (context-menu:display-context-menu
+            (convert-code-actions response
+                                  workspace)))
+          (t
+           (message "No suggestions from code action")))))
 
 ;;; formatting
 

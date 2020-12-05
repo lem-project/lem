@@ -119,12 +119,10 @@
   server-info
   (trigger-characters (make-hash-table)))
 
-(defun find-workspace (root-uri language-id)
+(defun find-workspace (language-id)
   (dolist (workspace *workspaces*)
-    (when (and (equal (workspace-root-uri workspace)
-                      root-uri)
-               (equal (workspace-language-id workspace)
-                      language-id))
+    (when (equal (workspace-language-id workspace)
+                 language-id)
       (return workspace))))
 
 (defun buffer-workspace (buffer)
@@ -278,19 +276,35 @@
   (push workspace *workspaces*)
   workspace)
 
+(defun establish-connection (spec)
+  (when (ensure-running-server-process spec)
+    (let ((client (make-client spec)))
+      (loop :with condition := nil
+            :repeat 3
+            :do (handler-case (client:jsonrpc-connect client)
+                  (:no-error (&rest values)
+                    (declare (ignore values))
+                    (return client))
+                  (error (c)
+                    (setq condition c)
+                    (sleep 0.1)))
+            :finally (error condition)))))
+
 (defun ensure-lsp-buffer (buffer)
-  (let ((spec (buffer-language-spec buffer)))
-    (ensure-running-server-process spec)
-    (let* ((language-id (spec-langauge-id spec))
-           (root-uri (utils:pathname-to-uri
-                      (find-root-pathname (buffer-directory buffer)
-                                          (spec-root-uri-patterns spec))))
-           (workspace (or (find-workspace root-uri language-id)
-                          (initialize-workspace
-                           (make-workspace :client (make-client-and-connect spec)
-                                           :root-uri root-uri
-                                           :language-id language-id)))))
-      (assign-workspace-to-buffer buffer workspace))))
+  (let* ((spec (buffer-language-spec buffer))
+         (root-uri (utils:pathname-to-uri
+                    (find-root-pathname (buffer-directory buffer)
+                                        (spec-root-uri-patterns spec))))
+         (client (establish-connection spec))
+         (workspace
+           (if client
+               (initialize-workspace
+                (make-workspace :client client
+                                :root-uri root-uri
+                                :language-id (spec-langauge-id spec)))
+               (find-workspace (spec-langauge-id spec)))))
+    (assert workspace)
+    (assign-workspace-to-buffer buffer workspace)))
 
 (defun point-to-lsp-position (point)
   (make-instance 'protocol:position

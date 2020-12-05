@@ -122,7 +122,7 @@
 (defun find-workspace (language-id &key (errorp t))
   (dolist (workspace *workspaces*
                      (when errorp
-                       (editor-error "The ~A workspace is not found.")))
+                       (editor-error "The ~A workspace is not found." language-id)))
     (when (equal (workspace-language-id workspace)
                  language-id)
       (return workspace))))

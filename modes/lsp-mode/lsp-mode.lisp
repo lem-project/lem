@@ -288,18 +288,19 @@
                   (error (c)
                     (setq condition c)
                     (sleep 0.1)))
-            :finally (error condition)))))
+            :finally (kill-server-process spec)
+                     (error condition)))))
 
 (defun ensure-lsp-buffer (buffer)
   (let* ((spec (buffer-language-spec buffer))
          (root-uri (utils:pathname-to-uri
                     (find-root-pathname (buffer-directory buffer)
                                         (spec-root-uri-patterns spec))))
-         (client (establish-connection spec))
+         (new-client (establish-connection spec))
          (workspace
-           (if client
+           (if new-client
                (initialize-workspace
-                (make-workspace :client client
+                (make-workspace :client new-client
                                 :root-uri root-uri
                                 :language-id (spec-langauge-id spec)))
                (find-workspace (spec-langauge-id spec)))))

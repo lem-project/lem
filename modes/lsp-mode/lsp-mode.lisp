@@ -146,7 +146,7 @@
   (buffer-workspace (point-buffer point)))
 
 (define-minor-mode lsp-mode
-    (:name "Language Client"
+    (:name "lsp"
      :enable-hook 'enable-hook))
 
 (defun enable-hook ()

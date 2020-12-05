@@ -89,6 +89,11 @@
           (run-server spec))
     (values)))
 
+(defun kill-server-process (spec)
+  (when-let* ((server-info (get-running-server-info spec))
+              (disposable (server-info-disposable server-info)))
+    (funcall disposable)))
+
 (defun quit-all-server-process ()
   (maphash (lambda (language-id server-info)
              (declare (ignore language-id))

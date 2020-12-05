@@ -157,7 +157,14 @@
 
 (define-minor-mode lsp-mode
     (:name "lsp"
-     :enable-hook 'enable-hook))
+     :enable-hook 'enable-hook)
+  (setf (variable-value 'lem.language-mode:completion-spec)
+        (completion:make-completion-spec #'text-document/completion
+                                         :prefix-search t))
+  (setf (variable-value 'lem.language-mode:find-definitions-function)
+        #'find-definitions)
+  (setf (variable-value 'lem.language-mode:find-references-function)
+        #'find-references))
 
 (defun enable-hook ()
   (let ((buffer (current-buffer)))
@@ -262,13 +269,6 @@
   (add-hook (variable-value 'after-save-hook :buffer buffer) 'text-document/did-save)
   (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)
   (add-hook (variable-value 'self-insert-after-hook :buffer buffer) 'self-insert-hook)
-  (setf (variable-value 'lem.language-mode:completion-spec)
-        (completion:make-completion-spec #'text-document/completion
-                                         :prefix-search t))
-  (setf (variable-value 'lem.language-mode:find-definitions-function)
-        #'find-definitions)
-  (setf (variable-value 'lem.language-mode:find-references-function)
-        #'find-references)
   (dolist (character (get-completion-trigger-characters workspace))
     (setf (gethash character (workspace-trigger-characters workspace))
           #'completion-with-trigger-character))

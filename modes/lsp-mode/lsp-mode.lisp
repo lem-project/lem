@@ -155,10 +155,14 @@
      :enable-hook 'enable-hook))
 
 (defun enable-hook ()
-  (ensure-lsp-buffer (current-buffer))
-  (text-document/did-open (current-buffer))
-  (enable-document-highlight-idle-timer)
-  (add-hook *exit-editor-hook* 'quit-all-server-process))
+  (handler-case
+      (progn
+        (ensure-lsp-buffer (current-buffer))
+        (text-document/did-open (current-buffer))
+        (enable-document-highlight-idle-timer)
+        (add-hook *exit-editor-hook* 'quit-all-server-process))
+    (editor-error (c)
+      (message "~A" c))))
 
 (defun find-root-pathname (directory uri-patterns)
   (or (utils:find-root-pathname directory
@@ -291,7 +295,8 @@
                     (setq condition c)
                     (sleep 0.1)))
             :finally (kill-server-process spec)
-                     (error condition)))))
+                     (editor-error "Could not establish a connection with the Language Server (condition: ~A)"
+                                   condition)))))
 
 (defun ensure-lsp-buffer (buffer)
   (let* ((spec (buffer-language-spec buffer))

@@ -87,7 +87,7 @@
   (unless (get-running-server-info spec)
     (setf (gethash (spec-langauge-id spec) *language-id-server-info-map*)
           (run-server spec))
-    (values)))
+    t))
 
 (defun kill-server-process (spec)
   (when-let* ((server-info (get-running-server-info spec))

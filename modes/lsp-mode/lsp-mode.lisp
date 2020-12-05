@@ -119,8 +119,10 @@
   server-info
   (trigger-characters (make-hash-table)))
 
-(defun find-workspace (language-id)
-  (dolist (workspace *workspaces*)
+(defun find-workspace (language-id &key (errorp t))
+  (dolist (workspace *workspaces*
+                     (when errorp
+                       (editor-error "The ~A workspace is not found.")))
     (when (equal (workspace-language-id workspace)
                  language-id)
       (return workspace))))
@@ -303,8 +305,7 @@
                 (make-workspace :client new-client
                                 :root-uri root-uri
                                 :language-id (spec-langauge-id spec)))
-               (find-workspace (spec-langauge-id spec)))))
-    (assert workspace)
+               (find-workspace (spec-langauge-id spec) :errorp t))))
     (assign-workspace-to-buffer buffer workspace)))
 
 (defun point-to-lsp-position (point)

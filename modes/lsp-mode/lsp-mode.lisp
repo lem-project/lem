@@ -267,16 +267,15 @@
           #'lsp-signature-help-with-trigger-character)))
 
 (defun initialize-workspace (workspace)
-  (push workspace *workspaces*)
   (jsonrpc:expose (client:client-connection (workspace-client workspace))
                   "textDocument/publishDiagnostics"
                   'text-document/publish-diagnostics)
   (jsonrpc:expose (client:client-connection (workspace-client workspace))
                   "window/showMessage"
                   'window/show-message)
-  ;; initialize, initializedが失敗したときに、無効なworkspaceが残ってしまう問題があるかもしれない
   (initialize workspace)
   (initialized workspace)
+  (push workspace *workspaces*)
   workspace)
 
 (defun ensure-lsp-buffer (buffer)

@@ -155,14 +155,15 @@
      :enable-hook 'enable-hook))
 
 (defun enable-hook ()
-  (handler-case
-      (progn
-        (ensure-lsp-buffer (current-buffer))
-        (text-document/did-open (current-buffer))
-        (enable-document-highlight-idle-timer)
-        (add-hook *exit-editor-hook* 'quit-all-server-process))
-    (editor-error (c)
-      (message "~A" c))))
+  (let ((buffer (current-buffer)))
+    (handler-case
+        (progn
+          (add-hook *exit-editor-hook* 'quit-all-server-process)
+          (ensure-lsp-buffer buffer)
+          (text-document/did-open buffer)
+          (enable-document-highlight-idle-timer))
+      (editor-error (c)
+        (message "~A" c)))))
 
 (defun find-root-pathname (directory uri-patterns)
   (or (utils:find-root-pathname directory
@@ -294,24 +295,26 @@
                   (error (c)
                     (setq condition c)
                     (sleep 0.1)))
-            :finally (kill-server-process spec)
-                     (editor-error "Could not establish a connection with the Language Server (condition: ~A)"
+            :finally (editor-error "Could not establish a connection with the Language Server (condition: ~A)"
                                    condition)))))
 
 (defun ensure-lsp-buffer (buffer)
   (let* ((spec (buffer-language-spec buffer))
          (root-uri (utils:pathname-to-uri
                     (find-root-pathname (buffer-directory buffer)
-                                        (spec-root-uri-patterns spec))))
-         (new-client (establish-connection spec))
-         (workspace
-           (if new-client
-               (initialize-workspace
-                (make-workspace :client new-client
-                                :root-uri root-uri
-                                :language-id (spec-langauge-id spec)))
-               (find-workspace (spec-langauge-id spec) :errorp t))))
-    (assign-workspace-to-buffer buffer workspace)))
+                                        (spec-root-uri-patterns spec)))))
+    (handler-bind ((error (lambda (c)
+                            (declare (ignore c))
+                            (kill-server-process spec))))
+      (let* ((new-client (establish-connection spec))
+             (workspace
+               (if new-client
+                   (initialize-workspace
+                    (make-workspace :client new-client
+                                    :root-uri root-uri
+                                    :language-id (spec-langauge-id spec)))
+                   (find-workspace (spec-langauge-id spec) :errorp t))))
+        (assign-workspace-to-buffer buffer workspace)))))
 
 (defun point-to-lsp-position (point)
   (make-instance 'protocol:position

@@ -155,10 +155,10 @@
      :enable-hook 'enable-hook))
 
 (defun enable-hook ()
-  (add-hook *exit-editor-hook* 'quit-all-server-process)
   (ensure-lsp-buffer (current-buffer))
   (text-document/did-open (current-buffer))
-  (enable-document-highlight-idle-timer))
+  (enable-document-highlight-idle-timer)
+  (add-hook *exit-editor-hook* 'quit-all-server-process))
 
 (defun find-root-pathname (directory uri-patterns)
   (or (utils:find-root-pathname directory

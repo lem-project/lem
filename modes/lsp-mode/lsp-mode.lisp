@@ -321,6 +321,12 @@
                    (find-workspace (spec-langauge-id spec) :errorp t))))
         (assign-workspace-to-buffer buffer workspace)))))
 
+(defun check-connection ()
+  (let* ((buffer (current-buffer))
+         (spec (buffer-language-spec buffer)))
+    (unless (get-running-server-info spec)
+      (ensure-lsp-buffer buffer))))
+
 (defun point-to-lsp-position (point)
   (make-instance 'protocol:position
                  :line (1- (line-number-at-point point))
@@ -681,6 +687,7 @@
           (hover-to-string result))))))
 
 (define-command lsp-hover () ()
+  (check-connection)
   (message "~A" (text-document/hover (current-point))))
 
 ;;; completion
@@ -741,6 +748,7 @@
 
 (defun completion-with-trigger-character (c)
   (declare (ignore c))
+  (check-connection)
   (lem.language-mode::complete-symbol))
 
 ;;; signatureHelp
@@ -818,6 +826,7 @@
                                                #|:active-signature-help|#)))
 
 (define-command lsp-signature-help () ()
+  (check-connection)
   (text-document/signature-help (current-point)
                                 (make-instance 'protocol:signature-help-context
                                                :trigger-kind protocol:signature-help-trigger-kind.invoked
@@ -894,6 +903,7 @@
                                       (make-text-document-position-arguments point))))))))
 
 (defun find-definitions (point)
+  (check-connection)
   (with-jsonrpc-error ()
     (text-document/definition point)))
 
@@ -919,6 +929,7 @@
                                       (make-text-document-position-arguments point))))))))
 
 (define-command lsp-type-definition () ()
+  (check-connection)
   (let ((xref-locations
           (with-jsonrpc-error ()
             (text-document/type-definition (current-point)))))
@@ -946,6 +957,7 @@
                                       (make-text-document-position-arguments point))))))))
 
 (define-command lsp-implementation () ()
+  (check-connection)
   (let ((xref-locations
           (with-jsonrpc-error ()
             (text-document/implementation (current-point)))))
@@ -990,6 +1002,7 @@
                                       (make-text-document-position-arguments point))))))))
 
 (defun find-references (point)
+  (check-connection)
   (text-document/references point))
 
 ;;; document highlights
@@ -1031,7 +1044,12 @@
          (display-document-highlights (point-buffer point)
                                       value))))))
 
+(defun document-highlight-calls-timer ()
+  (when (mode-active-p (current-buffer) 'lsp-mode)
+    (text-document/document-highlight (current-point))))
+
 (define-command lsp-document-highlight () ()
+  (check-connection)
   (when (mode-active-p (current-buffer) 'lsp-mode)
     (text-document/document-highlight (current-point))))
 
@@ -1271,6 +1289,7 @@
                                :text-document (make-text-document-identifier buffer)))))))
 
 (define-command lsp-document-symbol () ()
+  (check-connection)
   (display-document-symbol-response
    (current-buffer)
    (text-document/document-symbol (current-buffer))))
@@ -1335,6 +1354,7 @@
                                            :diagnostics (json:json-array)))))))))
 
 (define-command lsp-code-action () ()
+  (check-connection)
   (let ((response (text-document/code-action (current-point)))
         (workspace (buffer-workspace (current-buffer))))
     (cond ((typep response 'protocol:command)
@@ -1377,6 +1397,7 @@
                                 :options (make-formatting-options buffer))))))))
 
 (define-command lsp-document-format () ()
+  (check-connection)
   (text-document/formatting (current-buffer)))
 
 ;;; range formatting
@@ -1405,6 +1426,7 @@
                                   :options (make-formatting-options buffer)))))))))
 
 (define-command lsp-document-range-format (start end) ("r")
+  (check-connection)
   (text-document/range-formatting start end))
 
 ;;; onTypeFormatting
@@ -1457,6 +1479,7 @@
         (apply-workspace-edit response)))))
 
 (define-command lsp-rename (new-name) ("sNew name: ")
+  (check-connection)
   (text-document/rename (current-point) new-name))
 
 ;;;

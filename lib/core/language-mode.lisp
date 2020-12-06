@@ -29,7 +29,8 @@
    :xref-filespec-to-filename
    :move-to-xref-location-position
    :indent-size
-   :display-xref-locations)
+   :display-xref-locations
+   :display-xref-references)
   #+sbcl
   (:lock t))
 (in-package :lem.language-mode)
@@ -343,7 +344,7 @@
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
     (funcall fn (current-point))))
 
-(defun show-references (refs)
+(defun display-xref-references (refs)
   (unless refs
     (editor-error "No references found"))
   (push-location-stack (current-point))
@@ -371,7 +372,7 @@
 (define-command find-references () ()
   (alexandria:when-let (fn (variable-value 'find-references-function :buffer))
     (let ((refs (funcall fn (current-point))))
-      (show-references refs))))
+      (display-xref-references refs))))
 
 (defvar *xref-stack-table* (make-hash-table :test 'equal))
 (defvar *xref-history-table* (make-hash-table :test 'equal))

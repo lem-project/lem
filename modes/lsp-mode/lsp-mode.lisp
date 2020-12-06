@@ -900,23 +900,26 @@
              (let ((response
                      (request:request
                       (workspace-client workspace)
-                      (make-instance 'request:definition
-                                     :params (apply #'make-instance
-                                                    'protocol:definition-params
-                                                    (make-text-document-position-arguments point))))))
-               (send-event (lambda () (funcall then response))))
+                      (make-instance
+                       'request:definition
+                       :params (apply #'make-instance
+                                      'protocol:definition-params
+                                      (make-text-document-position-arguments point))))))
+               (send-event
+                (lambda ()
+                  (funcall then (convert-definition-response response)))))
            (jsonrpc/errors:jsonrpc-callback-error (c)
              (send-event (lambda () (funcall catch c))))))
        :name "text-document/definition"))))
 
 (defun find-definitions (point)
   (check-connection)
-  (text-document/definition point
-                            (lambda (response)
-                              (lem.language-mode:display-xref-locations
-                               (convert-definition-response response)))
-                            (lambda (c)
-                              (editor-error "~A" c))))
+  (text-document/definition
+   point
+   (lambda (response)
+     (lem.language-mode:display-xref-locations response))
+   (lambda (c)
+     (editor-error "~A" c))))
 
 ;;; type definition
 

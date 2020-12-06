@@ -1049,8 +1049,8 @@
     (text-document/document-highlight (current-point))))
 
 (define-command lsp-document-highlight () ()
-  (check-connection)
   (when (mode-active-p (current-buffer) 'lsp-mode)
+    (check-connection)
     (text-document/document-highlight (current-point))))
 
 (defvar *document-highlight-idle-timer* nil)
@@ -1058,7 +1058,7 @@
 (defun enable-document-highlight-idle-timer ()
   (unless *document-highlight-idle-timer*
     (setf *document-highlight-idle-timer*
-          (start-idle-timer 500 t #'lsp-document-highlight nil "lsp-document-highlight"))
+          (start-idle-timer 500 t #'document-highlight-calls-timer nil "lsp-document-highlight"))
     (add-hook *post-command-hook* 'clear-document-highlight-overlays)))
 
 ;;; document symbols

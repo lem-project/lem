@@ -944,7 +944,7 @@
   (let ((xref-locations
           (with-jsonrpc-error ()
             (text-document/type-definition (current-point)))))
-    (lem.language-mode::display-xref-locations xref-locations)))
+    (lem.language-mode:display-xref-locations xref-locations)))
 
 ;;; implementation
 
@@ -972,7 +972,7 @@
   (let ((xref-locations
           (with-jsonrpc-error ()
             (text-document/implementation (current-point)))))
-    (lem.language-mode::display-xref-locations xref-locations)))
+    (lem.language-mode:display-xref-locations xref-locations)))
 
 ;;; references
 

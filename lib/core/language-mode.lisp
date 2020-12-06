@@ -315,7 +315,7 @@
                             (location-position< (xref-location-position location1)
                                                 (xref-location-position location2))))))))
 
-(defun show-locations (locations)
+(defun display-xref-locations (locations)
   (unless locations
     (editor-error "No definitions found"))
   (push-location-stack (current-point))
@@ -341,7 +341,7 @@
 (define-command find-definitions () ()
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
     (let ((locations (funcall fn (current-point))))
-      (show-locations locations))))
+      (display-xref-locations locations))))
 
 (defun show-references (refs)
   (unless refs

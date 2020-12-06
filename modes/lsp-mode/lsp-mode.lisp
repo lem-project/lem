@@ -891,21 +891,32 @@
                 (t
                  nil))))
 
-(defun text-document/definition (point)
+(defun text-document/definition (point then catch)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-definition-p workspace)
-      (convert-definition-response
-       (request:request
-        (workspace-client workspace)
-        (make-instance 'request:definition
-                       :params (apply #'make-instance
-                                      'protocol:definition-params
-                                      (make-text-document-position-arguments point))))))))
+      (bt:make-thread
+       (lambda ()
+         (handler-case
+             (let ((response
+                     (request:request
+                      (workspace-client workspace)
+                      (make-instance 'request:definition
+                                     :params (apply #'make-instance
+                                                    'protocol:definition-params
+                                                    (make-text-document-position-arguments point))))))
+               (send-event (lambda () (funcall then response))))
+           (jsonrpc/errors:jsonrpc-callback-error (c)
+             (send-event (lambda () (funcall catch c))))))
+       :name "text-document/definition"))))
 
 (defun find-definitions (point)
   (check-connection)
-  (with-jsonrpc-error ()
-    (lem.language-mode:display-xref-locations (text-document/definition point))))
+  (text-document/definition point
+                            (lambda (response)
+                              (lem.language-mode:display-xref-locations
+                               (convert-definition-response response)))
+                            (lambda (c)
+                              (editor-error "~A" c))))
 
 ;;; type definition
 

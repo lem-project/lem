@@ -580,7 +580,7 @@
   (let ((xrefs (nconc (definition point)
                       (type-definition point)
                       (implementation point))))
-    (lem.language-mode:display-xref-locations (delete-duplicates xrefs :test #'xref-location-equal)))
+    (lem.language-mode:display-xref-locations (delete-duplicates xrefs :test #'xref-location-equal))))
 
 (defun references (point)
   (when (reference-provider-p point)

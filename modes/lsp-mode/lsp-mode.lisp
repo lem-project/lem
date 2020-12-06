@@ -1507,6 +1507,12 @@
   (text-document/rename (current-point) new-name))
 
 ;;;
+(define-command lsp-restart-server () ()
+  (when-let ((spec (buffer-language-spec (current-buffer))))
+    (kill-server-process spec)
+    (ensure-lsp-buffer (current-buffer))))
+
+;;;
 (defvar *language-spec-table* (make-hash-table))
 
 (defun get-language-spec (major-mode)

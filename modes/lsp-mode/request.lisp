@@ -73,7 +73,7 @@
       (do-response-log response)
       response)))
 
-(defun jsonrpc-call-async (jsonrpc method params callback)
+(defun jsonrpc-call-async (jsonrpc method params callback &optional error-callback)
   (handler-bind ((jsonrpc/errors:jsonrpc-callback-error
                    #'do-error-response-log))
     (do-request-log method params)
@@ -82,7 +82,8 @@
                         params
                         (lambda (response)
                           (do-response-log response)
-                          (funcall callback response)))))
+                          (funcall callback response))
+                        error-callback)))
 
 (defun jsonrpc-notify (jsonrpc method params)
   (do-log "notify: ~A ~A" method (pretty-json params))
@@ -113,13 +114,14 @@
                                  (request-method request)
                                  (object-to-json (request-params request)))))
 
-(defmethod request-async (client (request request) callback)
+(defmethod request-async (client (request request) callback &optional error-callback)
   (jsonrpc-call-async (client-connection client)
                       (request-method request)
                       (object-to-json (request-params request))
                       (lambda (response)
                         (let ((value (coerce-response request response)))
-                          (funcall callback value)))))
+                          (funcall callback value)))
+                      error-callback))
 
 (defmethod request (client (request notification))
   (jsonrpc-notify (client-connection client)

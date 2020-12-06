@@ -113,6 +113,33 @@
        (jsonrpc/errors:jsonrpc-callback-error (,c)
          (editor-error "~A" ,c)))))
 
+(defun invoke-async (function then catch)
+  (bt:make-thread
+   (lambda ()
+     (handler-case
+         (let ((response (funcall function)))
+           (when then (send-event (lambda () (funcall then response)))))
+       (jsonrpc/errors:jsonrpc-callback-error (c)
+         (when catch (send-event (lambda () (funcall catch c)))))))))
+
+(defmacro async (form &key then catch)
+  `(invoke-async (lambda () ,form)
+                 ,then
+                 ,catch))
+
+(defun simple-editor-error (message)
+  (editor-error "~A" message))
+
+(defun jsonrpc-editor-error (message code)
+  (editor-error "JSONRPC-CALLBACK-ERROR: ~A (Code=~A)" message code))
+
+(defun async-request (client request &key then)
+  (request:request-async client request
+                         (lambda (response)
+                           (send-event (lambda () (funcall then response))))
+                         (lambda (message code)
+                           (send-event (lambda () (jsonrpc-editor-error message code))))))
+
 ;;;
 (defvar *workspaces* '())
 
@@ -891,35 +918,21 @@
                 (t
                  nil))))
 
-(defun text-document/definition (point then catch)
+(defun text-document/definition (point then)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-definition-p workspace)
-      (bt:make-thread
-       (lambda ()
-         (handler-case
-             (let ((response
-                     (request:request
-                      (workspace-client workspace)
-                      (make-instance
-                       'request:definition
-                       :params (apply #'make-instance
-                                      'protocol:definition-params
-                                      (make-text-document-position-arguments point))))))
-               (send-event
-                (lambda ()
-                  (funcall then (convert-definition-response response)))))
-           (jsonrpc/errors:jsonrpc-callback-error (c)
-             (send-event (lambda () (funcall catch c))))))
-       :name "text-document/definition"))))
+      (async-request
+       (workspace-client workspace)
+       (make-instance 'request:definition
+                      :params (apply #'make-instance
+                                     'protocol:definition-params
+                                     (make-text-document-position-arguments point)))
+       :then (lambda (response)
+               (funcall then (convert-definition-response response)))))))
 
 (defun find-definitions (point)
   (check-connection)
-  (text-document/definition
-   point
-   (lambda (response)
-     (lem.language-mode:display-xref-locations response))
-   (lambda (c)
-     (editor-error "~A" c))))
+  (text-document/definition point #'lem.language-mode:display-xref-locations))
 
 ;;; type definition
 
@@ -931,23 +944,20 @@
 (defun convert-type-definition-response (value)
   (convert-definition-response value))
 
-(defun text-document/type-definition (point)
+(defun text-document/type-definition (point then)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-type-definition-p workspace)
-      (convert-type-definition-response
-       (request:request
-        (workspace-client workspace)
-        (make-instance 'request:type-definition
-                       :params (apply #'make-instance
-                                      'protocol:type-definition-params
-                                      (make-text-document-position-arguments point))))))))
+      (async-request (workspace-client workspace)
+                     (make-instance 'request:type-definition
+                                    :params (apply #'make-instance
+                                                   'protocol:type-definition-params
+                                                   (make-text-document-position-arguments point)))
+                     :then (lambda (response)
+                             (funcall then (convert-type-definition-response response)))))))
 
 (define-command lsp-type-definition () ()
   (check-connection)
-  (let ((xref-locations
-          (with-jsonrpc-error ()
-            (text-document/type-definition (current-point)))))
-    (lem.language-mode:display-xref-locations xref-locations)))
+  (text-document/type-definition (current-point) #'lem.language-mode:display-xref-locations))
 
 ;;; implementation
 
@@ -959,23 +969,21 @@
 (defun convert-implementation-response (value)
   (convert-definition-response value))
 
-(defun text-document/implementation (point)
+(defun text-document/implementation (point then)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-implementation-p workspace)
-      (convert-implementation-response
-       (request:request
-        (workspace-client workspace)
-        (make-instance 'request:implementation
-                       :params (apply #'make-instance
-                                      'protocol:type-definition-params
-                                      (make-text-document-position-arguments point))))))))
+      (async-request (workspace-client workspace)
+                     (make-instance 'request:implementation
+                                    :params (apply #'make-instance
+                                                   'protocol:type-definition-params
+                                                   (make-text-document-position-arguments point)))
+                     :then (lambda (response)
+                             (funcall then (convert-implementation-response response)))))))
 
 (define-command lsp-implementation () ()
   (check-connection)
-  (let ((xref-locations
-          (with-jsonrpc-error ()
-            (text-document/implementation (current-point)))))
-    (lem.language-mode:display-xref-locations xref-locations)))
+  (text-document/implementation (current-point)
+                                #'lem.language-mode:display-xref-locations))
 
 ;;; references
 
@@ -1001,23 +1009,25 @@
                          :content (xref-location-to-content location)))
                       (convert-definition-response value))))
 
-(defun text-document/references (point &optional include-declaration)
+(defun text-document/references (point then &optional include-declaration)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-references-p workspace)
-      (convert-references-response
-       (request:request
-        (workspace-client workspace)
-        (make-instance 'request:references
-                       :params (apply #'make-instance
-                                      'protocol:reference-params
-                                      :context (make-instance 'protocol:reference-context
-                                                              :include-declaration (json:to-json-boolean
-                                                                                    include-declaration))
-                                      (make-text-document-position-arguments point))))))))
+      (async-request
+       (workspace-client workspace)
+       (make-instance 'request:references
+                      :params (apply #'make-instance
+                                     'protocol:reference-params
+                                     :context (make-instance 'protocol:reference-context
+                                                             :include-declaration (json:to-json-boolean
+                                                                                   include-declaration))
+                                     (make-text-document-position-arguments point)))
+       :then (lambda (response)
+               (funcall then (convert-references-response response)))))))
 
 (defun find-references (point)
   (check-connection)
-  (lem.language-mode:display-xref-references (text-document/references point)))
+  (text-document/references point
+                            #'lem.language-mode:display-xref-references))
 
 ;;; document highlights
 

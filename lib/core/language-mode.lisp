@@ -28,7 +28,8 @@
    :xref-filespec-to-buffer
    :xref-filespec-to-filename
    :move-to-xref-location-position
-   :indent-size)
+   :indent-size
+   :display-xref-locations)
   #+sbcl
   (:lock t))
 (in-package :lem.language-mode)

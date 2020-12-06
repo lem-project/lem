@@ -78,7 +78,7 @@
 (defun find-definitions (point)
   (let* ((name (read-name point "gtags -x "))
          (text (global (buffer-directory) "-x" name)))
-    (result-to-xref-locations text 'content)))
+    (display-xref-locations (result-to-xref-locations text 'content))))
 
 (defun find-references (point)
   (let* ((name (read-name point "gtags -rx "))

@@ -211,7 +211,7 @@
       ((not (godef-successful-p file))
        (editor-error "~A" (godef-error file)))
       (t
-       (godef-parse file)))))
+       (display-xref-locations (godef-parse file))))))
 
 (define-command godef-describe () ()
   (let ((description (nth-value 1 (call-godef (current-point)))))

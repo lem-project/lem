@@ -905,7 +905,7 @@
 (defun find-definitions (point)
   (check-connection)
   (with-jsonrpc-error ()
-    (text-document/definition point)))
+    (lem.language-mode:display-xref-locations (text-document/definition point))))
 
 ;;; type definition
 

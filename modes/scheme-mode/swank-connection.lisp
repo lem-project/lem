@@ -661,7 +661,7 @@
 
 (defun find-definitions (point)
   (check-connection)
-  (some (alexandria:rcurry #'funcall point) *find-definitions*))
+  (display-xref-locations (some (alexandria:rcurry #'funcall point) *find-definitions*)))
 
 (defun find-references (point)
   (check-connection)

@@ -341,8 +341,7 @@
 
 (define-command find-definitions () ()
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
-    (let ((locations (funcall fn (current-point))))
-      (display-xref-locations locations))))
+    (funcall fn (current-point))))
 
 (defun show-references (refs)
   (unless refs

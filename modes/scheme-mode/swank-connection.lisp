@@ -674,11 +674,12 @@
     ;; for r7rs-swank (check unsupported function)
     (check-aborted data)
 
-    (loop
-      :for (type . definitions) :in data
-      :for defs := (definitions-to-locations definitions)
-      :collect (make-xref-references :type type
-                                     :locations defs))))
+    (display-xref-references
+     (loop
+       :for (type . definitions) :in data
+       :for defs := (definitions-to-locations definitions)
+       :collect (make-xref-references :type type
+                                      :locations defs)))))
 
 (defun completion-symbol (point)
   ;(check-connection)

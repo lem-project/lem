@@ -1003,7 +1003,7 @@
 
 (defun find-references (point)
   (check-connection)
-  (text-document/references point))
+  (lem.language-mode:display-xref-references (text-document/references point)))
 
 ;;; document highlights
 

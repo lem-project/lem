@@ -701,11 +701,12 @@
          (data (lisp-eval `(swank:xrefs '(:calls :macroexpands :binds
                                           :references :sets :specializes)
                                         ,name))))
-    (loop
-      :for (type . definitions) :in data
-      :for defs := (definitions-to-locations definitions)
-      :collect (make-xref-references :type type
-                                     :locations defs))))
+    (display-xref-references
+     (loop
+       :for (type . definitions) :in data
+       :for defs := (definitions-to-locations definitions)
+       :collect (make-xref-references :type type
+                                      :locations defs)))))
 
 (defun completion-symbol (point)
   (check-connection)

@@ -371,8 +371,7 @@
 
 (define-command find-references () ()
   (alexandria:when-let (fn (variable-value 'find-references-function :buffer))
-    (let ((refs (funcall fn (current-point))))
-      (display-xref-references refs))))
+    (funcall fn (current-point))))
 
 (defvar *xref-stack-table* (make-hash-table :test 'equal))
 (defvar *xref-history-table* (make-hash-table :test 'equal))

@@ -590,11 +590,12 @@
       (let ((result (jsonrpc-call (workspace-connection workspace)
                                   "textDocument/references"
                                   (text-document-position-params point))))
-        (lem.language-mode:make-xref-references
-         :locations
-         (mapcar (lambda (location)
-                   (location-to-xref-location buffer location))
-                 result))))))
+        (lem.language-mode:display-xref-references
+         (lem.language-mode:make-xref-references
+          :locations
+          (mapcar (lambda (location)
+                    (location-to-xref-location buffer location))
+                  result)))))))
 
 (defun document-highlight (point)
   ;; TODO

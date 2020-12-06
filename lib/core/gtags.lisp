@@ -84,7 +84,7 @@
   (let* ((name (read-name point "gtags -rx "))
          (text (global (buffer-directory (point-buffer point)) "-rx" name))
          (locations (result-to-xref-locations text 'reference-content)))
-    (make-xref-references :locations locations)))
+    (display-xref-references (make-xref-references :locations locations))))
 
 (defun gtags-path ()
   (string-right-trim

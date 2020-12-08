@@ -1,11 +1,14 @@
-(defpackage :lem-lsp-mode/tests/json
+(defpackage :lem-tests/lsp-utils/json
   (:use :cl
-        :rove
-        :lem-lsp-mode/json)
-  (:import-from :lem-lsp-mode/protocol))
-(in-package :lem-lsp-mode/tests/json)
+        :lem-tests/deftest
+        :lem-lsp-utils/json)
+  (:import-from :trivial-package-local-nicknames)
+  ;; TODO
+  (:import-from :lem-lsp-utils/protocol))
+(in-package :lem-tests/lsp-utils/json)
 
-(lem-lsp-mode/project:local-nickname :protocol :lem-lsp-mode/protocol)
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (trivial-package-local-nicknames:add-package-local-nickname :protocol :lem-lsp-utils/protocol))
 
 (defclass test-params (object)
   ((a

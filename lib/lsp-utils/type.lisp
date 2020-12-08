@@ -1,6 +1,7 @@
-(defpackage :lem-lsp-mode/type
+(defpackage :lem-lsp-utils/type
   (:use :cl)
-  (:import-from :lem-lsp-mode/json
+  (:import-from :cl-package-locks)
+  (:import-from :lem-lsp-utils/json
                 :json-array-p
                 :json-object-p)
   (:export :ts-array
@@ -8,9 +9,9 @@
            :ts-equal-specializer
            :ts-object
            :ts-tuple))
-(in-package :lem-lsp-mode/type)
+(in-package :lem-lsp-utils/type)
 
-(cl-package-locks:lock-package :lem-lsp-mode/type)
+(cl-package-locks:lock-package :lem-lsp-utils/type)
 
 (deftype ts-array (&optional (element-type '*))
   (declare (ignore element-type))

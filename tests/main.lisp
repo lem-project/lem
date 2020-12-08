@@ -3,6 +3,8 @@
   (:use :cl)
   (:import-from :lem-tests/deftest
                 :run-all-tests)
+  (:import-from :lem-tests/lsp-utils/json)
+  (:import-from :lem-tests/lsp-utils/json-lsp-utils)
   (:import-from :lem-tests/string-width-utils)
   (:import-from :lem-tests/lisp-syntax/indent-test)
   (:import-from :lem-tests/lisp-syntax/defstruct-to-defclass)

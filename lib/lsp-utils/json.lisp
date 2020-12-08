@@ -1,5 +1,6 @@
-(defpackage :lem-lsp-mode/json
+(defpackage :lem-lsp-utils/json
   (:use :cl)
+  (:import-from :cl-package-locks)
   (:import-from :alexandria)
   (:import-from :st-json)
   (:import-from :yason)
@@ -27,9 +28,9 @@
            :json-object-length
            :json-array-p
            :json-object-p))
-(in-package :lem-lsp-mode/json)
+(in-package :lem-lsp-utils/json)
 
-(cl-package-locks:lock-package :lem-lsp-mode/json)
+(cl-package-locks:lock-package :lem-lsp-utils/json)
 
 (define-condition missing-parameter ()
   ((slot-name

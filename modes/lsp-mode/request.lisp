@@ -1,14 +1,14 @@
 (defpackage :lem-lsp-mode/request
   (:use :cl)
-  (:import-from :lem-lsp-mode/utils)
-  (:import-from :lem-lsp-mode/json-lsp-utils
+  (:import-from :lem-lsp-utils/json-lsp-utils
                 :make-json
                 :coerce-json
                 :object-to-json)
+  (:import-from :lem-lsp-utils/type
+                :ts-array)
   (:import-from :lem-lsp-mode/client
                 :client-connection)
-  (:import-from :lem-lsp-mode/type
-                :ts-array)
+  (:import-from :lem-lsp-mode/utils)
   (:export :request
            :request-async
            :initialize-request
@@ -36,7 +36,7 @@
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
 
-(lem-lsp-mode/project:local-nickname :protocol :lem-lsp-mode/protocol)
+(lem-lsp-mode/project:local-nickname :protocol :lem-lsp-utils/protocol)
 (lem-lsp-mode/project:local-nickname :utils :lem-lsp-mode/utils)
 
 (defvar *log-stream* nil)

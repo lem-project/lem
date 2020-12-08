@@ -1,9 +1,9 @@
-(defpackage :lem-lsp-mode/tests/json-lsp-utils
+(defpackage :lem-tests/lsp-utils/json-lsp-utils
   (:use :cl
-        :rove
-        :lem-lsp-mode/json
-        :lem-lsp-mode/json-lsp-utils))
-(in-package :lem-lsp-mode/tests/json-lsp-utils)
+        :lem-tests/deftest
+        :lem-lsp-utils/json
+        :lem-lsp-utils/json-lsp-utils))
+(in-package :lem-tests/lsp-utils/json-lsp-utils)
 
 (defclass position/test (object)
   ((line :initarg :line :type number)
@@ -53,13 +53,13 @@
       (ok (position-equals (slot-value object 'end) :line 5 :character 10)))
     (ok (typep nil '(or range/test null))))
   (testing "lsp-array"
-    (ok (signals (coerce-json 100 '(lem-lsp-mode/type:ts-array integer))
+    (ok (signals (coerce-json 100 '(lem-lsp-utils/type:ts-array integer))
                  'json-type-error))
-    (ok (signals (coerce-json '(1 "a") '(lem-lsp-mode/type:ts-array integer))
+    (ok (signals (coerce-json '(1 "a") '(lem-lsp-utils/type:ts-array integer))
                  'json-type-error))
-    (ok (json-array-p (coerce-json '(1 2 3) '(lem-lsp-mode/type:ts-array integer))))
+    (ok (json-array-p (coerce-json '(1 2 3) '(lem-lsp-utils/type:ts-array integer))))
     (ok (equalp #(1 2 3)
-                (coerce-json '(1 2 3) '(lem-lsp-mode/type:ts-array integer))))
+                (coerce-json '(1 2 3) '(lem-lsp-utils/type:ts-array integer))))
     (let ((result
             (coerce-json (list (hash "line" 10
                                      "character" 3)
@@ -67,43 +67,43 @@
                                      "character" 2)
                                (hash "line" 0
                                      "character" 100))
-                         '(lem-lsp-mode/type:ts-array position/test))))
+                         '(lem-lsp-utils/type:ts-array position/test))))
       (ok (= 3 (length result)))
       (ok (position-equals (elt result 0) :line 10 :character 3))
       (ok (position-equals (elt result 1) :line 3 :character 2))
       (ok (position-equals (elt result 2) :line 0 :character 100))))
   (testing "equal-specializer"
-    (ok (signals (coerce-json 1 '(lem-lsp-mode/type:ts-equal-specializer "foo"))
+    (ok (signals (coerce-json 1 '(lem-lsp-utils/type:ts-equal-specializer "foo"))
                  'json-type-error))
-    (ok (equal "foo" (coerce-json "foo" '(lem-lsp-mode/type:ts-equal-specializer "foo")))))
+    (ok (equal "foo" (coerce-json "foo" '(lem-lsp-utils/type:ts-equal-specializer "foo")))))
   (testing "object"
     (ok (signals (coerce-json 1
-                              '(lem-lsp-mode/type:ts-object string integer))
+                              '(lem-lsp-utils/type:ts-object string integer))
                  'json-type-error))
     (ok (signals (coerce-json (hash "foo" 100 'bar 200)
-                              '(lem-lsp-mode/type:ts-object string integer))
+                              '(lem-lsp-utils/type:ts-object string integer))
                  'json-type-error))
     (ok (hash-equal (coerce-json (hash "foo" 100 "bar" 200)
-                                 '(lem-lsp-mode/type:ts-object string integer))
+                                 '(lem-lsp-utils/type:ts-object string integer))
                     (hash "foo" 100 "bar" 200)))
     (ok (contain-hash-keys-p (coerce-json (hash "foo" '(100 200) "bar" '(1 2 3))
-                                          '(lem-lsp-mode/type:ts-object string (lem-lsp-mode/type:ts-array integer)))
+                                          '(lem-lsp-utils/type:ts-object string (lem-lsp-utils/type:ts-array integer)))
                              '("foo" "bar")))
     (ok (signals (coerce-json (hash "foo" '(100 200) "bar" '(1 "a" 3))
-                              '(lem-lsp-mode/type:ts-object string (lem-lsp-mode/type:ts-array integer)))
+                              '(lem-lsp-utils/type:ts-object string (lem-lsp-utils/type:ts-array integer)))
                  'json-type-error)))
   (testing "tuple"
-    (ok (signals (coerce-json "foo" '(lem-lsp-mode/type:ts-tuple integer))
+    (ok (signals (coerce-json "foo" '(lem-lsp-utils/type:ts-tuple integer))
                  'json-type-error))
-    (ok (signals (coerce-json '(1 2) '(lem-lsp-mode/type:ts-tuple integer))
+    (ok (signals (coerce-json '(1 2) '(lem-lsp-utils/type:ts-tuple integer))
                  'json-type-error))
-    (ok (signals (coerce-json '(1 2) '(lem-lsp-mode/type:ts-tuple integer string))
+    (ok (signals (coerce-json '(1 2) '(lem-lsp-utils/type:ts-tuple integer string))
                  'json-type-error))
-    (ok (equal (coerce-json '(1 2) '(lem-lsp-mode/type:ts-tuple integer integer))
+    (ok (equal (coerce-json '(1 2) '(lem-lsp-utils/type:ts-tuple integer integer))
                '(1 2)))
-    (ok (signals (coerce-json '(1 2 "foo") '(lem-lsp-mode/type:ts-tuple string integer string))
+    (ok (signals (coerce-json '(1 2 "foo") '(lem-lsp-utils/type:ts-tuple string integer string))
                  'json-type-error))
-    (ok (equal (coerce-json '(1 2 "foo") '(lem-lsp-mode/type:ts-tuple integer integer string))
+    (ok (equal (coerce-json '(1 2 "foo") '(lem-lsp-utils/type:ts-tuple integer integer string))
                '(1 2 "foo"))))
   (testing "or"
     (ok (equal 1 (coerce-json 1 '(or integer string))))
@@ -122,14 +122,14 @@
     (let ((result (coerce-json
                    (hash "name" "abc"
                          "version" "1.0")
-                   '(lem-lsp-mode/type:ts-interface
+                   '(lem-lsp-utils/type:ts-interface
                      ("name" :type common-lisp:string)
                      ("version" :type common-lisp:string)))))
       (ok (hash-table-p result))
       (ok (equal "abc" (gethash "name" result)))
       (ok (equal "1.0" (gethash "version" result))))
     (let ((result (coerce-json (hash "foo" 100)
-                               `(lem-lsp-mode/type:ts-interface
+                               `(lem-lsp-utils/type:ts-interface
                                  ("foo" :type integer :optional-p t)
                                  ("bar" :type string :optional-p t)))))
       (ok (hash-table-p result))

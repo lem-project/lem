@@ -1,12 +1,13 @@
-(defpackage :lem-lsp-mode/json-lsp-utils
+(defpackage :lem-lsp-utils/json-lsp-utils
   (:use :cl
-        :lem-lsp-mode/json
-        :lem-lsp-mode/type)
+        :lem-lsp-utils/json
+        :lem-lsp-utils/type)
+  (:import-from :cl-package-locks)
   (:export :json-type-error
            :coerce-json))
-(in-package :lem-lsp-mode/json-lsp-utils)
+(in-package :lem-lsp-utils/json-lsp-utils)
 
-(cl-package-locks:lock-package :lem-lsp-mode/json-lsp-utils)
+(cl-package-locks:lock-package :lem-lsp-utils/json-lsp-utils)
 
 (define-condition json-type-error ()
   ((type :initarg :type)

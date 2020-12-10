@@ -3,6 +3,9 @@
   (:import-from :jsonrpc)
   (:import-from :lem-lsp-mode/lem-stdio-transport
                 :lem-stdio-transport)
+  ;; 事前に:jsonrpc/transport/tcpをquickloadしておかないとjsonrpc:client-connect内のquickloadでデッドロック?を起こす事がある
+  (:import-from :jsonrpc/transport/tcp)
+  (:import-from :jsonrpc/transport/stdio)
   (:export :jsonrpc-connect
            :client
            :client-connection

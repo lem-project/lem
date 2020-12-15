@@ -1,6 +1,7 @@
 (defpackage :lem-lsp-mode/lsp-mode
   (:use :cl :lem :alexandria)
   (:shadow :execute-command)
+  (:import-from :lem-lsp-utils/uri)
   (:import-from :lem-lsp-utils/json)
   (:import-from :lem-lsp-utils/json-lsp-utils)
   (:import-from :lem-lsp-utils/protocol)
@@ -177,7 +178,7 @@
   (buffer-modified-tick buffer))
 
 (defun buffer-uri (buffer)
-  (utils:pathname-to-uri (buffer-filename buffer)))
+  (lem-lsp-utils/uri:pathname-to-uri (buffer-filename buffer)))
 
 (defun get-workspace-from-point (point)
   (buffer-workspace (point-buffer point)))
@@ -332,7 +333,7 @@
 
 (defun ensure-lsp-buffer (buffer)
   (let* ((spec (buffer-language-spec buffer))
-         (root-uri (utils:pathname-to-uri
+         (root-uri (lem-lsp-utils/uri:pathname-to-uri
                     (find-root-pathname (buffer-directory buffer)
                                         (spec-root-uri-patterns spec)))))
     (handler-bind ((error (lambda (c)
@@ -387,7 +388,7 @@
         :position (point-to-lsp-position point)))
 
 (defun find-buffer-from-uri (uri)
-  (let ((pathname (utils:uri-to-pathname uri)))
+  (let ((pathname (lem-lsp-utils/uri:uri-to-pathname uri)))
     (dolist (buffer (buffer-list))
       (when (uiop:pathname-equal pathname (buffer-filename buffer))
         (return buffer)))))
@@ -896,7 +897,7 @@
     (let* ((start-position (protocol:range-start (protocol:location-range location)))
            (end-position (protocol:range-end (protocol:location-range location)))
            (uri (protocol:location-uri location))
-           (file (utils:uri-to-pathname uri)))
+           (file (lem-lsp-utils/uri:uri-to-pathname uri)))
       (declare (ignore end-position))
       (when (uiop:file-exists-p file)
         (lem.language-mode:make-xref-location

@@ -4,8 +4,6 @@
   (:import-from :alexandria)
   (:import-from :trivia)
   (:export :get-pid
-           :pathname-to-uri
-           :uri-to-pathname
            :find-root-pathname
            :do-sequence))
 (in-package :lem-lsp-mode/utils)
@@ -19,12 +17,6 @@
   (progn
     #+win32 (win32:get-current-process-id)
     #-win32 (system::getpid)))
-
-(defun pathname-to-uri (pathname)
-  (format nil "file://~A" (namestring pathname)))
-
-(defun uri-to-pathname (uri)
-  (pathname (quri:uri-path (quri:uri uri))))
 
 (defun find-root-pathname (directory root-test-function)
   (cond ((dolist (file (uiop:directory-files directory))

@@ -1,12 +1,14 @@
 (defpackage :lem-utils/main
   (:nicknames :lem-utils)
   (:use :cl)
+  (:import-from :trivia)
   (:export :utf8-bytes
            :bests-if
            :max-if
            :min-if
            :find-tree
-           :random-range))
+           :random-range
+           :do-sequence))
 (in-package :lem-utils/main)
 
 #+sbcl
@@ -48,3 +50,25 @@
 
 (defun random-range (min max &optional (state *random-state*))
   (+ min (random (- max min) state)))
+
+(defmacro do-sequence ((var-form sequence) &body body)
+  (flet ((parse-var-form (var-form)
+           (trivia:ematch var-form
+             ((trivia:guard var (symbolp var))
+              (values var))
+             ((list (trivia:guard element-var (symbolp element-var))
+                    (trivia:guard index-var (symbolp index-var)))
+              (values element-var index-var)))))
+    (multiple-value-bind (element-var index-var)
+        (parse-var-form var-form)
+      (alexandria:with-gensyms (g-i)
+        `(let ,(when index-var `((,g-i 0)))
+           (map nil
+                (lambda (,element-var)
+                  ,(if index-var
+                       `(progn
+                          (let ((,index-var ,g-i))
+                            ,@body)
+                          (incf ,g-i))
+                       `(progn ,@body)))
+                ,sequence))))))

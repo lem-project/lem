@@ -400,7 +400,7 @@
 (defun apply-text-edits (buffer text-edits)
   (with-point ((start (buffer-point buffer) :left-inserting)
                (end (buffer-point buffer) :left-inserting))
-    (utils:do-sequence (text-edit text-edits)
+    (lem-utils:do-sequence (text-edit text-edits)
       (let ((range (protocol:text-edit-range text-edit))
             (new-text (protocol:text-edit-new-text text-edit)))
         (move-to-lsp-position start (protocol:range-start range))
@@ -427,7 +427,7 @@
 
 (defun apply-workspace-edit (workspace-edit)
   (labels ((apply-document-changes (document-changes)
-             (utils:do-sequence (document-change document-changes)
+             (lem-utils:do-sequence (document-change document-changes)
                (apply-document-change document-change)))
            (apply-changes (changes)
              (declare (ignore changes))

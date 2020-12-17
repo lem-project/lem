@@ -617,7 +617,7 @@
 (defun highlight-diagnostics (params)
   (when-let ((buffer (find-buffer-from-uri (protocol:publish-diagnostics-params-uri params))))
     (reset-buffer-diagnostic buffer)
-    (utils:do-sequence (diagnostic (protocol:publish-diagnostics-params-diagnostics params))
+    (lem-utils:do-sequence (diagnostic (protocol:publish-diagnostics-params-diagnostics params))
       (highlight-diagnostic buffer diagnostic))
     (setf (buffer-diagnostic-idle-timer buffer)
           (start-idle-timer 1000 t #'popup-diagnostic nil "lsp-diagnostic"))))
@@ -799,7 +799,7 @@
           (active-signature
             (handler-case (protocol:signature-help-active-signature signature-help)
               (unbound-slot () nil))))
-      (utils:do-sequence ((signature index) (protocol:signature-help-signatures signature-help))
+      (lem-utils:do-sequence ((signature index) (protocol:signature-help-signatures signature-help))
         (when (plusp index) (insert-character point #\newline))
         (let ((active-signature-p (eql index active-signature)))
           (if active-signature-p
@@ -1049,7 +1049,7 @@
   (clear-document-highlight-overlays)
   (with-point ((start (buffer-point buffer))
                (end (buffer-point buffer)))
-    (utils:do-sequence (document-highlight document-highlights)
+    (lem-utils:do-sequence (document-highlight document-highlights)
       (let* ((range (protocol:document-highlight-range document-highlight)))
         (move-to-lsp-position start (protocol:range-start range))
         (move-to-lsp-position end (protocol:range-end range))
@@ -1292,7 +1292,7 @@
                                       (move-to-lsp-position start (protocol:range-start range))
                                       (move-to-lsp-position end (protocol:range-end range))
                                       'lem.sourcelist::jump-highlight)))))
-  (utils:do-sequence
+  (lem-utils:do-sequence
       (document-symbol
        (handler-case (protocol:document-symbol-children document-symbol)
          (unbound-slot () nil)))
@@ -1300,7 +1300,7 @@
 
 (defun display-document-symbol-response (buffer value)
   (lem.sourcelist:with-sourcelist (sourcelist "*Document Symbol*")
-    (utils:do-sequence (item value)
+    (lem-utils:do-sequence (item value)
       (append-document-symbol-item sourcelist buffer item 0))))
 
 (defun text-document/document-symbol (buffer)
@@ -1352,7 +1352,7 @@
 
 (defun convert-code-actions (code-actions workspace)
   (let ((items '()))
-    (utils:do-sequence (code-action code-actions)
+    (lem-utils:do-sequence (code-action code-actions)
       (push (context-menu:make-item :label (protocol:code-action-title code-action)
                                     :callback (curry #'execute-code-action workspace code-action))
             items))

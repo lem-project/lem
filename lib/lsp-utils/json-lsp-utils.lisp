@@ -32,7 +32,7 @@
 (defun coerce-json (value type &optional context)
   (trivia:match type
     ((list 'ts-array item-type)
-     (assert-type value 'list)
+     (assert-type value '(or vector list))
      (map 'vector
           (lambda (item)
             (coerce-json item item-type))

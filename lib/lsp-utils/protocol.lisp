@@ -694,12 +694,15 @@
            :MESSAGE))
 (IN-PACKAGE :LEM-LSP-UTILS/PROTOCOL)
 (cl-package-locks:lock-package :lem-lsp-utils/protocol)
-(COMMON-LISP:DEFCLASS MESSAGE (LEM-LSP-UTILS/JSON:OBJECT) ((JSONRPC :INITARG :JSONRPC :DOCUMENTATION "" :TYPE COMMON-LISP:STRING :READER MESSAGE-JSONRPC)))
+(COMMON-LISP:DEFCLASS MESSAGE (LEM-LSP-UTILS/JSON:OBJECT)
+                      ((JSONRPC :INITARG :JSONRPC :DOCUMENTATION "" :TYPE COMMON-LISP:STRING :READER
+                        MESSAGE-JSONRPC)))
 
 (COMMON-LISP:DEFCLASS REQUEST-MESSAGE (MESSAGE)
                       ((ID :INITARG :ID :DOCUMENTATION "*
 * The request id."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:STRING) :READER REQUEST-MESSAGE-ID)
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:STRING) :READER
+                        REQUEST-MESSAGE-ID)
                        (METHOD :INITARG :METHOD :DOCUMENTATION "*
 * The method to be invoked."
                         :TYPE COMMON-LISP:STRING :READER REQUEST-MESSAGE-METHOD)
@@ -710,11 +713,16 @@
 (COMMON-LISP:DEFCLASS RESPONSE-MESSAGE (MESSAGE)
                       ((ID :INITARG :ID :DOCUMENTATION "*
 * The request id."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:STRING NULL) :READER RESPONSE-MESSAGE-ID)
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:STRING COMMON-LISP:NULL)
+                        :READER RESPONSE-MESSAGE-ID)
                        (RESULT? :INITARG :RESULT :DOCUMENTATION "*
 * The result of a request. This member is REQUIRED on success.
 * This member MUST NOT exist if there was an error invoking the method."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING COMMON-LISP:NUMBER COMMON-LISP:BOOLEAN OBJECT NULL) :READER RESPONSE-MESSAGE-RESULT)
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:STRING COMMON-LISP:NUMBER COMMON-LISP:BOOLEAN
+                                        OBJECT COMMON-LISP:NULL)
+                        :READER RESPONSE-MESSAGE-RESULT)
                        (ERROR? :INITARG :ERROR :DOCUMENTATION "*
 * The error object in case a request fails."
                         :TYPE RESPONSE-ERROR :READER RESPONSE-MESSAGE-ERROR)))
@@ -729,7 +737,10 @@
                        (DATA? :INITARG :DATA :DOCUMENTATION "*
 * A primitive or structured value that contains additional
 * information about the error. Can be omitted."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING COMMON-LISP:NUMBER COMMON-LISP:BOOLEAN ARRAY OBJECT NULL) :READER RESPONSE-ERROR-DATA)))
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:STRING COMMON-LISP:NUMBER COMMON-LISP:BOOLEAN
+                                        ARRAY OBJECT COMMON-LISP:NULL)
+                        :READER RESPONSE-ERROR-DATA)))
 
 (COMMON-LISP:PROGN
  (COMMON-LISP:DEFTYPE ERROR-CODES () COMMON-LISP:T)
@@ -756,7 +767,8 @@
 (COMMON-LISP:DEFCLASS CANCEL-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((ID :INITARG :ID :DOCUMENTATION "*
 * The request id to cancel."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:STRING) :READER CANCEL-PARAMS-ID)))
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:STRING) :READER
+                        CANCEL-PARAMS-ID)))
 
 (COMMON-LISP:DEFTYPE PROGRESS-TOKEN () '(COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:STRING))
 
@@ -791,7 +803,9 @@
 * The range's end position."
                         :TYPE POSITION :READER RANGE-END)))
 
-(COMMON-LISP:DEFCLASS LOCATION (LEM-LSP-UTILS/JSON:OBJECT) ((URI :INITARG :URI :DOCUMENTATION "" :TYPE DOCUMENT-URI :READER LOCATION-URI) (RANGE :INITARG :RANGE :DOCUMENTATION "" :TYPE RANGE :READER LOCATION-RANGE)))
+(COMMON-LISP:DEFCLASS LOCATION (LEM-LSP-UTILS/JSON:OBJECT)
+                      ((URI :INITARG :URI :DOCUMENTATION "" :TYPE DOCUMENT-URI :READER LOCATION-URI)
+                       (RANGE :INITARG :RANGE :DOCUMENTATION "" :TYPE RANGE :READER LOCATION-RANGE)))
 
 (COMMON-LISP:DEFCLASS LOCATION-LINK (LEM-LSP-UTILS/JSON:OBJECT)
                       ((ORIGIN-SELECTION-RANGE? :INITARG :ORIGIN-SELECTION-RANGE :DOCUMENTATION "*
@@ -823,7 +837,8 @@
                         :TYPE DIAGNOSTIC-SEVERITY :READER DIAGNOSTIC-SEVERITY)
                        (CODE? :INITARG :CODE :DOCUMENTATION "*
 * The diagnostic's code, which might appear in the user interface."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:STRING) :READER DIAGNOSTIC-CODE)
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:STRING) :READER
+                        DIAGNOSTIC-CODE)
                        (SOURCE? :INITARG :SOURCE :DOCUMENTATION "*
 * A human-readable string describing the source of this
 * diagnostic, e.g. 'typescript' or 'super lint'."
@@ -839,7 +854,8 @@
                        (RELATED-INFORMATION? :INITARG :RELATED-INFORMATION :DOCUMENTATION "*
 * An array of related diagnostic information, e.g. when symbol-names within
 * a scope collide all definitions can be marked via this property."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DIAGNOSTIC-RELATED-INFORMATION) :READER DIAGNOSTIC-RELATED-INFORMATION)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DIAGNOSTIC-RELATED-INFORMATION) :READER
+                        DIAGNOSTIC-RELATED-INFORMATION)))
 
 (COMMON-LISP:PROGN
  (COMMON-LISP:DEFTYPE DIAGNOSTIC-SEVERITY () COMMON-LISP:T)
@@ -849,11 +865,19 @@
  (COMMON-LISP:DEFPARAMETER DIAGNOSTIC-SEVERITY.HINT 4))
 
 (COMMON-LISP:DEFTYPE DIAGNOSTIC-SEVERITY ()
-  '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 1) (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 2) (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 3) (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 4)))
+  '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 1)
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 2)
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 3)
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 4)))
 
-(COMMON-LISP:PROGN (COMMON-LISP:DEFTYPE DIAGNOSTIC-TAG () COMMON-LISP:T) (COMMON-LISP:DEFPARAMETER DIAGNOSTIC-TAG.UNNECESSARY 1) (COMMON-LISP:DEFPARAMETER DIAGNOSTIC-TAG.DEPRECATED 2))
+(COMMON-LISP:PROGN
+ (COMMON-LISP:DEFTYPE DIAGNOSTIC-TAG () COMMON-LISP:T)
+ (COMMON-LISP:DEFPARAMETER DIAGNOSTIC-TAG.UNNECESSARY 1)
+ (COMMON-LISP:DEFPARAMETER DIAGNOSTIC-TAG.DEPRECATED 2))
 
-(COMMON-LISP:DEFTYPE DIAGNOSTIC-TAG () '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 1) (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 2)))
+(COMMON-LISP:DEFTYPE DIAGNOSTIC-TAG ()
+  '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 1)
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 2)))
 
 (COMMON-LISP:DEFCLASS DIAGNOSTIC-RELATED-INFORMATION (LEM-LSP-UTILS/JSON:OBJECT)
                       ((LOCATION :INITARG :LOCATION :DOCUMENTATION "*
@@ -873,7 +897,8 @@
                        (ARGUMENTS? :INITARG :ARGUMENTS :DOCUMENTATION "*
 * Arguments that the command handler should be
 * invoked with."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:T) :READER COMMAND-ARGUMENTS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:T) :READER
+                        COMMAND-ARGUMENTS)))
 
 (COMMON-LISP:DEFCLASS TEXT-EDIT (LEM-LSP-UTILS/JSON:OBJECT)
                       ((RANGE :INITARG :RANGE :DOCUMENTATION "*
@@ -888,10 +913,12 @@
 (COMMON-LISP:DEFCLASS TEXT-DOCUMENT-EDIT (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * The text document to change."
-                        :TYPE VERSIONED-TEXT-DOCUMENT-IDENTIFIER :READER TEXT-DOCUMENT-EDIT-TEXT-DOCUMENT)
+                        :TYPE VERSIONED-TEXT-DOCUMENT-IDENTIFIER :READER
+                        TEXT-DOCUMENT-EDIT-TEXT-DOCUMENT)
                        (EDITS :INITARG :EDITS :DOCUMENTATION "*
 * The edits to be applied."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-EDIT) :READER TEXT-DOCUMENT-EDIT-EDITS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-EDIT) :READER
+                        TEXT-DOCUMENT-EDIT-EDITS)))
 
 (COMMON-LISP:DEFCLASS CREATE-FILE-OPTIONS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((OVERWRITE? :INITARG :OVERWRITE :DOCUMENTATION "*
@@ -904,7 +931,8 @@
 (COMMON-LISP:DEFCLASS CREATE-FILE (LEM-LSP-UTILS/JSON:OBJECT)
                       ((KIND :INITARG :KIND :DOCUMENTATION "*
 * A create"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "create") :READER CREATE-FILE-KIND)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "create") :READER
+                        CREATE-FILE-KIND)
                        (URI :INITARG :URI :DOCUMENTATION "*
 * The resource to create."
                         :TYPE DOCUMENT-URI :READER CREATE-FILE-URI)
@@ -923,7 +951,8 @@
 (COMMON-LISP:DEFCLASS RENAME-FILE (LEM-LSP-UTILS/JSON:OBJECT)
                       ((KIND :INITARG :KIND :DOCUMENTATION "*
 * A rename"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "rename") :READER RENAME-FILE-KIND)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "rename") :READER
+                        RENAME-FILE-KIND)
                        (OLD-URI :INITARG :OLD-URI :DOCUMENTATION "*
 * The old (existing) location."
                         :TYPE DOCUMENT-URI :READER RENAME-FILE-OLD-URI)
@@ -945,7 +974,8 @@
 (COMMON-LISP:DEFCLASS DELETE-FILE (LEM-LSP-UTILS/JSON:OBJECT)
                       ((KIND :INITARG :KIND :DOCUMENTATION "*
 * A delete"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "delete") :READER DELETE-FILE-KIND)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "delete") :READER
+                        DELETE-FILE-KIND)
                        (URI :INITARG :URI :DOCUMENTATION "*
 * The file to delete."
                         :TYPE DOCUMENT-URI :READER DELETE-FILE-URI)
@@ -956,7 +986,13 @@
 (COMMON-LISP:DEFCLASS WORKSPACE-EDIT (LEM-LSP-UTILS/JSON:OBJECT)
                       ((CHANGES? :INITARG :CHANGES :DOCUMENTATION "*
 * Holds changes to existing resources."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("uri" :TYPE (LEM-LSP-UTILS/TYPE:TS-OBJECT DOCUMENT-URI (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-EDIT)) :OPTIONAL-P COMMON-LISP:T)) :READER WORKSPACE-EDIT-CHANGES)
+                        :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                         ("uri" :TYPE
+                          (LEM-LSP-UTILS/TYPE:TS-OBJECT DOCUMENT-URI
+                           (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-EDIT))
+                          :OPTIONAL-P COMMON-LISP:T))
+                        :READER WORKSPACE-EDIT-CHANGES)
                        (DOCUMENT-CHANGES? :INITARG :DOCUMENT-CHANGES :DOCUMENTATION "*
 * Depending on the client capability `workspace.workspaceEdit.resourceOperations` document changes
 * are either an array of `TextDocumentEdit`s to express changes to n different text documents
@@ -968,27 +1004,37 @@
 *
 * If a client neither supports `documentChanges` nor `workspace.workspaceEdit.resourceOperations` then
 * only plain `TextEdit`s using the `changes` property are supported."
-                        :TYPE (COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-DOCUMENT-EDIT) (LEM-LSP-UTILS/TYPE:TS-ARRAY (COMMON-LISP:OR TEXT-DOCUMENT-EDIT CREATE-FILE RENAME-FILE DELETE-FILE))) :READER
-                        WORKSPACE-EDIT-DOCUMENT-CHANGES)))
+                        :TYPE
+                        (COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-DOCUMENT-EDIT)
+                                        (LEM-LSP-UTILS/TYPE:TS-ARRAY
+                                         (COMMON-LISP:OR TEXT-DOCUMENT-EDIT CREATE-FILE RENAME-FILE
+                                                         DELETE-FILE)))
+                        :READER WORKSPACE-EDIT-DOCUMENT-CHANGES)))
 
 (COMMON-LISP:DEFCLASS WORKSPACE-EDIT-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DOCUMENT-CHANGES? :INITARG :DOCUMENT-CHANGES :DOCUMENTATION "*
 * The client supports versioned document changes in `WorkspaceEdit`s"
-                        :TYPE COMMON-LISP:BOOLEAN :READER WORKSPACE-EDIT-CLIENT-CAPABILITIES-DOCUMENT-CHANGES)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        WORKSPACE-EDIT-CLIENT-CAPABILITIES-DOCUMENT-CHANGES)
                        (RESOURCE-OPERATIONS? :INITARG :RESOURCE-OPERATIONS :DOCUMENTATION "*
 * The resource operations the client supports. Clients should at least
 * support 'create', 'rename' and 'delete' files and folders.
 *
 * @since 3.13.0"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY RESOURCE-OPERATION-KIND) :READER WORKSPACE-EDIT-CLIENT-CAPABILITIES-RESOURCE-OPERATIONS)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY RESOURCE-OPERATION-KIND) :READER
+                        WORKSPACE-EDIT-CLIENT-CAPABILITIES-RESOURCE-OPERATIONS)
                        (FAILURE-HANDLING? :INITARG :FAILURE-HANDLING :DOCUMENTATION "*
 * The failure handling strategy of a client if applying the workspace edit
 * fails.
 *
 * @since 3.13.0"
-                        :TYPE FAILURE-HANDLING-KIND :READER WORKSPACE-EDIT-CLIENT-CAPABILITIES-FAILURE-HANDLING)))
+                        :TYPE FAILURE-HANDLING-KIND :READER
+                        WORKSPACE-EDIT-CLIENT-CAPABILITIES-FAILURE-HANDLING)))
 
-(COMMON-LISP:DEFTYPE RESOURCE-OPERATION-KIND () '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "create") (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "rename") (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "delete")))
+(COMMON-LISP:DEFTYPE RESOURCE-OPERATION-KIND ()
+  '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "create")
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "rename")
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "delete")))
 
 (COMMON-LISP:PROGN
  (COMMON-LISP:DEFTYPE RESOURCE-OPERATION-KIND () COMMON-LISP:T)
@@ -997,7 +1043,9 @@
  (COMMON-LISP:DEFPARAMETER RESOURCE-OPERATION-KIND.DELETE "delete"))
 
 (COMMON-LISP:DEFTYPE FAILURE-HANDLING-KIND ()
-  '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "abort") (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "transactional") (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "undo")
+  '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "abort")
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "transactional")
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "undo")
                    (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "textOnlyTransactional")))
 
 (COMMON-LISP:PROGN
@@ -1037,12 +1085,14 @@
 *
 * The version number of a document will increase after each change, including
 * undo/redo. The number doesn't need to be consecutive."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER NULL) :READER VERSIONED-TEXT-DOCUMENT-IDENTIFIER-VERSION)))
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:NULL) :READER
+                        VERSIONED-TEXT-DOCUMENT-IDENTIFIER-VERSION)))
 
 (COMMON-LISP:DEFCLASS TEXT-DOCUMENT-POSITION-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * The text document."
-                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER TEXT-DOCUMENT-POSITION-PARAMS-TEXT-DOCUMENT)
+                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER
+                        TEXT-DOCUMENT-POSITION-PARAMS-TEXT-DOCUMENT)
                        (POSITION :INITARG :POSITION :DOCUMENTATION "*
 * The position inside the text document."
                         :TYPE POSITION :READER TEXT-DOCUMENT-POSITION-PARAMS-POSITION)))
@@ -1078,11 +1128,17 @@
                       ((DOCUMENT-SELECTOR :INITARG :DOCUMENT-SELECTOR :DOCUMENTATION "*
 * A document selector to identify the scope of the registration. If set to null
 * the document selector provided on the client side will be used."
-                        :TYPE (COMMON-LISP:OR DOCUMENT-SELECTOR NULL) :READER TEXT-DOCUMENT-REGISTRATION-OPTIONS-DOCUMENT-SELECTOR)))
+                        :TYPE (COMMON-LISP:OR DOCUMENT-SELECTOR COMMON-LISP:NULL) :READER
+                        TEXT-DOCUMENT-REGISTRATION-OPTIONS-DOCUMENT-SELECTOR)))
 
-(COMMON-LISP:PROGN (COMMON-LISP:DEFTYPE MARKUP-KIND () COMMON-LISP:T) (COMMON-LISP:DEFPARAMETER MARKUP-KIND.PLAIN-TEXT "plaintext") (COMMON-LISP:DEFPARAMETER MARKUP-KIND.MARKDOWN "markdown"))
+(COMMON-LISP:PROGN
+ (COMMON-LISP:DEFTYPE MARKUP-KIND () COMMON-LISP:T)
+ (COMMON-LISP:DEFPARAMETER MARKUP-KIND.PLAIN-TEXT "plaintext")
+ (COMMON-LISP:DEFPARAMETER MARKUP-KIND.MARKDOWN "markdown"))
 
-(COMMON-LISP:DEFTYPE MARKUP-KIND () '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "plaintext") (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "markdown")))
+(COMMON-LISP:DEFTYPE MARKUP-KIND ()
+  '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "plaintext")
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "markdown")))
 
 (COMMON-LISP:DEFCLASS MARKUP-CONTENT (LEM-LSP-UTILS/JSON:OBJECT)
                       ((KIND :INITARG :KIND :DOCUMENTATION "*
@@ -1093,7 +1149,9 @@
                         :TYPE COMMON-LISP:STRING :READER MARKUP-CONTENT-VALUE)))
 
 (COMMON-LISP:DEFCLASS WORK-DONE-PROGRESS-BEGIN (LEM-LSP-UTILS/JSON:OBJECT)
-                      ((KIND :INITARG :KIND :DOCUMENTATION "" :TYPE (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "begin") :READER WORK-DONE-PROGRESS-BEGIN-KIND)
+                      ((KIND :INITARG :KIND :DOCUMENTATION "" :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "begin") :READER
+                        WORK-DONE-PROGRESS-BEGIN-KIND)
                        (TITLE :INITARG :TITLE :DOCUMENTATION "*
 * Mandatory title of the progress operation. Used to briefly inform about
 * the kind of operation being performed.
@@ -1122,7 +1180,9 @@
                         :TYPE COMMON-LISP:NUMBER :READER WORK-DONE-PROGRESS-BEGIN-PERCENTAGE)))
 
 (COMMON-LISP:DEFCLASS WORK-DONE-PROGRESS-REPORT (LEM-LSP-UTILS/JSON:OBJECT)
-                      ((KIND :INITARG :KIND :DOCUMENTATION "" :TYPE (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "report") :READER WORK-DONE-PROGRESS-REPORT-KIND)
+                      ((KIND :INITARG :KIND :DOCUMENTATION "" :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "report") :READER
+                        WORK-DONE-PROGRESS-REPORT-KIND)
                        (CANCELLABLE? :INITARG :CANCELLABLE :DOCUMENTATION "*
 * Controls enablement state of a cancel button. This property is only valid if a cancel
 * button got requested in the `WorkDoneProgressStart` payload.
@@ -1147,7 +1207,9 @@
                         :TYPE COMMON-LISP:NUMBER :READER WORK-DONE-PROGRESS-REPORT-PERCENTAGE)))
 
 (COMMON-LISP:DEFCLASS WORK-DONE-PROGRESS-END (LEM-LSP-UTILS/JSON:OBJECT)
-                      ((KIND :INITARG :KIND :DOCUMENTATION "" :TYPE (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "end") :READER WORK-DONE-PROGRESS-END-KIND)
+                      ((KIND :INITARG :KIND :DOCUMENTATION "" :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "end") :READER
+                        WORK-DONE-PROGRESS-END-KIND)
                        (MESSAGE? :INITARG :MESSAGE :DOCUMENTATION "*
 * Optional, a final message indicating to for example indicate the outcome
 * of the operation."
@@ -1158,7 +1220,9 @@
 * An optional token that a server can use to report work done progress."
                         :TYPE PROGRESS-TOKEN :READER WORK-DONE-PROGRESS-PARAMS-WORK-DONE-TOKEN)))
 
-(COMMON-LISP:DEFCLASS WORK-DONE-PROGRESS-OPTIONS (LEM-LSP-UTILS/JSON:OBJECT) ((WORK-DONE-PROGRESS? :INITARG :WORK-DONE-PROGRESS :DOCUMENTATION "" :TYPE COMMON-LISP:BOOLEAN :READER WORK-DONE-PROGRESS-OPTIONS-WORK-DONE-PROGRESS)))
+(COMMON-LISP:DEFCLASS WORK-DONE-PROGRESS-OPTIONS (LEM-LSP-UTILS/JSON:OBJECT)
+                      ((WORK-DONE-PROGRESS? :INITARG :WORK-DONE-PROGRESS :DOCUMENTATION "" :TYPE
+                        COMMON-LISP:BOOLEAN :READER WORK-DONE-PROGRESS-OPTIONS-WORK-DONE-PROGRESS)))
 
 (COMMON-LISP:DEFCLASS PARTIAL-RESULT-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((PARTIAL-RESULT-TOKEN? :INITARG :PARTIAL-RESULT-TOKEN :DOCUMENTATION "*
@@ -1171,23 +1235,30 @@
 * The process Id of the parent process that started
 * the server. Is null if the process has not been started by another process.
 * If the parent process is not alive then the server should exit (see exit notification) its process."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER NULL) :READER INITIALIZE-PARAMS-PROCESS-ID)
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:NULL) :READER
+                        INITIALIZE-PARAMS-PROCESS-ID)
                        (CLIENT-INFO? :INITARG :CLIENT-INFO :DOCUMENTATION "*
 * Information about the client
 *
 * @since 3.15.0"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("name" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL) ("version" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:T)) :READER INITIALIZE-PARAMS-CLIENT-INFO)
+                        :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                         ("name" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL)
+                         ("version" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:T))
+                        :READER INITIALIZE-PARAMS-CLIENT-INFO)
                        (ROOT-PATH? :INITARG :ROOT-PATH :DOCUMENTATION "*
 * The rootPath of the workspace. Is null
 * if no folder is open.
 *
 * @deprecated in favour of rootUri."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING NULL) :READER INITIALIZE-PARAMS-ROOT-PATH)
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING COMMON-LISP:NULL) :READER
+                        INITIALIZE-PARAMS-ROOT-PATH)
                        (ROOT-URI :INITARG :ROOT-URI :DOCUMENTATION "*
 * The rootUri of the workspace. Is null if no
 * folder is open. If both `rootPath` and `rootUri` are set
 * `rootUri` wins."
-                        :TYPE (COMMON-LISP:OR DOCUMENT-URI NULL) :READER INITIALIZE-PARAMS-ROOT-URI)
+                        :TYPE (COMMON-LISP:OR DOCUMENT-URI COMMON-LISP:NULL) :READER
+                        INITIALIZE-PARAMS-ROOT-URI)
                        (INITIALIZATION-OPTIONS? :INITARG :INITIALIZATION-OPTIONS :DOCUMENTATION "*
 * User provided initialization options."
                         :TYPE COMMON-LISP:T :READER INITIALIZE-PARAMS-INITIALIZATION-OPTIONS)
@@ -1196,8 +1267,11 @@
                         :TYPE CLIENT-CAPABILITIES :READER INITIALIZE-PARAMS-CAPABILITIES)
                        (TRACE? :INITARG :TRACE :DOCUMENTATION "*
 * The initial trace setting. If omitted trace is disabled ('off')."
-                        :TYPE (COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "off") (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "messages") (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "verbose")) :READER
-                        INITIALIZE-PARAMS-TRACE)
+                        :TYPE
+                        (COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "off")
+                                        (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "messages")
+                                        (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "verbose"))
+                        :READER INITIALIZE-PARAMS-TRACE)
                        (WORKSPACE-FOLDERS? :INITARG :WORKSPACE-FOLDERS :DOCUMENTATION "*
 * The workspace folders configured in the client when the server starts.
 * This property is only available if the client supports workspace folders.
@@ -1205,102 +1279,142 @@
 * configured.
 *
 * @since 3.6.0"
-                        :TYPE (COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-ARRAY WORKSPACE-FOLDER) NULL) :READER INITIALIZE-PARAMS-WORKSPACE-FOLDERS)))
+                        :TYPE
+                        (COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-ARRAY WORKSPACE-FOLDER)
+                                        COMMON-LISP:NULL)
+                        :READER INITIALIZE-PARAMS-WORKSPACE-FOLDERS)))
 
 (COMMON-LISP:DEFCLASS TEXT-DOCUMENT-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
-                      ((SYNCHRONIZATION? :INITARG :SYNCHRONIZATION :DOCUMENTATION "" :TYPE TEXT-DOCUMENT-SYNC-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-SYNCHRONIZATION)
+                      ((SYNCHRONIZATION? :INITARG :SYNCHRONIZATION :DOCUMENTATION "" :TYPE
+                        TEXT-DOCUMENT-SYNC-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-SYNCHRONIZATION)
                        (COMPLETION? :INITARG :COMPLETION :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/completion` request."
-                        :TYPE COMPLETION-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-COMPLETION)
+                        :TYPE COMPLETION-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-COMPLETION)
                        (HOVER? :INITARG :HOVER :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/hover` request."
-                        :TYPE HOVER-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-HOVER)
+                        :TYPE HOVER-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-HOVER)
                        (SIGNATURE-HELP? :INITARG :SIGNATURE-HELP :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/signatureHelp` request."
-                        :TYPE SIGNATURE-HELP-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-SIGNATURE-HELP)
+                        :TYPE SIGNATURE-HELP-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-SIGNATURE-HELP)
                        (DECLARATION? :INITARG :DECLARATION :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/declaration` request.
 *
 * @since 3.14.0"
-                        :TYPE DECLARATION-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-DECLARATION)
+                        :TYPE DECLARATION-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-DECLARATION)
                        (DEFINITION? :INITARG :DEFINITION :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/definition` request."
-                        :TYPE DEFINITION-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-DEFINITION)
+                        :TYPE DEFINITION-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-DEFINITION)
                        (TYPE-DEFINITION? :INITARG :TYPE-DEFINITION :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/typeDefinition` request.
 *
 * @since 3.6.0"
-                        :TYPE TYPE-DEFINITION-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-TYPE-DEFINITION)
+                        :TYPE TYPE-DEFINITION-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-TYPE-DEFINITION)
                        (IMPLEMENTATION? :INITARG :IMPLEMENTATION :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/implementation` request.
 *
 * @since 3.6.0"
-                        :TYPE IMPLEMENTATION-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-IMPLEMENTATION)
+                        :TYPE IMPLEMENTATION-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-IMPLEMENTATION)
                        (REFERENCES? :INITARG :REFERENCES :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/references` request."
-                        :TYPE REFERENCE-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-REFERENCES)
+                        :TYPE REFERENCE-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-REFERENCES)
                        (DOCUMENT-HIGHLIGHT? :INITARG :DOCUMENT-HIGHLIGHT :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/documentHighlight` request."
-                        :TYPE DOCUMENT-HIGHLIGHT-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-DOCUMENT-HIGHLIGHT)
+                        :TYPE DOCUMENT-HIGHLIGHT-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-DOCUMENT-HIGHLIGHT)
                        (DOCUMENT-SYMBOL? :INITARG :DOCUMENT-SYMBOL :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/documentSymbol` request."
-                        :TYPE DOCUMENT-SYMBOL-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-DOCUMENT-SYMBOL)
+                        :TYPE DOCUMENT-SYMBOL-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-DOCUMENT-SYMBOL)
                        (CODE-ACTION? :INITARG :CODE-ACTION :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/codeAction` request."
-                        :TYPE CODE-ACTION-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-CODE-ACTION)
+                        :TYPE CODE-ACTION-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-CODE-ACTION)
                        (CODE-LENS? :INITARG :CODE-LENS :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/codeLens` request."
-                        :TYPE CODE-LENS-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-CODE-LENS)
+                        :TYPE CODE-LENS-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-CODE-LENS)
                        (DOCUMENT-LINK? :INITARG :DOCUMENT-LINK :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/documentLink` request."
-                        :TYPE DOCUMENT-LINK-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-DOCUMENT-LINK)
+                        :TYPE DOCUMENT-LINK-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-DOCUMENT-LINK)
                        (COLOR-PROVIDER? :INITARG :COLOR-PROVIDER :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/documentColor` and the
 * `textDocument/colorPresentation` request.
 *
 * @since 3.6.0"
-                        :TYPE DOCUMENT-COLOR-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-COLOR-PROVIDER)
+                        :TYPE DOCUMENT-COLOR-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-COLOR-PROVIDER)
                        (FORMATTING? :INITARG :FORMATTING :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/formatting` request."
-                        :TYPE DOCUMENT-FORMATTING-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-FORMATTING)
+                        :TYPE DOCUMENT-FORMATTING-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-FORMATTING)
                        (RANGE-FORMATTING? :INITARG :RANGE-FORMATTING :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/rangeFormatting` request."
-                        :TYPE DOCUMENT-RANGE-FORMATTING-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-RANGE-FORMATTING)
+                        :TYPE DOCUMENT-RANGE-FORMATTING-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-RANGE-FORMATTING)
                        (ON-TYPE-FORMATTING? :INITARG :ON-TYPE-FORMATTING :DOCUMENTATION "* request.
 * Capabilities specific to the `textDocument/onTypeFormatting` request."
-                        :TYPE DOCUMENT-ON-TYPE-FORMATTING-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-ON-TYPE-FORMATTING)
+                        :TYPE DOCUMENT-ON-TYPE-FORMATTING-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-ON-TYPE-FORMATTING)
                        (RENAME? :INITARG :RENAME :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/rename` request."
-                        :TYPE RENAME-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-RENAME)
+                        :TYPE RENAME-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-RENAME)
                        (PUBLISH-DIAGNOSTICS? :INITARG :PUBLISH-DIAGNOSTICS :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/publishDiagnostics` notification."
-                        :TYPE PUBLISH-DIAGNOSTICS-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-PUBLISH-DIAGNOSTICS)
+                        :TYPE PUBLISH-DIAGNOSTICS-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-PUBLISH-DIAGNOSTICS)
                        (FOLDING-RANGE? :INITARG :FOLDING-RANGE :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/foldingRange` request.
 *
 * @since 3.10.0"
-                        :TYPE FOLDING-RANGE-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-FOLDING-RANGE)
+                        :TYPE FOLDING-RANGE-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-FOLDING-RANGE)
                        (SELECTION-RANGE? :INITARG :SELECTION-RANGE :DOCUMENTATION "*
 * Capabilities specific to the `textDocument/selectionRange` request.
 *
 * @since 3.15.0"
-                        :TYPE SELECTION-RANGE-CLIENT-CAPABILITIES :READER TEXT-DOCUMENT-CLIENT-CAPABILITIES-SELECTION-RANGE)))
+                        :TYPE SELECTION-RANGE-CLIENT-CAPABILITIES :READER
+                        TEXT-DOCUMENT-CLIENT-CAPABILITIES-SELECTION-RANGE)))
 
 (COMMON-LISP:DEFCLASS CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((WORKSPACE? :INITARG :WORKSPACE :DOCUMENTATION "*
 * Workspace specific client capabilities."
                         :TYPE
-                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("applyEdit" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T) ("workspaceEdit" :TYPE WORKSPACE-EDIT-CLIENT-CAPABILITIES :OPTIONAL-P COMMON-LISP:T)
-                         ("didChangeConfiguration" :TYPE DID-CHANGE-CONFIGURATION-CLIENT-CAPABILITIES :OPTIONAL-P COMMON-LISP:T) ("didChangeWatchedFiles" :TYPE DID-CHANGE-WATCHED-FILES-CLIENT-CAPABILITIES :OPTIONAL-P COMMON-LISP:T)
-                         ("symbol" :TYPE WORKSPACE-SYMBOL-CLIENT-CAPABILITIES :OPTIONAL-P COMMON-LISP:T) ("executeCommand" :TYPE EXECUTE-COMMAND-CLIENT-CAPABILITIES :OPTIONAL-P COMMON-LISP:T)
-                         ("workspaceFolders" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T) ("configuration" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T))
+                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                         ("applyEdit" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
+                         ("workspaceEdit" :TYPE WORKSPACE-EDIT-CLIENT-CAPABILITIES :OPTIONAL-P
+                          COMMON-LISP:T)
+                         ("didChangeConfiguration" :TYPE
+                          DID-CHANGE-CONFIGURATION-CLIENT-CAPABILITIES :OPTIONAL-P COMMON-LISP:T)
+                         ("didChangeWatchedFiles" :TYPE DID-CHANGE-WATCHED-FILES-CLIENT-CAPABILITIES
+                          :OPTIONAL-P COMMON-LISP:T)
+                         ("symbol" :TYPE WORKSPACE-SYMBOL-CLIENT-CAPABILITIES :OPTIONAL-P
+                          COMMON-LISP:T)
+                         ("executeCommand" :TYPE EXECUTE-COMMAND-CLIENT-CAPABILITIES :OPTIONAL-P
+                          COMMON-LISP:T)
+                         ("workspaceFolders" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
+                         ("configuration" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T))
                         :READER CLIENT-CAPABILITIES-WORKSPACE)
                        (TEXT-DOCUMENT? :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * Text document specific client capabilities."
-                        :TYPE TEXT-DOCUMENT-CLIENT-CAPABILITIES :READER CLIENT-CAPABILITIES-TEXT-DOCUMENT)
+                        :TYPE TEXT-DOCUMENT-CLIENT-CAPABILITIES :READER
+                        CLIENT-CAPABILITIES-TEXT-DOCUMENT)
                        (WINDOW? :INITARG :WINDOW :DOCUMENTATION "*
 * Window specific client capabilities."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("workDoneProgress" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)) :READER CLIENT-CAPABILITIES-WINDOW)
+                        :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                         ("workDoneProgress" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T))
+                        :READER CLIENT-CAPABILITIES-WINDOW)
                        (EXPERIMENTAL? :INITARG :EXPERIMENTAL :DOCUMENTATION "*
 * Experimental client capabilities."
                         :TYPE COMMON-LISP:T :READER CLIENT-CAPABILITIES-EXPERIMENTAL)))
@@ -1313,9 +1427,15 @@
 * Information about the server.
 *
 * @since 3.15.0"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("name" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL) ("version" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:T)) :READER INITIALIZE-RESULT-SERVER-INFO)))
+                        :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                         ("name" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL)
+                         ("version" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:T))
+                        :READER INITIALIZE-RESULT-SERVER-INFO)))
 
-(COMMON-LISP:PROGN (COMMON-LISP:DEFTYPE INITIALIZE-ERROR () COMMON-LISP:T) (COMMON-LISP:DEFPARAMETER INITIALIZE-ERROR.UNKNOWN-PROTOCOL-VERSION 1))
+(COMMON-LISP:PROGN
+ (COMMON-LISP:DEFTYPE INITIALIZE-ERROR () COMMON-LISP:T)
+ (COMMON-LISP:DEFPARAMETER INITIALIZE-ERROR.UNKNOWN-PROTOCOL-VERSION 1))
 
 (COMMON-LISP:DEFCLASS INITIALIZE-ERROR (LEM-LSP-UTILS/JSON:OBJECT)
                       ((RETRY :INITARG :RETRY :DOCUMENTATION "*
@@ -1329,92 +1449,138 @@
                       ((TEXT-DOCUMENT-SYNC? :INITARG :TEXT-DOCUMENT-SYNC :DOCUMENTATION "*
 * Defines how text documents are synced. Is either a detailed structure defining each notification or
 * for backwards compatibility the TextDocumentSyncKind number. If omitted it defaults to `TextDocumentSyncKind.None`."
-                        :TYPE (COMMON-LISP:OR TEXT-DOCUMENT-SYNC-OPTIONS COMMON-LISP:NUMBER) :READER SERVER-CAPABILITIES-TEXT-DOCUMENT-SYNC)
+                        :TYPE (COMMON-LISP:OR TEXT-DOCUMENT-SYNC-OPTIONS COMMON-LISP:NUMBER) :READER
+                        SERVER-CAPABILITIES-TEXT-DOCUMENT-SYNC)
                        (COMPLETION-PROVIDER? :INITARG :COMPLETION-PROVIDER :DOCUMENTATION "*
 * The server provides completion support."
                         :TYPE COMPLETION-OPTIONS :READER SERVER-CAPABILITIES-COMPLETION-PROVIDER)
                        (HOVER-PROVIDER? :INITARG :HOVER-PROVIDER :DOCUMENTATION "*
 * The server provides hover support."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN HOVER-OPTIONS) :READER SERVER-CAPABILITIES-HOVER-PROVIDER)
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN HOVER-OPTIONS) :READER
+                        SERVER-CAPABILITIES-HOVER-PROVIDER)
                        (SIGNATURE-HELP-PROVIDER? :INITARG :SIGNATURE-HELP-PROVIDER :DOCUMENTATION "*
 * The server provides signature help support."
-                        :TYPE SIGNATURE-HELP-OPTIONS :READER SERVER-CAPABILITIES-SIGNATURE-HELP-PROVIDER)
+                        :TYPE SIGNATURE-HELP-OPTIONS :READER
+                        SERVER-CAPABILITIES-SIGNATURE-HELP-PROVIDER)
                        (DECLARATION-PROVIDER? :INITARG :DECLARATION-PROVIDER :DOCUMENTATION "*
 * The server provides go to declaration support.
 *
 * @since 3.14.0"
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN DECLARATION-OPTIONS DECLARATION-REGISTRATION-OPTIONS) :READER SERVER-CAPABILITIES-DECLARATION-PROVIDER)
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:BOOLEAN DECLARATION-OPTIONS
+                                        DECLARATION-REGISTRATION-OPTIONS)
+                        :READER SERVER-CAPABILITIES-DECLARATION-PROVIDER)
                        (DEFINITION-PROVIDER? :INITARG :DEFINITION-PROVIDER :DOCUMENTATION "*
 * The server provides goto definition support."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN DEFINITION-OPTIONS) :READER SERVER-CAPABILITIES-DEFINITION-PROVIDER)
-                       (TYPE-DEFINITION-PROVIDER? :INITARG :TYPE-DEFINITION-PROVIDER :DOCUMENTATION "*
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN DEFINITION-OPTIONS) :READER
+                        SERVER-CAPABILITIES-DEFINITION-PROVIDER)
+                       (TYPE-DEFINITION-PROVIDER? :INITARG :TYPE-DEFINITION-PROVIDER :DOCUMENTATION
+                        "*
 * The server provides goto type definition support.
 *
 * @since 3.6.0"
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN TYPE-DEFINITION-OPTIONS TYPE-DEFINITION-REGISTRATION-OPTIONS) :READER SERVER-CAPABILITIES-TYPE-DEFINITION-PROVIDER)
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:BOOLEAN TYPE-DEFINITION-OPTIONS
+                                        TYPE-DEFINITION-REGISTRATION-OPTIONS)
+                        :READER SERVER-CAPABILITIES-TYPE-DEFINITION-PROVIDER)
                        (IMPLEMENTATION-PROVIDER? :INITARG :IMPLEMENTATION-PROVIDER :DOCUMENTATION "*
 * The server provides goto implementation support.
 *
 * @since 3.6.0"
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN IMPLEMENTATION-OPTIONS IMPLEMENTATION-REGISTRATION-OPTIONS) :READER SERVER-CAPABILITIES-IMPLEMENTATION-PROVIDER)
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:BOOLEAN IMPLEMENTATION-OPTIONS
+                                        IMPLEMENTATION-REGISTRATION-OPTIONS)
+                        :READER SERVER-CAPABILITIES-IMPLEMENTATION-PROVIDER)
                        (REFERENCES-PROVIDER? :INITARG :REFERENCES-PROVIDER :DOCUMENTATION "*
 * The server provides find references support."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN REFERENCE-OPTIONS) :READER SERVER-CAPABILITIES-REFERENCES-PROVIDER)
-                       (DOCUMENT-HIGHLIGHT-PROVIDER? :INITARG :DOCUMENT-HIGHLIGHT-PROVIDER :DOCUMENTATION "*
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN REFERENCE-OPTIONS) :READER
+                        SERVER-CAPABILITIES-REFERENCES-PROVIDER)
+                       (DOCUMENT-HIGHLIGHT-PROVIDER? :INITARG :DOCUMENT-HIGHLIGHT-PROVIDER
+                        :DOCUMENTATION "*
 * The server provides document highlight support."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN DOCUMENT-HIGHLIGHT-OPTIONS) :READER SERVER-CAPABILITIES-DOCUMENT-HIGHLIGHT-PROVIDER)
-                       (DOCUMENT-SYMBOL-PROVIDER? :INITARG :DOCUMENT-SYMBOL-PROVIDER :DOCUMENTATION "*
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN DOCUMENT-HIGHLIGHT-OPTIONS)
+                        :READER SERVER-CAPABILITIES-DOCUMENT-HIGHLIGHT-PROVIDER)
+                       (DOCUMENT-SYMBOL-PROVIDER? :INITARG :DOCUMENT-SYMBOL-PROVIDER :DOCUMENTATION
+                        "*
 * The server provides document symbol support."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN DOCUMENT-SYMBOL-OPTIONS) :READER SERVER-CAPABILITIES-DOCUMENT-SYMBOL-PROVIDER)
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN DOCUMENT-SYMBOL-OPTIONS) :READER
+                        SERVER-CAPABILITIES-DOCUMENT-SYMBOL-PROVIDER)
                        (CODE-ACTION-PROVIDER? :INITARG :CODE-ACTION-PROVIDER :DOCUMENTATION "*
 * The server provides code actions. The `CodeActionOptions` return type is only
 * valid if the client signals code action literal support via the property
 * `textDocument.codeAction.codeActionLiteralSupport`."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN CODE-ACTION-OPTIONS) :READER SERVER-CAPABILITIES-CODE-ACTION-PROVIDER)
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN CODE-ACTION-OPTIONS) :READER
+                        SERVER-CAPABILITIES-CODE-ACTION-PROVIDER)
                        (CODE-LENS-PROVIDER? :INITARG :CODE-LENS-PROVIDER :DOCUMENTATION "*
 * The server provides code lens."
                         :TYPE CODE-LENS-OPTIONS :READER SERVER-CAPABILITIES-CODE-LENS-PROVIDER)
                        (DOCUMENT-LINK-PROVIDER? :INITARG :DOCUMENT-LINK-PROVIDER :DOCUMENTATION "*
 * The server provides document link support."
-                        :TYPE DOCUMENT-LINK-OPTIONS :READER SERVER-CAPABILITIES-DOCUMENT-LINK-PROVIDER)
+                        :TYPE DOCUMENT-LINK-OPTIONS :READER
+                        SERVER-CAPABILITIES-DOCUMENT-LINK-PROVIDER)
                        (COLOR-PROVIDER? :INITARG :COLOR-PROVIDER :DOCUMENTATION "*
 * The server provides color provider support.
 *
 * @since 3.6.0"
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN DOCUMENT-COLOR-OPTIONS DOCUMENT-COLOR-REGISTRATION-OPTIONS) :READER SERVER-CAPABILITIES-COLOR-PROVIDER)
-                       (DOCUMENT-FORMATTING-PROVIDER? :INITARG :DOCUMENT-FORMATTING-PROVIDER :DOCUMENTATION "*
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:BOOLEAN DOCUMENT-COLOR-OPTIONS
+                                        DOCUMENT-COLOR-REGISTRATION-OPTIONS)
+                        :READER SERVER-CAPABILITIES-COLOR-PROVIDER)
+                       (DOCUMENT-FORMATTING-PROVIDER? :INITARG :DOCUMENT-FORMATTING-PROVIDER
+                        :DOCUMENTATION "*
 * The server provides document formatting."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN DOCUMENT-FORMATTING-OPTIONS) :READER SERVER-CAPABILITIES-DOCUMENT-FORMATTING-PROVIDER)
-                       (DOCUMENT-RANGE-FORMATTING-PROVIDER? :INITARG :DOCUMENT-RANGE-FORMATTING-PROVIDER :DOCUMENTATION "*
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN DOCUMENT-FORMATTING-OPTIONS)
+                        :READER SERVER-CAPABILITIES-DOCUMENT-FORMATTING-PROVIDER)
+                       (DOCUMENT-RANGE-FORMATTING-PROVIDER? :INITARG
+                        :DOCUMENT-RANGE-FORMATTING-PROVIDER :DOCUMENTATION "*
 * The server provides document range formatting."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN DOCUMENT-RANGE-FORMATTING-OPTIONS) :READER SERVER-CAPABILITIES-DOCUMENT-RANGE-FORMATTING-PROVIDER)
-                       (DOCUMENT-ON-TYPE-FORMATTING-PROVIDER? :INITARG :DOCUMENT-ON-TYPE-FORMATTING-PROVIDER :DOCUMENTATION "*
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN DOCUMENT-RANGE-FORMATTING-OPTIONS)
+                        :READER SERVER-CAPABILITIES-DOCUMENT-RANGE-FORMATTING-PROVIDER)
+                       (DOCUMENT-ON-TYPE-FORMATTING-PROVIDER? :INITARG
+                        :DOCUMENT-ON-TYPE-FORMATTING-PROVIDER :DOCUMENTATION "*
 * The server provides document formatting on typing."
-                        :TYPE DOCUMENT-ON-TYPE-FORMATTING-OPTIONS :READER SERVER-CAPABILITIES-DOCUMENT-ON-TYPE-FORMATTING-PROVIDER)
+                        :TYPE DOCUMENT-ON-TYPE-FORMATTING-OPTIONS :READER
+                        SERVER-CAPABILITIES-DOCUMENT-ON-TYPE-FORMATTING-PROVIDER)
                        (RENAME-PROVIDER? :INITARG :RENAME-PROVIDER :DOCUMENTATION "*
 * The server provides rename support. RenameOptions may only be
 * specified if the client states that it supports
 * `prepareSupport` in its initial `initialize` request."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN RENAME-OPTIONS) :READER SERVER-CAPABILITIES-RENAME-PROVIDER)
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN RENAME-OPTIONS) :READER
+                        SERVER-CAPABILITIES-RENAME-PROVIDER)
                        (FOLDING-RANGE-PROVIDER? :INITARG :FOLDING-RANGE-PROVIDER :DOCUMENTATION "*
 * The server provides folding provider support.
 *
 * @since 3.10.0"
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN FOLDING-RANGE-OPTIONS FOLDING-RANGE-REGISTRATION-OPTIONS) :READER SERVER-CAPABILITIES-FOLDING-RANGE-PROVIDER)
-                       (EXECUTE-COMMAND-PROVIDER? :INITARG :EXECUTE-COMMAND-PROVIDER :DOCUMENTATION "*
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:BOOLEAN FOLDING-RANGE-OPTIONS
+                                        FOLDING-RANGE-REGISTRATION-OPTIONS)
+                        :READER SERVER-CAPABILITIES-FOLDING-RANGE-PROVIDER)
+                       (EXECUTE-COMMAND-PROVIDER? :INITARG :EXECUTE-COMMAND-PROVIDER :DOCUMENTATION
+                        "*
 * The server provides execute command support."
-                        :TYPE EXECUTE-COMMAND-OPTIONS :READER SERVER-CAPABILITIES-EXECUTE-COMMAND-PROVIDER)
-                       (SELECTION-RANGE-PROVIDER? :INITARG :SELECTION-RANGE-PROVIDER :DOCUMENTATION "*
+                        :TYPE EXECUTE-COMMAND-OPTIONS :READER
+                        SERVER-CAPABILITIES-EXECUTE-COMMAND-PROVIDER)
+                       (SELECTION-RANGE-PROVIDER? :INITARG :SELECTION-RANGE-PROVIDER :DOCUMENTATION
+                        "*
 * The server provides selection range support.
 *
 * @since 3.15.0"
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN SELECTION-RANGE-OPTIONS SELECTION-RANGE-REGISTRATION-OPTIONS) :READER SERVER-CAPABILITIES-SELECTION-RANGE-PROVIDER)
-                       (WORKSPACE-SYMBOL-PROVIDER? :INITARG :WORKSPACE-SYMBOL-PROVIDER :DOCUMENTATION "*
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:BOOLEAN SELECTION-RANGE-OPTIONS
+                                        SELECTION-RANGE-REGISTRATION-OPTIONS)
+                        :READER SERVER-CAPABILITIES-SELECTION-RANGE-PROVIDER)
+                       (WORKSPACE-SYMBOL-PROVIDER? :INITARG :WORKSPACE-SYMBOL-PROVIDER
+                        :DOCUMENTATION "*
 * The server provides workspace symbol support."
-                        :TYPE COMMON-LISP:BOOLEAN :READER SERVER-CAPABILITIES-WORKSPACE-SYMBOL-PROVIDER)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        SERVER-CAPABILITIES-WORKSPACE-SYMBOL-PROVIDER)
                        (WORKSPACE? :INITARG :WORKSPACE :DOCUMENTATION "*
 * Workspace specific server capabilities"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("workspaceFolders" :TYPE WORKSPACE-FOLDERS-SERVER-CAPABILITIES :OPTIONAL-P COMMON-LISP:T)) :READER SERVER-CAPABILITIES-WORKSPACE)
+                        :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                         ("workspaceFolders" :TYPE WORKSPACE-FOLDERS-SERVER-CAPABILITIES :OPTIONAL-P
+                          COMMON-LISP:T))
+                        :READER SERVER-CAPABILITIES-WORKSPACE)
                        (EXPERIMENTAL? :INITARG :EXPERIMENTAL :DOCUMENTATION "*
 * Experimental server capabilities."
                         :TYPE COMMON-LISP:T :READER SERVER-CAPABILITIES-EXPERIMENTAL)))
@@ -1445,7 +1611,8 @@
                         :TYPE COMMON-LISP:STRING :READER SHOW-MESSAGE-REQUEST-PARAMS-MESSAGE)
                        (ACTIONS? :INITARG :ACTIONS :DOCUMENTATION "*
 * The message action items to present."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY MESSAGE-ACTION-ITEM) :READER SHOW-MESSAGE-REQUEST-PARAMS-ACTIONS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY MESSAGE-ACTION-ITEM) :READER
+                        SHOW-MESSAGE-REQUEST-PARAMS-ACTIONS)))
 
 (COMMON-LISP:DEFCLASS MESSAGE-ACTION-ITEM (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TITLE :INITARG :TITLE :DOCUMENTATION "*
@@ -1482,7 +1649,10 @@
 * Options necessary for the registration."
                         :TYPE COMMON-LISP:T :READER REGISTRATION-REGISTER-OPTIONS)))
 
-(COMMON-LISP:DEFCLASS REGISTRATION-PARAMS (LEM-LSP-UTILS/JSON:OBJECT) ((REGISTRATIONS :INITARG :REGISTRATIONS :DOCUMENTATION "" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY REGISTRATION) :READER REGISTRATION-PARAMS-REGISTRATIONS)))
+(COMMON-LISP:DEFCLASS REGISTRATION-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
+                      ((REGISTRATIONS :INITARG :REGISTRATIONS :DOCUMENTATION "" :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-ARRAY REGISTRATION) :READER
+                        REGISTRATION-PARAMS-REGISTRATIONS)))
 
 (COMMON-LISP:DEFCLASS UNREGISTRATION (LEM-LSP-UTILS/JSON:OBJECT)
                       ((ID :INITARG :ID :DOCUMENTATION "*
@@ -1494,15 +1664,18 @@
                         :TYPE COMMON-LISP:STRING :READER UNREGISTRATION-METHOD)))
 
 (COMMON-LISP:DEFCLASS UNREGISTRATION-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
-                      ((UNREGISTERATIONS :INITARG :UNREGISTERATIONS :DOCUMENTATION "This should correctly be named `unregistrations`. However changing this
+                      ((UNREGISTERATIONS :INITARG :UNREGISTERATIONS :DOCUMENTATION
+                        "This should correctly be named `unregistrations`. However changing this
  is a breaking change and needs to wait until we deliver a 4.x version
  of the specification."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY UNREGISTRATION) :READER UNREGISTRATION-PARAMS-UNREGISTERATIONS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY UNREGISTRATION) :READER
+                        UNREGISTRATION-PARAMS-UNREGISTERATIONS)))
 
 (COMMON-LISP:DEFCLASS WORKSPACE-FOLDERS-SERVER-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((SUPPORTED? :INITARG :SUPPORTED :DOCUMENTATION "*
 * The server has support for workspace folders"
-                        :TYPE COMMON-LISP:BOOLEAN :READER WORKSPACE-FOLDERS-SERVER-CAPABILITIES-SUPPORTED)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        WORKSPACE-FOLDERS-SERVER-CAPABILITIES-SUPPORTED)
                        (CHANGE-NOTIFICATIONS? :INITARG :CHANGE-NOTIFICATIONS :DOCUMENTATION "*
 * Whether the server wants to receive workspace folder
 * change notifications.
@@ -1511,7 +1684,8 @@
 * under which the notification is registered on the client
 * side. The ID can be used to unregister for these events
 * using the `client/unregisterCapability` request."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING COMMON-LISP:BOOLEAN) :READER WORKSPACE-FOLDERS-SERVER-CAPABILITIES-CHANGE-NOTIFICATIONS)))
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING COMMON-LISP:BOOLEAN) :READER
+                        WORKSPACE-FOLDERS-SERVER-CAPABILITIES-CHANGE-NOTIFICATIONS)))
 
 (COMMON-LISP:DEFCLASS WORKSPACE-FOLDER (LEM-LSP-UTILS/JSON:OBJECT)
                       ((URI :INITARG :URI :DOCUMENTATION "*
@@ -1525,27 +1699,34 @@
 (COMMON-LISP:DEFCLASS DID-CHANGE-WORKSPACE-FOLDERS-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((EVENT :INITARG :EVENT :DOCUMENTATION "*
 * The actual workspace folder change event."
-                        :TYPE WORKSPACE-FOLDERS-CHANGE-EVENT :READER DID-CHANGE-WORKSPACE-FOLDERS-PARAMS-EVENT)))
+                        :TYPE WORKSPACE-FOLDERS-CHANGE-EVENT :READER
+                        DID-CHANGE-WORKSPACE-FOLDERS-PARAMS-EVENT)))
 
 (COMMON-LISP:DEFCLASS WORKSPACE-FOLDERS-CHANGE-EVENT (LEM-LSP-UTILS/JSON:OBJECT)
                       ((ADDED :INITARG :ADDED :DOCUMENTATION "*
 * The array of added workspace folders"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY WORKSPACE-FOLDER) :READER WORKSPACE-FOLDERS-CHANGE-EVENT-ADDED)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY WORKSPACE-FOLDER) :READER
+                        WORKSPACE-FOLDERS-CHANGE-EVENT-ADDED)
                        (REMOVED :INITARG :REMOVED :DOCUMENTATION "*
 * The array of the removed workspace folders"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY WORKSPACE-FOLDER) :READER WORKSPACE-FOLDERS-CHANGE-EVENT-REMOVED)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY WORKSPACE-FOLDER) :READER
+                        WORKSPACE-FOLDERS-CHANGE-EVENT-REMOVED)))
 
 (COMMON-LISP:DEFCLASS DID-CHANGE-CONFIGURATION-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Did change configuration notification supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DID-CHANGE-CONFIGURATION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DID-CHANGE-CONFIGURATION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
 (COMMON-LISP:DEFCLASS DID-CHANGE-CONFIGURATION-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((SETTINGS :INITARG :SETTINGS :DOCUMENTATION "*
 * The actual changed settings"
                         :TYPE COMMON-LISP:T :READER DID-CHANGE-CONFIGURATION-PARAMS-SETTINGS)))
 
-(COMMON-LISP:DEFCLASS CONFIGURATION-PARAMS (LEM-LSP-UTILS/JSON:OBJECT) ((ITEMS :INITARG :ITEMS :DOCUMENTATION "" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY CONFIGURATION-ITEM) :READER CONFIGURATION-PARAMS-ITEMS)))
+(COMMON-LISP:DEFCLASS CONFIGURATION-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
+                      ((ITEMS :INITARG :ITEMS :DOCUMENTATION "" :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-ARRAY CONFIGURATION-ITEM) :READER
+                        CONFIGURATION-PARAMS-ITEMS)))
 
 (COMMON-LISP:DEFCLASS CONFIGURATION-ITEM (LEM-LSP-UTILS/JSON:OBJECT)
                       ((SCOPE-URI? :INITARG :SCOPE-URI :DOCUMENTATION "*
@@ -1560,12 +1741,14 @@
 * Did change watched files notification supports dynamic registration. Please note
 * that the current protocol doesn't support static configuration for file changes
 * from the server side."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DID-CHANGE-WATCHED-FILES-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DID-CHANGE-WATCHED-FILES-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
 (COMMON-LISP:DEFCLASS DID-CHANGE-WATCHED-FILES-REGISTRATION-OPTIONS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((WATCHERS :INITARG :WATCHERS :DOCUMENTATION "*
 * The watchers to register."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY FILE-SYSTEM-WATCHER) :READER DID-CHANGE-WATCHED-FILES-REGISTRATION-OPTIONS-WATCHERS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY FILE-SYSTEM-WATCHER) :READER
+                        DID-CHANGE-WATCHED-FILES-REGISTRATION-OPTIONS-WATCHERS)))
 
 (COMMON-LISP:DEFCLASS FILE-SYSTEM-WATCHER (LEM-LSP-UTILS/JSON:OBJECT)
                       ((GLOB-PATTERN :INITARG :GLOB-PATTERN :DOCUMENTATION "*
@@ -1585,12 +1768,17 @@
 * which is 7."
                         :TYPE COMMON-LISP:NUMBER :READER FILE-SYSTEM-WATCHER-KIND)))
 
-(COMMON-LISP:PROGN (COMMON-LISP:DEFTYPE WATCH-KIND () COMMON-LISP:T) (COMMON-LISP:DEFPARAMETER WATCH-KIND.CREATE 1) (COMMON-LISP:DEFPARAMETER WATCH-KIND.CHANGE 2) (COMMON-LISP:DEFPARAMETER WATCH-KIND.DELETE 4))
+(COMMON-LISP:PROGN
+ (COMMON-LISP:DEFTYPE WATCH-KIND () COMMON-LISP:T)
+ (COMMON-LISP:DEFPARAMETER WATCH-KIND.CREATE 1)
+ (COMMON-LISP:DEFPARAMETER WATCH-KIND.CHANGE 2)
+ (COMMON-LISP:DEFPARAMETER WATCH-KIND.DELETE 4))
 
 (COMMON-LISP:DEFCLASS DID-CHANGE-WATCHED-FILES-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((CHANGES :INITARG :CHANGES :DOCUMENTATION "*
 * The actual file events."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY FILE-EVENT) :READER DID-CHANGE-WATCHED-FILES-PARAMS-CHANGES)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY FILE-EVENT) :READER
+                        DID-CHANGE-WATCHED-FILES-PARAMS-CHANGES)))
 
 (COMMON-LISP:DEFCLASS FILE-EVENT (LEM-LSP-UTILS/JSON:OBJECT)
                       ((URI :INITARG :URI :DOCUMENTATION "*
@@ -1609,14 +1797,20 @@
 (COMMON-LISP:DEFCLASS WORKSPACE-SYMBOL-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Symbol request supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER WORKSPACE-SYMBOL-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        WORKSPACE-SYMBOL-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (SYMBOL-KIND? :INITARG :SYMBOL-KIND :DOCUMENTATION "*
 * Specific capabilities for the `SymbolKind` in the `workspace/symbol` request."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY SYMBOL-KIND) :OPTIONAL-P COMMON-LISP:T)) :READER WORKSPACE-SYMBOL-CLIENT-CAPABILITIES-SYMBOL-KIND)))
+                        :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                         ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY SYMBOL-KIND) :OPTIONAL-P
+                          COMMON-LISP:T))
+                        :READER WORKSPACE-SYMBOL-CLIENT-CAPABILITIES-SYMBOL-KIND)))
 
 (COMMON-LISP:DEFCLASS WORKSPACE-SYMBOL-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS WORKSPACE-SYMBOL-REGISTRATION-OPTIONS (WORKSPACE-SYMBOL-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS WORKSPACE-SYMBOL-REGISTRATION-OPTIONS (WORKSPACE-SYMBOL-OPTIONS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS WORKSPACE-SYMBOL-PARAMS (WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS)
                       ((QUERY :INITARG :QUERY :DOCUMENTATION "*
@@ -1627,12 +1821,14 @@
 (COMMON-LISP:DEFCLASS EXECUTE-COMMAND-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Execute command supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER EXECUTE-COMMAND-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        EXECUTE-COMMAND-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
 (COMMON-LISP:DEFCLASS EXECUTE-COMMAND-OPTIONS (WORK-DONE-PROGRESS-OPTIONS)
                       ((COMMANDS :INITARG :COMMANDS :DOCUMENTATION "*
 * The commands to be executed on the server"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER EXECUTE-COMMAND-OPTIONS-COMMANDS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER
+                        EXECUTE-COMMAND-OPTIONS-COMMANDS)))
 
 (COMMON-LISP:DEFCLASS EXECUTE-COMMAND-REGISTRATION-OPTIONS (EXECUTE-COMMAND-OPTIONS) COMMON-LISP:NIL)
 
@@ -1642,7 +1838,8 @@
                         :TYPE COMMON-LISP:STRING :READER EXECUTE-COMMAND-PARAMS-COMMAND)
                        (ARGUMENTS? :INITARG :ARGUMENTS :DOCUMENTATION "*
 * Arguments that the command should be invoked with."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:T) :READER EXECUTE-COMMAND-PARAMS-ARGUMENTS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:T) :READER
+                        EXECUTE-COMMAND-PARAMS-ARGUMENTS)))
 
 (COMMON-LISP:DEFCLASS APPLY-WORKSPACE-EDIT-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((LABEL? :INITARG :LABEL :DOCUMENTATION "*
@@ -1663,7 +1860,8 @@
 * This may be used may be used by the server for diagnostic
 * logging or to provide a suitable error for a request that
 * triggered the edit."
-                        :TYPE COMMON-LISP:STRING :READER APPLY-WORKSPACE-EDIT-RESPONSE-FAILURE-REASON)))
+                        :TYPE COMMON-LISP:STRING :READER
+                        APPLY-WORKSPACE-EDIT-RESPONSE-FAILURE-REASON)))
 
 (COMMON-LISP:PROGN
  (COMMON-LISP:DEFTYPE TEXT-DOCUMENT-SYNC-KIND () COMMON-LISP:T)
@@ -1684,20 +1882,23 @@
 (COMMON-LISP:DEFCLASS DID-OPEN-TEXT-DOCUMENT-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * The document that was opened."
-                        :TYPE TEXT-DOCUMENT-ITEM :READER DID-OPEN-TEXT-DOCUMENT-PARAMS-TEXT-DOCUMENT)))
+                        :TYPE TEXT-DOCUMENT-ITEM :READER
+                        DID-OPEN-TEXT-DOCUMENT-PARAMS-TEXT-DOCUMENT)))
 
 (COMMON-LISP:DEFCLASS TEXT-DOCUMENT-CHANGE-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS)
                       ((SYNC-KIND :INITARG :SYNC-KIND :DOCUMENTATION "*
 * How documents are synced to the server. See TextDocumentSyncKind.Full
 * and TextDocumentSyncKind.Incremental."
-                        :TYPE TEXT-DOCUMENT-SYNC-KIND :READER TEXT-DOCUMENT-CHANGE-REGISTRATION-OPTIONS-SYNC-KIND)))
+                        :TYPE TEXT-DOCUMENT-SYNC-KIND :READER
+                        TEXT-DOCUMENT-CHANGE-REGISTRATION-OPTIONS-SYNC-KIND)))
 
 (COMMON-LISP:DEFCLASS DID-CHANGE-TEXT-DOCUMENT-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * The document that did change. The version number points
 * to the version after all provided content changes have
 * been applied."
-                        :TYPE VERSIONED-TEXT-DOCUMENT-IDENTIFIER :READER DID-CHANGE-TEXT-DOCUMENT-PARAMS-TEXT-DOCUMENT)
+                        :TYPE VERSIONED-TEXT-DOCUMENT-IDENTIFIER :READER
+                        DID-CHANGE-TEXT-DOCUMENT-PARAMS-TEXT-DOCUMENT)
                        (CONTENT-CHANGES :INITARG :CONTENT-CHANGES :DOCUMENTATION "*
 * The actual content changes. The content changes describe single state changes
 * to the document. So if there are two content changes c1 (at array index 0) and
@@ -1710,16 +1911,21 @@
 * - apply the 'textDocument/didChange' notifications in the order you recevie them.
 * - apply the `TextDocumentContentChangeEvent`s in a single notification in the order
 *   you receive them."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-DOCUMENT-CONTENT-CHANGE-EVENT) :READER DID-CHANGE-TEXT-DOCUMENT-PARAMS-CONTENT-CHANGES)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-DOCUMENT-CONTENT-CHANGE-EVENT)
+                        :READER DID-CHANGE-TEXT-DOCUMENT-PARAMS-CONTENT-CHANGES)))
 
 (COMMON-LISP:DEFTYPE TEXT-DOCUMENT-CONTENT-CHANGE-EVENT ()
-  '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("range" :TYPE RANGE :OPTIONAL-P COMMON-LISP:NIL) ("rangeLength" :TYPE COMMON-LISP:NUMBER :OPTIONAL-P COMMON-LISP:T) ("text" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL))
-                   (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("text" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL))))
+  '(COMMON-LISP:OR
+    (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("range" :TYPE RANGE :OPTIONAL-P COMMON-LISP:NIL)
+     ("rangeLength" :TYPE COMMON-LISP:NUMBER :OPTIONAL-P COMMON-LISP:T)
+     ("text" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL))
+    (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("text" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL))))
 
 (COMMON-LISP:DEFCLASS WILL-SAVE-TEXT-DOCUMENT-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * The document that will be saved."
-                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER WILL-SAVE-TEXT-DOCUMENT-PARAMS-TEXT-DOCUMENT)
+                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER
+                        WILL-SAVE-TEXT-DOCUMENT-PARAMS-TEXT-DOCUMENT)
                        (REASON :INITARG :REASON :DOCUMENTATION "*
 * The 'TextDocumentSaveReason'."
                         :TYPE COMMON-LISP:NUMBER :READER WILL-SAVE-TEXT-DOCUMENT-PARAMS-REASON)))
@@ -1738,12 +1944,14 @@
 (COMMON-LISP:DEFCLASS TEXT-DOCUMENT-SAVE-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS)
                       ((INCLUDE-TEXT? :INITARG :INCLUDE-TEXT :DOCUMENTATION "*
 * The client is supposed to include the content on save."
-                        :TYPE COMMON-LISP:BOOLEAN :READER TEXT-DOCUMENT-SAVE-REGISTRATION-OPTIONS-INCLUDE-TEXT)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        TEXT-DOCUMENT-SAVE-REGISTRATION-OPTIONS-INCLUDE-TEXT)))
 
 (COMMON-LISP:DEFCLASS DID-SAVE-TEXT-DOCUMENT-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * The document that was saved."
-                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER DID-SAVE-TEXT-DOCUMENT-PARAMS-TEXT-DOCUMENT)
+                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER
+                        DID-SAVE-TEXT-DOCUMENT-PARAMS-TEXT-DOCUMENT)
                        (TEXT? :INITARG :TEXT :DOCUMENTATION "*
 * Optional the content when saved. Depends on the includeText value
 * when the save notification was requested."
@@ -1752,23 +1960,28 @@
 (COMMON-LISP:DEFCLASS DID-CLOSE-TEXT-DOCUMENT-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * The document that was closed."
-                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER DID-CLOSE-TEXT-DOCUMENT-PARAMS-TEXT-DOCUMENT)))
+                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER
+                        DID-CLOSE-TEXT-DOCUMENT-PARAMS-TEXT-DOCUMENT)))
 
 (COMMON-LISP:DEFCLASS TEXT-DOCUMENT-SYNC-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether text document synchronization supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER TEXT-DOCUMENT-SYNC-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        TEXT-DOCUMENT-SYNC-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (WILL-SAVE? :INITARG :WILL-SAVE :DOCUMENTATION "*
 * The client supports sending will save notifications."
-                        :TYPE COMMON-LISP:BOOLEAN :READER TEXT-DOCUMENT-SYNC-CLIENT-CAPABILITIES-WILL-SAVE)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        TEXT-DOCUMENT-SYNC-CLIENT-CAPABILITIES-WILL-SAVE)
                        (WILL-SAVE-WAIT-UNTIL? :INITARG :WILL-SAVE-WAIT-UNTIL :DOCUMENTATION "*
 * The client supports sending a will save request and
 * waits for a response providing text edits which will
 * be applied to the document before it is saved."
-                        :TYPE COMMON-LISP:BOOLEAN :READER TEXT-DOCUMENT-SYNC-CLIENT-CAPABILITIES-WILL-SAVE-WAIT-UNTIL)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        TEXT-DOCUMENT-SYNC-CLIENT-CAPABILITIES-WILL-SAVE-WAIT-UNTIL)
                        (DID-SAVE? :INITARG :DID-SAVE :DOCUMENTATION "*
 * The client supports did save notifications."
-                        :TYPE COMMON-LISP:BOOLEAN :READER TEXT-DOCUMENT-SYNC-CLIENT-CAPABILITIES-DID-SAVE)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        TEXT-DOCUMENT-SYNC-CLIENT-CAPABILITIES-DID-SAVE)))
 
 (COMMON-LISP:PROGN
  (COMMON-LISP:DEFTYPE TEXT-DOCUMENT-SYNC-KIND () COMMON-LISP:T)
@@ -1792,28 +2005,36 @@
                        (WILL-SAVE-WAIT-UNTIL? :INITARG :WILL-SAVE-WAIT-UNTIL :DOCUMENTATION "*
 * If present will save wait until requests are sent to the server. If omitted the request should not be
 * sent."
-                        :TYPE COMMON-LISP:BOOLEAN :READER TEXT-DOCUMENT-SYNC-OPTIONS-WILL-SAVE-WAIT-UNTIL)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        TEXT-DOCUMENT-SYNC-OPTIONS-WILL-SAVE-WAIT-UNTIL)
                        (SAVE? :INITARG :SAVE :DOCUMENTATION "*
 * If present save notifications are sent to the server. If omitted the notification should not be
 * sent."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN SAVE-OPTIONS) :READER TEXT-DOCUMENT-SYNC-OPTIONS-SAVE)))
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:BOOLEAN SAVE-OPTIONS) :READER
+                        TEXT-DOCUMENT-SYNC-OPTIONS-SAVE)))
 
 (COMMON-LISP:DEFCLASS PUBLISH-DIAGNOSTICS-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((RELATED-INFORMATION? :INITARG :RELATED-INFORMATION :DOCUMENTATION "*
 * Whether the clients accepts diagnostics with related information."
-                        :TYPE COMMON-LISP:BOOLEAN :READER PUBLISH-DIAGNOSTICS-CLIENT-CAPABILITIES-RELATED-INFORMATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        PUBLISH-DIAGNOSTICS-CLIENT-CAPABILITIES-RELATED-INFORMATION)
                        (TAG-SUPPORT? :INITARG :TAG-SUPPORT :DOCUMENTATION "*
 * Client supports the tag property to provide meta data about a diagnostic.
 * Clients supporting tags have to handle unknown tags gracefully.
 *
 * @since 3.15.0"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DIAGNOSTIC-TAG) :OPTIONAL-P COMMON-LISP:NIL)) :READER PUBLISH-DIAGNOSTICS-CLIENT-CAPABILITIES-TAG-SUPPORT)
+                        :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                         ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DIAGNOSTIC-TAG) :OPTIONAL-P
+                          COMMON-LISP:NIL))
+                        :READER PUBLISH-DIAGNOSTICS-CLIENT-CAPABILITIES-TAG-SUPPORT)
                        (VERSION-SUPPORT? :INITARG :VERSION-SUPPORT :DOCUMENTATION "*
 * Whether the client interprets the version property of the
 * `textDocument/publishDiagnostics` notification's parameter.
 *
 * @since 3.15.0"
-                        :TYPE COMMON-LISP:BOOLEAN :READER PUBLISH-DIAGNOSTICS-CLIENT-CAPABILITIES-VERSION-SUPPORT)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        PUBLISH-DIAGNOSTICS-CLIENT-CAPABILITIES-VERSION-SUPPORT)))
 
 (COMMON-LISP:DEFCLASS PUBLISH-DIAGNOSTICS-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((URI :INITARG :URI :DOCUMENTATION "*
@@ -1826,27 +2047,42 @@
                         :TYPE COMMON-LISP:NUMBER :READER PUBLISH-DIAGNOSTICS-PARAMS-VERSION)
                        (DIAGNOSTICS :INITARG :DIAGNOSTICS :DOCUMENTATION "*
 * An array of diagnostic information items."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DIAGNOSTIC) :READER PUBLISH-DIAGNOSTICS-PARAMS-DIAGNOSTICS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DIAGNOSTIC) :READER
+                        PUBLISH-DIAGNOSTICS-PARAMS-DIAGNOSTICS)))
 
 (COMMON-LISP:DEFCLASS COMPLETION-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether completion supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER COMPLETION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        COMPLETION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (COMPLETION-ITEM? :INITARG :COMPLETION-ITEM :DOCUMENTATION "*
 * The client supports the following `CompletionItem` specific
 * capabilities."
                         :TYPE
-                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("snippetSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T) ("commitCharactersSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
-                         ("documentationFormat" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY MARKUP-KIND) :OPTIONAL-P COMMON-LISP:T) ("deprecatedSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
+                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                         ("snippetSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
+                         ("commitCharactersSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P
+                          COMMON-LISP:T)
+                         ("documentationFormat" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY MARKUP-KIND)
+                          :OPTIONAL-P COMMON-LISP:T)
+                         ("deprecatedSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
                          ("preselectSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)
-                         ("tagSupport" :TYPE (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMPLETION-ITEM-TAG) :OPTIONAL-P COMMON-LISP:NIL)) :OPTIONAL-P COMMON-LISP:T))
+                         ("tagSupport" :TYPE
+                          (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                           ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMPLETION-ITEM-TAG)
+                            :OPTIONAL-P COMMON-LISP:NIL))
+                          :OPTIONAL-P COMMON-LISP:T))
                         :READER COMPLETION-CLIENT-CAPABILITIES-COMPLETION-ITEM)
-                       (COMPLETION-ITEM-KIND? :INITARG :COMPLETION-ITEM-KIND :DOCUMENTATION "" :TYPE (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMPLETION-ITEM-KIND) :OPTIONAL-P COMMON-LISP:T))
+                       (COMPLETION-ITEM-KIND? :INITARG :COMPLETION-ITEM-KIND :DOCUMENTATION "" :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                         ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMPLETION-ITEM-KIND)
+                          :OPTIONAL-P COMMON-LISP:T))
                         :READER COMPLETION-CLIENT-CAPABILITIES-COMPLETION-ITEM-KIND)
                        (CONTEXT-SUPPORT? :INITARG :CONTEXT-SUPPORT :DOCUMENTATION "*
 * The client supports to send additional context information for a
 * `textDocument/completion` request."
-                        :TYPE COMMON-LISP:BOOLEAN :READER COMPLETION-CLIENT-CAPABILITIES-CONTEXT-SUPPORT)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        COMPLETION-CLIENT-CAPABILITIES-CONTEXT-SUPPORT)))
 
 (COMMON-LISP:DEFCLASS COMPLETION-OPTIONS (WORK-DONE-PROGRESS-OPTIONS)
                       ((TRIGGER-CHARACTERS? :INITARG :TRIGGER-CHARACTERS :DOCUMENTATION "*
@@ -1858,7 +2094,8 @@
 *
 * If code complete should automatically be trigger on characters not being valid inside
 * an identifier (for example `.` in JavaScript) list them in `triggerCharacters`."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER COMPLETION-OPTIONS-TRIGGER-CHARACTERS)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER
+                        COMPLETION-OPTIONS-TRIGGER-CHARACTERS)
                        (ALL-COMMIT-CHARACTERS? :INITARG :ALL-COMMIT-CHARACTERS :DOCUMENTATION "*
 * The list of all possible characters that commit a completion. This field can be used
 * if clients don't support individual commit characters per completion item. See
@@ -1868,15 +2105,19 @@
 * completion item the ones on the completion item win.
 *
 * @since 3.2.0"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER COMPLETION-OPTIONS-ALL-COMMIT-CHARACTERS)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER
+                        COMPLETION-OPTIONS-ALL-COMMIT-CHARACTERS)
                        (RESOLVE-PROVIDER? :INITARG :RESOLVE-PROVIDER :DOCUMENTATION "*
 * The server provides support to resolve additional
 * information for a completion item."
                         :TYPE COMMON-LISP:BOOLEAN :READER COMPLETION-OPTIONS-RESOLVE-PROVIDER)))
 
-(COMMON-LISP:DEFCLASS COMPLETION-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS COMPLETION-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS COMPLETION-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS COMPLETION-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS COMPLETION-PARAMS (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS)
+(COMMON-LISP:DEFCLASS COMPLETION-PARAMS
+                      (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS
+                       PARTIAL-RESULT-PARAMS)
                       ((CONTEXT? :INITARG :CONTEXT :DOCUMENTATION "*
 * The completion context. This is only available if the client specifies
 * to send this using `ClientCapabilities.textDocument.completion.contextSupport === true`"
@@ -1888,7 +2129,10 @@
  (COMMON-LISP:DEFPARAMETER COMPLETION-TRIGGER-KIND.TRIGGER-CHARACTER 2)
  (COMMON-LISP:DEFPARAMETER COMPLETION-TRIGGER-KIND.TRIGGER-FOR-INCOMPLETE-COMPLETIONS 3))
 
-(COMMON-LISP:DEFTYPE COMPLETION-TRIGGER-KIND () '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 1) (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 2) (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 3)))
+(COMMON-LISP:DEFTYPE COMPLETION-TRIGGER-KIND ()
+  '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 1)
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 2)
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 3)))
 
 (COMMON-LISP:DEFCLASS COMPLETION-CONTEXT (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TRIGGER-KIND :INITARG :TRIGGER-KIND :DOCUMENTATION "*
@@ -1906,13 +2150,21 @@
                         :TYPE COMMON-LISP:BOOLEAN :READER COMPLETION-LIST-IS-INCOMPLETE)
                        (ITEMS :INITARG :ITEMS :DOCUMENTATION "*
 * The completion items."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMPLETION-ITEM) :READER COMPLETION-LIST-ITEMS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMPLETION-ITEM) :READER
+                        COMPLETION-LIST-ITEMS)))
 
-(COMMON-LISP:PROGN (COMMON-LISP:DEFTYPE INSERT-TEXT-FORMAT () COMMON-LISP:T) (COMMON-LISP:DEFPARAMETER INSERT-TEXT-FORMAT.PLAIN-TEXT 1) (COMMON-LISP:DEFPARAMETER INSERT-TEXT-FORMAT.SNIPPET 2))
+(COMMON-LISP:PROGN
+ (COMMON-LISP:DEFTYPE INSERT-TEXT-FORMAT () COMMON-LISP:T)
+ (COMMON-LISP:DEFPARAMETER INSERT-TEXT-FORMAT.PLAIN-TEXT 1)
+ (COMMON-LISP:DEFPARAMETER INSERT-TEXT-FORMAT.SNIPPET 2))
 
-(COMMON-LISP:DEFTYPE INSERT-TEXT-FORMAT () '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 1) (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 2)))
+(COMMON-LISP:DEFTYPE INSERT-TEXT-FORMAT ()
+  '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 1)
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 2)))
 
-(COMMON-LISP:PROGN (COMMON-LISP:DEFTYPE COMPLETION-ITEM-TAG () COMMON-LISP:T) (COMMON-LISP:DEFPARAMETER COMPLETION-ITEM-TAG.DEPRECATED 1))
+(COMMON-LISP:PROGN
+ (COMMON-LISP:DEFTYPE COMPLETION-ITEM-TAG () COMMON-LISP:T)
+ (COMMON-LISP:DEFPARAMETER COMPLETION-ITEM-TAG.DEPRECATED 1))
 
 (COMMON-LISP:DEFTYPE COMPLETION-ITEM-TAG () '(LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 1))
 
@@ -1931,14 +2183,16 @@
 * Tags for this completion item.
 *
 * @since 3.15.0"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMPLETION-ITEM-TAG) :READER COMPLETION-ITEM-TAGS)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMPLETION-ITEM-TAG) :READER
+                        COMPLETION-ITEM-TAGS)
                        (DETAIL? :INITARG :DETAIL :DOCUMENTATION "*
 * A human-readable string with additional information
 * about this item, like type or symbol information."
                         :TYPE COMMON-LISP:STRING :READER COMPLETION-ITEM-DETAIL)
                        (DOCUMENTATION? :INITARG :DOCUMENTATION :DOCUMENTATION "*
 * A human-readable string that represents a doc-comment."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING MARKUP-CONTENT) :READER COMPLETION-ITEM-DOCUMENTATION)
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING MARKUP-CONTENT) :READER
+                        COMPLETION-ITEM-DOCUMENTATION)
                        (DEPRECATED? :INITARG :DEPRECATED :DOCUMENTATION "*
 * Indicates if this item is deprecated.
 *
@@ -1990,12 +2244,14 @@
 * Additional text edits should be used to change text unrelated to the current cursor position
 * (for example adding an import statement at the top of the file if the completion item will
 * insert an unqualified type)."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-EDIT) :READER COMPLETION-ITEM-ADDITIONAL-TEXT-EDITS)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-EDIT) :READER
+                        COMPLETION-ITEM-ADDITIONAL-TEXT-EDITS)
                        (COMMIT-CHARACTERS? :INITARG :COMMIT-CHARACTERS :DOCUMENTATION "*
 * An optional set of characters that when pressed while this completion is active will accept it first and
 * then type that character. *Note* that all commit characters should have `length=1` and that superfluous
 * characters will be ignored."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER COMPLETION-ITEM-COMMIT-CHARACTERS)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER
+                        COMPLETION-ITEM-COMMIT-CHARACTERS)
                        (COMMAND? :INITARG :COMMAND :DOCUMENTATION "*
 * An optional command that is executed *after* inserting this completion. *Note* that
 * additional modifications to the current document should be described with the
@@ -2037,40 +2293,57 @@
 (COMMON-LISP:DEFCLASS HOVER-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether hover supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER HOVER-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        HOVER-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (CONTENT-FORMAT? :INITARG :CONTENT-FORMAT :DOCUMENTATION "*
 * Client supports the follow content formats for the content
 * property. The order describes the preferred format of the client."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY MARKUP-KIND) :READER HOVER-CLIENT-CAPABILITIES-CONTENT-FORMAT)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY MARKUP-KIND) :READER
+                        HOVER-CLIENT-CAPABILITIES-CONTENT-FORMAT)))
 
 (COMMON-LISP:DEFCLASS HOVER-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS HOVER-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS HOVER-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS HOVER-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS HOVER-OPTIONS)
+                      COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS HOVER-PARAMS (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS HOVER-PARAMS (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS HOVER (LEM-LSP-UTILS/JSON:OBJECT)
                       ((CONTENTS :INITARG :CONTENTS :DOCUMENTATION "*
 * The hover's content"
-                        :TYPE (COMMON-LISP:OR MARKED-STRING (LEM-LSP-UTILS/TYPE:TS-ARRAY MARKED-STRING) MARKUP-CONTENT) :READER HOVER-CONTENTS)
+                        :TYPE
+                        (COMMON-LISP:OR MARKED-STRING (LEM-LSP-UTILS/TYPE:TS-ARRAY MARKED-STRING)
+                                        MARKUP-CONTENT)
+                        :READER HOVER-CONTENTS)
                        (RANGE? :INITARG :RANGE :DOCUMENTATION "*
 * An optional range is a range inside a text document
 * that is used to visualize a hover, e.g. by changing the background color."
                         :TYPE RANGE :READER HOVER-RANGE)))
 
 (COMMON-LISP:DEFTYPE MARKED-STRING ()
-  '(COMMON-LISP:OR COMMON-LISP:STRING (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("language" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL) ("value" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL))))
+  '(COMMON-LISP:OR COMMON-LISP:STRING
+                   (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                    ("language" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL)
+                    ("value" :TYPE COMMON-LISP:STRING :OPTIONAL-P COMMON-LISP:NIL))))
 
 (COMMON-LISP:DEFCLASS SIGNATURE-HELP-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether signature help supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER SIGNATURE-HELP-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        SIGNATURE-HELP-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (SIGNATURE-INFORMATION? :INITARG :SIGNATURE-INFORMATION :DOCUMENTATION "*
 * The client supports the following `SignatureInformation`
 * specific properties."
                         :TYPE
-                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("documentationFormat" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY MARKUP-KIND) :OPTIONAL-P COMMON-LISP:T)
-                         ("parameterInformation" :TYPE (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("labelOffsetSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P COMMON-LISP:T)) :OPTIONAL-P COMMON-LISP:T))
+                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                         ("documentationFormat" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY MARKUP-KIND)
+                          :OPTIONAL-P COMMON-LISP:T)
+                         ("parameterInformation" :TYPE
+                          (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                           ("labelOffsetSupport" :TYPE COMMON-LISP:BOOLEAN :OPTIONAL-P
+                            COMMON-LISP:T))
+                          :OPTIONAL-P COMMON-LISP:T))
                         :READER SIGNATURE-HELP-CLIENT-CAPABILITIES-SIGNATURE-INFORMATION)
                        (CONTEXT-SUPPORT? :INITARG :CONTEXT-SUPPORT :DOCUMENTATION "*
 * The client supports to send additional context information for a
@@ -2079,13 +2352,15 @@
 * `SignatureHelpOptions`.
 *
 * @since 3.15.0"
-                        :TYPE COMMON-LISP:BOOLEAN :READER SIGNATURE-HELP-CLIENT-CAPABILITIES-CONTEXT-SUPPORT)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        SIGNATURE-HELP-CLIENT-CAPABILITIES-CONTEXT-SUPPORT)))
 
 (COMMON-LISP:DEFCLASS SIGNATURE-HELP-OPTIONS (WORK-DONE-PROGRESS-OPTIONS)
                       ((TRIGGER-CHARACTERS? :INITARG :TRIGGER-CHARACTERS :DOCUMENTATION "*
 * The characters that trigger signature help
 * automatically."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER SIGNATURE-HELP-OPTIONS-TRIGGER-CHARACTERS)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER
+                        SIGNATURE-HELP-OPTIONS-TRIGGER-CHARACTERS)
                        (RETRIGGER-CHARACTERS? :INITARG :RETRIGGER-CHARACTERS :DOCUMENTATION "*
 * List of characters that re-trigger signature help.
 *
@@ -2093,11 +2368,14 @@
 * are also counted as re-trigger characters.
 *
 * @since 3.15.0"
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER SIGNATURE-HELP-OPTIONS-RETRIGGER-CHARACTERS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER
+                        SIGNATURE-HELP-OPTIONS-RETRIGGER-CHARACTERS)))
 
-(COMMON-LISP:DEFCLASS SIGNATURE-HELP-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS SIGNATURE-HELP-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS SIGNATURE-HELP-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS SIGNATURE-HELP-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS SIGNATURE-HELP-PARAMS (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS)
+(COMMON-LISP:DEFCLASS SIGNATURE-HELP-PARAMS
+                      (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS)
                       ((CONTEXT? :INITARG :CONTEXT :DOCUMENTATION "*
 * The signature help context. This is only available if the client specifies
 * to send this using the client capability  `textDocument.signatureHelp.contextSupport === true`
@@ -2111,12 +2389,16 @@
  (COMMON-LISP:DEFPARAMETER SIGNATURE-HELP-TRIGGER-KIND.TRIGGER-CHARACTER 2)
  (COMMON-LISP:DEFPARAMETER SIGNATURE-HELP-TRIGGER-KIND.CONTENT-CHANGE 3))
 
-(COMMON-LISP:DEFTYPE SIGNATURE-HELP-TRIGGER-KIND () '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 1) (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 2) (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 3)))
+(COMMON-LISP:DEFTYPE SIGNATURE-HELP-TRIGGER-KIND ()
+  '(COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 1)
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 2)
+                   (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER 3)))
 
 (COMMON-LISP:DEFCLASS SIGNATURE-HELP-CONTEXT (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TRIGGER-KIND :INITARG :TRIGGER-KIND :DOCUMENTATION "*
 * Action that caused signature help to be triggered."
-                        :TYPE SIGNATURE-HELP-TRIGGER-KIND :READER SIGNATURE-HELP-CONTEXT-TRIGGER-KIND)
+                        :TYPE SIGNATURE-HELP-TRIGGER-KIND :READER
+                        SIGNATURE-HELP-CONTEXT-TRIGGER-KIND)
                        (TRIGGER-CHARACTER? :INITARG :TRIGGER-CHARACTER :DOCUMENTATION "*
 * Character that caused signature help to be triggered.
 *
@@ -2139,7 +2421,8 @@
                       ((SIGNATURES :INITARG :SIGNATURES :DOCUMENTATION "*
 * One or more signatures. If no signaures are availabe the signature help
 * request should return `null`."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY SIGNATURE-INFORMATION) :READER SIGNATURE-HELP-SIGNATURES)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY SIGNATURE-INFORMATION) :READER
+                        SIGNATURE-HELP-SIGNATURES)
                        (ACTIVE-SIGNATURE? :INITARG :ACTIVE-SIGNATURE :DOCUMENTATION "*
 * The active signature. If omitted or the value lies outside the
 * range of `signatures` the value defaults to zero or is ignore if
@@ -2169,10 +2452,12 @@
                        (DOCUMENTATION? :INITARG :DOCUMENTATION :DOCUMENTATION "*
 * The human-readable doc-comment of this signature. Will be shown
 * in the UI but can be omitted."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING MARKUP-CONTENT) :READER SIGNATURE-INFORMATION-DOCUMENTATION)
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING MARKUP-CONTENT) :READER
+                        SIGNATURE-INFORMATION-DOCUMENTATION)
                        (PARAMETERS? :INITARG :PARAMETERS :DOCUMENTATION "*
 * The parameters of this signature."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY PARAMETER-INFORMATION) :READER SIGNATURE-INFORMATION-PARAMETERS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY PARAMETER-INFORMATION) :READER
+                        SIGNATURE-INFORMATION-PARAMETERS)))
 
 (COMMON-LISP:DEFCLASS PARAMETER-INFORMATION (LEM-LSP-UTILS/JSON:OBJECT)
                       ((LABEL :INITARG :LABEL :DOCUMENTATION "*
@@ -2184,90 +2469,131 @@
 *
 * *Note*: a label of type string should be a substring of its containing signature label.
 * Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING (LEM-LSP-UTILS/TYPE:TS-TUPLE COMMON-LISP:NUMBER COMMON-LISP:NUMBER)) :READER PARAMETER-INFORMATION-LABEL)
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:STRING
+                                        (LEM-LSP-UTILS/TYPE:TS-TUPLE COMMON-LISP:NUMBER
+                                         COMMON-LISP:NUMBER))
+                        :READER PARAMETER-INFORMATION-LABEL)
                        (DOCUMENTATION? :INITARG :DOCUMENTATION :DOCUMENTATION "*
 * The human-readable doc-comment of this parameter. Will be shown
 * in the UI but can be omitted."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING MARKUP-CONTENT) :READER PARAMETER-INFORMATION-DOCUMENTATION)))
+                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING MARKUP-CONTENT) :READER
+                        PARAMETER-INFORMATION-DOCUMENTATION)))
 
 (COMMON-LISP:DEFCLASS DECLARATION-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether declaration supports dynamic registration. If this is set to `true`
 * the client supports the new `DeclarationRegistrationOptions` return value
 * for the corresponding server capability as well."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DECLARATION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DECLARATION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (LINK-SUPPORT? :INITARG :LINK-SUPPORT :DOCUMENTATION "*
 * The client supports additional metadata in the form of declaration links."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DECLARATION-CLIENT-CAPABILITIES-LINK-SUPPORT)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DECLARATION-CLIENT-CAPABILITIES-LINK-SUPPORT)))
 
 (COMMON-LISP:DEFCLASS DECLARATION-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS DECLARATION-REGISTRATION-OPTIONS (DECLARATION-OPTIONS TEXT-DOCUMENT-REGISTRATION-OPTIONS STATIC-REGISTRATION-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS DECLARATION-REGISTRATION-OPTIONS
+                      (DECLARATION-OPTIONS TEXT-DOCUMENT-REGISTRATION-OPTIONS
+                       STATIC-REGISTRATION-OPTIONS)
+                      COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS DECLARATION-PARAMS (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS DECLARATION-PARAMS
+                      (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS
+                       PARTIAL-RESULT-PARAMS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS DEFINITION-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether definition supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DEFINITION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DEFINITION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (LINK-SUPPORT? :INITARG :LINK-SUPPORT :DOCUMENTATION "*
 * The client supports additional metadata in the form of definition links.
 *
 * @since 3.14.0"
-                        :TYPE COMMON-LISP:BOOLEAN :READER DEFINITION-CLIENT-CAPABILITIES-LINK-SUPPORT)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DEFINITION-CLIENT-CAPABILITIES-LINK-SUPPORT)))
 
 (COMMON-LISP:DEFCLASS DEFINITION-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS DEFINITION-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS DEFINITION-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS DEFINITION-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS DEFINITION-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS DEFINITION-PARAMS (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS DEFINITION-PARAMS
+                      (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS
+                       PARTIAL-RESULT-PARAMS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS TYPE-DEFINITION-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether implementation supports dynamic registration. If this is set to `true`
 * the client supports the new `TypeDefinitionRegistrationOptions` return value
 * for the corresponding server capability as well."
-                        :TYPE COMMON-LISP:BOOLEAN :READER TYPE-DEFINITION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        TYPE-DEFINITION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (LINK-SUPPORT? :INITARG :LINK-SUPPORT :DOCUMENTATION "*
 * The client supports additional metadata in the form of definition links.
 *
 * @since 3.14.0"
-                        :TYPE COMMON-LISP:BOOLEAN :READER TYPE-DEFINITION-CLIENT-CAPABILITIES-LINK-SUPPORT)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        TYPE-DEFINITION-CLIENT-CAPABILITIES-LINK-SUPPORT)))
 
 (COMMON-LISP:DEFCLASS TYPE-DEFINITION-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS TYPE-DEFINITION-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS TYPE-DEFINITION-OPTIONS STATIC-REGISTRATION-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS TYPE-DEFINITION-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS TYPE-DEFINITION-OPTIONS
+                       STATIC-REGISTRATION-OPTIONS)
+                      COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS TYPE-DEFINITION-PARAMS (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS TYPE-DEFINITION-PARAMS
+                      (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS
+                       PARTIAL-RESULT-PARAMS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS IMPLEMENTATION-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether implementation supports dynamic registration. If this is set to `true`
 * the client supports the new `ImplementationRegistrationOptions` return value
 * for the corresponding server capability as well."
-                        :TYPE COMMON-LISP:BOOLEAN :READER IMPLEMENTATION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        IMPLEMENTATION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (LINK-SUPPORT? :INITARG :LINK-SUPPORT :DOCUMENTATION "*
 * The client supports additional metadata in the form of definition links.
 *
 * @since 3.14.0"
-                        :TYPE COMMON-LISP:BOOLEAN :READER IMPLEMENTATION-CLIENT-CAPABILITIES-LINK-SUPPORT)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        IMPLEMENTATION-CLIENT-CAPABILITIES-LINK-SUPPORT)))
 
 (COMMON-LISP:DEFCLASS IMPLEMENTATION-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS IMPLEMENTATION-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS IMPLEMENTATION-OPTIONS STATIC-REGISTRATION-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS IMPLEMENTATION-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS IMPLEMENTATION-OPTIONS
+                       STATIC-REGISTRATION-OPTIONS)
+                      COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS IMPLEMENTATION-PARAMS (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS IMPLEMENTATION-PARAMS
+                      (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS
+                       PARTIAL-RESULT-PARAMS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS REFERENCE-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether references supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER REFERENCE-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        REFERENCE-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
 (COMMON-LISP:DEFCLASS REFERENCE-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS REFERENCE-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS REFERENCE-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS REFERENCE-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS REFERENCE-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS REFERENCE-PARAMS (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS) ((CONTEXT :INITARG :CONTEXT :DOCUMENTATION "" :TYPE REFERENCE-CONTEXT :READER REFERENCE-PARAMS-CONTEXT)))
+(COMMON-LISP:DEFCLASS REFERENCE-PARAMS
+                      (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS
+                       PARTIAL-RESULT-PARAMS)
+                      ((CONTEXT :INITARG :CONTEXT :DOCUMENTATION "" :TYPE REFERENCE-CONTEXT :READER
+                        REFERENCE-PARAMS-CONTEXT)))
 
 (COMMON-LISP:DEFCLASS REFERENCE-CONTEXT (LEM-LSP-UTILS/JSON:OBJECT)
                       ((INCLUDE-DECLARATION :INITARG :INCLUDE-DECLARATION :DOCUMENTATION "*
@@ -2277,13 +2603,19 @@
 (COMMON-LISP:DEFCLASS DOCUMENT-HIGHLIGHT-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether document highlight supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DOCUMENT-HIGHLIGHT-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DOCUMENT-HIGHLIGHT-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
 (COMMON-LISP:DEFCLASS DOCUMENT-HIGHLIGHT-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS DOCUMENT-HIGHLIGHT-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS DOCUMENT-HIGHLIGHT-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS DOCUMENT-HIGHLIGHT-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS DOCUMENT-HIGHLIGHT-OPTIONS)
+                      COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS DOCUMENT-HIGHLIGHT-PARAMS (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS DOCUMENT-HIGHLIGHT-PARAMS
+                      (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS
+                       PARTIAL-RESULT-PARAMS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS DOCUMENT-HIGHLIGHT (LEM-LSP-UTILS/JSON:OBJECT)
                       ((RANGE :INITARG :RANGE :DOCUMENTATION "*
@@ -2302,22 +2634,31 @@
 (COMMON-LISP:DEFCLASS DOCUMENT-SYMBOL-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether document symbol supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DOCUMENT-SYMBOL-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DOCUMENT-SYMBOL-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (SYMBOL-KIND? :INITARG :SYMBOL-KIND :DOCUMENTATION "*
 * Specific capabilities for the `SymbolKind` in the `textDocument/documentSymbol` request."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY SYMBOL-KIND) :OPTIONAL-P COMMON-LISP:T)) :READER DOCUMENT-SYMBOL-CLIENT-CAPABILITIES-SYMBOL-KIND)
-                       (HIERARCHICAL-DOCUMENT-SYMBOL-SUPPORT? :INITARG :HIERARCHICAL-DOCUMENT-SYMBOL-SUPPORT :DOCUMENTATION "*
+                        :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                         ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY SYMBOL-KIND) :OPTIONAL-P
+                          COMMON-LISP:T))
+                        :READER DOCUMENT-SYMBOL-CLIENT-CAPABILITIES-SYMBOL-KIND)
+                       (HIERARCHICAL-DOCUMENT-SYMBOL-SUPPORT? :INITARG
+                        :HIERARCHICAL-DOCUMENT-SYMBOL-SUPPORT :DOCUMENTATION "*
 * The client supports hierarchical document symbols."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DOCUMENT-SYMBOL-CLIENT-CAPABILITIES-HIERARCHICAL-DOCUMENT-SYMBOL-SUPPORT)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DOCUMENT-SYMBOL-CLIENT-CAPABILITIES-HIERARCHICAL-DOCUMENT-SYMBOL-SUPPORT)))
 
 (COMMON-LISP:DEFCLASS DOCUMENT-SYMBOL-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS DOCUMENT-SYMBOL-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS DOCUMENT-SYMBOL-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS DOCUMENT-SYMBOL-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS DOCUMENT-SYMBOL-OPTIONS) COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS DOCUMENT-SYMBOL-PARAMS (WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * The text document."
-                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER DOCUMENT-SYMBOL-PARAMS-TEXT-DOCUMENT)))
+                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER
+                        DOCUMENT-SYMBOL-PARAMS-TEXT-DOCUMENT)))
 
 (COMMON-LISP:PROGN
  (COMMON-LISP:DEFTYPE SYMBOL-KIND () COMMON-LISP:T)
@@ -2373,7 +2714,8 @@
                         :TYPE RANGE :READER DOCUMENT-SYMBOL-SELECTION-RANGE)
                        (CHILDREN? :INITARG :CHILDREN :DOCUMENTATION "*
 * Children of this symbol, e.g. properties of a class."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DOCUMENT-SYMBOL) :READER DOCUMENT-SYMBOL-CHILDREN)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DOCUMENT-SYMBOL) :READER
+                        DOCUMENT-SYMBOL-CHILDREN)))
 
 (COMMON-LISP:DEFCLASS SYMBOL-INFORMATION (LEM-LSP-UTILS/JSON:OBJECT)
                       ((NAME :INITARG :NAME :DOCUMENTATION "*
@@ -2406,20 +2748,27 @@
 (COMMON-LISP:DEFCLASS CODE-ACTION-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether code action supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER CODE-ACTION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
-                       (CODE-ACTION-LITERAL-SUPPORT? :INITARG :CODE-ACTION-LITERAL-SUPPORT :DOCUMENTATION "*
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        CODE-ACTION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                       (CODE-ACTION-LITERAL-SUPPORT? :INITARG :CODE-ACTION-LITERAL-SUPPORT
+                        :DOCUMENTATION "*
 * The client supports code action literals as a valid
 * response of the `textDocument/codeAction` request.
 *
 * @since 3.8.0"
                         :TYPE
                         (LEM-LSP-UTILS/TYPE:TS-INTERFACE
-                         ("codeActionKind" :TYPE (LEM-LSP-UTILS/TYPE:TS-INTERFACE ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY CODE-ACTION-KIND) :OPTIONAL-P COMMON-LISP:NIL)) :OPTIONAL-P COMMON-LISP:NIL))
+                         ("codeActionKind" :TYPE
+                          (LEM-LSP-UTILS/TYPE:TS-INTERFACE
+                           ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY CODE-ACTION-KIND)
+                            :OPTIONAL-P COMMON-LISP:NIL))
+                          :OPTIONAL-P COMMON-LISP:NIL))
                         :READER CODE-ACTION-CLIENT-CAPABILITIES-CODE-ACTION-LITERAL-SUPPORT)
                        (IS-PREFERRED-SUPPORT? :INITARG :IS-PREFERRED-SUPPORT :DOCUMENTATION "*
 * Whether code action supports the `isPreferred` property.
 * @since 3.15.0"
-                        :TYPE COMMON-LISP:BOOLEAN :READER CODE-ACTION-CLIENT-CAPABILITIES-IS-PREFERRED-SUPPORT)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        CODE-ACTION-CLIENT-CAPABILITIES-IS-PREFERRED-SUPPORT)))
 
 (COMMON-LISP:DEFCLASS CODE-ACTION-OPTIONS (WORK-DONE-PROGRESS-OPTIONS)
                       ((CODE-ACTION-KINDS? :INITARG :CODE-ACTION-KINDS :DOCUMENTATION "*
@@ -2427,9 +2776,11 @@
 *
 * The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
 * may list out every specific kind they provide."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY CODE-ACTION-KIND) :READER CODE-ACTION-OPTIONS-CODE-ACTION-KINDS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY CODE-ACTION-KIND) :READER
+                        CODE-ACTION-OPTIONS-CODE-ACTION-KINDS)))
 
-(COMMON-LISP:DEFCLASS CODE-ACTION-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS CODE-ACTION-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS CODE-ACTION-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS CODE-ACTION-OPTIONS) COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS CODE-ACTION-PARAMS (WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
@@ -2462,13 +2813,15 @@
 * errors are currently presented to the user for the given range. There is no guarantee
 * that these accurately reflect the error state of the resource. The primary parameter
 * to compute code actions is the provided range."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DIAGNOSTIC) :READER CODE-ACTION-CONTEXT-DIAGNOSTICS)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DIAGNOSTIC) :READER
+                        CODE-ACTION-CONTEXT-DIAGNOSTICS)
                        (ONLY? :INITARG :ONLY :DOCUMENTATION "*
 * Requested kind of actions to return.
 *
 * Actions not of this kind are filtered out by the client before being shown. So servers
 * can omit computing them."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY CODE-ACTION-KIND) :READER CODE-ACTION-CONTEXT-ONLY)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY CODE-ACTION-KIND) :READER
+                        CODE-ACTION-CONTEXT-ONLY)))
 
 (COMMON-LISP:DEFCLASS CODE-ACTION (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TITLE :INITARG :TITLE :DOCUMENTATION "*
@@ -2481,7 +2834,8 @@
                         :TYPE CODE-ACTION-KIND :READER CODE-ACTION-KIND)
                        (DIAGNOSTICS? :INITARG :DIAGNOSTICS :DOCUMENTATION "*
 * The diagnostics that this code action resolves."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DIAGNOSTIC) :READER CODE-ACTION-DIAGNOSTICS)
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DIAGNOSTIC) :READER
+                        CODE-ACTION-DIAGNOSTICS)
                        (IS-PREFERRED? :INITARG :IS-PREFERRED :DOCUMENTATION "*
 * Marks this as a preferred action. Preferred actions are used by the `auto fix` command and can be targeted
 * by keybindings.
@@ -2503,14 +2857,16 @@
 (COMMON-LISP:DEFCLASS CODE-LENS-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether code lens supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER CODE-LENS-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        CODE-LENS-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
 (COMMON-LISP:DEFCLASS CODE-LENS-OPTIONS (WORK-DONE-PROGRESS-OPTIONS)
                       ((RESOLVE-PROVIDER? :INITARG :RESOLVE-PROVIDER :DOCUMENTATION "*
 * Code lens has a resolve provider as well."
                         :TYPE COMMON-LISP:BOOLEAN :READER CODE-LENS-OPTIONS-RESOLVE-PROVIDER)))
 
-(COMMON-LISP:DEFCLASS CODE-LENS-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS CODE-LENS-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS CODE-LENS-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS CODE-LENS-OPTIONS) COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS CODE-LENS-PARAMS (WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
@@ -2532,19 +2888,22 @@
 (COMMON-LISP:DEFCLASS DOCUMENT-LINK-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether document link supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DOCUMENT-LINK-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DOCUMENT-LINK-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (TOOLTIP-SUPPORT? :INITARG :TOOLTIP-SUPPORT :DOCUMENTATION "*
 * Whether the client supports the `tooltip` property on `DocumentLink`.
 *
 * @since 3.15.0"
-                        :TYPE COMMON-LISP:BOOLEAN :READER DOCUMENT-LINK-CLIENT-CAPABILITIES-TOOLTIP-SUPPORT)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DOCUMENT-LINK-CLIENT-CAPABILITIES-TOOLTIP-SUPPORT)))
 
 (COMMON-LISP:DEFCLASS DOCUMENT-LINK-OPTIONS (WORK-DONE-PROGRESS-OPTIONS)
                       ((RESOLVE-PROVIDER? :INITARG :RESOLVE-PROVIDER :DOCUMENTATION "*
 * Document links have a resolve provider as well."
                         :TYPE COMMON-LISP:BOOLEAN :READER DOCUMENT-LINK-OPTIONS-RESOLVE-PROVIDER)))
 
-(COMMON-LISP:DEFCLASS DOCUMENT-LINK-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS DOCUMENT-LINK-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS DOCUMENT-LINK-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS DOCUMENT-LINK-OPTIONS) COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS DOCUMENT-LINK-PARAMS (WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
@@ -2575,11 +2934,15 @@
 (COMMON-LISP:DEFCLASS DOCUMENT-COLOR-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether document color supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DOCUMENT-COLOR-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DOCUMENT-COLOR-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
 (COMMON-LISP:DEFCLASS DOCUMENT-COLOR-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS DOCUMENT-COLOR-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS STATIC-REGISTRATION-OPTIONS DOCUMENT-COLOR-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS DOCUMENT-COLOR-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS STATIC-REGISTRATION-OPTIONS
+                       DOCUMENT-COLOR-OPTIONS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS DOCUMENT-COLOR-PARAMS (WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
@@ -2611,7 +2974,8 @@
 (COMMON-LISP:DEFCLASS COLOR-PRESENTATION-PARAMS (WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * The text document."
-                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER COLOR-PRESENTATION-PARAMS-TEXT-DOCUMENT)
+                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER
+                        COLOR-PRESENTATION-PARAMS-TEXT-DOCUMENT)
                        (COLOR :INITARG :COLOR :DOCUMENTATION "*
 * The color information to request presentations for."
                         :TYPE COLOR :READER COLOR-PRESENTATION-PARAMS-COLOR)
@@ -2633,21 +2997,26 @@
                        (ADDITIONAL-TEXT-EDITS? :INITARG :ADDITIONAL-TEXT-EDITS :DOCUMENTATION "*
 * An optional array of additional [text edits](#TextEdit) that are applied when
 * selecting this color presentation. Edits must not overlap with the main [edit](#ColorPresentation.textEdit) nor with themselves."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-EDIT) :READER COLOR-PRESENTATION-ADDITIONAL-TEXT-EDITS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-EDIT) :READER
+                        COLOR-PRESENTATION-ADDITIONAL-TEXT-EDITS)))
 
 (COMMON-LISP:DEFCLASS DOCUMENT-FORMATTING-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether formatting supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DOCUMENT-FORMATTING-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DOCUMENT-FORMATTING-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
 (COMMON-LISP:DEFCLASS DOCUMENT-FORMATTING-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS DOCUMENT-FORMATTING-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS DOCUMENT-FORMATTING-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS DOCUMENT-FORMATTING-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS DOCUMENT-FORMATTING-OPTIONS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS DOCUMENT-FORMATTING-PARAMS (WORK-DONE-PROGRESS-PARAMS)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * The document to format."
-                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER DOCUMENT-FORMATTING-PARAMS-TEXT-DOCUMENT)
+                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER
+                        DOCUMENT-FORMATTING-PARAMS-TEXT-DOCUMENT)
                        (OPTIONS :INITARG :OPTIONS :DOCUMENTATION "*
 * The format options."
                         :TYPE FORMATTING-OPTIONS :READER DOCUMENT-FORMATTING-PARAMS-OPTIONS)))
@@ -2659,11 +3028,13 @@
                        (INSERT-SPACES :INITARG :INSERT-SPACES :DOCUMENTATION "*
 * Prefer spaces over tabs."
                         :TYPE COMMON-LISP:BOOLEAN :READER FORMATTING-OPTIONS-INSERT-SPACES)
-                       (TRIM-TRAILING-WHITESPACE? :INITARG :TRIM-TRAILING-WHITESPACE :DOCUMENTATION "*
+                       (TRIM-TRAILING-WHITESPACE? :INITARG :TRIM-TRAILING-WHITESPACE :DOCUMENTATION
+                        "*
 * Trim trailing whitespace on a line.
 *
 * @since 3.15.0"
-                        :TYPE COMMON-LISP:BOOLEAN :READER FORMATTING-OPTIONS-TRIM-TRAILING-WHITESPACE)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        FORMATTING-OPTIONS-TRIM-TRAILING-WHITESPACE)
                        (INSERT-FINAL-NEWLINE? :INITARG :INSERT-FINAL-NEWLINE :DOCUMENTATION "*
 * Insert a newline character at the end of the file if one does not exist.
 *
@@ -2676,21 +3047,28 @@
                         :TYPE COMMON-LISP:BOOLEAN :READER FORMATTING-OPTIONS-TRIM-FINAL-NEWLINES)
                        (KEY? :INITARG :KEY :DOCUMENTATION "*
 * Signature for further properties."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-OBJECT COMMON-LISP:STRING (COMMON-LISP:OR COMMON-LISP:BOOLEAN COMMON-LISP:NUMBER COMMON-LISP:STRING)) :READER FORMATTING-OPTIONS-KEY)))
+                        :TYPE
+                        (LEM-LSP-UTILS/TYPE:TS-OBJECT COMMON-LISP:STRING
+                         (COMMON-LISP:OR COMMON-LISP:BOOLEAN COMMON-LISP:NUMBER COMMON-LISP:STRING))
+                        :READER FORMATTING-OPTIONS-KEY)))
 
 (COMMON-LISP:DEFCLASS DOCUMENT-RANGE-FORMATTING-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether formatting supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DOCUMENT-RANGE-FORMATTING-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DOCUMENT-RANGE-FORMATTING-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
 (COMMON-LISP:DEFCLASS DOCUMENT-RANGE-FORMATTING-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS DOCUMENT-RANGE-FORMATTING-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS DOCUMENT-RANGE-FORMATTING-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS DOCUMENT-RANGE-FORMATTING-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS DOCUMENT-RANGE-FORMATTING-OPTIONS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS DOCUMENT-RANGE-FORMATTING-PARAMS (WORK-DONE-PROGRESS-PARAMS)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
 * The document to format."
-                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER DOCUMENT-RANGE-FORMATTING-PARAMS-TEXT-DOCUMENT)
+                        :TYPE TEXT-DOCUMENT-IDENTIFIER :READER
+                        DOCUMENT-RANGE-FORMATTING-PARAMS-TEXT-DOCUMENT)
                        (RANGE :INITARG :RANGE :DOCUMENTATION "*
 * The range to format"
                         :TYPE RANGE :READER DOCUMENT-RANGE-FORMATTING-PARAMS-RANGE)
@@ -2701,17 +3079,22 @@
 (COMMON-LISP:DEFCLASS DOCUMENT-ON-TYPE-FORMATTING-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether on type formatting supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER DOCUMENT-ON-TYPE-FORMATTING-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        DOCUMENT-ON-TYPE-FORMATTING-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
 (COMMON-LISP:DEFCLASS DOCUMENT-ON-TYPE-FORMATTING-OPTIONS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((FIRST-TRIGGER-CHARACTER :INITARG :FIRST-TRIGGER-CHARACTER :DOCUMENTATION "*
 * A character on which formatting should be triggered, like `}`."
-                        :TYPE COMMON-LISP:STRING :READER DOCUMENT-ON-TYPE-FORMATTING-OPTIONS-FIRST-TRIGGER-CHARACTER)
+                        :TYPE COMMON-LISP:STRING :READER
+                        DOCUMENT-ON-TYPE-FORMATTING-OPTIONS-FIRST-TRIGGER-CHARACTER)
                        (MORE-TRIGGER-CHARACTER? :INITARG :MORE-TRIGGER-CHARACTER :DOCUMENTATION "*
 * More trigger characters."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER DOCUMENT-ON-TYPE-FORMATTING-OPTIONS-MORE-TRIGGER-CHARACTER)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER
+                        DOCUMENT-ON-TYPE-FORMATTING-OPTIONS-MORE-TRIGGER-CHARACTER)))
 
-(COMMON-LISP:DEFCLASS DOCUMENT-ON-TYPE-FORMATTING-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS DOCUMENT-ON-TYPE-FORMATTING-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS DOCUMENT-ON-TYPE-FORMATTING-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS DOCUMENT-ON-TYPE-FORMATTING-OPTIONS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS DOCUMENT-ON-TYPE-FORMATTING-PARAMS (TEXT-DOCUMENT-POSITION-PARAMS)
                       ((CH :INITARG :CH :DOCUMENTATION "*
@@ -2719,25 +3102,29 @@
                         :TYPE COMMON-LISP:STRING :READER DOCUMENT-ON-TYPE-FORMATTING-PARAMS-CH)
                        (OPTIONS :INITARG :OPTIONS :DOCUMENTATION "*
 * The format options."
-                        :TYPE FORMATTING-OPTIONS :READER DOCUMENT-ON-TYPE-FORMATTING-PARAMS-OPTIONS)))
+                        :TYPE FORMATTING-OPTIONS :READER
+                        DOCUMENT-ON-TYPE-FORMATTING-PARAMS-OPTIONS)))
 
 (COMMON-LISP:DEFCLASS RENAME-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
 * Whether rename supports dynamic registration."
-                        :TYPE COMMON-LISP:BOOLEAN :READER RENAME-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        RENAME-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (PREPARE-SUPPORT? :INITARG :PREPARE-SUPPORT :DOCUMENTATION "*
 * Client supports testing for validity of rename operations
 * before execution.
 *
 * @since version 3.12.0"
-                        :TYPE COMMON-LISP:BOOLEAN :READER RENAME-CLIENT-CAPABILITIES-PREPARE-SUPPORT)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        RENAME-CLIENT-CAPABILITIES-PREPARE-SUPPORT)))
 
 (COMMON-LISP:DEFCLASS RENAME-OPTIONS (WORK-DONE-PROGRESS-OPTIONS)
                       ((PREPARE-PROVIDER? :INITARG :PREPARE-PROVIDER :DOCUMENTATION "*
 * Renames should be checked and tested before being executed."
                         :TYPE COMMON-LISP:BOOLEAN :READER RENAME-OPTIONS-PREPARE-PROVIDER)))
 
-(COMMON-LISP:DEFCLASS RENAME-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS RENAME-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS RENAME-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS RENAME-OPTIONS) COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS RENAME-PARAMS (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS)
                       ((NEW-NAME :INITARG :NEW-NAME :DOCUMENTATION "*
@@ -2753,19 +3140,25 @@
 * Whether implementation supports dynamic registration for folding range providers. If this is set to `true`
 * the client supports the new `FoldingRangeRegistrationOptions` return value for the corresponding server
 * capability as well."
-                        :TYPE COMMON-LISP:BOOLEAN :READER FOLDING-RANGE-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        FOLDING-RANGE-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (RANGE-LIMIT? :INITARG :RANGE-LIMIT :DOCUMENTATION "*
 * The maximum number of folding ranges that the client prefers to receive per document. The value serves as a
 * hint, servers are free to follow the limit."
-                        :TYPE COMMON-LISP:NUMBER :READER FOLDING-RANGE-CLIENT-CAPABILITIES-RANGE-LIMIT)
+                        :TYPE COMMON-LISP:NUMBER :READER
+                        FOLDING-RANGE-CLIENT-CAPABILITIES-RANGE-LIMIT)
                        (LINE-FOLDING-ONLY? :INITARG :LINE-FOLDING-ONLY :DOCUMENTATION "*
 * If set, the client signals that it only supports folding complete lines. If set, client will
 * ignore specified `startCharacter` and `endCharacter` properties in a FoldingRange."
-                        :TYPE COMMON-LISP:BOOLEAN :READER FOLDING-RANGE-CLIENT-CAPABILITIES-LINE-FOLDING-ONLY)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        FOLDING-RANGE-CLIENT-CAPABILITIES-LINE-FOLDING-ONLY)))
 
 (COMMON-LISP:DEFCLASS FOLDING-RANGE-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS FOLDING-RANGE-REGISTRATION-OPTIONS (TEXT-DOCUMENT-REGISTRATION-OPTIONS FOLDING-RANGE-OPTIONS STATIC-REGISTRATION-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS FOLDING-RANGE-REGISTRATION-OPTIONS
+                      (TEXT-DOCUMENT-REGISTRATION-OPTIONS FOLDING-RANGE-OPTIONS
+                       STATIC-REGISTRATION-OPTIONS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS FOLDING-RANGE-PARAMS (WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
@@ -2798,11 +3191,15 @@ COMMON-LISP:NIL
 * Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
 * the client supports the new `SelectionRangeRegistrationOptions` return value for the corresponding server
 * capability as well."
-                        :TYPE COMMON-LISP:BOOLEAN :READER SELECTION-RANGE-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
+                        :TYPE COMMON-LISP:BOOLEAN :READER
+                        SELECTION-RANGE-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
 (COMMON-LISP:DEFCLASS SELECTION-RANGE-OPTIONS (WORK-DONE-PROGRESS-OPTIONS) COMMON-LISP:NIL)
 
-(COMMON-LISP:DEFCLASS SELECTION-RANGE-REGISTRATION-OPTIONS (SELECTION-RANGE-OPTIONS TEXT-DOCUMENT-REGISTRATION-OPTIONS STATIC-REGISTRATION-OPTIONS) COMMON-LISP:NIL)
+(COMMON-LISP:DEFCLASS SELECTION-RANGE-REGISTRATION-OPTIONS
+                      (SELECTION-RANGE-OPTIONS TEXT-DOCUMENT-REGISTRATION-OPTIONS
+                       STATIC-REGISTRATION-OPTIONS)
+                      COMMON-LISP:NIL)
 
 (COMMON-LISP:DEFCLASS SELECTION-RANGE-PARAMS (WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
@@ -2810,7 +3207,8 @@ COMMON-LISP:NIL
                         :TYPE TEXT-DOCUMENT-IDENTIFIER :READER SELECTION-RANGE-PARAMS-TEXT-DOCUMENT)
                        (POSITIONS :INITARG :POSITIONS :DOCUMENTATION "*
 * The positions inside the text document."
-                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY POSITION) :READER SELECTION-RANGE-PARAMS-POSITIONS)))
+                        :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY POSITION) :READER
+                        SELECTION-RANGE-PARAMS-POSITIONS)))
 
 (COMMON-LISP:DEFCLASS SELECTION-RANGE (LEM-LSP-UTILS/JSON:OBJECT)
                       ((RANGE :INITARG :RANGE :DOCUMENTATION "*

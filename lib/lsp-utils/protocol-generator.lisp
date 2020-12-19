@@ -484,6 +484,7 @@
     ("boolean" 'boolean) ; TODO: jsonライブラリ毎のt/nilや:true/:falseという違いを考慮する
     ("number" 'number)
     ("string" 'string)
+    ("null" 'null) ; TODO: jsonライブラリ毎の:nullやnilという違いを考慮する
     (otherwise
      (symbolize (simple-type-name type)))))
 

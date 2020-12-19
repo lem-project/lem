@@ -12,7 +12,7 @@
 (define-condition json-type-error ()
   ((type :initarg :type)
    (value :initarg :value)
-   (context :initarg :context))
+   (context :initarg :context :initform nil))
   (:report (lambda (c s)
              (with-slots (value type context) c
                (if context
@@ -51,7 +51,7 @@
        new-hash-table))
     ((list 'ts-equal-specializer value-spec)
      (unless (equal value value-spec)
-       (error 'json-type-error :type type :value value))
+       (error 'json-type-error :type type :value value :context context))
      value)
     ((list 'ts-object key-type value-type)
      (assert-type value 'hash-table)
@@ -64,12 +64,12 @@
     ((cons 'ts-tuple types)
      (assert-type value 'list)
      (unless (alexandria:length= value types)
-       (error 'json-type-error :type type :value value))
+       (error 'json-type-error :type type :value value :context context))
      (loop :for type :in types
            :for item :in value
            :collect (coerce-json item type)))
     ((cons 'or types)
-     (dolist (type1 types (error 'json-type-error :type type :value value))
+     (dolist (type1 types (error 'json-type-error :type type :value value :context context))
        (handler-case (coerce-json value type1)
          (json-type-error ())
          (:no-error (result)

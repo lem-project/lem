@@ -714,14 +714,16 @@
                       ((ID :INITARG :ID :DOCUMENTATION "*
 * The request id."
                         :TYPE
-                        (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:STRING COMMON-LISP:NULL)
+                        (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:STRING
+                                        (COMMON-LISP:OR COMMON-LISP:NULL (COMMON-LISP:EQL :NULL)))
                         :READER RESPONSE-MESSAGE-ID)
                        (RESULT? :INITARG :RESULT :DOCUMENTATION "*
 * The result of a request. This member is REQUIRED on success.
 * This member MUST NOT exist if there was an error invoking the method."
                         :TYPE
                         (COMMON-LISP:OR COMMON-LISP:STRING COMMON-LISP:NUMBER COMMON-LISP:BOOLEAN
-                                        OBJECT COMMON-LISP:NULL)
+                                        OBJECT
+                                        (COMMON-LISP:OR COMMON-LISP:NULL (COMMON-LISP:EQL :NULL)))
                         :READER RESPONSE-MESSAGE-RESULT)
                        (ERROR? :INITARG :ERROR :DOCUMENTATION "*
 * The error object in case a request fails."
@@ -739,7 +741,8 @@
 * information about the error. Can be omitted."
                         :TYPE
                         (COMMON-LISP:OR COMMON-LISP:STRING COMMON-LISP:NUMBER COMMON-LISP:BOOLEAN
-                                        ARRAY OBJECT COMMON-LISP:NULL)
+                                        ARRAY OBJECT
+                                        (COMMON-LISP:OR COMMON-LISP:NULL (COMMON-LISP:EQL :NULL)))
                         :READER RESPONSE-ERROR-DATA)))
 
 (COMMON-LISP:PROGN
@@ -1085,8 +1088,10 @@
 *
 * The version number of a document will increase after each change, including
 * undo/redo. The number doesn't need to be consecutive."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:NULL) :READER
-                        VERSIONED-TEXT-DOCUMENT-IDENTIFIER-VERSION)))
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:NUMBER
+                                        (COMMON-LISP:OR COMMON-LISP:NULL (COMMON-LISP:EQL :NULL)))
+                        :READER VERSIONED-TEXT-DOCUMENT-IDENTIFIER-VERSION)))
 
 (COMMON-LISP:DEFCLASS TEXT-DOCUMENT-POSITION-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
@@ -1128,8 +1133,10 @@
                       ((DOCUMENT-SELECTOR :INITARG :DOCUMENT-SELECTOR :DOCUMENTATION "*
 * A document selector to identify the scope of the registration. If set to null
 * the document selector provided on the client side will be used."
-                        :TYPE (COMMON-LISP:OR DOCUMENT-SELECTOR COMMON-LISP:NULL) :READER
-                        TEXT-DOCUMENT-REGISTRATION-OPTIONS-DOCUMENT-SELECTOR)))
+                        :TYPE
+                        (COMMON-LISP:OR DOCUMENT-SELECTOR
+                                        (COMMON-LISP:OR COMMON-LISP:NULL (COMMON-LISP:EQL :NULL)))
+                        :READER TEXT-DOCUMENT-REGISTRATION-OPTIONS-DOCUMENT-SELECTOR)))
 
 (COMMON-LISP:PROGN
  (COMMON-LISP:DEFTYPE MARKUP-KIND () COMMON-LISP:T)
@@ -1235,8 +1242,10 @@
 * The process Id of the parent process that started
 * the server. Is null if the process has not been started by another process.
 * If the parent process is not alive then the server should exit (see exit notification) its process."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:NUMBER COMMON-LISP:NULL) :READER
-                        INITIALIZE-PARAMS-PROCESS-ID)
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:NUMBER
+                                        (COMMON-LISP:OR COMMON-LISP:NULL (COMMON-LISP:EQL :NULL)))
+                        :READER INITIALIZE-PARAMS-PROCESS-ID)
                        (CLIENT-INFO? :INITARG :CLIENT-INFO :DOCUMENTATION "*
 * Information about the client
 *
@@ -1251,14 +1260,18 @@
 * if no folder is open.
 *
 * @deprecated in favour of rootUri."
-                        :TYPE (COMMON-LISP:OR COMMON-LISP:STRING COMMON-LISP:NULL) :READER
-                        INITIALIZE-PARAMS-ROOT-PATH)
+                        :TYPE
+                        (COMMON-LISP:OR COMMON-LISP:STRING
+                                        (COMMON-LISP:OR COMMON-LISP:NULL (COMMON-LISP:EQL :NULL)))
+                        :READER INITIALIZE-PARAMS-ROOT-PATH)
                        (ROOT-URI :INITARG :ROOT-URI :DOCUMENTATION "*
 * The rootUri of the workspace. Is null if no
 * folder is open. If both `rootPath` and `rootUri` are set
 * `rootUri` wins."
-                        :TYPE (COMMON-LISP:OR DOCUMENT-URI COMMON-LISP:NULL) :READER
-                        INITIALIZE-PARAMS-ROOT-URI)
+                        :TYPE
+                        (COMMON-LISP:OR DOCUMENT-URI
+                                        (COMMON-LISP:OR COMMON-LISP:NULL (COMMON-LISP:EQL :NULL)))
+                        :READER INITIALIZE-PARAMS-ROOT-URI)
                        (INITIALIZATION-OPTIONS? :INITARG :INITIALIZATION-OPTIONS :DOCUMENTATION "*
 * User provided initialization options."
                         :TYPE COMMON-LISP:T :READER INITIALIZE-PARAMS-INITIALIZATION-OPTIONS)
@@ -1281,7 +1294,7 @@
 * @since 3.6.0"
                         :TYPE
                         (COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-ARRAY WORKSPACE-FOLDER)
-                                        COMMON-LISP:NULL)
+                                        (COMMON-LISP:OR COMMON-LISP:NULL (COMMON-LISP:EQL :NULL)))
                         :READER INITIALIZE-PARAMS-WORKSPACE-FOLDERS)))
 
 (COMMON-LISP:DEFCLASS TEXT-DOCUMENT-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)

@@ -481,7 +481,7 @@
 (defmethod to-lisp-type ((type simple-type))
   (switch ((simple-type-name type) :test #'string=)
     ("any" t)
-    ("boolean" 'boolean) ; TODO: jsonライブラリ毎のt/nilや:true/:falseという違いを考慮する
+    ("boolean" 'lem-lsp-utils/type:ts-boolean)
     ("number" 'number)
     ("string" 'string)
     ("null" '(or null (eql :null))) ; TODO: jsonライブラリ毎の:nullやnilという違いを考慮する

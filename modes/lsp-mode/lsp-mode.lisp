@@ -42,7 +42,7 @@
 
 (defun client-capabilities ()
   (json-lsp-utils:coerce-json
-   (yason:parse *client-capabilities-text*)
+   (yason:parse *client-capabilities-text* :json-booleans-as-symbols t)
    'protocol:client-capabilities))
 
 ;;;

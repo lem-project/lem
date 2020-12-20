@@ -74,6 +74,12 @@
          (json-type-error ())
          (:no-error (result)
            (return result)))))
+    ('ts-boolean
+     (unless (json-boolean-p value)
+       (error 'json-type-error :type type :value value :context context))
+     (if (eq value (json-true))
+         t
+         nil))
     (otherwise
      (let ((class (and (symbolp type)
                        (find-class type nil))))

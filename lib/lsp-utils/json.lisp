@@ -27,7 +27,8 @@
            :json-get*
            :json-object-length
            :json-array-p
-           :json-object-p))
+           :json-object-p
+           :json-boolean-p))
 (in-package :lem-lsp-utils/json)
 
 (cl-package-locks:lock-package :lem-lsp-utils/json)
@@ -95,6 +96,10 @@
 (defgeneric json-get-internal (json-backend json key default))
 (defgeneric json-object-length-internal (json-backend json))
 (defgeneric json-array-internal (json-backend vector))
+(defgeneric json-boolean-p-internal (json-backend value))
+
+(defmethod json-boolean-p-internal (json-backend value)
+  (member value (list (json-true) (json-false))))
 
 (defclass json-backend ()
   ((null :initarg :null :reader json-backend-null)
@@ -193,6 +198,9 @@
 (defmethod json-array-internal ((json-backend yason-backend) vector)
   vector)
 
+(defmethod json-boolean-p-internal ((json-backend yason-backend) value)
+  (member value '(yason:true t yason:false nil)))
+
 
 (defparameter *json-backend* (make-instance 'yason-backend))
 
@@ -239,3 +247,6 @@
 
 (defun json-object-p (value)
   (typep value (json-backend-object-type *json-backend*)))
+
+(defun json-boolean-p (value)
+  (json-boolean-p-internal *json-backend* value))

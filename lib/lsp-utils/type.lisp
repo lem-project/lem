@@ -8,7 +8,8 @@
            :ts-interface
            :ts-equal-specializer
            :ts-object
-           :ts-tuple))
+           :ts-tuple
+           :ts-boolean))
 (in-package :lem-lsp-utils/type)
 
 (cl-package-locks:lock-package :lem-lsp-utils/type)
@@ -27,8 +28,11 @@
 
 (deftype ts-object (key value)
   (declare (ignore key value))
-  `(satisfies json-object-p))
+  '(satisfies json-object-p))
 
 (deftype ts-tuple (&rest types)
   (declare (ignore types))
   '(satisfies json-array-p))
+
+(deftype ts-boolean ()
+  '(satisfies json-boolean-p))

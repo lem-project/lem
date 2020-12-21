@@ -1,7 +1,6 @@
 (defpackage :lem-lsp-mode/request
   (:use :cl)
-  (:import-from :lem-lsp-utils/json-lsp-utils
-                :make-json
+  (:import-from :lem-lsp-utils/json
                 :coerce-json
                 :object-to-json)
   (:import-from :lem-lsp-utils/type

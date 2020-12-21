@@ -1,10 +1,7 @@
 (defpackage :lem-lsp-mode/lsp-mode
   (:use :cl :lem :alexandria)
   (:shadow :execute-command)
-  (:import-from :lem-lsp-utils/uri)
-  (:import-from :lem-lsp-utils/json)
-  (:import-from :lem-lsp-utils/json-lsp-utils)
-  (:import-from :lem-lsp-utils/protocol)
+  (:import-from :lem-lsp-utils)
   (:import-from :lem-lsp-mode/utils)
   (:import-from :lem-lsp-mode/request)
   (:import-from :lem-lsp-mode/client)
@@ -14,7 +11,6 @@
 (cl-package-locks:lock-package :lem-lsp-mode/lsp-mode)
 (lem-lsp-mode/project:local-nickname :protocol :lem-lsp-utils/protocol)
 (lem-lsp-mode/project:local-nickname :json :lem-lsp-utils/json)
-(lem-lsp-mode/project:local-nickname :json-lsp-utils :lem-lsp-utils/json-lsp-utils)
 (lem-lsp-mode/project:local-nickname :utils :lem-lsp-mode/utils)
 (lem-lsp-mode/project:local-nickname :request :lem-lsp-mode/request)
 (lem-lsp-mode/project:local-nickname :client :lem-lsp-mode/client)
@@ -41,7 +37,7 @@
                                    "client-capabilities.json"))))
 
 (defun client-capabilities ()
-  (json-lsp-utils:coerce-json
+  (json:coerce-json
    (yason:parse *client-capabilities-text* :json-booleans-as-symbols t)
    'protocol:client-capabilities))
 
@@ -478,7 +474,7 @@
 
 (defun window/show-message (params)
   (request::do-request-log "window/showMessage" params :from :server)
-  (let* ((params (json-lsp-utils:coerce-json params 'protocol:show-message-params))
+  (let* ((params (json:coerce-json params 'protocol:show-message-params))
          (text (format nil "~A: ~A"
                        (switch ((protocol:show-message-params-type params) :test #'=)
                          (protocol:message-type.error
@@ -632,7 +628,7 @@
 
 (defun text-document/publish-diagnostics (params)
   (request::do-request-log "textDocument/publishDiagnostics" params :from :server)
-  (let ((params (json-lsp-utils:coerce-json params 'protocol:publish-diagnostics-params)))
+  (let ((params (json:coerce-json params 'protocol:publish-diagnostics-params)))
     (send-event (lambda () (highlight-diagnostics params)))))
 
 (define-command lsp-document-diagnostics () ()

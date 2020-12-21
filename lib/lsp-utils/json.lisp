@@ -18,6 +18,7 @@
            :yason-backend
            :make-json
            :object-to-json
+           :coerce-json
            :json-null
            :json-true
            :json-false
@@ -214,6 +215,10 @@
 
 (defun object-to-json (object)
   (object-to-json-internal *json-backend* object))
+
+(defvar *coerce-json-fn*)
+
+(defgeneric coerce-json (json type))
 
 (defun json-null ()
   (json-backend-null *json-backend*))

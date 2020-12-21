@@ -52,7 +52,7 @@
               :when (and (consp form)
                          (eq 'asdf:defsystem (first form))
                          (property-list-p (cddr form))
-                         (eq :package-inferred-system (getf (cddr form) :class)))
+                         #+(or)(eq :package-inferred-system (getf (cddr form) :class)))
               :collect (destructuring-bind (&key pathname &allow-other-keys)
                            (cddr form)
                          (make-project-root

@@ -410,7 +410,8 @@
 
 (define-command scheme-insert-space-and-autodoc (n) ("p")
   (loop :repeat n :do (insert-character (current-point) #\space))
-  (when (eq *use-scheme-autodoc* t)
+  (when (and (eq *use-scheme-autodoc* t)
+             (connected-p))
     (scheme-autodoc)))
 
 (defun check-parens ()

@@ -261,7 +261,7 @@
     (charms/ll:wtimeout *padwin* 0))
   (let ((code (charms/ll:wgetch *padwin*)))
     ;; drop some input for Windows Terminal (windows 10)
-    ;; (they appears when we input surrogate pair characters)
+    ;; (they appear when we input surrogate pair characters)
     (when (windows-term-setting-winterm-input (windows-term-setting))
       (when (= code #x020b)
         (setf code (charms/ll:wgetch *padwin*))
@@ -305,7 +305,7 @@
     (apply #'format out fmt args)
     (terpri out)))
 
-;; overwite method (use only stdscr)
+;; overwrite method (use only stdscr)
 ;;  (we don't make a new scrwin to avoid the display corruption of
 ;;   horizontal splitted window with wide characters)
 (defmethod lem-if:make-view
@@ -619,7 +619,7 @@
            ((= code #x09c) (setf code 31)) ; C-_ (Redo) for mintty
            )))
       code))
-  ;; overwite function (workaround for exit problem)
+  ;; overwrite function (workaround for exit problem)
   (defun get-event (&optional esc-delaying)
     (let ((code (get-charcode-from-input)))
       (cond
@@ -655,7 +655,7 @@
         (t
          (get-key code))))))
 
-;; overwite function (workaround for exit problem)
+;; overwrite function (workaround for exit problem)
 (defun input-loop (editor-thread)
   (handler-case
       (loop

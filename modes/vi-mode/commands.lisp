@@ -563,8 +563,8 @@
 (defun forward-matching-paren (p &optional skip)
   (with-point ((p p))
     (when (or skip (syntax-open-paren-char-p (character-at p)))
-      (scan-lists p 1 0)
-      (character-offset p *cursor-offset*))))
+      (when (scan-lists p 1 0 t)
+        (character-offset p *cursor-offset*)))))
 
 (defun backward-matching-paren (p)
   (when (syntax-closed-paren-char-p (character-at p))

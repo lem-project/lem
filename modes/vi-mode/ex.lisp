@@ -27,8 +27,8 @@
                                   (mapcar (lambda (filename)
                                             (let ((label (tail-of-pathname filename))
                                                   (prefix-len (- (length str) (length comp-str))))
-                                              (with-point ((s (lem::minibuffer-start-point))
-                                                           (e (lem::minibuffer-start-point)))
+                                              (with-point ((s (lem.prompt-window::prompt-start-point))
+                                                           (e (lem.prompt-window::prompt-start-point)))
                                                 (lem.completion-mode:make-completion-item
                                                  :label label
                                                  :start (character-offset

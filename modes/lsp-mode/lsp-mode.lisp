@@ -1519,7 +1519,10 @@
   (getf spec :mode))
 
 (defun spec-command (spec)
-  (getf spec :command))
+  (let ((command (getf spec :command)))
+    (if (or (symbolp command) (functionp command))
+        (funcall command)
+        command)))
 
 (defun spec-port (spec)
   (getf spec :port))
@@ -1541,6 +1544,39 @@
   :language-id "javascript"
   :root-uri-patterns '("package.json" "tsconfig.json")
   :command '("typescript-language-server" "--stdio")
+  :mode :stdio)
+
+(defun find-dart-bin-path ()
+  (multiple-value-bind (output error-output status)
+      (uiop:run-program '("which" "dart")
+                        :output :string
+                        :ignore-error-status t)
+    (declare (ignore error-output))
+    (if (zerop status)
+        (namestring
+         (uiop:pathname-directory-pathname
+          (string-right-trim '(#\newline) output)))
+        nil)))
+
+(defun find-dart-language-server ()
+  (let ((program-name "analysis_server.dart.snapshot"))
+    (when-let (path (find-dart-bin-path))
+      (let ((result
+              (string-right-trim
+               '(#\newline)
+               (uiop:run-program (list "find" path "-name" program-name)
+                                 :output :string))))
+        (when (search program-name result)
+          result)))))
+
+(defun dart-startup-lsp-command ()
+  (if-let ((lsp-path (find-dart-language-server)))
+    (list "dart" lsp-path "--lsp")
+    (editor-error "dart language server not found")))
+
+(def-language-spec lem-dart-mode:dart-mode
+  :language-id "dart"
+  :command 'dart-startup-lsp-command
   :mode :stdio)
 
 #|

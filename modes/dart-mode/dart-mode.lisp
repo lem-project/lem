@@ -87,6 +87,35 @@ see : https://dart.dev/guides/language/language-tour
                           :name 'syntax-builtin-attribute))))
     (make-tmlanguage :patterns patterns)))
 
+(defun current-indent (point)
+  (point-column (back-to-indentation point)))
+
+(defun string-or-comment-indent (point)
+  (line-start point)
+  (+ (current-indent point)
+     (variable-value 'tab-width :buffer point)))
+
+(defun calc-indent-1 (point)
+  (line-start point)
+  (skip-whitespace-forward point t)
+  (cond ((member (character-at point) '(#\) #\}))
+         (scan-lists point -1 1)
+         (current-indent point))
+        (t
+         (line-offset point -1)
+         (line-end point)
+         (skip-whitespace-backward point)
+         (let ((offset (if (member (character-at point -1) '(#\{ #\( #\,))
+                           2
+                           0)))
+           (+ (current-indent point) offset)))))
+
+(defun calc-indent (point)
+  (line-start point)
+  (if (in-string-or-comment-p point)
+      (string-or-comment-indent point)
+      (calc-indent-1 point)))
+
 (defvar *dart-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab #\newline)
@@ -106,6 +135,7 @@ see : https://dart.dev/guides/language/language-tour
      :syntax-table *dart-syntax-table*
      :mode-hook *dart-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t
+        (variable-value 'calc-indent-function) 'calc-indent
         (variable-value 'tab-width) 2
         (variable-value 'line-comment) "//"
         (variable-value 'insertion-line-comment) "// "))

@@ -1576,6 +1576,7 @@
 
 (def-language-spec lem-dart-mode:dart-mode
   :language-id "dart"
+  :root-uri-patterns '("pubspec.yaml")
   :command 'dart-startup-lsp-command
   :mode :stdio)
 

@@ -18,18 +18,6 @@
 (lem-lsp-mode/project:local-nickname :context-menu :lem-lsp-mode/context-menu)
 
 ;;;
-(defmacro with-editor-thread (() &body body)
-  `(send-event
-    (lambda ()
-      ,@body
-      (redraw-display))))
-
-(defmacro lambda-with-editor-thread ((value) &body body)
-  `(lambda (,value)
-     (with-editor-thread ()
-       ,@body)))
-
-;;;
 (defparameter *client-capabilities-text*
   (load-time-value
    (uiop:read-file-string

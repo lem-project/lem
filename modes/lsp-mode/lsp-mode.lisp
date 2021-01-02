@@ -1055,15 +1055,16 @@
 (defun text-document/document-highlight (point)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-document-highlight-p workspace)
-      (request:request-async
+      (async-request
        (workspace-client workspace)
        (make-instance 'request:document-highlight
                       :params (apply #'make-instance
                                      'protocol:document-highlight-params
                                      (make-text-document-position-arguments point)))
-       (lambda-with-editor-thread (value)
-         (display-document-highlights (point-buffer point)
-                                      value))))))
+       :then (lambda (value)
+               (display-document-highlights (point-buffer point)
+                                            value)
+               (redraw-display))))))
 
 (defun document-highlight-calls-timer ()
   (when (mode-active-p (current-buffer) 'lsp-mode)

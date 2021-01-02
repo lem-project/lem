@@ -157,4 +157,15 @@ see : https://dart.dev/guides/language/language-tour
         (variable-value 'line-comment) "//"
         (variable-value 'insertion-line-comment) "// "))
 
+(define-key *dart-mode-keymap* "Tab" 'dart-insert-indent)
+
+(define-command dart-insert-indent (n) ("p")
+  (with-point ((point (current-point)))
+    (back-to-indentation point)
+    (when (point< (current-point) point)
+      (move-point (current-point) point))
+    (insert-string point
+                   (make-string (* n (variable-value 'tab-width))
+                                :initial-element #\space))))
+
 (pushnew (cons "\\.dart$" 'dart-mode) *auto-mode-alist* :test #'equal)

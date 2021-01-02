@@ -87,6 +87,9 @@ see : https://dart.dev/guides/language/language-tour
                           :name 'syntax-builtin-attribute))))
     (make-tmlanguage :patterns patterns)))
 
+(defun dart-indent-size ()
+  (variable-value 'tab-width))
+
 (defun current-indent (point)
   (point-column (back-to-indentation point)))
 
@@ -114,15 +117,15 @@ see : https://dart.dev/guides/language/language-tour
            (skip-whitespace-backward point)
            (let* ((before-char (character-at point -1))
                   (offset (cond ((member before-char '(#\{ #\( #\: #\[))
-                                 2)
+                                 (dart-indent-size))
                                 ((case-line-p start)
-                                 -2)
+                                 (- (dart-indent-size)))
                                 ((and (char= before-char #\))
                                       (with-point ((point point))
                                         (scan-lists point -1 0)
                                         (skip-whitespace-backward point)
                                         (string= "if" (symbol-string-at-point point))))
-                                 2)
+                                 (dart-indent-size))
                                 (t
                                  0))))
              (+ (current-indent point) offset))))))

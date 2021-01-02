@@ -90,30 +90,47 @@ see : https://dart.dev/guides/language/language-tour
 (defun current-indent (point)
   (point-column (back-to-indentation point)))
 
-(defun string-or-comment-indent (point)
+(defun step-indent (point)
   (line-start point)
   (+ (current-indent point)
      (variable-value 'tab-width :buffer point)))
 
+(defun case-line-p (point)
+  (with-point ((point point))
+    (line-start point)
+    (skip-whitespace-forward point t)
+    (member (symbol-string-at-point point) '("case" "default") :test #'string=)))
+
 (defun calc-indent-1 (point)
   (line-start point)
   (skip-whitespace-forward point t)
-  (cond ((member (character-at point) '(#\) #\}))
+  (cond ((member (character-at point) '(#\) #\} #\]))
          (scan-lists point -1 1)
          (current-indent point))
         (t
-         (line-offset point -1)
-         (line-end point)
-         (skip-whitespace-backward point)
-         (let ((offset (if (member (character-at point -1) '(#\{ #\(
-                           2
-                           0)))
-           (+ (current-indent point) offset)))))
+         (with-point ((start point))
+           (line-offset point -1)
+           (line-end point)
+           (skip-whitespace-backward point)
+           (let* ((before-char (character-at point -1))
+                  (offset (cond ((member before-char '(#\{ #\( #\: #\[))
+                                 2)
+                                ((case-line-p start)
+                                 -2)
+                                ((and (char= before-char #\))
+                                      (with-point ((point point))
+                                        (scan-lists point -1 0)
+                                        (skip-whitespace-backward point)
+                                        (string= "if" (symbol-string-at-point point))))
+                                 2)
+                                (t
+                                 0))))
+             (+ (current-indent point) offset))))))
 
 (defun calc-indent (point)
   (line-start point)
   (if (in-string-or-comment-p point)
-      (string-or-comment-indent point)
+      (step-indent point)
       (calc-indent-1 point)))
 
 (defvar *dart-syntax-table*

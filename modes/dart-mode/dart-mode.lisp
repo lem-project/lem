@@ -105,7 +105,7 @@ see : https://dart.dev/guides/language/language-tour
          (line-offset point -1)
          (line-end point)
          (skip-whitespace-backward point)
-         (let ((offset (if (member (character-at point -1) '(#\{ #\( #\,))
+         (let ((offset (if (member (character-at point -1) '(#\{ #\(
                            2
                            0)))
            (+ (current-indent point) offset)))))

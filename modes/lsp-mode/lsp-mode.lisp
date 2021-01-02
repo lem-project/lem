@@ -183,9 +183,10 @@
     (handler-case
         (progn
           (add-hook *exit-editor-hook* 'quit-all-server-process)
-          (ensure-lsp-buffer buffer)
-          (text-document/did-open buffer)
-          (enable-document-highlight-idle-timer))
+          (ensure-lsp-buffer buffer
+                             (lambda ()
+                               (text-document/did-open buffer)
+                               (enable-document-highlight-idle-timer))))
       (editor-error (c)
         (message "~A" c)))))
 
@@ -288,17 +289,18 @@
     (setf (gethash character (workspace-trigger-characters workspace))
           #'lsp-signature-help-with-trigger-character)))
 
-(defun initialize-workspace (workspace)
+(defun initialize-workspace (workspace continuation)
   (jsonrpc:expose (client:client-connection (workspace-client workspace))
                   "textDocument/publishDiagnostics"
                   'text-document/publish-diagnostics)
   (jsonrpc:expose (client:client-connection (workspace-client workspace))
                   "window/showMessage"
                   'window/show-message)
-  (initialize workspace)
-  (initialized workspace)
-  (push workspace *workspaces*)
-  workspace)
+  (initialize workspace
+              (lambda ()
+                (initialized workspace)
+                (push workspace *workspaces*)
+                (funcall continuation workspace))))
 
 (defun establish-connection (spec)
   (when (ensure-running-server-process spec)
@@ -315,7 +317,7 @@
             :finally (editor-error "Could not establish a connection with the Language Server (condition: ~A)"
                                    condition)))))
 
-(defun ensure-lsp-buffer (buffer)
+(defun ensure-lsp-buffer (buffer &optional continuation)
   (let* ((spec (buffer-language-spec buffer))
          (root-uri (lem-lsp-utils/uri:pathname-to-uri
                     (find-root-pathname (buffer-directory buffer)
@@ -323,15 +325,18 @@
     (handler-bind ((error (lambda (c)
                             (declare (ignore c))
                             (kill-server-process spec))))
-      (let* ((new-client (establish-connection spec))
-             (workspace
-               (if new-client
-                   (initialize-workspace
-                    (make-workspace :client new-client
-                                    :root-uri root-uri
-                                    :language-id (spec-langauge-id spec)))
-                   (find-workspace (spec-langauge-id spec) :errorp t))))
-        (assign-workspace-to-buffer buffer workspace)))))
+      (let ((new-client (establish-connection spec)))
+        (if (null new-client)
+            (let ((workspace (find-workspace (spec-langauge-id spec) :errorp t)))
+              (assign-workspace-to-buffer buffer workspace)
+              (when continuation (funcall continuation)))
+            (initialize-workspace
+             (make-workspace :client new-client
+                             :root-uri root-uri
+                             :language-id (spec-langauge-id spec))
+             (lambda (workspace)
+               (assign-workspace-to-buffer buffer workspace)
+               (when continuation (funcall continuation)))))))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))
@@ -425,28 +430,28 @@
 
 ;;; General Messages
 
-(defun initialize (workspace)
-  (let ((initialize-result
-          (request:request
-           (workspace-client workspace)
-           (make-instance
-            'request:initialize-request
-            :params (make-instance
-                     'protocol:initialize-params
-                     :process-id (utils:get-pid)
-                     :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
-                     :root-uri (workspace-root-uri workspace)
-                     :capabilities (client-capabilities)
-                     :trace "off"
-                     :workspace-folders (json:json-null))))))
-    (setf (workspace-server-capabilities workspace)
-          (protocol:initialize-result-capabilities initialize-result))
-    (handler-case (protocol:initialize-result-server-info initialize-result)
-      (unbound-slot () nil)
-      (:no-error (server-info)
-        (setf (workspace-server-info workspace)
-              server-info))))
-  (values))
+(defun initialize (workspace continuation)
+  (async-request
+   (workspace-client workspace)
+   (make-instance
+    'request:initialize-request
+    :params (make-instance
+             'protocol:initialize-params
+             :process-id (utils:get-pid)
+             :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
+             :root-uri (workspace-root-uri workspace)
+             :capabilities (client-capabilities)
+             :trace "off"
+             :workspace-folders (json:json-null)))
+   :then (lambda (initialize-result)
+           (setf (workspace-server-capabilities workspace)
+                 (protocol:initialize-result-capabilities initialize-result))
+           (handler-case (protocol:initialize-result-server-info initialize-result)
+             (unbound-slot () nil)
+             (:no-error (server-info)
+               (setf (workspace-server-info workspace)
+                     server-info)))
+           (funcall continuation))))
 
 (defun initialized (workspace)
   (request:request (workspace-client workspace)

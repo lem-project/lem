@@ -671,12 +671,12 @@
     (let ((contents (protocol:hover-contents hover)))
       (cond
         ;; MarkedString
-        ((json:json-object-p contents)
+        ((typep contents 'protocol::marked-string)
          (marked-string-to-string contents))
         ;; MarkedString[]
         ((json:json-array-p contents)
          (with-output-to-string (out)
-           (dolist (content contents)
+           (lem-utils:do-sequence (content contents)
              (write-string (marked-string-to-string content)
                            out))))
         ;; MarkupContent

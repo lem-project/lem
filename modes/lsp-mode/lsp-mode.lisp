@@ -513,13 +513,27 @@
                                                          :uri (buffer-uri buffer))
                            :content-changes content-changes))))
 
+(defun provide-did-save-text-document-p (workspace)
+  (let ((sync (protocol:server-capabilities-text-document-sync
+               (workspace-server-capabilities workspace))))
+    (etypecase sync
+      (number
+       (member sync
+               (list protocol:text-document-sync-kind.full
+                     protocol:text-document-sync-kind.incremental)))
+      (protocol:text-document-sync-options
+       (handler-case (protocol:text-document-sync-options-save sync)
+         (unbound-slot ()
+           nil))))))
+
 (defun text-document/did-save (buffer)
-  (request:request
-   (workspace-client (buffer-workspace buffer))
-   (make-instance 'request:text-document-did-save
-                  :params (make-instance 'protocol:did-save-text-document-params
-                                         :text-document (make-text-document-identifier buffer)
-                                         :text (buffer-text buffer)))))
+  (when (provide-did-save-text-document-p (buffer-workspace buffer))
+    (request:request
+     (workspace-client (buffer-workspace buffer))
+     (make-instance 'request:text-document-did-save
+                    :params (make-instance 'protocol:did-save-text-document-params
+                                           :text-document (make-text-document-identifier buffer)
+                                           :text (buffer-text buffer))))))
 
 (defun text-document/did-close (buffer)
   (request:request

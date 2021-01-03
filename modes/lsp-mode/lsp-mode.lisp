@@ -43,6 +43,11 @@
 (defun make-server-process-buffer (spec)
   (make-buffer (server-process-buffer-name spec)))
 
+(defun get-spec-command (spec &rest args)
+  (if (functionp (spec-command spec))
+      (apply (spec-command spec) args)
+      (spec-command spec)))
+
 (defmethod run-server-using-mode ((mode (eql :tcp)) spec)
   (flet ((output-callback (string)
            (let* ((buffer (make-server-process-buffer spec))
@@ -51,14 +56,14 @@
              (insert-string point string))))
     (let* ((port (or (spec-port spec) (lem-utils/socket:random-available-port)))
            (process (when (spec-command spec)
-                      (lem-process:run-process (funcall (spec-command spec) port)
+                      (lem-process:run-process (get-spec-command spec port)
                                                :output-callback #'output-callback))))
       (make-server-info :process process
                         :port port
                         :disposable (lambda () (lem-process:delete-process process))))))
 
 (defmethod run-server-using-mode ((mode (eql :stdio)) spec)
-  (let ((process (async-process:create-process (spec-command spec) :nonblock nil)))
+  (let ((process (async-process:create-process (get-spec-command spec) :nonblock nil)))
     (make-server-info :process process
                       :disposable (lambda () (async-process:delete-process process)))))
 
@@ -1519,10 +1524,7 @@
   (getf spec :mode))
 
 (defun spec-command (spec)
-  (let ((command (getf spec :command)))
-    (if (or (symbolp command) (functionp command))
-        (funcall command)
-        command)))
+  (getf spec :command))
 
 (defun spec-port (spec)
   (getf spec :port))
@@ -1577,7 +1579,7 @@
 (def-language-spec lem-dart-mode:dart-mode
   :language-id "dart"
   :root-uri-patterns '("pubspec.yaml")
-  :command 'dart-startup-lsp-command
+  :command #'dart-startup-lsp-command
   :mode :stdio)
 
 #|

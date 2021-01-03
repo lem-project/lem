@@ -136,6 +136,23 @@ see : https://dart.dev/guides/language/language-tour
       (step-indent point)
       (calc-indent-1 point)))
 
+(defun beginning-of-defun (point n)
+  (loop :repeat n
+        :do (loop
+              (unless (line-offset point -1)
+                (return-from beginning-of-defun))
+              (when (syntax-symbol-char-p (character-at point))
+                (return)))))
+
+(defun end-of-defun (point n)
+  (loop :repeat n
+        :do (loop
+              (unless (line-offset point 1)
+                (return-from end-of-defun))
+              (when (syntax-closed-paren-char-p (character-at point))
+                (line-offset point 1)
+                (return)))))
+
 (defvar *dart-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab #\newline)
@@ -157,6 +174,8 @@ see : https://dart.dev/guides/language/language-tour
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'calc-indent-function) 'calc-indent
         (variable-value 'tab-width) 2
+        (variable-value 'beginning-of-defun-function) 'beginning-of-defun
+        (variable-value 'end-of-defun-function) 'end-of-defun
         (variable-value 'line-comment) "//"
         (variable-value 'insertion-line-comment) "// "))
 

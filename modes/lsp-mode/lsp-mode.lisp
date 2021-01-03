@@ -191,7 +191,8 @@
           (ensure-lsp-buffer buffer
                              (lambda ()
                                (text-document/did-open buffer)
-                               (enable-document-highlight-idle-timer))))
+                               (enable-document-highlight-idle-timer)
+                               (redraw-display))))
       (editor-error (c)
         (message "~A" c)))))
 
@@ -331,17 +332,20 @@
                             (declare (ignore c))
                             (kill-server-process spec))))
       (let ((new-client (establish-connection spec)))
-        (if (null new-client)
-            (let ((workspace (find-workspace (spec-langauge-id spec) :errorp t)))
-              (assign-workspace-to-buffer buffer workspace)
-              (when continuation (funcall continuation)))
-            (initialize-workspace
-             (make-workspace :client new-client
-                             :root-uri root-uri
-                             :language-id (spec-langauge-id spec))
-             (lambda (workspace)
-               (assign-workspace-to-buffer buffer workspace)
-               (when continuation (funcall continuation)))))))))
+        (cond ((null new-client)
+               (let ((workspace (find-workspace (spec-langauge-id spec) :errorp t)))
+                 (assign-workspace-to-buffer buffer workspace)
+                 (when continuation (funcall continuation))))
+              (t
+               (start-loading-spinner buffer)
+               (initialize-workspace
+                (make-workspace :client new-client
+                                :root-uri root-uri
+                                :language-id (spec-langauge-id spec))
+                (lambda (workspace)
+                  (stop-loading-spinner buffer)
+                  (assign-workspace-to-buffer buffer workspace)
+                  (when continuation (funcall continuation))))))))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))
@@ -1583,6 +1587,53 @@
   :root-uri-patterns '("pubspec.yaml")
   :command #'dart-startup-lsp-command
   :mode :stdio)
+
+;;;
+(defclass spinner ()
+  ((frames :initform #("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
+           :reader spinner-frames)
+   (frame-index :initform 0
+                :accessor spinner-frame-index)
+   (timer :initarg :timer
+          :reader spinner-timer)))
+
+(defvar *spinner-table* (make-hash-table))
+
+(defun buffer-spinner (buffer)
+  (gethash (buffer-major-mode buffer) *spinner-table*))
+
+(defun (setf buffer-spinner) (spinner buffer)
+  (setf (gethash (buffer-major-mode buffer) *spinner-table*)
+        spinner))
+
+(defmethod convert-modeline-element ((spinner spinner) window)
+  (let ((attribute (merge-attribute (ensure-attribute 'modeline t)
+                                    (make-attribute :foreground "yellow"))))
+    (values (format nil
+                    "~A initializing  "
+                    (elt (spinner-frames spinner)
+                         (spinner-frame-index spinner)))
+            attribute
+            :right)))
+
+(defun update-spinner-frame ()
+  (when-let ((spinner (buffer-spinner (current-buffer))))
+    (setf (spinner-frame-index spinner)
+          (mod (1+ (spinner-frame-index spinner))
+               (length (spinner-frames spinner))))))
+
+(defun start-loading-spinner (buffer)
+  (unless (buffer-spinner buffer)
+    (let* ((timer (start-timer 80 t 'update-spinner-frame))
+           (spinner (make-instance 'spinner :timer timer)))
+      (modeline-add-status-list spinner buffer)
+      (setf (buffer-spinner buffer) spinner))))
+
+(defun stop-loading-spinner (buffer)
+  (when-let ((spinner (buffer-spinner buffer)))
+    (modeline-remove-status-list spinner buffer)
+    (stop-timer (spinner-timer spinner))
+    (setf (buffer-spinner buffer) nil)))
 
 #|
 Language Features

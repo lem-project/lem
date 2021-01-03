@@ -827,7 +827,11 @@
                       (unbound-slot () nil))))
               (when (< active-parameter (length parameters))
                 ;; TODO: labelが[number, number]の場合に対応する
-                (let ((label (protocol:parameter-information-label (elt parameters active-parameter))))
+                (let ((label (protocol:parameter-information-label
+                              (elt parameters
+                                   (if (<= 0 active-parameter (1- (length parameters)))
+                                       active-parameter
+                                       0)))))
                   (when (stringp label)
                     (with-point ((p point))
                       (line-start p)
@@ -840,7 +844,9 @@
           (handler-case (protocol:signature-information-documentation signature)
             (unbound-slot () nil)
             (:no-error (documentation)
-              (insert-string point documentation)))))
+              (if (typep documentation 'protocol:markup-content)
+                  (insert-string point (protocol:markup-content-value documentation))
+                  (insert-string point documentation))))))
       (buffer-start (buffer-point buffer))
       (message-buffer buffer))))
 

@@ -501,12 +501,13 @@
 (defun text-document/did-change (buffer content-changes)
   (request:request
    (workspace-client (buffer-workspace buffer))
-   (make-instance 'request:text-document-did-change
-                  :params (make-instance 'protocol:did-change-text-document-params
-                                         :text-document (make-instance 'protocol:versioned-text-document-identifier
-                                                                       :version (buffer-version buffer)
-                                                                       :uri (buffer-uri buffer))
-                                         :content-changes content-changes))))
+   (make-instance
+    'request:text-document-did-change
+    :params (make-instance 'protocol:did-change-text-document-params
+                           :text-document (make-instance 'protocol:versioned-text-document-identifier
+                                                         :version (buffer-version buffer)
+                                                         :uri (buffer-uri buffer))
+                           :content-changes content-changes))))
 
 (defun text-document/did-save (buffer)
   (request:request
@@ -840,12 +841,13 @@
           (display-signature-help result))))))
 
 (defun lsp-signature-help-with-trigger-character (character)
-  (text-document/signature-help (current-point)
-                                (make-instance 'protocol:signature-help-context
-                                               :trigger-kind protocol:signature-help-trigger-kind.trigger-character
-                                               :trigger-character (string character)
-                                               :is-retrigger (json:json-false)
-                                               #|:active-signature-help|#)))
+  (text-document/signature-help
+   (current-point)
+   (make-instance 'protocol:signature-help-context
+                  :trigger-kind protocol:signature-help-trigger-kind.trigger-character
+                  :trigger-character (string character)
+                  :is-retrigger (json:json-false)
+                  #|:active-signature-help|#)))
 
 (define-command lsp-signature-help () ()
   (check-connection)

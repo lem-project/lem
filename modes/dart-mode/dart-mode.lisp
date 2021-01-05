@@ -179,7 +179,7 @@ see : https://dart.dev/guides/language/language-tour
         (variable-value 'line-comment) "//"
         (variable-value 'insertion-line-comment) "// "))
 
-(define-key *dart-mode-keymap* "Tab" 'dart-insert-indent)
+;; (define-key *dart-mode-keymap* "Tab" 'dart-insert-indent)
 
 (define-command dart-insert-indent (n) ("p")
   (with-point ((point (current-point)))

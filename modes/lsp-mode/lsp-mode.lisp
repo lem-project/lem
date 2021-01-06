@@ -176,8 +176,7 @@
     (:name "lsp"
      :enable-hook 'enable-hook)
   (setf (variable-value 'lem.language-mode:completion-spec)
-        (completion:make-completion-spec #'text-document/completion
-                                         :prefix-search t))
+        (completion:make-completion-spec #'text-document/completion))
   (setf (variable-value 'lem.language-mode:find-definitions-function)
         #'find-definitions)
   (setf (variable-value 'lem.language-mode:find-references-function)

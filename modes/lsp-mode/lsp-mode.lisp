@@ -824,7 +824,8 @@
                     (handler-case
                         (protocol:signature-information-parameters signature)
                       (unbound-slot () nil))))
-              (when (< active-parameter (length parameters))
+              (when (and (plusp (length parameters))
+                         (< active-parameter (length parameters)))
                 ;; TODO: labelが[number, number]の場合に対応する
                 (let ((label (protocol:parameter-information-label
                               (elt parameters

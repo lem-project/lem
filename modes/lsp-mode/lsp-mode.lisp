@@ -838,7 +838,8 @@
                       (when (search-forward p label)
                         (with-point ((start p))
                           (character-offset start (- (length label)))
-                          (put-text-property start p :attribute 'signature-help-active-parameter-attribute)))))))))
+                          (put-text-property start p
+                                             :attribute 'signature-help-active-parameter-attribute)))))))))
           (insert-character point #\space)
           (insert-character point #\newline)
           (handler-case (protocol:signature-information-documentation signature)

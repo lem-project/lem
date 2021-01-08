@@ -178,6 +178,36 @@
     (stop-timer (spinner-timer spinner))
     (setf (buffer-spinner buffer) nil)))
 
+
+;;;
+(defclass spec ()
+  ((language-id
+    :initarg :language-id
+    :initform (required-argument :language-id)
+    :reader spec-language-id)
+   (root-uri-patterns
+    :initarg :root-uri-patterns
+    :initform nil
+    :reader spec-root-uri-patterns)
+   (command
+    :initarg :command
+    :initform nil
+    :reader spec-command)
+   (mode
+    :initarg :mode
+    :initform (required-argument :mode)
+    :reader spec-mode)
+   (port
+    :initarg :port
+    :initform nil
+    :reader spec-port)))
+
+(defun get-language-spec (major-mode)
+  (make-instance (get major-mode 'spec)))
+
+(defun register-language-spec (major-mode spec-name)
+  (setf (get major-mode 'spec) spec-name))
+
 ;;;
 (defvar *workspaces* '())
 
@@ -1584,35 +1614,9 @@
     (ensure-lsp-buffer (current-buffer))))
 
 ;;;
-(defclass spec ()
-  ((language-id
-    :initarg :language-id
-    :initform (required-argument :language-id)
-    :reader spec-language-id)
-   (root-uri-patterns
-    :initarg :root-uri-patterns
-    :initform nil
-    :reader spec-root-uri-patterns)
-   (command
-    :initarg :command
-    :initform nil
-    :reader spec-command)
-   (mode
-    :initarg :mode
-    :initform (required-argument :mode)
-    :reader spec-mode)
-   (port
-    :initarg :port
-    :initform nil
-    :reader spec-port)))
-
-(defun get-language-spec (major-mode)
-  (make-instance (get major-mode 'spec)))
-
-;;;
 (defmacro define-language-spec ((spec-name major-mode) &body initargs)
   `(progn
-     (setf (get ',major-mode 'spec) ',spec-name)
+     (register-language-spec ',major-mode ',spec-name)
      ,(when (mode-hook major-mode)
         `(add-hook ,(mode-hook major-mode) 'lsp-mode))
      (defclass ,spec-name (spec) ()

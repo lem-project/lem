@@ -180,6 +180,9 @@
 
 
 ;;;
+(defgeneric spec-initialization-options (spec)
+  (:method (spec) nil))
+
 (defclass spec ()
   ((language-id
     :initarg :language-id
@@ -524,14 +527,16 @@
    (workspace-client workspace)
    (make-instance
     'request:initialize-request
-    :params (make-instance
-             'protocol:initialize-params
-             :process-id (utils:get-pid)
-             :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
-             :root-uri (workspace-root-uri workspace)
-             :capabilities (client-capabilities)
-             :trace "off"
-             :workspace-folders (json:json-null)))
+    :params (apply #'make-instance
+                   'protocol:initialize-params
+                   :process-id (utils:get-pid)
+                   :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
+                   :root-uri (workspace-root-uri workspace)
+                   :capabilities (client-capabilities)
+                   :trace "off"
+                   :workspace-folders (json:json-null)
+                   (when-let ((value (spec-initialization-options (workspace-spec workspace))))
+                     (list :initialization-options value))))
    :then (lambda (initialize-result)
            (setf (workspace-server-capabilities workspace)
                  (protocol:initialize-result-capabilities initialize-result))
@@ -1670,6 +1675,10 @@
   :root-uri-patterns '("pubspec.yaml")
   :command #'dart-startup-lsp-command
   :mode :stdio)
+
+(defmethod spec-initialization-options ((spec dart-spec))
+  (json:make-json "onlyAnalyzeProjectsWithOpenFiles" (json:json-true)
+                  "suggestFromUnimportedLibraries" (json:json-true)))
 
 #|
 Language Features

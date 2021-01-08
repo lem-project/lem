@@ -38,7 +38,7 @@
   disposable)
 
 (defun server-process-buffer-name (spec)
-  (format nil "*Lsp <~A>*" (spec-langauge-id spec)))
+  (format nil "*Lsp <~A>*" (spec-language-id spec)))
 
 (defun make-server-process-buffer (spec)
   (make-buffer (server-process-buffer-name spec)))
@@ -71,14 +71,14 @@
   (run-server-using-mode (spec-mode spec) spec))
 
 (defun get-running-server-info (spec)
-  (gethash (spec-langauge-id spec) *language-id-server-info-map*))
+  (gethash (spec-language-id spec) *language-id-server-info-map*))
 
 (defun remove-server-info (spec)
-  (remhash (spec-langauge-id spec) *language-id-server-info-map*))
+  (remhash (spec-language-id spec) *language-id-server-info-map*))
 
 (defun ensure-running-server-process (spec)
   (unless (get-running-server-info spec)
-    (setf (gethash (spec-langauge-id spec) *language-id-server-info-map*)
+    (setf (gethash (spec-language-id spec) *language-id-server-info-map*)
           (run-server spec))
     t))
 
@@ -209,7 +209,7 @@
 (defun buffer-language-id (buffer)
   (let ((spec (buffer-language-spec buffer)))
     (when spec
-      (spec-langauge-id spec))))
+      (spec-language-id spec))))
 
 (defun buffer-version (buffer)
   (buffer-modified-tick buffer))
@@ -380,7 +380,7 @@
                             (kill-server-process spec))))
       (let ((new-client (establish-connection spec)))
         (cond ((null new-client)
-               (let ((workspace (find-workspace (spec-langauge-id spec) :errorp t)))
+               (let ((workspace (find-workspace (spec-language-id spec) :errorp t)))
                  (assign-workspace-to-buffer buffer workspace)
                  (when continuation (funcall continuation))))
               (t
@@ -388,7 +388,7 @@
                (initialize-workspace
                 (make-workspace :client new-client
                                 :root-uri root-uri
-                                :language-id (spec-langauge-id spec))
+                                :language-id (spec-language-id spec))
                 (lambda (workspace)
                   (stop-loading-spinner buffer)
                   (assign-workspace-to-buffer buffer workspace)
@@ -1589,7 +1589,7 @@
 (defun get-language-spec (major-mode)
   (gethash major-mode *language-spec-table*))
 
-(defun spec-langauge-id (spec)
+(defun spec-language-id (spec)
   (getf spec :language-id))
 
 (defun spec-root-uri-patterns (spec)

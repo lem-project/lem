@@ -214,10 +214,13 @@
 (defstruct workspace
   root-uri
   client
-  language-id
+  spec
   server-capabilities
   server-info
   (trigger-characters (make-hash-table)))
+
+(defun workspace-language-id (workspace)
+  (spec-language-id (workspace-spec workspace)))
 
 (defun find-workspace (language-id &key (errorp t))
   (dolist (workspace *workspaces*
@@ -418,7 +421,7 @@
                (initialize-workspace
                 (make-workspace :client new-client
                                 :root-uri root-uri
-                                :language-id (spec-language-id spec))
+                                :spec spec)
                 (lambda (workspace)
                   (stop-loading-spinner buffer)
                   (assign-workspace-to-buffer buffer workspace)

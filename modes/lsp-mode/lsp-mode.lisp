@@ -44,9 +44,10 @@
   (make-buffer (server-process-buffer-name spec)))
 
 (defun get-spec-command (spec &rest args)
-  (if (functionp (spec-command spec))
-      (apply (spec-command spec) args)
-      (spec-command spec)))
+  (let ((command (spec-command spec)))
+    (if (functionp command)
+        (apply command args)
+        command)))
 
 (defmethod run-server-using-mode ((mode (eql :tcp)) spec)
   (flet ((output-callback (string)
@@ -55,8 +56,8 @@
              (buffer-end point)
              (insert-string point string))))
     (let* ((port (or (spec-port spec) (lem-utils/socket:random-available-port)))
-           (process (when (spec-command spec)
-                      (lem-process:run-process (get-spec-command spec port)
+           (process (when-let (command (get-spec-command spec port))
+                      (lem-process:run-process command
                                                :output-callback #'output-callback))))
       (make-server-info :process process
                         :port port
@@ -1665,16 +1666,15 @@
         (when (search program-name result)
           result)))))
 
-(defun dart-startup-lsp-command ()
-  (if-let ((lsp-path (find-dart-language-server)))
-    (list "dart" lsp-path "--lsp")
-    (editor-error "dart language server not found")))
-
 (define-language-spec (dart-spec lem-dart-mode:dart-mode)
   :language-id "dart"
   :root-uri-patterns '("pubspec.yaml")
-  :command #'dart-startup-lsp-command
   :mode :stdio)
+
+(defmethod spec-command ((spec dart-spec))
+  (if-let ((lsp-path (find-dart-language-server)))
+    (list "dart" lsp-path "--lsp")
+    (editor-error "dart language server not found")))
 
 (defmethod spec-initialization-options ((spec dart-spec))
   (json:make-json "onlyAnalyzeProjectsWithOpenFiles" (json:json-true)

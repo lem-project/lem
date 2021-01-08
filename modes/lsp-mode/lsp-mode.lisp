@@ -1584,40 +1584,47 @@
     (ensure-lsp-buffer (current-buffer))))
 
 ;;;
-(defvar *language-spec-table* (make-hash-table))
+(defclass spec ()
+  ((language-id
+    :initarg :language-id
+    :initform (required-argument :language-id)
+    :reader spec-language-id)
+   (root-uri-patterns
+    :initarg :root-uri-patterns
+    :initform nil
+    :reader spec-root-uri-patterns)
+   (command
+    :initarg :command
+    :initform nil
+    :reader spec-command)
+   (mode
+    :initarg :mode
+    :initform (required-argument :mode)
+    :reader spec-mode)
+   (port
+    :initarg :port
+    :initform nil
+    :reader spec-port)))
 
 (defun get-language-spec (major-mode)
-  (gethash major-mode *language-spec-table*))
+  (make-instance (get major-mode 'spec)))
 
-(defun spec-language-id (spec)
-  (getf spec :language-id))
-
-(defun spec-root-uri-patterns (spec)
-  (getf spec :root-uri-patterns))
-
-(defun spec-mode (spec)
-  (getf spec :mode))
-
-(defun spec-command (spec)
-  (getf spec :command))
-
-(defun spec-port (spec)
-  (getf spec :port))
-
-(defmacro def-language-spec (major-mode &rest plist)
+;;;
+(defmacro define-language-spec ((spec-name major-mode) &body initargs)
   `(progn
-     (setf (gethash ',major-mode *language-spec-table*)
-           (list ,@plist))
+     (setf (get ',major-mode 'spec) ',spec-name)
      ,(when (mode-hook major-mode)
-        `(add-hook ,(mode-hook major-mode) 'lsp-mode))))
+        `(add-hook ,(mode-hook major-mode) 'lsp-mode))
+     (defclass ,spec-name (spec) ()
+       (:default-initargs ,@initargs))))
 
-(def-language-spec lem-go-mode:go-mode
+(define-language-spec (go-spec lem-go-mode:go-mode)
   :language-id "go"
   :root-uri-patterns '("go.mod")
   :command (lambda (port) `("gopls" "serve" "-port" ,(princ-to-string port)))
   :mode :tcp)
 
-(def-language-spec lem-js-mode:js-mode
+(define-language-spec (js-spec lem-js-mode:js-mode)
   :language-id "javascript"
   :root-uri-patterns '("package.json" "tsconfig.json")
   :command '("typescript-language-server" "--stdio")
@@ -1651,7 +1658,7 @@
     (list "dart" lsp-path "--lsp")
     (editor-error "dart language server not found")))
 
-(def-language-spec lem-dart-mode:dart-mode
+(define-language-spec (dart-spec lem-dart-mode:dart-mode)
   :language-id "dart"
   :root-uri-patterns '("pubspec.yaml")
   :command #'dart-startup-lsp-command

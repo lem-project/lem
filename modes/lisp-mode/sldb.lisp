@@ -61,6 +61,7 @@
 (define-key *sldb-keymap* "b" 'sldb-break-on-return)
 (define-key *sldb-keymap* "C" 'sldb-inspect-condition)
 (define-key *sldb-keymap* "C-c C-c" 'sldb-recompile-in-frame-source)
+(define-key *sldb-keymap* "M-Return" 'sldb-copy-down-to-repl)
 
 (defun get-sldb-buffer (thread)
   (dolist (buffer (buffer-list))
@@ -202,7 +203,10 @@
                                                         (button-get frame-button 'frame))))
                                      (lambda ()
                                        (sldb-inspect-var frame-number var)))
-                                   :attribute 'local-name-attribute)
+                                   :attribute 'local-name-attribute
+                                   'sldb-var i
+                                   'frame (button-get frame-button 'frame)
+                                   :button-tag 'sldb-frame)
                     (insert-string point " = ")
                     (insert-string point value :attribute 'local-value-attribute)))
         (when catches
@@ -320,6 +324,12 @@
         (frame-number (button-get (button-at point) 'frame)))
       (editor-error "No frame at point")))
 
+(defun frame-var-number-at-point (point)
+  (let* ((button (button-at point))
+         (var (and button (button-get button 'sldb-var))))
+    (or var
+        (editor-error "No variable at point"))))
+
 (define-command sldb-restart-frame (frame-number)
     ((list (frame-number-at-point (current-point))))
   (when frame-number
@@ -434,6 +444,11 @@
                        ((t &rest _)
                         (declare (ignore _))
                         (recompile-location source-location))))))
+
+(define-command sldb-copy-down-to-repl () ()
+  (copy-down-to-repl 'swank/backend:frame-var-value
+                     (frame-number-at-point (current-point))
+                     (frame-var-number-at-point (current-point))))
 
 (pushnew (lambda (event)
            (alexandria:destructuring-case event

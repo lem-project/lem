@@ -18,18 +18,6 @@
 (lem-lsp-mode/project:local-nickname :context-menu :lem-lsp-mode/context-menu)
 
 ;;;
-(defmacro with-editor-thread (() &body body)
-  `(send-event
-    (lambda ()
-      ,@body
-      (redraw-display))))
-
-(defmacro lambda-with-editor-thread ((value) &body body)
-  `(lambda (,value)
-     (with-editor-thread ()
-       ,@body)))
-
-;;;
 (defparameter *client-capabilities-text*
   (load-time-value
    (uiop:read-file-string
@@ -50,10 +38,16 @@
   disposable)
 
 (defun server-process-buffer-name (spec)
-  (format nil "*Lsp <~A>*" (spec-langauge-id spec)))
+  (format nil "*Lsp <~A>*" (spec-language-id spec)))
 
 (defun make-server-process-buffer (spec)
   (make-buffer (server-process-buffer-name spec)))
+
+(defun get-spec-command (spec &rest args)
+  (let ((command (spec-command spec)))
+    (if (functionp command)
+        (apply command args)
+        command)))
 
 (defmethod run-server-using-mode ((mode (eql :tcp)) spec)
   (flet ((output-callback (string)
@@ -62,15 +56,15 @@
              (buffer-end point)
              (insert-string point string))))
     (let* ((port (or (spec-port spec) (lem-utils/socket:random-available-port)))
-           (process (when (spec-command spec)
-                      (lem-process:run-process (funcall (spec-command spec) port)
+           (process (when-let (command (get-spec-command spec port))
+                      (lem-process:run-process command
                                                :output-callback #'output-callback))))
       (make-server-info :process process
                         :port port
                         :disposable (lambda () (lem-process:delete-process process))))))
 
 (defmethod run-server-using-mode ((mode (eql :stdio)) spec)
-  (let ((process (async-process:create-process (spec-command spec) :nonblock nil)))
+  (let ((process (async-process:create-process (get-spec-command spec) :nonblock nil)))
     (make-server-info :process process
                       :disposable (lambda () (async-process:delete-process process)))))
 
@@ -78,14 +72,14 @@
   (run-server-using-mode (spec-mode spec) spec))
 
 (defun get-running-server-info (spec)
-  (gethash (spec-langauge-id spec) *language-id-server-info-map*))
+  (gethash (spec-language-id spec) *language-id-server-info-map*))
 
 (defun remove-server-info (spec)
-  (remhash (spec-langauge-id spec) *language-id-server-info-map*))
+  (remhash (spec-language-id spec) *language-id-server-info-map*))
 
 (defun ensure-running-server-process (spec)
   (unless (get-running-server-info spec)
-    (setf (gethash (spec-langauge-id spec) *language-id-server-info-map*)
+    (setf (gethash (spec-language-id spec) *language-id-server-info-map*)
           (run-server spec))
     t))
 
@@ -137,16 +131,100 @@
                          (lambda (message code)
                            (send-event (lambda () (jsonrpc-editor-error message code))))))
 
+
+;;; modeline spinner
+(defclass spinner ()
+  ((frames :initform #("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
+           :reader spinner-frames)
+   (frame-index :initform 0
+                :accessor spinner-frame-index)
+   (timer :initarg :timer
+          :reader spinner-timer)))
+
+(defvar *spinner-table* (make-hash-table))
+
+(defun buffer-spinner (buffer)
+  (gethash (buffer-major-mode buffer) *spinner-table*))
+
+(defun (setf buffer-spinner) (spinner buffer)
+  (setf (gethash (buffer-major-mode buffer) *spinner-table*)
+        spinner))
+
+(defmethod convert-modeline-element ((spinner spinner) window)
+  (let ((attribute (merge-attribute (ensure-attribute 'modeline t)
+                                    (make-attribute :foreground "yellow"))))
+    (values (format nil
+                    "~A initializing  "
+                    (elt (spinner-frames spinner)
+                         (spinner-frame-index spinner)))
+            attribute
+            :right)))
+
+(defun update-spinner-frame ()
+  (when-let ((spinner (buffer-spinner (current-buffer))))
+    (setf (spinner-frame-index spinner)
+          (mod (1+ (spinner-frame-index spinner))
+               (length (spinner-frames spinner))))))
+
+(defun start-loading-spinner (buffer)
+  (unless (buffer-spinner buffer)
+    (let* ((timer (start-timer 80 t 'update-spinner-frame))
+           (spinner (make-instance 'spinner :timer timer)))
+      (modeline-add-status-list spinner buffer)
+      (setf (buffer-spinner buffer) spinner))))
+
+(defun stop-loading-spinner (buffer)
+  (when-let ((spinner (buffer-spinner buffer)))
+    (modeline-remove-status-list spinner buffer)
+    (stop-timer (spinner-timer spinner))
+    (setf (buffer-spinner buffer) nil)))
+
+
+;;;
+(defgeneric spec-initialization-options (spec)
+  (:method (spec) nil))
+
+(defclass spec ()
+  ((language-id
+    :initarg :language-id
+    :initform (required-argument :language-id)
+    :reader spec-language-id)
+   (root-uri-patterns
+    :initarg :root-uri-patterns
+    :initform nil
+    :reader spec-root-uri-patterns)
+   (command
+    :initarg :command
+    :initform nil
+    :reader spec-command)
+   (mode
+    :initarg :mode
+    :initform (required-argument :mode)
+    :reader spec-mode)
+   (port
+    :initarg :port
+    :initform nil
+    :reader spec-port)))
+
+(defun get-language-spec (major-mode)
+  (make-instance (get major-mode 'spec)))
+
+(defun register-language-spec (major-mode spec-name)
+  (setf (get major-mode 'spec) spec-name))
+
 ;;;
 (defvar *workspaces* '())
 
 (defstruct workspace
   root-uri
   client
-  language-id
+  spec
   server-capabilities
   server-info
   (trigger-characters (make-hash-table)))
+
+(defun workspace-language-id (workspace)
+  (spec-language-id (workspace-spec workspace)))
 
 (defun find-workspace (language-id &key (errorp t))
   (dolist (workspace *workspaces*
@@ -168,7 +246,7 @@
 (defun buffer-language-id (buffer)
   (let ((spec (buffer-language-spec buffer)))
     (when spec
-      (spec-langauge-id spec))))
+      (spec-language-id spec))))
 
 (defun buffer-version (buffer)
   (buffer-modified-tick buffer))
@@ -183,8 +261,7 @@
     (:name "lsp"
      :enable-hook 'enable-hook)
   (setf (variable-value 'lem.language-mode:completion-spec)
-        (completion:make-completion-spec #'text-document/completion
-                                         :prefix-search t))
+        (completion:make-completion-spec #'text-document/completion))
   (setf (variable-value 'lem.language-mode:find-definitions-function)
         #'find-definitions)
   (setf (variable-value 'lem.language-mode:find-references-function)
@@ -195,9 +272,11 @@
     (handler-case
         (progn
           (add-hook *exit-editor-hook* 'quit-all-server-process)
-          (ensure-lsp-buffer buffer)
-          (text-document/did-open buffer)
-          (enable-document-highlight-idle-timer))
+          (ensure-lsp-buffer buffer
+                             (lambda ()
+                               (text-document/did-open buffer)
+                               (enable-document-highlight-idle-timer)
+                               (redraw-display))))
       (editor-error (c)
         (message "~A" c)))))
 
@@ -300,17 +379,18 @@
     (setf (gethash character (workspace-trigger-characters workspace))
           #'lsp-signature-help-with-trigger-character)))
 
-(defun initialize-workspace (workspace)
+(defun initialize-workspace (workspace continuation)
   (jsonrpc:expose (client:client-connection (workspace-client workspace))
                   "textDocument/publishDiagnostics"
                   'text-document/publish-diagnostics)
   (jsonrpc:expose (client:client-connection (workspace-client workspace))
                   "window/showMessage"
                   'window/show-message)
-  (initialize workspace)
-  (initialized workspace)
-  (push workspace *workspaces*)
-  workspace)
+  (initialize workspace
+              (lambda ()
+                (initialized workspace)
+                (push workspace *workspaces*)
+                (funcall continuation workspace))))
 
 (defun establish-connection (spec)
   (when (ensure-running-server-process spec)
@@ -327,7 +407,7 @@
             :finally (editor-error "Could not establish a connection with the Language Server (condition: ~A)"
                                    condition)))))
 
-(defun ensure-lsp-buffer (buffer)
+(defun ensure-lsp-buffer (buffer &optional continuation)
   (let* ((spec (buffer-language-spec buffer))
          (root-uri (lem-lsp-utils/uri:pathname-to-uri
                     (find-root-pathname (buffer-directory buffer)
@@ -335,15 +415,21 @@
     (handler-bind ((error (lambda (c)
                             (declare (ignore c))
                             (kill-server-process spec))))
-      (let* ((new-client (establish-connection spec))
-             (workspace
-               (if new-client
-                   (initialize-workspace
-                    (make-workspace :client new-client
-                                    :root-uri root-uri
-                                    :language-id (spec-langauge-id spec)))
-                   (find-workspace (spec-langauge-id spec) :errorp t))))
-        (assign-workspace-to-buffer buffer workspace)))))
+      (let ((new-client (establish-connection spec)))
+        (cond ((null new-client)
+               (let ((workspace (find-workspace (spec-language-id spec) :errorp t)))
+                 (assign-workspace-to-buffer buffer workspace)
+                 (when continuation (funcall continuation))))
+              (t
+               (start-loading-spinner buffer)
+               (initialize-workspace
+                (make-workspace :client new-client
+                                :root-uri root-uri
+                                :spec spec)
+                (lambda (workspace)
+                  (stop-loading-spinner buffer)
+                  (assign-workspace-to-buffer buffer workspace)
+                  (when continuation (funcall continuation))))))))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))
@@ -437,28 +523,30 @@
 
 ;;; General Messages
 
-(defun initialize (workspace)
-  (let ((initialize-result
-          (request:request
-           (workspace-client workspace)
-           (make-instance
-            'request:initialize-request
-            :params (make-instance
-                     'protocol:initialize-params
-                     :process-id (utils:get-pid)
-                     :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
-                     :root-uri (workspace-root-uri workspace)
-                     :capabilities (client-capabilities)
-                     :trace "off"
-                     :workspace-folders (json:json-null))))))
-    (setf (workspace-server-capabilities workspace)
-          (protocol:initialize-result-capabilities initialize-result))
-    (handler-case (protocol:initialize-result-server-info initialize-result)
-      (unbound-slot () nil)
-      (:no-error (server-info)
-        (setf (workspace-server-info workspace)
-              server-info))))
-  (values))
+(defun initialize (workspace continuation)
+  (async-request
+   (workspace-client workspace)
+   (make-instance
+    'request:initialize-request
+    :params (apply #'make-instance
+                   'protocol:initialize-params
+                   :process-id (utils:get-pid)
+                   :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
+                   :root-uri (workspace-root-uri workspace)
+                   :capabilities (client-capabilities)
+                   :trace "off"
+                   :workspace-folders (json:json-null)
+                   (when-let ((value (spec-initialization-options (workspace-spec workspace))))
+                     (list :initialization-options value))))
+   :then (lambda (initialize-result)
+           (setf (workspace-server-capabilities workspace)
+                 (protocol:initialize-result-capabilities initialize-result))
+           (handler-case (protocol:initialize-result-server-info initialize-result)
+             (unbound-slot () nil)
+             (:no-error (server-info)
+               (setf (workspace-server-info workspace)
+                     server-info)))
+           (funcall continuation))))
 
 (defun initialized (workspace)
   (request:request (workspace-client workspace)
@@ -503,20 +591,35 @@
 (defun text-document/did-change (buffer content-changes)
   (request:request
    (workspace-client (buffer-workspace buffer))
-   (make-instance 'request:text-document-did-change
-                  :params (make-instance 'protocol:did-change-text-document-params
-                                         :text-document (make-instance 'protocol:versioned-text-document-identifier
-                                                                       :version (buffer-version buffer)
-                                                                       :uri (buffer-uri buffer))
-                                         :content-changes content-changes))))
+   (make-instance
+    'request:text-document-did-change
+    :params (make-instance 'protocol:did-change-text-document-params
+                           :text-document (make-instance 'protocol:versioned-text-document-identifier
+                                                         :version (buffer-version buffer)
+                                                         :uri (buffer-uri buffer))
+                           :content-changes content-changes))))
+
+(defun provide-did-save-text-document-p (workspace)
+  (let ((sync (protocol:server-capabilities-text-document-sync
+               (workspace-server-capabilities workspace))))
+    (etypecase sync
+      (number
+       (member sync
+               (list protocol:text-document-sync-kind.full
+                     protocol:text-document-sync-kind.incremental)))
+      (protocol:text-document-sync-options
+       (handler-case (protocol:text-document-sync-options-save sync)
+         (unbound-slot ()
+           nil))))))
 
 (defun text-document/did-save (buffer)
-  (request:request
-   (workspace-client (buffer-workspace buffer))
-   (make-instance 'request:text-document-did-save
-                  :params (make-instance 'protocol:did-save-text-document-params
-                                         :text-document (make-text-document-identifier buffer)
-                                         :text (buffer-text buffer)))))
+  (when (provide-did-save-text-document-p (buffer-workspace buffer))
+    (request:request
+     (workspace-client (buffer-workspace buffer))
+     (make-instance 'request:text-document-did-save
+                    :params (make-instance 'protocol:did-save-text-document-params
+                                           :text-document (make-text-document-identifier buffer)
+                                           :text (buffer-text buffer))))))
 
 (defun text-document/did-close (buffer)
   (request:request
@@ -678,12 +781,12 @@
     (let ((contents (protocol:hover-contents hover)))
       (cond
         ;; MarkedString
-        ((json:json-object-p contents)
+        ((typep contents 'protocol::marked-string)
          (marked-string-to-string contents))
         ;; MarkedString[]
         ((json:json-array-p contents)
          (with-output-to-string (out)
-           (dolist (content contents)
+           (lem-utils:do-sequence (content contents)
              (write-string (marked-string-to-string content)
                            out))))
         ;; MarkupContent
@@ -808,22 +911,30 @@
                     (handler-case
                         (protocol:signature-information-parameters signature)
                       (unbound-slot () nil))))
-              (when (< active-parameter (length parameters))
+              (when (and (plusp (length parameters))
+                         (< active-parameter (length parameters)))
                 ;; TODO: labelが[number, number]の場合に対応する
-                (let ((label (protocol:parameter-information-label (elt parameters active-parameter))))
+                (let ((label (protocol:parameter-information-label
+                              (elt parameters
+                                   (if (<= 0 active-parameter (1- (length parameters)))
+                                       active-parameter
+                                       0)))))
                   (when (stringp label)
                     (with-point ((p point))
                       (line-start p)
                       (when (search-forward p label)
                         (with-point ((start p))
                           (character-offset start (- (length label)))
-                          (put-text-property start p :attribute 'signature-help-active-parameter-attribute)))))))))
+                          (put-text-property start p
+                                             :attribute 'signature-help-active-parameter-attribute)))))))))
           (insert-character point #\space)
           (insert-character point #\newline)
           (handler-case (protocol:signature-information-documentation signature)
             (unbound-slot () nil)
             (:no-error (documentation)
-              (insert-string point documentation)))))
+              (if (typep documentation 'protocol:markup-content)
+                  (insert-string point (protocol:markup-content-value documentation))
+                  (insert-string point documentation))))))
       (buffer-start (buffer-point buffer))
       (message-buffer buffer))))
 
@@ -842,12 +953,13 @@
           (display-signature-help result))))))
 
 (defun lsp-signature-help-with-trigger-character (character)
-  (text-document/signature-help (current-point)
-                                (make-instance 'protocol:signature-help-context
-                                               :trigger-kind protocol:signature-help-trigger-kind.trigger-character
-                                               :trigger-character (string character)
-                                               :is-retrigger (json:json-false)
-                                               #|:active-signature-help|#)))
+  (text-document/signature-help
+   (current-point)
+   (make-instance 'protocol:signature-help-context
+                  :trigger-kind protocol:signature-help-trigger-kind.trigger-character
+                  :trigger-character (string character)
+                  :is-retrigger (json:json-false)
+                  #|:active-signature-help|#)))
 
 (define-command lsp-signature-help () ()
   (check-connection)
@@ -1055,15 +1167,16 @@
 (defun text-document/document-highlight (point)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-document-highlight-p workspace)
-      (request:request-async
+      (async-request
        (workspace-client workspace)
        (make-instance 'request:document-highlight
                       :params (apply #'make-instance
                                      'protocol:document-highlight-params
                                      (make-text-document-position-arguments point)))
-       (lambda-with-editor-thread (value)
-         (display-document-highlights (point-buffer point)
-                                      value))))))
+       :then (lambda (value)
+               (display-document-highlights (point-buffer point)
+                                            value)
+               (redraw-display))))))
 
 (defun document-highlight-calls-timer ()
   (when (mode-active-p (current-buffer) 'lsp-mode)
@@ -1510,44 +1623,62 @@
     (ensure-lsp-buffer (current-buffer))))
 
 ;;;
-(defvar *language-spec-table* (make-hash-table))
-
-(defun get-language-spec (major-mode)
-  (gethash major-mode *language-spec-table*))
-
-(defun spec-langauge-id (spec)
-  (getf spec :language-id))
-
-(defun spec-root-uri-patterns (spec)
-  (getf spec :root-uri-patterns))
-
-(defun spec-mode (spec)
-  (getf spec :mode))
-
-(defun spec-command (spec)
-  (getf spec :command))
-
-(defun spec-port (spec)
-  (getf spec :port))
-
-(defmacro def-language-spec (major-mode &rest plist)
+(defmacro define-language-spec ((spec-name major-mode) &body initargs)
   `(progn
-     (setf (gethash ',major-mode *language-spec-table*)
-           (list ,@plist))
+     (register-language-spec ',major-mode ',spec-name)
      ,(when (mode-hook major-mode)
-        `(add-hook ,(mode-hook major-mode) 'lsp-mode))))
+        `(add-hook ,(mode-hook major-mode) 'lsp-mode))
+     (defclass ,spec-name (spec) ()
+       (:default-initargs ,@initargs))))
 
-(def-language-spec lem-go-mode:go-mode
+(define-language-spec (go-spec lem-go-mode:go-mode)
   :language-id "go"
   :root-uri-patterns '("go.mod")
   :command (lambda (port) `("gopls" "serve" "-port" ,(princ-to-string port)))
   :mode :tcp)
 
-(def-language-spec lem-js-mode:js-mode
+(define-language-spec (js-spec lem-js-mode:js-mode)
   :language-id "javascript"
   :root-uri-patterns '("package.json" "tsconfig.json")
   :command '("typescript-language-server" "--stdio")
   :mode :stdio)
+
+(defun find-dart-bin-path ()
+  (multiple-value-bind (output error-output status)
+      (uiop:run-program '("which" "dart")
+                        :output :string
+                        :ignore-error-status t)
+    (declare (ignore error-output))
+    (if (zerop status)
+        (namestring
+         (uiop:pathname-directory-pathname
+          (string-right-trim '(#\newline) output)))
+        nil)))
+
+(defun find-dart-language-server ()
+  (let ((program-name "analysis_server.dart.snapshot"))
+    (when-let (path (find-dart-bin-path))
+      (let ((result
+              (string-right-trim
+               '(#\newline)
+               (uiop:run-program (list "find" path "-name" program-name)
+                                 :output :string))))
+        (when (search program-name result)
+          result)))))
+
+(define-language-spec (dart-spec lem-dart-mode:dart-mode)
+  :language-id "dart"
+  :root-uri-patterns '("pubspec.yaml")
+  :mode :stdio)
+
+(defmethod spec-command ((spec dart-spec))
+  (if-let ((lsp-path (find-dart-language-server)))
+    (list "dart" lsp-path "--lsp")
+    (editor-error "dart language server not found")))
+
+(defmethod spec-initialization-options ((spec dart-spec))
+  (json:make-json "onlyAnalyzeProjectsWithOpenFiles" (json:json-true)
+                  "suggestFromUnimportedLibraries" (json:json-true)))
 
 #|
 Language Features

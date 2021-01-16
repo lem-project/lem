@@ -75,6 +75,9 @@
 (in-package :lem-vi-mode.commands)
 
 (defvar *cursor-offset* -1)
+(defvar *vi-clear-recursive* nil)
+(defvar *vi-delete-recursive* nil)
+(defvar *vi-yank-recursive* nil)
 
 (defun bolp (point)
   (zerop (point-charpos point)))
@@ -314,7 +317,6 @@
   (unless (bolp (current-point))
     (delete-previous-char n)))
 
-(defvar *vi-delete-recursive* nil)
 (let ((tag (gensym)))
   (define-command vi-delete (&optional (n 1)) ("p")
     (cond (*vi-delete-recursive*
@@ -402,7 +404,6 @@
          (unless *vi-clear-recursive*
            (fall-within-line (current-point))))))
 
-(defvar *vi-clear-recursive* nil)
 (define-command vi-clear () ()
   (let ((*vi-clear-recursive* t))
     (vi-delete))
@@ -430,7 +431,6 @@
                         (equal c1 #\))))
          (insert-character p #\space)))))
 
-(defvar *vi-yank-recursive* nil)
 (let ((tag (gensym)))
   (define-command vi-yank (&optional (n 1)) ("p")
     (cond (*vi-yank-recursive*

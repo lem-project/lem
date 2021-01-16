@@ -10,6 +10,7 @@
     },
     "completion":{
       "completionItem":{
+        "snippetSupport": false
       },
       "contextSupport":true
     },

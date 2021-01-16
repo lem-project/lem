@@ -32,6 +32,7 @@
 (define-key *lisp-inspector-keymap* "." 'lisp-inspector-show-source)
 (define-key *lisp-inspector-keymap* ">" 'lisp-inspector-fetch-all)
 (define-key *lisp-inspector-keymap* "q" 'lisp-inspector-quit)
+(define-key *lisp-inspector-keymap* "M-Return" 'lisp-inspector-copy-down-to-repl)
 
 (define-command lisp-inspect (string)
     ((list (or (symbol-string-at-point (current-point))
@@ -242,6 +243,9 @@
             ((= e2 s1)
              (list (append i2 i1) l2 s2 e1))
             (t (error "Invalid chunks"))))))
+
+(define-command lisp-inspector-copy-down-to-repl () ()
+  (copy-down-to-repl 'swank:inspector-nth-part (inspector-get-part)))
 
 (pushnew (lambda (event)
            (alexandria:destructuring-case event

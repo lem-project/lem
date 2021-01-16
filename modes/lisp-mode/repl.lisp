@@ -230,6 +230,17 @@
         (setf (current-window) (pop-to-buffer buffer))
         (start-lisp-repl))))
 
+(defun copy-down-to-repl (slimefun &rest args)
+  (lisp-eval-async
+   `(,(read-from-string "swank-repl:listener-save-value") ',slimefun ,@args)
+   (lambda (result)
+     (declare (ignore result))
+     (lisp-eval-async
+      `(,(read-from-string "swank-repl:listener-get-value"))
+      (lambda (result)
+        (declare (ignore result))
+        (lem.listener-mode:listener-reset-prompt (repl-buffer)))))))
+
 (defun write-string-to-repl (string)
   (let ((buffer (repl-buffer)))
     (unless buffer

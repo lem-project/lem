@@ -324,7 +324,7 @@
     ))
 
 
-(defclass buffer-list-manager (lem-base::buffer-list-manager) ())
+(defclass buffer-list-manager (lem::buffer-list-manager) ())
 
 (defmethod lem-base::delete-buffer-using-manager :before
     ((manager buffer-list-manager)

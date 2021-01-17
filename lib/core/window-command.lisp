@@ -61,7 +61,7 @@
                             (first (last (buffer-list))))))))
 
 (defmethod lem-base::delete-buffer-using-manager :before
-    ((manager lem-base::buffer-list-manager)
+    ((manager buffer-list-manager)
      buffer)
   (strip-buffer-from-frame-windows buffer (current-frame)))
 

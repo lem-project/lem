@@ -28,6 +28,7 @@
                (:file "kill")
                (:file "file-ext")
                (:file "screen")
+               (:file "buffer-list-manager")
                (:file "frame")
                (:file "window")
                (:file "modeline")

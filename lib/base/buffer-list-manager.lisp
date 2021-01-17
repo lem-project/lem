@@ -2,6 +2,8 @@
 
 (defvar *buffer-list-manager*)
 
+(defgeneric delete-buffer-using-manager (buffer-list-manager buffer))
+
 (defclass buffer-list-manager ()
   ((buffers
     :initarg :buffers

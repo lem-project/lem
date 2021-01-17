@@ -1001,8 +1001,8 @@ next line because it is at the end of width."
                      (- frame-height
                         (+ (window-y window) (window-height window)))))))
 
-(defun get-buffer-windows (buffer)
-  (loop :for window :in (window-list)
+(defun get-buffer-windows (buffer &optional (frame (current-frame)))
+  (loop :for window :in (window-list frame)
         :when (eq buffer (window-buffer window))
         :collect window))
 

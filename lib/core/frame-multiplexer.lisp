@@ -219,7 +219,8 @@
 
 (defun frame-multiplexer-on ()
   (unless (enabled-frame-multiplexer-p)
-    (frame-multiplexer-init)))
+    (frame-multiplexer-init)
+    (change-class (lem-base::buffer-list-manager) 'buffer-list-manager)))
 
 (defun frame-multiplexer-off ()
   (when (enabled-frame-multiplexer-p)
@@ -227,7 +228,9 @@
                (declare (ignore k))
                (delete-window v))
              *virtual-frame-map*)
-    (clrhash *virtual-frame-map*)))
+    (clrhash *virtual-frame-map*)
+    ;; TODO: buffer-list-managerを元に戻す
+    ))
 
 (define-command toggle-frame-multiplexer () ()
   (setf (variable-value 'frame-multiplexer :global)
@@ -319,3 +322,15 @@
     (check-tabs 1 3)
     (check-nth-frame 1)
     ))
+
+
+(defclass buffer-list-manager (lem-base::buffer-list-manager) ())
+
+(defmethod lem-base::delete-buffer-using-manager :before
+    ((manager buffer-list-manager)
+     buffer)
+  (maphash (lambda (k virtual-frame)
+             (declare (ignore k))
+             (dolist (frame (virtual-frame-frames virtual-frame))
+               (lem::strip-buffer-from-frame-windows buffer frame)))
+           *virtual-frame-map*))

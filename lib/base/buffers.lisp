@@ -53,16 +53,19 @@
             :do (unless (get-buffer sub-name)
                   (return sub-name)))))
 
-(defun delete-buffer (buffer)
-  "`buffer`をバッファのリストから消します。
-エディタ変数`kill-buffer-hook`がバッファが消される前に実行されます。"
-  (check-type buffer buffer)
+(defmethod delete-buffer-using-manager ((manager buffer-list-manager) buffer)
   (alexandria:when-let ((hooks (variable-value 'kill-buffer-hook :buffer buffer)))
     (run-hooks hooks buffer))
   (alexandria:when-let ((hooks (variable-value 'kill-buffer-hook :global)))
     (run-hooks hooks buffer))
   (buffer-free buffer)
   (set-buffer-list (delete buffer (buffer-list))))
+
+(defun delete-buffer (buffer)
+  "`buffer`をバッファのリストから消します。
+エディタ変数`kill-buffer-hook`がバッファが消される前に実行されます。"
+  (check-type buffer buffer)
+  (delete-buffer-using-manager (buffer-list-manager) buffer))
 
 (defun get-next-buffer (buffer)
   "バッファリスト内にある`buffer`の次のバッファを返します。"

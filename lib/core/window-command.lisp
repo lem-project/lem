@@ -54,6 +54,17 @@
 
 (define-key *global-keymap* "C-x b" 'select-buffer)
 
+(defun strip-buffer-from-frame-windows (buffer frame)
+  (dolist (window (get-buffer-windows buffer frame))
+    (with-current-window window
+      (switch-to-buffer (or (get-previous-buffer buffer)
+                            (first (last (buffer-list))))))))
+
+(defmethod lem-base::delete-buffer-using-manager :before
+    ((manager lem-base::buffer-list-manager)
+     buffer)
+  (strip-buffer-from-frame-windows buffer (current-frame)))
+
 (define-key *global-keymap* "C-x k" 'kill-buffer)
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
   (check-switch-minibuffer-window)
@@ -61,10 +72,6 @@
     (unless buffer
       (editor-error "buffer does not exist: ~A" buffer-or-name))
     (when (cdr (buffer-list))
-      (dolist (window (get-buffer-windows buffer))
-        (with-current-window window
-          (switch-to-buffer (or (get-previous-buffer buffer)
-                                (car (last (buffer-list)))))))
       (delete-buffer buffer)))
   t)
 

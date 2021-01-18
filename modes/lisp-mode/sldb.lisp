@@ -206,7 +206,7 @@
                                    :attribute 'local-name-attribute
                                    'sldb-var i
                                    'frame (button-get frame-button 'frame)
-                                   :button-tag 'sldb-frame)
+                                   :button-tag 'sldb-var)
                     (insert-string point " = ")
                     (insert-string point value :attribute 'local-value-attribute)))
         (when catches
@@ -322,6 +322,11 @@
 (defun frame-number-at-point (point)
   (or (when (text-property-at point 'sldb-frame)
         (frame-number (button-get (button-at point) 'frame)))
+      (with-point ((start point))
+        (and (previous-single-property-change start 'sldb-frame)
+             (text-property-at start 'sldb-frame -1)
+             (character-offset start -1)
+             (frame-number (button-get (button-at start) 'frame))))
       (editor-error "No frame at point")))
 
 (defun frame-var-number-at-point (point)

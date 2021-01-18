@@ -231,12 +231,14 @@
         (start-lisp-repl))))
 
 (defun copy-down-to-repl (slimefun &rest args)
+  (unless (find-package :swank-repl)
+    (make-package :swank-repl))
   (lisp-eval-async
-   `(,(read-from-string "swank-repl:listener-save-value") ',slimefun ,@args)
+   `(,(read-from-string "swank-repl::listener-save-value") ',slimefun ,@args)
    (lambda (result)
      (declare (ignore result))
      (lisp-eval-async
-      `(,(read-from-string "swank-repl:listener-get-value"))
+      `(,(read-from-string "swank-repl::listener-get-value"))
       (lambda (result)
         (declare (ignore result))
         (lem.listener-mode:listener-reset-prompt (repl-buffer)))))))

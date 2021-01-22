@@ -85,7 +85,6 @@
    :local-value-attribute
    :catch-tag-attribute
    :*sldb-keymap*
-   :sldb-default-action
    :sldb-down
    :sldb-up
    :sldb-details-down

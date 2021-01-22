@@ -269,10 +269,6 @@
             (t
              (kill-buffer buffer))))))
 
-(define-command sldb-default-action () ()
-  (let ((button (button-at (current-point))))
-    (when button (button-action button))))
-
 (define-command sldb-down (p) ((list (current-point)))
   (next-single-property-change p 'sldb-frame)
   (when (end-line-p p)

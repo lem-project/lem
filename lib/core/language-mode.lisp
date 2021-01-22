@@ -407,8 +407,8 @@
         (jump-highlighting)))))
 
 (define-command complete-symbol () ()
-  (alexandria:when-let (fn (variable-value 'completion-spec :buffer))
-    (lem.completion-mode:run-completion fn)))
+  (alexandria:when-let (completion (variable-value 'completion-spec :buffer))
+    (lem.completion-mode:run-completion completion)))
 
 (define-command indent-line-and-complete-symbol () ()
   (if (variable-value 'calc-indent-function :buffer)

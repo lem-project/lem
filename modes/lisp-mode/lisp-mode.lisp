@@ -20,6 +20,8 @@
 (defvar *last-compilation-result* nil)
 (defvar *indent-table* (make-hash-table :test 'equal))
 
+(defvar *enable-feature-highlight* t)
+
 (define-major-mode lisp-mode language-mode
     (:name "lisp"
      :description "Contains necessary functions to handle lisp code."
@@ -47,7 +49,7 @@
   (setf (variable-value 'find-references-function) 'find-references)
   (setf (variable-value 'completion-spec) 'completion-symbol)
   (setf (variable-value 'idle-function) 'lisp-idle-function)
-  (set-syntax-parser lem-lisp-syntax:*syntax-table* (make-tmlanguage-lisp))
+  (set-syntax-parser lem-lisp-syntax:*syntax-table* (make-tmlanguage-lisp :enable-feature-support *enable-feature-highlight*))
   (unless (connected-p) (self-connect)))
 
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)

@@ -11,6 +11,21 @@
     (or autodoc-symbol
         (setf autodoc-symbol (intern "AUTODOC" :swank)))))
 
+(defun highlighting-marker (point)
+  (let ((marker-start "===> ")
+        (marker-end " <==="))
+    (when (search-forward point marker-start)
+      (with-point ((start point))
+        (when (search-forward point marker-end)
+          (let ((matched-string
+                  (with-point ((start start)
+                               (end point))
+                    (character-offset end (- (length marker-end)))
+                    (points-to-string start end))))
+            (character-offset start (- (length marker-start)))
+            (delete-between-points start point)
+            (insert-string start matched-string :attribute 'region)))))))
+
 (defun autodoc (function)
   (let ((context (lem-lisp-syntax:parse-for-swank-autodoc (current-point))))
     (lisp-eval-async
@@ -20,23 +35,14 @@
          ((list doc _)
           (unless (eq doc :not-available)
             (let* ((buffer (make-buffer "*swank:autodoc-fontity*"
-                                        :temporary t :enable-undo-p nil))
-                   (point (buffer-point buffer)))
-              (erase-buffer buffer)
-              (change-buffer-mode buffer 'lisp-mode)
-              (insert-string point doc)
-              (buffer-start point)
-              (multiple-value-bind (result string)
-                  (search-forward-regexp point "(?====> (.*) <===)")
-                (when result
-                  (with-point ((start point))
-                    (character-offset point 5)
-                    (search-forward point "<===")
-                    (delete-between-points start point)
-                    (insert-string point string :attribute 'region))))
-              (buffer-start (buffer-point buffer))
-              (setf (variable-value 'truncate-lines :buffer buffer) nil)
-              (funcall function buffer)))))))))
+                                        :temporary t :enable-undo-p nil)))
+              (with-point ((point (buffer-point buffer) :right-inserting))
+                (erase-buffer buffer)
+                (change-buffer-mode buffer 'lisp-mode)
+                (insert-string point doc)
+                (setf (variable-value 'truncate-lines :buffer buffer) nil)
+                (highlighting-marker point)
+                (funcall function buffer))))))))))
 
 (define-command lisp-autodoc () ()
   (autodoc #'message-buffer))

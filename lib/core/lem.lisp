@@ -227,12 +227,18 @@
 
   (log:info "Starting Lem")
 
-  (if *in-the-editor*
-      (apply-args args)
-      (invoke-frontend
-       (lambda (&optional initialize finalize)
-         (run-editor-thread initialize args finalize))
-       :buffer-list-manager (make-instance 'buffer-list-manager))))
+  (cond (*in-the-editor*
+         (apply-args args))
+        (t
+         (let ((implementation (get-default-implementation :errorp nil)))
+           (unless implementation
+             (ql:quickload :lem-ncurses)
+             (setf implementation (get-default-implementation)))
+           (invoke-frontend
+            (lambda (&optional initialize finalize)
+              (run-editor-thread initialize args finalize))
+            :implementation implementation
+            :buffer-list-manager (make-instance 'buffer-list-manager))))))
 
 (defun main (&optional (args (uiop:command-line-arguments)))
   (apply #'lem args))

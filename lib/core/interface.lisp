@@ -30,18 +30,20 @@
     :initarg :support-floating-window
     :reader support-floating-window)))
 
-(defun get-default-implementation ()
+(defun get-default-implementation (&key (errorp t))
   (let* ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))
          (class (case (length classes)
                   (0
-                   (error "Implementation does not exist. (probably because you didn't quickload lem-ncurses)"))
+                   (when errorp
+                     (error "Implementation does not exist. (probably because you didn't quickload lem-ncurses)")))
                   (1
                    (first classes))
                   (otherwise
                    (dolist (class classes (first classes))
                      (when (string= :ncurses (class-name class))
                        (return class)))))))
-    (make-instance class)))
+    (when class
+      (make-instance class))))
 
 (defgeneric lem-if:invoke (implementation function))
 (defgeneric lem-if:display-background-mode (implementation))

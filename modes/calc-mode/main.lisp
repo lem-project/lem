@@ -19,7 +19,7 @@
 
 (defun calc-string (string)
   (unless (find-package :xyzzy-calc/calc)
-    #-ros.init(lem-base:maybe-quickload "xyzzy-calc"
+    #-ros.init(lem:maybe-quickload "xyzzy-calc"
                                         :error-on-failure-p t)
     #+ros.init(lem:maybe-quickload "snmsts//xyzzy-calc"
                                    :error-on-failure-p t)

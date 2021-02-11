@@ -220,9 +220,16 @@
                                          string
                                          (string #\newline))))))
 
-(define-command start-lisp-repl () ()
+(define-command start-lisp-repl (&optional (use-this-window nil)) ("P")
   (check-connection)
-  (lem.listener-mode:listener-start "*lisp-repl*" 'lisp-repl-mode))
+  (flet ((switch (buffer split-window-p)
+           (if split-window-p
+               (setf (current-window) (pop-to-buffer buffer))
+               (switch-to-buffer buffer))))
+    (lem.listener-mode:listener-start
+     "*lisp-repl*"
+     'lisp-repl-mode
+     :switch-to-buffer-function (alexandria:rcurry #'switch (not use-this-window)))))
 
 (define-command lisp-switch-to-repl-buffer () ()
   (let ((buffer (repl-buffer)))

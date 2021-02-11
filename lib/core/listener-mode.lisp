@@ -53,9 +53,12 @@
 (defun listener-start-point (buffer)
   (%listener-point buffer))
 
-(defun listener-start (buffer-name mode)
+(defun default-switch-to-buffer (buffer)
+  (setf (current-window) (pop-to-buffer buffer)))
+
+(defun listener-start (buffer-name mode &key (switch-to-buffer-function 'default-switch-to-buffer))
   (let ((buffer (make-buffer buffer-name)))
-    (setf (current-window) (pop-to-buffer buffer))
+    (funcall switch-to-buffer-function buffer)
     (funcall mode)
     (listener-reset-prompt buffer)))
 

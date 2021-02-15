@@ -276,7 +276,10 @@
       (switch-current-frame vf frame))
     (lem::change-display-size-hook)))
 
-(add-hook *after-init-hook* 'frame-multiplexer-on)
+(defun enable-frame-multiplexer ()
+  (setf (variable-value 'frame-multiplexer :global) t))
+
+(add-hook *after-init-hook* 'enable-frame-multiplexer)
 
 (define-command frame-multiplexer-test () ()
   (labels ((vf ()

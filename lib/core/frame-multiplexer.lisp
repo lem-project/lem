@@ -276,6 +276,8 @@
       (switch-current-frame vf frame))
     (lem::change-display-size-hook)))
 
+(add-hook *after-init-hook* 'frame-multiplexer-on)
+
 (define-command frame-multiplexer-test () ()
   (labels ((vf ()
              (maphash (lambda (k v)

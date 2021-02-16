@@ -531,11 +531,15 @@
   (charms/ll:wmove (ncurses-view-scrwin view) y x)
   (charms/ll:wclrtobot (ncurses-view-scrwin view)))
 
+(define-attribute popup-border-color
+  (:light :foreground "gray" :reverse-p t)
+  (:dark :foreground "#303030" :reverse-p t))
+
 (defun draw-border (border)
   (let ((win (border-win border)))
     ;; (charms/ll:wclear win)
     ;; (charms/ll:box win 0 0)
-    (let ((attr (attribute-to-bits (make-attribute :foreground "#303030" :reverse-p t))))
+    (let ((attr (attribute-to-bits 'popup-border-color)))
       (charms/ll:wattron win attr)
       (charms/ll:mvwaddstr win 0 0 (make-string (border-width border) :initial-element #\space))
       (loop :for i :from 1 :below (1- (border-height border))

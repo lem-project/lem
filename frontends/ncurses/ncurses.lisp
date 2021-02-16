@@ -493,7 +493,7 @@
                      (+ (ncurses-view-y view) height)
                      (ncurses-view-x view))
     (charms/ll:wresize (ncurses-view-modeline-scrwin view)
-                       (minibuffer-window-height)
+                       1
                        width)))
 
 (defmethod lem-if:set-view-pos ((implementation ncurses) view x y)

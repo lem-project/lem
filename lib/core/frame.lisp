@@ -57,7 +57,7 @@
    ;; minibuffer
    (minibuffer
     :initarg :minibuffer
-    :initform (make-instance 'minibuffer)
+    :initform (make-instance 'sticky-prompt)
     :accessor frame-minibuffer)
    ;; prompt
    (prompt-window
@@ -65,34 +65,34 @@
     :accessor frame-prompt-window)))
 
 (defmethod frame-minibuffer-buffer ((frame frame))
-  (minibuffer-minibuffer-buffer (frame-minibuffer frame)))
+  (sticky-prompt-minibuffer-buffer (frame-minibuffer frame)))
 
 (defmethod (setf frame-minibuffer-buffer) (value (frame frame))
-  (setf (minibuffer-minibuffer-buffer (frame-minibuffer frame)) value))
+  (setf (sticky-prompt-minibuffer-buffer (frame-minibuffer frame)) value))
 
 (defmethod frame-echoarea-buffer ((frame frame))
-  (minibuffer-echoarea-buffer (frame-minibuffer frame)))
+  (sticky-prompt-echoarea-buffer (frame-minibuffer frame)))
 
 (defmethod (setf frame-echoarea-buffer) (value (frame frame))
-  (setf (minibuffer-echoarea-buffer (frame-minibuffer frame)) value))
+  (setf (sticky-prompt-echoarea-buffer (frame-minibuffer frame)) value))
 
 (defmethod frame-minibuffer-window ((frame frame))
-  (minibuffer-minibuffer-window (frame-minibuffer frame)))
+  (sticky-prompt-minibuffer-window (frame-minibuffer frame)))
 
 (defmethod (setf frame-minibuffer-window) (value (frame frame))
-  (setf (minibuffer-minibuffer-window (frame-minibuffer frame)) value))
+  (setf (sticky-prompt-minibuffer-window (frame-minibuffer frame)) value))
 
 (defmethod frame-minibuffer-calls-window ((frame frame))
-  (minibuffer-minibuffer-calls-window (frame-minibuffer frame)))
+  (sticky-prompt-minibuffer-calls-window (frame-minibuffer frame)))
 
 (defmethod (setf frame-minibuffer-calls-window) (value (frame frame))
-  (setf (minibuffer-minibuffer-calls-window (frame-minibuffer frame)) value))
+  (setf (sticky-prompt-minibuffer-calls-window (frame-minibuffer frame)) value))
 
 (defmethod frame-minibuffer-start-charpos ((frame frame))
-  (minibuffer-minibuffer-start-charpos (frame-minibuffer frame)))
+  (sticky-prompt-minibuffer-start-charpos (frame-minibuffer frame)))
 
 (defmethod (setf frame-minibuffer-start-charpos) (value (frame frame))
-  (setf (minibuffer-minibuffer-start-charpos (frame-minibuffer frame)) value))
+  (setf (sticky-prompt-minibuffer-start-charpos (frame-minibuffer frame)) value))
 
 (defun make-frame (&optional (old-frame (current-frame)))
   (let ((frame (make-instance 'frame)))

@@ -43,27 +43,27 @@
 (defvar *minibuffer-activate-hook* '())
 (defvar *minibuffer-deactivate-hook* '())
 
-(defclass minibuffer ()
+(defclass sticky-prompt ()
   ((minibuffer-buffer
     :initarg :minibuffer-buffer
     :initform nil
-    :accessor minibuffer-minibuffer-buffer)
+    :accessor sticky-prompt-minibuffer-buffer)
    (echoarea-buffer
     :initarg :echoarea-buffer
     :initform nil
-    :accessor minibuffer-echoarea-buffer)
+    :accessor sticky-prompt-echoarea-buffer)
    (minibuffer-window
     :initarg :minibuffer-window
     :initform nil
-    :accessor minibuffer-minibuffer-window)
+    :accessor sticky-prompt-minibuffer-window)
    (minibuffer-calls-window
     :initarg :minibuffer-calls-window
     :initform nil
-    :accessor minibuffer-minibuffer-calls-window)
+    :accessor sticky-prompt-minibuffer-calls-window)
    (minibuffer-start-charpos
     :initarg :minibuffer-start-charpos
     :initform nil
-    :accessor minibuffer-minibuffer-start-charpos)))
+    :accessor sticky-prompt-minibuffer-start-charpos)))
 
 (defclass minibuffer-window (floating-window) ())
 (defclass sticky-minibuffer-window (minibuffer-window) ())

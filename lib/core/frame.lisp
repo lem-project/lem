@@ -13,6 +13,7 @@
           frame-minibuffer-window
           frame-minibuffer-calls-window
           frame-minibuffer-start-charpos
+          frame-prompt-window
           map-frame
           get-frame
           current-frame

@@ -43,6 +43,28 @@
 (defvar *minibuffer-activate-hook* '())
 (defvar *minibuffer-deactivate-hook* '())
 
+(defclass minibuffer ()
+  ((minibuffer-buffer
+    :initarg :minibuffer-buffer
+    :initform nil
+    :accessor minibuffer-minibuffer-buffer)
+   (echoarea-buffer
+    :initarg :echoarea-buffer
+    :initform nil
+    :accessor minibuffer-echoarea-buffer)
+   (minibuffer-window
+    :initarg :minibuffer-window
+    :initform nil
+    :accessor minibuffer-minibuffer-window)
+   (minibuffer-calls-window
+    :initarg :minibuffer-calls-window
+    :initform nil
+    :accessor minibuffer-minibuffer-calls-window)
+   (minibuffer-start-charpos
+    :initarg :minibuffer-start-charpos
+    :initform nil
+    :accessor minibuffer-minibuffer-start-charpos)))
+
 (defclass minibuffer-window (floating-window) ())
 (defclass sticky-minibuffer-window (minibuffer-window) ())
 

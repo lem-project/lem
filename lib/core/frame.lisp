@@ -55,30 +55,44 @@
     :initform nil
     :accessor frame-modified-header-windows)
    ;; minibuffer
-   (minibuffer-buffer
-    :initarg :minibuffer-buffer
-    :initform nil
-    :accessor frame-minibuffer-buffer)
-   (echoarea-buffer
-    :initarg :echoarea-buffer
-    :initform nil
-    :accessor frame-echoarea-buffer)
-   (minibuffer-window
-    :initarg :minibuffer-window
-    :initform nil
-    :accessor frame-minibuffer-window)
-   (minibuffer-calls-window
-    :initarg :minibuffer-calls-window
-    :initform nil
-    :accessor frame-minibuffer-calls-window)
-   (minibuffer-start-charpos
-    :initarg :minibuffer-start-charpos
-    :initform nil
-    :accessor frame-minibuffer-start-charpos)
+   (minibuffer
+    :initarg :minibuffer
+    :initform (make-instance 'minibuffer)
+    :accessor frame-minibuffer)
    ;; prompt
    (prompt-window
     :initform nil
     :accessor frame-prompt-window)))
+
+(defmethod frame-minibuffer-buffer ((frame frame))
+  (minibuffer-minibuffer-buffer (frame-minibuffer frame)))
+
+(defmethod (setf frame-minibuffer-buffer) (value (frame frame))
+  (setf (minibuffer-minibuffer-buffer (frame-minibuffer frame)) value))
+
+(defmethod frame-echoarea-buffer ((frame frame))
+  (minibuffer-echoarea-buffer (frame-minibuffer frame)))
+
+(defmethod (setf frame-echoarea-buffer) (value (frame frame))
+  (setf (minibuffer-echoarea-buffer (frame-minibuffer frame)) value))
+
+(defmethod frame-minibuffer-window ((frame frame))
+  (minibuffer-minibuffer-window (frame-minibuffer frame)))
+
+(defmethod (setf frame-minibuffer-window) (value (frame frame))
+  (setf (minibuffer-minibuffer-window (frame-minibuffer frame)) value))
+
+(defmethod frame-minibuffer-calls-window ((frame frame))
+  (minibuffer-minibuffer-calls-window (frame-minibuffer frame)))
+
+(defmethod (setf frame-minibuffer-calls-window) (value (frame frame))
+  (setf (minibuffer-minibuffer-calls-window (frame-minibuffer frame)) value))
+
+(defmethod frame-minibuffer-start-charpos ((frame frame))
+  (minibuffer-minibuffer-start-charpos (frame-minibuffer frame)))
+
+(defmethod (setf frame-minibuffer-start-charpos) (value (frame frame))
+  (setf (minibuffer-minibuffer-start-charpos (frame-minibuffer frame)) value))
 
 (defun make-frame (&optional (old-frame (current-frame)))
   (let ((frame (make-instance 'frame)))

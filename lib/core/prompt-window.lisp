@@ -40,7 +40,7 @@
     :initform nil
     :reader prompt-window-history)))
 
-(defclass floating-prompt-window (floating-window prompt-parameters)
+(defclass floating-prompt (floating-window prompt-parameters)
   ((start-point
     :accessor prompt-window-start-charpos))
   (:default-initargs
@@ -158,7 +158,7 @@
 (defun make-prompt-window (buffer parameters)
   (destructuring-bind (x y width height)
       (compute-window-rectangle buffer)
-    (make-instance 'floating-prompt-window
+    (make-instance 'floating-prompt
                    :buffer buffer
                    :x x
                    :y y
@@ -170,7 +170,7 @@
                    :called-window (prompt-window-called-window parameters)
                    :history (prompt-window-history parameters))))
 
-(defmethod lem::update-prompt-window ((window floating-prompt-window))
+(defmethod lem::update-prompt-window ((window floating-prompt))
   (destructuring-bind (x y width height)
       (compute-window-rectangle (window-buffer window))
     (unless (and (= x (window-x window))

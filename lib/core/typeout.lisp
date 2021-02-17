@@ -66,10 +66,10 @@
                   *typeout-window*)
                  (t
                   (let ((typeout-buffer-p (buffer-value buffer 'typeout-buffer-p))
-                        (switchable-buffer-p (switchable-buffer-p buffer)))
+                        (not-switchable-buffer-p (not-switchable-buffer-p buffer)))
                     (setf *typeout-window-rewinding-values*
                           (list typeout-buffer-p
-                                switchable-buffer-p)))
+                                not-switchable-buffer-p)))
                   (let ((window (make-instance 'floating-window
                                                :buffer buffer
                                                :x 0
@@ -86,7 +86,7 @@
                           *typeout-before-window* (current-window))
                     window)))))
     (setf (buffer-value buffer 'typeout-buffer-p) t)
-    (setf (switchable-buffer-p buffer) t)
+    (setf (not-switchable-buffer-p buffer) t)
     (bury-buffer buffer)
     (setf (current-window) window)
     (typeout-mode t)
@@ -137,10 +137,10 @@
     (when *typeout-window-rewinding-values*
       (let ((buffer (window-buffer *typeout-window*)))
         (destructuring-bind (typeout-buffer-p
-                             switchable-buffer-p)
+                             not-switchable-buffer-p)
             *typeout-window-rewinding-values*
           (setf (buffer-value buffer 'typeout-buffer-p) typeout-buffer-p)
-          (setf (switchable-buffer-p buffer) switchable-buffer-p))))
+          (setf (not-switchable-buffer-p buffer) not-switchable-buffer-p))))
     (delete-window *typeout-window*)))
 
 (defun dismiss-typeout-window-2 ()

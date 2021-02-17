@@ -1051,11 +1051,11 @@ next line because it is at the end of width."
     (setf (window-parameter (current-window) 'change-buffer) t))
   buffer)
 
-(let ((key '#:switchable-buffer-p))
-  (defun switchable-buffer-p (buffer)
+(let ((key '#:not-switchable-buffer-p))
+  (defun not-switchable-buffer-p (buffer)
     (buffer-value buffer key))
 
-  (defun (setf switchable-buffer-p) (value buffer)
+  (defun (setf not-switchable-buffer-p) (value buffer)
     (setf (buffer-value buffer key) value)))
 
 (defun switch-to-buffer (buffer &optional (record t) (move-prev-point t))
@@ -1063,8 +1063,8 @@ next line because it is at the end of width."
   (when (deleted-buffer-p buffer)
     (editor-error "This buffer has been deleted"))
   (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)
-  (when (or (switchable-buffer-p (window-buffer (current-window)))
-            (switchable-buffer-p buffer))
+  (when (or (not-switchable-buffer-p (window-buffer (current-window)))
+            (not-switchable-buffer-p buffer))
     (editor-error "This buffer is not switchable"))
   (%switch-to-buffer buffer record move-prev-point))
 

@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(frame
+(export '(update-prompt-window
+          frame
           make-frame
           frame-current-window
           frame-window-tree

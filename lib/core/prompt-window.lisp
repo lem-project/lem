@@ -170,7 +170,7 @@
                    :called-window (prompt-window-called-window parameters)
                    :history (prompt-window-history parameters))))
 
-(defmethod lem::update-prompt-window ((window floating-prompt))
+(defmethod update-prompt-window ((window floating-prompt))
   (destructuring-bind (x y width height)
       (compute-window-rectangle (window-buffer window))
     (unless (and (= x (window-x window))

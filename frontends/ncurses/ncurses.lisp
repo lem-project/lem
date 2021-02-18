@@ -578,9 +578,9 @@
   (charms/ll:wscrl (ncurses-view-scrwin view) n))
 
 (defmethod lem-if:clipboard-paste ((implementation ncurses))
-  (trivial-clipboard:text))
+  (ignore-errors (trivial-clipboard:text)))
 
 (defmethod lem-if:clipboard-copy ((implementation ncurses) text)
-  (trivial-clipboard:text text))
+  (ignore-errors (trivial-clipboard:text text)))
 
 (pushnew :lem-ncurses *features*)

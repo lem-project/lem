@@ -8,4 +8,5 @@
   :serial t
   :components (#+win32(:file "cl-charms-pdcurseswin32")
                (:file "term")
+               (:file "clipboard")
                (:file "ncurses")))

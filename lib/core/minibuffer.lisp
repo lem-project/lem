@@ -68,9 +68,9 @@
 (defclass minibuffer-window (floating-window) ())
 (defclass sticky-minibuffer-window (minibuffer-window) ())
 
-(defun make-minibuffer-window (frame)
+(defun make-minibuffer-window (frame buffer)
   (make-instance 'sticky-minibuffer-window
-                 :buffer (frame-echoarea-buffer frame)
+                 :buffer buffer
                  :x 0
                  :y (- (display-height)
                        (minibuffer-window-height))
@@ -102,14 +102,22 @@
   (setf (variable-value 'truncate-lines :buffer (current-buffer)) nil))
 
 (defun setup-minibuffer (frame)
-  (setf (frame-echoarea-buffer frame)
-        (make-buffer "*echoarea*" :temporary t :enable-undo-p nil))
-  (setf (frame-minibuffer-buffer frame)
-        (make-buffer "*minibuffer*" :temporary t :enable-undo-p t))
-  (when (or (null (frame-minibuffer-window frame))
-            (deleted-window-p (frame-minibuffer-window frame)))
-    (setf (frame-minibuffer-window frame)
-          (make-minibuffer-window frame))))
+  (let* ((echoarea-buffer
+           (make-buffer "*echoarea*" :temporary t :enable-undo-p nil))
+         (minibuffer-buffer
+           (make-buffer "*minibuffer*" :temporary t :enable-undo-p t))
+         (minibuffer-window
+           (or (alexandria:when-let*
+                   ((sticky-prompt (frame-minibuffer frame))
+                    (window (sticky-prompt-minibuffer-window sticky-prompt)))
+                 (unless (deleted-window-p window)
+                   window))
+               (make-minibuffer-window frame echoarea-buffer))))
+    (setf (frame-minibuffer frame)
+          (make-instance 'sticky-prompt
+                         :minibuffer-buffer minibuffer-buffer
+                         :echoarea-buffer echoarea-buffer
+                         :minibuffer-window minibuffer-window))))
 
 (defun teardown-minibuffer (frame)
   (%free-window (frame-minibuffer-window frame)))
@@ -129,21 +137,25 @@
 
 (defgeneric show-message (string)
   (:method (string)
-    (cond (string
-           (erase-buffer (frame-echoarea-buffer (current-frame)))
-           (let ((point (buffer-point (frame-echoarea-buffer (current-frame)))))
-             (insert-string point string))
-           (when (active-minibuffer-window)
-             (handler-case
-                 (with-current-window (minibuffer-window)
-                   (unwind-protect (progn
-                                     (%switch-to-buffer (frame-echoarea-buffer (current-frame)) nil nil)
-                                     (sit-for 1 t))
-                     (%switch-to-buffer (frame-minibuffer-buffer (current-frame)) nil nil)))
-               (editor-abort ()
-                 (minibuf-read-line-break)))))
-          (t
-           (erase-buffer (frame-echoarea-buffer (current-frame)))))))
+    (let ((sticky-prompt (frame-minibuffer (current-frame))))
+      (cond (string
+             (erase-buffer (sticky-prompt-echoarea-buffer sticky-prompt))
+             (let ((point (buffer-point (sticky-prompt-echoarea-buffer sticky-prompt))))
+               (insert-string point string))
+             (when (active-minibuffer-window)
+               (handler-case
+                   (with-current-window (minibuffer-window)
+                     (unwind-protect
+                          (progn
+                            (%switch-to-buffer (sticky-prompt-echoarea-buffer sticky-prompt)
+                                               nil nil)
+                            (sit-for 1 t))
+                       (%switch-to-buffer (sticky-prompt-minibuffer-buffer sticky-prompt)
+                                          nil nil)))
+                 (editor-abort ()
+                   (minibuf-read-line-break)))))
+            (t
+             (erase-buffer (sticky-prompt-echoarea-buffer sticky-prompt)))))))
 
 (defun message-without-log (string &rest args)
   (show-message (if string
@@ -295,6 +307,7 @@
   (when (and (not *enable-recursive-minibuffers*) (< 0 *minibuf-read-line-depth*))
     (editor-error "ERROR: recursive use of minibuffer"))
   (let* ((frame (current-frame))
+         (sticky-prompt (frame-minibuffer frame))
          (minibuffer-calls-window (frame-minibuffer-calls-window frame)))
     (unwind-protect
          (progn
@@ -308,7 +321,8 @@
                      (catch +recursive-minibuffer-break-tag+
                        (handler-case
                            (with-current-window (minibuffer-window)
-                             (%switch-to-buffer (frame-minibuffer-buffer (current-frame)) nil nil)
+                             (%switch-to-buffer (sticky-prompt-minibuffer-buffer sticky-prompt)
+                                                nil nil)
                              (let ((minibuf-buffer-prev-string
                                      (points-to-string (buffer-start-point (minibuffer))
                                                        (buffer-end-point (minibuffer))))

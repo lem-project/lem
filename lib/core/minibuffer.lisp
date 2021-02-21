@@ -230,7 +230,7 @@
   (character-offset
    (copy-point (buffer-start-point (minibuffer))
                :temporary)
-   (frame-minibuffer-start-charpos (current-frame))))
+   (sticky-prompt-minibuffer-start-charpos (frame-minibuffer (current-frame)))))
 
 (defun get-minibuffer-string ()
   (points-to-string (minibuffer-start-point)

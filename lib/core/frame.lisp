@@ -11,7 +11,6 @@
           frame-modified-header-windows
           frame-minibuffer-window
           frame-minibuffer-calls-window
-          frame-minibuffer-start-charpos
           frame-prompt-window
           map-frame
           get-frame
@@ -66,20 +65,8 @@
 (defmethod frame-minibuffer-window ((frame frame))
   (sticky-prompt-minibuffer-window (frame-minibuffer frame)))
 
-(defmethod (setf frame-minibuffer-window) (value (frame frame))
-  (setf (sticky-prompt-minibuffer-window (frame-minibuffer frame)) value))
-
 (defmethod frame-minibuffer-calls-window ((frame frame))
   (sticky-prompt-minibuffer-calls-window (frame-minibuffer frame)))
-
-(defmethod (setf frame-minibuffer-calls-window) (value (frame frame))
-  (setf (sticky-prompt-minibuffer-calls-window (frame-minibuffer frame)) value))
-
-(defmethod frame-minibuffer-start-charpos ((frame frame))
-  (sticky-prompt-minibuffer-start-charpos (frame-minibuffer frame)))
-
-(defmethod (setf frame-minibuffer-start-charpos) (value (frame frame))
-  (setf (sticky-prompt-minibuffer-start-charpos (frame-minibuffer frame)) value))
 
 (defun make-frame (&optional (old-frame (current-frame)))
   (let ((frame (make-instance 'frame)))

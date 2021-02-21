@@ -169,15 +169,17 @@
 
 (defgeneric show-message-buffer (buffer)
   (:method (buffer)
-    (erase-buffer (frame-echoarea-buffer (current-frame)))
-    (insert-buffer (buffer-point (frame-echoarea-buffer (current-frame))) buffer)))
+    (let ((sticky-prompt (frame-minibuffer (current-frame))))
+      (erase-buffer (sticky-prompt-echoarea-buffer sticky-prompt))
+      (insert-buffer (buffer-point (sticky-prompt-echoarea-buffer sticky-prompt)) buffer))))
 
 (defun message-buffer (buffer)
   (show-message-buffer buffer))
 
 (defun active-echoarea-p ()
-  (point< (buffer-start-point (frame-echoarea-buffer (current-frame)))
-          (buffer-end-point (frame-echoarea-buffer (current-frame)))))
+  (let ((sticky-prompt (frame-minibuffer (current-frame))))
+    (point< (buffer-start-point (sticky-prompt-echoarea-buffer sticky-prompt))
+            (buffer-end-point (sticky-prompt-echoarea-buffer sticky-prompt)))))
 
 (defgeneric prompt-for-character (prompt)
   (:method (prompt)

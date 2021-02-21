@@ -9,7 +9,6 @@
           frame-header-windows
           frame-modified-floating-windows
           frame-modified-header-windows
-          frame-echoarea-buffer
           frame-minibuffer-window
           frame-minibuffer-calls-window
           frame-minibuffer-start-charpos
@@ -63,12 +62,6 @@
    (prompt-window
     :initform nil
     :accessor frame-prompt-window)))
-
-(defmethod frame-echoarea-buffer ((frame frame))
-  (sticky-prompt-echoarea-buffer (frame-minibuffer frame)))
-
-(defmethod (setf frame-echoarea-buffer) (value (frame frame))
-  (setf (sticky-prompt-echoarea-buffer (frame-minibuffer frame)) value))
 
 (defmethod frame-minibuffer-window ((frame frame))
   (sticky-prompt-minibuffer-window (frame-minibuffer frame)))

@@ -53,7 +53,7 @@
    ;; minibuffer
    (minibuffer
     :initarg :minibuffer
-    :initform (make-instance 'sticky-prompt)
+    :initform nil
     :accessor frame-minibuffer)
    ;; prompt
    (prompt-window

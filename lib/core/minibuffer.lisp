@@ -82,7 +82,8 @@
   (t :foreground "blue" :bold-p t))
 
 (defun minibuffer-window ()
-  (sticky-prompt-minibuffer-window (frame-minibuffer (current-frame))))
+  (when (frame-minibuffer (current-frame))
+    (sticky-prompt-minibuffer-window (frame-minibuffer (current-frame)))))
 (defun minibuffer-window-p (window)
   (typep window 'sticky-minibuffer-window))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
@@ -119,8 +120,9 @@
   (%free-window (sticky-prompt-minibuffer-window sticky-prompt)))
 
 (defun minibuf-update-size ()
-  (window-set-pos (minibuffer-window) 0 (1- (display-height)))
-  (window-set-size (minibuffer-window) (display-width) 1))
+  (when (frame-minibuffer (current-frame))
+    (window-set-pos (minibuffer-window) 0 (1- (display-height)))
+    (window-set-size (minibuffer-window) (display-width) 1)))
 
 (defun log-message (string args)
   (when string

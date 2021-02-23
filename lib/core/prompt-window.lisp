@@ -31,17 +31,17 @@
     :initarg :existing-test-function
     :initform nil
     :reader prompt-window-existing-test-function)
-   (called-window
-    :initarg :called-window
+   (caller-of-prompt-window
+    :initarg :caller-of-prompt-window
     :initform nil
-    :reader prompt-window-called-window)
+    :reader prompt-window-caller-of-prompt-window)
    (history
     :initarg :history
     :initform nil
     :reader prompt-window-history)))
 
 (defclass floating-prompt (floating-window prompt-parameters)
-  ((start-point
+  ((start-charpos
     :accessor prompt-window-start-charpos))
   (:default-initargs
    :border +border-size+))
@@ -167,7 +167,7 @@
                    :use-modeline-p nil
                    :completion-function (prompt-window-completion-function parameters)
                    :existing-test-function (prompt-window-existing-test-function parameters)
-                   :called-window (prompt-window-called-window parameters)
+                   :caller-of-prompt-window (prompt-window-caller-of-prompt-window parameters)
                    :history (prompt-window-history parameters))))
 
 (defmethod update-prompt-window ((window floating-prompt))
@@ -225,7 +225,7 @@
 (defun delete-prompt (prompt-window)
   (let ((frame (lem::get-frame-of-window prompt-window)))
     (when (eq prompt-window (frame-current-window frame))
-      (let ((window (prompt-window-called-window prompt-window)))
+      (let ((window (prompt-window-caller-of-prompt-window prompt-window)))
         (setf (frame-current-window frame)
               (if (deleted-window-p window)
                   (first (window-list))
@@ -282,13 +282,13 @@
           (execute-input execute))))))
 
 (defmethod prompt-for-character (prompt-string)
-  (let ((called-window (current-window)))
+  (let ((caller-of-prompt-window (current-window)))
     (prompt-for-aux :prompt-string prompt-string
                     :initial-string ""
                     :parameters (make-instance 'prompt-parameters
-                                               :called-window called-window)
+                                               :caller-of-prompt-window caller-of-prompt-window)
                     :body-function (lambda ()
-                                     (with-current-window called-window
+                                     (with-current-window caller-of-prompt-window
                                        (redraw-display t)
                                        (let ((key (read-key)))
                                          (if (lem::abort-key-p key)
@@ -316,7 +316,7 @@
                   :parameters (make-instance 'prompt-parameters
                                              :completion-function completion-function
                                              :existing-test-function existing-test-function
-                                             :called-window (current-window)
+                                             :caller-of-prompt-window (current-window)
                                              :history (get-history history-name))
                   :syntax-table syntax-table
                   :body-function #'prompt-for-line-command-loop))

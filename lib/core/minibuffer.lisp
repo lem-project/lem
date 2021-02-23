@@ -56,10 +56,10 @@
     :initarg :minibuffer-window
     :initform nil
     :accessor sticky-prompt-minibuffer-window)
-   (minibuffer-calls-window
-    :initarg :minibuffer-calls-window
+   (caller-of-prompt-window
+    :initarg :caller-of-prompt-window
     :initform nil
-    :accessor sticky-prompt-minibuffer-calls-window)
+    :accessor sticky-prompt-caller-of-prompt-window)
    (minibuffer-start-charpos
     :initarg :minibuffer-start-charpos
     :initform nil
@@ -306,10 +306,10 @@
     (editor-error "ERROR: recursive use of minibuffer"))
   (let* ((frame (current-frame))
          (sticky-prompt (frame-minibuffer frame))
-         (minibuffer-calls-window (sticky-prompt-minibuffer-calls-window sticky-prompt)))
+         (caller-of-prompt-window (sticky-prompt-caller-of-prompt-window sticky-prompt)))
     (unwind-protect
          (progn
-           (setf (sticky-prompt-minibuffer-calls-window sticky-prompt) (current-window))
+           (setf (sticky-prompt-caller-of-prompt-window sticky-prompt) (current-window))
            (let ((*minibuf-read-line-history*
                    (let ((table (gethash history-name *minibuf-read-line-history-table*)))
                      (or table
@@ -350,9 +350,9 @@
                                         (when initial
                                           (insert-string (current-point) initial))
                                         (unwind-protect (minibuf-read-line-loop comp-f existing-p syntax-table)
-                                          (if (deleted-window-p (sticky-prompt-minibuffer-calls-window sticky-prompt))
+                                          (if (deleted-window-p (sticky-prompt-caller-of-prompt-window sticky-prompt))
                                               (setf (current-window) (car (window-list)))
-                                              (setf (current-window) (sticky-prompt-minibuffer-calls-window sticky-prompt)))
+                                              (setf (current-window) (sticky-prompt-caller-of-prompt-window sticky-prompt)))
                                           (with-current-window (minibuffer-window)
                                             (let ((*inhibit-read-only* t))
                                               (erase-buffer))
@@ -376,7 +376,7 @@
                (if (eq result +recursive-minibuffer-break-tag+)
                    (error 'editor-abort)
                    result))))
-      (setf (sticky-prompt-minibuffer-calls-window sticky-prompt) minibuffer-calls-window))))
+      (setf (sticky-prompt-caller-of-prompt-window sticky-prompt) caller-of-prompt-window))))
 
 (defun prompt-for-string (prompt &optional initial)
   (prompt-for-line prompt (or initial "") nil nil 'mh-read-string))

@@ -61,7 +61,7 @@
     :accessor frame-prompt-window)))
 
 (defmethod frame-caller-of-prompt-window ((frame frame))
-  (sticky-prompt-minibuffer-calls-window (frame-minibuffer frame)))
+  (sticky-prompt-caller-of-prompt-window (frame-minibuffer frame)))
 
 (defun make-frame (&optional (old-frame (current-frame)))
   (let ((frame (make-instance 'frame)))

@@ -65,8 +65,7 @@
     :initform nil
     :accessor sticky-prompt-minibuffer-start-charpos)))
 
-(defclass minibuffer-window (floating-window) ())
-(defclass sticky-minibuffer-window (minibuffer-window) ())
+(defclass sticky-minibuffer-window (floating-window) ())
 
 (defun make-minibuffer-window (frame buffer)
   (make-instance 'sticky-minibuffer-window
@@ -85,7 +84,7 @@
 (defun minibuffer-window ()
   (sticky-prompt-minibuffer-window (frame-minibuffer (current-frame))))
 (defun minibuffer-window-p (window)
-  (typep window 'minibuffer-window))
+  (typep window 'sticky-minibuffer-window))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
 (defun minibuffer-window-height () *minibuffer-window-height*)
 (defun minibuffer () (window-buffer (minibuffer-window)))

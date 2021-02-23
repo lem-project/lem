@@ -113,8 +113,7 @@
 (defun window-in-frame-p (window frame)
   (when (or (find window (window-list frame))
             (find window (frame-floating-windows frame))
-            (find window (frame-header-windows frame))
-            (eq window (frame-minibuffer-window frame)))
+            (find window (frame-header-windows frame)))
     t))
 
 (defun get-frame-of-window (window)

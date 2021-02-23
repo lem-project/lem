@@ -1073,26 +1073,27 @@ next line because it is at the end of width."
       (return-from pop-to-buffer (values (current-window) nil))
       (let ((parent-window (current-window))
             (split-p))
-        (let ((current-window (cond ((minibuffer-window-active-p)
-                                     (frame-minibuffer-calls-window (current-frame)))
-                                    #+(or)
-                                    ((typep (current-window) 'lem.prompt-window::floating-prompt)
-                                     (lem.prompt-window::prompt-window-called-window
-                                      (frame-prompt-window (current-frame))))
-                                    (t
-                                     (current-window)))))
+        (let ((dst-window
+                (cond ((minibuffer-window-active-p)
+                       (frame-minibuffer-calls-window (current-frame)))
+                      #+(or)
+                      ((typep (current-window) 'lem.prompt-window::floating-prompt)
+                       (lem.prompt-window::prompt-window-called-window
+                        (frame-prompt-window (current-frame))))
+                      (t
+                       (current-window)))))
           (when (or (one-window-p) force-split-p)
             (setf split-p t)
-            (split-window-sensibly current-window))
+            (split-window-sensibly dst-window))
           (with-current-window
               (or (window-tree-find-if (window-tree)
                                        (lambda (window)
                                          (eq buffer (window-buffer window))))
-                  (get-next-window current-window))
+                  (get-next-window dst-window))
             (switch-to-buffer buffer)
-            (setf (window-parameter current-window 'split-p) split-p)
-            (setf (window-parameter current-window 'parent-window) parent-window)
-            (values current-window split-p))))))
+            (setf (window-parameter (current-window) 'split-p) split-p)
+            (setf (window-parameter (current-window) 'parent-window) parent-window)
+            (values (current-window) split-p))))))
 
 (defun difference-window-y (window)
   (lambda (w1 w2)

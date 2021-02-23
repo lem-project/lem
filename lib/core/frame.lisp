@@ -91,7 +91,8 @@
 
 (defun teardown-frame (frame)
   (teardown-windows frame)
-  (teardown-minibuffer (frame-minibuffer frame)))
+  (when (frame-minibuffer frame)
+    (teardown-minibuffer (frame-minibuffer frame))))
 
 (defun teardown-frames ()
   (maphash (lambda (k v)
@@ -139,5 +140,5 @@
 
 (defun max-window-height (frame)
   (- (display-height)
-     (if (sticky-bottom-minibuffer-p) 1 0)
+     (if (frame-minibuffer frame) 1 0)
      (topleft-window-y frame)))

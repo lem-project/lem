@@ -90,9 +90,6 @@
 (defun minibuffer () (window-buffer (minibuffer-window)))
 (defun minibufferp (buffer) (eq buffer (minibuffer)))
 
-(defun sticky-bottom-minibuffer-p ()
-  (typep (minibuffer-window) 'sticky-minibuffer-window))
-
 (define-major-mode minibuffer-mode nil
     (:name "minibuffer"
      :keymap *minibuf-keymap*

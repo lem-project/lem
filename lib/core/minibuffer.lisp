@@ -83,7 +83,7 @@
   (t :foreground "blue" :bold-p t))
 
 (defun minibuffer-window ()
-  (frame-minibuffer-window (current-frame)))
+  (sticky-prompt-minibuffer-window (frame-minibuffer (current-frame))))
 (defun minibuffer-window-p (window)
   (typep window 'minibuffer-window))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))

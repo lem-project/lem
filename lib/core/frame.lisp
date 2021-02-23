@@ -9,7 +9,6 @@
           frame-header-windows
           frame-modified-floating-windows
           frame-modified-header-windows
-          frame-minibuffer-window
           frame-prompt-window
           map-frame
           get-frame
@@ -60,9 +59,6 @@
    (prompt-window
     :initform nil
     :accessor frame-prompt-window)))
-
-(defmethod frame-minibuffer-window ((frame frame))
-  (sticky-prompt-minibuffer-window (frame-minibuffer frame)))
 
 (defmethod frame-caller-of-prompt-window ((frame frame))
   (sticky-prompt-minibuffer-calls-window (frame-minibuffer frame)))

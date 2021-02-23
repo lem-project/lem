@@ -119,8 +119,8 @@
                          :echoarea-buffer echoarea-buffer
                          :minibuffer-window minibuffer-window))))
 
-(defun teardown-minibuffer (frame)
-  (%free-window (frame-minibuffer-window frame)))
+(defun teardown-minibuffer (sticky-prompt)
+  (%free-window (sticky-prompt-minibuffer-window sticky-prompt)))
 
 (defun minibuf-update-size ()
   (window-set-pos (minibuffer-window) 0 (1- (display-height)))

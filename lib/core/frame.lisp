@@ -95,7 +95,7 @@
 
 (defun teardown-frame (frame)
   (teardown-windows frame)
-  (teardown-minibuffer frame))
+  (teardown-minibuffer (frame-minibuffer frame)))
 
 (defun teardown-frames ()
   (maphash (lambda (k v)

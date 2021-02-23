@@ -10,7 +10,6 @@
           frame-modified-floating-windows
           frame-modified-header-windows
           frame-minibuffer-window
-          frame-minibuffer-calls-window
           frame-prompt-window
           map-frame
           get-frame
@@ -65,7 +64,7 @@
 (defmethod frame-minibuffer-window ((frame frame))
   (sticky-prompt-minibuffer-window (frame-minibuffer frame)))
 
-(defmethod frame-minibuffer-calls-window ((frame frame))
+(defmethod frame-caller-of-prompt-window ((frame frame))
   (sticky-prompt-minibuffer-calls-window (frame-minibuffer frame)))
 
 (defun make-frame (&optional (old-frame (current-frame)))

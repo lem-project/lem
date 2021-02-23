@@ -85,7 +85,8 @@
     frame))
 
 (defun setup-frame (frame buffer)
-  (setup-minibuffer frame)
+  (assert (null (frame-minibuffer frame)))
+  (setf (frame-minibuffer frame) (create-minibuffer frame))
   (setup-frame-windows frame buffer)
   (lem-if:set-first-view (implementation) (window-view (frame-current-window frame))))
 

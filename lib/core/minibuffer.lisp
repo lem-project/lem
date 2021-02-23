@@ -98,23 +98,17 @@
                     :symbol-chars '(#\_ #\-)))
   (setf (variable-value 'truncate-lines :buffer (current-buffer)) nil))
 
-(defun setup-minibuffer (frame)
+(defun create-minibuffer (frame)
   (let* ((echoarea-buffer
            (make-buffer "*echoarea*" :temporary t :enable-undo-p nil))
          (minibuffer-buffer
            (make-buffer "*minibuffer*" :temporary t :enable-undo-p t))
          (minibuffer-window
-           (or (alexandria:when-let*
-                   ((sticky-prompt (frame-minibuffer frame))
-                    (window (sticky-prompt-minibuffer-window sticky-prompt)))
-                 (unless (deleted-window-p window)
-                   window))
-               (make-minibuffer-window frame echoarea-buffer))))
-    (setf (frame-minibuffer frame)
-          (make-instance 'sticky-prompt
-                         :minibuffer-buffer minibuffer-buffer
-                         :echoarea-buffer echoarea-buffer
-                         :minibuffer-window minibuffer-window))))
+           (make-minibuffer-window frame echoarea-buffer)))
+    (make-instance 'sticky-prompt
+                   :minibuffer-buffer minibuffer-buffer
+                   :echoarea-buffer echoarea-buffer
+                   :minibuffer-window minibuffer-window)))
 
 (defun teardown-minibuffer (sticky-prompt)
   (%free-window (sticky-prompt-minibuffer-window sticky-prompt)))

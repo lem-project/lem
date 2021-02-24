@@ -72,17 +72,19 @@
 (defun current-prompt-window ()
   (frame-floating-prompt-window (current-frame)))
 
-(defun prompt-start-point ()
-  (let* ((prompt-window (current-prompt-window))
-         (buffer (window-buffer prompt-window)))
+(defmethod prompt-start-point ((prompt floating-prompt))
+  (let ((buffer (window-buffer prompt)))
     (character-offset (copy-point (buffer-start-point buffer) :temporary)
-                      (prompt-window-start-charpos prompt-window))))
+                      (prompt-window-start-charpos prompt))))
+
+(defun current-prompt-start-point ()
+  (prompt-start-point (current-prompt-window)))
 
 (defun current-point-in-prompt ()
   (buffer-point (window-buffer (current-prompt-window))))
 
 (defun get-between-input-points ()
-  (list (prompt-start-point)
+  (list (current-prompt-start-point)
         (buffer-end-point (window-buffer (current-prompt-window)))))
 
 (defun get-input-string ()
@@ -109,7 +111,7 @@
 
 (define-command prompt-completion () ()
   (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
-    (with-point ((start (prompt-start-point)))
+    (with-point ((start (current-prompt-start-point)))
       (lem.completion-mode:run-completion
        (lambda (point)
          (with-point ((start start)
@@ -320,34 +322,6 @@
                                              :history (get-history history-name))
                   :syntax-table syntax-table
                   :body-function #'prompt-for-line-command-loop))
-
-(defun prompt-file-complete (string directory &key directory-only)
-  (mapcar (lambda (filename)
-            (let ((label (tail-of-pathname filename)))
-              (with-point ((s (prompt-start-point))
-                           (e (prompt-start-point)))
-                (lem.completion-mode:make-completion-item
-                 :label label
-                 :start (character-offset
-                         s
-                         (length (namestring (uiop:pathname-directory-pathname string))))
-                 :end (line-end e)))))
-          (completion-file string directory :directory-only directory-only)))
-
-(defun prompt-buffer-complete (string)
-  (loop :for buffer :in (completion-buffer string)
-        :collect (with-point ((s (prompt-start-point))
-                              (e (prompt-start-point)))
-                   (lem.completion-mode:make-completion-item
-                    :detail (alexandria:if-let (filename (buffer-filename buffer))
-                                               (enough-namestring filename (probe-file "./"))
-                                               "")
-                    :label (buffer-name buffer)
-                    :start s
-                    :end (line-end e)))))
-
-(setf *minibuffer-file-complete-function* 'prompt-file-complete)
-(setf *minibuffer-buffer-complete-function* 'prompt-buffer-complete)
 
 (defmethod active-minibuffer-window ()
   (current-prompt-window))

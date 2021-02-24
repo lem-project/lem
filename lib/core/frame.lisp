@@ -10,6 +10,7 @@
           frame-modified-floating-windows
           frame-modified-header-windows
           frame-floating-prompt-window
+          frame-prompt-window
           map-frame
           get-frame
           current-frame
@@ -60,6 +61,10 @@
     :initform nil
     :accessor frame-floating-prompt-window)))
 
+(defmethod frame-prompt-window ((frame frame))
+  (or (frame-minibuffer frame)
+      (frame-floating-prompt-window frame)))
+
 (defmethod frame-caller-of-prompt-window ((frame frame))
   (sticky-prompt-caller-of-prompt-window (frame-minibuffer frame)))
 
@@ -86,7 +91,7 @@
 
 (defun setup-frame (frame buffer)
   (assert (null (frame-minibuffer frame)))
-  (setf (frame-minibuffer frame) (create-minibuffer frame))
+  ;; (setf (frame-minibuffer frame) (create-minibuffer frame))
   (setup-frame-windows frame buffer)
   (lem-if:set-first-view (implementation) (window-view (frame-current-window frame))))
 

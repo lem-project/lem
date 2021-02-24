@@ -78,6 +78,12 @@
                  :use-modeline-p nil
                  :frame frame))
 
+(defmethod prompt-start-point ((prompt sticky-minibuffer-window))
+  (character-offset
+   (copy-point (buffer-start-point (minibuffer))
+               :temporary)
+   (sticky-prompt-minibuffer-start-charpos prompt)))
+
 (define-attribute minibuffer-prompt-attribute
   (t :foreground "blue" :bold-p t))
 
@@ -219,10 +225,7 @@
       nil))
 
 (defun minibuffer-start-point ()
-  (character-offset
-   (copy-point (buffer-start-point (minibuffer))
-               :temporary)
-   (sticky-prompt-minibuffer-start-charpos (frame-minibuffer (current-frame)))))
+  (prompt-start-point (frame-minibuffer (current-frame))))
 
 (defun get-minibuffer-string ()
   (points-to-string (minibuffer-start-point)

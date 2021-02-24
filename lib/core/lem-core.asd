@@ -30,6 +30,7 @@
                (:file "screen")
                (:file "buffer-list-manager")
                (:file "frame")
+               (:file "prompt-interface")
                (:file "window")
                (:file "modeline")
                (:file "defcommand")

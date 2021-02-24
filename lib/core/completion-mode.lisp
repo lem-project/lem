@@ -286,11 +286,14 @@
 (setf *minibuffer-completion-function* 'minibuffer-completion)
 
 
+(defun current-prompt-start-point ()
+  (prompt-start-point (frame-prompt-window (current-frame))))
+
 (defun minibuffer-file-complete (string directory &key directory-only)
   (mapcar (lambda (filename)
             (let ((label (tail-of-pathname filename)))
-              (with-point ((s (lem::minibuffer-start-point))
-                           (e (lem::minibuffer-start-point)))
+              (with-point ((s (current-prompt-start-point))
+                           (e (current-prompt-start-point)))
                 (make-completion-item
                  :label label
                  :start (character-offset
@@ -301,15 +304,15 @@
 
 (defun minibuffer-buffer-complete (string)
   (loop :for buffer :in (completion-buffer string)
-        :collect (with-point ((s (lem::minibuffer-start-point))
-                              (e (lem::minibuffer-start-point)))
+        :collect (with-point ((s (current-prompt-start-point))
+                              (e (current-prompt-start-point)))
                    (make-completion-item
                     :detail (alexandria:if-let (filename (buffer-filename buffer))
-                                               (enough-namestring filename (probe-file "./"))
-                                               "")
+                              (enough-namestring filename (probe-file "./"))
+                              "")
                     :label (buffer-name buffer)
                     :start s
                     :end (line-end e)))))
 
-;;(setf *minibuffer-file-complete-function* 'minibuffer-file-complete)
-;;(setf *minibuffer-buffer-complete-function* 'minibuffer-buffer-complete)
+(setf *minibuffer-file-complete-function* 'minibuffer-file-complete)
+(setf *minibuffer-buffer-complete-function* 'minibuffer-buffer-complete)

@@ -70,7 +70,7 @@
 (define-key *prompt-mode-keymap* "M-n" 'prompt-next-history)
 
 (defun current-prompt-window ()
-  (frame-prompt-window (current-frame)))
+  (frame-floating-prompt-window (current-frame)))
 
 (defun prompt-start-point ()
   (let* ((prompt-window (current-prompt-window))
@@ -261,7 +261,7 @@
                             (parameters (alexandria:required-argument :parameters))
                             (body-function (alexandria:required-argument :body-function))
                             (syntax-table nil))
-  (when (frame-prompt-window (current-frame))
+  (when (frame-floating-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (run-hooks *prompt-activate-hook*)
   (with-current-window (current-window)
@@ -270,7 +270,7 @@
                                          parameters)))
       (switch-to-prompt-window prompt-window)
       (handler-case
-          (with-unwind-setf (((frame-prompt-window (current-frame))
+          (with-unwind-setf (((frame-floating-prompt-window (current-frame))
                               prompt-window))
               (if syntax-table
                   (with-current-syntax syntax-table

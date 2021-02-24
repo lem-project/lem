@@ -9,7 +9,7 @@
           frame-header-windows
           frame-modified-floating-windows
           frame-modified-header-windows
-          frame-prompt-window
+          frame-floating-prompt-window
           map-frame
           get-frame
           current-frame
@@ -58,7 +58,7 @@
    ;; prompt
    (prompt-window
     :initform nil
-    :accessor frame-prompt-window)))
+    :accessor frame-floating-prompt-window)))
 
 (defmethod frame-caller-of-prompt-window ((frame frame))
   (sticky-prompt-caller-of-prompt-window (frame-minibuffer frame)))
@@ -102,8 +102,8 @@
            *display-frame-map*))
 
 (defun redraw-frame (frame)
-  (when (frame-prompt-window frame)
-    (update-prompt-window (frame-prompt-window frame)))
+  (when (frame-floating-prompt-window frame)
+    (update-prompt-window (frame-floating-prompt-window frame)))
   (redraw-display (and (redraw-after-modifying-floating-window (implementation))
                        (frame-modified-floating-windows frame)))
   (setf (frame-modified-floating-windows frame) nil))

@@ -66,7 +66,7 @@
       (frame-floating-prompt-window frame)))
 
 (defmethod frame-caller-of-prompt-window ((frame frame))
-  (sticky-prompt-caller-of-prompt-window (frame-minibuffer frame)))
+  (caller-of-prompt-window (frame-prompt-window frame)))
 
 (defun make-frame (&optional (old-frame (current-frame)))
   (let ((frame (make-instance 'frame)))

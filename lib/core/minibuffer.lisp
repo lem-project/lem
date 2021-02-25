@@ -84,6 +84,9 @@
                :temporary)
    (sticky-prompt-minibuffer-start-charpos prompt)))
 
+(defmethod caller-of-prompt-window ((prompt sticky-prompt))
+  (sticky-prompt-caller-of-prompt-window prompt))
+
 (define-attribute minibuffer-prompt-attribute
   (t :foreground "blue" :bold-p t))
 
@@ -124,15 +127,6 @@
     (window-set-pos (minibuffer-window) 0 (1- (display-height)))
     (window-set-size (minibuffer-window) (display-width) 1)))
 
-(defun log-message (string args)
-  (when string
-    (let ((msg (apply #'format nil string args)))
-      (let ((buffer (make-buffer "*Messages*")))
-        (with-open-stream (stream (make-buffer-output-stream
-                                   (buffer-end-point buffer)))
-          (fresh-line stream)
-          (princ msg stream))))))
-
 (defgeneric show-message (string)
   (:method (string)
     (let ((sticky-prompt (frame-minibuffer (current-frame))))
@@ -155,34 +149,20 @@
             (t
              (erase-buffer (sticky-prompt-echoarea-buffer sticky-prompt)))))))
 
-(defun message-without-log (string &rest args)
-  (show-message (if string
-                    (apply #'format nil string args)
-                    nil)))
-
-(defun message (string &rest args)
-  (log-message string args)
-  (apply #'message-without-log string args)
-  t)
-
-(defgeneric show-message-buffer (buffer)
-  (:method (buffer)
-    (let ((sticky-prompt (frame-minibuffer (current-frame))))
-      (erase-buffer (sticky-prompt-echoarea-buffer sticky-prompt))
-      (insert-buffer (buffer-point (sticky-prompt-echoarea-buffer sticky-prompt)) buffer))))
-
-(defun message-buffer (buffer)
-  (show-message-buffer buffer))
+(defmethod show-message-buffer (buffer)
+  (let ((sticky-prompt (frame-minibuffer (current-frame))))
+    (erase-buffer (sticky-prompt-echoarea-buffer sticky-prompt))
+    (insert-buffer (buffer-point (sticky-prompt-echoarea-buffer sticky-prompt)) buffer)))
 
 (defun active-echoarea-p ()
   (let ((sticky-prompt (frame-minibuffer (current-frame))))
     (point< (buffer-start-point (sticky-prompt-echoarea-buffer sticky-prompt))
             (buffer-end-point (sticky-prompt-echoarea-buffer sticky-prompt)))))
 
-(defgeneric prompt-for-character (prompt)
-  (:method (prompt)
+(defgeneric prompt-for-character (prompt-string)
+  (:method (prompt-string)
     (when (interactive-p)
-      (message "~A" prompt)
+      (message "~A" prompt-string)
       (redraw-display))
     (let ((key (read-key)))
       (when (interactive-p)

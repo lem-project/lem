@@ -78,7 +78,7 @@
                  :use-modeline-p nil
                  :frame frame))
 
-(defmethod prompt-start-point ((prompt sticky-minibuffer-window))
+(defmethod prompt-start-point ((prompt sticky-prompt))
   (character-offset
    (copy-point (buffer-start-point (minibuffer))
                :temporary)

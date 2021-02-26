@@ -13,9 +13,9 @@
 (defgeneric active-minibuffer-window ()) ;TOOD
 (defgeneric prompt-for-character (prompt-string))
 
-(defun prompt-for-y-or-n-p (prompt)
+(defun prompt-for-y-or-n-p (prompt-string)
   (do () (nil)
-    (let ((c (prompt-for-character (format nil "~a [y/n]? " prompt))))
+    (let ((c (prompt-for-character (format nil "~a [y/n]? " prompt-string))))
       (case c
         (#\y (return t))
         (#\n (return nil))))))

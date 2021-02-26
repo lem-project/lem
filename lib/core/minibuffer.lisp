@@ -267,8 +267,6 @@
         (lem.history:add-history *minibuf-read-line-history* str)
         str))))
 
-(defgeneric prompt-for-line (prompt initial comp-f existing-p history-name &optional syntax-table))
-
 (defmethod prompt-for-line (prompt initial comp-f existing-p history-name
                             &optional (syntax-table (current-syntax)))
   (when (= 0 *minibuf-read-line-depth*)

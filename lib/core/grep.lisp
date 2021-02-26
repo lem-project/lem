@@ -130,23 +130,23 @@
     (buffer-start p)
     (loop :while (replace-diff p))))
 
-(define-command grep (string) ((list (prompt-for-string ": " "grep -nH ")))
-  (let ((directory (buffer-directory)))
-    (labels ((f (&optional a)
-               (declare (ignore a))
-               (call-background-job
-                (lambda ()
-                  (with-output-to-string (s)
-                    (uiop:run-program string
-                                      :directory directory
-                                      :output s
-                                      :error-output s
-                                      :ignore-error-status t)))
-                (alexandria:curry #'grep-with-string
-                                  "*grep*"
-                                  directory
-                                  #'f))))
-      (f))))
+(define-command grep (string &optional (directory (buffer-directory)))
+    ((list (prompt-for-string ": " "grep -nH ")))
+  (labels ((f (&optional a)
+             (declare (ignore a))
+             (call-background-job
+              (lambda ()
+                (with-output-to-string (s)
+                  (uiop:run-program string
+                                    :directory directory
+                                    :output s
+                                    :error-output s
+                                    :ignore-error-status t)))
+              (alexandria:curry #'grep-with-string
+                                "*grep*"
+                                directory
+                                #'f))))
+    (f)))
 
 (define-command grep-replace () ()
   (when (buffer-value (current-buffer) 'grep-buffer t)

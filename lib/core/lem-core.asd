@@ -31,7 +31,7 @@
                (:file "buffer-list-manager")
                (:file "frame")
                (:file "echo")
-               (:file "prompt-interface")
+               (:file "prompt")
                (:file "window")
                (:file "modeline")
                (:file "defcommand")

@@ -328,3 +328,6 @@
 
 (defmethod active-minibuffer-window ()
   (current-prompt-window))
+
+(defmethod prompt-active-p ((prompt floating-prompt))
+  (eq prompt (current-window)))

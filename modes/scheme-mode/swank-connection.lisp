@@ -271,17 +271,15 @@
                         '(swank:list-all-package-names t))))
 
     ;(dbg-log-format "package-names=~S" package-names)
-    ;(string-upcase (prompt-for-line
     (convert-package-name
-     (prompt-for-line ;"Package: " ""
-                      "Library: " ""
-                      (lambda (str)
-                        (setf str (convert-package-name str))
-                        (completion str package-names))
-                      (lambda (str)
-                        (setf str (convert-package-name str))
-                        (find str package-names :test #'string=))
-                      'mh-scheme-package))))
+     (prompt-for-string "Library: "
+                        :completion-function (lambda (str)
+                                               (setf str (convert-package-name str))
+                                               (completion str package-names))
+                        :test-function (lambda (str)
+                                         (setf str (convert-package-name str))
+                                         (find str package-names :test #'string=))
+                        :history-symbol 'mh-scheme-package))))
 
 ;(define-command scheme-set-package (package-name) ((list (read-package-name)))
 (define-command scheme-set-library (package-name) ((list (read-package-name)))
@@ -307,13 +305,12 @@
    (format nil "(:emacs-interrupt ~A)" (current-swank-thread))))
 
 (defun prompt-for-sexp (string &optional initial)
-  (prompt-for-line string
-                   initial
-                   (lambda (str)
-                     (declare (ignore str))
-                     (completion-symbol (current-point)))
-                   nil
-                   'mh-scheme-sexp))
+  (prompt-for-string string
+                     :initial-value initial
+                     :completion-function (lambda (str)
+                                            (declare (ignore str))
+                                            (completion-symbol (current-point)))
+                     :history-symbol 'mh-scheme-sexp))
 
 (define-command scheme-eval-string (string)
     ((list (prompt-for-sexp "Scheme Eval: ")))
@@ -622,12 +619,11 @@
 
 (defun prompt-for-symbol-name (prompt &optional (initial ""))
   (let ((package (current-package)))
-    (prompt-for-line prompt
-                     initial
-                     (lambda (str)
-                       (symbol-completion str package))
-                     nil
-                     'mh-scheme-read-symbol)))
+    (prompt-for-string prompt
+                       :initial-value initial
+                       :completion-function (lambda (str)
+                                              (symbol-completion str package))
+                       :history-symbol 'mh-scheme-read-symbol)))
 
 (defun definition-to-location (definition)
   (destructuring-bind (title location) definition

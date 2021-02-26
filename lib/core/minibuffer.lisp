@@ -347,7 +347,7 @@
                    result))))
       (setf (sticky-prompt-caller-of-prompt-window sticky-prompt) caller-of-prompt-window))))
 
-(defun prompt-for-string (prompt &key (initial-value "")
+(defun prompt-for-string (prompt &key initial-value
                                       completion-function
                                       test-function
                                       (history-symbol nil)

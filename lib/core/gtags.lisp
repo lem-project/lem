@@ -73,7 +73,7 @@
 
 (defun read-name (point prompt)
   (or (symbol-string-at-point point)
-      (prompt-for-line prompt "" nil nil 'read-name)))
+      (prompt-for-string prompt :history-symbol 'read-name)))
 
 (defun find-definitions (point)
   (let* ((name (read-name point "gtags -x "))

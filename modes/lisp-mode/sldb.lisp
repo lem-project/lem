@@ -363,11 +363,10 @@
 
 (define-command sldb-invoke-restart-by-name (restart-name)
     ((list (let ((restarts (buffer-value (current-buffer) 'restarts)))
-             (prompt-for-line "Restart:"
-                              ""
-                              (lambda (s) (completion s restarts))
-                              (lambda (s) (member s restarts :test #'string-equal :key #'first))
-                              'sldb-restarts))))
+             (prompt-for-string "Restart:"
+                                :completion-function (lambda (s) (completion s restarts))
+                                :test-function (lambda (s) (member s restarts :test #'string-equal :key #'first))
+                                :history-symbol 'sldb-restarts))))
   (sldb-invoke-restart
    (position restart-name
              (buffer-value (current-buffer) 'restarts)

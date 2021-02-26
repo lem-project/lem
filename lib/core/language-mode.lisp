@@ -47,7 +47,7 @@
 (define-editor-variable indent-size 2)
 
 (defun prompt-for-symbol (prompt history-name)
-  (prompt-for-line prompt "" nil nil history-name))
+  (prompt-for-string prompt :history-symbol history-name))
 
 (defvar *idle-timer* nil)
 

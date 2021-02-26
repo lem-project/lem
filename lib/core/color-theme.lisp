@@ -64,12 +64,11 @@
                spec-table))))
 
 (define-command load-theme (name)
-    ((list (prompt-for-line "Color theme: "
-                            nil
-                            (lambda (string)
-                              (completion string (all-color-themes)))
-                            'find-color-theme
-                            'mh-color-theme)))
+    ((list (prompt-for-string "Color theme: "
+                              :completion-function (lambda (string)
+                                                     (completion string (all-color-themes)))
+                              :test-function 'find-color-theme
+                              :history-symbol 'mh-color-theme)))
   (when (find-color-theme name)
     (load-theme-1 name)
     (message nil)

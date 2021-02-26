@@ -347,8 +347,17 @@
                    result))))
       (setf (sticky-prompt-caller-of-prompt-window sticky-prompt) caller-of-prompt-window))))
 
-(defun prompt-for-string (prompt &key (initial-value ""))
-  (prompt-for-line prompt initial-value nil nil 'mh-read-string))
+(defun prompt-for-string (prompt &key (initial-value "")
+                                      completion-function
+                                      test-function
+                                      (history-symbol nil)
+                                      (syntax-table (current-syntax)))
+  (prompt-for-line prompt
+                   initial-value
+                   completion-function
+                   test-function
+                   history-symbol
+                   syntax-table))
 
 (defun prompt-for-integer (prompt &optional min max)
   (parse-integer

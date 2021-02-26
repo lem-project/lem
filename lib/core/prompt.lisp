@@ -12,6 +12,7 @@
 (defgeneric prompt-active-p (prompt))
 (defgeneric active-minibuffer-window ()) ;TOOD
 (defgeneric prompt-for-character (prompt-string))
+(defgeneric prompt-for-line (prompt initial comp-f existing-p history-name &optional syntax-table))
 
 (defun prompt-for-y-or-n-p (prompt-string)
   (do () (nil)

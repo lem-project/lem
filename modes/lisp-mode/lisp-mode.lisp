@@ -799,8 +799,8 @@
            :name "lisp-wait-message"))))
 
 (define-command slime-connect (hostname port &optional (start-repl t))
-    ((list (prompt-for-string "Hostname: " *localhost*)
-           (parse-integer (prompt-for-string "Port: " (princ-to-string *default-port*)))
+    ((list (prompt-for-string "Hostname: " :initial-value *localhost*)
+           (parse-integer (prompt-for-string "Port: " :initial-value (princ-to-string *default-port*)))
            t))
   (message "Connecting...")
   (let ((connection

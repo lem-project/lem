@@ -1074,14 +1074,9 @@ next line because it is at the end of width."
       (let ((parent-window (current-window))
             (split-p))
         (let ((dst-window
-                (cond ((minibuffer-window-active-p)
-                       (frame-caller-of-prompt-window (current-frame)))
-                      #+(or)
-                      ((typep (current-window) 'lem.prompt-window::floating-prompt)
-                       (lem.prompt-window::prompt-window-called-window
-                        (frame-prompt-window (current-frame))))
-                      (t
-                       (current-window)))))
+                (if (frame-prompt-active-p (current-frame))
+                    (frame-caller-of-prompt-window (current-frame))
+                    (current-window))))
           (when (or (one-window-p) force-split-p)
             (setf split-p t)
             (split-window-sensibly dst-window))

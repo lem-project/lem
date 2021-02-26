@@ -87,6 +87,10 @@
 (defmethod caller-of-prompt-window ((prompt sticky-prompt))
   (sticky-prompt-caller-of-prompt-window prompt))
 
+(defmethod prompt-active-p ((prompt sticky-prompt))
+  (eq (sticky-prompt-minibuffer-window prompt)
+      (current-window)))
+
 (define-attribute minibuffer-prompt-attribute
   (t :foreground "blue" :bold-p t))
 
@@ -198,7 +202,6 @@
   (when (minibuffer-window-active-p)
     (editor-error "Cannot switch buffer in minibuffer window")))
 
-(defgeneric active-minibuffer-window ())
 (defmethod active-minibuffer-window ()
   (if (/= 0 *minibuf-read-line-depth*)
       (minibuffer-window)

@@ -68,6 +68,10 @@
 (defmethod frame-caller-of-prompt-window ((frame frame))
   (caller-of-prompt-window (frame-prompt-window frame)))
 
+(defmethod frame-prompt-active-p ((frame frame))
+  (alexandria:when-let (prompt (frame-prompt-window frame))
+    (prompt-active-p prompt)))
+
 (defun make-frame (&optional (old-frame (current-frame)))
   (let ((frame (make-instance 'frame)))
     (when old-frame

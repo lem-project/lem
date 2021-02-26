@@ -21,7 +21,6 @@
           minibuffer-read-line-completion
           minibuffer-read-line-prev-history
           minibuffer-read-line-next-history
-          prompt-for-line
           prompt-for-string
           prompt-for-integer
           prompt-for-buffer

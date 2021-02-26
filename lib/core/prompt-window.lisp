@@ -287,17 +287,16 @@
           (execute-input execute))))))
 
 (defmethod prompt-for-character (prompt-string)
-  (let ((caller-of-prompt-window (current-window)))
-    (prompt-for-aux :prompt-string prompt-string
-                    :initial-string ""
-                    :parameters (make-instance 'prompt-parameters
-                                               :caller-of-prompt-window caller-of-prompt-window)
-                    :body-function (lambda ()
-                                     (redraw-display t)
-                                     (let ((key (read-key)))
-                                       (if (lem::abort-key-p key)
-                                           (error 'editor-abort)
-                                           (key-to-char key)))))))
+  (prompt-for-aux :prompt-string prompt-string
+                  :initial-string ""
+                  :parameters (make-instance 'prompt-parameters
+                                             :caller-of-prompt-window (current-window))
+                  :body-function (lambda ()
+                                   (redraw-display t)
+                                   (let ((key (read-key)))
+                                     (if (lem::abort-key-p key)
+                                         (error 'editor-abort)
+                                         (key-to-char key))))))
 
 (defun prompt-for-line-command-loop ()
   (handler-bind ((editor-abort

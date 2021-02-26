@@ -2,6 +2,7 @@
   (:use :cl
         :lem
         :lem.universal-argument
+        :lem.abbrev
         :lem-vi-mode.core
         :lem-vi-mode.commands
         :lem-vi-mode.ex
@@ -102,6 +103,7 @@
 (define-key *command-keymap* 'self-insert 'undefined-key)
 
 (define-key *insert-keymap* "Escape" 'vi-end-insert)
+(define-key *insert-keymap* "C-p" 'abbrev)
 (define-key *insert-keymap* "C-w" 'vi-kill-last-word)
 
 (define-key *command-keymap* "C-p" 'yank-pop)

@@ -293,12 +293,11 @@
                     :parameters (make-instance 'prompt-parameters
                                                :caller-of-prompt-window caller-of-prompt-window)
                     :body-function (lambda ()
-                                     (with-current-window caller-of-prompt-window
-                                       (redraw-display t)
-                                       (let ((key (read-key)))
-                                         (if (lem::abort-key-p key)
-                                             (error 'editor-abort)
-                                             (key-to-char key))))))))
+                                     (redraw-display t)
+                                     (let ((key (read-key)))
+                                       (if (lem::abort-key-p key)
+                                           (error 'editor-abort)
+                                           (key-to-char key)))))))
 
 (defun prompt-for-line-command-loop ()
   (handler-bind ((editor-abort

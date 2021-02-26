@@ -78,13 +78,13 @@
 (lem:define-command !version-up () ()
   (let* ((target (lem:prompt-for-string "target?:" :initial-value "lem"))
          (old-version (version-string (get-version target)))
-         (type (lem:prompt-for-line
+         (type (lem:prompt-for-string
                 (format nil "~A version (~A):" target old-version)
-                ""
-                (lambda (str) (lem:completion-strings str *candidates*))
-                (lambda (name)
-                  (member name *candidates* :test #'string=))
-                'lem-version)))
+                :initial-value ""
+                :completion-function (lambda (str) (lem:completion-strings str *candidates*))
+                :test-function (lambda (name)
+                                 (member name *candidates* :test #'string=))
+                :history-symbol 'lem-version)))
     (and type
          target
          (let ((version (inclement-version type target)))

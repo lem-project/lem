@@ -195,12 +195,11 @@
 (defun prompt-for-shortcuts ()
   (let* ((*scheme-repl-shortcuts* *scheme-repl-shortcuts*)
          (names (mapcar #'car *scheme-repl-shortcuts*)))
-    (cdr (assoc (prompt-for-line
+    (cdr (assoc (prompt-for-string
                  "Command:"
-                 ""
-                 (lambda (x) (completion-strings x names))
-                 (lambda (name) (member name names :test #'string=))
-                 'mh-scheme-repl-shortcuts)
+                 :completion-function (lambda (x) (completion-strings x names))
+                 :test-function (lambda (name) (member name names :test #'string=))
+                 :history-symbol 'mh-scheme-repl-shortcuts)
                 *scheme-repl-shortcuts* :test #'equal))))
 
 (define-command scheme-repl-shortcut (n) ("p")

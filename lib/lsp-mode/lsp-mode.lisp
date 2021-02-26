@@ -668,17 +668,17 @@
                                                 (lem.sourcelist:jump-highlighting point)))))
                            (mapcar #'symbol-to-definition document-symbol))))
             (let (select-item)
-              (lem:prompt-for-line
-               "Document Symbol: " ""
-               (lambda (str)
-                 (lem:completion str completion-items
-                                 :key #'lem.completion-mode:completion-item-label))
-               (lambda (str)
-                 (setf select-item
-                       (find str completion-items
-                             :test #'string=
-                             :key #'lem.completion-mode:completion-item-label)))
-               'mh-document-symbol)
+              (lem:prompt-for-string
+               "Document Symbol: "
+               :completion-function (lambda (str)
+                                (lem:completion str completion-items
+                                                :key #'lem.completion-mode:completion-item-label))
+               :test-function (lambda (str)
+                                (setf select-item
+                                      (find str completion-items
+                                            :test #'string=
+                                            :key #'lem.completion-mode:completion-item-label)))
+               :history-symbol 'mh-document-symbol)
               (when select-item
                 (funcall (lem.completion-mode::completion-item-focus-action select-item))))))))))
 

@@ -94,17 +94,16 @@
 
 (define-key *global-keymap* "M-x" 'execute-command)
 (define-command execute-command (arg) ("P")
-  (let* ((name (prompt-for-line
+  (let* ((name (prompt-for-string
                 (if arg
                     (format nil "~D M-x " arg)
                     "M-x ")
-                ""
-                (lambda (str)
-                  (if (find #\- str)
-                      (completion-hypheen str (all-command-names))
-                      (completion str (all-command-names))))
-                'exist-command-p
-                'mh-execute-command))
+                :completion-function (lambda (str)
+                                       (if (find #\- str)
+                                           (completion-hypheen str (all-command-names))
+                                           (completion str (all-command-names))))
+                :test-function 'exist-command-p
+                :history-symbol 'mh-execute-command))
          (cmd (find-command-symbol name)))
     (if cmd
         (call-command cmd arg)

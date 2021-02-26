@@ -39,12 +39,11 @@
 (defun prompt-for-shortcuts ()
   (let* ((*lisp-repl-shortcuts* *lisp-repl-shortcuts*)
          (names (mapcar #'car *lisp-repl-shortcuts*)))
-    (cdr (assoc (prompt-for-line
+    (cdr (assoc (prompt-for-string
                  "Command:"
-                 ""
-                 (lambda (x) (completion-strings x names))
-                 (lambda (name) (member name names :test #'string=))
-                 'mh-lisp-repl-shortcuts)
+                 :completion-function (lambda (x) (completion-strings x names))
+                 :test-function (lambda (name) (member name names :test #'string=))
+                 :history-symbol 'mh-lisp-repl-shortcuts)
                 *lisp-repl-shortcuts* :test #'equal))))
 
 (define-command lisp-repl-shortcut (n) ("p")

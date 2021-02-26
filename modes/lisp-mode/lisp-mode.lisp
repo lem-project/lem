@@ -293,13 +293,13 @@
   (let ((package-names (mapcar #'string-downcase
                                (lisp-eval
                                 '(swank:list-all-package-names t)))))
-    (string-upcase (prompt-for-line
-                    "Package: " ""
-                    (lambda (str)
-                      (completion str package-names))
-                    (lambda (str)
-                      (find str package-names :test #'string=))
-                    'mh-lisp-package))))
+    (string-upcase (prompt-for-string
+                    "Package: "
+                    :completion-function (lambda (str)
+                                           (completion str package-names))
+                    :test-function (lambda (str)
+                                     (find str package-names :test #'string=))
+                    :history-symbol 'mh-lisp-package))))
 
 (defun lisp-beginning-of-defun (point n)
   (lem-lisp-syntax:beginning-of-defun point (- n)))
@@ -360,13 +360,12 @@
    (format nil "(:emacs-interrupt ~A)" (current-swank-thread))))
 
 (defun prompt-for-sexp (string &optional initial)
-  (prompt-for-line string
-                   initial
-                   (lambda (str)
-                     (declare (ignore str))
-                     (completion-symbol (current-point)))
-                   nil
-                   'mh-sexp))
+  (prompt-for-string string
+                     :initial-value initial
+                     :completion-function (lambda (str)
+                                            (declare (ignore str))
+                                            (completion-symbol (current-point)))
+                     :history-symbol 'mh-sexp))
 
 (define-command lisp-eval-string (string)
     ((list (prompt-for-sexp "Lisp Eval: ")))
@@ -660,12 +659,11 @@
 
 (defun prompt-for-symbol-name (prompt &optional (initial ""))
   (let ((package (current-package)))
-    (prompt-for-line prompt
-                     initial
-                     (lambda (str)
-                       (symbol-completion str package))
-                     nil
-                     'mh-read-symbol)))
+    (prompt-for-string prompt
+                       :initial-value initial
+                       :completion-function (lambda (str)
+                                              (symbol-completion str package))
+                       :history-symbol 'mh-read-symbol)))
 
 (defun definition-to-location (definition)
   (destructuring-bind (title location) definition
@@ -1051,14 +1049,13 @@
 (defun prompt-for-impl (&key (existing t))
   (let* ((default-impl (config :slime-lisp-implementation ""))
          (command-list (get-slime-command-list))
-         (impl (prompt-for-line
+         (impl (prompt-for-string
                 (format nil "lisp implementation (~A): " default-impl)
-                ""
-                'completion-impls
-                (and existing
-                     (lambda (name)
-                       (member name command-list :test #'string=)))
-                'mh-read-impl))
+                :completion-function 'completion-impls
+                :test-function (and existing
+                                    (lambda (name)
+                                      (member name command-list :test #'string=)))
+                :history-symbol 'mh-read-impl))
          (impl (if (string= impl "")
                    default-impl
                    impl))

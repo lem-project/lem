@@ -76,7 +76,7 @@
                 do (format out "~A~%" line)))))))
 
 (lem:define-command !version-up () ()
-  (let* ((target (lem:prompt-for-string "target?:" "lem"))
+  (let* ((target (lem:prompt-for-string "target?:" :initial-value "lem"))
          (old-version (version-string (get-version target)))
          (type (lem:prompt-for-line
                 (format nil "~A version (~A):" target old-version)
@@ -88,7 +88,8 @@
     (and type
          target
          (let ((version (inclement-version type target)))
-           (setf version (lem:prompt-for-string (format nil "(was:~A)OK?:" old-version) (version-string version)))
+           (setf version (lem:prompt-for-string (format nil "(was:~A)OK?:" old-version)
+                                                :initial-value (version-string version)))
            (rewrite.asd version target)
            (rewrite-package.json version target)
            (rewrite-configure.ac version target)

@@ -372,7 +372,7 @@
     (let ((old-string (buffer-value buffer 'isearch-redisplay-string)))
       (unless old-string
         (return-from isearch-replace-highlight))
-      (let ((new-string (prompt-for-string "Replace: " old-string)))
+      (let ((new-string (prompt-for-string "Replace: " :initial-value old-string)))
         (save-excursion
           (unless (buffer-mark-p buffer) (buffer-start (current-point)))
           (query-replace-internal old-string

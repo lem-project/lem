@@ -92,7 +92,7 @@
 (define-command rectangle-string () ()
   (let ((string (prompt-for-string (format nil "String rectangle~:[~; (default ~:*~A)~]: "
                                            *default-string*)
-                                   "")))
+                                   :initial-value "")))
     (when (and (equal "" string) *default-string*)
       (setf string *default-string*))
     (setf *default-string* string)

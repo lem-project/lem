@@ -33,6 +33,11 @@
                             :type "asd"
                             :defaults directory)))
 
+(defun ensure-system-name (value)
+  (etypecase value
+    (string value)
+    (symbol (string-downcase value))))
+
 (defun get-project-roots-from-asd-file (asd-file)
   (let ((asdf-package (find-package :asdf-user))
         (eof-value '#:eof-value))
@@ -56,7 +61,7 @@
               :collect (destructuring-bind (&key pathname &allow-other-keys)
                            (cddr form)
                          (make-project-root
-                          :name (second form)
+                          :name (ensure-system-name (second form))
                           :asd-file asd-file
                           :pathname pathname)))))))
 

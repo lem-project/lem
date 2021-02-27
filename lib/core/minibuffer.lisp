@@ -372,19 +372,18 @@
                                           (if max (<= n max) t))))
                       :history-symbol 'mh-read-number)))
 
-(defun prompt-for-buffer (prompt &optional default existing)
-  (when default
-    (setq prompt (format nil "~a(~a) " prompt default)))
-  (let ((result (prompt-for-line
-                 prompt
-                 ""
-                 *minibuffer-buffer-complete-function*
-                 (and existing
-                      (lambda (name)
-                        (member name (buffer-list) :test #'string= :key #'buffer-name)))
-                 'mh-read-buffer)))
+(defun prompt-for-buffer (prompt &optional default-value existing)
+  (let ((result (prompt-for-string
+                 (if default-value
+                     (format nil "~a(~a) " prompt default-value)
+                     prompt)
+                 :completion-function *minibuffer-buffer-complete-function*
+                 :test-function (and existing
+                                     (lambda (name)
+                                       (get-buffer name)))
+                 :history-symbol 'mh-read-buffer)))
     (if (string= result "")
-        default
+        default-value
         result)))
 
 (defun prompt-for-file (prompt &optional directory (default (buffer-directory)) existing)

@@ -7,7 +7,7 @@
 (defun ex-write (range filename touch)
   (case (length range)
     (0 (if (string= filename "")
-           (lem:save-buffer touch)
+           (lem:save-current-buffer touch)
            (lem:write-file filename)))
     (2 (lem:write-region-file (first range) (second range)
                               (if (string= filename "")

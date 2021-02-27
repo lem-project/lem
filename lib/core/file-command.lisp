@@ -4,6 +4,7 @@
           read-file
           Add-Newline-at-EOF-on-Writing-File
           save-buffer
+          save-current-buffer
           changefile-name
           write-file
           write-region-file
@@ -92,18 +93,23 @@
         (save-excursion
           (insert-character p #\newline))))))
 
-(define-key *global-keymap* "C-x C-s" 'save-buffer)
-(define-command save-buffer (&optional arg) ("P")
+(defun save-buffer (buffer &optional force-p)
+  (cond
+    ((and (or force-p (buffer-modified-p buffer))
+          (buffer-filename buffer))
+     (add-newline-at-eof buffer)
+     (write-to-file buffer (buffer-filename buffer))
+     (buffer-unmark buffer)
+     (buffer-filename buffer))
+    ((null (buffer-filename buffer))
+     (editor-error "No file name"))
+    (t nil)))
+
+(define-key *global-keymap* "C-x C-s" 'save-current-buffer)
+(define-command save-current-buffer (&optional force-p) ("P")
   (let ((buffer (current-buffer)))
-    (cond
-      ((and (or arg (buffer-modified-p buffer))
-            (buffer-filename buffer))
-       (add-newline-at-eof buffer)
-       (write-to-file buffer (buffer-filename buffer))
-       (buffer-unmark buffer)
-       (message "Wrote ~A" (buffer-filename)))
-      ((not (buffer-filename buffer))
-       (message "No file name")))))
+    (alexandria:when-let (filename (save-buffer buffer force-p))
+      (message "Wrote ~A" filename))))
 
 (define-key *global-keymap* "C-x C-w" 'write-file)
 (define-command write-file (filename) ("FWrite File: ")
@@ -124,7 +130,7 @@
                            new)))
       (setf (buffer-filename) expand-file-name)
       (add-newline-at-eof (current-buffer))
-      (save-buffer t))))
+      (save-current-buffer t))))
 
 (define-command write-region-file (start end filename)
     ((progn
@@ -153,7 +159,7 @@
         (switch-to-buffer buffer nil)
         (when (or save-silently-p
                   (prompt-for-y-or-n-p (format nil "Save file ~A" (buffer-filename buffer))))
-          (save-buffer))))
+          (save-current-buffer))))
     (switch-to-buffer prev-buffer nil)))
 
 (define-command revert-buffer (does-not-ask-p) ("P")

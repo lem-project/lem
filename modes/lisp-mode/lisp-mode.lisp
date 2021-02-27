@@ -566,7 +566,7 @@
   (check-connection)
   (when (buffer-modified-p (current-buffer))
     (when (prompt-for-y-or-n-p "Save file")
-      (save-buffer)))
+      (save-current-buffer)))
   (let ((file (buffer-filename (current-buffer))))
     (run-hooks (variable-value 'load-file-functions) file)
     (lisp-eval-async `(swank:compile-file-for-emacs ,file t)

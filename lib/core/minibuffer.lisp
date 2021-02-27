@@ -13,7 +13,6 @@
           message
           message-without-log
           message-buffer
-          active-echoarea-p
           check-switch-minibuffer-window
           minibuffer-read-line-execute
           minibuffer-read-line-completion
@@ -143,11 +142,6 @@
   (let ((sticky-prompt (frame-minibuffer (current-frame))))
     (erase-buffer (sticky-prompt-echoarea-buffer sticky-prompt))
     (insert-buffer (buffer-point (sticky-prompt-echoarea-buffer sticky-prompt)) buffer)))
-
-(defun active-echoarea-p ()
-  (let ((sticky-prompt (frame-minibuffer (current-frame))))
-    (point< (buffer-start-point (sticky-prompt-echoarea-buffer sticky-prompt))
-            (buffer-end-point (sticky-prompt-echoarea-buffer sticky-prompt)))))
 
 (defmethod prompt-for-character (prompt-string)
   (when (interactive-p)

@@ -360,17 +360,17 @@
 
 (defun prompt-for-integer (prompt &optional min max)
   (parse-integer
-   (prompt-for-line prompt "" nil
-                    #'(lambda (str)
-                        (multiple-value-bind (n len)
-                            (parse-integer str :junk-allowed t)
-                          (and
-                           n
-                           (/= 0 (length str))
-                           (= (length str) len)
-                           (if min (<= min n) t)
-                           (if max (<= n max) t))))
-                    'mh-read-number)))
+   (prompt-for-string prompt
+                      :test-function (lambda (str)
+                                       (multiple-value-bind (n len)
+                                           (parse-integer str :junk-allowed t)
+                                         (and
+                                          n
+                                          (/= 0 (length str))
+                                          (= (length str) len)
+                                          (if min (<= min n) t)
+                                          (if max (<= n max) t))))
+                      :history-symbol 'mh-read-number)))
 
 (defun prompt-for-buffer (prompt &optional default existing)
   (when default

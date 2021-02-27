@@ -289,7 +289,7 @@
 (defun current-prompt-start-point ()
   (prompt-start-point (frame-prompt-window (current-frame))))
 
-(defun minibuffer-file-complete (string directory &key directory-only)
+(defun prompt-file-completion (string directory &key directory-only)
   (mapcar (lambda (filename)
             (let ((label (tail-of-pathname filename)))
               (with-point ((s (current-prompt-start-point))
@@ -302,7 +302,7 @@
                  :end (line-end e)))))
           (completion-file string directory :directory-only directory-only)))
 
-(defun minibuffer-buffer-complete (string)
+(defun prompt-buffer-completion (string)
   (loop :for buffer :in (completion-buffer string)
         :collect (with-point ((s (current-prompt-start-point))
                               (e (current-prompt-start-point)))
@@ -314,5 +314,5 @@
                     :start s
                     :end (line-end e)))))
 
-(setf *prompt-file-completion-function* 'minibuffer-file-complete)
-(setf *prompt-buffer-completion-function* 'minibuffer-buffer-complete)
+(setf *prompt-file-completion-function* 'prompt-file-completion)
+(setf *prompt-buffer-completion-function* 'prompt-buffer-completion)

@@ -387,17 +387,19 @@
         result)))
 
 (defun prompt-for-file (prompt &optional directory (default (buffer-directory)) existing)
-  (when default
-    (setq prompt (format nil "~a(~a) " prompt default)))
   (let ((result
-          (prompt-for-line prompt
-                           directory
-                           (when *minibuffer-file-complete-function*
-                             (lambda (str)
-                               (funcall *minibuffer-file-complete-function*
-                                        str directory)))
-                           (and existing #'virtual-probe-file)
-                           'mh-read-file)))
+          (prompt-for-string (if default
+                                 (format nil "~a(~a) " prompt default)
+                                 prompt)
+                             :initial-value (when directory (princ-to-string directory))
+                             :completion-function
+                             (when *minibuffer-file-complete-function*
+                               (lambda (str)
+                                 (funcall *minibuffer-file-complete-function*
+                                          str (or directory
+                                                  (namestring (user-homedir-pathname))))))
+                             :test-function (and existing #'virtual-probe-file)
+                             :history-symbol 'mh-read-file)))
     (if (string= result "")
         default
         result)))

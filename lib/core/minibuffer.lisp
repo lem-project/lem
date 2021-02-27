@@ -437,10 +437,10 @@
                                                   (asdf:system-source-directory :lem))))
               :test #'equal))))
       (setq systems (mapcar (lambda (x) (subseq x 4)) systems))
-      (prompt-for-line prompt ""
-                       (lambda (str) (completion str systems))
-                       (lambda (system) (find system systems :test #'string=))
-                       history-name))))
+      (prompt-for-string prompt
+                         :completion-function (lambda (str) (completion str systems))
+                         :test-function (lambda (system) (find system systems :test #'string=))
+                         :history-symbol history-name))))
 
 (defun prompt-for-encodings (prompt history-name)
   (let (encodings)
@@ -448,11 +448,11 @@
                (declare (ignore y))
                (push (string-downcase x) encodings))
              lem-base::*encoding-collections*)
-    (let ((name (prompt-for-line
-                 (format nil "~A(~(~A~))" prompt lem-base::*default-external-format*) ""
-                 (lambda (str) (completion str encodings))
-                 (lambda (encoding) (or (equal encoding "")
-                                        (find encoding encodings :test #'string=)))
-                 history-name)))
+    (let ((name (prompt-for-string
+                 (format nil "~A(~(~A~))" prompt lem-base::*default-external-format*)
+                 :completion-function (lambda (str) (completion str encodings))
+                 :test-function (lambda (encoding) (or (equal encoding "")
+                                                       (find encoding encodings :test #'string=)))
+                 :history-symbol history-name)))
       (cond ((equal name "") lem-base::*default-external-format*)
             (t (read-from-string (format nil ":~A" name)))))))

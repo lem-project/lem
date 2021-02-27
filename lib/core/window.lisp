@@ -667,13 +667,12 @@ next line because it is at the end of width."
                                    new-window))))
   t)
 
-(defun split-window-before (window)
+(defun check-before-splitting-window (window)
   (when (floating-window-p window)
-    (editor-error "Can not split this window"))
-  t)
+    (editor-error "Can not split this window")))
 
 (defun split-window-vertically (window &optional height)
-  (split-window-before window)
+  (check-before-splitting-window window)
   (let* ((use-modeline-p t)
          (min (+ 1 (if use-modeline-p 1 0)))
          (max (- (window-height window) min)))
@@ -699,7 +698,7 @@ next line because it is at the end of width."
                                     (window-view new-window))))
 
 (defun split-window-horizontally (window &optional width)
-  (split-window-before window)
+  (check-before-splitting-window window)
   (let* ((fringe-size 0)
          (min (+ 2 fringe-size))
          (max (- (window-width window) min)))

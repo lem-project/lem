@@ -118,27 +118,26 @@
     (window-set-pos (minibuffer-window) 0 (1- (display-height)))
     (window-set-size (minibuffer-window) (display-width) 1)))
 
-(defgeneric show-message (string)
-  (:method (string)
-    (let ((sticky-prompt (frame-minibuffer (current-frame))))
-      (cond (string
-             (erase-buffer (sticky-prompt-echoarea-buffer sticky-prompt))
-             (let ((point (buffer-point (sticky-prompt-echoarea-buffer sticky-prompt))))
-               (insert-string point string))
-             (when (active-minibuffer-window)
-               (handler-case
-                   (with-current-window (minibuffer-window)
-                     (unwind-protect
-                          (progn
-                            (%switch-to-buffer (sticky-prompt-echoarea-buffer sticky-prompt)
-                                               nil nil)
-                            (sit-for 1 t))
-                       (%switch-to-buffer (sticky-prompt-minibuffer-buffer sticky-prompt)
-                                          nil nil)))
-                 (editor-abort ()
-                   (minibuf-read-line-break)))))
-            (t
-             (erase-buffer (sticky-prompt-echoarea-buffer sticky-prompt)))))))
+(defmethod show-message (string)
+  (let ((sticky-prompt (frame-minibuffer (current-frame))))
+    (cond (string
+           (erase-buffer (sticky-prompt-echoarea-buffer sticky-prompt))
+           (let ((point (buffer-point (sticky-prompt-echoarea-buffer sticky-prompt))))
+             (insert-string point string))
+           (when (active-minibuffer-window)
+             (handler-case
+                 (with-current-window (minibuffer-window)
+                   (unwind-protect
+                        (progn
+                          (%switch-to-buffer (sticky-prompt-echoarea-buffer sticky-prompt)
+                                             nil nil)
+                          (sit-for 1 t))
+                     (%switch-to-buffer (sticky-prompt-minibuffer-buffer sticky-prompt)
+                                        nil nil)))
+               (editor-abort ()
+                 (minibuf-read-line-break)))))
+          (t
+           (erase-buffer (sticky-prompt-echoarea-buffer sticky-prompt))))))
 
 (defmethod show-message-buffer (buffer)
   (let ((sticky-prompt (frame-minibuffer (current-frame))))

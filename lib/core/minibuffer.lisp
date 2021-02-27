@@ -2,7 +2,7 @@
 
 (export '(*enable-recursive-minibuffers*
           *minibuffer-completion-function*
-          *minibuffer-file-complete-function*
+          *prompt-file-completion-function*
           *minibuffer-buffer-complete-function*
           *minibuffer-activate-hook*
           *minibuffer-deactivate-hook*
@@ -31,7 +31,7 @@
 (defvar +recursive-minibuffer-break-tag+ (gensym))
 
 (defvar *minibuffer-completion-function* nil)
-(defvar *minibuffer-file-complete-function* nil)
+(defvar *prompt-file-completion-function* nil)
 (defvar *minibuffer-buffer-complete-function* nil)
 
 (defvar *minibuffer-activate-hook* '())
@@ -365,9 +365,9 @@
                                  prompt)
                              :initial-value (when directory (princ-to-string directory))
                              :completion-function
-                             (when *minibuffer-file-complete-function*
+                             (when *prompt-file-completion-function*
                                (lambda (str)
-                                 (funcall *minibuffer-file-complete-function*
+                                 (funcall *prompt-file-completion-function*
                                           str (or directory
                                                   (namestring (user-homedir-pathname))))))
                              :test-function (and existing #'virtual-probe-file)
@@ -381,9 +381,9 @@
           (prompt-for-string prompt
                              :initial-value directory
                              :completion-function
-                             (when *minibuffer-file-complete-function*
+                             (when *prompt-file-completion-function*
                                (lambda (str)
-                                 (funcall *minibuffer-file-complete-function*
+                                 (funcall *prompt-file-completion-function*
                                           str directory :directory-only t)))
                              :test-function (and existing #'virtual-probe-file)
                              :history-symbol 'prompt-for-directory)))

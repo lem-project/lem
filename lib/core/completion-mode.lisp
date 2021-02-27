@@ -314,5 +314,5 @@
                     :start s
                     :end (line-end e)))))
 
-(setf *minibuffer-file-complete-function* 'minibuffer-file-complete)
+(setf *prompt-file-completion-function* 'minibuffer-file-complete)
 (setf *minibuffer-buffer-complete-function* 'minibuffer-buffer-complete)

@@ -3,7 +3,7 @@
 (export '(*enable-recursive-minibuffers*
           *minibuffer-completion-function*
           *prompt-file-completion-function*
-          *minibuffer-buffer-complete-function*
+          *prompt-buffer-completion-function*
           *minibuffer-activate-hook*
           *minibuffer-deactivate-hook*
           *minibuf-keymap*
@@ -32,7 +32,7 @@
 
 (defvar *minibuffer-completion-function* nil)
 (defvar *prompt-file-completion-function* nil)
-(defvar *minibuffer-buffer-complete-function* nil)
+(defvar *prompt-buffer-completion-function* nil)
 
 (defvar *minibuffer-activate-hook* '())
 (defvar *minibuffer-deactivate-hook* '())
@@ -349,7 +349,7 @@
                  (if default-value
                      (format nil "~a(~a) " prompt default-value)
                      prompt)
-                 :completion-function *minibuffer-buffer-complete-function*
+                 :completion-function *prompt-buffer-completion-function*
                  :test-function (and existing
                                      (lambda (name)
                                        (get-buffer name)))

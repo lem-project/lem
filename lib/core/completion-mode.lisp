@@ -315,4 +315,4 @@
                     :end (line-end e)))))
 
 (setf *prompt-file-completion-function* 'minibuffer-file-complete)
-(setf *minibuffer-buffer-complete-function* 'minibuffer-buffer-complete)
+(setf *prompt-buffer-completion-function* 'minibuffer-buffer-complete)

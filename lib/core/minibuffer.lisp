@@ -8,7 +8,6 @@
           minibuffer-prompt-attribute
           minibuffer-window-p
           minibuffer-window-active-p
-          minibuffer-window-height
           minibufferp
           message
           message-without-log
@@ -19,7 +18,7 @@
           minibuffer-read-line-prev-history
           minibuffer-read-line-next-history))
 
-(defparameter *minibuffer-window-height* 1)
+(defconstant +minibuffer-window-height+ 1)
 (defvar *enable-recursive-minibuffers* nil)
 
 (defvar +recursive-minibuffer-break-tag+ (gensym))
@@ -58,9 +57,9 @@
                  :buffer buffer
                  :x 0
                  :y (- (display-height)
-                       (minibuffer-window-height))
+                       +minibuffer-window-height+)
                  :width (display-width)
-                 :height (minibuffer-window-height)
+                 :height +minibuffer-window-height+
                  :use-modeline-p nil
                  :frame frame))
 
@@ -86,7 +85,6 @@
 (defun minibuffer-window-p (window)
   (typep window 'sticky-minibuffer-window))
 (defun minibuffer-window-active-p () (eq (current-window) (minibuffer-window)))
-(defun minibuffer-window-height () *minibuffer-window-height*)
 (defun minibuffer () (window-buffer (minibuffer-window)))
 (defun minibufferp (buffer) (eq buffer (minibuffer)))
 

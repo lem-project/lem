@@ -21,8 +21,6 @@
           minibuffer-read-line-completion
           minibuffer-read-line-prev-history
           minibuffer-read-line-next-history
-          prompt-for-string
-          prompt-for-integer
           prompt-for-buffer
           prompt-for-file
           prompt-for-directory))
@@ -346,32 +344,6 @@
                    result))))
       (setf (sticky-prompt-caller-of-prompt-window sticky-prompt) caller-of-prompt-window))))
 
-(defun prompt-for-string (prompt &key initial-value
-                                      completion-function
-                                      test-function
-                                      (history-symbol nil)
-                                      (syntax-table (current-syntax)))
-  (prompt-for-line prompt
-                   initial-value
-                   completion-function
-                   test-function
-                   history-symbol
-                   syntax-table))
-
-(defun prompt-for-integer (prompt &optional min max)
-  (parse-integer
-   (prompt-for-string prompt
-                      :test-function (lambda (str)
-                                       (multiple-value-bind (n len)
-                                           (parse-integer str :junk-allowed t)
-                                         (and
-                                          n
-                                          (/= 0 (length str))
-                                          (= (length str) len)
-                                          (if min (<= min n) t)
-                                          (if max (<= n max) t))))
-                      :history-symbol 'mh-read-number)))
-
 (defun prompt-for-buffer (prompt &optional default-value existing)
   (let ((result (prompt-for-string
                  (if default-value
@@ -381,7 +353,7 @@
                  :test-function (and existing
                                      (lambda (name)
                                        (get-buffer name)))
-                 :history-symbol 'mh-read-buffer)))
+                 :history-symbol 'prompt-for-buffer)))
     (if (string= result "")
         default-value
         result)))
@@ -399,7 +371,7 @@
                                           str (or directory
                                                   (namestring (user-homedir-pathname))))))
                              :test-function (and existing #'virtual-probe-file)
-                             :history-symbol 'mh-read-file)))
+                             :history-symbol 'prompt-for-file)))
     (if (string= result "")
         default
         result)))
@@ -414,7 +386,7 @@
                                  (funcall *minibuffer-file-complete-function*
                                           str directory :directory-only t)))
                              :test-function (and existing #'virtual-probe-file)
-                             :history-symbol 'mh-read-file)))
+                             :history-symbol 'prompt-for-directory)))
     (if (string= result "")
         default
         result)))

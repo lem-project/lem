@@ -302,9 +302,7 @@
   (window-tree-leaf-p (window-tree)))
 
 (defun deleted-window-p (window)
-  (cond ((minibuffer-window-p window)
-         nil)
-        ((window-tree-find (window-tree) window)
+  (cond ((window-tree-find (window-tree) window)
          nil)
         ((find window (frame-floating-windows (current-frame)))
          nil)

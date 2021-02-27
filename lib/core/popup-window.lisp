@@ -397,22 +397,20 @@
   (when (and popup-message (not (deleted-window-p popup-message)))
     (delete-window popup-message)))
 
-(defvar *show-message* nil)
-
 (defmethod lem::show-message (string)
   (cond ((null string)
-         (delete-popup-message *show-message*)
-         (setf *show-message* nil))
+         (delete-popup-message (frame-message-window (current-frame)))
+         (setf (frame-message-window (current-frame)) nil))
         (t
-         (setf *show-message*
+         (setf (frame-message-window (current-frame))
                (display-popup-message string
                                       :timeout nil
-                                      :destination-window *show-message*
+                                      :destination-window (frame-message-window (current-frame))
                                       :gravity :follow-cursor)))))
 
 (defmethod lem::show-message-buffer (buffer)
-  (setf *show-message*
+  (setf (frame-message-window (current-frame))
         (display-popup-message buffer
                                :timeout nil
-                               :destination-window *show-message*
+                               :destination-window (frame-message-window (current-frame))
                                :gravity :follow-cursor)))

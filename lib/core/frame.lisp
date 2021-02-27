@@ -11,6 +11,7 @@
           frame-modified-header-windows
           frame-floating-prompt-window
           frame-prompt-window
+          frame-message-window
           map-frame
           get-frame
           current-frame
@@ -51,15 +52,16 @@
     :initarg :modified-header-windows
     :initform nil
     :accessor frame-modified-header-windows)
-   ;; minibuffer
    (minibuffer
     :initarg :minibuffer
     :initform nil
     :accessor frame-minibuffer)
-   ;; prompt
    (prompt-window
     :initform nil
-    :accessor frame-floating-prompt-window)))
+    :accessor frame-floating-prompt-window)
+   (message-window
+    :initform nil
+    :accessor frame-message-window)))
 
 (defmethod frame-prompt-window ((frame frame))
   (or (frame-minibuffer frame)

@@ -10,8 +10,6 @@
 
 (define-vi-state ex (:keymap *ex-keymap*))
 
-(define-key *ex-keymap* "Return" 'minibuffer-read-line-execute)
-
 (define-command vi-ex () ()
   (let ((directory (lem:buffer-directory)))
     (with-state 'ex

@@ -190,8 +190,7 @@
 
 (define-command minibuffer-read-line-execute () ()
   (let ((str (get-minibuffer-string)))
-    (when (or (string= str "")
-              (null *minibuf-read-line-existing-p*)
+    (when (or (null *minibuf-read-line-existing-p*)
               (funcall *minibuf-read-line-existing-p* str))
       (throw 'minibuf-read-line-end t)))
   t)

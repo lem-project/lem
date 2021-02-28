@@ -64,7 +64,8 @@
                  :completion-function *prompt-buffer-completion-function*
                  :test-function (and existing
                                      (lambda (name)
-                                       (get-buffer name)))
+                                       (or (alexandria:emptyp name)
+                                           (get-buffer name))))
                  :history-symbol 'prompt-for-buffer)))
     (if (string= result "")
         default-value
@@ -79,9 +80,10 @@
                              :completion-function
                              (when *prompt-file-completion-function*
                                (lambda (str)
-                                 (funcall *prompt-file-completion-function*
-                                          str (or directory
-                                                  (namestring (user-homedir-pathname))))))
+                                 (or (alexandria:emptyp str)
+                                     (funcall *prompt-file-completion-function*
+                                              str (or directory
+                                                      (namestring (user-homedir-pathname)))))))
                              :test-function (and existing #'virtual-probe-file)
                              :history-symbol 'prompt-for-file)))
     (if (string= result "")
@@ -95,8 +97,9 @@
                              :completion-function
                              (when *prompt-file-completion-function*
                                (lambda (str)
-                                 (funcall *prompt-file-completion-function*
-                                          str directory :directory-only t)))
+                                 (or (alexandria:emptyp str)
+                                     (funcall *prompt-file-completion-function*
+                                              str directory :directory-only t))))
                              :test-function (and existing #'virtual-probe-file)
                              :history-symbol 'prompt-for-directory)))
     (if (string= result "")

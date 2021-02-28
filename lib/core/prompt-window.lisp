@@ -106,8 +106,7 @@
 
 (define-command prompt-execute () ()
   (let ((input (get-input-string)))
-    (when (or (zerop (length input))
-              (null (prompt-window-existing-test-function (current-prompt-window)))
+    (when (or (null (prompt-window-existing-test-function (current-prompt-window)))
               (funcall (prompt-window-existing-test-function (current-prompt-window)) input))
       (lem.history:add-history (prompt-window-history (current-prompt-window)) input)
       (error 'execute :input input))))

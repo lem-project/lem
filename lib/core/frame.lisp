@@ -51,10 +51,6 @@
     :initarg :modified-header-windows
     :initform nil
     :accessor frame-modified-header-windows)
-   (minibuffer
-    :initarg :minibuffer
-    :initform nil
-    :accessor frame-minibuffer)
    (prompt-window
     :initform nil
     :accessor frame-floating-prompt-window)
@@ -63,8 +59,7 @@
     :accessor frame-message-window)))
 
 (defmethod frame-prompt-window ((frame frame))
-  (or (frame-minibuffer frame)
-      (frame-floating-prompt-window frame)))
+  (frame-floating-prompt-window frame))
 
 (defmethod frame-caller-of-prompt-window ((frame frame))
   (caller-of-prompt-window (frame-prompt-window frame)))
@@ -95,15 +90,11 @@
     frame))
 
 (defun setup-frame (frame buffer)
-  (assert (null (frame-minibuffer frame)))
-  ;; (setf (frame-minibuffer frame) (create-minibuffer frame))
   (setup-frame-windows frame buffer)
   (lem-if:set-first-view (implementation) (window-view (frame-current-window frame))))
 
 (defun teardown-frame (frame)
-  (teardown-windows frame)
-  (when (frame-minibuffer frame)
-    (teardown-minibuffer (frame-minibuffer frame))))
+  (teardown-windows frame))
 
 (defun teardown-frames ()
   (maphash (lambda (k v)
@@ -151,5 +142,4 @@
 
 (defun max-window-height (frame)
   (- (display-height)
-     (if (frame-minibuffer frame) 1 0)
      (topleft-window-y frame)))

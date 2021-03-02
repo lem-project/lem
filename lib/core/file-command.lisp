@@ -42,7 +42,6 @@
     (values buffer new-file-p)))
 
 (defmethod execute ((command find-file-command) arg)
-  (check-switch-minibuffer-window)
   (let ((*default-external-format* *default-external-format*))
     (let ((filename
             (cond ((and (numberp arg) (= 1 arg))
@@ -75,7 +74,6 @@
 
 (define-key *global-keymap* "C-x C-r" 'read-file)
 (define-command read-file (filename) ("FRead File: ")
-  (check-switch-minibuffer-window)
   (when (pathnamep filename)
     (setf filename (namestring filename)))
   (dolist (pathname (expand-files* filename))
@@ -151,7 +149,6 @@
 
 (define-key *global-keymap* "C-x s" 'save-some-buffers)
 (define-command save-some-buffers (&optional save-silently-p) ("P")
-  (check-switch-minibuffer-window)
   (let ((prev-buffer (current-buffer)))
     (dolist (buffer (buffer-list))
       (when (and (buffer-modified-p buffer)

@@ -45,7 +45,6 @@
                (:file "streams")
                (:file "fundamental-mode")
                (:file "comp")
-               (:file "minibuffer")
                (:file "typeout")
                (:file "lem")
 

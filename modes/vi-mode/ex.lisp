@@ -22,7 +22,7 @@
             (let ((comp-str (ppcre:regex-replace "^(e|vs|sp)\\s*" str "")))
               (if (string= comp-str ".")
                   (list (format nil "~A/" str))
-                  ;; Almost same as minibuffer-file-complete in lem-core/completion-file.lisp
+                  ;; Almost same as pormpt-file-complete in lem-core/completion-file.lisp
                   ;; except item's :start offsets which will be used when selecting a completion item.
                   (mapcar (lambda (filename)
                             (let ((label (tail-of-pathname filename))

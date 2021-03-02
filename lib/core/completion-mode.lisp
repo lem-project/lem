@@ -264,27 +264,6 @@
     (run-completion-1 completion-spec
                       nil)))
 
-(defun minibuffer-completion (comp-f start)
-  (run-completion
-   (lambda (point)
-     (with-point ((start start)
-                  (end point))
-       (let ((items (funcall comp-f
-                             (points-to-string start
-                                               (buffer-end-point (point-buffer end))))))
-         (loop :for item? :in items
-               :for item := (typecase item?
-                              (string
-                               (make-completion-item :label item?
-                                                     :start start
-                                                     :end end))
-                              (completion-item
-                               item?))
-               :when item
-               :collect item))))))
-
-(setf *minibuffer-completion-function* 'minibuffer-completion)
-
 
 (defun current-prompt-start-point ()
   (prompt-start-point (frame-prompt-window (current-frame))))

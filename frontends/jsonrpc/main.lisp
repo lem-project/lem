@@ -158,9 +158,7 @@
     ((implementation jsonrpc) window x y width height use-modeline)
   (with-error-handler ()
     (let ((view (make-view :x x :y y :width width :height height :use-modeline use-modeline
-                           :kind (cond ((lem::minibuffer-window-p window)
-                                        "minibuffer")
-                                       ((lem::floating-window-p window)
+                           :kind (cond ((lem::floating-window-p window)
                                         "popup")
                                        (t
                                         nil)))))

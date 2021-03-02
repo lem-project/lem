@@ -102,7 +102,7 @@
                         (start-idle-timers)
                         (prog1 (read-command)
                           (stop-idle-timers)))))
-             (unless (minibuffer-window-active-p) (message nil))
+             (message nil)
              (call-command cmd nil)))
 
          (editor-abort-handler (c)

@@ -123,6 +123,11 @@
     :initform nil
     :accessor window-parameters)))
 
+(defclass permanent-window-mixin () ())
+
+(defun permanent-window-p (window)
+  (typep window 'permanent-window-mixin))
+
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))
   (with-slots (screen view-point point) window
@@ -801,7 +806,7 @@ next line because it is at the end of width."
 
 (defmethod %delete-window ((window window))
   (when (or (one-window-p)
-            (minibuffer-window-p window))
+            (permanent-window-p window))
     (editor-error "Can not delete this window"))
   (when (eq (current-window) window)
     (setf (current-window)
@@ -1188,8 +1193,7 @@ next line because it is at the end of width."
     (dolist (window (window-list))
       (unless (eq window (current-window))
         (window-redraw window force)))
-    (unless (minibuffer-window-active-p)
-      (window-redraw (current-window) force))
+    (window-redraw (current-window) force)
     (dolist (window (frame-header-windows (current-frame)))
       (window-redraw window (redraw-after-modifying-floating-window (implementation))))
     (dolist (window (frame-floating-windows (current-frame)))
@@ -1203,7 +1207,6 @@ next line because it is at the end of width."
                   (topleft-window-y (current-frame))
                   (+ (max-window-width (current-frame)) (topleft-window-x (current-frame)))
                   (+ (max-window-height (current-frame)) (topleft-window-y (current-frame))))
-  (minibuf-update-size)
   (recenter t))
 
 (defun display-popup-message (buffer-or-string

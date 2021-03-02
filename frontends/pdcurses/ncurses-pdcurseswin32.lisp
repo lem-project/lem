@@ -453,10 +453,7 @@
                    (lem:redraw-display)
                    t)
                   (t nil))))
-            ;; include active minibuffer window
-            (if (lem::active-minibuffer-window)
-                (cons (lem::active-minibuffer-window) (lem:window-list))
-                (lem:window-list)))))
+            (lem:window-list))))
         ;; button-1 up
         ((logtest bstate charms/ll:BUTTON1_RELEASED)
          (let ((o-orig (lem:current-window))

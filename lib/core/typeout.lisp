@@ -157,8 +157,7 @@
       (dismiss-typeout-window))))
 
 (defun typeout-window-post-command-hook ()
-  (when (and (not (minibuffer-window-active-p))
-             (not (mode-active-p (window-buffer (current-window)) 'typeout-mode))
+  (when (and (not (mode-active-p (window-buffer (current-window)) 'typeout-mode))
              *typeout-window*)
     (dismiss-typeout-window)))
 

@@ -45,7 +45,6 @@
       (make-buffer name)))
 
   (define-command select-buffer (name) ("BUse Buffer: ")
-    (check-switch-minibuffer-window)
     (let ((buffer (or (get-buffer name)
                       (maybe-create-buffer name)
                       (error 'editor-abort))))
@@ -67,7 +66,6 @@
 
 (define-key *global-keymap* "C-x k" 'kill-buffer)
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
-  (check-switch-minibuffer-window)
   (let ((buffer (get-buffer buffer-or-name)))
     (unless buffer
       (editor-error "buffer does not exist: ~A" buffer-or-name))
@@ -157,17 +155,16 @@
 
 (define-key *global-keymap* "C-x 1" 'delete-other-windows)
 (define-command delete-other-windows () ()
-  (unless (minibuffer-window-active-p)
-    (dolist (win (window-list))
-      (unless (eq win (current-window))
-        (delete-window win)))
-    (window-set-pos (current-window)
-                    (topleft-window-x (current-frame))
-                    (topleft-window-y (current-frame)))
-    (window-set-size (current-window)
-                     (max-window-width (current-frame))
-                     (max-window-height (current-frame)))
-    t))
+  (dolist (win (window-list))
+    (unless (eq win (current-window))
+      (delete-window win)))
+  (window-set-pos (current-window)
+                  (topleft-window-x (current-frame))
+                  (topleft-window-y (current-frame)))
+  (window-set-size (current-window)
+                   (max-window-width (current-frame))
+                   (max-window-height (current-frame)))
+  t)
 
 (define-key *global-keymap* "C-x 0" 'delete-current-window)
 (define-command delete-current-window () ()

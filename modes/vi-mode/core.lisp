@@ -132,8 +132,6 @@
           (lambda ()
             (initialize-vi-modeline)
             (change-state 'command)
-            (add-hook *minibuffer-activate-hook* 'minibuffer-activate-hook)
-            (add-hook *minibuffer-deactivate-hook* 'minibuffer-deactivate-hook)
             (add-hook lem.prompt-window::*prompt-activate-hook* 'minibuffer-activate-hook)
             (add-hook lem.prompt-window::*prompt-deactivate-hook* 'minibuffer-deactivate-hook)
             (add-hook *post-command-hook* 'vi-post-command-hook)))
@@ -141,8 +139,6 @@
 (add-hook *disable-hook*
           (lambda ()
             (finalize-vi-modeline)
-            (remove-hook *minibuffer-activate-hook* 'minibuffer-activate-hook)
-            (remove-hook *minibuffer-deactivate-hook* 'minibuffer-deactivate-hook)
             (remove-hook lem.prompt-window::*prompt-activate-hook* 'minibuffer-activate-hook)
             (remove-hook lem.prompt-window::*prompt-deactivate-hook* 'minibuffer-deactivate-hook)
             (remove-hook *post-command-hook* 'vi-post-command-hook)))

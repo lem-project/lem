@@ -14,9 +14,6 @@
 
 (defvar *history-table* (make-hash-table))
 
-(defvar *prompt-activate-hook* '())
-(defvar *prompt-deactivate-hook* '())
-
 (define-condition execute ()
   ((input
     :initarg :input

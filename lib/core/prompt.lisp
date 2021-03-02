@@ -1,6 +1,8 @@
 (in-package :lem)
 
-(export '(*prompt-buffer-completion-function*
+(export '(*prompt-activate-hook*
+          *prompt-deactivate-hook*
+          *prompt-buffer-completion-function*
           *prompt-file-completion-function*
           prompt-start-point
           prompt-active-p
@@ -12,6 +14,9 @@
           prompt-for-buffer
           prompt-for-file
           prompt-for-directory))
+
+(defvar *prompt-activate-hook* '())
+(defvar *prompt-deactivate-hook* '())
 
 (defvar *prompt-buffer-completion-function* nil)
 (defvar *prompt-file-completion-function* nil)

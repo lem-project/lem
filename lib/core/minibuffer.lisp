@@ -9,9 +9,6 @@
           minibuffer-window-p
           minibuffer-window-active-p
           minibufferp
-          message
-          message-without-log
-          message-buffer
           check-switch-minibuffer-window
           minibuffer-read-line-execute
           minibuffer-read-line-completion

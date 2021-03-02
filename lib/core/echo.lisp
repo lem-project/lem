@@ -1,5 +1,9 @@
 (in-package :lem)
 
+(export '(message
+          message-without-log
+          message-buffer))
+
 (defgeneric show-message (string))
 (defgeneric show-message-buffer (buffer))
 

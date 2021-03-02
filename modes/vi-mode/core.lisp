@@ -120,8 +120,8 @@
 
 (define-vi-state modeline (:keymap *inactive-keymap*))
 
-(defun minibuffer-activate-hook () (change-state 'modeline))
-(defun minibuffer-deactivate-hook () (change-state 'command))
+(defun prompt-activate-hook () (change-state 'modeline))
+(defun prompt-deactivate-hook () (change-state 'command))
 
 (defun vi-post-command-hook ()
   (alexandria:when-let ((it (vi-state-post-command-hook
@@ -132,13 +132,13 @@
           (lambda ()
             (initialize-vi-modeline)
             (change-state 'command)
-            (add-hook *prompt-activate-hook* 'minibuffer-activate-hook)
-            (add-hook *prompt-deactivate-hook* 'minibuffer-deactivate-hook)
+            (add-hook *prompt-activate-hook* 'prompt-activate-hook)
+            (add-hook *prompt-deactivate-hook* 'prompt-deactivate-hook)
             (add-hook *post-command-hook* 'vi-post-command-hook)))
 
 (add-hook *disable-hook*
           (lambda ()
             (finalize-vi-modeline)
-            (remove-hook *prompt-activate-hook* 'minibuffer-activate-hook)
-            (remove-hook *prompt-deactivate-hook* 'minibuffer-deactivate-hook)
+            (remove-hook *prompt-activate-hook* 'prompt-activate-hook)
+            (remove-hook *prompt-deactivate-hook* 'prompt-deactivate-hook)
             (remove-hook *post-command-hook* 'vi-post-command-hook)))

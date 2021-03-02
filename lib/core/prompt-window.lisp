@@ -210,9 +210,8 @@
 (defun initialize-prompt (prompt-window)
   (let* ((buffer (window-buffer prompt-window))
          (prompt-string (prompt-buffer-prompt-string buffer)))
-    (when (plusp (length prompt-string))
-      (setf (prompt-window-start-charpos prompt-window)
-            (length prompt-string)))
+    (setf (prompt-window-start-charpos prompt-window)
+          (length prompt-string))
     (buffer-end (buffer-point buffer))))
 
 (defun create-prompt (prompt-string initial-string parameters)

@@ -323,7 +323,7 @@
                   :syntax-table syntax-table
                   :body-function #'prompt-for-line-command-loop))
 
-(defmethod active-minibuffer-window ()
+(defmethod active-prompt-window ()
   (current-prompt-window))
 
 (defmethod prompt-active-p ((prompt floating-prompt))

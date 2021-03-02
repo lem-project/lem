@@ -162,11 +162,11 @@
       (isearch-sort-overlays buffer))))
 
 (defun isearch-update-display ()
-  (isearch-update-minibuffer)
+  (isearch-update-message)
   (window-see (current-window))
   (isearch-update-buffer))
 
-(defun isearch-update-minibuffer ()
+(defun isearch-update-message ()
   (setf *isearch-popup-message*
         (display-popup-message (format nil
                                        "~A~A~A"

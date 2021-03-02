@@ -114,7 +114,7 @@
 (define-command other-window (&optional (n 1)) ("p")
   (let ((window-list
           (append (alexandria:ensure-list
-                   (active-minibuffer-window))
+                   (active-prompt-window))
                   (window-list))))
     (when (minusp n)
       (setf n (- (length window-list) (abs n))))

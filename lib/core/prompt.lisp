@@ -4,7 +4,7 @@
           *prompt-file-completion-function*
           prompt-start-point
           prompt-active-p
-          active-minibuffer-window
+          active-prompt-window
           prompt-for-character
           prompt-for-y-or-n-p
           prompt-for-string
@@ -19,7 +19,7 @@
 (defgeneric prompt-start-point (prompt))
 (defgeneric caller-of-prompt-window (prompt))
 (defgeneric prompt-active-p (prompt))
-(defgeneric active-minibuffer-window ()) ;TOOD
+(defgeneric active-prompt-window ())
 (defgeneric prompt-for-character (prompt-string))
 (defgeneric prompt-for-line (prompt initial comp-f existing-p history-name &optional syntax-table))
 

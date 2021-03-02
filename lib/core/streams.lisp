@@ -4,8 +4,8 @@
           make-buffer-input-stream
           buffer-output-stream
           make-buffer-output-stream
-          minibuffer-input-stream
-          make-minibuffer-input-stream
+          editor-input-stream
+          make-editor-input-stream
           editor-output-stream
           make-editor-output-stream
           make-editor-io-stream))
@@ -157,25 +157,25 @@
   )
 
 
-(defclass minibuffer-input-stream (trivial-gray-streams:fundamental-input-stream)
+(defclass editor-input-stream (trivial-gray-streams:fundamental-input-stream)
   ((queue
     :initform nil
     :initarg :queue
-    :accessor minibuffer-input-stream-queue)))
+    :accessor editor-input-stream-queue)))
 
-(defun make-minibuffer-input-stream ()
-  (make-instance 'minibuffer-input-stream :queue nil))
+(defun make-editor-input-stream ()
+  (make-instance 'editor-input-stream :queue nil))
 
-(defmethod trivial-gray-streams:stream-read-char ((stream minibuffer-input-stream))
-  (let ((c (pop (minibuffer-input-stream-queue stream))))
+(defmethod trivial-gray-streams:stream-read-char ((stream editor-input-stream))
+  (let ((c (pop (editor-input-stream-queue stream))))
     (cond ((null c)
            (let ((string
                    (handler-case (values (prompt-for-string "") t)
                      (editor-abort ()
-                       (setf (minibuffer-input-stream-queue stream) nil)
+                       (setf (editor-input-stream-queue stream) nil)
                        (return-from trivial-gray-streams:stream-read-char :eof)))))
-             (setf (minibuffer-input-stream-queue stream)
-                   (nconc (minibuffer-input-stream-queue stream)
+             (setf (editor-input-stream-queue stream)
+                   (nconc (editor-input-stream-queue stream)
                           (coerce string 'list)
                           (list #\newline))))
            (trivial-gray-streams:stream-read-char stream))
@@ -183,27 +183,27 @@
            :eof)
           (c))))
 
-(defmethod trivial-gray-streams:stream-unread-char ((stream minibuffer-input-stream) char)
-  (push char (minibuffer-input-stream-queue stream))
+(defmethod trivial-gray-streams:stream-unread-char ((stream editor-input-stream) char)
+  (push char (editor-input-stream-queue stream))
   nil)
 
-(defmethod trivial-gray-streams:stream-read-char-no-hang ((stream minibuffer-input-stream))
+(defmethod trivial-gray-streams:stream-read-char-no-hang ((stream editor-input-stream))
   (trivial-gray-streams:stream-read-char stream))
 
-(defmethod trivial-gray-streams:stream-peek-char ((stream minibuffer-input-stream))
+(defmethod trivial-gray-streams:stream-peek-char ((stream editor-input-stream))
   (let ((c (trivial-gray-streams:stream-read-char stream)))
     (prog1 c
       (trivial-gray-streams:stream-unread-char stream c))))
 
-(defmethod trivial-gray-streams:stream-listen ((stream minibuffer-input-stream))
+(defmethod trivial-gray-streams:stream-listen ((stream editor-input-stream))
   (let ((c (trivial-gray-streams:stream-read-char-no-hang stream)))
     (prog1 c
       (trivial-gray-streams:stream-unread-char stream c))))
 
-(defmethod trivial-gray-streams:stream-read-line ((stream minibuffer-input-stream))
+(defmethod trivial-gray-streams:stream-read-line ((stream editor-input-stream))
   (prompt-for-string ""))
 
-(defmethod trivial-gray-streams:stream-clear-input ((stream minibuffer-input-stream))
+(defmethod trivial-gray-streams:stream-clear-input ((stream editor-input-stream))
   nil)
 
 
@@ -269,7 +269,7 @@
 ;;   )
 
 
-(defclass editor-io-stream (minibuffer-input-stream editor-output-stream)
+(defclass editor-io-stream (editor-input-stream editor-output-stream)
   ())
 
 (defun make-editor-io-stream (&optional destination)

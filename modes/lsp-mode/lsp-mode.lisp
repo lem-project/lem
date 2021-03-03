@@ -1643,6 +1643,12 @@
   :command '("typescript-language-server" "--stdio")
   :mode :stdio)
 
+(define-language-spec (rust-spec lem-rust-mode:rust-mode)
+  :language-id "rust"
+  :root-uri-patterns '("Cargo.toml")
+  :command '("rls")
+  :mode :stdio)
+
 (defun find-dart-bin-path ()
   (multiple-value-bind (output error-output status)
       (uiop:run-program '("which" "dart")

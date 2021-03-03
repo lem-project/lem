@@ -1,5 +1,6 @@
 DEBUG
 *.fasl
+*.so
 node_modules
 package-lock.json
 roswell/lem-ncurses

@@ -68,26 +68,43 @@
       ((and (not (lem:floating-window-p (lem:current-window)))
             (eql btype *mouse-button-1*)
             (eql bstate #\M))
-       (find-if
-        (lambda (o)
-          (multiple-value-bind (x y w h) (get-window-rect o)
-            (cond
-              ;; vertical dragging window
-              ((and (= y1 (- y 1)) (<= x x1 (+ x w -1)))
-               (setf *dragging-window* (list o 'y))
-               t)
-              ;; horizontal dragging window
-              ((and (= x1 (- x 1)) (<= y y1 (+ y h -1)))
-               (setf *dragging-window* (list o 'x))
-               t)
-              ;; move cursor
-              ((and (<= x x1 (+ x w -1)) (<= y y1 (+ y h -1)))
-               (setf (lem:current-window) o)
-               (move-to-cursor o (- x1 x) (- y1 y))
-               (lem:redraw-display)
-               t)
-              (t nil))))
-        (lem:window-list)))
+       (or
+        ;; for frame header window
+        (find-if
+         (lambda (o)
+           (multiple-value-bind (x y w h) (get-window-rect o)
+             (cond
+               ;; select frame
+               ((and (<= x x1 (+ x w -1)) (<= y y1 (+ y h -1)))
+                (lem:with-point ((point (lem:buffer-start-point (lem:window-buffer o))))
+                  (when (lem:line-offset point (- y1 y) (- x1 x))
+                    (let ((button (lem.button:button-at point)))
+                      (when button
+                        (lem.button:button-action button)))))
+                t)
+               (t nil))))
+         (frame-header-windows (current-frame)))
+        ;; for normal window
+        (find-if
+         (lambda (o)
+           (multiple-value-bind (x y w h) (get-window-rect o)
+             (cond
+               ;; vertical dragging window
+               ((and (= y1 (- y 1)) (<= x x1 (+ x w -1)))
+                (setf *dragging-window* (list o 'y))
+                t)
+               ;; horizontal dragging window
+               ((and (= x1 (- x 1)) (<= y y1 (+ y h -1)))
+                (setf *dragging-window* (list o 'x))
+                t)
+               ;; move cursor
+               ((and (<= x x1 (+ x w -1)) (<= y y1 (+ y h -1)))
+                (setf (lem:current-window) o)
+                (move-to-cursor o (- x1 x) (- y1 y))
+                (lem:redraw-display)
+                t)
+               (t nil))))
+         (lem:window-list))))
       ;; button-1 up
       ((and (eql btype *mouse-button-1*)
             (eql bstate #\m))

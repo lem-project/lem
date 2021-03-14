@@ -485,7 +485,8 @@
                       (when (lem:line-offset point (- y1 y) (- disp-x x))
                         (let ((button (lem.button:button-at point)))
                           (when button
-                            (lem.button:button-action button)))))
+                            (lem.button:button-action button)
+                            (lem::change-display-size-hook)))))
                     t)
                    (t nil))))
              (frame-header-windows (current-frame)))

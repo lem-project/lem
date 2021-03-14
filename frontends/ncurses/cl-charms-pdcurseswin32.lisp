@@ -93,7 +93,11 @@
       0))
 
 ;; for extracting a character code
-(define-exported-constant A_CHARTEXT #x0000ffff)
+(define-exported-constant PDC_A_CHARTEXT  #x0000ffff)
+
+;; for character attributes
+(define-exported-constant PDC_A_UNDERLINE #x00100000)
+(define-exported-constant PDC_A_BOLD      #x00800000)
 
 ;; for mouse
 (define-exported-constant BUTTON4_PRESSED #x00010000) ; wheel up

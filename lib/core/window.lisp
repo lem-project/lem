@@ -624,6 +624,28 @@ next line because it is at the end of width."
                    (window-scroll-up window))))
     (run-hooks *window-scroll-functions* window)))
 
+(defun adjust-view-point (window)
+  "When the window view point is at the middle of wrapped line and
+window width is changed, we must recalc the window view point."
+  (unless (variable-value 'truncate-lines :default (window-buffer window))
+    (return-from adjust-view-point nil))
+  (when (start-line-p (window-view-point window))
+    (return-from adjust-view-point nil))
+  (let ((point (window-view-point window))
+        (i1    0))
+    (map-wrapping-line
+     window
+     (line-string point)
+     (lambda (i)
+       (when (= (point-charpos point) i)
+         (return-from adjust-view-point nil))
+       (when (< (point-charpos point) i)
+         (line-offset point 0 i1)
+         (return-from adjust-view-point point))
+       (setf i1 i)))
+    (line-offset point 0 i1)
+    point))
+
 (defun window-offset-view (window)
   (if (point< (window-buffer-point window)
               (window-view-point window))
@@ -636,6 +658,7 @@ next line because it is at the end of width."
                   (1- height))))))
 
 (defun window-see (window &optional (recenter *scroll-recenter-p*))
+  (adjust-view-point window)
   (let ((offset (window-offset-view window)))
     (unless (zerop offset)
       (cond (recenter

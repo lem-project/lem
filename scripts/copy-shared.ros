@@ -14,9 +14,10 @@ exec ros -Q -- $0 "$@"
 
 (defun main (&rest argv)
   (declare (ignorable argv))
-  (let ((orig (sb-alien::shared-object-pathname (first sb-sys:*shared-objects*))))
+  (let ((orig (first (apply #'append (mapcar (lambda (x) (directory (merge-pathnames "libasyncprocess.so" x)))
+                                             (eval (read-from-string "cffi:*foreign-library-directories*")))))))
     (uiop:copy-file orig
-                    (merge-pathnames 
+                    (merge-pathnames
                      (file-namestring orig)
                      (uiop:getcwd)))))
 ;;; vim: set ft=lisp lisp:

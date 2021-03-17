@@ -61,6 +61,11 @@
 ;;   caused by wide characters)
 (setf lem.prompt-window::*extra-side-margin* 2)
 
+;; popup border color for windows
+;; (it needs subtle adjustments ...)
+(define-attribute popup-border-color-for-windows
+  (t :foreground "#b0b0b0" :background "#666666"))
+
 
 ;; windows terminal type
 ;;   :mintty  : mintty  (winpty is needed)
@@ -130,6 +135,9 @@
                    ;; reserve last line for windows ime (windows 8.1 or earlier)
                    ;; reserve last line for safety (windows 10)
                    ;;   fixnum : number of reserved lines
+  write-last-line  ;; write something to last line to recover screen corruption
+                   ;;   t   : enabled
+                   ;;   nil : disabled
   )
 (defun update-windows-term-setting ()
   (setf (windows-term-setting)
@@ -146,7 +154,8 @@
             :winterm-input       nil
             :resize-refresh      (not *pdcurses-win10-jp*)
             :resize-delay        1
-            :reserved-last-lines 1))
+            :reserved-last-lines 1
+            :write-last-line     t))
           (:conemu
            (make-windows-term-setting
             :disp-char-width     t
@@ -159,7 +168,8 @@
             :winterm-input       nil
             :resize-refresh      (not *pdcurses-win10-jp*)
             :resize-delay        1
-            :reserved-last-lines 1))
+            :reserved-last-lines 1
+            :write-last-line     t))
           (:winterm
            (make-windows-term-setting
             :disp-char-width     t
@@ -172,7 +182,8 @@
             :winterm-input       t
             :resize-refresh      (not *pdcurses-win10-jp*)
             :resize-delay        1
-            :reserved-last-lines 1))
+            :reserved-last-lines 1
+            :write-last-line     t))
           (t
            (make-windows-term-setting
             :disp-char-width     *pdcurses-win10-jp*
@@ -185,7 +196,8 @@
             :winterm-input       nil
             :resize-refresh      (not *pdcurses-win10-jp*)
             :resize-delay        1
-            :reserved-last-lines 1)))))
+            :reserved-last-lines 1
+            :write-last-line     t)))))
 (defmethod calc-disp-char-width ((wt windows-term-setting) code)
   (let ((fn (windows-term-setting-disp-char-width wt)))
     (if (functionp fn)
@@ -213,6 +225,11 @@
   (setf (now-resizing)
         (max (windows-term-setting-resize-delay wt) 1))
   (lem::change-display-size-hook)
+  v)
+(defmethod (setf write-last-line) (v (wt windows-term-setting))
+  (setf (windows-term-setting-write-last-line wt) v)
+  (write-something-to-last-line :clear t)
+  (lem:redraw-display)
   v)
 
 ;; initialize windows terminal type and setting
@@ -332,6 +349,28 @@
    :y y
    :width width
    :height height))
+
+;; overwrite function (use pdcurses constants)
+(defun attribute-to-bits (attribute-or-name)
+  (let ((attribute (ensure-attribute attribute-or-name nil))
+        (cursorp (eq attribute-or-name 'cursor)))
+    (if (null attribute)
+        0
+        (or (lem::attribute-%internal-value attribute)
+            (let* ((foreground (attribute-foreground attribute))
+                   (background (attribute-background attribute))
+                   (bits (logior (if (or cursorp (lem::attribute-reverse-p attribute))
+                                     (lem.term:get-color-pair background foreground)
+                                     (lem.term:get-color-pair foreground background))
+                                 0
+                                 (if (lem::attribute-bold-p attribute)
+                                     charms/ll:PDC_A_BOLD
+                                     0)
+                                 (if (lem::attribute-underline-p attribute)
+                                     charms/ll:PDC_A_UNDERLINE
+                                     0))))
+              (setf (lem::attribute-%internal-value attribute) bits)
+              bits)))))
 
 ;; mouse function
 (defun mouse-get-window-rect (window)
@@ -677,7 +716,10 @@
 ;; workaround for display update problem (incomplete)
 (let ((temp-view   nil)
       (toggle-flag t))
-  (defun write-something-to-last-line ()
+  (defun write-something-to-last-line (&key (clear nil))
+    (unless (or clear
+                (windows-term-setting-write-last-line (windows-term-setting)))
+      (return-from write-something-to-last-line))
     (unless temp-view
       (setf temp-view (lem-if:make-view *implementation* nil 0 0 0 0 nil)))
     ;; this recovers winpty's screen corruption
@@ -686,7 +728,9 @@
       (print-sub (ncurses-view-scrwin temp-view)
                  (get-pos-x temp-view x y)
                  (get-pos-y temp-view x y)
-                 (if toggle-flag "+" "-"))
+                 (if clear
+                     " "
+                     (if toggle-flag "+" "-")))
       (setf toggle-flag (not toggle-flag)))))
 
 ;; workaround for display update problem (incomplete)
@@ -765,11 +809,11 @@
 (defun get-charcode-from-scrwin (view x y)
   (let ((code (charms/ll:mvwinch (ncurses-view-scrwin view) y x)))
     (unless (= code charms/ll:ERR)
-      (setf code (logand code charms/ll:A_CHARTEXT))
+      (setf code (logand code charms/ll:PDC_A_CHARTEXT))
       (when (<= #xd800 code #xdbff)
         (let ((c-lead  code)
               (c-trail (logand (charms/ll:mvwinch (ncurses-view-scrwin view) y (+ x 1))
-                               charms/ll:A_CHARTEXT)))
+                               charms/ll:PDC_A_CHARTEXT)))
           (when (<= #xdc00 c-trail #xdfff)
             (setf code (+ #x10000 (* (- c-lead #xd800) #x0400) (- c-trail #xdc00)))))))
     code))
@@ -953,8 +997,7 @@
 ;; overwrite function (use only stdscr)
 (defun draw-border (border view)
   ;; b-width includes a margin for wide characters display problem
-  (let* ((attr     (attribute-to-bits (make-attribute :background "#666666"
-                                                      :foreground "#b0b0b0")))
+  (let* ((attr     (attribute-to-bits 'popup-border-color-for-windows))
          (b-width  (+ (border-width border) 1))
          (b-height (border-height border))
          (x1       -1)
@@ -987,7 +1030,7 @@
   ;; write same character to avoid wide characters display problem
   (let ((code (charms/ll:mvinch pos-y pos-x)))
     (unless (= code charms/ll:ERR)
-      (setf code (logand code charms/ll:A_CHARTEXT))
+      (setf code (logand code charms/ll:PDC_A_CHARTEXT))
       (charms/ll:mvaddch pos-y pos-x code))))
 
 ;; overwrite method (use only stdscr)

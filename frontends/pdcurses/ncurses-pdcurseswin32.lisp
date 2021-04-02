@@ -489,7 +489,7 @@
                             (lem::change-display-size-hook)))))
                     t)
                    (t nil))))
-             (frame-header-windows (current-frame)))
+             (lem:frame-header-windows (lem:current-frame)))
             ;; for normal window
             (find-if
              (lambda (o)

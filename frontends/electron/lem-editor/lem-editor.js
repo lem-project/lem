@@ -80,62 +80,6 @@ class LemEditorPane extends HTMLElement {
   }
 }
 
-class DrawingEvent {}
-
-class DrawBlock extends DrawingEvent {
-  constructor({ style, x, y, w, h }) {
-    super();
-    this.style = style;
-    this.x = x;
-    this.y = y;
-    this.w = w;
-    this.h = h;
-  }
-
-  run(ctx) {
-    ctx.fillStyle = this.style;
-    ctx.fillRect(this.x, this.y, this.w, this.h);
-  }
-}
-
-class DrawText extends DrawingEvent {
-  constructor({ style, font, x, y, text }) {
-    super();
-    this.style = style;
-    this.font = font;
-    this.x = x;
-    this.y = y;
-    this.text = text;
-  }
-
-  run(ctx) {
-    ctx.fillStyle = this.style;
-    ctx.font = this.font;
-    ctx.textBaseline = "top";
-    ctx.fillText(this.text, this.x, this.y);
-  }
-}
-
-class DrawUnderline extends DrawingEvent {
-  constructor({ style, x, y, width }) {
-    super();
-    this.style = style;
-    this.x = x;
-    this.y = y;
-    this.width = width;
-  }
-
-  run(ctx) {
-    ctx.strokeStyle = this.style;
-    ctx.lineWidth = 1;
-    ctx.setLineDash([]);
-    ctx.beginPath();
-    ctx.moveTo(this.x, this.y);
-    ctx.lineTo(this.x + this.width, this.y);
-    ctx.stroke();
-  }
-}
-
 class LemSidePane extends HTMLElement {
   constructor() {
     super();
@@ -554,6 +498,168 @@ class Picker {
   }
 }
 
+const viewStyleTable = {
+  popup: { zIndex: 2, "box-shadow": "0 0 0 12px #555555" },
+};
+
+class View {
+  constructor(id, x, y, width, height, use_modeline, kind) {
+    this.id = id;
+    this.width = width;
+    this.height = height;
+    this.use_modeline = use_modeline;
+    this.editSurface = new Surface(
+      x,
+      y,
+      width,
+      height,
+      viewStyleTable[kind] || {}
+    );
+    if (use_modeline) {
+      this.modelineSurface = new Surface(x, y + height, width, 1, {
+        zIndex: 1,
+      });
+    } else {
+      this.modelineSurface = null;
+    }
+    this.move(x, y);
+    this.resize(width, height);
+    this.cursor = { x: null, y: null, color: option.foreground };
+  }
+
+  allTags() {
+    if (this.modelineSurface !== null) {
+      return [this.editSurface.canvas, this.modelineSurface.canvas];
+    } else {
+      return [this.editSurface.canvas];
+    }
+  }
+
+  delete() {
+    this.editSurface.canvas.parentNode.removeChild(this.editSurface.canvas);
+    if (this.modelineSurface !== null) {
+      this.modelineSurface.canvas.parentNode.removeChild(
+        this.modelineSurface.canvas
+      );
+    }
+  }
+
+  move(x, y) {
+    this.editSurface.move(x, y);
+    if (this.modelineSurface !== null) {
+      this.modelineSurface.move(x, y + this.height);
+    }
+  }
+
+  resize(width, height) {
+    this.width = width;
+    this.height = height;
+    this.editSurface.resize(width, height);
+    if (this.modelineSurface !== null) {
+      this.modelineSurface.move(
+        this.x,
+        this.editSurface.y + this.editSurface.height
+      );
+      this.modelineSurface.resize(width, 1);
+    }
+  }
+
+  clear() {
+    this.editSurface.drawBlock(0, 0, this.width, this.height);
+  }
+
+  clearEol(x, y) {
+    this.editSurface.drawBlock(x, y, this.width - x, 1);
+  }
+
+  clearEob(x, y) {
+    this.clearEol(x, y);
+    this.editSurface.drawBlock(x, y + 1, this.width, this.height - y - 1);
+  }
+
+  put(x, y, text, textWidth, attribute) {
+    this.editSurface.put(x, y, text, textWidth, attribute);
+  }
+
+  modelinePut(x, text, textWidth, attribute) {
+    if (this.modelineSurface !== null) {
+      this.modelineSurface.put(x, 0, text, textWidth, attribute);
+    }
+  }
+
+  touch() {
+    this.editSurface.touch();
+    if (this.modelineSurface !== null) {
+      this.modelineSurface.touch();
+    }
+  }
+
+  setCursor(x, y) {
+    this.cursor.x = x;
+    this.cursor.y = y;
+  }
+
+  scroll(n) {
+    this.editSurface.scroll(n);
+  }
+}
+
+class DrawingEvent {}
+
+class DrawBlock extends DrawingEvent {
+  constructor({ style, x, y, w, h }) {
+    super();
+    this.style = style;
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
+
+  run(ctx) {
+    ctx.fillStyle = this.style;
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+  }
+}
+
+class DrawText extends DrawingEvent {
+  constructor({ style, font, x, y, text }) {
+    super();
+    this.style = style;
+    this.font = font;
+    this.x = x;
+    this.y = y;
+    this.text = text;
+  }
+
+  run(ctx) {
+    ctx.fillStyle = this.style;
+    ctx.font = this.font;
+    ctx.textBaseline = "top";
+    ctx.fillText(this.text, this.x, this.y);
+  }
+}
+
+class DrawUnderline extends DrawingEvent {
+  constructor({ style, x, y, width }) {
+    super();
+    this.style = style;
+    this.x = x;
+    this.y = y;
+    this.width = width;
+  }
+
+  run(ctx) {
+    ctx.strokeStyle = this.style;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(this.x + this.width, this.y);
+    ctx.stroke();
+  }
+}
+
 class Surface {
   constructor(x, y, width, height, styles) {
     this.x = x;
@@ -678,111 +784,6 @@ class Surface {
   }
 }
 
-const viewStyleTable = {
-  popup: { zIndex: 2, "box-shadow": "0 0 0 12px #555555" },
-};
-
-class View {
-  constructor(id, x, y, width, height, use_modeline, kind) {
-    this.id = id;
-    this.width = width;
-    this.height = height;
-    this.use_modeline = use_modeline;
-    this.editSurface = new Surface(
-      x,
-      y,
-      width,
-      height,
-      viewStyleTable[kind] || {}
-    );
-    if (use_modeline) {
-      this.modelineSurface = new Surface(x, y + height, width, 1, {
-        zIndex: 1,
-      });
-    } else {
-      this.modelineSurface = null;
-    }
-    this.move(x, y);
-    this.resize(width, height);
-    this.cursor = { x: null, y: null, color: option.foreground };
-  }
-
-  allTags() {
-    if (this.modelineSurface !== null) {
-      return [this.editSurface.canvas, this.modelineSurface.canvas];
-    } else {
-      return [this.editSurface.canvas];
-    }
-  }
-
-  delete() {
-    this.editSurface.canvas.parentNode.removeChild(this.editSurface.canvas);
-    if (this.modelineSurface !== null) {
-      this.modelineSurface.canvas.parentNode.removeChild(
-        this.modelineSurface.canvas
-      );
-    }
-  }
-
-  move(x, y) {
-    this.editSurface.move(x, y);
-    if (this.modelineSurface !== null) {
-      this.modelineSurface.move(x, y + this.height);
-    }
-  }
-
-  resize(width, height) {
-    this.width = width;
-    this.height = height;
-    this.editSurface.resize(width, height);
-    if (this.modelineSurface !== null) {
-      this.modelineSurface.move(
-        this.x,
-        this.editSurface.y + this.editSurface.height
-      );
-      this.modelineSurface.resize(width, 1);
-    }
-  }
-
-  clear() {
-    this.editSurface.drawBlock(0, 0, this.width, this.height);
-  }
-
-  clearEol(x, y) {
-    this.editSurface.drawBlock(x, y, this.width - x, 1);
-  }
-
-  clearEob(x, y) {
-    this.clearEol(x, y);
-    this.editSurface.drawBlock(x, y + 1, this.width, this.height - y - 1);
-  }
-
-  put(x, y, text, textWidth, attribute) {
-    this.editSurface.put(x, y, text, textWidth, attribute);
-  }
-
-  modelinePut(x, text, textWidth, attribute) {
-    if (this.modelineSurface !== null) {
-      this.modelineSurface.put(x, 0, text, textWidth, attribute);
-    }
-  }
-
-  touch() {
-    this.editSurface.touch();
-    if (this.modelineSurface !== null) {
-      this.modelineSurface.touch();
-    }
-  }
-
-  setCursor(x, y) {
-    this.cursor.x = x;
-    this.cursor.y = y;
-  }
-
-  scroll(n) {
-    this.editSurface.scroll(n);
-  }
-}
 
 customElements.define("lem-editor", LemEditor);
 customElements.define("lem-side-pane", LemSidePane);

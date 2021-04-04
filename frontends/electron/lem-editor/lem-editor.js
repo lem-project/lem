@@ -674,7 +674,7 @@ class Surface {
     this.ctx = this.canvas.getContext("2d", { alpha: false });
     this.ctx.textBaseline = "top";
     this.ctx.font = fontAttribute.font;
-    this.drawing_context = [];
+    this.event_queue = [];
   }
 
   move(x, y) {
@@ -692,7 +692,7 @@ class Surface {
   }
 
   drawBlock(x, y, w, h, color) {
-    this.drawing_context.push(
+    this.event_queue.push(
       new DrawBlock({
         style: color || option.background,
         x: x * fontAttribute.width,
@@ -704,7 +704,7 @@ class Surface {
   }
 
   drawText(x, y, text, font, color) {
-    this.drawing_context.push(
+    this.event_queue.push(
       new DrawText({
         style: color,
         font: font,
@@ -716,7 +716,7 @@ class Surface {
   }
 
   drawUnderline(x, y, length, color) {
-    this.drawing_context.push(
+    this.event_queue.push(
       new DrawUnderline({
         style: color,
         x: x * fontAttribute.width,
@@ -752,10 +752,10 @@ class Surface {
   }
 
   touch() {
-    for (let event of this.drawing_context) {
+    for (let event of this.event_queue) {
       event.run(this.ctx);
     }
-    this.drawing_context = [];
+    this.event_queue = [];
   }
 
   scroll(n) {

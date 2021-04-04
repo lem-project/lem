@@ -80,6 +80,62 @@ class LemEditorPane extends HTMLElement {
   }
 }
 
+class DrawingEvent {}
+
+class DrawBlock extends DrawingEvent {
+  constructor({ style, x, y, w, h }) {
+    super();
+    this.style = style;
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
+
+  run(ctx) {
+    ctx.fillStyle = this.style;
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+  }
+}
+
+class DrawText extends DrawingEvent {
+  constructor({ style, font, x, y, text }) {
+    super();
+    this.style = style;
+    this.font = font;
+    this.x = x;
+    this.y = y;
+    this.text = text;
+  }
+
+  run(ctx) {
+    ctx.fillStyle = this.style;
+    ctx.font = this.font;
+    ctx.textBaseline = "top";
+    ctx.fillText(this.text, this.x, this.y);
+  }
+}
+
+class DrawUnderline extends DrawingEvent {
+  constructor({ style, x, y, width }) {
+    super();
+    this.style = style;
+    this.x = x;
+    this.y = y;
+    this.width = width;
+  }
+
+  run(ctx) {
+    ctx.strokeStyle = this.style;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(this.x + this.width, this.y);
+    ctx.stroke();
+  }
+}
+
 class LemSidePane extends HTMLElement {
   constructor() {
     super();
@@ -536,59 +592,38 @@ class Surface {
   }
 
   drawBlock(x, y, w, h, color) {
-    //this.ctx2.fillStyle = color || option.background;
-    //this.ctx2.fillRect(
-    //  x * fontAttribute.width,
-    //  y * fontAttribute.height,
-    //  w * fontAttribute.width + 1,
-    //  h * fontAttribute.height
-    //);
-
-    this.drawing_context.push({
-      kind: "draw_block",
-      style: color || option.background,
-      x: x * fontAttribute.width,
-      y: y * fontAttribute.height,
-      w: w * fontAttribute.width + 1,
-      h: h * fontAttribute.height,
-    });
+    this.drawing_context.push(
+      new DrawBlock({
+        style: color || option.background,
+        x: x * fontAttribute.width,
+        y: y * fontAttribute.height,
+        w: w * fontAttribute.width + 1,
+        h: h * fontAttribute.height,
+      })
+    );
   }
 
   drawText(x, y, text, font, color) {
-    // this.ctx2.fillStyle = color;
-    // this.ctx2.font = font;
-    // this.ctx2.textBaseline = "top";
-    // x *= fontAttribute.width;
-    // y *= fontAttribute.height;
-    // this.ctx2.fillText(text, x, y);
-
-    this.drawing_context.push({
-      kind: "draw_text",
-      style: color,
-      font: font,
-      x: x * fontAttribute.width,
-      y: y * fontAttribute.height,
-      text: text,
-    });
+    this.drawing_context.push(
+      new DrawText({
+        style: color,
+        font: font,
+        x: x * fontAttribute.width,
+        y: y * fontAttribute.height,
+        text: text,
+      })
+    );
   }
 
   drawUnderline(x, y, length, color) {
-    // this.ctx2.strokeStyle = color;
-    // this.ctx2.lineWidth = 1;
-    // this.ctx2.setLineDash([]);
-    // this.ctx2.beginPath();
-    // x *= fontAttribute.width;
-    // y = (y + 1) * fontAttribute.height - 3;
-    // this.ctx2.moveTo(x, y);
-    // this.ctx2.lineTo(x + fontAttribute.width * length, y);
-    // this.ctx2.stroke();
-
-    this.drawing_context.push({
-      kind: "draw_underline",
-      style: color,
-      x: x * fontAttribute.width,
-      y: (y + 1) * fontAttribute.height - 3,
-    });
+    this.drawing_context.push(
+      new DrawUnderline({
+        style: color,
+        x: x * fontAttribute.width,
+        y: (y + 1) * fontAttribute.height - 3,
+        width: fontAttribute.width * length,
+      })
+    );
   }
 
   put(x, y, text, textWidth, attribute) {
@@ -617,46 +652,8 @@ class Surface {
   }
 
   touch() {
-    // const image = this.ctx2.getImageData(
-    //   0,
-    //   0,
-    //   this.canvas.width,
-    //   this.canvas.height
-    // );
-    // this.ctx.putImageData(image, 0, 0);
-
-    console.log(this.drawing_context);
-    for (let elt of this.drawing_context) {
-      switch (elt.kind) {
-        case "draw_block":
-          {
-            let { style, x, y, w, h } = elt;
-            this.ctx.fillStyle = style;
-            this.ctx.fillRect(x, y, w, h);
-          }
-          break;
-        case "draw_text":
-          {
-            let { style, font, x, y, text } = elt;
-            this.ctx.fillStyle = style;
-            this.ctx.font = font;
-            this.ctx.textBaseline = "top";
-            this.ctx.fillText(text, x, y);
-          }
-          break;
-        case "draw_underline":
-          {
-            let { style, x, y } = elt;
-            this.ctx.strokeStyle = color;
-            this.ctx.lineWidth = 1;
-            this.ctx.setLineDash([]);
-            this.ctx.beginPath();
-            this.ctx.moveTo(x, y);
-            this.ctx.lineTo(x, y);
-            this.ctx.stroke();
-          }
-          break;
-      }
+    for (let event of this.drawing_context) {
+      event.run(this.ctx);
     }
     this.drawing_context = [];
   }

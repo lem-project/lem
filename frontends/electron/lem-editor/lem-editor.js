@@ -568,10 +568,6 @@ class Surface {
     this.ctx = this.canvas.getContext("2d", { alpha: false });
     this.ctx.textBaseline = "top";
     this.ctx.font = fontAttribute.font;
-    // this.canvas2 = document.createElement("canvas");
-    // this.ctx2 = this.canvas2.getContext("2d", { alpha: false });
-    // this.ctx2.textBaseline = "top";
-    // this.ctx2.font = fontAttribute.font;
     this.drawing_context = [];
   }
 
@@ -587,8 +583,6 @@ class Surface {
     this.height = height;
     this.canvas.width = width * fontAttribute.width;
     this.canvas.height = height * fontAttribute.height;
-    // this.canvas2.width = width * fontAttribute.width;
-    // this.canvas2.height = height * fontAttribute.height;
   }
 
   drawBlock(x, y, w, h, color) {

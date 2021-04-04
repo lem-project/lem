@@ -512,10 +512,11 @@ class Surface {
     this.ctx = this.canvas.getContext("2d", { alpha: false });
     this.ctx.textBaseline = "top";
     this.ctx.font = fontAttribute.font;
-    this.canvas2 = document.createElement("canvas");
-    this.ctx2 = this.canvas2.getContext("2d", { alpha: false });
-    this.ctx2.textBaseline = "top";
-    this.ctx2.font = fontAttribute.font;
+    // this.canvas2 = document.createElement("canvas");
+    // this.ctx2 = this.canvas2.getContext("2d", { alpha: false });
+    // this.ctx2.textBaseline = "top";
+    // this.ctx2.font = fontAttribute.font;
+    this.drawing_context = [];
   }
 
   move(x, y) {
@@ -530,39 +531,64 @@ class Surface {
     this.height = height;
     this.canvas.width = width * fontAttribute.width;
     this.canvas.height = height * fontAttribute.height;
-    this.canvas2.width = width * fontAttribute.width;
-    this.canvas2.height = height * fontAttribute.height;
+    // this.canvas2.width = width * fontAttribute.width;
+    // this.canvas2.height = height * fontAttribute.height;
   }
 
   drawBlock(x, y, w, h, color) {
-    this.ctx2.fillStyle = color || option.background;
-    this.ctx2.fillRect(
-      x * fontAttribute.width,
-      y * fontAttribute.height,
-      w * fontAttribute.width + 1,
-      h * fontAttribute.height
-    );
+    //this.ctx2.fillStyle = color || option.background;
+    //this.ctx2.fillRect(
+    //  x * fontAttribute.width,
+    //  y * fontAttribute.height,
+    //  w * fontAttribute.width + 1,
+    //  h * fontAttribute.height
+    //);
+
+    this.drawing_context.push({
+      kind: "draw_block",
+      style: color || option.background,
+      x: x * fontAttribute.width,
+      y: y * fontAttribute.height,
+      w: w * fontAttribute.width + 1,
+      h: h * fontAttribute.height,
+    });
   }
 
   drawText(x, y, text, font, color) {
-    this.ctx2.fillStyle = color;
-    this.ctx2.font = font;
-    this.ctx2.textBaseline = "top";
-    x *= fontAttribute.width;
-    y *= fontAttribute.height;
-    this.ctx2.fillText(text, x, y);
+    // this.ctx2.fillStyle = color;
+    // this.ctx2.font = font;
+    // this.ctx2.textBaseline = "top";
+    // x *= fontAttribute.width;
+    // y *= fontAttribute.height;
+    // this.ctx2.fillText(text, x, y);
+
+    this.drawing_context.push({
+      kind: "draw_text",
+      style: color,
+      font: font,
+      x: x * fontAttribute.width,
+      y: y * fontAttribute.height,
+      text: text,
+    });
   }
 
   drawUnderline(x, y, length, color) {
-    this.ctx2.strokeStyle = color;
-    this.ctx2.lineWidth = 1;
-    this.ctx2.setLineDash([]);
-    this.ctx2.beginPath();
-    x *= fontAttribute.width;
-    y = (y + 1) * fontAttribute.height - 3;
-    this.ctx2.moveTo(x, y);
-    this.ctx2.lineTo(x + fontAttribute.width * length, y);
-    this.ctx2.stroke();
+    // this.ctx2.strokeStyle = color;
+    // this.ctx2.lineWidth = 1;
+    // this.ctx2.setLineDash([]);
+    // this.ctx2.beginPath();
+    // x *= fontAttribute.width;
+    // y = (y + 1) * fontAttribute.height - 3;
+    // this.ctx2.moveTo(x, y);
+    // this.ctx2.lineTo(x + fontAttribute.width * length, y);
+    // this.ctx2.stroke();
+
+    this.drawing_context.push({
+      kind: "draw_underline",
+      style: color,
+      x: x * fontAttribute.width,
+      y: (y + 1) * fontAttribute.height - 3,
+    });
   }
 
   put(x, y, text, textWidth, attribute) {
@@ -591,33 +617,68 @@ class Surface {
   }
 
   touch() {
-    const image = this.ctx2.getImageData(
-      0,
-      0,
-      this.canvas.width,
-      this.canvas.height
-    );
-    this.ctx.putImageData(image, 0, 0);
+    // const image = this.ctx2.getImageData(
+    //   0,
+    //   0,
+    //   this.canvas.width,
+    //   this.canvas.height
+    // );
+    // this.ctx.putImageData(image, 0, 0);
+
+    console.log(this.drawing_context);
+    for (let elt of this.drawing_context) {
+      switch (elt.kind) {
+        case "draw_block":
+          {
+            let { style, x, y, w, h } = elt;
+            this.ctx.fillStyle = style;
+            this.ctx.fillRect(x, y, w, h);
+          }
+          break;
+        case "draw_text":
+          {
+            let { style, font, x, y, text } = elt;
+            this.ctx.fillStyle = style;
+            this.ctx.font = font;
+            this.ctx.textBaseline = "top";
+            this.ctx.fillText(text, x, y);
+          }
+          break;
+        case "draw_underline":
+          {
+            let { style, x, y } = elt;
+            this.ctx.strokeStyle = color;
+            this.ctx.lineWidth = 1;
+            this.ctx.setLineDash([]);
+            this.ctx.beginPath();
+            this.ctx.moveTo(x, y);
+            this.ctx.lineTo(x, y);
+            this.ctx.stroke();
+          }
+          break;
+      }
+    }
+    this.drawing_context = [];
   }
 
   scroll(n) {
     if (n > 0) {
-      const image = this.ctx2.getImageData(
+      const image = this.ctx.getImageData(
         0,
         n * fontAttribute.height,
         this.width * fontAttribute.width,
         (this.height - n) * fontAttribute.height
       );
-      this.ctx2.putImageData(image, 0, 0);
+      this.ctx.putImageData(image, 0, 0);
     } else {
       n = -n;
-      const image = this.ctx2.getImageData(
+      const image = this.ctx.getImageData(
         0,
         0,
         this.width * fontAttribute.width,
         (this.height - n) * fontAttribute.height
       );
-      this.ctx2.putImageData(
+      this.ctx.putImageData(
         image,
         x * fontAttribute.width,
         (y + n) * fontAttribute.height

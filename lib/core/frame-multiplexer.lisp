@@ -65,9 +65,22 @@
       vf)))
 
 (defun switch-current-frame (virtual-frame frame)
+
+  ;; save buffer-point to window-point
+  (move-point (lem::%window-point (current-window))
+              (lem::window-buffer-point (current-window)))
+
   (setf (virtual-frame-current virtual-frame) frame)
   (setf (virtual-frame-changed virtual-frame) t)
-  (map-frame (implementation) frame))
+  (map-frame (implementation) frame)
+
+  ;; set current-buffer
+  (setf (current-buffer) (window-buffer (current-window)))
+
+  ;; restore buffer-point from window-point
+  (move-point (lem::window-buffer-point (current-window))
+              (lem::%window-point (current-window)))
+  )
 
 (defun find-unused-frame-id (virtual-frame)
   (position-if #'null (virtual-frame-id/frame-table virtual-frame)))
@@ -254,9 +267,10 @@
          (num (num-frames vf)))
     (when (= num 1)
       (editor-error "cannot delete this virtual frame"))
-    (let ((frame (search-previous-frame vf (virtual-frame-current vf))))
-      (free-frame vf (virtual-frame-current vf))
-      (switch-current-frame vf frame))))
+    (let* ((frame-now  (virtual-frame-current vf))
+           (frame-prev (search-previous-frame vf frame-now)))
+      (switch-current-frame vf frame-prev)
+      (free-frame vf frame-now))))
 
 (define-key *global-keymap* "C-z p" 'frame-multiplexer-prev)
 (define-command frame-multiplexer-prev () ()

@@ -533,7 +533,7 @@
 
 (define-attribute popup-border-color
   (:light :foreground "gray" :reverse-p t)
-  (:dark :foreground "#303030" :reverse-p t))
+  (:dark :foreground "#777777" :reverse-p t))
 
 (defun draw-border (border)
   (let ((win (border-win border)))

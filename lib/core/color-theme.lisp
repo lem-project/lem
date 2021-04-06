@@ -80,7 +80,7 @@
   ;; (background "#FFFFFF")
   (region :foreground nil :background "#eedc82")
   (modeline :background "#666666" :foreground "white")
-  (modeline-inactive :background "#666666" :foreground "gray")
+  (modeline-inactive :background "#444444" :foreground "gray")
   (syntax-string-attribute :foreground "RosyBrown")
   (syntax-comment-attribute :foreground "firebrick")
   (syntax-keyword-attribute :foreground "purple")

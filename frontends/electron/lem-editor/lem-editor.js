@@ -498,134 +498,6 @@ class Picker {
   }
 }
 
-class Surface {
-  constructor(x, y, width, height, styles) {
-    this.x = x;
-    this.y = y;
-    this.width = width;
-    this.height = height;
-    this.canvas = document.createElement("canvas");
-    this.canvas.style.position = "absolute";
-    for (let key in styles) {
-      this.canvas.style[key] = styles[key];
-    }
-    this.ctx = this.canvas.getContext("2d", { alpha: false });
-    this.ctx.textBaseline = "top";
-    this.ctx.font = fontAttribute.font;
-    this.canvas2 = document.createElement("canvas");
-    this.ctx2 = this.canvas2.getContext("2d", { alpha: false });
-    this.ctx2.textBaseline = "top";
-    this.ctx2.font = fontAttribute.font;
-  }
-
-  move(x, y) {
-    this.x = x;
-    this.y = y;
-    this.canvas.style.left = x * fontAttribute.width;
-    this.canvas.style.top = y * fontAttribute.height;
-  }
-
-  resize(width, height) {
-    this.width = width;
-    this.height = height;
-    this.canvas.width = width * fontAttribute.width;
-    this.canvas.height = height * fontAttribute.height;
-    this.canvas2.width = width * fontAttribute.width;
-    this.canvas2.height = height * fontAttribute.height;
-  }
-
-  drawBlock(x, y, w, h, color) {
-    this.ctx2.fillStyle = color || option.background;
-    this.ctx2.fillRect(
-      x * fontAttribute.width,
-      y * fontAttribute.height,
-      w * fontAttribute.width + 1,
-      h * fontAttribute.height
-    );
-  }
-
-  drawText(x, y, text, font, color) {
-    this.ctx2.fillStyle = color;
-    this.ctx2.font = font;
-    this.ctx2.textBaseline = "top";
-    x *= fontAttribute.width;
-    y *= fontAttribute.height;
-    this.ctx2.fillText(text, x, y);
-  }
-
-  drawUnderline(x, y, length, color) {
-    this.ctx2.strokeStyle = color;
-    this.ctx2.lineWidth = 1;
-    this.ctx2.setLineDash([]);
-    this.ctx2.beginPath();
-    x *= fontAttribute.width;
-    y = (y + 1) * fontAttribute.height - 3;
-    this.ctx2.moveTo(x, y);
-    this.ctx2.lineTo(x + fontAttribute.width * length, y);
-    this.ctx2.stroke();
-  }
-
-  put(x, y, text, textWidth, attribute) {
-    if (attribute === null) {
-      this.drawBlock(x, y, textWidth, 1, option.background);
-      this.drawText(x, y, text, fontAttribute.font, option.foreground);
-    } else {
-      let font = fontAttribute.font;
-      let foreground = attribute.foreground || option.foreground;
-      let background = attribute.background || option.background;
-      const { bold, reverse, underline } = attribute;
-      if (reverse) {
-        const tmp = foreground;
-        foreground = background;
-        background = tmp;
-      }
-      if (bold) {
-        font = "bold " + font;
-      }
-      this.drawBlock(x, y, textWidth, 1, background);
-      this.drawText(x, y, text, font, foreground);
-      if (underline) {
-        this.drawUnderline(x, y, text.length, foreground);
-      }
-    }
-  }
-
-  touch() {
-    const image = this.ctx2.getImageData(
-      0,
-      0,
-      this.canvas.width,
-      this.canvas.height
-    );
-    this.ctx.putImageData(image, 0, 0);
-  }
-
-  scroll(n) {
-    if (n > 0) {
-      const image = this.ctx2.getImageData(
-        0,
-        n * fontAttribute.height,
-        this.width * fontAttribute.width,
-        (this.height - n) * fontAttribute.height
-      );
-      this.ctx2.putImageData(image, 0, 0);
-    } else {
-      n = -n;
-      const image = this.ctx2.getImageData(
-        0,
-        0,
-        this.width * fontAttribute.width,
-        (this.height - n) * fontAttribute.height
-      );
-      this.ctx2.putImageData(
-        image,
-        x * fontAttribute.width,
-        (y + n) * fontAttribute.height
-      );
-    }
-  }
-}
-
 const viewStyleTable = {
   popup: { zIndex: 2, "box-shadow": "0 0 0 12px #555555" },
 };
@@ -731,6 +603,187 @@ class View {
     this.editSurface.scroll(n);
   }
 }
+
+class DrawingEvent {}
+
+class DrawBlock extends DrawingEvent {
+  constructor({ style, x, y, w, h }) {
+    super();
+    this.style = style;
+    this.x = x;
+    this.y = y;
+    this.w = w;
+    this.h = h;
+  }
+
+  run(ctx) {
+    ctx.fillStyle = this.style;
+    ctx.fillRect(this.x, this.y, this.w, this.h);
+  }
+}
+
+class DrawText extends DrawingEvent {
+  constructor({ style, font, x, y, text }) {
+    super();
+    this.style = style;
+    this.font = font;
+    this.x = x;
+    this.y = y;
+    this.text = text;
+  }
+
+  run(ctx) {
+    ctx.fillStyle = this.style;
+    ctx.font = this.font;
+    ctx.textBaseline = "top";
+    ctx.fillText(this.text, this.x, this.y);
+  }
+}
+
+class DrawUnderline extends DrawingEvent {
+  constructor({ style, x, y, width }) {
+    super();
+    this.style = style;
+    this.x = x;
+    this.y = y;
+    this.width = width;
+  }
+
+  run(ctx) {
+    ctx.strokeStyle = this.style;
+    ctx.lineWidth = 1;
+    ctx.setLineDash([]);
+    ctx.beginPath();
+    ctx.moveTo(this.x, this.y);
+    ctx.lineTo(this.x + this.width, this.y);
+    ctx.stroke();
+  }
+}
+
+class Surface {
+  constructor(x, y, width, height, styles) {
+    this.x = x;
+    this.y = y;
+    this.width = width;
+    this.height = height;
+    this.canvas = document.createElement("canvas");
+    this.canvas.style.position = "absolute";
+    for (let key in styles) {
+      this.canvas.style[key] = styles[key];
+    }
+    this.ctx = this.canvas.getContext("2d", { alpha: false });
+    this.ctx.textBaseline = "top";
+    this.ctx.font = fontAttribute.font;
+    this.event_queue = [];
+  }
+
+  move(x, y) {
+    this.x = x;
+    this.y = y;
+    this.canvas.style.left = x * fontAttribute.width;
+    this.canvas.style.top = y * fontAttribute.height;
+  }
+
+  resize(width, height) {
+    this.width = width;
+    this.height = height;
+    this.canvas.width = width * fontAttribute.width;
+    this.canvas.height = height * fontAttribute.height;
+  }
+
+  drawBlock(x, y, w, h, color) {
+    this.event_queue.push(
+      new DrawBlock({
+        style: color || option.background,
+        x: x * fontAttribute.width,
+        y: y * fontAttribute.height,
+        w: w * fontAttribute.width + 1,
+        h: h * fontAttribute.height,
+      })
+    );
+  }
+
+  drawText(x, y, text, font, color) {
+    this.event_queue.push(
+      new DrawText({
+        style: color,
+        font: font,
+        x: x * fontAttribute.width,
+        y: y * fontAttribute.height,
+        text: text,
+      })
+    );
+  }
+
+  drawUnderline(x, y, length, color) {
+    this.event_queue.push(
+      new DrawUnderline({
+        style: color,
+        x: x * fontAttribute.width,
+        y: (y + 1) * fontAttribute.height - 3,
+        width: fontAttribute.width * length,
+      })
+    );
+  }
+
+  put(x, y, text, textWidth, attribute) {
+    if (attribute === null) {
+      this.drawBlock(x, y, textWidth, 1, option.background);
+      this.drawText(x, y, text, fontAttribute.font, option.foreground);
+    } else {
+      let font = fontAttribute.font;
+      let foreground = attribute.foreground || option.foreground;
+      let background = attribute.background || option.background;
+      const { bold, reverse, underline } = attribute;
+      if (reverse) {
+        const tmp = foreground;
+        foreground = background;
+        background = tmp;
+      }
+      if (bold) {
+        font = "bold " + font;
+      }
+      this.drawBlock(x, y, textWidth, 1, background);
+      this.drawText(x, y, text, font, foreground);
+      if (underline) {
+        this.drawUnderline(x, y, text.length, foreground);
+      }
+    }
+  }
+
+  touch() {
+    for (let event of this.event_queue) {
+      event.run(this.ctx);
+    }
+    this.event_queue = [];
+  }
+
+  scroll(n) {
+    if (n > 0) {
+      const image = this.ctx.getImageData(
+        0,
+        n * fontAttribute.height,
+        this.width * fontAttribute.width,
+        (this.height - n) * fontAttribute.height
+      );
+      this.ctx.putImageData(image, 0, 0);
+    } else {
+      n = -n;
+      const image = this.ctx.getImageData(
+        0,
+        0,
+        this.width * fontAttribute.width,
+        (this.height - n) * fontAttribute.height
+      );
+      this.ctx.putImageData(
+        image,
+        x * fontAttribute.width,
+        (y + n) * fontAttribute.height
+      );
+    }
+  }
+}
+
 
 customElements.define("lem-editor", LemEditor);
 customElements.define("lem-side-pane", LemSidePane);

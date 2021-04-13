@@ -552,7 +552,7 @@
 (defmethod lem-if:redraw-view-after ((implementation ncurses) view focus-window-p)
   (alexandria:when-let (border (ncurses-view-border view))
     (draw-border border))
-  (let ((attr (attribute-to-bits 'modeline)))
+  (let ((attr (attribute-to-bits 'modeline-inactive)))
     (charms/ll:attron attr)
     (when (and (ncurses-view-modeline-scrwin view)
                (< 0 (ncurses-view-x view)))

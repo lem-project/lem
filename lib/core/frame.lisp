@@ -76,7 +76,20 @@
     frame))
 
 (defun map-frame (display frame)
-  (setf (gethash display *display-frame-map*) frame))
+  ;; save buffer-point to window-point
+  (move-point (lem::%window-point (current-window))
+              (lem::window-buffer-point (current-window)))
+
+  (setf (gethash display *display-frame-map*) frame)
+
+  ;; set current-buffer
+  (setf (current-buffer) (window-buffer (current-window)))
+
+  ;; restore buffer-point from window-point
+  (move-point (lem::window-buffer-point (current-window))
+              (lem::%window-point (current-window)))
+
+  frame)
 
 (defun get-frame (display)
   (gethash display *display-frame-map*))

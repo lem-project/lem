@@ -65,22 +65,9 @@
       vf)))
 
 (defun switch-current-frame (virtual-frame frame)
-
-  ;; save buffer-point to window-point
-  (move-point (lem::%window-point (current-window))
-              (lem::window-buffer-point (current-window)))
-
   (setf (virtual-frame-current virtual-frame) frame)
   (setf (virtual-frame-changed virtual-frame) t)
-  (map-frame (implementation) frame)
-
-  ;; set current-buffer
-  (setf (current-buffer) (window-buffer (current-window)))
-
-  ;; restore buffer-point from window-point
-  (move-point (lem::window-buffer-point (current-window))
-              (lem::%window-point (current-window)))
-  )
+  (map-frame (implementation) frame))
 
 (defun find-unused-frame-id (virtual-frame)
   (position-if #'null (virtual-frame-id/frame-table virtual-frame)))

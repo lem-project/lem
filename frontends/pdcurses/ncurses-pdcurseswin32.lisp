@@ -473,26 +473,44 @@
                                       charms/ll:BUTTON1_DOUBLE_CLICKED
                                       charms/ll:BUTTON1_TRIPLE_CLICKED)))
          (let ((press (logtest bstate charms/ll:BUTTON1_PRESSED)))
-           (find-if
-            (lambda (o)
-              (multiple-value-bind (x y w h) (mouse-get-window-rect o)
-                (cond
-                  ;; vertical dragging window
-                  ((and press (= y1 (- y 1)) (<= x disp-x (+ x w -1)))
-                   (setf *dragging-window* (list o 'y))
-                   t)
-                  ;; horizontal dragging window
-                  ((and press (= disp-x (- x 1)) (<= y y1 (+ y h -1)))
-                   (setf *dragging-window* (list o 'x))
-                   t)
-                  ;; move cursor
-                  ((and (<= x disp-x (+ x w -1)) (<= y y1 (+ y h -1)))
-                   (setf (lem:current-window) o)
-                   (mouse-move-to-cursor o (- disp-x x) (- y1 y))
-                   (lem:redraw-display)
-                   t)
-                  (t nil))))
-            (lem:window-list))))
+           (or
+            ;; for frame header window
+            (find-if
+             (lambda (o)
+               (multiple-value-bind (x y w h) (mouse-get-window-rect o)
+                 (cond
+                   ;; select frame
+                   ((and (<= x disp-x (+ x w -1)) (<= y y1 (+ y h -1)))
+                    (lem:with-point ((point (lem:buffer-start-point (lem:window-buffer o))))
+                      (when (lem:line-offset point (- y1 y) (- disp-x x))
+                        (let ((button (lem.button:button-at point)))
+                          (when button
+                            (lem.button:button-action button)
+                            (lem::change-display-size-hook)))))
+                    t)
+                   (t nil))))
+             (lem:frame-header-windows (lem:current-frame)))
+            ;; for normal window
+            (find-if
+             (lambda (o)
+               (multiple-value-bind (x y w h) (mouse-get-window-rect o)
+                 (cond
+                   ;; vertical dragging window
+                   ((and press (= y1 (- y 1)) (<= x disp-x (+ x w -1)))
+                    (setf *dragging-window* (list o 'y))
+                    t)
+                   ;; horizontal dragging window
+                   ((and press (= disp-x (- x 1)) (<= y y1 (+ y h -1)))
+                    (setf *dragging-window* (list o 'x))
+                    t)
+                   ;; move cursor
+                   ((and (<= x disp-x (+ x w -1)) (<= y y1 (+ y h -1)))
+                    (setf (lem:current-window) o)
+                    (mouse-move-to-cursor o (- disp-x x) (- y1 y))
+                    (lem:redraw-display)
+                    t)
+                   (t nil))))
+              (lem:window-list)))))
         ;; button-1 up
         ((logtest bstate charms/ll:BUTTON1_RELEASED)
          (let ((o-orig (lem:current-window))

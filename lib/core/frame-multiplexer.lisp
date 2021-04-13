@@ -254,9 +254,10 @@
          (num (num-frames vf)))
     (when (= num 1)
       (editor-error "cannot delete this virtual frame"))
-    (let ((frame (search-previous-frame vf (virtual-frame-current vf))))
-      (free-frame vf (virtual-frame-current vf))
-      (switch-current-frame vf frame))))
+    (let* ((frame-now  (virtual-frame-current vf))
+           (frame-prev (search-previous-frame vf frame-now)))
+      (switch-current-frame vf frame-prev)
+      (free-frame vf frame-now))))
 
 (define-key *global-keymap* "C-z p" 'frame-multiplexer-prev)
 (define-command frame-multiplexer-prev () ()

@@ -235,6 +235,13 @@
 (defun repl-set-prompt (point)
   (insert-string point
                  (format nil "~A> " (connection-prompt-string *connection*)))
+
+  ;; for r7rs-swank (move point to buffer-end)
+  (alexandria:when-let ((window (get-repl-window)))
+    (with-current-window window
+      (buffer-end point)
+      (window-see window)))
+
   point)
 
 (defun repl-reset-input ()

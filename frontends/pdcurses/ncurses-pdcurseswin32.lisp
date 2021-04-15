@@ -1059,7 +1059,7 @@
   ;; draw vertical line for horizontal splitted window
   (when (and (ncurses-view-modeline-scrwin view)
              (< 0 (ncurses-view-x view)))
-    (let ((attr (attribute-to-bits 'modeline)))
+    (let ((attr (attribute-to-bits 'modeline-inactive)))
       (charms/ll:attron attr)
       (loop :for y1 :from 0 :below (+ (ncurses-view-height view) 1)
          :do (charms/ll:mvaddch (+ (ncurses-view-y view) y1)

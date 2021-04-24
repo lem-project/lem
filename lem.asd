@@ -18,7 +18,7 @@
                "lem-paredit-mode"
                "lem-nim-mode"
                "lem-scheme-mode"
-               "lem-diff-mode"
+               "lem-patch-mode"
                "lem-yaml-mode"
                "lem-review-mode"
                "lem-asciidoc-mode"

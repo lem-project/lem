@@ -240,28 +240,31 @@
 (defun guess-offset ()
   (save-excursion
     (ignore-errors
-     (with-point ((start (current-point)))
-       (let ((h (make-hash-table :test 'equalp)))
-         (map-region start (buffer-end (current-point))
-                     (lambda (line endp)
-                       (declare(ignore endp))
-                       (multiple-value-bind (tab space)
-                           (count-offset line)
-                         (when (or (not (zerop tab))
-                                   (not (zerop space)))
-                           (incf (gethash (make-array 2
-                                                      :initial-contents
-                                                      (list tab space))
-                                          h 0))))))
-         (let* ((* (loop for k being the hash-keys in h
-                         using (hash-value v)
-                         collect (cons v k)))
-                (* (sort * #'> :key #'first))
-                (* (mapcar #'rest *)))
-           (if (zerop (aref (first *) 0))
-               (setf (variable-value 'indent-size :buffer)
-                     (gcd (aref (first *) 1)
-                          (aref (second *) 1))))))))))
+      (with-point ((start (current-point)))
+        (buffer-start start)
+        (let ((h (make-hash-table :test 'equalp)))
+          (map-region start (buffer-end (current-point))
+                      (lambda (line endp)
+                        (declare(ignore endp))
+                        (multiple-value-bind (tab space)
+                            (count-offset line)
+                          (when (or (not (zerop tab))
+                                    (not (zerop space)))
+                            (incf (gethash (make-array 2
+                                                       :initial-contents
+                                                       (list tab space))
+                                           h 0))))))
+          (let* ((* (loop for k being the hash-keys in h
+                          using (hash-value v)
+                          collect (cons v k)))
+                 (* (sort * #'> :key #'first))
+                 (* (mapcar #'rest *)))
+            (if (zerop (aref (first *) 0))
+                (let ((gcd (gcd (aref (first *) 1)
+                                (aref (second *) 1))))
+                  (unless (= 1 gcd)
+                    (setf (variable-value 'indent-size :buffer)
+                          gcd))))))))))
 
 (pushnew (cons "\\.c$" 'c-mode) *auto-mode-alist* :test #'equal)
 (pushnew (cons "\\.h$" 'c-mode) *auto-mode-alist* :test #'equal)

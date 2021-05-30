@@ -44,8 +44,6 @@
   (lem-process:process-send-input (buffer-process (point-buffer point))
                                   string))
 
-(defparameter *buffer-name* "*shell*")
-
 (defun delete-shell-buffer (buffer)
   (lem-process:delete-process (buffer-process buffer))
   buffer)

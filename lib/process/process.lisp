@@ -15,15 +15,27 @@
     :reader process-buffer-stream)
    (read-thread
     :initarg :read-thread
+    :writer set-process-read-thread
     :reader process-read-thread)
    (output-callback
     :initarg :output-callback
-    :reader process-output-callback)))
+    :reader process-output-callback)
+   (callback-type
+    :initarg :output-callback-type
+    :reader process-output-callback-type)))
 
-(defun run-process (command &key name output-callback directory)
+(defun run-process (command &key name output-callback output-callback-type directory)
   (setf command (uiop:ensure-list command))
   (let ((buffer-stream (make-string-output-stream)))
     (let* ((pointer (async-process:create-process command :nonblock nil :directory directory))
+           (process (make-instance 'process
+                                   :pointer pointer
+                                   :name name
+                                   :command command
+                                   :buffer-stream buffer-stream
+                                   ;; :read-thread thread
+                                   :output-callback output-callback
+                                   :output-callback-type output-callback-type))
            (thread (bt:make-thread
                     (lambda ()
                       (loop
@@ -32,23 +44,25 @@
                         (alexandria:when-let
                             (string (async-process:process-receive-output pointer))
                           (send-event (lambda ()
-                                        (write-to-buffer buffer-stream string output-callback))))))
+                                        (write-to-buffer process string))))))
                     :name (format nil "run-process ~{~A~^ ~}" command))))
-      (make-instance 'process
-                     :pointer pointer
-                     :name name
-                     :command command
-                     :buffer-stream buffer-stream
-                     :read-thread thread
-                     :output-callback output-callback))))
+      (set-process-read-thread thread process)
+      process)))
 
 (defun get-process-output-string (process)
   (get-output-stream-string (process-buffer-stream process)))
 
-(defun write-to-buffer (buffer-stream string output-callback)
-  (write-string string buffer-stream)
-  (when output-callback
-    (funcall output-callback string)))
+(defun write-to-buffer (process string)
+  (let ((buffer-stream (process-buffer-stream process))
+        (output-callback (process-output-callback process))
+        (output-callback-type (process-output-callback-type process)))
+    (write-string string buffer-stream)
+    (when output-callback
+      (case output-callback-type
+        (:process-input
+         (funcall output-callback process string))
+        (otherwise
+         (funcall output-callback string))))))
 
 (defun delete-process (process)
   (when (bt:thread-alive-p (process-read-thread process))

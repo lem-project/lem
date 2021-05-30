@@ -1,11 +1,23 @@
 (defpackage :lem-shell-mode
   (:use :cl :lem :alexandria)
-  (:export)
+  (:export :*default-shell-command*)
   #+sbcl
   (:lock t))
 (in-package :lem-shell-mode)
 
-(defparameter *command* '("/usr/local/bin/bash"))
+(defvar *default-shell-command* nil "Set if you do want to use non default shell. '(\"/usr/local/bin/bash\")")
+
+(defun shell-command ()
+  (or *default-shell-command*
+      (let ((shell
+              (or
+               #-windows
+               (uiop:getenv "SHELL")
+               #+windows
+               (let ((windir (uiop:getenv "windir")))
+                 (and windir
+                      (merge-pathnames "system32/cmd.exe" windir))))))
+        (list shell))))
 
 (defun buffer-process (buffer)
   (buffer-value buffer 'process))
@@ -62,7 +74,7 @@
 
 (defun run-shell-internal ()
   (create-shell-buffer
-   (lem-process:run-process *command*
+   (lem-process:run-process (shell-command)
                             :name "shell"
                             :output-callback 'output-callback
                             :output-callback-type :process-input)))

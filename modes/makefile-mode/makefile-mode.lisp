@@ -34,7 +34,7 @@
     table))
 
 (define-major-mode makefile-mode language-mode
-    (:name "Makefile mode"
+    (:name "Makefile"
      :keymap *makefile-mode-keymap*
      :syntax-table *makefile-syntax-table*
      :mode-hook *makefile-mode-hook*)

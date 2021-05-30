@@ -49,7 +49,7 @@
   buffer)
 
 (defun shell-buffer-name (process)
-  (format nil "~A pid:~D"
+  (format nil "*~A pid:~D*"
           (lem-process::process-name process)
           (async-process::process-pid (lem-process::process-pointer process))))
 

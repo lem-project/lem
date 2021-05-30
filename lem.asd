@@ -29,7 +29,8 @@
                "lem-haskell-mode"
                "lem-ocaml-mode"
                "lem-asm-mode"
-               "lem-makefile-mode"))
+               "lem-makefile-mode"
+               "lem-shell-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

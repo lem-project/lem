@@ -37,7 +37,9 @@
         (variable-value 'lem.listener-mode:listener-check-input-function :buffer buffer)
         (constantly t)
         (variable-value 'lem.listener-mode:listener-execute-function :buffer buffer)
-        'execute-input))
+        'execute-input
+        (variable-value 'lem.listener-mode:listener-prompt-attribute :buffer buffer)
+        nil))
 
 (defun execute-input (point string)
   (setf string (concatenate 'string string (string #\newline)))

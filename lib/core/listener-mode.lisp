@@ -21,6 +21,8 @@
   (:light :foreground "blue" :bold-p t)
   (:dark :foreground "cyan" :bold-p t))
 
+(define-editor-variable listener-prompt-attribute 'listener-prompt-attribute)
+
 (defvar %listener-point-indicator (gensym))
 (defmacro %listener-point (buffer)
   `(buffer-value ,buffer %listener-point-indicator))
@@ -82,7 +84,9 @@
                           cur-point)))
       (with-point ((s point))
         (line-start s)
-        (put-text-property s point :attribute 'listener-prompt-attribute)
+        (let ((attribute (variable-value 'listener-prompt-attribute :default buffer)))
+          (when attribute
+            (put-text-property s point :attribute attribute)))
         (put-text-property s point :read-only t)
         (put-text-property s point :field t)))
     (buffer-end cur-point)

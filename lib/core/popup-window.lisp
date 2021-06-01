@@ -22,7 +22,7 @@
 (defgeneric adjust-for-redrawing (gravity popup-window)
   (:method (gravity popup-window)))
 
-(defgeneric compute-popup-window-position (gravity source-window width height))
+(defgeneric compute-popup-window-rectangle (gravity source-window width height))
 
 (defclass gravity ()
   ((offset-x :initarg :offset-x :reader gravity-offset-x :initform 0)
@@ -45,7 +45,7 @@
 
 (defmethod adjust-for-redrawing ((gravity gravity-follow-cursor) popup-window)
   (multiple-value-bind (x y width height)
-      (compute-popup-window-position (popup-window-gravity popup-window)
+      (compute-popup-window-rectangle (popup-window-gravity popup-window)
                                      (popup-window-source-window popup-window)
                                      (popup-window-base-width popup-window)
                                      (popup-window-base-height popup-window))
@@ -54,7 +54,7 @@
                          (+ x +border-size+)
                          (+ y +border-size+))))
 
-(defmethod compute-popup-window-position :around ((gravity gravity) source-window width height)
+(defmethod compute-popup-window-rectangle :around ((gravity gravity) source-window width height)
   (multiple-value-bind (x y width height)
       (call-next-method)
     (values (+ x (gravity-offset-x gravity))
@@ -62,14 +62,14 @@
             width
             height)))
 
-(defmethod compute-popup-window-position ((gravity gravity-center) source-window width height)
+(defmethod compute-popup-window-rectangle ((gravity gravity-center) source-window width height)
   (let ((x (- (floor (display-width) 2)
               (floor width 2)))
         (y (- (floor (display-height) 2)
               (floor height 2))))
     (values x y width height)))
 
-(defmethod compute-popup-window-position ((gravity gravity-cursor) source-window width height)
+(defmethod compute-popup-window-rectangle ((gravity gravity-cursor) source-window width height)
   (let* ((b2 (* +border-size+ 2))
          (disp-w (max (- (display-width)  b2 *extra-right-margin*)
                       +min-width+))
@@ -108,13 +108,13 @@
       (setf w (min width disp-w)))
     (values x y w h)))
 
-(defmethod compute-popup-window-position ((gravity gravity-top) source-window width height)
+(defmethod compute-popup-window-rectangle ((gravity gravity-top) source-window width height)
   (let* ((x (- (floor (display-width) 2)
                       (floor width 2)))
          (y (+ (window-y source-window) 1)))
     (values x y width height)))
 
-(defmethod compute-popup-window-position ((gravity gravity-topright) source-window width height)
+(defmethod compute-popup-window-rectangle ((gravity gravity-topright) source-window width height)
   (let* ((b2 (* +border-size+ 2))
          (win-x (window-x source-window))
          (win-y (window-y source-window))
@@ -170,7 +170,7 @@
 (defun popup-window (source-window buffer width height &key destination-window (gravity :cursor))
   (let ((gravity (ensure-gravity gravity)))
     (multiple-value-bind (x y w h)
-        (compute-popup-window-position gravity source-window width height)
+        (compute-popup-window-rectangle gravity source-window width height)
       (cond (destination-window
              (lem::window-set-size destination-window w h)
              (lem::window-set-pos destination-window

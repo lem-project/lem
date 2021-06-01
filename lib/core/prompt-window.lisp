@@ -139,7 +139,7 @@
     (or (replace-if-history-exists #'lem.history:next-history)
         (replace-if-history-exists #'lem.history:restore-edit-string))))
 
-(defun compute-window-rectangle (buffer)
+(defun compute-window-size (buffer)
   (flet ((compute-width ()
            (loop :for string :in (uiop:split-string (buffer-text buffer) :separator '(#\newline))
                  :maximize (+ (string-width string) 2))))
@@ -149,16 +149,29 @@
                         +min-width+))
            (height (max (min (buffer-nlines buffer)
                              (- (display-height) b2))
-                        +min-height+))
-           (x (- (floor (display-width) 2)
-                 (floor width 2)))
-           (y (- (floor (display-height) 2)
-                 (floor height 2))))
-      (list x y width height))))
+                        +min-height+)))
+      (list width height))))
+
+(defun compute-window-rectangle (buffer)
+  (destructuring-bind (width height)
+      (compute-window-size buffer)
+    (multiple-value-list
+     (lem.popup-window::compute-popup-window-rectangle (lem.popup-window::ensure-gravity :center)
+                                                       ;; source-windowを決められないのでnilにする
+                                                       ;; centerの場合は使わないのでとりあえずは動く
+                                                       nil
+                                                       width
+                                                       height))))
 
 (defun make-prompt-window (buffer parameters)
-  (destructuring-bind (x y width height)
-      (compute-window-rectangle buffer)
+  (multiple-value-bind (x y width height)
+      (destructuring-bind (width height)
+          (compute-window-size buffer)
+        (lem.popup-window::compute-popup-window-rectangle
+         (lem.popup-window::ensure-gravity (prompt-gravity parameters))
+         (prompt-window-caller-of-prompt-window parameters)
+         width
+         height))
     (make-instance 'floating-prompt
                    :buffer buffer
                    :x x

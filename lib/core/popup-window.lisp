@@ -24,7 +24,10 @@
 
 (defgeneric compute-popup-window-position (gravity source-window width height))
 
-(defclass gravity (cl-singleton-mixin:singleton-class) ())
+(defclass gravity ()
+  ((offset-x :initarg :offset-x :reader gravity-offset-x :initform 0)
+   (offset-y :initarg :offset-y :reader gravity-offset-y :initform 0)))
+(defclass gravity-center (gravity) ())
 (defclass gravity-top (gravity) ())
 (defclass gravity-topright (gravity) ())
 (defclass gravity-cursor (gravity) ())
@@ -34,6 +37,7 @@
   (if (typep gravity 'gravity)
       gravity
       (ecase gravity
+        (:center (make-instance 'gravity-center))
         (:top (make-instance 'gravity-top))
         (:topright (make-instance 'gravity-topright))
         (:cursor (make-instance 'gravity-cursor))
@@ -49,6 +53,21 @@
     (lem::window-set-pos popup-window
                          (+ x +border-size+)
                          (+ y +border-size+))))
+
+(defmethod compute-popup-window-position :around ((gravity gravity) source-window width height)
+  (multiple-value-bind (x y width height)
+      (call-next-method)
+    (values (+ x (gravity-offset-x gravity))
+            (+ y (gravity-offset-y gravity))
+            width
+            height)))
+
+(defmethod compute-popup-window-position ((gravity gravity-center) source-window width height)
+  (let ((x (- (floor (display-width) 2)
+              (floor width 2)))
+        (y (- (floor (display-height) 2)
+              (floor height 2))))
+    (values x y width height)))
 
 (defmethod compute-popup-window-position ((gravity gravity-cursor) source-window width height)
   (let* ((b2 (* +border-size+ 2))

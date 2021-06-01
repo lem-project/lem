@@ -437,11 +437,14 @@
               (move-point (current-point) goal-point))
             (return))
           (with-point ((end cur-point :right-inserting))
-            (isearch-update-buffer cur-point before)
             (funcall *isearch-search-backward-function* cur-point before)
             (with-point ((start cur-point :right-inserting))
               (loop :for c := (unless pass-through
-                                (prompt-for-character (format nil "Replace ~s with ~s [y/n/!]" before after)))
+                                (isearch-update-buffer cur-point before)
+                                (redraw-display)
+                                (prompt-for-character (format nil "Replace ~s with ~s [y/n/!]" before after)
+                                                      :gravity (make-instance 'lem.popup-window::gravity-cursor
+                                                                              :offset-y 1)))
                     :do (cond
                           ((or pass-through (char= c #\y))
                            (delete-between-points start end)

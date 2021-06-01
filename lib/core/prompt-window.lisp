@@ -35,7 +35,11 @@
    (history
     :initarg :history
     :initform nil
-    :reader prompt-window-history)))
+    :reader prompt-window-history)
+   (gravity
+    :initarg :gravity
+    :initform :center
+    :reader prompt-gravity)))
 
 (defclass floating-prompt (floating-window prompt-parameters)
   ((start-charpos
@@ -294,11 +298,12 @@
         (execute (execute)
           (execute-input execute))))))
 
-(defmethod prompt-for-character (prompt-string)
+(defmethod prompt-for-character (prompt-string &key (gravity :center))
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string ""
                   :parameters (make-instance 'prompt-parameters
-                                             :caller-of-prompt-window (current-window))
+                                             :caller-of-prompt-window (current-window)
+                                             :gravity gravity)
                   :body-function (lambda ()
                                    (redraw-display t)
                                    (let ((key (read-key)))

@@ -31,9 +31,9 @@
 (defun prompt-for-character (prompt &key (gravity :center))
   (%prompt-for-character prompt :gravity gravity))
 
-(defun prompt-for-y-or-n-p (prompt-string)
+(defun prompt-for-y-or-n-p (prompt)
   (do () (nil)
-    (let ((c (prompt-for-character (format nil "~a [y/n]? " prompt-string))))
+    (let ((c (prompt-for-character (format nil "~a [y/n]? " prompt))))
       (case c
         (#\y (return t))
         (#\n (return nil))))))

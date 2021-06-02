@@ -4,7 +4,6 @@
           *prompt-deactivate-hook*
           *prompt-buffer-completion-function*
           *prompt-file-completion-function*
-          prompt-start-point
           prompt-active-p
           active-prompt-window
           prompt-for-character
@@ -21,7 +20,6 @@
 (defvar *prompt-buffer-completion-function* nil)
 (defvar *prompt-file-completion-function* nil)
 
-(defgeneric prompt-start-point (prompt))
 (defgeneric caller-of-prompt-window (prompt))
 (defgeneric prompt-active-p (prompt))
 (defgeneric active-prompt-window ())

@@ -73,7 +73,7 @@
 (defun current-prompt-window ()
   (frame-floating-prompt-window (current-frame)))
 
-(defmethod prompt-start-point ((prompt floating-prompt))
+(defun prompt-start-point (prompt)
   (let ((buffer (window-buffer prompt)))
     (character-offset (copy-point (buffer-start-point buffer) :temporary)
                       (prompt-window-start-charpos prompt))))

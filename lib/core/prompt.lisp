@@ -24,7 +24,7 @@
 (defgeneric prompt-active-p (prompt))
 (defgeneric active-prompt-window ())
 (defgeneric %prompt-for-character (prompt &key gravity))
-(defgeneric prompt-for-line (prompt initial comp-f existing-p history-name &optional syntax-table))
+(defgeneric %prompt-for-line (prompt initial comp-f existing-p history-name &optional syntax-table))
 
 (defun prompt-for-character (prompt &key (gravity :center))
   (%prompt-for-character prompt :gravity gravity))
@@ -40,12 +40,12 @@
                                       test-function
                                       (history-symbol nil)
                                       (syntax-table (current-syntax)))
-  (prompt-for-line prompt
-                   initial-value
-                   completion-function
-                   test-function
-                   history-symbol
-                   syntax-table))
+  (%prompt-for-line prompt
+                    initial-value
+                    completion-function
+                    test-function
+                    history-symbol
+                    syntax-table))
 
 (defun prompt-for-integer (prompt &key min max)
   (parse-integer

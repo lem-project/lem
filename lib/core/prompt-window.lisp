@@ -321,12 +321,12 @@
                      (invoke-restart 'lem-restart:message))))
     (lem::command-loop)))
 
-(defmethod lem::prompt-for-line (prompt-string
-                                 initial-string
-                                 completion-function
-                                 existing-test-function
-                                 history-name
-                                 &optional (syntax-table (current-syntax)))
+(defmethod lem::%prompt-for-line (prompt-string
+                                  initial-string
+                                  completion-function
+                                  existing-test-function
+                                  history-name
+                                  &optional (syntax-table (current-syntax)))
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string initial-string
                   :parameters (make-instance 'prompt-parameters

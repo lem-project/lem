@@ -298,7 +298,7 @@
         (execute (execute)
           (execute-input execute))))))
 
-(defmethod prompt-for-character (prompt-string &key (gravity :center))
+(defmethod lem::%prompt-for-character (prompt-string &key (gravity :center))
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string ""
                   :parameters (make-instance 'prompt-parameters

@@ -25,8 +25,11 @@
 (defgeneric caller-of-prompt-window (prompt))
 (defgeneric prompt-active-p (prompt))
 (defgeneric active-prompt-window ())
-(defgeneric prompt-for-character (prompt-string &key gravity))
+(defgeneric %prompt-for-character (prompt &key gravity))
 (defgeneric prompt-for-line (prompt initial comp-f existing-p history-name &optional syntax-table))
+
+(defun prompt-for-character (prompt &key (gravity :center))
+  (%prompt-for-character prompt :gravity gravity))
 
 (defun prompt-for-y-or-n-p (prompt-string)
   (do () (nil)

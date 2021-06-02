@@ -14,6 +14,8 @@
           prompt-for-file
           prompt-for-directory))
 
+(defparameter *default-prompt-gravity* :center)
+
 (defvar *prompt-activate-hook* '())
 (defvar *prompt-deactivate-hook* '())
 
@@ -24,13 +26,13 @@
 (defgeneric prompt-active-p (prompt))
 (defgeneric active-prompt-window ())
 (defgeneric %prompt-for-character (prompt &key gravity))
-(defgeneric %prompt-for-line (prompt initial comp-f existing-p history-name &optional syntax-table))
+(defgeneric %prompt-for-line (prompt initial comp-f existing-p history-name &optional syntax-table gravity))
 
-(defun prompt-for-character (prompt &key (gravity :center))
+(defun prompt-for-character (prompt &key (gravity *default-prompt-gravity*))
   (%prompt-for-character prompt :gravity gravity))
 
-(defun prompt-for-y-or-n-p (prompt)
-  (loop :for c := (prompt-for-character (format nil "~A [y/n]? " prompt))
+(defun prompt-for-y-or-n-p (prompt &key (gravity *default-prompt-gravity*))
+  (loop :for c := (prompt-for-character (format nil "~A [y/n]? " prompt) :gravity gravity)
         :do (case c
               (#\y (return t))
               (#\n (return nil)))))
@@ -39,15 +41,17 @@
                                       completion-function
                                       test-function
                                       (history-symbol nil)
-                                      (syntax-table (current-syntax)))
+                                      (syntax-table (current-syntax))
+                                      (gravity *default-prompt-gravity*))
   (%prompt-for-line prompt
                     initial-value
                     completion-function
                     test-function
                     history-symbol
-                    syntax-table))
+                    syntax-table
+                    gravity))
 
-(defun prompt-for-integer (prompt &key min max)
+(defun prompt-for-integer (prompt &key min max (gravity *default-prompt-gravity*))
   (parse-integer
    (prompt-for-string prompt
                       :test-function (lambda (str)
@@ -59,9 +63,10 @@
                                           (= (length str) len)
                                           (if min (<= min n) t)
                                           (if max (<= n max) t))))
-                      :history-symbol 'prompt-for-integer)))
+                      :history-symbol 'prompt-for-integer
+                      :gravity gravity)))
 
-(defun prompt-for-buffer (prompt &key default existing)
+(defun prompt-for-buffer (prompt &key default existing (gravity *default-prompt-gravity*))
   (let ((result (prompt-for-string
                  (if default
                      (format nil "~a(~a) " prompt default)
@@ -71,12 +76,14 @@
                                      (lambda (name)
                                        (or (alexandria:emptyp name)
                                            (get-buffer name))))
-                 :history-symbol 'prompt-for-buffer)))
+                 :history-symbol 'prompt-for-buffer
+                 :gravity gravity)))
     (if (string= result "")
         default
         result)))
 
-(defun prompt-for-file (prompt &key directory (default (buffer-directory)) existing)
+(defun prompt-for-file (prompt &key directory (default (buffer-directory)) existing
+                                    (gravity *default-prompt-gravity*))
   (let ((result
           (prompt-for-string (if default
                                  (format nil "~a(~a) " prompt default)
@@ -90,12 +97,14 @@
                                               str (or directory
                                                       (namestring (user-homedir-pathname)))))))
                              :test-function (and existing #'virtual-probe-file)
-                             :history-symbol 'prompt-for-file)))
+                             :history-symbol 'prompt-for-file
+                             :gravity gravity)))
     (if (string= result "")
         default
         result)))
 
-(defun prompt-for-directory (prompt &key directory (default (buffer-directory)) existing)
+(defun prompt-for-directory (prompt &key directory (default (buffer-directory)) existing
+                                         (gravity *default-prompt-gravity*))
   (let ((result
           (prompt-for-string prompt
                              :initial-value directory
@@ -106,7 +115,8 @@
                                      (funcall *prompt-file-completion-function*
                                               str directory :directory-only t))))
                              :test-function (and existing #'virtual-probe-file)
-                             :history-symbol 'prompt-for-directory)))
+                             :history-symbol 'prompt-for-directory
+                             :gravity gravity)))
     (if (string= result "")
         default
         result)))

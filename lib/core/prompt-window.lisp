@@ -326,14 +326,16 @@
                                   completion-function
                                   existing-test-function
                                   history-name
-                                  &optional (syntax-table (current-syntax)))
+                                  &optional (syntax-table (current-syntax))
+                                            gravity)
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string initial-string
                   :parameters (make-instance 'prompt-parameters
                                              :completion-function completion-function
                                              :existing-test-function existing-test-function
                                              :caller-of-prompt-window (current-window)
-                                             :history (get-history history-name))
+                                             :history (get-history history-name)
+                                             :gravity (or gravity :center))
                   :syntax-table syntax-table
                   :body-function #'prompt-for-line-command-loop))
 

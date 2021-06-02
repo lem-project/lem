@@ -365,13 +365,13 @@
       (return (buffer-directory (window-buffer window))))))
 
 (define-command directory-mode-copy-files () ()
-  (let ((dst-file (prompt-for-file "Destination Filename: " (get-dest-directory)))
+  (let ((dst-file (prompt-for-file "Destination Filename: " :directory (get-dest-directory)))
         (files (selected-files (current-point))))
     (copy-files files dst-file))
   (update-all))
 
 (define-command directory-mode-rename-files () ()
-  (let ((dst-file (prompt-for-file "Destination Filename: " (get-dest-directory))))
+  (let ((dst-file (prompt-for-file "Destination Filename: " :directory (get-dest-directory))))
     (rename-files (selected-files (current-point)) dst-file))
   (update-all))
 

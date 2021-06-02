@@ -138,7 +138,10 @@
      (editor-error "Scheme repl is not available."))))
 
 (define-command scheme-load-file (filename)
-    ((list (prompt-for-file "Load File: " (or (buffer-filename) (buffer-directory)) nil t)))
+    ((list (prompt-for-file "Load File: "
+                            :directory (or (buffer-filename) (buffer-directory))
+                            :default nil
+                            :existing t)))
   (cond
     ((eq (scheme-repl-type) :scheme-slime)
      (check-connection)

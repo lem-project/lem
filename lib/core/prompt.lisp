@@ -50,7 +50,7 @@
                    history-symbol
                    syntax-table))
 
-(defun prompt-for-integer (prompt &optional min max)
+(defun prompt-for-integer (prompt &key min max)
   (parse-integer
    (prompt-for-string prompt
                       :test-function (lambda (str)
@@ -64,10 +64,10 @@
                                           (if max (<= n max) t))))
                       :history-symbol 'prompt-for-integer)))
 
-(defun prompt-for-buffer (prompt &optional default-value existing)
+(defun prompt-for-buffer (prompt &key default existing)
   (let ((result (prompt-for-string
-                 (if default-value
-                     (format nil "~a(~a) " prompt default-value)
+                 (if default
+                     (format nil "~a(~a) " prompt default)
                      prompt)
                  :completion-function *prompt-buffer-completion-function*
                  :test-function (and existing
@@ -76,10 +76,10 @@
                                            (get-buffer name))))
                  :history-symbol 'prompt-for-buffer)))
     (if (string= result "")
-        default-value
+        default
         result)))
 
-(defun prompt-for-file (prompt &optional directory (default (buffer-directory)) existing)
+(defun prompt-for-file (prompt &key directory (default (buffer-directory)) existing)
   (let ((result
           (prompt-for-string (if default
                                  (format nil "~a(~a) " prompt default)
@@ -98,7 +98,7 @@
         default
         result)))
 
-(defun prompt-for-directory (prompt &optional directory (default (buffer-directory)) existing)
+(defun prompt-for-directory (prompt &key directory (default (buffer-directory)) existing)
   (let ((result
           (prompt-for-string prompt
                              :initial-value directory
@@ -114,7 +114,7 @@
         default
         result)))
 
-(defun prompt-for-library (prompt history-name)
+(defun prompt-for-library (prompt &key history-symbol)
   (macrolet ((ql-symbol-value (symbol)
                `(symbol-value (uiop:find-symbol* ,symbol :quicklisp))))
     (let ((systems
@@ -135,9 +135,9 @@
       (prompt-for-string prompt
                          :completion-function (lambda (str) (completion str systems))
                          :test-function (lambda (system) (find system systems :test #'string=))
-                         :history-symbol history-name))))
+                         :history-symbol history-symbol))))
 
-(defun prompt-for-encodings (prompt history-name)
+(defun prompt-for-encodings (prompt &key history-symbol)
   (let (encodings)
     (maphash (lambda (x y)
                (declare (ignore y))
@@ -148,6 +148,6 @@
                  :completion-function (lambda (str) (completion str encodings))
                  :test-function (lambda (encoding) (or (equal encoding "")
                                                        (find encoding encodings :test #'string=)))
-                 :history-symbol history-name)))
+                 :history-symbol history-symbol)))
       (cond ((equal name "") lem-base::*default-external-format*)
             (t (read-from-string (format nil ":~A" name)))))))

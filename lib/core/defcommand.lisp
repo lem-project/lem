@@ -39,24 +39,24 @@
                               `(prompt-for-integer ,(subseq arg-descripter 1)))
                              ((char= #\b (aref arg-descripter 0))
                               `(prompt-for-buffer ,(subseq arg-descripter 1)
-                                                  (buffer-name (current-buffer))
-                                                  t))
+                                                  :default (buffer-name (current-buffer))
+                                                  :existing t))
                              ((char= #\B (aref arg-descripter 0))
                               `(prompt-for-buffer ,(subseq arg-descripter 1)
-                                                  (buffer-name (other-buffer))
-                                                  nil))
+                                                  :default (buffer-name (other-buffer))
+                                                  :existing nil))
                              ((char= #\f (aref arg-descripter 0))
                               `(prompt-for-file
                                 ,(subseq arg-descripter 1)
-                                (buffer-directory)
-                                nil
-                                t))
+                                :directory (buffer-directory)
+                                :default nil
+                                :existing t))
                              ((char= #\F (aref arg-descripter 0))
                               `(prompt-for-file
                                 ,(subseq arg-descripter 1)
-                                (buffer-directory)
-                                nil
-                                nil))
+                                :directory (buffer-directory)
+                                :default nil
+                                :existing nil))
                              (t
                               (error "Illegal arg-descripter: ~a" arg-descripter))))
                        arg-descripters)))))

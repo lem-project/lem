@@ -47,19 +47,19 @@
             (cond ((and (numberp arg) (= 1 arg))
                    (prompt-for-file
                     "Find File: "
-                    (buffer-directory)
-                    nil
-                    nil))
+                    :directory (buffer-directory)
+                    :default nil
+                    :existing nil))
                   ((numberp arg)
                    (setf *default-external-format*
                          (prompt-for-encodings
                           "Encodings: "
-                          'mh-read-file-encodings))
+                          :history-symbol 'mh-read-file-encodings))
                    (prompt-for-file
                     "Find File: "
-                    (buffer-directory)
-                    nil
-                    nil))
+                    :directory (buffer-directory)
+                    :default nil
+                    :existing nil))
                   ((pathnamep arg)
                    (namestring arg)))))
       (dolist (pathname (expand-files* filename))
@@ -135,7 +135,10 @@
        (check-marked)
        (list (region-beginning)
              (region-end)
-             (prompt-for-file "Write Region To File: " (buffer-directory) nil nil))))
+             (prompt-for-file "Write Region To File: "
+                              :directory (buffer-directory)
+                              :default nil
+                              :existing nil))))
   (setf filename (expand-file-name filename))
   (add-newline-at-eof (point-buffer start))
   (write-region-to-file start end filename)
@@ -179,7 +182,7 @@
              t)))))
 
 (define-command change-directory (directory)
-    ((list (prompt-for-directory "change directory: " (buffer-directory))))
+    ((list (prompt-for-directory "change directory: " :directory (buffer-directory))))
   (let ((directory (expand-file-name directory (buffer-directory))))
     (setf (buffer-directory) directory)
     (uiop:chdir directory)

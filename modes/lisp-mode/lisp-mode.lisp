@@ -453,7 +453,10 @@
      ,(points-to-string start end))))
 
 (define-command lisp-load-file (filename)
-    ((list (prompt-for-file "Load File: " (or (buffer-filename) (buffer-directory)) nil t)))
+    ((list (prompt-for-file "Load File: "
+                            :directory (or (buffer-filename) (buffer-directory))
+                            :default nil
+                            :existing t)))
   (check-connection)
   (when (and (probe-file filename)
              (not (uiop:directory-pathname-p filename)))

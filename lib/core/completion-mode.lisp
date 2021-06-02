@@ -263,35 +263,3 @@
       (skip-chars-backward *initial-point* #'syntax-symbol-char-p))
     (run-completion-1 completion-spec
                       nil)))
-
-
-(defun current-prompt-start-point ()
-  (prompt-start-point (frame-prompt-window (current-frame))))
-
-(defun prompt-file-completion (string directory &key directory-only)
-  (mapcar (lambda (filename)
-            (let ((label (tail-of-pathname filename)))
-              (with-point ((s (current-prompt-start-point))
-                           (e (current-prompt-start-point)))
-                (make-completion-item
-                 :label label
-                 :start (character-offset
-                         s
-                         (length (namestring (uiop:pathname-directory-pathname string))))
-                 :end (line-end e)))))
-          (completion-file string directory :directory-only directory-only)))
-
-(defun prompt-buffer-completion (string)
-  (loop :for buffer :in (completion-buffer string)
-        :collect (with-point ((s (current-prompt-start-point))
-                              (e (current-prompt-start-point)))
-                   (make-completion-item
-                    :detail (alexandria:if-let (filename (buffer-filename buffer))
-                              (enough-namestring filename (probe-file "./"))
-                              "")
-                    :label (buffer-name buffer)
-                    :start s
-                    :end (line-end e)))))
-
-(setf *prompt-file-completion-function* 'prompt-file-completion)
-(setf *prompt-buffer-completion-function* 'prompt-buffer-completion)

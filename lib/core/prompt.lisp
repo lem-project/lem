@@ -32,11 +32,10 @@
   (%prompt-for-character prompt :gravity gravity))
 
 (defun prompt-for-y-or-n-p (prompt)
-  (do () (nil)
-    (let ((c (prompt-for-character (format nil "~a [y/n]? " prompt))))
-      (case c
-        (#\y (return t))
-        (#\n (return nil))))))
+  (loop :for c := (prompt-for-character (format nil "~A [y/n]? " prompt))
+        :do (case c
+              (#\y (return t))
+              (#\n (return nil)))))
 
 (defun prompt-for-string (prompt &key initial-value
                                       completion-function

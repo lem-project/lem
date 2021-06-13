@@ -135,6 +135,9 @@
 (defmacro define-attribute (name &body specs)
   (check-type name symbol)
   `(progn
+     ,(when (eql *package* (symbol-package name))
+        ;; for the purpose of source location.
+        `(defvar ,name))
      (pushnew ',name *attributes*)
      (setf (get ',name '%attribute-value) nil)
      (setf (get ',name 'attribute)
@@ -154,7 +157,8 @@
                                                                    ((eq p :dark)
                                                                     `(display-dark-p))))
                                                            (alexandria:ensure-list pattern)))
-                                                    (make-attribute ,@args))))))))))))
+                                                    (make-attribute ,@args))))))))))
+     ',name))
 
 (define-attribute cursor
   (:light :foreground "white" :background "black")

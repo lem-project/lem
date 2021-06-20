@@ -47,7 +47,7 @@
                                   (mode-name (buffer-major-mode buffer))
                                   (setf firstp (mode-keymap (buffer-major-mode buffer)))
                                   t)
-      (setf (not firstp))
+      (setf firstp (not firstp))
       (dolist (mode (buffer-minor-modes buffer))
         (describe-bindings-internal s
                                     (mode-name mode)

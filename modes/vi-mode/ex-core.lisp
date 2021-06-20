@@ -30,7 +30,13 @@
   (lem:search-backward-regexp *point* pattern))
 
 (defun goto-line (line-number)
-  (lem:move-to-line (lem:copy-point *point* :temporary) line-number))
+  (let* ((nlines (lem:buffer-nlines (lem:point-buffer *point*)))
+         (line-number (cond ((< line-number 1) 1)
+                            ((< nlines line-number) nlines)
+                            (t line-number))))
+    (lem:move-point (lem:current-point)
+                    (lem:move-to-line (lem:copy-point *point* :temporary)
+                                      line-number))))
 
 (defun current-line ()
   *point*)

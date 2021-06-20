@@ -22,36 +22,43 @@
     (princ #\page s)
     (terpri s))
   (let ((column-width 16))
-    (princ name s)
-    (terpri s)
-    (format s "~va~a~%" column-width "key" "binding")
-    (format s "~va~a~%" column-width "---" "-------")
-    (when keymap
-      (keymap-flatten-map keymap
-                          (lambda (keys command)
-                            (unless (equal "UNDEFINED-KEY" (symbol-name command))
-                              (format s "~va~(~a~)~%"
-                                      column-width
-                                      (keyseq-to-string keys)
-                                      (symbol-name command))))))
-    (terpri s)))
+    (loop :while keymap
+          :do (format s "~A (~(~A~))~%" name (keymap-name keymap))
+              (format s "~va~a~%" column-width "key" "binding")
+              (format s "~va~a~%" column-width "---" "-------")
+              (keymap-flatten-map keymap
+                                  (lambda (keys command)
+                                    (unless (equal "UNDEFINED-KEY" (symbol-name command))
+                                      (format s "~va~(~a~)~%"
+                                              column-width
+                                              (keyseq-to-string keys)
+                                              (symbol-name command)))))
+              (setf keymap (keymap-parent keymap))
+              (terpri s))))
+
 
 ;; Unable to use this binding because C-h is used by 'delete-previous-char
 ;; (define-key *global-keymap* "C-h b" 'describe-bindings)
 (define-command describe-bindings () ()
-  (let ((buffer (current-buffer)))
+  (let ((buffer (current-buffer))
+        (firstp t))
     (with-pop-up-typeout-window (s (make-buffer "*bindings*") :focus t :erase t)
       (describe-bindings-internal s
-                                  "Major Mode Bindings"
-                                  (mode-keymap (buffer-major-mode buffer))
+                                  (mode-name (buffer-major-mode buffer))
+                                  (setf firstp (mode-keymap (buffer-major-mode buffer)))
                                   t)
-      (describe-bindings-internal s
-                                  "Global Bindings"
-                                  *global-keymap*)
+      (setf (not firstp))
       (dolist (mode (buffer-minor-modes buffer))
         (describe-bindings-internal s
                                     (mode-name mode)
-                                    (mode-keymap mode))))))
+                                    (mode-keymap mode)
+                                    firstp)
+        (when (mode-keymap mode)
+          (setf firstp t)))
+      (describe-bindings-internal s
+                                  "Global"
+                                  *global-keymap*
+                                  firstp))))
 
 (define-command list-modes () ()
   "Outputs all available major and minor modes."

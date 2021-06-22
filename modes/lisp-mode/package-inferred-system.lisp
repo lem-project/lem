@@ -52,7 +52,8 @@
              (eof-value-p (value)
                (eq value eof-value)))
       (with-open-file (in asd-file)
-        (loop :for form := (read-form in)
+        (loop :with *read-eval* := nil
+              :for form := (read-form in)
               :until (eof-value-p form)
               :when (and (consp form)
                          (eq 'asdf:defsystem (first form))

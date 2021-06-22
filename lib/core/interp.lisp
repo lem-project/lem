@@ -28,7 +28,7 @@
   (throw +bailout-tag+
     (with-output-to-string (stream)
       (princ condition stream)
-      (uiop/image:print-backtrace
+      (uiop:print-backtrace
        :stream stream
        :condition condition))))
 
@@ -36,7 +36,7 @@
   (let ((o (with-output-to-string (stream)
              (princ condition stream)
              (fresh-line stream)
-             (uiop/image:print-backtrace
+             (uiop:print-backtrace
               :stream stream
               :count 100))))
     (funcall 'pop-up-typeout-window

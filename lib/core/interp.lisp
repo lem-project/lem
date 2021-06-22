@@ -17,8 +17,8 @@
 (defvar *post-command-hook* '())
 (defvar *exit-editor-hook* '())
 
-(defvar +exit-tag+ (gensym "EXIT"))
-(defvar +bailout-tag+ (make-symbol "BAILOUT"))
+(defparameter +exit-tag+ (make-symbol "EXIT"))
+(defparameter +bailout-tag+ (make-symbol "BAILOUT"))
 
 (defmacro with-catch-bailout (&body body)
   `(catch +bailout-tag+

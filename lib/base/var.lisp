@@ -124,3 +124,14 @@
 
 (defun find-editor-variable (var)
   (find var *editor-variables* :test 'string-equal))
+
+(defstruct per-buffer-hook
+  var
+  buffer
+  (global t))
+
+(defmethod run-hooks ((hook per-buffer-hook) &rest args)
+  (with-slots (var buffer global) hook
+    (apply #'run-hooks (variable-value var :buffer buffer) args)
+    (when global
+      (apply #'run-hooks (variable-value var :global) args))))

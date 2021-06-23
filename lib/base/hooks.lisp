@@ -5,7 +5,9 @@
            :remove-hook))
 (in-package :lem-base/hooks)
 
-(defun run-hooks (hooks &rest args)
+(defgeneric run-hooks (hooks &rest args))
+
+(defmethod run-hooks ((hooks list) &rest args)
   (dolist (hook hooks)
     (apply (car hook) args)))
 

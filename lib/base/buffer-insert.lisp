@@ -237,17 +237,13 @@
 
 (defun call-before-change-functions (buffer start arg)
   (unless *inhibit-modification-hooks*
-    (alexandria:when-let ((hooks (variable-value 'before-change-functions :buffer buffer)))
-      (run-hooks hooks start arg))
-    (alexandria:when-let ((hooks (variable-value 'before-change-functions :global)))
-      (run-hooks hooks start arg))))
+    (run-hooks (make-per-buffer-hook :var 'before-change-functions :buffer buffer)
+               start arg)))
 
 (defun call-after-change-functions (buffer start end old-len)
   (unless *inhibit-modification-hooks*
-    (alexandria:when-let ((hooks (variable-value 'after-change-functions :buffer buffer)))
-      (run-hooks hooks start end old-len))
-    (alexandria:when-let ((hooks (variable-value 'after-change-functions :global)))
-      (run-hooks hooks start end old-len))))
+    (run-hooks (make-per-buffer-hook :var 'after-change-functions :buffer buffer)
+               start end old-len)))
 
 (defmacro insert/after-change-function (point arg)
   `(if (and (not *inhibit-modification-hooks*)

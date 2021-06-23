@@ -107,16 +107,12 @@
                         (buffer-end-point buffer) filename))
 
 (defun run-before-save-hooks (buffer)
-  (alexandria:when-let ((hooks (variable-value 'before-save-hook :buffer buffer)))
-    (run-hooks hooks buffer))
-  (alexandria:when-let ((hooks (variable-value 'before-save-hook :global)))
-    (run-hooks hooks buffer)))
+  (run-hooks (make-per-buffer-hook :var 'before-save-hook :buffer buffer)
+             buffer))
 
 (defun run-after-save-hooks (buffer)
-  (alexandria:when-let ((hooks (variable-value 'after-save-hook :buffer buffer)))
-    (run-hooks hooks buffer))
-  (alexandria:when-let ((hooks (variable-value 'after-save-hook :global)))
-    (run-hooks hooks buffer)))
+  (run-hooks (make-per-buffer-hook :var 'after-save-hook :buffer buffer)
+             buffer))
 
 (defun call-with-write-hook (buffer function)
   (run-before-save-hooks buffer)

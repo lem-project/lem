@@ -39,8 +39,8 @@
               (point-buffer end)))
   (unless *recursive-syntax-scan*
     (let ((*recursive-syntax-scan* t))
-      (run-hooks (variable-value 'before-syntax-scan-hook :global t) start end)
-      (run-hooks (variable-value 'before-syntax-scan-hook :buffer start) start end)
+      (run-hooks (make-per-buffer-hook :var 'before-syntax-scan-hook :buffer start)
+                 start end)
       (without-interrupts
         (let ((buffer (point-buffer start)))
           (when (enable-syntax-highlight-p buffer)
@@ -51,5 +51,5 @@
                 (line-start start)
                 (line-end end)
                 (%syntax-scan-region (syntax-table-parser *current-syntax*) start end))))))
-      (run-hooks (variable-value 'after-syntax-scan-hook :global t) start end)
-      (run-hooks (variable-value 'after-syntax-scan-hook :buffer start) start end))))
+      (run-hooks (make-per-buffer-hook :var 'after-syntax-scan-hook :buffer start)
+                 start end))))

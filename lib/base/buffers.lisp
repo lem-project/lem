@@ -54,10 +54,7 @@
                   (return sub-name)))))
 
 (defmethod delete-buffer-using-manager ((manager buffer-list-manager) buffer)
-  (alexandria:when-let ((hooks (variable-value 'kill-buffer-hook :buffer buffer)))
-    (run-hooks hooks buffer))
-  (alexandria:when-let ((hooks (variable-value 'kill-buffer-hook :global)))
-    (run-hooks hooks buffer))
+  (run-hooks (make-per-buffer-hook :var 'kill-buffer-hook :buffer buffer) buffer)
   (buffer-free buffer)
   (set-buffer-list (delete buffer (buffer-list))))
 

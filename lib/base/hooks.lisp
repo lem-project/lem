@@ -2,8 +2,7 @@
   (:use :cl)
   (:export :run-hooks
            :add-hook
-           :remove-hook
-           :find-hook))
+           :remove-hook))
 (in-package :lem-base/hooks)
 
 (defun run-hooks (hooks &rest args)
@@ -23,6 +22,3 @@
 
 (defmacro remove-hook (place callback)
   `(setf ,place (delete ,callback ,place :key #'car)))
-
-(defun find-hook (hooks callback)
-  (find callback hooks :key #'car))

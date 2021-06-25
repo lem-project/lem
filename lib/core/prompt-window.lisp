@@ -94,6 +94,9 @@
 (defun get-input-string ()
   (apply #'points-to-string (get-between-input-points)))
 
+(defmethod get-prompt-input-string ((prompt floating-prompt))
+  (get-input-string))
+
 (defun replace-prompt-input (input)
   (apply #'delete-between-points (get-between-input-points))
   (insert-string (current-point-in-prompt) input))

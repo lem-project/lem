@@ -6,6 +6,7 @@
           *prompt-file-completion-function*
           prompt-active-p
           active-prompt-window
+          get-prompt-input-string
           prompt-for-character
           prompt-for-y-or-n-p
           prompt-for-string
@@ -25,6 +26,7 @@
 (defgeneric caller-of-prompt-window (prompt))
 (defgeneric prompt-active-p (prompt))
 (defgeneric active-prompt-window ())
+(defgeneric get-prompt-input-string (prompt))
 (defgeneric %prompt-for-character (prompt &key gravity))
 (defgeneric %prompt-for-line (prompt initial comp-f existing-p history-name &optional syntax-table gravity))
 

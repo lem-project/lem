@@ -10,6 +10,8 @@
   (make-keymap :name '*rectangle-mark-mode-keymap*
                :undef-hook 'rectangle-self-insert))
 
+(defvar *default-string* nil)
+
 (define-minor-mode rectangle-mark-mode
     (:keymap *rectangle-mark-mode-keymap*
      :name "rect")
@@ -88,17 +90,39 @@
   (move-point (current-point) *mark-point*)
   (rectangle-end))
 
-(defvar *default-string* nil)
+(defun apply-to-buffer (string)
+  (dolist (ov *overlays*)
+    (delete-between-points (overlay-start ov) (overlay-end ov))
+    (insert-string (overlay-start ov) string)))
+
+(defun post-command-hook ()
+  (let ((string (get-prompt-input-string (active-prompt-window))))
+    (apply-to-buffer string)))
+
+(defun editing-buffer ()
+  (current-buffer))
+
+(defun prompt-for-string* ()
+  (let ((*post-command-hook* *post-command-hook*))
+    (add-hook *post-command-hook* 'post-command-hook)
+    (let ((editing-buffer (editing-buffer)))
+      (buffer-undo-boundary editing-buffer)
+      (handler-bind ((editor-abort
+                       (lambda (c)
+                         (declare (ignore c))
+                         (buffer-undo (buffer-point editing-buffer)))))
+        (let ((string (prompt-for-string
+                       (format nil "String rectangle~:[~; (default ~:*~A)~]: "
+                               *default-string*
+                               :initial-value ""))))
+          (when (and (equal "" string) *default-string*)
+            (setf string *default-string*))
+          (setf *default-string* string)
+          string)))))
+
 (define-command rectangle-string () ()
-  (let ((string (prompt-for-string (format nil "String rectangle~:[~; (default ~:*~A)~]: "
-                                           *default-string*)
-                                   :initial-value "")))
-    (when (and (equal "" string) *default-string*)
-      (setf string *default-string*))
-    (setf *default-string* string)
-    (dolist (ov *overlays*)
-      (delete-between-points (overlay-start ov) (overlay-end ov))
-      (insert-string (overlay-start ov) string)))
+  (let ((string (prompt-for-string*)))
+    (apply-to-buffer string))
   (rectangle-end))
 
 (define-command rectangle-exchange-point-mark () ()

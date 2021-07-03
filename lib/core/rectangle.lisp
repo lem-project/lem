@@ -5,7 +5,6 @@
 
 (defvar *mark-point* nil)
 (defvar *overlays* '())
-(defvar *default-string* nil)
 
 (defvar *rectangle-mark-mode-keymap*
   (make-keymap :name '*rectangle-mark-mode-keymap*
@@ -115,9 +114,7 @@
                        (when (/= last-tick (buffer-modified-tick editing-buffer))
                          (buffer-undo (buffer-point editing-buffer))))))
       (let ((string (prompt-for-string* "String rectangle: "
-                                        :initial-value *default-string*
                                         :callback 'post-command-hook)))
-        (setf *default-string* string)
         (apply-to-buffer string))))
   (rectangle-end))
 

@@ -12,8 +12,6 @@
   (make-keymap :name '*rectangle-mark-mode-keymap*
                :undef-hook 'rectangle-self-insert))
 
-(defvar *default-string* nil)
-
 (define-minor-mode rectangle-mark-mode
     (:keymap *rectangle-mark-mode-keymap*
      :name "rect")

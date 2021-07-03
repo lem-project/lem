@@ -98,7 +98,7 @@
   (let ((string (get-prompt-input-string (active-prompt-window))))
     (apply-to-buffer string)))
 
-(defun prompt-for-string* ()
+(define-command rectangle-string () ()
   (let ((*post-command-hook* *post-command-hook*))
     (add-hook *post-command-hook* 'post-command-hook)
     (let ((editing-buffer (current-buffer)))
@@ -114,11 +114,8 @@
           (when (and (equal "" string) *default-string*)
             (setf string *default-string*))
           (setf *default-string* string)
-          string)))))
-
-(define-command rectangle-string () ()
-  (let ((string (prompt-for-string*)))
-    (apply-to-buffer string))
+          string
+          (apply-to-buffer string)))))
   (rectangle-end))
 
 (define-command rectangle-exchange-point-mark () ()

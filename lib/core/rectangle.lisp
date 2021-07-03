@@ -5,7 +5,6 @@
 
 (defvar *mark-point* nil)
 (defvar *overlays* '())
-(defvar *editing-buffer*)
 (defvar *default-string* nil)
 
 (defvar *rectangle-mark-mode-keymap*
@@ -99,18 +98,15 @@
   (let ((string (get-prompt-input-string (active-prompt-window))))
     (apply-to-buffer string)))
 
-(defun editing-buffer ()
-  *editing-buffer*)
-
 (defun prompt-for-string* ()
   (let ((*post-command-hook* *post-command-hook*))
     (add-hook *post-command-hook* 'post-command-hook)
-    (let ((*editing-buffer* (current-buffer)))
-      (buffer-undo-boundary (editing-buffer))
+    (let ((editing-buffer (current-buffer)))
+      (buffer-undo-boundary editing-buffer)
       (handler-bind ((editor-abort
                        (lambda (c)
                          (declare (ignore c))
-                         (buffer-undo (buffer-point (editing-buffer))))))
+                         (buffer-undo (buffer-point editing-buffer)))))
         (let ((string (prompt-for-string
                        (format nil "String rectangle~:[~; (default ~:*~A)~]: "
                                *default-string*

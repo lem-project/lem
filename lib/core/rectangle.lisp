@@ -114,7 +114,6 @@
           (when (and (equal "" string) *default-string*)
             (setf string *default-string*))
           (setf *default-string* string)
-          string
           (apply-to-buffer string)))))
   (rectangle-end))
 

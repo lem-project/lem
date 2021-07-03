@@ -109,12 +109,8 @@
                          (declare (ignore c))
                          (when (/= last-tick (buffer-modified-tick editing-buffer))
                            (buffer-undo (buffer-point editing-buffer))))))
-        (let ((string (prompt-for-string
-                       (format nil "String rectangle~:[~; (default ~:*~A)~]: "
-                               *default-string*)
-                       :initial-value "")))
-          (when (and (equal "" string) *default-string*)
-            (setf string *default-string*))
+        (let ((string (prompt-for-string "String rectangle: "
+                                         :initial-value *default-string*)))
           (setf *default-string* string)
           (apply-to-buffer string)))))
   (rectangle-end))

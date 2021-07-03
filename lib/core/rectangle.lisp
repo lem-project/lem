@@ -98,21 +98,27 @@
   (let ((string (get-prompt-input-string (active-prompt-window))))
     (apply-to-buffer string)))
 
-(define-command rectangle-string () ()
+(defun prompt-for-string* (prompt &rest args &key callback &allow-other-keys)
   (let ((*post-command-hook* *post-command-hook*))
-    (add-hook *post-command-hook* 'post-command-hook)
-    (let* ((editing-buffer (current-buffer))
-           (last-tick (buffer-modified-tick editing-buffer)))
-      (buffer-undo-boundary editing-buffer)
-      (handler-bind ((editor-abort
-                       (lambda (c)
-                         (declare (ignore c))
-                         (when (/= last-tick (buffer-modified-tick editing-buffer))
-                           (buffer-undo (buffer-point editing-buffer))))))
-        (let ((string (prompt-for-string "String rectangle: "
-                                         :initial-value *default-string*)))
-          (setf *default-string* string)
-          (apply-to-buffer string)))))
+    (add-hook *post-command-hook* callback)
+    (apply #'prompt-for-string
+           prompt
+           (alexandria:remove-from-plist args :callback))))
+
+(define-command rectangle-string () ()
+  (let* ((editing-buffer (current-buffer))
+         (last-tick (buffer-modified-tick editing-buffer)))
+    (buffer-undo-boundary editing-buffer)
+    (handler-bind ((editor-abort
+                     (lambda (c)
+                       (declare (ignore c))
+                       (when (/= last-tick (buffer-modified-tick editing-buffer))
+                         (buffer-undo (buffer-point editing-buffer))))))
+      (let ((string (prompt-for-string* "String rectangle: "
+                                        :initial-value *default-string*
+                                        :callback 'post-command-hook)))
+        (setf *default-string* string)
+        (apply-to-buffer string))))
   (rectangle-end))
 
 (define-command rectangle-exchange-point-mark () ()

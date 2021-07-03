@@ -104,18 +104,24 @@
            prompt
            (alexandria:remove-from-plist args :callback))))
 
-(define-command rectangle-string () ()
-  (let* ((editing-buffer (current-buffer))
-         (last-tick (buffer-modified-tick editing-buffer)))
-    (buffer-undo-boundary editing-buffer)
+(defun call-with-editing-savepoint (buffer function)
+  (let ((last-tick (buffer-modified-tick buffer)))
+    (buffer-undo-boundary buffer)
     (handler-bind ((editor-abort
                      (lambda (c)
                        (declare (ignore c))
-                       (when (/= last-tick (buffer-modified-tick editing-buffer))
-                         (buffer-undo (buffer-point editing-buffer))))))
-      (let ((string (prompt-for-string* "String rectangle: "
-                                        :callback 'post-command-hook)))
-        (apply-to-buffer string))))
+                       (when (/= last-tick (buffer-modified-tick buffer))
+                         (buffer-undo (buffer-point buffer))))))
+      (funcall function))))
+
+(defmacro with-editing-savepoint (buffer &body body)
+  `(call-with-editing-savepoint ,buffer (lambda () ,@body)))
+
+(define-command rectangle-string () ()
+  (with-editing-savepoint (current-buffer)
+    (apply-to-buffer
+     (prompt-for-string* "String rectangle: "
+                         :callback 'post-command-hook)))
   (rectangle-end))
 
 (define-command rectangle-exchange-point-mark () ()

@@ -139,7 +139,7 @@
         (with-point ((curr (window-view-point window))
                      (limit (window-view-point window)))
           (unless (line-offset limit (window-height window))
-            (buffer-end limit))
+            (setf limit nil))
           (loop :with prev
                 :do (when (and prev (point= prev curr)) (return))
                     (setf prev (copy-point curr :temporary))

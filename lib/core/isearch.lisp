@@ -442,9 +442,10 @@
               (loop :for c := (unless pass-through
                                 (isearch-update-buffer cur-point before)
                                 (redraw-display)
-                                (prompt-for-character (format nil "Replace ~s with ~s [y/n/!]" before after)
-                                                      :gravity (make-instance 'lem.popup-window::gravity-cursor
-                                                                              :offset-y 1)))
+                                (prompt-for-character
+                                 (format nil "Replace ~s with ~s [y/n/!]" before after)
+                                 :gravity (make-instance 'lem.popup-window::gravity-cursor
+                                                         :offset-y 1)))
                     :do (cond
                           ((or pass-through (char= c #\y))
                            (delete-between-points start end)

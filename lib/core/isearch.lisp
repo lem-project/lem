@@ -429,33 +429,34 @@
 
 (defun query-replace-internal-body (cur-point goal-point before after query count)
   (let ((pass-through (not query)))
-    (loop
-      :repeat (or count most-positive-fixnum)
-      :do (when (or (not (funcall *isearch-search-forward-function* cur-point before))
-                    (and goal-point (point< goal-point cur-point)))
-            (when goal-point
-              (move-point (current-point) goal-point))
-            (return))
-          (with-point ((end cur-point :right-inserting))
-            (funcall *isearch-search-backward-function* cur-point before)
-            (with-point ((start cur-point :right-inserting))
-              (loop :for c := (unless pass-through
-                                (isearch-update-buffer cur-point before)
-                                (redraw-display)
-                                (prompt-for-character
-                                 (format nil "Replace ~s with ~s [y/n/!]" before after)
-                                 :gravity (make-instance 'lem.popup-window::gravity-cursor
-                                                         :offset-y 1)))
-                    :do (cond
-                          ((or pass-through (char= c #\y))
-                           (delete-between-points start end)
-                           (insert-string cur-point after)
-                           (return))
-                          ((char= c #\n)
-                           (move-point cur-point end)
-                           (return))
-                          ((char= c #\!)
-                           (setf pass-through t)))))))))
+    (with-point ((cur-point cur-point :left-inserting))
+      (loop
+        :repeat (or count most-positive-fixnum)
+        :do (when (or (not (funcall *isearch-search-forward-function* cur-point before))
+                      (and goal-point (point< goal-point cur-point)))
+              (when goal-point
+                (move-point (current-point) goal-point))
+              (return))
+            (with-point ((end cur-point :right-inserting))
+              (funcall *isearch-search-backward-function* cur-point before)
+              (with-point ((start cur-point :right-inserting))
+                (loop :for c := (unless pass-through
+                                  (isearch-update-buffer cur-point before)
+                                  (redraw-display)
+                                  (prompt-for-character
+                                   (format nil "Replace ~s with ~s [y/n/!]" before after)
+                                   :gravity (make-instance 'lem.popup-window::gravity-cursor
+                                                           :offset-y 1)))
+                      :do (cond
+                            ((or pass-through (char= c #\y))
+                             (delete-between-points start end)
+                             (insert-string cur-point after)
+                             (return))
+                            ((char= c #\n)
+                             (move-point cur-point end)
+                             (return))
+                            ((char= c #\!)
+                             (setf pass-through t))))))))))
 
 (defun query-replace-internal (before after search-forward-function search-backward-function
                                &key query (start nil start-p) (end nil end-p) count)

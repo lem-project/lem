@@ -12,6 +12,7 @@
   (:import-from :lem-tests/buffer-list-test)
   (:import-from :lem-tests/lisp-mode/package-inferred-system)
   (:import-from :lem-tests/popup-window)
+  (:import-from :lem-tests/isearch)
   ;; (:import-from :lem-tests/frame-multiplexer)
   ;; (:import-from :lem-tests/vi-mode)
   (:export :run-all-tests))

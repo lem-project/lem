@@ -22,11 +22,23 @@
 (defvar *find-directory-function* nil)
 (defvar *default-external-format* :detect-encoding)
 
-(defun %encoding-read (encoding in point)
+(define-condition encoding-read-error (editor-error)
+  ((condition :initarg :condition)
+   (filename :initarg :filename
+             :reader encoding-read-error-filename))
+  (:report (lambda (c s)
+             (with-slots (filename) c
+               (format s "Couldn't read this file: ~A" filename)))))
+
+(defun %encoding-read (encoding point stream stream-filename)
   (let ((end-of-line (encoding-end-of-line encoding)))
     (loop
       (multiple-value-bind (str eof-p)
-          (read-line in nil)
+          (handler-bind ((error (lambda (e)
+                                  (error 'encoding-read-error
+                                         :condition e
+                                         :filename stream-filename))))
+            (read-line stream nil))
         (cond
           (eof-p
            (when str
@@ -55,15 +67,15 @@
   (let* ((encoding (encoding external-format end-of-line))
          (use-internal-p (typep encoding 'internal-encoding)))
     (with-point ((point point :left-inserting))
-      (with-open-virtual-file (in filename
-                                  :element-type (unless use-internal-p
-                                                  '(unsigned-byte 8))
-                                  :external-format (and use-internal-p external-format)
-                                  :direction :input)
+      (with-open-virtual-file (stream filename
+                                      :element-type (unless use-internal-p
+                                                      '(unsigned-byte 8))
+                                      :external-format (and use-internal-p external-format)
+                                      :direction :input)
         (if use-internal-p
-            (%encoding-read encoding in point)
+            (%encoding-read encoding point stream filename)
             (encoding-read encoding
-                           in
+                           stream
                            (encoding-read-detect-eol
                             #'(lambda (c)
                                 (when c (insert-char/point point (code-char c)))))))))
@@ -92,7 +104,12 @@
            (setf (buffer-filename buffer) filename)
            (when (probe-file filename)
              (let ((*inhibit-modification-hooks* t))
-               (let ((encoding (insert-file-contents (buffer-start-point buffer) filename)))
+               (let ((encoding
+                       (handler-bind ((encoding-read-error
+                                        (lambda (e)
+                                          (declare (ignore e))
+                                          (delete-buffer buffer))))
+                         (insert-file-contents (buffer-start-point buffer) filename))))
                  (setf (buffer-encoding buffer) encoding)))
              (buffer-unmark buffer))
            (buffer-start (buffer-point buffer))

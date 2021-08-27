@@ -5,7 +5,6 @@
            :directory-does-not-exist-directory
            :read-only-error
            :editor-error
-           :editor-error-message
            :scan-error
            :editor-interrupt))
 (in-package :lem-base/errors)
@@ -29,11 +28,11 @@
 (define-condition editor-error (editor-condition)
   ((message
     :initform ""
-    :initarg :message
-    :reader editor-error-message))
+    :initarg :message))
   (:report
    (lambda (condition stream)
-     (princ (editor-error-message condition) stream))))
+     (with-slots (message) condition
+       (princ message stream)))))
 
 (defun editor-error (message &rest args)
   (error 'editor-error :message (apply #'format nil message args)))

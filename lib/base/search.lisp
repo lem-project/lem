@@ -46,11 +46,13 @@
         (point< point limit-point))
       (constantly nil)))
 
-(defmacro search* (&rest args)
-  `(search ,@args
-           :test (if *case-fold-search*
-                     #'char=
-                     #'char-equal)))
+(defun search-with-case-fold-search (sub-seq main-seq &rest args)
+  (apply #'search
+         sub-seq main-seq
+         :test (if *case-fold-search*
+                   #'char=
+                   #'char-equal)
+         args))
 
 (defun search-forward (point string &optional limit-point)
   (let ((nlines (count #\newline string)))
@@ -62,11 +64,11 @@
                                                (buffer-end end-point)))))))
       (search-step point
                    (lambda (point)
-                     (search* string
-                              (take-string point)
-                              :start2 (point-charpos point)))
+                     (search-with-case-fold-search string
+                                                   (take-string point)
+                                                   :start2 (point-charpos point)))
                    (lambda (point)
-                     (search* string (take-string point)))
+                     (search-with-case-fold-search string (take-string point)))
                    (lambda (point)
                      (line-offset point 1))
                    (lambda (point charpos)
@@ -79,16 +81,17 @@
     (flet ((search-from-end (point end-charpos)
              (with-point ((point point))
                (when (line-offset point (- nlines))
-                 (search* string
-                          (points-to-string
-                           (line-start (copy-point point :temporary))
-                           (with-point ((point point))
-                             (unless (line-offset point nlines)
-                               (buffer-end point))
-                             (if end-charpos
-                                 (character-offset point end-charpos)
-                                 (line-end point))))
-                          :from-end t)))))
+                 (search-with-case-fold-search
+                  string
+                  (points-to-string
+                   (line-start (copy-point point :temporary))
+                   (with-point ((point point))
+                     (unless (line-offset point nlines)
+                       (buffer-end point))
+                     (if end-charpos
+                         (character-offset point end-charpos)
+                         (line-end point))))
+                  :from-end t)))))
       (let ((end-charpos (point-charpos point)))
         (search-step point
                      (lambda (point)

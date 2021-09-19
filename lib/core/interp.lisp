@@ -68,7 +68,9 @@
 (defclass $call-command () ())
 (defmethod $call-command ((call-command $call-command) this-command universal-argument)
   (run-hooks *pre-command-hook*)
-  (prog1 (execute this-command universal-argument)
+  (prog1 (alexandria:if-let (*executing-command* (get-command this-command))
+           (execute *executing-command* universal-argument)
+           (editor-error "~A: command not found" this-command))
     (buffer-undo-boundary)
     (run-hooks *post-command-hook*)))
 

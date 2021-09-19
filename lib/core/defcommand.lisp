@@ -1,7 +1,6 @@
 (in-package :lem)
 
 (export '(define-command
-          find-command
           exist-command-p))
 
 (defvar *command-table* (make-hash-table :test 'equal))
@@ -65,8 +64,8 @@
                         (car arg-descripters))
                  (apply #',fn-name ,arguments)))))))
 
-(defun find-command (name)
-  (car (gethash name *command-table*)))
+(defun exist-command-p (command-name)
+  (not (null (gethash command-name *command-table*))))
 
 (defun find-command-symbol (name)
   (cdr (gethash name *command-table*)))
@@ -94,6 +93,3 @@
 
 (defun all-command-names ()
   (alexandria:hash-table-keys *command-table*))
-
-(defun exist-command-p (str)
-  (if (find-command str) t nil))

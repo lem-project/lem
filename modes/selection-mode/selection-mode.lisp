@@ -7,11 +7,8 @@
 
 (define-minor-mode selection-mode
     (:keymap *selection-mode-keymap*
-     :global t)
-  (if (mode-active-p (current-buffer) 'selection-mode)
-      (add-hook *pre-command-hook* 'pre-selection-command-hook)
-      (progn (remove-hook *pre-command-hook* 'pre-selection-command-hook)
-             (cancel-selection))))
+     :disable-hook 'cancel-selection
+     :global t))
 
 (define-key *selection-mode-keymap* "Shift-Left" 'selection-backward-char)
 (define-key *selection-mode-keymap* "Shift-Right" 'selection-forward-char)
@@ -46,9 +43,9 @@
       (delete-point *point*))
     (lem::enable-minor-mode '%selection-mode)
     (setf *point* (copy-point (buffer-point (current-buffer)))))
-  (prog1 
+  (prog1
       (funcall f n)
-    (setf *overlay* 
+    (setf *overlay*
           (make-overlay *point* (buffer-point (current-buffer)) 'selection))))
 
 (defun cancel-selection ()
@@ -62,33 +59,36 @@
     (delete-point *point*)
     (setf *point* nil)))
 
-(define-command selection-next-line (&optional n) ("p")
+(defclass selection-advice () ())
+
+(define-command (selection-next-line (:advice-classes selection-advice)) (&optional n) ("p")
   (call-with-selection #'next-line n))
-(define-command selection-backward-char (&optional n) ("p")
+(define-command (selection-backward-char (:advice-classes selection-advice)) (&optional n) ("p")
   (call-with-selection #'backward-char n))
-(define-command selection-forward-char (&optional n) ("p")
+(define-command (selection-forward-char (:advice-classes selection-advice)) (&optional n) ("p")
   (call-with-selection #'forward-char n))
-(define-command selection-previous-line (&optional n) ("p")
+(define-command (selection-previous-line (:advice-classes selection-advice)) (&optional n) ("p")
   (call-with-selection #'previous-line n))
-(define-command selection-copy (&optional n) ("p")
+(define-command (selection-copy (:advice-classes selection-advice)) (&optional n) ("p")
   (declare (ignore n))
   (message "Copy")
   (lem::copy-to-clipboard (points-to-string (overlay-start *overlay*) (overlay-end *overlay*)))
   (cancel-selection))
 
-(define-command selection-cut (&optional n) ("p")
+(define-command (selection-cut (:advice-classes selection-advice)) (&optional n) ("p")
   (declare (ignore n))
   (message "Cut")
   (lem::copy-to-clipboard (points-to-string (overlay-start *overlay*) (overlay-end *overlay*)))
-  (delete-character (overlay-start *overlay*) 
+  (delete-character (overlay-start *overlay*)
                     (count-characters (overlay-start *overlay*) (overlay-end *overlay*)))
   (cancel-selection))
 
-(define-command selection-paste (&optional n) ("p")
+(define-command (selection-paste (:advice-classes selection-advice))
+    (&optional n) ("p")
   (declare (ignore n))
   (message "Paste")
   (paste-from-clipboard))
 
-(defun pre-selection-command-hook ()
-  (unless (string= (package-name (symbol-package *this-command*)) :lem-selection-mode/selection-mode)
+(defmethod lem::execute :before ((command lem:primary-command) argument)
+  (unless (typep command 'selection-advice)
     (cancel-selection)))

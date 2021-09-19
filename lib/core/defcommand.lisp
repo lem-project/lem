@@ -64,11 +64,13 @@
                         (car arg-descripters))
                  (apply #',fn-name ,arguments)))))))
 
+(defstruct cmd function name)
+
 (defun exist-command-p (command-name)
   (not (null (gethash command-name *command-table*))))
 
 (defun find-command-symbol (name)
-  (cdr (gethash name *command-table*)))
+  (cmd-name (gethash name *command-table*)))
 
 (defun get-command (symbol)
   (get symbol 'command))
@@ -79,7 +81,8 @@
     (alexandria:with-unique-names (universal-argument)
       `(progn
          (setf (get ',name 'command) ',gcmd)
-         (setf (gethash ,command-name *command-table*) (cons ',gcmd ',name))
+         (setf (gethash ,command-name *command-table*)
+               (make-cmd :function ',gcmd :name ',name))
          (defun ,name ,parms ,@body)
          (defun ,gcmd (,universal-argument)
            (declare (ignorable ,universal-argument))
@@ -89,7 +92,6 @@
              universal-argument
              arg-descripters))
          ',name))))
-
 
 (defun all-command-names ()
   (alexandria:hash-table-keys *command-table*))

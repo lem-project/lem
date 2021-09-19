@@ -7,12 +7,12 @@
 (defvar *command-table* (make-hash-table :test 'equal))
 
 (eval-when (:compile-toplevel :load-toplevel)
-  (defun define-command-gen-args (garg arg-descripters)
+  (defun gen-defcommand-arg-parser (universal-argument arg-descripters)
     (cond
       ((string= "p" (car arg-descripters))
-       `(list (or ,garg 1)))
+       `(list (or ,universal-argument 1)))
       ((string= "P" (car arg-descripters))
-       `(list ,garg))
+       `(list ,universal-argument))
       ((string= "r" (car arg-descripters))
        `(progn
           (check-marked)
@@ -49,21 +49,21 @@
                             (error "Illegal arg-descripter: ~a" arg-descripter))))
                      arg-descripters)))))
 
-  (let ((garg (gensym "ARG"))
-        (g-args (gensym)))
-    (defun define-command-gen-cmd (cmd-name fn-name parms arg-descripters)
-      `(defun ,cmd-name (,garg)
-         (declare (ignorable ,garg))
-         (block ,fn-name
-           ,(if (null arg-descripters)
-                (progn
-                  (assert (null parms))
-                  `(,fn-name))
-                `(destructuring-bind (&rest ,g-args)
-                     ,(if (stringp (car arg-descripters))
-                          (define-command-gen-args garg arg-descripters)
-                          (car arg-descripters))
-                   (apply #',fn-name ,g-args))))))))
+  (alexandria:with-unique-names (arguments)
+    (defun gen-defcommand-body (fn-name
+                                        parms
+                                        universal-argument
+                                        arg-descripters)
+      `(block ,fn-name
+         ,(if (null arg-descripters)
+              (progn
+                (assert (null parms))
+                `(,fn-name))
+              `(destructuring-bind (&rest ,arguments)
+                   ,(if (stringp (car arg-descripters))
+                        (gen-defcommand-arg-parser universal-argument arg-descripters)
+                        (car arg-descripters))
+                 (apply #',fn-name ,arguments)))))))
 
 (defun find-command (name)
   (car (gethash name *command-table*)))
@@ -80,13 +80,21 @@
 (defmacro define-command (name parms (&rest arg-descripters) &body body)
   (let ((gcmd (gensym (symbol-name name)))
         (command-name (string-downcase name)))
-    `(progn
-       (setf (get ',name 'command) ',gcmd)
-       (setf (get ',gcmd 'name) ,command-name)
-       (setf (gethash ,command-name *command-table*) (cons ',gcmd ',name))
-       (defun ,name ,parms ,@body)
-       ,(define-command-gen-cmd gcmd name parms arg-descripters)
-       ',name)))
+    (alexandria:with-unique-names (universal-argument)
+      `(progn
+         (setf (get ',name 'command) ',gcmd)
+         (setf (get ',gcmd 'name) ,command-name)
+         (setf (gethash ,command-name *command-table*) (cons ',gcmd ',name))
+         (defun ,name ,parms ,@body)
+         (defun ,gcmd (,universal-argument)
+           (declare (ignorable ,universal-argument))
+           ,(gen-defcommand-body
+             name
+             parms
+             universal-argument
+             arg-descripters))
+         ',name))))
+
 
 (defun all-command-names ()
   (alexandria:hash-table-keys *command-table*))

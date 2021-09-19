@@ -83,6 +83,9 @@
         `(progn
            (add-command ,command-name (make-cmd :name ',name))
            (defun ,name ,params
+             ;; コマンドではなく直接この関数を呼び出した場合
+             ;; - *this-command*が束縛されない
+             ;; - executeのフックが使えない
              ,@body)
            (defclass ,name (,primary-class ,@advice-classes) ())
            (defmethod execute ((,command ,name) ,universal-argument)
@@ -91,3 +94,35 @@
                                    params
                                    universal-argument
                                    arg-descripters)))))))
+
+#|
+;;; example 1
+(defclass foo-advice () ())
+
+(define-command (foo-1 (:advice-classes foo-advice)) (p) ("p")
+  ...body)
+
+(define-command (foo-2 (:advice-classes foo-advice)) (s) ("sInput: ")
+  ...body)
+
+(defclass execute ((command foo-advice) argument)
+  ;; :advice-classesをfoo-adviceにしたfoo-1とfoo-2コマンドだけが呼び出される
+  )
+
+;;; example 2
+(defclass bar-primary () ())
+
+(define-command (bar-1 (:primary-class bar-primary)) (p) ("p")
+  ...body)
+
+(define-command (bar-2 (:primary-class bar-primary)) (s) ("sInput: ")
+  ...body)
+
+(defclass execute ((command bar-primary) argument)
+  ;; :primary-classをbar-primaryにしたbar-1,bar-2コマンドだけが呼び出される
+  )
+
+(defclass execute ((command primary-command) argument)
+  ;; :primary-classがbar-primaryのときはこれは呼び出されない
+  )
+|#

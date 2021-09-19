@@ -64,7 +64,7 @@
                         (car arg-descripters))
                  (apply #',fn-name ,arguments)))))))
 
-(defstruct cmd function name)
+(defstruct cmd name)
 
 (defun exist-command-p (command-name)
   (not (null (gethash command-name *command-table*))))
@@ -82,7 +82,7 @@
       `(progn
          (setf (get ',name 'command) ',gcmd)
          (setf (gethash ,command-name *command-table*)
-               (make-cmd :function ',gcmd :name ',name))
+               (make-cmd :name ',name))
          (defun ,name ,parms ,@body)
          (defun ,gcmd (,universal-argument)
            (declare (ignorable ,universal-argument))

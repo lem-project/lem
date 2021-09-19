@@ -34,6 +34,7 @@
                (:file "prompt")
                (:file "window")
                (:file "modeline")
+               (:file "command-table")
                (:file "defcommand")
                (:file "mode")
                (:file "keymap")

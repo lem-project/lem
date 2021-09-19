@@ -3,6 +3,7 @@
 (export '(*pre-command-hook*
           *post-command-hook*
           this-command
+          execute
           primary-command))
 
 (defconstant +primary-command-class-name+ 'primary-command)

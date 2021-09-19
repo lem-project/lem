@@ -66,18 +66,6 @@
                         (car arg-descripters))
                  (apply #',fn-name ,arguments)))))))
 
-(defun get-command (symbol)
-  (alexandria:when-let (class (find-class symbol nil))
-    (make-instance class)))
-
-(defclass command () ())
-(defgeneric execute (command argument))
-
-(defmethod execute ((command symbol) argument)
-  (alexandria:if-let (class (find-class command nil))
-    (execute (make-instance class) argument)
-    (editor-error "~A: command not found" command)))
-
 (defmacro define-command (name params (&rest arg-descripters) &body body)
   (alexandria:with-unique-names (command universal-argument)
     (let ((command-name (string-downcase name)))

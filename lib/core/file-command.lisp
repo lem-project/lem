@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(export '(find-file
+(export '(execute-find-file
+          find-file
           read-file
           Add-Newline-at-EOF-on-Writing-File
           save-buffer
@@ -12,7 +13,6 @@
           save-some-buffers
           revert-buffer
           change-directory))
-
 
 (defun expand-files* (filename)
   (directory-files (expand-file-name filename (buffer-directory))))
@@ -31,16 +31,8 @@
 
 (defgeneric execute-find-file (command mode pathname))
 
-(defclass find-file-command () ())
-
-(defmethod execute-find-file ((command find-file-command) mode pathname)
-  (directory-for-file-or-lose pathname)
-  (multiple-value-bind (buffer new-file-p)
-      (find-file-buffer pathname)
-    (switch-to-buffer buffer t nil)
-    (values buffer new-file-p)))
-
-(defmethod execute ((command find-file-command) arg)
+(define-key *global-keymap* "C-x C-f" 'find-file)
+(define-command find-file (arg) ("p")
   (let ((*default-external-format* *default-external-format*))
     (let ((filename
             (cond ((and (numberp arg) (= 1 arg))
@@ -62,14 +54,16 @@
                   ((pathnamep arg)
                    (namestring arg)))))
       (dolist (pathname (expand-files* filename))
-        (execute-find-file command
+        (execute-find-file (executing-command)
                            (detect-mode-from-pathname pathname)
                            pathname)))))
 
-(define-key *global-keymap* "C-x C-f" 'find-file)
-(define-command find-file (arg) ("p")
-  (execute (make-instance 'find-file-command)
-           arg))
+(defmethod execute-find-file ((command find-file) mode pathname)
+  (directory-for-file-or-lose pathname)
+  (multiple-value-bind (buffer new-file-p)
+      (find-file-buffer pathname)
+    (switch-to-buffer buffer t nil)
+    (values buffer new-file-p)))
 
 (define-key *global-keymap* "C-x C-r" 'read-file)
 (define-command read-file (filename) ("FRead File: ")

@@ -136,7 +136,7 @@
             (prin1 form stream)
             (terpri stream)))))))
 
-(defmethod lem::execute-find-file ((command lem::find-file-command)
+(defmethod lem::execute-find-file ((command find-file)
                                    (mode (eql 'lisp-mode))
                                    pathname)
   (let ((buffer (call-next-method)))

@@ -1,9 +1,6 @@
 (in-package :lem)
 
-(export '(*this-command*
-          *universal-argument*
-          *pre-command-hook*
-          *post-command-hook*
+(export '(*universal-argument*
           *exit-editor-hook*
           interactive-p
           continue-flag
@@ -11,10 +8,7 @@
           pop-up-backtrace
           call-background-job))
 
-(defvar *this-command* nil)
 (defvar *universal-argument*)
-(defvar *pre-command-hook* '())
-(defvar *post-command-hook* '())
 (defvar *exit-editor-hook* '())
 
 (defparameter +exit-tag+ (make-symbol "EXIT"))
@@ -64,20 +58,6 @@
   (prog1 (cdr (assoc flag *last-flags*))
     (push (cons flag t) *last-flags*)
     (push (cons flag t) *curr-flags*)))
-
-(defclass $call-command () ())
-(defmethod $call-command ((call-command $call-command) this-command universal-argument)
-  (run-hooks *pre-command-hook*)
-  (prog1 (alexandria:if-let (*executing-command* (get-command this-command))
-           (execute *executing-command* universal-argument)
-           (editor-error "~A: command not found" this-command))
-    (buffer-undo-boundary)
-    (run-hooks *post-command-hook*)))
-
-(defvar *call-command* (make-instance '$call-command))
-
-(defun call-command (*this-command* *universal-argument*)
-  ($call-command *call-command* *this-command* *universal-argument*))
 
 (defmacro do-command-loop ((&key interactive) &body body)
   (alexandria:once-only (interactive)

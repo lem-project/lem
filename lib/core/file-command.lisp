@@ -54,7 +54,7 @@
                   ((pathnamep arg)
                    (namestring arg)))))
       (dolist (pathname (expand-files* filename))
-        (execute-find-file (executing-command)
+        (execute-find-file (this-command)
                            (detect-mode-from-pathname pathname)
                            pathname)))))
 

@@ -174,7 +174,7 @@
 (defun find-keybind (key)
   (let ((cmd (lookup-keybind key)))
     (when (symbolp cmd)
-      (get-command cmd))))
+      cmd)))
 
 (defun abort-key-p (key)
   (and (key-p key)

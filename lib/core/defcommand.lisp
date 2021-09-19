@@ -74,16 +74,12 @@
 (defun get-command (symbol)
   (get symbol 'command))
 
-(defun command-name (command)
-  (get command 'name))
-
 (defmacro define-command (name parms (&rest arg-descripters) &body body)
   (let ((gcmd (gensym (symbol-name name)))
         (command-name (string-downcase name)))
     (alexandria:with-unique-names (universal-argument)
       `(progn
          (setf (get ',name 'command) ',gcmd)
-         (setf (get ',gcmd 'name) ,command-name)
          (setf (gethash ,command-name *command-table*) (cons ',gcmd ',name))
          (defun ,name ,parms ,@body)
          (defun ,gcmd (,universal-argument)

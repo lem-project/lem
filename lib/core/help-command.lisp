@@ -13,9 +13,9 @@
   (redraw-display)
   (let* ((keys (read-key-sequence))
          (cmd (find-keybind keys)))
-    (message "describe-key: ~a ~a"
+    (message "describe-key: ~a ~(~a~)"
              (keyseq-to-string keys)
-             (command-name cmd))))
+             cmd)))
 
 (defun describe-bindings-internal (s name keymap &optional first-p)
   (unless first-p

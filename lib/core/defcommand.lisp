@@ -1,9 +1,11 @@
 (in-package :lem)
 
 (export '(define-command
+          make-command-table
+          add-command
+          remove-command
+          find-command
           exist-command-p))
-
-(defvar *command-table* (make-hash-table :test 'equal))
 
 (eval-when (:compile-toplevel :load-toplevel)
   (defun gen-defcommand-arg-parser (universal-argument arg-descripters)
@@ -64,13 +66,31 @@
                         (car arg-descripters))
                  (apply #',fn-name ,arguments)))))))
 
+(defvar *command-table*)
+
 (defstruct cmd name)
 
-(defun exist-command-p (command-name)
-  (not (null (gethash command-name *command-table*))))
+(defstruct command-table
+  (table (make-hash-table :test 'equal)))
 
-(defun find-command-symbol (name)
-  (cmd-name (gethash name *command-table*)))
+(defun add-command (name cmd &optional (command-table *command-table*))
+  (check-type name string)
+  (setf (gethash name (command-table-table command-table)) cmd))
+
+(defun remove-command (name &optional (command-table *command-table*))
+  (remhash name (command-table-table command-table)))
+
+(defun all-command-names (&optional (command-table *command-table*))
+  (alexandria:hash-table-keys (command-table-table command-table)))
+
+(defun find-command (command-name &optional (command-table *command-table*))
+  (gethash command-name (command-table-table command-table)))
+
+(defun exist-command-p (command-name &optional (command-table *command-table*))
+  (not (null (find-command command-name command-table))))
+
+(defun find-command-symbol (command-name &optional (command-table *command-table*))
+  (cmd-name (gethash command-name (command-table-table command-table))))
 
 (defun get-command (symbol)
   (get symbol 'command))
@@ -81,8 +101,7 @@
     (alexandria:with-unique-names (universal-argument)
       `(progn
          (setf (get ',name 'command) ',gcmd)
-         (setf (gethash ,command-name *command-table*)
-               (make-cmd :name ',name))
+         (add-command ,command-name (make-cmd :name ',name))
          (defun ,name ,parms ,@body)
          (defun ,gcmd (,universal-argument)
            (declare (ignorable ,universal-argument))
@@ -93,5 +112,4 @@
              arg-descripters))
          ',name))))
 
-(defun all-command-names ()
-  (alexandria:hash-table-keys *command-table*))
+(setf *command-table* (make-command-table))

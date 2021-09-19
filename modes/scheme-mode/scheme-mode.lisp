@@ -149,24 +149,19 @@
 (defun disable-commands (cmds &optional cmds-backup-table)
   (loop :for cmd in cmds
         :for cmd-str := (string-downcase cmd)
-        :do (multiple-value-bind (value exists)
-                (gethash cmd-str lem::*command-table*)
-              (when exists
-                (when cmds-backup-table
-                  (setf (gethash cmd-str cmds-backup-table) value))
-                (remhash cmd-str lem::*command-table*)))))
+        :do (alexandria:when-let (value (find-command cmd-str))
+              (when cmds-backup-table
+                (add-command cmd-str
+                             value
+                             cmds-backup-table))
+              (remove-command cmd-str))))
 
 (defun enable-commands (cmds cmds-backup-table)
   (loop :for cmd in cmds
         :for cmd-str := (string-downcase cmd)
-        :do (multiple-value-bind (value exists)
-                (gethash cmd-str lem::*command-table*)
-              (declare (ignore value))
-              (unless exists
-                (multiple-value-bind (value exists)
-                    (gethash cmd-str cmds-backup-table)
-                  (when exists
-                    (setf (gethash cmd-str lem::*command-table*) value)))))))
+        :do (unless (exist-command-p cmd-str)
+              (alexandria:when-let (value (find-command cmd-str cmds-backup-table))
+                (add-command cmd-str value)))))
 
 ;; disable scheme process commands
 (let ((cmds-1 '(scheme-kill-process)))
@@ -176,7 +171,7 @@
   (add-hook *after-init-hook* 'disable-scheme-process-commands))
 
 ;; disable/enable scheme slime commands
-(let ((cmds-backup-table (make-hash-table :test 'equal))
+(let ((cmds-backup-table (make-command-table))
       (cmds-1 '(scheme-slime-connect
                 scheme-slime))
       (cmds-2 '(scheme-repl-interrupt

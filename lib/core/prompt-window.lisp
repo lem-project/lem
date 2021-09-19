@@ -14,7 +14,7 @@
 
 (defvar *history-table* (make-hash-table))
 
-(define-condition execute ()
+(define-condition execute-condition ()
   ((input
     :initarg :input
     :reader execute-input)))
@@ -113,7 +113,7 @@
     (when (or (null (prompt-window-existing-test-function (current-prompt-window)))
               (funcall (prompt-window-existing-test-function (current-prompt-window)) input))
       (lem.history:add-history (prompt-window-history (current-prompt-window)) input)
-      (error 'execute :input input))))
+      (error 'execute-condition :input input))))
 
 (define-command prompt-completion () ()
   (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
@@ -298,8 +298,8 @@
                   (funcall body-function))
             (delete-prompt prompt-window)
             (run-hooks *prompt-deactivate-hook*))
-        (execute (execute)
-          (execute-input execute))))))
+        (execute-condition (e)
+          (execute-input e))))))
 
 (defmethod lem::%prompt-for-character (prompt-string &key (gravity :center))
   (prompt-for-aux :prompt-string prompt-string

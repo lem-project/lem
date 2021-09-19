@@ -67,21 +67,28 @@
                  (apply #',fn-name ,arguments)))))))
 
 (defun get-command (symbol)
-  (get symbol 'command))
+  (alexandria:when-let (class (find-class symbol nil))
+    (make-instance class)))
 
-(defmacro define-command (name parms (&rest arg-descripters) &body body)
-  (let ((gcmd (gensym (symbol-name name)))
-        (command-name (string-downcase name)))
-    (alexandria:with-unique-names (universal-argument)
+(defclass command () ())
+(defgeneric execute (command argument))
+
+(defmethod execute ((command symbol) argument)
+  (alexandria:if-let (class (find-class command nil))
+    (execute (make-instance class) argument)
+    (editor-error "~A: command not found" command)))
+
+(defmacro define-command (name params (&rest arg-descripters) &body body)
+  (alexandria:with-unique-names (command universal-argument)
+    (let ((command-name (string-downcase name)))
       `(progn
-         (setf (get ',name 'command) ',gcmd)
          (add-command ,command-name (make-cmd :name ',name))
-         (defun ,name ,parms ,@body)
-         (defun ,gcmd (,universal-argument)
+         (defun ,name ,params
+           ,@body)
+         (defclass ,name (command) ())
+         (defmethod execute ((,command ,name) ,universal-argument)
            (declare (ignorable ,universal-argument))
-           ,(gen-defcommand-body
-             name
-             parms
-             universal-argument
-             arg-descripters))
-         ',name))))
+           ,(gen-defcommand-body name
+                                 params
+                                 universal-argument
+                                 arg-descripters))))))

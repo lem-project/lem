@@ -29,7 +29,6 @@
       (error 'editor-abort))
     directory))
 
-(defgeneric execute (command arg))
 (defgeneric execute-find-file (command mode pathname))
 
 (defclass find-file-command () ())

@@ -65,14 +65,20 @@
     (push (cons flag t) *last-flags*)
     (push (cons flag t) *curr-flags*)))
 
-(defun call-command (*this-command* *universal-argument*)
+(defclass $call-command () ())
+(defmethod $call-command ((call-command $call-command) this-command universal-argument)
   (run-hooks *pre-command-hook*)
-  (prog1 (let ((cmd (get-command *this-command*)))
+  (prog1 (let ((cmd (get-command this-command)))
            (if cmd
-               (funcall cmd *universal-argument*)
-               (editor-error "~A: command not found" *this-command*)))
+               (funcall cmd universal-argument)
+               (editor-error "~A: command not found" this-command)))
     (buffer-undo-boundary)
     (run-hooks *post-command-hook*)))
+
+(defvar *call-command* (make-instance '$call-command))
+
+(defun call-command (*this-command* *universal-argument*)
+  ($call-command *call-command* *this-command* *universal-argument*))
 
 (defmacro do-command-loop ((&key interactive) &body body)
   (alexandria:once-only (interactive)

@@ -49,7 +49,7 @@
                (:file "typeout")
                (:file "lem")
 
-               (:file "command")
+               (:file "primitive-command")
                (:file "file-command")
                (:file "window-command")
                (:file "help-command")

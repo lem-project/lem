@@ -29,7 +29,7 @@
       (error 'editor-abort))
     directory))
 
-(defgeneric execute-find-file (command mode pathname))
+(defgeneric execute-find-file (mode pathname))
 
 (define-key *global-keymap* "C-x C-f" 'find-file)
 (define-command find-file (arg) ("p")
@@ -54,11 +54,10 @@
                   ((pathnamep arg)
                    (namestring arg)))))
       (dolist (pathname (expand-files* filename))
-        (execute-find-file (this-command)
-                           (detect-mode-from-pathname pathname)
+        (execute-find-file (detect-mode-from-pathname pathname)
                            pathname)))))
 
-(defmethod execute-find-file ((command find-file) mode pathname)
+(defmethod execute-find-file (mode pathname)
   (directory-for-file-or-lose pathname)
   (multiple-value-bind (buffer new-file-p)
       (find-file-buffer pathname)

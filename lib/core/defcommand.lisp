@@ -66,17 +66,28 @@
                         (car arg-descripters))
                  (apply #',fn-name ,arguments)))))))
 
-(defmacro define-command (name params (&rest arg-descripters) &body body)
-  (alexandria:with-unique-names (command universal-argument)
-    (let ((command-name (string-downcase name)))
-      `(progn
-         (add-command ,command-name (make-cmd :name ',name))
-         (defun ,name ,params
-           ,@body)
-         (defclass ,name (command) ())
-         (defmethod execute ((,command ,name) ,universal-argument)
-           (declare (ignorable ,universal-argument))
-           ,(gen-defcommand-body name
-                                 params
-                                 universal-argument
-                                 arg-descripters))))))
+(defun primary-class (options)
+  (let ((value (alexandria:assoc-value options :primary-class)))
+    (cond ((null value)
+           +primary-command-class-name+)
+          (t
+           (alexandria:length= (assert value) 1)
+           (first value)))))
+
+(defmacro define-command (name-and-options params (&rest arg-descripters) &body body)
+  (destructuring-bind (name . options) (uiop:ensure-list name-and-options)
+    (let ((primary-class (primary-class options))
+          (advice-classes (alexandria:assoc-value options :advice-classes))
+          (command-name (string-downcase name)))
+      (alexandria:with-unique-names (command universal-argument)
+        `(progn
+           (add-command ,command-name (make-cmd :name ',name))
+           (defun ,name ,params
+             ,@body)
+           (defclass ,name (,primary-class ,@advice-classes) ())
+           (defmethod execute ((,command ,name) ,universal-argument)
+             (declare (ignorable ,universal-argument))
+             ,(gen-defcommand-body name
+                                   params
+                                   universal-argument
+                                   arg-descripters)))))))

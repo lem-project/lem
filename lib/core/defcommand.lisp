@@ -51,9 +51,9 @@
 
   (alexandria:with-unique-names (arguments)
     (defun gen-defcommand-body (fn-name
-                                        parms
-                                        universal-argument
-                                        arg-descripters)
+                                parms
+                                universal-argument
+                                arg-descripters)
       `(block ,fn-name
          ,(if (null arg-descripters)
               (progn

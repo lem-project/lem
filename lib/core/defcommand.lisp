@@ -1,11 +1,6 @@
 (in-package :lem)
 
-(export '(define-command
-          make-command-table
-          add-command
-          remove-command
-          find-command
-          exist-command-p))
+(export '(define-command))
 
 (eval-when (:compile-toplevel :load-toplevel)
   (defun gen-defcommand-arg-parser (universal-argument arg-descriptors)

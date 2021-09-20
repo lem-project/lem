@@ -3,63 +3,63 @@
 (export '(define-command))
 
 (eval-when (:compile-toplevel :load-toplevel)
-  (defun gen-defcommand-arg-parser (universal-argument arg-descriptors)
-    (cond
-      ((string= "p" (car arg-descriptors))
-       `(list (or ,universal-argument 1)))
-      ((string= "P" (car arg-descriptors))
-       `(list ,universal-argument))
-      ((string= "r" (car arg-descriptors))
-       `(progn
-          (check-marked)
-          (list (region-beginning) (region-end))))
-      (t
-       (cons 'list
-             (mapcar #'(lambda (arg-descriptor)
-                         (cond
-                           ((char= #\s (aref arg-descriptor 0))
-                            `(prompt-for-string ,(subseq arg-descriptor 1)))
-                           ((char= #\n (aref arg-descriptor 0))
-                            `(prompt-for-integer ,(subseq arg-descriptor 1)))
-                           ((char= #\b (aref arg-descriptor 0))
-                            `(prompt-for-buffer ,(subseq arg-descriptor 1)
-                                                :default (buffer-name (current-buffer))
-                                                :existing t))
-                           ((char= #\B (aref arg-descriptor 0))
-                            `(prompt-for-buffer ,(subseq arg-descriptor 1)
-                                                :default (buffer-name (other-buffer))
-                                                :existing nil))
-                           ((char= #\f (aref arg-descriptor 0))
-                            `(prompt-for-file
-                              ,(subseq arg-descriptor 1)
-                              :directory (buffer-directory)
-                              :default nil
-                              :existing t))
-                           ((char= #\F (aref arg-descriptor 0))
-                            `(prompt-for-file
-                              ,(subseq arg-descriptor 1)
-                              :directory (buffer-directory)
-                              :default nil
-                              :existing nil))
-                           (t
-                            (error "Illegal arg-descriptor: ~a" arg-descriptor))))
-                     arg-descriptors)))))
+  (defun parse-arg-descriptors (arg-descriptors universal-argument)
+    (let* ((pre-forms '())
+           (forms
+             (mapcar (lambda (arg-descriptor)
+                       (cond ((and (stringp arg-descriptor)
+                                   (< 0 (length arg-descriptor)))
+                              (ecase (char arg-descriptor 0)
+                                (#\p
+                                 `(list (or ,universal-argument 1)))
+                                (#\P
+                                 `(list ,universal-argument))
+                                (#\s
+                                 `(list (prompt-for-string ,(subseq arg-descriptor 1))))
+                                (#\n
+                                 `(list (prompt-for-integer ,(subseq arg-descriptor 1))))
+                                (#\b
+                                 `(list (prompt-for-buffer ,(subseq arg-descriptor 1)
+                                                           :default (buffer-name (current-buffer))
+                                                           :existing t)))
+                                (#\B
+                                 `(list (prompt-for-buffer ,(subseq arg-descriptor 1)
+                                                           :default (buffer-name (other-buffer))
+                                                           :existing nil)))
+                                (#\f
+                                 `(list (prompt-for-file
+                                         ,(subseq arg-descriptor 1)
+                                         :directory (buffer-directory)
+                                         :default nil
+                                         :existing t)))
+                                (#\F
+                                 `(list (prompt-for-file
+                                         ,(subseq arg-descriptor 1)
+                                         :directory (buffer-directory)
+                                         :default nil
+                                         :existing nil)))
+                                (#\r
+                                 (push '(check-marked) pre-forms)
+                                 '(list
+                                   (region-beginning)
+                                   (region-end)))))
+                             (t
+                              arg-descriptor)))
+                     arg-descriptors)))
+      (if (null pre-forms)
+          `(append ,@forms)
+          `(progn
+             ,@pre-forms
+             (append ,@forms)))))
 
   (alexandria:with-unique-names (arguments)
     (defun gen-defcommand-body (fn-name
-                                parms
                                 universal-argument
                                 arg-descriptors)
       `(block ,fn-name
-         ,(if (null arg-descriptors)
-              (progn
-                (assert (null parms))
-                `(,fn-name))
-              `(destructuring-bind (&rest ,arguments)
-                   ,(if (stringp (car arg-descriptors))
-                        (gen-defcommand-arg-parser universal-argument arg-descriptors)
-                        (car arg-descriptors))
-                 (apply #',fn-name ,arguments)))))))
+         (destructuring-bind (&rest ,arguments)
+             ,(parse-arg-descriptors arg-descriptors universal-argument)
+           (apply #',fn-name ,arguments))))))
 
 (defun primary-class (options)
   (let ((value (alexandria:assoc-value options :primary-class)))
@@ -86,7 +86,6 @@
            (defmethod execute ((,command ,name) ,universal-argument)
              (declare (ignorable ,universal-argument))
              ,(gen-defcommand-body name
-                                   params
                                    universal-argument
                                    arg-descriptors)))))))
 

@@ -8,62 +8,62 @@
           exist-command-p))
 
 (eval-when (:compile-toplevel :load-toplevel)
-  (defun gen-defcommand-arg-parser (universal-argument arg-descripters)
+  (defun gen-defcommand-arg-parser (universal-argument arg-descriptors)
     (cond
-      ((string= "p" (car arg-descripters))
+      ((string= "p" (car arg-descriptors))
        `(list (or ,universal-argument 1)))
-      ((string= "P" (car arg-descripters))
+      ((string= "P" (car arg-descriptors))
        `(list ,universal-argument))
-      ((string= "r" (car arg-descripters))
+      ((string= "r" (car arg-descriptors))
        `(progn
           (check-marked)
           (list (region-beginning) (region-end))))
       (t
        (cons 'list
-             (mapcar #'(lambda (arg-descripter)
+             (mapcar #'(lambda (arg-descriptor)
                          (cond
-                           ((char= #\s (aref arg-descripter 0))
-                            `(prompt-for-string ,(subseq arg-descripter 1)))
-                           ((char= #\n (aref arg-descripter 0))
-                            `(prompt-for-integer ,(subseq arg-descripter 1)))
-                           ((char= #\b (aref arg-descripter 0))
-                            `(prompt-for-buffer ,(subseq arg-descripter 1)
+                           ((char= #\s (aref arg-descriptor 0))
+                            `(prompt-for-string ,(subseq arg-descriptor 1)))
+                           ((char= #\n (aref arg-descriptor 0))
+                            `(prompt-for-integer ,(subseq arg-descriptor 1)))
+                           ((char= #\b (aref arg-descriptor 0))
+                            `(prompt-for-buffer ,(subseq arg-descriptor 1)
                                                 :default (buffer-name (current-buffer))
                                                 :existing t))
-                           ((char= #\B (aref arg-descripter 0))
-                            `(prompt-for-buffer ,(subseq arg-descripter 1)
+                           ((char= #\B (aref arg-descriptor 0))
+                            `(prompt-for-buffer ,(subseq arg-descriptor 1)
                                                 :default (buffer-name (other-buffer))
                                                 :existing nil))
-                           ((char= #\f (aref arg-descripter 0))
+                           ((char= #\f (aref arg-descriptor 0))
                             `(prompt-for-file
-                              ,(subseq arg-descripter 1)
+                              ,(subseq arg-descriptor 1)
                               :directory (buffer-directory)
                               :default nil
                               :existing t))
-                           ((char= #\F (aref arg-descripter 0))
+                           ((char= #\F (aref arg-descriptor 0))
                             `(prompt-for-file
-                              ,(subseq arg-descripter 1)
+                              ,(subseq arg-descriptor 1)
                               :directory (buffer-directory)
                               :default nil
                               :existing nil))
                            (t
-                            (error "Illegal arg-descripter: ~a" arg-descripter))))
-                     arg-descripters)))))
+                            (error "Illegal arg-descriptor: ~a" arg-descriptor))))
+                     arg-descriptors)))))
 
   (alexandria:with-unique-names (arguments)
     (defun gen-defcommand-body (fn-name
                                 parms
                                 universal-argument
-                                arg-descripters)
+                                arg-descriptors)
       `(block ,fn-name
-         ,(if (null arg-descripters)
+         ,(if (null arg-descriptors)
               (progn
                 (assert (null parms))
                 `(,fn-name))
               `(destructuring-bind (&rest ,arguments)
-                   ,(if (stringp (car arg-descripters))
-                        (gen-defcommand-arg-parser universal-argument arg-descripters)
-                        (car arg-descripters))
+                   ,(if (stringp (car arg-descriptors))
+                        (gen-defcommand-arg-parser universal-argument arg-descriptors)
+                        (car arg-descriptors))
                  (apply #',fn-name ,arguments)))))))
 
 (defun primary-class (options)
@@ -74,7 +74,7 @@
            (alexandria:length= (assert value) 1)
            (first value)))))
 
-(defmacro define-command (name-and-options params (&rest arg-descripters) &body body)
+(defmacro define-command (name-and-options params (&rest arg-descriptors) &body body)
   (destructuring-bind (name . options) (uiop:ensure-list name-and-options)
     (let ((primary-class (primary-class options))
           (advice-classes (alexandria:assoc-value options :advice-classes))
@@ -93,7 +93,7 @@
              ,(gen-defcommand-body name
                                    params
                                    universal-argument
-                                   arg-descripters)))))))
+                                   arg-descriptors)))))))
 
 #|
 ;;; example 1

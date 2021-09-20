@@ -4,7 +4,6 @@
           *exit-editor-hook*
           interactive-p
           continue-flag
-          call-command
           pop-up-backtrace
           call-background-job))
 

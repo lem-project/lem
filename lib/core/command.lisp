@@ -4,7 +4,8 @@
           *post-command-hook*
           this-command
           execute
-          primary-command))
+          primary-command
+          call-command))
 
 (defconstant +primary-command-class-name+ 'primary-command)
 

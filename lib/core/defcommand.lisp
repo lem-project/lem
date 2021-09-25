@@ -43,8 +43,12 @@
                                  '(list
                                    (region-beginning)
                                    (region-end)))))
+                             ((and (consp arg-descriptor)
+                                   (eq :splice (first arg-descriptor)))
+                              (assert (alexandria:length= arg-descriptor 2))
+                              (second arg-descriptor))
                              (t
-                              arg-descriptor)))
+                              `(list ,arg-descriptor))))
                      arg-descriptors)))
       (if (null pre-forms)
           `(append ,@forms)

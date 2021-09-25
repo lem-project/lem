@@ -282,7 +282,7 @@
                         :history-symbol 'mh-scheme-package))))
 
 ;(define-command scheme-set-package (package-name) ((list (read-package-name)))
-(define-command scheme-set-library (package-name) ((list (read-package-name)))
+(define-command scheme-set-library (package-name) ((read-package-name))
   (check-connection)
   (cond ((not *use-scheme-set-library*)
          (editor-error "Not supported"))
@@ -313,7 +313,7 @@
                      :history-symbol 'mh-scheme-sexp))
 
 (define-command scheme-eval-string (string)
-    ((list (prompt-for-sexp "Scheme Eval: ")))
+    ((prompt-for-sexp "Scheme Eval: "))
   (check-connection)
   (interactive-eval string))
 
@@ -777,9 +777,11 @@
            :name "scheme-wait-message"))))
 
 (define-command scheme-slime-connect (hostname port &optional (start-repl t))
-    ((list (prompt-for-string "Hostname: " :initial-value *localhost*)
-           (parse-integer (prompt-for-string "Port: " :initial-value (princ-to-string *default-port*)))
-           t))
+    ((:splice
+      (list (prompt-for-string "Hostname: " :initial-value *localhost*)
+            (parse-integer
+             (prompt-for-string "Port: "
+                                :initial-value (princ-to-string *default-port*))))))
   (enable-scheme-slime-commands)
   (message "Connecting...")
   (let (connection)

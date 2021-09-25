@@ -35,8 +35,8 @@
 (define-key *lisp-inspector-keymap* "M-Return" 'lisp-inspector-copy-down-to-repl)
 
 (define-command lisp-inspect (string)
-    ((list (or (symbol-string-at-point (current-point))
-               (prompt-for-sexp "Inspect value (evaluated): "))))
+    ((or (symbol-string-at-point (current-point))
+         (prompt-for-sexp "Inspect value (evaluated): ")))
   (lisp-eval-async `(swank:init-inspector ,string) 'open-inspector))
 
 (defun inspector-buffer ()
@@ -158,18 +158,18 @@
     part))
 
 (define-command lisp-inspector-pprint (part)
-    ((list (inspector-get-part)))
+    ((inspector-get-part))
   (lisp-eval-describe `(swank:pprint-inspector-part ,part)))
 
 (define-command lisp-inspector-eval (string)
-    ((list (prompt-for-sexp "Inspector eval: ")))
+    ((prompt-for-sexp "Inspector eval: "))
   (eval-with-transcript `(swank:inspector-eval ,string)))
 
 (define-command lisp-inspector-history () ()
   (lisp-eval-describe `(swank:inspector-history)))
 
 (define-command lisp-inspector-show-source (part)
-    ((list (inspector-get-part)))
+    ((inspector-get-part))
   (lisp-eval-async `(swank:find-source-location-for-emacs '(:inspector ,part))
                    #'show-source-location))
 

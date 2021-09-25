@@ -68,7 +68,7 @@
                (symbol-string-at-point point)))))))
 
 (define-command lisp-add-export (symbol-name)
-    ((list (prompt-for-string "Export: " :initial-value (get-defun-symbol (current-point)))))
+    ((prompt-for-string "Export: " :initial-value (get-defun-symbol (current-point))))
   (check-connection)
   (with-point ((point (current-point) :left-inserting))
     (multiple-value-bind (point exists)

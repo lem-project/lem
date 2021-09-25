@@ -598,7 +598,7 @@
     (delete-blank-lines)))
 
 (define-command load-library (name)
-    ((list (prompt-for-library "load library: " :history-symbol 'load-library)))
+    ((prompt-for-library "load library: " :history-symbol 'load-library))
   (message "Loading ~A." name)
   (cond ((ignore-errors (maybe-quickload (format nil "lem-~A" name) :silent t))
          (message "Loaded ~A." name))

@@ -331,7 +331,7 @@
     (when (form-offset end 1)
       (indent-region (current-point) end))))
 
-(define-command lisp-set-package (package-name) ((list (read-package-name)))
+(define-command lisp-set-package (package-name) ((read-package-name))
   (check-connection)
   (cond ((string= package-name ""))
         ((eq (current-buffer) (repl-buffer))
@@ -368,7 +368,7 @@
                      :history-symbol 'mh-sexp))
 
 (define-command lisp-eval-string (string)
-    ((list (prompt-for-sexp "Lisp Eval: ")))
+    ((prompt-for-sexp "Lisp Eval: "))
   (check-connection)
   (interactive-eval string))
 
@@ -420,7 +420,7 @@
     (insert-string (current-point) (format nil "~{~S~^~%~}" values))))
 
 (define-command self-lisp-eval-string (string)
-    ((list (prompt-for-sexp "Lisp Eval: ")))
+    ((prompt-for-sexp "Lisp Eval: "))
   (self-interactive-eval string))
 
 (define-command self-lisp-eval-last-expression (p) ("P")
@@ -453,10 +453,10 @@
      ,(points-to-string start end))))
 
 (define-command lisp-load-file (filename)
-    ((list (prompt-for-file "Load File: "
-                            :directory (or (buffer-filename) (buffer-directory))
-                            :default nil
-                            :existing t)))
+    ((prompt-for-file "Load File: "
+                      :directory (or (buffer-filename) (buffer-directory))
+                      :default nil
+                      :existing t))
   (check-connection)
   (when (and (probe-file filename)
              (not (uiop:directory-pathname-p filename)))
@@ -639,7 +639,7 @@
   (macroexpand-internal 'swank:swank-macroexpand-all))
 
 (define-command lisp-quickload (system-name)
-    ((list (prompt-for-symbol-name "System: " (lem-lisp-mode::buffer-package (current-buffer)))))
+    ((prompt-for-symbol-name "System: " (lem-lisp-mode::buffer-package (current-buffer))))
   (check-connection)
   (eval-with-transcript `(,(uiop:find-symbol* :quickload :quicklisp) ,(string system-name))))
 
@@ -800,9 +800,11 @@
            :name "lisp-wait-message"))))
 
 (define-command slime-connect (hostname port &optional (start-repl t))
-    ((list (prompt-for-string "Hostname: " :initial-value *localhost*)
-           (parse-integer (prompt-for-string "Port: " :initial-value (princ-to-string *default-port*)))
-           t))
+    ((:splice
+      (list (prompt-for-string "Hostname: " :initial-value *localhost*)
+            (parse-integer
+             (prompt-for-string "Port: "
+                                :initial-value (princ-to-string *default-port*))))))
   (message "Connecting...")
   (let ((connection
           (handler-case (if (eq hostname *localhost*)

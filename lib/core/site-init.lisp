@@ -64,7 +64,7 @@
         (maybe-quickload system-name :silent t)))))
 
 (define-command site-init-add-dependency (symbols)
-  ((list (prompt-for-library "library: " :history-symbol 'load-library)))
+    ((prompt-for-library "library: " :history-symbol 'load-library))
   "Input system name and test it's loadable."
   (loop :with site-init := (site-init)
         :with depends-on := (getf (cddr site-init) :depends-on)

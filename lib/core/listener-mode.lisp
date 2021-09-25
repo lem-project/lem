@@ -146,7 +146,7 @@
       (replace-textarea str))))
 
 (define-command listener-previous-matching-input (regexp)
-    ((list (prompt-for-string "Previous element matching (regexp): ")))
+    ((prompt-for-string "Previous element matching (regexp): "))
   (%backup-edit-string (%listener-history))
   (multiple-value-bind (str win)
       (lem.history:previous-matching (%listener-history) regexp)

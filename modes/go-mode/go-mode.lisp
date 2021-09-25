@@ -139,7 +139,7 @@
   (filter-buffer "gofmt"))
 
 (define-command godoc (command)
-    ((list (prompt-for-string "godoc ")))
+    ((prompt-for-string "godoc "))
   (let ((text
           (with-output-to-string (out)
             (uiop:run-program (list "godoc" command)
@@ -279,7 +279,7 @@
         (bt:make-thread fn :name "go-flymake")))
 
 (define-command goflymake (buffer)
-    ((list (current-buffer)))
+    ((current-buffer))
   (when (eq 'go-mode (buffer-major-mode buffer))
     (mapc #'delete-overlay *goflymake-overlays*)
     (setf *goflymake-overlays* '())

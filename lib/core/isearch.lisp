@@ -488,7 +488,7 @@
 (define-key *global-keymap* "M-%" 'query-replace)
 
 (define-command query-replace (before after)
-    ((read-query-replace-args))
+    ((:splice (read-query-replace-args)))
   (query-replace-internal before
                           after
                           #'search-forward
@@ -496,7 +496,7 @@
                           :query t))
 
 (define-command query-replace-regexp (before after)
-    ((read-query-replace-args))
+    ((:splice (read-query-replace-args)))
   (query-replace-internal before
                           after
                           #'search-forward-regexp
@@ -504,7 +504,7 @@
                           :query t))
 
 (define-command query-replace-symbol (before after)
-    ((read-query-replace-args))
+    ((:splice (read-query-replace-args)))
   (query-replace-internal before
                           after
                           #'search-forward-symbol

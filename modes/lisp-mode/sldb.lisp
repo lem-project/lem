@@ -269,13 +269,13 @@
             (t
              (kill-buffer buffer))))))
 
-(define-command sldb-down (p) ((list (current-point)))
+(define-command sldb-down (p) ((current-point))
   (next-single-property-change p 'sldb-frame)
   (when (end-line-p p)
     (or (next-single-property-change p 'sldb-frame)
         (next-single-property-change p 'sldb-more-frames))))
 
-(define-command sldb-up (p) ((list (current-point)))
+(define-command sldb-up (p) ((current-point))
   (let ((sp (buffer-value (current-buffer)
                           'backtrace-start-point)))
     (cond ((point< p sp)
@@ -332,7 +332,7 @@
         (editor-error "No variable at point"))))
 
 (define-command sldb-restart-frame (frame-number)
-    ((list (frame-number-at-point (current-point))))
+    ((frame-number-at-point (current-point)))
   (when frame-number
     (lisp-rex `(swank:restart-frame ,frame-number)
               :continuation (lambda (v)
@@ -362,11 +362,13 @@
 (define-command sldb-invoke-restart-9 () () (sldb-invoke-restart 9))
 
 (define-command sldb-invoke-restart-by-name (restart-name)
-    ((list (let ((restarts (buffer-value (current-buffer) 'restarts)))
-             (prompt-for-string "Restart:"
-                                :completion-function (lambda (s) (completion s restarts))
-                                :test-function (lambda (s) (member s restarts :test #'string-equal :key #'first))
-                                :history-symbol 'sldb-restarts))))
+    ((:splice
+      (let ((restarts (buffer-value (current-buffer) 'restarts)))
+        (prompt-for-string "Restart:"
+                           :completion-function (lambda (s) (completion s restarts))
+                           :test-function (lambda (s)
+                                            (member s restarts :test #'string-equal :key #'first))
+                           :history-symbol 'sldb-restarts))))
   (sldb-invoke-restart
    (position restart-name
              (buffer-value (current-buffer) 'restarts)
@@ -374,7 +376,7 @@
              :key #'first)))
 
 (define-command sldb-show-frame-source (frame-number)
-    ((list (frame-number-at-point (current-point))))
+    ((frame-number-at-point (current-point)))
   (lisp-eval-async `(swank:frame-source-location ,frame-number)
                    #'show-source-location))
 
@@ -387,18 +389,18 @@
           pkg)))
 
 (define-command sldb-eval-in-frame (frame string package)
-    ((eval-form-for-frame "Eval in frame (~A)> "))
+    ((:splice (eval-form-for-frame "Eval in frame (~A)> ")))
   (lisp-eval-async `(swank:eval-string-in-frame ,string ,frame ,package)
                    (lambda (string)
                      (message "~A" string))))
 
 (define-command sldb-pprint-eval-in-frame (frame string package)
-    ((eval-form-for-frame "Eval in frame (~A)> "))
+    ((:splice (eval-form-for-frame "Eval in frame (~A)> ")))
   (lisp-eval-async `(swank:pprint-eval-string-in-frame ,string ,frame ,package)
                    *write-string-function*))
 
 (define-command sldb-inspect-in-frame (string)
-    ((list (prompt-for-sexp "Inspect in frame (evaluated): ")))
+    ((prompt-for-sexp "Inspect in frame (evaluated): "))
   (let ((frame-number (frame-number-at-point (current-point))))
     (lisp-eval-async `(swank:inspect-in-frame ,string ,frame-number)
                      'open-inspector)))
@@ -413,7 +415,7 @@
   (lisp-eval-async `(swank:sldb-out ,(frame-number-at-point (current-point)))))
 
 (define-command sldb-break-on-return (name)
-    ((list (prompt-for-symbol-name "Function: ")))
+    ((prompt-for-symbol-name "Function: "))
   (lisp-eval-async `(swank:sldb-break ,name)
                    (lambda (message)
                      (message "~A" message))))

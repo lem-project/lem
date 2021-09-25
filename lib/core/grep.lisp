@@ -131,7 +131,7 @@
     (loop :while (replace-diff p))))
 
 (define-command grep (string &optional (directory (buffer-directory)))
-    ((list (prompt-for-string ": " :initial-value "grep -nH ")))
+    ((prompt-for-string ": " :initial-value "grep -nH "))
   (labels ((f (&optional a)
              (declare (ignore a))
              (call-background-job

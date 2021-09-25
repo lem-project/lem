@@ -533,7 +533,7 @@
        (yank)))))
 
 (define-command vi-replace-char (c)
-    ((list (key-to-char (read-key))))
+    ((key-to-char (read-key)))
   (cond
     ((visual-p)
      (apply-visual-range (lambda (start end)

@@ -49,7 +49,8 @@
   (setf (variable-value 'find-references-function) 'find-references)
   (setf (variable-value 'completion-spec) 'completion-symbol)
   (setf (variable-value 'idle-function) 'lisp-idle-function)
-  (set-syntax-parser lem-lisp-syntax:*syntax-table* (make-tmlanguage-lisp :enable-feature-support *enable-feature-highlight*))
+  (set-syntax-parser lem-lisp-syntax:*syntax-table*
+                     (make-tmlanguage-lisp :enable-feature-support *enable-feature-highlight*))
   (unless (connected-p) (self-connect)))
 
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)

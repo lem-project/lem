@@ -70,7 +70,7 @@
     (cond ((null value)
            +primary-command-class-name+)
           (t
-           (alexandria:length= (assert value) 1)
+           (assert (alexandria:length= (assert value) 1))
            (first value)))))
 
 (defmacro define-command (&whole form name-and-options params (&rest arg-descriptors) &body body)

@@ -8,13 +8,17 @@
 
 (defvar *command-table*)
 
-(defstruct cmd name)
+(defstruct cmd name form)
 
 (defstruct command-table
   (table (make-hash-table :test 'equal)))
 
 (defun add-command (name cmd &optional (command-table *command-table*))
   (check-type name string)
+  (alexandria:when-let (existing-cmd (gethash name (command-table-table command-table)))
+    (unless (equalp (cmd-form cmd)
+                    (cmd-form existing-cmd))
+      (cerror "redefine command" "~A is already defined" name)))
   (setf (gethash name (command-table-table command-table)) cmd))
 
 (defun remove-command (name &optional (command-table *command-table*))

@@ -69,14 +69,14 @@
            (alexandria:length= (assert value) 1)
            (first value)))))
 
-(defmacro define-command (name-and-options params (&rest arg-descriptors) &body body)
+(defmacro define-command (&whole form name-and-options params (&rest arg-descriptors) &body body)
   (destructuring-bind (name . options) (uiop:ensure-list name-and-options)
     (let ((primary-class (primary-class options))
           (advice-classes (alexandria:assoc-value options :advice-classes))
           (command-name (string-downcase name)))
       (alexandria:with-unique-names (command universal-argument)
         `(progn
-           (add-command ,command-name (make-cmd :name ',name))
+           (add-command ,command-name (make-cmd :name ',name :form ',form))
            (defun ,name ,params
              ;; コマンドではなく直接この関数を呼び出した場合
              ;; - *this-command*が束縛されない

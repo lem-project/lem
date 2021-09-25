@@ -5,9 +5,6 @@
           quick-exit
           keyboard-quit
           nop-command
-          self-insert-before-hook
-          self-insert-after-hook
-          self-insert
           unmark-buffer
           *read-only-function*
           toggle-read-only
@@ -90,18 +87,6 @@
 
 (define-key *global-keymap* "NopKey" 'nop-command)
 (define-command nop-command () ())
-
-(define-editor-variable self-insert-before-hook '())
-(define-editor-variable self-insert-after-hook '())
-
-(define-command self-insert (n) ("p")
-  (let ((c (insertion-key-p (last-read-key-sequence))))
-    (cond (c
-           (run-hooks (variable-value 'self-insert-before-hook) c)
-           (insert-character (current-point) c n)
-           (run-hooks (variable-value 'self-insert-after-hook) c))
-          (t
-           (undefined-key)))))
 
 (define-key *global-keymap* "M-~" 'unmark-buffer)
 (define-command unmark-buffer () ()

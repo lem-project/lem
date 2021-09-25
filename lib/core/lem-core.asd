@@ -51,6 +51,7 @@
                (:file "lem")
 
                (:file "primitive-command")
+               (:file "self-insert-command")
                (:file "file-command")
                (:file "window-command")
                (:file "help-command")

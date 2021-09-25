@@ -8,14 +8,14 @@
 (defun search-backward-migemo (point query &optional limit-point)
   (search-backward-regexp point (cl-migemo:query query) limit-point))
 
-(define-command isearch-forward-migemo (&optional prompt) ((list nil))
+(define-command isearch-forward-migemo (&optional prompt) ()
   (lem.isearch::isearch-start (or prompt "ISearch Migemo: ")
                               (lem.isearch::make-add-char-callback #'search-forward-migemo)
                               #'search-forward-migemo
                               #'search-backward-migemo
                               ""))
 
-(define-command isearch-backward-migemo (&optional prompt) ((list nil))
+(define-command isearch-backward-migemo (&optional prompt) ()
   (lem.isearch::isearch-start (or prompt "ISearch Migemo: ")
                               (lem.isearch::make-add-char-callback #'search-backward-migemo)
                               #'search-forward-migemo

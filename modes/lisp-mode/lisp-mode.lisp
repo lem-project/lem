@@ -1176,7 +1176,7 @@
         (run-slime last-command :directory directory)))))
 
 (define-command slime-self-connect (&optional (start-repl t))
-    ((list t))
+    ()
   (unless (self-connected-p)
     (self-connect))
   (when start-repl (start-lisp-repl)))

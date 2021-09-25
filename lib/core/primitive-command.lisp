@@ -67,7 +67,7 @@
     t))
 
 (define-key *global-keymap* "C-x C-c" 'exit-lem)
-(define-command exit-lem (&optional (ask t)) ((list t))
+(define-command exit-lem (&optional (ask t)) ()
   (when (or (null ask)
             (not (any-modified-buffer-p))
             (prompt-for-y-or-n-p "Modified buffers exist. Leave anyway"))
@@ -582,7 +582,7 @@
         (with-pop-up-typeout-window (out (make-buffer "*Command*") :focus nil :erase t :read-only nil)
           (write-string output-string out))))))
 
-(define-command delete-trailing-whitespace (buffer) ((list (current-buffer)))
+(define-command delete-trailing-whitespace (&optional (buffer (current-buffer))) ()
   (save-excursion
     (setf (current-buffer) buffer)
     (let ((p (current-point)))

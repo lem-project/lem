@@ -659,7 +659,7 @@
 (define-command vi-write () ()
   (lem:write-file (lem:buffer-filename (lem:current-buffer))))
 
-(define-command vi-quit (&optional (ask t)) ((list t))
+(define-command vi-quit (&optional (ask t)) ()
   (if (one-window-p)
       (exit-lem ask)
       (delete-current-window)))

@@ -102,13 +102,11 @@
   (setf *unread-keys* (nconc *unread-keys* kseq)))
 
 (defun execute-key-sequence (key-sequence)
-  (handler-case
-      (let ((*unread-keys* key-sequence))
-        (do-command-loop (:interactive nil)
-          (when (null *unread-keys*)
-            (return-from execute-key-sequence t))
-          (call-command (read-command) nil)))
-    (editor-condition ())))
+  (let ((*unread-keys* key-sequence))
+    (do-command-loop (:interactive nil)
+      (when (null *unread-keys*)
+        (return))
+      (call-command (read-command) nil))))
 
 (defun sit-for (seconds &optional (update-window-p t))
   (when update-window-p (redraw-display))

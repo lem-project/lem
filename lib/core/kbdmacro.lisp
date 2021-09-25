@@ -40,7 +40,11 @@
          (let ((*macro-running-p* t))
            (loop
              :repeat n
-             :while (execute-key-sequence *last-macro-chars*)
+             :while (handler-case
+                        (progn
+                          (execute-key-sequence *last-macro-chars*)
+                          t)
+                      (editor-condition () nil))
              :finally (return t))))))
 
 (define-command apply-macro-to-region-lines (start-point end-point) ("r")

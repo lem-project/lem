@@ -123,14 +123,7 @@
       (save-current-buffer t))))
 
 (define-command write-region-file (start end filename)
-    ((progn
-       (check-marked)
-       (list (region-beginning)
-             (region-end)
-             (prompt-for-file "Write Region To File: "
-                              :directory (buffer-directory)
-                              :default nil
-                              :existing nil))))
+    ("r" "FWrite Region To File: ")
   (setf filename (expand-file-name filename))
   (add-newline-at-eof (point-buffer start))
   (write-region-to-file start end filename)

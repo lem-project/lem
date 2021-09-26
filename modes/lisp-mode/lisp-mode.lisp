@@ -130,7 +130,7 @@
       (log:debug "Starting internal SWANK and connecting to it" swank:*communication-style*)
       (let ((swank::*swank-debug-p* nil))
         (swank:create-server :port port :style :spawn))
-      (slime-connect *localhost* port nil)
+      (%slime-connect *localhost* port)
       (update-buffer-package)
       (setf *self-connected-port* port))))
 
@@ -800,13 +800,16 @@
                           (change-connection ()))))
            :name "lisp-wait-message"))))
 
-(define-command slime-connect (hostname port &optional (start-repl t))
-    ((:splice
-      (list (prompt-for-string "Hostname: " :initial-value *localhost*)
-            (parse-integer
-             (prompt-for-string "Port: "
-                                :initial-value (princ-to-string *default-port*))))))
-  (message "Connecting...")
+(defun connected-slime-message (connection &key repl)
+  (let ((message
+          (format nil ";;; Swank server running on ~A ~A"
+                  (connection-implementation-name connection)
+                  (connection-implementation-version connection))))
+    (if repl
+        (write-string-to-repl (format nil "~%~A" message))
+        (message "~A" message))))
+
+(defun %slime-connect (hostname port)
   (let ((connection
           (handler-case (if (eq hostname *localhost*)
                             (or (ignore-errors (new-connection "127.0.0.1" port))
@@ -814,13 +817,20 @@
                             (new-connection hostname port))
             (error (c)
               (editor-error "~A" c)))))
-    (message "Swank server running on ~A ~A"
-             (connection-implementation-name connection)
-             (connection-implementation-version connection))
     (add-connection connection)
-    (when start-repl (start-lisp-repl))
     (start-thread)
     connection))
+
+(define-command slime-connect (hostname port &optional (start-repl t))
+    ((:splice
+      (list (prompt-for-string "Hostname: " :initial-value *localhost*)
+            (parse-integer
+             (prompt-for-string "Port: "
+                                :initial-value (princ-to-string *default-port*))))))
+  (message "Connecting...")
+  (let ((connection (%slime-connect hostname port)))
+    (when start-repl (start-lisp-repl))
+    (connected-slime-message connection :repl nil)))
 
 (defvar *unknown-keywords* nil)
 (defun pull-events ()
@@ -1104,32 +1114,41 @@
   (let* ((port (lem-utils/socket:random-available-port))
          (process (run-lisp :command command :directory directory :port port)))
     (send-swank-create-server process port)
-    (sleep 0.5)
-    (let ((successp)
-          (condition)
-          (progress-message "SLIME is starting up"))
-      (loop :repeat 30
-            :do (message-without-log "~A" progress-message)
-                (redraw-display)
-                (setf progress-message (format nil "~A." progress-message))
-                (handler-case
-                    (let ((conn (slime-connect *localhost* port t)))
-                      (setf (connection-command conn) command)
-                      (setf (connection-process conn) process)
-                      (setf (connection-process-directory conn) directory)
-                      (setf successp t)
-                      (return))
-                  (editor-error (c)
-                    (setf condition c)
-                    (if (lem-process:process-alive-p process)
-                        (sleep 0.5)
-                        (return)))))
-      (unless successp
-        (send-event (lambda ()
-                      (pop-up-typeout-window (make-lisp-process-buffer port) nil)))
-        (error condition)))
-    #-win32
-    (add-hook *exit-editor-hook* 'slime-quit-all)))
+    (start-lisp-repl)
+    (write-string-to-repl ";;; SLIME is starting up")
+    (let (timer
+          (retry-count 0))
+      (labels ((interval ()
+                 (write-string-to-repl ".")
+                 (handler-case
+                     (let ((conn (%slime-connect *localhost* port)))
+                       (setf (connection-command conn) command)
+                       (setf (connection-process conn) process)
+                       (setf (connection-process-directory conn) directory)
+                       conn)
+                   (editor-error (c)
+                     (cond ((or (not (lem-process:process-alive-p process))
+                                (< 30 retry-count))
+                            (failure c))
+                           (t
+                            (incf retry-count))))
+                   (:no-error (conn)
+                     (connected-slime-message conn :repl t)
+                     ;; replのプロンプトの表示とカーソル位置の変更をしたいが
+                     ;; 他のファイルの作業中にバッファ/ウィンドウが切り替わると作業の邪魔なので
+                     ;; with-current-windowで元に戻す
+                     (with-current-window (current-window) (start-lisp-repl))
+                     (success))))
+               (success ()
+                 (stop-timer timer)
+                 #-win32
+                 (add-hook *exit-editor-hook* 'slime-quit-all))
+               (failure (c)
+                 (stop-timer timer)
+                 (pop-up-typeout-window (make-lisp-process-buffer port)
+                                        nil)
+                 (error c)))
+        (setf timer (start-timer 500 t #'interval))))))
 
 (define-command slime (&optional ask-impl) ("P")
   (let ((command (if ask-impl (prompt-for-impl))))
@@ -1178,8 +1197,7 @@
         (sit-for* 3)
         (run-slime last-command :directory directory)))))
 
-(define-command slime-self-connect (&optional (start-repl t))
-    ()
+(define-command slime-self-connect (&optional (start-repl t)) ()
   (unless (self-connected-p)
     (self-connect))
   (when start-repl (start-lisp-repl)))

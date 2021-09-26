@@ -24,7 +24,6 @@
            :isearch-prev-highlight
            :isearch-toggle-highlighting
            :read-query-replace-args
-           :isearch-toggle-highlighting
            :query-replace
            :query-replace-regexp
            :query-replace-symbol)

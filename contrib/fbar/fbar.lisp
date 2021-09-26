@@ -57,9 +57,10 @@
 		      (if suffix
 			  (format nil "~A.~A" (pathname-name path) suffix)
 			  (format nil "~A" (pathname-name path))))))
+
     ;;pad the filename to create a 'background'
     (let* ((nstring (if dirp (dname) (fname)))
-	   (rem (max 0 (- *fbar-width* (length nstring) tab))))
+           (rem (max 0 (- *fbar-width* (lem:string-width nstring) tab))))
       (setf nstring (concatenate 'string
 				 (spaces tab)
 				 nstring
@@ -108,6 +109,7 @@
   
   (define-command fbar-on () ()
     (unless *fbar-window*
+      (fbar)
       (setf old-window (current-window)
 	    old-buffer (current-buffer)
 	    old-point (copy-point  (current-point) :temporary  ))
@@ -116,7 +118,7 @@
                            :buffer *fbar-buffer*
                            :x 0
                            :y 0
-                           :width *fbar-width*
+                           :width (1+ *fbar-width*)
                            :height (1- (display-height))
                            :use-modeline-p nil))
       

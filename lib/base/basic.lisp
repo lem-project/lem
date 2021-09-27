@@ -50,11 +50,13 @@
 
 (defun first-line-p (point)
   "`point`が最初の行ならT、それ以外ならNILを返します。"
-  (null (line-prev (point-line point))))
+  (eq (point-line point)
+      (point-line (buffer-start-point (point-buffer point)))))
 
 (defun last-line-p (point)
   "`point`が最後の行ならT、それ以外ならNILを返します。"
-  (null (line-next (point-line point))))
+  (eq (point-line point)
+      (point-line (buffer-end-point (point-buffer point)))))
 
 (defun start-line-p (point)
   "`point`が行頭ならT、それ以外ならNILを返します。"
@@ -67,13 +69,11 @@
 
 (defun start-buffer-p (point)
   "`point`がバッファの最初の位置ならT、それ以外ならNILを返します。"
-  (and (first-line-p point)
-       (start-line-p point)))
+  (point<= point (buffer-start-point (point-buffer point))))
 
 (defun end-buffer-p (point)
   "`point`がバッファの最後の位置ならT、それ以外ならNILを返します。"
-  (and (last-line-p point)
-       (end-line-p point)))
+  (point<= (buffer-end-point (point-buffer point)) point))
 
 (defun same-line-p (point1 point2)
   "`point1`と`point2`が同じ位置ならT、それ以外ならNILを返します。"

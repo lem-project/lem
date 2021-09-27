@@ -2,6 +2,7 @@
   (:use :cl :lem)
   (:export :listener-prompt-attribute
            :*listener-mode-keymap*
+           :listener-start-point
            :listener-start
            :listener-update-point
            :listener-reset-prompt

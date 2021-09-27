@@ -58,11 +58,13 @@
 (defmacro define-repl-shortcut (name lambda-list &body body)
   (if (symbolp lambda-list)
       `(progn
-         (setf *lisp-repl-shortcuts* (remove ,(string-downcase name) *lisp-repl-shortcuts* :key 'first :test 'equal))
+         (setf *lisp-repl-shortcuts*
+               (remove ,(string-downcase name) *lisp-repl-shortcuts* :key 'first :test 'equal))
          (push (cons ,(string-downcase name) ',lambda-list) *lisp-repl-shortcuts*)
          ',name)
       `(progn
-         (setf *lisp-repl-shortcuts* (remove ,(string-downcase name) *lisp-repl-shortcuts* :key 'first :test 'equal))
+         (setf *lisp-repl-shortcuts*
+               (remove ,(string-downcase name) *lisp-repl-shortcuts* :key 'first :test 'equal))
          (push (cons ,(string-downcase name) ',name) *lisp-repl-shortcuts*)
          (defun ,name ,lambda-list ,@body))))
 

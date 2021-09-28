@@ -25,7 +25,7 @@
 (define-editor-variable listener-prompt-attribute 'listener-prompt-attribute)
 
 (defvar %listener-point-indicator (gensym))
-(defmacro %listener-point (buffer)
+(defmacro prompt-end-point (buffer)
   `(buffer-value ,buffer %listener-point-indicator))
 
 (define-editor-variable listener-set-prompt-function)
@@ -42,7 +42,7 @@
     (setf (variable-value 'listener-store)
           (make-instance '<listener>
                          :history (lem.history:make-history))))
-  (unless (%listener-point (current-buffer))
+  (unless (prompt-end-point (current-buffer))
     (listener-update-point)))
 
 (define-key *listener-mode-keymap* "Return" 'listener-return)
@@ -57,7 +57,7 @@
     (listener-history listener)))
 
 (defun listener-start-point (buffer)
-  (%listener-point buffer))
+  (prompt-end-point buffer))
 
 (defun default-switch-to-buffer (buffer)
   (setf (current-window) (pop-to-buffer buffer)))
@@ -69,9 +69,9 @@
     (listener-reset-prompt buffer)))
 
 (defun listener-update-point (&optional (point (current-point)))
-  (when (%listener-point (point-buffer point))
-    (delete-point (%listener-point (point-buffer point))))
-  (setf (%listener-point (point-buffer point))
+  (when (prompt-end-point (point-buffer point))
+    (delete-point (prompt-end-point (point-buffer point))))
+  (setf (prompt-end-point (point-buffer point))
         (if point
             (copy-point point :right-inserting)
             (copy-point (current-point) :right-inserting))))
@@ -131,7 +131,7 @@
     (save-excursion
       (delete-between-points start end)
       (insert-string start str)
-      (move-point (%listener-point (current-buffer)) start))
+      (move-point (prompt-end-point (current-buffer)) start))
     (buffer-end (current-point))))
 
 (define-command listener-prev-input () ()

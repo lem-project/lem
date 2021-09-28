@@ -369,7 +369,7 @@
     (push tag (read-string-tag-stack))
     (setf (current-window) (pop-to-buffer buffer))
     (buffer-end (current-point))
-    (lem.listener-mode:listener-update-point)
+    (lem.listener-mode:listener-update-point (current-point))
     (repl-change-read-line-input)))
 
 (defun repl-pop-stack ()

@@ -293,7 +293,7 @@
              (scheme-eval `(swank:set-package ,package-name))
            (new-package name prompt-string)
            (when (repl-buffer)
-             (lem.listener-mode:listener-reset-prompt (repl-buffer)))))
+             (lem.listener-mode:refresh-prompt (repl-buffer)))))
         (t
          (check-scheme-mode)
          (setf (buffer-value (current-buffer) "package") package-name))))

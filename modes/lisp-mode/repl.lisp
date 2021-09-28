@@ -206,7 +206,7 @@
    string
    (lambda (value)
      (declare (ignore value))
-     (lem.listener-mode:listener-reset-prompt (ensure-repl-buffer-exist))
+     (lem.listener-mode:refresh-prompt (ensure-repl-buffer-exist))
      (when *record-history-of-repl*
        (start-timer 0 nil
                     (lambda ()
@@ -274,7 +274,7 @@
       `(,(read-from-string "swank-repl::listener-get-value"))
       (lambda (result)
         (declare (ignore result))
-        (lem.listener-mode:listener-reset-prompt (ensure-repl-buffer-exist)))))))
+        (lem.listener-mode:refresh-prompt (ensure-repl-buffer-exist)))))))
 
 (defun write-string-to-repl (string)
   (let ((buffer (ensure-repl-buffer-exist)))

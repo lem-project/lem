@@ -339,7 +339,7 @@
          (destructuring-bind (name prompt-string)
              (lisp-eval `(swank:set-package ,package-name))
            (new-package name prompt-string)
-           (lem.listener-mode:listener-reset-prompt (repl-buffer))))
+           (lem.listener-mode:refresh-prompt (repl-buffer))))
         (t
          (setf (buffer-value (current-buffer) "package") package-name))))
 

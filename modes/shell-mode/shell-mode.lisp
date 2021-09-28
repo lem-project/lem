@@ -70,7 +70,7 @@
     (buffer-end point)
     (lem-lisp-mode::insert-escape-sequence-string point string)
     ;; (insert-string point string)
-    (lem.listener-mode:listener-reset-prompt buffer nil)))
+    (lem.listener-mode:refresh-prompt buffer nil)))
 
 (defun run-shell-internal ()
   (create-shell-buffer

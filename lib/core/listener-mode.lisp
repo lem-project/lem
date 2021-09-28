@@ -5,7 +5,7 @@
            :prompt-end-point
            :listener-start
            :change-prompt-end-point
-           :listener-reset-prompt
+           :refresh-prompt
            :listener-return
            :listener-prev-input
            :listener-next-input
@@ -65,7 +65,7 @@
   (let ((buffer (make-buffer buffer-name)))
     (funcall switch-to-buffer-function buffer)
     (funcall mode)
-    (listener-reset-prompt buffer)))
+    (refresh-prompt buffer)))
 
 (defun change-prompt-end-point (point)
   (check-type point point)
@@ -75,7 +75,7 @@
     (set-prompt-end-point buffer
                           (copy-point point :right-inserting))))
 
-(defun listener-reset-prompt (&optional (buffer (current-buffer)) (fresh-line t))
+(defun refresh-prompt (&optional (buffer (current-buffer)) (fresh-line t))
   (let ((cur-point (buffer-point buffer)))
     (buffer-end cur-point)
     (when fresh-line
@@ -102,7 +102,7 @@
         (insert-character point #\newline)
         (let ((start (prompt-end-point (current-buffer))))
           (unless (point<= start point)
-            (listener-reset-prompt)
+            (refresh-prompt)
             (return-from listener-return t))
           (let ((str (points-to-string start point)))
             (lem.history:add-history (current-listener-history) str)
@@ -159,7 +159,7 @@
 (defun clear-listener (buffer)
   (let ((*inhibit-read-only* t))
     (erase-buffer buffer))
-  (listener-reset-prompt buffer))
+  (refresh-prompt buffer))
 
 (define-command listener-clear-buffer () ()
   (clear-listener (current-buffer))

@@ -157,7 +157,7 @@
        (scheme-eval-from-string
         (format nil "(swank:load-file ~S)" filename))
        ;(when (repl-buffer)
-       ;  (lem.listener-mode:listener-reset-prompt (repl-buffer)))
+       ;  (lem.listener-mode:refresh-prompt (repl-buffer)))
        (message "Loaded")))
     ((eq (scheme-repl-type :kind :initial) :scheme-process)
      (scheme-run-process-and-output-newline)
@@ -350,7 +350,7 @@
        string
        (lambda (value)
          (declare (ignore value))
-         (lem.listener-mode:listener-reset-prompt (repl-buffer))
+         (lem.listener-mode:refresh-prompt (repl-buffer))
          (when *record-history-of-repl*
            (start-timer 0 nil
                         (lambda ()

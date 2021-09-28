@@ -55,7 +55,7 @@
     (insert-string p string)
     (when (or (ppcre:scan "^>>> " (line-string p))
               (ppcre:scan "^... " (line-string p)))
-      (lem.listener-mode:listener-reset-prompt buffer nil))
+      (lem.listener-mode:refresh-prompt buffer nil))
     (unless already-exists
       (setf (current-window) (display-buffer buffer)))
     (alexandria:when-let (window (first (get-buffer-windows buffer)))

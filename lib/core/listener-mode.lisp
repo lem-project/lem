@@ -25,8 +25,12 @@
 (define-editor-variable listener-prompt-attribute 'listener-prompt-attribute)
 
 (defvar %listener-point-indicator (gensym))
-(defmacro prompt-end-point (buffer)
-  `(buffer-value ,buffer %listener-point-indicator))
+
+(defun prompt-end-point (buffer)
+  (buffer-value buffer %listener-point-indicator))
+
+(defun change-prompt-end-point (buffer point)
+  (setf (buffer-value buffer %listener-point-indicator) point))
 
 (define-editor-variable listener-set-prompt-function)
 (define-editor-variable listener-check-input-function)
@@ -71,10 +75,10 @@
 (defun listener-update-point (&optional (point (current-point)))
   (when (prompt-end-point (point-buffer point))
     (delete-point (prompt-end-point (point-buffer point))))
-  (setf (prompt-end-point (point-buffer point))
-        (if point
-            (copy-point point :right-inserting)
-            (copy-point (current-point) :right-inserting))))
+  (change-prompt-end-point (point-buffer point)
+                           (if point
+                               (copy-point point :right-inserting)
+                               (copy-point (current-point) :right-inserting))))
 
 (defun listener-reset-prompt (&optional (buffer (current-buffer)) (fresh-line t))
   (let ((cur-point (buffer-point buffer)))

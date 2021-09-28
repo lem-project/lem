@@ -27,7 +27,7 @@
 (progn
   (defun prompt-end-point (buffer)
     (buffer-value buffer #1='#:prompt-end-point))
-  (defun change-prompt-end-point (buffer point)
+  (defun set-prompt-end-point (buffer point)
     (setf (buffer-value buffer '#1#) point)))
 
 (define-editor-variable listener-set-prompt-function)
@@ -72,8 +72,8 @@
   (let ((buffer (point-buffer point)))
     (when (prompt-end-point buffer)
       (delete-point (prompt-end-point buffer)))
-    (change-prompt-end-point buffer
-                             (copy-point point :right-inserting))))
+    (set-prompt-end-point buffer
+                          (copy-point point :right-inserting))))
 
 (defun listener-reset-prompt (&optional (buffer (current-buffer)) (fresh-line t))
   (let ((cur-point (buffer-point buffer)))

@@ -72,6 +72,14 @@
 (defun repl-buffer ()
   (get-buffer "*lisp-repl*"))
 
+(defun ensure-repl-buffer-exist ()
+  (let ((buffer (repl-buffer)))
+    (unless buffer
+      (with-current-window (current-window)
+        (start-lisp-repl))
+      (setf buffer (repl-buffer)))
+    buffer))
+
 (defun repl-set-prompt (point)
   (insert-string point
                  (format nil "~A> " (connection-prompt-string *connection*)))
@@ -104,13 +112,15 @@
         'repl-read-line))
 
 (defun clear-repl ()
-  (lem.listener-mode:clear-listener (repl-buffer)))
+  (when (repl-buffer)
+    (lem.listener-mode:clear-listener (repl-buffer))))
 
 (defun get-repl-window ()
-  (let* ((buffer (repl-buffer)))
-    (if (eq buffer (window-buffer (current-window)))
-        (current-window)
-        (first (get-buffer-windows buffer)))))
+  (let ((buffer (repl-buffer)))
+    (when buffer
+      (if (eq buffer (window-buffer (current-window)))
+          (current-window)
+          (first (get-buffer-windows buffer))))))
 
 (defun repl-buffer-width ()
   (alexandria:when-let* ((window (get-repl-window))
@@ -119,19 +129,20 @@
 
 (defun repl-highlight-notes (notes)
   (let ((buffer (repl-buffer)))
-    (dolist (note notes)
-      (trivia:match note
-        ((and (trivia:property :location location)
-              (trivia:property :message _))
-         (let* ((xref-loc (source-location-to-xref-location location))
-                (offset (xref-location-position xref-loc)))
-           (with-point ((start (buffer-point buffer)))
-             (move-point start (lem.listener-mode:listener-start-point buffer))
-             (form-offset start -1)
-             (character-offset start (if (plusp offset) (1- offset) offset))
-             (with-point ((end start))
-               (form-offset end 1)
-               (put-text-property start end :attribute 'compiler-note-attribute)))))))))
+    (when buffer
+      (dolist (note notes)
+        (trivia:match note
+          ((and (trivia:property :location location)
+                (trivia:property :message _))
+           (let* ((xref-loc (source-location-to-xref-location location))
+                  (offset (xref-location-position xref-loc)))
+             (with-point ((start (buffer-point buffer)))
+               (move-point start (lem.listener-mode:listener-start-point buffer))
+               (form-offset start -1)
+               (character-offset start (if (plusp offset) (1- offset) offset))
+               (with-point ((end start))
+                 (form-offset end 1)
+                 (put-text-property start end :attribute 'compiler-note-attribute))))))))))
 
 (defun repl-completion (point)
   (with-point ((p point))
@@ -189,12 +200,13 @@
 (defvar *repl-history* '())
 
 (defun listener-eval (string)
+  (ensure-repl-buffer-exist)
   (request-listener-eval
    *connection*
    string
    (lambda (value)
      (declare (ignore value))
-     (lem.listener-mode:listener-reset-prompt (repl-buffer))
+     (lem.listener-mode:listener-reset-prompt (ensure-repl-buffer-exist))
      (when *record-history-of-repl*
        (start-timer 0 nil
                     (lambda ()
@@ -204,8 +216,7 @@
    (repl-buffer-width)))
 
 (defun repl-read-string (thread tag)
-  (unless (repl-buffer) (start-lisp-repl))
-  (let ((buffer (repl-buffer)))
+  (let ((buffer (ensure-repl-buffer-exist)))
     (push thread (read-string-thread-stack))
     (push tag (read-string-tag-stack))
     (setf (current-window) (pop-to-buffer buffer))
@@ -263,13 +274,10 @@
       `(,(read-from-string "swank-repl::listener-get-value"))
       (lambda (result)
         (declare (ignore result))
-        (lem.listener-mode:listener-reset-prompt (repl-buffer)))))))
+        (lem.listener-mode:listener-reset-prompt (ensure-repl-buffer-exist)))))))
 
 (defun write-string-to-repl (string)
-  (let ((buffer (repl-buffer)))
-    (unless buffer
-      (start-lisp-repl)
-      (setf buffer (repl-buffer)))
+  (let ((buffer (ensure-repl-buffer-exist)))
     (with-point ((start (buffer-end-point buffer) :left-inserting))
       (when (text-property-at start :field -1)
         (insert-character start #\newline))

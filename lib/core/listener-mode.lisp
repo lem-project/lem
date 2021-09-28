@@ -4,7 +4,7 @@
            :*listener-mode-keymap*
            :prompt-end-point
            :listener-start
-           :listener-update-point
+           :change-prompt-end-point
            :listener-reset-prompt
            :listener-return
            :listener-prev-input
@@ -45,7 +45,7 @@
           (make-instance '<listener>
                          :history (lem.history:make-history))))
   (unless (prompt-end-point (current-buffer))
-    (listener-update-point (current-point))))
+    (change-prompt-end-point (current-point))))
 
 (define-key *listener-mode-keymap* "Return" 'listener-return)
 (define-key *listener-mode-keymap* "M-p" 'listener-prev-input)
@@ -67,7 +67,7 @@
     (funcall mode)
     (listener-reset-prompt buffer)))
 
-(defun listener-update-point (point)
+(defun change-prompt-end-point (point)
   (check-type point point)
   (let ((buffer (point-buffer point)))
     (when (prompt-end-point buffer)
@@ -94,7 +94,7 @@
         (put-text-property s point :field t)))
     (buffer-end cur-point)
     (buffer-undo-boundary buffer)
-    (listener-update-point cur-point)))
+    (change-prompt-end-point cur-point)))
 
 (define-command listener-return () ()
   (with-point ((point (buffer-end (current-point)) :left-inserting))
@@ -108,7 +108,7 @@
             (lem.history:add-history (current-listener-history) str)
             (buffer-end point)
             (insert-character point #\newline)
-            (listener-update-point (current-point))
+            (change-prompt-end-point (current-point))
             (funcall (variable-value 'listener-execute-function) point str)))))
   t)
 

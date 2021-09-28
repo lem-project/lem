@@ -28,10 +28,6 @@
 (defmacro %listener-point (buffer)
   `(buffer-value ,buffer %listener-point-indicator))
 
-(defun %listener-history ()
-  (let ((listener (variable-value 'listener-store :buffer (current-buffer))))
-    (listener-history listener)))
-
 (define-editor-variable listener-set-prompt-function)
 (define-editor-variable listener-check-input-function)
 (define-editor-variable listener-execute-function)
@@ -55,6 +51,10 @@
 (define-key *listener-mode-keymap* "M-r" 'listener-previous-matching-input)
 (define-key *listener-mode-keymap* "C-c M-o" 'listener-clear-buffer)
 (define-key *listener-mode-keymap* "C-c C-u" 'listener-clear-input)
+
+(defun current-listener-history ()
+  (let ((listener (variable-value 'listener-store :buffer (current-buffer))))
+    (listener-history listener)))
 
 (defun listener-start-point (buffer)
   (%listener-point buffer))
@@ -106,7 +106,7 @@
             (listener-reset-prompt)
             (return-from listener-return t))
           (let ((str (points-to-string start point)))
-            (lem.history:add-history (%listener-history) str)
+            (lem.history:add-history (current-listener-history) str)
             (buffer-end point)
             (insert-character point #\newline)
             (listener-update-point)
@@ -135,25 +135,25 @@
     (buffer-end (current-point))))
 
 (define-command listener-prev-input () ()
-  (%backup-edit-string (%listener-history))
+  (%backup-edit-string (current-listener-history))
   (multiple-value-bind (str win)
-      (lem.history:prev-history (%listener-history))
+      (lem.history:prev-history (current-listener-history))
     (when win
       (replace-textarea str))))
 
 (define-command listener-next-input () ()
-  (%backup-edit-string (%listener-history))
-  (%restore-edit-string (%listener-history))
+  (%backup-edit-string (current-listener-history))
+  (%restore-edit-string (current-listener-history))
   (multiple-value-bind (str win)
-      (lem.history:next-history (%listener-history))
+      (lem.history:next-history (current-listener-history))
     (when win
       (replace-textarea str))))
 
 (define-command listener-previous-matching-input (regexp)
     ((prompt-for-string "Previous element matching (regexp): "))
-  (%backup-edit-string (%listener-history))
+  (%backup-edit-string (current-listener-history))
   (multiple-value-bind (str win)
-      (lem.history:previous-matching (%listener-history) regexp)
+      (lem.history:previous-matching (current-listener-history) regexp)
     (when win
       (replace-textarea str))))
 

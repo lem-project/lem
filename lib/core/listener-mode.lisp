@@ -26,9 +26,9 @@
 
 (progn
   (defun prompt-end-point (buffer)
-    (buffer-value buffer #1='#:prompt-end-point))
+    (buffer-value buffer '%prompt-end-point))
   (defun set-prompt-end-point (buffer point)
-    (setf (buffer-value buffer '#1#) point)))
+    (setf (buffer-value buffer '%prompt-end-point) point)))
 
 (define-editor-variable listener-set-prompt-function)
 (define-editor-variable listener-check-input-function)

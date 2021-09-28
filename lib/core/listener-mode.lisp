@@ -28,21 +28,24 @@
 (defmacro %listener-point (buffer)
   `(buffer-value ,buffer %listener-point-indicator))
 
-(defvar %listener-history-indicator (gensym))
-(defmacro %listener-history ()
-  `(buffer-value (current-buffer) %listener-history-indicator))
+(defun %listener-history ()
+  (let ((listener (variable-value 'listener-store :buffer (current-buffer))))
+    (listener-history listener)))
 
 (define-editor-variable listener-set-prompt-function)
 (define-editor-variable listener-check-input-function)
 (define-editor-variable listener-execute-function)
 
+(define-editor-variable listener-store)
+
 (define-minor-mode listener-mode
     (:name "listener"
      :keymap *listener-mode-keymap*)
   (setf (variable-value 'enable-syntax-highlight) nil)
-  (unless (%listener-history)
-    (setf (%listener-history)
-          (lem.history:make-history)))
+  (unless (variable-value 'listener-store)
+    (setf (variable-value 'listener-store)
+          (make-instance '<listener>
+                         :history (lem.history:make-history))))
   (unless (%listener-point (current-buffer))
     (listener-update-point)))
 
@@ -166,3 +169,9 @@
 (define-command listener-clear-input () ()
   (delete-between-points (listener-start-point (current-buffer))
                          (buffer-end-point (current-buffer))))
+
+
+(defclass <listener> ()
+  ((history :initform (lem.history:make-history)
+            :initarg :history
+            :accessor listener-history)))

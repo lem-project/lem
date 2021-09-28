@@ -9,7 +9,8 @@
      (repl-reset-input)
      (lem.listener-mode:listener-mode t)
      (setf *write-string-function* 'write-string-to-repl)
-     (setf (variable-value 'completion-spec) 'repl-completion))
+     (setf (variable-value 'completion-spec) 'repl-completion)
+     (setf (variable-value 'calc-indent-function) 'repl-calc-indent))
     (t
      (editor-error "No connection for repl. Did you mean 'start-lisp-repl' command?"))))
 
@@ -144,6 +145,19 @@
                      (completion-file str (lem:buffer-directory (point-buffer p))))))
           (t
            (completion-symbol p)))))
+
+(defmacro with-save-point ((place value) &body body)
+  (let ((tmp-var (gensym)))
+    `(with-point ((,tmp-var ,place))
+       (move-point ,place ,value)
+       (unwind-protect (progn ,@body)
+         (move-point ,place ,tmp-var)))))
+
+(defun repl-calc-indent (point)
+  (let ((buffer (point-buffer point)))
+    (with-save-point ((buffer-start-point buffer)
+                      (lem.listener-mode:listener-start-point buffer))
+      (calc-indent point))))
 
 (defvar *repl-compiler-check* nil)
 

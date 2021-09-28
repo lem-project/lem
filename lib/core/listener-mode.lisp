@@ -68,10 +68,11 @@
     (listener-reset-prompt buffer)))
 
 (defun listener-update-point (&optional (point (current-point)))
-  (when (prompt-end-point (point-buffer point))
-    (delete-point (prompt-end-point (point-buffer point))))
-  (change-prompt-end-point (point-buffer point)
-                           (copy-point point :right-inserting)))
+  (let ((buffer (point-buffer point)))
+    (when (prompt-end-point buffer)
+      (delete-point (prompt-end-point buffer)))
+    (change-prompt-end-point buffer
+                             (copy-point point :right-inserting))))
 
 (defun listener-reset-prompt (&optional (buffer (current-buffer)) (fresh-line t))
   (let ((cur-point (buffer-point buffer)))

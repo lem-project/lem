@@ -24,13 +24,11 @@
 
 (define-editor-variable listener-prompt-attribute 'listener-prompt-attribute)
 
-(defvar %listener-point-indicator (gensym))
-
-(defun prompt-end-point (buffer)
-  (buffer-value buffer %listener-point-indicator))
-
-(defun change-prompt-end-point (buffer point)
-  (setf (buffer-value buffer %listener-point-indicator) point))
+(progn
+  (defun prompt-end-point (buffer)
+    (buffer-value buffer #1='#:prompt-end-point))
+  (defun change-prompt-end-point (buffer point)
+    (setf (buffer-value buffer '#1#) point)))
 
 (define-editor-variable listener-set-prompt-function)
 (define-editor-variable listener-check-input-function)

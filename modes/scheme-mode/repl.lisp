@@ -77,11 +77,11 @@
      (check-connection)
      (lem.listener-mode:listener-return))
     ((and (eq (scheme-repl-type :kind :current) :scheme-process)
-          (point<= (lem.listener-mode:prompt-end-point (current-buffer))
+          (point<= (lem.listener-mode:input-start-point (current-buffer))
                    (current-point))
           (repl-paren-correspond-p (current-point)))
      (let ((str (points-to-string
-                 (lem.listener-mode:prompt-end-point (current-buffer))
+                 (lem.listener-mode:input-start-point (current-buffer))
                  (current-point))))
        (lem.history:add-history (lem.listener-mode::current-listener-history) str)
        (scheme-run-process-and-output-newline)
@@ -90,7 +90,7 @@
      (insert-character (current-point) #\newline))))
 
 (defun repl-paren-correspond-p (point)
-  (with-point ((start (lem.listener-mode:prompt-end-point
+  (with-point ((start (lem.listener-mode:input-start-point
                        (point-buffer point))))
     (let ((state (parse-partial-sexp start point)))
       (and (not (member (lem-base::pps-state-type state)
@@ -212,7 +212,7 @@
     ((or (eq (scheme-repl-type :kind :current) :scheme-process)
          (eq (scheme-repl-type :kind :current) :scheme-slime))
      (with-point ((point (current-point)))
-       (if (point>= (lem.listener-mode:prompt-end-point (current-buffer)) point)
+       (if (point>= (lem.listener-mode:input-start-point (current-buffer)) point)
            (let ((fun (prompt-for-shortcuts)))
              (when fun
                (funcall fun n)))
@@ -288,7 +288,7 @@
          (let* ((xref-loc (source-location-to-xref-location location))
                 (offset (xref-location-position xref-loc)))
            (with-point ((start (buffer-point buffer)))
-             (move-point start (lem.listener-mode:prompt-end-point buffer))
+             (move-point start (lem.listener-mode:input-start-point buffer))
              (form-offset start -1)
              (character-offset start (if (plusp offset) (1- offset) offset))
              (with-point ((end start))

@@ -49,7 +49,7 @@
 
 (define-command lisp-repl-shortcut (n) ("p")
   (with-point ((point (current-point)))
-    (if (point>= (lem.listener-mode:prompt-end-point (current-buffer)) point)
+    (if (point>= (lem.listener-mode:input-start-point (current-buffer)) point)
         (let ((fun (prompt-for-shortcuts)))
           (when fun
             (funcall fun n)))
@@ -88,7 +88,7 @@
 (defun repl-paren-correspond-p (point)
   (unless (eq (repl-buffer) (point-buffer point))
     (return-from repl-paren-correspond-p))
-  (with-point ((start (lem.listener-mode:prompt-end-point (repl-buffer))))
+  (with-point ((start (lem.listener-mode:input-start-point (repl-buffer))))
     (let ((state (parse-partial-sexp start point)))
       (and (not (pps-state-string-or-comment-p state))
            (>= 0 (pps-state-paren-depth state))))))
@@ -137,7 +137,7 @@
            (let* ((xref-loc (source-location-to-xref-location location))
                   (offset (xref-location-position xref-loc)))
              (with-point ((start (buffer-point buffer)))
-               (move-point start (lem.listener-mode:prompt-end-point buffer))
+               (move-point start (lem.listener-mode:input-start-point buffer))
                (form-offset start -1)
                (character-offset start (if (plusp offset) (1- offset) offset))
                (with-point ((end start))
@@ -167,7 +167,7 @@
 (defun repl-calc-indent (point)
   (let ((buffer (point-buffer point)))
     (with-save-point ((buffer-start-point buffer)
-                      (lem.listener-mode:prompt-end-point buffer))
+                      (lem.listener-mode:input-start-point buffer))
       (calc-indent point))))
 
 (defvar *repl-compiler-check* nil)

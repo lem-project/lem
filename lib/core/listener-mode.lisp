@@ -2,7 +2,7 @@
   (:use :cl :lem)
   (:export :listener-prompt-attribute
            :*listener-mode-keymap*
-           :prompt-end-point
+           :input-start-point
            :listener-start
            :change-input-start-point
            :refresh-prompt
@@ -24,11 +24,11 @@
 
 (define-editor-variable listener-prompt-attribute 'listener-prompt-attribute)
 
-(defun prompt-end-point (buffer)
-  (buffer-value buffer '%prompt-end-point))
+(defun input-start-point (buffer)
+  (buffer-value buffer '%input-start-point))
 
-(defun set-prompt-end-point (buffer point)
-  (setf (buffer-value buffer '%prompt-end-point) point))
+(defun set-input-start-point (buffer point)
+  (setf (buffer-value buffer '%input-start-point) point))
 
 (define-editor-variable listener-set-prompt-function)
 (define-editor-variable listener-check-input-function)
@@ -44,7 +44,7 @@
     (setf (variable-value 'listener-store)
           (make-instance '<listener>
                          :history (lem.history:make-history))))
-  (unless (prompt-end-point (current-buffer))
+  (unless (input-start-point (current-buffer))
     (change-input-start-point (current-point))))
 
 (define-key *listener-mode-keymap* "Return" 'listener-return)
@@ -70,9 +70,9 @@
 (defun change-input-start-point (point)
   (check-type point point)
   (let ((buffer (point-buffer point)))
-    (when (prompt-end-point buffer)
-      (delete-point (prompt-end-point buffer)))
-    (set-prompt-end-point buffer
+    (when (input-start-point buffer)
+      (delete-point (input-start-point buffer)))
+    (set-input-start-point buffer
                           (copy-point point :right-inserting))))
 
 (defun refresh-prompt (&optional (buffer (current-buffer)) (fresh-line t))
@@ -100,7 +100,7 @@
   (with-point ((point (buffer-end (current-point)) :left-inserting))
     (if (not (funcall (variable-value 'listener-check-input-function) point))
         (insert-character point #\newline)
-        (let ((start (prompt-end-point (current-buffer))))
+        (let ((start (input-start-point (current-buffer))))
           (unless (point<= start point)
             (refresh-prompt)
             (return-from listener-return t))
@@ -115,7 +115,7 @@
 (defun %backup-edit-string (history)
   (lem.history:backup-edit-string
    history
-   (points-to-string (prompt-end-point (current-buffer))
+   (points-to-string (input-start-point (current-buffer))
                      (buffer-end-point (current-buffer)))))
 
 (defun %restore-edit-string (history)
@@ -125,12 +125,12 @@
       (replace-textarea str))))
 
 (defun replace-textarea (str)
-  (let ((start (prompt-end-point (current-buffer)))
+  (let ((start (input-start-point (current-buffer)))
         (end (buffer-end-point (current-buffer))))
     (save-excursion
       (delete-between-points start end)
       (insert-string start str)
-      (move-point (prompt-end-point (current-buffer)) start))
+      (move-point (input-start-point (current-buffer)) start))
     (buffer-end (current-point))))
 
 (define-command listener-prev-input () ()
@@ -166,7 +166,7 @@
   t)
 
 (define-command listener-clear-input () ()
-  (delete-between-points (prompt-end-point (current-buffer))
+  (delete-between-points (input-start-point (current-buffer))
                          (buffer-end-point (current-buffer))))
 
 

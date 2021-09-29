@@ -221,7 +221,7 @@
     (push tag (read-string-tag-stack))
     (setf (current-window) (pop-to-buffer buffer))
     (buffer-end (current-point))
-    (lem.listener-mode:change-prompt-end-point (current-point))
+    (lem.listener-mode:change-input-start-point (current-point))
     (repl-change-read-line-input)))
 
 (defun repl-pop-stack ()
@@ -282,7 +282,7 @@
       (when (text-property-at start :field -1)
         (insert-character start #\newline))
       (insert-escape-sequence-string (buffer-end-point buffer) string))
-    (lem.listener-mode:change-prompt-end-point (buffer-end-point buffer))
+    (lem.listener-mode:change-input-start-point (buffer-end-point buffer))
     (buffer-end (buffer-point buffer))
     (alexandria:when-let ((window (get-repl-window)))
       (with-current-window window

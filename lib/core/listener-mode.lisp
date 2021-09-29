@@ -75,26 +75,30 @@
     (set-input-start-point buffer
                           (copy-point point :right-inserting))))
 
+(defun write-prompt (point)
+  (let ((buffer (point-buffer point)))
+    (funcall (variable-value 'listener-set-prompt-function
+                             :buffer buffer)
+             point)
+    (with-point ((s point))
+      (line-start s)
+      (let ((attribute (variable-value 'listener-prompt-attribute :default buffer)))
+        (when attribute
+          (put-text-property s point :attribute attribute)))
+      (put-text-property s point :read-only t)
+      (put-text-property s point :field t))))
+
 (defun refresh-prompt (&optional (buffer (current-buffer)) (fresh-line t))
-  (let ((cur-point (buffer-point buffer)))
-    (buffer-end cur-point)
+  (let ((point (buffer-point buffer)))
+    (buffer-end point)
     (when fresh-line
-      (unless (start-line-p cur-point)
-        (insert-character cur-point #\newline 1)
-        (buffer-end cur-point)))
-    (let ((point (funcall (variable-value 'listener-set-prompt-function
-                                          :buffer buffer)
-                          cur-point)))
-      (with-point ((s point))
-        (line-start s)
-        (let ((attribute (variable-value 'listener-prompt-attribute :default buffer)))
-          (when attribute
-            (put-text-property s point :attribute attribute)))
-        (put-text-property s point :read-only t)
-        (put-text-property s point :field t)))
-    (buffer-end cur-point)
+      (unless (start-line-p point)
+        (insert-character point #\newline 1)
+        (buffer-end point)))
+    (write-prompt point)
+    (buffer-end point)
     (buffer-undo-boundary buffer)
-    (change-input-start-point cur-point)))
+    (change-input-start-point point)))
 
 (define-command listener-return () ()
   (with-point ((point (buffer-end (current-point)) :left-inserting))

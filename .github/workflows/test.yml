@@ -20,6 +20,13 @@ jobs:
     - name: Run test
       run: |
         ros config set dynamic-space-size 2048
+
+        # workaround for compiling esrap with sbcl/2.1.9
+        mkdir $HOME/common-lisp
+        cd $HOME/common-lisp
+        git clone https://github.com/scymtym/esrap
+        cd $HOME
+
         ros install lem
         ros install cxxxr/sblint
         export PATH=$HOME/.roswell/bin:$PATH

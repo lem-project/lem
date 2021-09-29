@@ -25,7 +25,7 @@ jobs:
         mkdir $HOME/common-lisp
         cd $HOME/common-lisp
         git clone https://github.com/scymtym/esrap
-        cd $HOME
+        cd -
 
         ros install lem
         ros install cxxxr/sblint

@@ -66,6 +66,7 @@
                (:file "prompt-window")
                (:file "tmlanguage")
                (:file "button")
+               (:file "loading-spinner")
                (:file "listener-mode")
                (:file "universal-argument")
                (:file "kbdmacro")

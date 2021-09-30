@@ -800,14 +800,12 @@
                           (change-connection ()))))
            :name "lisp-wait-message"))))
 
-(defun connected-slime-message (connection &key repl)
+(defun connected-slime-message (connection)
   (let ((message
           (format nil ";;; Swank server running on ~A ~A"
                   (connection-implementation-name connection)
                   (connection-implementation-version connection))))
-    (if repl
-        (write-string-to-repl (format nil "~%~A" message))
-        (message "~A" message))))
+    (message "~A" message)))
 
 (defun %slime-connect (hostname port)
   (let ((connection
@@ -830,7 +828,7 @@
   (message "Connecting...")
   (let ((connection (%slime-connect hostname port)))
     (when start-repl (start-lisp-repl))
-    (connected-slime-message connection :repl nil)))
+    (connected-slime-message connection)))
 
 (defvar *unknown-keywords* nil)
 (defun pull-events ()
@@ -1115,11 +1113,11 @@
          (process (run-lisp :command command :directory directory :port port)))
     (send-swank-create-server process port)
     (start-lisp-repl)
-    (write-string-to-repl ";;; SLIME is starting up")
+    (start-loading-spinner (repl-buffer)
+                           :loading-message "Slime is starting up")
     (let (timer
           (retry-count 0))
       (labels ((interval ()
-                 (write-string-to-repl ".")
                  (handler-case
                      (let ((conn (%slime-connect *localhost* port)))
                        (setf (connection-command conn) command)
@@ -1133,21 +1131,25 @@
                            (t
                             (incf retry-count))))
                    (:no-error (conn)
-                     (connected-slime-message conn :repl t)
+                     (connected-slime-message conn)
                      ;; replのプロンプトの表示とカーソル位置の変更をしたいが
                      ;; 他のファイルの作業中にバッファ/ウィンドウが切り替わると作業の邪魔なので
                      ;; with-current-windowで元に戻す
-                     (with-current-window (current-window) (start-lisp-repl))
+                     (unless (repl-buffer)
+                       (with-current-window (current-window) (start-lisp-repl)))
                      (success))))
                (success ()
-                 (stop-timer timer)
+                 (finalize)
                  #-win32
                  (add-hook *exit-editor-hook* 'slime-quit-all))
                (failure (c)
-                 (stop-timer timer)
+                 (finalize)
                  (pop-up-typeout-window (make-lisp-process-buffer port)
                                         nil)
-                 (error c)))
+                 (error c))
+               (finalize ()
+                 (stop-timer timer)
+                 (stop-loading-spinner (repl-buffer))))
         (setf timer (start-timer 500 t #'interval))))))
 
 (define-command slime (&optional ask-impl) ("P")

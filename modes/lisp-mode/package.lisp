@@ -4,6 +4,7 @@
         :lem.completion-mode
         :lem.language-mode
         :lem.button
+        :lem.loading-spinner
         :lem-lisp-mode.errors
         :lem-lisp-mode.swank-protocol)
   (:export

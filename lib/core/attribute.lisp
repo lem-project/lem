@@ -73,11 +73,11 @@
                  :bold-p bold-p
                  :underline-p underline-p))
 
-(defun ensure-attribute (x raise)
+(defun ensure-attribute (x &optional (errorp t))
   (cond ((symbolp x)
          (let ((fn (get x 'attribute)))
            (cond (fn (funcall fn))
-                 (raise (error "invalid attribute: ~A" x))
+                 (errorp (error "invalid attribute: ~A" x))
                  (t nil))))
         ((attribute-p x)
          x)

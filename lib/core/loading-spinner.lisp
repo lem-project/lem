@@ -33,11 +33,10 @@
             attribute
             :right)))
 
-(defun update-spinner-frame ()
-  (when-let ((spinner (buffer-spinner (current-buffer))))
-    (setf (spinner-frame-index spinner)
-          (mod (1+ (spinner-frame-index spinner))
-               (length (spinner-frames spinner))))))
+(defun update-spinner-frame (spinner)
+  (setf (spinner-frame-index spinner)
+        (mod (1+ (spinner-frame-index spinner))
+             (length (spinner-frames spinner)))))
 
 (defgeneric start-loading-spinner (type &key &allow-other-keys))
 (defgeneric stop-loading-spinner (spinner))
@@ -49,11 +48,13 @@
 (defmethod start-loading-spinner ((type (eql :modeline)) &key buffer loading-message)
   (check-type buffer buffer)
   (unless (buffer-spinner buffer)
-    (let* ((timer (start-timer 80 t 'update-spinner-frame))
-           (spinner (make-instance 'modeline-spinner
-                                   :timer timer
-                                   :loading-message loading-message
-                                   :buffer buffer)))
+    (let* ((spinner)
+           (timer (start-timer 80 t (lambda () (update-spinner-frame spinner)))))
+      (setf spinner
+            (make-instance 'modeline-spinner
+                           :timer timer
+                           :loading-message loading-message
+                           :buffer buffer))
       (modeline-add-status-list spinner buffer)
       (setf (buffer-spinner buffer) spinner)
       spinner)))

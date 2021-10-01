@@ -66,7 +66,6 @@
 
 (defmethod stop-loading-spinner ((spinner modeline-spinner))
   (let ((buffer (modeline-spinner-buffer spinner)))
-    (when-let ((spinner (buffer-spinner buffer)))
-      (modeline-remove-status-list spinner buffer)
-      (stop-timer (spinner-timer spinner))
-      (setf (buffer-spinner buffer) nil))))
+    (modeline-remove-status-list spinner buffer)
+    (stop-timer (spinner-timer spinner))
+    (setf (buffer-spinner buffer) nil)))

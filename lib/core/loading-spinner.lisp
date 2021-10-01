@@ -4,6 +4,9 @@
            :stop-loading-spinner))
 (in-package :lem.loading-spinner)
 
+(define-attribute spinner-attribute
+  (t :foreground "yellow"))
+
 (defclass spinner ()
   ((frames :initform #("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
            :reader spinner-frames)
@@ -24,7 +27,7 @@
 
 (defmethod convert-modeline-element ((spinner spinner) window)
   (let ((attribute (merge-attribute (ensure-attribute 'modeline t)
-                                    (make-attribute :foreground "yellow"))))
+                                    (ensure-attribute 'spinner-attribute))))
     (values (format nil
                     "~A ~A  "
                     (elt (spinner-frames spinner)

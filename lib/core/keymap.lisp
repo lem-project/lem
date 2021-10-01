@@ -55,7 +55,7 @@
                    (setf (gethash k table) symbol))
                   (t
                    (let ((next (gethash k table)))
-                     (if next
+                     (if (and next (hash-table-p next))
                          (setf table next)
                          (let ((new-table (make-hash-table :test 'eq)))
                            (setf (gethash k table) new-table)

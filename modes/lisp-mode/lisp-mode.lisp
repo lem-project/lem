@@ -1113,44 +1113,46 @@
          (process (run-lisp :command command :directory directory :port port)))
     (send-swank-create-server process port)
     (start-lisp-repl)
-    (start-loading-spinner (repl-buffer)
-                           :loading-message "Slime is starting up")
-    (let (timer
-          (retry-count 0))
-      (labels ((interval ()
-                 (handler-case
-                     (let ((conn (%slime-connect *localhost* port)))
-                       (setf (connection-command conn) command)
-                       (setf (connection-process conn) process)
-                       (setf (connection-process-directory conn) directory)
-                       conn)
-                   (editor-error (c)
-                     (cond ((or (not (lem-process:process-alive-p process))
-                                (< 30 retry-count))
-                            (failure c))
-                           (t
-                            (incf retry-count))))
-                   (:no-error (conn)
-                     (connected-slime-message conn)
-                     ;; replのプロンプトの表示とカーソル位置の変更をしたいが
-                     ;; 他のファイルの作業中にバッファ/ウィンドウが切り替わると作業の邪魔なので
-                     ;; with-current-windowで元に戻す
-                     (unless (repl-buffer)
-                       (with-current-window (current-window) (start-lisp-repl)))
-                     (success))))
-               (success ()
-                 (finalize)
-                 #-win32
-                 (add-hook *exit-editor-hook* 'slime-quit-all))
-               (failure (c)
-                 (finalize)
-                 (pop-up-typeout-window (make-lisp-process-buffer port)
-                                        nil)
-                 (error c))
-               (finalize ()
-                 (stop-timer timer)
-                 (stop-loading-spinner (repl-buffer))))
-        (setf timer (start-timer 500 t #'interval))))))
+    (let ((spinner
+            (start-loading-spinner :modeline
+                                   :buffer (repl-buffer)
+                                   :loading-message "Slime is starting up")))
+      (let (timer
+            (retry-count 0))
+        (labels ((interval ()
+                   (handler-case
+                       (let ((conn (%slime-connect *localhost* port)))
+                         (setf (connection-command conn) command)
+                         (setf (connection-process conn) process)
+                         (setf (connection-process-directory conn) directory)
+                         conn)
+                     (editor-error (c)
+                       (cond ((or (not (lem-process:process-alive-p process))
+                                  (< 30 retry-count))
+                              (failure c))
+                             (t
+                              (incf retry-count))))
+                     (:no-error (conn)
+                       (connected-slime-message conn)
+                       ;; replのプロンプトの表示とカーソル位置の変更をしたいが
+                       ;; 他のファイルの作業中にバッファ/ウィンドウが切り替わると作業の邪魔なので
+                       ;; with-current-windowで元に戻す
+                       (unless (repl-buffer)
+                         (with-current-window (current-window) (start-lisp-repl)))
+                       (success))))
+                 (success ()
+                   (finalize)
+                   #-win32
+                   (add-hook *exit-editor-hook* 'slime-quit-all))
+                 (failure (c)
+                   (finalize)
+                   (pop-up-typeout-window (make-lisp-process-buffer port)
+                                          nil)
+                   (error c))
+                 (finalize ()
+                   (stop-timer timer)
+                   (stop-loading-spinner spinner)))
+          (setf timer (start-timer 500 t #'interval)))))))
 
 (define-command slime (&optional ask-impl) ("P")
   (let ((command (if ask-impl (prompt-for-impl))))

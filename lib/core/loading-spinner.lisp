@@ -39,15 +39,28 @@
           (mod (1+ (spinner-frame-index spinner))
                (length (spinner-frames spinner))))))
 
-(defun start-loading-spinner (buffer &key loading-message)
+(defgeneric start-loading-spinner (type &key &allow-other-keys))
+(defgeneric stop-loading-spinner (spinner))
+
+(defclass modeline-spinner (spinner)
+  ((buffer :initarg :buffer
+           :reader modeline-spinner-buffer)))
+
+(defmethod start-loading-spinner ((type (eql :modeline)) &key buffer loading-message)
+  (check-type buffer buffer)
   (unless (buffer-spinner buffer)
     (let* ((timer (start-timer 80 t 'update-spinner-frame))
-           (spinner (make-instance 'spinner :timer timer :loading-message loading-message)))
+           (spinner (make-instance 'modeline-spinner
+                                   :timer timer
+                                   :loading-message loading-message
+                                   :buffer buffer)))
       (modeline-add-status-list spinner buffer)
-      (setf (buffer-spinner buffer) spinner))))
+      (setf (buffer-spinner buffer) spinner)
+      spinner)))
 
-(defun stop-loading-spinner (buffer)
-  (when-let ((spinner (buffer-spinner buffer)))
-    (modeline-remove-status-list spinner buffer)
-    (stop-timer (spinner-timer spinner))
-    (setf (buffer-spinner buffer) nil)))
+(defmethod stop-loading-spinner ((spinner modeline-spinner))
+  (let ((buffer (modeline-spinner-buffer spinner)))
+    (when-let ((spinner (buffer-spinner buffer)))
+      (modeline-remove-status-list spinner buffer)
+      (stop-timer (spinner-timer spinner))
+      (setf (buffer-spinner buffer) nil))))

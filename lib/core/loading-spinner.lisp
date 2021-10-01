@@ -4,6 +4,8 @@
            :stop-loading-spinner))
 (in-package :lem.loading-spinner)
 
+(defconstant +loading-interval+ 80)
+
 (define-attribute spinner-attribute
   (t :foreground "yellow"))
 
@@ -52,7 +54,7 @@
   (check-type buffer buffer)
   (unless (buffer-spinner buffer)
     (let* ((spinner)
-           (timer (start-timer 80 t (lambda () (update-spinner-frame spinner)))))
+           (timer (start-timer +loading-interval+ t (lambda () (update-spinner-frame spinner)))))
       (setf spinner
             (make-instance 'modeline-spinner
                            :timer timer

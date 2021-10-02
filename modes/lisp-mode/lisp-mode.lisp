@@ -527,41 +527,40 @@
 
 (defvar *note-overlays* nil)
 
+(defun convert-notes (notes)
+  (loop :for note :in notes
+        :when (destructuring-bind (&key location message source-context &allow-other-keys) note
+                (when location
+                  (alexandria:when-let ((xref-location
+                                         (source-location-to-xref-location location nil t)))
+                    (list xref-location
+                          message
+                          source-context))))
+        :collect :it))
+
 (defun highlight-notes (notes)
   (lisp-remove-notes)
-  (when (and (null notes)
-             (null (get-buffer-windows (get-buffer "*lisp-compilations*"))))
-    (return-from highlight-notes))
-  (when (dolist (note notes nil)
-          (trivia:match note
-            ((trivia:property :location location)
-             (when (source-location-to-xref-location location nil t)
-               (return t)))))
+  (when (or notes (get-buffer-windows (get-buffer "*lisp-compilations*")))
     (lem.sourcelist:with-sourcelist (sourcelist "*lisp-compilations*")
-      (dolist (note notes)
-        (trivia:match note
-          ((and (trivia:property :location location)
-                (or (trivia:property :message message) (and))
-                (or (trivia:property :source-context source-context) (and)))
-           (alexandria:when-let ((xref-location (source-location-to-xref-location location nil t)))
-             (let* ((name (xref-filespec-to-filename (xref-location-filespec xref-location)))
-                    (pos (xref-location-position xref-location))
-                    (buffer (xref-filespec-to-buffer (xref-location-filespec xref-location))))
-               (lem.sourcelist:append-sourcelist
-                sourcelist
-                (lambda (cur-point)
-                  (insert-string cur-point name :attribute 'lem.sourcelist:title-attribute)
-                  (insert-string cur-point ":")
-                  (insert-string cur-point (princ-to-string pos)
-                                 :attribute 'lem.sourcelist:position-attribute)
-                  (insert-string cur-point ":")
-                  (insert-character cur-point #\newline 1)
-                  (insert-string cur-point message)
-                  (insert-character cur-point #\newline)
-                  (insert-string cur-point source-context))
-                (alexandria:curry #'go-to-location xref-location))
-               (push (make-highlight-overlay pos buffer)
-                     *note-overlays*)))))))))
+      (loop :for (xref-location message source-context) :in (convert-notes notes)
+            :do (let* ((name (xref-filespec-to-filename (xref-location-filespec xref-location)))
+                       (pos (xref-location-position xref-location))
+                       (buffer (xref-filespec-to-buffer (xref-location-filespec xref-location))))
+                  (lem.sourcelist:append-sourcelist
+                   sourcelist
+                   (lambda (cur-point)
+                     (insert-string cur-point name :attribute 'lem.sourcelist:title-attribute)
+                     (insert-string cur-point ":")
+                     (insert-string cur-point (princ-to-string pos)
+                                    :attribute 'lem.sourcelist:position-attribute)
+                     (insert-string cur-point ":")
+                     (insert-character cur-point #\newline 1)
+                     (insert-string cur-point message)
+                     (insert-character cur-point #\newline)
+                     (insert-string cur-point source-context))
+                   (alexandria:curry #'go-to-location xref-location))
+                  (push (make-highlight-overlay pos buffer)
+                        *note-overlays*))))))
 
 (define-command lisp-remove-notes () ()
   (mapc #'delete-overlay *note-overlays*)

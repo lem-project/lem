@@ -28,15 +28,7 @@
      :keymap *lisp-mode-keymap*
      :syntax-table lem-lisp-syntax:*syntax-table*
      :mode-hook *lisp-mode-hook*)
-  (modeline-add-status-list (lambda (window)
-                              (format nil " [~A~A]" (buffer-package (window-buffer window) "CL-USER")
-                                      (if *connection*
-                                          (format nil " ~A:~A"
-                                                  (connection-implementation-name *connection*)
-                                                  (or (self-connection-p *connection*)
-                                                      (connection-pid *connection*)))
-                                          "")))
-                            (current-buffer))
+  (modeline-add-status-list 'lisp-mode (current-buffer))
   (setf (variable-value 'beginning-of-defun-function) 'lisp-beginning-of-defun)
   (setf (variable-value 'end-of-defun-function) 'lisp-end-of-defun)
   (setf (variable-value 'indent-tabs-mode) nil)
@@ -73,6 +65,15 @@
 (define-key *lisp-mode-keymap* "C-c C-b" 'lisp-connection-list)
 (define-key *lisp-mode-keymap* "C-c g" 'lisp-interrupt)
 (define-key *lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
+
+(defmethod convert-modeline-element ((element (eql 'lisp-mode)) window)
+  (format nil " [~A~A]" (buffer-package (window-buffer window) "CL-USER")
+          (if *connection*
+              (format nil " ~A:~A"
+                      (connection-implementation-name *connection*)
+                      (or (self-connection-p *connection*)
+                          (connection-pid *connection*)))
+              "")))
 
 (defun change-current-connection (conn)
   (when *connection*

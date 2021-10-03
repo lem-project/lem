@@ -80,8 +80,9 @@
 
 (defun infer-package-name-1 (project-root lisp-file)
   (labels ((infer (project-root lisp-file)
-             ; (project-root-asd-file project-root) => #P"/common-lisp/project-root/project-root.asd"
-             ; lisp-file => #P"/common-lisp/project-root/tests/a/b.lisp
+             ;; (project-root-asd-file project-root) =>
+             ;;   #P"/common-lisp/project-root/project-root.asd"
+             ;; lisp-file => #P"/common-lisp/project-root/tests/a/b.lisp
              (let ((dir1 (pathname-directory (project-root-asd-file project-root)))
                    (dir2 (pathname-directory lisp-file)))
                (assert (eq :absolute (first dir1)))
@@ -92,7 +93,8 @@
                              (null mismatch))
                    (return-from infer nil))
                  (if-let (pathname (project-root-pathname project-root))
-                   (let ((prefix-directory (pathname-directory (uiop:ensure-directory-pathname pathname))))
+                   (let ((prefix-directory (pathname-directory
+                                            (uiop:ensure-directory-pathname pathname))))
                      ; prefix-directory => (:relative "tests")
                      (when (eq :relative (first prefix-directory))
                        (let* ((relative-lisp-file-directory (subseq dir2 mismatch))
@@ -101,7 +103,8 @@
                                               (rest prefix-directory)
                                               :test #'equal)
                                     (length (rest prefix-directory)))))
-                         ;; defsystem内に:pathname "tests"とあった場合、project-root/tests/a/bの/a/bだけを残す
+                         ;; defsystem内に:pathname "tests"とあった場合
+                         ;; project-root/tests/a/bの/a/bだけを残す
                          (when (eql mismatch2 (length (rest prefix-directory)))
                            (append (list (project-root-name project-root))
                                    (subseq relative-lisp-file-directory mismatch2)

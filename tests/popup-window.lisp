@@ -7,13 +7,11 @@
 (defvar *popup-parameters* nil)
 
 (defmethod lem.popup-window::display-popup-message-using-popup-parameters
-    ((implementation fake-interface)
-     popup-parameters)
+    ((implementation fake-interface) popup-parameters)
   (setf *popup-parameters* popup-parameters))
 
 (deftest display-popup-window
-  (let ((lem::*implementation* (make-instance 'fake-interface)))
-    (lem::setup-first-frame)
+  (lem:with-interface (make-instance 'fake-interface)
     (let (*popup-parameters*)
       (lem:display-popup-message "hello")
       (let ((popup-parameters *popup-parameters*))

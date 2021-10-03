@@ -8,7 +8,8 @@
           set-foreground
           set-background
           display-width
-          display-height))
+          display-height
+          with-interface))
 
 (defvar *implementation*)
 
@@ -659,3 +660,9 @@
 ;; ミニバッファでしか使っていない
 (defun reset-horizontal-scroll (window)
   (setf (screen-horizontal-scroll-start (window-screen window)) 0))
+
+
+(defmacro with-interface (implementation &body body)
+  `(let ((*implementation* ,implementation))
+     (setup-first-frame)
+     ,@body))

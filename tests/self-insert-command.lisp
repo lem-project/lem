@@ -12,8 +12,7 @@
   (ok (equal expected-text (buffer-text (current-buffer)))))
 
 (deftest self-insert-command
-  (let ((lem::*implementation* (make-instance 'fake-interface)))
-    (lem::setup-first-frame)
+  (with-interface (make-instance 'fake-interface)
     (verify-self-insert "a" (list (make-key :sym "a")))
     (verify-self-insert "aaaa" (list (make-key :ctrl t :sym "u")
                                      (make-key :sym "a")))

@@ -374,7 +374,8 @@
          (size (or size (compute-size-from-buffer buffer))))
     (values buffer size)))
 
-(defun make-popup-parameters (buffer-or-string &rest args &key timeout size gravity destination-window)
+(defun make-popup-parameters (buffer-or-string &rest args
+                                               &key timeout size gravity destination-window)
   (declare (ignore timeout gravity destination-window))
   (multiple-value-bind (buffer size)
       (etypecase buffer-or-string
@@ -387,7 +388,7 @@
            :size size
            (alexandria:remove-from-plist args :size))))
 
-(defun display-popup-buffer-default-impl (popup-parameters)
+(defmethod display-popup-message-using-popup-parameters (implementation popup-parameters)
   (with-slots (buffer timeout size gravity destination-window) popup-parameters
     (let ((size (or size (compute-size-from-buffer buffer))))
       (destructuring-bind (width height) size
@@ -404,8 +405,10 @@
                              (delete-window window)))))
           window)))))
 
-(defmethod lem-if:display-popup-message (implementation buffer-or-string &key timeout size gravity destination-window)
-  (display-popup-buffer-default-impl
+(defmethod lem-if:display-popup-message (implementation buffer-or-string
+                                         &key timeout size gravity destination-window)
+  (display-popup-message-using-popup-parameters
+   implementation
    (make-popup-parameters buffer-or-string
                           :timeout timeout
                           :size size

@@ -3,8 +3,7 @@
   (:import-from :cl-ansi-text)
   (:export :sample-file
            :with-global-variable-value
-           :diff-text
-           :with-mock-functions))
+           :diff-text))
 (in-package :lem-tests/utilities)
 
 (defun sample-file (filename)
@@ -39,23 +38,3 @@
                          (t
                           (write-string (format nil "+~A~%" line1) out)
                           (write-string (format nil "-~A~%" line2) out)))))))))
-
-(eval-when (:compile-toplevel :load-toplevel :execute)
-  (defun expand-with-mock-functions (definitions body)
-    (let ((setf-function-forms '())
-          (bindings '()))
-      (dolist (definition definitions)
-        (destructuring-bind (name lambda-list &body body) definition
-          (push (list (gensym (string name)) `(symbol-function ',name)) bindings)
-          (push `(setf (symbol-function ',name)
-                       (lambda ,lambda-list ,@body))
-                setf-function-forms)))
-      `(let ,bindings
-         ,@setf-function-forms
-         (unwind-protect (progn ,@body)
-           ,@(mapcar (lambda (binding)
-                       `(setf ,(second binding) ,(first binding)))
-                     bindings))))))
-
-(defmacro with-mock-functions ((&rest definitions) &body body)
-  (expand-with-mock-functions definitions body))

@@ -33,8 +33,4 @@
                           (format out " ~A~%" line1))
                          (t
                           (write-string (cl-ansi-text:yellow (format nil "+~A~%" line1)) out)
-                          (write-string (cl-ansi-text:cyan (format nil "-~A~%" line2)) out))
-                         #+(or)
-                         (t
-                          (write-string (format nil "+~A~%" line1) out)
-                          (write-string (format nil "-~A~%" line2) out)))))))))
+                          (write-string (cl-ansi-text:cyan (format nil "-~A~%" line2)) out)))))))))

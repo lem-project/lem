@@ -35,7 +35,8 @@
          (class (case (length classes)
                   (0
                    (when errorp
-                     (error "Implementation does not exist. (probably because you didn't quickload lem-ncurses)")))
+                     (error "Implementation does not exist.~
+                             (probably because you didn't quickload lem-ncurses)")))
                   (1
                    (first classes))
                   (otherwise
@@ -82,7 +83,8 @@
 (defgeneric lem-if:popup-menu-first (implementation))
 (defgeneric lem-if:popup-menu-last (implementation))
 (defgeneric lem-if:popup-menu-select (implementation))
-(defgeneric lem-if:display-popup-message (implementation buffer-or-string &key timeout size gravity destination-window))
+(defgeneric lem-if:display-popup-message (implementation buffer-or-string &key timeout size gravity
+                                                                               destination-window))
 (defgeneric lem-if:delete-popup-message (implementation popup-message))
 
 (defgeneric lem-if:display-menu (implementation menu name))
@@ -121,7 +123,8 @@
 (defun display-width () (lem-if:display-width *implementation*))
 (defun display-height () (lem-if:display-height *implementation*))
 
-(defun invoke-frontend (function &key ((:implementation *implementation*) (get-default-implementation))
+(defun invoke-frontend (function &key ((:implementation *implementation*)
+                                       (get-default-implementation))
                                       ((:buffer-list-manager lem-base::*buffer-list-manager*)
                                        (make-instance (lem-base::buffer-list-manager))))
   (let ((bt:*default-special-bindings*
@@ -193,7 +196,8 @@
                 ((char= char #\tab)
                  (loop :with size :=
                           (+ *print-start-x*
-                             (* *printing-tab-size* (floor (+ *printing-tab-size* x) *printing-tab-size*)))
+                             (* *printing-tab-size*
+                                (floor (+ *printing-tab-size* x) *printing-tab-size*)))
                        :while (< x size)
                        :do (setf (aref pool-string (incf i)) #\space)
                            (incf x)))
@@ -438,7 +442,8 @@
 (define-editor-variable truncate-character #\\)
 (defvar *truncate-character*)
 
-(defun screen-display-line-wrapping (screen screen-width view-charpos cursor-y point-y str/attributes)
+(defun screen-display-line-wrapping (screen screen-width view-charpos cursor-y point-y
+                                     str/attributes)
   (declare (ignore cursor-y))
   (when (and (< 0 view-charpos) (= point-y 0))
     (setf str/attributes

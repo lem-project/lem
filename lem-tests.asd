@@ -20,6 +20,7 @@
                (:file "string-width-utils")
                (:file "syntax-test")
                (:file "buffer-list-test")
+               (:file "buffer")
                (:file "popup-window")
                (:file "isearch")
                (:file "self-insert-command")

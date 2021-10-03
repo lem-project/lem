@@ -43,94 +43,83 @@
 
 (defclass buffer ()
   ((name
-    :initform nil
     :initarg :name
     :accessor buffer-%name)
    (%filename
     :initform nil
-    :initarg :%filename
     :accessor buffer-%filename)
    (%directory
     :initform nil
-    :initarg :%directory
     :accessor buffer-%directory)
    (%modified-p
-    :initform nil
+    :initform 0
     :reader buffer-modified-tick
-    :accessor buffer-%modified-p)
+    :accessor buffer-%modified-p
+    :type integer)
    (%enable-undo-p
-    :initform nil
     :initarg :%enable-undo-p
-    :accessor buffer-%enable-undo-p)
+    :accessor buffer-%enable-undo-p
+    :type boolean)
    (temporary
     :initarg :temporary
-    :reader buffer-temporary-p)
+    :reader buffer-temporary-p
+    :type boolean)
    (read-only-p
-    :initform nil
     :initarg :read-only-p
-    :accessor buffer-read-only-p)
+    :accessor buffer-read-only-p
+    :type boolean)
    (syntax-table
     :initform (fundamental-syntax-table)
     :initarg :syntax-table
-    :accessor buffer-syntax-table)
+    :accessor buffer-syntax-table
+    :type syntax-table)
    (major-mode
-    :initform nil
     :initarg :major-mode
     :accessor buffer-major-mode)
    (minor-modes
     :initform nil
-    :initarg :minor-modes
-    :accessor buffer-minor-modes)
+    :accessor buffer-minor-modes
+    :type list)
    (start-point
     :initform nil
-    :initarg :start-point
     :writer set-buffer-start-point
     :reader buffer-start-point)
    (end-point
-    :initform nil
-    :initarg :end-point
     :writer set-buffer-end-point
     :reader buffer-end-point)
    (mark-p
     :initform nil
-    :initarg :mark-p
     :accessor buffer-mark-p)
    (mark
     :initform nil
-    :initarg :mark
     :accessor buffer-mark)
    (point
     :initform nil
-    :initarg :point
     :accessor buffer-point)
    (keep-binfo
     :initform nil
-    :initarg :keep-binfo
     :accessor %buffer-keep-binfo)
    (points
     :initform nil
     :accessor buffer-points)
    (nlines
-    :initform nil
-    :initarg :nlines
-    :accessor buffer-nlines)
+    :initform 1
+    :accessor buffer-nlines
+    :type (integer 1 *))
    (edit-history
     :initform (make-array 0 :adjustable t :fill-pointer 0)
     :accessor buffer-edit-history)
    (redo-stack
-    :initform nil
+    :initform '()
     :accessor buffer-redo-stack)
    (encoding
     :initform nil
-    :initarg :encoding
     :accessor buffer-encoding)
    (last-write-date
     :initform nil
-    :initarg :last-write-date
     :accessor buffer-last-write-date)
    (variables
-    :initform nil
-    :initarg :variables
+    :initform (make-hash-table :test 'equal)
     :accessor buffer-variables))
   (:documentation
    "`buffer`はバッファ名、ファイル名、テキスト、テキストを指す位置等が入った、
@@ -193,13 +182,6 @@
                                :temporary temporary
                                :major-mode 'fundamental-mode
                                :syntax-table syntax-table)))
-    (setf (buffer-mark-p buffer) nil)
-    (setf (buffer-mark buffer) nil)
-    (setf (%buffer-keep-binfo buffer) nil)
-    (setf (buffer-nlines buffer) 1)
-    (setf (buffer-%modified-p buffer) 0)
-    (setf (buffer-redo-stack buffer) nil)
-    (setf (buffer-variables buffer) (make-hash-table :test 'equal))
     (let ((line (make-line nil nil "")))
       (set-buffer-start-point (make-point buffer 1 line 0 :kind :right-inserting)
                               buffer)

@@ -5,7 +5,8 @@
           clear-editor-local-variables
           variable-value
           variable-documentation
-          find-editor-variable))
+          find-editor-variable
+          with-global-variable-value))
 
 (defvar *editor-variables* '())
 
@@ -135,3 +136,15 @@
     (apply #'run-hooks (variable-value var :buffer buffer) args)
     (when global
       (apply #'run-hooks (variable-value var :global) args))))
+
+
+;; for test
+(defun call-with-global-variable-value (var value function)
+  (let* ((editor-variable (get var 'editor-variable))
+         (save-value (editor-variable-value editor-variable)))
+    (setf (editor-variable-value editor-variable) value)
+    (unwind-protect (funcall function)
+      (setf (editor-variable-value editor-variable) save-value))))
+
+(defmacro with-global-variable-value ((var value) &body body)
+  `(call-with-global-variable-value ',var ,value (lambda () ,@body)))

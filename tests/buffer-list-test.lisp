@@ -2,9 +2,9 @@
   (:use :cl
         :lem-tests/deftest)
   (:import-from :lem-tests/utilities
-                :sample-file
+                :sample-file)
+  (:import-from :lem-base
                 :with-global-variable-value)
-  (:import-from :lem-base)
   (:import-from :alexandria))
 (in-package :lem-tests/buffer-list-test)
 

@@ -1172,6 +1172,15 @@ window width is changed, we must recalc the window view point."
     :initform 0
     :reader floating-window-border)))
 
+(defmethod initialize-instance ((floating-window floating-window)
+                                &key (x (alexandria:required-argument :x))
+                                     (y (alexandria:required-argument :y))
+                                     (width (alexandria:required-argument :width))
+                                     (height (alexandria:required-argument :height))
+                                     (use-modeline-p nil))
+  (declare (ignore x y width height use-modeline-p))
+  (call-next-method))
+
 (defmethod initialize-instance :before ((floating-window floating-window) &rest initargs)
   (declare (ignore initargs))
   (unless (support-floating-window (implementation))

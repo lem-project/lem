@@ -141,6 +141,8 @@
                                   :right-inserting)))
     (setf point (copy-point (buffer-start-point (window-buffer window)) :right-inserting))))
 
+(defun windowp (x) (typep x 'window))
+
 (defun make-window (buffer x y width height use-modeline-p)
   (make-instance 'window
                  :buffer buffer
@@ -154,9 +156,6 @@
 (defgeneric window-redraw (window force)
   (:method (window force)
     (redraw-display-window window force)))
-
-(defun windowp (x)
-  (typep x 'window))
 
 (defun window-view (window)
   (screen-view (window-screen window)))

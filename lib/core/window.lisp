@@ -78,22 +78,27 @@
     :type fixnum)
    (x
     :initarg :x
+    :reader window-x
     :accessor window-%x
     :type fixnum)
    (y
     :initarg :y
+    :reader window-y
     :accessor window-%y
     :type fixnum)
    (width
     :initarg :width
+    :reader window-width
     :accessor window-%width
     :type fixnum)
    (height
     :initarg :height
+    :reader window-height
     :accessor window-%height
     :type fixnum)
    (buffer
     :initarg :buffer
+    :reader window-buffer
     :accessor window-%buffer
     :type buffer)
    (screen
@@ -158,21 +163,6 @@
 
 (defun windowp (x)
   (typep x 'window))
-
-(defun window-x (&optional (window (current-window)))
-  (window-%x window))
-
-(defun window-y (&optional (window (current-window)))
-  (window-%y window))
-
-(defun window-width (&optional (window (current-window)))
-  (window-%width window))
-
-(defun window-height (&optional (window (current-window)))
-  (window-%height window))
-
-(defun window-buffer (&optional (window (current-window)))
-  (window-%buffer window))
 
 (defun window-view (window)
   (screen-view (window-screen window)))

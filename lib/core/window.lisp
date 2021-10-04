@@ -57,19 +57,18 @@
 (define-editor-variable truncate-lines t)
 
 (defparameter *window-left-margin* 1)
+(defparameter *default-popup-message-timeout* 5)
+(defparameter *window-sufficient-width* 150)
+(defparameter *scroll-recenter-p* t)
 
-(defvar *default-popup-message-timeout* 5)
+(defparameter *window-scroll-functions* '())
+(defparameter *window-size-change-functions* '())
+(defparameter *window-show-buffer-functions* '())
 
-(defvar *window-sufficient-width* 150)
-(defvar *scroll-recenter-p* t)
-(defvar *window-scroll-functions* '())
-(defvar *window-size-change-functions* '())
-(defvar *window-show-buffer-functions* '())
+(defparameter *use-new-vertical-move-function* t)
+(defparameter *use-cursor-movement-workaround* t)
 
 (defvar *window-id-counter* 0)
-
-(defvar *use-new-vertical-move-function* t)
-(defvar *use-cursor-movement-workaround* t)
 
 (defclass window ()
   ((id

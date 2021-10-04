@@ -128,11 +128,6 @@
     :initform nil
     :accessor window-parameters)))
 
-(defclass permanent-window-mixin () ())
-
-(defun permanent-window-p (window)
-  (typep window 'permanent-window-mixin))
-
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))
   (with-slots (screen view-point point) window
@@ -818,8 +813,7 @@ window width is changed, we must recalc the window view point."
                                      (window-%height win)))))))))
 
 (defmethod %delete-window ((window window))
-  (when (or (one-window-p)
-            (permanent-window-p window))
+  (when (one-window-p)
     (editor-error "Can not delete this window"))
   (when (eq (current-window) window)
     (setf (current-window)

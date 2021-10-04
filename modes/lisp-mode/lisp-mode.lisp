@@ -801,11 +801,10 @@
            :name "lisp-wait-message"))))
 
 (defun connected-slime-message (connection)
-  (let ((message
-          (format nil ";;; Swank server running on ~A ~A"
-                  (connection-implementation-name connection)
-                  (connection-implementation-version connection))))
-    (message "~A" message)))
+  (message "~A"
+           (format nil "Swank server running on ~A ~A"
+                   (connection-implementation-name connection)
+                   (connection-implementation-version connection))))
 
 (defun %slime-connect (hostname port)
   (let ((connection

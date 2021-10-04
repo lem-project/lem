@@ -30,18 +30,22 @@
 (defun set-input-start-point (buffer point)
   (setf (buffer-value buffer '%input-start-point) point))
 
+(defun listener-store (buffer)
+  (buffer-value buffer '%listener-store))
+
+(defun (setf listener-store) (listener-store buffer)
+  (setf (buffer-value buffer '%listener-store) listener-store))
+
 (define-editor-variable listener-set-prompt-function)
 (define-editor-variable listener-check-input-function)
 (define-editor-variable listener-execute-function)
-
-(define-editor-variable listener-store)
 
 (define-minor-mode listener-mode
     (:name "listener"
      :keymap *listener-mode-keymap*)
   (setf (variable-value 'enable-syntax-highlight) nil)
-  (unless (variable-value 'listener-store)
-    (setf (variable-value 'listener-store)
+  (unless (listener-store (current-buffer))
+    (setf (listener-store (current-buffer))
           (make-instance '<listener>
                          :history (lem.history:make-history))))
   (unless (input-start-point (current-buffer))
@@ -55,7 +59,7 @@
 (define-key *listener-mode-keymap* "C-c C-u" 'listener-clear-input)
 
 (defun current-listener-history ()
-  (let ((listener (variable-value 'listener-store :buffer (current-buffer))))
+  (let ((listener (listener-store (current-buffer))))
     (listener-history listener)))
 
 (defun default-switch-to-buffer (buffer)

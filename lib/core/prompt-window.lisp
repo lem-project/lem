@@ -350,17 +350,23 @@
 
 
 (defun prompt-file-completion (string directory &key directory-only)
-  (mapcar (lambda (filename)
-            (let ((label (tail-of-pathname filename)))
-              (with-point ((s (current-prompt-start-point))
-                           (e (current-prompt-start-point)))
-                (lem.completion-mode:make-completion-item
-                 :label label
-                 :start (character-offset
-                         s
-                         (length (namestring (uiop:pathname-directory-pathname string))))
-                 :end (line-end e)))))
-          (completion-file string directory :directory-only directory-only)))
+  (flet ((move-to-file-start (point)
+           ;; Move the point to the start of the file.
+           ;; /foo/bar/baz.txt
+           ;;          ^
+           (line-end point)
+           (search-backward point "/")
+           (character-offset point 1)
+           point))
+    (mapcar (lambda (filename)
+              (let ((label (tail-of-pathname filename)))
+                (with-point ((s (current-prompt-start-point))
+                             (e (current-prompt-start-point)))
+                  (lem.completion-mode:make-completion-item
+                   :label label
+                   :start (move-to-file-start s)
+                   :end (line-end e)))))
+            (completion-file string directory :directory-only directory-only))))
 
 (defun prompt-buffer-completion (string)
   (loop :for buffer :in (completion-buffer string)

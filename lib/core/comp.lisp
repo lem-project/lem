@@ -102,9 +102,9 @@
         (candidates2
           (completion str (buffer-list)
                       :test (lambda (str buffer)
-                              (or (lem::fuzzy-match-p str (buffer-name buffer))
+                              (or (fuzzy-match-p str (buffer-name buffer))
                                   (and (buffer-filename buffer)
-                                       (lem::fuzzy-match-p str (buffer-filename buffer))))))))
+                                       (fuzzy-match-p str (buffer-filename buffer))))))))
     (dolist (c candidates1)
       (setf candidates2 (delete c candidates2)))
     (append candidates1 candidates2)))

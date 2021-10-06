@@ -12,15 +12,14 @@
 
 (defparameter *default-port* 4005)
 (defparameter *localhost* "127.0.0.1")
+(defparameter *enable-feature-highlight* t)
+(defparameter *write-string-function* 'write-string-to-repl)
 
 (defvar *connection-list* '())
 (defvar *connection* nil)
 (defvar *event-hooks* '())
-(defvar *write-string-function* 'write-string-to-repl)
 (defvar *last-compilation-result* nil)
 (defvar *indent-table* (make-hash-table :test 'equal))
-
-(defvar *enable-feature-highlight* t)
 
 (define-major-mode lisp-mode language-mode
     (:name "lisp"

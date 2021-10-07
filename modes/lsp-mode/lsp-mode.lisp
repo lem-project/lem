@@ -16,6 +16,7 @@
 (lem-lsp-mode/project:local-nickname :client :lem-lsp-mode/client)
 (lem-lsp-mode/project:local-nickname :completion :lem.completion-mode)
 (lem-lsp-mode/project:local-nickname :context-menu :lem-lsp-mode/context-menu)
+(lem-lsp-mode/project:local-nickname :spinner :lem.loading-spinner)
 
 ;;;
 (defparameter *client-capabilities-text*
@@ -130,55 +131,6 @@
                            (send-event (lambda () (funcall then response))))
                          (lambda (message code)
                            (send-event (lambda () (jsonrpc-editor-error message code))))))
-
-
-;;; modeline spinner
-(defclass spinner ()
-  ((frames :initform #("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")
-           :reader spinner-frames)
-   (frame-index :initform 0
-                :accessor spinner-frame-index)
-   (timer :initarg :timer
-          :reader spinner-timer)))
-
-(defvar *spinner-table* (make-hash-table))
-
-(defun buffer-spinner (buffer)
-  (gethash (buffer-major-mode buffer) *spinner-table*))
-
-(defun (setf buffer-spinner) (spinner buffer)
-  (setf (gethash (buffer-major-mode buffer) *spinner-table*)
-        spinner))
-
-(defmethod convert-modeline-element ((spinner spinner) window)
-  (let ((attribute (merge-attribute (ensure-attribute 'modeline t)
-                                    (make-attribute :foreground "yellow"))))
-    (values (format nil
-                    "~A initializing  "
-                    (elt (spinner-frames spinner)
-                         (spinner-frame-index spinner)))
-            attribute
-            :right)))
-
-(defun update-spinner-frame ()
-  (when-let ((spinner (buffer-spinner (current-buffer))))
-    (setf (spinner-frame-index spinner)
-          (mod (1+ (spinner-frame-index spinner))
-               (length (spinner-frames spinner))))))
-
-(defun start-loading-spinner (buffer)
-  (unless (buffer-spinner buffer)
-    (let* ((timer (start-timer 80 t 'update-spinner-frame))
-           (spinner (make-instance 'spinner :timer timer)))
-      (modeline-add-status-list spinner buffer)
-      (setf (buffer-spinner buffer) spinner))))
-
-(defun stop-loading-spinner (buffer)
-  (when-let ((spinner (buffer-spinner buffer)))
-    (modeline-remove-status-list spinner buffer)
-    (stop-timer (spinner-timer spinner))
-    (setf (buffer-spinner buffer) nil)))
-
 
 ;;;
 (defgeneric spec-initialization-options (spec)
@@ -421,15 +373,18 @@
                  (assign-workspace-to-buffer buffer workspace)
                  (when continuation (funcall continuation))))
               (t
-               (start-loading-spinner buffer)
-               (initialize-workspace
-                (make-workspace :client new-client
-                                :root-uri root-uri
-                                :spec spec)
-                (lambda (workspace)
-                  (stop-loading-spinner buffer)
-                  (assign-workspace-to-buffer buffer workspace)
-                  (when continuation (funcall continuation))))))))))
+               (let ((spinner (spinner:start-loading-spinner
+                               :modeline
+                               :loading-message "initializing"
+                               :buffer buffer)))
+                 (initialize-workspace
+                  (make-workspace :client new-client
+                                  :root-uri root-uri
+                                  :spec spec)
+                  (lambda (workspace)
+                    (assign-workspace-to-buffer buffer workspace)
+                    (when continuation (funcall continuation))
+                    (spinner:stop-loading-spinner spinner))))))))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))

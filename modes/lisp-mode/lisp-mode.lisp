@@ -804,6 +804,7 @@
    (format nil "Swank server running on ~A ~A"
            (connection-implementation-name connection)
            (connection-implementation-version connection))
+   :timeout 1
    :gravity :center))
 
 (defun %slime-connect (hostname port)

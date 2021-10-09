@@ -415,7 +415,6 @@
 
 (defun disp-reset-lines (window)
   (let ((screen (window-screen window))
-        (buffer (window-buffer window))
         (view-point (window-view-point window)))
     (with-point ((point view-point))
       (loop :for row :from 0 :below (screen-height screen)
@@ -426,7 +425,8 @@
                 (unless (line-offset point 1)
                   (fill (screen-lines screen) nil :start (1+ row))
                   (return))))
-    (let ((overlays (overlays buffer)))
+    (let* ((buffer (window-buffer window))
+           (overlays (overlays buffer)))
       (when (eq (current-window) window)
         (alexandria:when-let ((overlay (maybe-push-mark-overlay buffer)))
           (push overlay overlays)))

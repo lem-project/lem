@@ -226,11 +226,6 @@
 
 (defmethod lem-if:redraw-view-after ((implementation jsonrpc) view focus-window-p)
   (with-error-handler ()
-    (when focus-window-p
-      (move-cursor implementation
-                   view
-                   lem::*cursor-x*
-                   lem::*cursor-y*))
     (notify "touch" (params "viewInfo" view))))
 
 (defmethod lem-if:scroll ((implementation jsonrpc) view n)
@@ -240,6 +235,10 @@
 
 (defmethod lem-if:update-display ((implementation jsonrpc))
   (with-error-handler ()
+    (move-cursor implementation
+                 (window-view (current-window))
+                 lem::*cursor-x*
+                 lem::*cursor-y*)
     (notify "update-display" nil)))
 
 

@@ -166,8 +166,5 @@
               'lw:quit
               most-negative-fixnum)
 
-(defmethod lem-if:redraw-window :before ((implementation capi-impl) window force)
-  (log-format "******************** redraw-window ~A *****************" window))
-
 (setq lem:*enable-clipboard-p* t)
 (setq lem::*enable-piece-of-paper* nil)

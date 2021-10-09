@@ -61,7 +61,6 @@
 (defgeneric lem-if:print-modeline (implementation view x y string attribute))
 (defgeneric lem-if:clear-eol (implementation view x y))
 (defgeneric lem-if:clear-eob (implementation view x y))
-(defgeneric lem-if:redraw-window (implementation window force))
 (defgeneric lem-if:redraw-view-after (implementation view)
   (:method (implementation view)))
 (defgeneric lem-if:update-display (implementation))
@@ -605,9 +604,6 @@
             :do (lem-if:print-modeline *implementation* view x 0 string attribute)))))
 
 (defun redraw-display-window (window force)
-  (lem-if:redraw-window *implementation* window force))
-
-(defmethod lem-if:redraw-window (implementation window force)
   (let ((focus-window-p (eq window (current-window)))
         (buffer (window-buffer window))
         (screen (window-screen window)))

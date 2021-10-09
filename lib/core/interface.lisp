@@ -398,24 +398,20 @@
                                      view-end-point))))
       (setf (screen-left-width screen) left-width))))
 
-(defun maybe-push-mark-overlay (window)
-  (when (eq window (current-window))
-    (let ((buffer (window-buffer window)))
-      (when (buffer-mark-p buffer)
-        (let ((start (region-beginning buffer))
-              (end (region-end buffer)))
-          (make-temporary-overlay start end 'region))))))
+(defun maybe-push-mark-overlay (buffer)
+  (when (buffer-mark-p buffer)
+    (let ((start (region-beginning buffer))
+          (end (region-end buffer)))
+      (make-temporary-overlay start end 'region))))
 
-(defun maybe-set-cursor-attribute (window screen view-point)
-  (when (eq window (current-window))
-    (let* ((buffer (window-buffer window))
-           (point (buffer-point buffer))
-           (charpos (point-charpos point)))
-      (disp-set-line screen
-                     'cursor
-                     (count-lines view-point point)
-                     charpos
-                     (1+ charpos)))))
+(defun maybe-set-cursor-attribute (buffer screen view-point)
+  (let* ((point (buffer-point buffer))
+         (charpos (point-charpos point)))
+    (disp-set-line screen
+                   'cursor
+                   (count-lines view-point point)
+                   charpos
+                   (1+ charpos))))
 
 (defun disp-reset-lines (window)
   (let ((screen (window-screen window))
@@ -431,10 +427,12 @@
                   (fill (screen-lines screen) nil :start (1+ row))
                   (return))))
     (let ((overlays (overlays buffer)))
-      (alexandria:when-let ((overlay (maybe-push-mark-overlay window)))
-        (push overlay overlays))
+      (when (eq (current-window) window)
+        (alexandria:when-let ((overlay (maybe-push-mark-overlay buffer)))
+          (push overlay overlays)))
       (disp-set-overlays screen overlays view-point)
-      (maybe-set-cursor-attribute window screen view-point))))
+      (when (eq (current-window) window)
+        (maybe-set-cursor-attribute buffer screen view-point)))))
 
 (define-editor-variable truncate-character #\\)
 (defvar *truncate-character*)

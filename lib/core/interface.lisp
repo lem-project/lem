@@ -402,10 +402,8 @@
   (when (eq window (current-window))
     (let ((buffer (window-buffer window)))
       (when (buffer-mark-p buffer)
-        (let ((start (buffer-point buffer))
-              (end (buffer-mark buffer)))
-          (when (point< end start)
-            (rotatef start end))
+        (let ((start (region-beginning buffer))
+              (end (region-end buffer)))
           (make-temporary-overlay start end 'region))))))
 
 (defun maybe-set-cursor-attribute (window screen view-point)

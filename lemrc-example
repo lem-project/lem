@@ -8,7 +8,7 @@
 (load-theme "emacs-dark")
 
 (setf *scroll-recenter-p* t)
-(setf (variable-value 'truncate-lines :global) nil)
+(setf (variable-value 'line-wrap :global) nil)
 (setf (variable-value 'lem.line-numbers:line-numbers :global) t)
 
 ;;; vi-mode

@@ -245,7 +245,7 @@
          (point (buffer-point buffer))
          (width 0))
     (erase-buffer buffer)
-    (setf (variable-value 'truncate-lines :buffer buffer) nil)
+    (setf (variable-value 'line-wrap :buffer buffer) nil)
     (with-point ((start point :right-inserting))
       (loop :for (item . continue-p) :on items
             :for linum :from 0
@@ -356,7 +356,7 @@
 
 (defun make-popup-buffer (text)
   (let ((buffer (make-buffer "*Popup Message*" :temporary t :enable-undo-p nil)))
-    (setf (variable-value 'truncate-lines :buffer buffer) nil)
+    (setf (variable-value 'line-wrap :buffer buffer) nil)
     (erase-buffer buffer)
     (insert-string (buffer-point buffer) text)
     (buffer-start (buffer-point buffer))

@@ -54,7 +54,7 @@
   (let* ((buffer (make-buffer "*frame-multiplexer*" :enable-undo-p nil :temporary t))
          (id/frame-table (make-array +frame-multiplexer-max-number-of-frames+ :initial-element nil)))
     (setf (aref id/frame-table 0) frame)
-    (setf (variable-value 'truncate-lines :buffer buffer) nil)
+    (setf (variable-value 'line-wrap :buffer buffer) nil)
     (let ((vf (make-instance 'virtual-frame
                              :impl impl
                              :buffer buffer

@@ -35,7 +35,7 @@
 
 (defun tabbar-init ()
   (let ((buffer (make-buffer "*tabbar*" :enable-undo-p nil :temporary t)))
-    (setf (variable-value 'truncate-lines :buffer buffer) nil)
+    (setf (variable-value 'line-wrap :buffer buffer) nil)
     (setf *tabbar* (make-instance 'tabbar-window :buffer buffer))))
 
 (defun tabbar-require-update ()

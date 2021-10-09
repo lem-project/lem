@@ -93,7 +93,7 @@
       (setf (current-window) window))
     (change-buffer-mode buffer 'sldb-mode)
     (setf (buffer-read-only-p buffer) nil)
-    (setf (variable-value 'truncate-lines :buffer buffer) nil)
+    (setf (variable-value 'line-wrap :buffer buffer) nil)
     (setf (buffer-value buffer 'thread)
           thread
           (buffer-value buffer 'level)

@@ -388,7 +388,7 @@
                       (delete-between-points start point)
                       (insert-string point string :attribute 'region))))
                 (buffer-start (buffer-point buffer))
-                (setf (variable-value 'truncate-lines :buffer buffer) nil)
+                (setf (variable-value 'line-wrap :buffer buffer) nil)
                 (funcall function buffer))))))))))
 
 (define-command scheme-autodoc-with-typeout () ()

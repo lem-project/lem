@@ -26,7 +26,7 @@
      :keymap *grep-mode-keymap*
      :syntax-table *syntax-table*)
   (setf (variable-value 'enable-syntax-highlight) t)
-  (setf (variable-value 'truncate-lines) nil))
+  (setf (variable-value 'line-wrap) nil))
 
 (define-key *grep-mode-keymap* "Return" 'grep-jump)
 (define-key *grep-mode-keymap* "q" 'quit-window)

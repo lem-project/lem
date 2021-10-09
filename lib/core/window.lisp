@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(export '(truncate-lines
+(export '(line-wrap
           *default-popup-message-timeout*
           *window-sufficient-width*
           *scroll-recenter-p*
@@ -54,7 +54,7 @@
           display-popup-message
           delete-popup-message))
 
-(define-editor-variable truncate-lines t)
+(define-editor-variable line-wrap t)
 
 (defparameter *window-left-margin* 1)
 (defparameter *default-popup-message-timeout* 5)
@@ -330,7 +330,7 @@
 (defun %calc-window-cursor-x (point window)
   "Return (values cur-x next). the 'next' is a flag if the cursor goes to
 next line because it is at the end of width."
-  (unless (variable-value 'truncate-lines :default (window-buffer window))
+  (unless (variable-value 'line-wrap :default (window-buffer window))
     (return-from %calc-window-cursor-x (values (point-column point) nil)))
   (let* ((tab-size (variable-value 'tab-width :default (window-buffer window)))
          (charpos (point-charpos point))
@@ -372,7 +372,7 @@ next line because it is at the end of width."
               (setq start i))))
 
 (defun window-wrapping-offset (window start-point end-point)
-  (unless (variable-value 'truncate-lines :default (window-buffer window))
+  (unless (variable-value 'line-wrap :default (window-buffer window))
     (return-from window-wrapping-offset 0))
   (let ((offset 0))
     (labels ((inc (arg)
@@ -416,7 +416,7 @@ next line because it is at the end of width."
 
 (defun forward-line-wrap (point window)
   (assert (eq (point-buffer point) (window-buffer window)))
-  (when (variable-value 'truncate-lines :default (point-buffer point))
+  (when (variable-value 'line-wrap :default (point-buffer point))
     (map-wrapping-line window
                        (line-string point)
                        (lambda (i)
@@ -449,7 +449,7 @@ next line because it is at the end of width."
 
 (defun backward-line-wrap (point window contain-same-line-p)
   (assert (eq (point-buffer point) (window-buffer window)))
-  (cond ((variable-value 'truncate-lines :default (point-buffer point))
+  (cond ((variable-value 'line-wrap :default (point-buffer point))
          (backward-line-wrap-1 point window contain-same-line-p))
         (contain-same-line-p
          (line-start point))))
@@ -472,7 +472,7 @@ next line because it is at the end of width."
   (assert (eq (point-buffer point) (window-buffer window)))
   (when (<= n 0)
     (return-from move-to-next-virtual-line-n point))
-  (unless (variable-value 'truncate-lines :default (point-buffer point))
+  (unless (variable-value 'line-wrap :default (point-buffer point))
     (return-from move-to-next-virtual-line-n (line-offset point n)))
   (loop :with n1 := n
         :do (map-wrapping-line
@@ -496,7 +496,7 @@ next line because it is at the end of width."
   (assert (eq (point-buffer point) (window-buffer window)))
   (when (<= n 0)
     (return-from move-to-previous-virtual-line-n point))
-  (unless (variable-value 'truncate-lines :default (point-buffer point))
+  (unless (variable-value 'line-wrap :default (point-buffer point))
     (return-from move-to-previous-virtual-line-n (line-offset point (- n))))
   (let ((pos-ring  (make-array (1+ n))) ; ring buffer of wrapping position
         (pos-size  (1+ n))
@@ -545,7 +545,7 @@ next line because it is at the end of width."
     ;; workaround for cursor movement problem
     (when (and *use-cursor-movement-workaround*
                (eq point (window-buffer-point window))
-               (variable-value 'truncate-lines :default (point-buffer point))
+               (variable-value 'line-wrap :default (point-buffer point))
                (numberp (get-next-line-context-column))
                (>= (get-next-line-context-column) (- (window-width window) 3)))
       (save-next-line-context-column 0))
@@ -567,7 +567,7 @@ next line because it is at the end of width."
   (move-to-next-virtual-line point (if n (- n) -1) window))
 
 (defun point-virtual-line-column (point &optional (window (current-window)))
-  (if (variable-value 'truncate-lines :default (point-buffer point))
+  (if (variable-value 'line-wrap :default (point-buffer point))
       (let ((column (point-column point)))
         (with-point ((start point))
           (backward-line-wrap start window t)
@@ -610,7 +610,7 @@ next line because it is at the end of width."
 (defun adjust-view-point (window)
   "When the window view point is at the middle of wrapped line and
 window width is changed, we must recalc the window view point."
-  (unless (variable-value 'truncate-lines :default (window-buffer window))
+  (unless (variable-value 'line-wrap :default (window-buffer window))
     (return-from adjust-view-point nil))
   (when (start-line-p (window-view-point window))
     (return-from adjust-view-point nil))

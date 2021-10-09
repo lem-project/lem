@@ -40,7 +40,7 @@
                 (erase-buffer buffer)
                 (change-buffer-mode buffer 'lisp-mode)
                 (insert-string point doc)
-                (setf (variable-value 'truncate-lines :buffer buffer) nil)
+                (setf (variable-value 'line-wrap :buffer buffer) nil)
                 (highlighting-marker point)
                 (funcall function buffer))))))))))
 

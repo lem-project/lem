@@ -51,7 +51,7 @@
         (if focus
             (setf (current-window) (display-buffer buffer))
             (display-buffer buffer))
-        (setf (variable-value 'truncate-lines :buffer buffer) nil)
+        (setf (variable-value 'line-wrap :buffer buffer) nil)
         (setf (get-sourcelist buffer) sourcelist)
         (setf *current-sourcelist-buffer* buffer)))))
 

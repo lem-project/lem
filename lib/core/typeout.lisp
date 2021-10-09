@@ -8,7 +8,7 @@
     (:name "typeout"
      :keymap *typeout-mode-keymap*
      :enable-hook (lambda ()
-                    (setf (variable-value 'truncate-lines :buffer (current-buffer)) nil))))
+                    (setf (variable-value 'line-wrap :buffer (current-buffer)) nil))))
 
 (define-key *typeout-mode-keymap* "q" 'dismiss-typeout-window)
 (define-key *typeout-mode-keymap* "Space" 'next-page-or-dismiss-typeout-window)

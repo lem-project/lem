@@ -115,7 +115,7 @@
     (setf (buffer-value buffer 'mark-overlays) nil)
     (setf (buffer-value buffer 'menu) menu)
     (change-buffer-mode buffer 'menu-mode)
-    (setf (variable-value 'truncate-lines :buffer buffer) nil)
+    (setf (variable-value 'line-wrap :buffer buffer) nil)
     (setf (buffer-read-only-p buffer) t)
     (let ((window (display-buffer buffer)))
       (with-current-window window

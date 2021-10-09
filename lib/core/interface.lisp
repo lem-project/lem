@@ -502,7 +502,7 @@
 (defun adjust-horizontal-scroll (window)
   (let ((screen (window-screen window))
         (buffer (window-buffer window)))
-    (unless (variable-value 'truncate-lines :default buffer)
+    (unless (variable-value 'line-wrap :default buffer)
       (let ((point-column (point-column (buffer-point buffer)))
             (width (- (screen-width screen) (screen-left-width screen))))
         (cond ((<= (+ (screen-horizontal-scroll-start screen) width)
@@ -514,9 +514,9 @@
 
 (defun screen-display-lines (screen redraw-flag buffer view-charpos cursor-y)
   (let* ((*printing-tab-size* (variable-value 'tab-width :default buffer))
-         (truncate-lines (variable-value 'truncate-lines :default buffer))
+         (line-wrap (variable-value 'line-wrap :default buffer))
          (disp-line-function
-           (if truncate-lines
+           (if line-wrap
                #'screen-display-line-wrapping
                #'screen-display-line))
          (wrap-lines (screen-wrap-lines screen))
@@ -560,7 +560,7 @@
                                   y
                                   str/attributes))
                    (cond
-                     (truncate-lines
+                     (line-wrap
                       (let ((offset (- y2 y)))
                         (cond ((< 0 offset)
                                (setf redraw-flag t)

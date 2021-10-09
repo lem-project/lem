@@ -94,12 +94,6 @@
 (defgeneric lem-if:clipboard-copy (implementation text)
   (:method (implementation text)))
 
-(defvar *print-start-x* 0)
-(defvar *cursor-x* 0)
-(defvar *cursor-y* 0)
-(defvar *redraw-start-y*)
-(defvar *redraw-end-y*)
-
 (defvar *display-background-mode* nil)
 
 (defun implementation ()
@@ -182,6 +176,10 @@
 
 (defvar *printing-tab-size*)
 
+(defvar *cursor-x* 0)
+(defvar *cursor-y* 0)
+(defvar *print-start-x* 0)
+
 (defun screen-print-string (screen x y string attribute)
   (when (and (eq attribute 'cursor) (< 0 (length string)))
     (setf *cursor-x* x)
@@ -215,41 +213,6 @@
     x))
 
 
-(defun redraw-line-p (y)
-  (or (not *redraw-start-y*)
-      (<= *redraw-start-y* y *redraw-end-y*)))
-
-(defun disp-print-line (screen y str/attributes do-clrtoeol
-                        &key (start-x 0) (string-start 0) string-end)
-  (unless (redraw-line-p y)
-    (return-from disp-print-line nil))
-  (destructuring-bind (str . attributes)
-      str/attributes
-    (when (null string-end)
-      (setf string-end (length str)))
-    (unless (and (= 0 string-start)
-                 (= (length str) string-end))
-      (setf str (subseq str
-                        string-start
-                        (if (null string-end)
-                            nil
-                            (min (length str) string-end))))
-      (setf attributes (lem-base/line::subseq-elements attributes string-start string-end)))
-    (let ((prev-end 0)
-          (x start-x))
-      (loop :for (start end attr) :in attributes
-            :do (setf end (min (length str) end))
-                (setf x (screen-print-string screen x y (subseq str prev-end start) nil))
-                (setf x (screen-print-string screen x y (subseq str start end) attr))
-                (setf prev-end end))
-      (setf x (screen-print-string screen x y
-                                   (if (= prev-end 0)
-                                       str
-                                       (subseq str prev-end))
-                                   nil))
-      (when do-clrtoeol
-        (lem-if:clear-eol *implementation* (screen-view screen) x y)))))
-
 #+(or)
 (progn
   (defun overlay-line (elements start end attribute)
@@ -434,6 +397,45 @@
       (when (eq (current-window) window)
         (maybe-set-cursor-attribute buffer screen view-point)))))
 
+
+(defvar *redraw-start-y*)
+(defvar *redraw-end-y*)
+
+(defun redraw-line-p (y)
+  (or (not *redraw-start-y*)
+      (<= *redraw-start-y* y *redraw-end-y*)))
+
+(defun disp-print-line (screen y str/attributes do-clrtoeol
+                        &key (start-x 0) (string-start 0) string-end)
+  (unless (redraw-line-p y)
+    (return-from disp-print-line nil))
+  (destructuring-bind (str . attributes)
+      str/attributes
+    (when (null string-end)
+      (setf string-end (length str)))
+    (unless (and (= 0 string-start)
+                 (= (length str) string-end))
+      (setf str (subseq str
+                        string-start
+                        (if (null string-end)
+                            nil
+                            (min (length str) string-end))))
+      (setf attributes (lem-base/line::subseq-elements attributes string-start string-end)))
+    (let ((prev-end 0)
+          (x start-x))
+      (loop :for (start end attr) :in attributes
+            :do (setf end (min (length str) end))
+                (setf x (screen-print-string screen x y (subseq str prev-end start) nil))
+                (setf x (screen-print-string screen x y (subseq str start end) attr))
+                (setf prev-end end))
+      (setf x (screen-print-string screen x y
+                                   (if (= prev-end 0)
+                                       str
+                                       (subseq str prev-end))
+                                   nil))
+      (when do-clrtoeol
+        (lem-if:clear-eol *implementation* (screen-view screen) x y)))))
+
 (define-editor-variable truncate-character #\\)
 (defvar *truncate-character*)
 
@@ -493,19 +495,6 @@
                      :string-start start
                      :string-end end))
   point-y)
-
-(defun adjust-horizontal-scroll (window)
-  (let ((screen (window-screen window))
-        (buffer (window-buffer window)))
-    (unless (variable-value 'line-wrap :default buffer)
-      (let ((point-column (point-column (buffer-point buffer)))
-            (width (- (screen-width screen) (screen-left-width screen))))
-        (cond ((<= (+ (screen-horizontal-scroll-start screen) width)
-                   (1+ point-column))
-               (setf (screen-horizontal-scroll-start screen)
-                     (- (1+ point-column) width)))
-              ((< point-column (screen-horizontal-scroll-start screen))
-               (setf (screen-horizontal-scroll-start screen) point-column)))))))
 
 (defun screen-display-lines (screen redraw-flag buffer view-charpos cursor-y)
   (let* ((*printing-tab-size* (variable-value 'tab-width :default buffer))
@@ -598,6 +587,19 @@
                                 default-attribute)
       (loop :for (x string attribute) :in elements
             :do (lem-if:print-modeline *implementation* view x 0 string attribute)))))
+
+(defun adjust-horizontal-scroll (window)
+  (let ((screen (window-screen window))
+        (buffer (window-buffer window)))
+    (unless (variable-value 'line-wrap :default buffer)
+      (let ((point-column (point-column (buffer-point buffer)))
+            (width (- (screen-width screen) (screen-left-width screen))))
+        (cond ((<= (+ (screen-horizontal-scroll-start screen) width)
+                   (1+ point-column))
+               (setf (screen-horizontal-scroll-start screen)
+                     (- (1+ point-column) width)))
+              ((< point-column (screen-horizontal-scroll-start screen))
+               (setf (screen-horizontal-scroll-start screen) point-column)))))))
 
 (defun redraw-display-window (window force)
   (let ((focus-window-p (eq window (current-window)))

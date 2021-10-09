@@ -8,7 +8,8 @@
            :min-if
            :find-tree
            :random-range
-           :do-sequence))
+           :do-sequence
+           :if-push))
 (in-package :lem-utils/main)
 
 #+sbcl
@@ -72,3 +73,10 @@
                           (incf ,g-i))
                        `(progn ,@body)))
                 ,sequence))))))
+
+(defmacro if-push (expression place)
+  (alexandria:once-only (expression)
+    `(progn
+       (when ,expression
+         (push ,expression ,place))
+       (values))))

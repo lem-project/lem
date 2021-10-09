@@ -1,5 +1,7 @@
 (defpackage :lem-fake-interface
-  (:use :cl :lem))
+  (:use :cl :lem)
+  (:export :fake-interface
+           :with-fake-interface))
 (in-package :lem-fake-interface)
 
 (defclass fake-interface (lem:implementation)
@@ -112,3 +114,8 @@
 ;; (defmethod lem-if:delete-popup-message ((implementation fake-interface) popup-message))
 ;; (defmethod lem-if:display-menu ((implementation fake-interface) menu name))
 ;; (defmethod lem-if:update-menu ((implementation fake-interface) menu items))
+
+(defmacro with-fake-interface (() &body body)
+  `(let ((*implementation* (make-instance 'fake-interface)))
+     (lem::setup-first-frame)
+     ,@body))

@@ -1,7 +1,8 @@
 (defpackage :lem-tests/popup-window
   (:use :cl :lem-tests/deftest)
   (:import-from :lem-fake-interface
-                :fake-interface))
+                :fake-interface
+                :with-fake-interface))
 (in-package :lem-tests/popup-window)
 
 (defvar *popup-parameters* nil)
@@ -11,7 +12,7 @@
   (setf *popup-parameters* popup-parameters))
 
 (deftest display-popup-window
-  (lem:with-interface (make-instance 'fake-interface)
+  (with-fake-interface ()
     (let (*popup-parameters*)
       (lem:display-popup-message "hello")
       (let ((popup-parameters *popup-parameters*))

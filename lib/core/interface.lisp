@@ -8,8 +8,7 @@
           set-foreground
           set-background
           display-width
-          display-height
-          with-interface))
+          display-height))
 
 (defvar *implementation*)
 
@@ -656,9 +655,3 @@
 
 (defun update-display ()
   (lem-if:update-display *implementation*))
-
-
-(defmacro with-interface (implementation &body body)
-  `(let ((*implementation* ,implementation))
-     (setup-first-frame)
-     ,@body))

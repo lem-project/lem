@@ -224,7 +224,7 @@
     (notify "move-cursor"
             (params "viewInfo" view "x" x "y" y))))
 
-(defmethod lem-if:redraw-view-after ((implementation jsonrpc) view focus-window-p)
+(defmethod lem-if:redraw-view-after ((implementation jsonrpc) view)
   (with-error-handler ()
     (notify "touch" (params "viewInfo" view))))
 

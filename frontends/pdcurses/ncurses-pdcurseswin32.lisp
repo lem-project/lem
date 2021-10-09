@@ -1052,7 +1052,7 @@
       (charms/ll:mvaddch pos-y pos-x code))))
 
 ;; overwrite method (use only stdscr)
-(defmethod lem-if:redraw-view-after ((implementation ncurses) view focus-window-p)
+(defmethod lem-if:redraw-view-after ((implementation ncurses) view)
   ;; draw border
   (alexandria:when-let (border (ncurses-view-border view))
     (draw-border border view))

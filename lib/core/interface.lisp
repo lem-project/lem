@@ -62,8 +62,8 @@
 (defgeneric lem-if:clear-eol (implementation view x y))
 (defgeneric lem-if:clear-eob (implementation view x y))
 (defgeneric lem-if:redraw-window (implementation window force))
-(defgeneric lem-if:redraw-view-after (implementation view focus-window-p)
-  (:method (implementation view focus-winodw-p)))
+(defgeneric lem-if:redraw-view-after (implementation view)
+  (:method (implementation view)))
 (defgeneric lem-if:update-display (implementation))
 (defgeneric lem-if:scroll (implementation view n))
 
@@ -650,7 +650,7 @@
               (buffer-modified-tick buffer))
         (when (window-use-modeline-p window)
           (screen-redraw-modeline window (or (screen-modified-p screen) force)))
-        (lem-if:redraw-view-after *implementation* (screen-view screen) focus-window-p)
+        (lem-if:redraw-view-after *implementation* (screen-view screen))
         (setf (screen-modified-p screen) nil)))))
 
 (defun update-display ()

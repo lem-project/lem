@@ -549,7 +549,7 @@
       (charms/ll:wattroff win attr))
     (charms/ll:wnoutrefresh win)))
 
-(defmethod lem-if:redraw-view-after ((implementation ncurses) view focus-window-p)
+(defmethod lem-if:redraw-view-after ((implementation ncurses) view)
   (alexandria:when-let (border (ncurses-view-border view))
     (draw-border border))
   (let ((attr (attribute-to-bits 'modeline-inactive)))

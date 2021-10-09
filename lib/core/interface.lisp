@@ -432,9 +432,9 @@
                 (unless (line-offset point 1)
                   (fill (screen-lines screen) nil :start (1+ i))
                   (return))))
-    (let ((overlays (overlays buffer))
-          ov)
-      (when (setf ov (maybe-push-mark-overlay window)) (push ov overlays))
+    (let ((overlays (overlays buffer)))
+      (alexandria:when-let ((overlay (maybe-push-mark-overlay window)))
+        (push overlay overlays))
       (disp-set-overlays screen overlays view-point)
       (maybe-set-cursor-attribute window screen view-point))))
 

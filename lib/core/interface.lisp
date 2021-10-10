@@ -294,25 +294,15 @@
 (defun disp-attribute-to-screen-region (screen attribute screen-row start end)
   (flet ((draw-line (row start-charpos &optional end-charpos)
            (draw-attribute-to-screen-line screen attribute row start-charpos end-charpos)))
-    (cond ((same-line-p start end)
-           (draw-line screen-row
-                      (point-charpos start)
-                      (point-charpos end))
-           (return-from disp-attribute-to-screen-region))
-          (t
-           (draw-line screen-row
-                      (point-charpos start))))
     (with-point ((point start))
-      (line-offset point 1)
-      (loop :for row :from (1+ screen-row)
-            :do (cond
-                  ((same-line-p point end)
-                   (draw-line row 0 (point-charpos end))
-                   (return))
-                  (t
-                   (draw-line row 0)
-                   (unless (line-offset point 1)
-                     (return))))))))
+      (loop :for start-charpos := (point-charpos start) :then 0
+            :for row :from screen-row
+            :do (cond ((same-line-p point end)
+                       (draw-line row start-charpos (point-charpos end))
+                       (return))
+                      (t
+                       (draw-line row start-charpos)))
+            :while (line-offset point 1)))))
 
 (flet ((make-temporary-region-overlay-if-marked (buffer)
          (when (buffer-mark-p buffer)

@@ -292,24 +292,27 @@
                                          attribute)))))
 
 (defun disp-attribute-to-screen-region (screen attribute screen-row start end)
-  (let ((start-and-end-on-same-line (same-line-p start end)))
-    (draw-attribute-to-screen-line screen attribute screen-row (point-charpos start)
-                                   (if start-and-end-on-same-line
-                                       (point-charpos end)
-                                       nil))
-    (when start-and-end-on-same-line
-      (return-from disp-attribute-to-screen-region)))
-  (with-point ((point start))
-    (line-offset point 1)
-    (loop :for i :from (1+ screen-row)
-          :do (cond
-                ((same-line-p point end)
-                 (draw-attribute-to-screen-line screen attribute i 0 (point-charpos end))
-                 (return))
-                (t
-                 (draw-attribute-to-screen-line screen attribute i 0 nil)
-                 (unless (line-offset point 1)
-                   (return-from disp-attribute-to-screen-region)))))))
+  (flet ((draw-line (row start-charpos &optional end-charpos)
+           (draw-attribute-to-screen-line screen attribute row start-charpos end-charpos)))
+    (cond ((same-line-p start end)
+           (draw-line screen-row
+                      (point-charpos start)
+                      (point-charpos end))
+           (return-from disp-attribute-to-screen-region))
+          (t
+           (draw-line screen-row
+                      (point-charpos start))))
+    (with-point ((point start))
+      (line-offset point 1)
+      (loop :for i :from (1+ screen-row)
+            :do (cond
+                  ((same-line-p point end)
+                   (draw-line i 0 (point-charpos end))
+                   (return))
+                  (t
+                   (draw-line i 0)
+                   (unless (line-offset point 1)
+                     (return-from disp-attribute-to-screen-region))))))))
 
 (flet ((make-temporary-region-overlay-if-marked (buffer)
          (when (buffer-mark-p buffer)

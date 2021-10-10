@@ -312,7 +312,7 @@
                   (t
                    (draw-line row 0)
                    (unless (line-offset point 1)
-                     (return-from disp-attribute-to-screen-region))))))))
+                     (return))))))))
 
 (flet ((make-temporary-region-overlay-if-marked (buffer)
          (when (buffer-mark-p buffer)

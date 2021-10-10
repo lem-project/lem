@@ -291,7 +291,7 @@
                                          (or end-charpos (length string))
                                          attribute)))))
 
-(defun disp-attribute-to-screen-region (screen attribute screen-row start end)
+(defun draw-attribute-to-screen-region (screen attribute screen-row start end)
   (flet ((draw-line (row start-charpos &optional end-charpos)
            (draw-attribute-to-screen-line screen attribute row start-charpos end-charpos)))
     (with-point ((point start))
@@ -349,7 +349,7 @@
                                                     (point-charpos end)))
                     ((and (point<= view-point start)
                           (point< end view-end-point))
-                     (disp-attribute-to-screen-region screen
+                     (draw-attribute-to-screen-region screen
                                                       (overlay-attribute overlay)
                                                       (calc-row start)
                                                       start
@@ -357,13 +357,13 @@
                     ((and (point<= start view-point)
                           (point<= view-point end)
                           (point<= end view-end-point))
-                     (disp-attribute-to-screen-region screen
+                     (draw-attribute-to-screen-region screen
                                                       (overlay-attribute overlay)
                                                       0
                                                       view-point
                                                       end))
                     ((point<= view-point start)
-                     (disp-attribute-to-screen-region screen
+                     (draw-attribute-to-screen-region screen
                                                       (overlay-attribute overlay)
                                                       (calc-row start)
                                                       start

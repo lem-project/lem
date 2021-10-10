@@ -410,10 +410,10 @@
   (reset-screen-lines-and-left-lines window)
   (draw-window-overlays-to-screen window)
   (let ((screen (window-screen window))
-        (view-point (window-view-point window)))
-    (let ((buffer (window-buffer window)))
-      (when (eq (current-window) window)
-        (maybe-set-cursor-attribute buffer screen view-point)))))
+        (view-point (window-view-point window))
+        (buffer (window-buffer window)))
+    (when (eq (current-window) window)
+      (maybe-set-cursor-attribute buffer screen view-point))))
 
 
 (defvar *redraw-start-y*)

@@ -311,7 +311,7 @@
                  (unless (line-offset point 1)
                    (return-from disp-set-overlay)))))))
 
-(defun disp-set-overlays (screen overlays view-point)
+(defun draw-window-overlays-to-screen (screen overlays view-point)
   (flet ((calc-row (curr-point) (count-lines view-point curr-point)))
     (let ((left-width 0)
           (view-end-point (with-point ((view-point view-point))
@@ -409,7 +409,7 @@
         (view-point (window-view-point window)))
     (let ((buffer (window-buffer window))
           (overlays (get-window-overlays window)))
-      (disp-set-overlays screen overlays view-point)
+      (draw-window-overlays-to-screen screen overlays view-point)
       (when (eq (current-window) window)
         (maybe-set-cursor-attribute buffer screen view-point)))))
 

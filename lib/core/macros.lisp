@@ -1,8 +1,7 @@
 (in-package :lem)
 
 (export '(with-current-window
-          with-pop-up-typeout-window
-          handler-case-bind))
+          with-pop-up-typeout-window))
 
 (defmacro with-current-window (window &body body)
   (let ((gprev-window (gensym "PREV-WINDOW"))
@@ -43,13 +42,6 @@
      (with-debug-output ("PROFILE")
        (sb-profile:report))
      (sb-profile:unprofile)))
-
-(defmacro handler-case-bind ((error-bind &body body)
-                             ((condition) &body protected-form))
-  `(handler-case
-       (handler-bind ((error ,error-bind))
-         (progn ,@body))
-     (error (,condition) ,@protected-form)))
 
 (defmacro with-editor-stream (() &body body)
   (alexandria:with-gensyms (stream)

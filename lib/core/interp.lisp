@@ -40,12 +40,14 @@
              :erase t)))
 
 (defmacro with-error-handler (() &body body)
-  `(handler-case-bind ((lambda (condition)
-                         (handler-bind ((error #'bailout))
-                           (pop-up-backtrace condition)
-                           (redraw-display)))
-                       ,@body)
-                      ((condition) (declare (ignore condition)))))
+  `(handler-case
+       (handler-bind ((error
+                        (lambda (condition)
+                          (handler-bind ((error #'bailout))
+                            (pop-up-backtrace condition)
+                            (redraw-display)))))
+         ,@body)
+     (error ())))
 
 (defvar *interactive-p* nil)
 (defun interactive-p () *interactive-p*)

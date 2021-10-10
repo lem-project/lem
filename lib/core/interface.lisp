@@ -377,21 +377,18 @@
                                        view-end-point))))
         (setf (screen-left-width screen) left-width)))))
 
-(defun maybe-set-cursor-attribute (buffer screen view-point)
-  (let* ((point (buffer-point buffer))
-         (charpos (point-charpos point)))
-    (disp-set-line screen
-                   'cursor
-                   (count-lines view-point point)
-                   charpos
-                   (1+ charpos))))
-
 (defun draw-cursor-to-screen (window)
   (when (eq (current-window) window)
     (let ((screen (window-screen window))
           (view-point (window-view-point window))
           (buffer (window-buffer window)))
-      (maybe-set-cursor-attribute buffer screen view-point))))
+      (let* ((point (buffer-point buffer))
+             (charpos (point-charpos point)))
+        (disp-set-line screen
+                       'cursor
+                       (count-lines view-point point)
+                       charpos
+                       (1+ charpos))))))
 
 (flet ((reset-screen-lines (screen view-point)
          (with-point ((point view-point))

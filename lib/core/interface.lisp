@@ -387,6 +387,13 @@
                    charpos
                    (1+ charpos))))
 
+(defun draw-cursor-to-screen (window)
+  (when (eq (current-window) window)
+    (let ((screen (window-screen window))
+          (view-point (window-view-point window))
+          (buffer (window-buffer window)))
+      (maybe-set-cursor-attribute buffer screen view-point))))
+
 (defun reset-screen-lines (screen view-point)
   (with-point ((point view-point))
     (loop :for row :from 0 :below (screen-height screen)
@@ -409,11 +416,7 @@
 (defun draw-window-to-screen (window)
   (reset-screen-lines-and-left-lines window)
   (draw-window-overlays-to-screen window)
-  (let ((screen (window-screen window))
-        (view-point (window-view-point window))
-        (buffer (window-buffer window)))
-    (when (eq (current-window) window)
-      (maybe-set-cursor-attribute buffer screen view-point))))
+  (draw-cursor-to-screen window))
 
 
 (defvar *redraw-start-y*)

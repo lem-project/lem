@@ -379,16 +379,16 @@
 
 (defun draw-cursor-to-screen (window)
   (when (eq (current-window) window)
-    (let ((screen (window-screen window))
-          (view-point (window-view-point window))
-          (buffer (window-buffer window)))
-      (let* ((point (buffer-point buffer))
-             (charpos (point-charpos point)))
-        (disp-set-line screen
-                       'cursor
-                       (count-lines view-point point)
-                       charpos
-                       (1+ charpos))))))
+    (let* ((screen (window-screen window))
+           (view-point (window-view-point window))
+           (buffer (window-buffer window))
+           (point (buffer-point buffer))
+           (charpos (point-charpos point)))
+      (disp-set-line screen
+                     'cursor
+                     (count-lines view-point point)
+                     charpos
+                     (1+ charpos)))))
 
 (flet ((reset-screen-lines (screen view-point)
          (with-point ((point view-point))

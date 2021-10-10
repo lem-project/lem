@@ -361,7 +361,7 @@
                                      view-end-point))))
       (setf (screen-left-width screen) left-width))))
 
-(defun maybe-push-mark-overlay (buffer)
+(defun make-temporary-region-overlay-if-marked (buffer)
   (when (buffer-mark-p buffer)
     (let ((start (region-beginning buffer))
           (end (region-end buffer)))
@@ -397,7 +397,7 @@
     (let* ((buffer (window-buffer window))
            (overlays (overlays buffer)))
       (when (eq (current-window) window)
-        (lem-utils:if-push (maybe-push-mark-overlay buffer)
+        (lem-utils:if-push (make-temporary-region-overlay-if-marked buffer)
                            overlays))
       (disp-set-overlays screen overlays view-point)
       (when (eq (current-window) window)

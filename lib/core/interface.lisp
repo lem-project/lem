@@ -403,7 +403,7 @@
     (reset-screen-lines screen view-point)
     (reset-screen-left-lines screen)))
 
-(defun disp-reset-lines (window)
+(defun draw-window-to-screen (window)
   (reset-screen-lines-and-left-lines window)
   (let ((screen (window-screen window))
         (view-point (window-view-point window)))
@@ -637,7 +637,7 @@
                 (values (- (screen-height screen) scroll-n) (screen-height screen))
                 (values 0 (- scroll-n))))
         (run-show-buffer-hooks window)
-        (disp-reset-lines window)
+        (draw-window-to-screen window)
         (adjust-horizontal-scroll window)
         (let ((*truncate-character*
                 (variable-value 'truncate-character :default buffer)))

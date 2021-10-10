@@ -397,11 +397,16 @@
 (defun reset-screen-left-lines (screen)
   (fill (screen-left-lines screen) nil))
 
-(defun disp-reset-lines (window)
+(defun reset-screen-lines-and-left-lines (window)
   (let ((screen (window-screen window))
         (view-point (window-view-point window)))
     (reset-screen-lines screen view-point)
-    (reset-screen-left-lines screen)
+    (reset-screen-left-lines screen)))
+
+(defun disp-reset-lines (window)
+  (reset-screen-lines-and-left-lines window)
+  (let ((screen (window-screen window))
+        (view-point (window-view-point window)))
     (let ((buffer (window-buffer window))
           (overlays (get-window-overlays window)))
       (disp-set-overlays screen overlays view-point)

@@ -311,6 +311,20 @@
                  (unless (line-offset point 1)
                    (return-from disp-set-overlay)))))))
 
+(defun make-temporary-region-overlay-if-marked (buffer)
+  (when (buffer-mark-p buffer)
+    (let ((start (region-beginning buffer))
+          (end (region-end buffer)))
+      (make-temporary-overlay start end 'region))))
+
+(defun get-window-overlays (window)
+  (let* ((buffer (window-buffer window))
+         (overlays (overlays buffer)))
+    (when (eq (current-window) window)
+      (lem-utils:if-push (make-temporary-region-overlay-if-marked buffer)
+                         overlays))
+    overlays))
+
 (defun draw-window-overlays-to-screen (window)
   (let ((screen (window-screen window))
         (overlays (get-window-overlays window))
@@ -363,20 +377,6 @@
                                        start
                                        view-end-point))))
         (setf (screen-left-width screen) left-width)))))
-
-(defun make-temporary-region-overlay-if-marked (buffer)
-  (when (buffer-mark-p buffer)
-    (let ((start (region-beginning buffer))
-          (end (region-end buffer)))
-      (make-temporary-overlay start end 'region))))
-
-(defun get-window-overlays (window)
-  (let* ((buffer (window-buffer window))
-         (overlays (overlays buffer)))
-    (when (eq (current-window) window)
-      (lem-utils:if-push (make-temporary-region-overlay-if-marked buffer)
-                         overlays))
-    overlays))
 
 (defun maybe-set-cursor-attribute (buffer screen view-point)
   (let* ((point (buffer-point buffer))

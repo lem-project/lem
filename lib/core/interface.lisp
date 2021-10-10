@@ -406,10 +406,9 @@
                          (return)))))
          (reset-screen-left-lines (screen)
            (fill (screen-left-lines screen) nil)))
-    (let ((screen (window-screen window))
-          (view-point (window-view-point window)))
-      (reset-screen-lines screen view-point)
-      (reset-screen-left-lines screen))))
+    (reset-screen-lines (window-screen window)
+                        (window-view-point window))
+    (reset-screen-left-lines (window-screen window))))
 
 (defun draw-window-to-screen (window)
   (reset-screen-lines-and-left-lines window)

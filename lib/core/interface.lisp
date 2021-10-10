@@ -239,7 +239,7 @@
                   :if (null (cdr rest)) :do (add (the fixnum (+ start e)) end attribute))))
       acc))
 
-  (defun disp-set-line (screen attribute screen-row start-charpos end-charpos)
+  (defun draw-attribute-to-screen-line (screen attribute screen-row start-charpos end-charpos)
     (when (and (<= 0 screen-row)
                (< screen-row (screen-height screen))
                (not (null (aref (screen-lines screen) screen-row)))
@@ -271,7 +271,7 @@
                                                      end-charpos)))))))))
   )
 
-(defun disp-set-line (screen attribute screen-row start-charpos end-charpos)
+(defun draw-attribute-to-screen-line (screen attribute screen-row start-charpos end-charpos)
   (when (and (<= 0 screen-row)
              (< screen-row (screen-height screen))
              (not (null (aref (screen-lines screen) screen-row)))
@@ -291,25 +291,25 @@
                                          (or end-charpos (length string))
                                          attribute)))))
 
-(defun disp-set-overlay (screen attribute screen-row start end)
+(defun disp-attribute-to-screen-region (screen attribute screen-row start end)
   (let ((start-and-end-on-same-line (same-line-p start end)))
-    (disp-set-line screen attribute screen-row (point-charpos start)
-	         (if start-and-end-on-same-line
-		   (point-charpos end)
-		   nil))
+    (draw-attribute-to-screen-line screen attribute screen-row (point-charpos start)
+                                   (if start-and-end-on-same-line
+                                       (point-charpos end)
+                                       nil))
     (when start-and-end-on-same-line
-      (return-from disp-set-overlay)))
+      (return-from disp-attribute-to-screen-region)))
   (with-point ((point start))
     (line-offset point 1)
     (loop :for i :from (1+ screen-row)
           :do (cond
                 ((same-line-p point end)
-                 (disp-set-line screen attribute i 0 (point-charpos end))
+                 (draw-attribute-to-screen-line screen attribute i 0 (point-charpos end))
                  (return))
                 (t
-                 (disp-set-line screen attribute i 0 nil)
+                 (draw-attribute-to-screen-line screen attribute i 0 nil)
                  (unless (line-offset point 1)
-                   (return-from disp-set-overlay)))))))
+                   (return-from disp-attribute-to-screen-region)))))))
 
 (flet ((make-temporary-region-overlay-if-marked (buffer)
          (when (buffer-mark-p buffer)
@@ -349,32 +349,32 @@
                     ((and (same-line-p start end)
                           (point<= view-point start)
                           (point< start view-end-point))
-                     (disp-set-line screen
-                                    (overlay-attribute overlay)
-                                    (calc-row start)
-                                    (point-charpos start)
-                                    (point-charpos end)))
+                     (draw-attribute-to-screen-line screen
+                                                    (overlay-attribute overlay)
+                                                    (calc-row start)
+                                                    (point-charpos start)
+                                                    (point-charpos end)))
                     ((and (point<= view-point start)
                           (point< end view-end-point))
-                     (disp-set-overlay screen
-                                       (overlay-attribute overlay)
-                                       (calc-row start)
-                                       start
-                                       end))
+                     (disp-attribute-to-screen-region screen
+                                                      (overlay-attribute overlay)
+                                                      (calc-row start)
+                                                      start
+                                                      end))
                     ((and (point<= start view-point)
                           (point<= view-point end)
                           (point<= end view-end-point))
-                     (disp-set-overlay screen
-                                       (overlay-attribute overlay)
-                                       0
-                                       view-point
-                                       end))
+                     (disp-attribute-to-screen-region screen
+                                                      (overlay-attribute overlay)
+                                                      0
+                                                      view-point
+                                                      end))
                     ((point<= view-point start)
-                     (disp-set-overlay screen
-                                       (overlay-attribute overlay)
-                                       (calc-row start)
-                                       start
-                                       view-end-point))))
+                     (disp-attribute-to-screen-region screen
+                                                      (overlay-attribute overlay)
+                                                      (calc-row start)
+                                                      start
+                                                      view-end-point))))
         (setf (screen-left-width screen) left-width)))))
 
 (defun draw-cursor-to-screen (window)
@@ -384,11 +384,11 @@
            (buffer (window-buffer window))
            (point (buffer-point buffer))
            (charpos (point-charpos point)))
-      (disp-set-line screen
-                     'cursor
-                     (count-lines view-point point)
-                     charpos
-                     (1+ charpos)))))
+      (draw-attribute-to-screen-line screen
+                                     'cursor
+                                     (count-lines view-point point)
+                                     charpos
+                                     (1+ charpos)))))
 
 (flet ((reset-screen-lines (screen view-point)
          (with-point ((point view-point))

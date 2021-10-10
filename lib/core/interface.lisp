@@ -304,13 +304,13 @@
                       (point-charpos start))))
     (with-point ((point start))
       (line-offset point 1)
-      (loop :for i :from (1+ screen-row)
+      (loop :for row :from (1+ screen-row)
             :do (cond
                   ((same-line-p point end)
-                   (draw-line i 0 (point-charpos end))
+                   (draw-line row 0 (point-charpos end))
                    (return))
                   (t
-                   (draw-line i 0)
+                   (draw-line row 0)
                    (unless (line-offset point 1)
                      (return-from disp-attribute-to-screen-region))))))))
 

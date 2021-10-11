@@ -213,65 +213,41 @@
     x))
 
 
-#+(or)
-(progn
-  (defun overlay-line (elements start end attribute)
-    (declare (optimize (speed 3) (safety 0) (debug 0)))
-    (declare (type fixnum start end))
-    (let ((acc '()))
-      (flet ((add (start end attribute)
-               (when (< start end)
-                 (push (list start end attribute) acc))))
-        (if (null elements)
-            (add start end attribute)
-            (loop :for rest :on elements
-                  :for firstp := t :then nil
-                  :for prev := nil :then e
-                  :for (s e value) :of-type (fixnum fixnum t) :in elements
-                  :if firstp :do (add start (the fixnum (+ start s)) attribute)
-                  :if (and prev) :do (add (the fixnum (+ start (the fixnum prev)))
-                                          (the fixnum (+ start s))
-                                          attribute)
-                  :do (let ((src-attribute (ensure-attribute value nil)))
-                        (add (the fixnum (+ start s))
-                             (the fixnum (+ start e))
-                             (merge-attribute src-attribute attribute)))
-                  :if (null (cdr rest)) :do (add (the fixnum (+ start e)) end attribute))))
-      acc))
+(defun overlay-attributes (under-attributes over-start over-end over-attribute)
+  ;; under-attributes := ((start-charpos end-charpos attribute) ...)
+  (let* ((over-attribute (ensure-attribute over-attribute))
+         (under-part-attributes (lem-base/line::subseq-elements under-attributes
+                                                                over-start
+                                                                over-end))
+         (merged-attributes (lem-base/line::remove-elements under-attributes
+                                                            over-start
+                                                            over-end)))
+    (flet ((add-element (start end attribute)
+             (when (< start end)
+               (push (list start end (ensure-attribute attribute))
+                     merged-attributes))))
+      (if (null under-part-attributes)
+          (add-element over-start over-end over-attribute)
+          (loop :for prev-under := 0 :then under-end-offset
+                :for (under-start-offset under-end-offset under-attribute)
+                :in under-part-attributes
+                :do (add-element (+ over-start prev-under)
+                                 (+ over-start under-start-offset)
+                                 over-attribute)
+                    (add-element (+ over-start under-start-offset)
+                                 (+ over-start under-end-offset)
+                                 (alexandria:if-let (under-attribute
+                                                     (ensure-attribute under-attribute nil))
+                                   (merge-attribute under-attribute
+                                                    over-attribute)
+                                   over-attribute))
+                :finally (add-element (+ over-start under-end-offset)
+                                      over-end
+                                      over-attribute))))
+    (lem-base/line::normalization-elements merged-attributes)))
 
-  (defun draw-attribute-to-screen-line (screen attribute screen-row start-charpos end-charpos)
-    (when (and (<= 0 screen-row)
-               (< screen-row (screen-height screen))
-               (not (null (aref (screen-lines screen) screen-row)))
-               (or (null end-charpos)
-                   (< start-charpos end-charpos)))
-      (destructuring-bind (string . attributes)
-          (aref (screen-lines screen) screen-row)
-        (declare (ignore string))
-        (let ((end-charpos (or end-charpos (screen-width screen))))
-          (let* ((range-elements
-                   (lem-base::subseq-elements attributes
-                                              start-charpos
-                                              end-charpos)))
-            #+(or)
-            (when (< (length string) end-charpos)
-              (setf (car (aref (screen-lines screen) screen-row))
-                    (concatenate 'string
-                                 string
-                                 (make-string (1- (- end-charpos (length string)))
-                                              :initial-element #\space))))
-            (setf (cdr (aref (screen-lines screen) screen-row))
-                  (lem-base::normalization-elements
-                   (nconc (overlay-line range-elements
-                                        start-charpos
-                                        end-charpos
-                                        attribute)
-                          (lem-base::remove-elements attributes
-                                                     start-charpos
-                                                     end-charpos)))))))))
-  )
-
-(defun draw-attribute-to-screen-line (screen attribute screen-row start-charpos end-charpos)
+(defun draw-attribute-to-screen-line (screen attribute screen-row start-charpos end-charpos
+                                      &key (transparency t))
   (when (and (<= 0 screen-row)
              (< screen-row (screen-height screen))
              (not (null (aref (screen-lines screen) screen-row)))
@@ -286,10 +262,15 @@
                            (make-string (- end-charpos (length string))
                                         :initial-element #\space))))
       (setf (cdr (aref (screen-lines screen) screen-row))
-            (lem-base/line::put-elements attributes
-                                         start-charpos
-                                         (or end-charpos (length string))
-                                         attribute)))))
+            (if transparency
+                (overlay-attributes attributes
+                                    start-charpos
+                                    (or end-charpos (length string))
+                                    attribute)
+                (lem-base/line::put-elements attributes
+                                             start-charpos
+                                             (or end-charpos (length string))
+                                             attribute))))))
 
 (defun draw-attribute-to-screen-region (screen attribute screen-row start end)
   (flet ((draw-line (row start-charpos &optional end-charpos)
@@ -382,7 +363,8 @@
                                      'cursor
                                      (count-lines view-point point)
                                      charpos
-                                     (1+ charpos)))))
+                                     (1+ charpos)
+                                     :transparency nil))))
 
 (defun reset-screen-lines (screen view-point)
   (with-point ((point view-point))

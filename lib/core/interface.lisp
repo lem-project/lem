@@ -174,44 +174,6 @@
   (setf (screen-y screen) y)
   (lem-if:set-view-pos *implementation* (screen-view screen) x y))
 
-(defvar *printing-tab-size*)
-
-(defvar *cursor-x* 0)
-(defvar *cursor-y* 0)
-(defvar *print-start-x* 0)
-
-(defun screen-print-string (screen x y string attribute)
-  (when (and (eq attribute 'cursor) (< 0 (length string)))
-    (setf *cursor-x* x)
-    (setf *cursor-y* y))
-  (let ((view (screen-view screen))
-        (x0 x)
-        (i -1)
-        (pool-string (make-string (screen-width screen) :initial-element #\space)))
-    (loop :for char :across string
-          :do (cond
-                ((char= char #\tab)
-                 (loop :with size :=
-                          (+ *print-start-x*
-                             (* *printing-tab-size*
-                                (floor (+ *printing-tab-size* x) *printing-tab-size*)))
-                       :while (< x size)
-                       :do (setf (aref pool-string (incf i)) #\space)
-                           (incf x)))
-                ((alexandria:when-let ((control-char (control-char char)))
-                   (loop :for c :across control-char
-                         :do (setf (aref pool-string (incf i)) c
-                                   x (char-width c x)))
-                   t))
-                (t
-                 (setf (aref pool-string (incf i)) char)
-                 (setf x (char-width char x)))))
-    (unless (= i -1)
-      (lem-if:print *implementation* view x0 y
-                       (subseq pool-string 0 (1+ i))
-                       attribute))
-    x))
-
 
 (defun overlay-attributes (under-attributes over-start over-end over-attribute)
   ;; under-attributes := ((start-charpos end-charpos attribute) ...)
@@ -399,6 +361,43 @@
   (draw-cursor-to-screen window))
 
 
+(defvar *printing-tab-size*)
+(defvar *cursor-x* 0)
+(defvar *cursor-y* 0)
+(defvar *print-start-x* 0)
+
+(defun screen-print-string (screen x y string attribute)
+  (when (and (eq attribute 'cursor) (< 0 (length string)))
+    (setf *cursor-x* x)
+    (setf *cursor-y* y))
+  (let ((view (screen-view screen))
+        (x0 x)
+        (i -1)
+        (pool-string (make-string (screen-width screen) :initial-element #\space)))
+    (loop :for char :across string
+          :do (cond
+                ((char= char #\tab)
+                 (loop :with size :=
+                          (+ *print-start-x*
+                             (* *printing-tab-size*
+                                (floor (+ *printing-tab-size* x) *printing-tab-size*)))
+                       :while (< x size)
+                       :do (setf (aref pool-string (incf i)) #\space)
+                           (incf x)))
+                ((alexandria:when-let ((control-char (control-char char)))
+                   (loop :for c :across control-char
+                         :do (setf (aref pool-string (incf i)) c
+                                   x (char-width c x)))
+                   t))
+                (t
+                 (setf (aref pool-string (incf i)) char)
+                 (setf x (char-width char x)))))
+    (unless (= i -1)
+      (lem-if:print *implementation* view x0 y
+                       (subseq pool-string 0 (1+ i))
+                       attribute))
+    x))
+
 (defvar *redraw-start-y*)
 (defvar *redraw-end-y*)
 

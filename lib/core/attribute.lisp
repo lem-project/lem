@@ -105,6 +105,18 @@
                   :underline-p (or (attribute-underline-p over)
                                    (attribute-underline-p under))))
 
+(defun attribute-equal (attribute1 attribute2)
+  (and (equal (attribute-foreground attribute1)
+              (attribute-foreground attribute2))
+       (equal (attribute-background attribute1)
+              (attribute-background attribute2))
+       (equal (attribute-reverse-p attribute1)
+              (attribute-reverse-p attribute2))
+       (equal (attribute-bold-p attribute1)
+              (attribute-bold-p attribute2))
+       (equal (attribute-underline-p attribute1)
+              (attribute-underline-p attribute2))))
+
 (defun set-attribute (attribute &key (foreground nil foregroundp)
                                      (background nil backgroundp)
                                      reverse-p bold-p underline-p)

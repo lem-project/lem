@@ -134,8 +134,6 @@
   (let ((view (lem-if:make-view *implementation* window x y width height use-modeline)))
     (%make-screen :view view
                   :use-modeline use-modeline
-                  :x x
-                  :y y
                   :width width
                   :left-lines (make-array (max 0 height) :initial-element nil)
                   :lines (make-array (max 0 height) :initial-element nil)
@@ -170,8 +168,6 @@
 
 (defun screen-set-pos (screen x y)
   (screen-modify screen)
-  (setf (screen-x screen) x)
-  (setf (screen-y screen) y)
   (lem-if:set-view-pos *implementation* (screen-view screen) x y))
 
 

@@ -4,8 +4,6 @@
   view
   use-modeline
   modeline-elements
-  x
-  y
   left-lines
   left-width
   old-left-width

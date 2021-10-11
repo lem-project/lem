@@ -248,6 +248,15 @@
 
 (defun draw-attribute-to-screen-line (screen attribute screen-row start-charpos end-charpos
                                       &key (transparency t))
+  ;; transparencyがTのとき、オーバーレイがその下のテキストの属性を消さずに
+  ;; 下のattributeを上のattributeとマージします。(透過する)
+  ;; NILのとき、オーバーレイの下のテキスト属性はオーバーレイの色で置き換えられます。
+  ;;
+  ;; 常に透過せず真偽値で切り替えているのはカーソルもオーバーレイとして扱うため、マージすると
+  ;; シンボルのcursorという値でattributeを保持できなくなってしまいeqで判別できなくなります。
+  ;; cursorというシンボルのattributeには特別な意味があり、画面描画フェーズでカーソルに
+  ;; 対応する箇所を表示するときcursorとeqならその(x, y)座標にカーソルがあることがわかります。
+  ;; ncursesの場合、カーソル位置を物理的なカーソルにセットするためにCのwmove関数を呼びます。
   (when (and (<= 0 screen-row)
              (< screen-row (screen-height screen))
              (not (null (aref (screen-lines screen) screen-row)))

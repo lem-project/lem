@@ -825,7 +825,6 @@
             (parse-integer
              (prompt-for-string "Port: "
                                 :initial-value (princ-to-string *default-port*))))))
-  (message "Connecting...")
   (let ((connection (%slime-connect hostname port)))
     (when start-repl (start-lisp-repl))
     (connected-slime-message connection)))

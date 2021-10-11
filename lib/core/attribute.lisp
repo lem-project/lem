@@ -58,6 +58,15 @@
     :initform nil
     :accessor attribute-%internal-value)))
 
+(defmethod print-object ((attribute attribute) stream)
+  (print-unreadable-object (attribute stream :type t :identity t)
+    (format stream "(~A ~A)~:[~; reverse~]~:[~; bold~]~:[~; underline~]"
+            (or (attribute-foreground attribute) "")
+            (or (attribute-background attribute) "")
+            (attribute-reverse-p attribute)
+            (attribute-bold-p attribute)
+            (attribute-underline-p attribute))))
+
 ;; 22-Dec-17 stacksmith:
 ;; If internal value needs to be deallocated, set this to (lambda (attribute))
 (defparameter *attribute-destroy-%internal-value* nil)

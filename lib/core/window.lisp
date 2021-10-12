@@ -107,7 +107,8 @@
     :writer set-window-view-point
     :type point)
    (point
-    :accessor %window-point
+    :reader %window-point
+    :writer set-window-point
     :type point)
    (delete-hook
     :initform nil
@@ -1049,11 +1050,11 @@ window width is changed, we must recalc the window view point."
              (destructuring-bind (view-point cursor-point)
                  (%buffer-keep-binfo buffer)
                (set-window-view-point (copy-point view-point) (current-window))
-               (setf (%window-point (current-window)) (copy-point cursor-point))
+               (set-window-point (copy-point cursor-point) (current-window))
                (move-point (buffer-point (current-buffer)) cursor-point)))
             (t
-             (setf (%window-point (current-window))
-                   (copy-point (buffer-start-point buffer) :right-inserting))
+             (set-window-point (copy-point (buffer-start-point buffer) :right-inserting)
+                               (current-window))
              (set-window-view-point (copy-point (buffer-start-point buffer) :right-inserting)
                                     (current-window)))))
     (setf (window-parameter (current-window) 'change-buffer) t))

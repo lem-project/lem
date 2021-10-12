@@ -83,7 +83,7 @@
    (y
     :initarg :y
     :reader window-y
-    :accessor window-%y
+    :writer set-window-y
     :type fixnum)
    (width
     :initarg :width
@@ -749,7 +749,7 @@ window width is changed, we must recalc the window view point."
     (setf (frame-modified-floating-windows (current-frame)) t))
   (screen-set-pos (window-screen window) x y)
   (set-window-x x window)
-  (setf (window-%y window) y))
+  (set-window-y y window))
 
 (defun window-set-size (window width height)
   (when (floating-window-p window)
@@ -764,7 +764,7 @@ window width is changed, we must recalc the window view point."
 (defun window-move (window dx dy)
   (window-set-pos window
                   (+ (window-x window) dx)
-                  (+ (window-%y window) dy)))
+                  (+ (window-y window) dy)))
 
 (defun window-resize (window dw dh)
   (window-set-size window
@@ -782,7 +782,7 @@ window width is changed, we must recalc the window view point."
                (dolist (win (lem-utils:min-if #'window-x window-list))
                  (window-set-pos win
                                  (window-x deleted-window)
-                                 (window-%y win))
+                                 (window-y win))
                  (window-set-size win
                                   (+ (window-%width deleted-window)
                                      1
@@ -795,18 +795,18 @@ window width is changed, we must recalc the window view point."
                                      1
                                      (window-%width win))
                                   (window-%height win)))))
-        (cond ((< (window-%y deleted-window)
-                  (window-%y (car window-list)))
-               (dolist (win (lem-utils:min-if #'window-%y window-list))
+        (cond ((< (window-y deleted-window)
+                  (window-y (car window-list)))
+               (dolist (win (lem-utils:min-if #'window-y window-list))
                  (window-set-pos win
                                  (window-x win)
-                                 (window-%y deleted-window))
+                                 (window-y deleted-window))
                  (window-set-size win
                                   (window-%width win)
                                   (+ (window-%height deleted-window)
                                      (window-%height win)))))
               (t
-               (dolist (win (lem-utils:max-if #'window-%y window-list))
+               (dolist (win (lem-utils:max-if #'window-y window-list))
                  (window-set-size win
                                   (window-%width win)
                                   (+ (window-%height deleted-window)
@@ -848,11 +848,11 @@ window width is changed, we must recalc the window view point."
                     window-list))
 
 (defun collect-top-windows (window-list)
-  (lem-utils:min-if #'window-%y window-list))
+  (lem-utils:min-if #'window-y window-list))
 
 (defun collect-bottom-windows (window-list)
   (lem-utils:max-if (lambda (window)
-                      (+ (window-%y window)
+                      (+ (window-y window)
                          (window-%height window)))
                     window-list))
 
@@ -948,8 +948,8 @@ window width is changed, we must recalc the window view point."
                  0 n 0 0))
 
 (defun grow-window-internal (grow-window-list shrink-window-list n)
-  (if (< (window-%y (car grow-window-list))
-         (window-%y (car shrink-window-list)))
+  (if (< (window-y (car grow-window-list))
+         (window-y (car shrink-window-list)))
       (and (shrink-top-windows shrink-window-list n)
            (grow-bottom-windows grow-window-list n))
       (and (shrink-bottom-windows shrink-window-list n)

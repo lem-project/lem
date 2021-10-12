@@ -129,11 +129,8 @@
     (lem-if:invoke *implementation* function)))
 
 (defun make-screen (window x y width height use-modeline)
-  (when use-modeline
-    (decf height))
   (let ((view (lem-if:make-view *implementation* window x y width height use-modeline)))
     (%make-screen :view view
-                  :use-modeline use-modeline
                   :width width
                   :left-lines (make-array (max 0 height) :initial-element nil)
                   :lines (make-array (max 0 height) :initial-element nil)
@@ -154,8 +151,6 @@
 
 (defun screen-set-size (screen width height)
   (screen-modify screen)
-  (when (screen-use-modeline screen)
-    (decf height))
   (lem-if:set-view-size *implementation* (screen-view screen) width height)
   (setf (screen-left-lines screen)
         (make-array height :initial-element nil))

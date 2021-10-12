@@ -134,7 +134,8 @@
                               (window-x window)
                               (window-y window)
                               (window-width window)
-                              (window-height window)
+                              (- (window-height window)
+                                 (if (window-use-modeline-p window) 1 0))
                               (window-use-modeline-p window)))
     (setf view-point (buffer-start
                       (copy-point (buffer-point (window-buffer window))
@@ -757,7 +758,8 @@ window width is changed, we must recalc the window view point."
   (setf (window-%height window) height)
   (screen-set-size (window-screen window)
                    width
-                   height))
+                   (- height
+                      (if (window-use-modeline-p window) 1 0))))
 
 (defun window-move (window dx dy)
   (window-set-pos window

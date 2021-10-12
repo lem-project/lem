@@ -2,7 +2,6 @@
 
 (defstruct (screen (:constructor %make-screen))
   view
-  use-modeline
   modeline-elements
   left-lines
   left-width

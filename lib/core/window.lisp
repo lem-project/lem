@@ -98,7 +98,7 @@
    (buffer
     :initarg :buffer
     :reader window-buffer
-    :accessor window-%buffer
+    :writer set-window-buffer
     :type buffer)
    (screen
     :reader window-screen)
@@ -126,6 +126,9 @@
    (parameters
     :initform nil
     :accessor window-parameters)))
+
+(defmethod set-window-buffer :before (buffer (window window))
+  (screen-modify (window-screen window)))
 
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))
@@ -165,10 +168,6 @@
   (window-tree-find-if (window-tree)
                        (lambda (window)
                          (= id (window-id window)))))
-
-(defun set-window-buffer (window buffer)
-  (screen-modify (window-screen window))
-  (setf (window-%buffer window) buffer))
 
 (defun window-buffer-point (window)
   (buffer-point (window-buffer window)))
@@ -1042,7 +1041,7 @@ window width is changed, we must recalc the window view point."
           (setf (%buffer-keep-binfo old-buffer)
                 (list (copy-point (window-view-point (current-window)) :right-inserting)
                       (copy-point (window-buffer-point (current-window)) :right-inserting)))))
-      (set-window-buffer (current-window) buffer)
+      (set-window-buffer buffer (current-window))
       (setf (current-buffer) buffer)
       (delete-point (%window-point (current-window)))
       (delete-point (window-view-point (current-window)))

@@ -128,7 +128,7 @@
                         bt:*default-special-bindings*))))
     (lem-if:invoke *implementation* function)))
 
-(defun make-screen (width height view)
+(defun make-screen (view width height)
   (%make-screen :view view
                 :width width
                 :left-lines (make-array (max 0 height) :initial-element nil)

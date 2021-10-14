@@ -154,7 +154,7 @@
   (let ((width (window-width window))
         (height (window-height-without-modeline window))
         (view (make-view-from-window window)))
-    (set-window-screen (make-screen width height view)
+    (set-window-screen (make-screen view width height)
                        window))
   (set-window-view-point (buffer-start
                           (copy-point (buffer-point (window-buffer window))

@@ -116,6 +116,6 @@
 ;; (defmethod lem-if:update-menu ((implementation fake-interface) menu items))
 
 (defmacro with-fake-interface (() &body body)
-  `(let ((*implementation* (make-instance 'fake-interface)))
+  `(with-implementation (make-instance 'fake-interface)
      (lem::setup-first-frame)
      ,@body))

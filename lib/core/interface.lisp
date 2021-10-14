@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(export '(*implementation*
+(export '(with-implementation
           implementation
           native-scroll-support
           redraw-after-modifying-floating-window
@@ -98,6 +98,10 @@
 
 (defun implementation ()
   *implementation*)
+
+(defmacro with-implementation (implementation &body body)
+  `(let ((*implementation* ,implementation))
+     ,@body))
 
 (defun display-background-mode ()
   (or *display-background-mode*

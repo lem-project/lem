@@ -739,7 +739,7 @@
                 (windows-term-setting-write-last-line (windows-term-setting)))
       (return-from write-something-to-last-line))
     (unless temp-view
-      (setf temp-view (lem-if:make-view *implementation* nil 0 0 0 0 nil)))
+      (setf temp-view (lem-if:make-view (lem:implementation) nil 0 0 0 0 nil)))
     ;; this recovers winpty's screen corruption
     (let ((x (- charms/ll:*cols*  2))
           (y (- charms/ll:*lines* 1)))

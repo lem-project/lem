@@ -128,13 +128,12 @@
                         bt:*default-special-bindings*))))
     (lem-if:invoke *implementation* function)))
 
-(defun make-screen (window x y width height use-modeline)
-  (let ((view (lem-if:make-view *implementation* window x y width height use-modeline)))
-    (%make-screen :view view
-                  :width width
-                  :left-lines (make-array (max 0 height) :initial-element nil)
-                  :lines (make-array (max 0 height) :initial-element nil)
-                  :old-lines (make-array (max 0 height) :initial-element nil))))
+(defun make-screen (window x y width height use-modeline view)
+  (%make-screen :view view
+                :width width
+                :left-lines (make-array (max 0 height) :initial-element nil)
+                :lines (make-array (max 0 height) :initial-element nil)
+                :old-lines (make-array (max 0 height) :initial-element nil)))
 
 (defun screen-delete (screen)
   (lem-if:delete-view *implementation* (screen-view screen)))

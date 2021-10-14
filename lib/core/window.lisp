@@ -144,7 +144,14 @@
                                 y
                                 width
                                 height
-                                (window-use-modeline-p window))))
+                                (window-use-modeline-p window)
+                                (lem-if:make-view (implementation)
+                                                  window
+                                                  x
+                                                  y
+                                                  width
+                                                  height
+                                                  (window-use-modeline-p window)))))
     (setf view-point (buffer-start
                       (copy-point (buffer-point (window-buffer window))
                                   :right-inserting)))

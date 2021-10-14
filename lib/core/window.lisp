@@ -134,13 +134,17 @@
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))
   (with-slots (screen view-point point) window
-    (setf screen (make-screen window
-                              (window-x window)
-                              (window-y window)
-                              (window-width window)
-                              (- (window-height window)
-                                 (if (window-use-modeline-p window) 1 0))
-                              (window-use-modeline-p window)))
+    (let ((x (window-x window))
+          (y (window-y window))
+          (width (window-width window))
+          (height (- (window-height window)
+                     (if (window-use-modeline-p window) 1 0))))
+      (setf screen (make-screen window
+                                x
+                                y
+                                width
+                                height
+                                (window-use-modeline-p window))))
     (setf view-point (buffer-start
                       (copy-point (buffer-point (window-buffer window))
                                   :right-inserting)))

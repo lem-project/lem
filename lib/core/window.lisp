@@ -137,17 +137,13 @@
      (if (window-use-modeline-p window) 1 0)))
 
 (defun make-view-from-window (window)
-  (let* ((x (window-x window))
-         (y (window-y window))
-         (width (window-width window))
-         (height (window-height-without-modeline window)))
-    (lem-if:make-view (implementation)
-                      window
-                      x
-                      y
-                      width
-                      height
-                      (window-use-modeline-p window))))
+  (lem-if:make-view (implementation)
+                    window
+                    (window-x window)
+                    (window-y window)
+                    (window-width window)
+                    (window-height-without-modeline window)
+                    (window-use-modeline-p window)))
 
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))

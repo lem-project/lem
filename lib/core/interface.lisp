@@ -128,42 +128,6 @@
                         bt:*default-special-bindings*))))
     (lem-if:invoke *implementation* function)))
 
-(defun make-screen (view width height)
-  (%make-screen :view view
-                :width width
-                :left-lines (make-array (max 0 height) :initial-element nil)
-                :lines (make-array (max 0 height) :initial-element nil)
-                :old-lines (make-array (max 0 height) :initial-element nil)))
-
-(defun screen-delete (screen)
-  (lem-if:delete-view *implementation* (screen-view screen)))
-
-(defun screen-clear (screen)
-  (screen-modify screen)
-  (lem-if:clear *implementation* (screen-view screen)))
-
-(defun screen-height (screen)
-  (length (screen-lines screen)))
-
-(defun screen-modify (screen)
-  (setf (screen-modified-p screen) t))
-
-(defun screen-set-size (screen width height)
-  (screen-modify screen)
-  (lem-if:set-view-size *implementation* (screen-view screen) width height)
-  (setf (screen-left-lines screen)
-        (make-array height :initial-element nil))
-  (setf (screen-lines screen)
-        (make-array height :initial-element nil))
-  (setf (screen-old-lines screen)
-        (make-array height :initial-element nil))
-  (setf (screen-width screen)
-        width))
-
-(defun screen-set-pos (screen x y)
-  (screen-modify screen)
-  (lem-if:set-view-pos *implementation* (screen-view screen) x y))
-
 
 (defun overlay-attributes (under-attributes over-start over-end over-attribute)
   ;; under-attributes := ((start-charpos end-charpos attribute) ...)

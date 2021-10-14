@@ -120,6 +120,9 @@
 (defun display-width () (lem-if:display-width *implementation*))
 (defun display-height () (lem-if:display-height *implementation*))
 
+(defun update-display ()
+  (lem-if:update-display *implementation*))
+
 (defun invoke-frontend (function &key ((:implementation *implementation*)
                                        (get-default-implementation))
                                       ((:buffer-list-manager lem-base::*buffer-list-manager*)
@@ -604,6 +607,3 @@
           (screen-redraw-modeline window (or (screen-modified-p screen) force)))
         (lem-if:redraw-view-after *implementation* (screen-view screen))
         (setf (screen-modified-p screen) nil)))))
-
-(defun update-display ()
-  (lem-if:update-display *implementation*))

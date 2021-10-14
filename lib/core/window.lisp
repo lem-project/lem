@@ -147,11 +147,10 @@
 
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))
-  (let ((width (window-width window))
-        (height (window-height-without-modeline window))
-        (view (make-view-from-window window)))
-    (set-window-screen (make-screen view width height)
-                       window))
+  (set-window-screen (make-screen (make-view-from-window window)
+                                  (window-width window)
+                                  (window-height-without-modeline window))
+                     window)
   (set-window-view-point (buffer-start
                           (copy-point (buffer-point (window-buffer window))
                                       :right-inserting))

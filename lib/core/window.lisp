@@ -170,6 +170,9 @@
                  :height height
                  :use-modeline-p use-modeline-p))
 
+(defun clear-window (window)
+  (screen-clear (window-screen window)))
+
 (defgeneric %delete-window (window))
 (defgeneric window-redraw (window force)
   (:method (window force)

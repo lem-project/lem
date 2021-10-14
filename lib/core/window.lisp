@@ -139,12 +139,8 @@
           (width (window-width window))
           (height (- (window-height window)
                      (if (window-use-modeline-p window) 1 0))))
-      (setf screen (make-screen window
-                                x
-                                y
-                                width
+      (setf screen (make-screen width
                                 height
-                                (window-use-modeline-p window)
                                 (lem-if:make-view (implementation)
                                                   window
                                                   x

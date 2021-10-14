@@ -132,20 +132,26 @@
 (defmethod set-window-buffer :before (buffer (window window))
   (screen-modify (window-screen window)))
 
-(defmethod initialize-instance :after ((window window) &rest initargs)
-  (declare (ignore initargs))
+(defun make-view-from-window (window)
   (let* ((x (window-x window))
          (y (window-y window))
          (width (window-width window))
          (height (- (window-height window)
-                    (if (window-use-modeline-p window) 1 0)))
-         (view (lem-if:make-view (implementation)
-                                 window
-                                 x
-                                 y
-                                 width
-                                 height
-                                 (window-use-modeline-p window))))
+                    (if (window-use-modeline-p window) 1 0))))
+    (lem-if:make-view (implementation)
+                      window
+                      x
+                      y
+                      width
+                      height
+                      (window-use-modeline-p window))))
+
+(defmethod initialize-instance :after ((window window) &rest initargs)
+  (declare (ignore initargs))
+  (let ((width (window-width window))
+        (height (- (window-height window)
+                   (if (window-use-modeline-p window) 1 0)))
+        (view (make-view-from-window window)))
     (set-window-screen (make-screen width height view)
                        window))
   (set-window-view-point (buffer-start

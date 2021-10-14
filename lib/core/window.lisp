@@ -132,12 +132,15 @@
 (defmethod set-window-buffer :before (buffer (window window))
   (screen-modify (window-screen window)))
 
+(defun window-height-without-modeline (window)
+  (- (window-height window)
+     (if (window-use-modeline-p window) 1 0)))
+
 (defun make-view-from-window (window)
   (let* ((x (window-x window))
          (y (window-y window))
          (width (window-width window))
-         (height (- (window-height window)
-                    (if (window-use-modeline-p window) 1 0))))
+         (height (window-height-without-modeline window)))
     (lem-if:make-view (implementation)
                       window
                       x
@@ -149,8 +152,7 @@
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))
   (let ((width (window-width window))
-        (height (- (window-height window)
-                   (if (window-use-modeline-p window) 1 0)))
+        (height (window-height-without-modeline window))
         (view (make-view-from-window window)))
     (set-window-screen (make-screen width height view)
                        window))
@@ -337,8 +339,7 @@
   (line-start
    (move-point (window-view-point window)
                (window-buffer-point window)))
-  (let* ((height (- (window-height window)
-                    (if (window-use-modeline-p window) 1 0)))
+  (let* ((height (window-height-without-modeline window))
          (n      (- (window-cursor-y window)
                     (floor height 2))))
     (window-scroll window n)
@@ -652,8 +653,7 @@ window width is changed, we must recalc the window view point."
       ;; return minus number
       (window-cursor-y window)
       ;; return zero or plus number
-      (let ((height (- (window-height window)
-                       (if (window-use-modeline-p window) 1 0))))
+      (let ((height (window-height-without-modeline window)))
         (max 0 (- (window-cursor-y window)
                   (1- height))))))
 

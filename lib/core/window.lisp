@@ -101,7 +101,8 @@
     :writer set-window-buffer
     :type buffer)
    (screen
-    :reader window-screen)
+    :reader window-screen
+    :writer set-window-screen)
    (view-point
     :reader window-view-point
     :writer set-window-view-point
@@ -133,24 +134,27 @@
 
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))
-  (with-slots (screen view-point point) window
-    (let* ((x (window-x window))
-           (y (window-y window))
-           (width (window-width window))
-           (height (- (window-height window)
-                      (if (window-use-modeline-p window) 1 0)))
-           (view (lem-if:make-view (implementation)
-                                   window
-                                   x
-                                   y
-                                   width
-                                   height
-                                   (window-use-modeline-p window))))
-      (setf screen (make-screen width height view)))
-    (setf view-point (buffer-start
-                      (copy-point (buffer-point (window-buffer window))
-                                  :right-inserting)))
-    (setf point (copy-point (buffer-start-point (window-buffer window)) :right-inserting))))
+  (let* ((x (window-x window))
+         (y (window-y window))
+         (width (window-width window))
+         (height (- (window-height window)
+                    (if (window-use-modeline-p window) 1 0)))
+         (view (lem-if:make-view (implementation)
+                                 window
+                                 x
+                                 y
+                                 width
+                                 height
+                                 (window-use-modeline-p window))))
+    (set-window-screen (make-screen width height view)
+                       window))
+  (set-window-view-point (buffer-start
+                          (copy-point (buffer-point (window-buffer window))
+                                      :right-inserting))
+                         window)
+  (set-window-point (copy-point (buffer-start-point (window-buffer window))
+                                :right-inserting)
+                    window))
 
 (defun windowp (x) (typep x 'window))
 

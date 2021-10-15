@@ -97,14 +97,13 @@
 
 (defun draw-window-overlays-to-screen (window)
   (let ((screen (window-screen window))
-        (overlays (get-window-overlays window))
         (view-point (window-view-point window)))
     (flet ((calc-row (curr-point) (count-lines view-point curr-point)))
       (let ((left-width 0)
             (view-end-point (with-point ((view-point view-point))
                               (or (line-offset view-point (screen-height screen))
                                   (buffer-end view-point)))))
-        (loop :for overlay :in overlays
+        (loop :for overlay :in (get-window-overlays window)
               :for start := (overlay-start overlay)
               :for end := (overlay-end overlay)
               :do (cond

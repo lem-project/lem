@@ -60,8 +60,9 @@
 
                (:file "init")
                (:file "interface")
-               (:file "popup-window")
+               (:file "display")
 
+               (:file "popup-window")
                (:file "completion-mode")
                (:file "prompt-window")
                (:file "tmlanguage")

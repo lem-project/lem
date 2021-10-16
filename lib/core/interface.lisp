@@ -120,14 +120,14 @@
 (defun display-width () (lem-if:display-width (implementation)))
 (defun display-height () (lem-if:display-height (implementation)))
 
-(defun invoke-frontend (function &key ((:implementation *implementation*)
+(defun invoke-frontend (function &key (implementation
                                        (get-default-implementation))
                                       ((:buffer-list-manager lem-base::*buffer-list-manager*)
                                        (make-instance (lem-base::buffer-list-manager))))
   (let ((bt:*default-special-bindings*
           (acons '*implementation*
-                 (implementation)
+                 implementation
                  (acons 'lem-base::*buffer-list-manager*
                         lem-base::*buffer-list-manager*
                         bt:*default-special-bindings*))))
-    (lem-if:invoke (implementation) function)))
+    (lem-if:invoke implementation function)))

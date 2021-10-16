@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(overlay-p
-          overlay-start
+(export '(overlay-start
           overlay-end
           overlay-attribute
           overlay-buffer
@@ -35,9 +34,6 @@
     :initform t
     :accessor overlay-alive-p
     :type boolean)))
-
-(defun overlay-p (x)
-  (typep x 'overlay))
 
 (defun make-temporary-overlay (start end attribute)
   (when (point< end start) (rotatef start end))

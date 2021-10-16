@@ -1248,7 +1248,8 @@ window width is changed, we must recalc the window view point."
                   (topleft-window-y (current-frame))
                   (+ (max-window-width (current-frame)) (topleft-window-x (current-frame)))
                   (+ (max-window-height (current-frame)) (topleft-window-y (current-frame))))
-  (recenter t))
+  (clear-screens-of-window-list)
+  (redraw-display))
 
 (defun display-popup-message (buffer-or-string
                               &key (timeout *default-popup-message-timeout*)

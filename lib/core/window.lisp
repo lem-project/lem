@@ -1247,8 +1247,8 @@ window width is changed, we must recalc the window view point."
     (without-interrupts
       (when (frame-floating-prompt-window (current-frame))
         (update-prompt-window (frame-floating-prompt-window (current-frame))))
-      (redraw-all-windows))
-    (setf (frame-modified-floating-windows (current-frame)) nil)))
+      (redraw-all-windows)
+      (setf (frame-modified-floating-windows (current-frame)) nil))))
 
 (defun adjust-all-window-size ()
   (dolist (window (frame-header-windows (current-frame)))

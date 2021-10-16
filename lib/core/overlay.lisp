@@ -65,8 +65,8 @@
     overlay))
 
 (defun delete-overlay (overlay)
-  (when (and (overlay-p overlay)
-             (overlay-alive-p overlay))
+  (check-type overlay overlay)
+  (when (overlay-alive-p overlay)
     (delete-point (overlay-start overlay))
     (delete-point (overlay-end overlay))
     (let ((buffer (overlay-buffer overlay)))

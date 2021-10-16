@@ -18,8 +18,7 @@
           unmap-frame
           setup-frame
           teardown-frame
-          teardown-frames
-          redraw-frame))
+          teardown-frames))
 
 (defparameter *display-frame-map* (make-hash-table))
 
@@ -101,13 +100,6 @@
              (declare (ignore k))
              (teardown-frame v))
            *display-frame-map*))
-
-(defun redraw-frame (frame)
-  (when (frame-floating-prompt-window frame)
-    (update-prompt-window (frame-floating-prompt-window frame)))
-  (redraw-display (and (redraw-after-modifying-floating-window (implementation))
-                       (frame-modified-floating-windows frame)))
-  (setf (frame-modified-floating-windows frame) nil))
 
 (defun window-in-frame-p (window frame)
   (when (or (find window (window-list frame))

@@ -81,7 +81,7 @@
            (when (= 0 (event-queue-length))
              (without-interrupts
                (handler-bind ((error #'bailout))
-                 (redraw-frame (current-frame))))))
+                 (redraw-display)))))
 
          (read-command-and-call ()
            (let ((cmd (progn

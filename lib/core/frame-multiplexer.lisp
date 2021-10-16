@@ -148,13 +148,11 @@
           'list))
 
 (defun require-update-p (virtual-frame)
-  (cond ((virtual-frame-changed virtual-frame) t)
-        ((not (= (display-width)
-                 (virtual-frame-width virtual-frame)))
-         t)
-        ((not (= (display-height)
-                 (virtual-frame-height virtual-frame)))
-         t)))
+  (or (virtual-frame-changed virtual-frame)
+      (not (= (display-width)
+              (virtual-frame-width virtual-frame)))
+      (not (= (display-height)
+              (virtual-frame-height virtual-frame)))))
 
 (defmethod window-redraw ((window virtual-frame) force)
   (when (or force (require-update-p window))

@@ -1140,7 +1140,8 @@ window width is changed, we must recalc the window view point."
     (first (sort (lem-utils:min-if #'window-x
                                    (remove-if-not (lambda (w)
                                                     (> (window-x w)
-                                                       (+ (window-x window) (window-width window))))
+                                                       (+ (window-x window)
+                                                          (window-width window))))
                                                   (window-list)))
                  (difference-window-y window)))))
 
@@ -1160,7 +1161,9 @@ window width is changed, we must recalc the window view point."
   (unless (floating-window-p window)
     (first (sort (lem-utils:min-if #'window-y
                                    (remove-if-not (lambda (w)
-                                                    (>= (window-y w) (+ (window-y window) (window-height window))))
+                                                    (>= (window-y w)
+                                                        (+ (window-y window)
+                                                           (window-height window))))
                                                   (window-list)))
                  (difference-window-x window)))))
 
@@ -1185,7 +1188,8 @@ window width is changed, we must recalc the window view point."
     (error "floating window is not supported"))
   (setf (frame-modified-floating-windows (current-frame)) t))
 
-(defmethod initialize-instance :after ((floating-window floating-window) &key (frame (current-frame)) &allow-other-keys)
+(defmethod initialize-instance :after ((floating-window floating-window)
+                                       &key (frame (current-frame)) &allow-other-keys)
   (alexandria:appendf (frame-floating-windows frame)
                       (list floating-window)))
 

@@ -37,8 +37,8 @@
 
 (defun make-temporary-overlay (start end attribute)
   (when (point< end start) (rotatef start end))
-  (setf attribute (ensure-attribute attribute t))
-  (let* ((buffer (point-buffer start))
+  (let* ((attribute (ensure-attribute attribute t))
+         (buffer (point-buffer start))
          (overlay
            (make-instance 'overlay
                           :start start
@@ -49,8 +49,8 @@
 
 (defun make-overlay (start end attribute)
   (when (point< end start) (rotatef start end))
-  (setf attribute (ensure-attribute attribute t))
-  (let* ((buffer (point-buffer start))
+  (let* ((attribute (ensure-attribute attribute t))
+         (buffer (point-buffer start))
          (overlay
            (make-instance 'overlay
                           :start (copy-point start :right-inserting)

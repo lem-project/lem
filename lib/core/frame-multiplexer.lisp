@@ -71,6 +71,7 @@
 
   (setf (virtual-frame-current virtual-frame) frame)
   (setf (virtual-frame-changed virtual-frame) t)
+  (notify-frame-redisplay-required frame)
   (map-frame (implementation) frame)
 
   ;; set current-buffer
@@ -191,17 +192,7 @@
         (when (> margin-right 0)
           (insert-string p (make-string margin-right :initial-element #\space)
                          :attribute 'frame-multiplexer-background-attribute)))
-      (line-offset p 0 charpos))
-    ;; redraw windows in current frame
-    (let* ((frame (virtual-frame-current window)))
-      (dolist (w (window-list frame))
-        (window-redraw w t))
-      (dolist (w (frame-floating-windows frame))
-        (window-redraw w t))
-      (dolist (w (frame-header-windows frame))
-        (unless (eq w window)
-          (window-redraw w t))))
-    (lem-if:update-display (implementation)))
+      (line-offset p 0 charpos)))
   ;; clear virtual-frame-changed to nil because of applying redraw
   (setf (virtual-frame-changed window) nil)
   (call-next-method))

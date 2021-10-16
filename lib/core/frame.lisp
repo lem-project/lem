@@ -11,6 +11,7 @@
           frame-floating-prompt-window
           frame-prompt-window
           frame-message-window
+          notify-frame-redisplay-required
           map-frame
           get-frame
           current-frame
@@ -40,21 +41,48 @@
    (header-windows
     :initarg :header-windows
     :initform '()
-    :reader frame-header-windows)
+    :reader frame-header-windows
+    :documentation "")
    (modified-floating-windows
     :initarg :modified-floating-windows
     :initform nil
-    :accessor frame-modified-floating-windows)
+    :accessor frame-modified-floating-windows
+    :documentation "このスロットがTの場合、
+floating-windowが追加/削除/大きさの変更などがあったことを示します。
+redraw-display関数でこのスロットを参照して、必要なウィンドウの再描画を判断するために使います。
+またredraw-display内でNILにセットされます。
+
+このスロットは内部処理のためのものであり、使ってはいけません。(DO NOT USE THIS SLOT)")
    (modified-header-windows
     :initarg :modified-header-windows
     :initform nil
-    :accessor frame-modified-header-windows)
+    :accessor frame-modified-header-windows
+    :documentation "このスロットがTの場合、header-windowが追加または削除されたことを示します。
+redraw-display関数でこのスロットを参照して、画面の再描画時にウィンドウの大きさを
+計算仕直す必要があるか判断します。
+またredraw-display内でNILにセットされます。
+
+このスロットは内部処理のためのものであり、使ってはいけません。(DO NOT USE THIS SLOT)")
+   (require-redisplay-windows
+    :initform nil
+    :accessor frame-require-redisplay-windows
+    :documentation "このスロットがTの場合、redraw-display関数で画面全体を再描画します。
+redraw-display内でNILにセットされます。
+
+このスロットが必要になったのは、frame-multiplexerでframe-multiplexer-deleteを呼び出した後に
+redraw-displayを呼び出したとき、画面の最小限の更新だけでは変更前のフレームが
+残ってしまう問題があったからです。
+
+このスロットは内部処理のためのものであり、使ってはいけません。(DO NOT USE THIS SLOT)")
    (prompt-window
     :initform nil
     :accessor frame-floating-prompt-window)
    (message-window
     :initform nil
     :accessor frame-message-window)))
+
+(defmethod notify-frame-redisplay-required ((frame frame))
+  (setf (frame-require-redisplay-windows frame) t))
 
 (defmethod frame-prompt-window ((frame frame))
   (frame-floating-prompt-window frame))

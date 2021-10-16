@@ -1238,20 +1238,21 @@ window width is changed, we must recalc the window view point."
        (frame-modified-floating-windows (current-frame))))
 
 (defun redraw-display (&optional (force (modified-floating-window-p)))
-  (labels ((redraw-window-list ()
+  (labels ((redraw-window-list (force)
              (dolist (window (window-list))
                (unless (eq window (current-window))
                  (window-redraw window force)))
              (window-redraw (current-window) force))
-           (redraw-header-windows ()
+           (redraw-header-windows (force)
              (dolist (window (frame-header-windows (current-frame)))
                (window-redraw window force)))
            (redraw-floating-windows ()
              (dolist (window (frame-floating-windows (current-frame)))
                (window-redraw window (redraw-after-modifying-floating-window (implementation)))))
            (redraw-all-windows ()
-             (redraw-window-list)
-             (redraw-header-windows)
+             (redraw-header-windows force)
+             (redraw-window-list (or (frame-require-redisplay-windows (current-frame))
+                                     force))
              (redraw-floating-windows)
              (lem-if:update-display (implementation))))
     (without-interrupts
@@ -1261,7 +1262,8 @@ window width is changed, we must recalc the window view point."
         (setf (frame-modified-header-windows (current-frame)) nil)
         (adjust-all-window-size))
       (redraw-all-windows)
-      (setf (frame-modified-floating-windows (current-frame)) nil))))
+      (setf (frame-modified-floating-windows (current-frame)) nil
+            (frame-require-redisplay-windows (current-frame)) nil))))
 
 (defun display-popup-message (buffer-or-string
                               &key (timeout *default-popup-message-timeout*)

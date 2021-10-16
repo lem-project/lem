@@ -1235,7 +1235,10 @@ window width is changed, we must recalc the window view point."
     (without-interrupts
       (when (frame-modified-header-windows (current-frame))
         (setf (frame-modified-header-windows (current-frame)) nil)
-        (change-display-size-hook))
+        (change-display-size-hook)
+        ;; change-display-size-hookがredraw-displayを再帰的に呼び出すため
+        ;; early returnをして二重の再描画を避ける
+        (return-from redraw-display))
       (redraw-window-list)
       (redraw-header-windows)
       (redraw-floating-windows)

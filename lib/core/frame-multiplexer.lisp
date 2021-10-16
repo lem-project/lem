@@ -157,10 +157,7 @@
          t)))
 
 (defmethod window-redraw ((window virtual-frame) force)
-  (when (or force
-            (loop :for k :being :each :hash-key :of *virtual-frame-map*
-                  :using (hash-value vf)
-                  :thereis (require-update-p vf)))
+  (when (or force (require-update-p window))
     ;; draw button for frames
     (let* ((buffer (virtual-frame-header-buffer window))
            (p (buffer-point buffer))
@@ -199,7 +196,7 @@
                          :attribute 'frame-multiplexer-background-attribute)))
       (line-offset p 0 charpos))
     ;; redraw windows in current frame
-    (let* ((frame (virtual-frame-current (gethash (implementation) *virtual-frame-map*))))
+    (let* ((frame (virtual-frame-current window)))
       (dolist (w (window-list frame))
         (window-redraw w t))
       (dolist (w (frame-floating-windows frame))
@@ -208,11 +205,8 @@
         (unless (eq w window)
           (window-redraw w t))))
     (lem-if:update-display (implementation)))
-  ;; clear all virtual-frame-changed to nil because of applying redraw
-  (maphash (lambda (k vf)
-             (declare (ignore k))
-             (setf (virtual-frame-changed vf) nil))
-           *virtual-frame-map*)
+  ;; clear virtual-frame-changed to nil because of applying redraw
+  (setf (virtual-frame-changed window) nil)
   (call-next-method))
 
 (defun frame-multiplexer-init ()

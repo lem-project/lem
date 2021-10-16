@@ -105,23 +105,23 @@
 
 (defun display-background-mode ()
   (or *display-background-mode*
-      (lem-if:display-background-mode *implementation*)))
+      (lem-if:display-background-mode (implementation))))
 
 (defun set-display-background-mode (mode)
   (check-type mode (member :light :dark nil))
   (setf *display-background-mode* mode))
 
 (defun set-foreground (name)
-  (lem-if:update-foreground *implementation* name))
+  (lem-if:update-foreground (implementation) name))
 
 (defun set-background (name)
-  (lem-if:update-background *implementation* name))
+  (lem-if:update-background (implementation) name))
 
-(defun display-width () (lem-if:display-width *implementation*))
-(defun display-height () (lem-if:display-height *implementation*))
+(defun display-width () (lem-if:display-width (implementation)))
+(defun display-height () (lem-if:display-height (implementation)))
 
 (defun update-display ()
-  (lem-if:update-display *implementation*))
+  (lem-if:update-display (implementation)))
 
 (defun invoke-frontend (function &key ((:implementation *implementation*)
                                        (get-default-implementation))
@@ -129,8 +129,8 @@
                                        (make-instance (lem-base::buffer-list-manager))))
   (let ((bt:*default-special-bindings*
           (acons '*implementation*
-                 *implementation*
+                 (implementation)
                  (acons 'lem-base::*buffer-list-manager*
                         lem-base::*buffer-list-manager*
                         bt:*default-special-bindings*))))
-    (lem-if:invoke *implementation* function)))
+    (lem-if:invoke (implementation) function)))

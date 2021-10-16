@@ -217,7 +217,7 @@
                  (setf (aref pool-string (incf i)) char)
                  (setf x (char-width char x)))))
     (unless (= i -1)
-      (lem-if:print *implementation* view x0 y
+      (lem-if:print (implementation) view x0 y
                        (subseq pool-string 0 (1+ i))
                        attribute))
     x))
@@ -258,7 +258,7 @@
                                        (subseq str prev-end))
                                    nil))
       (when do-clrtoeol
-        (lem-if:clear-eol *implementation* (screen-view screen) x y)))))
+        (lem-if:clear-eol (implementation) (screen-view screen) x y)))))
 
 (define-editor-variable truncate-character #\\)
 (defvar *truncate-character*)
@@ -313,7 +313,7 @@
            (setf start 0)
            (setf end (wide-index (car str/attributes) screen-width))))
     (when (redraw-line-p point-y)
-      (lem-if:clear-eol *implementation* (screen-view screen) start-x point-y))
+      (lem-if:clear-eol (implementation) (screen-view screen) start-x point-y))
     (disp-print-line screen point-y str/attributes nil
                      :start-x start-x
                      :string-start start
@@ -351,7 +351,7 @@
                 (str/attributes
                  (setf (aref (screen-old-lines screen) i) str/attributes)
                  (when (zerop (length (car str/attributes)))
-                   (lem-if:clear-eol *implementation* (screen-view screen) 0 y))
+                   (lem-if:clear-eol (implementation) (screen-view screen) 0 y))
                  (let (y2)
                    (when left-str/attr
                      (screen-print-string screen
@@ -381,7 +381,7 @@
                       (setf (aref (screen-lines screen) i) nil)))))
                 (t
                  (fill (screen-old-lines screen) nil :start i)
-                 (lem-if:clear-eob *implementation* (screen-view screen) 0 y)
+                 (lem-if:clear-eob (implementation) (screen-view screen) 0 y)
                  (return))))))
 
 (defun screen-redraw-modeline (window force)
@@ -406,11 +406,11 @@
     (setf elements (nreverse elements))
     (when (or force (not (equal elements (screen-modeline-elements screen))))
       (setf (screen-modeline-elements screen) elements)
-      (lem-if:print-modeline *implementation* view 0 0
+      (lem-if:print-modeline (implementation) view 0 0
                                 (make-string (window-width window) :initial-element #\space)
                                 default-attribute)
       (loop :for (x string attribute) :in elements
-            :do (lem-if:print-modeline *implementation* view x 0 string attribute)))))
+            :do (lem-if:print-modeline (implementation) view x 0 string attribute)))))
 
 (defun adjust-horizontal-scroll (window)
   (let ((screen (window-screen window))
@@ -431,14 +431,14 @@
         (screen (window-screen window)))
     (let ((scroll-n (when focus-window-p
                       (window-see window))))
-      (when (or (not (native-scroll-support *implementation*))
+      (when (or (not (native-scroll-support (implementation)))
                 (not (equal (screen-last-buffer-name screen) (buffer-name buffer)))
                 (not (eql (screen-last-buffer-modified-tick screen)
                           (buffer-modified-tick buffer)))
                 (and scroll-n (>= scroll-n (screen-height screen))))
         (setf scroll-n nil))
       (when scroll-n
-        (lem-if:scroll *implementation* (screen-view screen) scroll-n))
+        (lem-if:scroll (implementation) (screen-view screen) scroll-n))
       (multiple-value-bind (*redraw-start-y* *redraw-end-y*)
           (when scroll-n
             (if (plusp scroll-n)
@@ -468,5 +468,5 @@
               (buffer-modified-tick buffer))
         (when (window-use-modeline-p window)
           (screen-redraw-modeline window (or (screen-modified-p screen) force)))
-        (lem-if:redraw-view-after *implementation* (screen-view screen))
+        (lem-if:redraw-view-after (implementation) (screen-view screen))
         (setf (screen-modified-p screen) nil)))))

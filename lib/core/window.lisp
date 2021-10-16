@@ -1220,6 +1220,19 @@ window width is changed, we must recalc the window view point."
   (remove-header-window (current-frame) window)
   (setf (frame-modified-header-windows (current-frame)) t))
 
+(defun adjust-all-window-size ()
+  (dolist (window (frame-header-windows (current-frame)))
+    (window-set-size window (display-width) 1))
+  (adjust-windows (topleft-window-x (current-frame))
+                  (topleft-window-y (current-frame))
+                  (+ (max-window-width (current-frame)) (topleft-window-x (current-frame)))
+                  (+ (max-window-height (current-frame)) (topleft-window-y (current-frame)))))
+
+(defun change-display-size-hook ()
+  (adjust-all-window-size)
+  (clear-screens-of-window-list)
+  (redraw-display))
+
 (defun modified-floating-window-p ()
   (and (redraw-after-modifying-floating-window (implementation))
        (frame-modified-floating-windows (current-frame))))
@@ -1249,19 +1262,6 @@ window width is changed, we must recalc the window view point."
         (adjust-all-window-size))
       (redraw-all-windows)
       (setf (frame-modified-floating-windows (current-frame)) nil))))
-
-(defun adjust-all-window-size ()
-  (dolist (window (frame-header-windows (current-frame)))
-    (window-set-size window (display-width) 1))
-  (adjust-windows (topleft-window-x (current-frame))
-                  (topleft-window-y (current-frame))
-                  (+ (max-window-width (current-frame)) (topleft-window-x (current-frame)))
-                  (+ (max-window-height (current-frame)) (topleft-window-y (current-frame)))))
-
-(defun change-display-size-hook ()
-  (adjust-all-window-size)
-  (clear-screens-of-window-list)
-  (redraw-display))
 
 (defun display-popup-message (buffer-or-string
                               &key (timeout *default-popup-message-timeout*)

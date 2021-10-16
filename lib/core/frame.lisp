@@ -7,7 +7,6 @@
           frame-window-tree
           frame-floating-windows
           frame-header-windows
-          frame-modified-floating-windows
           frame-modified-header-windows
           frame-floating-prompt-window
           frame-prompt-window

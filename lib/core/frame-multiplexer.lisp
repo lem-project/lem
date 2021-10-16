@@ -55,14 +55,13 @@
          (id/frame-table (make-array +max-number-of-frames+ :initial-element nil)))
     (setf (aref id/frame-table 0) frame)
     (setf (variable-value 'line-wrap :buffer buffer) nil)
-    (let ((vf (make-instance 'virtual-frame
-                             :impl impl
-                             :buffer buffer
-                             :width (display-width)
-                             :height (display-height)
-                             :id/frame-table id/frame-table
-                             :current frame)))
-      vf)))
+    (make-instance 'virtual-frame
+                   :impl impl
+                   :buffer buffer
+                   :width (display-width)
+                   :height (display-height)
+                   :id/frame-table id/frame-table
+                   :current frame)))
 
 (defun switch-current-frame (virtual-frame frame)
 

@@ -120,9 +120,6 @@
 (defun display-width () (lem-if:display-width (implementation)))
 (defun display-height () (lem-if:display-height (implementation)))
 
-(defun update-display ()
-  (lem-if:update-display (implementation)))
-
 (defun invoke-frontend (function &key ((:implementation *implementation*)
                                        (get-default-implementation))
                                       ((:buffer-list-manager lem-base::*buffer-list-manager*)

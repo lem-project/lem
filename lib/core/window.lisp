@@ -1228,7 +1228,7 @@ window width is changed, we must recalc the window view point."
       (window-redraw window (redraw-after-modifying-floating-window (implementation))))
     (dolist (window (frame-floating-windows (current-frame)))
       (window-redraw window (redraw-after-modifying-floating-window (implementation))))
-    (update-display)))
+    (lem-if:update-display (implementation))))
 
 (defun change-display-size-hook ()
   (dolist (window (frame-header-windows (current-frame)))

@@ -1253,13 +1253,16 @@ window width is changed, we must recalc the window view point."
       (redraw-all-windows))
     (setf (frame-modified-floating-windows (current-frame)) nil)))
 
-(defun change-display-size-hook ()
+(defun adjust-all-window-size ()
   (dolist (window (frame-header-windows (current-frame)))
     (window-set-size window (display-width) 1))
   (adjust-windows (topleft-window-x (current-frame))
                   (topleft-window-y (current-frame))
                   (+ (max-window-width (current-frame)) (topleft-window-x (current-frame)))
-                  (+ (max-window-height (current-frame)) (topleft-window-y (current-frame))))
+                  (+ (max-window-height (current-frame)) (topleft-window-y (current-frame)))))
+
+(defun change-display-size-hook ()
+  (adjust-all-window-size)
   (clear-screens-of-window-list)
   (redraw-display))
 

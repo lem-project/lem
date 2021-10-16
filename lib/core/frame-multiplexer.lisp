@@ -2,8 +2,8 @@
   (:use :cl :lem :lem.button))
 (in-package :lem-frame-multiplexer)
 
-(defconstant +frame-multiplexer-max-number-of-frames+ 256)
-(defconstant +frame-multiplexer-max-width-of-each-frame-name+ 20)
+(defconstant +max-number-of-frames+ 256)
+(defconstant +max-width-of-each-frame-name+ 20)
 
 (defvar *virtual-frame-map* (make-hash-table))
 
@@ -52,7 +52,7 @@
 (defun make-virtual-frame (impl frame)
   (declare (type frame frame))
   (let* ((buffer (make-buffer "*frame-multiplexer*" :enable-undo-p nil :temporary t))
-         (id/frame-table (make-array +frame-multiplexer-max-number-of-frames+ :initial-element nil)))
+         (id/frame-table (make-array +max-number-of-frames+ :initial-element nil)))
     (setf (aref id/frame-table 0) frame)
     (setf (variable-value 'line-wrap :buffer buffer) nil)
     (let ((vf (make-instance 'virtual-frame
@@ -176,9 +176,9 @@
                            (format nil "~a~a:~a "
                                    (if focusp #\# #\space)
                                    (find-frame-id window frame)
-                                   (if (>= (length name) +frame-multiplexer-max-width-of-each-frame-name+)
+                                   (if (>= (length name) +max-width-of-each-frame-name+)
                                        (format nil "~a..."
-                                               (subseq name 0 +frame-multiplexer-max-width-of-each-frame-name+))
+                                               (subseq name 0 +max-width-of-each-frame-name+))
                                        name)))
                          ;; set action when click
                          (let ((frame frame))

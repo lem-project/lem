@@ -200,7 +200,7 @@
       (line-offset p 0 charpos))
     ;; redraw windows in current frame
     (let* ((frame (virtual-frame-current (gethash (implementation) *virtual-frame-map*))))
-      (dolist (w (lem::window-tree-flatten (frame-window-tree frame)))
+      (dolist (w (window-list frame))
         (window-redraw w t))
       (dolist (w (frame-floating-windows frame))
         (window-redraw w t))

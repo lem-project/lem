@@ -22,6 +22,39 @@
         (frame-multiplexer-on)
         (frame-multiplexer-off))))
 
+(defstruct tab
+  focus-p
+  number
+  buffer-name)
+
+(defun make-tabs (virtual-frame frames)
+  (loop :for frame :in frames
+        :collect (make-tab
+                  :focus-p (eq frame
+                               (virtual-frame-current virtual-frame))
+                  :number (find-frame-id virtual-frame frame)
+                  :buffer-name (let* ((buffer (window-buffer (frame-current-window frame)))
+                                      (name (buffer-name buffer)))
+                                 (if (>= (length name) +max-width-of-each-frame-name+)
+                                     (format nil "~a..."
+                                             (subseq name 0 +max-width-of-each-frame-name+))
+                                     name)))))
+
+(defun tab-content (tab)
+  (format nil "~A~A:~A "
+          (if (tab-focus-p tab) #\# #\space)
+          (tab-number tab)
+          (tab-buffer-name tab)))
+
+(defun tab= (tab1 tab2)
+  (and (equal (tab-focus-p tab1) (tab-focus-p tab2))
+       (equal (tab-number tab1) (tab-number tab2))
+       (equal (tab-buffer-name tab1) (tab-buffer-name tab2))))
+
+(defun equal-tabs (tabs1 tabs2)
+  (and (= (length tabs1) (length tabs2))
+       (every #'tab= tabs1 tabs2)))
+
 (defclass virtual-frame (header-window)
   ((implementation
     :initarg :impl
@@ -42,12 +75,12 @@
    (display-height
     :initarg :height
     :accessor virtual-frame-height)
-   (changed
-    :initform t
-    :accessor virtual-frame-changed)
    (buffer
     :initarg :buffer
-    :accessor virtual-frame-header-buffer)))
+    :accessor virtual-frame-header-buffer)
+   (last-displayed-tabs
+    :initform nil
+    :accessor virtual-frame-last-displayed-tabs)))
 
 (defun make-virtual-frame (impl frame)
   (declare (type frame frame))
@@ -70,7 +103,6 @@
               (lem::window-buffer-point (current-window)))
 
   (setf (virtual-frame-current virtual-frame) frame)
-  (setf (virtual-frame-changed virtual-frame) t)
   (notify-frame-redisplay-required frame)
   (map-frame (implementation) frame)
 
@@ -147,61 +179,52 @@
   (coerce (remove-if #'null (virtual-frame-id/frame-table virtual-frame))
           'list))
 
-(defun changed-current-buffer-p (current-frame)
-  (not (eq (current-buffer)
-           (window-buffer (frame-current-window current-frame)))))
+(defun write-tabs-to-buffer (window frames tabs)
+  (let* ((buffer (virtual-frame-header-buffer window))
+         (p (buffer-point buffer))
+         (charpos (point-charpos p)))
+    (erase-buffer buffer)
+    (loop :for frame :in frames
+          :for tab :in tabs
+          :do (let ((start-pos (point-charpos p)))
+                (insert-button p
+                               ;; virtual frame name on header
+                               (tab-content tab)
+                               ;; set action when click
+                               (let ((frame frame))
+                                 (lambda ()
+                                   (switch-current-frame window frame)))
+                               :attribute (if (tab-focus-p tab)
+                                              'frame-multiplexer-active-frame-name-attribute
+                                              'frame-multiplexer-frame-name-attribute))
+                (when (tab-focus-p tab)
+                  ;; set buffer-point to that focused tab position
+                  (let ((end-pos (point-charpos p)))
+                    (unless (<= start-pos charpos (1- end-pos))
+                      (setf charpos start-pos))))))
 
-(defun require-update-p (virtual-frame)
-  (or (virtual-frame-changed virtual-frame)
-      (not (= (display-width)
-              (virtual-frame-width virtual-frame)))
-      (not (= (display-height)
-              (virtual-frame-height virtual-frame)))
-      (virtual-frame-current virtual-frame)
-      (changed-current-buffer-p (virtual-frame-current virtual-frame))))
+    ;; fill right margin after the tabs
+    (let ((margin-right (- (display-width) (point-column p))))
+      (when (> margin-right 0)
+        (insert-string p (make-string margin-right :initial-element #\space)
+                       :attribute 'frame-multiplexer-background-attribute)))
+    (line-offset p 0 charpos)))
+
+(defun display-resized-p (virtual-frame)
+  (not (and (= (display-width)
+               (virtual-frame-width virtual-frame))
+            (= (display-height)
+               (virtual-frame-height virtual-frame)))))
 
 (defmethod window-redraw ((window virtual-frame) force)
-  (when (or force (require-update-p window))
-    ;; draw button for frames
-    (let* ((buffer (virtual-frame-header-buffer window))
-           (p (buffer-point buffer))
-           (charpos (point-charpos p)))
-      (erase-buffer buffer)
-      (dolist (frame (virtual-frame-frames window))
-        (let ((focusp (eq frame (virtual-frame-current window)))
-              (start-pos (point-charpos p)))
-          (insert-button p
-                         ;; virtual frame name on header
-                         (let* ((buffer (window-buffer (frame-current-window frame)))
-                                (name (buffer-name buffer)))
-                           (format nil "~a~a:~a "
-                                   (if focusp #\# #\space)
-                                   (find-frame-id window frame)
-                                   (if (>= (length name) +max-width-of-each-frame-name+)
-                                       (format nil "~a..."
-                                               (subseq name 0 +max-width-of-each-frame-name+))
-                                       name)))
-                         ;; set action when click
-                         (let ((frame frame))
-                           (lambda ()
-                             (switch-current-frame window frame)))
-                         :attribute (if focusp
-                                        'frame-multiplexer-active-frame-name-attribute
-                                        'frame-multiplexer-frame-name-attribute))
-          ;; increment charpos
-          (when focusp
-            (let ((end-pos (point-charpos p)))
-              (unless (<= start-pos charpos (1- end-pos))
-                (setf charpos start-pos))))))
-      ;; fill right margin
-      (let ((margin-right (- (display-width) (point-column p))))
-        (when (> margin-right 0)
-          (insert-string p (make-string margin-right :initial-element #\space)
-                         :attribute 'frame-multiplexer-background-attribute)))
-      (line-offset p 0 charpos)))
-  ;; clear virtual-frame-changed to nil because of applying redraw
-  (setf (virtual-frame-changed window) nil)
-  (call-next-method))
+  (let* ((frames (virtual-frame-frames window))
+         (tabs (make-tabs window frames)))
+    (when (or force
+              (display-resized-p window)
+              (not (equal-tabs tabs (virtual-frame-last-displayed-tabs window))))
+      (setf (virtual-frame-last-displayed-tabs window) tabs)
+      (write-tabs-to-buffer window frames tabs))
+    (call-next-method)))
 
 (defun frame-multiplexer-init ()
   (clrhash *virtual-frame-map*)

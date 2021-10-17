@@ -1073,14 +1073,16 @@
     ;; workaround for display update problem (incomplete)
     (write-something-to-last-line)
     ;; set cursor position
-    (if (lem::covered-with-floating-window-p (current-window) lem::*cursor-x* lem::*cursor-y*)
-        (charms/ll:curs-set 0)
-        (progn
-          (charms/ll:curs-set 1)
-          (charms/ll:wmove (ncurses-view-scrwin view)
-                           (get-pos-y view lem::*cursor-x* lem::*cursor-y*)
-                           ;; workaround for cursor position problem
-                           ;;(get-pos-x view lem::*cursor-x* lem::*cursor-y*)
-                           (get-cur-x view lem::*cursor-x* lem::*cursor-y*))))
+    (let ((cursor-x (last-print-cursor-x (current-window)))
+          (cursor-y (last-print-cursor-y (current-window))))
+      (if (lem::covered-with-floating-window-p (current-window) cursor-x cursor-y)
+          (charms/ll:curs-set 0)
+          (progn
+            (charms/ll:curs-set 1)
+            (charms/ll:wmove (ncurses-view-scrwin view)
+                             (get-pos-y view cursor-x cursor-y)
+                             ;; workaround for cursor position problem
+                             ;;(get-pos-x view cursor-x cursor-y)
+                             (get-cur-x view cursor-x cursor-y)))))
     (charms/ll:wnoutrefresh (ncurses-view-scrwin view))
     (charms/ll:doupdate)))

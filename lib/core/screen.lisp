@@ -13,7 +13,9 @@
   modified-p
   last-buffer-name
   last-buffer-modified-tick
-  (horizontal-scroll-start 0))
+  (horizontal-scroll-start 0)
+  (last-print-cursor-x 0)
+  (last-print-cursor-y 0))
 
 (defun make-screen (view width height)
   (%make-screen :view view

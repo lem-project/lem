@@ -237,8 +237,8 @@
   (with-error-handler ()
     (move-cursor implementation
                  (window-view (current-window))
-                 lem::*cursor-x*
-                 lem::*cursor-y*)
+                 (last-print-cursor-x (current-window))
+                 (last-print-cursor-y (current-window)))
     (notify "update-display" nil)))
 
 

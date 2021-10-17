@@ -17,6 +17,8 @@
           window-height
           window-buffer
           window-view
+          last-print-cursor-x
+          last-print-cursor-y
           window-parameter
           window-delete-hook
           window-redraw
@@ -181,6 +183,18 @@
 
 (defun window-view (window)
   (screen-view (window-screen window)))
+
+(defmethod last-print-cursor-x ((window window))
+  "最後にカーソルを描画した時のX座標を返します。
+各フロントエンドでカーソルを画面に表示するために使うためのものであり、
+それ以外での使用は推奨しません。(SHOULD NOT)"
+  (screen-last-print-cursor-x (window-screen window)))
+
+(defmethod last-print-cursor-y ((window window))
+  "最後にカーソルを描画した時のY座標を返します。
+各フロントエンドでカーソルを画面に表示するために使うためのものであり、
+それ以外での使用は推奨しません。(SHOULD NOT)"
+  (screen-last-print-cursor-y (window-screen window)))
 
 (defun find-window (id)
   (window-tree-find-if (window-tree)

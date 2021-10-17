@@ -186,14 +186,12 @@
 
 
 (defvar *printing-tab-size*)
-(defvar *cursor-x* 0)
-(defvar *cursor-y* 0)
 (defvar *print-start-x* 0)
 
 (defun screen-print-string (screen x y string attribute)
   (when (and (eq attribute 'cursor) (< 0 (length string)))
-    (setf *cursor-x* x)
-    (setf *cursor-y* y))
+    (setf (screen-last-print-cursor-x screen) x
+          (screen-last-print-cursor-y screen) y))
   (let ((view (screen-view screen))
         (x0 x)
         (i -1)

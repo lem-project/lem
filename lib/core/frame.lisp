@@ -7,7 +7,6 @@
           frame-window-tree
           frame-floating-windows
           frame-header-windows
-          frame-modified-header-windows
           frame-floating-prompt-window
           frame-prompt-window
           frame-message-window
@@ -43,18 +42,18 @@
     :initform '()
     :reader frame-header-windows)
    (modified-floating-windows
-    :initarg :modified-floating-windows
     :initform nil
-    :accessor frame-modified-floating-windows
+    :reader frame-modified-floating-windows
+    :writer set-frame-modified-floating-windows
     :documentation "このスロットがTの場合、
 floating-windowが追加/削除/大きさの変更などがあったことを示します。
 redraw-display関数でこのスロットを参照して、必要なウィンドウの再描画を判断するために使います。
 またredraw-display内でNILにセットされます。
 このスロットは内部処理のためのものであり、使ってはいけません。(DO NOT USE THIS SLOT)")
    (modified-header-windows
-    :initarg :modified-header-windows
     :initform nil
-    :accessor frame-modified-header-windows
+    :reader frame-modified-header-windows
+    :writer set-frame-modified-header-windows
     :documentation "このスロットがTの場合、header-windowが追加または削除されたことを示します。
 redraw-display関数でこのスロットを参照して、画面の再描画時にウィンドウの大きさを
 計算仕直す必要があるか判断します。
@@ -62,7 +61,8 @@ redraw-display関数でこのスロットを参照して、画面の再描画時
 このスロットは内部処理のためのものであり、使ってはいけません。(DO NOT USE THIS SLOT)")
    (require-redisplay-windows
     :initform nil
-    :accessor frame-require-redisplay-windows
+    :reader frame-require-redisplay-windows
+    :writer set-frame-require-redisplay-windows
     :documentation "このスロットがTの場合、redraw-display関数で画面全体を再描画します。
 redraw-display内でNILにセットされます。
 このスロットが必要になったのは、frame-multiplexerでframe-multiplexer-deleteを呼び出した後に
@@ -76,8 +76,19 @@ redraw-displayを呼び出したとき、画面の最小限の更新だけでは
     :initform nil
     :accessor frame-message-window)))
 
+(defmethod notify-floating-window-modified ((frame frame))
+  (set-frame-modified-floating-windows t frame))
+
+(defmethod notify-header-window-modified ((frame frame))
+  (set-frame-modified-header-windows t frame))
+
 (defmethod notify-frame-redisplay-required ((frame frame))
-  (setf (frame-require-redisplay-windows frame) t))
+  (set-frame-require-redisplay-windows t frame))
+
+(defmethod notify-frame-redraw-finished ((frame frame))
+  (set-frame-modified-header-windows nil frame)
+  (set-frame-modified-floating-windows nil frame)
+  (set-frame-require-redisplay-windows nil frame))
 
 (defmethod frame-prompt-window ((frame frame))
   (frame-floating-prompt-window frame))

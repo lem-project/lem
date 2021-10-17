@@ -761,14 +761,14 @@ window width is changed, we must recalc the window view point."
 
 (defun window-set-pos (window x y)
   (when (floating-window-p window)
-    (setf (frame-modified-floating-windows (current-frame)) t))
+    (notify-floating-window-modified (current-frame)))
   (screen-set-pos (window-screen window) x y)
   (set-window-x x window)
   (set-window-y y window))
 
 (defun window-set-size (window width height)
   (when (floating-window-p window)
-    (setf (frame-modified-floating-windows (current-frame)) t))
+    (notify-floating-window-modified (current-frame)))
   (set-window-width width window)
   (set-window-height height window)
   (screen-set-size (window-screen window)
@@ -1187,7 +1187,7 @@ window width is changed, we must recalc the window view point."
   (declare (ignore initargs))
   (unless (support-floating-window (implementation))
     (error "floating window is not supported"))
-  (setf (frame-modified-floating-windows (current-frame)) t))
+  (notify-floating-window-modified (current-frame)))
 
 (defmethod initialize-instance :after ((floating-window floating-window)
                                        &key (frame (current-frame)) &allow-other-keys)
@@ -1197,7 +1197,7 @@ window width is changed, we must recalc the window view point."
 (defmethod %delete-window ((window floating-window))
   (when (eq window (current-window))
     (editor-error "Can not delete this window"))
-  (setf (frame-modified-floating-windows (current-frame)) t)
+  (notify-floating-window-modified (current-frame))
   (setf (frame-floating-windows (current-frame))
         (delete window (frame-floating-windows (current-frame)))))
 
@@ -1213,12 +1213,12 @@ window width is changed, we must recalc the window view point."
     (setf width (display-width))
     (setf height 1))
   (add-header-window (current-frame) window)
-  (setf (frame-modified-header-windows (current-frame)) t)
+  (notify-header-window-modified (current-frame))
   (call-next-method))
 
 (defmethod %delete-window ((window header-window))
   (remove-header-window (current-frame) window)
-  (setf (frame-modified-header-windows (current-frame)) t))
+  (notify-header-window-modified (current-frame)))
 
 (defun adjust-all-window-size ()
   (dolist (window (frame-header-windows (current-frame)))
@@ -1264,11 +1264,9 @@ window width is changed, we must recalc the window view point."
       (when (frame-floating-prompt-window (current-frame))
         (update-prompt-window (frame-floating-prompt-window (current-frame))))
       (when (frame-modified-header-windows (current-frame))
-        (setf (frame-modified-header-windows (current-frame)) nil)
         (adjust-all-window-size))
       (redraw-all-windows)
-      (setf (frame-modified-floating-windows (current-frame)) nil
-            (frame-require-redisplay-windows (current-frame)) nil))))
+      (notify-frame-redraw-finished (current-frame)))))
 
 (defun display-popup-message (buffer-or-string
                               &key (timeout *default-popup-message-timeout*)

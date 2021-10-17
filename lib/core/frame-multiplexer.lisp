@@ -147,12 +147,18 @@
   (coerce (remove-if #'null (virtual-frame-id/frame-table virtual-frame))
           'list))
 
+(defun changed-current-buffer-p (current-frame)
+  (not (eq (current-buffer)
+           (window-buffer (frame-current-window current-frame)))))
+
 (defun require-update-p (virtual-frame)
   (or (virtual-frame-changed virtual-frame)
       (not (= (display-width)
               (virtual-frame-width virtual-frame)))
       (not (= (display-height)
-              (virtual-frame-height virtual-frame)))))
+              (virtual-frame-height virtual-frame)))
+      (virtual-frame-current virtual-frame)
+      (changed-current-buffer-p (virtual-frame-current virtual-frame))))
 
 (defmethod window-redraw ((window virtual-frame) force)
   (when (or force (require-update-p window))

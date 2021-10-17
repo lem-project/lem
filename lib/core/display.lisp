@@ -186,7 +186,9 @@
 
 
 (defvar *printing-tab-size*)
-(defvar *print-start-x* 0)
+
+(defun screen-margin-left (screen)
+  (screen-left-width screen))
 
 (defun screen-print-string (screen x y string attribute)
   (when (and (eq attribute 'cursor) (< 0 (length string)))
@@ -200,7 +202,7 @@
           :do (cond
                 ((char= char #\tab)
                  (loop :with size :=
-                          (+ *print-start-x*
+                          (+ (screen-margin-left screen)
                              (* *printing-tab-size*
                                 (floor (+ *printing-tab-size* x) *printing-tab-size*)))
                        :while (< x size)
@@ -327,8 +329,7 @@
                #'screen-display-line))
          (wrap-lines (screen-wrap-lines screen))
          (screen-width (- (screen-width screen)
-                          (screen-left-width screen)))
-         (*print-start-x* (screen-left-width screen)))
+                          (screen-left-width screen))))
     (setf (screen-wrap-lines screen) nil)
     (loop :for y :from 0
           :for i :from 0

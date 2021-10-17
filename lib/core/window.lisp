@@ -1233,40 +1233,46 @@ window width is changed, we must recalc the window view point."
   (clear-screens-of-window-list)
   (redraw-display))
 
+(defvar *in-redraw-display* nil
+  "この変数がTの場合、redraw-display関数で画面を描画中であることを表します。
+再帰的なredraw-displayの呼び出しを防ぐために用います。")
+
 (defun redraw-display (&optional force)
-  (labels ((redraw-window-list (force)
-             (dolist (window (window-list))
-               (unless (eq window (current-window))
+  (assert (not *in-redraw-display*) (*in-redraw-display*) "redraw-display is called recursively.")
+  (let ((*in-redraw-display* t))
+    (labels ((redraw-window-list (force)
+               (dolist (window (window-list))
+                 (unless (eq window (current-window))
+                   (window-redraw window force)))
+               (window-redraw (current-window) force))
+             (redraw-header-windows (force)
+               (dolist (window (frame-header-windows (current-frame)))
                  (window-redraw window force)))
-             (window-redraw (current-window) force))
-           (redraw-header-windows (force)
-             (dolist (window (frame-header-windows (current-frame)))
-               (window-redraw window force)))
-           (redraw-floating-windows ()
-             (dolist (window (frame-floating-windows (current-frame)))
-               (window-redraw window (redraw-after-modifying-floating-window (implementation)))))
-           (redraw-all-windows ()
-             (redraw-header-windows force)
-             (redraw-window-list
-              (or (frame-require-redisplay-windows (current-frame))
-                  (and (redraw-after-modifying-floating-window (implementation))
-                       (or
-                        ;; floating-windowが変更されたら、その下のウィンドウは再描画する必要がある
-                        (frame-modified-floating-windows (current-frame))
-                        ;; floating-windowが存在するときは常にその下のウィンドウは再描画する
-                        ;; 例えば、promptの表示中に文字の削除などでpromptが縮小した場合に
-                        ;; その下のウィンドウを再描画しないとpromptの枠が残ってしまう
-                        (not (null (frame-floating-windows (current-frame))))))
-                  force))
-             (redraw-floating-windows)
-             (lem-if:update-display (implementation))))
-    (without-interrupts
-      (when (frame-floating-prompt-window (current-frame))
-        (update-prompt-window (frame-floating-prompt-window (current-frame))))
-      (when (frame-modified-header-windows (current-frame))
-        (adjust-all-window-size))
-      (redraw-all-windows)
-      (notify-frame-redraw-finished (current-frame)))))
+             (redraw-floating-windows ()
+               (dolist (window (frame-floating-windows (current-frame)))
+                 (window-redraw window (redraw-after-modifying-floating-window (implementation)))))
+             (redraw-all-windows ()
+               (redraw-header-windows force)
+               (redraw-window-list
+                (or (frame-require-redisplay-windows (current-frame))
+                    (and (redraw-after-modifying-floating-window (implementation))
+                         (or
+                          ;; floating-windowが変更されたら、その下のウィンドウは再描画する必要がある
+                          (frame-modified-floating-windows (current-frame))
+                          ;; floating-windowが存在するときは常にその下のウィンドウは再描画する
+                          ;; 例えば、promptの表示中に文字の削除などでpromptが縮小した場合に
+                          ;; その下のウィンドウを再描画しないとpromptの枠が残ってしまう
+                          (not (null (frame-floating-windows (current-frame))))))
+                    force))
+               (redraw-floating-windows)
+               (lem-if:update-display (implementation))))
+      (without-interrupts
+        (when (frame-floating-prompt-window (current-frame))
+          (update-prompt-window (frame-floating-prompt-window (current-frame))))
+        (when (frame-modified-header-windows (current-frame))
+          (adjust-all-window-size))
+        (redraw-all-windows)
+        (notify-frame-redraw-finished (current-frame))))))
 
 (defun display-popup-message (buffer-or-string
                               &key (timeout *default-popup-message-timeout*)

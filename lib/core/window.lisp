@@ -1238,7 +1238,9 @@ window width is changed, we must recalc the window view point."
 再帰的なredraw-displayの呼び出しを防ぐために用います。")
 
 (defun redraw-display (&optional force)
-  (assert (not *in-redraw-display*) (*in-redraw-display*) "redraw-display is called recursively.")
+  (when *in-redraw-display*
+    (log:warn "redraw-display is called recursively")
+    (return-from redraw-display))
   (let ((*in-redraw-display* t))
     (labels ((redraw-window-list (force)
                (dolist (window (window-list))

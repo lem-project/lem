@@ -362,58 +362,28 @@
     (buffer-start (buffer-point buffer))
     buffer))
 
-(defstruct (popup-parameters (:constructor %make-popup-parameters))
-  buffer
-  timeout
-  size
-  gravity
-  destination-window)
-
-(defun make-popup-buffer-from-string (string size)
-  (let* ((buffer (make-popup-buffer string))
-         (size (or size (compute-size-from-buffer buffer))))
-    (values buffer size)))
-
-(defun make-popup-parameters (buffer-or-string &rest args
-                                               &key timeout size gravity destination-window)
-  (declare (ignore timeout gravity destination-window))
-  (multiple-value-bind (buffer size)
-      (etypecase buffer-or-string
-        (string
-         (make-popup-buffer-from-string buffer-or-string size))
-        (buffer
-         (values buffer-or-string size)))
-    (apply #'%make-popup-parameters
-           :buffer buffer
-           :size size
-           (alexandria:remove-from-plist args :size))))
-
-(defmethod display-popup-message-using-popup-parameters (implementation popup-parameters)
-  (with-slots (buffer timeout size gravity destination-window) popup-parameters
-    (let ((size (or size (compute-size-from-buffer buffer))))
-      (destructuring-bind (width height) size
-        (delete-popup-message destination-window)
-        (let ((window (popup-window (current-window) buffer width height :gravity gravity)))
-          (buffer-start (window-view-point window))
-          (window-see window)
-          (when timeout
-            (check-type timeout number)
-            (start-timer (round (* timeout 1000))
-                         nil
-                         (lambda ()
-                           (unless (deleted-window-p window)
-                             (delete-window window)))))
-          window)))))
-
 (defmethod lem-if:display-popup-message (implementation buffer-or-string
-                                         &key timeout size gravity destination-window)
-  (display-popup-message-using-popup-parameters
-   implementation
-   (make-popup-parameters buffer-or-string
-                          :timeout timeout
-                          :size size
-                          :gravity (or gravity :cursor)
-                          :destination-window destination-window)))
+                                         &key timeout
+                                              size
+                                              (gravity :cursor)
+                                              destination-window)
+  (let ((buffer (etypecase buffer-or-string
+                  (string (make-popup-buffer buffer-or-string))
+                  (buffer buffer-or-string))))
+    (destructuring-bind (width height)
+        (or size (compute-size-from-buffer buffer))
+      (delete-popup-message destination-window)
+      (let ((window (popup-window (current-window) buffer width height :gravity gravity)))
+        (buffer-start (window-view-point window))
+        (window-see window)
+        (when timeout
+          (check-type timeout number)
+          (start-timer (round (* timeout 1000))
+                       nil
+                       (lambda ()
+                         (unless (deleted-window-p window)
+                           (delete-window window)))))
+        window))))
 
 (defmethod lem-if:delete-popup-message (implementation popup-message)
   (when (and popup-message (not (deleted-window-p popup-message)))

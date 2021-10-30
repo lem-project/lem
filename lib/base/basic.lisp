@@ -91,6 +91,8 @@
 
 (defun move-point (point new-point)
   "`point`を`new-point`の位置に移動します。"
+  (assert (eq (point-buffer point)
+              (point-buffer new-point)))
   (%move-to-position point
                      (point-linum new-point)
                      (point-line new-point)

@@ -1,7 +1,8 @@
 (defpackage :lem-fake-interface
   (:use :cl :lem)
   (:export :fake-interface
-           :with-fake-interface))
+           :with-fake-interface
+           :get-displayed-text))
 (in-package :lem-fake-interface)
 
 (defclass fake-interface (lem:implementation)
@@ -30,13 +31,13 @@
   modeline
   lines)
 
-(defun display ()
-  (let ((lines (view-lines (lem::screen-view (lem::window-screen (current-window))))))
+(defun get-displayed-text (&optional (window (current-window)))
+  (let ((lines (view-lines (lem::screen-view (lem::window-screen window)))))
     (with-output-to-string (out)
       (loop :for line :across lines
             :for line-string := (string-right-trim (string (code-char 0)) line)
-            :do (unless (zerop (length line-string))
-                  (write-string line-string out))))))
+            :do (fresh-line out)
+                (write-string line-string out)))))
 
 (defmethod lem-if:invoke ((implementation fake-interface) function)
   (funcall function))

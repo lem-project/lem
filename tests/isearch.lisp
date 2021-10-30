@@ -17,14 +17,24 @@ xyz1234
     buffer))
 
 (deftest replace-string
-  (let ((buffer (make-test-buffer *text*)))
-    (lem.isearch::query-replace-internal "foo"
-                                         "foobar"
-                                         #'search-forward
-                                         #'search-backward
-                                         :query nil
-                                         :start (buffer-start-point buffer)
-                                         :end (buffer-end-point buffer)
-                                         :count 100)
-    (ok (equal (ppcre:regex-replace-all "foo" *text* "foobar")
-               (buffer-text buffer)))))
+  (lem-tests/buffer-list-test::with-buffer-list ()
+    (let ((buffer (make-test-buffer *text*)))
+      (lem.isearch::query-replace-internal "foo"
+                                           "foobar"
+                                           #'search-forward
+                                           #'search-backward
+                                           :query nil
+                                           :start (buffer-start-point buffer)
+                                           :end (buffer-end-point buffer)
+                                           :count 100)
+      (ok (equal (ppcre:regex-replace-all "foo" *text* "foobar")
+                 (buffer-text buffer))))
+    ;; XXX: After running this test, the buffer state will be broken
+    #+(or)
+    (progn
+      (print (buffer-list)) ; => (#<BUFFER *tmp* NIL>)
+      (let ((b (first (buffer-list))))
+        ;; ???
+        (assert (point< (buffer-point b)
+                        (buffer-end-point b)))))
+    ))

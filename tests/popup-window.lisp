@@ -1,5 +1,5 @@
 (defpackage :lem-tests/popup-window
-  (:use :cl :lem-tests/deftest)
+  (:use :cl :lem :lem-tests/deftest)
   (:import-from :lem-fake-interface
                 :fake-interface
                 :with-fake-interface))
@@ -13,13 +13,15 @@
     (first windows)))
 
 (deftest display-popup-window
-  (with-fake-interface ()
-    (lem:display-popup-message "hello")
-    (let ((popup-window (find-popup-window)))
-      (ok (eql 1 (lem:floating-window-border popup-window)))
-      (ok (eq (lem:current-window)
-              (lem.popup-window::popup-window-source-window popup-window)))
-      (ok (= 6 (lem.popup-window::popup-window-base-width popup-window)))
-      (ok (= 1 (lem.popup-window::popup-window-base-height popup-window)))
-      (ok (typep (lem.popup-window::popup-window-gravity popup-window)
-                 'lem.popup-window::gravity-cursor)))))
+  (lem-tests/buffer-list-test::with-buffer-list ()
+    (with-fake-interface ()
+      (lem:display-popup-message "hello")
+      (let ((popup-window (find-popup-window)))
+        (ok (equal "hello" (lem:buffer-text (lem:window-buffer popup-window))))
+        (ok (eql 1 (lem:floating-window-border popup-window)))
+        (ok (eq (lem:current-window)
+                (lem.popup-window::popup-window-source-window popup-window)))
+        (ok (= 6 (lem.popup-window::popup-window-base-width popup-window)))
+        (ok (= 1 (lem.popup-window::popup-window-base-height popup-window)))
+        (ok (typep (lem.popup-window::popup-window-gravity popup-window)
+                   'lem.popup-window::gravity-cursor))))))

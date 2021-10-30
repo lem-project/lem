@@ -4,6 +4,7 @@
                "alexandria"
                "cl-ppcre"
                "babel"
+               "log4cl"
                "lem-utils")
   :serial t
   :components ((:file "string-width-utils")
@@ -30,4 +31,5 @@
                (:file "tmlanguage")
                (:file "encodings")
                (:file "file")
-               (:file "indent")))
+               (:file "indent")
+               (:file "check-corruption")))

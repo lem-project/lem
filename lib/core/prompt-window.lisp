@@ -166,9 +166,9 @@
      (lem.popup-window::compute-popup-window-rectangle (lem.popup-window::ensure-gravity :center)
                                                        ;; source-windowを決められないのでnilにする
                                                        ;; centerの場合は使わないのでとりあえずは動く
-                                                       nil
-                                                       width
-                                                       height))))
+                                                       :source-window nil
+                                                       :width width
+                                                       :height height))))
 
 (defun make-prompt-window (buffer parameters)
   (multiple-value-bind (x y width height)
@@ -176,9 +176,9 @@
           (compute-window-size buffer)
         (lem.popup-window::compute-popup-window-rectangle
          (lem.popup-window::ensure-gravity (prompt-gravity parameters))
-         (prompt-window-caller-of-prompt-window parameters)
-         width
-         height))
+         :source-window (prompt-window-caller-of-prompt-window parameters)
+         :width width
+         :height height))
     (make-instance 'floating-prompt
                    :buffer buffer
                    :x x

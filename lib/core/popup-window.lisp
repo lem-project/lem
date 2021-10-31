@@ -19,6 +19,11 @@
 (defvar *focus-attribute* nil)
 (defvar *non-focus-attribute* nil)
 
+(define-attribute popup-menu-attribute
+  (t :foreground "white" :background "RoyalBlue"))
+(define-attribute non-focus-popup-menu-attribute
+  (t :background "#444" :foreground "white"))
+
 (defgeneric adjust-for-redrawing (gravity popup-window)
   (:method (gravity popup-window)))
 
@@ -32,6 +37,22 @@
 (defclass gravity-topright (gravity) ())
 (defclass gravity-cursor (gravity) ())
 (defclass gravity-follow-cursor (gravity-cursor) ())
+
+(defclass popup-window (floating-window)
+  ((gravity
+    :initarg :gravity
+    :reader popup-window-gravity)
+   (source-window
+    :initarg :source-window
+    :reader popup-window-source-window)
+   (base-width
+    :initarg :base-width
+    :reader popup-window-base-width)
+   (base-height
+    :initarg :base-height
+    :reader popup-window-base-height))
+  (:default-initargs
+   :border +border-size+))
 
 (defun ensure-gravity (gravity)
   (if (typep gravity 'gravity)
@@ -141,27 +162,6 @@
       (setf x win-x)
       (setf w (min width win-w)))
     (values x y w h)))
-
-(defclass popup-window (floating-window)
-  ((gravity
-    :initarg :gravity
-    :reader popup-window-gravity)
-   (source-window
-    :initarg :source-window
-    :reader popup-window-source-window)
-   (base-width
-    :initarg :base-width
-    :reader popup-window-base-width)
-   (base-height
-    :initarg :base-height
-    :reader popup-window-base-height))
-  (:default-initargs
-   :border +border-size+))
-
-(define-attribute popup-menu-attribute
-  (t :foreground "white" :background "RoyalBlue"))
-(define-attribute non-focus-popup-menu-attribute
-  (t :background "#444" :foreground "white"))
 
 (defmethod window-redraw ((popup-window popup-window) force)
   (adjust-for-redrawing (popup-window-gravity popup-window) popup-window)

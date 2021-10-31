@@ -369,7 +369,7 @@
            (with-point ((p (buffer-point buffer)))
              (buffer-start p)
              (loop
-               :maximize (1+ (string-width (line-string p)))
+               :maximize (string-width (line-string p))
                :while (line-offset p 1)))))
     (list (compute-width)
           (compute-height))))

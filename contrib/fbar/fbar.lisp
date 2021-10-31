@@ -114,13 +114,12 @@
 	    old-buffer (current-buffer)
 	    old-point (copy-point  (current-point) :temporary  ))
       (setf *fbar-window*
-            (make-instance 'lem:floating-window
-                           :buffer *fbar-buffer*
-                           :x 0
-                           :y 0
-                           :width (1+ *fbar-width*)
-                           :height (1- (display-height))
-                           :use-modeline-p nil))
+            (make-floating-window :buffer *fbar-buffer*
+                                  :x 0
+                                  :y 0
+                                  :width (1+ *fbar-width*)
+                                  :height (1- (display-height))
+                                  :use-modeline-p nil))
       
       (setf (current-window) *fbar-window*)
       (setf (current-buffer) *fbar-buffer*)

@@ -70,13 +70,12 @@
                     (setf *typeout-window-rewinding-values*
                           (list typeout-buffer-p
                                 not-switchable-buffer-p)))
-                  (let ((window (make-instance 'floating-window
-                                               :buffer buffer
-                                               :x 0
-                                               :y 0
-                                               :width (display-width)
-                                               :height window-height
-                                               :use-modeline-p t)))
+                  (let ((window (make-floating-window :buffer buffer
+                                                      :x 0
+                                                      :y 0
+                                                      :width (display-width)
+                                                      :height window-height
+                                                      :use-modeline-p t)))
                     (setf (window-modeline-format window) '(typeout-window-modeline))
                     (add-hook (window-delete-hook window)
                               'delete-typeout-window-hook)

@@ -48,6 +48,7 @@
           right-window
           up-window
           down-window
+          make-floating-window
           floating-window
           floating-window-border
           floating-window-p
@@ -1188,15 +1189,6 @@ window width is changed, we must recalc the window view point."
     :initform 0
     :reader floating-window-border)))
 
-(defmethod initialize-instance ((floating-window floating-window)
-                                &key (x (alexandria:required-argument :x))
-                                     (y (alexandria:required-argument :y))
-                                     (width (alexandria:required-argument :width))
-                                     (height (alexandria:required-argument :height))
-                                     (use-modeline-p nil))
-  (declare (ignore x y width height use-modeline-p))
-  (call-next-method))
-
 (defmethod initialize-instance :before ((floating-window floating-window) &rest initargs)
   (declare (ignore initargs))
   (unless (support-floating-window (implementation))
@@ -1207,6 +1199,20 @@ window width is changed, we must recalc the window view point."
                                        &key (frame (current-frame)) &allow-other-keys)
   (alexandria:appendf (frame-floating-windows frame)
                       (list floating-window)))
+
+(defun make-floating-window (&key (buffer (alexandria:required-argument :buffer))
+                                  (x (alexandria:required-argument :x))
+                                  (y (alexandria:required-argument :y))
+                                  (width (alexandria:required-argument :width))
+                                  (height (alexandria:required-argument :height))
+                                  (use-modeline-p (alexandria:required-argument :use-modeline-p)))
+  (make-instance 'floating-window
+                 :buffer buffer
+                 :x x
+                 :y y
+                 :width width
+                 :height height
+                 :use-modeline-p use-modeline-p))
 
 (defmethod %delete-window ((window floating-window))
   (when (eq window (current-window))

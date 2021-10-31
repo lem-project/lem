@@ -170,7 +170,7 @@
                                                       :height height)))
 
 (defun make-prompt-window (buffer parameters)
-  (multiple-value-bind (x y width height)
+  (destructuring-bind (x y width height)
       (compute-window-rectangle buffer
                                 :gravity (prompt-gravity parameters)
                                 :source-window (prompt-window-caller-of-prompt-window parameters))
@@ -187,7 +187,7 @@
                    :history (prompt-window-history parameters))))
 
 (defmethod update-prompt-window ((window floating-prompt))
-  (multiple-value-bind (x y width height)
+  (destructuring-bind (x y width height)
       (compute-window-rectangle (window-buffer window)
                                 ;; source-windowを決められないのでnilにする
                                 ;; centerの場合は使わないのでとりあえずは動く

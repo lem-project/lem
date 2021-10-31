@@ -148,8 +148,10 @@
 
 (defun compute-window-size (buffer)
   (flet ((compute-width ()
-           (loop :for string :in (uiop:split-string (buffer-text buffer) :separator '(#\newline))
-                 :maximize (+ (string-width string) 2))))
+           (+ (lem.popup-window::compute-buffer-width buffer)
+              ;; Find File: <file-name>|
+              ;;                       ^ ここにカーソルがあるとき、1つ余分に幅が無いと足りなくなる
+              1)))
     (let* ((b2 (* +border-size+ 2))
            (width  (max (min (compute-width)
                              (- (display-width)  b2 *extra-side-margin*))

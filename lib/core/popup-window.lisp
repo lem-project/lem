@@ -167,7 +167,12 @@
   (adjust-for-redrawing (popup-window-gravity popup-window) popup-window)
   (call-next-method))
 
-(defun popup-window (source-window buffer width height &key destination-window (gravity :cursor))
+(defun make-popup-window (&key (source-window (alexandria:required-argument :source-window))
+                               (buffer (alexandria:required-argument :buffer))
+                               (width (alexandria:required-argument :width))
+                               (height (alexandria:required-argument :height))
+                               (destination-window nil)
+                               (gravity :cursor))
   (let ((gravity (ensure-gravity gravity)))
     (multiple-value-bind (x y w h)
         (compute-popup-window-rectangle gravity source-window width height)
@@ -286,20 +291,20 @@
   (multiple-value-bind (buffer width)
       (create-menu-buffer items print-spec)
     (setf *menu-window*
-          (popup-window (current-window)
-                        buffer
-                        width
-                        (min 20 (length items))))))
+          (make-popup-window :source-window (current-window)
+                             :buffer buffer
+                             :width width
+                             :height (min 20 (length items))))))
 
 (defmethod lem-if:popup-menu-update (implementation items)
   (multiple-value-bind (buffer width)
       (create-menu-buffer items *print-spec*)
     (update-focus-overlay (buffer-point buffer))
-    (popup-window (current-window)
-                  buffer
-                  width
-                  (min 20 (length items))
-                  :destination-window *menu-window*)))
+    (make-popup-window :source-window (current-window)
+                       :buffer buffer
+                       :width width
+                       :height (min 20 (length items))
+                       :destination-window *menu-window*)))
 
 (defmethod lem-if:popup-menu-quit (implementation)
   (when *focus-overlay*
@@ -373,7 +378,11 @@
     (destructuring-bind (width height)
         (or size (compute-size-from-buffer buffer))
       (delete-popup-message destination-window)
-      (let ((window (popup-window (current-window) buffer width height :gravity gravity)))
+      (let ((window (make-popup-window :source-window (current-window)
+                                       :buffer buffer
+                                       :width width
+                                       :height height
+                                       :gravity gravity)))
         (buffer-start (window-view-point window))
         (window-see window)
         (when timeout

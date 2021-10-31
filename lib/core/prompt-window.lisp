@@ -153,12 +153,14 @@
               ;;                       ^ ここにカーソルがあるとき、1つ余分に幅が無いと足りなくなる
               1)))
     (let* ((b2 (* +border-size+ 2))
-           (width  (max (min (compute-width)
-                             (- (display-width)  b2 *extra-side-margin*))
-                        +min-width+))
-           (height (max (min (buffer-nlines buffer)
-                             (- (display-height) b2))
-                        +min-height+)))
+           (width
+             (alexandria:clamp (compute-width)
+                               +min-width+
+                               (- (display-width)  b2 *extra-side-margin*)))
+           (height
+             (alexandria:clamp (buffer-nlines buffer)
+                               +min-height+
+                               (- (display-height) b2))))
       (list width height))))
 
 (defun compute-window-rectangle (buffer &key gravity source-window)

@@ -243,16 +243,17 @@
           (put-attribute start p start-attribute)
           (move-point start p))))))
 
+(defun compute-buffer-width (buffer)
+  (with-point ((point (buffer-start-point buffer)))
+    (loop :maximize (point-column (line-end point))
+          :while (line-offset point 1))))
+
 (defun fill-in-the-background-with-space (buffer)
-  (labels ((compute-buffer-width ()
-             (with-point ((point (buffer-start-point buffer)))
-               (loop :maximize (point-column (line-end point))
-                     :while (line-offset point 1))))
-           (fill-space (width)
+  (labels ((fill-space (width)
              (with-point ((point (buffer-start-point buffer) :left-inserting))
                (loop :do (move-to-column point width t)
                      :while (line-offset point 1)))))
-    (let ((width (compute-buffer-width)))
+    (let ((width (compute-buffer-width buffer)))
       (fill-space width)
       width)))
 
@@ -363,16 +364,9 @@
     (funcall f item)))
 
 (defun compute-size-from-buffer (buffer)
-  (flet ((compute-height ()
-           (buffer-nlines buffer))
-         (compute-width ()
-           (with-point ((p (buffer-point buffer)))
-             (buffer-start p)
-             (loop
-               :maximize (string-width (line-string p))
-               :while (line-offset p 1)))))
-    (list (compute-width)
-          (compute-height))))
+  (let ((width (compute-buffer-width buffer))
+        (height (buffer-nlines buffer)))
+    (list width height)))
 
 (defun make-popup-buffer (text)
   (let ((buffer (make-buffer "*Popup Message*" :temporary t :enable-undo-p nil)))

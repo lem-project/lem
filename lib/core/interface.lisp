@@ -82,7 +82,8 @@
 (defgeneric lem-if:popup-menu-first (implementation))
 (defgeneric lem-if:popup-menu-last (implementation))
 (defgeneric lem-if:popup-menu-select (implementation))
-(defgeneric lem-if:display-popup-message (implementation buffer-or-string &key timeout size gravity
+(defgeneric lem-if:display-popup-message (implementation buffer-or-string &key timeout
+                                                                               gravity
                                                                                destination-window))
 (defgeneric lem-if:delete-popup-message (implementation popup-message))
 

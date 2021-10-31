@@ -1298,13 +1298,11 @@ window width is changed, we must recalc the window view point."
 
 (defun display-popup-message (buffer-or-string
                               &key (timeout *default-popup-message-timeout*)
-                                   size
                                    (gravity :cursor)
                                    destination-window)
   (lem-if:display-popup-message (implementation)
                                 buffer-or-string
                                 :timeout timeout
-                                :size size
                                 :gravity gravity
                                 :destination-window destination-window))
 

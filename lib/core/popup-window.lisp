@@ -384,14 +384,13 @@
 
 (defmethod lem-if:display-popup-message (implementation buffer-or-string
                                          &key timeout
-                                              size
                                               (gravity :cursor)
                                               destination-window)
   (let ((buffer (etypecase buffer-or-string
                   (string (make-popup-buffer buffer-or-string))
                   (buffer buffer-or-string))))
     (destructuring-bind (width height)
-        (or size (compute-size-from-buffer buffer))
+        (compute-size-from-buffer buffer)
       (delete-popup-message destination-window)
       (let ((window (make-popup-window :source-window (current-window)
                                        :buffer buffer

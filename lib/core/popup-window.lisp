@@ -50,9 +50,7 @@
     :reader popup-window-base-width)
    (base-height
     :initarg :base-height
-    :reader popup-window-base-height))
-  (:default-initargs
-   :border +border-size+))
+    :reader popup-window-base-height)))
 
 (defun ensure-gravity (gravity)
   (if (typep gravity 'gravity)
@@ -179,7 +177,7 @@
                                (height (alexandria:required-argument :height))
                                (destination-window nil)
                                (gravity :cursor)
-                          &aux (border-size +border-size+))
+                               (border-size +border-size+))
   (let ((gravity (ensure-gravity gravity)))
     (destructuring-bind (x y w h)
         (compute-popup-window-rectangle gravity
@@ -204,7 +202,8 @@
                             :gravity gravity
                             :source-window source-window
                             :base-width  width
-                            :base-height height))))))
+                            :base-height height
+                            :border border-size))))))
 
 (defun quit-popup-window (floating-window)
   (delete-window floating-window))

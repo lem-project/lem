@@ -205,20 +205,19 @@
 (defun update-focus-overlay (point)
   (when *focus-overlay*
     (delete-overlay *focus-overlay*))
-  (when point
-    (with-point ((start point)
-                 (end point))
-      (setf *focus-overlay*
-            (make-overlay (line-start start)
-                          (line-end end)
-                          *focus-attribute*)))))
+  (with-point ((start point)
+               (end point))
+    (setf *focus-overlay*
+          (make-overlay (line-start start)
+                        (line-end end)
+                        *focus-attribute*))))
 
 (defgeneric apply-print-spec (print-spec point item)
   (:method ((print-spec function) point item)
     (let ((string (funcall print-spec item)))
       (insert-string point string))))
 
-(defun fill-background (buffer background-color)
+(defun fill-background-color (buffer background-color)
   (with-point ((p (buffer-start-point buffer))
                (start (buffer-start-point buffer)))
     (flet ((put-attribute (start end attribute)
@@ -244,36 +243,52 @@
           (put-attribute start p start-attribute)
           (move-point start p))))))
 
+(defun fill-in-the-background-with-space (buffer)
+  (labels ((compute-buffer-width ()
+             (with-point ((point (buffer-start-point buffer)))
+               (loop :maximize (point-column (line-end point))
+                     :while (line-offset point 1))))
+           (fill-space (width)
+             (with-point ((point (buffer-start-point buffer) :left-inserting))
+               (loop :do (move-to-column point width t)
+                     :while (line-offset point 1)))))
+    (let ((width (compute-buffer-width)))
+      (fill-space width)
+      width)))
+
+(defun fill-background (buffer)
+  (let ((width (fill-in-the-background-with-space buffer))
+        (attribute (ensure-attribute *non-focus-attribute* nil)))
+    (if attribute
+        (fill-background-color buffer (attribute-background attribute))
+        (log:error "*non-focus-attribute* is an invalid value" *non-focus-attribute*))
+    width))
+
+(defun insert-items (point items print-spec)
+  (with-point ((start point :right-inserting))
+    (loop :for (item . continue-p) :on items
+          :do (move-point start point)
+              (apply-print-spec print-spec point item)
+              (line-end point)
+              (put-text-property start point :item item)
+              (when continue-p
+                (insert-character point #\newline)))
+    (buffer-start point)))
+
+(defun make-menu-buffer ()
+  (or *menu-buffer*
+      (setq *menu-buffer*
+            (make-buffer "*popup menu*" :enable-undo-p nil :temporary t))))
+
 (defun create-menu-buffer (items print-spec)
-  (let* ((buffer (or *menu-buffer*
-                     (make-buffer "*popup menu*" :enable-undo-p nil :temporary t)))
-         (point (buffer-point buffer))
-         (width 0))
+  (let* ((buffer (make-menu-buffer))
+         (point (buffer-point buffer)))
     (erase-buffer buffer)
     (setf (variable-value 'line-wrap :buffer buffer) nil)
-    (with-point ((start point :right-inserting))
-      (loop :for (item . continue-p) :on items
-            :for linum :from 0
-            :do (move-point start point)
-                (insert-character point #\space)
-                (apply-print-spec print-spec point item)
-                (line-end point)
-                (put-text-property start point :item item)
-                (setf width (max width (+ 1 (point-column point))))
-                (when continue-p
-                  (insert-character point #\newline))))
-    (buffer-start point)
-    (update-focus-overlay point)
-    (with-point ((p (buffer-start-point buffer) :left-inserting))
-      (loop
-        :do (move-to-column p width t)
-        :while (line-offset p 1)))
-    (fill-background buffer
-                     (alexandria:when-let
-                         (attribute (ensure-attribute *non-focus-attribute* nil))
-                       (attribute-background attribute)))
-    (setf *menu-buffer* buffer)
-    (values buffer width)))
+    (insert-items point items print-spec)
+    (update-focus-overlay (buffer-start-point buffer))
+    (let ((width (fill-background buffer)))
+      (values buffer width))))
 
 (defun get-focus-item ()
   (alexandria:when-let (p (focus-point))

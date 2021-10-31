@@ -84,12 +84,14 @@
     :reader label-width)))
 
 (defmethod lem.popup-window:apply-print-spec ((print-spec print-spec) point item)
+  (insert-string point " ")
   (insert-string point (completion-item-label item))
   (move-to-column point (label-width print-spec) t)
   (line-end point)
   (insert-string point "  ")
   (insert-string point (completion-item-detail item)
-                 :attribute 'detail-attribute))
+                 :attribute 'detail-attribute)
+  (insert-string point " "))
 
 (defvar *current-completion-spec* nil)
 (defvar *last-items* nil)

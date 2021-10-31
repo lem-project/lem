@@ -159,26 +159,19 @@
                         +min-height+)))
       (list width height))))
 
-(defun compute-window-rectangle (buffer)
+(defun compute-window-rectangle (buffer &key gravity source-window)
   (destructuring-bind (width height)
       (compute-window-size buffer)
-    (multiple-value-list
-     (lem.popup-window::compute-popup-window-rectangle (lem.popup-window::ensure-gravity :center)
-                                                       ;; source-windowを決められないのでnilにする
-                                                       ;; centerの場合は使わないのでとりあえずは動く
-                                                       :source-window nil
-                                                       :width width
-                                                       :height height))))
+    (lem.popup-window::compute-popup-window-rectangle (lem.popup-window::ensure-gravity gravity)
+                                                      :source-window source-window
+                                                      :width width
+                                                      :height height)))
 
 (defun make-prompt-window (buffer parameters)
   (multiple-value-bind (x y width height)
-      (destructuring-bind (width height)
-          (compute-window-size buffer)
-        (lem.popup-window::compute-popup-window-rectangle
-         (lem.popup-window::ensure-gravity (prompt-gravity parameters))
-         :source-window (prompt-window-caller-of-prompt-window parameters)
-         :width width
-         :height height))
+      (compute-window-rectangle buffer
+                                :gravity (prompt-gravity parameters)
+                                :source-window (prompt-window-caller-of-prompt-window parameters))
     (make-instance 'floating-prompt
                    :buffer buffer
                    :x x
@@ -192,8 +185,12 @@
                    :history (prompt-window-history parameters))))
 
 (defmethod update-prompt-window ((window floating-prompt))
-  (destructuring-bind (x y width height)
-      (compute-window-rectangle (window-buffer window))
+  (multiple-value-bind (x y width height)
+      (compute-window-rectangle (window-buffer window)
+                                ;; source-windowを決められないのでnilにする
+                                ;; centerの場合は使わないのでとりあえずは動く
+                                :gravity :center
+                                :source-window nil)
     (unless (and (= x (window-x window))
                  (= y (window-y window)))
       (lem::window-set-pos window x y))

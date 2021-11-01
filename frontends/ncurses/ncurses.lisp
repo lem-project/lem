@@ -14,7 +14,7 @@
 (setf lem.popup-window::*extra-width-margin* 0)
 
 ;; prompt window margin setting
-(setf lem.prompt-window::*extra-side-margin* 2)
+;; (setf lem.prompt-window::*extra-side-margin* 2)
 
 
 (defclass ncurses (lem:implementation)

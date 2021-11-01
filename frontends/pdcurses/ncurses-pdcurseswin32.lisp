@@ -59,7 +59,7 @@
 ;; prompt window margin setting
 ;;  (extra margin is required to avoid partial loss of popup window display
 ;;   caused by wide characters)
-(setf lem.prompt-window::*extra-side-margin* 2)
+;; (setf lem.prompt-window::*extra-side-margin* 2)
 
 ;; popup border color for windows
 ;; (it needs subtle adjustments ...)

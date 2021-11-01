@@ -6,11 +6,9 @@
   (:lock t))
 (in-package :lem.prompt-window)
 
-(defparameter +border-size+ 1)
-(defparameter +min-width+   3)
-(defparameter +min-height+  1)
-
-(defvar *extra-side-margin* 0)
+(defconstant +border-size+ 1)
+(defconstant +min-width+   3)
+(defconstant +min-height+  1)
 
 (defvar *history-table* (make-hash-table))
 
@@ -43,9 +41,7 @@
 
 (defclass floating-prompt (floating-window prompt-parameters)
   ((start-charpos
-    :accessor prompt-window-start-charpos))
-  (:default-initargs
-   :border +border-size+))
+    :accessor prompt-window-start-charpos)))
 
 (defclass prompt-buffer (buffer)
   ((prompt-string
@@ -146,30 +142,15 @@
     (or (replace-if-history-exists #'lem.history:next-history)
         (replace-if-history-exists #'lem.history:restore-edit-string))))
 
-(defun compute-window-size (buffer)
-  (flet ((compute-width ()
-           (+ (lem.popup-window::compute-buffer-width buffer)
-              ;; Find File: <file-name>|
-              ;;                       ^ ここにカーソルがあるとき、1つ余分に幅が無いと足りなくなる
-              1)))
-    (let* ((b2 (* +border-size+ 2))
-           (width
-             (alexandria:clamp (compute-width)
-                               +min-width+
-                               (- (display-width)  b2 *extra-side-margin*)))
-           (height
-             (alexandria:clamp (buffer-nlines buffer)
-                               +min-height+
-                               (- (display-height) b2))))
-      (list width height))))
-
 (defun compute-window-rectangle (buffer &key gravity source-window)
-  (destructuring-bind (width height)
-      (compute-window-size buffer)
-    (lem.popup-window::compute-popup-window-rectangle (lem.popup-window::ensure-gravity gravity)
-                                                      :source-window source-window
-                                                      :width width
-                                                      :height height)))
+  (destructuring-bind (width height) (lem.popup-window::compute-size-from-buffer buffer)
+    (lem.popup-window::compute-popup-window-rectangle
+     (lem.popup-window::ensure-gravity gravity)
+     :source-window source-window
+     ;; Find File: <file-name>|
+     ;;                       ^ ここにカーソルがあるとき、widthは1つ余分に幅が必要
+     :width (max +min-width+ (1+ width))
+     :height (max +min-height+ height))))
 
 (defun make-prompt-window (buffer parameters)
   (destructuring-bind (x y width height)
@@ -186,7 +167,8 @@
                    :completion-function (prompt-window-completion-function parameters)
                    :existing-test-function (prompt-window-existing-test-function parameters)
                    :caller-of-prompt-window (prompt-window-caller-of-prompt-window parameters)
-                   :history (prompt-window-history parameters))))
+                   :history (prompt-window-history parameters)
+                   :border +border-size+)))
 
 (defmethod update-prompt-window ((window floating-prompt))
   (destructuring-bind (x y width height)

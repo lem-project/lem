@@ -1040,8 +1040,11 @@ window width is changed, we must recalc the window view point."
                      (- frame-height
                         (+ (window-y window) (window-height window)))))))
 
-(defun get-buffer-windows (buffer &optional (frame (current-frame)))
-  (loop :for window :in (window-list frame)
+(defun get-buffer-windows (buffer &key (frame (current-frame))
+                                       (include-floating-windows nil))
+  (loop :for window :in (append (window-list frame)
+                                (when include-floating-windows
+                                  (frame-floating-windows frame)))
         :when (eq buffer (window-buffer window))
         :collect window))
 

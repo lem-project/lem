@@ -134,7 +134,7 @@
   (let ((buffer (point-buffer point)))
     (isearch-reset-overlays buffer)
     (unless (equal search-string "")
-      (dolist (window (get-buffer-windows buffer))
+      (dolist (window (get-buffer-windows buffer :include-floating-windows t))
         (with-point ((curr (window-view-point window))
                      (limit (window-view-point window)))
           (unless (line-offset limit (window-height window))

@@ -1205,7 +1205,7 @@ window width is changed, we must recalc the window view point."
                                   (y (alexandria:required-argument :y))
                                   (width (alexandria:required-argument :width))
                                   (height (alexandria:required-argument :height))
-                                  (use-modeline-p (alexandria:required-argument :use-modeline-p)))
+                                  (use-modeline-p nil))
   (make-instance 'floating-window
                  :buffer buffer
                  :x x

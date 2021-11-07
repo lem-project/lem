@@ -16,8 +16,9 @@
   (unless (get-self-insert-char)
     (undefined-key)))
 
-(define-command (self-insert (:advice-classes self-insert-advice)) (char &optional (n 1))
-    ((get-self-insert-char) "p")
+(define-command (self-insert (:advice-classes self-insert-advice))
+    (&optional (n 1) (char (get-self-insert-char)))
+    ("p" (get-self-insert-char))
   (run-hooks (variable-value 'self-insert-before-hook) char)
   (insert-character (current-point) char n)
   (run-hooks (variable-value 'self-insert-after-hook) char))

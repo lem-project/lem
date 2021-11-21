@@ -27,29 +27,29 @@ lspのコマンドやキーバインドは暫定的なものなので今後追�
 lspに対応している言語のファイルを開くとlsp-modeが自動で有効化されます(これを書いている段階ではgoとjavascriptのみ)。  
 lsp-mode有効化時、特定のlanguage serverがインストールされていない場合はエラーが出るので事前にインストールしておく必要があります。
 
-- publishDiagnostics
+- publishDiagnostics  
   コンパイルエラーや警告箇所を画面に表示します
-- hover
+- hover  
   関数などの説明を表示します
-- completion
+- completion  
   入力の補完を行います
-- signatureHelp
+- signatureHelp  
   関数のシグネチャの一覧を表示します
-- definition
+- definition  
   カーソル位置のシンボルの定義位置へ移動します
-- typeDefinition
+- typeDefinition  
   カーソル位置のシンボルの型の定義位置へ移動します
-- implementation
+- implementation  
   カーソル位置のインターフェースの実装へ移動します
-- references
+- references  
   カーソル位置のシンボルが使われている箇所の一覧を出します
-- documentHighlights
+- documentHighlights  
   カーソル位置の変数などの参照箇所をハイライトします
-- documentSymbols
+- documentSymbols  
   ファイル内の定義の一覧を出します
-- formatting
+- formatting  
   ファイルをフォーマットします
-- rename
+- rename  
   カーソル位置のシンボルとそれを使っている箇所の名前を変更します
 
 ### publishDiagnostics

@@ -469,7 +469,8 @@
            (apply-changes (changes)
              (declare (ignore changes))
              (error "Not yet implemented")))
-    (if-let ((document-changes (handler-case (protocol:workspace-edit-document-changes workspace-edit)
+    (if-let ((document-changes (handler-case
+                                   (protocol:workspace-edit-document-changes workspace-edit)
                                  (unbound-slot () nil))))
       (apply-document-changes document-changes)
       (when-let ((changes (handler-case (protocol:workspace-edit-changes workspace-edit)

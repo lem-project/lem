@@ -44,12 +44,13 @@
     (when shift (write-string "Shift-" stream))
     (write-string sym stream)))
 
-(let ((table (make-hash-table :test 'equal)))
-  (defun make-key (&rest args &key ctrl meta super hypher shift sym)
-    (let ((hashkey (list ctrl meta super hypher shift sym)))
-      (or (gethash hashkey table)
-          (setf (gethash hashkey table)
-                (apply #'%make-key args))))))
+(defvar *key-constructor-cache* (make-hash-table :test 'equal))
+
+(defun make-key (&rest args &key ctrl meta super hypher shift sym)
+  (let ((hashkey (list ctrl meta super hypher shift sym)))
+    (or (gethash hashkey *key-constructor-cache*)
+        (setf (gethash hashkey *key-constructor-cache*)
+              (apply #'%make-key args)))))
 
 (defun match-key (key &key ctrl meta super hypher shift sym)
   (and (eq (key-ctrl key) ctrl)

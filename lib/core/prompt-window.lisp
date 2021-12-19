@@ -149,8 +149,8 @@
      :source-window source-window
      ;; Find File: <file-name>|
      ;;                       ^ ここにカーソルがあるとき、widthは1つ余分に幅が必要
-     :width (max +min-width+ (1+ width))
-     :height (max +min-height+ height))))
+     :width (alexandria:clamp (1+ width) +min-width+ (- (display-width) 2))
+     :height (alexandria:clamp height +min-height+ (- (display-height) 2)))))
 
 (defun make-prompt-window (buffer parameters)
   (destructuring-bind (x y width height)

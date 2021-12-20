@@ -399,9 +399,10 @@
 
 (defun move-to-lsp-position (point position)
   (buffer-start point)
-  (line-offset point
-               (protocol:position-line position)
-               (protocol:position-character position)))
+  (or (line-offset point
+                   (protocol:position-line position)
+                   (protocol:position-character position))
+      (buffer-end point)))
 
 (defun make-lsp-range (start end)
   (make-instance 'protocol:range

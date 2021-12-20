@@ -1,19 +1,9 @@
 # lem-lsp - LemでLanguage Server Protocolを使う
 
-## lem-lspの起動方法
-
-今のところlem-lspはexperimentalな機能としているのでデフォルトでは読み込まれていません。
-最新のlemでlem-lsp-modeを読み込むことで使えるようになります。
-
-たとえば以下のコマンドでlspを有効にしたlemを起動できます。
-
-```
-$ ros -s lem-ncurses -s lem-lsp-mode -e '(ed)'
-```
-
 ## Goのlanguage serverのインストール
 
-goplsは以下のコマンドでインストールできます。
+Goのlanguage serverにはgoplsを使います。
+以下のコマンドでインストールします。
 
 ```
 $ GO111MODULE=on go get golang.org/x/tools/gopls@latest

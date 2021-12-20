@@ -450,11 +450,13 @@
                          points))))
              points)))
     (let ((points (replace-points)))
-      (loop :for (start end text) :in points
-            :do (delete-between-points start end)
-                (insert-string start text)
-                (delete-point start)
-                (delete-point end)))))
+      (unwind-protect
+           (loop :for (start end text) :in points
+                 :do (delete-between-points start end)
+                     (insert-string start text))
+        (loop :for (start end) :in points
+              :do (delete-point start)
+                  (delete-point end))))))
 
 (defgeneric apply-document-change (document-change))
 

@@ -56,3 +56,33 @@ clean-local:
 # [tbd] need roswell yet. edit configure.ac
 all-sbcl:
 	sbcl --eval '(asdf:make :lem/executable)' --quit
+
+PACK = $(PACKAGE)-$(VERSION)-$(shell uname -s | tr '[A-Z]' '[a-z]' | sed -E 's/([^-]*).*/\1/')-$(shell uname -m)$(SBCL_BIN_VARIANT)
+packdir=lem
+
+$(packdir)/Makefile:
+	rm -rf $(packdir)
+	$(MKDIR_P) $(packdir)
+	echo "prefix = /usr/local" > $@
+	echo "all: bin/lem$(EXEEXT)" >> $@
+	echo "install:" >> $@
+	echo "	mkdir -p $$""(prefix)/bin" >> $@
+	echo "	mkdir -p $$""(prefix)/lib" >> $@
+	echo "	mkdir -p $$""(prefix)/share/$(PACKAGE)/$(PACKAGE_VERSION)/site-lisp" >> $@
+	echo "	install -c $(bin_SCRIPTS) $$""(prefix)/bin" >> $@
+	echo "	install -c lib/libasyncprocess.$(SOEXT) $$""(prefix)/lib" >> $@
+	echo "	cp -r contrib $$""(prefix)/share/$(PACKAGE)/$(PACKAGE_VERSION)/site-lisp" >> $@
+	echo "uninstall:" >> $@
+	echo "	cd $$""(prefix); rm -f $(bin_SCRIPTS)" >> $@
+	echo "	cd $$""(prefix); rm -f lib/libasyncprocess.$(SOEXT)" >> $@
+	echo "	rm -rf $$""(prefix)/share/$(PACKAGE)/$(PACKAGE_VERSION)/site-lisp" >> $@
+
+$(PACK).tar.bz2: $(packdir)/Makefile $(bin_SCRIPTS)
+	$(MKDIR_P) $(packdir)/bin
+	cp -f $(bin_SCRIPTS) $(packdir)/bin
+	$(MKDIR_P) $(packdir)/lib
+	cp -f $(dist_lemdll_DATA) $(packdir)/lib
+	cp -r contrib $(packdir)
+	tar jcvf $(PACK).tar.bz2 $(packdir)
+
+pack: $(PACK).tar.bz2

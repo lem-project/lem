@@ -449,7 +449,7 @@
                                (copy-point end)
                                new-text)
                          points))))
-             points)))
+             (nreverse points))))
     (let ((points (replace-points)))
       (unwind-protect
            (loop :for (start end text) :in points

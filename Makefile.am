@@ -1,3 +1,6 @@
+-include .env
+export $(shell sed 's/=.*//' .env)
+
 SUBDIRS = scripts/gen-contrib contrib
 
 export lem_contrib_prefix = ${datadir}/lem
@@ -57,8 +60,8 @@ clean-local:
 all-sbcl:
 	sbcl --eval '(asdf:make :lem/executable)' --quit
 
-PACK = $(PACKAGE)-$(VERSION)-$(shell uname -s | tr '[A-Z]' '[a-z]' | sed -E 's/([^-]*).*/\1/')-$(shell uname -m)$(SBCL_BIN_VARIANT)
-packdir=lem
+PACK = $(PACKAGE)-$(VERSION)-$(shell uname -s | tr '[A-Z]' '[a-z]' | sed -E 's/([^-]*).*/\1/')-$(shell uname -m)$(LEM_VARIANT)
+packdir = $(PACK)
 
 $(packdir)/Makefile:
 	rm -rf $(packdir)
@@ -86,3 +89,8 @@ $(PACK).tar.bz2: $(packdir)/Makefile $(bin_SCRIPTS)
 	tar jcvf $(PACK).tar.bz2 $(packdir)
 
 pack: $(PACK).tar.bz2
+
+upload:
+	echo upload!!! $(FILE)
+	ros install roswell/sbcl_bin
+	ros -s roswell.github.utils -e "(mapc (lambda (x) (print x) (roswell.github.utils:github x \"v$(VERSION)\" \"lem-project\" \"lem\")) (directory \"$(FILE)\"))"

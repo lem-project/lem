@@ -444,6 +444,7 @@
                                   (redraw-display)
                                   (save-excursion
                                     (move-point (current-point) cur-point)
+                                    (redraw-display)
                                     (prompt-for-character
                                      (format nil "Replace ~s with ~s [y/n/!]" before after)
                                      :gravity (make-instance 'lem.popup-window::gravity-cursor

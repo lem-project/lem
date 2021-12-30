@@ -179,6 +179,7 @@
 (let ((once nil))
   (defun init (args)
     (unless once
+      (uiop:call-image-restore-hook)
       (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
                      *original-home*)
         (init-quicklisp (merge-pathnames "quicklisp/" (lem-home))))

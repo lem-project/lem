@@ -2,6 +2,7 @@
 
 (export '(*pre-command-hook*
           *post-command-hook*
+          handle-signal
           before-executing-command
           after-executing-command
           this-command

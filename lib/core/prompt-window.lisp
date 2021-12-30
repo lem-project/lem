@@ -292,7 +292,7 @@
                                              :caller-of-prompt-window (current-window)
                                              :gravity gravity)
                   :body-function (lambda ()
-                                   (redraw-display t)
+                                   (redraw-display)
                                    (let ((key (read-key)))
                                      (if (lem::abort-key-p key)
                                          (error 'editor-abort)

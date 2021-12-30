@@ -166,6 +166,25 @@
              (move-to-column (current-point) column)
              t)))))
 
+(define-condition ask-revert-buffer (before-executing-command)
+  ((last-time :initform nil
+              :accessor ask-revert-buffer-last-time)))
+(defmethod handle-signal ((condition ask-revert-buffer))
+  (when (or (null (ask-revert-buffer-last-time condition))
+            (< (* 2 (/ internal-time-units-per-second 10))
+               (- (get-internal-real-time) (ask-revert-buffer-last-time condition))))
+    (setf (ask-revert-buffer-last-time condition) (get-internal-real-time))
+    (when (changed-disk-p (current-buffer))
+      (revert-buffer t)
+      #+(or)
+      (cond ((eql (buffer-value (current-buffer) 'no-revert-buffer)
+                  (file-write-date (buffer-filename))))
+            ((prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))
+             (revert-buffer t))
+            (t
+             (setf (buffer-value (current-buffer) 'no-revert-buffer)
+                   (file-write-date (buffer-filename))))))))
+
 (define-command change-directory (directory)
     ((prompt-for-directory "change directory: " :directory (buffer-directory)))
   (let ((directory (expand-file-name directory (buffer-directory))))

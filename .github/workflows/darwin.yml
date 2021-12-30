@@ -1,0 +1,37 @@
+name: darwin
+
+on:
+  push:
+    branches: [ master, develop, make-pack ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: macos-10.15
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: checkenv
+        run: |
+          uname -s
+          uname -m
+          brew install autoconf automake
+      - name: Install Roswell
+        env:
+          LISP: ${{ matrix.lisp }}
+        run: |
+          curl -L https://raw.githubusercontent.com/roswell/roswell/v20.06.14.107/scripts/install-for-ci.sh | sh
+      - name: build
+        run: |
+          ros config set dynamic-space-size 2048
+          ./bootstrap
+          ./configure
+          make
+          make pack
+          ros install snmsts/sn.github
+      - name: Upload
+        env:
+          GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          make upload

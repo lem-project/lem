@@ -34,4 +34,4 @@ jobs:
         env:
           GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          make upload
+          env FILE=`echo *.tar.bz2` $(MAKE) upload

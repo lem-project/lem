@@ -133,16 +133,19 @@
 
 (defun command-loop ()
   (do-command-loop (:interactive t)
-    (if (toplevel-command-loop-p)
-        (with-error-handler ()
-          (let ((*toplevel-command-loop-p* nil))
-            (handler-bind ((editor-condition
-                             (lambda (c)
-                               (declare (ignore c))
-                               (invoke-restart 'lem-restart:message))))
-              (command-loop-body))))
-        (command-loop-body))
-    (fix-current-buffer-if-broken)))
+    (handler-bind ((<executing-command>
+                     (lambda (condition)
+                       (handle-signal condition))))
+      (if (toplevel-command-loop-p)
+          (with-error-handler ()
+            (let ((*toplevel-command-loop-p* nil))
+              (handler-bind ((editor-condition
+                               (lambda (c)
+                                 (declare (ignore c))
+                                 (invoke-restart 'lem-restart:message))))
+                (command-loop-body))))
+          (command-loop-body))
+      (fix-current-buffer-if-broken))))
 
 (defun toplevel-command-loop (initialize-function)
   (with-catch-bailout

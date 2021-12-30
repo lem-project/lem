@@ -3,6 +3,7 @@
 (export '(overlay-start
           overlay-end
           overlay-attribute
+          set-overlay-attribute
           overlay-buffer
           make-overlay
           delete-overlay
@@ -21,6 +22,7 @@
    (attribute
     :initarg :attribute
     :reader overlay-attribute
+    :writer set-overlay-attribute
     :type (or null attribute))
    (buffer
     :initarg :buffer

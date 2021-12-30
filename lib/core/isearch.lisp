@@ -128,6 +128,17 @@
         (return (overlay-start prev)))
       (setf prev ov))))
 
+(defun isearch-current-overlay (point)
+  (dolist (ov (buffer-value point 'isearch-overlays))
+    (when (point<= (overlay-start ov) point (overlay-end ov))
+      (return ov))))
+
+(defun activate-current-highlight (point)
+  (alexandria:when-let (ov (isearch-current-overlay point))
+    (dolist (ov (buffer-value point 'isearch-overlays))
+      (set-overlay-attribute 'isearch-highlight-attribute ov))
+    (set-overlay-attribute 'isearch-highlight-active-attribute ov)))
+
 
 (defun isearch-update-buffer (&optional (point (current-point))
                                         (search-string *isearch-string*))
@@ -158,6 +169,24 @@
                                                      (point<= point curr))
                                                 'isearch-highlight-active-attribute
                                                 'isearch-highlight-attribute)))))))
+      (isearch-sort-overlays buffer))))
+
+(defun highlight-region (start-point end-point search-string)
+  (let ((end-point (or end-point
+                       (buffer-end-point (point-buffer start-point)))))
+    (assert (point<= start-point end-point))
+    (let ((buffer (point-buffer start-point)))
+      (isearch-reset-overlays buffer)
+      (when (string= search-string "")
+        (return-from highlight-region nil))
+      (with-point ((p start-point))
+        (loop
+          (unless (funcall *isearch-search-forward-function* p search-string end-point)
+            (return))
+          (with-point ((before p))
+            (funcall *isearch-search-backward-function* before search-string)
+            (isearch-add-overlay buffer
+                                 (make-overlay before p 'isearch-highlight-attribute)))))
       (isearch-sort-overlays buffer))))
 
 (defun isearch-update-display ()
@@ -429,6 +458,7 @@
 (defun query-replace-internal-body (cur-point goal-point before after query count)
   (let ((pass-through (not query)))
     (with-point ((cur-point cur-point :left-inserting))
+      (highlight-region cur-point goal-point before)
       (loop
         :repeat (or count most-positive-fixnum)
         :do (when (or (not (funcall *isearch-search-forward-function* cur-point before))
@@ -440,9 +470,9 @@
               (funcall *isearch-search-backward-function* cur-point before)
               (with-point ((start cur-point :right-inserting))
                 (loop :for c := (unless pass-through
-                                  (isearch-update-buffer cur-point before)
                                   (save-excursion
                                     (move-point (current-point) cur-point)
+                                    (activate-current-highlight cur-point)
                                     (redraw-display)
                                     (prompt-for-character
                                      (format nil "Replace ~s with ~s [y/n/!]" before after)

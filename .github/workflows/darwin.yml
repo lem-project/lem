@@ -16,7 +16,7 @@ jobs:
         run: |
           uname -s
           uname -m
-          brew install autoconf automake openssl
+          brew install autoconf automake
       - name: Install Roswell
         env:
           LISP: ${{ matrix.lisp }}
@@ -29,7 +29,7 @@ jobs:
           ./configure
           make
           make pack
-          ros install snmsts/sn.github
+          ros install snmsts/sn.github snmsts/cl-plus-ssl
       - name: Upload
         env:
           GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

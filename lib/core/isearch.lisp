@@ -441,7 +441,6 @@
               (with-point ((start cur-point :right-inserting))
                 (loop :for c := (unless pass-through
                                   (isearch-update-buffer cur-point before)
-                                  (redraw-display)
                                   (save-excursion
                                     (move-point (current-point) cur-point)
                                     (redraw-display)

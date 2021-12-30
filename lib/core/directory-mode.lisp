@@ -382,8 +382,8 @@
 
 (setf *find-directory-function* 'directory-buffer)
 
-(defun post-command-hook ()
+
+(define-condition update-line (after-executing-command) ())
+(defmethod handle-signal ((condition after-executing-command))
   (when (eq 'directory-mode (buffer-major-mode (current-buffer)))
     (update-line (current-point))))
-
-(add-hook *post-command-hook* 'post-command-hook)

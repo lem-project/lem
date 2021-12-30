@@ -168,6 +168,7 @@
                    :existing-test-function (prompt-window-existing-test-function parameters)
                    :caller-of-prompt-window (prompt-window-caller-of-prompt-window parameters)
                    :history (prompt-window-history parameters)
+                   :gravity (prompt-gravity parameters)
                    :border +border-size+)))
 
 (defmethod update-prompt-window ((window floating-prompt))
@@ -175,8 +176,8 @@
       (compute-window-rectangle (window-buffer window)
                                 ;; source-windowを決められないのでnilにする
                                 ;; centerの場合は使わないのでとりあえずは動く
-                                :gravity :center
-                                :source-window nil)
+                                :gravity (prompt-gravity window)
+                                :source-window (prompt-window-caller-of-prompt-window window))
     (unless (and (= x (window-x window))
                  (= y (window-y window)))
       (lem::window-set-pos window x y))
@@ -291,7 +292,7 @@
                                              :caller-of-prompt-window (current-window)
                                              :gravity gravity)
                   :body-function (lambda ()
-                                   (redraw-display t)
+                                   (redraw-display)
                                    (let ((key (read-key)))
                                      (if (lem::abort-key-p key)
                                          (error 'editor-abort)

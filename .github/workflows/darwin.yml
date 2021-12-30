@@ -16,7 +16,7 @@ jobs:
         run: |
           uname -s
           uname -m
-          brew install autoconf automake
+          brew install autoconf automake openssl
       - name: Install Roswell
         env:
           LISP: ${{ matrix.lisp }}

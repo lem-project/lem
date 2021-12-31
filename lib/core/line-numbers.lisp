@@ -19,6 +19,10 @@
         (line-numbers-on)
         (line-numbers-off))))
 
+(define-condition update (after-executing-command) ())
+(defmethod handle-signal ((condition update))
+  (update))
+
 (defun update (&optional (window (current-window)))
   (let ((buffer (window-buffer window)))
     (mapc #'delete-overlay (buffer-value buffer 'line-number-overlays))
@@ -46,7 +50,6 @@
 (defun line-numbers-init ()
   (unless *initialized*
     (setf *initialized* t)
-    (add-hook *post-command-hook* 'update)
     (add-hook *window-scroll-functions* 'update)))
 
 (defun line-numbers-on ()
@@ -56,7 +59,6 @@
 (defun line-numbers-off ()
   (when (variable-value 'line-numbers)
     (setf *initialized* nil)
-    (remove-hook *post-command-hook* 'update)
     (remove-hook *window-scroll-functions* 'update)
     (dolist (buffer (buffer-list))
       (mapc #'delete-overlay (buffer-value buffer 'line-number-overlays)))))

@@ -155,9 +155,8 @@
     (unless (line-offset (current-point) (window-height (current-window)))
       (dismiss-typeout-window))))
 
-(defun typeout-window-post-command-hook ()
+(define-condition dismiss-typeout-window-if-getout (after-executing-command) ())
+(defmethod handle-signal ((condition dismiss-typeout-window-if-getout))
   (when (and (not (mode-active-p (window-buffer (current-window)) 'typeout-mode))
              *typeout-window*)
     (dismiss-typeout-window)))
-
-(add-hook *post-command-hook* 'typeout-window-post-command-hook)

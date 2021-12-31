@@ -12,16 +12,16 @@
   (:method (condition)
     nil))
 
-(define-condition <executing-command> ()
+(define-condition executing-command ()
   ((command :initarg :command
             :initform (alexandria:required-argument :command)
             :reader executing-command-command)))
 
-(define-condition before-executing-command (<executing-command>) ()
+(define-condition before-executing-command (executing-command) ()
   (:report (lambda (c s)
              (format s "before executing the ~S command" (executing-command-command c)))))
 
-(define-condition after-executing-command (<executing-command>) ()
+(define-condition after-executing-command (executing-command) ()
   (:report (lambda (c s)
              (format s "after executing the ~S command" (executing-command-command c)))))
 

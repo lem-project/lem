@@ -56,5 +56,5 @@
     (signal-subconditions 'after-executing-command :command this-command)))
 
 (defun signal-subconditions (condition &rest initargs)
-  (dolist (c (collect-subclasses (ensure-class condition) :include-itself t))
+  (dolist (c (collect-subclasses (ensure-class condition) :include-itself nil))
     (apply #'signal c initargs)))

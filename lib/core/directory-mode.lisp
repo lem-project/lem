@@ -385,5 +385,5 @@
 
 (define-condition update-line (after-executing-command) ())
 (defmethod handle-signal ((condition after-executing-command))
-  (when (eq 'directory-mode (buffer-major-mode (current-buffer)))
+  (when (mode-active-p (current-buffer) 'directory-mode)
     (update-line (current-point))))

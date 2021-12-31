@@ -168,6 +168,7 @@
 
 (define-condition ask-revert-buffer (before-executing-command)
   ((last-time :initform nil
+              :allocation :class
               :accessor ask-revert-buffer-last-time)))
 (defmethod handle-signal ((condition ask-revert-buffer))
   (when (or (null (ask-revert-buffer-last-time condition))

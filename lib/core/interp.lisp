@@ -133,9 +133,7 @@
 
 (defun command-loop ()
   (do-command-loop (:interactive t)
-    (handler-bind ((<executing-command>
-                     (lambda (condition)
-                       (handle-signal condition))))
+    (handler-bind ((<executing-command> #'handle-signal))
       (if (toplevel-command-loop-p)
           (with-error-handler ()
             (let ((*toplevel-command-loop-p* nil))

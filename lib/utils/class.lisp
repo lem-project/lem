@@ -1,7 +1,6 @@
 (defpackage :lem-utils/class
   (:use :cl)
   (:export :ensure-class
-           :self-and-direct-subclasses
            :collect-subclasses))
 (in-package :lem-utils/class)
 

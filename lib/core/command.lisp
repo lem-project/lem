@@ -1,8 +1,6 @@
 (in-package :lem)
 
-(export '(*pre-command-hook*
-          *post-command-hook*
-          handle-signal
+(export '(handle-signal
           before-executing-command
           after-executing-command
           this-command
@@ -29,9 +27,6 @@
 
 (defconstant +primary-command-class-name+ 'primary-command)
 
-(defvar *pre-command-hook* '())
-(defvar *post-command-hook* '())
-
 (defvar *this-command*)
 
 (defun this-command ()
@@ -47,12 +42,10 @@
 
 (defun call-command (this-command universal-argument)
   (signal-subconditions 'before-executing-command :command this-command)
-  (run-hooks *pre-command-hook*)
   (prog1 (alexandria:if-let (*this-command* (get-command this-command))
            (execute *this-command* universal-argument)
            (editor-error "~A: command not found" this-command))
     (buffer-undo-boundary)
-    (run-hooks *post-command-hook*)
     (signal-subconditions 'after-executing-command :command this-command)))
 
 (defun signal-subconditions (condition &rest initargs)

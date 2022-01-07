@@ -11,7 +11,7 @@
 (defun update-cache-p ()
   (let ((time (get-universal-time)))
     (when (or (null *last-time*)
-              (<= *internal-second* (- time *last-time*)))
+              (<= *interval-second* (- time *last-time*)))
       (setf *last-time* time)
       t)))
 

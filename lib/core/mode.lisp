@@ -56,7 +56,8 @@
 (defun mode-active-p (buffer mode)
   (or (eq mode (buffer-major-mode buffer))
       (find mode (buffer-minor-modes buffer))
-      (find mode *global-minor-mode-list*)))
+      (find mode *global-minor-mode-list*)
+      (eq mode (mode-name (current-global-mode)))))
 
 (defun enable-minor-mode (minor-mode)
   (if (global-minor-mode-p minor-mode)

@@ -2,7 +2,7 @@
 
 ![](https://github.com/Shinmera/lem-icon/blob/gh-pages/icon-blue.svg)
 
-![Build Status](https://github.com/cxxxr/lem/workflows/CI/badge.svg)
+![Build Status](https://github.com/lem-project/lem/workflows/CI/badge.svg)
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
 
 After installing lem, you can start developing in Common Lisp at once. 
@@ -19,7 +19,7 @@ You can skip over writing tidy settings or installing many plugins as you do on 
 ## Platform
 - Linux
 - MacOS 10.13+ 
-- [Windows](https://github.com/cxxxr/lem/wiki/Windows-Platform)
+- [Windows](https://github.com/lem-project/lem/wiki/Windows-Platform)
 
 ## Play with Lem in the Docker
 
@@ -109,10 +109,10 @@ $ lem --frontend ncurses-ccl
 ```
 
 ## How to develop lisp
-See https://github.com/cxxxr/lem/wiki/Lisp-Mode
+See https://github.com/lem-project/lem/wiki/Lisp-Mode
 
 ## How to hack on lem itself
-See https://github.com/cxxxr/lem/wiki/How-to-hack-on-lem-itself
+See https://github.com/lem-project/lem/wiki/How-to-hack-on-lem-itself
 
 If you have a questions, join [this Gitter chat](https://gitter.im/lem-developers/community).
 
@@ -146,4 +146,4 @@ Support this project by becoming a sponsor. Your logo will show up here with a l
 
 
 # License
-[MIT](https://github.com/cxxxr/lem/blob/master/LICENCE)
+[MIT](https://github.com/lem-project/lem/blob/master/LICENCE)

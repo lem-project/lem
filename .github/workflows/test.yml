@@ -23,6 +23,7 @@ jobs:
 
         ros install lem
         ros install cxxxr/sblint
+        ros install fukamachi/rove
 
         export PATH=$HOME/.roswell/bin:$PATH
 

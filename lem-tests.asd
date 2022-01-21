@@ -8,8 +8,7 @@
                "trivial-package-local-nicknames"
                "rove")
   :pathname "tests"
-  :components ((:file "deftest")
-               (:file "utilities")
+  :components ((:file "utilities")
                (:module "lsp-utils"
                 :components ((:file "json")
                              (:file "json-lsp-utils")))

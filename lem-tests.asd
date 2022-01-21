@@ -18,7 +18,7 @@
                              (:file "defstruct-to-defclass")))
                (:module "lisp-mode"
                 :components ((:file "package-inferred-system")))
-               ;; (:file "string-width-utils")
+               (:file "string-width-utils")
                (:file "syntax-test")
                (:file "buffer-list-test")
                (:file "buffer")

@@ -1,6 +1,6 @@
 (defpackage :lem-tests/buffer-list-test
   (:use :cl
-        :lem-tests/deftest)
+        :rove)
   (:import-from :lem-tests/utilities
                 :sample-file)
   (:import-from :lem-base

@@ -1,6 +1,6 @@
 (defpackage :lem-tests/lisp-syntax/indent-test
   (:use :cl
-        :lem-tests/deftest)
+        :rove)
   (:import-from :lem-base)
   (:import-from :lem-lisp-syntax)
   (:import-from :lem-lisp-mode)

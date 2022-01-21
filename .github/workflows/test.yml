@@ -4,7 +4,7 @@ on:
   push:
     branches: [ master, develop ]
   pull_request:
-    branches: [ master ]
+    branches: [ '*' ]
 
 jobs:
   build:
@@ -21,17 +21,15 @@ jobs:
       run: |
         ros config set dynamic-space-size 2048
 
-        # workaround for compiling esrap with sbcl/2.1.9
-        mkdir $HOME/common-lisp
-        cd $HOME/common-lisp
-        git clone https://github.com/scymtym/esrap
-        cd -
-
         ros install lem
         ros install cxxxr/sblint
+        ros install fukamachi/rove
+
         export PATH=$HOME/.roswell/bin:$PATH
-        lem-test
+
         sblint lib/base/lem-base.asd
         sblint lib/core/lem-core.asd
         sblint lib/lisp-syntax/lem-lisp-syntax.asd
         sblint modes/lisp-mode/lem-lisp-mode.asd
+
+        rove lem-tests.asd

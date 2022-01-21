@@ -1,6 +1,6 @@
 (defpackage :lem-tests/lsp-utils/json-lsp-utils
   (:use :cl
-        :lem-tests/deftest
+        :rove
         :lem-lsp-utils/json
         :lem-lsp-utils/json-lsp-utils))
 (in-package :lem-tests/lsp-utils/json-lsp-utils)

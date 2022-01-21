@@ -1,7 +1,7 @@
 ;;; このファイルをsbcl/2.0.9でコンパイルするとldbに落ちる
 
 (defpackage :lem-tests/string-width-utils
-  (:use :cl :lem-tests/deftest)
+  (:use :cl :rove)
   (:import-from :lem-base
                 :control-char
                 :wide-char-p

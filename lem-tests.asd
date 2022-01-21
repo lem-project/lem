@@ -5,7 +5,8 @@
                "lem-fake-interface"
                "lem-lisp-mode"
                "cl-ansi-text"
-               "trivial-package-local-nicknames")
+               "trivial-package-local-nicknames"
+               "rove")
   :pathname "tests"
   :components ((:file "deftest")
                (:file "utilities")
@@ -17,7 +18,7 @@
                              (:file "defstruct-to-defclass")))
                (:module "lisp-mode"
                 :components ((:file "package-inferred-system")))
-               (:file "string-width-utils")
+               ;; (:file "string-width-utils")
                (:file "syntax-test")
                (:file "buffer-list-test")
                (:file "buffer")
@@ -26,4 +27,4 @@
                (:file "self-insert-command")
                (:file "main"))
   :perform (test-op (o c)
-                    (symbol-call :lem-tests :run-all-tests)))
+                    (symbol-call :rove :run c)))

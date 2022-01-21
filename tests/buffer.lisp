@@ -1,6 +1,6 @@
 (defpackage :lem-tests/buffer
   (:use :cl
-        :lem-tests/deftest))
+        :rove))
 (in-package :lem-tests/buffer)
 
 (deftest make-buffer

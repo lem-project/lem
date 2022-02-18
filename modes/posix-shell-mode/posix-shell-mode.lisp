@@ -35,6 +35,8 @@
 (defun make-tmlanguage-posix-shell ()
   (let* ((patterns (make-tm-patterns
                     (make-tm-region "#" "$" :name 'syntax-comment-attribute)
+                    (make-tm-match "\\\\'")
+                    (make-tm-match "\\\\\"")
                     (make-tm-string-region "\"")
                     (make-tm-string-region "'")
                     (make-tm-match (tokens :word-boundary

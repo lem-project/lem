@@ -31,6 +31,7 @@
                "lem-asm-mode"
                "lem-makefile-mode"
                "lem-shell-mode"
+               "lem-sql-mode"
                "lem-lsp-mode"))
 
 (defsystem "lem/executable"

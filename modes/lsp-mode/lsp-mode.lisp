@@ -1624,6 +1624,12 @@
   :command '("rls")
   :mode :stdio)
 
+(define-language-spec (sql-spec lem-sql-mode:sql-mode)
+  :language-id "sql"
+  :root-uri-patterns '()
+  :command '("sql-language-server" "up" "--method" "stdio")
+  :mode :stdio)
+
 (defun find-dart-bin-path ()
   (multiple-value-bind (output error-output status)
       (uiop:run-program '("which" "dart")

@@ -348,14 +348,14 @@
   (when (ensure-running-server-process spec)
     (let ((client (make-client spec)))
       (loop :with condition := nil
-            :repeat 3
+            :repeat 6
             :do (handler-case (client:jsonrpc-connect client)
                   (:no-error (&rest values)
                     (declare (ignore values))
                     (return client))
                   (error (c)
                     (setq condition c)
-                    (sleep 0.1)))
+                    (sleep 0.5)))
             :finally (editor-error "Could not establish a connection with the Language Server (condition: ~A)"
                                    condition)))))
 

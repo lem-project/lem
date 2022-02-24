@@ -356,8 +356,9 @@
                   (error (c)
                     (setq condition c)
                     (sleep 0.5)))
-            :finally (editor-error "Could not establish a connection with the Language Server (condition: ~A)"
-                                   condition)))))
+            :finally (editor-error
+                      "Could not establish a connection with the Language Server (condition: ~A)"
+                      condition)))))
 
 (defun ensure-lsp-buffer (buffer &optional continuation)
   (let* ((spec (buffer-language-spec buffer))

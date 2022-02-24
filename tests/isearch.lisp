@@ -1,5 +1,5 @@
 (defpackage :lem-tests/isearch
-  (:use :cl :lem-tests/deftest :lem))
+  (:use :cl :rove :lem))
 (in-package :lem-tests/isearch)
 
 (defparameter *text* "

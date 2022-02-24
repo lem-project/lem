@@ -92,7 +92,7 @@
 
 (defmethod compute-popup-window-rectangle ((gravity gravity-cursor)
                                            &key source-window width height border-size)
-  (let* ((b2 (* border-size 2))
+  (let* ((b2 (* (or border-size 0) 2))
          (disp-w (max (- (display-width)  b2 *extra-right-margin*)
                       +min-width+))
          (disp-h (max (- (display-height) b2)
@@ -140,7 +140,7 @@
 (defmethod compute-popup-window-rectangle ((gravity gravity-topright)
                                            &key source-window width height border-size
                                            &allow-other-keys)
-  (let* ((b2 (* border-size 2))
+  (let* ((b2 (* (or border-size 0) 2))
          (win-x (window-x source-window))
          (win-y (window-y source-window))
          (win-w (max (- (window-width  source-window) b2 2)

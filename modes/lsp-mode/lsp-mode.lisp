@@ -348,14 +348,14 @@
   (when (ensure-running-server-process spec)
     (let ((client (make-client spec)))
       (loop :with condition := nil
-            :repeat 3
+            :repeat 6
             :do (handler-case (client:jsonrpc-connect client)
                   (:no-error (&rest values)
                     (declare (ignore values))
                     (return client))
                   (error (c)
                     (setq condition c)
-                    (sleep 0.1)))
+                    (sleep 0.5)))
             :finally (editor-error "Could not establish a connection with the Language Server (condition: ~A)"
                                    condition)))))
 
@@ -1162,8 +1162,13 @@
 (defun enable-document-highlight-idle-timer ()
   (unless *document-highlight-idle-timer*
     (setf *document-highlight-idle-timer*
-          (start-idle-timer 500 t #'document-highlight-calls-timer nil "lsp-document-highlight"))
-    (add-hook *post-command-hook* 'clear-document-highlight-overlays)))
+          (start-idle-timer 500 t #'document-highlight-calls-timer nil
+                            "lsp-document-highlight"))))
+
+(define-condition lsp-after-executing-command (after-executing-command) ())
+(defmethod handle-signal ((condition lsp-after-executing-command))
+  (when (mode-active-p (current-buffer) 'lsp-mode)
+    (clear-document-highlight-overlays)))
 
 ;;; document symbols
 
@@ -1617,6 +1622,12 @@
   :language-id "rust"
   :root-uri-patterns '("Cargo.toml")
   :command '("rls")
+  :mode :stdio)
+
+(define-language-spec (sql-spec lem-sql-mode:sql-mode)
+  :language-id "sql"
+  :root-uri-patterns '()
+  :command '("sql-language-server" "up" "--method" "stdio")
   :mode :stdio)
 
 (defun find-dart-bin-path ()

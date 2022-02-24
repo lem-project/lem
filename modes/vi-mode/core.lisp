@@ -128,17 +128,20 @@
                              (ensure-state (current-state)))))
     (funcall it)))
 
+(define-condition post-command-hook (after-executing-command) ())
+(defmethod handle-signal ((condition post-command-hook))
+  (when (mode-active-p (current-buffer) 'vi-mode)
+    (vi-post-command-hook)))
+
 (add-hook *enable-hook*
           (lambda ()
             (initialize-vi-modeline)
             (change-state 'command)
             (add-hook *prompt-activate-hook* 'prompt-activate-hook)
-            (add-hook *prompt-deactivate-hook* 'prompt-deactivate-hook)
-            (add-hook *post-command-hook* 'vi-post-command-hook)))
+            (add-hook *prompt-deactivate-hook* 'prompt-deactivate-hook)))
 
 (add-hook *disable-hook*
           (lambda ()
             (finalize-vi-modeline)
             (remove-hook *prompt-activate-hook* 'prompt-activate-hook)
-            (remove-hook *prompt-deactivate-hook* 'prompt-deactivate-hook)
-            (remove-hook *post-command-hook* 'vi-post-command-hook)))
+            (remove-hook *prompt-deactivate-hook* 'prompt-deactivate-hook)))

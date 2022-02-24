@@ -88,21 +88,10 @@
   (move-point (current-point) *mark-point*)
   (rectangle-end))
 
-(defun apply-to-buffer (string)
+(defun replace-rectangle (string)
   (dolist (ov *overlays*)
     (delete-between-points (overlay-start ov) (overlay-end ov))
     (insert-string (overlay-start ov) string)))
-
-(defun post-command-hook ()
-  (let ((string (get-prompt-input-string (active-prompt-window))))
-    (apply-to-buffer string)))
-
-(defun prompt-for-string* (prompt &rest args &key callback &allow-other-keys)
-  (let ((*post-command-hook* *post-command-hook*))
-    (add-hook *post-command-hook* callback)
-    (apply #'prompt-for-string
-           prompt
-           (alexandria:remove-from-plist args :callback))))
 
 (defun call-with-editing-savepoint (buffer function)
   (let ((last-tick (buffer-modified-tick buffer)))
@@ -117,11 +106,18 @@
 (defmacro with-editing-savepoint (buffer &body body)
   `(call-with-editing-savepoint ,buffer (lambda () ,@body)))
 
+(define-condition update-rectangle (after-executing-command) ())
+
+(defun handle-update-rectangle (update-rectangle)
+  (declare (ignore update-rectangle))
+  (let ((string (get-prompt-input-string (active-prompt-window))))
+    (replace-rectangle string)))
+
 (define-command rectangle-string () ()
   (with-editing-savepoint (current-buffer)
-    (apply-to-buffer
-     (prompt-for-string* "String rectangle: "
-                         :callback 'post-command-hook)))
+    (replace-rectangle
+     (handler-bind ((update-rectangle #'handle-update-rectangle))
+       (prompt-for-string "String rectangle: "))))
   (rectangle-end))
 
 (define-command rectangle-exchange-point-mark () ()

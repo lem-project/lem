@@ -34,23 +34,6 @@
    (buffer-start-point buffer)
    (buffer-end-point buffer)))
 
-(let ((last-time nil))
-  (defun ask-revert-buffer ()
-    (when (or (null last-time)
-              (< (* 2 (/ internal-time-units-per-second 10))
-                 (- (get-internal-real-time) last-time)))
-      (setf last-time (get-internal-real-time))
-      (when (changed-disk-p (current-buffer))
-        (revert-buffer t)
-        #+(or)
-        (cond ((eql (buffer-value (current-buffer) 'no-revert-buffer)
-                    (file-write-date (buffer-filename))))
-              ((prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))
-               (revert-buffer t))
-              (t
-               (setf (buffer-value (current-buffer) 'no-revert-buffer)
-                     (file-write-date (buffer-filename)))))))))
-
 (defun setup-first-frame ()
   (let ((frame (make-frame nil)))
     (map-frame (implementation) frame)
@@ -86,9 +69,7 @@
                 5000)
       (add-hook (variable-value 'before-save-hook :global)
                 (lambda (buffer)
-                  (scan-file-property-list buffer)))
-      (add-hook *pre-command-hook*
-                'ask-revert-buffer))))
+                  (scan-file-property-list buffer))))))
 
 (defun teardown ()
   (teardown-frames)

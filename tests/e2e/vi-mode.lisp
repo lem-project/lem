@@ -1,7 +1,7 @@
 (defpackage :lem-tests/vi-mode
   (:use :cl
         :lem
-        :lem-tests/deftest)
+        :rove)
   (:import-from :lem-fake-interface
                 :fake-interface))
 (in-package :lem-tests/vi-mode)

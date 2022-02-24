@@ -1,16 +1,31 @@
 (in-package :lem)
 
-(export '(*pre-command-hook*
-          *post-command-hook*
+(export '(handle-signal
+          before-executing-command
+          after-executing-command
           this-command
           execute
           primary-command
           call-command))
 
-(defconstant +primary-command-class-name+ 'primary-command)
+(defgeneric handle-signal (condition)
+  (:method (condition)
+    nil))
 
-(defvar *pre-command-hook* '())
-(defvar *post-command-hook* '())
+(define-condition executing-command ()
+  ((command :initarg :command
+            :initform (alexandria:required-argument :command)
+            :reader executing-command-command)))
+
+(define-condition before-executing-command (executing-command) ()
+  (:report (lambda (c s)
+             (format s "before executing the ~S command" (executing-command-command c)))))
+
+(define-condition after-executing-command (executing-command) ()
+  (:report (lambda (c s)
+             (format s "after executing the ~S command" (executing-command-command c)))))
+
+(defconstant +primary-command-class-name+ 'primary-command)
 
 (defvar *this-command*)
 
@@ -26,9 +41,13 @@
     (make-instance class)))
 
 (defun call-command (this-command universal-argument)
-  (run-hooks *pre-command-hook*)
+  (signal-subconditions 'before-executing-command :command this-command)
   (prog1 (alexandria:if-let (*this-command* (get-command this-command))
            (execute *this-command* universal-argument)
            (editor-error "~A: command not found" this-command))
     (buffer-undo-boundary)
-    (run-hooks *post-command-hook*)))
+    (signal-subconditions 'after-executing-command :command this-command)))
+
+(defun signal-subconditions (condition &rest initargs)
+  (dolist (c (collect-subclasses (ensure-class condition) :include-itself nil))
+    (apply #'signal c initargs)))

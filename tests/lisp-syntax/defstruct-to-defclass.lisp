@@ -280,7 +280,7 @@
 (deftest defstruct-to-defclass
   (let ((lem-lisp-mode::*disable-self-connect* t))
     (flet ((test (n)
-             (testing (format nil "case-~D" n)
+             (testing ((format nil "case-~D" n))
                (let* ((buffer (make-test-buffer))
                       (expected-form-string (fetch-expected-form-string buffer n))
                       (point (lem-base:buffer-point buffer)))

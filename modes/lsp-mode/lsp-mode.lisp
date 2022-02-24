@@ -50,6 +50,28 @@
         (apply command args)
         command)))
 
+(define-condition not-found-program (editor-error)
+  ((name :initarg :name
+         :initform (required-argument :name)
+         :reader not-found-program-name)
+   (spec :initarg :spec
+         :initform (required-argument :spec)
+         :reader not-found-program-spec))
+  (:report (lambda (c s)
+             (with-slots (name) c
+               (format s "~A not found" name)))))
+
+(defun exist-program-p (program)
+  (let ((status
+          (nth-value 2
+                     (uiop:run-program (list "which" program)
+                                       :ignore-error-status t))))
+    (= status 0)))
+
+(defun check-exist-program (program spec)
+  (unless (exist-program-p program)
+    (error 'not-found-program :name program :spec spec)))
+
 (defmethod run-server-using-mode ((mode (eql :tcp)) spec)
   (flet ((output-callback (string)
            (let* ((buffer (make-server-process-buffer spec))
@@ -58,6 +80,7 @@
              (insert-string point string))))
     (let* ((port (or (spec-port spec) (lem-utils/socket:random-available-port)))
            (process (when-let (command (get-spec-command spec port))
+                      (check-exist-program (first command) spec)
                       (lem-process:run-process command
                                                :output-callback #'output-callback))))
       (make-server-info :process process
@@ -65,9 +88,11 @@
                         :disposable (lambda () (lem-process:delete-process process))))))
 
 (defmethod run-server-using-mode ((mode (eql :stdio)) spec)
-  (let ((process (async-process:create-process (get-spec-command spec) :nonblock nil)))
-    (make-server-info :process process
-                      :disposable (lambda () (async-process:delete-process process)))))
+  (let ((command (get-spec-command spec)))
+    (check-exist-program command spec)
+    (let ((process (async-process:create-process command :nonblock nil)))
+      (make-server-info :process process
+                        :disposable (lambda () (async-process:delete-process process))))))
 
 (defun run-server (spec)
   (run-server-using-mode (spec-mode spec) spec))
@@ -366,7 +391,7 @@
                     (find-root-pathname (buffer-directory buffer)
                                         (spec-root-uri-patterns spec)))))
     (handler-bind ((error (lambda (c)
-                            (declare (ignore c))
+                            (log:info c (princ-to-string c))
                             (kill-server-process spec))))
       (let ((new-client (establish-connection spec)))
         (cond ((null new-client)

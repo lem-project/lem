@@ -89,7 +89,7 @@
 
 (defmethod run-server-using-mode ((mode (eql :stdio)) spec)
   (let ((command (get-spec-command spec)))
-    (check-exist-program command spec)
+    (check-exist-program (first command) spec)
     (let ((process (async-process:create-process command :nonblock nil)))
       (make-server-info :process process
                         :disposable (lambda () (async-process:delete-process process))))))

@@ -280,7 +280,7 @@
 					"name": "punctuation.section.scope.end.sql"
 				}
 			},
-			"comment": "Allow for special ↩ behavior",
+			"comment": "Allow for special (#\LEFTWARDS_ARROW_WITH_HOOK) behavior",
 			"match": "(\\()(\\))",
 			"name": "meta.block.sql"
 		}

@@ -58,8 +58,16 @@
          :initform (required-argument :spec)
          :reader not-found-program-spec))
   (:report (lambda (c s)
-             (with-slots (name) c
-               (format s "~A not found" name)))))
+             (with-slots (name spec) c
+               (format s (gen-install-help-message name spec))))))
+
+(defun gen-install-help-message (program spec)
+  (with-output-to-string (out)
+    (format out "\"~A\" is not installed." program)
+    (when (spec-install-command spec)
+      (format out "~&You can install it with the following command.~2% $ ~A" (spec-install-command spec)))
+    (when (spec-readme-url spec)
+      (format out "~&~%See follow for the readme URL~2% ~A ~%" (spec-readme-url spec)))))
 
 (defun exist-program-p (program)
   (let ((status
@@ -174,6 +182,14 @@
     :initarg :command
     :initform nil
     :reader spec-command)
+   (install-command
+    :initarg :install-command
+    :initform nil
+    :reader spec-install-command)
+   (readme-url
+    :initarg :readme-url
+    :initform nil
+    :reader spec-readme-url)
    (mode
     :initarg :mode
     :initform (required-argument :mode)
@@ -1636,24 +1652,30 @@
   :language-id "go"
   :root-uri-patterns '("go.mod")
   :command (lambda (port) `("gopls" "serve" "-port" ,(princ-to-string port)))
+  :install-command "go install golang.org/x/tools/gopls@latest"
+  :readme-url "https://github.com/golang/tools/tree/master/gopls"
   :mode :tcp)
 
 (define-language-spec (js-spec lem-js-mode:js-mode)
   :language-id "javascript"
   :root-uri-patterns '("package.json" "tsconfig.json")
   :command '("typescript-language-server" "--stdio")
+  :install-command "npm install -g typescript-language-server typescript"
+  :readme-url "https://github.com/typescript-language-server/typescript-language-server"
   :mode :stdio)
 
 (define-language-spec (rust-spec lem-rust-mode:rust-mode)
   :language-id "rust"
   :root-uri-patterns '("Cargo.toml")
   :command '("rls")
+  :readme-url "https://github.com/rust-lang/rls"
   :mode :stdio)
 
 (define-language-spec (sql-spec lem-sql-mode:sql-mode)
   :language-id "sql"
   :root-uri-patterns '()
   :command '("sql-language-server" "up" "--method" "stdio")
+  :readme-url "https://github.com/joe-re/sql-language-server"
   :mode :stdio)
 
 (defun find-dart-bin-path ()

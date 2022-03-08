@@ -27,14 +27,18 @@
           select-buffer-other-window
           switch-to-last-focused-window))
 
+(defvar *balance-after-split-window* t)
+
 (eval-when (:compile-toplevel :load-toplevel)
   (defmacro define-other-window-command (command prompt)
     (if (exist-command-p (string-downcase command))
         `(define-command ,(intern (format nil "~a-OTHER-WINDOW"
                                           (string-upcase command)))
-           (arg) (,prompt)
-           (if (one-window-p)
-               (split-window-sensibly (current-window)))
+             (arg) (,prompt)
+           (when (one-window-p)
+             (split-window-sensibly (current-window))
+             (when *balance-after-split-window*
+               (balance-windows)))
            (other-window)
            (,command arg))
         (warn "command ~a is not defined." command)))
@@ -98,11 +102,15 @@
 
 (define-key *global-keymap* "C-x 2" 'split-active-window-vertically)
 (define-command split-active-window-vertically (&optional n) ("P")
-  (split-window-vertically (current-window) n))
+  (split-window-vertically (current-window) n)
+  (when *balance-after-split-window*
+    (balance-windows)))
 
 (define-key *global-keymap* "C-x 3" 'split-active-window-horizontally)
 (define-command split-active-window-horizontally (&optional n) ("P")
-  (split-window-horizontally (current-window) n))
+  (split-window-horizontally (current-window) n)
+  (when *balance-after-split-window*
+    (balance-windows)))
 
 (defvar *last-focused-window-id* nil)
 
@@ -126,7 +134,9 @@
 (define-key *global-keymap* "M-o" 'other-window-or-split-window)
 (define-command other-window-or-split-window (&optional (n 1)) ("p")
   (when (one-window-p)
-    (split-window-sensibly (current-window)))
+    (split-window-sensibly (current-window))
+    (when *balance-after-split-window*
+      (balance-windows)))
   (other-window n))
 
 (define-command switch-to-last-focused-window () ()

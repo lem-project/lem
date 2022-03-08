@@ -103,14 +103,16 @@
 (define-key *global-keymap* "C-x 2" 'split-active-window-vertically)
 (define-command split-active-window-vertically (&optional n) ("P")
   (split-window-vertically (current-window) n)
-  (when *balance-after-split-window*
-    (balance-windows)))
+  (unless n
+    (when *balance-after-split-window*
+      (balance-windows))))
 
 (define-key *global-keymap* "C-x 3" 'split-active-window-horizontally)
 (define-command split-active-window-horizontally (&optional n) ("P")
   (split-window-horizontally (current-window) n)
-  (when *balance-after-split-window*
-    (balance-windows)))
+  (unless n
+    (when *balance-after-split-window*
+      (balance-windows))))
 
 (defvar *last-focused-window-id* nil)
 

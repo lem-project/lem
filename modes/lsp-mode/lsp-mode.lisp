@@ -258,7 +258,9 @@
   (setf (variable-value 'lem.language-mode:find-definitions-function)
         #'find-definitions)
   (setf (variable-value 'lem.language-mode:find-references-function)
-        #'find-references))
+        #'find-references)
+  (setf (buffer-value (current-buffer) 'revert-buffer-function)
+        #'lsp-revert-buffer))
 
 (defun enable-hook ()
   (let ((buffer (current-buffer)))
@@ -272,6 +274,27 @@
                                (redraw-display))))
       (editor-error (c)
         (message "~A" c)))))
+
+(defun overwrite-buffer-whole-text (buffer)
+  (with-point ((start (buffer-point buffer))
+               (end (buffer-point buffer)))
+    (buffer-start start)
+    (buffer-end end)
+    (text-document/did-change
+     buffer
+     (json:json-array
+      (json:make-json :range (make-instance 'protocol:range
+                                            :start (point-to-lsp-position start)
+                                            :end (point-to-lsp-position end))
+                      :range-length (count-characters start end)
+                      :text (points-to-string start end))))))
+
+(defun lsp-revert-buffer (buffer)
+  (remove-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)
+  (unwind-protect (progn
+                    (lem::revert-buffer-internal buffer)
+                    (overwrite-buffer-whole-text buffer))
+    (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)))
 
 (defun find-root-pathname (directory uri-patterns)
   (or (utils:find-root-pathname directory

@@ -12,6 +12,7 @@
           insert-file
           save-some-buffers
           revert-buffer
+          revert-buffer-function
           change-directory))
 
 (defun expand-files* (filename)
@@ -147,9 +148,16 @@
           (save-current-buffer))))
     (switch-to-buffer prev-buffer nil)))
 
+(defun (setf revert-buffer-function) (function buffer)
+  (setf (buffer-value buffer 'revert-buffer-function)
+        function))
+
+(defun revert-buffer-function (buffer)
+  (buffer-value buffer 'revert-buffer-function))
+
 (define-command revert-buffer (does-not-ask-p) ("P")
-  (cond ((buffer-value (current-buffer) 'revert-buffer-function)
-         (funcall (buffer-value (current-buffer) 'revert-buffer-function) does-not-ask-p))
+  (cond ((revert-buffer-function (current-buffer))
+         (funcall (revert-buffer-function (current-buffer)) does-not-ask-p))
         ((and (or (buffer-modified-p (current-buffer))
                   (changed-disk-p (current-buffer)))
               (or does-not-ask-p

@@ -131,8 +131,8 @@
 
 (define-command grep (string &optional (directory (buffer-directory)))
     ((prompt-for-string ": " :initial-value "grep -nH "))
-  (labels ((f (&optional a)
-             (declare (ignore a))
+  (labels ((f (&rest args)
+             (declare (ignore args))
              (call-background-job
               (lambda ()
                 (with-output-to-string (s)

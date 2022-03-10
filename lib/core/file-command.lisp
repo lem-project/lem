@@ -148,31 +148,37 @@
           (save-current-buffer))))
     (switch-to-buffer prev-buffer nil)))
 
+(defun revert-buffer-function (buffer)
+  (buffer-value buffer 'revert-buffer-function))
+
 (defun (setf revert-buffer-function) (function buffer)
   (setf (buffer-value buffer 'revert-buffer-function)
         function))
 
-(defun revert-buffer-function (buffer)
-  (buffer-value buffer 'revert-buffer-function))
+(defun revert-buffer-internal (buffer)
+  (with-buffer-read-only buffer nil
+    (let* ((point (buffer-point buffer))
+           (line-number (line-number-at-point point))
+           (column (point-column point)))
+      (erase-buffer buffer)
+      (insert-file-contents point (buffer-filename buffer))
+      (buffer-unmark buffer)
+      (update-changed-disk-date buffer)
+      (move-to-line point line-number)
+      (move-to-column point column)
+      t)))
 
 (define-command revert-buffer (does-not-ask-p) ("P")
-  (cond ((revert-buffer-function (current-buffer))
-         (funcall (revert-buffer-function (current-buffer)) does-not-ask-p))
-        ((and (or (buffer-modified-p (current-buffer))
-                  (changed-disk-p (current-buffer)))
-              (or does-not-ask-p
-                  (prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))))
-         (with-buffer-read-only (current-buffer) nil
-           (let ((line-number (line-number-at-point (current-point)))
-                 (column (point-column (current-point))))
-             (erase-buffer)
-             (insert-file-contents (current-point)
-                                   (buffer-filename))
-             (buffer-unmark (current-buffer))
-             (update-changed-disk-date (current-buffer))
-             (move-to-line (current-point) line-number)
-             (move-to-column (current-point) column)
-             t)))))
+  (let ((ask (not does-not-ask-p))
+        (buffer (current-buffer)))
+    (alexandria:if-let (fn (revert-buffer-function buffer))
+      (funcall fn buffer)
+      (when (and (or (buffer-modified-p buffer)
+                     (changed-disk-p buffer))
+                 (if ask
+                     (prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))
+                     t))
+        (revert-buffer-internal buffer)))))
 
 (define-condition ask-revert-buffer (before-executing-command)
   ((last-time :initform nil

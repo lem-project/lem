@@ -179,7 +179,8 @@
 
 (define-key *global-keymap* "C-x 0" 'delete-current-window)
 (define-command delete-current-window () ()
-  (delete-window (current-window)))
+  (delete-window (current-window))
+  (maybe-balance-windows))
 
 (define-command quit-window (&optional window kill-buffer-p) ("P")
   (when (null window)

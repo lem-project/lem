@@ -1104,10 +1104,10 @@ window width is changed, we must recalc the window view point."
   (check-type buffer buffer)
   (when (deleted-buffer-p buffer)
     (editor-error "This buffer has been deleted"))
-  (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)
   (when (or (not-switchable-buffer-p (window-buffer (current-window)))
             (not-switchable-buffer-p buffer))
     (editor-error "This buffer is not switchable"))
+  (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)
   (%switch-to-buffer buffer record move-prev-point))
 
 (defun pop-to-buffer (buffer &optional force-split-p)

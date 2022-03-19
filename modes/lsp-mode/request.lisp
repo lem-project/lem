@@ -38,15 +38,21 @@
 (lem-lsp-mode/project:local-nickname :protocol :lem-lsp-utils/protocol)
 (lem-lsp-mode/project:local-nickname :utils :lem-lsp-mode/utils)
 
+(defvar *log-pathname* (merge-pathnames "lsp.log" (lem:lem-home)))
+(defvar *log-enable* nil)
 (defvar *log-stream* nil)
 (defvar *log-mutex* (bt:make-lock))
 
 (defun do-log (string &rest args)
-  (when *log-stream*
+  (when *log-enable*
     (bt:with-lock-held (*log-mutex*)
-      (fresh-line *log-stream*)
-      (apply #'format *log-stream* string args)
-      (terpri *log-stream*))))
+      (with-open-file (out *log-pathname*
+                           :direction :output
+                           :if-exists :append
+                           :if-does-not-exist :create)
+        (fresh-line out)
+        (apply #'format out string args)
+        (terpri out)))))
 
 (defun pretty-json (params)
   (with-output-to-string (stream)

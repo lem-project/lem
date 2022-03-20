@@ -39,10 +39,10 @@ jobs:
         run: |
           curl -L https://raw.githubusercontent.com/roswell/roswell/v20.06.14.107/scripts/install-for-ci.sh | sh
           ros install snmsts/sn.github
-          if [ -n "$IMAGE" ]; then
-             docker login docker.pkg.github.com -u snmsts -p $GITHUB_OAUTH_TOKEN;
-             make pull-docker || make build-docker push-docker
-          fi
+          docker login docker.pkg.github.com -u snmsts -p $GITHUB_OAUTH_TOKEN;
+          ./bootstrap
+          ./configure
+          make pull-docker || make build-docker push-docker
       - name: build
         env:
           IMAGE: ${{ matrix.image }}

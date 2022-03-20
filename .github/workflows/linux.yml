@@ -37,7 +37,7 @@ jobs:
           GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           IMAGE: ${{ matrix.image }}
         run: |
-          sh scripts/install-for-ci.sh
+          curl -L https://raw.githubusercontent.com/roswell/roswell/v20.06.14.107/scripts/install-for-ci.sh | sh
           ros install snmsts/sn.github
           if [ -n "$IMAGE" ]; then
              docker login docker.pkg.github.com -u snmsts -p $GITHUB_OAUTH_TOKEN;
@@ -48,7 +48,6 @@ jobs:
           IMAGE: ${{ matrix.image }}
         run: |
           make docker
-          ros install snmsts/sn.github
       - name: upload
         env:
           GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,56 @@
+name: linux
+
+on:
+  push:
+    branches: [ master, develop, make-pack ]
+  pull_request:
+    branches: [ master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-18.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+        - lisp: sbcl-bin/2.0.0
+          target: x86-64
+          image: glibc2.27-sbcl2.2.1
+          makeopts: musl
+    environment: SET_VERSION
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: setenv
+        run: |
+          echo "$HOME/.roswell/bin" >> $GITHUB_PATH
+          echo "ROSWELL_BRANCH=release" >> $GITHUB_ENV
+      - name: checkenv
+        run: |
+          uname -s
+          uname -m
+      - name: Install Roswell
+        env:
+          LISP: ${{ matrix.lisp }}
+          GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IMAGE: ${{ matrix.image }}
+        run: |
+          sh scripts/install-for-ci.sh
+          ros install snmsts/sn.github
+          if [ -n "$IMAGE" ]; then
+             docker login docker.pkg.github.com -u snmsts -p $GITHUB_OAUTH_TOKEN;
+             make pull-docker || make build-docker push-docker
+          fi
+      - name: build
+        env:
+          IMAGE: ${{ matrix.image }}
+        run: |
+          make docker
+          ros install snmsts/sn.github
+      - name: upload
+        env:
+          GITHUB_OAUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          env FILE=`echo *.tar.bz2` make upload

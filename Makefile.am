@@ -94,3 +94,17 @@ upload:
 	echo upload!!! $(FILE)
 	ros install roswell/sbcl_bin
 	ros -s roswell.github.utils -e "(mapc (lambda (x) (print x) (roswell.github.utils:github x \"v$(VERSION)\" \"lem-project\" \"lem\")) (directory \"$(FILE)\"))"
+
+build-docker:
+	docker build -t docker.pkg.github.com/lem-project/lem/$$(cat ./scripts/$(IMAGE)/Name) ./scripts/$(IMAGE)
+push-docker:
+	docker push docker.pkg.github.com/lem-project/lem/$$(cat ./scripts/$(IMAGE)/Name);
+pull-docker:
+	docker pull docker.pkg.github.com/lem-project/lem/$$(cat ./scripts/$(IMAGE)/Name);
+docker:
+	docker run \
+		-v `pwd`:/tmp2 \
+		-e ARCH=$(ARCH) \
+		docker.pkg.github.com/lem-project/lem/$$(cat ./scripts/$(IMAGE)/Name) \
+		bash \
+		-c "cd /tmp2;./bootstrap;./configure;make; make pack"

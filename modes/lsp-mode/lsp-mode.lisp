@@ -1688,6 +1688,10 @@
   :readme-url "https://github.com/golang/tools/tree/master/gopls"
   :mode :tcp)
 
+(defmethod spec-initialization-options ((spec go-spec))
+  (json:make-json "completeUnimported" (json:json-true)
+                  "matcher" "fuzzy"))
+
 (define-language-spec (js-spec lem-js-mode:js-mode)
   :language-id "javascript"
   :root-uri-patterns '("package.json" "tsconfig.json")

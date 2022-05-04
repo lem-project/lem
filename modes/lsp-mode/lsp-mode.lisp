@@ -735,6 +735,15 @@
     (let ((range (protocol:diagnostic-range diagnostic)))
       (move-to-lsp-position start (protocol:range-start range))
       (move-to-lsp-position end (protocol:range-end range))
+      (when (point= start end)
+        ;; XXX: gopls用
+        ;; func main() {
+        ;;     fmt.
+        ;; というコードでrange.start, range.endが行末を
+        ;; 差していてハイライトされないので一文字ずらしておく
+        (if (end-line-p end)
+            (character-offset start -1)
+            (character-offset end 1)))
       (let ((overlay (make-overlay start end
                                    (handler-case (protocol:diagnostic-severity diagnostic)
                                      (unbound-slot ()

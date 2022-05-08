@@ -492,9 +492,7 @@
 
 (defun find-buffer-from-uri (uri)
   (let ((pathname (lem-lsp-utils/uri:uri-to-pathname uri)))
-    (dolist (buffer (buffer-list))
-      (when (uiop:pathname-equal pathname (buffer-filename buffer))
-        (return buffer)))))
+    (find-file-buffer pathname)))
 
 (defun get-buffer-from-text-document-identifier (text-document-identifier)
   (let ((uri (protocol:text-document-identifier-uri text-document-identifier)))

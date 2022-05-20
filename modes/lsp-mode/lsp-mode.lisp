@@ -874,28 +874,47 @@
     :initarg :sort-text
     :reader completion-item-sort-text)))
 
-(defun convert-completion-items (items)
+(defun convert-to-range (point range)
+  (let ((range-start (protocol:range-start range))
+        (range-end (protocol:range-end range)))
+    (with-point ((start point)
+                 (end point))
+      (move-to-lsp-position start range-start)
+      (move-to-lsp-position end range-end)
+      (values start end))))
+
+(defun convert-completion-items (point items)
   (sort (map 'list
              (lambda (item)
-               (make-instance 'completion-item
-                              :label (protocol:completion-item-label item)
-                              :detail (handler-case (protocol:completion-item-detail item)
-                                        (unbound-slot () ""))
-                              :sort-text (handler-case (protocol:completion-item-sort-text item)
-                                           (unbound-slot ()
-                                             (protocol:completion-item-label item)))))
+               (let ((text-edit
+                       (handler-case (protocol:completion-item-text-edit item)
+                         (unbound-slot () nil)))
+                     start
+                     end)
+                 (when text-edit
+                   (setf (values start end)
+                         (convert-to-range point (protocol:text-edit-range text-edit))))
+                 (make-instance 'completion-item
+                                :start start
+                                :end end
+                                :label (protocol:completion-item-label item)
+                                :detail (handler-case (protocol:completion-item-detail item)
+                                          (unbound-slot () ""))
+                                :sort-text (handler-case (protocol:completion-item-sort-text item)
+                                             (unbound-slot ()
+                                               (protocol:completion-item-label item))))))
              items)
         #'string<
         :key #'completion-item-sort-text))
 
-(defun convert-completion-list (completion-list)
-  (convert-completion-items (protocol:completion-list-items completion-list)))
+(defun convert-completion-list (point completion-list)
+  (convert-completion-items point (protocol:completion-list-items completion-list)))
 
-(defun convert-completion-response (value)
+(defun convert-completion-response (point value)
   (cond ((typep value 'protocol:completion-list)
-         (convert-completion-list value))
+         (convert-completion-list point value))
         ((json:json-array-p value)
-         (convert-completion-items value))
+         (convert-completion-items point value))
         (t
          nil)))
 
@@ -908,6 +927,7 @@
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-completion-p workspace)
       (convert-completion-response
+       point
        (request:request
         (workspace-client workspace)
         (make-instance 'request:completion-request

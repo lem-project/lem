@@ -1568,6 +1568,20 @@
           (t
            (message "No suggestions from code action")))))
 
+(defun find-organize-imports (code-actions)
+  (lem-utils:do-sequence (code-action code-actions)
+    (when (equal "source.organizeImports" (protocol:code-action-kind code-action))
+      (return-from find-organize-imports code-action))))
+
+(defun organize-imports (buffer)
+  (let ((response (text-document/code-action (buffer-point buffer)))
+        (workspace (buffer-workspace buffer)))
+    (when-let (code-action (find-organize-imports response))
+      (execute-code-action workspace code-action))))
+
+(define-command lsp-organize-imports () ()
+  (organize-imports (current-buffer)))
+
 ;;; formatting
 
 (defun provide-formatting-p (workspace)

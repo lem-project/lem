@@ -264,16 +264,17 @@
 
 (defun enable-hook ()
   (let ((buffer (current-buffer)))
-    (handler-case
-        (progn
-          (add-hook *exit-editor-hook* 'quit-all-server-process)
-          (ensure-lsp-buffer buffer
-                             (lambda ()
-                               (text-document/did-open buffer)
-                               (enable-document-highlight-idle-timer)
-                               (redraw-display))))
-      (editor-error (c)
-        (message "~A" c)))))
+    (unless (buffer-temporary-p buffer)
+      (handler-case
+          (progn
+            (add-hook *exit-editor-hook* 'quit-all-server-process)
+            (ensure-lsp-buffer buffer
+                               (lambda ()
+                                 (text-document/did-open buffer)
+                                 (enable-document-highlight-idle-timer)
+                                 (redraw-display))))
+        (editor-error (c)
+          (message "~A" c))))))
 
 (defun overwrite-buffer-whole-text (buffer)
   (with-point ((start (buffer-point buffer))

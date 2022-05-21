@@ -290,6 +290,9 @@
                       :range-length (count-characters start end)
                       :text (points-to-string start end))))))
 
+(define-command lsp-sync-buffer () ()
+  (overwrite-buffer-whole-text (current-buffer)))
+
 (defun lsp-revert-buffer (buffer)
   (remove-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)
   (unwind-protect (progn

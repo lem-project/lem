@@ -276,28 +276,18 @@
         (editor-error (c)
           (message "~A" c))))))
 
-(defun overwrite-buffer-whole-text (buffer)
-  (with-point ((start (buffer-point buffer))
-               (end (buffer-point buffer)))
-    (buffer-start start)
-    (buffer-end end)
-    (text-document/did-change
-     buffer
-     (json:json-array
-      (json:make-json :range (make-instance 'protocol:range
-                                            :start (point-to-lsp-position start)
-                                            :end (point-to-lsp-position end))
-                      :range-length (count-characters start end)
-                      :text (points-to-string start end))))))
+(defun reopen-buffer (buffer)
+  (text-document/did-close buffer)
+  (text-document/did-open buffer))
 
 (define-command lsp-sync-buffer () ()
-  (overwrite-buffer-whole-text (current-buffer)))
+  (reopen-buffer (current-buffer)))
 
 (defun lsp-revert-buffer (buffer)
   (remove-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)
   (unwind-protect (progn
                     (lem::revert-buffer-internal buffer)
-                    (overwrite-buffer-whole-text buffer))
+                    (reopen-buffer buffer))
     (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)))
 
 (defun find-root-pathname (directory uri-patterns)

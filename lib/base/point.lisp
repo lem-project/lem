@@ -62,8 +62,8 @@
   (buffer-point (current-buffer)))
 
 (defmethod print-object ((object point) stream)
-  (print-unreadable-object (object stream :identity t)
-    (format stream "POINT (~D, ~D) ~S"
+  (print-unreadable-object (object stream :identity t :type t)
+    (format stream "(~D, ~D) ~S"
             (point-linum object)
             (point-charpos object)
             (line-str (point-line object)))))

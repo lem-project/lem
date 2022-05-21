@@ -219,9 +219,10 @@
   nil)
 
 (defmethod print-object ((buffer buffer) stream)
-  (format stream "#<BUFFER ~a ~a>"
-          (buffer-name buffer)
-          (buffer-filename buffer)))
+  (print-unreadable-object (buffer stream :identity t :type t)
+    (format stream "~A ~A"
+            (buffer-name buffer)
+            (buffer-filename buffer))))
 
 (defun %buffer-clear-keep-binfo (buffer)
   (when (%buffer-keep-binfo buffer)

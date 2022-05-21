@@ -60,8 +60,8 @@
   (slot-boundp timer 'last-time))
 
 (defmethod print-object ((object timer) stream)
-  (print-unreadable-object (object stream :identity t)
-    (format stream "TIMER: ~S" (timer-name object))))
+  (print-unreadable-object (object stream :identity t :type t)
+    (format stream "~S" (timer-name object))))
 
 (defun timer-p (x)
   (typep x 'timer))

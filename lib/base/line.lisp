@@ -32,8 +32,8 @@
   points)
 
 (defmethod print-object ((object line) stream)
-  (print-unreadable-object (object stream :identity t)
-    (format stream "LINE: string: ~S, plist: ~S"
+  (print-unreadable-object (object stream :identity t :type t)
+    (format stream "string: ~S, plist: ~S"
             (line-str object)
             (line-plist object))))
 

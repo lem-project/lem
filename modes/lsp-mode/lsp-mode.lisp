@@ -165,6 +165,10 @@
                          (lambda (message code)
                            (send-event (lambda () (jsonrpc-editor-error message code))))))
 
+(defun display-message (text)
+  (let ((lem::*message-timeout* nil))
+    (message "~A" text)))
+
 ;;;
 (defgeneric spec-initialization-options (spec)
   (:method (spec) nil))
@@ -762,7 +766,7 @@
     (when (point<= (overlay-start overlay)
                    (current-point)
                    (overlay-end overlay))
-      (message "~A" (diagnostic-message (overlay-diagnostic overlay)))
+      (display-message (diagnostic-message (overlay-diagnostic overlay)))
       (return))))
 
 (defun text-document/publish-diagnostics (params)
@@ -851,7 +855,7 @@
 
 (define-command lsp-hover () ()
   (check-connection)
-  (message "~A" (text-document/hover (current-point))))
+  (display-message (text-document/hover (current-point))))
 
 ;;; completion
 

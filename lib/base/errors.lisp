@@ -6,7 +6,9 @@
            :read-only-error
            :editor-error
            :scan-error
-           :editor-interrupt))
+           :editor-interrupt)
+  #+sbcl
+  (:lock t))
 (in-package :lem-base/errors)
 
 (define-condition editor-condition (simple-error)

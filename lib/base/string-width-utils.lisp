@@ -5,7 +5,9 @@
            :wide-char-p
            :char-width
            :string-width
-           :wide-index))
+           :wide-index)
+  #+sbcl
+  (:lock t))
 (in-package :lem-base/string-width-utils)
 
 (defconstant +default-tab-size+ 8)

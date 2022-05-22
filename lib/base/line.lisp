@@ -20,7 +20,9 @@
            :line-property-insert-newline
            :line-property-delete-pos
            :line-property-delete-line
-           :line-free))
+           :line-free)
+  #+sbcl
+  (:lock t))
 (in-package :lem-base/line)
 
 (defstruct (line (:constructor %make-line))

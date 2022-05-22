@@ -6,7 +6,9 @@
            :list-directory
            :file-size
            :virtual-probe-file
-           :with-open-virtual-file))
+           :with-open-virtual-file)
+  #+sbcl
+  (:lock t))
 (in-package :lem-base/file-utils)
 
 (defun guess-host-name (filename)

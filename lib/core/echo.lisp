@@ -6,7 +6,9 @@
           message-without-log
           message-buffer))
 
-(defgeneric show-message (string))
+(defparameter *message-timeout* 1)
+
+(defgeneric show-message (string &key timeout))
 (defgeneric show-message-buffer (buffer))
 
 (defun log-message (string args)
@@ -21,7 +23,8 @@
 (defun message-without-log (string &rest args)
   (show-message (if string
                     (apply #'format nil string args)
-                    nil)))
+                    nil)
+                :timeout *message-timeout*))
 
 (defun message (string &rest args)
   (log-message string args)

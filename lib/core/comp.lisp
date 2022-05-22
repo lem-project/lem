@@ -80,7 +80,7 @@
               :append
                  (completion (let ((str (enough-namestring namestr input-directory)))
                                (if (uiop:directory-pathname-p str)
-                                   (or (ignore-errors (namestring (fad:pathname-as-file str))) "")
+                                   (string-right-trim "/" str)
                                    str))
                              files
                              :test test-fn

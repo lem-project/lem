@@ -209,7 +209,7 @@
 
 (defun delete-file* (file)
   #+windows
-  (fad:delete-directory-and-files file)
+  (uiop:delete-directory-tree file)
   #-windows
   (run-command `("rm" "-fr" ,file)))
 

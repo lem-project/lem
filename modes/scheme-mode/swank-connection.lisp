@@ -1132,8 +1132,7 @@
           ;           (not (eq *use-scheme-set-library* :repl)))
           ;  (update-buffer-package))
           (when (and (eq *use-scheme-autodoc* :auto)
-                     (member major-mode '(scheme-mode scheme-repl-mode))
-                     (not (lem.popup-window::visible-popup-window-p)))
+                     (member major-mode '(scheme-mode scheme-repl-mode)))
             (scheme-autodoc)))
       (error () (scheme-slime-quit)))))
 

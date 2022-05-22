@@ -94,10 +94,12 @@
                              :completion-function
                              (when *prompt-file-completion-function*
                                (lambda (str)
-                                 (or (alexandria:emptyp str)
-                                     (funcall *prompt-file-completion-function*
-                                              str (or directory
-                                                      (namestring (user-homedir-pathname)))))))
+                                 (funcall *prompt-file-completion-function*
+                                          (if (alexandria:emptyp str)
+                                              "./"
+                                              str)
+                                          (or directory
+                                              (namestring (user-homedir-pathname))))))
                              :test-function (and existing #'virtual-probe-file)
                              :history-symbol 'prompt-for-file
                              :gravity gravity)))
@@ -113,9 +115,11 @@
                              :completion-function
                              (when *prompt-file-completion-function*
                                (lambda (str)
-                                 (or (alexandria:emptyp str)
-                                     (funcall *prompt-file-completion-function*
-                                              str directory :directory-only t))))
+                                 (funcall *prompt-file-completion-function*
+                                          (if (alexandria:emptyp str)
+                                              "./"
+                                              str)
+                                          directory :directory-only t)))
                              :test-function (and existing #'virtual-probe-file)
                              :history-symbol 'prompt-for-directory
                              :gravity gravity)))

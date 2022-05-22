@@ -418,7 +418,7 @@
   (when (and popup-message (not (deleted-window-p popup-message)))
     (delete-window popup-message)))
 
-(defmethod lem::show-message (string)
+(defmethod lem:show-message (string)
   (cond ((null string)
          (delete-popup-message (frame-message-window (current-frame)))
          (setf (frame-message-window (current-frame)) nil))
@@ -429,7 +429,7 @@
                                       :destination-window (frame-message-window (current-frame))
                                       :gravity :follow-cursor)))))
 
-(defmethod lem::show-message-buffer (buffer)
+(defmethod lem:show-message-buffer (buffer)
   (setf (frame-message-window (current-frame))
         (display-popup-message buffer
                                :timeout nil

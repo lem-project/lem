@@ -1,6 +1,8 @@
 (in-package :lem)
 
-(export '(message
+(export '(show-message
+          show-message-buffer
+          message
           message-without-log
           message-buffer))
 

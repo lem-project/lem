@@ -192,14 +192,13 @@
   (completion-mode t))
 
 (defun completion-item-range (point item)
-  (cond ((and (completion-item-start item)
-              (completion-item-end item))
-         (values (completion-item-start item)
-                 (completion-item-end item)))
-        (t
-         (with-point ((start point))
-           (skip-chars-backward start #'syntax-symbol-char-p)
-           (values start point)))))
+  (let ((start (or (completion-item-start item)
+                   (with-point ((start point))
+                     (skip-chars-backward start #'syntax-symbol-char-p)
+                     start)))
+        (end (or (completion-item-end item)
+                 point)))
+    (values start end)))
 
 (defun completion-insert (point item &optional begin)
   (when item

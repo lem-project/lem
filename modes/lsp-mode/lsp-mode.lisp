@@ -884,14 +884,17 @@
                        (handler-case (protocol:completion-item-text-edit item)
                          (unbound-slot () nil)))
                      start
-                     end)
+                     end
+                     (label (protocol:completion-item-label item)))
                  (when text-edit
                    (setf (values start end)
-                         (convert-to-range point (protocol:text-edit-range text-edit))))
+                         (convert-to-range point (protocol:text-edit-range text-edit)))
+                   (setf label (protocol:text-edit-new-text text-edit)))
                  (make-instance 'completion-item
                                 :start start
-                                :end end
-                                :label (protocol:completion-item-label item)
+                                ;; 補完候補を表示した後に文字を入力し, 候補選択をするとendがずれるので使えない
+                                ;; :end end
+                                :label label
                                 :detail (handler-case (protocol:completion-item-detail item)
                                           (unbound-slot () ""))
                                 :sort-text (handler-case (protocol:completion-item-sort-text item)

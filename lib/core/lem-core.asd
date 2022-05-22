@@ -8,12 +8,10 @@
                "babel"
                "bordeaux-threads"
                "yason"
-               "cl-fad"
+               "log4cl"
                "lem-base"
                "lem-encodings"
                "lem-lisp-syntax"
-               "log4cl"
-               "cl-singleton-mixin"
                "lem-utils")
   :serial t
   :components ((:file "history")

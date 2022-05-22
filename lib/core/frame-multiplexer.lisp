@@ -1,5 +1,7 @@
 (defpackage :lem-frame-multiplexer
-  (:use :cl :lem :lem.button))
+  (:use :cl :lem :lem.button)
+  #+sbcl
+  (:lock t))
 (in-package :lem-frame-multiplexer)
 
 (defconstant +max-number-of-frames+ 256)

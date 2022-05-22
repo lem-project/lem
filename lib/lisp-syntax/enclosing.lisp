@@ -1,6 +1,8 @@
 (defpackage :lem-lisp-syntax.enclosing
   (:use :cl :lem-base)
-  (:export :search-local-definition))
+  (:export :search-local-definition)
+  #+sbcl
+  (:lock t))
 (in-package :lem-lisp-syntax.enclosing)
 
 (defvar *variable-binding-ops*

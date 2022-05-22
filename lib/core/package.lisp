@@ -51,4 +51,6 @@
 (defpackage :lem-restart
   (:use)
   (:export :message
-           :call-function))
+           :call-function)
+  #+sbcl
+  (:lock t))

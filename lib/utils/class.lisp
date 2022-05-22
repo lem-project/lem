@@ -4,6 +4,9 @@
            :collect-subclasses))
 (in-package :lem-utils/class)
 
+#+sbcl
+(sb-ext:lock-package :lem-utils/class)
+
 (defun ensure-class (class)
   (etypecase class
     (class class)

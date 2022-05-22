@@ -2,7 +2,9 @@
   (:use :cl :lem-base)
   (:export
    :beginning-of-defun
-   :top-of-defun))
+   :top-of-defun)
+  #+sbcl
+  (:lock t))
 (in-package :lem-lisp-syntax.misc)
 
 (defun beginning-of-defun (point n)

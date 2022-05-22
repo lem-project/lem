@@ -1,6 +1,8 @@
 (defpackage :lem.rectangle
   (:use :cl :lem)
-  (:export))
+  (:export)
+  #+sbcl
+  (:lock t))
 (in-package :lem.rectangle)
 
 (defvar *mark-point* nil)

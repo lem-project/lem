@@ -1,6 +1,8 @@
 (defpackage :lem-lisp-syntax.defstruct-to-defclass
   (:use :cl :lem-base)
-  (:export :defstruct-to-defclass))
+  (:export :defstruct-to-defclass)
+  #+sbcl
+  (:lock t))
 (in-package :lem-lisp-syntax.defstruct-to-defclass)
 
 (defvar *save-points* '())

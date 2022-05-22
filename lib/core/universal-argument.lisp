@@ -15,7 +15,9 @@
            :universal-argument-9
            :universal-argument-abort
            :universal-argument-repeat
-           :universal-argument-minus))
+           :universal-argument-minus)
+  #+sbcl
+  (:lock t))
 (in-package :lem.universal-argument)
 
 (defparameter *base* 4)

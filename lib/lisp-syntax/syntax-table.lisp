@@ -1,6 +1,8 @@
 (defpackage :lem-lisp-syntax.syntax-table
   (:use :cl :lem-base)
-  (:export :*syntax-table*))
+  (:export :*syntax-table*)
+  #+sbcl
+  (:lock t))
 (in-package :lem-lisp-syntax.syntax-table)
 
 (flet ((f (c1 c2 step-fn)

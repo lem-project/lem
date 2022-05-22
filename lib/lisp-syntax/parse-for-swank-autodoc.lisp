@@ -1,6 +1,8 @@
 (defpackage :lem-lisp-syntax.parse-for-swank-autodoc
   (:use :cl :lem-base)
-  (:export :parse-for-swank-autodoc))
+  (:export :parse-for-swank-autodoc)
+  #+sbcl
+  (:lock t))
 (in-package :lem-lisp-syntax.parse-for-swank-autodoc)
 
 (defvar *cursor-marker* 'swank::%cursor-marker%)

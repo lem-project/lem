@@ -5,7 +5,9 @@
            :set-indentation
            :update-system-indentation
            :indentation-update
-           :calc-indent))
+           :calc-indent)
+  #+sbcl
+  (:lock t))
 (in-package :lem-lisp-syntax.indent)
 
 (defparameter *body-indent* 2)

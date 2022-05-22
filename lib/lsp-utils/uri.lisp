@@ -5,6 +5,8 @@
            :uri-to-pathname))
 (in-package :lem-lsp-utils/uri)
 
+(cl-package-locks:lock-package :lem-lsp-utils/uri)
+
 (defun pathname-to-uri (pathname)
   (format nil "file://~A" (namestring pathname)))
 

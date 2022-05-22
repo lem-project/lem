@@ -8,3 +8,5 @@
   (:import-from :lem-lsp-utils/protocol-generator)
   (:import-from :lem-lsp-utils/uri))
 (in-package :lem-lsp-utils/main)
+
+(cl-package-locks:lock-package :lem-lsp-utils/main)

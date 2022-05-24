@@ -40,7 +40,6 @@
 
 (defvar *log-pathname* (merge-pathnames "lsp.log" (lem:lem-home)))
 (defvar *log-enable* nil)
-(defvar *log-stream* nil)
 (defvar *log-mutex* (bt:make-lock))
 
 (defun do-log (string &rest args)

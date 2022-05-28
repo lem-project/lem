@@ -10,7 +10,8 @@
      (lem.listener-mode:listener-mode t)
      (setf *write-string-function* 'write-string-to-repl)
      (setf (variable-value 'completion-spec) 'repl-completion)
-     (setf (variable-value 'calc-indent-function) 'repl-calc-indent))
+     ;; (setf (variable-value 'calc-indent-function) 'repl-calc-indent)
+     )
     (t
      (editor-error "No connection for repl. Did you mean 'start-lisp-repl' command?"))))
 

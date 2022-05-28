@@ -1133,8 +1133,7 @@ window width is changed, we must recalc the window view point."
 
 (defmethod initialize-instance :after ((floating-window floating-window)
                                        &key (frame (current-frame)) &allow-other-keys)
-  (alexandria:appendf (frame-floating-windows frame)
-                      (list floating-window)))
+  (add-floating-window frame floating-window))
 
 (defun make-floating-window (&key (buffer (alexandria:required-argument :buffer))
                                   (x (alexandria:required-argument :x))
@@ -1154,8 +1153,7 @@ window width is changed, we must recalc the window view point."
   (when (eq window (current-window))
     (editor-error "Can not delete this window"))
   (notify-floating-window-modified (current-frame))
-  (setf (frame-floating-windows (current-frame))
-        (delete window (frame-floating-windows (current-frame)))))
+  (remove-floating-windows (current-frame) window))
 
 (defun floating-window-p (window)
   (typep window 'floating-window))

@@ -146,6 +146,14 @@ redraw-displayを呼び出したとき、画面の最小限の更新だけでは
     (current-frame)))
 
 
+(defun add-floating-window (frame window)
+  (alexandria:nconcf (frame-floating-windows frame)
+                     (list window)))
+
+(defun remove-floating-windows (frame window)
+  (alexandria:deletef (frame-floating-windows frame)
+                      window))
+
 (defun add-header-window (frame window)
   (with-slots (header-windows) frame
     (alexandria:nconcf header-windows (list window))))

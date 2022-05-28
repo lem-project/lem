@@ -70,6 +70,8 @@
 (defparameter *use-new-vertical-move-function* t)
 (defparameter *use-cursor-movement-workaround* t)
 
+(defgeneric %delete-window (window))
+
 (defclass window ()
   ((x
     :initarg :x
@@ -172,11 +174,6 @@
     (mapc #'clear-screen (window-list))
     (mapc #'clear-screen (frame-floating-windows (current-frame)))))
 
-(defgeneric %delete-window (window))
-(defgeneric window-redraw (window force)
-  (:method (window force)
-    (redraw-display-window window force)))
-
 (defun window-view (window)
   (screen-view (window-screen window)))
 
@@ -239,6 +236,12 @@
   (delete-point (window-view-point window))
   (delete-point (%window-point window))
   (screen-delete (window-screen window)))
+
+(defun delete-window (window)
+  (%delete-window window)
+  (run-hooks (window-delete-hook window))
+  (%free-window window)
+  t)
 
 (defun setup-frame-windows (frame buffer)
   (assert (= (length (frame-header-windows frame))
@@ -770,12 +773,6 @@ window width is changed, we must recalc the window view point."
           (setf (window-tree) (funcall another-getter))
           (funcall setter2 (funcall another-getter))))))
 
-(defun delete-window (window)
-  (%delete-window window)
-  (run-hooks (window-delete-hook window))
-  (%free-window window)
-  t)
-
 (defun collect-left-windows (window-list)
   (lem-utils:min-if #'window-x window-list))
 
@@ -794,6 +791,7 @@ window width is changed, we must recalc the window view point."
                          (window-height window)))
                     window-list))
 
+;;; resize windows
 (defun %shrink-windows (window-list
                         collect-windows-fn
                         check-fn
@@ -971,6 +969,7 @@ window width is changed, we must recalc the window view point."
                      (- frame-height
                         (+ (window-y window) (window-height window)))))))
 
+;;; buffers
 (defun get-buffer-windows (buffer &key (frame (current-frame))
                                        (include-floating-windows nil))
   (loop :for window :in (append (window-list frame)
@@ -989,6 +988,7 @@ window width is changed, we must recalc the window view point."
         (car (buffer-list))
         (car buffer-list))))
 
+;;; switch-to-buffer/pop-to-buffer
 (defun run-show-buffer-hooks (window)
   (when (window-parameter window 'change-buffer)
     (setf (window-parameter window 'change-buffer) nil)
@@ -1063,6 +1063,7 @@ window width is changed, we must recalc the window view point."
             (setf (window-parameter (current-window) 'parent-window) parent-window)
             (values (current-window) split-p))))))
 
+;;; move window
 (defun difference-window-y (window)
   (lambda (w1 w2)
     (< (abs (- (window-y window) (window-y w1)))
@@ -1117,6 +1118,7 @@ window width is changed, we must recalc the window view point."
                                                   (window-list)))
                  (difference-window-x window)))))
 
+;;; floating-window
 (defclass floating-window (window)
   ((border
     :initarg :border
@@ -1158,6 +1160,7 @@ window width is changed, we must recalc the window view point."
 (defun floating-window-p (window)
   (typep window 'floating-window))
 
+;;; header-window
 (defclass header-window (window) ())
 
 (defmethod initialize-instance ((window header-window) &key &allow-other-keys)
@@ -1174,6 +1177,7 @@ window width is changed, we must recalc the window view point."
   (remove-header-window (current-frame) window)
   (notify-header-window-modified (current-frame)))
 
+;;;
 (defun adjust-all-window-size ()
   (dolist (window (frame-header-windows (current-frame)))
     (window-set-size window (display-width) 1))
@@ -1187,9 +1191,24 @@ window width is changed, we must recalc the window view point."
   (clear-screens-of-window-list)
   (redraw-display))
 
+
+(defun covered-with-floating-window-p (window x y)
+  (let ((x (+ x (window-x window)))
+        (y (+ y (window-y window))))
+    (dolist (w (frame-floating-windows (current-frame)))
+      (when (and (not (eq w window))
+                 (<= (window-x w) x (+ (window-x w) (window-width w) -1))
+                 (<= (window-y w) y (+ (window-y w) (window-height w) -1)))
+        (return t)))))
+
+;;; redraw-display
 (defvar *in-redraw-display* nil
   "この変数がTの場合、redraw-display関数で画面を描画中であることを表します。
 再帰的なredraw-displayの呼び出しを防ぐために用います。")
+
+(defgeneric window-redraw (window force)
+  (:method (window force)
+    (redraw-display-window window force)))
 
 (defun redraw-display (&optional force)
   (when *in-redraw-display*
@@ -1230,6 +1249,7 @@ window width is changed, we must recalc the window view point."
         (redraw-all-windows)
         (notify-frame-redraw-finished (current-frame))))))
 
+;;; popup-message
 (defun display-popup-message (buffer-or-string
                               &key (timeout *default-popup-message-timeout*)
                                    (gravity :cursor)
@@ -1242,12 +1262,3 @@ window width is changed, we must recalc the window view point."
 
 (defun delete-popup-message (popup-message)
   (lem-if:delete-popup-message (implementation) popup-message))
-
-(defun covered-with-floating-window-p (window x y)
-  (let ((x (+ x (window-x window)))
-        (y (+ y (window-y window))))
-    (dolist (w (frame-floating-windows (current-frame)))
-      (when (and (not (eq w window))
-                 (<= (window-x w) x (+ (window-x w) (window-width w) -1))
-                 (<= (window-y w) y (+ (window-y w) (window-height w) -1)))
-        (return t)))))

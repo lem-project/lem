@@ -115,10 +115,10 @@
   (unless n
     (maybe-balance-windows)))
 
-(defvar *last-focused-window-id* nil)
+(defvar *last-focused-window* nil)
 
 (defun update-last-focused-window ()
-  (setf *last-focused-window-id* (window-id (current-window))))
+  (setf *last-focused-window* (current-window)))
 
 (define-key *global-keymap* "C-x o" 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
@@ -142,8 +142,9 @@
   (other-window n))
 
 (define-command switch-to-last-focused-window () ()
-  (let ((window (or (and *last-focused-window-id*
-                         (find-window *last-focused-window-id*))
+  (let ((window (or (and (not (null *last-focused-window*))
+                         (not (deleted-window-p *last-focused-window*))
+                         *last-focused-window*)
                     (get-next-window (current-window)))))
     (update-last-focused-window)
     (setf (current-window) window)))

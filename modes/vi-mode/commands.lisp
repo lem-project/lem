@@ -662,7 +662,7 @@
 (define-command vi-quit (&optional (ask t)) ()
   (if (one-window-p)
       (exit-lem ask)
-      (delete-current-window)))
+      (delete-active-window)))
 
 (define-command vi-write-quit () ()
   (vi-write)

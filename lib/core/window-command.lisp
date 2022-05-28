@@ -13,7 +13,7 @@
           window-move-right
           window-move-left
           delete-other-windows
-          delete-current-window
+          delete-active-window
           quit-window
           grow-window
           shrink-window
@@ -178,8 +178,8 @@
                    (max-window-height (current-frame)))
   t)
 
-(define-key *global-keymap* "C-x 0" 'delete-current-window)
-(define-command delete-current-window () ()
+(define-key *global-keymap* "C-x 0" 'delete-active-window)
+(define-command delete-active-window () ()
   (delete-window (current-window))
   (maybe-balance-windows))
 

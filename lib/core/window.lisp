@@ -70,14 +70,8 @@
 (defparameter *use-new-vertical-move-function* t)
 (defparameter *use-cursor-movement-workaround* t)
 
-(defvar *window-id-counter* 0)
-
 (defclass window ()
-  ((id
-    :initform (mod (incf *window-id-counter*) most-positive-fixnum)
-    :reader window-id
-    :type fixnum)
-   (x
+  ((x
     :initarg :x
     :reader window-x
     :writer set-window-x

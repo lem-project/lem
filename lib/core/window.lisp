@@ -207,8 +207,8 @@
   (frame-current-window (current-frame)))
 
 (defun (setf current-window) (new-window)
+  (check-type new-window window)
   (let ((frame (current-frame)))
-    (check-type new-window window)
     (when (frame-current-window frame)
       (let ((old-window (current-window)))
         (move-point (%window-point old-window)

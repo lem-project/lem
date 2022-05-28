@@ -209,10 +209,7 @@
     (return-from grow-window (shrink-window (- n))))
   (when (one-window-p)
     (editor-error "Only one window"))
-  (resize-window-recursive (current-window) n
-                           #'(lambda (x y n)
-                               (grow-window-internal x y n))
-                           :vsplit))
+  (grow-window-height (current-window) n))
 
 (define-key *global-keymap* "C-x C-z" 'shrink-window)
 (define-command shrink-window (n) ("p")
@@ -220,10 +217,7 @@
     (return-from shrink-window (grow-window (- n))))
   (when (one-window-p)
     (editor-error "Only one window"))
-  (resize-window-recursive (current-window) n
-                           #'(lambda (x y n)
-                               (grow-window-internal y x n))
-                           :vsplit))
+  (shrink-window-height (current-window) n))
 
 (define-key *global-keymap* "C-x }" 'grow-window-horizontally)
 (define-command grow-window-horizontally (n) ("p")
@@ -231,10 +225,7 @@
     (return-from grow-window-horizontally (shrink-window-horizontally (- n))))
   (when (one-window-p)
     (editor-error "Only one window"))
-  (resize-window-recursive (current-window) n
-                           #'(lambda (x y n)
-                               (grow-window-horizontally-internal x y n))
-                           :hsplit))
+  (grow-window-width (current-window) n))
 
 (define-key *global-keymap* "C-x {" 'shrink-window-horizontally)
 (define-command shrink-window-horizontally (n) ("p")
@@ -242,10 +233,7 @@
     (return-from shrink-window-horizontally (grow-window-horizontally (- n))))
   (when (one-window-p)
     (editor-error "Only one window"))
-  (resize-window-recursive (current-window) n
-                           #'(lambda (x y n)
-                               (grow-window-horizontally-internal y x n))
-                           :hsplit))
+  (shrink-window-width (current-window) n))
 
 (defun display-buffer (buffer &optional force-split-p)
   (multiple-value-bind (window split-p)

@@ -902,7 +902,7 @@ window width is changed, we must recalc the window view point."
       (and (shrink-right-windows shrink-window-list n)
            (grow-left-windows grow-window-list n))))
 
-(defun resize-window-recursive (node n apply-fn split-type)
+(defun resize-window-recursive (node apply-fn split-type)
   (multiple-value-bind (parent-node
                         getter
                         setter
@@ -914,10 +914,33 @@ window width is changed, we must recalc the window view point."
           ((eq split-type (window-node-split-type parent-node))
            (funcall apply-fn
                     (window-tree-flatten (funcall getter))
-                    (window-tree-flatten (funcall another-getter))
-                    n))
+                    (window-tree-flatten (funcall another-getter))))
           (t
-           (resize-window-recursive parent-node n apply-fn split-type)))))
+           (resize-window-recursive parent-node apply-fn split-type)))))
+
+(defun grow-window-height (window n)
+  (resize-window-recursive window
+                           (lambda (upper-windows lower-windows)
+                             (grow-window-internal upper-windows lower-windows n))
+                           :vsplit))
+
+(defun shrink-window-height (window n)
+  (resize-window-recursive window
+                           (lambda (upper-windows lower-windows)
+                             (grow-window-internal lower-windows upper-windows n))
+                           :vsplit))
+
+(defun grow-window-width (window n)
+  (resize-window-recursive (current-window)
+                           (lambda (left-windows right-windows)
+                             (grow-window-horizontally-internal left-windows right-windows n))
+                           :hsplit))
+
+(defun shrink-window-width (window n)
+  (resize-window-recursive (current-window)
+                           (lambda (left-windows right-windows)
+                             (grow-window-horizontally-internal right-windows left-windows n))
+                           :hsplit))
 
 (defun adjust-windows (frame-x frame-y frame-width frame-height)
   (let ((window-list (window-list)))

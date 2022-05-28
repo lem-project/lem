@@ -9,14 +9,14 @@
 
 (defstruct (window-node (:constructor %make-window-node))
   split-type
-  car
-  cdr)
+  left
+  right)
 
-(defun make-window-node (split-type car cdr)
+(defun make-window-node (split-type left right)
   (assert (member split-type '(:hsplit :vsplit)))
   (%make-window-node :split-type split-type
-                     :car car
-                     :cdr cdr))
+                     :left left
+                     :right right))
 
 (defun window-tree-leaf-p (window)
   (windowp window))
@@ -26,8 +26,8 @@
              (cond ((window-tree-leaf-p tree)
                     (funcall fn tree))
                    (t
-                    (f (window-node-car tree))
-                    (f (window-node-cdr tree))))))
+                    (f (window-node-left tree))
+                    (f (window-node-right tree))))))
     (f tree)
     nil))
 
@@ -52,36 +52,36 @@
 
 (defun window-tree-parent (tree node)
   (cond ((window-tree-leaf-p tree) nil)
-        ((eq node (window-node-car tree))
+        ((eq node (window-node-left tree))
          (values tree
                  (lambda ()
-                   (window-node-car tree))
+                   (window-node-left tree))
                  (lambda (new-value)
-                   (setf (window-node-car tree) new-value))
+                   (setf (window-node-left tree) new-value))
                  (lambda ()
-                   (window-node-cdr tree))
+                   (window-node-right tree))
                  (lambda (new-value)
-                   (setf (window-node-cdr tree) new-value))))
-        ((eq node (window-node-cdr tree))
+                   (setf (window-node-right tree) new-value))))
+        ((eq node (window-node-right tree))
          (values tree
                  (lambda ()
-                   (window-node-cdr tree))
+                   (window-node-right tree))
                  (lambda (new-value)
-                   (setf (window-node-cdr tree) new-value))
+                   (setf (window-node-right tree) new-value))
                  (lambda ()
-                   (window-node-car tree))
+                   (window-node-left tree))
                  (lambda (new-value)
-                   (setf (window-node-car tree) new-value))))
+                   (setf (window-node-left tree) new-value))))
         (t
          (multiple-value-bind (parent
                                getter
                                setter
                                another-getter
                                another-setter)
-             (window-tree-parent (window-node-car tree) node)
+             (window-tree-parent (window-node-left tree) node)
            (if parent
                (values parent getter setter another-getter another-setter)
-               (window-tree-parent (window-node-cdr tree) node))))))
+               (window-tree-parent (window-node-right tree) node))))))
 
 (defun convert-window-n-tree (node)
   (labels ((join-children (node child)
@@ -97,8 +97,8 @@
              (cond ((windowp node)
                     (list node))
                    (t
-                    (append (join-children node (window-node-car node))
-                            (join-children node (window-node-cdr node)))))))
+                    (append (join-children node (window-node-left node))
+                            (join-children node (window-node-right node)))))))
     (if (windowp node)
         node
         (cons (window-node-split-type node)

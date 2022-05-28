@@ -7,7 +7,6 @@
           *window-scroll-functions*
           *window-size-change-functions*
           *window-show-buffer-functions*
-          find-window
           window-view-point
           windowp
           window-id
@@ -198,11 +197,6 @@
 各フロントエンドでカーソルを画面に表示するために使うためのものであり、
 それ以外での使用は推奨しません。(SHOULD NOT)"
   (screen-last-print-cursor-y (window-screen window)))
-
-(defun find-window (id)
-  (window-tree-find-if (window-tree)
-                       (lambda (window)
-                         (= id (window-id window)))))
 
 (defun window-buffer-point (window)
   (buffer-point (window-buffer window)))

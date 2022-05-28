@@ -14,7 +14,7 @@
           window-move-left
           delete-other-windows
           delete-active-window
-          quit-window
+          quit-active-window
           grow-window
           shrink-window
           grow-window-horizontally
@@ -183,25 +183,9 @@
   (delete-window (current-window))
   (maybe-balance-windows))
 
-(define-command quit-window (&optional window kill-buffer-p) ("P")
-  (when (null window)
-    (setf window (current-window)))
-  (let ((parent-window (window-parameter window 'parent-window)))
-    (cond
-      ((and (not (one-window-p))
-            (window-parameter window 'split-p))
-       (if kill-buffer-p
-           (kill-buffer (window-buffer window))
-           (bury-buffer (window-buffer window)))
-       (delete-window window)
-       (unless (deleted-window-p parent-window)
-         (setf (current-window) parent-window)))
-      (t
-       (if kill-buffer-p
-           (kill-buffer (window-buffer window))
-           (switch-to-buffer (bury-buffer (window-buffer window)) nil))
-       (unless (deleted-window-p parent-window)
-         (setf (current-window) parent-window))))))
+(define-command quit-active-window (&optional kill-buffer) ("P")
+  (quit-window (current-window)
+               :kill-buffer kill-buffer))
 
 (define-key *global-keymap* "C-x ^" 'grow-window)
 (define-command grow-window (n) ("p")

@@ -263,9 +263,9 @@
                                       (when (and window
                                                  (not (deleted-window-p window))
                                                  (not (buffer-value buffer 'level)))
-                                        (quit-window window t)))))))
+                                        (quit-window window :kill-buffer t)))))))
             ((eq buffer (window-buffer (current-window)))
-             (quit-window (current-window) t))
+             (quit-window (current-window) :kill-buffer t))
             (t
              (kill-buffer buffer))))))
 

@@ -26,7 +26,7 @@
     (:name "directory"
      :keymap *directory-mode-keymap*))
 
-(define-key *directory-mode-keymap* "q" 'quit-window)
+(define-key *directory-mode-keymap* "q" 'quit-active-window)
 (define-key *directory-mode-keymap* "g" 'directory-mode-update-buffer)
 (define-key *directory-mode-keymap* "^" 'directory-mode-up-directory)
 (define-key *directory-mode-keymap* "Return" 'directory-mode-find-file)

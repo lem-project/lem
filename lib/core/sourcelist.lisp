@@ -158,7 +158,7 @@
      :keymap *sourcelist-mode-keymap*))
 
 (define-key *sourcelist-mode-keymap* "Return" 'sourcelist-jump)
-(define-key *sourcelist-mode-keymap* "q" 'quit-window)
+(define-key *sourcelist-mode-keymap* "q" 'quit-active-window)
 
 (define-command sourcelist-jump () ()
   (alexandria:when-let ((sourcelist (get-sourcelist (current-buffer)))

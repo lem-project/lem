@@ -18,7 +18,7 @@
     (:name "Menu"
      :keymap *menu-mode-keymap*))
 
-(define-key *menu-mode-keymap* "q" 'quit-window)
+(define-key *menu-mode-keymap* "q" 'quit-active-window)
 (define-key *menu-mode-keymap* "d" 'menu-delete)
 (define-key *menu-mode-keymap* "Return" 'menu-select-this-window)
 (define-key *menu-mode-keymap* "C-o" 'menu-select-other-window)
@@ -177,7 +177,7 @@
             (when (and close
                        (equal (current-buffer) cb)
                        (equal (current-window) cw))
-              (quit-window))))))
+              (quit-active-window))))))
 
 (define-command menu-select-this-window () ()
   (menu-select-1))

@@ -11,7 +11,7 @@
   (make-keymap :name '*lisp-apropos-mode-keymap*
                :parent *lisp-mode-keymap*))
 
-(define-key *lisp-apropos-mode-keymap* "q" 'quit-window)
+(define-key *lisp-apropos-mode-keymap* "q" 'quit-active-window)
 (define-key *lisp-apropos-mode-keymap* "Return" 'lem.language-mode::find-definitions)
 
 (define-major-mode lisp-apropos-mode lisp-mode

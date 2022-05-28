@@ -43,6 +43,7 @@
           other-buffer
           switch-to-buffer
           pop-to-buffer
+          quit-window
           left-window
           right-window
           up-window
@@ -1061,6 +1062,24 @@ window width is changed, we must recalc the window view point."
             (setf (window-parameter (current-window) 'split-p) split-p)
             (setf (window-parameter (current-window) 'parent-window) parent-window)
             (values (current-window) split-p))))))
+
+(defun quit-window (window &key kill-buffer)
+  (let ((parent-window (window-parameter window 'parent-window)))
+    (cond
+      ((and (not (one-window-p))
+            (window-parameter window 'split-p))
+       (if kill-buffer
+           (kill-buffer (window-buffer window))
+           (bury-buffer (window-buffer window)))
+       (delete-window window)
+       (unless (deleted-window-p parent-window)
+         (setf (current-window) parent-window)))
+      (t
+       (if kill-buffer
+           (kill-buffer (window-buffer window))
+           (switch-to-buffer (bury-buffer (window-buffer window)) nil))
+       (unless (deleted-window-p parent-window)
+         (setf (current-window) parent-window))))))
 
 ;;; move window
 (defun difference-window-y (window)

@@ -146,7 +146,7 @@
   (when (and (eq (current-buffer) (window-buffer (current-window)))
              (find 'typeout-mode (buffer-minor-modes (current-buffer))))
     (typeout-mode nil) 
-    (quit-window)))
+    (quit-active-window)))
 
 (define-command next-page-or-dismiss-typeout-window () ()
   (unless (deleted-window-p *typeout-window*)

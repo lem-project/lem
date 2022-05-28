@@ -29,7 +29,7 @@
   (setf (variable-value 'line-wrap) nil))
 
 (define-key *grep-mode-keymap* "Return" 'grep-jump)
-(define-key *grep-mode-keymap* "q" 'quit-window)
+(define-key *grep-mode-keymap* "q" 'quit-active-window)
 
 (defun grep-parse-line (line)
   (ignore-errors

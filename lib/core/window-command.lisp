@@ -61,7 +61,7 @@
 (define-key *global-keymap* "C-x b" 'select-buffer)
 
 (defun strip-buffer-from-frame-windows (buffer frame)
-  (dolist (window (get-buffer-windows buffer :frame frame))
+  (dolist (window (get-buffer-windows buffer :frame frame :include-floating-windows t))
     (with-current-window window
       (switch-to-buffer (or (get-previous-buffer buffer)
                             (first (last (buffer-list))))))))

@@ -174,8 +174,10 @@
                  :use-modeline-p use-modeline-p))
 
 (defun clear-screens-of-window-list ()
-  (dolist (window (window-list))
-    (screen-clear (window-screen window))))
+  (flet ((clear-screen (window)
+           (screen-clear (window-screen window))))
+    (mapc #'clear-screen (window-list))
+    (mapc #'clear-screen (frame-floating-windows (current-frame)))))
 
 (defgeneric %delete-window (window))
 (defgeneric window-redraw (window force)
@@ -316,8 +318,7 @@
                (window-tree-parent (window-node-cdr tree) node))))))
 
 (defun window-list (&optional (frame (current-frame)))
-  (window-tree-flatten
-   (frame-window-tree frame)))
+  (window-tree-flatten (frame-window-tree frame)))
 
 (defun one-window-p ()
   (window-tree-leaf-p (window-tree)))
@@ -347,7 +348,9 @@
     (setf (frame-window-tree frame) window)))
 
 (defun teardown-windows (frame)
-  (mapc #'%free-window (window-list frame)))
+  (mapc #'%free-window (window-list frame))
+  (mapc #'%free-window (frame-floating-windows frame))
+  (values))
 
 (defun window-recenter (window)
   (line-start

@@ -30,6 +30,7 @@
                (:file "frame")
                (:file "echo")
                (:file "prompt")
+               (:file "window-tree")
                (:file "window")
                (:file "modeline")
                (:file "command-table")

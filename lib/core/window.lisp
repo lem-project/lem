@@ -931,13 +931,13 @@ window width is changed, we must recalc the window view point."
                            :vsplit))
 
 (defun grow-window-width (window n)
-  (resize-window-recursive (current-window)
+  (resize-window-recursive window
                            (lambda (left-windows right-windows)
                              (grow-window-horizontally-internal left-windows right-windows n))
                            :hsplit))
 
 (defun shrink-window-width (window n)
-  (resize-window-recursive (current-window)
+  (resize-window-recursive window
                            (lambda (left-windows right-windows)
                              (grow-window-horizontally-internal right-windows left-windows n))
                            :hsplit))

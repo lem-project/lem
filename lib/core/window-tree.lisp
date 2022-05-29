@@ -9,14 +9,24 @@
 
 (defstruct (window-node (:constructor %make-window-node))
   split-type
-  left
-  right)
+  children)
+
+(defun window-node-left (window-node)
+  (elt (window-node-children window-node) 0))
+
+(defun (setf window-node-left) (value window-node)
+  (setf (elt (window-node-children window-node) 0) value))
+
+(defun window-node-right (window-node)
+  (elt (window-node-children window-node) 1))
+
+(defun (setf window-node-right) (value window-node)
+  (setf (elt (window-node-children window-node) 1) value))
 
 (defun make-window-node (split-type left right)
   (assert (member split-type '(:hsplit :vsplit)))
   (%make-window-node :split-type split-type
-                     :left left
-                     :right right))
+                     :children (make-array 2 :initial-contents (list left right))))
 
 (defun window-tree-leaf-p (window)
   (windowp window))

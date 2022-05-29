@@ -33,11 +33,9 @@
 
 (defun window-tree-map (tree fn)
   (labels ((f (tree)
-             (cond ((window-tree-leaf-p tree)
-                    (funcall fn tree))
-                   (t
-                    (f (window-node-left tree))
-                    (f (window-node-right tree))))))
+             (if (window-tree-leaf-p tree)
+                 (funcall fn tree)
+                 (map nil #'f (window-node-children tree)))))
     (f tree)
     nil))
 

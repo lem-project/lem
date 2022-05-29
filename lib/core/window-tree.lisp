@@ -50,7 +50,7 @@
                      (when (funcall test win)
                        (return-from window-tree-find-if win)))))
 
-(defun window-tree-parent (tree node)
+(defun get-parent-window-node-accessors (tree node)
   (cond ((window-tree-leaf-p tree) nil)
         ((eq node (window-node-left tree))
          (values tree
@@ -78,10 +78,10 @@
                                setter
                                another-getter
                                another-setter)
-             (window-tree-parent (window-node-left tree) node)
+             (get-parent-window-node-accessors (window-node-left tree) node)
            (if parent
                (values parent getter setter another-getter another-setter)
-               (window-tree-parent (window-node-right tree) node))))))
+               (get-parent-window-node-accessors (window-node-right tree) node))))))
 
 (defun convert-window-n-tree (node)
   (labels ((join-children (node child)

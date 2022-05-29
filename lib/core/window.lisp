@@ -605,7 +605,7 @@ window width is changed, we must recalc the window view point."
               (window-buffer-point current-window))
   (window-see new-window)
   (multiple-value-bind (node getter setter)
-      (window-tree-parent (window-tree) current-window)
+      (get-parent-window-node-accessors (window-tree) current-window)
     (if (null node)
         (setf (window-tree)
               (make-window-node split-type
@@ -621,7 +621,7 @@ window width is changed, we must recalc the window view point."
   (when (floating-window-p window)
     (editor-error "Can not split this window")))
 
-(defun split-window-vertically (window &key height)
+(defun split-window-vertically (window &key height balance)
   (check-before-splitting-window window)
   (let* ((use-modeline-p t)
          (min (+ 1 (if use-modeline-p 1 0)))
@@ -762,14 +762,14 @@ window width is changed, we must recalc the window view point."
     (setf (current-window)
           (get-next-window (current-window))))
   (multiple-value-bind (node getter setter another-getter another-setter)
-      (window-tree-parent (window-tree) window)
+      (get-parent-window-node-accessors (window-tree) window)
     (declare (ignore getter setter another-setter))
     (adjust-size-windows-after-delete-window
      window
      (funcall another-getter)
      (eq (window-node-split-type node) :hsplit))
     (multiple-value-bind (node2 getter2 setter2)
-        (window-tree-parent (window-tree) node)
+        (get-parent-window-node-accessors (window-tree) node)
       (declare (ignore getter2))
       (if (null node2)
           (setf (window-tree) (funcall another-getter))
@@ -908,7 +908,7 @@ window width is changed, we must recalc the window view point."
                         setter
                         another-getter
                         another-setter)
-      (window-tree-parent (window-tree) node)
+      (get-parent-window-node-accessors (window-tree) node)
     (declare (ignore setter another-setter))
     (cond ((null parent-node) nil)
           ((eq split-type (window-node-split-type parent-node))

@@ -621,7 +621,7 @@ window width is changed, we must recalc the window view point."
   (when (floating-window-p window)
     (editor-error "Can not split this window")))
 
-(defun split-window-vertically (window &key height balance)
+(defun split-window-vertically (window &key height)
   (check-before-splitting-window window)
   (let* ((use-modeline-p t)
          (min (+ 1 (if use-modeline-p 1 0)))
@@ -647,7 +647,7 @@ window width is changed, we must recalc the window view point."
                                     (window-view window)
                                     (window-view new-window))))
 
-(defun split-window-horizontally (window &optional width)
+(defun split-window-horizontally (window &key width)
   (check-before-splitting-window window)
   (let* ((fringe-size 0)
          (min (+ 2 fringe-size))

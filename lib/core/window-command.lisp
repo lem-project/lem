@@ -105,13 +105,13 @@
 
 (define-key *global-keymap* "C-x 2" 'split-active-window-vertically)
 (define-command split-active-window-vertically (&optional n) ("P")
-  (split-window-vertically (current-window) n)
+  (split-window-vertically (current-window) :height n)
   (unless n
     (maybe-balance-windows)))
 
 (define-key *global-keymap* "C-x 3" 'split-active-window-horizontally)
 (define-command split-active-window-horizontally (&optional n) ("P")
-  (split-window-horizontally (current-window) n)
+  (split-window-horizontally (current-window) :width n)
   (unless n
     (maybe-balance-windows)))
 

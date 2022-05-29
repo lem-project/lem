@@ -104,7 +104,7 @@
         (cons (window-node-split-type node)
               (rec node)))))
 
-(defun balance-windows ()
+(defun balance-windows (&optional (window-tree (window-tree)))
   (labels ((rec (node x y width height)
              (cond ((windowp node)
                     (window-set-size node width height)
@@ -151,7 +151,7 @@
                                               child-height)
                                          (incf y child-height)
                                          (decf rest-height child-height))))))))))))
-    (rec (convert-window-n-tree (window-tree))
+    (rec (convert-window-n-tree window-tree)
          (topleft-window-x (current-frame))
          (topleft-window-y (current-frame))
          (max-window-width (current-frame))

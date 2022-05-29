@@ -25,7 +25,11 @@
   (:method (window)))
 
 (defclass frame ()
-  ((current-window
+  ((window-left-margin
+    :initform 1
+    :allocation :class
+    :reader frame-window-left-margin)
+   (current-window
     :initarg :current-window
     :initform nil
     :accessor frame-current-window)

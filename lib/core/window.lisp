@@ -59,7 +59,6 @@
 
 (define-editor-variable line-wrap t)
 
-(defparameter *window-left-margin* 1)
 (defparameter *default-popup-message-timeout* 5)
 (defparameter *window-sufficient-width* 150)
 (defparameter *scroll-recenter-p* t)
@@ -663,9 +662,12 @@ window width is changed, we must recalc the window view point."
     (editor-error "Can not split this window"))
   (let ((new-window
           (make-window (window-buffer window)
-                       (+ *window-left-margin* (window-x window) width)
+                       (+ (frame-window-left-margin (current-frame))
+                          (window-x window) width)
                        (window-y window)
-                       (- (window-width window) width *window-left-margin*)
+                       (- (window-width window)
+                          width
+                          (frame-window-left-margin (current-frame)))
                        (window-height window)
                        t)))
     (set-window-width width window)

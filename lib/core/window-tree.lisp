@@ -129,7 +129,8 @@
                                               y
                                               (if (null rest-children)
                                                   child-width
-                                                  (- child-width *window-left-margin*))
+                                                  (- child-width
+                                                     (frame-window-left-margin (current-frame))))
                                               height)
                                          (incf x child-width)
                                          (decf rest-width child-width)))))

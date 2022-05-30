@@ -218,8 +218,8 @@
                  (setf x (char-width char x)))))
     (unless (= i -1)
       (lem-if:print (implementation) view x0 y
-                       (subseq pool-string 0 (1+ i))
-                       attribute))
+                    (subseq pool-string 0 (1+ i))
+                    attribute))
     x))
 
 (defvar *redraw-start-y*)

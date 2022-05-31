@@ -425,7 +425,10 @@
                (setf (screen-horizontal-scroll-start screen) point-column)))))))
 
 (defun redraw-display-window (window force)
-  (let ((focus-window-p (eq window (current-window)))
+  (let ((lem-if:*background-color-of-drawing-window*
+          (when (typep window 'floating-window)
+            (floating-window-background-color window)))
+        (focus-window-p (eq window (current-window)))
         (buffer (window-buffer window))
         (screen (window-screen window)))
     (let ((scroll-n (when focus-window-p

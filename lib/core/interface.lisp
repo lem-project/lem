@@ -46,6 +46,8 @@
     (when class
       (make-instance class))))
 
+(defvar lem-if:*background-color-of-drawing-window* nil)
+
 (defgeneric lem-if:invoke (implementation function))
 (defgeneric lem-if:display-background-mode (implementation))
 (defgeneric lem-if:update-foreground (implementation color-name))

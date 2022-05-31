@@ -1143,7 +1143,11 @@ window width is changed, we must recalc the window view point."
   ((border
     :initarg :border
     :initform 0
-    :reader floating-window-border)))
+    :reader floating-window-border)
+   (background-color
+    :initarg :background-color
+    :initform nil
+    :reader floating-window-background-color)))
 
 (defmethod initialize-instance :before ((floating-window floating-window) &rest initargs)
   (declare (ignore initargs))
@@ -1160,14 +1164,16 @@ window width is changed, we must recalc the window view point."
                                   (y (alexandria:required-argument :y))
                                   (width (alexandria:required-argument :width))
                                   (height (alexandria:required-argument :height))
-                                  (use-modeline-p nil))
+                                  (use-modeline-p nil)
+                                  (background-color nil))
   (make-instance 'floating-window
                  :buffer buffer
                  :x x
                  :y y
                  :width width
                  :height height
-                 :use-modeline-p use-modeline-p))
+                 :use-modeline-p use-modeline-p
+                 :background-color background-color))
 
 (defmethod %delete-window ((window floating-window))
   (when (eq window (current-window))

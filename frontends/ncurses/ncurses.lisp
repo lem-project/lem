@@ -234,11 +234,14 @@
 (defun attribute-to-bits (attribute-or-name)
   (let ((attribute (ensure-attribute attribute-or-name nil))
         (cursorp (eq attribute-or-name 'cursor)))
+    (when (and lem-if:*background-color-of-drawing-window* (null attribute))
+      (setf attribute (make-attribute :background lem-if:*background-color-of-drawing-window*)))
     (if (null attribute)
         0
         (or (lem::attribute-%internal-value attribute)
             (let* ((foreground (attribute-foreground attribute))
-                   (background (attribute-background attribute))
+                   (background (or (attribute-background attribute)
+                                   lem-if:*background-color-of-drawing-window*))
                    (bits (logior (if (or cursorp (lem::attribute-reverse-p attribute))
                                      (lem.term:get-color-pair background foreground)
                                      (lem.term:get-color-pair foreground background))
@@ -532,8 +535,17 @@
     (charms/ll:wattroff (ncurses-view-modeline-scrwin view) attr)))
 
 (defmethod lem-if:clear-eol ((implementation ncurses) view x y)
-  (charms/ll:wmove (ncurses-view-scrwin view) y x)
-  (charms/ll:wclrtoeol (ncurses-view-scrwin view)))
+  (cond (lem-if:*background-color-of-drawing-window*
+         (let ((attr (attribute-to-bits (make-attribute :background lem-if:*background-color-of-drawing-window*))))
+           (charms/ll:wattron (ncurses-view-scrwin view) attr)
+           (charms/ll:mvwaddstr (ncurses-view-scrwin view)
+                                y
+                                x
+                                (make-string (- (ncurses-view-width view) x) :initial-element #\space))
+           (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
+        (t
+         (charms/ll:wmove (ncurses-view-scrwin view) y x)
+         (charms/ll:wclrtoeol (ncurses-view-scrwin view)))))
 
 (defmethod lem-if:clear-eob ((implementation ncurses) view x y)
   (charms/ll:wmove (ncurses-view-scrwin view) y x)

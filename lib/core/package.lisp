@@ -9,6 +9,7 @@
   (:nicknames :lem-if)
   (:use)
   (:export
+   :*background-color-of-drawing-window*
    :invoke
    :display-background-mode
    :update-foreground

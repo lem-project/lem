@@ -548,8 +548,22 @@
          (charms/ll:wclrtoeol (ncurses-view-scrwin view)))))
 
 (defmethod lem-if:clear-eob ((implementation ncurses) view x y)
-  (charms/ll:wmove (ncurses-view-scrwin view) y x)
-  (charms/ll:wclrtobot (ncurses-view-scrwin view)))
+  (cond (lem-if:*background-color-of-drawing-window*
+         (let ((attr (attribute-to-bits (make-attribute :background lem-if:*background-color-of-drawing-window*))))
+           (charms/ll:wattron (ncurses-view-scrwin view) attr)
+           (charms/ll:mvwaddstr (ncurses-view-scrwin view)
+                                y
+                                x
+                                (make-string (- (ncurses-view-width view) x) :initial-element #\space))
+           (loop :for y1 :from y :to (ncurses-view-height view)
+                 :do (charms/ll:mvwaddstr (ncurses-view-scrwin view)
+                                          y1
+                                          0
+                                          (make-string (ncurses-view-width view) :initial-element #\space)))
+           (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
+        (t
+         (charms/ll:wmove (ncurses-view-scrwin view) y x)
+         (charms/ll:wclrtobot (ncurses-view-scrwin view)))))
 
 (define-attribute popup-border-color
   (:light :foreground "gray" :reverse-p t)

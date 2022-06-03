@@ -805,7 +805,7 @@
            (connection-implementation-name connection)
            (connection-implementation-version connection))
    :timeout 1
-   :gravity :center))
+   :style '(:gravity :center)))
 
 (defun %slime-connect (hostname port)
   (let ((connection

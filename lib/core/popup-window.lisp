@@ -173,14 +173,41 @@
   (adjust-for-redrawing (popup-window-gravity popup-window) popup-window)
   (call-next-method))
 
+(defstruct style
+  (gravity :cursor)
+  (use-border t)
+  (background-color nil))
+
+(defun merge-style (style &key (gravity nil gravity-p)
+                               (use-border nil use-border-p)
+                               (background-color nil background-color-p))
+  (make-style :gravity (if gravity-p
+                           gravity
+                           (style-gravity style))
+              :use-border (if use-border-p
+                              use-border
+                              (style-use-border style))
+              :background-color (if background-color-p
+                                    background-color
+                                    (style-background-color style))))
+
+(defun ensure-style (style)
+  (cond ((null style)
+         (make-style))
+        ((style-p style)
+         style)
+        (t
+         (apply #'make-style style))))
+
 (defun make-popup-window (&key (source-window (alexandria:required-argument :source-window))
                                (buffer (alexandria:required-argument :buffer))
                                (width (alexandria:required-argument :width))
                                (height (alexandria:required-argument :height))
                                (destination-window nil)
-                               (gravity :cursor)
-                               (border-size +border-size+))
-  (let ((gravity (ensure-gravity gravity)))
+                               style)
+  (let* ((style (ensure-style style))
+         (border-size (if (style-use-border style) +border-size+ 0))
+         (gravity (ensure-gravity (style-gravity style))))
     (destructuring-bind (x y w h)
         (compute-popup-window-rectangle gravity
                                         :source-window source-window
@@ -205,7 +232,8 @@
                             :source-window source-window
                             :base-width  width
                             :base-height height
-                            :border border-size))))))
+                            :border border-size
+                            :background-color (style-background-color style)))))))
 
 (defun quit-popup-window (floating-window)
   (delete-window floating-window))
@@ -311,18 +339,25 @@
                                       &key action-callback
                                            print-spec
                                            (focus-attribute 'popup-menu-attribute)
-                                           (non-focus-attribute 'non-focus-popup-menu-attribute))
-  (setf *print-spec* print-spec)
-  (setf *action-callback* action-callback)
-  (setf *focus-attribute* focus-attribute)
-  (setf *non-focus-attribute* non-focus-attribute)
-  (multiple-value-bind (buffer width)
-      (create-menu-buffer items print-spec)
-    (setf *menu-window*
-          (make-popup-window :source-window (current-window)
-                             :buffer buffer
-                             :width width
-                             :height (min 20 (length items))))))
+                                           (non-focus-attribute 'non-focus-popup-menu-attribute)
+                                           (style (make-style)))
+  (let ((focus-attribute (ensure-attribute focus-attribute))
+        (non-focus-attribute (ensure-attribute non-focus-attribute)))
+    (setf *print-spec* print-spec)
+    (setf *action-callback* action-callback)
+    (setf *focus-attribute* focus-attribute)
+    (setf *non-focus-attribute* non-focus-attribute)
+    (multiple-value-bind (buffer width)
+        (create-menu-buffer items print-spec)
+      (setf *menu-window*
+            (make-popup-window :source-window (current-window)
+                               :buffer buffer
+                               :width width
+                               :height (min 20 (length items))
+                               :style (merge-style
+                                       style
+                                       :background-color (or (style-background-color style)
+                                                             (attribute-background non-focus-attribute))))))))
 
 (defmethod lem-if:popup-menu-update (implementation items)
   (multiple-value-bind (buffer width)
@@ -390,8 +425,8 @@
 
 (defmethod lem-if:display-popup-message (implementation buffer-or-string
                                          &key timeout
-                                              (gravity :cursor)
-                                              destination-window)
+                                              destination-window
+                                              style)
   (let ((buffer (etypecase buffer-or-string
                   (string (make-popup-buffer buffer-or-string))
                   (buffer buffer-or-string))))
@@ -402,7 +437,7 @@
                                        :buffer buffer
                                        :width width
                                        :height height
-                                       :gravity gravity)))
+                                       :style style)))
         (buffer-start (window-view-point window))
         (window-see window)
         (when timeout
@@ -427,11 +462,11 @@
                (display-popup-message string
                                       :timeout timeout
                                       :destination-window (frame-message-window (current-frame))
-                                      :gravity :follow-cursor)))))
+                                      :style '(:gravity :follow-cursor))))))
 
 (defmethod lem:show-message-buffer (buffer)
   (setf (frame-message-window (current-frame))
         (display-popup-message buffer
                                :timeout nil
                                :destination-window (frame-message-window (current-frame))
-                               :gravity :follow-cursor)))
+                               :style '(:gravity :follow-cursor))))

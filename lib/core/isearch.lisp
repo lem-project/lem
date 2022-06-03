@@ -205,7 +205,7 @@
                                        *isearch-prompt*
                                        *isearch-string*)
                                :timeout nil
-                               :gravity :topright
+                               :style '(:gravity :topright)
                                :destination-window *isearch-popup-message*)))
 
 (defun make-add-char-callback (search-function)

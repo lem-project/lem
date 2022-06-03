@@ -607,7 +607,7 @@
                        (protocol:show-message-params-message params))))
     (send-event (lambda ()
                   (display-popup-message text
-                                         :gravity :top
+                                         :style '(:gravity :top)
                                          :timeout 3)))))
 
 ;;; Text Synchronization

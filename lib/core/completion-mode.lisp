@@ -89,9 +89,10 @@
   (move-to-column point (label-width print-spec) t)
   (line-end point)
   (insert-string point "  ")
-  (insert-string point (completion-item-detail item)
-                 :attribute 'detail-attribute)
-  (insert-string point " "))
+  (unless (alexandria:emptyp (completion-item-detail item))
+    (insert-string point (completion-item-detail item)
+                   :attribute 'detail-attribute)
+    (insert-string point " ")))
 
 (defvar *current-completion-spec* nil)
 (defvar *last-items* nil)

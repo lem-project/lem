@@ -1,7 +1,6 @@
 (in-package :lem)
 
 (export '(show-message
-          show-message-buffer
           clear-message
           message
           message-without-log
@@ -10,7 +9,6 @@
 (defparameter *message-timeout* 1)
 
 (defgeneric show-message (string &key timeout))
-(defgeneric show-message-buffer (buffer))
 (defgeneric clear-message ())
 
 (defun log-message (string args)
@@ -34,4 +32,4 @@
   t)
 
 (defun message-buffer (buffer)
-  (show-message-buffer buffer))
+  (show-message buffer))

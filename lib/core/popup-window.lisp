@@ -340,8 +340,9 @@
                                            print-spec
                                            (focus-attribute 'popup-menu-attribute)
                                            (non-focus-attribute 'non-focus-popup-menu-attribute)
-                                           (style (make-style)))
-  (let ((focus-attribute (ensure-attribute focus-attribute))
+                                           style)
+  (let ((style (ensure-style style))
+        (focus-attribute (ensure-attribute focus-attribute))
         (non-focus-attribute (ensure-attribute non-focus-attribute)))
     (setf *print-spec* print-spec)
     (setf *action-callback* action-callback)

@@ -166,8 +166,11 @@
                            (send-event (lambda () (jsonrpc-editor-error message code))))))
 
 (defun display-message (text)
-  (let ((lem::*message-timeout* nil))
-    (message "~A" text)))
+  (show-message text
+                :style '(:gravity :cursor
+                         :use-border nil
+                         :background-color "#404040")
+                :timeout nil))
 
 ;;;
 (defgeneric spec-initialization-options (spec)

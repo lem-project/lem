@@ -52,7 +52,10 @@
     :reader popup-window-base-width)
    (base-height
     :initarg :base-height
-    :reader popup-window-base-height)))
+    :reader popup-window-base-height)
+   (style
+    :initarg :style
+    :reader popup-window-style)))
 
 (defun ensure-gravity (gravity)
   (if (typep gravity 'gravity)
@@ -203,7 +206,6 @@
                                (buffer (alexandria:required-argument :buffer))
                                (width (alexandria:required-argument :width))
                                (height (alexandria:required-argument :height))
-                               (destination-window nil)
                                style)
   (let* ((style (ensure-style style))
          (border-size (if (style-use-border style) +border-size+ 0))
@@ -214,26 +216,40 @@
                                         :width width
                                         :height height
                                         :border-size border-size)
-      (cond (destination-window
-             (lem::window-set-size destination-window w h)
-             (lem::window-set-pos destination-window
-                                  (+ x border-size)
-                                  (+ y border-size))
-             destination-window)
-            (t
-             (make-instance 'popup-window
-                            :buffer buffer
-                            :x (+ x border-size)
-                            :y (+ y border-size)
-                            :width  w
-                            :height h
-                            :use-modeline-p nil
-                            :gravity gravity
-                            :source-window source-window
-                            :base-width  width
-                            :base-height height
-                            :border border-size
-                            :background-color (style-background-color style)))))))
+      (make-instance 'popup-window
+                     :buffer buffer
+                     :x (+ x border-size)
+                     :y (+ y border-size)
+                     :width  w
+                     :height h
+                     :use-modeline-p nil
+                     :gravity gravity
+                     :source-window source-window
+                     :base-width  width
+                     :base-height height
+                     :border border-size
+                     :background-color (style-background-color style)
+                     :style style))))
+
+(defun update-popup-window (&key (source-window (alexandria:required-argument :source-window))
+                                 (width (alexandria:required-argument :width))
+                                 (height (alexandria:required-argument :height))
+                                 (destination-window
+                                  (alexandria:required-argument :destination-window)))
+  (let* ((style (popup-window-style destination-window))
+         (border-size (if (style-use-border style) +border-size+ 0))
+         (gravity (ensure-gravity (style-gravity style))))
+    (destructuring-bind (x y w h)
+        (compute-popup-window-rectangle gravity
+                                        :source-window source-window
+                                        :width width
+                                        :height height
+                                        :border-size border-size)
+      (lem::window-set-size destination-window w h)
+      (lem::window-set-pos destination-window
+                           (+ x border-size)
+                           (+ y border-size))
+      destination-window)))
 
 (defun quit-popup-window (floating-window)
   (delete-window floating-window))
@@ -358,17 +374,17 @@
                                :style (merge-style
                                        style
                                        :background-color (or (style-background-color style)
-                                                             (attribute-background non-focus-attribute))))))))
+                                                             (attribute-background
+                                                              non-focus-attribute))))))))
 
 (defmethod lem-if:popup-menu-update (implementation items)
   (multiple-value-bind (buffer width)
       (create-menu-buffer items *print-spec*)
     (update-focus-overlay (buffer-point buffer))
-    (make-popup-window :source-window (current-window)
-                       :buffer buffer
-                       :width width
-                       :height (min 20 (length items))
-                       :destination-window *menu-window*)))
+    (update-popup-window :source-window (current-window)
+                         :width width
+                         :height (min 20 (length items))
+                         :destination-window *menu-window*)))
 
 (defmethod lem-if:popup-menu-quit (implementation)
   (when *focus-overlay*

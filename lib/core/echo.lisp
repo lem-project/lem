@@ -8,7 +8,7 @@
 
 (defparameter *message-timeout* 1)
 
-(defgeneric show-message (string &key timeout))
+(defgeneric show-message (string &key timeout style))
 (defgeneric clear-message ())
 
 (defun log-message (string args)

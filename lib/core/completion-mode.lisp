@@ -247,7 +247,8 @@
                            (loop :for item :in items
                                  :maximize (1+ (length (completion-item-label item)))))
             :focus-attribute 'completion-attribute
-            :non-focus-attribute 'non-focus-completion-attribute)
+            :non-focus-attribute 'non-focus-completion-attribute
+            :style '(:use-border nil))
            (start-completion-mode completion-spec)
            (unless repeat
              (narrowing-down))))))

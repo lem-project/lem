@@ -231,6 +231,22 @@
   width
   height)
 
+(defun compute-attribute-value (attribute cursorp)
+  (let* ((foreground (attribute-foreground attribute))
+         (background (or (attribute-background attribute)
+                         lem-if:*background-color-of-drawing-window*))
+         (bits (logior (if (or cursorp (lem::attribute-reverse-p attribute))
+                           (lem.term:get-color-pair background foreground)
+                           (lem.term:get-color-pair foreground background))
+                       0
+                       (if (lem::attribute-bold-p attribute)
+                           charms/ll:a_bold
+                           0)
+                       (if (lem::attribute-underline-p attribute)
+                           charms/ll:a_underline
+                           0))))
+    bits))
+
 (defun attribute-to-bits (attribute-or-name)
   (let ((attribute (ensure-attribute attribute-or-name nil))
         (cursorp (eq attribute-or-name 'cursor)))
@@ -239,19 +255,7 @@
     (if (null attribute)
         0
         (or (lem::attribute-cache attribute)
-            (let* ((foreground (attribute-foreground attribute))
-                   (background (or (attribute-background attribute)
-                                   lem-if:*background-color-of-drawing-window*))
-                   (bits (logior (if (or cursorp (lem::attribute-reverse-p attribute))
-                                     (lem.term:get-color-pair background foreground)
-                                     (lem.term:get-color-pair foreground background))
-                                 0
-                                 (if (lem::attribute-bold-p attribute)
-                                     charms/ll:a_bold
-                                     0)
-                                 (if (lem::attribute-underline-p attribute)
-                                     charms/ll:a_underline
-                                     0))))
+            (let ((bits (compute-attribute-value attribute cursorp)))
               (setf (lem::attribute-cache attribute) bits)
               bits)))))
 

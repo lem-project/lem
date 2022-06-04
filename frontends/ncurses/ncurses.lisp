@@ -238,7 +238,7 @@
       (setf attribute (make-attribute :background lem-if:*background-color-of-drawing-window*)))
     (if (null attribute)
         0
-        (or (lem::attribute-%internal-value attribute)
+        (or (lem::attribute-cache attribute)
             (let* ((foreground (attribute-foreground attribute))
                    (background (or (attribute-background attribute)
                                    lem-if:*background-color-of-drawing-window*))
@@ -252,7 +252,7 @@
                                  (if (lem::attribute-underline-p attribute)
                                      charms/ll:a_underline
                                      0))))
-              (setf (lem::attribute-%internal-value attribute) bits)
+              (setf (lem::attribute-cache attribute) bits)
               bits)))))
 
 ;; for input

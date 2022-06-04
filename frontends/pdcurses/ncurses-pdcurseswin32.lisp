@@ -356,7 +356,7 @@
         (cursorp (eq attribute-or-name 'cursor)))
     (if (null attribute)
         0
-        (or (lem::attribute-%internal-value attribute)
+        (or (lem::attribute-cache attribute)
             (let* ((foreground (attribute-foreground attribute))
                    (background (attribute-background attribute))
                    (bits (logior (if (or cursorp (lem::attribute-reverse-p attribute))
@@ -369,7 +369,7 @@
                                  (if (lem::attribute-underline-p attribute)
                                      charms/ll:PDC_A_UNDERLINE
                                      0))))
-              (setf (lem::attribute-%internal-value attribute) bits)
+              (setf (lem::attribute-cache attribute) bits)
               bits)))))
 
 ;; mouse function

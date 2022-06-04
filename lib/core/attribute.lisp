@@ -53,9 +53,9 @@
    (underline-p
     :initarg :underline-p
     :reader attribute-underline-p)
-   (%internal-value
+   (cache
     :initform nil
-    :accessor attribute-%internal-value)))
+    :accessor attribute-cache)))
 
 (defmethod print-object ((attribute attribute) stream)
   (print-unreadable-object (attribute stream :type t :identity t)
@@ -116,7 +116,7 @@
                                      (background nil backgroundp)
                                      reverse-p bold-p underline-p)
   (let ((attribute (ensure-attribute attribute t)))
-    (setf (attribute-%internal-value attribute) nil)
+    (setf (attribute-cache attribute) nil)
     (when foregroundp
       (setf (slot-value attribute 'foreground) foreground))
     (when backgroundp
@@ -128,7 +128,7 @@
 (macrolet ((def (setter slot-name)
              `(defun ,setter (attribute value)
                 (let ((attribute (ensure-attribute attribute t)))
-                  (setf (attribute-%internal-value attribute) nil)
+                  (setf (attribute-cache attribute) nil)
                   (setf (slot-value attribute ',slot-name) value)))))
   (def set-attribute-foreground foreground)
   (def set-attribute-background background)

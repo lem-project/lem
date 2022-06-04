@@ -1,13 +1,11 @@
 (in-package :lem)
 
-(export '(*universal-argument*
-          *exit-editor-hook*
+(export '(*exit-editor-hook*
           interactive-p
           continue-flag
           pop-up-backtrace
           call-background-job))
 
-(defvar *universal-argument*)
 (defvar *exit-editor-hook* '())
 
 (defun bailout (condition)

@@ -10,19 +10,13 @@
 (defvar *universal-argument*)
 (defvar *exit-editor-hook* '())
 
-(defparameter +bailout-tag+ (make-symbol "BAILOUT"))
-
-(defmacro with-catch-bailout (&body body)
-  `(catch +bailout-tag+
-     ,@body))
-
 (defun bailout (condition)
-  (throw +bailout-tag+
-    (with-output-to-string (stream)
-      (princ condition stream)
-      (uiop:print-backtrace
-       :stream stream
-       :condition condition))))
+  (signal 'exit-editor
+          :report (with-output-to-string (stream)
+                    (princ condition stream)
+                    (uiop:print-backtrace
+                     :stream stream
+                     :condition condition))))
 
 (defun pop-up-backtrace (condition)
   (let ((o (with-output-to-string (stream)
@@ -145,15 +139,14 @@
     (fix-current-buffer-if-broken)))
 
 (defun toplevel-command-loop (initialize-function)
-  (with-catch-bailout
-    (handler-bind ((exit-editor
-                     (lambda (c)
-                       (return-from toplevel-command-loop
-                         (exit-editor-report c)))))
-      (with-error-handler ()
-        (funcall initialize-function))
-      (with-editor-stream ()
-        (command-loop)))))
+  (handler-bind ((exit-editor
+                   (lambda (c)
+                     (return-from toplevel-command-loop
+                       (exit-editor-report c)))))
+    (with-error-handler ()
+      (funcall initialize-function))
+    (with-editor-stream ()
+      (command-loop))))
 
 (defun exit-editor (&optional report)
   (run-hooks *exit-editor-hook*)

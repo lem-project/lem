@@ -10,7 +10,6 @@
 (defvar *universal-argument*)
 (defvar *exit-editor-hook* '())
 
-(defparameter +exit-tag+ (make-symbol "EXIT"))
 (defparameter +bailout-tag+ (make-symbol "BAILOUT"))
 
 (defmacro with-catch-bailout (&body body)
@@ -147,7 +146,10 @@
 
 (defun toplevel-command-loop (initialize-function)
   (with-catch-bailout
-    (catch +exit-tag+
+    (handler-bind ((exit-editor
+                     (lambda (c)
+                       (return-from toplevel-command-loop
+                         (exit-editor-report c)))))
       (with-error-handler ()
         (funcall initialize-function))
       (with-editor-stream ()
@@ -156,7 +158,7 @@
 (defun exit-editor (&optional report)
   (run-hooks *exit-editor-hook*)
   (mapc #'disable-minor-mode *global-minor-mode-list*)
-  (throw +exit-tag+ report))
+  (signal 'exit-editor :report report))
 
 (defun call-background-job (function cont)
   (bt:make-thread

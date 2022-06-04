@@ -13,3 +13,7 @@
    (lambda (condition stream)
      (when (editor-abort-message condition)
        (princ (editor-abort-message condition) stream)))))
+
+(define-condition exit-editor ()
+  ((report :initarg :report
+           :reader exit-editor-report)))

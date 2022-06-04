@@ -254,10 +254,14 @@
       (setf attribute (make-attribute :background lem-if:*background-color-of-drawing-window*)))
     (if (null attribute)
         0
-        (or (lem::attribute-cache attribute)
-            (let ((bits (compute-attribute-value attribute cursorp)))
-              (setf (lem::attribute-cache attribute) bits)
-              bits)))))
+        (cond ((and (null (attribute-background attribute))
+                    lem-if:*background-color-of-drawing-window*)
+               (compute-attribute-value attribute cursorp))
+              ((lem::attribute-cache attribute))
+              (t
+               (let ((bits (compute-attribute-value attribute cursorp)))
+                 (setf (lem::attribute-cache attribute) bits)
+                 bits))))))
 
 ;; for input
 ;;  (we don't use stdscr for input because it calls wrefresh implicitly

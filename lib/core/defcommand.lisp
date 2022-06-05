@@ -80,7 +80,10 @@
           (command-name (string-downcase name)))
       (alexandria:with-unique-names (command universal-argument)
         `(progn
-           (add-command ,command-name (make-cmd :name ',name :form ',form))
+           (add-command ,command-name
+                        (make-cmd :name ',name
+                                  :form ',form
+                                  :source-location #+sbcl (sb-c:source-location) #-sbcl nil))
            (defun ,name ,params
              ;; コマンドではなく直接この関数を呼び出した場合
              ;; - *this-command*が束縛されない

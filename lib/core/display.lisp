@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(defvar *inactive-window-background-color* nil)
+
 (defun overlay-attributes (under-attributes over-start over-end over-attribute)
   ;; under-attributes := ((start-charpos end-charpos attribute) ...)
   (let* ((over-attribute (ensure-attribute over-attribute))

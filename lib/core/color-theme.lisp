@@ -59,6 +59,8 @@
                     (apply #'set-foreground args))
                    ((background)
                     (apply #'set-background args))
+                   ((inactive-window-background)
+                    (setf *inactive-window-background-color* (first args)))
                    (otherwise
                     (apply #'set-attribute name args))))
                spec-table))))
@@ -93,6 +95,7 @@
   (display-background-mode :dark)
   ;; (foreground "#FFFFFF")
   ;; (background "#000000")
+  (inactive-window-background "#2A2A2A")
   (region :foreground nil :background "blue")
   (syntax-string-attribute :foreground "light salmon")
   (syntax-comment-attribute :foreground "chocolate1")

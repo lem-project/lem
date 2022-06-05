@@ -42,6 +42,7 @@
         :do (setf (gethash name spec-table) args)))
 
 (defun load-theme-1 (name)
+  (setf *inactive-window-background-color* nil)
   (let ((theme (find-color-theme name)))
     (unless theme
       (error "undefined color theme: ~A" name))
@@ -80,6 +81,7 @@
   (display-background-mode :light)
   ;; (foreground "#000000")
   ;; (background "#FFFFFF")
+  (inactive-window-background "light gray")
   (region :foreground nil :background "#eedc82")
   (modeline :background "#404040" :foreground "white")
   (modeline-inactive :background "#303030" :foreground "gray")

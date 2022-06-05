@@ -428,8 +428,13 @@
 
 (defun redraw-display-window (window force)
   (let ((lem-if:*background-color-of-drawing-window*
-          (when (typep window 'floating-window)
-            (floating-window-background-color window)))
+          (cond ((typep window 'floating-window)
+                 (floating-window-background-color window))
+                ((and *inactive-window-background-color*
+                      (not (eq window (current-window)))
+                      (eq 'window (type-of window)))
+                 *inactive-window-background-color*)
+                (t nil)))
         (focus-window-p (eq window (current-window)))
         (buffer (window-buffer window))
         (screen (window-screen window)))

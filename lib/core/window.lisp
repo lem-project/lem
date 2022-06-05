@@ -208,6 +208,7 @@
 
 (defun (setf current-window) (new-window)
   (check-type new-window window)
+  (notify-frame-redisplay-required (current-frame))
   (let ((frame (current-frame)))
     (alexandria:when-let (old-window (frame-current-window frame))
       (move-point (%window-point old-window)
@@ -237,6 +238,7 @@
   (screen-delete (window-screen window)))
 
 (defun delete-window (window)
+  (notify-frame-redisplay-required (current-frame))
   (%delete-window window)
   (run-hooks (window-delete-hook window))
   (%free-window window)
@@ -688,6 +690,7 @@ window width is changed, we must recalc the window view point."
         (car window-list))))
 
 (defun window-set-pos (window x y)
+  (notify-frame-redisplay-required (current-frame))
   (when (floating-window-p window)
     (notify-floating-window-modified (current-frame)))
   (screen-set-pos (window-screen window) x y)
@@ -695,6 +698,7 @@ window width is changed, we must recalc the window view point."
   (set-window-y y window))
 
 (defun window-set-size (window width height)
+  (notify-frame-redisplay-required (current-frame))
   (when (floating-window-p window)
     (notify-floating-window-modified (current-frame)))
   (set-window-width width window)

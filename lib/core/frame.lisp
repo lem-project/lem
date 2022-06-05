@@ -67,11 +67,15 @@ redraw-display関数でこのスロットを参照して、画面の再描画時
     :initform nil
     :reader frame-require-redisplay-windows
     :writer set-frame-require-redisplay-windows
-    :documentation "このスロットがTの場合、redraw-display関数で画面全体を再描画します。
-redraw-display内でNILにセットされます。
-このスロットが必要になったのは、frame-multiplexerでframe-multiplexer-deleteを呼び出した後に
-redraw-displayを呼び出したとき、画面の最小限の更新だけでは変更前のフレームが
-残ってしまう問題があったからです。
+    :documentation "このスロットがTの場合、
+redraw-display関数でキャッシュを捨てて画面全体を再描画します。
+
+このスロットが使われるケース
+- frame-multiplexer-delete呼び出し後にredraw-displayで再描画時に画面の最小限の更新だけでは
+  変更前のフレームが残ってしまう問題がありキャッシュを無効化する必要がある
+- インアクティブなウィンドウの背景色を変える場合、
+  ウィンドウ切り替え時などに画面全体を再描画する必要がある
+
 このスロットは内部処理のためのものであり、使ってはいけません。(DO NOT USE THIS SLOT)")
    (prompt-window
     :initform nil

@@ -351,26 +351,20 @@
    :height height))
 
 ;; overwrite function (use pdcurses constants)
-(defun attribute-to-bits (attribute-or-name)
-  (let ((attribute (ensure-attribute attribute-or-name nil))
-        (cursorp (eq attribute-or-name 'cursor)))
-    (if (null attribute)
-        0
-        (or (lem::attribute-cache attribute)
-            (let* ((foreground (attribute-foreground attribute))
-                   (background (attribute-background attribute))
-                   (bits (logior (if (or cursorp (lem::attribute-reverse-p attribute))
-                                     (lem.term:get-color-pair background foreground)
-                                     (lem.term:get-color-pair foreground background))
-                                 0
-                                 (if (lem::attribute-bold-p attribute)
-                                     charms/ll:PDC_A_BOLD
-                                     0)
-                                 (if (lem::attribute-underline-p attribute)
-                                     charms/ll:PDC_A_UNDERLINE
-                                     0))))
-              (setf (lem::attribute-cache attribute) bits)
-              bits)))))
+(defun compute-attribute-value (attribute cursorp)
+  (let* ((foreground (attribute-foreground attribute))
+         (background (attribute-background attribute))
+         (bits (logior (if (or cursorp (lem::attribute-reverse-p attribute))
+                           (lem.term:get-color-pair background foreground)
+                           (lem.term:get-color-pair foreground background))
+                       0
+                       (if (lem::attribute-bold-p attribute)
+                           charms/ll:PDC_A_BOLD
+                           0)
+                       (if (lem::attribute-underline-p attribute)
+                           charms/ll:PDC_A_UNDERLINE
+                           0))))
+    bits))
 
 ;; mouse function
 (defun mouse-get-window-rect (window)

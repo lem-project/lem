@@ -1258,13 +1258,8 @@ window width is changed, we must recalc the window view point."
                (redraw-window-list
                 (or (frame-require-redisplay-windows (current-frame))
                     (and (redraw-after-modifying-floating-window (implementation))
-                         (or
-                          ;; floating-windowが変更されたら、その下のウィンドウは再描画する必要がある
-                          (frame-modified-floating-windows (current-frame))
-                          ;; floating-windowが存在するときは常にその下のウィンドウは再描画する
-                          ;; 例えば、promptの表示中に文字の削除などでpromptが縮小した場合に
-                          ;; その下のウィンドウを再描画しないとpromptの枠が残ってしまう
-                          (not (null (frame-floating-windows (current-frame))))))
+                         ;; floating-windowが変更されたら、その下のウィンドウは再描画する必要がある
+                         (frame-modified-floating-windows (current-frame)))
                     force))
                (redraw-floating-windows)
                (lem-if:update-display (implementation))))

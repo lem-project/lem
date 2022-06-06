@@ -140,6 +140,27 @@
   (dolist (attribute *attributes*)
     (setf (get attribute '%attribute-value) nil)))
 
+(defun get-attribute-cache (attribute &key background)
+  (if (null (attribute-cache attribute))
+      nil
+      (dolist (elt (attribute-cache attribute))
+        (let ((key (car elt)))
+          (when (and (eq :background (first key))
+                     (equal background (second key)))
+            (return-from get-attribute-cache (cdr elt)))))))
+
+(defun (setf get-attribute-cache) (value attribute &key background)
+  (dolist (elt (attribute-cache attribute)
+               (setf (attribute-cache attribute)
+                     (acons (list :background background) value
+                            (attribute-cache attribute))))
+    (let ((key (car elt)))
+      (when (and (eq :background (first key))
+                 (equal background (second key)))
+        (setf (cdr elt) value)
+        (return))))
+  value)
+
 (defun display-light-p ()
   (eq :light (display-background-mode)))
 

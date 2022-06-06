@@ -254,13 +254,15 @@
       (setf attribute (make-attribute :background lem-if:*background-color-of-drawing-window*)))
     (if (null attribute)
         0
-        (cond ((and (null (attribute-background attribute))
-                    lem-if:*background-color-of-drawing-window*)
-               (compute-attribute-value attribute cursorp))
-              ((lem::attribute-cache attribute))
+        (cond ((lem::get-attribute-cache
+                attribute
+                :background lem-if:*background-color-of-drawing-window*))
               (t
                (let ((bits (compute-attribute-value attribute cursorp)))
-                 (setf (lem::attribute-cache attribute) bits)
+                 (setf (lem::get-attribute-cache
+                        attribute
+                        :background lem-if:*background-color-of-drawing-window*)
+                       bits)
                  bits))))))
 
 ;; for input

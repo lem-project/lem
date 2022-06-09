@@ -149,10 +149,10 @@
                                                       view-end-point))))
         (setf (screen-left-width screen) left-width)))))
 
-(defun draw-point-to-screen (screen view-point cursor-point)
+(defun draw-point-to-screen (screen view-point cursor-point attribute)
   (let ((charpos (point-charpos cursor-point)))
     (draw-attribute-to-screen-line screen
-                                   'cursor
+                                   attribute
                                    (count-lines view-point cursor-point)
                                    charpos
                                    (1+ charpos)
@@ -160,9 +160,16 @@
 
 (defun draw-cursor-to-screen (window)
   (when (eq (current-window) window)
-    (draw-point-to-screen (window-screen window)
-                          (window-view-point window)
-                          (buffer-point (window-buffer window)))))
+    (let ((buffer (window-buffer window)))
+      (draw-point-to-screen (window-screen window)
+                            (window-view-point window)
+                            (buffer-point buffer)
+                            'cursor)
+      (dolist (point (buffer-fake-cursors buffer))
+        (draw-point-to-screen (window-screen window)
+                              (window-view-point window)
+                              point
+                              'fake-cursor)))))
 
 (defun reset-screen-lines (screen view-point)
   (with-point ((point view-point))

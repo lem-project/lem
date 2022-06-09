@@ -49,6 +49,8 @@
                (:file "typeout")
                (:file "lem")
 
+               (:file "cursors")
+
                (:file "primitive-command")
                (:file "self-insert-command")
                (:file "file-command")

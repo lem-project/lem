@@ -198,6 +198,10 @@
   (:light :foreground "white" :background "black")
   (:dark :foreground "black" :background "white"))
 
+(define-attribute fake-cursor
+  (:light :foreground "white" :background "blue")
+  (:dark :foreground "black" :background "yellow"))
+
 (define-attribute region
   (:light :foreground nil :background "#eedc82")
   (:dark :foreground nil :background "blue"))

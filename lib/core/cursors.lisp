@@ -24,12 +24,13 @@
   (values))
 
 (defun buffer-cursors (buffer)
-  (cons (buffer-point buffer)
-        (buffer-fake-cursors buffer)))
+  (sort (copy-list (cons (buffer-point buffer)
+                         (buffer-fake-cursors buffer)))
+        #'point<))
 
 #+lem.features.multiple-cursors
 (define-command add-cursors-to-next-line () ()
-  (let ((cursors (sort (copy-list (buffer-cursors (current-buffer))) #'point<)))
+  (let ((cursors (buffer-cursors (current-buffer))))
     (loop :for (cursor next-cursor) :on cursors
           :do (with-point ((p cursor))
                 (when (and (line-offset p 1)

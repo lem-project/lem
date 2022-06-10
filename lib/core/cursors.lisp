@@ -48,3 +48,16 @@
 
 (defmacro do-multiple-cursors ((point buffer) &body body)
   `(foreach-multiple-cursors ,buffer (lambda (,point) ,@body)))
+
+(defun call-with-multiple-cursors (buffer function)
+  (with-point ((save-point (buffer-point buffer) :left-inserting))
+    (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
+      (move-point (buffer-point buffer) point)
+      (funcall function)
+      (unless (point= point (buffer-point buffer))
+        (move-point point (buffer-point buffer))))
+    (move-point (buffer-point buffer) save-point))
+  (funcall function))
+
+(defmacro with-multiple-cursors ((&optional (buffer '(current-buffer))) &body body)
+  `(call-with-multiple-cursors ,buffer (lambda () ,@body)))

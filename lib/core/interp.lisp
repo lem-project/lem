@@ -62,11 +62,6 @@
               (current-buffer))
     (setf (current-buffer) (window-buffer (current-window)))))
 
-(defvar *editor-condition-handlers* (make-hash-table))
-
-(defun register-command-loop-condition-handler (condition-name handler)
-  (pushnew handler (gethash condition-name *editor-condition-handlers*)))
-
 (defun command-loop-body ()
   (flet ((redraw ()
            (when (= 0 (event-queue-length))
@@ -88,11 +83,7 @@
 
          (editor-condition-handler (c)
            (declare (ignore c))
-           (stop-record-key))
-
-         (editor-condition-handler! (c)
-           (dolist (function (gethash (type-of c) *editor-condition-handlers*))
-             (funcall function c))))
+           (stop-record-key)))
 
     (redraw)
 
@@ -101,9 +92,7 @@
                          #'editor-abort-handler)
                        (editor-condition
                          #'editor-condition-handler))
-          (handler-bind ((editor-condition
-                           #'editor-condition-handler!))
-            (read-command-and-call)))
+          (read-command-and-call))
       (editor-condition (c)
         (restart-case (error c)
           (lem-restart:message ()

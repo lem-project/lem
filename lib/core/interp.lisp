@@ -6,6 +6,8 @@
           pop-up-backtrace
           call-background-job))
 
+(define-condition editor-abort-handler (signal-handler) ())
+
 (defvar *exit-editor-hook* '())
 
 (defun bailout (condition)
@@ -79,11 +81,14 @@
 
          (editor-abort-handler (c)
            (declare (ignore c))
-           (buffer-mark-cancel (current-buffer)))
+           (signal-subconditions 'editor-abort-handler)
+           (buffer-mark-cancel (current-buffer)) ; TODO: define handler
+           )
 
          (editor-condition-handler (c)
            (declare (ignore c))
-           (stop-record-key)))
+           (stop-record-key) ; TODO: define handler
+           ))
 
     (redraw)
 

@@ -17,27 +17,40 @@
     (delete-point point)
     (values)))
 
-(defun delete-all-fake-cursors (buffer)
+(defun clear-cursors (buffer)
   (mapc #'delete-fake-cursor (buffer-fake-cursors buffer))
   (values))
 
-(defun call-with-multiple-cursors (buffer function)
+(defun call-with-multiple-cursors (buffer function only-fake-cursors)
   (with-point ((save-point (buffer-point buffer) :left-inserting))
     (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
       (move-point (buffer-point buffer) point)
       (funcall function)
       (unless (point= point (buffer-point buffer))
         (move-point point (buffer-point buffer))))
-    (move-point (buffer-point buffer) save-point))
-  (funcall function))
+    (move-point (buffer-point buffer) save-point)
+    (unless only-fake-cursors
+      (funcall function))))
 
-(defmacro with-multiple-cursors ((&optional (buffer '(current-buffer))) &body body)
-  `(call-with-multiple-cursors ,buffer (lambda () ,@body)))
+(defmacro with-multiple-cursors ((&key (buffer '(current-buffer))
+                                       (only-fake-cursors nil))
+                                 &body body)
+  `(call-with-multiple-cursors ,buffer
+                               (lambda () ,@body)
+                               ,only-fake-cursors))
 
 (defun buffer-cursors (buffer)
   (sort (copy-list (cons (buffer-point buffer)
                          (buffer-fake-cursors buffer)))
         #'point<))
+
+(defun clear-duplicate-cursors (buffer)
+  (loop :for (cursor next-cursor) :on (buffer-cursors buffer)
+        :when (and next-cursor (same-line-p cursor next-cursor))
+        :do (delete-fake-cursor
+             (if (eq cursor (buffer-point buffer))
+                 next-cursor
+                 cursor))))
 
 (define-command add-cursors-to-next-line () ()
   (let ((cursors (buffer-cursors (current-buffer))))

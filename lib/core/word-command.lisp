@@ -59,12 +59,12 @@
 
 (define-key *global-keymap* "M-f" 'forward-word)
 (define-key *global-keymap* "C-Right" 'forward-word)
-(define-command forward-word (n) ("p")
+(define-command (forward-word (:advice-classes movable-advice)) (n) ("p")
   (word-offset (current-point) n))
 
 (define-key *global-keymap* "M-b" 'previous-word)
 (define-key *global-keymap* "C-Left" 'previous-word)
-(define-command previous-word (n) ("p")
+(define-command (previous-word (:advice-classes movable-advice)) (n) ("p")
   (word-offset (current-point) (- n)))
 
 (define-key *global-keymap* "M-d" 'delete-word)
@@ -140,7 +140,7 @@
   (case-word-aux (current-point) n #'alphanumericp #'char-upcase #'char-upcase))
 
 (define-key *global-keymap* "M-}" 'forward-paragraph)
-(define-command forward-paragraph (&optional (n 1)) ("p")
+(define-command (forward-paragraph (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (let ((point (current-point))
         (dir (if (plusp n) 1 -1)))
     (dotimes (_ (abs n))
@@ -153,7 +153,7 @@
                   (return-from forward-paragraph))))))
 
 (define-key *global-keymap* "M-{" 'backward-paragraph)
-(define-command backward-paragraph (&optional (n 1)) ("p")
+(define-command (backward-paragraph (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (forward-paragraph (- n)))
 
 (define-key *global-keymap* "M-k" 'kill-paragraph)

@@ -61,6 +61,8 @@
 
 (defvar *set-location-hook* '())
 
+(defclass movable-advice () ())
+
 (defun delete-character-with-killring (point n killp)
   (let ((string (delete-character point n)))
     (when (and killp string) (kill-push string))
@@ -266,13 +268,13 @@
            (move-to-beginning-of-buffer)
            (editor-error "Beginning of buffer")))))
 
-(define-command next-line (&optional n) ("p")
+(define-command (next-line (:advice-classes movable-advice)) (&optional n) ("p")
   (next-line-aux n
                  #'point-virtual-line-column
                  #'move-to-next-virtual-line
                  #'move-to-virtual-line-column))
 
-(define-command next-logical-line (&optional n) ("p")
+(define-command (next-logical-line (:advice-classes movable-advice)) (&optional n) ("p")
   (next-line-aux n
                  #'point-column
                  #'line-offset
@@ -280,39 +282,40 @@
 
 (define-key *global-keymap* "C-p" 'previous-line)
 (define-key *global-keymap* "Up" 'previous-line)
-(define-command previous-line (&optional (n 1)) ("p")
+(define-command (previous-line (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (next-line (- n)))
 
-(define-command previous-logical-line (&optional (n 1)) ("p")
+(define-command (previous-logical-line (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (next-logical-line (- n)))
 
 (define-key *global-keymap* "C-f" 'forward-char)
 (define-key *global-keymap* "Right" 'forward-char)
-(define-command forward-char (&optional (n 1)) ("p")
+(define-command (forward-char (:advice-classes movable-advice))
+    (&optional (n 1)) ("p")
   (or (character-offset (current-point) n)
       (editor-error "End of buffer")))
 
 (define-key *global-keymap* "C-b" 'backward-char)
 (define-key *global-keymap* "Left" 'backward-char)
-(define-command backward-char (&optional (n 1)) ("p")
+(define-command (backward-char (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (or (character-offset (current-point) (- n))
       (editor-error "Beginning of buffer")))
 
 (define-key *global-keymap* "M-<" 'move-to-beginning-of-buffer)
-(define-command move-to-beginning-of-buffer () ()
+(define-command (move-to-beginning-of-buffer (:advice-classes movable-advice)) () ()
   (run-hooks *set-location-hook* (current-point))
   (buffer-start (current-point))
   t)
 
 (define-key *global-keymap* "M->" 'move-to-end-of-buffer)
-(define-command move-to-end-of-buffer () ()
+(define-command (move-to-end-of-buffer (:advice-classes movable-advice)) () ()
   (run-hooks *set-location-hook* (current-point))
   (buffer-end (current-point))
   t)
 
 (define-key *global-keymap* "C-a" 'move-to-beginning-of-line)
 (define-key *global-keymap* "Home" 'move-to-beginning-of-line)
-(define-command move-to-beginning-of-line () ()
+(define-command (move-to-beginning-of-line (:advice-classes movable-advice)) () ()
   (let ((bol (backward-line-wrap (copy-point (current-point) :temporary)
                                  (current-window)
                                  t)))
@@ -322,24 +325,24 @@
                                          bol)
         (move-point (current-point) bol)))
   t)
-(define-command move-to-beginning-of-logical-line () ()
+(define-command (move-to-beginning-of-logical-line (:advice-classes movable-advice)) () ()
   (line-start (current-point))
   t)
 
 (define-key *global-keymap* "C-e" 'move-to-end-of-line)
 (define-key *global-keymap* "End" 'move-to-end-of-line)
-(define-command move-to-end-of-line () ()
+(define-command (move-to-end-of-line (:advice-classes movable-advice)) () ()
   (or (and (forward-line-wrap (current-point) (current-window))
            (character-offset (current-point) -1))
       (line-end (current-point)))
   t)
-(define-command move-to-end-of-logical-line () ()
+(define-command (move-to-end-of-logical-line (:advice-classes movable-advice)) () ()
   (line-end (current-point))
   t)
 
 (define-key *global-keymap* "C-v" 'next-page)
 (define-key *global-keymap* "PageDown" 'next-page)
-(define-command next-page (&optional n) ("P")
+(define-command (next-page (:advice-classes movable-advice)) (&optional n) ("P")
   (if n
       (scroll-down n)
       (progn
@@ -348,7 +351,7 @@
 
 (define-key *global-keymap* "M-v" 'previous-page)
 (define-key *global-keymap* "PageUp" 'previous-page)
-(define-command previous-page (&optional n) ("P")
+(define-command (previous-page (:advice-classes movable-advice)) (&optional n) ("P")
   (if n
       (scroll-up n)
       (progn
@@ -381,7 +384,7 @@
                                :initial-element #\space))))
 
 (define-key *global-keymap* "C-x ]" 'next-page-char)
-(define-command next-page-char (&optional (n 1)) ("p")
+(define-command (next-page-char (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (let ((point (current-point)))
     (dotimes (_ (abs n))
       (loop
@@ -391,7 +394,7 @@
           (return))))))
 
 (define-key *global-keymap* "C-x [" 'previous-page-char)
-(define-command previous-page-char (&optional (n 1)) ("p")
+(define-command (previous-page-char (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (next-page-char (- n)))
 
 (define-key *global-keymap* "C-x C-o" 'delete-blank-lines)

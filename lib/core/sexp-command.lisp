@@ -11,7 +11,7 @@
           transpose-sexps))
 
 (define-key *global-keymap* "C-M-f" 'forward-sexp)
-(define-command forward-sexp (&optional (n 1) no-errors) ("p")
+(define-command (forward-sexp (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (with-point ((prev (current-point)))
     (let ((point (form-offset (current-point) n)))
       (or point
@@ -22,23 +22,23 @@
                 (scan-error)))))))
 
 (define-key *global-keymap* "C-M-b" 'backward-sexp)
-(define-command backward-sexp (&optional (n 1) no-errors) ("p")
+(define-command (backward-sexp (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (forward-sexp (- n) no-errors))
 
 (define-key *global-keymap* "C-M-n" 'forward-list)
-(define-command forward-list (&optional (n 1) no-errors) ("p")
+(define-command (forward-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (scan-lists (current-point) n 0 no-errors))
 
 (define-key *global-keymap* "C-M-p" 'backward-list)
-(define-command backward-list (&optional (n 1) no-errors) ("p")
+(define-command (backward-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (scan-lists (current-point) (- n) 0 no-errors))
 
 (define-key *global-keymap* "C-M-d" 'down-list)
-(define-command down-list (&optional (n 1) no-errors) ("p")
+(define-command (down-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (scan-lists (current-point) n -1 no-errors))
 
 (define-key *global-keymap* "C-M-u" 'backward-up-list)
-(define-command backward-up-list (&optional (n 1) no-errors) ("p")
+(define-command (backward-up-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (or (maybe-beginning-of-string (current-point))
       (scan-lists (current-point) (- n) 1 no-errors)))
 

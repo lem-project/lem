@@ -313,7 +313,7 @@
 (define-command sldb-abort () ()
   (lisp-eval-async '(swank:sldb-abort)
                    (lambda (v)
-                     (message "Restart returned: ~A" v))))
+                     (display-message "Restart returned: ~A" v))))
 
 (defun frame-number-at-point (point)
   (or (when (text-property-at point 'sldb-frame)
@@ -337,7 +337,7 @@
     (lisp-rex `(swank:restart-frame ,frame-number)
               :continuation (lambda (v)
                               (alexandria:destructuring-ecase v
-                                ((:ok value) (message "~A" value))
+                                ((:ok value) (display-message "~A" value))
                                 ((:abort _) (declare (ignore _))))))))
 
 (defun sldb-invoke-restart (n)
@@ -347,7 +347,7 @@
               ,n)
             :continuation (lambda (x)
                             (alexandria:destructuring-ecase x
-                              ((:ok value) (message "Restart returned: %s" value))
+                              ((:ok value) (display-message "Restart returned: %s" value))
                               ((:abort _) (declare (ignore _)))))))
 
 (define-command sldb-invoke-restart-0 () () (sldb-invoke-restart 0))
@@ -392,7 +392,7 @@
     ((:splice (eval-form-for-frame "Eval in frame (~A)> ")))
   (lisp-eval-async `(swank:eval-string-in-frame ,string ,frame ,package)
                    (lambda (string)
-                     (message "~A" string))))
+                     (display-message "~A" string))))
 
 (define-command sldb-pprint-eval-in-frame (frame string package)
     ((:splice (eval-form-for-frame "Eval in frame (~A)> ")))
@@ -418,7 +418,7 @@
     ((prompt-for-symbol-name "Function: "))
   (lisp-eval-async `(swank:sldb-break ,name)
                    (lambda (message)
-                     (message "~A" message))))
+                     (display-message "~A" message))))
 
 (define-command sldb-inspect-condition () ()
   (lisp-eval-async '(swank:inspect-current-condition)
@@ -427,7 +427,7 @@
 (define-command sldb-print-condition () ()
   (lisp-eval-async '(swank:sdlb-print-condition)
                    (lambda (message)
-                     (message "~A" message))))
+                     (display-message "~A" message))))
 
 (defun recompile-location (source-location)
   (save-excursion
@@ -442,7 +442,7 @@
                    (lambda (source-location)
                      (alexandria:destructuring-case source-location
                        ((:error message)
-                        (message "~A" message))
+                        (display-message "~A" message))
                        ((t &rest _)
                         (declare (ignore _))
                         (recompile-location source-location))))))

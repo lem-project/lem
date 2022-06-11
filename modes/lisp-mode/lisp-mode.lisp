@@ -255,7 +255,7 @@
                                                  (window-buffer (current-window)))
                                        (setf (current-buffer) prev)))))
                                 ((:abort condition)
-                                 (message "Evaluation aborted on ~A." condition))))
+                                 (display-message "Evaluation aborted on ~A." condition))))
               :thread (current-swank-thread)
               :package package)))
 
@@ -264,9 +264,9 @@
             :continuation (lambda (value)
                             (alexandria:destructuring-ecase value
                               ((:ok x)
-                               (message "~A" x))
+                               (display-message "~A" x))
                               ((:abort condition)
-                               (message "Evaluation aborted on ~A." condition))))
+                               (display-message "Evaluation aborted on ~A." condition))))
             :package (current-package)))
 
 (defun re-eval-defvar (string)
@@ -413,7 +413,7 @@
 
 (defun self-interactive-eval (string)
   (with-eval (:values values :stream (make-editor-io-stream))
-    (message "=> ~{~S~^, ~}" values)))
+    (display-message "=> ~{~S~^, ~}" values)))
 
 (defun self-eval-print (string &optional print-right-margin)
   (declare (ignore print-right-margin))
@@ -483,7 +483,7 @@
       (lisp-eval-async `(swank:operator-arglist ,name ,package)
                        (lambda (arglist)
                          (when arglist
-                           (message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))))))
+                           (display-message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))))))
 
 (defun check-parens ()
   (with-point ((point (current-point)))
@@ -505,15 +505,15 @@
       (lisp-eval-async `(swank:load-file ,fastfile)))))
 
 (defun show-compile-result (notes secs successp)
-  (message (format nil "~{~A~^ ~}"
-                   (remove-if #'null
-                              (list (if successp
-                                        "Compilation finished"
-                                        "Compilation failed")
-                                    (unless notes
-                                      "(No warnings)")
-                                    (when secs
-                                      (format nil "[~,2f secs]" secs)))))))
+  (display-message (format nil "~{~A~^ ~}"
+                           (remove-if #'null
+                                      (list (if successp
+                                                "Compilation finished"
+                                                "Compilation failed")
+                                            (unless notes
+                                              "(No warnings)")
+                                            (when secs
+                                              (format nil "[~,2f secs]" secs)))))))
 
 (defun make-highlight-overlay (pos buffer)
   (with-point ((point (buffer-point buffer)))
@@ -893,7 +893,7 @@
     ;;  )
     ((:debug-condition thread message)
      (assert thread)
-     (message "~A" message))
+     (display-message "~A" message))
     ((:ping thread tag)
      (send-message-string
       *connection*
@@ -916,7 +916,7 @@
 (defun show-source-location (source-location)
   (alexandria:destructuring-case source-location
     ((:error message)
-     (message "~A" message))
+     (display-message "~A" message))
     ((t &rest _)
      (declare (ignore _))
      (let ((xref-location (source-location-to-xref-location source-location)))

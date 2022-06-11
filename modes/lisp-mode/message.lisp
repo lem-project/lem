@@ -6,5 +6,5 @@
                          :use-border nil
                          :background-color "#404040"
                          :offset-x 1
-                         :offset-y 0)
+                         :offset-y 1)
                 :timeout nil))

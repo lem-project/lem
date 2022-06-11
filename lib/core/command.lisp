@@ -8,11 +8,7 @@
           primary-command
           call-command))
 
-(defgeneric handle-signal (condition)
-  (:method (condition)
-    nil))
-
-(define-condition executing-command ()
+(define-condition executing-command (signal-handler)
   ((command :initarg :command
             :initform (alexandria:required-argument :command)
             :reader executing-command-command)))
@@ -47,7 +43,3 @@
            (editor-error "~A: command not found" this-command))
     (buffer-undo-boundary)
     (signal-subconditions 'after-executing-command :command this-command)))
-
-(defun signal-subconditions (condition &rest initargs)
-  (dolist (c (collect-subclasses (ensure-class condition) :include-itself nil))
-    (apply #'signal c initargs)))

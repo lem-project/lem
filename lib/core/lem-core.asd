@@ -19,6 +19,7 @@
                (:file "quicklisp-utils")
                (:file "config")
                (:file "errors")
+               (:file "signal-handler")
                (:file "key")
                (:file "macros")
                (:file "color")

@@ -128,7 +128,7 @@
 (define-key *global-keymap* "Delete" 'delete-next-char)
 (define-command delete-next-char (&optional n) ("P")
   (when (end-buffer-p (current-point))
-    (editor-error "End of buffer"))
+    (error 'end-of-buffer :point (current-point)))
   (when n
     (unless (continue-flag :kill)
       (kill-ring-new)))
@@ -182,7 +182,7 @@
       ((null arg)
        (let ((p (current-point)))
          (cond ((end-buffer-p p)
-                (editor-error "End of buffer"))
+                (error 'end-of-buffer :point p))
                ((end-line-p p)
                 (character-offset p 1))
                (t (line-end p)))
@@ -263,10 +263,10 @@
             (funcall move-to-column-fn (current-point) (get-next-line-context-column)))
     (cond ((plusp n)
            (move-to-end-of-buffer)
-           (editor-error "End of buffer"))
+           (error 'end-of-buffer :point (current-point)))
           ((minusp n)
            (move-to-beginning-of-buffer)
-           (editor-error "Beginning of buffer")))))
+           (error 'beginning-of-buffer :point (current-point))))))
 
 (define-command (next-line (:advice-classes movable-advice)) (&optional n) ("p")
   (next-line-aux n
@@ -293,13 +293,13 @@
 (define-command (forward-char (:advice-classes movable-advice))
     (&optional (n 1)) ("p")
   (or (character-offset (current-point) n)
-      (editor-error "End of buffer")))
+      (error 'end-of-buffer :point (current-point))))
 
 (define-key *global-keymap* "C-b" 'backward-char)
 (define-key *global-keymap* "Left" 'backward-char)
 (define-command (backward-char (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (or (character-offset (current-point) (- n))
-      (editor-error "Beginning of buffer")))
+      (error 'beginning-of-buffer :point (current-point))))
 
 (define-key *global-keymap* "M-<" 'move-to-beginning-of-buffer)
 (define-command (move-to-beginning-of-buffer (:advice-classes movable-advice)) () ()

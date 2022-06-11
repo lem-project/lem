@@ -17,3 +17,15 @@
 (define-condition exit-editor ()
   ((report :initarg :report
            :reader exit-editor-report)))
+
+(define-condition move-cursor-error (editor-error)
+  ((point :initarg :point
+          :reader move-cursor-error-point)))
+
+(define-condition end-of-buffer (move-cursor-error)
+  ()
+  (:default-initargs :message "End of buffer"))
+
+(define-condition beginning-of-buffer (move-cursor-error)
+  ()
+  (:default-initargs :message "Beginning of buffer"))

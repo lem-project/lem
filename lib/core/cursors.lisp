@@ -21,14 +21,6 @@
   (mapc #'delete-fake-cursor (buffer-fake-cursors buffer))
   (values))
 
-(defun foreach-multiple-cursors (buffer function)
-  (dolist (point (buffer-fake-cursors buffer))
-    (funcall function point))
-  (funcall function (buffer-point buffer)))
-
-(defmacro do-multiple-cursors ((point buffer) &body body)
-  `(foreach-multiple-cursors ,buffer (lambda (,point) ,@body)))
-
 (defun call-with-multiple-cursors (buffer function)
   (with-point ((save-point (buffer-point buffer) :left-inserting))
     (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))

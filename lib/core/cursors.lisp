@@ -61,5 +61,10 @@
                                (not (same-line-p p next-cursor))))
                   (add-fake-cursor p))))))
 
-(define-command clear-cursors () ()
-  (delete-all-fake-cursors (current-buffer)))
+(define-condition garbage-collection-cursors (after-executing-command) ())
+(defmethod handle-signal ((condition garbage-collection-cursors))
+  (clear-duplicate-cursors (current-buffer)))
+
+(define-condition clear-cursor-when-aborted (editor-abort-handler) ())
+(defmethod handle-signal ((condition clear-cursor-when-aborted))
+  (clear-cursors (current-buffer)))

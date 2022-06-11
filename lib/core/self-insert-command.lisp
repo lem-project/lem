@@ -20,5 +20,10 @@
     (&optional (n 1) (char (get-self-insert-char)))
     ("p" (get-self-insert-char))
   (run-hooks (variable-value 'self-insert-before-hook) char)
-  (insert-character (current-point) char n)
+  (self-insert-aux char n)
   (run-hooks (variable-value 'self-insert-after-hook) char))
+
+(defun self-insert-aux (char n &optional sticky)
+  (insert-character (current-point) char n)
+  (when sticky
+    (character-offset (current-point) (- n))))

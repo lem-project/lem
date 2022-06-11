@@ -112,18 +112,15 @@
 (define-command quoted-insert (&optional (n 1)) ("p")
   (let* ((key (read-key))
          (char (or (key-to-char key) (code-char 0))))
-    (dotimes (_ n t)
-      (insert-character (current-point) char 1))))
+    (self-insert-aux char n)))
 
 (define-key *global-keymap* "Return" 'newline)
 (define-command newline (&optional (n 1)) ("p")
-  (insert-character (current-point) #\newline n))
+  (self-insert-aux #\newline n))
 
 (define-key *global-keymap* "C-o" 'open-line)
 (define-command open-line (n) ("p")
-  (let ((point (current-point)))
-    (insert-character (current-point) #\newline n)
-    (character-offset point (- n))))
+  (self-insert-aux #\newline n t))
 
 (define-key *global-keymap* "C-d" 'delete-next-char)
 (define-key *global-keymap* "Delete" 'delete-next-char)
@@ -136,7 +133,6 @@
   (delete-character-with-killring (current-point)
                                   (or n 1)
                                   (if n t nil)))
-
 
 (define-key *global-keymap* "C-h" 'delete-previous-char)
 (define-key *global-keymap* "Backspace" 'delete-previous-char)

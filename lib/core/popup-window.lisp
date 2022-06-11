@@ -32,8 +32,8 @@
 (defgeneric compute-popup-window-rectangle (gravity &key source-window width height border-size))
 
 (defclass gravity ()
-  ((offset-x :initarg :offset-x :reader gravity-offset-x :initform 0)
-   (offset-y :initarg :offset-y :reader gravity-offset-y :initform 0)))
+  ((offset-x :initarg :offset-x :accessor gravity-offset-x :initform 0)
+   (offset-y :initarg :offset-y :accessor gravity-offset-y :initform 0)))
 (defclass gravity-center (gravity) ())
 (defclass gravity-top (gravity) ())
 (defclass gravity-topright (gravity) ())
@@ -179,7 +179,9 @@
 (defstruct style
   (gravity :cursor)
   (use-border t)
-  (background-color nil))
+  (background-color nil)
+  (offset-x 0)
+  (offset-y 0))
 
 (defun merge-style (style &key (gravity nil gravity-p)
                                (use-border nil use-border-p)
@@ -192,7 +194,9 @@
                               (style-use-border style))
               :background-color (if background-color-p
                                     background-color
-                                    (style-background-color style))))
+                                    (style-background-color style))
+              :offset-x (style-offset-x style)
+              :offset-y (style-offset-y style)))
 
 (defun ensure-style (style)
   (cond ((null style)
@@ -210,6 +214,8 @@
   (let* ((style (ensure-style style))
          (border-size (if (style-use-border style) +border-size+ 0))
          (gravity (ensure-gravity (style-gravity style))))
+    (setf (gravity-offset-x gravity) (style-offset-x style)
+          (gravity-offset-y gravity) (style-offset-y style))
     (destructuring-bind (x y w h)
         (compute-popup-window-rectangle gravity
                                         :source-window source-window
@@ -239,6 +245,8 @@
   (let* ((style (popup-window-style destination-window))
          (border-size (if (style-use-border style) +border-size+ 0))
          (gravity (ensure-gravity (style-gravity style))))
+    (setf (gravity-offset-x gravity) (style-offset-x style)
+          (gravity-offset-y gravity) (style-offset-y style))
     (destructuring-bind (x y w h)
         (compute-popup-window-rectangle gravity
                                         :source-window source-window

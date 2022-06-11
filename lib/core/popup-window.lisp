@@ -110,7 +110,7 @@
                (window-cursor-x source-window)))
          (y (max (min (+ (window-y source-window)
                          (window-cursor-y source-window)
-                         1)
+                         border-size)
                       (1- (display-height)))
                  0))
          (w width)

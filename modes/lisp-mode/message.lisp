@@ -4,5 +4,7 @@
   (show-message (apply #'format nil control-string format-arguments)
                 :style '(:gravity :cursor
                          :use-border nil
-                         :background-color "#404040")
+                         :background-color "#404040"
+                         :offset-x 1
+                         :offset-y 0)
                 :timeout nil))

@@ -248,7 +248,7 @@
                                  :maximize (1+ (length (completion-item-label item)))))
             :focus-attribute 'completion-attribute
             :non-focus-attribute 'non-focus-completion-attribute
-            :style '(:use-border nil))
+            :style '(:use-border nil :offset-y 1))
            (start-completion-mode completion-spec)
            (unless repeat
              (narrowing-down))))))

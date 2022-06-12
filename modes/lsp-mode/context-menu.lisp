@@ -42,10 +42,3 @@
                                                 (funcall (item-callback item)))
                              :print-spec #'item-label)
   (lsp-context-menu-mode t))
-
-(define-command test () ()
-  (display-context-menu (mapcar (lambda (string)
-                                  (make-item :label string
-                                             :callback (lambda (item)
-                                                         (message "Selected ~S" item))))
-                                '("foo" "bar" "baz"))))

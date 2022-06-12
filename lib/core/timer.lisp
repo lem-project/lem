@@ -129,7 +129,7 @@
                   (funcall (timer-function timer)))
                 (funcall (timer-function timer))))
         (error (condition)
-          (message "Error running timer ~S: ~A" (timer-name timer) condition))))
+          (show-message (format nil "Error running timer ~S: ~A" (timer-name timer) condition)))))
     (redraw-display)
     (not (null updating-timers))))
 

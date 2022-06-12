@@ -229,7 +229,7 @@
         (function
          (funcall destination string))
         (null
-         (message "~A" string))))))
+         (show-message string))))))
 
 (defmethod trivial-gray-streams:stream-write-char ((stream editor-output-stream) character)
   (with-slots (pool column) stream

@@ -627,7 +627,7 @@
                   (machine-type)
                   (machine-instance))))
     (when (eql name 1)
-      (message "~A" version))
+      (show-message (princ-to-string version)))
     version))
 
 (define-command compare-windows (ignore-whitespace) ("p")

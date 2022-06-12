@@ -281,7 +281,7 @@
                                  (enable-document-highlight-idle-timer)
                                  (redraw-display))))
         (editor-error (c)
-          (message "~A" c))))))
+          (show-message (princ-to-string c)))))))
 
 (defun reopen-buffer (buffer)
   (text-document/did-close buffer)

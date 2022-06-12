@@ -184,8 +184,8 @@
       (let ((chnum (count-characters start end))
             (wnum (%count-words start end))
             (linum (count-lines start end)))
-        (message (format nil "~a has ~d lines, ~d words and ~d characters."
-                         (if (buffer-mark-p buffer)
-                             "Region"
-                             "Buffer")
-                         linum wnum chnum))))))
+        (show-message (format nil "~a has ~d lines, ~d words and ~d characters."
+                              (if (buffer-mark-p buffer)
+                                  "Region"
+                                  "Buffer")
+                              linum wnum chnum))))))

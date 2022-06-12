@@ -9,13 +9,13 @@
 ;; Unable to use this binding because C-h is used by 'delete-previous-char
 ;; (define-key *global-keymap* "C-h k" 'describe-key)
 (define-command describe-key () ()
-  (message "describe-key: ")
+  (show-message "describe-key: ")
   (redraw-display)
   (let* ((keys (read-key-sequence))
          (cmd (find-keybind keys)))
-    (message "describe-key: ~a ~(~a~)"
-             (keyseq-to-string keys)
-             cmd)))
+    (show-message (format nil "describe-key: ~a ~(~a~)"
+                          (keyseq-to-string keys)
+                          cmd))))
 
 (defun describe-bindings-internal (s name keymap &optional first-p)
   (unless first-p

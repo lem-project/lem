@@ -45,7 +45,7 @@
   (setf *argument* (make-arg-state)))
 
 (defun update-message ()
-  (message "C-u ~D" (to-integer *argument*)))
+  (show-message (format nil "C-u ~D" (to-integer *argument*))))
 
 (define-minor-mode universal-argument-mode
     (:name "C-U"

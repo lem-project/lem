@@ -21,7 +21,7 @@
   (mapc #'delete-fake-cursor (buffer-fake-cursors buffer))
   (values))
 
-(defun call-with-multiple-cursors (buffer function only-fake-cursors)
+(defun %do-multiple-cursors (buffer function only-fake-cursors)
   (with-point ((save-point (buffer-point buffer) :left-inserting))
     (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
       (move-point (buffer-point buffer) point)
@@ -32,12 +32,12 @@
     (unless only-fake-cursors
       (funcall function))))
 
-(defmacro with-multiple-cursors ((&key (buffer '(current-buffer))
-                                       (only-fake-cursors nil))
-                                 &body body)
-  `(call-with-multiple-cursors ,buffer
-                               (lambda () ,@body)
-                               ,only-fake-cursors))
+(defmacro do-multiple-cursors ((&key (buffer '(current-buffer))
+                                     (only-fake-cursors nil))
+                               &body body)
+  `(%do-multiple-cursors ,buffer
+                         (lambda () ,@body)
+                         ,only-fake-cursors))
 
 (defun buffer-cursors (buffer)
   (sort (copy-list (cons (buffer-point buffer)

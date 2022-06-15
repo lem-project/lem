@@ -119,7 +119,7 @@
 (defun command-loop ()
   (do-command-loop (:interactive t)
     (if (toplevel-command-loop-p)
-        (handler-bind ((executing-command #'handle-signal))
+        (handler-bind ((signal-handler #'handle-signal))
           (with-error-handler ()
             (let ((*toplevel-command-loop-p* nil))
               (handler-bind ((editor-condition

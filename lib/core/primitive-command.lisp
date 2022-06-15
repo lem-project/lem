@@ -62,6 +62,18 @@
 (defvar *set-location-hook* '())
 
 (defclass movable-advice () ())
+(defclass jump-cursor-advice () ())
+
+(defmethod execute :around ((command movable-advice) argument)
+  (do-multiple-cursors (:only-fake-cursors t)
+    (handler-case
+        (call-next-method)
+      (move-cursor-error ())))
+  (call-next-method))
+
+(defmethod execute :around ((command jump-cursor-advice) argument)
+  (prog1 (call-next-method)
+    (clear-cursors (current-buffer))))
 
 (defun delete-character-with-killring (point n killp)
   (let ((string (delete-character point n)))
@@ -127,24 +139,27 @@
 (define-key *global-keymap* "C-d" 'delete-next-char)
 (define-key *global-keymap* "Delete" 'delete-next-char)
 (define-command delete-next-char (&optional n) ("P")
+  ;; TODO: multiple cursors
   (when (end-buffer-p (current-point))
     (error 'end-of-buffer :point (current-point)))
   (when n
     (unless (continue-flag :kill)
       (kill-ring-new)))
-  (delete-character-with-killring (current-point)
-                                  (or n 1)
-                                  (if n t nil)))
+  (do-multiple-cursors ()
+    (delete-character-with-killring (current-point)
+                                    (or n 1)
+                                    (if n t nil))))
 
 (define-key *global-keymap* "C-h" 'delete-previous-char)
 (define-key *global-keymap* "Backspace" 'delete-previous-char)
 (define-command delete-previous-char (&optional n) ("P")
   (if (and (buffer-mark (current-buffer))
            (buffer-mark-p (current-buffer)))
+      ;; TODO: multiple cursors
       (let ((start (region-beginning))
             (end (region-end)))
         (delete-character start (count-characters start end)))
-      (progn
+      (do-multiple-cursors ()
         (backward-char (or n 1))
         (handler-case (delete-next-char n)
           (read-only-error (e)
@@ -153,6 +168,7 @@
 
 (define-key *global-keymap* "M-w" 'copy-region)
 (define-command copy-region (start end) ("r")
+  ;; TODO: multiple cursors
   (unless (continue-flag :kill)
     (kill-ring-new))
   (kill-push (points-to-string start end))
@@ -164,19 +180,23 @@
 
 (define-key *global-keymap* "C-w" 'kill-region)
 (define-command kill-region (start end) ("r")
+  ;; TODO: multiple cursors
   (when (point< end start)
     (rotatef start end))
   (unless (continue-flag :kill)
     (kill-ring-new))
-  (delete-character-with-killring start (count-characters start end) t)
+  (do-multiple-cursors ()
+    (delete-character-with-killring start (count-characters start end) t))
   t)
 
 (define-command kill-region-to-clipboard (start end) ("r")
+  ;; TODO: multiple cursors
   (copy-region-to-clipboard start end)
   (delete-character start (count-characters start end)))
 
 (define-key *global-keymap* "C-k" 'kill-line)
 (define-command kill-line (&optional arg) ("P")
+  ;; TODO: multiple cursors
   (with-point ((start (current-point) :right-inserting))
     (cond
       ((null arg)
@@ -195,6 +215,7 @@
 
 (define-key *global-keymap* "C-y" 'yank)
 (define-command yank (&optional arg) ("P")
+  ;; TODO: multiple cursors
   (let ((string (if (null arg)
                     (current-kill-ring)
                     (kill-ring-nth arg))))
@@ -206,6 +227,7 @@
 
 (define-key *global-keymap* "M-y" 'yank-pop)
 (define-command yank-pop (&optional n) ("p")
+  ;; TODO: multiple cursors
   (let ((start (buffer-value (current-buffer) 'yank-start))
         (end (buffer-value (current-buffer) 'yank-end))
         prev-yank-p)
@@ -219,6 +241,7 @@
            nil))))
 
 (define-command yank-pop-next (&optional n) ("p")
+  ;; TODO: multiple cursors
   (let ((start (buffer-value (current-buffer) 'yank-start))
         (end (buffer-value (current-buffer) 'yank-end))
         prev-yank-p)
@@ -232,6 +255,7 @@
            nil))))
 
 (define-command yank-to-clipboard (&optional arg) ("p")
+  ;; TODO: multiple cursors
   (let ((string (if (null arg)
                     (current-kill-ring)
                     (kill-ring-nth arg))))
@@ -239,7 +263,8 @@
     t))
 
 (define-command paste-from-clipboard () ()
-  (insert-string (current-point) (get-clipboard-data))
+  (do-multiple-cursors ()
+    (insert-string (current-point) (get-clipboard-data)))
   t)
 
 (define-key *global-keymap* "C-n" 'next-line)
@@ -302,13 +327,13 @@
       (error 'beginning-of-buffer :point (current-point))))
 
 (define-key *global-keymap* "M-<" 'move-to-beginning-of-buffer)
-(define-command (move-to-beginning-of-buffer (:advice-classes movable-advice)) () ()
+(define-command (move-to-beginning-of-buffer (:advice-classes jump-cursor-advice)) () ()
   (run-hooks *set-location-hook* (current-point))
   (buffer-start (current-point))
   t)
 
 (define-key *global-keymap* "M->" 'move-to-end-of-buffer)
-(define-command (move-to-end-of-buffer (:advice-classes movable-advice)) () ()
+(define-command (move-to-end-of-buffer (:advice-classes jump-cursor-advice)) () ()
   (run-hooks *set-location-hook* (current-point))
   (buffer-end (current-point))
   t)
@@ -373,15 +398,17 @@
           (return))))))
 
 (define-command entab-line (n) ("p")
-  (tab-line-aux n
-                #'(lambda (n)
-                    (make-string n :initial-element #\tab))))
+  (do-multiple-cursors ()
+    (tab-line-aux n
+                  #'(lambda (n)
+                      (make-string n :initial-element #\tab)))))
 
 (define-command detab-line (n) ("p")
-  (tab-line-aux n
-                (lambda (n)
-                  (make-string (* n (variable-value 'tab-width))
-                               :initial-element #\space))))
+  (do-multiple-cursors ()
+    (tab-line-aux n
+                  (lambda (n)
+                    (make-string (* n (variable-value 'tab-width))
+                                 :initial-element #\space)))))
 
 (define-key *global-keymap* "C-x ]" 'next-page-char)
 (define-command (next-page-char (:advice-classes movable-advice)) (&optional (n 1)) ("p")
@@ -399,20 +426,21 @@
 
 (define-key *global-keymap* "C-x C-o" 'delete-blank-lines)
 (define-command delete-blank-lines () ()
-  (let ((point (current-point)))
-    (loop
-      (unless (blank-line-p point)
-        (line-offset point 1)
-        (return))
-      (unless (line-offset point -1)
-        (return)))
-    (loop
-      (when (end-buffer-p point)
-        (return))
-      (let ((nblanks (blank-line-p point)))
-        (if nblanks
-            (delete-character point nblanks)
-            (return))))))
+  (do-multiple-cursors ()
+    (let ((point (current-point)))
+      (loop
+        (unless (blank-line-p point)
+          (line-offset point 1)
+          (return))
+        (unless (line-offset point -1)
+          (return)))
+      (loop
+        (when (end-buffer-p point)
+          (return))
+        (let ((nblanks (blank-line-p point)))
+          (if nblanks
+              (delete-character point nblanks)
+              (return)))))))
 
 (defun delete-while-whitespaces (ignore-newline-p)
   (let ((n (skip-chars-forward (current-point)
@@ -423,61 +451,66 @@
 
 (define-key *global-keymap* "M-Space" 'just-one-space)
 (define-command just-one-space () ()
-  (skip-whitespace-backward (current-point) t)
-  (delete-while-whitespaces t)
-  (insert-character (current-point) #\space 1)
+  (do-multiple-cursors ()
+    (skip-whitespace-backward (current-point) t)
+    (delete-while-whitespaces t)
+    (insert-character (current-point) #\space 1))
   t)
 
 (define-key *global-keymap* "M-^" 'delete-indentation)
 (define-command delete-indentation () ()
-  (with-point ((p (current-point)))
-    (line-start p)
-    (unless (start-buffer-p p)
-      (delete-character p -1)
-      (skip-whitespace-backward p t)
-      (loop :while (and (syntax-space-char-p (character-at p))
-                        (not (end-buffer-p p)))
-            :do (delete-character p))
-      (unless (or (start-line-p p)
-                  (syntax-closed-paren-char-p (character-at p))
-                  (with-point ((p p))
-                    (and (character-offset p -1)
-                         (let ((c (character-at p)))
-                           (or (end-line-p p)
-                               (syntax-open-paren-char-p c)
-                               (syntax-expr-prefix-char-p c))))))
-        (insert-character p #\space)))))
+  (do-multiple-cursors ()
+    (with-point ((p (current-point)))
+      (line-start p)
+      (unless (start-buffer-p p)
+        (delete-character p -1)
+        (skip-whitespace-backward p t)
+        (loop :while (and (syntax-space-char-p (character-at p))
+                          (not (end-buffer-p p)))
+              :do (delete-character p))
+        (unless (or (start-line-p p)
+                    (syntax-closed-paren-char-p (character-at p))
+                    (with-point ((p p))
+                      (and (character-offset p -1)
+                           (let ((c (character-at p)))
+                             (or (end-line-p p)
+                                 (syntax-open-paren-char-p c)
+                                 (syntax-expr-prefix-char-p c))))))
+          (insert-character p #\space))))))
 
 (define-key *global-keymap* "C-t" 'transpose-characters)
 (define-command transpose-characters () ()
-  (let ((point (current-point)))
-    (cond ((start-line-p point))
-          ((end-line-p point)
-           (let ((c1 (character-at point -1))
-                 (c2 (character-at point -2)))
-             (unless (eql c2 #\newline)
-               (delete-character point -2)
-               (insert-string point (format nil "~C~C" c1 c2)))))
-          (t
-           (let ((c1 (character-at point 0))
-                 (c2 (character-at point -1)))
-             (delete-character point 1)
-             (delete-character point -1)
-             (insert-string point (format nil "~C~C" c1 c2)))))))
+  (do-multiple-cursors ()
+    (let ((point (current-point)))
+      (cond ((start-line-p point))
+            ((end-line-p point)
+             (let ((c1 (character-at point -1))
+                   (c2 (character-at point -2)))
+               (unless (eql c2 #\newline)
+                 (delete-character point -2)
+                 (insert-string point (format nil "~C~C" c1 c2)))))
+            (t
+             (let ((c1 (character-at point 0))
+                   (c2 (character-at point -1)))
+               (delete-character point 1)
+               (delete-character point -1)
+               (insert-string point (format nil "~C~C" c1 c2))))))))
 
 (define-key *global-keymap* "M-m" 'back-to-indentation-command)
-(define-command back-to-indentation-command () ()
+(define-command (back-to-indentation-command (:advice-classes movable-advice)) () ()
   (back-to-indentation (current-point))
   t)
 
 (define-key *global-keymap* "C-\\" 'undo)
 (define-command undo (n) ("p")
+  ;; TODO: multiple cursors
   (dotimes (_ n t)
     (unless (buffer-undo (current-point))
       (editor-error "Undo Error"))))
 
 (define-key *global-keymap* "C-_" 'redo)
 (define-command redo (n) ("p")
+  ;; TODO: multiple cursors
   (dotimes (_ n t)
     (unless (buffer-redo (current-point))
       (editor-error "Redo Error"))))
@@ -495,20 +528,24 @@
           (insert-string point (princ-to-string (funcall fn n))))))))
 
 (define-command increment () ()
-  (*crement-aux #'1+))
+  (do-multiple-cursors ()
+    (*crement-aux #'1+)))
 
 (define-command decrement () ()
-  (*crement-aux #'1-))
+  (do-multiple-cursors ()
+    (*crement-aux #'1-)))
 
 (define-key *global-keymap* "C-@" 'mark-set)
 (define-key *global-keymap* "C-Space" 'mark-set)
 (define-command mark-set () ()
+  ;; TODO: multiple cursors
   (run-hooks *set-location-hook* (current-point))
   (set-current-mark (current-point))
   (message "Mark set"))
 
 (define-key *global-keymap* "C-x C-x" 'exchange-point-mark)
 (define-command exchange-point-mark () ()
+  ;; TODO: multiple cursors
   (check-marked)
   (let ((mark (buffer-mark (current-buffer)))
         (point (copy-point (buffer-point (current-buffer)) :temporary)))
@@ -517,14 +554,14 @@
   t)
 
 (define-key *global-keymap* "C-x h" 'mark-set-whole-buffer)
-(define-command mark-set-whole-buffer () ()
+(define-command (mark-set-whole-buffer (:advice-classes jump-cursor-advice)) () ()
   (buffer-end (current-point))
   (set-current-mark (current-point))
   (buffer-start (current-point))
   (message "Mark set whole buffer"))
 
 (define-key *global-keymap* "M-g" 'goto-line)
-(define-command goto-line (n) ("nLine to GOTO: ")
+(define-command (goto-line (:advice-classes jump-cursor-advice)) (n) ("nLine to GOTO: ")
   (cond ((< n 1)
          (setf n 1))
         ((< #1=(buffer-nlines (current-buffer)) n)

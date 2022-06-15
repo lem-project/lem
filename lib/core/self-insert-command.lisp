@@ -24,6 +24,7 @@
   (run-hooks (variable-value 'self-insert-after-hook) char))
 
 (defun self-insert-aux (char n &optional sticky)
-  (insert-character (current-point) char n)
-  (when sticky
-    (character-offset (current-point) (- n))))
+  (do-multiple-cursors ()
+    (insert-character (current-point) char n)
+    (when sticky
+      (character-offset (current-point) (- n)))))

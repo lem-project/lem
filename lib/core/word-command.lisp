@@ -70,6 +70,7 @@
 (define-key *global-keymap* "M-d" 'delete-word)
 (define-key *global-keymap* "C-Delete" 'delete-word)
 (define-command delete-word (n) ("p")
+  ;; TODO: multiple cursors kill ring
   (with-point ((point (current-point) :right-inserting))
     (let ((start (current-point))
           (end (or (word-offset point n)
@@ -86,6 +87,7 @@
 (define-key *global-keymap* "M-Backspace" 'backward-delete-word)
 (define-key *global-keymap* "C-Backspace" 'backward-delete-word)
 (define-command backward-delete-word (n) ("p")
+  ;; TODO: multiple cursors kill ring
   (delete-word (- n)))
 
 (defun case-region-aux (start end case-fun replace-char-p)
@@ -104,10 +106,12 @@
 
 (define-key *global-keymap* "C-x C-l" 'downcase-region)
 (define-command downcase-region (start end) ("r")
+  ;; TODO: multiple cursor
   (case-region-aux start end #'char-downcase #'identity))
 
 (define-key *global-keymap* "C-x C-u" 'uppercase-region)
 (define-command uppercase-region (start end) ("r")
+  ;; TODO: multiple cursor
   (case-region-aux start end #'char-upcase #'identity))
 
 (defun case-word-aux (point n replace-char-p first-case rest-case)
@@ -128,15 +132,15 @@
         (move-point point end)))))
 
 (define-key *global-keymap* "M-c" 'capitalize-word)
-(define-command capitalize-word (&optional (n 1)) ("p")
+(define-command (capitalize-word (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (case-word-aux (current-point) n #'alphanumericp #'char-upcase #'char-downcase))
 
 (define-key *global-keymap* "M-l" 'lowercase-word)
-(define-command lowercase-word (&optional (n 1)) ("p")
+(define-command (lowercase-word (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (case-word-aux (current-point) n #'alphanumericp #'char-downcase #'char-downcase))
 
 (define-key *global-keymap* "M-u" 'uppercase-word)
-(define-command uppercase-word (&optional (n 1)) ("p")
+(define-command (uppercase-word (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (case-word-aux (current-point) n #'alphanumericp #'char-upcase #'char-upcase))
 
 (define-key *global-keymap* "M-}" 'forward-paragraph)
@@ -158,6 +162,7 @@
 
 (define-key *global-keymap* "M-k" 'kill-paragraph)
 (define-command kill-paragraph (&optional (n 1)) ("p")
+  ;; TODO: multiple cursors kill ring
   (dotimes (_ n t)
     (with-point ((start (current-point) :right-inserting))
       (forward-paragraph)

@@ -44,6 +44,7 @@
 
 (define-key *global-keymap* "C-M-@" 'mark-sexp)
 (define-command mark-sexp () ()
+  ;; TODO: multiple cursors
   (cond
     ((continue-flag :mark-sexp)
      (form-offset (buffer-mark (current-buffer)) 1))
@@ -54,6 +55,7 @@
 
 (define-key *global-keymap* "C-M-k" 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
+  ;; TODO: multiple cursors
   (dotimes (_ n t)
     (let ((end (form-offset (copy-point (current-point) :temporary) 1)))
       (if end
@@ -63,6 +65,7 @@
 
 (define-key *global-keymap* "C-M-t" 'transpose-sexps)
 (define-command transpose-sexps () ()
+  ;; TODO: multiple cursors
   (with-point ((point1 (current-point) :left-inserting)
                (point2 (current-point) :left-inserting))
     (when (and (form-offset point1 -1)
@@ -86,6 +89,7 @@
 
 (define-key *global-keymap* "C-M-y" 'kill-around-form)
 (define-command kill-around-form () ()
+  ;; TODO: multiple cursors
   (with-point ((end (current-point) :right-inserting))
     (let ((start (current-point)))
       (unless (form-offset end 1)

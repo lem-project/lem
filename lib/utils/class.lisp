@@ -1,5 +1,6 @@
 (defpackage :lem-utils/class
   (:use :cl)
+  (:import-from :closer-mop)
   (:export :ensure-class
            :collect-subclasses))
 (in-package :lem-utils/class)
@@ -16,7 +17,7 @@
                                        (alexandria:required-argument :include-itself)))
   (labels ((rec (class include-itself)
              (let ((subclasses
-                     (loop :for subclass :in (c2mop:class-direct-subclasses class)
+                     (loop :for subclass :in (closer-mop:class-direct-subclasses class)
                            :append (rec subclass t))))
                (if include-itself
                    (cons class subclasses)

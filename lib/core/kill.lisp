@@ -20,15 +20,16 @@
            ((cons major _)
             (<= 2 major))))))
 
-(defvar *enable-clipboard-p*
+(defparameter *enable-clipboard-p*
   (ignore-errors
     (or (progn #+darwin nil #-darwin t)
         (sbcl-2.0.0-or-later-p))))
 
+(defparameter *kill-ring-max* 10)
+
 (defvar *kill-ring* nil)
 (defvar *kill-ring-yank-ptr* nil)
 (defvar *kill-ring-yank-ptr-prev* nil)
-(defvar *kill-ring-max* 10)
 
 (defvar *kill-new-flag* t)
 (defvar *kill-before-p* nil)

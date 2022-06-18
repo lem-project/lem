@@ -1,13 +1,12 @@
-(defpackage :lem-utils/socket
+(defpackage :lem-socket-utils
   (:use :cl)
   (:import-from :usocket)
   (:import-from :lem-utils)
   (:export :port-available-p
-           :random-available-port))
-(in-package :lem-utils/socket)
-
-#+sbcl
-(sb-ext:lock-package :lem-utils/socket)
+           :random-available-port)
+  #+sbcl
+  (:lock t))
+(in-package :lem-socket-utils)
 
 (defun port-available-p (port)
   (let (socket)

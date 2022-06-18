@@ -86,7 +86,7 @@
                   (point (buffer-point buffer)))
              (buffer-end point)
              (insert-string point string))))
-    (let* ((port (or (spec-port spec) (lem-utils/socket:random-available-port)))
+    (let* ((port (or (spec-port spec) (lem-socket-utils:random-available-port)))
            (process (when-let (command (get-spec-command spec port))
                       (check-exist-program (first command) spec)
                       (lem-process:run-process command

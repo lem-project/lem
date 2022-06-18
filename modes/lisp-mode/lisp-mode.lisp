@@ -126,7 +126,7 @@
 
 (defun self-connect ()
   (unless *disable-self-connect*
-    (let ((port (lem-utils/socket:random-available-port)))
+    (let ((port (lem-socket-utils:random-available-port)))
       (log:debug "Starting internal SWANK and connecting to it" swank:*communication-style*)
       (let ((swank::*swank-debug-p* nil))
         (swank:create-server :port port :style :spawn))
@@ -1108,7 +1108,7 @@
 (defun run-slime (command &key (directory (buffer-directory)))
   (unless command
     (setf command (get-lisp-command :impl *impl-name*)))
-  (let* ((port (lem-utils/socket:random-available-port))
+  (let* ((port (lem-socket-utils:random-available-port))
          (process (run-lisp :command command :directory directory :port port)))
     (send-swank-create-server process port)
     (start-lisp-repl)

@@ -1025,8 +1025,8 @@
 (defun run-slime (command &key (directory (buffer-directory)))
   ;;(unless command
   ;;  (setf command (get-lisp-command :impl *impl-name*)))
-  (let ((port (or (lem-utils/socket:port-available-p *default-port*)
-                  (lem-utils/socket:random-available-port))))
+  (let ((port (or (lem-socket-utils:port-available-p *default-port*)
+                  (lem-socket-utils:random-available-port))))
 
     ;; for r7rs-swank (make command)
     (unless command

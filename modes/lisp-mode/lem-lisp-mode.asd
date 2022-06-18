@@ -7,7 +7,7 @@
                "uiop"
                "lem-core"
                "lem-process"
-               "lem-utils/socket")
+               "lem-socket-utils")
   :serial t
   :components ((:file "errors")
                (:file "swank-protocol")

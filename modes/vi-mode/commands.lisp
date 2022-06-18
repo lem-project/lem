@@ -324,7 +324,7 @@
                         (end (line-end (current-point))))
              (let ((eob (not (character-offset end 1))))
                (kill-region start end)
-               (kill-append "" nil '(:vi-line))
+               (kill-append "" :vi-line)
                (if eob
                    (unless (or (first-line-p (current-point))
                                *vi-clear-recursive*)
@@ -347,7 +347,7 @@
                (kill-ring-new))
              (kill-push (get-output-stream-string out))
              (when (visual-line-p)
-               (kill-append "" nil '(:vi-line))))
+               (kill-append "" :vi-line)))
            (vi-visual-end))
           (t
            (let* ((uarg nil)
@@ -386,7 +386,7 @@
                                (character-offset end 1))
                              (kill-region start end)
                              (when multiline
-                               (kill-append "" nil '(:vi-line)))))))))
+                               (kill-append "" :vi-line))))))))
                  (unless *vi-clear-recursive*
                    (fall-within-line (current-point))))))))))
 
@@ -440,7 +440,7 @@
              (line-end end)
              (character-offset end 1)
              (copy-region start end)
-             (kill-append "" nil '(:vi-line))
+             (kill-append "" :vi-line)
              (throw tag t)))
           ((visual-p)
            (with-output-to-string (out)
@@ -455,7 +455,7 @@
                (kill-ring-new))
              (kill-push (get-output-stream-string out))
              (when (visual-line-p)
-               (kill-append "" nil '(:vi-line))))
+               (kill-append "" :vi-line)))
            (vi-visual-end))
           (t
            (let* ((uarg nil)
@@ -490,7 +490,7 @@
                              (character-offset end 1))
                            (copy-region start end)
                            (when multiline
-                             (kill-append "" nil '(:vi-line))))))))
+                             (kill-append "" :vi-line)))))))
                  (move-point (current-point) start))))))))
 
 (define-command vi-paste-after () ()

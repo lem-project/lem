@@ -33,7 +33,7 @@
 (defvar *kill-new-flag* t)
 (defvar *kill-before-p* nil)
 
-(defun kill-append (string before-p options)
+(defun %kill-append (string options before-p)
   (setf (car *kill-ring*)
         (cons (if before-p
                   (concatenate 'string
@@ -43,6 +43,9 @@
                                (first (car *kill-ring*))
                                string))
               options)))
+
+(defun kill-append (string &rest options)
+  (%kill-append string options nil))
 
 (defun copy-to-clipboard (string)
   (lem-if:clipboard-copy (implementation) string))
@@ -61,7 +64,7 @@
      (setq *kill-ring-yank-ptr-prev* nil)
      (setq *kill-new-flag* nil))
     (t
-     (kill-append string *kill-before-p* options)))
+     (%kill-append string options *kill-before-p*)))
   (when *enable-clipboard-p*
     (copy-to-clipboard (car (first *kill-ring*))))
   t)

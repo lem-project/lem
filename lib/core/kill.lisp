@@ -8,7 +8,6 @@
           kill-ring-rotate
           kill-ring-rotate-undo
           kill-ring-first-string
-          kill-ring-nth-string
           kill-ring-new))
 
 (defun sbcl-2.0.0-or-later-p ()
@@ -95,9 +94,6 @@
 
 (defun kill-ring-first-string ()
   (apply #'values (car *kill-ring-yank-ptr*)))
-
-(defun kill-ring-nth-string (n)
-  (apply #'values (kill-ring-nth n)))
 
 (defun kill-ring-new ()
   (setf *kill-new-flag* t))

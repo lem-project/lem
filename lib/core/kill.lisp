@@ -47,12 +47,6 @@
 (defun kill-append (string &rest options)
   (%kill-append string options nil))
 
-(defun copy-to-clipboard (string)
-  (lem-if:clipboard-copy (implementation) string))
-
-(defun get-clipboard-data ()
-  (lem-if:clipboard-paste (implementation)))
-
 (defun kill-push (string &rest options)
   (cond
     (*kill-new-flag*
@@ -106,3 +100,9 @@
 
 (defun kill-ring-new ()
   (setf *kill-new-flag* t))
+
+(defun copy-to-clipboard (string)
+  (lem-if:clipboard-copy (implementation) string))
+
+(defun get-clipboard-data ()
+  (lem-if:clipboard-paste (implementation)))

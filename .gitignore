@@ -24,3 +24,5 @@ lem-icon.svg
 lem-ncurses.desktop
 
 .DS_Store
+
+GIT_IGNORE.*

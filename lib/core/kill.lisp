@@ -11,6 +11,20 @@
           kill-ring-nth-string
           kill-ring-new))
 
+(defun sbcl-2.0.0-or-later-p ()
+  (and (string-equal "sbcl" (lisp-implementation-type))
+       (let ((version (mapcar #'parse-integer
+                              (uiop:split-string (lisp-implementation-version)
+                                                 :separator "."))))
+         (trivia:match version
+           ((cons major _)
+            (<= 2 major))))))
+
+(defvar *enable-clipboard-p*
+  (ignore-errors
+    (or (progn #+darwin nil #-darwin t)
+        (sbcl-2.0.0-or-later-p))))
+
 (defvar *kill-ring* nil)
 (defvar *kill-ring-yank-ptr* nil)
 (defvar *kill-ring-yank-ptr-prev* nil)
@@ -18,19 +32,6 @@
 
 (defvar *kill-new-flag* t)
 (defvar *kill-before-p* nil)
-
-(defvar *enable-clipboard-p*
-  (cond ((ignore-errors
-           (or (progn #+darwin nil #-darwin t)
-               ;; sbcl 2.0.0 or lator
-               (and (string-equal "sbcl" (lisp-implementation-type))
-                    (let ((version (mapcar #'parse-integer (uiop:split-string (lisp-implementation-version) :separator "."))))
-                      (trivia:match version
-                        ((cons major _)
-                         (<= 2 major)))))))
-         t)
-        (t
-         nil)))
 
 (defun kill-append (string before-p options)
   (setf (car *kill-ring*)

@@ -1,8 +1,8 @@
 (in-package :lem)
 
-(export '(*kill-ring-max*
+(export '(*enable-clipboard-p*
+          *kill-ring-max*
           *kill-before-p*
-          *enable-clipboard-p*
           kill-append
           kill-push
           kill-ring-rotate

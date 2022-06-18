@@ -1,12 +1,4 @@
-(defpackage :lem-utils/class
-  (:use :cl)
-  (:import-from :closer-mop)
-  (:export :ensure-class
-           :collect-subclasses))
-(in-package :lem-utils/class)
-
-#+sbcl
-(sb-ext:lock-package :lem-utils/class)
+(in-package :lem-utils)
 
 (defun ensure-class (class)
   (etypecase class

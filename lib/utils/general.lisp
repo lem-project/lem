@@ -1,19 +1,4 @@
-(defpackage :lem-utils/main
-  (:nicknames :lem-utils)
-  (:use :cl)
-  (:import-from :trivia)
-  (:export :utf8-bytes
-           :bests-if
-           :max-if
-           :min-if
-           :find-tree
-           :random-range
-           :do-sequence
-           :if-push))
-(in-package :lem-utils/main)
-
-#+sbcl
-(sb-ext:lock-package :lem-utils/main)
+(in-package :lem-utils)
 
 (defun utf8-bytes (c)
   (cond

@@ -1,4 +1,4 @@
-(defsystem "lem-utils"
+(defsystem "lem-common"
   :serial t
   :depends-on ("trivia"
                "closer-mop")

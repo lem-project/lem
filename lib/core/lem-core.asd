@@ -12,7 +12,7 @@
                "lem-base"
                "lem-encodings"
                "lem-lisp-syntax"
-               "lem-utils")
+               "lem-common")
   :serial t
   :components ((:file "history")
                (:file "package")

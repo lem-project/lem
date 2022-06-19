@@ -1,4 +1,4 @@
-(defpackage :lem-utils
+(defpackage :lem-common
   (:use :cl)
   (:export
    ;; class.lisp

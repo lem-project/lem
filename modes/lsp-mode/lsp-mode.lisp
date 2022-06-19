@@ -504,7 +504,7 @@
            (let ((points '()))
              (with-point ((start (buffer-point buffer) :left-inserting)
                           (end (buffer-point buffer) :left-inserting))
-               (lem-utils:do-sequence (text-edit text-edits)
+               (lem-common:do-sequence (text-edit text-edits)
                  (let ((range (protocol:text-edit-range text-edit))
                        (new-text (protocol:text-edit-new-text text-edit)))
                    (move-to-lsp-position start (protocol:range-start range))
@@ -542,7 +542,7 @@
 
 (defun apply-workspace-edit (workspace-edit)
   (labels ((apply-document-changes (document-changes)
-             (lem-utils:do-sequence (document-change document-changes)
+             (lem-common:do-sequence (document-change document-changes)
                (apply-document-change document-change)))
            (apply-changes (changes)
              (declare (ignore changes))
@@ -759,7 +759,7 @@
 (defun highlight-diagnostics (params)
   (when-let ((buffer (find-buffer-from-uri (protocol:publish-diagnostics-params-uri params))))
     (reset-buffer-diagnostic buffer)
-    (lem-utils:do-sequence (diagnostic (protocol:publish-diagnostics-params-diagnostics params))
+    (lem-common:do-sequence (diagnostic (protocol:publish-diagnostics-params-diagnostics params))
       (highlight-diagnostic buffer diagnostic))
     (setf (buffer-diagnostic-idle-timer buffer)
           (start-idle-timer 1000 t #'popup-diagnostic nil "lsp-diagnostic"))))
@@ -829,7 +829,7 @@
         ;; MarkedString[]
         ((json:json-array-p contents)
          (with-output-to-string (out)
-           (lem-utils:do-sequence (content contents)
+           (lem-common:do-sequence (content contents)
              (write-string (marked-string-to-string content)
                            out))))
         ;; MarkupContent
@@ -964,7 +964,7 @@
           (active-signature
             (handler-case (protocol:signature-help-active-signature signature-help)
               (unbound-slot () nil))))
-      (lem-utils:do-sequence ((signature index) (protocol:signature-help-signatures signature-help))
+      (lem-common:do-sequence ((signature index) (protocol:signature-help-signatures signature-help))
         (when (plusp index) (insert-character point #\newline))
         (let ((active-signature-p (eql index active-signature)))
           (if active-signature-p
@@ -1223,7 +1223,7 @@
   (clear-document-highlight-overlays)
   (with-point ((start (buffer-point buffer))
                (end (buffer-point buffer)))
-    (lem-utils:do-sequence (document-highlight document-highlights)
+    (lem-common:do-sequence (document-highlight document-highlights)
       (let* ((range (protocol:document-highlight-range document-highlight)))
         (move-to-lsp-position start (protocol:range-start range))
         (move-to-lsp-position end (protocol:range-end range))
@@ -1472,7 +1472,7 @@
                                       (move-to-lsp-position start (protocol:range-start range))
                                       (move-to-lsp-position end (protocol:range-end range))
                                       'lem.sourcelist::jump-highlight)))))
-  (lem-utils:do-sequence
+  (lem-common:do-sequence
       (document-symbol
        (handler-case (protocol:document-symbol-children document-symbol)
          (unbound-slot () nil)))
@@ -1480,7 +1480,7 @@
 
 (defun display-document-symbol-response (buffer value)
   (lem.sourcelist:with-sourcelist (sourcelist "*Document Symbol*")
-    (lem-utils:do-sequence (item value)
+    (lem-common:do-sequence (item value)
       (append-document-symbol-item sourcelist buffer item 0))))
 
 (defun text-document/document-symbol (buffer)
@@ -1532,7 +1532,7 @@
 
 (defun convert-code-actions (code-actions workspace)
   (let ((items '()))
-    (lem-utils:do-sequence (code-action code-actions)
+    (lem-common:do-sequence (code-action code-actions)
       (push (context-menu:make-item :label (protocol:code-action-title code-action)
                                     :callback (curry #'execute-code-action workspace code-action))
             items))
@@ -1573,7 +1573,7 @@
            (message "No suggestions from code action")))))
 
 (defun find-organize-imports (code-actions)
-  (lem-utils:do-sequence (code-action code-actions)
+  (lem-common:do-sequence (code-action code-actions)
     (when (equal "source.organizeImports" (protocol:code-action-kind code-action))
       (return-from find-organize-imports code-action))))
 

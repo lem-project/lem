@@ -1,4 +1,4 @@
-(in-package :lem-utils)
+(in-package :lem-common)
 
 (defun utf8-bytes (c)
   (cond

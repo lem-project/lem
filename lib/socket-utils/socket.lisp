@@ -1,7 +1,7 @@
 (defpackage :lem-socket-utils
   (:use :cl)
   (:import-from :usocket)
-  (:import-from :lem-utils)
+  (:import-from :lem-common)
   (:export :port-available-p
            :random-available-port)
   #+sbcl
@@ -27,6 +27,6 @@
         port))))
 
 (defun random-available-port ()
-  (loop :for port := (lem-utils:random-range 49152 65535)
+  (loop :for port := (lem-common:random-range 49152 65535)
         :when (port-available-p port)
         :return port))

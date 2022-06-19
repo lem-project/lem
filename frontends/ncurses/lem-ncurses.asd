@@ -4,7 +4,7 @@
                "trivial-clipboard"
                "cl-setlocale"
                "lem"
-               "lem-utils")
+               "lem-common")
   :serial t
   :components (#+win32(:file "cl-charms-pdcurseswin32")
                (:file "term")

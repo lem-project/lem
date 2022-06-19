@@ -5,7 +5,7 @@
                "cl-ppcre"
                "babel"
                "log4cl"
-               "lem-utils")
+               "lem-common")
   :serial t
   :components ((:file "string-width-utils")
                (:file "file-utils")

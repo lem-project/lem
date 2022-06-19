@@ -282,7 +282,7 @@
        (charms/ll:wtimeout *padwin* -1))))
 
 (defun get-key (code)
-  (let* ((char (let ((nbytes (lem-common:utf8-bytes code)))
+  (let* ((char (let ((nbytes (utf8-bytes code)))
                  (if (= nbytes 1)
                    (code-char code)
                    (let ((vec (make-array nbytes :element-type '(unsigned-byte 8))))

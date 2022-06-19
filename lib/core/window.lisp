@@ -726,7 +726,7 @@ window width is changed, we must recalc the window view point."
     (if horizontal-p
         (cond ((< (window-x deleted-window)
                   (window-x (car window-list)))
-               (dolist (win (lem-common:min-if #'window-x window-list))
+               (dolist (win (min-if #'window-x window-list))
                  (window-set-pos win
                                  (window-x deleted-window)
                                  (window-y win))
@@ -736,7 +736,7 @@ window width is changed, we must recalc the window view point."
                                      (window-width win))
                                   (window-height win))))
               (t
-               (dolist (win (lem-common:max-if #'window-x window-list))
+               (dolist (win (max-if #'window-x window-list))
                  (window-set-size win
                                   (+ (window-width deleted-window)
                                      1
@@ -744,7 +744,7 @@ window width is changed, we must recalc the window view point."
                                   (window-height win)))))
         (cond ((< (window-y deleted-window)
                   (window-y (car window-list)))
-               (dolist (win (lem-common:min-if #'window-y window-list))
+               (dolist (win (min-if #'window-y window-list))
                  (window-set-pos win
                                  (window-x win)
                                  (window-y deleted-window))
@@ -753,7 +753,7 @@ window width is changed, we must recalc the window view point."
                                   (+ (window-height deleted-window)
                                      (window-height win)))))
               (t
-               (dolist (win (lem-common:max-if #'window-y window-list))
+               (dolist (win (max-if #'window-y window-list))
                  (window-set-size win
                                   (window-width win)
                                   (+ (window-height deleted-window)
@@ -780,19 +780,19 @@ window width is changed, we must recalc the window view point."
           (funcall setter2 (funcall another-getter))))))
 
 (defun collect-left-windows (window-list)
-  (lem-common:min-if #'window-x window-list))
+  (min-if #'window-x window-list))
 
 (defun collect-right-windows (window-list)
-  (lem-common:max-if (lambda (window)
+  (max-if (lambda (window)
                       (+ (window-x window)
                          (window-width window)))
                     window-list))
 
 (defun collect-top-windows (window-list)
-  (lem-common:min-if #'window-y window-list))
+  (min-if #'window-y window-list))
 
 (defun collect-bottom-windows (window-list)
-  (lem-common:max-if (lambda (window)
+  (max-if (lambda (window)
                       (+ (window-y window)
                          (window-height window)))
                     window-list))
@@ -1112,12 +1112,12 @@ window width is changed, we must recalc the window view point."
 
 (defun right-window (window)
   (unless (floating-window-p window)
-    (first (sort (lem-common:min-if #'window-x
-                                   (remove-if-not (lambda (w)
-                                                    (> (window-x w)
-                                                       (+ (window-x window)
-                                                          (window-width window))))
-                                                  (window-list)))
+    (first (sort (min-if #'window-x
+                         (remove-if-not (lambda (w)
+                                          (> (window-x w)
+                                             (+ (window-x window)
+                                                (window-width window))))
+                                        (window-list)))
                  (difference-window-y window)))))
 
 (defun up-window (window)
@@ -1134,12 +1134,12 @@ window width is changed, we must recalc the window view point."
 
 (defun down-window (window)
   (unless (floating-window-p window)
-    (first (sort (lem-common:min-if #'window-y
-                                   (remove-if-not (lambda (w)
-                                                    (>= (window-y w)
-                                                        (+ (window-y window)
-                                                           (window-height window))))
-                                                  (window-list)))
+    (first (sort (min-if #'window-y
+                         (remove-if-not (lambda (w)
+                                          (>= (window-y w)
+                                              (+ (window-y window)
+                                                 (window-height window))))
+                                        (window-list)))
                  (difference-window-x window)))))
 
 ;;; floating-window

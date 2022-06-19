@@ -7,5 +7,5 @@
 (define-condition signal-handler () ())
 
 (defun signal-subconditions (condition &rest initargs)
-  (dolist (c (lem-common:collect-subclasses condition :include-itself nil))
+  (dolist (c (collect-subclasses condition :include-itself nil))
     (apply #'signal c initargs)))

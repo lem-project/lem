@@ -1,7 +1,6 @@
 (defpackage :lem-socket-utils
-  (:use :cl)
+  (:use :cl :lem-common)
   (:import-from :usocket)
-  (:import-from :lem-common)
   (:export :port-available-p
            :random-available-port)
   #+sbcl

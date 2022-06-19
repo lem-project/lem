@@ -93,8 +93,8 @@
   (let* ((buffer (window-buffer window))
          (overlays (overlays buffer)))
     (when (eq (current-window) window)
-      (lem-common:if-push (make-temporary-region-overlay-if-marked buffer)
-                         overlays))
+      (if-push (make-temporary-region-overlay-if-marked buffer)
+               overlays))
     overlays))
 
 (defun draw-window-overlays-to-screen (window)

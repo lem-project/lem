@@ -4,4 +4,4 @@
                "closer-mop")
   :components ((:file "package")
                (:file "class")
-               (:file "general")))
+               (:file "common")))

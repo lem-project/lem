@@ -54,12 +54,10 @@
       (kill-ring-nth 1)))
 
 (defun kill-ring-nth (n)
-  (do ((ptr *kill-ring-yank-ptr*
-            (or (cdr ptr)
-                *kill-ring*))
-       (n n (1- n)))
-      ((>= 1 n)
-       (apply #'values (car ptr)))))
+  (check-type n (integer 1 *))
+  (loop :for ptr := *kill-ring-yank-ptr* :then (or (rest ptr) *kill-ring*)
+        :repeat (1- n)
+        :finally (return (apply #'values (first ptr)))))
 
 (defun kill-ring-rotate ()
   (when *kill-ring-yank-ptr*

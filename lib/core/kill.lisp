@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(*enable-clipboard-p*
-          *kill-ring-max*
+(export '(*kill-ring-max*
           *kill-before-p*
           kill-append
           kill-push
@@ -9,20 +8,6 @@
           kill-ring-rotate-undo
           kill-ring-first-string
           kill-ring-new))
-
-(defun sbcl-2.0.0-or-later-p ()
-  (and (string-equal "sbcl" (lisp-implementation-type))
-       (let ((version (mapcar #'parse-integer
-                              (uiop:split-string (lisp-implementation-version)
-                                                 :separator "."))))
-         (trivia:match version
-           ((cons major _)
-            (<= 2 major))))))
-
-(defparameter *enable-clipboard-p*
-  (ignore-errors
-    (or (progn #+darwin nil #-darwin t)
-        (sbcl-2.0.0-or-later-p))))
 
 (defparameter *kill-ring-max* 10)
 
@@ -59,12 +44,12 @@
      (setq *kill-new-flag* nil))
     (t
      (%kill-append string options *kill-before-p*)))
-  (when *enable-clipboard-p*
+  (when (enable-clipboard-p)
     (copy-to-clipboard (car (first *kill-ring*))))
   t)
 
 (defun current-kill-ring ()
-  (or (and *enable-clipboard-p*
+  (or (and (enable-clipboard-p)
            (get-clipboard-data))
       (kill-ring-nth 1)))
 
@@ -97,9 +82,3 @@
 
 (defun kill-ring-new ()
   (setf *kill-new-flag* t))
-
-(defun copy-to-clipboard (string)
-  (lem-if:clipboard-copy (implementation) string))
-
-(defun get-clipboard-data ()
-  (lem-if:clipboard-paste (implementation)))

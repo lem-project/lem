@@ -24,6 +24,7 @@
                (:file "macros")
                (:file "color")
                (:file "attribute")
+               (:file "clipboard")
                (:file "kill")
                (:file "file-ext")
                (:file "screen")

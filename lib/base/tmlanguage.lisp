@@ -204,10 +204,10 @@
                    (add (tm-ahead-match pattern (tm-match-matcher pattern) string start end)))
                   (tm-include-repository
                    (add* (tm-best-rule-in-patterns (tm-get-repository (tm-include-refer pattern))
-                                                       string start end)))
+                                                   string start end)))
                   (tm-include-self
                    (add* (tm-best-rule-in-patterns (tmlanguage-patterns (current-syntax-parser))
-                                                       string start end))))))
+                                                   string start end))))))
           (when result
             (setf best (tm-get-best-result best result)))))
       (values best results))))

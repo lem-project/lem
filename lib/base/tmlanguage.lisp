@@ -186,10 +186,10 @@
       old-result))
 
 (defun tm-best-rule-in-patterns (patterns string start end)
-  (macrolet ((if-push (x)
+  (macrolet ((add (x)
                (alexandria:once-only (x)
                  `(when ,x (push ,x results) ,x)))
-             (if-pushs (x)
+             (add* (x)
                `(multiple-value-bind (result results2) ,x
                   (setf results (nconc results2 results))
                   result)))
@@ -199,14 +199,14 @@
         (let ((result
                 (etypecase pattern
                   (tm-region
-                   (if-push (tm-ahead-match pattern (tm-region-begin pattern) string start end)))
+                   (add (tm-ahead-match pattern (tm-region-begin pattern) string start end)))
                   (tm-match
-                   (if-push (tm-ahead-match pattern (tm-match-matcher pattern) string start end)))
+                   (add (tm-ahead-match pattern (tm-match-matcher pattern) string start end)))
                   (tm-include-repository
-                   (if-pushs (tm-best-rule-in-patterns (tm-get-repository (tm-include-refer pattern))
+                   (add* (tm-best-rule-in-patterns (tm-get-repository (tm-include-refer pattern))
                                                        string start end)))
                   (tm-include-self
-                   (if-pushs (tm-best-rule-in-patterns (tmlanguage-patterns (current-syntax-parser))
+                   (add* (tm-best-rule-in-patterns (tmlanguage-patterns (current-syntax-parser))
                                                        string start end))))))
           (when result
             (setf best (tm-get-best-result best result)))))

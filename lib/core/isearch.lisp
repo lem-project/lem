@@ -371,7 +371,7 @@
     (isearch-update-display)))
 
 (define-command isearch-yank () ()
-  (let ((str (kill-ring-first-string)))
+  (let ((str (current-kill-ring)))
     (when str
       (setq *isearch-string* str)
       (isearch-update-display))))

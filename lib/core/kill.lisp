@@ -6,7 +6,6 @@
           kill-push
           kill-ring-rotate
           kill-ring-rotate-undo
-          kill-ring-first-string
           kill-ring-new))
 
 (defparameter *kill-ring-max* 10)
@@ -74,9 +73,6 @@
             (cons (pop *kill-ring-yank-ptr-prev*)
                   *kill-ring-yank-ptr*)
             *kill-ring*)))
-
-(defun kill-ring-first-string ()
-  (apply #'values (car *kill-ring-yank-ptr*)))
 
 (defun kill-ring-new ()
   (setf *kill-new-flag* t))

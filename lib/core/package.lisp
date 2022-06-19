@@ -1,8 +1,6 @@
 (defpackage :lem
-  (:use :cl :lem-base :lem-common)
+  (:use :cl :lem-base)
   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base)
-                     :collect (make-symbol (string sym))))
-  (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-common)
                      :collect (make-symbol (string sym))))
   #+sbcl
   (:lock t))

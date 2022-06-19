@@ -5,9 +5,11 @@
                "cl-ppcre"
                "babel"
                "log4cl"
-               "lem-common")
+               "closer-mop"
+               "trivia")
   :serial t
-  :components ((:file "string-width-utils")
+  :components ((:file "utils")
+               (:file "string-width-utils")
                (:file "file-utils")
                (:file "errors")
                (:file "hooks")

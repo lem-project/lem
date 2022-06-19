@@ -11,8 +11,7 @@
                "log4cl"
                "lem-base"
                "lem-encodings"
-               "lem-lisp-syntax"
-               "lem-common")
+               "lem-lisp-syntax")
   :serial t
   :components ((:file "history")
                (:file "package")

@@ -3,7 +3,7 @@
   (:export
    ;; class.lisp
    :collect-subclasses
-   ;; common.lisp
+   ;; utils.lisp
    :utf8-bytes
    :bests-if
    :max-if

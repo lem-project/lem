@@ -13,8 +13,7 @@
                "lem-encodings"
                "lem-lisp-syntax")
   :serial t
-  :components ((:file "history")
-               (:file "package")
+  :components ((:file "package")
                (:file "quicklisp-utils")
                (:file "config")
                (:file "errors")
@@ -66,6 +65,7 @@
 
                (:file "popup-window")
                (:file "completion-mode")
+               (:file "history")
                (:file "prompt-window")
                (:file "tmlanguage")
                (:file "button")

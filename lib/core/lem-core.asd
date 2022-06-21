@@ -10,6 +10,7 @@
                "yason"
                "log4cl"
                "lem-base"
+               "lem-common"
                "lem-encodings"
                "lem-lisp-syntax")
   :serial t

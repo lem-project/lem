@@ -9,6 +9,8 @@
                "rove")
   :pathname "tests"
   :components ((:file "utilities")
+               (:module "common"
+                :components ((:file "ring")))
                (:module "lsp-utils"
                 :components ((:file "json")
                              (:file "json-lsp-utils")))

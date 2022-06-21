@@ -1,3 +1,3 @@
 (defsystem "lem-common"
   :serial t
-  :components ((:file "ring-buffer")))
+  :components ((:file "ring")))

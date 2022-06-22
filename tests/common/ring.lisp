@@ -65,6 +65,7 @@
     (ok (eql 3 (peek-back ring 2)))
     (ok (eql 2 (peek-back ring 3)))
     (ok (eql 1 (peek-back ring 4)))
+    (ok (signals (peek-back ring -1) 'invalid-index-error))
     (loop :for i :from 5 :to 20
           :do (ok (signals (peek-back ring i) 'invalid-index-error)))))
 

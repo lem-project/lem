@@ -69,8 +69,7 @@
   ring)
 
 (defmethod peek-back ((ring ring) n)
-  (check-type n (integer 0 *))
-  (when (<= (size-of ring) n)
+  (unless (<= 0 n (1- (size-of ring)))
     (error 'invalid-index-error :index n :size (size-of ring)))
   (aref (ring-data ring)
         (mod (- (ring-rear ring) n 1)

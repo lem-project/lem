@@ -15,7 +15,11 @@ exec ros -Q -- $0 "$@"
 (defun main (&rest argv)
   (declare (ignorable argv))
   (let ((orig (first (apply #'append (mapcar (lambda (x) (directory (merge-pathnames "libasyncprocess.so" x)))
-                                             (eval (read-from-string "cffi:*foreign-library-directories*")))))))
+                                             (loop for i in (eval (read-from-string "cffi:*foreign-library-directories*"))
+                                                   for j = (eval i)
+                                                   nconc (if (listp j)
+                                                             j
+                                                             (list j))))))))
     (uiop:copy-file orig
                     (merge-pathnames
                      (file-namestring orig)

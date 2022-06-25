@@ -75,11 +75,6 @@
   (prog1 (call-next-method)
     (clear-cursors (current-buffer))))
 
-(defun delete-character-with-killring (point n killp)
-  (let ((string (delete-character point n)))
-    (when (and killp string) (kill-push string))
-    t))
-
 (define-key *global-keymap* "C-x C-c" 'exit-lem)
 (define-command exit-lem (&optional (ask t)) ()
   (when (or (null ask)
@@ -142,13 +137,13 @@
   ;; TODO: multiple cursors
   (when (end-buffer-p (current-point))
     (error 'end-of-buffer :point (current-point)))
-  (when n
-    (unless (continue-flag :kill)
-      (kill-ring-new)))
-  (do-multiple-cursors ()
-    (delete-character-with-killring (current-point)
-                                    (or n 1)
-                                    (if n t nil))))
+  (let ((repeat-command (continue-flag :kill)))
+    (do-multiple-cursors ()
+      (let ((killp (not (null n)))
+            (killed-string (delete-character (current-point) (or n 1))))
+        (when killp
+          (with-killring (:new (not repeat-command))
+            (kill-push killed-string)))))))
 
 (define-key *global-keymap* "C-h" 'delete-previous-char)
 (define-key *global-keymap* "Backspace" 'delete-previous-char)
@@ -170,9 +165,8 @@
 (define-key *global-keymap* "M-w" 'copy-region)
 (define-command copy-region (start end) ("r")
   ;; TODO: multiple cursors
-  (unless (continue-flag :kill)
-    (kill-ring-new))
-  (kill-push (points-to-string start end))
+  (with-killring (:new (not (continue-flag :kill)))
+    (kill-push (points-to-string start end)))
   (buffer-mark-cancel (current-buffer))
   t)
 
@@ -184,11 +178,11 @@
   ;; TODO: multiple cursors
   (when (point< end start)
     (rotatef start end))
-  (unless (continue-flag :kill)
-    (kill-ring-new))
-  (do-multiple-cursors ()
-    (delete-character-with-killring start (count-characters start end) t))
-  t)
+  (let ((repeat-command (continue-flag :kill)))
+    (do-multiple-cursors ()
+      (let ((killed-string (delete-character start (count-characters start end))))
+        (with-killring (:new (not repeat-command))
+          (kill-push killed-string))))))
 
 (define-command kill-region-to-clipboard (start end) ("r")
   ;; TODO: multiple cursors

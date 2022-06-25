@@ -55,32 +55,30 @@
                               (push (make-overlay s e 'region) *overlays*)))))))
 
 (define-command rectangle-copy () ()
-  (unless (continue-flag :kill)
-    (kill-ring-new))
-  (setf *overlays* (sort *overlays* #'point< :key #'overlay-start))
-  (kill-push
-   (with-output-to-string (out)
-     (loop :for ovs :on *overlays*
-           :for ov := (car ovs)
-           :do (write-string (points-to-string (overlay-start ov) (overlay-end ov)) out)
-               (when (cdr ovs)
-                 (write-char #\newline out)))))
-  (rectangle-end))
+  (with-killring (:new (not (continue-flag :kill)))
+    (setf *overlays* (sort *overlays* #'point< :key #'overlay-start))
+    (kill-push
+     (with-output-to-string (out)
+       (loop :for ovs :on *overlays*
+             :for ov := (car ovs)
+             :do (write-string (points-to-string (overlay-start ov) (overlay-end ov)) out)
+                 (when (cdr ovs)
+                   (write-char #\newline out)))))
+    (rectangle-end)))
 
 (define-command rectangle-kill () ()
-  (unless (continue-flag :kill)
-    (kill-ring-new))
-  (setf *overlays* (sort *overlays* #'point< :key #'overlay-start))
-  (kill-push
-   (with-output-to-string (out)
-     (loop :for ovs :on *overlays*
-           :for ov := (car ovs)
-           :do (delete-between-points (overlay-start ov) (overlay-end ov))
-               (write-string (points-to-string (overlay-start ov) (overlay-end ov))
-                             out)
-               (when (cdr ovs)
-                 (write-char #\newline out)))))
-  (rectangle-end))  
+  (with-killring (:new (not (continue-flag :kill)))
+    (setf *overlays* (sort *overlays* #'point< :key #'overlay-start))
+    (kill-push
+     (with-output-to-string (out)
+       (loop :for ovs :on *overlays*
+             :for ov := (car ovs)
+             :do (delete-between-points (overlay-start ov) (overlay-end ov))
+                 (write-string (points-to-string (overlay-start ov) (overlay-end ov))
+                               out)
+                 (when (cdr ovs)
+                   (write-char #\newline out)))))
+    (rectangle-end)))
 
 (define-command rectangle-open () ()
   (dolist (ov *overlays*)

@@ -343,9 +343,8 @@
                                        (character-offset end 1))
                                      (write-string (points-to-string start end) out)
                                      (delete-between-points start end))))
-             (with-killring (:options (when (visual-line-p) :vi-line))
-               (unless (continue-flag :kill)
-                 (kill-ring-new))
+             (with-killring (:options (when (visual-line-p) :vi-line)
+                             :new (not (continue-flag :kill)))
                (kill-push (get-output-stream-string out))))
            (vi-visual-end))
           (t
@@ -449,9 +448,8 @@
                                      (when (visual-line-p)
                                        (character-offset end 1))
                                      (write-string (points-to-string start end) out))))
-             (with-killring (:options (when (visual-line-p) :vi-line))
-               (unless (continue-flag :kill)
-                 (kill-ring-new))
+             (with-killring (:options (when (visual-line-p) :vi-line)
+                             :new (not (continue-flag :kill)))
                (kill-push (get-output-stream-string out))))
            (vi-visual-end))
           (t

@@ -219,7 +219,7 @@
   ;; TODO: multiple cursors
   (let ((string (if (null arg)
                     (current-kill-ring)
-                    (kill-ring-nth arg))))
+                    (kill-ring-nth (1- arg)))))
     (setf (buffer-value (current-buffer) 'yank-start) (copy-point (current-point) :temporary))
     (insert-string (current-point) string)
     (setf (buffer-value (current-buffer) 'yank-end) (copy-point (current-point) :temporary))
@@ -259,7 +259,7 @@
   ;; TODO: multiple cursors
   (let ((string (if (null arg)
                     (current-kill-ring)
-                    (kill-ring-nth arg))))
+                    (kill-ring-nth (1- arg)))))
     (copy-to-clipboard string)
     t))
 

@@ -30,8 +30,8 @@
       (killring-nth *killring* 0)))
 
 (defun kill-ring-nth (n)
-  (check-type n (integer 1 *))
-  (killring-nth *killring* (1- n)))
+  (check-type n (integer 0 *))
+  (killring-nth *killring* n))
 
 (defun kill-ring-rotate ()
   (killring-rotate *killring*))

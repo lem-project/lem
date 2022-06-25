@@ -2,6 +2,7 @@
   :depends-on ("lem-base"
                "lem-core"
                "lem-lsp-utils"
+               "lem-lsp-server"
                "lem-fake-interface"
                "lem-lisp-mode"
                "cl-ansi-text"
@@ -14,6 +15,11 @@
                (:module "lsp-utils"
                 :components ((:file "json")
                              (:file "json-lsp-utils")))
+               (:module "lsp-server"
+                :components ((:file "test-server")
+                             (:file "initialize")
+                             (:file "initialized")
+                             (:file "text-document-did-open")))
                (:module "lisp-syntax"
                 :components ((:file "indent-test")
                              (:file "defstruct-to-defclass")))

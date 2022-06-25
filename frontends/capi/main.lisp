@@ -166,5 +166,4 @@
               'lw:quit
               most-negative-fixnum)
 
-(setq lem:*enable-clipboard-p* t)
 (setq lem::*enable-piece-of-paper* nil)

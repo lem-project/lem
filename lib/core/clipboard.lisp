@@ -1,6 +1,8 @@
 (in-package :lem)
 
-(export '(*enable-clipboard-p*))
+(export '(enable-clipboard-p
+          copy-to-clipboard
+          get-clipboard-data))
 
 (defun sbcl-2.0.0-or-later-p ()
   (and (string-equal "sbcl" (lisp-implementation-type))

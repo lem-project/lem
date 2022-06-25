@@ -1,4 +1,4 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/swank
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/swank
   (:use :cl)
   (:export :swank-init
            :fuzzy-completions
@@ -8,7 +8,7 @@
            :find-definitions
            :swank-apropos-list
            :swank-compile-file))
-(in-package :cl-lsp/swank)
+(in-package :lem-lsp-server/swank)
 
 (defvar *fuzzy-completions* nil)
 

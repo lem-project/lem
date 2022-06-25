@@ -1,15 +1,15 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/methods/text-document
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/methods/text-document
   (:use :cl
-        :cl-lsp/text-document-controller)
-  (:import-from :cl-lsp/server
+        :lem-lsp-server/text-document-controller)
+  (:import-from :lem-lsp-server/server
                 :define-method
                 :this-server
                 :server-text-document-controller
                 :set-server-text-document-controller)
   (:local-nicknames (:protocol :lem-lsp-utils/protocol)
                     (:json :lem-lsp-utils/json)
-                    (:editor :cl-lsp/editor)))
-(in-package :cl-lsp/methods/text-document)
+                    (:editor :lem-lsp-server/editor)))
+(in-package :lem-lsp-server/methods/text-document)
 
 (defun current-controller ()
   (or (server-text-document-controller (this-server))

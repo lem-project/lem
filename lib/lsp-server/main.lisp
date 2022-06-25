@@ -1,20 +1,20 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/main
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/main
   (:use :cl
         :alexandria
-        :cl-lsp/methods
-        :cl-lsp/logger
-        ;; :cl-lsp/eval
+        :lem-lsp-server/methods
+        :lem-lsp-server/logger
+        ;; :lem-lsp-server/eval
         )
-  (:import-from :cl-lsp/server
+  (:import-from :lem-lsp-server/server
                 :tcp-server
                 :stdio-server
                 :server-listen)
-  (:import-from :cl-lsp/config
+  (:import-from :lem-lsp-server/config
                 :with-environment
                 :config)
   (:export :run-tcp-mode
            :run-stdio-mode))
-(in-package :cl-lsp/main)
+(in-package :lem-lsp-server/main)
 
 (defun start-swank-if-enabled ()
   (when-let ((port (config :swank :port)))

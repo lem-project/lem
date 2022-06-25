@@ -1,8 +1,8 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/formatting
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/formatting
   (:use :cl
-        :cl-lsp/protocol
-        :cl-lsp/protocol-util
-        :cl-lsp/logger
+        :lem-lsp-server/protocol
+        :lem-lsp-server/protocol-util
+        :lem-lsp-server/logger
         :lem-base)
   (:shadow :indent-line)
   (:import-from :lem-lisp-syntax
@@ -10,7 +10,7 @@
   (:export :on-type-formatting
            :range-formatting
            :buffer-formatting))
-(in-package :cl-lsp/formatting)
+(in-package :lem-lsp-server/formatting)
 
 (defun indent-line (p &optional editp)
   (unless (blank-line-p p)

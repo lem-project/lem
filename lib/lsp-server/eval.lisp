@@ -1,19 +1,19 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/eval
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/eval
   (:use :cl
-        :cl-lsp/logger
-        :cl-lsp/methods
-        :cl-lsp/protocol
-        :cl-lsp/protocol-util
-        :cl-lsp/slime
-        :cl-lsp/swank
-        :cl-lsp/gray-streams
-        :cl-lsp/server)
-  (:import-from :cl-lsp/methods/lifetime
+        :lem-lsp-server/logger
+        :lem-lsp-server/methods
+        :lem-lsp-server/protocol
+        :lem-lsp-server/protocol-util
+        :lem-lsp-server/slime
+        :lem-lsp-server/swank
+        :lem-lsp-server/gray-streams
+        :lem-lsp-server/server)
+  (:import-from :lem-lsp-server/methods/lifetime
                 :register-initialized-hook)
   (:import-from :lem-base
                 :with-point
                 :points-to-string))
-(in-package :cl-lsp/eval)
+(in-package :lem-lsp-server/eval)
 
 (defvar *eval-thread* nil)
 

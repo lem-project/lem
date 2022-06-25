@@ -1,4 +1,4 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/slime
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/slime
   (:use :cl
         :lem-base)
   (:export :symbol-string-at-point*
@@ -8,7 +8,7 @@
            :map-buffer-symbols
            :search-buffer-package
            :compilation-notes))
-(in-package :cl-lsp/slime)
+(in-package :lem-lsp-server/slime)
 
 (defun symbol-string-at-point* (point)
   (let ((string (symbol-string-at-point point)))

@@ -1,14 +1,14 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/methods
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/methods
   (:use :cl
-        :cl-lsp/protocol
-        :cl-lsp/protocol-util
-        :cl-lsp/logger
-        :cl-lsp/slime
-        :cl-lsp/swank
-        :cl-lsp/formatting
-        ;; :cl-lsp/server
+        :lem-lsp-server/protocol
+        :lem-lsp-server/protocol-util
+        :lem-lsp-server/logger
+        :lem-lsp-server/slime
+        :lem-lsp-server/swank
+        :lem-lsp-server/formatting
+        ;; :lem-lsp-server/server
         :lem-base)
-  (:import-from :cl-lsp/server
+  (:import-from :lem-lsp-server/server
                 :define-method)
   (:import-from :lem-lisp-syntax
                 :*syntax-table*
@@ -19,7 +19,7 @@
            :get-buffer-from-uri
            :with-document-position
            :with-text-document-position))
-(in-package :cl-lsp/methods)
+(in-package :lem-lsp-server/methods)
 
 (defun get-buffer-from-uri (uri)
   (get-buffer uri))

@@ -1,6 +1,6 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/protocol-util
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/protocol-util
   (:use :cl
-        :cl-lsp/protocol
+        :lem-lsp-server/protocol
         :lem-base)
   (:export :list-to-object-or-object[]
            :list-to-object[]
@@ -10,7 +10,7 @@
            :make-lsp-range
            :file-location
            :buffer-location))
-(in-package :cl-lsp/protocol-util)
+(in-package :lem-lsp-server/protocol-util)
 
 (defun list-to-object-or-object[] (list)
   (cond ((null list) (vector))

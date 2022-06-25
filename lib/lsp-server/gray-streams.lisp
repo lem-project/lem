@@ -1,7 +1,7 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/gray-streams
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/gray-streams
   (:use :cl :trivial-gray-streams)
   (:export :lsp-output-stream))
-(in-package :cl-lsp/gray-streams)
+(in-package :lem-lsp-server/gray-streams)
 
 (defclass lsp-output-stream (fundamental-character-output-stream)
   ((output-fn

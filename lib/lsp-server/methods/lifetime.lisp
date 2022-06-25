@@ -1,15 +1,15 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/methods/lifetime
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/methods/lifetime
   (:use :cl)
-  (:import-from :cl-lsp/server
+  (:import-from :lem-lsp-server/server
                 :define-method
                 :this-server
                 :set-client-capabilities)
-  (:import-from :cl-lsp/swank
+  (:import-from :lem-lsp-server/swank
                 :swank-init)
   (:local-nicknames (:protocol :lem-lsp-utils/protocol)
                     (:json :lem-lsp-utils/json))
   (:export :register-initialized-hook))
-(in-package :cl-lsp/methods/lifetime)
+(in-package :lem-lsp-server/methods/lifetime)
 
 (defvar *initialized-hooks* '())
 
@@ -76,7 +76,7 @@
   (json:object-to-json
    (make-instance 'protocol:initialize-result
                   :capabilities (make-server-capabilities)
-                  :server-info (json:make-json :name "cl-lsp"
+                  :server-info (json:make-json :name "lem-lsp-server"
                                                #|:version "0.0.1"|#))))
 
 (define-method "initialized" () ()

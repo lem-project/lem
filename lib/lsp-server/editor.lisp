@@ -1,4 +1,4 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/editor
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/editor
   (:use :cl)
   (:export :make-file-contents-position
            :make-file-contents-range
@@ -6,7 +6,7 @@
            :close-file-contents
            :replace-file-contents
            :edit-file-contents))
-(in-package :cl-lsp/editor)
+(in-package :lem-lsp-server/editor)
 
 (defgeneric open-file-contents-using-editor (editor uri text))
 (defgeneric close-file-contents-using-editor (editor file-contents))

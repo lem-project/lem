@@ -1,6 +1,6 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/server
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/server
   (:use :cl)
-  (:import-from :cl-lsp/logger
+  (:import-from :lem-lsp-server/logger
                 :log-format)
   (:local-nicknames (:protocol :lem-lsp-utils/protocol)
                     (:json :lem-lsp-utils/json))
@@ -18,7 +18,7 @@
    :tcp-server
    :stdio-server
    :define-method))
-(in-package :cl-lsp/server)
+(in-package :lem-lsp-server/server)
 
 (defgeneric call (request params))
 (defgeneric request-method-name (request))
@@ -73,8 +73,8 @@
     (null params)
     (symbol
      (alexandria:switch ((symbol-package params-type))
-       ((load-time-value (find-package :cl-lsp/protocol)) ;fallback
-        (cl-lsp/protocol:convert-from-hash-table params-type params))
+       ((load-time-value (find-package :lem-lsp-server/protocol)) ;fallback
+        (lem-lsp-server/protocol:convert-from-hash-table params-type params))
        ((load-time-value (find-package :lem-lsp-utils/protocol))
         (json:coerce-json params params-type))))))
 

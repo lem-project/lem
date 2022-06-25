@@ -1,8 +1,8 @@
-(defpackage :cl-lsp/defpackage
+(defpackage :lem-lsp-server/defpackage
   (:use :cl)
   (:shadow :defpackage)
   (:export :defpackage))
-(in-package :cl-lsp/defpackage)
+(in-package :lem-lsp-server/defpackage)
 
 (defparameter *defpackage-options*
   '(:use

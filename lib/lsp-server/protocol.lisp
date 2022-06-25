@@ -1,8 +1,8 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/protocol
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/protocol
   (:use :cl)
   (:export :convert-from-hash-table
            :convert-to-hash-table))
-(in-package :cl-lsp/protocol)
+(in-package :lem-lsp-server/protocol)
 
 (defvar null-slot-value (make-symbol "NULL"))
 

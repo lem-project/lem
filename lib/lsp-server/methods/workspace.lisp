@@ -1,8 +1,8 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/methods/workspace
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/methods/workspace
   (:use :cl)
-  (:import-from :cl-lsp/server
+  (:import-from :lem-lsp-server/server
                 :define-method))
-(in-package :cl-lsp/methods/workspace)
+(in-package :lem-lsp-server/methods/workspace)
 
 (define-method "workspace/didChangeConfiguration" () ()
   nil)

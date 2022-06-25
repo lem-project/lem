@@ -1,13 +1,13 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/logger
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/logger
   (:use :cl)
-  (:import-from :cl-lsp/config
+  (:import-from :lem-lsp-server/config
                 :config)
   (:export :*enable-logger*
            :*logger-stream*
            :log-format
            :with-log-file
            :with-log-stream))
-(in-package :cl-lsp/logger)
+(in-package :lem-lsp-server/logger)
 
 (defvar *logger-stream*)
 

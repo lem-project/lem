@@ -1,12 +1,12 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/config
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/config
   (:use :cl)
   (:export :with-environment
            :config))
-(in-package :cl-lsp/config)
+(in-package :lem-lsp-server/config)
 
-(defconstant +user-package-name+ :cl-lsp/config-user)
+(defconstant +user-package-name+ :lem-lsp-server/config-user)
 
-(defparameter *config-pathname* (merge-pathnames ".cl-lsp.lisp" (user-homedir-pathname)))
+(defparameter *config-pathname* (merge-pathnames ".lem-lsp-server.lisp" (user-homedir-pathname)))
 
 (defvar *environment* nil)
 (defvar *cache* nil)

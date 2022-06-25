@@ -1,8 +1,8 @@
-(cl-lsp/defpackage:defpackage :cl-lsp/text-document-controller
+(lem-lsp-server/defpackage:defpackage :lem-lsp-server/text-document-controller
   (:use :cl)
   (:local-nicknames (:protocol :lem-lsp-utils/protocol)
                     (:json :lem-lsp-utils/json)
-                    (:editor :cl-lsp/editor))
+                    (:editor :lem-lsp-server/editor))
   (:export :text-document-uri
            :text-document-language-id
            :text-document-file-contents
@@ -11,7 +11,7 @@
            :open-text-document
            :close-text-document
            :apply-content-change))
-(in-package :cl-lsp/text-document-controller)
+(in-package :lem-lsp-server/text-document-controller)
 
 (defstruct text-document
   uri

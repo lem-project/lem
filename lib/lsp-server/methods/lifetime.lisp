@@ -76,7 +76,7 @@
   (json:object-to-json
    (make-instance 'protocol:initialize-result
                   :capabilities (make-server-capabilities)
-                  :server-info (json:make-json :name "lem-lsp-server"
+                  :server-info (json:make-json :name "cl-lsp"
                                                #|:version "0.0.1"|#))))
 
 (define-method "initialized" () ()

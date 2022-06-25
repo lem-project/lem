@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(export '(*kill-before-p*
-          with-killring
+(export '(with-killring
           kill-push
           kill-ring-rotate
           kill-ring-rotate-undo
@@ -12,13 +11,14 @@
 
 (defvar *killring* (make-killring 10))
 
-(defmacro with-killring ((&key options) &body body)
-  `(let ((*kill-options* ,options))
+(defmacro with-killring ((&key options before) &body body)
+  `(let ((*kill-options* ,options)
+         (*kill-before-p* ,before))
      ,@body))
 
-(defun kill-push (string &optional (options *kill-options*))
+(defun kill-push (string)
   (let ((element (killring-add *killring*
-                               (make-killring-element string options)
+                               (make-killring-element string *kill-options*)
                                *kill-before-p*)))
     (when (enable-clipboard-p)
       (copy-to-clipboard (killring-element-string element)))

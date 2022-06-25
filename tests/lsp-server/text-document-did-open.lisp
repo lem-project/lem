@@ -8,6 +8,7 @@
                     (:json :lem-lsp-utils/json)))
 (in-package :lem-lsp-server/test/text-document-did-open)
 
+#+(or)
 (deftest test
   (let ((server (make-instance 'test-server))
         (whole-text "(defun test (x) (cons x x))"))

@@ -168,6 +168,7 @@
                      :trace "off"
                      :workspace-folders (json:json-null)))))
 
+#+(or)
 (deftest initialize
   (let ((server (make-instance 'test-server)))
     (server-listen server)

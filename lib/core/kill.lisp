@@ -1,19 +1,22 @@
 (in-package :lem)
 
 (export '(*kill-before-p*
-          kill-append
+          with-killring
           kill-push
           kill-ring-rotate
           kill-ring-rotate-undo
           kill-ring-new))
 
 (defvar *kill-before-p* nil)
+(defvar *kill-options* '())
+
 (defvar *killring* (make-killring 10))
 
-(defun kill-append (string &rest options)
-  (killring-concat *killring* (make-killring-element string options) *kill-before-p*))
+(defmacro with-killring ((&key options) &body body)
+  `(let ((*kill-options* ,options))
+     ,@body))
 
-(defun kill-push (string &rest options)
+(defun kill-push (string &optional (options *kill-options*))
   (let ((element (killring-add *killring*
                                (make-killring-element string options)
                                *kill-before-p*)))

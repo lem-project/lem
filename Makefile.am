@@ -31,13 +31,11 @@ lem-ncurses.desktop: scripts/gen-desktop.ros
 bin/%.ros: roswell/%.ros
 	cp $< $@
 
-bin/${LEM_LAUNCHER}:
+bin/${LEM_LAUNCHER}$(EXEEXT): roswell/${LEM_LAUNCHER}.ros
 	${MKDIR_P} bin
-	echo "#!/bin/sh" > $@
-	echo "SBCL_HOME=\"$(lem_contrib_prefix)/$(PACKAGE_VERSION)/SBCL_HOME\"" >> $@
-	echo "export SBCL_HOME" >> $@
-	cat roswell/lem | sed -e "s/ncurses/${DEFAULT_FRONTEND}/g"| sed -e '1d' >> $@
-	chmod +x $@
+	cp $< bin
+	ros build bin/${LEM_LAUNCHER}.ros
+	rm bin/${LEM_LAUNCHER}.ros
 
 libasyncprocess.$(SOEXT):
 	cd $(PWD);ros scripts/copy-shared.ros

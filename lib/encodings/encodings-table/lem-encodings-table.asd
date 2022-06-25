@@ -1,5 +1,7 @@
-;;don't edit
 (defsystem "lem-encodings-table"
-  :depends-on (:ICONV)
+  :depends-on ("iconv")
   :class :package-inferred-system
-  :components ((:FILE "8bit") (:FILE "euc") (:FILE "sjis") (:FILE "main")))
+  :components ((:file "8bit")
+               (:file "euc")
+               (:file "sjis")
+               (:file "main")))

@@ -1,7 +1,6 @@
-(uiop/package:define-package :lem-encodings/utf-16 (:nicknames)
-                             (:use :lem-base :cl) (:shadow) (:export) (:intern))
+(uiop:define-package :lem-encodings/utf-16
+  (:use :lem-base :cl))
 (in-package :lem-encodings/utf-16)
-;;don't edit above
 
 (defclass utf-16 (encoding) ())
 (defclass utf-16be (encoding) ())

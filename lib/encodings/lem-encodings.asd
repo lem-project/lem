@@ -1,6 +1,11 @@
-;;don't edit
 (defsystem "lem-encodings"
-  :depends-on (:LEM-BASE)
+  :depends-on ("lem-base")
   :class :package-inferred-system
-  :components ((:FILE "table") (:FILE "8bit") (:FILE "gb2312") (:FILE "euc-jp")
- (:FILE "cp932") (:FILE "iso-8859-1") (:FILE "utf-8") (:FILE "utf-16")))
+  :components ((:file "table")
+               (:file "8bit")
+               (:file "gb2312")
+               (:file "euc-jp")
+               (:file "cp932")
+               (:file "iso-8859-1")
+               (:file "utf-8")
+               (:file "utf-16")))

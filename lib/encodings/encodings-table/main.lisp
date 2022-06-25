@@ -1,7 +1,7 @@
-(uiop/package:define-package :lem-encodings-table/main (:nicknames) (:use :cl)
-                             (:shadow) (:export :generate-table) (:intern))
+(uiop:define-package :lem-encodings-table/main
+  (:use :cl)
+  (:export :generate-table))
 (in-package :lem-encodings-table/main)
-;;don't edit above
 
 (defun generate-table ()
   (lem-encodings-table/sjis:generate-table 

@@ -1,7 +1,8 @@
-(uiop/package:define-package :lem-encodings-table/8bit (:nicknames) (:use :cl)
-                             (:shadow) (:export :generate-table) (:intern))
+(uiop:define-package :lem-encodings-table/8bit
+  (:use :cl)
+  (:export :generate-table))
 (in-package :lem-encodings-table/8bit)
-;;don't edit above
+
 (defun map-bytes (fun)
   (loop for c from #x00 to #xff
         do (funcall fun c)))

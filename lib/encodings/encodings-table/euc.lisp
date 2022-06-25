@@ -1,7 +1,7 @@
-(uiop/package:define-package :lem-encodings-table/euc (:nicknames) (:use :cl)
-                             (:shadow) (:export :generate-table) (:intern))
+(uiop:define-package :lem-encodings-table/euc
+  (:use :cl)
+  (:export :generate-table))
 (in-package :lem-encodings-table/euc)
-;;don't edit above
 
 (defun map-bytes (fun &key country)
   "from https://en.wikipedia.org/wiki/Extended_Unix_Code"

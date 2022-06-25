@@ -1,7 +1,7 @@
-(uiop/package:define-package :lem-encodings-table/sjis (:nicknames) (:use :cl)
-                             (:shadow) (:export :generate-table) (:intern))
+(uiop:define-package :lem-encodings-table/sjis
+  (:use :cl)
+  (:export :generate-table))
 (in-package :lem-encodings-table/sjis)
-;;don't edit above
 
 (defun map-bytes (fun)
   "from https://en.wikipedia.org/wiki/Shift_JIS#Shift_JISx0213_and_Shift_JIS-2004"

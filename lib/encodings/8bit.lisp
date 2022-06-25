@@ -1,6 +1,6 @@
-(uiop/package:define-package :lem-encodings/8bit (:use :cl :lem-base :lem-encodings/table))
+(uiop:define-package :lem-encodings/8bit
+  (:use :cl :lem-base :lem-encodings/table))
 (in-package :lem-encodings/8bit)
-;;;don't edit above
 
 (defmacro def-8bit-encoding (name)
   `(let* ((path (asdf:system-relative-pathname :lem-encodings ,(format nil "~(~A~).table" name)))

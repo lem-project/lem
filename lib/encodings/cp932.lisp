@@ -1,9 +1,10 @@
-(uiop/package:define-package :lem-encodings/cp932 (:nicknames) (:use :cl :lem-base)
-                             (:shadow) (:import-from :lem-encodings/table)
-                             (:export) (:intern))
+(uiop:define-package :lem-encodings/cp932
+  (:use :cl :lem-base)
+  (:import-from :lem-encodings/table))
 (in-package :lem-encodings/cp932)
-;;don't edit above
+
 (defun e+ (c) (+ #xe000 c))
+
 (let* ((path (asdf:system-relative-pathname :lem-encodings "cp932.table"))
        (data (lem-encodings/table:read-table path)))
   (defvar *from* (loop with result = (make-hash-table)

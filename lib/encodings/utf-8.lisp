@@ -1,6 +1,6 @@
-(uiop/package:define-package :lem-encodings/utf-8 (:use :cl :lem-base))
+(uiop:define-package :lem-encodings/utf-8
+  (:use :cl :lem-base))
 (in-package :lem-encodings/utf-8)
-;;;don't edit above
 
 (defclass utf-8 (encoding)
   ((bom

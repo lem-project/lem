@@ -1,6 +1,7 @@
-(uiop/package:define-package :lem-encodings/euc-jp (:use :cl :lem-base))
+(uiop:define-package :lem-encodings/euc-jp
+  (:use :cl :lem-base))
 (in-package :lem-encodings/euc-jp)
-;;;don't edit above
+
 (defun e+ (c) (+ #xe000 c))
 
 (let* ((path (asdf:system-relative-pathname :lem-encodings "euc-jp.table"))

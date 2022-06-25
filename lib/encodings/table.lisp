@@ -1,6 +1,7 @@
-(uiop/package:define-package :lem-encodings/table (:use :cl) (:export :read-table))
+(uiop:define-package :lem-encodings/table
+  (:use :cl)
+  (:export :read-table))
 (in-package :lem-encodings/table)
-;;;don't edit above
 
 (defun decode-code (code)
   (assert (equal (subseq code 0 2) "0x"))

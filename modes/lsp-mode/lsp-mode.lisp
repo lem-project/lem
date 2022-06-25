@@ -93,7 +93,9 @@
                                                :output-callback #'output-callback))))
       (make-server-info :process process
                         :port port
-                        :disposable (lambda () (lem-process:delete-process process))))))
+                        :disposable (lambda ()
+                                      (when process
+                                        (lem-process:delete-process process)))))))
 
 (defmethod run-server-using-mode ((mode (eql :stdio)) spec)
   (let ((command (get-spec-command spec)))

@@ -24,9 +24,8 @@
       (copy-to-clipboard (killring-element-string element)))
     element))
 
-(defun current-kill-ring ()
-  (or (and (enable-clipboard-p)
-           (get-clipboard-data))
+(defun current-kill-ring (&key (use-clipboard (enable-clipboard-p)))
+  (or (and use-clipboard (get-clipboard-data))
       (killring-nth *killring* 0)))
 
 (defun kill-ring-nth (n)

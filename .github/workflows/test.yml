@@ -27,7 +27,7 @@ jobs:
 
         export PATH=$HOME/.roswell/bin:$PATH
 
-        sblint lib/base/lem-base.asd
+        sblint lib/core/base/lem-base.asd
         sblint lib/core/lem-core.asd
         sblint lib/lisp-syntax/lem-lisp-syntax.asd
         sblint modes/lisp-mode/lem-lisp-mode.asd

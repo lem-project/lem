@@ -10,9 +10,7 @@
                "yason"
                "log4cl"
                "lem-base"
-               "lem-common"
-               "lem-encodings"
-               "lem-lisp-syntax")
+               "lem-common")
   :serial t
   :components ((:file "package")
                (:file "quicklisp-utils")

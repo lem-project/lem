@@ -1,6 +1,7 @@
 (defpackage :lem-base/line
   (:use :cl)
-  (:export :line-prev
+  (:export :line
+           :line-prev
            :line-next
            :line-str
            :line-plist

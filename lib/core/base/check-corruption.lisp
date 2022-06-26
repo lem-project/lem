@@ -5,7 +5,7 @@
      (log:error "assertion failed" ,form ,@args)))
 
 (defun check-line-corruption (line line-number buffer)
-  (check-type line lem-base/line::line)
+  (check-type line line)
   (check-type buffer buffer)
   (when (line-prev line)
     (debug-assert (eq line (line-next (line-prev line)))

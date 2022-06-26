@@ -1,7 +1,6 @@
 (defsystem "lem-core"
   :depends-on ("uiop"
                "alexandria"
-               "swank"
                "trivial-gray-streams"
                "cl-ppcre"
                "inquisitor"

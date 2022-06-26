@@ -4,6 +4,7 @@
                "lem-lsp-utils"
                "lem-lsp-server"
                "lem-fake-interface"
+               "lem-lisp-syntax"
                "lem-lisp-mode"
                "cl-ansi-text"
                "trivial-package-local-nicknames"

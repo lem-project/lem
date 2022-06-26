@@ -205,7 +205,7 @@
         ;; check zero-width-space character (#\u200b)
         (if (= code #x200b)
             0
-            (if (lem-base:wide-char-p (code-char code)) 2 1)))))
+            (if (lem:wide-char-p (code-char code)) 2 1)))))
 (defmethod calc-pos-char-width ((wt windows-term-setting) code)
   (let ((fn (windows-term-setting-pos-char-width wt)))
     (if (functionp fn)
@@ -219,7 +219,7 @@
         ;; check zero-width-space character (#\u200b)
         (if (= code #x200b)
             0
-            (if (lem-base:wide-char-p (code-char code)) 2 1)))))
+            (if (lem:wide-char-p (code-char code)) 2 1)))))
 (defmethod (setf reserved-last-lines) (v (wt windows-term-setting))
   (setf (windows-term-setting-reserved-last-lines wt) v)
   (setf (now-resizing)

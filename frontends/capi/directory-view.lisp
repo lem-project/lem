@@ -29,6 +29,6 @@
                           (when (uiop:directory-pathname-p pathname)
                             (mapcar (lambda (pathname)
                                       (cons nil pathname))
-                                    (sort (lem-base:list-directory pathname)
+                                    (sort (lem:list-directory pathname)
                                           #'string<
                                           :key #'princ-to-string)))))))

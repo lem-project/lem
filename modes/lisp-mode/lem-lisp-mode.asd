@@ -5,6 +5,7 @@
                "swank"
                "trivia"
                "uiop"
+               "lem-lisp-syntax"
                "lem-core"
                "lem-process"
                "lem-socket-utils")

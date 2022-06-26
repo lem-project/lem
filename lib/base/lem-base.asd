@@ -1,6 +1,5 @@
 (defsystem "lem-base"
-  :depends-on ("uiop"
-               "iterate"
+  :depends-on ("iterate"
                "alexandria"
                "cl-ppcre"
                "babel"

@@ -1,5 +1,6 @@
 (defsystem "lem-lsp-mode"
   :depends-on ("lem-lsp-utils"
+               "lem-socket-utils"
                "alexandria"
                "cl-package-locks"
                "jsonrpc"

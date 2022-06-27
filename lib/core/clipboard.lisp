@@ -15,8 +15,8 @@
 
 (defparameter *enable-clipboard-p*
   (ignore-errors
-    (or (progn #+darwin nil #-darwin t)
-        (sbcl-2.0.0-or-later-p))))
+    #+darwin (sbcl-2.0.0-or-later-p)
+    #-darwin t))
 
 (defun enable-clipboard-p ()
   *enable-clipboard-p*)

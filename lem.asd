@@ -3,7 +3,6 @@
   :depends-on ("lem-core"
 
                "lem-encodings"
-               "lem-lisp-syntax"
 
                "lem-vi-mode"
                "lem-lisp-mode"

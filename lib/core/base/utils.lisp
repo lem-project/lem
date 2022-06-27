@@ -7,7 +7,6 @@
    :max-if
    :min-if
    :find-tree
-   :random-range
    :do-sequence
    :if-push)
   #+sbcl
@@ -63,9 +62,6 @@
         ((consp tree)
          (or (find-tree x (car tree))
              (find-tree x (cdr tree))))))
-
-(defun random-range (min max &optional (state *random-state*))
-  (+ min (random (- max min) state)))
 
 (defmacro do-sequence ((var-form sequence) &body body)
   (flet ((parse-var-form (var-form)

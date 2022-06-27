@@ -7,6 +7,9 @@
   (:lock t))
 (in-package :lem-socket-utils)
 
+(defconstant +private-port-min+ 49152)
+(defconstant +private-port-max+ 65535)
+
 (defun port-available-p (port)
   (let (socket)
     (unwind-protect
@@ -26,6 +29,12 @@
         port))))
 
 (defun random-available-port ()
-  (loop :for port := (lem-base:random-range 49152 65535)
+  (loop :for port := (random-port)
         :when (port-available-p port)
         :return port))
+
+(defun random-port ()
+  (random-range +private-port-min+ +private-port-max+))
+
+(defun random-range (min max &optional (state *random-state*))
+  (+ min (random (1+ (- max min)) state)))

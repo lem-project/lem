@@ -15,7 +15,6 @@
                "lem-markdown-mode"
                "lem-js-mode"
                "lem-css-mode"
-               "lem-selection-mode"
                "lem-rust-mode"
                "lem-calc-mode"
                "lem-paredit-mode"

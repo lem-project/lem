@@ -36,9 +36,6 @@
           buffer-unbound
           clear-buffer-variables))
 
-(export '(%buffer-keep-binfo
-          %buffer-clear-keep-binfo))
-
 (defparameter +primordial-buffer-name+ "*tmp*")
 
 (defclass buffer ()

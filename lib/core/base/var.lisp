@@ -1,13 +1,5 @@
 (in-package :lem-base)
 
-(export '(editor-variable
-          define-editor-variable
-          clear-editor-local-variables
-          variable-value
-          variable-documentation
-          find-editor-variable
-          with-global-variable-value))
-
 (defvar *editor-variables* '())
 
 (defstruct editor-variable

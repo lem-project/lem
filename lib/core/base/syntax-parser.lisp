@@ -1,19 +1,5 @@
 (in-package :lem-base)
 
-(export '(syntax-string-attribute
-          syntax-comment-attribute
-          syntax-keyword-attribute
-          syntax-constant-attribute
-          syntax-function-name-attribute
-          syntax-variable-attribute
-          syntax-type-attribute
-          *global-syntax-highlight*
-          before-syntax-scan-hook
-          after-syntax-scan-hook
-          enable-syntax-highlight
-          enable-syntax-highlight-p
-          syntax-scan-region))
-
 (define-editor-variable before-syntax-scan-hook nil)
 (define-editor-variable after-syntax-scan-hook nil)
 (define-editor-variable enable-syntax-highlight nil)

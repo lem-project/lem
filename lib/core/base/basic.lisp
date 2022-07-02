@@ -1,53 +1,5 @@
 (in-package :lem-base)
 
-(export '(first-line-p
-          last-line-p
-          start-line-p
-          end-line-p
-          start-buffer-p
-          end-buffer-p
-          same-line-p
-          move-point
-          line-start
-          line-end
-          buffer-start
-          buffer-end
-          line-offset
-          character-offset
-          character-at
-          line-string
-          text-property-at
-          put-text-property
-          remove-text-property
-          next-single-property-change
-          previous-single-property-change
-          insert-character
-          insert-string
-          delete-character
-          erase-buffer
-          region-beginning
-          region-end
-          map-region
-          points-to-string
-          count-characters
-          delete-between-points
-          count-lines
-          apply-region-lines
-          line-number-at-point
-          point-column
-          move-to-column
-          position-at-point
-          move-to-position
-          point-bytes
-          move-to-line
-          check-marked
-          set-current-mark
-          blank-line-p
-          skip-chars-forward
-          skip-chars-backward
-          insert-buffer
-          buffer-text))
-
 (defun same-line-p (point1 point2)
   "`point1`と`point2`が同じ位置ならT、それ以外ならNILを返します。"
   (assert (eq (point-buffer point1)

@@ -1,41 +1,5 @@
 (in-package :lem-base)
 
-(export '(fundamental-mode
-          primordial-buffer
-          current-buffer
-          make-buffer
-          buffer
-          bufferp
-          buffer-start-point
-          buffer-end-point
-          deleted-buffer-p
-          buffer-name
-          buffer-temporary-p
-          buffer-modified-tick
-          buffer-modified-p
-          buffer-read-only-p
-          buffer-syntax-table
-          buffer-major-mode
-          buffer-minor-modes
-          buffer-mark-p
-          buffer-mark
-          buffer-point
-          buffer-nlines
-          buffer-enable-undo-p
-          buffer-enable-undo
-          buffer-disable-undo
-          buffer-filename
-          buffer-directory
-          buffer-unmark
-          buffer-mark-cancel
-          buffer-rename
-          buffer-undo
-          buffer-redo
-          buffer-undo-boundary
-          buffer-value
-          buffer-unbound
-          clear-buffer-variables))
-
 (defparameter +primordial-buffer-name+ "*tmp*")
 
 (defclass buffer ()

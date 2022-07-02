@@ -1,22 +1,5 @@
 (in-package :lem-base)
 
-(export '(syntax-table
-          set-syntax-parser
-          fundamental-syntax-table
-          current-syntax
-          with-current-syntax
-          make-syntax-table
-          syntax-word-char-p
-          syntax-space-char-p
-          syntax-symbol-char-p
-          syntax-open-paren-char-p
-          syntax-closed-paren-char-p
-          syntax-string-quote-char-p
-          syntax-escape-char-p
-          syntax-expr-prefix-char-p
-          syntax-skip-expr-prefix-forward
-          syntax-skip-expr-prefix-backward))
-
 (defstruct syntax-table
   (space-chars '(#\space #\tab #\newline))
   (symbol-chars '(#\_))

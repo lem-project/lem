@@ -1,12 +1,5 @@
 (in-package :lem-base)
 
-(export '(encoding
-          encoding-read
-          encoding-write
-          register-encoding
-          encoding-end-of-line
-          unregister-encoding))
-
 (defclass encoding () 
   ((end-of-line
     :initarg :end-of-line

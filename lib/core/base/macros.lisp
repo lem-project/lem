@@ -1,10 +1,5 @@
 (in-package :lem-base)
 
-(export '(save-excursion
-          with-point
-          with-buffer-read-only
-          without-interrupts))
-
 (defmacro save-excursion (&body body)
   "現在の`point`と`mark`を保存し、`body`の評価後に復元し`body`の結果を返します。  
 `body`でエラーがあっても復元されます。"

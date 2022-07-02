@@ -1,20 +1,5 @@
 (in-package :lem-base)
 
-(export '(current-point
-          point
-          pointp
-          copy-point
-          delete-point
-          point-buffer
-          point-charpos
-          point-kind
-          point=
-          point/=
-          point<
-          point<=
-          point>
-          point>=))
-
 (defclass point ()
   ((buffer
     :initarg :buffer

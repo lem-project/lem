@@ -1,10 +1,5 @@
 (in-package :lem-base)
 
-(export '(*inhibit-read-only*
-          *inhibit-modification-hooks*
-          before-change-functions
-          after-change-functions))
-
 (defvar *inhibit-read-only* nil
   "Tなら`buffer`のread-onlyを無効にします。")
 

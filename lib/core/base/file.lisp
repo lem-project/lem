@@ -1,18 +1,5 @@
 (in-package :lem-base)
 
-(export '(*find-file-hook*
-          before-save-hook
-          after-save-hook
-          *external-format-function*
-          *find-directory-function*
-          *default-external-format*
-          insert-file-contents
-          find-file-buffer
-          write-to-file
-          write-region-to-file
-          update-changed-disk-date
-          changed-disk-p))
-
 (defvar *find-file-hook* '())
 
 (define-editor-variable before-save-hook '())

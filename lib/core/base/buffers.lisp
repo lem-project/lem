@@ -1,17 +1,5 @@
 (in-package :lem-base)
 
-(export '(kill-buffer-hook
-          buffer-list
-          any-modified-buffer-p
-          get-buffer
-          unique-buffer-name
-          delete-buffer
-          get-next-buffer
-          get-previous-buffer
-          unbury-buffer
-          bury-buffer
-          get-file-buffer))
-
 (define-editor-variable kill-buffer-hook '())
 
 (defun buffer-list ()

@@ -1,12 +1,5 @@
 (in-package :lem-base)
 
-(export '(back-to-indentation
-          indent-tabs-mode
-          calc-indent-function
-          indent-line
-          indent-region
-          indent-buffer))
-
 (define-editor-variable indent-tabs-mode nil)
 (define-editor-variable calc-indent-function 'calc-indent-default)
 

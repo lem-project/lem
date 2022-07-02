@@ -1,34 +1,5 @@
 (in-package :lem-base)
 
-(export '(skip-space-and-comment-forward
-          skip-space-and-comment-backward
-          form-offset
-          scan-lists
-          skip-whitespace-forward
-          skip-whitespace-backward
-          skip-symbol-forward
-          skip-symbol-backward
-          symbol-string-at-point
-          make-pps-state
-          pps-state-type
-          pps-state-token-start-point
-          pps-state-end-char
-          pps-state-block-comment-depth
-          pps-state-block-pair
-          pps-state-paren-stack
-          pps-state-paren-depth
-          parse-partial-sexp
-          syntax-ppss
-          pps-state-string-p
-          pps-state-comment-p
-          pps-state-string-or-comment-p
-          in-string-p
-          in-comment-p
-          in-string-or-comment-p
-          maybe-beginning-of-string
-          maybe-beginning-of-comment
-          maybe-beginning-of-string-or-comment))
-
 (flet ((%match (str1 str2 str1-pos)
          (let ((end1 (+ str1-pos (length str2))))
            (when (and (<= end1 (length str1))

@@ -1,15 +1,5 @@
 (in-package :lem-base)
 
-(export '(make-tmlanguage
-          make-tm-repository
-          make-tm-match
-          make-tm-region
-          make-tm-include
-          make-tm-patterns
-          make-tm-name
-          add-tm-repository
-          add-tm-pattern))
-
 (defclass tmlanguage (syntax-parser)
   ((patterns
     :initarg :patterns

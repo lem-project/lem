@@ -1,15 +1,5 @@
 (in-package :lem-base)
 
-(export '(*case-fold-search*
-          search-forward
-          search-backward
-          search-forward-regexp
-          search-backward-regexp
-          search-forward-symbol
-          search-backward-symbol
-          looking-at
-          match-string-at))
-
 (defvar *case-fold-search* nil)
 
 (defun search-step (point first-search search step move-matched endp)

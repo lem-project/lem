@@ -69,6 +69,11 @@
     (message nil)
     (redraw-display t)))
 
+(defun initialize-color-theme ()
+  (load-theme (config :color-theme "emacs-dark")))
+
+(add-hook *before-init-hook* 'initialize-color-theme)
+
 (define-color-theme "emacs-light" ()
   (:display-background-mode :light)
   ;; (:foreground "#000000")

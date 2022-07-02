@@ -409,10 +409,6 @@
             (send-abort-event editor-thread t))))
     (exit-editor (c) (return-from input-loop c))))
 
-(add-hook *before-init-hook*
-          (lambda ()
-            (load-theme "emacs-dark")))
-
 (defmethod lem-if:invoke ((implementation ncurses) function)
   (let ((result nil)
         (input-thread (bt:current-thread)))

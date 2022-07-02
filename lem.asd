@@ -16,7 +16,6 @@
                "lem-js-mode"
                "lem-css-mode"
                "lem-rust-mode"
-               "lem-calc-mode"
                "lem-paredit-mode"
                "lem-nim-mode"
                "lem-scheme-mode"

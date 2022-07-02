@@ -1,20 +1,42 @@
 (defpackage :lem-base
-  (:use :cl
-        :lem-base/utils
-        :lem-base/string-width-utils
-        :lem-base/file-utils
-        :lem-base/errors
-        :lem-base/hooks
-        :lem-base/line)
+  (:use :cl)
   #+sbcl
   (:lock t)
-  (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base/utils)
-                     :collect (make-symbol (string sym))))
-  (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base/string-width-utils)
-                     :collect (make-symbol (string sym))))
-  (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base/file-utils)
-                     :collect (make-symbol (string sym))))
-  (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base/errors)
-                     :collect (make-symbol (string sym))))
-  (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base/hooks)
-                     :collect (make-symbol (string sym)))))
+
+  ;; utils.lisp
+  (:export
+   :collect-subclasses
+   :utf8-bytes
+   :bests-if
+   :max-if
+   :min-if
+   :find-tree
+   :do-sequence
+   :if-push)
+  ;; string-width-utils
+  (:export :+default-tab-size+
+           :control-char
+           :wide-char-p
+           :char-width
+           :string-width
+           :wide-index)
+  ;; file-utils.lisp
+  (:export :expand-file-name
+           :tail-of-pathname
+           :directory-files
+           :list-directory
+           :file-size
+           :virtual-probe-file
+           :with-open-virtual-file)
+  ;; errors.lisp
+  (:export :editor-condition
+           :directory-does-not-exist
+           :directory-does-not-exist-directory
+           :read-only-error
+           :editor-error
+           :scan-error
+           :editor-interrupt)
+  ;; hooks.lisp
+  (:export :run-hooks
+           :add-hook
+           :remove-hook))

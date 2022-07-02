@@ -1,15 +1,4 @@
-(defpackage :lem-base/file-utils
-  (:use :cl)
-  (:export :expand-file-name
-           :tail-of-pathname
-           :directory-files
-           :list-directory
-           :file-size
-           :virtual-probe-file
-           :with-open-virtual-file)
-  #+sbcl
-  (:lock t))
-(in-package :lem-base/file-utils)
+(in-package :lem-base)
 
 (defun guess-host-name (filename)
   (declare (ignorable filename))

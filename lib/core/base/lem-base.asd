@@ -7,13 +7,13 @@
                "closer-mop"
                "trivia")
   :serial t
-  :components ((:file "utils")
+  :components ((:file "package")
+               (:file "utils")
                (:file "string-width-utils")
                (:file "file-utils")
                (:file "errors")
                (:file "hooks")
                (:file "line")
-               (:file "package")
                (:file "var")
                (:file "editor-variables")
                (:file "macros")

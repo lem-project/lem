@@ -1,30 +1,4 @@
-(defpackage :lem-base/line
-  (:use :cl)
-  (:export :line
-           :line-prev
-           :line-next
-           :line-str
-           :line-plist
-           :line-syntax-context
-           :line-points
-           :make-line
-           :line-alive-p
-           :line-char
-           :line-length
-           :line-merge
-           :line-remove-property
-           :line-add-property
-           :line-clear-property
-           :line-search-property
-           :line-search-property-range
-           :line-property-insert-pos
-           :line-property-insert-newline
-           :line-property-delete-pos
-           :line-property-delete-line
-           :line-free)
-  #+sbcl
-  (:lock t))
-(in-package :lem-base/line)
+(in-package :lem-base)
 
 (defstruct (line (:constructor %make-line))
   prev

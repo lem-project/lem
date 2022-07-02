@@ -1,15 +1,4 @@
-(defpackage :lem-base/errors
-  (:use :cl)
-  (:export :editor-condition
-           :directory-does-not-exist
-           :directory-does-not-exist-directory
-           :read-only-error
-           :editor-error
-           :scan-error
-           :editor-interrupt)
-  #+sbcl
-  (:lock t))
-(in-package :lem-base/errors)
+(in-package :lem-base)
 
 (define-condition editor-condition (simple-error)
   ())

@@ -1,11 +1,4 @@
-(defpackage :lem-base/hooks
-  (:use :cl)
-  (:export :run-hooks
-           :add-hook
-           :remove-hook)
-  #+sbcl
-  (:lock t))
-(in-package :lem-base/hooks)
+(in-package :lem-base)
 
 (defgeneric run-hooks (hooks &rest args))
 

@@ -25,7 +25,8 @@
           find-file-other-window
           read-file-other-window
           select-buffer-other-window
-          switch-to-last-focused-window))
+          switch-to-last-focused-window
+          compare-windows))
 
 (defvar *balance-after-split-window* t)
 
@@ -257,3 +258,27 @@
 
 (define-other-window-command select-buffer "BUse Buffer Other Window: ")
 (define-key *global-keymap* "C-x 4 b" 'select-buffer-other-window)
+
+(define-command compare-windows (ignore-whitespace) ("p")
+  (setf ignore-whitespace (/= ignore-whitespace 1))
+  (when (one-window-p)
+    (editor-error "Separate window for compare-windows."))
+  (flet ((next-char (p)
+           (loop
+             :for c := (character-at p)
+             :do (when (not (and ignore-whitespace
+                                 (syntax-space-char-p c)))
+                   (return c))
+                 (unless (character-offset p 1)
+                   (return nil)))))
+    (loop :with window1 := (current-window)
+          :with window2 := (get-next-window window1)
+          :with p1 := (window-point window1)
+          :with p2 := (window-point window2)
+          :for c1 := (next-char p1)
+          :for c2 := (next-char p2)
+          :until (or (null c1)
+                     (null c2)
+                     (not (eql c1 c2)))
+          :while (and (character-offset p1 1)
+                      (character-offset p2 1)))))

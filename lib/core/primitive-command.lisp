@@ -16,6 +16,10 @@
   (prog1 (call-next-method)
     (clear-cursors (current-buffer))))
 
+(define-command undefined-key () ()
+  (editor-error "Key not found: ~A"
+                (keyseq-to-string (last-read-key-sequence))))
+
 (define-key *global-keymap* "C-x C-c" 'exit-lem)
 (define-command exit-lem (&optional (ask t)) ()
   (when (or (null ask)

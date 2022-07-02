@@ -239,7 +239,6 @@
    :keymap
    :make-keymap
    :*global-keymap*
-   :undefined-key
    :define-key
    :keyseq-to-string
    :find-keybind
@@ -329,6 +328,7 @@
   ;; primitive-command.lisp
   (:export
    :*set-location-hook*
+   :undefined-key
    :exit-lem
    :quick-exit
    :keyboard-quit

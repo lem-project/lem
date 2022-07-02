@@ -145,10 +145,6 @@
 (defvar *global-keymap* (make-keymap :name '*global-keymap*
                                      :undef-hook 'self-insert))
 
-(define-command undefined-key () ()
-  (editor-error "Key not found: ~A"
-                (keyseq-to-string (last-read-key-sequence))))
-
 (defun lookup-keybind (key)
   (let (cmd)
     (loop with buffer = (current-buffer)

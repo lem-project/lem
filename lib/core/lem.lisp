@@ -151,6 +151,17 @@
         (unless (uiop:directory-exists-p (qmerge (format nil "dists/~A/" (pathname-name ql-dist-url))))
           (ql-install-dist ql-dist-url :prompt nil))))))
 
+(defun load-init-file ()
+  (flet ((test (path)
+           (when (probe-file path)
+             (load path)
+             (message "Load file: ~a" path)
+             t)))
+    (let ((home (user-homedir-pathname))
+          (*package* (find-package :lem-user)))
+      (or (test (merge-pathnames "init.lisp" (lem-home)))
+          (test (merge-pathnames ".lemrc" home))))))
+
 (let ((once nil))
   (defun init (args)
     (unless once
@@ -217,3 +228,11 @@
 
 (defun main (&optional (args (uiop:command-line-arguments)))
   (apply #'lem args))
+
+#+sbcl
+(push #'(lambda (x)
+          (if x
+              (lem x)
+              (lem))
+          t)
+      sb-ext:*ed-functions*)

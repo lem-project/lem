@@ -57,7 +57,6 @@
                (:file "word-command")
                (:file "sexp-command")
 
-               (:file "init")
                (:file "interface")
                (:file "display")
 

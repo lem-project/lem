@@ -1,19 +1,5 @@
 (in-package :lem)
 
-(export '(*input-hook*
-          last-read-key-sequence
-          start-record-key
-          stop-record-key
-          key-recording-p
-          read-event
-          read-key
-          unread-key
-          read-command
-          read-key-sequence
-          unread-key-sequence
-          execute-key-sequence
-          sit-for))
-
 (defvar *input-hook* '())
 
 (defvar *key-recording-p* nil)

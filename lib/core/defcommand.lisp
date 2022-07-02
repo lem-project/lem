@@ -1,7 +1,5 @@
 (in-package :lem)
 
-(export '(define-command))
-
 (eval-when (:compile-toplevel :load-toplevel)
   (defun parse-arg-descriptors (arg-descriptors universal-argument)
     (let* ((pre-forms '())

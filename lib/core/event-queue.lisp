@@ -1,8 +1,5 @@
 (in-package :lem)
 
-(export '(send-event
-          send-abort-event))
-
 (declaim (inline make-queue enqueue dequeue empty-queue-p))
 
 (defun make-queue ()

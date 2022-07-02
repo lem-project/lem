@@ -1,24 +1,5 @@
 (in-package :lem)
 
-(export '(update-prompt-window
-          frame
-          make-frame
-          frame-current-window
-          frame-window-tree
-          frame-floating-windows
-          frame-header-windows
-          frame-floating-prompt-window
-          frame-prompt-window
-          frame-message-window
-          notify-frame-redisplay-required
-          map-frame
-          get-frame
-          current-frame
-          unmap-frame
-          setup-frame
-          teardown-frame
-          teardown-frames))
-
 (defparameter *display-frame-map* (make-hash-table))
 
 (defgeneric update-prompt-window (window)

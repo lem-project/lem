@@ -1,15 +1,5 @@
 (in-package :lem)
 
-(export '(with-implementation
-          implementation
-          native-scroll-support
-          redraw-after-modifying-floating-window
-          support-floating-window
-          set-foreground
-          set-background
-          display-width
-          display-height))
-
 (defvar *implementation*)
 
 (defclass implementation ()

@@ -1,9 +1,5 @@
 (in-package :lem)
 
-(export '(get-rgb-from-color-name
-          rgb-to-background-mode
-          parse-color))
-
 (defparameter *rgb.txt* "! $Xorg: rgb.txt,v 1.3 2000/08/17 19:54:00 cpqbld Exp $
 255 250 250  snow
 248 248 255  ghost white

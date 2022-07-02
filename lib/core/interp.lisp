@@ -1,11 +1,5 @@
 (in-package :lem)
 
-(export '(*exit-editor-hook*
-          interactive-p
-          continue-flag
-          pop-up-backtrace
-          call-background-job))
-
 (define-condition editor-abort-handler (signal-handler) ())
 
 (defvar *exit-editor-hook* '())

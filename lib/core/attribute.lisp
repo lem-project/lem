@@ -1,40 +1,5 @@
 (in-package :lem)
 
-(export '(make-attribute
-          attribute
-          attribute-p
-          ensure-attribute
-          merge-attribute
-          set-attribute
-          set-attribute-foreground
-          set-attribute-background
-          set-attribute-reverse-p
-          set-attribute-bold-p
-          set-attribute-underline-p
-          attribute-foreground
-          attribute-background
-          attribute-reverse-p
-          attribute-bold-p
-          attribute-underline-p
-          define-attribute
-          cursor
-          region
-          modeline
-          modeline-inactive
-          truncate-attribute
-          compiler-note-attribute
-          syntax-warning-attribute
-          syntax-string-attribute
-          syntax-comment-attribute
-          syntax-keyword-attribute
-          syntax-constant-attribute
-          syntax-function-name-attribute
-          syntax-variable-attribute
-          syntax-type-attribute
-          syntax-builtin-attribute
-          completion-attribute
-          non-focus-completion-attribute))
-
 (defvar *attributes* '())
 
 (defclass attribute ()

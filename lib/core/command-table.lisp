@@ -1,11 +1,5 @@
 (in-package :lem)
 
-(export '(make-command-table
-          add-command
-          remove-command
-          find-command
-          exist-command-p))
-
 (defvar *command-table*)
 
 (defstruct cmd name form source-location)

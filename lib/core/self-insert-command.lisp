@@ -1,9 +1,5 @@
 (in-package :lem)
 
-(export '(self-insert-before-hook
-          self-insert-after-hook
-          self-insert))
-
 (define-editor-variable self-insert-before-hook '())
 (define-editor-variable self-insert-after-hook '())
 

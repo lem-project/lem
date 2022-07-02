@@ -1,11 +1,5 @@
 (in-package :lem)
 
-(export '(show-message
-          clear-message
-          message
-          message-without-log
-          message-buffer))
-
 (defparameter *message-timeout* 1)
 
 (defgeneric show-message (string &key timeout style))

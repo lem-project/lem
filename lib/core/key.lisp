@@ -1,17 +1,5 @@
 (in-package :lem)
 
-(export '(make-key
-          key-p
-          key-ctrl
-          key-meta
-          key-super
-          key-hypher
-          key-shift
-          key-sym
-          match-key
-          insertion-key-sym-p
-          key-to-char))
-
 (defparameter *named-key-syms*
   '("Backspace" "Delete" "Down" "End" "Escape" "F0" "F1" "F10" "F11" "F12" "F2" "F3" "F4" "F5" "F6" "F7" "F8" "F9"
     "Home" "Left" "NopKey" "PageDown" "PageUp" "Return" "Right" "Space" "Tab" "Up"))

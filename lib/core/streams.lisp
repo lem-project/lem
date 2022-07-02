@@ -1,15 +1,5 @@
 (in-package :lem)
 
-(export '(buffer-input-stream
-          make-buffer-input-stream
-          buffer-output-stream
-          make-buffer-output-stream
-          editor-input-stream
-          make-editor-input-stream
-          editor-output-stream
-          make-editor-output-stream
-          make-editor-io-stream))
-
 (defclass buffer-input-stream (trivial-gray-streams:fundamental-input-stream)
   ((unread-char
     :initform nil

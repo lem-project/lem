@@ -1,12 +1,5 @@
 (in-package :lem)
 
-(export '(color-theme-names
-          define-color-theme
-          load-theme
-          display-background-mode
-          foreground
-          background))
-
 (defstruct color-theme
   specs
   parent)

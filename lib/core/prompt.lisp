@@ -1,20 +1,5 @@
 (in-package :lem)
 
-(export '(*prompt-activate-hook*
-          *prompt-deactivate-hook*
-          *prompt-buffer-completion-function*
-          *prompt-file-completion-function*
-          prompt-active-p
-          active-prompt-window
-          get-prompt-input-string
-          prompt-for-character
-          prompt-for-y-or-n-p
-          prompt-for-string
-          prompt-for-integer
-          prompt-for-buffer
-          prompt-for-file
-          prompt-for-directory))
-
 (defparameter *default-prompt-gravity* :center)
 
 (defvar *prompt-activate-hook* '())

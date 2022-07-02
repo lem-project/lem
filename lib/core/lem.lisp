@@ -1,11 +1,5 @@
 (in-package :lem)
 
-(export '(*before-init-hook*
-          *after-init-hook*
-          *splash-function*
-          lem
-          main))
-
 (defvar *before-init-hook* '())
 (defvar *after-init-hook* '())
 (defvar *splash-function* nil)

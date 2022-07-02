@@ -1,22 +1,5 @@
 (in-package :lem)
 
-(export '(major-mode
-          mode-name
-          mode-description
-          mode-keymap
-          mode-syntax-table
-          mode-hook
-          is-major
-          current-mode-keymap
-          find-mode-from-name
-          mode-active-p
-          toggle-minor-mode
-          define-major-mode
-          define-minor-mode
-          change-buffer-mode
-          define-global-mode
-          change-global-mode-keymap))
-
 (defvar *mode-list* '())
 (defvar *global-minor-mode-list* '())
 

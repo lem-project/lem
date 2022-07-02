@@ -1,7 +1,5 @@
 (in-package :lem)
 
-(export '(editor-abort))
-
 (defparameter *default-editor-abort-message* "Abort")
 
 (define-condition editor-abort (editor-condition)

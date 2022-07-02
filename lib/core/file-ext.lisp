@@ -1,8 +1,5 @@
 (in-package :lem)
 
-(export '(*auto-mode-alist*
-          *\#!-alist*))
-
 (defvar *auto-mode-alist* nil)
 (defvar *\#!-alist*
   '(("env" . second)))

@@ -1,15 +1,5 @@
 (in-package :lem)
 
-(export '(overlay-start
-          overlay-end
-          overlay-attribute
-          set-overlay-attribute
-          overlay-buffer
-          make-overlay
-          delete-overlay
-          overlay-put
-          overlay-get))
-
 (defclass overlay ()
   ((start
     :initarg :start

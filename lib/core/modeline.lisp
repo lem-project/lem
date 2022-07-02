@@ -1,16 +1,5 @@
 (in-package :lem)
 
-(export '(modeline-format
-          modeline-add-status-list
-          modeline-remove-status-list
-          modeline-clear-status-list
-          modeline-write-info
-          modeline-name
-          modeline-mode-names
-          modeline-position
-          modeline-posline
-          convert-modeline-element))
-
 (define-editor-variable modeline-format '(modeline-write-info
                                           modeline-name
                                           modeline-mode-names

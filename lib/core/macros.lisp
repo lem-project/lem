@@ -1,8 +1,5 @@
 (in-package :lem)
 
-(export '(with-current-window
-          with-pop-up-typeout-window))
-
 (defmacro with-current-window (window &body body)
   (let ((gprev-window (gensym "PREV-WINDOW"))
         (gwindow (gensym "WINDOW")))

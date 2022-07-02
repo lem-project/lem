@@ -1,7 +1,5 @@
 (in-package :lem)
 
-(export '(maybe-quickload))
-
 (defun maybe-quickload (systems &rest keys &key error-on-failure-p &allow-other-keys)
   (cond
     ((uiop:featurep :quicklisp)

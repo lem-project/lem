@@ -1,13 +1,5 @@
 (in-package :lem)
 
-(export '(handle-signal
-          before-executing-command
-          after-executing-command
-          this-command
-          execute
-          primary-command
-          call-command))
-
 (define-condition executing-command (signal-handler)
   ((command :initarg :command
             :initform (alexandria:required-argument :command)

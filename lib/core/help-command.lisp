@@ -1,11 +1,5 @@
 (in-package :lem)
 
-(export '(describe-key
-          describe-bindings
-          execute-command
-          apropos-command
-          lem-version))
-
 (define-key *global-keymap* "C-x ?" 'describe-key)
 ;; Unable to use this binding because C-h is used by 'delete-previous-char
 ;; (define-key *global-keymap* "C-h k" 'describe-key)

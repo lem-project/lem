@@ -1,13 +1,5 @@
 (in-package :lem)
 
-(export '(*file-completion-ignore-case*
-          completion
-          completion-test
-          completion-hypheen
-          completion-file
-          completion-strings
-          completion-buffer))
-
 (defvar *file-completion-ignore-case* t)
 
 (defun fuzzy-match-p (str elt &optional ignore-case)

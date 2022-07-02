@@ -1,16 +1,5 @@
 (in-package :lem)
 
-(export '(*keymaps*
-          keymap
-          make-keymap
-          *global-keymap*
-          undefined-key
-          define-key
-          keyseq-to-string
-          find-keybind
-          insertion-key-p
-          lookup-keybind))
-
 (defvar *keymaps* nil)
 
 (defstruct (keymap (:constructor %make-keymap) (:print-function %print-keymap))

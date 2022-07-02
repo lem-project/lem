@@ -1,33 +1,5 @@
 (in-package :lem)
 
-(export '(select-buffer
-          kill-buffer
-          previous-buffer
-          next-buffer
-          recenter
-          split-active-window-vertically
-          split-active-window-horizontally
-          other-window
-          window-move-up
-          window-move-down
-          window-move-right
-          window-move-left
-          delete-other-windows
-          delete-active-window
-          quit-active-window
-          grow-window
-          shrink-window
-          grow-window-horizontally
-          shrink-window-horizontally
-          display-buffer
-          scroll-down
-          scroll-up
-          find-file-other-window
-          read-file-other-window
-          select-buffer-other-window
-          switch-to-last-focused-window
-          compare-windows))
-
 (defvar *balance-after-split-window* t)
 
 (defun maybe-balance-windows ()

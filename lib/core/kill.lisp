@@ -1,10 +1,5 @@
 (in-package :lem)
 
-(export '(with-killring
-          kill-push
-          kill-ring-rotate
-          kill-ring-rotate-undo))
-
 (defvar *kill-before-p* nil)
 (defvar *kill-options* '())
 

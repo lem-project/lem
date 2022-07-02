@@ -1,16 +1,5 @@
 (in-package :lem)
 
-(export '(*running-timer*
-          timer
-          timer-p
-          timer-name
-          timer-ms
-          timer-alive-p
-          start-timer
-          start-idle-timer
-          stop-timer
-          alive-timer-p))
-
 (defvar *is-in-idle* nil)
 (defvar *timer-list* nil)
 (defvar *idle-timer-list* nil)

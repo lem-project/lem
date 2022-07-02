@@ -1,19 +1,5 @@
 (in-package :lem)
 
-(export '(forward-word
-          previous-word
-          delete-word
-          backward-delete-word
-          downcase-region
-          uppercase-region
-          capitalize-word
-          lowercase-word
-          uppercase-word
-          forward-paragraph
-          backward-paragraph
-          kill-paragraph
-          count-words))
-
 (defun word-type (char)
   (when (characterp char)
     (cond ((char<= (code-char 12354) ;#\HIRAGANA_LETTER_A

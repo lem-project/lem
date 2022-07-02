@@ -482,10 +482,7 @@
   (:export
    :color-theme-names
    :define-color-theme
-   :load-theme
-   :display-background-mode
-   :foreground
-   :background)
+   :load-theme)
   (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base)
                      :collect (make-symbol (string sym))))
   #+sbcl

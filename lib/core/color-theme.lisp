@@ -34,30 +34,27 @@
   (loop :for (name . args) :in (color-theme-specs theme)
         :do (setf (gethash name spec-table) args)))
 
-(defun load-theme-1 (name)
+(defun apply-theme (theme)
   (setf *inactive-window-background-color* nil)
-  (let ((theme (find-color-theme name)))
-    (unless theme
-      (error "undefined color theme: ~A" name))
-    (clear-all-attribute-cache)
-    (let ((spec-table (make-hash-table)))
-      (inherit-load-theme theme spec-table)
-      (maphash (lambda (name args)
-                 (case name
-                   ((:display-background-mode)
-                    (set-display-background-mode
-                     (case (first args)
-                       ((:light :dark) (first args))
-                       (otherwise nil))))
-                   ((:foreground)
-                    (apply #'set-foreground args))
-                   ((:background)
-                    (apply #'set-background args))
-                   ((:inactive-window-background)
-                    (setf *inactive-window-background-color* (first args)))
-                   (otherwise
-                    (apply #'set-attribute name args))))
-               spec-table))))
+  (clear-all-attribute-cache)
+  (let ((spec-table (make-hash-table)))
+    (inherit-load-theme theme spec-table)
+    (maphash (lambda (name args)
+               (case name
+                 ((:display-background-mode)
+                  (set-display-background-mode
+                   (case (first args)
+                     ((:light :dark) (first args))
+                     (otherwise nil))))
+                 ((:foreground)
+                  (apply #'set-foreground args))
+                 ((:background)
+                  (apply #'set-background args))
+                 ((:inactive-window-background)
+                  (setf *inactive-window-background-color* (first args)))
+                 (otherwise
+                  (apply #'set-attribute name args))))
+             spec-table)))
 
 (define-command load-theme (name)
     ((prompt-for-string "Color theme: "
@@ -65,8 +62,10 @@
                                                (completion string (all-color-themes)))
                         :test-function 'find-color-theme
                         :history-symbol 'mh-color-theme))
-  (when (find-color-theme name)
-    (load-theme-1 name)
+  (let ((theme (find-color-theme name)))
+    (unless theme
+      (editor-error "undefined color theme: ~A" name))
+    (apply-theme theme)
     (message nil)
     (redraw-display t)))
 

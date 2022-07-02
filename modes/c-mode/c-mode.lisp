@@ -157,8 +157,7 @@
           (decf indent indent-size))))
     (let ((word (looking-at p "\\w+"))
           (word-point)
-          (state)
-          (unbalanced-flag nil))
+          (state))
       (when word
         (setf word-point (copy-point p :temporary))
         (character-offset p (length word))
@@ -169,7 +168,6 @@
                                         (line-end p)))
         (cond
           ((unbalanced-p state)
-           (setf unbalanced-flag t)
            (unless (setf state (unbalanced-indent p indent start))
              (return-from c-indent-line nil)))
           ((and word (ppcre:scan "^(?:case|default)$" word))

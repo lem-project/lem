@@ -1,6 +1,7 @@
 (defpackage :lem-haskell-mode
   (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
-  (:export :*haskell-mode-hook*))
+  (:export :*haskell-mode-hook*
+           :haskell-mode))
 (in-package :lem-haskell-mode)
 
 ;; https://www.haskell.org/onlinereport/haskell2010/

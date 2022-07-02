@@ -1,6 +1,8 @@
 (defpackage :lem-rust-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :*rust-mode-hook* :rust-format-buffer))
+  (:export :*rust-mode-hook*
+           :rust-mode
+           :rust-format-buffer))
 (in-package :lem-rust-mode)
 
 (defvar *rust-format-on-save* t)

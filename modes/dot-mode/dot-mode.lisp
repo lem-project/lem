@@ -4,7 +4,8 @@
   (:import-from :cl-ppcre
                 :scan
                 :all-matches-as-strings)
-  (:export :*dot-mode-hook*))
+  (:export :*dot-mode-hook*
+           :dot-mode))
 (in-package :lem-dot-mode)
 
 (defvar *dot-types*

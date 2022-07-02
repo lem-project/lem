@@ -2,6 +2,7 @@
   (:use :cl :lem :lem.sourcelist)
   (:export
    :*language-mode-keymap*
+   :language-mode
    :idle-function
    :beginning-of-defun-function
    :end-of-defun-function

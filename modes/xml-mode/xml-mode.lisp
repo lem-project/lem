@@ -3,7 +3,8 @@
   (:import-from :cl-ppcre
                 :scan
                 :all-matches-as-strings)
-  (:export :*xml-mode-hook*))
+  (:export :*xml-mode-hook*
+           :xml-mode))
 (in-package :lem-xml-mode)
 
 (defun tokens (boundary strings)

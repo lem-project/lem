@@ -1,6 +1,7 @@
 (defpackage :lem-patch-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :*patch-mode-hook*))
+  (:export :*patch-mode-hook*
+           :patch-mode))
 (in-package :lem-patch-mode)
 
 (define-attribute add-line-attribute

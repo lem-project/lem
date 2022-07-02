@@ -5,7 +5,8 @@ link : https://github.com/kmuto/review/blob/master/doc/format.ja.md
 
 (defpackage :lem-review-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :*review-mode-hook*))
+  (:export :*review-mode-hook*
+           :review-mode))
 (in-package :lem-review-mode)
 
 (defun make-tmlanguage-review ()

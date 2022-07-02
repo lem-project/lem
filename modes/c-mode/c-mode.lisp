@@ -1,6 +1,7 @@
 (defpackage :lem-c-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :*c-mode-hook*)
+  (:export :*c-mode-hook*
+           :c-mode)
   #+sbcl
   (:lock t))
 (in-package :lem-c-mode)

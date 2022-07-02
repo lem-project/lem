@@ -2,7 +2,8 @@
   (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
   (:import-from :cl-ppcre
                 :scan)
-  (:export :*css-mode-hook*))
+  (:export :*css-mode-hook*
+           :css-mode))
 
 (in-package :lem-css-mode)
 

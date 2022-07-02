@@ -2,7 +2,8 @@
   (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
   (:import-from :lem-xml-mode
                 :xml-calc-indent)
-  (:export :*js-mode-hook*))
+  (:export :*js-mode-hook*
+           :js-mode))
 (in-package :lem-js-mode)
 
 #| 

@@ -1,6 +1,7 @@
 (defpackage :lem-ocaml-mode
   (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
-  (:export :*ocaml-mode-hook*))
+  (:export :*ocaml-mode-hook*
+           :ocaml-mode))
 (in-package :lem-ocaml-mode)
 
 #| http://caml.inria.fr/pub/docs/manual-ocaml/lex.html |#

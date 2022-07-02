@@ -4,7 +4,8 @@
    :lem.tmlanguage
    :load-tmlanguage)
   (:export :gofmt
-           :*go-mode-hook*))
+           :*go-mode-hook*
+           :go-mode))
 (in-package :lem-go-mode)
 
 (defvar *go-syntax-table*

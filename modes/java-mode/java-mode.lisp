@@ -1,6 +1,7 @@
 (defpackage :lem-java-mode
   (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
-  (:export :*java-mode-hook*))
+  (:export :*java-mode-hook*
+           :java-mode))
 (in-package :lem-java-mode)
 
 #|

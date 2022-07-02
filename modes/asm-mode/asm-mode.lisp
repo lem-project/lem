@@ -1,6 +1,7 @@
 (defpackage :lem-asm-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :*asm-mode-hook*)
+  (:export :*asm-mode-hook*
+           :asm-mode)
   #+sbcl
   (:lock t))
 (in-package :lem-asm-mode)

@@ -2,7 +2,8 @@
   (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
   (:import-from #:ppcre
                 #:parse-string)
-  (:export :*makefile-mode-hook*))
+  (:export :*makefile-mode-hook*
+           :makefile-mode))
 (in-package :lem-makefile-mode)
 
 (defun tokens (strings &optional boundary)

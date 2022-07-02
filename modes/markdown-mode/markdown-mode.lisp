@@ -2,7 +2,8 @@
 
 (defpackage :lem-markdown-mode
   (:use :cl :lem :lem.language-mode)
-  (:export :*markdown-mode-hook*))
+  (:export :*markdown-mode-hook*
+           :markdown-mode))
 (in-package :lem-markdown-mode)
 
 (defun make-tmlanguage-markdown ()

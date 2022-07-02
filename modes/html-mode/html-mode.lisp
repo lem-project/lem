@@ -7,7 +7,8 @@
                 #:*xml-open-tag-p*
                 #:*xml-close-tag-p*
                 #:xml-calc-indent)
-  (:import-from #:cl-ppcre))
+  (:import-from #:cl-ppcre)
+  (:export :html-mode))
 (in-package #:lem-html-mode)
 
 (define-major-mode html-mode xml-mode

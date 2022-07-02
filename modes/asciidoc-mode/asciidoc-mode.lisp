@@ -4,7 +4,8 @@ link : https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/
 
 (defpackage :lem-asciidoc-mode
   (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
-  (:export :*asciidoc-mode-hook*))
+  (:export :*asciidoc-mode-hook*
+           :asciidoc-mode))
 (in-package :lem-asciidoc-mode)
 
 (defun make-tmlanguage-asciidoc ()

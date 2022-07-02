@@ -1,6 +1,7 @@
 (defpackage :lem-python-mode
   (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
-  (:export :*python-mode-hook*))
+  (:export :*python-mode-hook*
+           :python-mode))
 (in-package :lem-python-mode)
 
 (defun tokens (boundary strings)

@@ -1,6 +1,7 @@
 (defpackage :lem-yaml-mode
   (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
-  (:export :*yaml-mode-hook*))
+  (:export :*yaml-mode-hook*
+           :yaml-mode))
 (in-package :lem-yaml-mode)
 
 #| link: https://yaml.org/spec/1.2/spec.html |#

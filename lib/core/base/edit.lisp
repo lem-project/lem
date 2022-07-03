@@ -20,10 +20,6 @@
      (line-offset point 0 charpos)
      (delete-char/point point value))))
 
-(defun apply-edit (edit point)
-  (destructuring-bind (kind linum charpos value) edit
-    (%apply-edit point kind linum charpos value)))
-
 (defun apply-inverse-edit (edit point)
   (destructuring-bind (kind linum charpos value) edit
     (ecase kind

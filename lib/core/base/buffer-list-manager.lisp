@@ -1,9 +1,5 @@
 (in-package :lem-base)
 
-(defparameter *default-buffer-list-manager* 'buffer-list-manager)
-
-(defvar *buffer-list-manager*)
-
 (defgeneric delete-buffer-using-manager (buffer-list-manager buffer))
 
 (defclass buffer-list-manager ()
@@ -12,10 +8,9 @@
     :initform '()
     :accessor buffer-list-manager-buffers)))
 
+(defvar *buffer-list-manager* (make-instance 'buffer-list-manager))
+
 (defun buffer-list-manager ()
-  (unless (boundp '*buffer-list-manager*)
-    (setf *buffer-list-manager*
-          (make-instance *default-buffer-list-manager*)))
   *buffer-list-manager*)
 
 (defun call-with-current-buffers (buffer-list function)

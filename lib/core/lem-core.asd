@@ -24,7 +24,6 @@
                (:file "kill")
                (:file "file-ext")
                (:file "screen")
-               (:file "buffer-list-manager")
                (:file "frame")
                (:file "echo")
                (:file "prompt")

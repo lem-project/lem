@@ -40,9 +40,10 @@
                             (first (last (buffer-list))))))))
 
 (defmethod lem-base::delete-buffer-using-manager :before
-    ((manager buffer-list-manager)
+    ((manager lem-base::buffer-list-manager)
      buffer)
-  (strip-buffer-from-frame-windows buffer (current-frame)))
+  (dolist (frame (all-frames))
+    (strip-buffer-from-frame-windows buffer frame)))
 
 (define-key *global-keymap* "C-x k" 'kill-buffer)
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")

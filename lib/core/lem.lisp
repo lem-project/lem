@@ -223,8 +223,7 @@
            (invoke-frontend
             (lambda (&optional initialize finalize)
               (run-editor-thread initialize args finalize))
-            :implementation implementation
-            :buffer-list-manager (make-instance 'buffer-list-manager))))))
+            :implementation implementation)))))
 
 (defun main (&optional (args (uiop:command-line-arguments)))
   (apply #'lem args))

@@ -1,7 +1,6 @@
 (in-package :lem)
 
-(defparameter *display-frame-map* (make-hash-table))
-
+(defvar *display-frame-map* (make-hash-table))
 (defvar *frames* '())
 
 (defgeneric update-prompt-window (window)

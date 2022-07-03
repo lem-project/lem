@@ -2,6 +2,8 @@
 
 (defparameter *display-frame-map* (make-hash-table))
 
+(defvar *frames* '())
+
 (defgeneric update-prompt-window (window)
   (:method (window)))
 
@@ -91,6 +93,7 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
 
 (defun make-frame (&optional (old-frame (current-frame)))
   (let ((frame (make-instance 'frame)))
+    (push frame *frames*)
     (when old-frame
       (dolist (window (frame-header-windows old-frame))
         (add-header-window frame window)))
@@ -101,6 +104,9 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
 
 (defun get-frame (display)
   (gethash display *display-frame-map*))
+
+(defun all-frames ()
+  *frames*)
 
 (defun current-frame ()
   (get-frame (implementation)))
@@ -115,6 +121,7 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
   (lem-if:set-first-view (implementation) (window-view (frame-current-window frame))))
 
 (defun teardown-frame (frame)
+  (alexandria:deletef *frames* frame)
   (teardown-windows frame))
 
 (defun teardown-frames ()

@@ -1,6 +1,5 @@
 (in-package :lem-base)
 
-(declaim (inline edit))
 (defun make-edit (kind linum charpos value)
   (list kind linum charpos value))
 

@@ -39,7 +39,7 @@
       (switch-to-buffer (or (get-previous-buffer buffer)
                             (first (last (buffer-list))))))))
 
-(defmethod lem-base::delete-buffer-using-manager :before
+(defmethod delete-buffer-using-manager :before
     ((manager lem-base::buffer-list-manager)
      buffer)
   (dolist (frame (all-frames))

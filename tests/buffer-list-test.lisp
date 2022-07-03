@@ -4,12 +4,13 @@
   (:import-from :lem-tests/utilities
                 :sample-file)
   (:import-from :lem-base
+                :with-current-buffers
                 :with-global-variable-value)
   (:import-from :alexandria))
 (in-package :lem-tests/buffer-list-test)
 
 (defmacro with-buffer-list ((&optional buffer-list) &body body)
-  `(lem-base::with-current-buffers ,buffer-list ,@body))
+  `(with-current-buffers ,buffer-list ,@body))
 
 (defun argument-type-is-buffer-test (function &key allow-string-p)
   (with-buffer-list ()

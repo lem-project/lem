@@ -100,6 +100,11 @@
    :*inhibit-modification-hooks*
    :before-change-functions
    :after-change-functions)
+  ;; buffer-list-manager.lisp
+  (:export
+   :delete-buffer-using-manager
+   :buffer-list-manager
+   :with-current-buffer)
   ;; buffers.lisp
   (:export
    :kill-buffer-hook

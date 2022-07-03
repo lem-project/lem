@@ -57,10 +57,10 @@
                         (= 0 (hash-table-count hash-table))
                         (eq 'equal (hash-table-test hash-table)))))
              buffer)))
-    (lem-base::with-current-buffers ()
+    (with-current-buffers ()
       (verify "test"))
     (testing "temporary parameter"
-      (lem-base::with-current-buffers ()
+      (with-current-buffers ()
         (ok (eq (lem-base:make-buffer "hoge")
                 (lem-base:make-buffer "hoge")))
         (ok (not (eq (lem-base:make-buffer "hoge")
@@ -68,11 +68,11 @@
         (ok (not (eq (lem-base:make-buffer "piyo" :temporary t)
                      (lem-base:make-buffer "piyo" :temporary t))))))
     (testing "read-only-p parameter"
-      (lem-base::with-current-buffers ()
+      (with-current-buffers ()
         (verify "test" :read-only-p t)))
     (testing "enable-undo-p parameter"
-      (lem-base::with-current-buffers ()
+      (with-current-buffers ()
         (verify "test" :enable-undo-p nil)))
     (testing "syntax-table parameter"
-      (lem-base::with-current-buffers ()
+      (with-current-buffers ()
         (verify "test" :syntax-table (lem-base:make-syntax-table))))))

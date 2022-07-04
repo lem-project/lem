@@ -6,8 +6,7 @@
            :empty-p
            :size-of
            :push-back
-           :peek-back
-           :coerce-to-list))
+           :peek-back))
 (in-package :lem-common.ring)
 
 (define-condition invalid-index-error (program-error)
@@ -74,13 +73,3 @@
   (aref (ring-data ring)
         (mod (- (ring-rear ring) n 1)
              (ring-size ring))))
-
-(defmethod coerce-to-list ((ring ring))
-  (if (ring-empty-p ring)
-      '()
-      (loop :with data := (ring-data ring)
-            :with n := (length data)
-            :with i := (ring-front ring)
-            :collect (aref data i)
-            :until (= (ring-rear ring)
-                      (setf i (mod (1+ i) n))))))

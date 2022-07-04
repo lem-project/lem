@@ -197,7 +197,7 @@
 (define-command yank-to-clipboard (&optional arg) ("p")
   ;; TODO: multiple cursors
   (let ((string (if (null arg)
-                    (current-kill-ring)
+                    (current-kill-ring :use-clipboard nil)
                     (killring-nth *killring* (1- arg)))))
     (copy-to-clipboard string)
     t))

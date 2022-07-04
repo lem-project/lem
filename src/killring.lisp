@@ -16,7 +16,7 @@
   (make-instance 'killring :ring (lem-common.ring:make-ring size)))
 
 (defmethod killring-concat ((killring killring) element before-p)
-  (when (lem-common.ring:empty-p (killring-ring killring))
+  (when (lem-common.ring:ring-empty-p (killring-ring killring))
     (lem-common.ring:ring-push (killring-ring killring) element)
     (return-from killring-concat element))
   (let ((existing-element (lem-common.ring:ring-ref (killring-ring killring) 0)))

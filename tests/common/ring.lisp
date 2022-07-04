@@ -36,12 +36,12 @@
 #<RING data: #(u v w x y z q r s t) front: 6 rear: 6>
 "))))
 
-(deftest empty-p
+(deftest ring-empty-p
   (let ((ring (make-ring 3)))
-    (ok (empty-p ring))
+    (ok (ring-empty-p ring))
     (loop :for i :from 1 :to 10
           :do (ring-push ring i)
-              (ok (not (empty-p ring))))))
+              (ok (not (ring-empty-p ring))))))
 
 (deftest ring-length
   (let ((ring (make-ring 3)))

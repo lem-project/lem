@@ -3,7 +3,7 @@
   (:export :invalid-index-error
            :ring
            :make-ring
-           :empty-p
+           :ring-empty-p
            :ring-length
            :ring-push
            :ring-ref))
@@ -23,8 +23,9 @@
           :accessor ring-front)
    (rear :initform 0
          :accessor ring-rear)
-   (empty-p :initform t
-            :accessor ring-empty-p)))
+   (empty :initform t
+          :writer set-ring-empty
+          :reader ring-empty-p)))
 
 (defmethod print-object ((object ring) stream)
   (print-unreadable-object (object stream :type t)
@@ -36,9 +37,6 @@
 
 (defun make-ring (size)
   (make-instance 'ring :data (make-array size)))
-
-(defmethod empty-p ((ring ring))
-  (ring-empty-p ring))
 
 (defmethod ring-length ((ring ring))
   (cond ((ring-empty-p ring)
@@ -64,7 +62,7 @@
   (setf (ring-rear ring)
         (mod (1+ (ring-rear ring))
              (ring-size ring)))
-  (setf (ring-empty-p ring) nil)
+  (set-ring-empty nil ring)
   ring)
 
 (defmethod ring-ref ((ring ring) n)

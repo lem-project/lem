@@ -87,7 +87,7 @@
       (let ((killp (not (null n)))
             (killed-string (delete-character (current-point) (or n 1))))
         (when killp
-          (with-killring (:new (not repeat-command))
+          (with-killring (:repeat repeat-command)
             (kill-push killed-string)))))))
 
 (define-key *global-keymap* "C-h" 'delete-previous-char)
@@ -110,7 +110,7 @@
 (define-key *global-keymap* "M-w" 'copy-region)
 (define-command copy-region (start end) ("r")
   ;; TODO: multiple cursors
-  (with-killring (:new (not (continue-flag :kill)))
+  (with-killring (:repeat (continue-flag :kill))
     (kill-push (points-to-string start end)))
   (buffer-mark-cancel (current-buffer))
   t)
@@ -126,7 +126,7 @@
   (let ((repeat-command (continue-flag :kill)))
     (do-multiple-cursors ()
       (let ((killed-string (delete-character start (count-characters start end))))
-        (with-killring (:new (not repeat-command))
+        (with-killring (:repeat repeat-command)
           (kill-push killed-string))))))
 
 (define-command kill-region-to-clipboard (start end) ("r")

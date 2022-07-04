@@ -5,18 +5,18 @@
 
 (defvar *killring* (make-killring 10))
 
-(defun call-with-killring (function &key options before new)
+(defun call-with-killring (function &key options before repeat)
   (let ((*kill-options* options)
         (*kill-before-p* before))
-    (when new
+    (unless repeat
       (killring-new *killring*))
     (funcall function)))
 
-(defmacro with-killring ((&key options before new) &body body)
+(defmacro with-killring ((&key options before (repeat t)) &body body)
   `(call-with-killring (lambda () ,@body)
                        :options ,options
                        :before ,before
-                       :new ,new))
+                       :repeat ,repeat))
 
 (defun kill-push (string)
   (let ((element (killring-add *killring*

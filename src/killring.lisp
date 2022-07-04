@@ -17,7 +17,7 @@
 
 (defmethod killring-concat ((killring killring) element before-p)
   (when (lem-common.ring:empty-p (killring-ring killring))
-    (lem-common.ring:push-back (killring-ring killring) element)
+    (lem-common.ring:ring-push (killring-ring killring) element)
     (return-from killring-concat element))
   (let ((existing-element (lem-common.ring:peek-back (killring-ring killring) 0)))
     (cond (before-p
@@ -44,7 +44,7 @@
          (killring-concat killring element before-p))
         (t
          (setf (killring-appending killring) t)
-         (lem-common.ring:push-back (killring-ring killring) element)
+         (lem-common.ring:ring-push (killring-ring killring) element)
          element)))
 
 (defmethod killring-nth ((killring killring) n)

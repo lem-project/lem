@@ -2,11 +2,11 @@
   (:use :cl :rove :lem-common.ring))
 (in-package :lem-tests/common/ring)
 
-(deftest push-back
+(deftest ring-push
   (let ((ring (make-ring 10)))
     (ok (string= (with-output-to-string (out)
                    (loop :for v :across "abcdefghijklmnopqrstuvwxyz"
-                         :do (push-back ring v)
+                         :do (ring-push ring v)
                              (format out "~A~%" ring)))
                  "#<RING data: #(a 0 0 0 0 0 0 0 0 0) front: 0 rear: 1>
 #<RING data: #(a b 0 0 0 0 0 0 0 0) front: 0 rear: 2>
@@ -40,14 +40,14 @@
   (let ((ring (make-ring 3)))
     (ok (empty-p ring))
     (loop :for i :from 1 :to 10
-          :do (push-back ring i)
+          :do (ring-push ring i)
               (ok (not (empty-p ring))))))
 
 (deftest size-of
   (let ((ring (make-ring 3)))
     (ok (= 0 (size-of ring)))
     (loop :for i :from 1 :to 10
-          :do (push-back ring i)
+          :do (ring-push ring i)
               (ok (= (min 3 i)
                      (size-of ring)))))
   (let ((ring (make-ring 10)))
@@ -59,7 +59,7 @@
 (deftest peek-back
   (let ((ring (make-ring 10)))
     (loop :for i :from 1 :to 5
-          :do (push-back ring i))
+          :do (ring-push ring i))
     (ok (eql 5 (peek-back ring 0)))
     (ok (eql 4 (peek-back ring 1)))
     (ok (eql 3 (peek-back ring 2)))

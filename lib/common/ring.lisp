@@ -5,7 +5,7 @@
            :make-ring
            :empty-p
            :size-of
-           :push-back
+           :ring-push
            :peek-back))
 (in-package :lem-common.ring)
 
@@ -52,7 +52,7 @@
 (defmethod ring-size ((ring ring))
   (length (ring-data ring)))
 
-(defmethod push-back ((ring ring) value)
+(defmethod ring-push ((ring ring) value)
   (setf (aref (ring-data ring) (ring-rear ring))
         value)
   (when (and (not (ring-empty-p ring))

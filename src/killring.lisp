@@ -60,12 +60,12 @@
 (defmethod killring-rotate ((killring killring))
   (setf (killring-offset killring)
         (mod (1+ (killring-offset killring))
-             (lem-common.ring:size-of (killring-ring killring)))))
+             (lem-common.ring:ring-length (killring-ring killring)))))
 
 (defmethod killring-rotate-undo ((killring killring))
   (setf (killring-offset killring)
         (mod (1- (killring-offset killring))
-             (lem-common.ring:size-of (killring-ring killring)))))
+             (lem-common.ring:ring-length (killring-ring killring)))))
 
 (defmethod killring-new ((killring killring))
   (setf (killring-appending killring) nil))

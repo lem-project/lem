@@ -4,7 +4,7 @@
            :ring
            :make-ring
            :empty-p
-           :size-of
+           :ring-length
            :ring-push
            :ring-ref))
 (in-package :lem-common.ring)
@@ -40,7 +40,7 @@
 (defmethod empty-p ((ring ring))
   (ring-empty-p ring))
 
-(defmethod size-of ((ring ring))
+(defmethod ring-length ((ring ring))
   (cond ((ring-empty-p ring)
          0)
         ((< (ring-front ring) (ring-rear ring))
@@ -68,8 +68,8 @@
   ring)
 
 (defmethod ring-ref ((ring ring) n)
-  (unless (<= 0 n (1- (size-of ring)))
-    (error 'invalid-index-error :index n :size (size-of ring)))
+  (unless (<= 0 n (1- (ring-length ring)))
+    (error 'invalid-index-error :index n :size (ring-length ring)))
   (aref (ring-data ring)
         (mod (- (ring-rear ring) n 1)
              (ring-size ring))))

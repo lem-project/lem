@@ -1,4 +1,4 @@
 (defsystem "lem-go-mode"
-  :depends-on ("lem-core" "yason")
+  :depends-on ("lem" "yason")
   :serial t
   :components ((:file "go-mode")))

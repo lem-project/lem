@@ -1,4 +1,4 @@
 (defsystem "lem-haskell-mode"
-  :depends-on ("lem-core")
+  :depends-on ("lem")
   :serial t
   :components ((:file "haskell-mode")))

@@ -1,6 +1,6 @@
 (defsystem "lem-tests"
   :depends-on ("lem-base"
-               "lem-core"
+               "lem"
                "lem-lsp-utils"
                "lem-lsp-server"
                "lem-fake-interface"

@@ -1,4 +1,4 @@
 (defsystem "lem-dart-mode"
-  :depends-on ("lem-core")
+  :depends-on ("lem")
   :serial t
   :components ((:file "dart-mode")))

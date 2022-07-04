@@ -1,4 +1,4 @@
 (defsystem "lem-select-popup"
   :serial t
-  :depends-on ("lem-core")
+  :depends-on ("lem")
   :components ((:file "select-popup")))

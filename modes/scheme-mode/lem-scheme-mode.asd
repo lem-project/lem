@@ -5,7 +5,7 @@
                "trivia"
                "uiop"
                #+#.(cl:if (asdf:find-system :async-process cl:nil) '(and) '(or)) "lem-process"
-               "lem-core"
+               "lem"
                "lem-socket-utils")
   :serial t
   :components ((:file "syntax-data")

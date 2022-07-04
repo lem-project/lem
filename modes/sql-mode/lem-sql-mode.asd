@@ -1,4 +1,4 @@
 (defsystem "lem-sql-mode"
-  :depends-on ("lem-core")
+  :depends-on ("lem")
   :serial t
   :components ((:file "sql-mode")))

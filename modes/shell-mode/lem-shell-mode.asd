@@ -1,4 +1,4 @@
 (defsystem "lem-shell-mode"
-  :depends-on ("lem-core")
+  :depends-on ("lem")
   :serial t
   :components ((:file "shell-mode")))

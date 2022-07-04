@@ -1,4 +1,4 @@
 (defsystem "lem-weaver"
   :serial t
-  :depends-on ("lem-core")
+  :depends-on ("lem")
   :components ((:file "weaver")))

@@ -1,4 +1,4 @@
 (defsystem "lem-nim-mode"
-  :depends-on ("lem-core")
+  :depends-on ("lem")
   :serial t
   :components ((:file "nim-mode")))

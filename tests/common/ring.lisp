@@ -49,12 +49,7 @@
     (loop :for i :from 1 :to 10
           :do (ring-push ring i)
               (ok (= (min 3 i)
-                     (ring-length ring)))))
-  (let ((ring (make-ring 10)))
-    (setf (lem-common.ring::ring-front ring) 5
-          (lem-common.ring::ring-rear ring) 3
-          (lem-common.ring::ring-empty-p ring) nil)
-    (ok (= 8 (ring-length ring)))))
+                     (ring-length ring))))))
 
 (deftest ring-ref
   (let ((ring (make-ring 10)))

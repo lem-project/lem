@@ -1,5 +1,7 @@
 (defpackage :lem
-  (:use :cl :lem-base)
+  (:use :cl
+        :lem-base
+        :lem-common.ring)
   ;; quicklisp-utils.lisp
   (:export
    :maybe-quickload)

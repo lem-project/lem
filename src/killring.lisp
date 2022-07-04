@@ -13,13 +13,13 @@
               :accessor killring-appending)))
 
 (defun make-killring (size)
-  (make-instance 'killring :ring (lem-common.ring:make-ring size)))
+  (make-instance 'killring :ring (make-ring size)))
 
 (defmethod killring-concat ((killring killring) element before-p)
-  (when (lem-common.ring:ring-empty-p (killring-ring killring))
-    (lem-common.ring:ring-push (killring-ring killring) element)
+  (when (ring-empty-p (killring-ring killring))
+    (ring-push (killring-ring killring) element)
     (return-from killring-concat element))
-  (let ((existing-element (lem-common.ring:ring-ref (killring-ring killring) 0)))
+  (let ((existing-element (ring-ref (killring-ring killring) 0)))
     (cond (before-p
            (setf (killring-element-string existing-element)
                  (concatenate 'string
@@ -44,28 +44,28 @@
          (killring-concat killring element before-p))
         (t
          (setf (killring-appending killring) t)
-         (lem-common.ring:ring-push (killring-ring killring) element)
+         (ring-push (killring-ring killring) element)
          element)))
 
 (defmethod killring-nth ((killring killring) n)
   (handler-case
-      (let ((element (lem-common.ring:ring-ref (killring-ring killring)
-                                                (+ n (killring-offset killring)))))
+      (let ((element (ring-ref (killring-ring killring)
+                               (+ n (killring-offset killring)))))
         (apply #'values
                (cons (killring-element-string element)
                      (killring-element-options element))))
-    (lem-common.ring:invalid-index-error ()
+    (invalid-index-error ()
       nil)))
 
 (defmethod killring-rotate ((killring killring))
   (setf (killring-offset killring)
         (mod (1+ (killring-offset killring))
-             (lem-common.ring:ring-length (killring-ring killring)))))
+             (ring-length (killring-ring killring)))))
 
 (defmethod killring-rotate-undo ((killring killring))
   (setf (killring-offset killring)
         (mod (1- (killring-offset killring))
-             (lem-common.ring:ring-length (killring-ring killring)))))
+             (ring-length (killring-ring killring)))))
 
 (defmethod killring-new ((killring killring))
   (setf (killring-appending killring) nil))

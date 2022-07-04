@@ -23,7 +23,7 @@ jobs:
 
         ros config set dynamic-space-size 2048
 
-        ros install lem
+        ros install lem-project/async-process lem
         ros install cxxxr/sblint
         ros install fukamachi/rove
 

@@ -19,6 +19,8 @@ jobs:
         curl -L https://raw.githubusercontent.com/roswell/roswell/v20.06.14.107/scripts/install-for-ci.sh | sh
     - name: Run test
       run: |
+        set -ex
+
         ros config set dynamic-space-size 2048
 
         ros install lem

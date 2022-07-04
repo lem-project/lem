@@ -8,7 +8,8 @@
                "yason"
                "log4cl"
                "lem-base"
-               "lem-common")
+               "lem-common"
+               "lem-encodings")
   :serial t
   :components ((:file "package")
                (:file "quicklisp-utils")

@@ -1,10 +1,9 @@
 (defsystem "lem"
   :version "1.9.2"
-  :depends-on ("lem-core"
+  :depends-on ("lem-core"))
 
-               "lem-encodings"
-
-               "lem-vi-mode"
+(defsystem "lem-extensions"
+  :depends-on ("lem-vi-mode"
                "lem-lisp-mode"
                "lem-go-mode"
                "lem-c-mode"

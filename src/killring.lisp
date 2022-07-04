@@ -19,7 +19,7 @@
   (when (lem-common.ring:empty-p (killring-ring killring))
     (lem-common.ring:ring-push (killring-ring killring) element)
     (return-from killring-concat element))
-  (let ((existing-element (lem-common.ring:peek-back (killring-ring killring) 0)))
+  (let ((existing-element (lem-common.ring:ring-ref (killring-ring killring) 0)))
     (cond (before-p
            (setf (killring-element-string existing-element)
                  (concatenate 'string
@@ -49,7 +49,7 @@
 
 (defmethod killring-nth ((killring killring) n)
   (handler-case
-      (let ((element (lem-common.ring:peek-back (killring-ring killring)
+      (let ((element (lem-common.ring:ring-ref (killring-ring killring)
                                                 (+ n (killring-offset killring)))))
         (apply #'values
                (cons (killring-element-string element)

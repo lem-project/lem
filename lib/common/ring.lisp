@@ -6,7 +6,7 @@
            :empty-p
            :size-of
            :ring-push
-           :peek-back))
+           :ring-ref))
 (in-package :lem-common.ring)
 
 (define-condition invalid-index-error (program-error)
@@ -67,7 +67,7 @@
   (setf (ring-empty-p ring) nil)
   ring)
 
-(defmethod peek-back ((ring ring) n)
+(defmethod ring-ref ((ring ring) n)
   (unless (<= 0 n (1- (size-of ring)))
     (error 'invalid-index-error :index n :size (size-of ring)))
   (aref (ring-data ring)

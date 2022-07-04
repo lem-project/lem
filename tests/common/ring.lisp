@@ -56,15 +56,15 @@
           (lem-common.ring::ring-empty-p ring) nil)
     (ok (= 8 (size-of ring)))))
 
-(deftest peek-back
+(deftest ring-ref
   (let ((ring (make-ring 10)))
     (loop :for i :from 1 :to 5
           :do (ring-push ring i))
-    (ok (eql 5 (peek-back ring 0)))
-    (ok (eql 4 (peek-back ring 1)))
-    (ok (eql 3 (peek-back ring 2)))
-    (ok (eql 2 (peek-back ring 3)))
-    (ok (eql 1 (peek-back ring 4)))
-    (ok (signals (peek-back ring -1) 'invalid-index-error))
+    (ok (eql 5 (ring-ref ring 0)))
+    (ok (eql 4 (ring-ref ring 1)))
+    (ok (eql 3 (ring-ref ring 2)))
+    (ok (eql 2 (ring-ref ring 3)))
+    (ok (eql 1 (ring-ref ring 4)))
+    (ok (signals (ring-ref ring -1) 'invalid-index-error))
     (loop :for i :from 5 :to 20
-          :do (ok (signals (peek-back ring i) 'invalid-index-error)))))
+          :do (ok (signals (ring-ref ring i) 'invalid-index-error)))))

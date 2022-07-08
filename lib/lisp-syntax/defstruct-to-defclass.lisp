@@ -378,9 +378,6 @@
                    (struct-end-point struct-info))))
 
 (defun defstruct-to-defclass (point)
-  (handler-case
-      (with-temporary-points ()
-        (alexandria:when-let ((info (analyze-defstruct point (make-struct-info))))
-          (translate-to-defclass-with-info point info)))
-    (editor-error (c)
-      (error c))))
+  (with-temporary-points ()
+    (alexandria:when-let ((info (analyze-defstruct point (make-struct-info))))
+      (translate-to-defclass-with-info point info))))

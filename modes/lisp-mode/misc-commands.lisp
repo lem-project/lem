@@ -174,6 +174,4 @@
 
 
 (define-command lisp-defstruct-to-defclass () ()
-  (handler-case (lem-lisp-syntax:defstruct-to-defclass (current-point))
-    (editor-error (c)
-      (display-popup-message (princ-to-string c)))))
+  (lem-lisp-syntax:defstruct-to-defclass (current-point)))

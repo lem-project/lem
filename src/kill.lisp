@@ -19,12 +19,9 @@
                        :repeat ,repeat))
 
 (defun kill-push (string)
-  (let ((element (killring-add *killring*
-                               (make-killring-element string *kill-options*)
-                               *kill-before-p*)))
-    (when (enable-clipboard-p)
-      (copy-to-clipboard (killring-element-string element)))
-    element))
+  (killring-add *killring*
+                (make-killring-element string *kill-options*)
+                *kill-before-p*))
 
 (defun current-kill-ring (&key (use-clipboard (enable-clipboard-p)))
   (or (and use-clipboard (get-clipboard-data))

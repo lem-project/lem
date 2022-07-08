@@ -47,6 +47,10 @@
          (ring-push (killring-ring killring) element)
          element)))
 
+(defmethod killring-add :after ((killring killring) element before-p)
+  (when (enable-clipboard-p)
+    (copy-to-clipboard (killring-element-string element))))
+
 (defmethod killring-nth ((killring killring) n)
   (handler-case
       (let ((element (ring-ref (killring-ring killring)

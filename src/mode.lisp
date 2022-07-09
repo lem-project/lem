@@ -23,24 +23,31 @@
    (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
 
 (defmethod mode-name ((mode symbol))
+  (assert (not (null mode)))
   (mode-name (get-mode-object mode)))
 
 (defmethod mode-description ((mode symbol))
+  (assert (not (null mode)))
   (mode-description (get-mode-object mode)))
 
 (defmethod mode-keymap ((mode symbol))
+  (assert (not (null mode)))
   (mode-keymap (get-mode-object mode)))
 
 (defmethod mode-syntax-table ((mode symbol))
+  (assert (not (null mode)))
   (mode-syntax-table (get-mode-object mode)))
 
 (defmethod mode-enable-hook ((mode symbol))
+  (assert (not (null mode)))
   (mode-enable-hook (get-mode-object mode)))
 
 (defmethod mode-disable-hook ((mode symbol))
+  (assert (not (null mode)))
   (mode-disable-hook (get-mode-object mode)))
 
 (defmethod mode-hook-variable ((mode symbol))
+  (assert (not (null mode)))
   (mode-hook-variable (get-mode-object mode)))
 
 (defun major-modes ()

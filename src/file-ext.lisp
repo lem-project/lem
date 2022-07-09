@@ -2,6 +2,20 @@
 
 (defvar *file-type-relationals* '())
 
+(defun get-file-mode (pathname)
+  (alexandria:assoc-value *file-type-relationals*
+                          (pathname-type pathname)
+                          :test #'string=))
+
+(defun associcate-file-type (type-list mode)
+  (dolist (type type-list)
+    (pushnew (cons type mode)
+             *file-type-relationals*
+             :test #'equal)))
+
+(defmacro define-file-type ((&rest type-list) mode)
+  `(associcate-file-type ',type-list ',mode))
+
 (defvar *\#!-alist*
   '(("env" . second)))
 
@@ -72,24 +86,10 @@
                   (line-offset cur-point 1)
                   (return)))))
 
-(defun get-file-mode (pathname)
-  (alexandria:assoc-value *file-type-relationals*
-                          (pathname-type pathname)
-                          :test #'string=))
-
 (defun prepare-auto-mode (buffer)
   (let ((mode (get-file-mode (buffer-filename buffer))))
     (when mode
       (change-buffer-mode buffer mode))))
-
-(defmacro define-file-type ((&rest type-list) mode)
-  `(associcate-file-type ',type-list ',mode))
-
-(defun associcate-file-type (type-list mode)
-  (dolist (type type-list)
-    (pushnew (cons type mode)
-             *file-type-relationals*
-             :test #'equal)))
 
 (defun detect-external-format-from-file (pathname)
   (values (inq:dependent-name (inq:detect-encoding (pathname pathname) :jp))

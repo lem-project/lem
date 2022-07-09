@@ -70,72 +70,74 @@
                              parent-mode
                              (&key name description keymap syntax-table mode-hook)
                              &body body)
-  `(progn
-     ,@(when mode-hook
-         `((defvar ,mode-hook '())
-           (setf (mode-hook ',major-mode) ',mode-hook)))
-     (pushnew ',major-mode *mode-list*)
-     (setf (mode-name ',major-mode) ,name)
-     (setf (get ',major-mode 'is-major) t)
-     ,@(when description
-         `((setf (mode-description ',major-mode)
-                ,description)))
-     ,@(cond (keymap
-              `((defvar ,keymap (make-keymap :name ',keymap
-                                             :parent ,(when parent-mode
-                                                        `(mode-keymap ',parent-mode))))
-                (setf (mode-keymap ',major-mode) ,keymap)))
-             (parent-mode
-              `((setf (mode-keymap ',major-mode)
-                      (mode-keymap ',parent-mode))))
-             (t
-              `((setf (mode-keymap ',major-mode) nil))))
-     ,(cond (syntax-table
-             `(setf (mode-syntax-table ',major-mode)
-                    ,syntax-table))
-            (parent-mode
-             `(setf (mode-syntax-table ',major-mode)
-                    (mode-syntax-table ',parent-mode)))
-            (t
-             `(setf (mode-syntax-table ',major-mode)
-                    (fundamental-syntax-table))))
-     (define-command ,major-mode () ()
-       (clear-editor-local-variables (current-buffer))
-       ,(when parent-mode `(,parent-mode))
-       (setf (buffer-major-mode (current-buffer)) ',major-mode)
-       (setf (buffer-syntax-table (current-buffer)) (mode-syntax-table ',major-mode))
-       ,@body
-       ,(when mode-hook
-          `(run-hooks ,mode-hook)))))
+  (let ((command-class-name (make-symbol (string major-mode))))
+    `(progn
+       ,@(when mode-hook
+           `((defvar ,mode-hook '())
+             (setf (mode-hook ',major-mode) ',mode-hook)))
+       (pushnew ',major-mode *mode-list*)
+       (setf (mode-name ',major-mode) ,name)
+       (setf (get ',major-mode 'is-major) t)
+       ,@(when description
+           `((setf (mode-description ',major-mode)
+                   ,description)))
+       ,@(cond (keymap
+                `((defvar ,keymap (make-keymap :name ',keymap
+                                               :parent ,(when parent-mode
+                                                          `(mode-keymap ',parent-mode))))
+                  (setf (mode-keymap ',major-mode) ,keymap)))
+               (parent-mode
+                `((setf (mode-keymap ',major-mode)
+                        (mode-keymap ',parent-mode))))
+               (t
+                `((setf (mode-keymap ',major-mode) nil))))
+       ,(cond (syntax-table
+               `(setf (mode-syntax-table ',major-mode)
+                      ,syntax-table))
+              (parent-mode
+               `(setf (mode-syntax-table ',major-mode)
+                      (mode-syntax-table ',parent-mode)))
+              (t
+               `(setf (mode-syntax-table ',major-mode)
+                      (fundamental-syntax-table))))
+       (define-command (,major-mode (:class-name ,command-class-name)) () ()
+         (clear-editor-local-variables (current-buffer))
+         ,(when parent-mode `(,parent-mode))
+         (setf (buffer-major-mode (current-buffer)) ',major-mode)
+         (setf (buffer-syntax-table (current-buffer)) (mode-syntax-table ',major-mode))
+         ,@body
+         ,(when mode-hook
+            `(run-hooks ,mode-hook))))))
 
 (defmacro define-minor-mode (minor-mode
                              (&key name description (keymap nil keymapp) global enable-hook disable-hook)
                              &body body)
-  `(progn
-     (pushnew ',minor-mode *mode-list*)
-     ,(when global
-        `(setf (get ',minor-mode 'global-minor-mode-p) t))
-     (setf (mode-name ',minor-mode) ,name)
-     ,@(when description
-         `((setf (mode-description ',minor-mode)
-                 ,description)))
-     ,@(when keymapp
-         `((defvar ,keymap (make-keymap :name ',keymap))
-           (setf (mode-keymap ',minor-mode) ,keymap)))
-     (setf (mode-enable-hook ',minor-mode) ,enable-hook)
-     (setf (mode-disable-hook ',minor-mode) ,disable-hook)
-     (define-command ,minor-mode (&optional (arg nil arg-p)) ("p")
-       (cond ((not arg-p)
-              (toggle-minor-mode ',minor-mode))
-             ((eq arg t)
-              (enable-minor-mode ',minor-mode))
-             ((eq arg nil)
-              (disable-minor-mode ',minor-mode))
-             ((integerp arg)
-              (toggle-minor-mode ',minor-mode))
-             (t
-              (error "Invalid arg: ~S" arg)))
-       ,@body)))
+  (let ((command-class-name (make-symbol (string minor-mode))))
+    `(progn
+       (pushnew ',minor-mode *mode-list*)
+       ,(when global
+          `(setf (get ',minor-mode 'global-minor-mode-p) t))
+       (setf (mode-name ',minor-mode) ,name)
+       ,@(when description
+           `((setf (mode-description ',minor-mode)
+                   ,description)))
+       ,@(when keymapp
+           `((defvar ,keymap (make-keymap :name ',keymap))
+             (setf (mode-keymap ',minor-mode) ,keymap)))
+       (setf (mode-enable-hook ',minor-mode) ,enable-hook)
+       (setf (mode-disable-hook ',minor-mode) ,disable-hook)
+       (define-command (,minor-mode (:class-name ,command-class-name)) (&optional (arg nil arg-p)) ("p")
+         (cond ((not arg-p)
+                (toggle-minor-mode ',minor-mode))
+               ((eq arg t)
+                (enable-minor-mode ',minor-mode))
+               ((eq arg nil)
+                (disable-minor-mode ',minor-mode))
+               ((integerp arg)
+                (toggle-minor-mode ',minor-mode))
+               (t
+                (error "Invalid arg: ~S" arg)))
+         ,@body))))
 
 (defun change-buffer-mode (buffer mode &rest args)
   (save-excursion
@@ -178,24 +180,25 @@
 (defmacro define-global-mode (mode (&optional parent) (&key keymap enable-hook disable-hook))
   (check-type parent symbol)
   (alexandria:with-gensyms (global-mode parent-mode)
-    `(progn
-       ,@(when keymap
-           `((defvar ,keymap
-               (make-keymap :name ',keymap
-                            :parent (alexandria:when-let ((,parent-mode
-                                                           ,(when parent
-                                                              `(get ',parent 'global-mode))))
-                                      (mode-keymap ,parent-mode))))))
-       (let ((,global-mode
-               (make-instance 'global-mode
-                              :name ',mode
-                              :parent ',parent
-                              :keymap ,keymap
-                              :enable-hook ,enable-hook
-                              :disable-hook ,disable-hook)))
-         (setf (get ',mode 'global-mode) ,global-mode)
-         (pushnew ',mode *global-mode-list*)
-         (when (null *current-global-mode*)
-           (setf *current-global-mode* ,global-mode)))
-       (define-command ,mode () ()
-         (change-global-mode ',mode)))))
+    (let ((command-class-name (make-symbol (string mode))))
+      `(progn
+         ,@(when keymap
+             `((defvar ,keymap
+                 (make-keymap :name ',keymap
+                              :parent (alexandria:when-let ((,parent-mode
+                                                             ,(when parent
+                                                                `(get ',parent 'global-mode))))
+                                        (mode-keymap ,parent-mode))))))
+         (let ((,global-mode
+                 (make-instance 'global-mode
+                                :name ',mode
+                                :parent ',parent
+                                :keymap ,keymap
+                                :enable-hook ,enable-hook
+                                :disable-hook ,disable-hook)))
+           (setf (get ',mode 'global-mode) ,global-mode)
+           (pushnew ',mode *global-mode-list*)
+           (when (null *current-global-mode*)
+             (setf *current-global-mode* ,global-mode)))
+         (define-command (,mode (:class-name ,command-class-name)) () ()
+           (change-global-mode ',mode))))))

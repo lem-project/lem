@@ -75,6 +75,9 @@
   (destructuring-bind (name . options) (uiop:ensure-list name-and-options)
     (let ((primary-class (primary-class options))
           (advice-classes (alexandria:assoc-value options :advice-classes))
+          (class-name (alexandria:if-let (elt (assoc :class options))
+                        (second elt)
+                        name))
           (command-name (alexandria:if-let (elt (assoc :name options))
                           (second elt)
                           (string-downcase name))))
@@ -89,8 +92,8 @@
              ;; - *this-command*が束縛されない
              ;; - executeのフックが使えない
              ,@body)
-           (defclass ,name (,primary-class ,@advice-classes) ())
-           (defmethod execute ((,command ,name) ,universal-argument)
+           (defclass ,class-name (,primary-class ,@advice-classes) ())
+           (defmethod execute ((,command ,class-name) ,universal-argument)
              (declare (ignorable ,universal-argument))
              ,(gen-defcommand-body name
                                    universal-argument

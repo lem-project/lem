@@ -72,13 +72,13 @@
                   (line-offset cur-point 1)
                   (return)))))
 
-(defun detect-mode-from-pathname (pathname)
+(defun get-file-mode (pathname)
   (alexandria:assoc-value *file-type-relationals*
                           (pathname-type pathname)
                           :test #'string=))
 
 (defun prepare-auto-mode (buffer)
-  (let ((mode (detect-mode-from-pathname (buffer-filename buffer))))
+  (let ((mode (get-file-mode (buffer-filename buffer))))
     (when mode
       (change-buffer-mode buffer mode))))
 

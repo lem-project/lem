@@ -40,7 +40,7 @@
                   ((pathnamep arg)
                    (namestring arg)))))
       (dolist (pathname (expand-files* filename))
-        (execute-find-file (detect-mode-from-pathname pathname)
+        (execute-find-file (get-file-mode pathname)
                            pathname)))))
 
 (defmethod execute-find-file (mode pathname)

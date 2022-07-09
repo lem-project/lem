@@ -31,7 +31,6 @@
    :with-pop-up-typeout-window)
   ;; color.lisp
   (:export
-   :get-rgb-from-color-name
    :rgb-to-background-mode
    :parse-color)
   ;; attribute.lisp

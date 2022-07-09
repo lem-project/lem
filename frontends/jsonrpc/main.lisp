@@ -37,7 +37,7 @@
 (defun bool (x) (if x 'yason:true 'yason:false))
 
 (defun ensure-rgb (color)
-  (let ((v (get-rgb-from-color-name color)))
+  (let ((v (parse-color color)))
     (if (null v)
         color
         (destructuring-bind (r g b) v
@@ -116,7 +116,7 @@
             (background (gethash "background" params)))
         (declare (ignore foreground))
         (resize width height)
-        (alexandria:when-let (color (or (get-rgb-from-color-name background) (parse-color background)))
+        (alexandria:when-let (color (parse-color background))
           (destructuring-bind (r g b) color
             (lem::set-display-background-mode (rgb-to-background-mode r g b))))
         (funcall loaded-fn)

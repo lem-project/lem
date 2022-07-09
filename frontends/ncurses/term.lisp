@@ -437,9 +437,10 @@
     (cond ((= b -1) :light)
           (t
            (let ((color (aref *colors* b)))
-             (lem:rgb-to-background-mode (color-red color)
-                                         (color-green color)
-                                         (color-blue color)))))))
+             (lem:rgb-to-background-mode
+              (lem:make-color (color-red color)
+                              (color-green color)
+                              (color-blue color))))))))
 
 ;;;
 

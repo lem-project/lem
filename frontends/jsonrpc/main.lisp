@@ -119,9 +119,7 @@
         (declare (ignore foreground))
         (resize width height)
         (alexandria:when-let (color (parse-color background))
-          (lem::set-display-background-mode (rgb-to-background-mode (color-red color)
-                                                                    (color-green color)
-                                                                    (color-blue color))))
+          (lem::set-display-background-mode (rgb-to-background-mode color)))
         (funcall loaded-fn)
         (params "width" *display-width*
                 "height" *display-height*)))))

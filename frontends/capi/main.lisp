@@ -42,9 +42,9 @@
   (let ((color (color:get-color-spec
                 (capi:simple-pane-background
                  (first (all-window-panes (lem-panel-window-panel *lem-panel*)))))))
-    (lem:rgb-to-background-mode (* (color:color-red color) 255)
-                                (* (color:color-green color) 255)
-                                (* (color:color-blue color) 255))))
+    (lem:rgb-to-background-mode (lem:make-color (* (color:color-red color) 255)
+                                                (* (color:color-green color) 255)
+                                                (* (color:color-blue color) 255)))))
 
 (defmethod lem-if:update-foreground ((implementation capi-impl) color-name)
   (log-format "update-foreground ~S" color-name)

@@ -775,11 +775,11 @@
 
 (defstruct (color (:constructor make-color (red green blue))) red green blue)
 
-(defun light-color-p (r g b)
-  (< 50 (/ (max r g b) 2.55)))
+(defun light-color-p (color)
+  (< 50 (/ (max (color-red color) (color-green color) (color-blue color)) 2.55)))
 
-(defun rgb-to-background-mode (r g b)
-  (if (light-color-p r g b)
+(defun rgb-to-background-mode (color)
+  (if (light-color-p color)
       :light
       :dark))
 

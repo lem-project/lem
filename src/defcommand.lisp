@@ -75,7 +75,9 @@
   (destructuring-bind (name . options) (uiop:ensure-list name-and-options)
     (let ((primary-class (primary-class options))
           (advice-classes (alexandria:assoc-value options :advice-classes))
-          (command-name (string-downcase name)))
+          (command-name (alexandria:if-let (elt (assoc :name options))
+                          (second elt)
+                          (string-downcase name))))
       (alexandria:with-unique-names (command universal-argument)
         `(progn
            (add-command ,command-name

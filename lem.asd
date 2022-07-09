@@ -8,6 +8,7 @@
                "bordeaux-threads"
                "yason"
                "log4cl"
+               "split-sequence"
                "lem-base"
                "lem-common"
                "lem-encodings")

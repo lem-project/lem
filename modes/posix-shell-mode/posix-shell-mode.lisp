@@ -81,7 +81,5 @@
           (column (point-column point)))
       (+ column (- tab-width (rem column tab-width))))))
 
-(pushnew (cons "sh" 'posix-shell-mode) \*#!-alist* :test #'equal)
-
 (define-file-type ("sh" "bashrc" "profile") posix-shell-mode)
-;(lem::define-program-name "sh" 'posix-shell-mode)
+(lem::define-program-name-with-mode ("sh" "bash") posix-shell-mode)

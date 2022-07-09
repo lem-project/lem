@@ -85,7 +85,6 @@
    :kill-ring-rotate-undo)
   ;; file-ext.lisp
   (:export
-   :|*#!-ALIST*|
    :define-file-type)
   ;; frame.lisp
   (:export

@@ -57,13 +57,12 @@
                   (syntax-scan-region start end)))
       (add-hook *find-file-hook*
                 (lambda (buffer)
-                  (prepare-auto-mode buffer)
-                  (scan-file-property-list buffer)
+                  (process-file-mode buffer)
                   (syntax-scan-buffer buffer))
                 5000)
       (add-hook (variable-value 'before-save-hook :global)
                 (lambda (buffer)
-                  (scan-file-property-list buffer))))))
+                  (process-file-mode buffer))))))
 
 (defun teardown ()
   (teardown-frames)

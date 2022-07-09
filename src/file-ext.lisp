@@ -86,10 +86,10 @@
                   (line-offset cur-point 1)
                   (return)))))
 
-(defun prepare-auto-mode (buffer)
-  (let ((mode (get-file-mode (buffer-filename buffer))))
-    (when mode
-      (change-buffer-mode buffer mode))))
+(defun process-file-mode (buffer)
+  (alexandria:when-let (mode (get-file-mode (buffer-filename buffer)))
+    (change-buffer-mode buffer mode))
+  (scan-file-property-list buffer))
 
 (defun detect-external-format-from-file (pathname)
   (values (inq:dependent-name (inq:detect-encoding (pathname pathname) :jp))

@@ -434,13 +434,12 @@
 
 (defun background-mode ()
   (let ((b (nth-value 1 (get-default-colors))))
-    (cond ((= b -1) :light)
+    (cond ((= b -1) (lem:make-color 0 0 0))
           (t
            (let ((color (aref *colors* b)))
-             (lem:rgb-to-background-mode
-              (lem:make-color (color-red color)
-                              (color-green color)
-                              (color-blue color))))))))
+             (lem:make-color (color-red color)
+                             (color-green color)
+                             (color-blue color)))))))
 
 ;;;
 

@@ -23,7 +23,7 @@
 (defvar *editor-thread*)
 (defvar *server*)
 
-(defvar *background-mode*)
+(defvar *background-color*)
 
 (defstruct view
   (id (incf *view-id-counter*))
@@ -119,7 +119,7 @@
         (declare (ignore foreground))
         (resize width height)
         (alexandria:when-let (color (parse-color background))
-          (setq *background-mode* (rgb-to-background-mode color)))
+          (setq *background-color* color))
         (funcall loaded-fn)
         (params "width" *display-width*
                 "height" *display-height*)))))
@@ -140,8 +140,8 @@
              :mode *mode*
              (if (eq *mode* :tcp) (list :port *port*))))))
 
-(defmethod lem-if:display-background-mode ((implementation jsonrpc))
-  *background-mode*)
+(defmethod lem-if:get-background-color ((implementation jsonrpc))
+  *background-color*)
 
 (defmethod lem-if:update-foreground ((implementation jsonrpc) color-name)
   (notify "update-foreground" color-name))

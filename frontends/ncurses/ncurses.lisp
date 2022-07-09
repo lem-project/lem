@@ -430,7 +430,7 @@
                (exit-editor-value result))
       (format t "~&~A~%" (exit-editor-value result)))))
 
-(defmethod lem-if:display-background-mode ((implementation ncurses))
+(defmethod lem-if:get-background-color ((implementation ncurses))
   (lem.term:background-mode))
 
 (defmethod lem-if:update-foreground ((implementation ncurses) color-name)

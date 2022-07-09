@@ -498,7 +498,7 @@
   (:export
    :*background-color-of-drawing-window*
    :invoke
-   :display-background-mode
+   :get-background-color
    :update-foreground
    :update-background
    :display-width

@@ -39,7 +39,7 @@
 (defvar lem-if:*background-color-of-drawing-window* nil)
 
 (defgeneric lem-if:invoke (implementation function))
-(defgeneric lem-if:display-background-mode (implementation))
+(defgeneric lem-if:get-background-color (implementation))
 (defgeneric lem-if:update-foreground (implementation color-name))
 (defgeneric lem-if:update-background (implementation color-name))
 (defgeneric lem-if:display-width (implementation))
@@ -102,7 +102,8 @@
 
 (defun display-background-mode ()
   (or *display-background-mode*
-      (lem-if:display-background-mode (implementation))))
+      (rgb-to-background-mode
+       (lem-if:get-background-color (implementation)))))
 
 (defun set-display-background-mode (mode)
   (check-type mode (member :light :dark nil))

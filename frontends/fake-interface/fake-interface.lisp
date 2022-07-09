@@ -42,8 +42,8 @@
 (defmethod lem-if:invoke ((implementation fake-interface) function)
   (funcall function))
 
-(defmethod lem-if:display-background-mode ((implementation fake-interface))
-  :dark)
+(defmethod lem-if:get-background-color ((implementation fake-interface))
+  (make-color 0 0 0))
 
 (defmethod lem-if:update-foreground ((implementation fake-interface) color-name)
   (setf (fake-interface-foreground implementation) color-name))

@@ -37,14 +37,14 @@
   (with-error-handler ()
     (set-first-window (lem-panel-window-panel *lem-panel*) view)))
 
-(defmethod lem-if:display-background-mode ((implementation capi-impl))
-  (log-format "display-background-mode")
+(defmethod lem-if:get-background-color ((implementation capi-impl))
+  (log-format "get-background-color")
   (let ((color (color:get-color-spec
                 (capi:simple-pane-background
                  (first (all-window-panes (lem-panel-window-panel *lem-panel*)))))))
-    (lem:rgb-to-background-mode (lem:make-color (* (color:color-red color) 255)
-                                                (* (color:color-green color) 255)
-                                                (* (color:color-blue color) 255)))))
+    (lem:make-color (* (color:color-red color) 255)
+                    (* (color:color-green color) 255)
+                    (* (color:color-blue color) 255))))
 
 (defmethod lem-if:update-foreground ((implementation capi-impl) color-name)
   (log-format "update-foreground ~S" color-name)

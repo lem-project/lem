@@ -19,12 +19,6 @@
   (def mode-disable-hook)
   (def mode-hook))
 
-(defun current-mode-keymap ()
-  (mode-keymap (buffer-major-mode (current-buffer))))
-
-(defun (setf current-mode-keymap) (new-keymap)
-  (setf (mode-keymap (buffer-major-mode (current-buffer))) new-keymap))
-
 (defun find-mode-from-name (mode-name)
   (find-if #'(lambda (mode)
                (string-equal mode-name (mode-name mode)))

@@ -5,11 +5,9 @@
 
 (macrolet ((def (name)
              `(progn
-                (defgeneric ,name (mode))
-                (defgeneric (setf ,name) (new-val mode))
                 (defmethod ,name (mode)
                   (get mode ',name))
-                (defmethod (setf ,name) (new-val mode)
+                (defmethod ,(alexandria:symbolicate 'set- name) (new-val mode)
                   (setf (get mode ',name) new-val)))))
   (def mode-name)
   (def mode-description)
@@ -74,32 +72,27 @@
     `(progn
        ,@(when mode-hook
            `((defvar ,mode-hook '())
-             (setf (mode-hook ',major-mode) ',mode-hook)))
+             (set-mode-hook ',mode-hook ',major-mode)))
        (pushnew ',major-mode *mode-list*)
-       (setf (mode-name ',major-mode) ,name)
+       (set-mode-name ,name ',major-mode)
        (setf (get ',major-mode 'is-major) t)
        ,@(when description
-           `((setf (mode-description ',major-mode)
-                   ,description)))
+           `((set-mode-description ,description ',major-mode)))
        ,@(cond (keymap
                 `((defvar ,keymap (make-keymap :name ',keymap
                                                :parent ,(when parent-mode
                                                           `(mode-keymap ',parent-mode))))
-                  (setf (mode-keymap ',major-mode) ,keymap)))
+                  (set-mode-keymap ,keymap ',major-mode)))
                (parent-mode
-                `((setf (mode-keymap ',major-mode)
-                        (mode-keymap ',parent-mode))))
+                `((set-mode-keymap (mode-keymap ',parent-mode) ',major-mode)))
                (t
-                `((setf (mode-keymap ',major-mode) nil))))
+                `((set-mode-keymap nil ',major-mode))))
        ,(cond (syntax-table
-               `(setf (mode-syntax-table ',major-mode)
-                      ,syntax-table))
+               `(set-mode-syntax-table ,syntax-table ',major-mode))
               (parent-mode
-               `(setf (mode-syntax-table ',major-mode)
-                      (mode-syntax-table ',parent-mode)))
+               `(set-mode-syntax-table (mode-syntax-table ',parent-mode) ',major-mode))
               (t
-               `(setf (mode-syntax-table ',major-mode)
-                      (fundamental-syntax-table))))
+               `(set-mode-syntax-table (fundamental-syntax-table) ',major-mode)))
        (define-command (,major-mode (:class-name ,command-class-name)) () ()
          (clear-editor-local-variables (current-buffer))
          ,(when parent-mode `(,parent-mode))
@@ -117,15 +110,14 @@
        (pushnew ',minor-mode *mode-list*)
        ,(when global
           `(setf (get ',minor-mode 'global-minor-mode-p) t))
-       (setf (mode-name ',minor-mode) ,name)
+       (set-mode-name ,name ',minor-mode)
        ,@(when description
-           `((setf (mode-description ',minor-mode)
-                   ,description)))
+           `((set-mode-description ,description ',minor-mode)))
        ,@(when keymapp
            `((defvar ,keymap (make-keymap :name ',keymap))
-             (setf (mode-keymap ',minor-mode) ,keymap)))
-       (setf (mode-enable-hook ',minor-mode) ,enable-hook)
-       (setf (mode-disable-hook ',minor-mode) ,disable-hook)
+             (set-mode-keymap ,keymap ',minor-mode)))
+       (set-mode-enable-hook ,enable-hook ',minor-mode)
+       (set-mode-disable-hook ,disable-hook ',minor-mode)
        (define-command (,minor-mode (:class-name ,command-class-name)) (&optional (arg nil arg-p)) ("p")
          (cond ((not arg-p)
                 (toggle-minor-mode ',minor-mode))
@@ -162,7 +154,7 @@
       *current-global-mode*))
 
 (defun change-global-mode-keymap (mode keymap)
-  (setf (mode-keymap (get mode 'global-mode)) keymap))
+  (set-mode-keymap keymap (get mode 'global-mode)))
 
 (defun change-global-mode (mode)
   (flet ((call (fun)

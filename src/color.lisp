@@ -773,8 +773,11 @@
   (defun get-rgb-from-color-name (color-name)
     (gethash (string-downcase color-name) color-names)))
 
+(defun light-color-p (r g b)
+  (< 50 (/ (max r g b) 2.55)))
+
 (defun rgb-to-background-mode (r g b)
-  (if (< 50 (/ (max r g b) 2.55))
+  (if (light-color-p r g b)
       :light
       :dark))
 

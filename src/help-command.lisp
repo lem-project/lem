@@ -58,8 +58,8 @@
 (define-command list-modes () ()
   "Outputs all available major and minor modes."
   (with-pop-up-typeout-window (s (make-buffer "*all-modes*") :focus t :erase t)
-    (let ((major-modes (remove-if-not #'is-major *mode-list*))
-          (minor-modes (remove-if #'is-major *mode-list*)))
+    (let ((major-modes (major-modes))
+          (minor-modes (minor-modes)))
       (labels ((is-technical-mode (mode)
                (eql (elt (symbol-name mode) 0)
                     #\%))

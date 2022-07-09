@@ -60,6 +60,12 @@
 (defun is-major (mode)
   (get mode 'is-major))
 
+(defun major-modes ()
+  (remove-if-not #'is-major *mode-list*))
+
+(defun minor-modes ()
+  (remove-if #'is-major *mode-list*))
+
 (defmacro define-major-mode (major-mode
                              parent-mode
                              (&key name description keymap syntax-table mode-hook)

@@ -356,9 +356,9 @@
 
 (defun get-color-1 (string)
   (alexandria:when-let ((color (lem:parse-color string)))
-    (get-color-rgb (color-red color)
-                   (color-green color)
-                   (color-blue color))))
+    (get-color-rgb (lem:color-red color)
+                   (lem:color-green color)
+                   (lem:color-blue color))))
 
 (defun get-color (string)
   (let ((color (get-color-1 string)))

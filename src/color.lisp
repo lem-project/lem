@@ -773,6 +773,8 @@
   (defun get-rgb-from-color-name (color-name)
     (gethash (string-downcase color-name) color-names)))
 
+(defstruct (color (:constructor make-color (red green blue))) red green blue)
+
 (defun light-color-p (r g b)
   (< 50 (/ (max r g b) 2.55)))
 
@@ -782,18 +784,20 @@
       :dark))
 
 (defun parse-color (string)
-  (or (get-rgb-from-color-name string)
-      (ppcre:register-groups-bind (r g b)
-          ("^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$"
-           string)
-        (when (and r g b)
-          (list (parse-integer r :radix 16)
-                (parse-integer g :radix 16)
-                (parse-integer b :radix 16))))
-      (ppcre:register-groups-bind (r g b)
-          ("^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$"
-           string)
-        (when (and r g b)
-          (list (* 17 (parse-integer r :radix 16))
-                (* 17 (parse-integer g :radix 16))
-                (* 17 (parse-integer b :radix 16)))))))
+  (alexandria:if-let (rgb (get-rgb-from-color-name string))
+    (destructuring-bind (r g b) rgb
+      (make-color r g b))
+    (or (ppcre:register-groups-bind (r g b)
+            ("^#([0-9a-fA-F]{2})([0-9a-fA-F]{2})([0-9a-fA-F]{2})$"
+             string)
+          (when (and r g b)
+            (make-color (parse-integer r :radix 16)
+                        (parse-integer g :radix 16)
+                        (parse-integer b :radix 16))))
+        (ppcre:register-groups-bind (r g b)
+            ("^#([0-9a-fA-F])([0-9a-fA-F])([0-9a-fA-F])$"
+             string)
+          (when (and r g b)
+            (make-color (* 17 (parse-integer r :radix 16))
+                        (* 17 (parse-integer g :radix 16))
+                        (* 17 (parse-integer b :radix 16))))))))

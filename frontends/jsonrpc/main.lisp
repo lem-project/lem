@@ -40,8 +40,10 @@
   (let ((v (parse-color color)))
     (if (null v)
         color
-        (destructuring-bind (r g b) v
-          (format nil "#~2,'0X~2,'0X~2,'0X" r g b)))))
+        (format nil "#~2,'0X~2,'0X~2,'0X"
+                (color-red color)
+                (color-green color)
+                (color-blue color)))))
 
 (defmethod yason:encode ((attribute lem::attribute) &optional (stream *standard-output*))
   (yason:with-output (stream)
@@ -117,8 +119,9 @@
         (declare (ignore foreground))
         (resize width height)
         (alexandria:when-let (color (parse-color background))
-          (destructuring-bind (r g b) color
-            (lem::set-display-background-mode (rgb-to-background-mode r g b))))
+          (lem::set-display-background-mode (rgb-to-background-mode (color-red color)
+                                                                    (color-green color)
+                                                                    (color-blue color))))
         (funcall loaded-fn)
         (params "width" *display-width*
                 "height" *display-height*)))))

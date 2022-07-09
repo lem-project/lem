@@ -63,9 +63,6 @@
                (string-equal mode-name (mode-name mode)))
            *mode-list*))
 
-(defun find-mode (mode)
-  (find mode *mode-list*))
-
 (defun global-minor-mode-p (mode)
   (get mode 'global-minor-mode-p))
 

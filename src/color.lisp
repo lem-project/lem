@@ -782,11 +782,6 @@
              (color-blue color))
         2.55)))
 
-(defun rgb-to-background-mode (color)
-  (if (light-color-p color)
-      :light
-      :dark))
-
 (defun parse-color (string)
   (alexandria:if-let (rgb (get-rgb-from-color-name string))
     (destructuring-bind (r g b) rgb

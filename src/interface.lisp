@@ -102,8 +102,9 @@
 
 (defun display-background-mode ()
   (or *display-background-mode*
-      (rgb-to-background-mode
-       (lem-if:get-background-color (implementation)))))
+      (if (light-color-p (lem-if:get-background-color (implementation)))
+          :light
+          :dark)))
 
 (defun set-display-background-mode (mode)
   (check-type mode (member :light :dark nil))

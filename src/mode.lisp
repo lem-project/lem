@@ -58,7 +58,7 @@
   (sort (mapcar #'class-name (collect-subclasses 'minor-mode :include-itself nil))
         #'string<))
 
-(defun find-mode-from-name (mode-name)
+(defun find-mode (mode-name)
   (find-if #'(lambda (mode)
                (string-equal mode-name (mode-name mode)))
            *mode-list*))

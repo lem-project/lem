@@ -226,7 +226,7 @@
    :mode-keymap
    :mode-syntax-table
    :mode-hook
-   :find-mode-from-name
+   :find-mode
    :mode-active-p
    :toggle-minor-mode
    :define-major-mode

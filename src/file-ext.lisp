@@ -42,7 +42,7 @@
            program))))
 
 (defun program-name-to-mode (program)
-  (or (find-mode-from-name program)
+  (or (find-mode program)
       (get-program-mode program)))
 
 (defun parse-file-mode (buffer)

@@ -85,8 +85,8 @@
    :kill-ring-rotate-undo)
   ;; file-ext.lisp
   (:export
-   :*auto-mode-alist*
-   :|*#!-ALIST*|)
+   :|*#!-ALIST*|
+   :define-file-type)
   ;; frame.lisp
   (:export
    :update-prompt-window

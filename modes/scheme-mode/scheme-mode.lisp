@@ -205,6 +205,4 @@
        (enable-commands  cmds-2 cmds-backup-table))))
   (add-hook *after-init-hook* 'disable-scheme-slime-commands))
 
-(pushnew (cons "\\.scm$" 'scheme-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons "\\.sld$" 'scheme-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons "\\.rkt$" 'scheme-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("scm" "sld" "rkt") scheme-mode)

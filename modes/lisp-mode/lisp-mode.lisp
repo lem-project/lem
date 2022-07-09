@@ -1284,7 +1284,4 @@
               (sockint::close fd)))))))
   (add-hook *exit-editor-hook* 'slime-quit-all-for-win32))
 
-(pushnew (cons ".lisp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons ".asd$" 'lisp-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons ".cl$" 'lisp-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons ".lsp$" 'lisp-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("lisp" "asd" "cl" "lsp") lisp-mode)

@@ -321,4 +321,4 @@
 (defun go-idle-function ()
   (goflymake-message))
 
-(pushnew (cons "\\.go$" 'go-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("go") go-mode)

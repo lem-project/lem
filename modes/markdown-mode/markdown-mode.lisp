@@ -44,5 +44,4 @@
           (column (point-column point)))
       (+ column (- tab-width (rem column tab-width))))))
 
-(dolist (s '("\\.md$" "\\.markdown$"))
-  (pushnew (cons s 'markdown-mode) *auto-mode-alist*))
+(define-file-type ("md" "markdown") markdown-mode)

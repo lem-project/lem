@@ -97,5 +97,4 @@
     (line-start p)
     (move-point point p)))
 
-(pushnew (cons "\\.py$" 'python-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons "wscript" 'python-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("py") python-mode)

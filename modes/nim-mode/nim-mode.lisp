@@ -160,8 +160,4 @@
         (variable-value 'beginning-of-defun-function) 'beginning-of-defun
         (variable-value 'end-of-defun-function) 'end-of-defun))
 
-(pushnew (cons "\\.nim$" 'nim-mode) 
-         *auto-mode-alist* :test #'equal)
-(pushnew (cons "\\.nimble$" 'nim-mode)
-         *auto-mode-alist* :test #'equal)
-
+(define-file-type ("nim" "nimble") nim-mode)

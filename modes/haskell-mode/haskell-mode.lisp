@@ -68,4 +68,4 @@
         (variable-value 'tab-width) 2
         (variable-value 'line-comment) "--"))
 
-(pushnew (cons "\\.hs$" 'haskell-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("hs") haskell-mode)

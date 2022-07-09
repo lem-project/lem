@@ -66,8 +66,4 @@
 
 (define-key *asm-mode-keymap* "Tab" 'asm-insert-tab)
 
-(pushnew (cons "\\.asm$" 'asm-mode)
-         *auto-mode-alist* :test #'equal)
-
-(pushnew (cons "\\.s$" 'asm-mode)
-         *auto-mode-alist* :test #'equal)
+(define-file-type ("asm" "s") asm-mode)

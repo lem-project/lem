@@ -191,4 +191,4 @@ see : https://dart.dev/guides/language/language-tour
                    (make-string (* n (variable-value 'tab-width))
                                 :initial-element #\space))))
 
-(pushnew (cons "\\.dart$" 'dart-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("dart") dart-mode)

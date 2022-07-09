@@ -327,5 +327,4 @@
     (line-start p)
     (move-point point p)))
 
-(pushnew (cons "\\.css$" 'css-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons "\\.scss$" 'css-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("css" "scss") css-mode)

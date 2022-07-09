@@ -64,4 +64,4 @@ link : https://asciidoctor.org/docs/asciidoc-syntax-quick-reference/
      :mode-hook *asciidoc-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t))
 
-(pushnew (cons "\\.adoc$" 'asciidoc-mode) *auto-mode-alist*)
+(define-file-type ("adoc") 'asciidoc-mode)

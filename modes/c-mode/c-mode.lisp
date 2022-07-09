@@ -265,5 +265,4 @@
                     (setf (variable-value 'indent-size :buffer)
                           gcd))))))))))
 
-(pushnew (cons "\\.c$" 'c-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons "\\.h$" 'c-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("c" "h") c-mode)

@@ -68,4 +68,4 @@
     (line-start p)
     (move-point point p)))
 
-(pushnew (cons "\\.scala$" 'scala-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("scala") scala-mode)

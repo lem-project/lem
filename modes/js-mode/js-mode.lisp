@@ -237,6 +237,4 @@ link :
                          *prettier-options*
                          (list (buffer-filename (current-buffer))))))
 
-(pushnew (cons "\\.js$" 'js-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons "\\.json$" 'js-mode) *auto-mode-alist* :test #'equal)
-(pushnew (cons "\\.jsx$" 'js-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("js" "json" "jsx") js-mode)

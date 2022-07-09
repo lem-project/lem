@@ -91,4 +91,4 @@
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'tab-width) 2))
 
-(pushnew (cons "\\.ml$" 'ocaml-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("ml") ocaml-mode)

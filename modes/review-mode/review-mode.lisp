@@ -46,4 +46,4 @@ link : https://github.com/kmuto/review/blob/master/doc/format.ja.md
      :mode-hook *review-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t))
 
-(pushnew (cons "\\.re$" 'review-mode) *auto-mode-alist*)
+(define-file-type ("re") review-mode)

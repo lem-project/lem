@@ -53,7 +53,4 @@
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'tab-width) 2))
 
-(dolist (pattern '("\\.dot$"))
-  (pushnew (cons pattern 'dot-mode)
-           *auto-mode-alist*
-           :test #'equal))
+(define-file-type ("dot") dot-mode)

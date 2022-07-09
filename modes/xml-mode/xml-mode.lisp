@@ -120,4 +120,4 @@
          (- (* (count-following-close-tags (points-to-string start end))
                tab-width))))))
 
-(pushnew (cons "\\.xml$" 'xml-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("xml") xml-mode)

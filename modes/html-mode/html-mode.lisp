@@ -38,4 +38,4 @@
         (*xml-close-tag-p* #'close-tag-p))
     (xml-calc-indent point)))
 
-(pushnew (cons "\\.html$" 'html-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("html") html-mode)

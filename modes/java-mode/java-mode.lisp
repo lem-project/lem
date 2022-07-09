@@ -79,4 +79,4 @@ see : https://docs.oracle.com/javase/specs/jls/se8/html/jls-3.html
         (variable-value 'tab-width) 2
         (variable-value 'line-comment) "//"))
 
-(pushnew (cons "\\.java$" 'java-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("java") java-mode)

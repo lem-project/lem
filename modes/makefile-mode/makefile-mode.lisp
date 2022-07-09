@@ -50,5 +50,4 @@
     (let ((tab-width (variable-value 'tab-width :default point)))
       (+ (point-column point) (- tab-width (rem (point-column point) tab-width))))))
 
-(dolist (pattern '("^Makefile$" "^makefile$"))
-  (pushnew (cons pattern 'makefile-mode) *auto-mode-alist* :test #'equal))
+(define-file-type ("Makefile" "makefile") makefile-mode)

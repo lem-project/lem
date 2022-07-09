@@ -326,4 +326,4 @@
     
     ))
 
-(pushnew (cons "\\.rs$" 'rust-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("rs") rust-mode)

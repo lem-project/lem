@@ -27,4 +27,4 @@
      :syntax-table *patch-syntax-table*)
   (setf (variable-value 'enable-syntax-highlight) t))
 
-(pushnew (cons "\\.patch$" 'patch-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("patch") patch-mode)

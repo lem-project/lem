@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(defvar *auto-mode-alist* nil)
+(defvar *file-type-relationals* '())
+
 (defvar *\#!-alist*
   '(("env" . second)))
 
@@ -72,16 +73,23 @@
                   (return)))))
 
 (defun detect-mode-from-pathname (pathname)
-  (let* ((filename (file-namestring pathname))
-         (elt (find-if (lambda (elt)
-                         (ppcre:scan (car elt) filename))
-                       *auto-mode-alist*)))
-    (cdr elt)))
+  (alexandria:assoc-value *file-type-relationals*
+                          (pathname-type pathname)
+                          :test #'string=))
 
 (defun prepare-auto-mode (buffer)
   (let ((mode (detect-mode-from-pathname (buffer-filename buffer))))
     (when mode
       (change-buffer-mode buffer mode))))
+
+(defmacro define-file-type ((&rest type-list) mode)
+  `(associcate-file-type ',type-list ',mode))
+
+(defun associcate-file-type (type-list mode)
+  (dolist (type type-list)
+    (pushnew (cons type mode)
+             *file-type-relationals*
+             :test #'equal)))
 
 (defun detect-external-format-from-file (pathname)
   (values (inq:dependent-name (inq:detect-encoding (pathname pathname) :jp))

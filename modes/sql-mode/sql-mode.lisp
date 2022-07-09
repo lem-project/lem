@@ -50,4 +50,4 @@
 (defun end-of-defun (point n)
   (declare (ignore point n)))
 
-(pushnew (cons "\\.sql$" 'sql-mode) *auto-mode-alist* :test #'equal)
+(define-file-type ("sql") sql-mode)

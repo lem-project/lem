@@ -57,6 +57,14 @@
 (defmethod mode-hook-variable ((mode symbol))
   (mode-hook-variable (get-mode-object mode)))
 
+(defun major-modes ()
+  (sort (mapcar #'class-name (collect-subclasses 'major-mode :include-itself nil))
+        #'string<))
+
+(defun minor-modes ()
+  (sort (mapcar #'class-name (collect-subclasses 'minor-mode :include-itself nil))
+        #'string<))
+
 (defun find-mode-from-name (mode-name)
   (find-if #'(lambda (mode)
                (string-equal mode-name (mode-name mode)))
@@ -95,15 +103,6 @@
       (disable-minor-mode minor-mode)
       (enable-minor-mode minor-mode)))
 
-(defun is-major (mode)
-  (get mode 'is-major))
-
-(defun major-modes ()
-  (remove-if-not #'is-major *mode-list*))
-
-(defun minor-modes ()
-  (remove-if #'is-major *mode-list*))
-
 (defmacro define-major-mode (major-mode
                              parent-mode
                              (&key name
@@ -115,7 +114,6 @@
   (let ((command-class-name (make-symbol (string major-mode))))
     `(progn
        (pushnew ',major-mode *mode-list*)
-       (setf (get ',major-mode 'is-major) t)
        ,@(when mode-hook
            `((defvar ,mode-hook '())))
        ,@(when keymap

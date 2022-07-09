@@ -1714,8 +1714,8 @@
 (defmacro define-language-spec ((spec-name major-mode) &body initargs)
   `(progn
      (register-language-spec ',major-mode ',spec-name)
-     ,(when (mode-hook major-mode)
-        `(add-hook ,(mode-hook major-mode) 'lsp-mode))
+     ,(when (lem::mode-hook-variable major-mode)
+        `(add-hook ,(lem::mode-hook-variable major-mode) 'lsp-mode))
      (defclass ,spec-name (spec) ()
        (:default-initargs ,@initargs))))
 

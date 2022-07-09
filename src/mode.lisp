@@ -17,6 +17,46 @@
   (def mode-disable-hook)
   (def mode-hook))
 
+(defun register-mode (name object)
+  (setf (get name 'mode-object) object))
+
+(defun get-mode-object (mode-name)
+  (get mode-name 'mode-object))
+
+(defclass mode ()
+  ((name :initarg :name :reader mode-name)
+   (description :initarg :description :reader mode-description)
+   (keymap :initarg :keymap :reader mode-keymap)))
+
+(defclass major-mode (mode)
+  ((syntax-table :initarg :syntax-table :reader mode-syntax-table)
+   (hook-variable :initarg :hook-variable :reader mode-hook-variable)))
+
+(defclass minor-mode (mode)
+  ((enable-hook :initarg :enable-hook :reader mode-enable-hook)
+   (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
+
+(defmethod mode-name ((mode symbol))
+  (mode-name (get-mode-object mode)))
+
+(defmethod mode-description ((mode symbol))
+  (mode-description (get-mode-object mode)))
+
+(defmethod mode-keymap ((mode symbol))
+  (mode-keymap (get-mode-object mode)))
+
+(defmethod mode-syntax-table ((mode symbol))
+  (mode-syntax-table (get-mode-object mode)))
+
+(defmethod mode-enable-hook ((mode symbol))
+  (mode-enable-hook (get-mode-object mode)))
+
+(defmethod mode-disable-hook ((mode symbol))
+  (mode-disable-hook (get-mode-object mode)))
+
+(defmethod mode-hook-variable ((mode symbol))
+  (mode-hook-variable (get-mode-object mode)))
+
 (defun find-mode-from-name (mode-name)
   (find-if #'(lambda (mode)
                (string-equal mode-name (mode-name mode)))
@@ -66,33 +106,22 @@
 
 (defmacro define-major-mode (major-mode
                              parent-mode
-                             (&key name description keymap syntax-table mode-hook)
+                             (&key name
+                                   description
+                                   keymap
+                                   (syntax-table '(fundamental-syntax-table))
+                                   mode-hook)
                              &body body)
   (let ((command-class-name (make-symbol (string major-mode))))
     `(progn
-       ,@(when mode-hook
-           `((defvar ,mode-hook '())
-             (set-mode-hook ',mode-hook ',major-mode)))
        (pushnew ',major-mode *mode-list*)
-       (set-mode-name ,name ',major-mode)
        (setf (get ',major-mode 'is-major) t)
-       ,@(when description
-           `((set-mode-description ,description ',major-mode)))
-       ,@(cond (keymap
-                `((defvar ,keymap (make-keymap :name ',keymap
-                                               :parent ,(when parent-mode
-                                                          `(mode-keymap ',parent-mode))))
-                  (set-mode-keymap ,keymap ',major-mode)))
-               (parent-mode
-                `((set-mode-keymap (mode-keymap ',parent-mode) ',major-mode)))
-               (t
-                `((set-mode-keymap nil ',major-mode))))
-       ,(cond (syntax-table
-               `(set-mode-syntax-table ,syntax-table ',major-mode))
-              (parent-mode
-               `(set-mode-syntax-table (mode-syntax-table ',parent-mode) ',major-mode))
-              (t
-               `(set-mode-syntax-table (fundamental-syntax-table) ',major-mode)))
+       ,@(when mode-hook
+           `((defvar ,mode-hook '())))
+       ,@(when keymap
+           `((defvar ,keymap (make-keymap :name ',keymap
+                                          :parent ,(when parent-mode
+                                                     `(mode-keymap ',parent-mode))))))
        (define-command (,major-mode (:class-name ,command-class-name)) () ()
          (clear-editor-local-variables (current-buffer))
          ,(when parent-mode `(,parent-mode))
@@ -100,7 +129,16 @@
          (setf (buffer-syntax-table (current-buffer)) (mode-syntax-table ',major-mode))
          ,@body
          ,(when mode-hook
-            `(run-hooks ,mode-hook))))))
+            `(run-hooks ,mode-hook)))
+       (defclass ,major-mode (,(or parent-mode 'major-mode))
+         ()
+         (:default-initargs
+          :name ,name
+          :description ,description
+          :keymap ,keymap
+          :syntax-table ,syntax-table
+          :hook-variable ',mode-hook))
+       (register-mode ',major-mode (make-instance ',major-mode)))))
 
 (defmacro define-minor-mode (minor-mode
                              (&key name description (keymap nil keymapp) global enable-hook disable-hook)
@@ -110,14 +148,8 @@
        (pushnew ',minor-mode *mode-list*)
        ,(when global
           `(setf (get ',minor-mode 'global-minor-mode-p) t))
-       (set-mode-name ,name ',minor-mode)
-       ,@(when description
-           `((set-mode-description ,description ',minor-mode)))
        ,@(when keymapp
-           `((defvar ,keymap (make-keymap :name ',keymap))
-             (set-mode-keymap ,keymap ',minor-mode)))
-       (set-mode-enable-hook ,enable-hook ',minor-mode)
-       (set-mode-disable-hook ,disable-hook ',minor-mode)
+           `((defvar ,keymap (make-keymap :name ',keymap))))
        (define-command (,minor-mode (:class-name ,command-class-name)) (&optional (arg nil arg-p)) ("p")
          (cond ((not arg-p)
                 (toggle-minor-mode ',minor-mode))
@@ -129,7 +161,16 @@
                 (toggle-minor-mode ',minor-mode))
                (t
                 (error "Invalid arg: ~S" arg)))
-         ,@body))))
+         ,@body)
+       (defclass ,minor-mode (minor-mode)
+         ()
+         (:default-initargs
+          :name ,name
+          :description ,description
+          :keymap ,keymap
+          :enable-hook ,enable-hook
+          :disable-hook ,disable-hook))
+       (register-mode ',minor-mode (make-instance ',minor-mode)))))
 
 (defun change-buffer-mode (buffer mode &rest args)
   (save-excursion
@@ -141,11 +182,11 @@
 (defvar *current-global-mode* nil)
 
 (defclass global-mode ()
-  ((name :initarg :name :accessor mode-name)
-   (parent :initarg :parent :accessor mode-parent)
-   (keymap :initarg :keymap :accessor mode-keymap)
-   (enable-hook :initarg :enable-hook :accessor mode-enable-hook)
-   (disable-hook :initarg :disable-hook :accessor mode-disable-hook)))
+  ((name :initarg :name :reader mode-name)
+   (parent :initarg :parent :reader mode-parent)
+   (keymap :initarg :keymap :reader mode-keymap :writer set-mode-keymap)
+   (enable-hook :initarg :enable-hook :reader mode-enable-hook)
+   (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
 
 (defun current-global-mode ()
   (if (symbolp *current-global-mode*)

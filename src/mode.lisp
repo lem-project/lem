@@ -3,20 +3,6 @@
 (defvar *mode-list* '())
 (defvar *global-minor-mode-list* '())
 
-(macrolet ((def (name)
-             `(progn
-                (defmethod ,name (mode)
-                  (get mode ',name))
-                (defmethod ,(alexandria:symbolicate 'set- name) (new-val mode)
-                  (setf (get mode ',name) new-val)))))
-  (def mode-name)
-  (def mode-description)
-  (def mode-keymap)
-  (def mode-syntax-table)
-  (def mode-enable-hook)
-  (def mode-disable-hook)
-  (def mode-hook))
-
 (defun register-mode (name object)
   (setf (get name 'mode-object) object))
 

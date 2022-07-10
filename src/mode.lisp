@@ -181,7 +181,6 @@
 
 (defclass global-mode ()
   ((name :initarg :name :reader mode-name)
-   (parent :initarg :parent :reader mode-parent)
    (keymap :initarg :keymap :reader mode-keymap :writer set-mode-keymap)
    (enable-hook :initarg :enable-hook :reader mode-enable-hook)
    (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
@@ -223,7 +222,6 @@
          (let ((,global-mode
                  (make-instance 'global-mode
                                 :name ',mode
-                                :parent ',parent
                                 :keymap ,keymap
                                 :enable-hook ,enable-hook
                                 :disable-hook ,disable-hook)))

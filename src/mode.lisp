@@ -1,13 +1,7 @@
 (in-package :lem)
 
-(defvar *mode-list* '())
 (defvar *global-minor-mode-list* '())
-
-(defun register-mode (name object)
-  (setf (get name 'mode-object) object))
-
-(defun get-mode-object (mode-name)
-  (get mode-name 'mode-object))
+(defvar *mode-objects* '())
 
 (defclass mode ()
   ((name :initarg :name :reader mode-name)
@@ -21,6 +15,44 @@
 (defclass minor-mode (mode)
   ((enable-hook :initarg :enable-hook :reader mode-enable-hook)
    (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
+
+(defmethod mode-identifier-name ((mode mode))
+  (type-of mode))
+
+(defun major-mode-p (mode)
+  (typep mode 'major-mode))
+
+(defun minor-mode-p (mode)
+  (typep mode 'minor-mode))
+
+(defun get-mode-object (mode-name)
+  (get mode-name 'mode-object))
+
+(defun register-mode (name object)
+  (setf *mode-objects*
+        (cons object
+              (remove name
+                      *mode-objects*
+                      :key #'mode-identifier-name
+                      :test #'eq)))
+  (setf (get name 'mode-object) object))
+
+(defun find-mode (name)
+  (find name
+        *mode-objects*
+        :key #'mode-name
+        :test #'string-equal))
+
+(defun collect-modes (test-function)
+  (sort (remove-if-not test-function *mode-objects*)
+        #'string<
+        :key #'mode-identifier-name))
+
+(defun major-modes ()
+  (mapcar #'mode-identifier-name (collect-modes #'major-mode-p)))
+
+(defun minor-modes ()
+  (mapcar #'mode-identifier-name (collect-modes #'minor-mode-p)))
 
 (defmethod mode-name ((mode symbol))
   (assert (not (null mode)))
@@ -49,19 +81,6 @@
 (defmethod mode-hook-variable ((mode symbol))
   (assert (not (null mode)))
   (mode-hook-variable (get-mode-object mode)))
-
-(defun major-modes ()
-  (sort (mapcar #'class-name (collect-subclasses 'major-mode :include-itself nil))
-        #'string<))
-
-(defun minor-modes ()
-  (sort (mapcar #'class-name (collect-subclasses 'minor-mode :include-itself nil))
-        #'string<))
-
-(defun find-mode (mode-name)
-  (find-if #'(lambda (mode)
-               (string-equal mode-name (mode-name mode)))
-           *mode-list*))
 
 (defun global-minor-mode-p (mode)
   (get mode 'global-minor-mode-p))
@@ -103,7 +122,6 @@
                              &body body)
   (let ((command-class-name (make-symbol (string major-mode))))
     `(progn
-       (pushnew ',major-mode *mode-list*)
        ,@(when mode-hook
            `((defvar ,mode-hook '())))
        ,@(when keymap
@@ -133,7 +151,6 @@
                              &body body)
   (let ((command-class-name (make-symbol (string minor-mode))))
     `(progn
-       (pushnew ',minor-mode *mode-list*)
        ,(when global
           `(setf (get ',minor-mode 'global-minor-mode-p) t))
        ,@(when keymapp

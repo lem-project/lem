@@ -37,12 +37,6 @@
                       :test #'eq)))
   (setf (get name 'mode-object) object))
 
-(defun find-mode (name)
-  (find name
-        *mode-objects*
-        :key #'mode-name
-        :test #'string-equal))
-
 (defun collect-modes (test-function)
   (sort (remove-if-not test-function *mode-objects*)
         #'string<

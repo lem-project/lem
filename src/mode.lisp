@@ -186,10 +186,7 @@
    (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
 
 (defun current-global-mode ()
-  (if (symbolp *current-global-mode*)
-      (setf *current-global-mode*
-            (get *current-global-mode* 'global-mode))
-      *current-global-mode*))
+  *current-global-mode*)
 
 (defun change-global-mode-keymap (mode keymap)
   (set-mode-keymap keymap (get mode 'global-mode)))

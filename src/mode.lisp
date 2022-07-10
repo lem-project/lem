@@ -177,7 +177,6 @@
     (apply mode args))
   buffer)
 
-(defvar *global-mode-list* '())
 (defvar *current-global-mode* nil)
 
 (defclass global-mode ()
@@ -229,7 +228,6 @@
                                 :enable-hook ,enable-hook
                                 :disable-hook ,disable-hook)))
            (setf (get ',mode 'global-mode) ,global-mode)
-           (pushnew ',mode *global-mode-list*)
            (when (null *current-global-mode*)
              (setf *current-global-mode* ,global-mode)))
          (define-command (,mode (:class-name ,command-class-name)) () ()

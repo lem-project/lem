@@ -93,6 +93,7 @@
              ;; - executeのフックが使えない
              ,@body)
            (defclass ,class-name (,primary-class ,@advice-classes) ())
+           (register-command-class ',name ',class-name)
            (defmethod execute ((,command ,class-name) ,universal-argument)
              (declare (ignorable ,universal-argument))
              ,(gen-defcommand-body name

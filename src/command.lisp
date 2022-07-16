@@ -24,8 +24,14 @@
 
 (defclass primary-command () ())
 
+(defun register-command-class (symbol class-name)
+  (setf (get symbol 'command-class) class-name))
+
+(defun get-command-class (symbol)
+  (get symbol 'command-class))
+
 (defun get-command (symbol)
-  (alexandria:when-let (class (find-class symbol nil))
+  (alexandria:when-let (class (get-command-class symbol))
     (make-instance class)))
 
 (defun call-command (this-command universal-argument)

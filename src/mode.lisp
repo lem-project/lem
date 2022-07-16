@@ -106,6 +106,9 @@
       (disable-minor-mode minor-mode)
       (enable-minor-mode minor-mode)))
 
+(defun make-mode-command-class-name (mode-name)
+  (make-symbol (format nil "~A~A" mode-name '#:-command)))
+
 (defmacro define-major-mode (major-mode
                              parent-mode
                              (&key name
@@ -114,7 +117,7 @@
                                    (syntax-table '(fundamental-syntax-table))
                                    mode-hook)
                              &body body)
-  (let ((command-class-name (make-symbol (string major-mode))))
+  (let ((command-class-name (make-mode-command-class-name major-mode)))
     `(progn
        ,@(when mode-hook
            `((defvar ,mode-hook '())))
@@ -122,7 +125,7 @@
            `((defvar ,keymap (make-keymap :name ',keymap
                                           :parent ,(when parent-mode
                                                      `(mode-keymap ',parent-mode))))))
-       (define-command (,major-mode (:class-name ,command-class-name)) () ()
+       (define-command (,major-mode (:class ,command-class-name)) () ()
          (clear-editor-local-variables (current-buffer))
          ,(when parent-mode `(,parent-mode))
          (setf (buffer-major-mode (current-buffer)) ',major-mode)
@@ -143,13 +146,13 @@
 (defmacro define-minor-mode (minor-mode
                              (&key name description (keymap nil keymapp) global enable-hook disable-hook)
                              &body body)
-  (let ((command-class-name (make-symbol (string minor-mode))))
+  (let ((command-class-name (make-mode-command-class-name minor-mode)))
     `(progn
        ,(when global
           `(setf (get ',minor-mode 'global-minor-mode-p) t))
        ,@(when keymapp
            `((defvar ,keymap (make-keymap :name ',keymap))))
-       (define-command (,minor-mode (:class-name ,command-class-name)) (&optional (arg nil arg-p)) ("p")
+       (define-command (,minor-mode (:class ,command-class-name)) (&optional (arg nil arg-p)) ("p")
          (cond ((not arg-p)
                 (toggle-minor-mode ',minor-mode))
                ((eq arg t)

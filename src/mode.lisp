@@ -1,7 +1,11 @@
 (in-package :lem)
 
 (defvar *active-global-minor-modes* '())
+(defvar *current-global-mode* nil)
+
 (defvar *mode-objects* '())
+
+(defgeneric mode-identifier-name (mode))
 
 (defun get-mode-object (mode-name)
   (get mode-name 'mode-object))
@@ -85,6 +89,9 @@
 (defun active-global-minor-modes ()
   *active-global-minor-modes*)
 
+(defun current-global-mode ()
+  *current-global-mode*)
+
 (defun mode-active-p (buffer mode)
   (or (eq mode (buffer-major-mode buffer))
       (find mode (buffer-minor-modes buffer))
@@ -100,6 +107,7 @@
 (defun make-mode-command-class-name (mode-name)
   (make-symbol (format nil "~A~A" mode-name '#:-command)))
 
+;;; major mode
 (defmacro define-major-mode (major-mode
                              parent-mode
                              (&key name
@@ -134,6 +142,7 @@
           :hook-variable ',mode-hook))
        (register-mode ',major-mode (make-instance ',major-mode)))))
 
+;;; minor mode
 (defun global-minor-mode-p (mode)
   (typep (get-mode-object mode) 'global-minor-mode))
 
@@ -187,11 +196,7 @@
           :disable-hook ,disable-hook))
        (register-mode ',minor-mode (make-instance ',minor-mode)))))
 
-(defvar *current-global-mode* nil)
-
-(defun current-global-mode ()
-  *current-global-mode*)
-
+;;; global-mode
 (defun change-global-mode-keymap (mode keymap)
   (set-mode-keymap keymap (get-mode-object mode)))
 

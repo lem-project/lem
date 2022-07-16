@@ -33,6 +33,8 @@
   ((enable-hook :initarg :enable-hook :reader mode-enable-hook)
    (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
 
+(defclass global-minor-mode (minor-mode) ())
+
 (defclass global-mode (mode)
   ((enable-hook :initarg :enable-hook :reader mode-enable-hook)
    (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
@@ -133,7 +135,7 @@
        (register-mode ',major-mode (make-instance ',major-mode)))))
 
 (defun global-minor-mode-p (mode)
-  (get mode 'global-minor-mode-p))
+  (typep (get-mode-object mode) 'global-minor-mode))
 
 (defun enable-minor-mode (minor-mode)
   (if (global-minor-mode-p minor-mode)
@@ -161,8 +163,6 @@
                              &body body)
   (let ((command-class-name (make-mode-command-class-name minor-mode)))
     `(progn
-       ,(when global
-          `(setf (get ',minor-mode 'global-minor-mode-p) t))
        ,@(when keymapp
            `((defvar ,keymap (make-keymap :name ',keymap))))
        (define-command (,minor-mode (:class ,command-class-name)) (&optional (arg nil arg-p)) ("p")
@@ -177,7 +177,7 @@
                (t
                 (error "Invalid arg: ~S" arg)))
          ,@body)
-       (defclass ,minor-mode (minor-mode)
+       (defclass ,minor-mode (,(if global 'global-minor-mode 'minor-mode))
          ()
          (:default-initargs
           :name ,name

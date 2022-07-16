@@ -46,11 +46,19 @@
 (defmethod mode-identifier-name ((mode mode))
   (type-of mode))
 
+(defun ensure-mode-object (mode)
+  (etypecase mode
+    (symbol (get-mode-object mode))
+    (mode mode)))
+
 (defun major-mode-p (mode)
-  (typep mode 'major-mode))
+  (typep (ensure-mode-object mode) 'major-mode))
 
 (defun minor-mode-p (mode)
-  (typep mode 'minor-mode))
+  (typep (ensure-mode-object mode) 'minor-mode))
+
+(defun global-minor-mode-p (mode)
+  (typep (ensure-mode-object mode) 'global-minor-mode))
 
 (defmethod mode-name ((mode symbol))
   (assert (not (null mode)))
@@ -143,9 +151,6 @@
        (register-mode ',major-mode (make-instance ',major-mode)))))
 
 ;;; minor mode
-(defun global-minor-mode-p (mode)
-  (typep (get-mode-object mode) 'global-minor-mode))
-
 (defun enable-minor-mode (minor-mode)
   (if (global-minor-mode-p minor-mode)
       (pushnew minor-mode *active-global-minor-modes*)
@@ -198,14 +203,14 @@
 
 ;;; global-mode
 (defun change-global-mode-keymap (mode keymap)
-  (set-mode-keymap keymap (get-mode-object mode)))
+  (set-mode-keymap keymap (ensure-mode-object mode)))
 
 (defun change-global-mode (mode)
   (flet ((call (fun)
            (unless (null fun)
              (alexandria:when-let ((fun (alexandria:ensure-function fun)))
                (funcall fun)))))
-    (let ((global-mode (get-mode-object mode)))
+    (let ((global-mode (ensure-mode-object mode)))
       (check-type global-mode global-mode)
       (when *current-global-mode*
         (call (mode-disable-hook *current-global-mode*)))

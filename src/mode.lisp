@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(defvar *global-minor-mode-list* '())
+(defvar *active-global-minor-modes* '())
 (defvar *mode-objects* '())
 
 (defun get-mode-object (mode-name)
@@ -82,13 +82,13 @@
 (defun minor-modes ()
   (mapcar #'mode-identifier-name (collect-modes #'minor-mode-p)))
 
-(defun global-minor-modes ()
-  *global-minor-mode-list*)
+(defun active-global-minor-modes ()
+  *active-global-minor-modes*)
 
 (defun mode-active-p (buffer mode)
   (or (eq mode (buffer-major-mode buffer))
       (find mode (buffer-minor-modes buffer))
-      (find mode (global-minor-modes))
+      (find mode (active-global-minor-modes))
       (eq mode (mode-name (current-global-mode)))))
 
 (defun change-buffer-mode (buffer mode &rest args)
@@ -139,15 +139,15 @@
 
 (defun enable-minor-mode (minor-mode)
   (if (global-minor-mode-p minor-mode)
-      (pushnew minor-mode *global-minor-mode-list*)
+      (pushnew minor-mode *active-global-minor-modes*)
       (pushnew minor-mode (buffer-minor-modes (current-buffer))))
   (when (mode-enable-hook minor-mode)
     (funcall (mode-enable-hook minor-mode))))
 
 (defun disable-minor-mode (minor-mode)
   (if (global-minor-mode-p minor-mode)
-      (setf *global-minor-mode-list*
-            (delete minor-mode *global-minor-mode-list*))
+      (setf *active-global-minor-modes*
+            (delete minor-mode *active-global-minor-modes*))
       (setf (buffer-minor-modes (current-buffer))
             (delete minor-mode (buffer-minor-modes (current-buffer)))))
   (when (mode-disable-hook minor-mode)

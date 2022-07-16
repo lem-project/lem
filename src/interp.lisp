@@ -136,7 +136,7 @@
 
 (defun exit-editor (&optional report)
   (run-hooks *exit-editor-hook*)
-  (mapc #'disable-minor-mode (global-minor-modes))
+  (mapc #'disable-minor-mode (active-global-minor-modes))
   (signal 'exit-editor :report report))
 
 (defun call-background-job (function cont)

@@ -77,7 +77,7 @@
 (defun mode-active-p (buffer mode)
   (or (eq mode (buffer-major-mode buffer))
       (find mode (buffer-minor-modes buffer))
-      (find mode *global-minor-mode-list*)
+      (find mode (global-minor-modes))
       (eq mode (mode-name (current-global-mode)))))
 
 (defun major-modes ()
@@ -85,6 +85,9 @@
 
 (defun minor-modes ()
   (mapcar #'mode-identifier-name (collect-modes #'minor-mode-p)))
+
+(defun global-minor-modes ()
+  *global-minor-mode-list*)
 
 (defun change-buffer-mode (buffer mode &rest args)
   (save-excursion

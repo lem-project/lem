@@ -149,7 +149,7 @@
   (let (cmd)
     (loop with buffer = (current-buffer)
           for mode in (nreverse (append (buffer-minor-modes buffer)
-                                        *global-minor-mode-list*
+                                        (global-minor-modes)
                                         (list (buffer-major-mode buffer)
                                               (current-global-mode))))
           do (when (mode-keymap mode)

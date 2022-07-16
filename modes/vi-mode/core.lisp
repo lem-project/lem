@@ -27,7 +27,8 @@
   (run-hooks *disable-hook*))
 
 (define-global-mode vi-mode (emacs-mode)
-  (:enable-hook #'enable-hook
+  (:name "vi"
+   :enable-hook #'enable-hook
    :disable-hook #'disable-hook))
 
 

@@ -6,4 +6,5 @@
 (in-package :lem)
 
 (define-global-mode emacs-mode ()
-  (:keymap *global-keymap*))
+  (:name "emacs"
+   :keymap *global-keymap*))

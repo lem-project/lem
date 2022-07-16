@@ -217,7 +217,7 @@
       (setf *current-global-mode* global-mode)
       (call (mode-enable-hook global-mode)))))
 
-(defmacro define-global-mode (mode (&optional parent) (&key keymap enable-hook disable-hook))
+(defmacro define-global-mode (mode (&optional parent) (&key name keymap enable-hook disable-hook))
   (check-type parent symbol)
   (alexandria:with-gensyms (global-mode parent-mode)
     (let ((command-class-name (make-mode-command-class-name mode)))
@@ -231,7 +231,7 @@
                                         (mode-keymap ,parent-mode))))))
          (defclass ,mode (global-mode) ()
            (:default-initargs
-            :name ',mode ; TODO: coerce to string
+            :name ,name
             :keymap ,keymap
             :enable-hook ,enable-hook
             :disable-hook ,disable-hook))

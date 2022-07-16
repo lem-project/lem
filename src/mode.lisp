@@ -74,12 +74,6 @@
   (assert (not (null mode)))
   (mode-hook-variable (get-mode-object mode)))
 
-(defun mode-active-p (buffer mode)
-  (or (eq mode (buffer-major-mode buffer))
-      (find mode (buffer-minor-modes buffer))
-      (find mode (global-minor-modes))
-      (eq mode (mode-name (current-global-mode)))))
-
 (defun major-modes ()
   (mapcar #'mode-identifier-name (collect-modes #'major-mode-p)))
 
@@ -88,6 +82,12 @@
 
 (defun global-minor-modes ()
   *global-minor-mode-list*)
+
+(defun mode-active-p (buffer mode)
+  (or (eq mode (buffer-major-mode buffer))
+      (find mode (buffer-minor-modes buffer))
+      (find mode (global-minor-modes))
+      (eq mode (mode-name (current-global-mode)))))
 
 (defun change-buffer-mode (buffer mode &rest args)
   (save-excursion

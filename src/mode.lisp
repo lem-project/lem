@@ -3,28 +3,6 @@
 (defvar *global-minor-mode-list* '())
 (defvar *mode-objects* '())
 
-(defclass mode ()
-  ((name :initarg :name :reader mode-name)
-   (description :initarg :description :reader mode-description)
-   (keymap :initarg :keymap :reader mode-keymap :writer set-mode-keymap)))
-
-(defclass major-mode (mode)
-  ((syntax-table :initarg :syntax-table :reader mode-syntax-table)
-   (hook-variable :initarg :hook-variable :reader mode-hook-variable)))
-
-(defclass minor-mode (mode)
-  ((enable-hook :initarg :enable-hook :reader mode-enable-hook)
-   (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
-
-(defmethod mode-identifier-name ((mode mode))
-  (type-of mode))
-
-(defun major-mode-p (mode)
-  (typep mode 'major-mode))
-
-(defun minor-mode-p (mode)
-  (typep mode 'minor-mode))
-
 (defun get-mode-object (mode-name)
   (get mode-name 'mode-object))
 
@@ -42,11 +20,31 @@
         #'string<
         :key #'mode-identifier-name))
 
-(defun major-modes ()
-  (mapcar #'mode-identifier-name (collect-modes #'major-mode-p)))
+(defclass mode ()
+  ((name :initarg :name :reader mode-name)
+   (description :initarg :description :reader mode-description)
+   (keymap :initarg :keymap :reader mode-keymap :writer set-mode-keymap)))
 
-(defun minor-modes ()
-  (mapcar #'mode-identifier-name (collect-modes #'minor-mode-p)))
+(defclass major-mode (mode)
+  ((syntax-table :initarg :syntax-table :reader mode-syntax-table)
+   (hook-variable :initarg :hook-variable :reader mode-hook-variable)))
+
+(defclass minor-mode (mode)
+  ((enable-hook :initarg :enable-hook :reader mode-enable-hook)
+   (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
+
+(defclass global-mode (mode)
+  ((enable-hook :initarg :enable-hook :reader mode-enable-hook)
+   (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
+
+(defmethod mode-identifier-name ((mode mode))
+  (type-of mode))
+
+(defun major-mode-p (mode)
+  (typep mode 'major-mode))
+
+(defun minor-mode-p (mode)
+  (typep mode 'minor-mode))
 
 (defmethod mode-name ((mode symbol))
   (assert (not (null mode)))
@@ -76,35 +74,23 @@
   (assert (not (null mode)))
   (mode-hook-variable (get-mode-object mode)))
 
-(defun global-minor-mode-p (mode)
-  (get mode 'global-minor-mode-p))
-
 (defun mode-active-p (buffer mode)
   (or (eq mode (buffer-major-mode buffer))
       (find mode (buffer-minor-modes buffer))
       (find mode *global-minor-mode-list*)
       (eq mode (mode-name (current-global-mode)))))
 
-(defun enable-minor-mode (minor-mode)
-  (if (global-minor-mode-p minor-mode)
-      (pushnew minor-mode *global-minor-mode-list*)
-      (pushnew minor-mode (buffer-minor-modes (current-buffer))))
-  (when (mode-enable-hook minor-mode)
-    (funcall (mode-enable-hook minor-mode))))
+(defun major-modes ()
+  (mapcar #'mode-identifier-name (collect-modes #'major-mode-p)))
 
-(defun disable-minor-mode (minor-mode)
-  (if (global-minor-mode-p minor-mode)
-      (setf *global-minor-mode-list*
-            (delete minor-mode *global-minor-mode-list*))
-      (setf (buffer-minor-modes (current-buffer))
-            (delete minor-mode (buffer-minor-modes (current-buffer)))))
-  (when (mode-disable-hook minor-mode)
-    (funcall (mode-disable-hook minor-mode))))
+(defun minor-modes ()
+  (mapcar #'mode-identifier-name (collect-modes #'minor-mode-p)))
 
-(defun toggle-minor-mode (minor-mode)
-  (if (mode-active-p (current-buffer) minor-mode)
-      (disable-minor-mode minor-mode)
-      (enable-minor-mode minor-mode)))
+(defun change-buffer-mode (buffer mode &rest args)
+  (save-excursion
+    (setf (current-buffer) buffer)
+    (apply mode args))
+  buffer)
 
 (defun make-mode-command-class-name (mode-name)
   (make-symbol (format nil "~A~A" mode-name '#:-command)))
@@ -143,6 +129,30 @@
           :hook-variable ',mode-hook))
        (register-mode ',major-mode (make-instance ',major-mode)))))
 
+(defun global-minor-mode-p (mode)
+  (get mode 'global-minor-mode-p))
+
+(defun enable-minor-mode (minor-mode)
+  (if (global-minor-mode-p minor-mode)
+      (pushnew minor-mode *global-minor-mode-list*)
+      (pushnew minor-mode (buffer-minor-modes (current-buffer))))
+  (when (mode-enable-hook minor-mode)
+    (funcall (mode-enable-hook minor-mode))))
+
+(defun disable-minor-mode (minor-mode)
+  (if (global-minor-mode-p minor-mode)
+      (setf *global-minor-mode-list*
+            (delete minor-mode *global-minor-mode-list*))
+      (setf (buffer-minor-modes (current-buffer))
+            (delete minor-mode (buffer-minor-modes (current-buffer)))))
+  (when (mode-disable-hook minor-mode)
+    (funcall (mode-disable-hook minor-mode))))
+
+(defun toggle-minor-mode (minor-mode)
+  (if (mode-active-p (current-buffer) minor-mode)
+      (disable-minor-mode minor-mode)
+      (enable-minor-mode minor-mode)))
+
 (defmacro define-minor-mode (minor-mode
                              (&key name description (keymap nil keymapp) global enable-hook disable-hook)
                              &body body)
@@ -174,17 +184,7 @@
           :disable-hook ,disable-hook))
        (register-mode ',minor-mode (make-instance ',minor-mode)))))
 
-(defun change-buffer-mode (buffer mode &rest args)
-  (save-excursion
-    (setf (current-buffer) buffer)
-    (apply mode args))
-  buffer)
-
 (defvar *current-global-mode* nil)
-
-(defclass global-mode (mode)
-  ((enable-hook :initarg :enable-hook :reader mode-enable-hook)
-   (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
 
 (defun current-global-mode ()
   *current-global-mode*)

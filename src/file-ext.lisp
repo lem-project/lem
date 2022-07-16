@@ -57,7 +57,8 @@
 
 (defun process-file (buffer)
   (alexandria:when-let (mode (detect-file-mode buffer))
-    (change-buffer-mode buffer mode)))
+    (change-buffer-mode buffer mode)
+    (values)))
 
 ;;;
 (defun detect-external-format-from-file (pathname)

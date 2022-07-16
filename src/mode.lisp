@@ -6,7 +6,7 @@
 (defclass mode ()
   ((name :initarg :name :reader mode-name)
    (description :initarg :description :reader mode-description)
-   (keymap :initarg :keymap :reader mode-keymap)))
+   (keymap :initarg :keymap :reader mode-keymap :writer set-mode-keymap)))
 
 (defclass major-mode (mode)
   ((syntax-table :initarg :syntax-table :reader mode-syntax-table)
@@ -182,24 +182,22 @@
 
 (defvar *current-global-mode* nil)
 
-(defclass global-mode ()
-  ((name :initarg :name :reader mode-name)
-   (keymap :initarg :keymap :reader mode-keymap :writer set-mode-keymap)
-   (enable-hook :initarg :enable-hook :reader mode-enable-hook)
+(defclass global-mode (mode)
+  ((enable-hook :initarg :enable-hook :reader mode-enable-hook)
    (disable-hook :initarg :disable-hook :reader mode-disable-hook)))
 
 (defun current-global-mode ()
   *current-global-mode*)
 
 (defun change-global-mode-keymap (mode keymap)
-  (set-mode-keymap keymap (get mode 'global-mode)))
+  (set-mode-keymap keymap (get-mode-object mode)))
 
 (defun change-global-mode (mode)
   (flet ((call (fun)
            (unless (null fun)
              (alexandria:when-let ((fun (alexandria:ensure-function fun)))
                (funcall fun)))))
-    (let ((global-mode (get mode 'global-mode)))
+    (let ((global-mode (get-mode-object mode)))
       (check-type global-mode global-mode)
       (when *current-global-mode*
         (call (mode-disable-hook *current-global-mode*)))
@@ -216,7 +214,7 @@
                  (make-keymap :name ',keymap
                               :parent (alexandria:when-let ((,parent-mode
                                                              ,(when parent
-                                                                `(get ',parent 'global-mode))))
+                                                                `(get-mode-object ',parent))))
                                         (mode-keymap ,parent-mode))))))
          (defclass ,mode (global-mode) ()
            (:default-initargs
@@ -225,7 +223,7 @@
             :enable-hook ,enable-hook
             :disable-hook ,disable-hook))
          (let ((,global-mode (make-instance ',mode)))
-           (setf (get ',mode 'global-mode) ,global-mode)
+           (register-mode ',mode ,global-mode)
            (unless *current-global-mode*
              (setf *current-global-mode* ,global-mode)))
          (define-command (,mode (:class ,command-class-name)) () ()

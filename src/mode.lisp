@@ -201,16 +201,15 @@
                (funcall fun)))))
     (let ((global-mode (get mode 'global-mode)))
       (check-type global-mode global-mode)
-      (when global-mode
-        (when *current-global-mode*
-          (call (mode-disable-hook *current-global-mode*)))
-        (setf *current-global-mode* global-mode)
-        (call (mode-enable-hook global-mode))))))
+      (when *current-global-mode*
+        (call (mode-disable-hook *current-global-mode*)))
+      (setf *current-global-mode* global-mode)
+      (call (mode-enable-hook global-mode)))))
 
 (defmacro define-global-mode (mode (&optional parent) (&key keymap enable-hook disable-hook))
   (check-type parent symbol)
   (alexandria:with-gensyms (global-mode parent-mode)
-    (let ((command-class-name (make-symbol (string mode))))
+    (let ((command-class-name (make-mode-command-class-name mode)))
       `(progn
          ,@(when keymap
              `((defvar ,keymap
@@ -219,14 +218,15 @@
                                                              ,(when parent
                                                                 `(get ',parent 'global-mode))))
                                         (mode-keymap ,parent-mode))))))
-         (let ((,global-mode
-                 (make-instance 'global-mode
-                                :name ',mode
-                                :keymap ,keymap
-                                :enable-hook ,enable-hook
-                                :disable-hook ,disable-hook)))
+         (defclass ,mode (global-mode) ()
+           (:default-initargs
+            :name ',mode ; TODO: coerce to string
+            :keymap ,keymap
+            :enable-hook ,enable-hook
+            :disable-hook ,disable-hook))
+         (let ((,global-mode (make-instance ',mode)))
            (setf (get ',mode 'global-mode) ,global-mode)
-           (when (null *current-global-mode*)
+           (unless *current-global-mode*
              (setf *current-global-mode* ,global-mode)))
-         (define-command (,mode (:class-name ,command-class-name)) () ()
+         (define-command (,mode (:class ,command-class-name)) () ()
            (change-global-mode ',mode))))))

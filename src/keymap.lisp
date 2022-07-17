@@ -140,9 +140,6 @@
                       table)))
     (f (keymap-table keymap) nil)))
 
-(defvar *global-keymap* (make-keymap :name '*global-keymap*
-                                     :undef-hook 'self-insert))
-
 (defun lookup-keybind (key)
   (let (cmd)
     (loop with buffer = (current-buffer)

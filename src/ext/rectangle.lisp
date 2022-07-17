@@ -14,7 +14,7 @@
 
 (define-minor-mode rectangle-mark-mode
     (:keymap *rectangle-mark-mode-keymap*
-     :name "rect")
+     :name "Rectangle")
   (setf *mark-point* (copy-point (current-point) :temporary)))
 
 (define-key *global-keymap* "C-x Space" 'start-rectangle-mark-mode)

@@ -26,6 +26,7 @@
     keymap))
 
 (defun define-key (keymap keyspec symbol)
+  (check-type keyspec (or symbol string))
   (check-type symbol symbol)
   (typecase keyspec
     (symbol

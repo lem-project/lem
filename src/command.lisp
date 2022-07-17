@@ -37,7 +37,7 @@
 (defun call-command (this-command universal-argument)
   (signal-subconditions 'before-executing-command :command this-command)
   (prog1 (alexandria:if-let (*this-command* (get-command this-command))
-           (execute (get-active-modes-class-instance)
+           (execute (get-active-modes-class-instance (current-buffer))
                     *this-command*
                     universal-argument)
            (editor-error "~A: command not found" this-command))

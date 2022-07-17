@@ -100,11 +100,15 @@
 (defun current-global-mode ()
   *current-global-mode*)
 
+(defun all-active-modes (buffer)
+  (mapcar #'ensure-mode-object
+          (append (buffer-minor-modes buffer)
+                  (active-global-minor-modes)
+                  (list (buffer-major-mode buffer))
+                  (list (current-global-mode)))))
+
 (defun mode-active-p (buffer mode)
-  (or (eq mode (buffer-major-mode buffer))
-      (find mode (buffer-minor-modes buffer))
-      (find mode (active-global-minor-modes))
-      (eq mode (mode-name (current-global-mode)))))
+  (not (null (find mode (all-active-modes buffer) :key #'mode-identifier-name))))
 
 (defun change-buffer-mode (buffer mode &rest args)
   (save-excursion
@@ -243,20 +247,15 @@
            (change-global-mode ',mode))))))
 
 
-(defun all-active-mode-classes ()
-  (mapcar #'class-of
-          (mapcar #'ensure-mode-object
-                  (append (buffer-minor-modes (current-buffer))
-                          (active-global-minor-modes)
-                          (list (buffer-major-mode (current-buffer)))
-                          (list (current-global-mode))))))
+(defun all-active-mode-classes (buffer)
+  (mapcar #'class-of (all-active-modes buffer)))
 
 (defconstant +active-modes-class-name+ '%active-modes-class)
 
 (defvar *last-active-modes-class-instance-cache* nil)
 
-(defun get-active-modes-class-instance ()
-  (let ((mode-classes (all-active-mode-classes)))
+(defun get-active-modes-class-instance (buffer)
+  (let ((mode-classes (all-active-mode-classes buffer)))
     (cond ((or (null *last-active-modes-class-instance-cache*)
                (not (equal (car *last-active-modes-class-instance-cache*)
                            (mapcar #'class-name mode-classes))))

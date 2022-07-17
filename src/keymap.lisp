@@ -2,18 +2,17 @@
 
 (defvar *keymaps* nil)
 
-(defstruct (keymap (:constructor %make-keymap) (:print-function %print-keymap))
+(defstruct (keymap (:constructor %make-keymap))
   undef-hook
   parent
   table
   function-table
   name)
 
-(defun %print-keymap (object stream depth)
-  (declare (ignorable depth))
+(defmethod print-object ((object keymap) stream)
   (print-unreadable-object (object stream :identity t :type t)
     (when (keymap-name object)
-      (format stream "~A" (keymap-name object)))))
+      (princ (keymap-name object) stream))))
 
 (defun make-keymap (&key undef-hook parent name)
   (let ((keymap (%make-keymap

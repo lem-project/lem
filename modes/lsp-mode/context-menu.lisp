@@ -8,7 +8,7 @@
   label
   callback)
 
-(defvar *context-menu-mode-keymap* (make-keymap :name '**context-menu-mode-keymap*
+(defvar *context-menu-mode-keymap* (make-keymap :name '*context-menu-mode-keymap*
                                                 :undef-hook 'lsp-context-menu-default))
 
 (define-minor-mode lsp-context-menu-mode

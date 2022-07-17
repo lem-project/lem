@@ -8,7 +8,7 @@
 
 (defclass self-insert-advice () ())
 
-(defmethod execute :before ((command self-insert-advice) argument)
+(defmethod execute :before (mode (command self-insert-advice) argument)
   (unless (get-self-insert-char)
     (undefined-key)))
 

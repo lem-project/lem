@@ -94,7 +94,7 @@
              ,@body)
            (defclass ,class-name (,primary-class ,@advice-classes) ())
            (register-command-class ',name ',class-name)
-           (defmethod execute ((,command ,class-name) ,universal-argument)
+           (defmethod execute (mode (,command ,class-name) ,universal-argument)
              (declare (ignorable ,universal-argument))
              ,(gen-defcommand-body name
                                    universal-argument
@@ -110,7 +110,7 @@
 (define-command (foo-2 (:advice-classes foo-advice)) (s) ("sInput: ")
   ...body)
 
-(defmethod execute ((command foo-advice) argument)
+(defmethod execute (mode (command foo-advice) argument)
   ;; :advice-classesをfoo-adviceにしたfoo-1とfoo-2コマンドだけが呼び出される
   )
 
@@ -123,11 +123,11 @@
 (define-command (bar-2 (:primary-class bar-primary)) (s) ("sInput: ")
   ...body)
 
-(defmethod execute ((command bar-primary) argument)
+(defmethod execute (mode (command bar-primary) argument)
   ;; :primary-classをbar-primaryにしたbar-1,bar-2コマンドだけが呼び出される
   )
 
-(defmethod execute ((command primary-command) argument)
+(defmethod execute (mode (command primary-command) argument)
   ;; :primary-classがbar-primaryのときはこれは呼び出されない
   )
 |#

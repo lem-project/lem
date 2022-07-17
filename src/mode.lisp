@@ -241,3 +241,32 @@
              (setf *current-global-mode* ,global-mode)))
          (define-command (,mode (:class ,command-class-name)) () ()
            (change-global-mode ',mode))))))
+
+
+(defun all-active-mode-classes ()
+  (mapcar #'class-of
+          (mapcar #'ensure-mode-object
+                  (append (buffer-minor-modes (current-buffer))
+                          (active-global-minor-modes)
+                          (list (buffer-major-mode (current-buffer)))
+                          (list (current-global-mode))))))
+
+(defconstant +active-modes-class-name+ '%active-modes-class)
+
+(defvar *last-active-modes-class-instance-cache* nil)
+
+(defun get-active-modes-class-instance ()
+  (let ((mode-classes (all-active-mode-classes)))
+    (cond ((or (null *last-active-modes-class-instance-cache*)
+               (not (equal (car *last-active-modes-class-instance-cache*)
+                           (mapcar #'class-name mode-classes))))
+           (let ((instance
+                   (make-instance
+                    (c2mop:ensure-class +active-modes-class-name+
+                                        :direct-superclasses mode-classes))))
+             (setf *last-active-modes-class-instance-cache*
+                   (cons (mapcar #'class-name mode-classes)
+                         instance))
+             instance))
+          (t
+           (cdr *last-active-modes-class-instance-cache*)))))

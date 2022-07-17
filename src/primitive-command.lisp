@@ -5,14 +5,14 @@
 (defclass movable-advice () ())
 (defclass jump-cursor-advice () ())
 
-(defmethod execute :around ((command movable-advice) argument)
+(defmethod execute :around (mode (command movable-advice) argument)
   (do-multiple-cursors (:only-fake-cursors t)
     (handler-case
         (call-next-method)
       (move-cursor-error ())))
   (call-next-method))
 
-(defmethod execute :around ((command jump-cursor-advice) argument)
+(defmethod execute :around (mode (command jump-cursor-advice) argument)
   (prog1 (call-next-method)
     (clear-cursors (current-buffer))))
 

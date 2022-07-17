@@ -20,7 +20,7 @@
 (defun this-command ()
   *this-command*)
 
-(defgeneric execute (command argument))
+(defgeneric execute (mode command argument))
 
 (defclass primary-command () ())
 
@@ -37,7 +37,9 @@
 (defun call-command (this-command universal-argument)
   (signal-subconditions 'before-executing-command :command this-command)
   (prog1 (alexandria:if-let (*this-command* (get-command this-command))
-           (execute *this-command* universal-argument)
+           (execute (get-active-modes-class-instance)
+                    *this-command*
+                    universal-argument)
            (editor-error "~A: command not found" this-command))
     (buffer-undo-boundary)
     (signal-subconditions 'after-executing-command :command this-command)))

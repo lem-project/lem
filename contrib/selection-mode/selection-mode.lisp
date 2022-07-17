@@ -89,6 +89,6 @@
   (message "Paste")
   (paste-from-clipboard))
 
-(defmethod execute :before ((command lem:primary-command) argument)
+(defmethod execute :before ((mode selection-mode) command argument)
   (unless (typep command 'selection-advice)
     (cancel-selection)))

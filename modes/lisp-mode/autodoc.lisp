@@ -4,7 +4,6 @@
 
 (define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-autodoc)
 (define-key *lisp-mode-keymap* "M-a" 'lisp-autodoc)
-(define-key *lisp-mode-keymap* "Space" 'lisp-insert-space-and-autodoc)
 
 (let ((autodoc-symbol nil))
   (defun autodoc-symbol ()
@@ -47,6 +46,6 @@
 (define-command lisp-autodoc () ()
   (autodoc #'message-buffer))
 
-(define-command lisp-insert-space-and-autodoc (n) ("p")
-  (loop :repeat n :do (insert-character (current-point) #\space))
-  (lisp-autodoc))
+(defmethod execute :after ((mode lisp-mode) (command self-insert) argument)
+  (when (eql #\space (lem::get-self-insert-char))
+    (lisp-autodoc)))

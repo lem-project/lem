@@ -52,7 +52,10 @@
   (= 1 (length sym)))
 
 (defun key-to-char (key)
-  (key-to-character key))
+  (cond ((key-to-character key))
+        ((and (insertion-key-sym-p (key-sym key))
+              (match-key key :sym (key-sym key)))
+         (char (key-sym key) 0))))
 
 (setf (key-to-character (make-key :ctrl t :sym "@")) (code-char 0))
 (setf (key-to-character (make-key :ctrl t :sym "a")) (code-char 1))

@@ -25,16 +25,16 @@
     (push keymap *keymaps*)
     keymap))
 
-(defun define-key (keymap keyspec symbol)
+(defun define-key (keymap keyspec command-name)
   (check-type keyspec (or symbol string))
-  (check-type symbol symbol)
+  (check-type command-name symbol)
   (typecase keyspec
     (symbol
      (setf (gethash keyspec (keymap-function-table keymap))
-           symbol))
+           command-name))
     (string
      (let ((keys (parse-keyspec keyspec)))
-       (define-key-internal keymap keys symbol))))
+       (define-key-internal keymap keys command-name))))
   (values))
 
 (defun define-key-internal (keymap keys symbol)

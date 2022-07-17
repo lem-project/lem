@@ -27,12 +27,14 @@
 
 (defun define-key (keymap keyspec symbol)
   (check-type symbol symbol)
-  (let ((keys (typecase keyspec
-                (symbol
-                 (setf (gethash keyspec (keymap-function-table keymap)) symbol)
-                 (return-from define-key))
-                (string (parse-keyspec keyspec)))))
-    (define-key-internal keymap keys symbol)))
+  (typecase keyspec
+    (symbol
+     (setf (gethash keyspec (keymap-function-table keymap))
+           symbol))
+    (string
+     (let ((keys (parse-keyspec keyspec)))
+       (define-key-internal keymap keys symbol))))
+  (values))
 
 (defun define-key-internal (keymap keys symbol)
   (loop :with table := (keymap-table keymap)

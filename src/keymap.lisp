@@ -4,7 +4,6 @@
 
 (defstruct (keymap (:constructor %make-keymap) (:print-function %print-keymap))
   undef-hook
-  insertion-hook
   parent
   table
   function-table
@@ -16,10 +15,9 @@
     (when (keymap-name object)
       (format stream "~A" (keymap-name object)))))
 
-(defun make-keymap (&key undef-hook insertion-hook parent name)
+(defun make-keymap (&key undef-hook parent name)
   (let ((keymap (%make-keymap
                  :undef-hook undef-hook
-                 :insertion-hook insertion-hook
                  :parent parent
                  :table (make-hash-table :test 'eq)
                  :function-table (make-hash-table :test 'eq)
@@ -115,9 +113,6 @@
                    (return)))
                cmd)))
           (gethash cmd (keymap-function-table keymap))
-          (and (keymap-insertion-hook keymap)
-               (insertion-key-p key)
-               (keymap-insertion-hook keymap))
           (keymap-undef-hook keymap)
           cmd))))
 

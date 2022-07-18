@@ -31,6 +31,9 @@
     (push keymap *keymaps*)
     keymap))
 
+(defun prefix-command-p (command)
+  (hash-table-p command))
+
 (defun define-key (keymap keyspec command-name)
   (check-type keyspec (or symbol string))
   (check-type command-name symbol)
@@ -51,7 +54,7 @@
                    (setf (gethash k table) symbol))
                   (t
                    (let ((next (gethash k table)))
-                     (if (and next (hash-table-p next))
+                     (if (and next (prefix-command-p next))
                          (setf table next)
                          (let ((new-table (make-hash-table :test 'eq)))
                            (setf (gethash k table) new-table)
@@ -97,7 +100,7 @@
 (defun traverse-keymap (keymap fun)
   (labels ((f (table prefix)
              (maphash (lambda (k v)
-                        (if (hash-table-p v)
+                        (if (prefix-command-p v)
                             (f v (cons k prefix))
                             (funcall fun (reverse (cons k prefix)) v)))
                       table)))
@@ -107,7 +110,7 @@
   (let ((table (keymap-table keymap)))
     (labels ((f (k)
                (let ((cmd (gethash k table)))
-                 (if (hash-table-p cmd)
+                 (if (prefix-command-p cmd)
                      (setf table cmd)
                      cmd))))
       (let ((parent (keymap-parent keymap)))

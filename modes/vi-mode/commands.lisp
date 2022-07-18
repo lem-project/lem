@@ -358,7 +358,7 @@
                                                      (char-code #\0))))
                                  finally
                                     (return (lookup-keybind key)))))
-             (loop while (hash-table-p command)
+             (loop while (lem::prefix-command-p command)
                    for key = (read-key)
                    do (setf command (gethash key command)))
              (when (symbolp command)
@@ -461,7 +461,7 @@
                                                      (char-code #\0))))
                                  finally
                                     (return (lookup-keybind key)))))
-             (loop while (hash-table-p command)
+             (loop while (lem::prefix-command-p command)
                    for key = (read-key)
                    do (setf command (gethash key command)))
              (when (symbolp command)

@@ -72,7 +72,7 @@
          (cmd (lookup-keybind key))
          (kseq (list key)))
     (loop
-      (cond ((hash-table-p cmd)
+      (cond ((prefix-command-p cmd)
              (let ((key (read-key)))
                (setf kseq (nconc kseq (list key)))
                (setf cmd (lookup-keybind kseq))))

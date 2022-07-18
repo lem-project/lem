@@ -16,14 +16,16 @@
     `(if *jump-motion-recursive*
          (progn ,@body)
          (let ((*jump-motion-recursive* t)
-               (,p (copy-point (current-point))))
+               (,p (copy-point (current-point)) ; leak?
+                   ))
            (prog1 (progn ,@body)
              (push ,p *prev-jump-points*)
              (setf *current-point* nil))))))
 
 (defun jump-back ()
   (push (or *current-point*
-            (copy-point (current-point))) *next-jump-points*)
+            (copy-point (current-point))) ; leak?
+        *next-jump-points*)
   (setf *current-point* (pop *prev-jump-points*))
   (when *current-point*
     (switch-to-buffer (point-buffer *current-point*))

@@ -94,6 +94,15 @@
                                                      str))))))))
     (mapcar #'parse (uiop:split-string string :separator " "))))
 
+(defun traverse-keymap (keymap fun)
+  (labels ((f (table prefix)
+             (maphash (lambda (k v)
+                        (if (hash-table-p v)
+                            (f v (cons k prefix))
+                            (funcall fun (reverse (cons k prefix)) v)))
+                      table)))
+    (f (keymap-table keymap) nil)))
+
 (defun keymap-find-keybind (keymap key cmd)
   (let ((table (keymap-table keymap)))
     (labels ((f (k)
@@ -128,15 +137,6 @@
           ((and (insertion-key-sym-p sym)
                 (match-key key :sym sym))
            (char sym 0)))))
-
-(defun traverse-keymap (keymap fun)
-  (labels ((f (table prefix)
-             (maphash (lambda (k v)
-                        (if (hash-table-p v)
-                            (f v (cons k prefix))
-                            (funcall fun (reverse (cons k prefix)) v)))
-                      table)))
-    (f (keymap-table keymap) nil)))
 
 (defun lookup-keybind (key)
   (let (cmd)

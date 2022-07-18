@@ -297,18 +297,18 @@
            (apply-visual-range #'indent-region)
            (vi-visual-end))
           (t
-           (let ((command (lookup-keybind (read-key))))
-             (when (symbolp command)
-               (with-point ((start (current-point)))
-                 (let ((*vi-indent-recursive* t)
-                       (*cursor-offset* 0))
-                   (catch tag
-                     ;; Ignore End of Buffer error and continue the deletion.
-                     (ignore-errors (call-command command n))
-                     (with-point ((end (current-point)))
-                       (when (point< end start)
-                         (rotatef start end))
-                       (indent-region start end)))))))))))
+           (let ((uarg (or (read-universal-argument) n))
+                 (command (read-command)))
+             (with-point ((start (current-point)))
+               (let ((*vi-indent-recursive* t)
+                     (*cursor-offset* 0))
+                 (catch tag
+                   ;; Ignore End of Buffer error and continue the deletion.
+                   (ignore-errors (call-command command uarg))
+                   (with-point ((end (current-point)))
+                     (when (point< end start)
+                       (rotatef start end))
+                     (indent-region start end))))))))))
 
 (define-command vi-substitute (&optional (n 1)) ("p")
   (vi-delete-next-char n)
@@ -358,7 +358,7 @@
                (kill-push (get-output-stream-string out))))
            (vi-visual-end))
           (t
-           (let ((uarg (read-universal-argument))
+           (let ((uarg (or (read-universal-argument) n))
                  (command (read-command)))
              (with-point ((start (current-point)))
                (let ((*vi-delete-recursive* t)
@@ -451,7 +451,7 @@
                (kill-push (get-output-stream-string out))))
            (vi-visual-end))
           (t
-           (let ((uarg (read-universal-argument))
+           (let ((uarg (or (read-universal-argument) n))
                  (command (read-command)))
              (with-point ((start (current-point)))
                (let ((*vi-yank-recursive* t)

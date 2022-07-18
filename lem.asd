@@ -2,6 +2,7 @@
   :version "1.9.2"
   :depends-on ("alexandria"
                "trivial-gray-streams"
+               "trivial-types"
                "cl-ppcre"
                "inquisitor"
                "babel"

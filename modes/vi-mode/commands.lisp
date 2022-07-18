@@ -360,31 +360,30 @@
           (t
            (let ((uarg (read-universal-argument))
                  (command (read-command)))
-             (when (symbolp command)
-               (with-point ((start (current-point)))
-                 (let ((*vi-delete-recursive* t)
-                       (*cursor-offset* 0))
-                   (catch tag
-                     (dotimes (i n)
-                       ;; Ignore End of Buffer error and continue the deletion.
-                       (ignore-errors (apply command (and uarg (list uarg)))))
-                     (with-point ((end (current-point)))
-                       (when (eq (point-buffer start)
-                                 (point-buffer end))
-                         (when (point< end start)
-                           (rotatef start end)
-                           (character-offset end 1))
-                         (when (point/= start end)
-                           (let ((multiline (find command
-                                                  *multiline-motion-commands*)))
-                             (when multiline
-                               (line-start start)
-                               (line-end end)
-                               (character-offset end 1))
-                             (with-killring (:options (when multiline :vi-line))
-                               (kill-region start end))))))))
-                 (unless *vi-clear-recursive*
-                   (fall-within-line (current-point))))))))))
+             (with-point ((start (current-point)))
+               (let ((*vi-delete-recursive* t)
+                     (*cursor-offset* 0))
+                 (catch tag
+                   (dotimes (i n)
+                     ;; Ignore End of Buffer error and continue the deletion.
+                     (ignore-errors (apply command (and uarg (list uarg)))))
+                   (with-point ((end (current-point)))
+                     (when (eq (point-buffer start)
+                               (point-buffer end))
+                       (when (point< end start)
+                         (rotatef start end)
+                         (character-offset end 1))
+                       (when (point/= start end)
+                         (let ((multiline (find command
+                                                *multiline-motion-commands*)))
+                           (when multiline
+                             (line-start start)
+                             (line-end end)
+                             (character-offset end 1))
+                           (with-killring (:options (when multiline :vi-line))
+                             (kill-region start end))))))))
+               (unless *vi-clear-recursive*
+                 (fall-within-line (current-point)))))))))
 
 (define-command vi-delete-line () ()
   (cond ((visual-block-p)
@@ -454,28 +453,27 @@
           (t
            (let ((uarg (read-universal-argument))
                  (command (read-command)))
-             (when (symbolp command)
-               (with-point ((start (current-point)))
-                 (let ((*vi-yank-recursive* t)
-                       (*cursor-offset* 0))
-                   (catch tag
-                     (dotimes (i n)
-                       ;; Ignore End of Buffer error and continue the deletion.
-                       (ignore-errors (apply command (and uarg (list uarg)))))
-                     (with-point ((end (current-point)))
-                       (when (point< end start)
-                         (rotatef start end)
-                         (character-offset end 1))
-                       (when (point/= start end)
-                         (let ((multiline (find command
-                                                *multiline-motion-commands*)))
-                           (when multiline
-                             (line-start start)
-                             (line-end end)
-                             (character-offset end 1))
-                           (with-killring (:options (when multiline :vi-line))
-                             (copy-region start end)))))))
-                 (move-point (current-point) start))))))))
+             (with-point ((start (current-point)))
+               (let ((*vi-yank-recursive* t)
+                     (*cursor-offset* 0))
+                 (catch tag
+                   (dotimes (i n)
+                     ;; Ignore End of Buffer error and continue the deletion.
+                     (ignore-errors (apply command (and uarg (list uarg)))))
+                   (with-point ((end (current-point)))
+                     (when (point< end start)
+                       (rotatef start end)
+                       (character-offset end 1))
+                     (when (point/= start end)
+                       (let ((multiline (find command
+                                              *multiline-motion-commands*)))
+                         (when multiline
+                           (line-start start)
+                           (line-end end)
+                           (character-offset end 1))
+                         (with-killring (:options (when multiline :vi-line))
+                           (copy-region start end)))))))
+               (move-point (current-point) start)))))))
 
 (define-command vi-paste-after () ()
   (multiple-value-bind (string type)

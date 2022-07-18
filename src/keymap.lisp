@@ -2,6 +2,13 @@
 
 (defvar *keymaps* nil)
 
+(deftype key-sequence ()
+  '(trivial-types:proper-list key))
+
+(defun keyseq-to-string (key-sequence)
+  (check-type key-sequence key-sequence)
+  (format nil "~{~A~^ ~}" key-sequence))
+
 (defstruct (keymap (:constructor %make-keymap))
   undef-hook
   parent
@@ -86,14 +93,6 @@
                                             :sym (or (named-key-sym-p str)
                                                      str))))))))
     (mapcar #'parse (uiop:split-string string :separator " "))))
-
-(defun keyseq-to-string (kseq)
-  (with-output-to-string (out)
-    (loop :for key* :on kseq
-          :for key := (first key*)
-          :do (princ key out)
-              (when (rest key*)
-                (write-char #\space out)))))
 
 (defun keymap-find-keybind (keymap key cmd)
   (let ((table (keymap-table keymap)))

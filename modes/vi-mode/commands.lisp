@@ -99,6 +99,16 @@
 (defun empty-line (point)
   (zerop (length (line-string point))))
 
+(defun read-universal-argument ()
+  (loop :for key := (read-key)
+        :for char := (key-to-char key)
+        :while (and char (digit-char-p char))
+        :collect (digit-char-p char) :into digits
+        :finally (unread-key key)
+                 (return-from read-universal-argument
+                   (and digits
+                        (parse-integer (format nil "~{~D~}" digits))))))
+
 ;; Vim word
 ;; See http://vimdoc.sourceforge.net/htmldoc/motion.html#word
 ;; word = a sequence of letters, digits and underscores
@@ -348,16 +358,8 @@
                (kill-push (get-output-stream-string out))))
            (vi-visual-end))
           (t
-           (let* ((uarg nil)
-                  (command (loop for key = (read-key)
-                                 for key-char = (key-to-char key)
-                                 while (and key-char
-                                            (char<= #\0 key-char #\9))
-                                 do (setf uarg (+ (* (or uarg 0) 10)
-                                                  (- (char-code key-char)
-                                                     (char-code #\0))))
-                                 finally
-                                    (return (lookup-keybind key)))))
+           (let* ((uarg (read-universal-argument))
+                  (command (lookup-keybind (read-key))))
              (loop while (lem::prefix-command-p command)
                    for key = (read-key)
                    do (setf command (gethash key command)))
@@ -453,14 +455,8 @@
                (kill-push (get-output-stream-string out))))
            (vi-visual-end))
           (t
-           (let* ((uarg nil)
-                  (command (loop for key = (read-key)
-                                 while (char<= #\0 (key-to-char key) #\9)
-                                 do (setf uarg (+ (* (or uarg 0) 10)
-                                                  (- (char-code (key-to-char key))
-                                                     (char-code #\0))))
-                                 finally
-                                    (return (lookup-keybind key)))))
+           (let* ((uarg (read-universal-argument))
+                  (command (lookup-keybind (read-key))))
              (loop while (lem::prefix-command-p command)
                    for key = (read-key)
                    do (setf command (gethash key command)))

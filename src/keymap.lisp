@@ -129,7 +129,7 @@
                 (match-key key :sym sym))
            (char sym 0)))))
 
-(defun keymap-flatten-map (keymap fun)
+(defun traverse-keymap (keymap fun)
   (labels ((f (table prefix)
              (maphash (lambda (k v)
                         (if (hash-table-p v)

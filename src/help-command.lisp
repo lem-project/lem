@@ -21,13 +21,13 @@
           :do (format s "~A (~(~A~))~%" name (keymap-name keymap))
               (format s "~va~a~%" column-width "key" "binding")
               (format s "~va~a~%" column-width "---" "-------")
-              (keymap-flatten-map keymap
-                                  (lambda (kseq command)
-                                    (unless (equal "UNDEFINED-KEY" (symbol-name command))
-                                      (format s "~va~(~a~)~%"
-                                              column-width
-                                              (keyseq-to-string kseq)
-                                              (symbol-name command)))))
+              (traverse-keymap keymap
+                               (lambda (kseq command)
+                                 (unless (equal "UNDEFINED-KEY" (symbol-name command))
+                                   (format s "~va~(~a~)~%"
+                                           column-width
+                                           (keyseq-to-string kseq)
+                                           (symbol-name command)))))
               (setf keymap (keymap-parent keymap))
               (terpri s))))
 

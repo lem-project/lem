@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(defstruct (killring-element (:constructor make-killring-element (string options)))
+(defstruct (killring-item (:constructor make-killring-item (string options)))
   string
   options)
 
@@ -21,21 +21,21 @@
     (return-from killring-concat element))
   (let ((existing-element (ring-ref (killring-ring killring) 0)))
     (cond (before-p
-           (setf (killring-element-string existing-element)
+           (setf (killring-item-string existing-element)
                  (concatenate 'string
-                              (killring-element-string element)
-                              (killring-element-string existing-element)))
-           (setf (killring-element-options existing-element)
-                 (append (killring-element-options element)
-                         (killring-element-options existing-element))))
+                              (killring-item-string element)
+                              (killring-item-string existing-element)))
+           (setf (killring-item-options existing-element)
+                 (append (killring-item-options element)
+                         (killring-item-options existing-element))))
           (t
-           (setf (killring-element-string existing-element)
+           (setf (killring-item-string existing-element)
                  (concatenate 'string
-                              (killring-element-string existing-element)
-                              (killring-element-string element)))
-           (setf (killring-element-options existing-element)
-                 (append (killring-element-options existing-element)
-                         (killring-element-options element)))))
+                              (killring-item-string existing-element)
+                              (killring-item-string element)))
+           (setf (killring-item-options existing-element)
+                 (append (killring-item-options existing-element)
+                         (killring-item-options element)))))
     existing-element))
 
 (defmethod killring-add ((killring killring) element before-p)
@@ -49,15 +49,15 @@
 
 (defmethod killring-add :after ((killring killring) element before-p)
   (when (enable-clipboard-p)
-    (copy-to-clipboard (killring-element-string element))))
+    (copy-to-clipboard (killring-item-string element))))
 
 (defmethod killring-nth ((killring killring) n)
   (handler-case
       (let ((element (ring-ref (killring-ring killring)
                                (+ n (killring-offset killring)))))
         (apply #'values
-               (cons (killring-element-string element)
-                     (killring-element-options element))))
+               (cons (killring-item-string element)
+                     (killring-item-options element))))
     (invalid-index-error ()
       nil)))
 

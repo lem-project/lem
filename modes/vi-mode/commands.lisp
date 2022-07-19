@@ -330,6 +330,7 @@
 (let ((tag (gensym)))
   (define-command vi-delete (&optional (n 1)) ("p")
     (cond (*vi-delete-recursive*
+           ;; TODO: universal argument
            (with-point ((start (line-start (current-point)))
                         (end (line-end (current-point))))
              (let ((eob (not (character-offset end 1))))
@@ -429,6 +430,7 @@
 (let ((tag (gensym)))
   (define-command vi-yank (&optional (n 1)) ("p")
     (cond (*vi-yank-recursive*
+           ;; TODO: universal argument
            (with-point ((start (current-point))
                         (end (current-point)))
              (line-start start)

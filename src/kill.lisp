@@ -20,7 +20,7 @@
 
 (defun kill-push (string)
   (killring-add *killring*
-                (make-killring-element string *kill-options*)
+                (make-killring-item string *kill-options*)
                 *kill-before-p*))
 
 (defun current-kill-ring (&key (use-clipboard (enable-clipboard-p)))

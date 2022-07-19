@@ -87,7 +87,7 @@
       (killring-new *killring*))
     (funcall function)))
 
-(defmacro with-killring ((&key options before (repeat t)) &body body)
+(defmacro with-killring ((&key options (before '*kill-before-p*) (repeat t)) &body body)
   `(call-with-killring (lambda () ,@body)
                        :options ,options
                        :before ,before

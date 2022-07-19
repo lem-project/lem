@@ -26,7 +26,6 @@
                (:file "attribute")
                (:file "clipboard")
                (:file "killring")
-               (:file "kill")
                (:file "file-ext")
                (:file "screen")
                (:file "frame")

@@ -2,23 +2,18 @@
 
 (defclass point ()
   ((buffer
-    :initarg :buffer
     :reader point-buffer
     :type buffer)
    (linum
-    :initarg :linum
     :accessor point-linum
     :type fixnum)
    (line
-    :initarg :line
     :accessor point-line
     :type line)
    (charpos
-    :initarg :charpos
     :accessor point-charpos
     :type fixnum)
    (kind
-    :initarg :kind
     :reader point-kind
     :type (member :temporary :left-inserting :right-inserting)))
   (:documentation
@@ -57,28 +52,54 @@
   "`x`が`point`ならT、それ以外ならNILを返します。"
   (typep x 'point))
 
+(defun initialize-point-slot-values
+    (point &key (buffer (alexandria:required-argument :buffer))
+                (linum (alexandria:required-argument :linum))
+                (line (alexandria:required-argument :line))
+                (charpos (alexandria:required-argument :line))
+                (kind (alexandria:required-argument :line)))
+  (setf (slot-value point 'buffer) buffer
+        (slot-value point 'linum) linum
+        (slot-value point 'line) line
+        (slot-value point 'charpos) charpos
+        (slot-value point 'kind) kind)
+  (values))
+
+(defun initialize-point (point kind)
+  (unless (eq :temporary kind)
+    (push point (line-points (point-line point)))
+    (push point (buffer-points (point-buffer point)))))
+
 (defun make-point (buffer linum line charpos &key (kind :right-inserting))
   (check-type kind (member :temporary :left-inserting :right-inserting))
-  (let ((point (make-instance 'point
-                              :buffer buffer
-                              :linum linum
-                              :line line
-                              :charpos charpos
-                              :kind kind)))
-    (unless (eq :temporary kind)
-      (push point (line-points line))
-      (push point (buffer-points buffer)))
+  (let ((point (make-instance 'point)))
+    (initialize-point-slot-values point
+                                  :buffer buffer
+                                  :linum linum
+                                  :line line
+                                  :charpos charpos
+                                  :kind kind)
+    (initialize-point point kind)
     point))
+
+(defmethod copy-point-using-class ((point point) from-point kind)
+  (check-type kind (member :temporary :left-inserting :right-inserting))
+  (initialize-point-slot-values point
+                                :buffer (point-buffer from-point)
+                                :linum (point-linum from-point)
+                                :line (point-line from-point)
+                                :charpos (point-charpos from-point)
+                                :kind kind)
+  (initialize-point point kind)
+  point)
 
 (defun copy-point (point &optional kind)
   "`point`のコピーを作って返します。
 `kind`は`:temporary`、`:left-inserting`または `right-inserting`です。
 省略された場合は`point`と同じ値です。"
-  (make-point (point-buffer point)
-              (point-linum point)
-              (point-line point)
-              (point-charpos point)
-              :kind (or kind (point-kind point))))
+  (copy-point-using-class (make-instance 'point)
+                          point
+                          (or kind (point-kind point))))
 
 (defun delete-point (point)
   "`point`を削除します。

@@ -123,6 +123,7 @@
    :current-point
    :point
    :pointp
+   :copy-point-using-class
    :copy-point
    :delete-point
    :point-buffer

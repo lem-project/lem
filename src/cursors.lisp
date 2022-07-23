@@ -1,6 +1,8 @@
 (in-package :lem)
 
-(defclass fake-cursor (point) ())
+(defclass fake-cursor (point)
+  ((killring :initarg :killring
+             :reader fake-cursor-killring)))
 
 (defun buffer-fake-cursors (buffer)
   (buffer-value buffer 'fake-cursors))
@@ -8,11 +10,17 @@
 (defun (setf buffer-fake-cursors) (value buffer)
   (setf (buffer-value buffer 'fake-cursors) value))
 
-(defun add-fake-cursor (point)
-  (push (copy-point-using-class (make-instance 'fake-cursor)
-                                point
-                                :left-inserting)
-        (buffer-fake-cursors (point-buffer point))))
+(defun cursor-killring (cursor)
+  (etypecase cursor
+    (point *killring*)
+    (fake-cursor (fake-cursor-killring cursor))))
+
+(defun make-fake-cursor (point)
+  (let* ((killring (copy-killring (cursor-killring point)))
+         (fake-cursor (make-instance 'fake-cursor :killring killring)))
+    (copy-point-using-class fake-cursor point :left-inserting)
+    (push fake-cursor (buffer-fake-cursors (point-buffer point)))
+    fake-cursor))
 
 (defun delete-fake-cursor (point)
   (let ((buffer (point-buffer point)))
@@ -63,7 +71,7 @@
                 (when (and (line-offset p 1)
                            (or (null next-cursor)
                                (not (same-line-p p next-cursor))))
-                  (add-fake-cursor p))))))
+                  (make-fake-cursor p))))))
 
 (define-condition garbage-collection-cursors (after-executing-command) ())
 (defmethod handle-signal ((condition garbage-collection-cursors))

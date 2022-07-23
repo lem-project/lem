@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(defclass fake-cursor (point) ())
+
 (defun buffer-fake-cursors (buffer)
   (buffer-value buffer 'fake-cursors))
 
@@ -7,7 +9,9 @@
   (setf (buffer-value buffer 'fake-cursors) value))
 
 (defun add-fake-cursor (point)
-  (push (copy-point point :left-inserting)
+  (push (copy-point-using-class (make-instance 'fake-cursor)
+                                point
+                                :left-inserting)
         (buffer-fake-cursors (point-buffer point))))
 
 (defun delete-fake-cursor (point)

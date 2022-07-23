@@ -3,6 +3,7 @@
   (:export :invalid-index-error
            :ring
            :make-ring
+           :copy-ring
            :ring-empty-p
            :ring-length
            :ring-push
@@ -37,6 +38,14 @@
 
 (defun make-ring (size)
   (make-instance 'ring :data (make-array size)))
+
+(defun copy-ring (ring)
+  (let ((new-ring (make-instance 'ring :data (copy-seq (ring-data ring)))))
+    (with-slots (front rear empty) new-ring
+      (setf front (ring-front ring)
+            rear (ring-rear ring)
+            empty (ring-empty-p ring)))
+    new-ring))
 
 (defmethod ring-length ((ring ring))
   (cond ((ring-empty-p ring)

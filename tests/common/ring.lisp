@@ -2,6 +2,17 @@
   (:use :cl :rove :lem-common.ring))
 (in-package :lem-tests/common/ring)
 
+(deftest copy-ring
+  (let ((ring (make-ring 10)))
+    (ring-push ring 100)
+    (ring-push ring 200)
+    (let ((ring2 (copy-ring ring)))
+      (ok (not (eq ring ring2)))
+      (ok (equal (ring-ref ring 0)
+                 (ring-ref ring2 0)))
+      (ok (equal (ring-ref ring 1)
+                 (ring-ref ring2 1))))))
+
 (deftest ring-push
   (let ((ring (make-ring 10)))
     (ok (string= (with-output-to-string (out)

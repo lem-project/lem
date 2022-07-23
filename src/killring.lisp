@@ -15,6 +15,9 @@
 (defun make-killring (size)
   (make-instance 'killring :ring (make-ring size)))
 
+(defun copy-killring (killring)
+  (make-instance 'killring :ring (copy-ring (killring-ring killring))))
+
 (defmethod killring-concat ((killring killring) element before-p)
   (when (ring-empty-p (killring-ring killring))
     (ring-push (killring-ring killring) element)

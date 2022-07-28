@@ -11,11 +11,12 @@
                "log4cl"
                "split-sequence"
                "lem-base"
-               "lem-common"
                "lem-encodings")
   :pathname "src"
   :serial t
-  :components ((:file "package")
+  :components ((:module "common"
+                :components ((:file "ring")))
+               (:file "package")
                (:file "quicklisp-utils")
                (:file "config")
                (:file "errors")

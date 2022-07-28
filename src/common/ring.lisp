@@ -1,4 +1,4 @@
-(defpackage :lem-common.ring
+(defpackage :lem/common/ring
   (:use :cl)
   (:export :invalid-index-error
            :ring
@@ -8,7 +8,7 @@
            :ring-length
            :ring-push
            :ring-ref))
-(in-package :lem-common.ring)
+(in-package :lem/common/ring)
 
 (define-condition invalid-index-error (program-error)
   ((index :initarg :index)

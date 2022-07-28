@@ -73,4 +73,10 @@
     (ok (eql 1 (ring-ref ring 4)))
     (ok (signals (ring-ref ring -1) 'invalid-index-error))
     (loop :for i :from 5 :to 20
-          :do (ok (signals (ring-ref ring i) 'invalid-index-error)))))
+          :do (ok (signals (ring-ref ring i) 'invalid-index-error)))
+
+    (ok (equal 100 (setf (ring-ref ring 0) 100)))
+    (ok (equal 100 (ring-ref ring 0)))
+    (ok (equal "xx" (setf (ring-ref ring 3) "xx")))
+    (ok (equal "xx" (ring-ref ring 3)))
+    (ok (signals (setf (ring-ref ring 5) 'foo) 'invalid-index-error))))

@@ -80,3 +80,11 @@
   (aref (ring-data ring)
         (mod (- (ring-rear ring) n 1)
              (ring-size ring))))
+
+(defmethod (setf ring-ref) (value (ring ring) n)
+  (unless (<= 0 n (1- (ring-length ring)))
+    (error 'invalid-index-error :index n :size (ring-length ring)))
+  (setf (aref (ring-data ring)
+              (mod (- (ring-rear ring) n 1)
+                   (ring-size ring)))
+        value))

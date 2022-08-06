@@ -879,8 +879,13 @@
      (indentation-update info))
     ((:eval-no-wait form)
      (eval (read-from-string form)))
-    ;; ((:eval thread tag form-string)
-    ;;  )
+    ((:eval thread tag form-string)
+     (let ((result (handler-case (eval (read-from-string form-string))
+                     (error (c)
+                       `(:error ,(type-of c) ,(princ-to-string c)))
+                     (:no-error (&rest values)
+                       `(:ok ,(first values))))))
+       (dispatch-message `(:emacs-return ,thread ,tag ,result))))
     ((:emacs-return thread tag value)
      (send-message-string
       *connection*

@@ -1284,4 +1284,4 @@
               (sockint::close fd)))))))
   (add-hook *exit-editor-hook* 'slime-quit-all-for-win32))
 
-(define-file-type ("lisp" "asd" "cl" "lsp") lisp-mode)
+(define-file-type ("lisp" "asd" "cl" "lsp" "ros") lisp-mode)

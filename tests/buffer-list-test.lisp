@@ -194,51 +194,52 @@
                 (ok (equal '(:local :global)
                                 (nreverse called-order)))))))))))
 
-(flet ((buffer-list-length=0-case (function)
-         (testing "buffer-list length is 0"
-           (with-buffer-list ()
-             (assert (null (lem-base:buffer-list)))
-             (ok (eq (funcall function (lem-base:make-buffer nil :temporary t))
-                          nil)))))
-       (buffer-list-length=1-case (function)
-         (testing "buffer-list length is 1"
-           (with-buffer-list ()
-             (let ((buffer-a (lem-base:make-buffer "a")))
-               (assert (equal (lem-base:buffer-list)
-                              (list buffer-a)))
-               (ok (eq (funcall function buffer-a) nil)))))))
+(defun buffer-list-length=0-case (function)
+  (testing "buffer-list length is 0"
+    (with-buffer-list ()
+      (assert (null (lem-base:buffer-list)))
+      (ok (eq (funcall function (lem-base:make-buffer nil :temporary t))
+              nil)))))
 
-  (deftest get-next-buffer
-    (argument-type-is-buffer-test #'lem-base:get-next-buffer)
-    (buffer-list-length=0-case #'lem-base:get-next-buffer)
-    (buffer-list-length=1-case #'lem-base:get-next-buffer)
-    (testing "buffer-list length is 3"
-      (with-buffer-list ()
-        (let ((buffer-a (lem-base:make-buffer "a"))
-              (buffer-b (lem-base:make-buffer "b"))
-              (buffer-c (lem-base:make-buffer "c")))
-          (assert (equal (lem-base:buffer-list)
-                         (list buffer-c buffer-b buffer-a)))
-          (ok (eq (lem-base:get-next-buffer buffer-c) buffer-b))
-          (ok (eq (lem-base:get-next-buffer buffer-b) buffer-a))
-          (ok (eq (lem-base:get-next-buffer buffer-a) nil))
-          (ok (eq (lem-base:get-next-buffer (lem-base:make-buffer nil :temporary t)) nil))))))
+(defun buffer-list-length=1-case (function)
+  (testing "buffer-list length is 1"
+    (with-buffer-list ()
+      (let ((buffer-a (lem-base:make-buffer "a")))
+        (assert (equal (lem-base:buffer-list)
+                       (list buffer-a)))
+        (ok (eq (funcall function buffer-a) nil))))))
 
-  (deftest get-previous-buffer
-    (argument-type-is-buffer-test #'lem-base:get-previous-buffer)
-    (buffer-list-length=0-case #'lem-base:get-previous-buffer)
-    (buffer-list-length=1-case #'lem-base:get-previous-buffer)
-    (testing "buffer-list length is 3"
-      (with-buffer-list ()
-        (let ((buffer-a (lem-base:make-buffer "a"))
-              (buffer-b (lem-base:make-buffer "b"))
-              (buffer-c (lem-base:make-buffer "c")))
-          (assert (equal (lem-base:buffer-list)
-                         (list buffer-c buffer-b buffer-a)))
-          (ok (eq (lem-base:get-previous-buffer buffer-c) nil))
-          (ok (eq (lem-base:get-previous-buffer buffer-b) buffer-c))
-          (ok (eq (lem-base:get-previous-buffer buffer-a) buffer-b))
-          (ok (eq (lem-base:get-previous-buffer (lem-base:make-buffer nil :temporary t)) nil)))))))
+(deftest get-next-buffer
+  (argument-type-is-buffer-test #'lem-base:get-next-buffer)
+  (buffer-list-length=0-case #'lem-base:get-next-buffer)
+  (buffer-list-length=1-case #'lem-base:get-next-buffer)
+  (testing "buffer-list length is 3"
+    (with-buffer-list ()
+      (let ((buffer-a (lem-base:make-buffer "a"))
+            (buffer-b (lem-base:make-buffer "b"))
+            (buffer-c (lem-base:make-buffer "c")))
+        (assert (equal (lem-base:buffer-list)
+                       (list buffer-c buffer-b buffer-a)))
+        (ok (eq (lem-base:get-next-buffer buffer-c) buffer-b))
+        (ok (eq (lem-base:get-next-buffer buffer-b) buffer-a))
+        (ok (eq (lem-base:get-next-buffer buffer-a) nil))
+        (ok (eq (lem-base:get-next-buffer (lem-base:make-buffer nil :temporary t)) nil))))))
+
+(deftest get-previous-buffer
+  (argument-type-is-buffer-test #'lem-base:get-previous-buffer)
+  (buffer-list-length=0-case #'lem-base:get-previous-buffer)
+  (buffer-list-length=1-case #'lem-base:get-previous-buffer)
+  (testing "buffer-list length is 3"
+    (with-buffer-list ()
+      (let ((buffer-a (lem-base:make-buffer "a"))
+            (buffer-b (lem-base:make-buffer "b"))
+            (buffer-c (lem-base:make-buffer "c")))
+        (assert (equal (lem-base:buffer-list)
+                       (list buffer-c buffer-b buffer-a)))
+        (ok (eq (lem-base:get-previous-buffer buffer-c) nil))
+        (ok (eq (lem-base:get-previous-buffer buffer-b) buffer-c))
+        (ok (eq (lem-base:get-previous-buffer buffer-a) buffer-b))
+        (ok (eq (lem-base:get-previous-buffer (lem-base:make-buffer nil :temporary t)) nil))))))
 
 (deftest bury-buffer
   (argument-type-is-buffer-test #'lem-base:bury-buffer)

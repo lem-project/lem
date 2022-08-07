@@ -25,7 +25,6 @@ jobs:
 
         ros install lem-project/async-process lem
         ros install cxxxr/sblint
-        ros install fukamachi/rove
 
         export PATH=$HOME/.roswell/bin:$PATH
 
@@ -34,4 +33,4 @@ jobs:
         sblint lib/lisp-syntax/lem-lisp-syntax.asd
         sblint modes/lisp-mode/lem-lisp-mode.asd
 
-        rove lem-tests.asd
+        ros -e '(asdf:test-system :lem-tests :force t)'

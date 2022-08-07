@@ -1,6 +1,6 @@
 (defpackage :lem-tests/lsp-utils/json
   (:use :cl
-        :rove
+        :lem-tests/test-if
         :lem-lsp-utils/json)
   (:import-from :trivial-package-local-nicknames)
   ;; TODO

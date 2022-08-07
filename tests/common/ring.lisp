@@ -1,5 +1,5 @@
 (defpackage :lem-tests/common/ring
-  (:use :cl :rove :lem/common/ring))
+  (:use :cl :lem-tests/test-if :lem/common/ring))
 (in-package :lem-tests/common/ring)
 
 (deftest copy-ring

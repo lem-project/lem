@@ -1,5 +1,5 @@
 (defpackage :lem-tests/popup-window
-  (:use :cl :lem :rove)
+  (:use :cl :lem :lem-tests/test-if)
   (:import-from :lem-fake-interface
                 :fake-interface
                 :with-fake-interface))

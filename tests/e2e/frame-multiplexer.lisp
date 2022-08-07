@@ -1,7 +1,7 @@
 (defpackage :lem-tests/frame-multiplexer
   (:use :cl
         :lem
-        :rove))
+        :lem-tests/test-if))
 (in-package :lem-tests/frame-multiplexer)
 
 ;;; このテストは不十分で動作も不安定なので、まだ動かさない

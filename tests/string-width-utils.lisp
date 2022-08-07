@@ -1,5 +1,5 @@
 (defpackage :lem-tests/string-width-utils
-  (:use :cl :rove)
+  (:use :cl :lem-tests/test-if)
   (:import-from :lem-base
                 :control-char
                 :wide-char-p

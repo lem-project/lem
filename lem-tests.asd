@@ -1,3 +1,6 @@
+(pushnew :lem-tests.rove *features*)
+;; (pushnew :lem-tests.fiveam *features*)
+
 (defsystem "lem-tests"
   :depends-on ("lem-base"
                "lem"
@@ -8,9 +11,13 @@
                "lem-lisp-mode"
                "cl-ansi-text"
                "trivial-package-local-nicknames"
-               "rove")
+               #+lem-tests.rove "rove"
+               #+lem-tests.fiveam "fiveam")
   :pathname "tests"
-  :components ((:file "utilities")
+  :components ((:module "test-if"
+                :components (#+lem-tests.rove (:file "rove")
+                             #+lem-tests.fiveam (:file "fiveam")))
+               (:file "utilities")
                (:module "common"
                 :components ((:file "ring")))
                (:module "lsp-utils"
@@ -34,4 +41,4 @@
                (:file "self-insert-command")
                (:file "main"))
   :perform (test-op (o c)
-                    (symbol-call :rove :run c)))
+                    (symbol-call :lem-tests/test-if :run-all-tests)))

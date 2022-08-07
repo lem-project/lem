@@ -1,7 +1,7 @@
 (defpackage :lem-tests/self-insert-command
   (:use :cl
         :lem
-        :rove)
+        :lem-tests/test-if)
   (:import-from :lem-fake-interface
                 :with-fake-interface))
 (in-package :lem-tests/self-insert-command)

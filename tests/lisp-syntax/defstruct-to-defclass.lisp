@@ -1,6 +1,6 @@
 (defpackage :lem-tests/lisp-syntax/defstruct-to-defclass
   (:use :cl
-        :rove)
+        :lem-tests/test-if)
   (:import-from :lem-base)
   (:import-from :lem-lisp-mode)
   (:import-from :lem-tests/utilities

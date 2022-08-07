@@ -1,6 +1,6 @@
 (lem-lsp-server/defpackage:defpackage :lem-lsp-server/test/text-document-did-open
   (:use :cl
-        :rove
+        :lem-tests/test-if
         :lem-lsp-server/server
         :lem-lsp-server/test/test-server
         :lem-lsp-server/text-document-controller)

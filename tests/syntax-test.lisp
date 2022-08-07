@@ -1,5 +1,5 @@
 (defpackage :lem-tests/syntax-test
-  (:use :cl :rove)
+  (:use :cl :lem-tests/test-if)
   (:import-from :lem-tests/utilities
                 :sample-file)
   (:import-from :lem-lisp-mode)

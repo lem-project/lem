@@ -1,6 +1,6 @@
 (lem-lsp-server/defpackage:defpackage :lem-lsp-server/test/initialized
   (:use :cl
-        :rove
+        :lem-tests/test-if
         :lem-lsp-server/server
         :lem-lsp-server/test/test-server)
   (:local-nicknames (:protocol :lem-lsp-utils/protocol)

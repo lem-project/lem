@@ -48,11 +48,12 @@
   killring)
 
 (defmethod peek-item ((killring killring) n)
-  (let ((item (ring-ref (killring-ring killring)
-                        (mod (+ n (killring-offset killring))
-                             (ring-length (killring-ring killring))))))
-    (values (item-string item)
-            (item-options item))))
+  (unless (ring-empty-p (killring-ring killring))
+    (let ((item (ring-ref (killring-ring killring)
+                          (mod (+ n (killring-offset killring))
+                               (ring-length (killring-ring killring))))))
+      (values (item-string item)
+              (item-options item)))))
 
 (defmethod rotate ((killring killring))
   (unless (ring-empty-p (killring-ring killring))

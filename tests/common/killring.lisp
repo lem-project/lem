@@ -65,3 +65,7 @@
       (killring:push-item killring "baz" :options :test3))
     (ok (equal '("bazfoobar" (:test3 :test :test2))
                (multiple-value-list (killring:peek-item killring 0))))))
+
+(test peek-item-when-empty
+  (let ((killring (killring:make-killring 10)))
+    (ok (null (killring:peek-item killring 0)))))

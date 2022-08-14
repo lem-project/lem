@@ -87,7 +87,7 @@
       (let ((killp (not (null n)))
             (killed-string (delete-character (current-point) (or n 1))))
         (when killp
-          (lem/common/killring:with-context (:appending repeat-command)
+          (lem/common/killring:with-killring-context (:appending repeat-command)
             (kill-push killed-string)))))))
 
 (define-key *global-keymap* "C-h" 'delete-previous-char)
@@ -110,7 +110,7 @@
 (define-key *global-keymap* "M-w" 'copy-region)
 (define-command copy-region (start end) ("r")
   ;; TODO: multiple cursors
-  (lem/common/killring:with-context (:appending (continue-flag :kill))
+  (lem/common/killring:with-killring-context (:appending (continue-flag :kill))
     (kill-push (points-to-string start end)))
   (buffer-mark-cancel (current-buffer))
   t)
@@ -126,7 +126,7 @@
   (let ((repeat-command (continue-flag :kill)))
     (do-multiple-cursors ()
       (let ((killed-string (delete-character start (count-characters start end))))
-        (lem/common/killring:with-context (:appending repeat-command)
+        (lem/common/killring:with-killring-context (:appending repeat-command)
           (kill-push killed-string))))))
 
 (define-command kill-region-to-clipboard (start end) ("r")
@@ -158,7 +158,7 @@
   ;; TODO: multiple cursors
   (let ((string (if (null arg)
                     (current-kill-ring)
-                    (lem/common/killring:peek-item *killring* (1- arg)))))
+                    (lem/common/killring:peek-killring-item *killring* (1- arg)))))
     (setf (buffer-value (current-buffer) 'yank-start) (copy-point (current-point) :temporary))
     (insert-string (current-point) string)
     (setf (buffer-value (current-buffer) 'yank-end) (copy-point (current-point) :temporary))
@@ -174,7 +174,7 @@
     (when (continue-flag :yank) (setq prev-yank-p t))
     (cond ((and start end prev-yank-p)
            (delete-between-points start end)
-           (lem/common/killring:rotate *killring*)
+           (lem/common/killring:rotate-killring *killring*)
            (yank n))
           (t
            (message "Previous command was not a yank")
@@ -188,7 +188,7 @@
     (when (continue-flag :yank) (setq prev-yank-p t))
     (cond ((and start end prev-yank-p)
            (delete-between-points start end)
-           (lem/common/killring:rotate-undo *killring*)
+           (lem/common/killring:rotate-killring-undo *killring*)
            (yank n))
           (t
            (message "Previous command was not a yank")
@@ -198,7 +198,7 @@
   ;; TODO: multiple cursors
   (let ((string (if (null arg)
                     (current-kill-ring :use-clipboard nil)
-                    (lem/common/killring:peek-item *killring* (1- arg)))))
+                    (lem/common/killring:peek-killring-item *killring* (1- arg)))))
     (copy-to-clipboard string)
     t))
 

@@ -2,11 +2,11 @@
   (:use :cl :lem/common/ring)
   (:export :make-killring
            :copy-killring
-           :push-item
-           :peek-item
-           :rotate
-           :rotate-undo
-           :with-context))
+           :push-killring-item
+           :peek-killring-item
+           :rotate-killring
+           :rotate-killring-undo
+           :with-killring-context))
 (in-package :lem/common/killring)
 
 (defvar *appending* nil)
@@ -30,12 +30,12 @@
 (defun copy-killring (killring)
   (make-instance 'killring :ring (copy-ring (killring-ring killring))))
 
-(defgeneric push-item (killring string &key options &allow-other-keys))
+(defgeneric push-killring-item (killring string &key options &allow-other-keys))
 
-(defmethod push-item :before ((killring killring) string &key &allow-other-keys)
+(defmethod push-killring-item :before ((killring killring) string &key &allow-other-keys)
   (setf (killring-offset killring) 0))
 
-(defmethod push-item ((killring killring) string &key (options *options*) &allow-other-keys)
+(defmethod push-killring-item ((killring killring) string &key (options *options*) &allow-other-keys)
   (let ((item (make-item :string string :options (alexandria:ensure-list options)))
         (ring (killring-ring killring)))
     (if *appending*
@@ -47,7 +47,7 @@
         (ring-push ring item)))
   killring)
 
-(defmethod peek-item ((killring killring) n)
+(defmethod peek-killring-item ((killring killring) n)
   (unless (ring-empty-p (killring-ring killring))
     (let ((item (ring-ref (killring-ring killring)
                           (mod (+ n (killring-offset killring))
@@ -55,20 +55,20 @@
       (values (item-string item)
               (item-options item)))))
 
-(defmethod rotate ((killring killring))
+(defmethod rotate-killring ((killring killring))
   (unless (ring-empty-p (killring-ring killring))
     (incf (killring-offset killring))))
 
-(defmethod rotate-undo ((killring killring))
+(defmethod rotate-killring-undo ((killring killring))
   (unless (ring-empty-p (killring-ring killring))
     (decf (killring-offset killring))))
 
-(defun call-with-context (function *appending* *before-inserting* *options*)
+(defun call-with-killring-context (function *appending* *before-inserting* *options*)
   (funcall function))
 
-(defmacro with-context ((&key appending (before-inserting '*before-inserting*) options)
-                        &body body)
-  `(call-with-context (lambda () ,@body)
-                      ,appending
-                      ,before-inserting
-                      ,options))
+(defmacro with-killring-context ((&key appending (before-inserting '*before-inserting*) options)
+                                 &body body)
+  `(call-with-killring-context (lambda () ,@body)
+                               ,appending
+                               ,before-inserting
+                               ,options))

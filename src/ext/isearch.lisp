@@ -474,10 +474,7 @@
                                     (move-point (current-point) cur-point)
                                     (activate-current-highlight cur-point)
                                     (redraw-display)
-                                    (prompt-for-character
-                                     (format nil "Replace ~s with ~s [y/n/!]" before after)
-                                     :gravity (make-instance 'lem.popup-window::gravity-cursor
-                                                             :offset-y 1))))
+                                    (prompt-for-character (format nil "Replace ~s with ~s [y/n/!]" before after))))
                       :do (cond
                             ((or pass-through (char= c #\y))
                              (delete-between-points start end)

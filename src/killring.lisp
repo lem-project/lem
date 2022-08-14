@@ -7,6 +7,6 @@
   (when (enable-clipboard-p)
     (copy-to-clipboard string)))
 
-(defun yank-from-clipboard-or-killring (&key (use-clipboard (enable-clipboard-p)))
-  (or (and use-clipboard (get-clipboard-data))
+(defun yank-from-clipboard-or-killring ()
+  (or (and (enable-clipboard-p) (get-clipboard-data))
       (peek-killring-item *killring* 0)))

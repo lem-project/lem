@@ -97,7 +97,8 @@
 
 (defmethod compute-popup-window-rectangle ((gravity gravity-cursor)
                                            &key source-window width height border-size)
-  (let* ((b2 (* (or border-size 0) 2))
+  (let* ((border-size (or border-size 0))
+         (b2 (* border-size 2))
          (disp-w (max (- (display-width)  b2 *extra-right-margin*)
                       +min-width+))
          (disp-h (max (- (display-height) b2)

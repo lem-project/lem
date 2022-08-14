@@ -37,6 +37,7 @@
                (:file "syntax-test")
                (:file "buffer-list-test")
                (:file "popup-window")
+               (:file "prompt")
                (:file "isearch")
                (:file "self-insert-command")
                (:file "main"))

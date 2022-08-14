@@ -101,7 +101,7 @@
         (delete-character start (count-characters start end)))
       (do-multiple-cursors ()
         (backward-char (or n 1))
-        (handler-case (let ((*kill-before-p* t))
+        (handler-case (with-killring-context (:before-inserting t)
                         (delete-next-char n))
           (read-only-error (e)
             (forward-char (or n 1))

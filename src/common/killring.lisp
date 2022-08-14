@@ -35,7 +35,10 @@
 (defmethod push-killring-item :before ((killring killring) string &key &allow-other-keys)
   (setf (killring-offset killring) 0))
 
-(defmethod push-killring-item ((killring killring) string &key (options *options*) &allow-other-keys)
+(defmethod push-killring-item ((killring killring)
+                               string
+                               &key (options *options*)
+                               &allow-other-keys)
   (let ((item (make-item :string string :options (alexandria:ensure-list options)))
         (ring (killring-ring killring)))
     (if *appending*

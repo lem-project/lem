@@ -12,7 +12,7 @@
 
 (defun cursor-killring (cursor)
   (etypecase cursor
-    (point *killring*)
+    (point (current-killring))
     (fake-cursor (fake-cursor-killring cursor))))
 
 (defun make-fake-cursor (point)

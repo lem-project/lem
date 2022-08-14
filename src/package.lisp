@@ -1,7 +1,10 @@
 (defpackage :lem
   (:use :cl
         :lem-base
-        :lem/common/ring)
+        :lem/common/killring)
+  ;; reexport common/killring
+  (:export
+   :with-killring-context)
   ;; quicklisp-utils.lisp
   (:export
    :maybe-quickload)
@@ -77,12 +80,6 @@
    :enable-clipboard-p
    :copy-to-clipboard
    :get-clipboard-data)
-  ;; kill.lisp
-  (:export
-   :with-killring
-   :kill-push
-   :kill-ring-rotate
-   :kill-ring-rotate-undo)
   ;; file-ext.lisp
   (:export
    :define-file-type)

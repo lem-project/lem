@@ -16,7 +16,7 @@
     (fake-cursor (fake-cursor-killring cursor))))
 
 (defun make-fake-cursor (point)
-  (let* ((killring (lem/common/killring:copy-killring (cursor-killring point)))
+  (let* ((killring (copy-killring (cursor-killring point)))
          (fake-cursor (make-instance 'fake-cursor :killring killring)))
     (copy-point-using-class fake-cursor point :left-inserting)
     (push fake-cursor (buffer-fake-cursors (point-buffer point)))

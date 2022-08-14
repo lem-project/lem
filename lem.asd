@@ -15,7 +15,8 @@
   :pathname "src"
   :serial t
   :components ((:module "common"
-                :components ((:file "ring")))
+                :components ((:file "ring")
+                             (:file "killring")))
                (:file "package")
                (:file "quicklisp-utils")
                (:file "config")

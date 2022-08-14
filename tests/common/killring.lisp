@@ -4,8 +4,6 @@
   (:local-nicknames (:killring :lem/common/killring)))
 (in-package :lem-tests/killring)
 
-(5am:def-suite* killring)
-
 (test simple-test
   (let ((killring (killring:make-killring 10)))
     (ok (killring:push-item killring "abc"))

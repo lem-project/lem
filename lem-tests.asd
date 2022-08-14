@@ -12,7 +12,8 @@
   :pathname "tests"
   :components ((:file "utilities")
                (:module "common"
-                :components ((:file "ring")))
+                :components ((:file "ring")
+                             (:file "killring")))
                (:module "lsp-utils"
                 :components ((:file "json")
                              (:file "json-lsp-utils")))

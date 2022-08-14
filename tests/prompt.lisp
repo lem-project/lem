@@ -1,11 +1,11 @@
 (defpackage :lem-tests/prompt
-  (:use :cl :lem-tests/test-if)
+  (:use :cl :testif)
   (:import-from :lem-fake-interface
                 :fake-interface
                 :with-fake-interface))
 (in-package :lem-tests/prompt)
 
-(deftest prompt-for-character
+(test prompt-for-character
   (with-fake-interface ()
     (lem:unread-key (lem:make-key :sym "a"))
     (ok (equal #\a

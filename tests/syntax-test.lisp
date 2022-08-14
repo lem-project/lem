@@ -1,14 +1,14 @@
 (defpackage :lem-tests/syntax-test
-  (:use :cl :lem-tests/test-if)
+  (:use :cl :testif)
   (:import-from :lem-tests/utilities
                 :sample-file)
   (:import-from :lem-lisp-mode)
   (:import-from :lem-base))
 (in-package :lem-tests/syntax-test)
 
-(deftest form-offset
+(test form-offset
   (let ((lem-lisp-mode::*disable-self-connect* t))
-    (testing "skip comment"
+    (test "skip comment"
       (let* ((buffer (lem-base:find-file-buffer (sample-file "syntax-sample.lisp")
                                                 :temporary t
                                                 :enable-undo-p nil
@@ -33,9 +33,9 @@
  d)
 "))
 
-(deftest scan-lists
+(test scan-lists
   (let ((lem-lisp-mode::*disable-self-connect* t))
-    (testing "limit-point"
+    (test "limit-point"
       (let* ((buffer (lem-base:make-buffer nil
                                            :temporary t
                                            :enable-undo-p nil
@@ -44,7 +44,7 @@
         (lem-base:insert-string point +scan-lists-sample-text+)
         (lem-base:with-point ((point point)
                               (limit-point point))
-          (testing "forward"
+          (test "forward"
             (assert (lem-base:search-forward (lem-base:buffer-start limit-point) "c)"))
             (lem-base:buffer-start point)
             (ok (and (null (lem-base:scan-lists point 1 0 t limit-point))
@@ -52,7 +52,7 @@
             (ok (and (eq point (lem-base:scan-lists point 1 0 t))
                      (= 4 (lem-base:line-number-at-point point))
                      (= 3 (lem-base:point-charpos point)))))
-          (testing "backward"
+          (test "backward"
             (lem-base:buffer-end point)
             (assert (lem-base:search-forward (lem-base:buffer-start limit-point) "(b"))
             (ok (and (null (lem-base:scan-lists point -1 0 t limit-point))

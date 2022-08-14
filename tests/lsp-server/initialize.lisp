@@ -1,6 +1,6 @@
 (lem-lsp-server/defpackage:defpackage :lem-lsp-server/test/initialize
   (:use :cl
-        :lem-tests/test-if
+        :testif
         :lem-lsp-server/server
         :lem-lsp-server/test/test-server)
   (:local-nicknames (:protocol :lem-lsp-utils/protocol)
@@ -169,7 +169,7 @@
                      :workspace-folders (json:json-null)))))
 
 #+(or)
-(deftest initialize
+(test initialize
   (let ((server (make-instance 'test-server)))
     (server-listen server)
     (let* ((response (initialize-request server))

@@ -1,7 +1,7 @@
 (defpackage :lem-tests/frame-multiplexer
   (:use :cl
         :lem
-        :lem-tests/test-if))
+        :testif))
 (in-package :lem-tests/frame-multiplexer)
 
 ;;; このテストは不十分で動作も不安定なので、まだ動かさない
@@ -12,7 +12,7 @@
 
 (defstruct (error-datum (:include datum)))
 
-(deftest test
+(test test
   (ql:quickload :lem-fake-interface :silent t)
   (lem)
   (let ((event-queue (lem::make-event-queue)))

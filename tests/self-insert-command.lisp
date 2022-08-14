@@ -1,7 +1,7 @@
 (defpackage :lem-tests/self-insert-command
   (:use :cl
         :lem
-        :lem-tests/test-if)
+        :testif)
   (:import-from :lem-fake-interface
                 :with-fake-interface))
 (in-package :lem-tests/self-insert-command)
@@ -11,7 +11,7 @@
   (execute-key-sequence key-seq)
   (ok (equal expected-text (buffer-text (current-buffer)))))
 
-(deftest self-insert-command
+(test self-insert-command
   (with-fake-interface ()
     (verify-self-insert "a" (list (make-key :sym "a")))
     (verify-self-insert "aaaa" (list (make-key :ctrl t :sym "u")

@@ -1,5 +1,5 @@
 (defpackage :lem-tests/popup-window
-  (:use :cl :lem :lem-tests/test-if)
+  (:use :cl :lem :testif)
   (:import-from :lem-fake-interface
                 :fake-interface
                 :with-fake-interface))
@@ -12,7 +12,7 @@
     (assert (= 1 (length windows)))
     (first windows)))
 
-(deftest display-popup-window
+(test display-popup-window
   (lem-tests/buffer-list-test::with-buffer-list ()
     (with-fake-interface ()
       (lem:display-popup-message "hello")

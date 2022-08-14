@@ -1,6 +1,6 @@
 (defpackage :lem-tests/lsp-utils/json-lsp-utils
   (:use :cl
-        :lem-tests/test-if
+        :testif
         :lem-lsp-utils/json
         :lem-lsp-utils/json-lsp-utils))
 (in-package :lem-tests/lsp-utils/json-lsp-utils)
@@ -39,8 +39,8 @@
        (= line (slot-value object 'line))
        (= character (slot-value object 'character))))
 
-(deftest coerce-json
-  (testing "object class"
+(test coerce-json
+  (test "object class"
     (let ((object (coerce-json (hash "line" 10
                                      "character" 3)
                                'position/test)))
@@ -52,7 +52,7 @@
       (ok (position-equals (slot-value object 'start) :line 3 :character 0))
       (ok (position-equals (slot-value object 'end) :line 5 :character 10)))
     (ok (typep nil '(or range/test null))))
-  (testing "lsp-array"
+  (test "lsp-array"
     (ok (signals (coerce-json 100 '(lem-lsp-utils/type:ts-array integer))
                  'json-type-error))
     (ok (signals (coerce-json '(1 "a") '(lem-lsp-utils/type:ts-array integer))
@@ -72,11 +72,11 @@
       (ok (position-equals (elt result 0) :line 10 :character 3))
       (ok (position-equals (elt result 1) :line 3 :character 2))
       (ok (position-equals (elt result 2) :line 0 :character 100))))
-  (testing "equal-specializer"
+  (test "equal-specializer"
     (ok (signals (coerce-json 1 '(lem-lsp-utils/type:ts-equal-specializer "foo"))
                  'json-type-error))
     (ok (equal "foo" (coerce-json "foo" '(lem-lsp-utils/type:ts-equal-specializer "foo")))))
-  (testing "object"
+  (test "object"
     (ok (signals (coerce-json 1
                               '(lem-lsp-utils/type:ts-object string integer))
                  'json-type-error))
@@ -92,7 +92,7 @@
     (ok (signals (coerce-json (hash "foo" '(100 200) "bar" '(1 "a" 3))
                               '(lem-lsp-utils/type:ts-object string (lem-lsp-utils/type:ts-array integer)))
                  'json-type-error)))
-  (testing "tuple"
+  (test "tuple"
     (ok (signals (coerce-json "foo" '(lem-lsp-utils/type:ts-tuple integer))
                  'json-type-error))
     (ok (signals (coerce-json '(1 2) '(lem-lsp-utils/type:ts-tuple integer))
@@ -105,7 +105,7 @@
                  'json-type-error))
     (ok (equal (coerce-json '(1 2 "foo") '(lem-lsp-utils/type:ts-tuple integer integer string))
                '(1 2 "foo"))))
-  (testing "or"
+  (test "or"
     (ok (equal 1 (coerce-json 1 '(or integer string))))
     (ok (equal "a" (coerce-json "a" '(or integer string))))
     (ok (position-equals (coerce-json (hash "line" 10
@@ -118,7 +118,7 @@
                                       '(or null position/test))
                          :line 10
                          :character 3)))
-  (testing "interface"
+  (test "interface"
     (let ((result (coerce-json
                    (hash "name" "abc"
                          "version" "1.0")
@@ -134,11 +134,11 @@
                                  ("bar" :type string :optional-p t)))))
       (ok (hash-table-p result))
       (ok (equal 100 (gethash "foo" result)))))
-  (testing "primitive"
+  (test "primitive"
     (ok (equal 1 (coerce-json 1 'integer)))
     (ok (equal nil (coerce-json nil 'boolean)))
     (ok (equal t (coerce-json t 'boolean))))
-  (testing "expand type"
+  (test "expand type"
     (ok (position-equals (coerce-json (hash "line" 10 "character" 3)
                                       'hoge)
                          :line 10

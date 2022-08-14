@@ -14,5 +14,5 @@ exec ros -Q -- $0 "$@"
 
 (defun main (&rest argv)
   (declare (ignorable argv))
-  (uiop:quit (if (lem-tests/test-if:run-all-tests) 0 1)))
+  (uiop:quit (if (testif:run-tests) 0 1)))
 ;;; vim: set ft=lisp lisp:

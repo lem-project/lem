@@ -1,13 +1,13 @@
 (lem-lsp-server/defpackage:defpackage :lem-lsp-server/test/initialized
   (:use :cl
-        :lem-tests/test-if
+        :testif
         :lem-lsp-server/server
         :lem-lsp-server/test/test-server)
   (:local-nicknames (:protocol :lem-lsp-utils/protocol)
                     (:json :lem-lsp-utils/json)))
 (in-package :lem-lsp-server/test/initialized)
 
-(deftest did-not-initialized
+(test did-not-initialized
   (let ((server (make-instance 'test-server)))
     (server-listen server)
     (let ((response
@@ -17,7 +17,7 @@
       (ok (equal -32002 (json:json-get response "code")))
       (ok (equal "did not initialize" (json:json-get response "message"))))))
 
-(deftest success
+(test success
   (let ((server (make-instance 'test-server)))
     (server-listen server)
     (lem-lsp-server/test/initialize:initialize-request server)

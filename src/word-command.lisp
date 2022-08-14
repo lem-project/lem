@@ -74,7 +74,7 @@
 (define-key *global-keymap* "C-Backspace" 'backward-delete-word)
 (define-command backward-delete-word (n) ("p")
   ;; TODO: multiple cursors kill ring
-  (with-killring (:before t)
+  (lem/common/killring:with-context (:before-inserting t)
     (delete-word (- n))))
 
 (defun case-region-aux (start end case-fun replace-char-p)

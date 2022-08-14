@@ -55,7 +55,7 @@
                               (push (make-overlay s e 'region) *overlays*)))))))
 
 (define-command rectangle-copy () ()
-  (with-killring (:repeat (continue-flag :kill))
+  (lem/common/killring:with-context (:appending (continue-flag :kill))
     (setf *overlays* (sort *overlays* #'point< :key #'overlay-start))
     (kill-push
      (with-output-to-string (out)
@@ -67,7 +67,7 @@
     (rectangle-end)))
 
 (define-command rectangle-kill () ()
-  (with-killring (:repeat (continue-flag :kill))
+  (lem/common/killring:with-context (:appending (continue-flag :kill))
     (setf *overlays* (sort *overlays* #'point< :key #'overlay-start))
     (kill-push
      (with-output-to-string (out)

@@ -334,7 +334,7 @@
            (with-point ((start (line-start (current-point)))
                         (end (line-end (current-point))))
              (let ((eob (not (character-offset end 1))))
-               (with-killring (:options :vi-line)
+               (lem/common/killring:with-context (:options :vi-line)
                  (kill-region start end))
                (if eob
                    (unless (or (first-line-p (current-point))
@@ -354,8 +354,8 @@
                                        (character-offset end 1))
                                      (write-string (points-to-string start end) out)
                                      (delete-between-points start end))))
-             (with-killring (:options (when (visual-line-p) :vi-line)
-                             :repeat (continue-flag :kill))
+             (lem/common/killring:with-context (:options (when (visual-line-p) :vi-line)
+                                                :appending (continue-flag :kill))
                (kill-push (get-output-stream-string out))))
            (vi-visual-end))
           (t
@@ -381,7 +381,7 @@
                              (line-start start)
                              (line-end end)
                              (character-offset end 1))
-                           (with-killring (:options (when multiline :vi-line))
+                           (lem/common/killring:with-context (:options (when multiline :vi-line))
                              (kill-region start end))))))))
                (unless *vi-clear-recursive*
                  (fall-within-line (current-point)))))))))
@@ -436,7 +436,7 @@
              (line-start start)
              (line-end end)
              (character-offset end 1)
-             (with-killring (:options :vi-line)
+             (lem/common/killring:with-context (:options :vi-line)
                (copy-region start end))
              (throw tag t)))
           ((visual-p)
@@ -448,8 +448,8 @@
                                      (when (visual-line-p)
                                        (character-offset end 1))
                                      (write-string (points-to-string start end) out))))
-             (with-killring (:options (when (visual-line-p) :vi-line)
-                             :repeat (continue-flag :kill))
+             (lem/common/killring:with-context (:options (when (visual-line-p) :vi-line)
+                                                :appending (continue-flag :kill))
                (kill-push (get-output-stream-string out))))
            (vi-visual-end))
           (t
@@ -473,7 +473,7 @@
                            (line-start start)
                            (line-end end)
                            (character-offset end 1))
-                         (with-killring (:options (when multiline :vi-line))
+                         (lem/common/killring:with-context (:options (when multiline :vi-line))
                            (copy-region start end)))))))
                (move-point (current-point) start)))))))
 

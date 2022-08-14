@@ -149,7 +149,7 @@
                  (ok (equal "foo" (struct-name info)))
                  (let ((slots (struct-slot-descriptions info)))
                    (ok (= (length slots) 11))
-                   (flet ((test (slot
+                   (flet ((%test (slot
                                  &key expected-slot-name
                                       expected-point-line-number
                                       expected-point-charpos
@@ -180,7 +180,7 @@
                                 (ok (eq t (slot-description-read-only-p slot)))
                                 (ok (not (slot-description-read-only-p slot))))))
                      (testing "a"
-                              (test (elt slots 0)
+                              (%test (elt slots 0)
                                     :expected-slot-name "a"
                                     :expected-point-line-number 17
                                     :expected-point-charpos 3
@@ -188,7 +188,7 @@
                                     :expected-type nil
                                     :expected-read-only-p nil))
                      (testing "b"
-                              (test (elt slots 1)
+                              (%test (elt slots 1)
                                     :expected-slot-name "b"
                                     :expected-point-line-number 18
                                     :expected-point-charpos 3
@@ -196,7 +196,7 @@
                                     :expected-type nil
                                     :expected-read-only-p nil))
                      (testing "c"
-                              (test (elt slots 2)
+                              (%test (elt slots 2)
                                     :expected-slot-name "c"
                                     :expected-point-line-number 19
                                     :expected-point-charpos 3
@@ -204,7 +204,7 @@
                                     :expected-type nil
                                     :expected-read-only-p nil))
                      (testing "d"
-                              (test (elt slots 3)
+                              (%test (elt slots 3)
                                     :expected-slot-name "d"
                                     :expected-point-line-number 21
                                     :expected-point-charpos 3
@@ -212,7 +212,7 @@
                                     :expected-type 'integer
                                     :expected-read-only-p nil))
                      (testing "e"
-                              (test (elt slots 4)
+                              (%test (elt slots 4)
                                     :expected-slot-name "e"
                                     :expected-point-line-number 22
                                     :expected-point-charpos 3
@@ -220,7 +220,7 @@
                                     :expected-type '(or nil string)
                                     :expected-read-only-p nil))
                      (testing "f"
-                              (test (elt slots 5)
+                              (%test (elt slots 5)
                                     :expected-slot-name "f"
                                     :expected-point-line-number 24
                                     :expected-point-charpos 3
@@ -228,7 +228,7 @@
                                     :expected-type 'symbol
                                     :expected-read-only-p nil))
                      (testing "g"
-                              (test (elt slots 6)
+                              (%test (elt slots 6)
                                     :expected-slot-name "g"
                                     :expected-point-line-number 27
                                     :expected-point-charpos 3
@@ -236,7 +236,7 @@
                                     :expected-type nil
                                     :expected-read-only-p t))
                      (testing "h"
-                              (test (elt slots 7)
+                              (%test (elt slots 7)
                                     :expected-slot-name "h"
                                     :expected-point-line-number 28
                                     :expected-point-charpos 3
@@ -244,7 +244,7 @@
                                     :expected-type nil
                                     :expected-read-only-p nil))
                      (testing "i"
-                              (test (elt slots 8)
+                              (%test (elt slots 8)
                                     :expected-slot-name "i"
                                     :expected-point-line-number 29
                                     :expected-point-charpos 3
@@ -252,7 +252,7 @@
                                     :expected-type nil
                                     :expected-read-only-p t))
                      (testing "j"
-                              (test (elt slots 9)
+                              (%test (elt slots 9)
                                     :expected-slot-name "j"
                                     :expected-point-line-number 30
                                     :expected-point-charpos 3
@@ -260,7 +260,7 @@
                                     :expected-type 'integer
                                     :expected-read-only-p t))
                      (testing "k"
-                              (test (elt slots 10)
+                              (%test (elt slots 10)
                                     :expected-slot-name "k"
                                     :expected-point-line-number 33
                                     :expected-point-charpos 3
@@ -279,7 +279,7 @@
 
 (deftest defstruct-to-defclass
   (let ((lem-lisp-mode::*disable-self-connect* t))
-    (flet ((test (n)
+    (flet ((%test (n)
              (testing (format nil "case-~D" n)
                (let* ((buffer (make-test-buffer))
                       (expected-form-string (fetch-expected-form-string buffer n))
@@ -291,7 +291,7 @@
                    (if (equal actual expected)
                        (pass '(equal actual expected))
                        (fail (diff-text actual expected))))))))
-      (test 1)
-      (test 2)
-      (test 3)
-      (test 4))))
+      (%test 1)
+      (%test 2)
+      (%test 3)
+      (%test 4))))

@@ -1,6 +1,7 @@
 (defpackage :lem/common/killring
   (:use :cl :lem/common/ring)
   (:export :make-killring
+           :copy-killring
            :push-item
            :peek-item
            :rotate
@@ -25,6 +26,9 @@
 
 (defun make-killring (size)
   (make-instance 'killring :ring (make-ring size)))
+
+(defun copy-killring (killring)
+  (make-instance 'killring :ring (copy-ring (killring-ring killring))))
 
 (defgeneric push-item (killring string &key options &allow-other-keys))
 

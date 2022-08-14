@@ -57,7 +57,7 @@
 (define-command rectangle-copy () ()
   (with-killring-context (:appending (continue-flag :kill))
     (setf *overlays* (sort *overlays* #'point< :key #'overlay-start))
-    (kill-push
+    (lem::copy-to-clipboard-with-killring
      (with-output-to-string (out)
        (loop :for ovs :on *overlays*
              :for ov := (car ovs)
@@ -69,7 +69,7 @@
 (define-command rectangle-kill () ()
   (with-killring-context (:appending (continue-flag :kill))
     (setf *overlays* (sort *overlays* #'point< :key #'overlay-start))
-    (kill-push
+    (lem::copy-to-clipboard-with-killring
      (with-output-to-string (out)
        (loop :for ovs :on *overlays*
              :for ov := (car ovs)

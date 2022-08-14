@@ -88,7 +88,7 @@
             (killed-string (delete-character (current-point) (or n 1))))
         (when killp
           (with-killring-context (:appending repeat-command)
-            (kill-push killed-string)))))))
+            (copy-to-clipboard-with-killring killed-string)))))))
 
 (define-key *global-keymap* "C-h" 'delete-previous-char)
 (define-key *global-keymap* "Backspace" 'delete-previous-char)
@@ -111,7 +111,7 @@
 (define-command copy-region (start end) ("r")
   ;; TODO: multiple cursors
   (with-killring-context (:appending (continue-flag :kill))
-    (kill-push (points-to-string start end)))
+    (copy-to-clipboard-with-killring (points-to-string start end)))
   (buffer-mark-cancel (current-buffer))
   t)
 
@@ -127,7 +127,7 @@
     (do-multiple-cursors ()
       (let ((killed-string (delete-character start (count-characters start end))))
         (with-killring-context (:appending repeat-command)
-          (kill-push killed-string))))))
+          (copy-to-clipboard-with-killring killed-string))))))
 
 (define-command kill-region-to-clipboard (start end) ("r")
   ;; TODO: multiple cursors
@@ -157,7 +157,7 @@
 (define-command yank (&optional arg) ("P")
   ;; TODO: multiple cursors
   (let ((string (if (null arg)
-                    (current-kill-ring)
+                    (yank-from-clipboard-or-killring)
                     (peek-killring-item *killring* (1- arg)))))
     (setf (buffer-value (current-buffer) 'yank-start) (copy-point (current-point) :temporary))
     (insert-string (current-point) string)
@@ -197,7 +197,7 @@
 (define-command yank-to-clipboard (&optional arg) ("p")
   ;; TODO: multiple cursors
   (let ((string (if (null arg)
-                    (current-kill-ring :use-clipboard nil)
+                    (yank-from-clipboard-or-killring :use-clipboard nil)
                     (peek-killring-item *killring* (1- arg)))))
     (copy-to-clipboard string)
     t))

@@ -371,7 +371,7 @@
     (isearch-update-display)))
 
 (define-command isearch-yank () ()
-  (let ((str (lem::current-kill-ring)))
+  (let ((str (lem::yank-from-clipboard-or-killring)))
     (when str
       (setq *isearch-string* str)
       (isearch-update-display))))

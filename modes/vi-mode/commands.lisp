@@ -356,7 +356,7 @@
                                      (delete-between-points start end))))
              (with-killring-context (:options (when (visual-line-p) :vi-line)
                                      :appending (continue-flag :kill))
-               (kill-push (get-output-stream-string out))))
+               (lem::copy-to-clipboard-with-killring (get-output-stream-string out))))
            (vi-visual-end))
           (t
            (let ((uarg (or (read-universal-argument) n))
@@ -450,7 +450,7 @@
                                      (write-string (points-to-string start end) out))))
              (with-killring-context (:options (when (visual-line-p) :vi-line)
                                      :appending (continue-flag :kill))
-               (kill-push (get-output-stream-string out))))
+               (lem::copy-to-clipboard-with-killring (get-output-stream-string out))))
            (vi-visual-end))
           (t
            (let ((uarg (or (read-universal-argument) n))
@@ -479,7 +479,7 @@
 
 (define-command vi-paste-after () ()
   (multiple-value-bind (string type)
-      (lem::current-kill-ring)
+      (lem::yank-from-clipboard-or-killring)
     (cond
       ((visual-p)
        (let ((visual-line (visual-line-p)))
@@ -503,7 +503,7 @@
 
 (define-command vi-paste-before () ()
   (multiple-value-bind (string type)
-      (lem::current-kill-ring)
+      (lem::yank-from-clipboard-or-killring)
     (cond
       ((visual-p)
        (vi-delete)

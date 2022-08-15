@@ -82,13 +82,13 @@
   ;; TODO: multiple cursors
   (when (end-buffer-p (current-point))
     (error 'end-of-buffer :point (current-point)))
-  (let ((repeat-command (continue-flag :kill)))
-    (do-multiple-cursors ()
-      (let ((killp (not (null n)))
-            (killed-string (delete-character (current-point) (or n 1))))
-        (when killp
-          (with-killring-context (:appending repeat-command)
-            (copy-to-clipboard-with-killring killed-string)))))))
+  (do-multiple-cursors ()
+    (let ((repeat-command (continue-flag :kill))
+          (killp (not (null n)))
+          (killed-string (delete-character (current-point) (or n 1))))
+      (when killp
+        (with-killring-context (:appending repeat-command)
+          (copy-to-clipboard-with-killring killed-string))))))
 
 (define-key *global-keymap* "C-h" 'delete-previous-char)
 (define-key *global-keymap* "Backspace" 'delete-previous-char)

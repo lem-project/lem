@@ -33,6 +33,7 @@
                (:file "popup-window")
                (:file "prompt")
                (:file "isearch")
+               (:file "cursors")
                (:file "self-insert-command")
                (:file "main"))
   :perform (test-op (o c)

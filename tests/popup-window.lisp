@@ -1,5 +1,7 @@
 (defpackage :lem-tests/popup-window
   (:use :cl :lem :testif)
+  (:import-from :lem-base
+                :with-current-buffers)
   (:import-from :lem-fake-interface
                 :fake-interface
                 :with-fake-interface))
@@ -13,7 +15,7 @@
     (first windows)))
 
 (test display-popup-window
-  (lem-tests/buffer-list-test::with-buffer-list ()
+  (with-current-buffers ()
     (with-fake-interface ()
       (lem:display-popup-message "hello")
       (redraw-display)

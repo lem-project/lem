@@ -1,5 +1,7 @@
 (defpackage :lem-tests/isearch
-  (:use :cl :testif :lem))
+  (:use :cl :testif :lem)
+  (:import-from :lem-base
+                :with-current-buffers))
 (in-package :lem-tests/isearch)
 
 (defparameter *text* "
@@ -17,7 +19,7 @@ xyz1234
     (setf (current-buffer) buffer)))
 
 (test replace-string
-  (lem-tests/buffer-list-test::with-buffer-list ()
+  (with-current-buffers ()
     (setup-testing-current-buffer *text*)
     (lem.isearch::query-replace-internal "foo"
                                          "foobar"

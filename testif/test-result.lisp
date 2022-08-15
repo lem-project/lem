@@ -77,5 +77,7 @@ Did ~D checks.
 
 (defun call-with-test-result (function)
   (let ((*result* (make-instance 'test-result-set)))
-    (funcall function)
-    (report *result*)))
+    (let ((value (funcall function)))
+      (report *result*)
+      (when (test-success-p *result*)
+        value))))

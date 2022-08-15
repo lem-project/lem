@@ -6,16 +6,15 @@
                 :with-fake-interface))
 (in-package :lem-tests/self-insert-command)
 
-(defun verify-self-insert (expected-text key-seq)
+(defun execute-self-insert (&rest key-seq)
   (erase-buffer (current-buffer))
   (execute-key-sequence key-seq)
-  (ok (equal expected-text (buffer-text (current-buffer)))))
+  (buffer-text (current-buffer)))
 
 (test self-insert-command
   (with-fake-interface ()
-    (verify-self-insert "a" (list (make-key :sym "a")))
-    (verify-self-insert "aaaa" (list (make-key :ctrl t :sym "u")
-                                     (make-key :sym "a")))
+    (ok "a" (execute-self-insert (make-key :sym "a")))
+    (ok "aaaa" (execute-self-insert (make-key :ctrl t :sym "u") (make-key :sym "a")))
     (handler-case
         (progn
           (execute-key-sequence (list (make-key :super t :meta t :hypher t :sym "a")))

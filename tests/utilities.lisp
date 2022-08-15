@@ -4,7 +4,9 @@
   (:export :sample-file
            :with-global-variable-value
            :diff-text
-           :with-testing-buffer))
+           :with-testing-buffer
+           :make-text-buffer
+           :lines))
 (in-package :lem-tests/utilities)
 
 (defun sample-file (filename)
@@ -31,3 +33,12 @@
      (let ((,buffer ,make-buffer-form))
        (setf (lem:current-buffer) ,buffer)
        ,@body)))
+
+(defun make-text-buffer (text &key (buffer-name (string-downcase (gentemp "TEST-BUFFER-"))))
+  (let ((buffer (lem:make-buffer buffer-name)))
+    (lem:insert-string (lem:buffer-point buffer) text)
+    (lem:buffer-start (lem:buffer-point buffer))
+    buffer))
+
+(defun lines (&rest strings)
+  (format nil "~{~A~%~}" strings))

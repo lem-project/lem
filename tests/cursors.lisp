@@ -34,3 +34,22 @@
       (test "Delete cursor"
         (lem::delete-fake-cursor cursor)
         (ok (null (lem::buffer-fake-cursors buffer)))))))
+
+(defun make-testing-fake-cursors (point n)
+  (lem:with-point ((p point))
+    (loop :repeat n
+          :do (assert (not (null (lem:line-offset p 1))))
+              (lem::make-fake-cursor p))))
+
+(test "Test to execute a series of commands"
+  (with-testing-buffer (buffer (make-text-buffer (lines "abcdefg" "hijklmn" "opqrstu")))
+    (make-testing-fake-cursors (lem:buffer-point buffer) 2)
+    (test "execute self-insert command"
+      (lem:execute-key-sequence (list (lem:make-key :sym " ")))
+      (ok (string= (lines " abcdefg" " hijklmn" " opqrstu")
+                   (lem:buffer-text buffer))))
+    (test "execute delete-previous-character command"
+      (lem:execute-key-sequence (list (lem:make-key :ctrl t :sym "h")))
+      (lem:buffer-text buffer)
+      (ok (string= (lines "abcdefg" "hijklmn" "opqrstu")
+                   (lem:buffer-text buffer))))))

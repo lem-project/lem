@@ -3,7 +3,8 @@
   (:import-from :cl-ansi-text)
   (:export :sample-file
            :with-global-variable-value
-           :diff-text))
+           :diff-text
+           :with-testing-buffer))
 (in-package :lem-tests/utilities)
 
 (defun sample-file (filename)
@@ -24,3 +25,9 @@
                          (t
                           (write-string (cl-ansi-text:yellow (format nil "+~A~%" line1)) out)
                           (write-string (cl-ansi-text:cyan (format nil "-~A~%" line2)) out)))))))))
+
+(defmacro with-testing-buffer ((buffer make-buffer-form) &body body)
+  `(lem-base::with-current-buffers ()
+     (let ((,buffer ,make-buffer-form))
+       (setf (lem:current-buffer) ,buffer)
+       ,@body)))

@@ -91,7 +91,8 @@
                                :form (assertion-form test)
                                :description (test-description test)
                                :pathname pathname
-                               :test-id test-id))))
+                               :test-id test-id)))
+  (values))
 
 ;; pass class
 (defclass pass (<test>)
@@ -105,7 +106,8 @@
     (add-result (make-instance 'test-passed
                                :description (test-description test)
                                :pathname pathname
-                               :test-id test-id))))
+                               :test-id test-id)))
+  (values))
 
 ;; fail class
 (defclass fail (<test>)
@@ -119,4 +121,5 @@
     (add-result (make-instance 'test-failed
                                :description (test-description test)
                                :pathname pathname
-                               :test-id test-id))))
+                               :test-id test-id)))
+  (values))

@@ -34,7 +34,6 @@
                (:file "prompt")
                (:file "isearch")
                (:file "cursors")
-               (:file "self-insert-command")
-               (:file "main"))
+               (:file "self-insert-command"))
   :perform (test-op (o c)
                     (symbol-call :testif :run-tests)))

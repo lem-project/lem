@@ -42,14 +42,24 @@
               (lem::make-fake-cursor p))))
 
 (test "Test to execute a series of commands"
-  (with-testing-buffer (buffer (make-text-buffer (lines "abcdefg" "hijklmn" "opqrstu")))
-    (make-testing-fake-cursors (lem:buffer-point buffer) 2)
-    (test "execute self-insert command"
-      (lem:execute-key-sequence (list (lem:make-key :sym " ")))
-      (ok (string= (lines " abcdefg" " hijklmn" " opqrstu")
-                   (lem:buffer-text buffer))))
-    (test "execute delete-previous-character command"
-      (lem:execute-key-sequence (list (lem:make-key :ctrl t :sym "h")))
-      (lem:buffer-text buffer)
-      (ok (string= (lines "abcdefg" "hijklmn" "opqrstu")
-                   (lem:buffer-text buffer))))))
+  (lem-fake-interface:with-fake-interface ()
+    (let ((lem::*killring* (lem/common/killring:make-killring 10)))
+      (with-testing-buffer (buffer (make-text-buffer (lines "abcdefg" "hijklmn" "opqrstu")))
+        (make-testing-fake-cursors (lem:buffer-point buffer) 2)
+        (test "execute self-insert command"
+          (lem:execute-key-sequence (list (lem:make-key :sym " ")))
+          (ok (string= (lines " abcdefg" " hijklmn" " opqrstu")
+                       (lem:buffer-text buffer))))
+        (test "execute delete-previous-character command"
+          (lem:execute-key-sequence (list (lem:make-key :ctrl t :sym "h")))
+          (lem:buffer-text buffer)
+          (ok (string= (lines "abcdefg" "hijklmn" "opqrstu")
+                       (lem:buffer-text buffer))))
+        #+TODO
+        (test "multiple cursor killring"
+          (lem:execute (lem:buffer-major-mode buffer)
+                       (make-instance 'lem:delete-next-char)
+                       4)
+          (dolist (cursor (lem::buffer-fake-cursors buffer))
+            (print (lem/common/killring:peek-killring-item
+                    (lem::fake-cursor-killring cursor) 0))))))))

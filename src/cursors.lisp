@@ -10,13 +10,8 @@
 (defun (setf buffer-fake-cursors) (value buffer)
   (setf (buffer-value buffer 'fake-cursors) value))
 
-(defun cursor-killring (cursor)
-  (etypecase cursor
-    (point (current-killring))
-    (fake-cursor (fake-cursor-killring cursor))))
-
 (defun make-fake-cursor (point)
-  (let* ((killring (copy-killring (cursor-killring point)))
+  (let* ((killring (copy-killring (current-killring)))
          (fake-cursor (make-instance 'fake-cursor :killring killring)))
     (copy-point-using-class fake-cursor point :left-inserting)
     (push fake-cursor (buffer-fake-cursors (point-buffer point)))
@@ -37,7 +32,8 @@
   (with-point ((save-point (buffer-point buffer) :left-inserting))
     (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
       (move-point (buffer-point buffer) point)
-      (funcall function)
+      (with-current-killring (fake-cursor-killring point)
+        (funcall function))
       (unless (point= point (buffer-point buffer))
         (move-point point (buffer-point buffer))))
     (move-point (buffer-point buffer) save-point)

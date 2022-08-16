@@ -5,6 +5,10 @@
 (defun current-killring ()
   *killring*)
 
+(defmacro with-current-killring (killring &body body)
+  `(let ((*killring* ,killring))
+     ,@body))
+
 (defun copy-to-clipboard-with-killring (string)
   (push-killring-item (current-killring) string)
   (when (enable-clipboard-p)

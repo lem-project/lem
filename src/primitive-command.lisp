@@ -216,22 +216,15 @@
 (define-key *global-keymap* "C-n" 'next-line)
 (define-key *global-keymap* "Down" 'next-line)
 
-(let ((saved-column nil))
-
-  (defun get-next-line-context-column ()
-    saved-column)
-
-  (defun save-next-line-context-column (column)
-    (setf saved-column column)))
-
 (defun next-line-aux (n
                       point-column-fn
                       forward-line-fn
                       move-to-column-fn)
   (unless (continue-flag :next-line)
-    (save-next-line-context-column (funcall point-column-fn (current-point))))
+    (setf (cursor-saved-column (current-point))
+          (funcall point-column-fn (current-point))))
   (unless (prog1 (funcall forward-line-fn (current-point) n)
-            (funcall move-to-column-fn (current-point) (get-next-line-context-column)))
+            (funcall move-to-column-fn (current-point) (cursor-saved-column (current-point))))
     (cond ((plusp n)
            (move-to-end-of-buffer)
            (error 'end-of-buffer :point (current-point)))

@@ -1,7 +1,8 @@
 (in-package :lem)
 
 (defclass cursor (point)
-  ())
+  ((saved-column :initform nil
+                 :accessor cursor-saved-column)))
 
 (defmethod lem-base::make-buffer-point (point)
   (let ((cursor (make-instance 'cursor)))

@@ -369,7 +369,7 @@ next line because it is at the end of width."
                (when (< (point-charpos point) i)
                  (decf n1)
                  (when (<= n1 0)
-                   ;; cursor-x offset is recovered by (get-next-line-context-column)
+                   ;; cursor-x offset is recovered by cursor-saved-column
                    (line-offset point 0 i)
                    (return-from move-to-next-virtual-line-n point)))))
             ;; go to next line
@@ -412,7 +412,7 @@ next line because it is at the end of width."
                        (return-from outer))
                      (pos-ring-push i))))
                 (when (>= pos-count (1+ n1))
-                  ;; cursor-x offset is recovered by (get-next-line-context-column)
+                  ;; cursor-x offset is recovered by cursor-saved-column
                   (line-offset point 0 (aref pos-ring pos-last))
                   (return-from move-to-previous-virtual-line-n point))
                 ;; go to previous line
@@ -433,8 +433,8 @@ next line because it is at the end of width."
     (when (and *use-cursor-movement-workaround*
                (eq point (window-buffer-point window))
                (variable-value 'line-wrap :default (point-buffer point))
-               (numberp (get-next-line-context-column))
-               (>= (get-next-line-context-column) (- (window-width window) 3)))
+               (numberp (cursor-saved-column point))
+               (>= (cursor-saved-column point) (- (window-width window) 3)))
       (save-next-line-context-column 0))
 
     (if *use-new-vertical-move-function*

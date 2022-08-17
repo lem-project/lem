@@ -24,6 +24,9 @@
       (setf (line-next prev) line))
     line))
 
+(defun make-empty-line ()
+  (make-line nil nil ""))
+
 (defun line-alive-p (line)
   (not (null (line-str line))))
 

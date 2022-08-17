@@ -4,6 +4,7 @@
         :lem.universal-argument)
   (:export :*enable-hook*
            :*disable-hook*
+           :vi-mode
            :define-vi-state
            :current-state
            :change-state

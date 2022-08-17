@@ -9,7 +9,8 @@
 (defun process-each-cursors (function)
   (do-multiple-cursors (:only-fake-cursors t)
     (handler-case
-        (funcall function)
+        (save-continue-flags
+          (funcall function))
       (move-cursor-error ())))
   (funcall function))
 

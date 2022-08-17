@@ -55,11 +55,16 @@
           (lem:buffer-text buffer)
           (ok (string= (lines "abcdefg" "hijklmn" "opqrstu")
                        (lem:buffer-text buffer))))
-        #+TODO
         (test "multiple cursor killring"
           (lem:execute (lem:buffer-major-mode buffer)
                        (make-instance 'lem:delete-next-char)
                        4)
-          (dolist (cursor (lem::buffer-fake-cursors buffer))
-            (print (lem/common/killring:peek-killring-item
-                    (lem::fake-cursor-killring cursor) 0))))))))
+          (ok (equal '("abcd"
+                       "opqr"
+                       "hijk")
+                     (mapcar (lambda (killring)
+                               (peek-killring-item killring 0))
+                             (cons lem::*killring*
+                                   (mapcar (lambda (cursor)
+                                             (lem::fake-cursor-killring cursor))
+                                           (lem::buffer-fake-cursors buffer)))))))))))

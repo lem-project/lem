@@ -42,6 +42,11 @@
 (defvar *last-flags* nil)
 (defvar *curr-flags* nil)
 
+(defmacro save-continue-flags (&body body)
+  `(let ((*last-flags* *last-flags*)
+         (*curr-flags* *curr-flags*))
+     ,@body))
+
 (defun continue-flag (flag)
   (prog1 (cdr (assoc flag *last-flags*))
     (push (cons flag t) *last-flags*)

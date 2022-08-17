@@ -435,7 +435,7 @@ next line because it is at the end of width."
                (variable-value 'line-wrap :default (point-buffer point))
                (numberp (cursor-saved-column point))
                (>= (cursor-saved-column point) (- (window-width window) 3)))
-      (save-next-line-context-column 0))
+      (setf (cursor-saved-column point) 0))
 
     (if *use-new-vertical-move-function*
         (if (plusp n)

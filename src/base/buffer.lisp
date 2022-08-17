@@ -124,6 +124,15 @@
     (aref (buffer-edit-history buffer)
           (1- (fill-pointer (buffer-edit-history buffer))))))
 
+(defun make-buffer-start-point (point)
+  (copy-point point :right-inserting))
+
+(defun make-buffer-end-point (point)
+  (copy-point point :left-inserting))
+
+(defun make-buffer-point (point)
+  (copy-point point :left-inserting))
+
 (defun make-buffer (name &key temporary read-only-p (enable-undo-p t)
                               (syntax-table (fundamental-syntax-table)))
   "バッファ名が`name`のバッファがバッファリストに含まれていれば
@@ -144,15 +153,13 @@
                                :temporary temporary
                                :major-mode 'fundamental-mode
                                :syntax-table syntax-table)))
-    (let ((line (make-line nil nil "")))
-      (set-buffer-start-point (make-point buffer 1 line 0 :kind :right-inserting)
-                              buffer)
-      (set-buffer-end-point (make-point buffer 1 line 0
-                                        :kind :left-inserting)
-                            buffer)
-      (set-buffer-point (make-point buffer 1 line 0
-                                    :kind :left-inserting)
-                        buffer))
+    (let* ((temp-point (make-point buffer 1 (make-line nil nil "") 0 :kind :temporary))
+           (start-point (make-buffer-start-point temp-point))
+           (end-point (make-buffer-end-point temp-point))
+           (point (make-buffer-point temp-point)))
+      (set-buffer-start-point start-point buffer)
+      (set-buffer-end-point end-point buffer)
+      (set-buffer-point point buffer))
     (unless temporary (add-buffer buffer))
     buffer))
 

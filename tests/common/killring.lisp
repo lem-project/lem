@@ -22,6 +22,12 @@
         (push-killring-item killring "??"))
       (ok (equal "??def!!" (peek-killring-item killring 0))))))
 
+(test appending-if-empty
+  (let ((killring (make-killring 10)))
+    (with-killring-context (:appending t)
+      (push-killring-item killring "abc")
+      (ok (equal "abc" (peek-killring-item killring 0))))))
+
 (test before-inserting
   (let ((killring (make-killring 10)))
     (push-killring-item killring "a")

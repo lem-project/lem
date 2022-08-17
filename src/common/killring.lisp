@@ -41,13 +41,16 @@
                                &allow-other-keys)
   (let ((item (make-item :string string :options (alexandria:ensure-list options)))
         (ring (killring-ring killring)))
-    (if *appending*
-        (let ((existing-item (ring-ref ring 0)))
-          (setf (ring-ref ring 0)
-                (if *before-inserting*
-                    (append-item item existing-item)
-                    (append-item existing-item item))))
-        (ring-push ring item)))
+    (cond ((not *appending*)
+           (ring-push ring item))
+          ((ring-empty-p ring)
+           (ring-push ring item))
+          (t
+           (let ((existing-item (ring-ref ring 0)))
+             (setf (ring-ref ring 0)
+                   (if *before-inserting*
+                       (append-item item existing-item)
+                       (append-item existing-item item)))))))
   killring)
 
 (defmethod peek-killring-item ((killring killring) n)

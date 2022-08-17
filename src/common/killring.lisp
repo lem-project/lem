@@ -69,7 +69,9 @@
 (defun call-with-killring-context (function *appending* *before-inserting* *options*)
   (funcall function))
 
-(defmacro with-killring-context ((&key appending (before-inserting '*before-inserting*) options)
+(defmacro with-killring-context ((&key appending
+                                       (before-inserting '*before-inserting*)
+                                       (options '*options*))
                                  &body body)
   `(call-with-killring-context (lambda () ,@body)
                                ,appending

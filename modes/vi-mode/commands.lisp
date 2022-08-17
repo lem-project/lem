@@ -485,12 +485,12 @@
        (let ((visual-line (visual-line-p)))
          (vi-delete)
          (when (and (not visual-line)
-                    (eql type :vi-line))
+                    (member :vi-line type))
            (insert-character (current-point) #\Newline)))
        (insert-string (current-point) string)
        (character-offset (current-point) -1))
       (t
-       (if (eql type :vi-line)
+       (if (member :vi-line type)
            (progn
              (line-end (current-point))
              (or (character-offset (current-point) 1)
@@ -498,7 +498,7 @@
            (character-offset (current-point) 1))
        (yank)
        (character-offset (current-point) -1)
-       (when (eql type :vi-line)
+       (when (member :vi-line type)
          (line-start (current-point)))))))
 
 (define-command vi-paste-before () ()
@@ -507,12 +507,12 @@
     (cond
       ((visual-p)
        (vi-delete)
-       (when (eql type :vi-line)
+       (when (member :vi-line type)
          (insert-character (current-point) #\Newline))
        (insert-string (current-point) string)
        (character-offset (current-point) -1))
       (t
-       (when (eql type :vi-line)
+       (when (member :vi-line type)
          (line-start (current-point)))
        (yank)))))
 

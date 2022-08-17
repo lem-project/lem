@@ -56,7 +56,8 @@
     :accessor buffer-mark)
    (point
     :initform nil
-    :accessor buffer-point)
+    :reader buffer-point
+    :writer set-buffer-point)
    (keep-binfo
     :initform nil
     :accessor %buffer-keep-binfo)
@@ -149,9 +150,9 @@
       (set-buffer-end-point (make-point buffer 1 line 0
                                         :kind :left-inserting)
                             buffer)
-      (setf (buffer-point buffer)
-            (make-point buffer 1 line 0
-                        :kind :left-inserting)))
+      (set-buffer-point (make-point buffer 1 line 0
+                                    :kind :left-inserting)
+                        buffer))
     (unless temporary (add-buffer buffer))
     buffer))
 
@@ -195,7 +196,7 @@
 (defun buffer-free (buffer)
   (%buffer-clear-keep-binfo buffer)
   (delete-point (buffer-point buffer))
-  (setf (buffer-point buffer) nil))
+  (set-buffer-point nil buffer))
 
 (defun deleted-buffer-p (buffer)
   (null (buffer-point buffer)))

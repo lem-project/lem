@@ -1,5 +1,12 @@
 (in-package :lem)
 
+(defclass cursor (point)
+  ())
+
+(defmethod lem-base::make-buffer-point (point)
+  (let ((cursor (make-instance 'cursor)))
+    (copy-point-using-class cursor point :left-inserting)))
+
 (defclass fake-cursor (point)
   ((killring :initarg :killring
              :reader fake-cursor-killring)))

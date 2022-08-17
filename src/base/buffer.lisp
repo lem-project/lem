@@ -130,8 +130,9 @@
 (defun make-buffer-end-point (point)
   (copy-point point :left-inserting))
 
-(defun make-buffer-point (point)
-  (copy-point point :left-inserting))
+(defgeneric make-buffer-point (point)
+  (:method (point)
+    (copy-point point :left-inserting)))
 
 (defun make-buffer (name &key temporary read-only-p (enable-undo-p t)
                               (syntax-table (fundamental-syntax-table)))

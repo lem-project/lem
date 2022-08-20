@@ -68,3 +68,44 @@
                                    (mapcar (lambda (cursor)
                                              (lem::fake-cursor-killring cursor))
                                            (lem::buffer-fake-cursors buffer)))))))))))
+
+(defun linum-and-column (point)
+  (list (lem:line-number-at-point point)
+        (lem:point-column point)))
+
+(defun all-positions (buffer)
+  (mapcar #'linum-and-column (lem::buffer-cursors buffer)))
+
+(defun positions-set-equal (positions1 positions2)
+  (alexandria:set-equal positions1 positions2 :test #'equal))
+
+(test "next-line/previous-line"
+  (lem-fake-interface:with-fake-interface ()
+    (lem::save-continue-flags
+      (with-testing-buffer (buffer (make-text-buffer (lines "abcdefghijklmn"
+                                                            "opqrstuvwxyz"
+                                                            "0123456789"
+                                                            "------------------")))
+        (lem::set-window-buffer buffer (lem:current-window))
+        (make-testing-fake-cursors (lem:buffer-point buffer) 2)
+        (lem:execute (lem:buffer-major-mode buffer)
+                     (make-instance 'lem:move-to-end-of-line)
+                     nil)
+
+        (lem:execute (lem:buffer-major-mode buffer)
+                     (make-instance 'lem:next-line)
+                     nil)
+        (ok (positions-set-equal '((2 12) (3 10) (4 10))
+                                 (all-positions buffer)))
+
+        (lem:execute (lem:buffer-major-mode buffer)
+                     (make-instance 'lem:previous-line)
+                     nil)
+        (ok (positions-set-equal '((1 14) (2 12) (3 10))
+                                 (all-positions buffer)))
+
+        (lem:execute (lem:buffer-major-mode buffer)
+                     (make-instance 'lem:next-line)
+                     nil)
+        (ok (positions-set-equal '((2 12) (3 10) (4 10))
+                                 (all-positions buffer)))))))

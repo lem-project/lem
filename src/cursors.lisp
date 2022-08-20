@@ -8,7 +8,7 @@
   (let ((cursor (make-instance 'cursor)))
     (copy-point-using-class cursor point :left-inserting)))
 
-(defclass fake-cursor (point)
+(defclass fake-cursor (cursor)
   ((killring :initarg :killring
              :reader fake-cursor-killring)))
 
@@ -37,16 +37,12 @@
   (values))
 
 (defun %do-multiple-cursors (buffer function only-fake-cursors)
-  (with-point ((save-point (buffer-point buffer) :left-inserting))
-    (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
-      (move-point (buffer-point buffer) point)
+  (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
+    (lem-base::with-buffer-point (buffer point)
       (with-current-killring (fake-cursor-killring point)
-        (funcall function))
-      (unless (point= point (buffer-point buffer))
-        (move-point point (buffer-point buffer))))
-    (move-point (buffer-point buffer) save-point)
-    (unless only-fake-cursors
-      (funcall function))))
+        (funcall function))))
+  (unless only-fake-cursors
+    (funcall function)))
 
 (defmacro do-multiple-cursors ((&key (buffer '(current-buffer))
                                      (only-fake-cursors nil))

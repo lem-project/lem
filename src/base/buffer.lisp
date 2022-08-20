@@ -351,3 +351,12 @@
 (defun clear-buffer-variables (&key (buffer (current-buffer)))
   "`buffer`に束縛されているすべてのバッファ変数を消します。"
   (clrhash (buffer-variables buffer)))
+
+(defun call-with-buffer-point (buffer point function)
+  (let ((original-point (buffer-point buffer)))
+    (set-buffer-point point buffer)
+    (unwind-protect (funcall function)
+      (set-buffer-point original-point buffer))))
+
+(defmacro with-buffer-point ((buffer point) &body body)
+  `(call-with-buffer-point ,buffer ,point (lambda () ,@body)))

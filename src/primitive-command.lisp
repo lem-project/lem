@@ -221,9 +221,10 @@
                       point-column-fn
                       forward-line-fn
                       move-to-column-fn)
-  (unless (continue-flag :next-line)
-    (setf (cursor-saved-column (current-point))
-          (funcall point-column-fn (current-point))))
+  (if (continue-flag :next-line)
+      (assert (not (null (cursor-saved-column (current-point)))))
+      (setf (cursor-saved-column (current-point))
+            (funcall point-column-fn (current-point))))
   (unless (prog1 (funcall forward-line-fn (current-point) n)
             (funcall move-to-column-fn (current-point) (cursor-saved-column (current-point))))
     (cond ((plusp n)

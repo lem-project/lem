@@ -14,6 +14,7 @@
 (define-major-mode html-mode xml-mode
     (:name "HTML"
      :keymap *html-mode-keymap*
+     :syntax-table lem-xml-mode::*xml-syntax-table*
      :mode-hook *html-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'tab-width) 2

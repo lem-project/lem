@@ -29,7 +29,9 @@
                  start end)
       (without-interrupts
         (let ((buffer (point-buffer start)))
-          (when (enable-syntax-highlight-p buffer)
+          (when (and (enable-syntax-highlight-p buffer)
+                     (buffer-syntax-table buffer)
+                     (syntax-table-parser (buffer-syntax-table buffer)))
             (let ((*current-syntax*
                     (buffer-syntax-table buffer)))
               (with-point ((start start)

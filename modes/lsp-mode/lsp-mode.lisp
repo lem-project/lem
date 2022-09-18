@@ -1711,11 +1711,14 @@
     (ensure-lsp-buffer (current-buffer))))
 
 ;;;
+(defun enable-lsp-mode ()
+  (lsp-mode t))
+
 (defmacro define-language-spec ((spec-name major-mode) &body initargs)
   `(progn
      (register-language-spec ',major-mode ',spec-name)
      ,(when (lem::mode-hook-variable major-mode)
-        `(add-hook ,(lem::mode-hook-variable major-mode) 'lsp-mode))
+        `(add-hook ,(lem::mode-hook-variable major-mode) 'enable-lsp-mode))
      (defclass ,spec-name (spec) ()
        (:default-initargs ,@initargs))))
 

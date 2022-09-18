@@ -134,10 +134,9 @@
   (when (point< end start)
     (rotatef start end))
   (let ((repeat-command (continue-flag :kill)))
-    (do-each-cursors ()
-      (let ((killed-string (delete-character start (count-characters start end))))
-        (with-killring-context (:appending repeat-command)
-          (copy-to-clipboard-with-killring killed-string))))))
+    (let ((killed-string (delete-character start (count-characters start end))))
+      (with-killring-context (:appending repeat-command)
+        (copy-to-clipboard-with-killring killed-string)))))
 
 (define-command kill-region-to-clipboard (start end) ("r")
   ;; TODO: multiple cursors
@@ -146,22 +145,22 @@
 
 (define-key *global-keymap* "C-k" 'kill-line)
 (define-command kill-line (&optional arg) ("P")
-  ;; TODO: multiple cursors
-  (with-point ((start (current-point) :right-inserting))
-    (cond
-      ((null arg)
-       (let ((p (current-point)))
-         (cond ((end-buffer-p p)
-                (error 'end-of-buffer :point p))
-               ((end-line-p p)
-                (character-offset p 1))
-               (t (line-end p)))
-         (kill-region start p)))
-      (t
-       (or (line-offset (current-point) arg)
-           (buffer-end (current-point)))
-       (let ((end (current-point)))
-         (kill-region start end))))))
+  (do-each-cursors ()
+    (with-point ((start (current-point) :right-inserting))
+      (cond
+        ((null arg)
+         (let ((p (current-point)))
+           (cond ((end-buffer-p p)
+                  (error 'end-of-buffer :point p))
+                 ((end-line-p p)
+                  (character-offset p 1))
+                 (t (line-end p)))
+           (kill-region start p)))
+        (t
+         (or (line-offset (current-point) arg)
+             (buffer-end (current-point)))
+         (let ((end (current-point)))
+           (kill-region start end)))))))
 
 (define-key *global-keymap* "C-y" 'yank)
 (define-command yank (&optional arg) ("P")

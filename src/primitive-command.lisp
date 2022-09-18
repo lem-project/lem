@@ -14,6 +14,9 @@
       (move-cursor-error ())))
   (funcall function))
 
+(defmacro do-each-cursors (() &body body)
+  `(process-each-cursors (lambda () ,@body)))
+
 (defmethod execute :around (mode (command movable-advice) argument)
   (process-each-cursors #'call-next-method))
 
@@ -131,7 +134,7 @@
   (when (point< end start)
     (rotatef start end))
   (let ((repeat-command (continue-flag :kill)))
-    (do-multiple-cursors ()
+    (do-each-cursors ()
       (let ((killed-string (delete-character start (count-characters start end))))
         (with-killring-context (:appending repeat-command)
           (copy-to-clipboard-with-killring killed-string))))))
@@ -210,7 +213,7 @@
     t))
 
 (define-command paste-from-clipboard () ()
-  (do-multiple-cursors ()
+  (do-each-cursors ()
     (insert-string (current-point) (get-clipboard-data)))
   t)
 
@@ -339,13 +342,13 @@
           (return))))))
 
 (define-command entab-line (n) ("p")
-  (do-multiple-cursors ()
+  (do-each-cursors ()
     (tab-line-aux n
                   #'(lambda (n)
                       (make-string n :initial-element #\tab)))))
 
 (define-command detab-line (n) ("p")
-  (do-multiple-cursors ()
+  (do-each-cursors ()
     (tab-line-aux n
                   (lambda (n)
                     (make-string (* n (variable-value 'tab-width))
@@ -367,7 +370,7 @@
 
 (define-key *global-keymap* "C-x C-o" 'delete-blank-lines)
 (define-command delete-blank-lines () ()
-  (do-multiple-cursors ()
+  (do-each-cursors ()
     (let ((point (current-point)))
       (loop
         (unless (blank-line-p point)
@@ -392,7 +395,7 @@
 
 (define-key *global-keymap* "M-Space" 'just-one-space)
 (define-command just-one-space () ()
-  (do-multiple-cursors ()
+  (do-each-cursors ()
     (skip-whitespace-backward (current-point) t)
     (delete-while-whitespaces t)
     (insert-character (current-point) #\space 1))
@@ -400,7 +403,7 @@
 
 (define-key *global-keymap* "M-^" 'delete-indentation)
 (define-command delete-indentation () ()
-  (do-multiple-cursors ()
+  (do-each-cursors ()
     (with-point ((p (current-point)))
       (line-start p)
       (unless (start-buffer-p p)
@@ -421,7 +424,7 @@
 
 (define-key *global-keymap* "C-t" 'transpose-characters)
 (define-command transpose-characters () ()
-  (do-multiple-cursors ()
+  (do-each-cursors ()
     (let ((point (current-point)))
       (cond ((start-line-p point))
             ((end-line-p point)
@@ -469,11 +472,11 @@
           (insert-string point (princ-to-string (funcall fn n))))))))
 
 (define-command increment () ()
-  (do-multiple-cursors ()
+  (do-each-cursors ()
     (*crement-aux #'1+)))
 
 (define-command decrement () ()
-  (do-multiple-cursors ()
+  (do-each-cursors ()
     (*crement-aux #'1-)))
 
 (define-key *global-keymap* "C-@" 'mark-set)

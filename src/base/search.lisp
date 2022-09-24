@@ -2,6 +2,11 @@
 
 (defvar *case-fold-search* nil)
 
+(defun char-compare-function ()
+  (if *case-fold-search*
+      #'char=
+      #'char-equal))
+
 (defun search-step (point first-search search step move-matched endp)
   (with-point ((start-point point))
     (let ((result
@@ -39,9 +44,7 @@
 (defun search-with-case-fold-search (sub-seq main-seq &rest args)
   (apply #'search
          sub-seq main-seq
-         :test (if *case-fold-search*
-                   #'char=
-                   #'char-equal)
+         :test (char-compare-function)
          args))
 
 (defun search-forward (point string &optional limit-point)

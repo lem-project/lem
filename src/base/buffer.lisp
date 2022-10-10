@@ -50,10 +50,12 @@
     :reader buffer-end-point)
    (mark-p
     :initform nil
-    :accessor buffer-mark-p)
+    :reader buffer-mark-p
+    :writer set-buffer-mark-p)
    (mark
     :initform nil
-    :accessor buffer-mark)
+    :reader buffer-mark
+    :writer set-buffer-mark)
    (point
     :initform nil
     :reader buffer-point
@@ -240,7 +242,7 @@
 
 (defun buffer-mark-cancel (buffer)
   (when (buffer-mark-p buffer)
-    (setf (buffer-mark-p buffer) nil)
+    (set-buffer-mark-p nil buffer)
     t))
 
 (defun check-read-only-buffer (buffer)

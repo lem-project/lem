@@ -428,12 +428,12 @@
 (defun set-current-mark (point)
   "`point`を現在のマークに設定します。"
   (let ((buffer (point-buffer point)))
-    (setf (buffer-mark-p buffer) t)
+    (set-buffer-mark-p t buffer)
     (cond ((buffer-mark buffer)
            (move-point (buffer-mark buffer) point))
           (t
-           (setf (buffer-mark buffer)
-                 (copy-point point :right-inserting)))))
+           (set-buffer-mark (copy-point point :right-inserting)
+                            buffer))))
   point)
 
 (defun blank-line-p (point)

@@ -57,6 +57,11 @@
    :with-point
    :with-buffer-read-only
    :without-interrupts)
+  ;; mark.lisp
+  (:export
+   :mark
+   :mark-cancel
+   :mark-set-point)
   ;; buffer.lisp
   (:export
    :fundamental-mode

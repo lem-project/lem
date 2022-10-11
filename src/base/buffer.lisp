@@ -48,14 +48,10 @@
    (end-point
     :writer set-buffer-end-point
     :reader buffer-end-point)
-   (mark-p
-    :initform nil
-    :reader buffer-mark-p
-    :writer set-buffer-mark-p)
-   (mark
-    :initform nil
-    :reader buffer-mark
-    :writer set-buffer-mark)
+   (%mark
+    :type mark
+    :initform (make-instance 'mark)
+    :reader buffer-mark-object)
    (point
     :initform nil
     :reader buffer-point
@@ -89,6 +85,12 @@
    "`buffer`はバッファ名、ファイル名、テキスト、テキストを指す位置等が入った、
 文書を管理するオブジェクトです。  
 複数の`buffer`はリストで管理されています。"))
+
+(defmethod buffer-mark ((buffer buffer))
+  (mark-point (buffer-mark-object buffer)))
+
+(defmethod buffer-mark-p ((buffer buffer))
+  (mark-active-p (buffer-mark-object buffer)))
 
 ;; workaround for windows
 #+win32
@@ -241,9 +243,7 @@
   (setf (buffer-%modified-p buffer) 0))
 
 (defun buffer-mark-cancel (buffer)
-  (when (buffer-mark-p buffer)
-    (set-buffer-mark-p nil buffer)
-    t))
+  (mark-cancel (buffer-mark-object buffer)))
 
 (defun check-read-only-buffer (buffer)
   (when (buffer-read-only-p buffer)

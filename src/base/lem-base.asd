@@ -18,6 +18,7 @@
                (:file "editor-variables")
                (:file "macros")
                (:file "edit")
+               (:file "mark")
                (:file "buffer")
                (:file "buffer-insert")
                (:file "buffer-list-manager")

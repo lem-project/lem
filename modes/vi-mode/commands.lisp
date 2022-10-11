@@ -367,7 +367,7 @@
                  (catch tag
                    (dotimes (i n)
                      ;; Ignore End of Buffer error and continue the deletion.
-                     (ignore-errors (apply command (and uarg (list uarg)))))
+                     (ignore-errors (call-command command uarg)))
                    (with-point ((end (current-point)))
                      (when (eq (point-buffer start)
                                (point-buffer end))
@@ -461,7 +461,7 @@
                  (catch tag
                    (dotimes (i n)
                      ;; Ignore End of Buffer error and continue the deletion.
-                     (ignore-errors (apply command (and uarg (list uarg)))))
+                     (ignore-errors (call-command command uarg)))
                    (with-point ((end (current-point)))
                      (when (point< end start)
                        (rotatef start end)

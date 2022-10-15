@@ -142,7 +142,9 @@
    :point<
    :point<=
    :point>
-   :point>=)
+   :point>=
+   :point-min
+   :point-max)
   ;; basic.lisp
   (:export
    :first-line-p

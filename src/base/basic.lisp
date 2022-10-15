@@ -251,19 +251,13 @@
 
 (defun region-beginning (&optional (buffer (current-buffer)))
   "`buffer`内のリージョンの始まりの位置の`point`を返します。"
-  (let ((start (buffer-point buffer))
-        (end (buffer-mark buffer)))
-    (if (point< start end)
-        start
-        end)))
+  (point-min (buffer-point buffer)
+             (buffer-mark buffer)))
 
 (defun region-end (&optional (buffer (current-buffer)))
   "`buffer`内のリージョンの終わりの位置の`point`を返します。"
-  (let ((start (buffer-point buffer))
-        (end (buffer-mark buffer)))
-    (if (point< start end)
-        end
-        start)))
+  (point-max (buffer-point buffer)
+             (buffer-mark buffer)))
 
 (defun %map-region (start end function)
   (when (point< end start)

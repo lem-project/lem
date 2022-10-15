@@ -195,3 +195,19 @@
         :for point2 :in more-points
         :always (or (%point< point2 point1)
                     (%point= point2 point1))))
+
+(defun point-min (point &rest more-points)
+  (assert (%always-same-buffer point more-points))
+  (loop :with min := point
+        :for point :in more-points
+        :do (when (point< point min)
+              (setf min point))
+        :finally (return min)))
+
+(defun point-max (point &rest more-points)
+  (assert (%always-same-buffer point more-points))
+  (loop :with max := point
+        :for point :in more-points
+        :do (when (point< max point)
+              (setf max point))
+        :finally (return max)))

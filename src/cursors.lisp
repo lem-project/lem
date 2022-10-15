@@ -2,7 +2,11 @@
 
 (defclass cursor (point)
   ((saved-column :initform nil
-                 :accessor cursor-saved-column)))
+                 :accessor cursor-saved-column)
+   (yank-start :initform nil
+               :accessor cursor-yank-start)
+   (yank-end :initform nil
+             :accessor cursor-yank-end)))
 
 (defmethod lem-base::make-buffer-point (point)
   (let ((cursor (make-instance 'cursor)))

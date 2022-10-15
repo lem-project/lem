@@ -152,7 +152,8 @@
            (end (cursor-region-end (current-point)))
            (killed-string (delete-character start (count-characters start end))))
       (with-killring-context (:appending (continue-flag :kill))
-        (copy-to-clipboard-with-killring killed-string)))))
+        (copy-to-clipboard-with-killring killed-string))
+      (mark-cancel (cursor-mark (current-point))))))
 
 (define-command kill-region-to-clipboard (start end) ("r")
   ;; TODO: multiple cursors

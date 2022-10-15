@@ -1,5 +1,8 @@
 (in-package :lem)
 
+(defun wsl-p ()
+  (zerop (nth-value 2 (uiop:run-program '("which" "clip.exe") :ignore-error-status t))))
+
 (defun sbcl-2.0.0-or-later-p ()
   (and (string-equal "sbcl" (lisp-implementation-type))
        (let ((version (mapcar #'parse-integer
@@ -12,7 +15,7 @@
 (defparameter *enable-clipboard-p*
   (ignore-errors
     #+darwin (sbcl-2.0.0-or-later-p)
-    #-darwin t))
+    #-darwin (not (wsl-p))))
 
 (defun enable-clipboard-p ()
   *enable-clipboard-p*)

@@ -76,6 +76,21 @@
       text)))
 
 ;;;
+(defclass wsl (os)
+  ())
+
+(defmethod copy-aux ((os wsl) text)
+  (execute-copy '("clip.exe") text))
+
+(defmethod paste-aux ((os wsl))
+  (let ((text (execute-paste '("powershell.exe" "Get-Clipboard"))))
+    (setf text (ppcre:regex-replace-all "\\r" text ""))
+    (when (and (plusp (length text))
+               (char= #\newline (char text (1- (length text)))))
+      (setf text (subseq text 0 (1- (length text)))))
+    text))
+
+;;;
 (defclass windows (os)
   ())
 
@@ -85,13 +100,15 @@
   (or #+darwin
       'mac
       #+unix
-      'unix
+      (if (lem::wsl-p) 'wsl 'unix)
       'windows))
 
-(let ((os nil))
-  (defun os ()
-    (or os
-        (setf os (make-instance (get-os-name))))))
+(defvar *os*)
+
+(defun os ()
+  (if (boundp '*os*)
+      *os*
+      (setf *os* (make-instance (get-os-name)))))
 
 (defun copy (text)
   (copy-aux (os) text)

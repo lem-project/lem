@@ -196,8 +196,7 @@
   ;; TODO: multiple cursors
   (let ((start (cursor-yank-start (current-point)))
         (end (cursor-yank-end (current-point)))
-        prev-yank-p)
-    (when (continue-flag :yank) (setq prev-yank-p t))
+        (prev-yank-p (continue-flag :yank)))
     (cond ((and start end prev-yank-p)
            (delete-between-points start end)
            (rotate-killring (current-killring))
@@ -210,8 +209,7 @@
   ;; TODO: multiple cursors
   (let ((start (buffer-value (current-buffer) 'yank-start))
         (end (buffer-value (current-buffer) 'yank-end))
-        prev-yank-p)
-    (when (continue-flag :yank) (setq prev-yank-p t))
+        (prev-yank-p (continue-flag :yank)))
     (cond ((and start end prev-yank-p)
            (delete-between-points start end)
            (rotate-killring-undo (current-killring))

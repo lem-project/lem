@@ -500,7 +500,7 @@
 (define-command mark-set () ()
   ;; TODO: multiple cursors
   (run-hooks *set-location-hook* (current-point))
-  (do-multiple-cursors ()
+  (do-each-cursors ()
     (set-cursor-mark (current-point)))
   (message "Mark set"))
 

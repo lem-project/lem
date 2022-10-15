@@ -12,6 +12,16 @@
   (let ((cursor (make-instance 'cursor)))
     (copy-point-using-class cursor point :left-inserting)))
 
+(defmethod change-yank-start (cursor point)
+  (when (cursor-yank-start cursor)
+    (delete-point (cursor-yank-start cursor)))
+  (setf (cursor-yank-start cursor) point))
+
+(defmethod change-yank-end (cursor point)
+  (when (cursor-yank-end cursor)
+    (delete-point (cursor-yank-end cursor)))
+  (setf (cursor-yank-end cursor) point))
+
 (defclass fake-cursor (cursor)
   ((killring :initarg :killring
              :reader fake-cursor-killring)
@@ -52,9 +62,14 @@
 
 (defun delete-fake-cursor (point)
   (let ((buffer (point-buffer point)))
+    (assert (not (eq point (buffer-point buffer))))
     ;; (assert (find point (buffer-fake-cursors buffer)))
     (alexandria:deletef (buffer-fake-cursors buffer) point)
     (delete-point point)
+    (alexandria:when-let ((yank-start (cursor-yank-start point)))
+      (delete-point yank-start))
+    (alexandria:when-let ((yank-end (cursor-yank-end point)))
+      (delete-point yank-end))
     (values)))
 
 (defun clear-cursors (buffer)

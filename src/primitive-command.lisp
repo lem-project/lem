@@ -483,7 +483,8 @@
 (define-command mark-set () ()
   ;; TODO: multiple cursors
   (run-hooks *set-location-hook* (current-point))
-  (set-current-mark (current-point))
+  (do-multiple-cursors ()
+    (set-cursor-mark (current-point)))
   (message "Mark set"))
 
 (define-key *global-keymap* "C-x C-x" 'exchange-point-mark)

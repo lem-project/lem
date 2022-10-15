@@ -10,7 +10,22 @@
 
 (defclass fake-cursor (cursor)
   ((killring :initarg :killring
-             :reader fake-cursor-killring)))
+             :reader fake-cursor-killring)
+   (mark :initarg :mark
+         :initform (make-instance 'mark)
+         :reader fake-cursor-mark)))
+
+(defmethod cursor-mark ((cursor cursor))
+  (buffer-mark-object (point-buffer cursor)))
+
+(defmethod cursor-mark ((cursor fake-cursor))
+  (fake-cursor-mark cursor))
+
+(defmethod set-cursor-mark ((cursor cursor))
+  (set-current-mark cursor))
+
+(defmethod set-cursor-mark ((cursor fake-cursor))
+  (mark-set-point (fake-cursor-mark cursor) cursor))
 
 (defun buffer-fake-cursors (buffer)
   (buffer-value buffer 'fake-cursors))

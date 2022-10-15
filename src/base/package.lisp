@@ -60,6 +60,8 @@
   ;; mark.lisp
   (:export
    :mark
+   :mark-point
+   :mark-active-p
    :mark-cancel
    :mark-set-point)
   ;; buffer.lisp
@@ -81,6 +83,7 @@
    :buffer-syntax-table
    :buffer-major-mode
    :buffer-minor-modes
+   :buffer-mark-object
    :buffer-mark-p
    :buffer-mark
    :buffer-point

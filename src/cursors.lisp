@@ -27,6 +27,12 @@
 (defmethod set-cursor-mark ((cursor fake-cursor))
   (mark-set-point (fake-cursor-mark cursor) cursor))
 
+(defmethod cursor-region-beginning ((cursor cursor))
+  (point-min cursor (mark-point (cursor-mark cursor))))
+
+(defmethod cursor-region-end ((cursor cursor))
+  (point-max cursor (mark-point (cursor-mark cursor))))
+
 (defun buffer-fake-cursors (buffer)
   (buffer-value buffer 'fake-cursors))
 

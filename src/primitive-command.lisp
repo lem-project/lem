@@ -117,25 +117,41 @@
              (forward-char (or n 1))
              (error e))))))
 
-(define-key *global-keymap* "M-w" 'copy-region)
+;(define-key *global-keymap* "M-w" 'copy-region)
 (define-command copy-region (start end) ("r")
-  ;; TODO: multiple cursors
   (with-killring-context (:appending (continue-flag :kill))
     (copy-to-clipboard-with-killring (points-to-string start end)))
   (buffer-mark-cancel (current-buffer))
   t)
 
+(define-key *global-keymap* "M-w" 'copy-region-with-multiple-cursors)
+(define-command copy-region-with-multiple-cursors () ()
+  (do-each-cursors ()
+    (with-killring-context (:appending (continue-flag :kill))
+      (let ((start (cursor-region-beginning (current-point)))
+            (end (cursor-region-end (current-point))))
+        (copy-to-clipboard-with-killring (points-to-string start end)))
+      (mark-cancel (cursor-mark (current-point))))))
+
 (define-command copy-region-to-clipboard (start end) ("r")
   (copy-to-clipboard (points-to-string start end)))
 
-(define-key *global-keymap* "C-w" 'kill-region)
+;(define-key *global-keymap* "C-w" 'kill-region)
 (define-command kill-region (start end) ("r")
-  ;; TODO: multiple cursors
   (when (point< end start)
     (rotatef start end))
   (let ((repeat-command (continue-flag :kill)))
     (let ((killed-string (delete-character start (count-characters start end))))
       (with-killring-context (:appending repeat-command)
+        (copy-to-clipboard-with-killring killed-string)))))
+
+(define-key *global-keymap* "C-w" 'kill-region-with-multiple-cursors)
+(define-command kill-region-with-multiple-cursors () ()
+  (do-each-cursors ()
+    (let* ((start (cursor-region-beginning (current-point)))
+           (end (cursor-region-end (current-point)))
+           (killed-string (delete-character start (count-characters start end))))
+      (with-killring-context (:appending (continue-flag :kill))
         (copy-to-clipboard-with-killring killed-string)))))
 
 (define-command kill-region-to-clipboard (start end) ("r")

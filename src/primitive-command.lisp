@@ -156,7 +156,6 @@
       (mark-cancel (cursor-mark (current-point))))))
 
 (define-command kill-region-to-clipboard (start end) ("r")
-  ;; TODO: multiple cursors
   (copy-region-to-clipboard start end)
   (delete-character start (count-characters start end)))
 
@@ -224,7 +223,6 @@
              nil)))))
 
 (define-command yank-to-clipboard (&optional arg) ("p")
-  ;; TODO: multiple cursors
   (let ((string
           (peek-killring-item (current-killring)
                               (if (null arg) 0 (1- arg)))))
@@ -501,7 +499,6 @@
 (define-key *global-keymap* "C-@" 'mark-set)
 (define-key *global-keymap* "C-Space" 'mark-set)
 (define-command mark-set () ()
-  ;; TODO: multiple cursors
   (run-hooks *set-location-hook* (current-point))
   (do-each-cursors ()
     (set-cursor-mark (current-point)))

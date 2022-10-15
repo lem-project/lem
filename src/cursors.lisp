@@ -52,7 +52,7 @@
 
 (defun delete-fake-cursor (point)
   (let ((buffer (point-buffer point)))
-    (assert (find point (buffer-fake-cursors buffer)))
+    ;; (assert (find point (buffer-fake-cursors buffer)))
     (alexandria:deletef (buffer-fake-cursors buffer) point)
     (delete-point point)
     (values)))

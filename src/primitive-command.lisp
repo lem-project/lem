@@ -211,17 +211,17 @@
              nil)))))
 
 (define-command yank-pop-next (&optional n) ("p")
-  ;; TODO: multiple cursors
-  (let ((start (buffer-value (current-buffer) 'yank-start))
-        (end (buffer-value (current-buffer) 'yank-end))
-        (prev-yank-p (continue-flag :yank)))
-    (cond ((and start end prev-yank-p)
-           (delete-between-points start end)
-           (rotate-killring-undo (current-killring))
-           (yank n))
-          (t
-           (message "Previous command was not a yank")
-           nil))))
+  (do-each-cursors ()
+    (let ((start (cursor-yank-start (current-point)))
+          (end (cursor-yank-end (current-point)))
+          (prev-yank-p (continue-flag :yank)))
+      (cond ((and start end prev-yank-p)
+             (delete-between-points start end)
+             (rotate-killring-undo (current-killring))
+             (yank-1 n))
+            (t
+             (message "Previous command was not a yank")
+             nil)))))
 
 (define-command yank-to-clipboard (&optional arg) ("p")
   ;; TODO: multiple cursors

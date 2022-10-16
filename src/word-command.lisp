@@ -56,24 +56,23 @@
 (define-key *global-keymap* "M-d" 'delete-word)
 (define-key *global-keymap* "C-Delete" 'delete-word)
 (define-command delete-word (n) ("p")
-  ;; TODO: multiple cursors kill ring
-  (with-point ((point (current-point) :right-inserting))
-    (let ((start (current-point))
-          (end (or (word-offset point n)
-                   (if (plusp n)
-                       (buffer-end point)
-                       (buffer-start point)))))
-      (cond ((point= start end))
-            ((point< start end)
-             (kill-region start end))
-            (t
-             (kill-region end start))))))
+  (do-each-cursors ()
+    (with-point ((point (current-point) :right-inserting))
+      (let ((start (current-point))
+            (end (or (word-offset point n)
+                     (if (plusp n)
+                         (buffer-end point)
+                         (buffer-start point)))))
+        (cond ((point= start end))
+              ((point< start end)
+               (kill-region start end))
+              (t
+               (kill-region end start)))))))
 
 (define-key *global-keymap* "C-M-h" 'backward-delete-word)
 (define-key *global-keymap* "M-Backspace" 'backward-delete-word)
 (define-key *global-keymap* "C-Backspace" 'backward-delete-word)
 (define-command backward-delete-word (n) ("p")
-  ;; TODO: multiple cursors kill ring
   (with-killring-context (:before-inserting t)
     (delete-word (- n))))
 
@@ -93,13 +92,13 @@
 
 (define-key *global-keymap* "C-x C-l" 'downcase-region)
 (define-command downcase-region (start end) ("r")
-  ;; TODO: multiple cursor
-  (case-region-aux start end #'char-downcase #'identity))
+  (do-each-cursors ()
+    (case-region-aux start end #'char-downcase #'identity)))
 
 (define-key *global-keymap* "C-x C-u" 'uppercase-region)
 (define-command uppercase-region (start end) ("r")
-  ;; TODO: multiple cursor
-  (case-region-aux start end #'char-upcase #'identity))
+  (do-each-cursors ()
+    (case-region-aux start end #'char-upcase #'identity)))
 
 (defun case-word-aux (point n replace-char-p first-case rest-case)
   (dotimes (_ n)
@@ -149,12 +148,12 @@
 
 (define-key *global-keymap* "M-k" 'kill-paragraph)
 (define-command kill-paragraph (&optional (n 1)) ("p")
-  ;; TODO: multiple cursors kill ring
-  (dotimes (_ n t)
-    (with-point ((start (current-point) :right-inserting))
-      (forward-paragraph)
-      (kill-region start
-                   (current-point)))))
+  (do-each-cursors ()
+    (dotimes (_ n t)
+      (with-point ((start (current-point) :right-inserting))
+        (forward-paragraph)
+        (kill-region start
+                     (current-point))))))
 
 (defun %count-words (start end)
   (save-excursion

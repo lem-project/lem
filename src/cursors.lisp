@@ -35,11 +35,11 @@
 (defmethod cursor-mark ((cursor fake-cursor))
   (fake-cursor-mark cursor))
 
-(defmethod set-cursor-mark ((cursor cursor))
-  (set-current-mark cursor))
+(defmethod set-cursor-mark ((cursor cursor) point)
+  (set-current-mark point))
 
-(defmethod set-cursor-mark ((cursor fake-cursor))
-  (mark-set-point (fake-cursor-mark cursor) cursor))
+(defmethod set-cursor-mark ((cursor fake-cursor) point)
+  (mark-set-point (fake-cursor-mark cursor) point))
 
 (defmethod cursor-region-beginning ((cursor cursor))
   (point-min cursor (mark-point (cursor-mark cursor))))

@@ -3,7 +3,6 @@
 (defvar *set-location-hook* '())
 
 (defclass movable-advice () ())
-(defclass delete-character-advice () ())
 (defclass jump-cursor-advice () ())
 
 (defun process-each-cursors (function)
@@ -18,9 +17,6 @@
   `(process-each-cursors (lambda () ,@body)))
 
 (defmethod execute :around (mode (command movable-advice) argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode (command delete-character-advice) argument)
   (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode (command jump-cursor-advice) argument)
@@ -89,33 +85,37 @@
 
 (define-key *global-keymap* "C-d" 'delete-next-char)
 (define-key *global-keymap* "Delete" 'delete-next-char)
-(define-command (delete-next-char (:advice-classes delete-character-advice)) (&optional n) ("P")
-  ;; TODO: multiple cursors
-  (when (end-buffer-p (current-point))
-    (error 'end-of-buffer :point (current-point)))
-  (let ((repeat-command (continue-flag :kill))
-        (killp (not (null n)))
-        (killed-string (delete-character (current-point) (or n 1))))
-    (when killp
-      (with-killring-context (:appending repeat-command)
-        (copy-to-clipboard-with-killring killed-string)))))
+(define-command delete-next-char (&optional n) ("P")
+  (do-each-cursors ()
+    (unless (end-buffer-p (current-point))
+      (let ((repeat-command (continue-flag :kill))
+            (killp (not (null n)))
+            (killed-string (delete-character (current-point) (or n 1))))
+        (when killp
+          (with-killring-context (:appending repeat-command)
+            (copy-to-clipboard-with-killring killed-string)))))))
 
 (define-key *global-keymap* "C-h" 'delete-previous-char)
 (define-key *global-keymap* "Backspace" 'delete-previous-char)
-(define-command (delete-previous-char (:advice-classes delete-character-advice)) (&optional n) ("P")
-  (cond ((and (buffer-mark (current-buffer))
-              (buffer-mark-p (current-buffer)))
-         ;; TODO: multiple cursors
-         (let ((start (region-beginning))
-               (end (region-end)))
-           (delete-character start (count-characters start end))))
-        (t
-         (backward-char (or n 1))
-         (handler-case (with-killring-context (:before-inserting t)
-                         (delete-next-char n))
-           (read-only-error (e)
-             (forward-char (or n 1))
-             (error e))))))
+(define-command delete-previous-char (&optional n) ("P")
+  (let ((marked (mark-active-p (cursor-mark (current-point)))))
+    (do-each-cursors ()
+      (cond (marked
+             (let ((start (cursor-region-beginning (current-point)))
+                   (end (cursor-region-end (current-point))))
+               ;; バッファを編集すると関数lem-base::buffer-modifyがlem-base:buffer-mark-cancelを呼び出し
+               ;; buffer-mark-objectのactive-pをnilにしてしまう
+               ;; fake-cursorを処理した後buffer-mark-objectを操作するとき,
+               ;; markされていない状態になってしまっていてここに到達しない問題がある
+               ;; それを回避するために事前にmarkしているかを変数markedに入れておく
+               (delete-character start (count-characters start end))))
+            (t
+             (backward-char (or n 1))
+             (handler-case (with-killring-context (:before-inserting t)
+                             (delete-next-char n))
+               (read-only-error (e)
+                 (forward-char (or n 1))
+                 (error e))))))))
 
 ;(define-key *global-keymap* "M-w" 'copy-region)
 (define-command copy-region (start end) ("r")

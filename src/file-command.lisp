@@ -17,7 +17,6 @@
 
 (defgeneric execute-find-file (mode pathname))
 
-(define-key *global-keymap* "C-x C-f" 'find-file)
 (define-command find-file (arg) ("p")
   (let ((*default-external-format* *default-external-format*))
     (let ((filename
@@ -50,7 +49,6 @@
     (switch-to-buffer buffer t nil)
     (values buffer new-file-p)))
 
-(define-key *global-keymap* "C-x C-r" 'read-file)
 (define-command read-file (filename) ("FRead File: ")
   (when (pathnamep filename)
     (setf filename (namestring filename)))
@@ -81,13 +79,11 @@
      (editor-error "No file name"))
     (t nil)))
 
-(define-key *global-keymap* "C-x C-s" 'save-current-buffer)
 (define-command save-current-buffer (&optional force-p) ("P")
   (let ((buffer (current-buffer)))
     (alexandria:when-let (filename (save-buffer buffer force-p))
       (message "Wrote ~A" filename))))
 
-(define-key *global-keymap* "C-x C-w" 'write-file)
 (define-command write-file (filename) ("FWrite File: ")
   (let* ((old (buffer-name))
          (new (file-namestring filename))
@@ -115,13 +111,11 @@
   (write-region-to-file start end filename)
   (message "Wrote ~A" filename))
 
-(define-key *global-keymap* "C-x Tab" 'insert-file)
 (define-command insert-file (filename) ("fInsert file: ")
   (insert-file-contents (current-point)
                         (expand-file-name filename))
   t)
 
-(define-key *global-keymap* "C-x s" 'save-some-buffers)
 (define-command save-some-buffers (&optional save-silently-p) ("P")
   (let ((prev-buffer (current-buffer)))
     (dolist (buffer (buffer-list))

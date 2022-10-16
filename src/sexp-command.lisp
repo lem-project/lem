@@ -1,6 +1,5 @@
 (in-package :lem)
 
-(define-key *global-keymap* "C-M-f" 'forward-sexp)
 (define-command (forward-sexp (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (with-point ((prev (current-point)))
     (let ((point (form-offset (current-point) n)))
@@ -11,28 +10,22 @@
                 nil
                 (scan-error)))))))
 
-(define-key *global-keymap* "C-M-b" 'backward-sexp)
 (define-command (backward-sexp (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (forward-sexp (- n) no-errors))
 
-(define-key *global-keymap* "C-M-n" 'forward-list)
 (define-command (forward-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (scan-lists (current-point) n 0 no-errors))
 
-(define-key *global-keymap* "C-M-p" 'backward-list)
 (define-command (backward-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (scan-lists (current-point) (- n) 0 no-errors))
 
-(define-key *global-keymap* "C-M-d" 'down-list)
 (define-command (down-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (scan-lists (current-point) n -1 no-errors))
 
-(define-key *global-keymap* "C-M-u" 'backward-up-list)
 (define-command (backward-up-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (or (maybe-beginning-of-string (current-point))
       (scan-lists (current-point) (- n) 1 no-errors)))
 
-(define-key *global-keymap* "C-M-@" 'mark-sexp)
 (define-command mark-sexp () ()
   (do-each-cursors ()
     (cond
@@ -43,7 +36,6 @@
          (form-offset (current-point) 1)
          (set-cursor-mark (current-point) (current-point)))))))
 
-(define-key *global-keymap* "C-M-k" 'kill-sexp)
 (define-command kill-sexp (&optional (n 1)) ("p")
   (do-each-cursors ()
     (dotimes (_ n t)
@@ -53,7 +45,6 @@
               (kill-region (current-point) end))
             (scan-error))))))
 
-(define-key *global-keymap* "C-M-t" 'transpose-sexps)
 (define-command transpose-sexps () ()
   (do-each-cursors ()
     (with-point ((point1 (current-point) :left-inserting)
@@ -77,7 +68,6 @@
           (insert-string point1 form-string2)
           (insert-string point2 form-string1))))))
 
-(define-key *global-keymap* "C-M-y" 'kill-around-form)
 (define-command kill-around-form () ()
   ;; TODO: multiple cursors
   (with-point ((end (current-point) :right-inserting))

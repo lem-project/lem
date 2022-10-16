@@ -62,6 +62,8 @@
                (:file "word-command")
                (:file "sexp-command")
 
+               (:file "default-keymap")
+
                (:file "interface")
                (:file "display")
 

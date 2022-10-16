@@ -43,18 +43,12 @@
                              (lambda (c) (eql type (word-type c))))))
           :finally (return point))))
 
-(define-key *global-keymap* "M-f" 'forward-word)
-(define-key *global-keymap* "C-Right" 'forward-word)
 (define-command (forward-word (:advice-classes movable-advice)) (n) ("p")
   (word-offset (current-point) n))
 
-(define-key *global-keymap* "M-b" 'previous-word)
-(define-key *global-keymap* "C-Left" 'previous-word)
 (define-command (previous-word (:advice-classes movable-advice)) (n) ("p")
   (word-offset (current-point) (- n)))
 
-(define-key *global-keymap* "M-d" 'delete-word)
-(define-key *global-keymap* "C-Delete" 'delete-word)
 (define-command delete-word (n) ("p")
   (do-each-cursors ()
     (with-point ((point (current-point) :right-inserting))
@@ -69,9 +63,6 @@
               (t
                (kill-region end start)))))))
 
-(define-key *global-keymap* "C-M-h" 'backward-delete-word)
-(define-key *global-keymap* "M-Backspace" 'backward-delete-word)
-(define-key *global-keymap* "C-Backspace" 'backward-delete-word)
 (define-command backward-delete-word (n) ("p")
   (with-killring-context (:before-inserting t)
     (delete-word (- n))))
@@ -90,12 +81,10 @@
                         (t
                          (character-offset point 1))))))))
 
-(define-key *global-keymap* "C-x C-l" 'downcase-region)
 (define-command downcase-region (start end) ("r")
   (do-each-cursors ()
     (case-region-aux start end #'char-downcase #'identity)))
 
-(define-key *global-keymap* "C-x C-u" 'uppercase-region)
 (define-command uppercase-region (start end) ("r")
   (do-each-cursors ()
     (case-region-aux start end #'char-upcase #'identity)))
@@ -117,19 +106,15 @@
                          replace-char-p)
         (move-point point end)))))
 
-(define-key *global-keymap* "M-c" 'capitalize-word)
 (define-command (capitalize-word (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (case-word-aux (current-point) n #'alphanumericp #'char-upcase #'char-downcase))
 
-(define-key *global-keymap* "M-l" 'lowercase-word)
 (define-command (lowercase-word (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (case-word-aux (current-point) n #'alphanumericp #'char-downcase #'char-downcase))
 
-(define-key *global-keymap* "M-u" 'uppercase-word)
 (define-command (uppercase-word (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (case-word-aux (current-point) n #'alphanumericp #'char-upcase #'char-upcase))
 
-(define-key *global-keymap* "M-}" 'forward-paragraph)
 (define-command (forward-paragraph (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (let ((point (current-point))
         (dir (if (plusp n) 1 -1)))
@@ -142,11 +127,9 @@
                   (when (plusp dir) (buffer-end point))
                   (return-from forward-paragraph))))))
 
-(define-key *global-keymap* "M-{" 'backward-paragraph)
 (define-command (backward-paragraph (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (forward-paragraph (- n)))
 
-(define-key *global-keymap* "M-k" 'kill-paragraph)
 (define-command kill-paragraph (&optional (n 1)) ("p")
   (do-each-cursors ()
     (dotimes (_ n t)
@@ -163,7 +146,6 @@
             :do (incf wnum))
       wnum)))
 
-(define-key *global-keymap* "M-=" 'count-words)
 (define-command count-words () ()
   (let ((buffer (current-buffer)))
     (multiple-value-bind (start end)

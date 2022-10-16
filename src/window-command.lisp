@@ -31,8 +31,6 @@
       (switch-to-buffer buffer))
     t))
 
-(define-key *global-keymap* "C-x b" 'select-buffer)
-
 (defun strip-buffer-from-frame-windows (buffer frame)
   (dolist (window (get-buffer-windows buffer :frame frame :include-floating-windows t))
     (with-current-window window
@@ -45,7 +43,6 @@
   (dolist (frame (all-frames))
     (strip-buffer-from-frame-windows buffer frame)))
 
-(define-key *global-keymap* "C-x k" 'kill-buffer)
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
   (let ((buffer (get-buffer buffer-or-name)))
     (unless buffer
@@ -54,7 +51,6 @@
       (delete-buffer buffer)))
   t)
 
-(define-key *global-keymap* "C-x Left" 'previous-buffer)
 (define-command previous-buffer () ()
   (switch-to-buffer
    (if (eq (current-buffer) (car (buffer-list)))
@@ -64,26 +60,22 @@
                    (return (car rest)))))
    nil))
 
-(define-key *global-keymap* "C-x Right" 'next-buffer)
 (define-command next-buffer () ()
   (switch-to-buffer (or (cadr (member (current-buffer) (buffer-list)))
                         (car (buffer-list)))
                     nil))
 
-(define-key *global-keymap* "C-l" 'recenter)
 (define-command recenter (p) ("P")
   (clear-screens-of-window-list)
   (unless p (window-recenter (current-window)))
   (redraw-display)
   t)
 
-(define-key *global-keymap* "C-x 2" 'split-active-window-vertically)
 (define-command split-active-window-vertically (&optional n) ("P")
   (split-window-vertically (current-window) :height n)
   (unless n
     (maybe-balance-windows)))
 
-(define-key *global-keymap* "C-x 3" 'split-active-window-horizontally)
 (define-command split-active-window-horizontally (&optional n) ("P")
   (split-window-horizontally (current-window) :width n)
   (unless n
@@ -94,7 +86,6 @@
 (defun update-last-focused-window ()
   (setf *last-focused-window* (current-window)))
 
-(define-key *global-keymap* "C-x o" 'other-window)
 (define-command other-window (&optional (n 1)) ("p")
   (let ((window-list
           (append (alexandria:ensure-list
@@ -108,7 +99,6 @@
             (get-next-window (current-window)
                              window-list)))))
 
-(define-key *global-keymap* "M-o" 'other-window-or-split-window)
 (define-command other-window-or-split-window (&optional (n 1)) ("p")
   (when (one-window-p)
     (split-window-sensibly (current-window))
@@ -139,7 +129,6 @@
   (alexandria:when-let ((window (left-window (current-window))))
     (setf (current-window) window)))
 
-(define-key *global-keymap* "C-x 1" 'delete-other-windows)
 (define-command delete-other-windows () ()
   (dolist (win (window-list))
     (unless (eq win (current-window))
@@ -152,7 +141,6 @@
                    (max-window-height (current-frame)))
   t)
 
-(define-key *global-keymap* "C-x 0" 'delete-active-window)
 (define-command delete-active-window () ()
   (delete-window (current-window))
   (maybe-balance-windows))
@@ -161,7 +149,6 @@
   (quit-window (current-window)
                :kill-buffer kill-buffer))
 
-(define-key *global-keymap* "C-x ^" 'grow-window)
 (define-command grow-window (n) ("p")
   (when (< n 0)
     (return-from grow-window (shrink-window (- n))))
@@ -169,7 +156,6 @@
     (editor-error "Only one window"))
   (grow-window-height (current-window) n))
 
-(define-key *global-keymap* "C-x C-z" 'shrink-window)
 (define-command shrink-window (n) ("p")
   (when (< n 0)
     (return-from shrink-window (grow-window (- n))))
@@ -177,7 +163,6 @@
     (editor-error "Only one window"))
   (shrink-window-height (current-window) n))
 
-(define-key *global-keymap* "C-x }" 'grow-window-horizontally)
 (define-command grow-window-horizontally (n) ("p")
   (when (< n 0)
     (return-from grow-window-horizontally (shrink-window-horizontally (- n))))
@@ -185,7 +170,6 @@
     (editor-error "Only one window"))
   (grow-window-width (current-window) n))
 
-(define-key *global-keymap* "C-x {" 'shrink-window-horizontally)
 (define-command shrink-window-horizontally (n) ("p")
   (when (< n 0)
     (return-from shrink-window-horizontally (grow-window-horizontally (- n))))
@@ -199,8 +183,6 @@
     (declare (ignore split-p))
     window))
 
-(define-key *global-keymap* "C-Down" 'scroll-down)
-(define-key *global-keymap* "M-Down" 'scroll-down)
 (define-command scroll-down (n) ("p")
   (cond
     ((minusp n)
@@ -212,8 +194,6 @@
                            (current-window) t))
      (next-line (- (window-offset-view (current-window)))))))
 
-(define-key *global-keymap* "C-Up" 'scroll-up)
-(define-key *global-keymap* "M-Up" 'scroll-up)
 (define-command scroll-up (n) ("p")
   (cond
     ((minusp n)
@@ -224,13 +204,10 @@
      (previous-line (window-offset-view (current-window))))))
 
 (define-other-window-command find-file "FFind File Other Window: ")
-(define-key *global-keymap* "C-x 4 f" 'find-file-other-window)
 
 (define-other-window-command read-file "FREAD File Other Window: ")
-(define-key *global-keymap* "C-x 4 r" 'read-file-other-window)
 
 (define-other-window-command select-buffer "BUse Buffer Other Window: ")
-(define-key *global-keymap* "C-x 4 b" 'select-buffer-other-window)
 
 (define-command compare-windows (ignore-whitespace) ("p")
   (setf ignore-whitespace (/= ignore-whitespace 1))

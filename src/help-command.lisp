@@ -1,8 +1,5 @@
 (in-package :lem)
 
-(define-key *global-keymap* "C-x ?" 'describe-key)
-;; Unable to use this binding because C-h is used by 'delete-previous-char
-;; (define-key *global-keymap* "C-h k" 'describe-key)
 (define-command describe-key () ()
   (show-message "describe-key: ")
   (redraw-display)
@@ -32,8 +29,6 @@
               (terpri s))))
 
 
-;; Unable to use this binding because C-h is used by 'delete-previous-char
-;; (define-key *global-keymap* "C-h b" 'describe-bindings)
 (define-command describe-bindings () ()
   (let ((buffer (current-buffer))
         (firstp t))
@@ -76,8 +71,6 @@
         (print-modes "Major modes" major-modes)
         (print-modes "Minor modes" minor-modes)))))
 
-;; Unable to use this binding because C-h is used by 'delete-previous-char
-;; (define-key *global-keymap* "C-h m" 'describe-mode)
 (define-command describe-mode () ()
   "Show information about current major mode and enabled minor modes."
   (let* ((buffer (current-buffer))
@@ -94,7 +87,6 @@
                   (mode-name mode)
                   (mode-description mode)))))))
 
-(define-key *global-keymap* "M-x" 'execute-command)
 (define-command execute-command (arg) ("P")
   (let* ((name (prompt-for-string
                 (if arg

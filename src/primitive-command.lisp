@@ -191,7 +191,8 @@
 
 (define-key *global-keymap* "C-y" 'yank)
 (define-command yank (&optional arg) ("P")
-  (let ((*enable-clipboard-p* (null (buffer-fake-cursors (current-buffer)))))
+  (let ((*enable-clipboard-p* (and (enable-clipboard-p)
+                                   (null (buffer-fake-cursors (current-buffer))))))
     (do-each-cursors ()
       (yank-1 arg))))
 

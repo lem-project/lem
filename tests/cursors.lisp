@@ -57,7 +57,7 @@
                        (lem:buffer-text buffer))))
         (test "multiple cursor killring"
           (lem:execute (lem:buffer-major-mode buffer)
-                       (make-instance 'lem:delete-next-char)
+                       (make-instance 'lem::delete-next-char-with-multiple-cursors)
                        4)
           (ok (equal '("abcd"
                        "opqr"

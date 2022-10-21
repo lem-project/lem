@@ -98,7 +98,8 @@
                              (:file "rectangle")
                              (:file "auto-save")
                              (:file "tabbar")
-                             (:file "frame-multiplexer")))))
+                             (:file "frame-multiplexer")
+                             (:file "multiple-cursors")))))
 
 (defsystem "lem-extensions"
   :depends-on ("lem-vi-mode"

@@ -50,18 +50,17 @@
   (word-offset (current-point) (- n)))
 
 (define-command delete-word (n) ("p")
-  (do-each-cursors ()
-    (with-point ((point (current-point) :right-inserting))
-      (let ((start (current-point))
-            (end (or (word-offset point n)
-                     (if (plusp n)
-                         (buffer-end point)
-                         (buffer-start point)))))
-        (cond ((point= start end))
-              ((point< start end)
-               (kill-region start end))
-              (t
-               (kill-region end start)))))))
+  (with-point ((point (current-point) :right-inserting))
+    (let ((start (current-point))
+          (end (or (word-offset point n)
+                   (if (plusp n)
+                       (buffer-end point)
+                       (buffer-start point)))))
+      (cond ((point= start end))
+            ((point< start end)
+             (kill-region start end))
+            (t
+             (kill-region end start))))))
 
 (define-command backward-delete-word (n) ("p")
   (with-killring-context (:before-inserting t)
@@ -82,12 +81,10 @@
                          (character-offset point 1))))))))
 
 (define-command downcase-region (start end) ("r")
-  (do-each-cursors ()
-    (case-region-aux start end #'char-downcase #'identity)))
+  (case-region-aux start end #'char-downcase #'identity))
 
 (define-command uppercase-region (start end) ("r")
-  (do-each-cursors ()
-    (case-region-aux start end #'char-upcase #'identity)))
+  (case-region-aux start end #'char-upcase #'identity))
 
 (defun case-word-aux (point n replace-char-p first-case rest-case)
   (dotimes (_ n)
@@ -131,12 +128,11 @@
   (forward-paragraph (- n)))
 
 (define-command kill-paragraph (&optional (n 1)) ("p")
-  (do-each-cursors ()
-    (dotimes (_ n t)
-      (with-point ((start (current-point) :right-inserting))
-        (forward-paragraph)
-        (kill-region start
-                     (current-point))))))
+  (dotimes (_ n t)
+    (with-point ((start (current-point) :right-inserting))
+      (forward-paragraph)
+      (kill-region start
+                   (current-point)))))
 
 (defun %count-words (start end)
   (save-excursion

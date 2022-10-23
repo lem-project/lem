@@ -61,6 +61,7 @@
                (:file "help-command")
                (:file "word-command")
                (:file "sexp-command")
+               (:file "multiple-cursors-command")
 
                (:file "default-keymap")
 
@@ -98,8 +99,7 @@
                              (:file "rectangle")
                              (:file "auto-save")
                              (:file "tabbar")
-                             (:file "frame-multiplexer")
-                             (:file "multiple-cursors")))))
+                             (:file "frame-multiplexer")))))
 
 (defsystem "lem-extensions"
   :depends-on ("lem-vi-mode"

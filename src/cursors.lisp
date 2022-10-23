@@ -76,20 +76,19 @@
   (mapc #'delete-fake-cursor (buffer-fake-cursors buffer))
   (values))
 
-(defun %do-multiple-cursors (buffer function only-fake-cursors)
-  (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
-    (lem-base::with-buffer-point (buffer point)
-      (with-current-killring (fake-cursor-killring point)
-        (funcall function))))
-  (unless only-fake-cursors
+(defun process-each-cursors (function)
+  (let ((buffer (current-buffer)))
+    (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
+      (lem-base::with-buffer-point (buffer point)
+        (with-current-killring (fake-cursor-killring point)
+          (handler-case
+              (save-continue-flags
+                (funcall function))
+            (move-cursor-error ())))))
     (funcall function)))
 
-(defmacro do-multiple-cursors ((&key (buffer '(current-buffer))
-                                     (only-fake-cursors nil))
-                               &body body)
-  `(%do-multiple-cursors ,buffer
-                         (lambda () ,@body)
-                         ,only-fake-cursors))
+(defmacro do-each-cursors (() &body body)
+  `(process-each-cursors (lambda () ,@body)))
 
 (defun buffer-cursors (buffer)
   (sort (copy-list (cons (buffer-point buffer)

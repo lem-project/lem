@@ -2,17 +2,6 @@
 
 (defvar *set-location-hook* '())
 
-(defun process-each-cursors (function)
-  (do-multiple-cursors (:only-fake-cursors t)
-    (handler-case
-        (save-continue-flags
-          (funcall function))
-      (move-cursor-error ())))
-  (funcall function))
-
-(defmacro do-each-cursors (() &body body)
-  `(process-each-cursors (lambda () ,@body)))
-
 (defclass movable-advice () ())
 (defclass jump-cursor-advice () ())
 

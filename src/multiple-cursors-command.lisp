@@ -1,178 +1,213 @@
-(defpackage :lem.multiple-cursors
-  (:use :cl :lem)
-  #+sbcl
-  (:lock t))
-(in-package :lem.multiple-cursors)
+(in-package :lem)
+
+(defun process-each-cursors (function)
+  (let ((buffer (current-buffer)))
+    (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
+      (lem-base::with-buffer-point (buffer point)
+        (with-current-killring (fake-cursor-killring point)
+          (handler-case
+              (save-continue-flags
+                (funcall function))
+            (move-cursor-error ())))))
+    (funcall function)))
+
+(defmacro do-each-cursors (() &body body)
+  `(process-each-cursors (lambda () ,@body)))
 
 (defmethod execute :around (mode
-                            (command lem::movable-advice)
+                            (command movable-advice)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem::jump-cursor-advice)
+                            (command jump-cursor-advice)
                             argument)
   (prog1 (call-next-method)
-    (lem::clear-cursors (current-buffer))))
+    (clear-cursors (current-buffer))))
 
 (defmethod execute :around (mode
-                            (command lem:delete-next-char)
+                            (command delete-next-char)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute (mode
-                    (command lem:delete-previous-char)
+                    (command delete-previous-char)
                     argument)
-  (cond ((mark-active-p (lem::cursor-mark (current-point)))
-         (lem::do-each-cursors ()
-           (lem::delete-cursor-region (current-point))))
+  (cond ((mark-active-p (cursor-mark (current-point)))
+         (do-each-cursors ()
+           (delete-cursor-region (current-point))))
         (t
-         (lem::do-each-cursors ()
-           (lem::delete-previous-char-1 argument)))))
+         (do-each-cursors ()
+           (delete-previous-char-1 argument)))))
 
 (defmethod execute :around (mode
-                            (command lem:copy-region)
+                            (command copy-region)
                             argument)
-  (lem::do-each-cursors ()
-    (lem::copy-cursor-region (current-point))))
+  (do-each-cursors ()
+    (copy-cursor-region (current-point))))
 
 (defmethod execute :around (mode
-                            (command lem:kill-region)
+                            (command kill-region)
                             argument)
-  (lem::do-each-cursors ()
-    (lem::kill-cursor-region (current-point))))
+  (do-each-cursors ()
+    (kill-cursor-region (current-point))))
 
 (defmethod execute :around (mode
-                            (command lem:kill-line)
+                            (command kill-line)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:yank)
+                            (command yank)
                             argument)
-  (let ((lem::*enable-clipboard-p* (and (lem:enable-clipboard-p)
-                                        (null (lem::buffer-fake-cursors (current-buffer))))))
-    (lem::process-each-cursors #'call-next-method)))
+  (let ((*enable-clipboard-p* (and (enable-clipboard-p)
+                                        (null (buffer-fake-cursors (current-buffer))))))
+    (process-each-cursors #'call-next-method)))
 
 (defmethod execute :around (mode
-                            (command lem:yank-pop)
+                            (command yank-pop)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:yank-pop-next)
+                            (command yank-pop-next)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:paste-from-clipboard)
+                            (command paste-from-clipboard)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:entab-line)
+                            (command entab-line)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:detab-line)
+                            (command detab-line)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:delete-blank-lines)
+                            (command delete-blank-lines)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:just-one-space)
+                            (command just-one-space)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:delete-indentation)
+                            (command delete-indentation)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:transpose-characters)
+                            (command transpose-characters)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem::increment)
+                            (command increment)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem::decrement)
+                            (command decrement)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:mark-set)
+                            (command mark-set)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:exchange-point-mark)
+                            (command exchange-point-mark)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:quoted-insert)
+                            (command quoted-insert)
                             argument)
   (let* ((key (read-key))
          (char (or (key-to-char key) (code-char 0))))
-    (lem::do-each-cursors ()
-      (lem::self-insert-aux char (or argument 1)))))
+    (do-each-cursors ()
+      (self-insert-aux char (or argument 1)))))
 
 (defmethod execute :around (mode
-                            (command lem:newline)
+                            (command newline)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:open-line)
+                            (command open-line)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:mark-sexp)
+                            (command mark-sexp)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:kill-sexp)
+                            (command kill-sexp)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:transpose-sexps)
+                            (command transpose-sexps)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:delete-word)
+                            (command delete-word)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:downcase-region)
+                            (command downcase-region)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:uppercase-region)
+                            (command uppercase-region)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:kill-paragraph)
+                            (command kill-paragraph)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
-                            (command lem:self-insert)
+                            (command self-insert)
                             argument)
-  (lem::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
+
+(define-command add-cursors-to-next-line () ()
+  (let ((cursors (buffer-cursors (current-buffer))))
+    (loop :for (cursor next-cursor) :on cursors
+          :do (with-point ((p cursor))
+                (when (and (line-offset p 1)
+                           (or (null next-cursor)
+                               (not (same-line-p p next-cursor))))
+                  (make-fake-cursor p))))))
+
+(defun clear-duplicate-cursors (buffer)
+  (loop :for (cursor next-cursor) :on (buffer-cursors buffer)
+        :when (and next-cursor (same-line-p cursor next-cursor))
+        :do (delete-fake-cursor
+             (if (eq cursor (buffer-point buffer))
+                 next-cursor
+                 cursor))))
+
+(define-condition garbage-collection-cursors (after-executing-command) ())
+(defmethod handle-signal ((condition garbage-collection-cursors))
+  (clear-duplicate-cursors (current-buffer)))
+
+(define-condition clear-cursor-when-aborted (editor-abort-handler) ())
+(defmethod handle-signal ((condition clear-cursor-when-aborted))
+  (clear-cursors (current-buffer)))

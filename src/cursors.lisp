@@ -76,46 +76,7 @@
   (mapc #'delete-fake-cursor (buffer-fake-cursors buffer))
   (values))
 
-(defun process-each-cursors (function)
-  (let ((buffer (current-buffer)))
-    (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
-      (lem-base::with-buffer-point (buffer point)
-        (with-current-killring (fake-cursor-killring point)
-          (handler-case
-              (save-continue-flags
-                (funcall function))
-            (move-cursor-error ())))))
-    (funcall function)))
-
-(defmacro do-each-cursors (() &body body)
-  `(process-each-cursors (lambda () ,@body)))
-
 (defun buffer-cursors (buffer)
   (sort (copy-list (cons (buffer-point buffer)
                          (buffer-fake-cursors buffer)))
         #'point<))
-
-(defun clear-duplicate-cursors (buffer)
-  (loop :for (cursor next-cursor) :on (buffer-cursors buffer)
-        :when (and next-cursor (same-line-p cursor next-cursor))
-        :do (delete-fake-cursor
-             (if (eq cursor (buffer-point buffer))
-                 next-cursor
-                 cursor))))
-
-(define-command add-cursors-to-next-line () ()
-  (let ((cursors (buffer-cursors (current-buffer))))
-    (loop :for (cursor next-cursor) :on cursors
-          :do (with-point ((p cursor))
-                (when (and (line-offset p 1)
-                           (or (null next-cursor)
-                               (not (same-line-p p next-cursor))))
-                  (make-fake-cursor p))))))
-
-(define-condition garbage-collection-cursors (after-executing-command) ())
-(defmethod handle-signal ((condition garbage-collection-cursors))
-  (clear-duplicate-cursors (current-buffer)))
-
-(define-condition clear-cursor-when-aborted (editor-abort-handler) ())
-(defmethod handle-signal ((condition clear-cursor-when-aborted))
-  (clear-cursors (current-buffer)))

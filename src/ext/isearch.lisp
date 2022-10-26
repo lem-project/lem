@@ -80,6 +80,7 @@
 (define-key *global-keymap* "M-s p" 'isearch-prev-highlight)
 (define-key *global-keymap* "F3" 'isearch-next-highlight)
 (define-key *global-keymap* "Shift-F3" 'isearch-prev-highlight)
+(define-key *isearch-keymap* "C-M-n" 'isearch-add-cursor-to-next-match)
 
 (defun disable-hook ()
   (setf (variable-value 'isearch-next-last :buffer) nil)
@@ -409,7 +410,8 @@
                                   :query nil))))))
 
 (defun search-next-matched (point n)
-  (alexandria:when-let ((string (buffer-value (current-buffer) 'isearch-redisplay-string)))
+  (alexandria:when-let ((string (or (buffer-value (current-buffer) 'isearch-redisplay-string)
+                                    *isearch-string*)))
     (let ((search-fn (if (plusp n)
                          *isearch-search-forward-function*
                          *isearch-search-backward-function*)))
@@ -429,6 +431,12 @@
      (isearch-end))
     ((boundp '*isearch-string*)
      (isearch-update-buffer))))
+
+(define-command isearch-add-cursor-to-next-match () ()
+  (dolist (point (lem::buffer-cursors (current-buffer)))
+    (with-point ((point point))
+      (when (search-next-matched point 1)
+        (lem::make-fake-cursor point)))))
 
 
 (defvar *replace-before-string* nil)

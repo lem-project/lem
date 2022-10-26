@@ -408,13 +408,17 @@
                                   *isearch-search-backward-function*
                                   :query nil))))))
 
-(define-command isearch-next-highlight (n) ("p")
+(defun search-next-matched (point n)
   (alexandria:when-let ((string (buffer-value (current-buffer) 'isearch-redisplay-string)))
     (let ((search-fn (if (plusp n)
                          *isearch-search-forward-function*
                          *isearch-search-backward-function*)))
-      (dotimes (_ (abs n))
-        (funcall search-fn (current-point) string)))))
+      (dotimes (_ (abs n) point)
+        (unless (funcall search-fn point string)
+          (return nil))))))
+
+(define-command isearch-next-highlight (n) ("p")
+  (search-next-matched (current-point) n))
 
 (define-command isearch-prev-highlight (n) ("p")
   (isearch-next-highlight (- n)))

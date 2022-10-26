@@ -168,6 +168,11 @@
   (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
+                            (command backward-delete-word)
+                            argument)
+  (process-each-cursors #'call-next-method))
+
+(defmethod execute :around (mode
                             (command downcase-region)
                             argument)
   (process-each-cursors #'call-next-method))

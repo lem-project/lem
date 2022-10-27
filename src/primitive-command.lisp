@@ -4,6 +4,7 @@
 
 (defclass movable-advice () ())
 (defclass jump-cursor-advice () ())
+(defclass editable-advice () ())
 
 (define-command undefined-key () ()
   (editor-error "Key not found: ~A"
@@ -50,13 +51,13 @@
          (char (or (key-to-char key) (code-char 0))))
     (self-insert-aux char n)))
 
-(define-command newline (&optional (n 1)) ("p")
+(define-command (newline (:advice-classes editable-advice)) (&optional (n 1)) ("p")
   (self-insert-aux #\newline n))
 
-(define-command open-line (n) ("p")
+(define-command (open-line (:advice-classes editable-advice)) (n) ("p")
   (self-insert-aux #\newline n t))
 
-(define-command delete-next-char (&optional n) ("P")
+(define-command (delete-next-char (:advice-classes editable-advice)) (&optional n) ("P")
   (unless (end-buffer-p (current-point))
     (let ((repeat-command (continue-flag :kill))
           (killp (not (null n)))
@@ -120,7 +121,7 @@
   (copy-region-to-clipboard start end)
   (delete-character start (count-characters start end)))
 
-(define-command kill-line (&optional arg) ("P")
+(define-command (kill-line (:advice-classes editable-advice)) (&optional arg) ("P")
   (with-point ((start (current-point) :right-inserting))
     (cond
       ((null arg)
@@ -151,7 +152,7 @@
 (define-command yank (&optional arg) ("P")
   (yank-1 arg))
 
-(define-command yank-pop (&optional n) ("p")
+(define-command (yank-pop (:advice-classes editable-advice)) (&optional n) ("p")
   (let ((start (cursor-yank-start (current-point)))
         (end (cursor-yank-end (current-point)))
         (prev-yank-p (continue-flag :yank)))
@@ -163,7 +164,7 @@
            (message "Previous command was not a yank")
            nil))))
 
-(define-command yank-pop-next (&optional n) ("p")
+(define-command (yank-pop-next (:advice-classes editable-advice)) (&optional n) ("p")
   (let ((start (cursor-yank-start (current-point)))
         (end (cursor-yank-end (current-point)))
         (prev-yank-p (continue-flag :yank)))
@@ -181,7 +182,7 @@
                               (if (null arg) 0 (1- arg)))))
     (copy-to-clipboard string)))
 
-(define-command paste-from-clipboard () ()
+(define-command (paste-from-clipboard (:advice-classes editable-advice)) () ()
   (insert-string (current-point) (get-clipboard-data)))
 
 (defun next-line-aux (n
@@ -289,12 +290,12 @@
         (unless (line-offset p 1)
           (return))))))
 
-(define-command entab-line (n) ("p")
+(define-command (entab-line (:advice-classes editable-advice)) (n) ("p")
   (tab-line-aux n
                 #'(lambda (n)
                     (make-string n :initial-element #\tab))))
 
-(define-command detab-line (n) ("p")
+(define-command (detab-line (:advice-classes editable-advice)) (n) ("p")
   (tab-line-aux n
                 (lambda (n)
                   (make-string (* n (variable-value 'tab-width))
@@ -312,7 +313,7 @@
 (define-command (previous-page-char (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (next-page-char (- n)))
 
-(define-command delete-blank-lines () ()
+(define-command (delete-blank-lines (:advice-classes editable-advice)) () ()
   (let ((point (current-point)))
     (loop
       (unless (blank-line-p point)
@@ -335,12 +336,12 @@
                                    '(#\space #\tab #\newline)))))
     (delete-character (current-point) (- n))))
 
-(define-command just-one-space () ()
+(define-command (just-one-space (:advice-classes editable-advice)) () ()
   (skip-whitespace-backward (current-point) t)
   (delete-while-whitespaces t)
   (insert-character (current-point) #\space 1))
 
-(define-command delete-indentation () ()
+(define-command (delete-indentation (:advice-classes editable-advice)) () ()
   (with-point ((p (current-point)))
     (line-start p)
     (unless (start-buffer-p p)
@@ -359,7 +360,7 @@
                                (syntax-expr-prefix-char-p c))))))
         (insert-character p #\space)))))
 
-(define-command transpose-characters () ()
+(define-command (transpose-characters (:advice-classes editable-advice)) () ()
   (let ((point (current-point)))
     (cond ((start-line-p point))
           ((end-line-p point)
@@ -403,10 +404,10 @@
           (delete-between-points start point)
           (insert-string point (princ-to-string (funcall fn n))))))))
 
-(define-command increment () ()
+(define-command (increment (:advice-classes editable-advice)) () ()
   (*crement-aux #'1+))
 
-(define-command decrement () ()
+(define-command (decrement (:advice-classes editable-advice)) () ()
   (*crement-aux #'1-))
 
 (define-command mark-set () ()

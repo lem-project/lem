@@ -49,7 +49,7 @@
 (define-command (previous-word (:advice-classes movable-advice)) (n) ("p")
   (word-offset (current-point) (- n)))
 
-(define-command delete-word (n) ("p")
+(define-command (delete-word (:advice-classes editable-advice)) (n) ("p")
   (with-point ((point (current-point) :right-inserting))
     (let ((start (current-point))
           (end (or (word-offset point n)
@@ -62,7 +62,7 @@
             (t
              (kill-region end start))))))
 
-(define-command backward-delete-word (n) ("p")
+(define-command (backward-delete-word (:advice-classes editable-advice)) (n) ("p")
   (with-killring-context (:before-inserting t)
     (delete-word (- n))))
 
@@ -103,13 +103,13 @@
                          replace-char-p)
         (move-point point end)))))
 
-(define-command (capitalize-word (:advice-classes movable-advice)) (&optional (n 1)) ("p")
+(define-command (capitalize-word (:advice-classes editable-advice)) (&optional (n 1)) ("p")
   (case-word-aux (current-point) n #'alphanumericp #'char-upcase #'char-downcase))
 
-(define-command (lowercase-word (:advice-classes movable-advice)) (&optional (n 1)) ("p")
+(define-command (lowercase-word (:advice-classes editable-advice)) (&optional (n 1)) ("p")
   (case-word-aux (current-point) n #'alphanumericp #'char-downcase #'char-downcase))
 
-(define-command (uppercase-word (:advice-classes movable-advice)) (&optional (n 1)) ("p")
+(define-command (uppercase-word (:advice-classes editable-advice)) (&optional (n 1)) ("p")
   (case-word-aux (current-point) n #'alphanumericp #'char-upcase #'char-upcase))
 
 (define-command (forward-paragraph (:advice-classes movable-advice)) (&optional (n 1)) ("p")
@@ -127,7 +127,7 @@
 (define-command (backward-paragraph (:advice-classes movable-advice)) (&optional (n 1)) ("p")
   (forward-paragraph (- n)))
 
-(define-command kill-paragraph (&optional (n 1)) ("p")
+(define-command (kill-paragraph (:advice-classes editable-advice)) (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (with-point ((start (current-point) :right-inserting))
       (forward-paragraph)

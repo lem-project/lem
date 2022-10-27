@@ -12,7 +12,7 @@
   (unless (get-self-insert-char)
     (undefined-key)))
 
-(define-command (self-insert (:advice-classes self-insert-advice))
+(define-command (self-insert (:advice-classes self-insert-advice editable-advice))
     (&optional (n 1) (char (get-self-insert-char)))
     ("p" (get-self-insert-char))
   (run-hooks (variable-value 'self-insert-before-hook) char)

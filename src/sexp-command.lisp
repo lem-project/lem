@@ -35,7 +35,7 @@
        (form-offset (current-point) 1)
        (set-cursor-mark (current-point) (current-point))))))
 
-(define-command kill-sexp (&optional (n 1)) ("p")
+(define-command (kill-sexp (:advice-classes editable-advice)) (&optional (n 1)) ("p")
   (dotimes (_ n t)
     (let ((end (form-offset (copy-point (current-point) :temporary) 1)))
       (if end
@@ -43,7 +43,7 @@
             (kill-region (current-point) end))
           (scan-error)))))
 
-(define-command transpose-sexps () ()
+(define-command (transpose-sexps (:advice-classes editable-advice)) () ()
   (with-point ((point1 (current-point) :left-inserting)
                (point2 (current-point) :left-inserting))
     (when (and (form-offset point1 -1)

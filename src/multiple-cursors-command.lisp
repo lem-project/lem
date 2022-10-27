@@ -20,15 +20,15 @@
   (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
+                            (command editable-advice)
+                            argument)
+  (process-each-cursors #'call-next-method))
+
+(defmethod execute :around (mode
                             (command jump-cursor-advice)
                             argument)
   (prog1 (call-next-method)
     (clear-cursors (current-buffer))))
-
-(defmethod execute :around (mode
-                            (command delete-next-char)
-                            argument)
-  (process-each-cursors #'call-next-method))
 
 (defmethod execute (mode
                     (command delete-previous-char)
@@ -53,71 +53,11 @@
     (kill-cursor-region (current-point))))
 
 (defmethod execute :around (mode
-                            (command kill-line)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
                             (command yank)
                             argument)
   (let ((*enable-clipboard-p* (and (enable-clipboard-p)
-                                        (null (buffer-fake-cursors (current-buffer))))))
+                                   (null (buffer-fake-cursors (current-buffer))))))
     (process-each-cursors #'call-next-method)))
-
-(defmethod execute :around (mode
-                            (command yank-pop)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command yank-pop-next)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command paste-from-clipboard)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command entab-line)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command detab-line)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command delete-blank-lines)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command just-one-space)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command delete-indentation)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command transpose-characters)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command increment)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command decrement)
-                            argument)
-  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
                             (command mark-set)
@@ -138,37 +78,7 @@
       (self-insert-aux char (or argument 1)))))
 
 (defmethod execute :around (mode
-                            (command newline)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command open-line)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
                             (command mark-sexp)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command kill-sexp)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command transpose-sexps)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command delete-word)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command backward-delete-word)
                             argument)
   (process-each-cursors #'call-next-method))
 
@@ -179,16 +89,6 @@
 
 (defmethod execute :around (mode
                             (command uppercase-region)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command kill-paragraph)
-                            argument)
-  (process-each-cursors #'call-next-method))
-
-(defmethod execute :around (mode
-                            (command self-insert)
                             argument)
   (process-each-cursors #'call-next-method))
 

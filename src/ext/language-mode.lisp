@@ -15,7 +15,7 @@
    :go-to-location
    :indent
    :newline-and-indent
-   :indent-region-command
+   :indent-region
    :xref-headline-attribute
    :xref-content-attribute
    :xref-insert-content
@@ -74,7 +74,7 @@
 (define-key *language-mode-keymap* "Tab" 'indent-line-and-complete-symbol)
 (define-key *global-keymap* "C-j" 'newline-and-indent)
 (define-key *global-keymap* "M-j" 'newline-and-indent)
-(define-key *language-mode-keymap* "C-M-\\" 'indent-region-command)
+(define-key *language-mode-keymap* "C-M-\\" 'indent-region)
 (define-key *language-mode-keymap* "M-;" 'comment-or-uncomment-region)
 (define-key *language-mode-keymap* "M-." 'find-definitions)
 (define-key *language-mode-keymap* "M-_" 'find-references)
@@ -116,7 +116,7 @@
           (delete-character p offset)))
       (line-offset p 0 old-charpos))))
 
-(define-command indent-region-command (start end) ("r")
+(define-command indent-region (start end) ("r")
   (indent-points start end))
 
 (defun space*-p (point)

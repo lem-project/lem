@@ -80,6 +80,18 @@
                         (t
                          (character-offset point 1))))))))
 
+(defun downcase-cursor-region (point)
+  (case-region-aux (cursor-region-beginning point)
+                   (cursor-region-end point)
+                   #'char-downcase
+                   #'identity))
+
+(defun uppercase-cursor-region (point)
+  (case-region-aux (cursor-region-beginning point)
+                   (cursor-region-end point)
+                   #'char-upcase
+                   #'identity))
+
 (define-command downcase-region (start end) ("r")
   (case-region-aux start end #'char-downcase #'identity))
 

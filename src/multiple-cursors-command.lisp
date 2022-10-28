@@ -85,12 +85,14 @@
 (defmethod execute :around (mode
                             (command downcase-region)
                             argument)
-  (process-each-cursors #'call-next-method))
+  (do-each-cursors ()
+    (downcase-cursor-region (current-point))))
 
 (defmethod execute :around (mode
                             (command uppercase-region)
                             argument)
-  (process-each-cursors #'call-next-method))
+  (do-each-cursors ()
+    (uppercase-cursor-region (current-point))))
 
 (define-command add-cursors-to-next-line () ()
   (let ((cursors (buffer-cursors (current-buffer))))

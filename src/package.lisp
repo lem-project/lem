@@ -324,6 +324,8 @@
    :main)
   ;; primitive-command.lisp
   (:export
+   :movable-advice
+   :editable-advice
    :*set-location-hook*
    :undefined-key
    :exit-lem

@@ -301,7 +301,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (insert-character yank-point c)
              (delete-character kill-point)))
          (move-point (current-point) origin)
-         (indent-region origin yank-point)))
+         (indent-points origin yank-point)))
       (t
        (scan-lists kill-point 1 1)
        (character-offset kill-point -1)
@@ -315,7 +315,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (insert-character yank-point c)
              (delete-character kill-point))
            (move-point (current-point) origin)
-           (indent-region origin yank-point)))))))
+           (indent-points origin yank-point)))))))
 
 (define-command paredit-barf () ()
   (with-point ((origin (current-point) :right-inserting)
@@ -334,7 +334,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (delete-character kill-point)
              (insert-character yank-point c))
            (move-point (current-point) origin)
-           (indent-region origin yank-point))))
+           (indent-points origin yank-point))))
       (t
        (scan-lists kill-point -1 1)
        (when (syntax-open-paren-char-p (character-at kill-point))
@@ -348,7 +348,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (skip-space-and-comment-backward yank-point)
              (insert-character yank-point c))
            (move-point (current-point) origin)
-           (indent-region origin kill-point)))))))
+           (indent-points origin kill-point)))))))
 
 (define-command paredit-splice () ()
   (with-point ((origin (current-point) :right-inserting)
@@ -371,7 +371,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            (character-offset end -1)
            (delete-character end)
            (delete-character start)
-           (indent-region start end)))))))
+           (indent-points start end)))))))
 
 (define-command paredit-splice-backward () ()
   (with-point ((origin (current-point) :right-inserting)
@@ -394,7 +394,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            (character-offset end -1)
            (delete-character end)
            (delete-between-points start origin)
-           (indent-region start end)))))))
+           (indent-points start end)))))))
 
 (define-command paredit-splice-forward () ()
   (with-point ((origin (current-point) :right-inserting)
@@ -417,7 +417,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            (scan-lists end 1 0)
            (delete-between-points origin end)
            (delete-character start)
-           (indent-region start end)))))))
+           (indent-points start end)))))))
 
 (define-command paredit-raise () ()
   (with-point ((start (current-point)))

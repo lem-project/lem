@@ -79,4 +79,4 @@
         (kill-sexp)
         (save-excursion (insert-string start remaining-text)))
       (form-offset end 1)
-      (indent-region start end))))
+      (indent-points start end))))

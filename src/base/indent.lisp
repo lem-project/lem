@@ -54,12 +54,12 @@
                          (copy-point point :temporary))))
     (indent-line-1 point column)))
 
-(defun indent-region (start end)
+(defun indent-points (start end)
   (apply-region-lines start end
                       (lambda (point)
                         (unless (blank-line-p point)
                           (indent-line point)))))
 
 (defun indent-buffer (buffer)
-  (indent-region (buffer-start-point buffer)
+  (indent-points (buffer-start-point buffer)
                  (buffer-end-point buffer)))

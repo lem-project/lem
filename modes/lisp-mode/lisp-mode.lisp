@@ -330,7 +330,7 @@
 (define-command lisp-indent-sexp () ()
   (with-point ((end (current-point) :right-inserting))
     (when (form-offset end 1)
-      (indent-region (current-point) end))))
+      (indent-points (current-point) end))))
 
 (define-command lisp-set-package (package-name) ((read-package-name))
   (check-connection)
@@ -623,7 +623,7 @@
                              (kill-sexp))
                            (insert-string (buffer-point buffer)
                                           string)
-                           (indent-region (buffer-start-point buffer)
+                           (indent-points (buffer-start-point buffer)
                                           (buffer-end-point buffer))
                            (with-pop-up-typeout-window (s buffer)
                              (declare (ignore s)))

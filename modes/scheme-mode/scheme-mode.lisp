@@ -139,7 +139,7 @@
 (define-command scheme-indent-sexp () ()
   (with-point ((end (current-point) :right-inserting))
     (when (form-offset end 1)
-      (indent-region (current-point) end))))
+      (indent-points (current-point) end))))
 
 (define-command scheme-scratch () ()
   (let ((buffer (primordial-buffer)))

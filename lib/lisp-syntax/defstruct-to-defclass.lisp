@@ -374,7 +374,7 @@
           (translate-complex-slot slot-info)
           (translate-simple-slot slot-info)))
     (insert-character point #\))
-    (indent-region (struct-start-point struct-info)
+    (indent-points (struct-start-point struct-info)
                    (struct-end-point struct-info))))
 
 (defun defstruct-to-defclass (point)

@@ -307,5 +307,5 @@
    :indent-tabs-mode
    :calc-indent-function
    :indent-line
-   :indent-region
+   :indent-points
    :indent-buffer))

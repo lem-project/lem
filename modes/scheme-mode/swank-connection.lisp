@@ -579,7 +579,7 @@
                                  (kill-sexp))
                                (insert-string (buffer-point buffer)
                                               string)
-                               (indent-region (buffer-start-point buffer)
+                               (indent-points (buffer-start-point buffer)
                                               (buffer-end-point buffer))
                                (with-pop-up-typeout-window (s buffer)
                                  (declare (ignore s)))

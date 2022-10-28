@@ -117,7 +117,7 @@
       (line-offset p 0 old-charpos))))
 
 (define-command indent-region-command (start end) ("r")
-  (indent-region start end))
+  (indent-points start end))
 
 (defun space*-p (point)
   (with-point ((point point))

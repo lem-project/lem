@@ -294,7 +294,7 @@
            (indent-line (current-point))
            (throw tag t))
           ((visual-p)
-           (apply-visual-range #'indent-region)
+           (apply-visual-range #'indent-points)
            (vi-visual-end))
           (t
            (let ((uarg (or (read-universal-argument) n))
@@ -308,7 +308,7 @@
                    (with-point ((end (current-point)))
                      (when (point< end start)
                        (rotatef start end))
-                     (indent-region start end))))))))))
+                     (indent-points start end))))))))))
 
 (define-command vi-substitute (&optional (n 1)) ("p")
   (vi-delete-next-char n)

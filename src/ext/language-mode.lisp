@@ -165,10 +165,10 @@
           (return t))))))
 
 (define-command comment-region () ()
-  (let ((line-comment (or (variable-value 'insertion-line-comment :buffer)
-                          (variable-value 'line-comment :buffer))))
-    (when line-comment
-      (save-excursion
+  (save-excursion ; To keep to mark-set
+    (let ((line-comment (or (variable-value 'insertion-line-comment :buffer)
+                            (variable-value 'line-comment :buffer))))
+      (when line-comment
         (with-point ((start (current-point) :right-inserting)
                      (end (current-point) :left-inserting))
           (set-region-point start end)
@@ -191,24 +191,25 @@
               (line-offset start 1 charpos))))))))
 
 (define-command uncomment-region () ()
-  (let* ((line-comment (variable-value 'line-comment :buffer))
-         (insertion-line-comment (or (variable-value 'insertion-line-comment :buffer)
-                                     line-comment)))
-    (when line-comment
-      (with-point ((start (current-point) :right-inserting)
-                   (end (current-point) :right-inserting))
-        (set-region-point start end)
-        (let ((p start))
-          (loop
-            (parse-partial-sexp p end nil t)
-            (when (point<= end p) (return))
-            (when (looking-at p line-comment)
-              (let ((res (looking-at p insertion-line-comment)))
-                (if res
-                    (delete-character p (length res))
-                    (loop :while (looking-at p line-comment)
-                          :do (delete-character p (length line-comment))))))
-            (unless (line-offset p 1) (return))))))))
+  (save-excursion ; To keep to mark-set
+    (let* ((line-comment (variable-value 'line-comment :buffer))
+           (insertion-line-comment (or (variable-value 'insertion-line-comment :buffer)
+                                       line-comment)))
+      (when line-comment
+        (with-point ((start (current-point) :right-inserting)
+                     (end (current-point) :right-inserting))
+          (set-region-point start end)
+          (let ((p start))
+            (loop
+              (parse-partial-sexp p end nil t)
+              (when (point<= end p) (return))
+              (when (looking-at p line-comment)
+                (let ((res (looking-at p insertion-line-comment)))
+                  (if res
+                      (delete-character p (length res))
+                      (loop :while (looking-at p line-comment)
+                            :do (delete-character p (length line-comment))))))
+              (unless (line-offset p 1) (return)))))))))
 
 (define-attribute xref-headline-attribute
   (t :bold-p t))

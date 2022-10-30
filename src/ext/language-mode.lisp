@@ -137,15 +137,17 @@
     (point<= point p)))
 
 (define-command comment-or-uncomment-region () ()
-  (if (commented-region-p)
-      (uncomment-region)
-      (comment-region)))
+  (let ((commented (commented-region-p)))
+    (lem::do-each-cursors ()
+      (if commented
+          (uncomment-region)
+          (comment-region)))))
 
 (defun set-region-point (start end)
   (cond
     ((buffer-mark-p (current-buffer))
-     (move-point start (region-beginning))
-     (move-point end (region-end)))
+     (move-point start (lem::cursor-region-beginning (current-point)))
+     (move-point end (lem::cursor-region-end (current-point))))
     (t
      (line-start start)
      (line-end end))))

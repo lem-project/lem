@@ -119,6 +119,13 @@
 (define-command indent-region (start end) ("r")
   (indent-points start end))
 
+(defmethod execute :around (mode
+                            (command indent-region)
+                            argument)
+  (lem::do-each-cursors ()
+    (indent-points (lem::cursor-region-beginning (current-point))
+                   (lem::cursor-region-end (current-point)))))
+
 (defun space*-p (point)
   (with-point ((point point))
     (skip-whitespace-forward point t)

@@ -136,12 +136,10 @@
     (back-to-indentation p)
     (point<= point p)))
 
-(define-command comment-or-uncomment-region () ()
-  (let ((commented (commented-region-p)))
-    (lem::do-each-cursors ()
-      (if commented
-          (uncomment-region)
-          (comment-region)))))
+(define-command (comment-or-uncomment-region (:advice-classes editable-advice)) () ()
+  (if (commented-region-p)
+      (uncomment-region)
+      (comment-region)))
 
 (defun set-region-point (start end)
   (cond
@@ -166,7 +164,7 @@
         (unless (line-offset start 1)
           (return t))))))
 
-(define-command comment-region () ()
+(define-command (comment-region (:advice-classes editable-advice)) () ()
   (save-excursion ; To keep to mark-set
     (let ((line-comment (or (variable-value 'insertion-line-comment :buffer)
                             (variable-value 'line-comment :buffer))))
@@ -192,7 +190,7 @@
                 (insert-string start line-comment))
               (line-offset start 1 charpos))))))))
 
-(define-command uncomment-region () ()
+(define-command (uncomment-region (:advice-classes editable-advice)) () ()
   (save-excursion ; To keep to mark-set
     (let* ((line-comment (variable-value 'line-comment :buffer))
            (insertion-line-comment (or (variable-value 'insertion-line-comment :buffer)
@@ -433,7 +431,7 @@
           (complete-symbol)))
       (complete-symbol)))
 
-(define-command insert-\(\) () ()
+(define-command (insert-\(\) (:advice-classes editable-advice)) () ()
   (let ((p (current-point)))
     (insert-character p #\()
     (insert-character p #\))
@@ -460,7 +458,7 @@
       (delete-character p)
       (character-offset p -1))))
 
-(define-command move-over-\) () ()
+(define-command (move-over-\) (:advice-classes movable-advice editable-advice)) () ()
   (let ((rper (backward-search-rper)))
     (if rper
         (progn

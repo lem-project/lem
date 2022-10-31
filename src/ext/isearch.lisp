@@ -412,9 +412,20 @@
 (defun search-next-matched (point n)
   (alexandria:when-let ((string (or (buffer-value (current-buffer) 'isearch-redisplay-string)
                                     *isearch-string*)))
-    (let ((search-fn (if (plusp n)
-                         *isearch-search-forward-function*
-                         *isearch-search-backward-function*)))
+    (let ((search-fn
+            (if (plusp n)
+                *isearch-search-forward-function*
+                *isearch-search-backward-function*))
+          (search-previous-fn
+            (if (plusp n)
+                *isearch-search-backward-function*
+                *isearch-search-forward-function*)))
+      (with-point ((start point)
+                   (end point))
+        (funcall search-fn end string)
+        (funcall search-previous-fn (move-point start end) string)
+        (when (point<= start point)
+          (move-point point end)))
       (dotimes (_ (abs n) point)
         (unless (funcall search-fn point string)
           (return nil))))))

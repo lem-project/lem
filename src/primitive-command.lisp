@@ -29,8 +29,7 @@
 (define-command nop-command () ())
 
 (define-command unmark-buffer () ()
-  (buffer-unmark (current-buffer))
-  t)
+  (buffer-unmark (current-buffer)))
 
 (defvar *read-only-function* nil)
 
@@ -39,12 +38,10 @@
         (not (buffer-read-only-p (current-buffer))))
   (when *read-only-function*
     (funcall *read-only-function*
-             (buffer-read-only-p (current-buffer))))
-  t)
+             (buffer-read-only-p (current-buffer)))))
 
 (define-command rename-buffer (name) ("sRename buffer: ")
-  (buffer-rename (current-buffer) name)
-  t)
+  (buffer-rename (current-buffer) name))
 
 (define-command quoted-insert (&optional (n 1)) ("p")
   (let* ((key (read-key))
@@ -95,8 +92,7 @@
 (define-command copy-region (start end) ("r")
   (with-killring-context (:appending (continue-flag :kill))
     (copy-to-clipboard-with-killring (points-to-string start end)))
-  (buffer-mark-cancel (current-buffer))
-  t)
+  (buffer-mark-cancel (current-buffer)))
 
 (define-command copy-region-to-clipboard (start end) ("r")
   (copy-to-clipboard (points-to-string start end)))
@@ -231,13 +227,11 @@
 
 (define-command (move-to-beginning-of-buffer (:advice-classes jump-cursor-advice)) () ()
   (run-hooks *set-location-hook* (current-point))
-  (buffer-start (current-point))
-  t)
+  (buffer-start (current-point)))
 
 (define-command (move-to-end-of-buffer (:advice-classes jump-cursor-advice)) () ()
   (run-hooks *set-location-hook* (current-point))
-  (buffer-end (current-point))
-  t)
+  (buffer-end (current-point)))
 
 (define-command (move-to-beginning-of-line (:advice-classes movable-advice)) () ()
   (let ((bol (backward-line-wrap (copy-point (current-point) :temporary)
@@ -247,20 +241,18 @@
         (previous-single-property-change (current-point)
                                          :field
                                          bol)
-        (move-point (current-point) bol)))
-  t)
+        (move-point (current-point) bol))))
+
 (define-command (move-to-beginning-of-logical-line (:advice-classes movable-advice)) () ()
-  (line-start (current-point))
-  t)
+  (line-start (current-point)))
 
 (define-command (move-to-end-of-line (:advice-classes movable-advice)) () ()
   (or (and (forward-line-wrap (current-point) (current-window))
            (character-offset (current-point) -1))
-      (line-end (current-point)))
-  t)
+      (line-end (current-point))))
+
 (define-command (move-to-end-of-logical-line (:advice-classes movable-advice)) () ()
-  (line-end (current-point))
-  t)
+  (line-end (current-point)))
 
 (define-command (next-page (:advice-classes movable-advice)) (&optional n) ("P")
   (if n
@@ -377,8 +369,7 @@
              (insert-string point (format nil "~C~C" c1 c2)))))))
 
 (define-command (back-to-indentation-command (:advice-classes movable-advice)) () ()
-  (back-to-indentation (current-point))
-  t)
+  (back-to-indentation (current-point)))
 
 (define-command undo (n) ("p")
   ;; TODO: multiple cursors
@@ -434,8 +425,7 @@
         ((< #1=(buffer-nlines (current-buffer)) n)
          (setf n #1#)))
   (run-hooks *set-location-hook* (current-point))
-  (line-offset (buffer-start (current-point)) (1- n))
-  t)
+  (line-offset (buffer-start (current-point)) (1- n)))
 
 (define-command filter-buffer (cmd) ("sFilter buffer: ")
   (let ((buffer (current-buffer))
@@ -467,8 +457,7 @@
             (delete-between-points start end)
             (insert-string start output-string)
             (move-to-line (current-point) line-number)
-            (line-offset (current-point) 0 charpos)
-            t))))))
+            (line-offset (current-point) 0 charpos)))))))
 
 (define-command pipe-command (str) ("sPipe command: ")
   (let ((directory (buffer-directory)))

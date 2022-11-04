@@ -390,10 +390,17 @@
   (multiple-value-bind (buffer width)
       (create-menu-buffer items *print-spec*)
     (update-focus-overlay (buffer-point buffer))
-    (update-popup-window :source-window (current-window)
-                         :width width
-                         :height (min 20 (length items))
-                         :destination-window *menu-window*)))
+    (let ((source-window (current-window)))
+      (when (eq source-window
+                (frame-prompt-window (current-frame)))
+        ;; prompt-window内でcompletion-windowを出している場合,
+        ;; completion-windowの位置を決める前にprompt-windowの調整を先にしておかないとずれるため,
+        ;; ここで更新する
+        (lem::update-floating-prompt-window (current-frame)))
+      (update-popup-window :source-window source-window
+                           :width width
+                           :height (min 20 (length items))
+                           :destination-window *menu-window*))))
 
 (defmethod lem-if:popup-menu-quit (implementation)
   (when *focus-overlay*

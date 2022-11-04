@@ -140,6 +140,10 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
   (when (window-in-frame-p window (current-frame))
     (current-frame)))
 
+(defun update-floating-prompt-window (frame)
+  (when (frame-floating-prompt-window frame)
+    (update-prompt-window (frame-floating-prompt-window frame))))
+
 
 (defun add-floating-window (frame window)
   (alexandria:nconcf (frame-floating-windows frame)

@@ -98,7 +98,7 @@
   (let ((cursors (buffer-cursors (current-buffer))))
     (loop :for (cursor next-cursor) :on cursors
           :do (with-point ((p cursor))
-                (when (and (line-offset p 1)
+                (when (and (line-offset p 1 (point-charpos p))
                            (or (null next-cursor)
                                (not (same-line-p p next-cursor))))
                   (make-fake-cursor p))))))

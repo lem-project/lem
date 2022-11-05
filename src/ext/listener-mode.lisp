@@ -145,7 +145,7 @@
 (define-command listener-prev-input () ()
   (%backup-edit-string (current-listener-history))
   (multiple-value-bind (str win)
-      (lem.history:prev-history (current-listener-history))
+      (lem.history:previous-history (current-listener-history))
     (when win
       (replace-textarea str))))
 

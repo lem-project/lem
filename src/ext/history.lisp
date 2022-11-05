@@ -3,7 +3,7 @@
   (:export :make-history
            :last-history
            :add-history
-           :prev-history
+           :previous-history
            :next-history
            :previous-matching
            :backup-edit-string
@@ -42,7 +42,7 @@
         (length (history-data history)))
   input)
 
-(defun prev-history (history)
+(defun previous-history (history)
   (when (< 0 (history-index history))
     (values (aref (history-data history)
                   (decf (history-index history)))

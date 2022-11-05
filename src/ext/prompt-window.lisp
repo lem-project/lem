@@ -134,7 +134,7 @@
 (define-command prompt-previous-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))
     (lem.history:backup-edit-string history (get-input-string))
-    (replace-if-history-exists #'lem.history:prev-history)))
+    (replace-if-history-exists #'lem.history:previous-history)))
 
 (define-command prompt-next-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))

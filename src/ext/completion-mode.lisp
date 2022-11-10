@@ -164,20 +164,20 @@
                                          mismatch)))))
       n)))
 
-(defun narrowing-down ()
-  (when *last-items*
-    (let ((n (partial-match (mapcar #'completion-item-label *last-items*))))
+(defun narrowing-down (last-items)
+  (when last-items
+    (let ((n (partial-match (mapcar #'completion-item-label last-items))))
       (multiple-value-bind (start end)
-          (completion-item-range (current-point) (first *last-items*))
+          (completion-item-range (current-point) (first last-items))
         (cond ((and n (plusp n) (< (count-characters start end) n))
                (completion-insert (current-point)
-                                  (first *last-items*)
+                                  (first last-items)
                                   n)
                (completion-again)
                t)
-              ((alexandria:length= *last-items* 1)
+              ((alexandria:length= last-items 1)
                (completion-insert (current-point)
-                                  (first *last-items*))
+                                  (first last-items))
                (completion-again)
                t)
               (t
@@ -185,7 +185,7 @@
 
 (define-command completion-narrowing-down-or-next-line () ()
   (when *last-items*
-    (or (narrowing-down)
+    (or (narrowing-down *last-items*)
         (completion-next-line))))
 
 (defun start-completion-mode (completion-spec)
@@ -251,7 +251,7 @@
             :style '(:use-border nil :offset-y 1))
            (start-completion-mode completion-spec)
            (unless repeat
-             (narrowing-down))))))
+             (narrowing-down *last-items*))))))
 
 (defun run-completion (completion)
   (let ((completion-spec

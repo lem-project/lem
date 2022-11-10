@@ -213,17 +213,20 @@
               :test #'alexandria:starts-with-subseq
               :key #'completion-item-label))
 
+(defun compute-completion-items (completion-spec)
+  (let ((items (funcall (spec-function completion-spec) (current-point))))
+    (when (spec-prefix-search completion-spec)
+      (setf items
+            (prefix-search (points-to-string *initial-point* (current-point))
+                           items)))
+    items))
+
 (defun completion-items (completion-spec repeat)
   (cond ((and repeat (spec-prefix-search completion-spec))
          (prefix-search (points-to-string *initial-point* (current-point))
                         *last-items*))
         (t
-         (let ((items (funcall (spec-function completion-spec) (current-point))))
-           (when (spec-prefix-search completion-spec)
-             (setf items
-                   (prefix-search (points-to-string *initial-point* (current-point))
-                                  items)))
-           (setf *last-items* items)))))
+         (setf *last-items* (compute-completion-items completion-spec)))))
 
 (defun run-completion-1 (completion-spec repeat)
   (let ((items (completion-items completion-spec repeat)))

@@ -94,6 +94,8 @@
                    :attribute 'detail-attribute)
     (insert-string point " ")))
 
+(defparameter *limit-number-of-items* 100)
+
 (defvar *current-completion-spec* nil)
 (defvar *last-items* nil)
 (defvar *initial-point* nil)
@@ -215,6 +217,9 @@
 
 (defun compute-completion-items (completion-spec)
   (let ((items (funcall (spec-function completion-spec) (current-point))))
+    (when (and *limit-number-of-items*
+               (< *limit-number-of-items* (length items)))
+      (setf items (subseq items 0 *limit-number-of-items*)))
     (when (spec-prefix-search completion-spec)
       (setf items
             (prefix-search (points-to-string *initial-point* (current-point))

@@ -43,12 +43,14 @@
 (defmethod execute :around (mode
                             (command copy-region)
                             argument)
+  (check-marked)
   (do-each-cursors ()
     (copy-cursor-region (current-point))))
 
 (defmethod execute :around (mode
                             (command kill-region)
                             argument)
+  (check-marked)
   (do-each-cursors ()
     (kill-cursor-region (current-point))))
 
@@ -85,12 +87,14 @@
 (defmethod execute :around (mode
                             (command downcase-region)
                             argument)
+  (check-marked)
   (do-each-cursors ()
     (downcase-cursor-region (current-point))))
 
 (defmethod execute :around (mode
                             (command uppercase-region)
                             argument)
+  (check-marked)
   (do-each-cursors ()
     (uppercase-cursor-region (current-point))))
 

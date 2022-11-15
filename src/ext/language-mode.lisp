@@ -122,6 +122,7 @@
 (defmethod execute :around (mode
                             (command indent-region)
                             argument)
+  (check-marked)
   (lem::do-each-cursors ()
     (indent-points (lem::cursor-region-beginning (current-point))
                    (lem::cursor-region-end (current-point)))))

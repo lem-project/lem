@@ -4,9 +4,11 @@
 (defvar *program-name-relationals* '())
 
 (defun get-file-mode (pathname)
-  (alexandria:assoc-value *file-type-relationals*
-                          (pathname-type pathname)
-                          :test #'string=))
+  (loop :with filename := (file-namestring pathname)
+        :for (file-type . mode) :in *file-type-relationals*
+        :do (when (alexandria:ends-with-subseq (format nil ".~A" file-type)
+                                               filename)
+              (return mode))))
 
 (defun associcate-file-type (type-list mode)
   (dolist (type type-list)

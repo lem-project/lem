@@ -24,8 +24,6 @@
 (defvar *loop-indent-subclauses* nil)
 (defvar *simple-loop-indentation* 2)
 
-(defvar *indent-log* '())
-
 (defun get-indentation (name)
   (or (gethash name *static-indent-table*)
       (caar (gethash name *dynamic-indent-table*))))
@@ -34,7 +32,6 @@
   (setf (gethash name *static-indent-table*) method))
 
 (defun update-system-indentation (name indent packages)
-  (push (list :update-system-indentation name indent packages) *indent-log*)
   (let ((list (gethash name *dynamic-indent-table*))
         ok)
     (if (null list)
@@ -53,7 +50,6 @@
             (cons (cons indent packages) list)))))
 
 (defun indentation-update ()
-  (push (list :indentation-update) *indent-log*)
   (do-all-symbols (symbol)
     (let ((key (string-downcase symbol)))
       (alexandria:when-let ((indent (swank::symbol-indentation symbol)))

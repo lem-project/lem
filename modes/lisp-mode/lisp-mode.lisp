@@ -173,7 +173,6 @@
     (connection-features *connection*)))
 
 (defun indentation-update (info)
-  (push (list :indentation-update info) lem-lisp-syntax.indent::*indent-log*)
   (loop :for (name indent packages) :in info
         :do (lem-lisp-syntax:update-system-indentation name indent packages)))
 

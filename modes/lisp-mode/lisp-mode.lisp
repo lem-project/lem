@@ -19,7 +19,6 @@
 (defvar *connection* nil)
 (defvar *event-hooks* '())
 (defvar *last-compilation-result* nil)
-(defvar *indent-table* (make-hash-table :test 'equal))
 
 (define-major-mode lisp-mode language-mode
     (:name "lisp"
@@ -176,33 +175,10 @@
 (defun indentation-update (info)
   (push (list :indentation-update info) lem-lisp-syntax.indent::*indent-log*)
   (loop :for (name indent packages) :in info
-        :do (lem-lisp-syntax:update-system-indentation name indent packages))
-  #+(or)
-  (loop :for (name indent packages) :in info
-        :do (dolist (package packages)
-              (unless (gethash package *indent-table*)
-                (setf (gethash package *indent-table*)
-                      (make-hash-table :test 'equal)))
-              (setf (gethash name (gethash package *indent-table*)) indent))))
-
-(defun indent-spec (string)
-  (when (connected-p)
-    (let* ((parts (uiop:split-string string :separator ":"))
-           (length (length parts))
-           (package))
-      (cond ((= length 1)
-             (setq package (current-package)))
-            ((or (= length 2)
-                 (and (= length 3)
-                      (string= "" (second parts))))
-             (setq package (first parts))))
-      (let ((table (gethash package *indent-table*)))
-        (when table
-          (values (gethash (first (last parts)) table)))))))
+        :do (lem-lisp-syntax:update-system-indentation name indent packages)))
 
 (defun calc-indent (point)
-  (let ((lem-lisp-syntax:*get-method-function* #'indent-spec))
-    (lem-lisp-syntax:calc-indent point)))
+  (lem-lisp-syntax:calc-indent point))
 
 (defun lisp-rex (form &key
                       continuation

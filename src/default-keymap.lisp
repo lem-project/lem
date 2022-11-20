@@ -115,3 +115,5 @@
 
 (define-key *global-keymap* "C-x ?" 'describe-key)
 (define-key *global-keymap* "M-x" 'execute-command)
+
+(define-key *global-keymap* "M-C" 'add-cursors-to-next-line)

@@ -1,20 +1,27 @@
 (defpackage :lem.listener-mode
   (:use :cl :lem)
-  (:export :listener-prompt-attribute
-           :*listener-mode-keymap*
-           :listener-mode
-           :input-start-point
-           :listener-start
-           :change-input-start-point
-           :refresh-prompt
-           :listener-return
-           :listener-prev-input
-           :listener-next-input
-           :listener-reset-interactive
-           :listener-set-prompt-function
-           :listener-check-input-function
-           :listener-execute-function
-           :clear-listener)
+  (:export
+   ;; keymap
+   :*listener-mode-keymap*
+   ;; functions
+   :input-start-point
+   :listener-start
+   :change-input-start-point
+   :refresh-prompt
+   :clear-listener
+   ;; editor variables
+   :listener-prompt-attribute
+   :listener-set-prompt-function
+   :listener-check-input-function
+   :listener-execute-function
+   ;; commands
+   :listener-mode
+   :listener-return
+   :listener-prev-input
+   :listener-next-input
+   :listener-previous-matching-input
+   :listener-clear-buffer
+   :listener-clear-input)
   #+sbcl
   (:lock t))
 (in-package :lem.listener-mode)

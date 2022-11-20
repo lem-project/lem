@@ -112,14 +112,13 @@
         (let ((start (input-start-point (current-buffer))))
           (unless (point<= start point)
             (refresh-prompt)
-            (return-from listener-return t))
+            (return-from listener-return))
           (let ((str (points-to-string start point)))
             (lem.history:add-history (current-listener-history) str)
             (buffer-end point)
             (insert-character point #\newline)
             (change-input-start-point (current-point))
-            (funcall (variable-value 'listener-execute-function) point str)))))
-  t)
+            (funcall (variable-value 'listener-execute-function) point str))))))
 
 (defun %backup-edit-string (history)
   (lem.history:backup-edit-string
@@ -171,8 +170,7 @@
   (refresh-prompt buffer))
 
 (define-command listener-clear-buffer () ()
-  (clear-listener (current-buffer))
-  t)
+  (clear-listener (current-buffer)))
 
 (define-command listener-clear-input () ()
   (delete-between-points (input-start-point (current-buffer))

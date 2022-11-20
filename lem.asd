@@ -51,9 +51,8 @@
                (:file "fundamental-mode")
                (:file "comp")
                (:file "typeout")
-               (:file "lem")
-
                (:file "cursors")
+               (:file "lem")
 
                (:file "primitive-command")
                (:file "self-insert-command")

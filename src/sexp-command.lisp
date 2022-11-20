@@ -65,8 +65,7 @@
         (insert-string point1 form-string2)
         (insert-string point2 form-string1)))))
 
-(define-command kill-around-form () ()
-  ;; TODO: multiple cursors
+(define-command (kill-around-form (:advice-classes editable-advice)) () ()
   (with-point ((end (current-point) :right-inserting))
     (let ((start (current-point)))
       (unless (form-offset end 1)

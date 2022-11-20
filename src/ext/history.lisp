@@ -15,18 +15,16 @@
 (defstruct (history (:constructor %make-history))
   data
   index
-  novelty-check
   edit-string)
 
-(defun history-default-novelty-check (input last-input)
+(defun require-additions-to-history-p (input last-input)
   (and (not (equal input last-input))
        (not (equal input ""))))
 
-(defun make-history (&optional (novelty-check #'history-default-novelty-check))
+(defun make-history ()
   (%make-history
    :data (make-array 0 :fill-pointer 0 :adjustable t)
-   :index 0
-   :novelty-check novelty-check))
+   :index 0))
 
 (defun last-history (history)
   (when (< 0 (length (history-data history)))
@@ -34,9 +32,9 @@
           (1- (length (history-data history))))))
 
 (defun add-history (history input)
-  (when (funcall (history-novelty-check history)
-                 input
-                 (last-history history))
+  (when (require-additions-to-history-p
+         input
+         (last-history history))
     (vector-push-extend input (history-data history)))
   (setf (history-index history)
         (length (history-data history)))
@@ -77,4 +75,3 @@
     (setf (history-index history) (length (history-data history)))
     (values (history-edit-string history)
             t)))
-

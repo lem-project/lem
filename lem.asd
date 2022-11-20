@@ -16,7 +16,8 @@
   :serial t
   :components ((:module "common"
                 :components ((:file "ring")
-                             (:file "killring")))
+                             (:file "killring")
+                             (:file "history")))
                (:file "package")
                (:file "quicklisp-utils")
                (:file "config")
@@ -75,7 +76,6 @@
                 :serial t
                 :components ((:file "popup-window")
                              (:file "completion-mode")
-                             (:file "history")
                              (:file "prompt-window")
                              (:file "tmlanguage")
                              (:file "button")

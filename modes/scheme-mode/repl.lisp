@@ -83,7 +83,7 @@
      (let ((str (points-to-string
                  (lem.listener-mode:input-start-point (current-buffer))
                  (current-point))))
-       (lem.history:add-history (lem.listener-mode::current-listener-history) str)
+       (lem/common/history:add-history (lem.listener-mode::current-listener-history) str)
        (scheme-run-process-and-output-newline)
        (scheme-send-input str)))
     (t

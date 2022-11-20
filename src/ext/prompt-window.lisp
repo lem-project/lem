@@ -108,7 +108,7 @@
   (let ((input (get-input-string)))
     (when (or (null (prompt-window-existing-test-function (current-prompt-window)))
               (funcall (prompt-window-existing-test-function (current-prompt-window)) input))
-      (lem.history:add-history (prompt-window-history (current-prompt-window)) input)
+      (lem/common/history:add-history (prompt-window-history (current-prompt-window)) input)
       (error 'execute-condition :input input))))
 
 (define-command prompt-completion () ()
@@ -133,14 +133,14 @@
 
 (define-command prompt-previous-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))
-    (lem.history:backup-edit-string history (get-input-string))
-    (replace-if-history-exists #'lem.history:previous-history)))
+    (lem/common/history:backup-edit-string history (get-input-string))
+    (replace-if-history-exists #'lem/common/history:previous-history)))
 
 (define-command prompt-next-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))
-    (lem.history:backup-edit-string history (get-input-string))
-    (or (replace-if-history-exists #'lem.history:next-history)
-        (replace-if-history-exists #'lem.history:restore-edit-string))))
+    (lem/common/history:backup-edit-string history (get-input-string))
+    (or (replace-if-history-exists #'lem/common/history:next-history)
+        (replace-if-history-exists #'lem/common/history:restore-edit-string))))
 
 (defun compute-window-rectangle (buffer &key gravity source-window)
   (destructuring-bind (width height) (lem.popup-window::compute-size-from-buffer buffer)
@@ -239,7 +239,7 @@
 (defun get-history (history-name)
   (or (gethash history-name *history-table*)
       (setf (gethash history-name *history-table*)
-            (lem.history:make-history))))
+            (lem/common/history:make-history))))
 
 (defmacro with-unwind-setf (bindings form &body cleanup-forms)
   (let ((gensyms (mapcar (lambda (b)

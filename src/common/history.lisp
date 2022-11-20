@@ -1,4 +1,4 @@
-(defpackage :lem.history
+(defpackage :lem/common/history
   (:use :cl)
   (:export :make-history
            :last-history
@@ -10,7 +10,7 @@
            :restore-edit-string)
   #+sbcl
   (:lock t))
-(in-package :lem.history)
+(in-package :lem/common/history)
 
 (defstruct (history (:constructor %make-history))
   data

@@ -54,7 +54,7 @@
   (setf (variable-value 'enable-syntax-highlight) nil)
   (unless (listener-history (current-buffer))
     (setf (listener-history (current-buffer))
-          (lem.history:make-history)))
+          (lem/common/history:make-history)))
   (unless (input-start-point (current-buffer))
     (change-input-start-point (current-point))))
 
@@ -119,21 +119,21 @@
             (refresh-prompt)
             (return-from listener-return))
           (let ((str (points-to-string start point)))
-            (lem.history:add-history (current-listener-history) str)
+            (lem/common/history:add-history (current-listener-history) str)
             (buffer-end point)
             (insert-character point #\newline)
             (change-input-start-point (current-point))
             (funcall (variable-value 'listener-execute-function) point str))))))
 
 (defun %backup-edit-string (history)
-  (lem.history:backup-edit-string
+  (lem/common/history:backup-edit-string
    history
    (points-to-string (input-start-point (current-buffer))
                      (buffer-end-point (current-buffer)))))
 
 (defun %restore-edit-string (history)
   (multiple-value-bind (str win)
-      (lem.history:restore-edit-string history)
+      (lem/common/history:restore-edit-string history)
     (when win
       (replace-textarea str))))
 
@@ -149,7 +149,7 @@
 (define-command listener-previous-input () ()
   (%backup-edit-string (current-listener-history))
   (multiple-value-bind (str win)
-      (lem.history:previous-history (current-listener-history))
+      (lem/common/history:previous-history (current-listener-history))
     (when win
       (replace-textarea str))))
 
@@ -157,7 +157,7 @@
   (%backup-edit-string (current-listener-history))
   (%restore-edit-string (current-listener-history))
   (multiple-value-bind (str win)
-      (lem.history:next-history (current-listener-history))
+      (lem/common/history:next-history (current-listener-history))
     (when win
       (replace-textarea str))))
 
@@ -165,7 +165,7 @@
     ((prompt-for-string "Previous element matching (regexp): "))
   (%backup-edit-string (current-listener-history))
   (multiple-value-bind (str win)
-      (lem.history:previous-matching (current-listener-history) regexp)
+      (lem/common/history:previous-matching (current-listener-history) regexp)
     (when win
       (replace-textarea str))))
 

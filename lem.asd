@@ -11,8 +11,7 @@
                "log4cl"
                "split-sequence"
                "lem-base"
-               ;; "lem-encodings"
-               )
+               "lem-encodings")
   :pathname "src"
   :serial t
   :components ((:module "common"

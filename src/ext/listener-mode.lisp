@@ -17,7 +17,7 @@
    ;; commands
    :listener-mode
    :listener-return
-   :listener-prev-input
+   :listener-previous-input
    :listener-next-input
    :listener-previous-matching-input
    :listener-clear-buffer
@@ -59,7 +59,7 @@
     (change-input-start-point (current-point))))
 
 (define-key *listener-mode-keymap* "Return" 'listener-return)
-(define-key *listener-mode-keymap* "M-p" 'listener-prev-input)
+(define-key *listener-mode-keymap* "M-p" 'listener-previous-input)
 (define-key *listener-mode-keymap* "M-n" 'listener-next-input)
 (define-key *listener-mode-keymap* "M-r" 'listener-previous-matching-input)
 (define-key *listener-mode-keymap* "C-c M-o" 'listener-clear-buffer)
@@ -146,7 +146,7 @@
       (move-point (input-start-point (current-buffer)) start))
     (buffer-end (current-point))))
 
-(define-command listener-prev-input () ()
+(define-command listener-previous-input () ()
   (%backup-edit-string (current-listener-history))
   (multiple-value-bind (str win)
       (lem.history:previous-history (current-listener-history))

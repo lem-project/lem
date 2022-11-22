@@ -13,7 +13,8 @@
   :components ((:file "utilities")
                (:module "common"
                 :components ((:file "ring")
-                             (:file "killring")))
+                             (:file "killring")
+                             (:file "history")))
                (:module "lsp-utils"
                 :components ((:file "json")
                              (:file "json-lsp-utils")))

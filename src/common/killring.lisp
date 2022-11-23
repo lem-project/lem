@@ -30,15 +30,10 @@
 (defun copy-killring (killring)
   (make-instance 'killring :ring (copy-ring (killring-ring killring))))
 
-(defgeneric push-killring-item (killring string &key options &allow-other-keys))
-
-(defmethod push-killring-item :before ((killring killring) string &key &allow-other-keys)
-  (setf (killring-offset killring) 0))
-
 (defmethod push-killring-item ((killring killring)
                                string
-                               &key (options *options*)
-                               &allow-other-keys)
+                               &key (options *options*))
+  (setf (killring-offset killring) 0)
   (let ((item (make-item :string string :options (alexandria:ensure-list options)))
         (ring (killring-ring killring)))
     (cond ((not *appending*)

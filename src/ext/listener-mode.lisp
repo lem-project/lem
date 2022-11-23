@@ -60,14 +60,30 @@
 (define-key *listener-mode-keymap* "C-c M-o" 'listener-clear-buffer)
 (define-key *listener-mode-keymap* "C-c C-u" 'listener-clear-input)
 
-(defun start-listener-mode ()
+(defun start-listener-mode (&optional history-pathname)
   (listener-mode t)
   (setf (variable-value 'enable-syntax-highlight) nil)
   (unless (listener-history (current-buffer))
     (setf (listener-history (current-buffer))
-          (lem/common/history:make-history)))
+          (lem/common/history:make-history :pathname history-pathname))
+    (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer))
+              'save-history))
+  (add-hook *exit-editor-hook* 'save-all-histories)
   (unless (input-start-point (current-buffer))
     (change-input-start-point (current-point))))
+
+(defun listener-buffer-p (buffer)
+  (mode-active-p buffer 'listener-mode))
+
+(defun save-history (buffer)
+  (assert (listener-buffer-p buffer))
+  (lem/common/history:save-file (listener-history buffer)))
+
+(defun all-listener-buffers ()
+  (remove-if-not #'listener-buffer-p (buffer-list)))
+
+(defun save-all-histories ()
+  (mapc #'save-history (all-listener-buffers)))
 
 (defun current-listener-history ()
   (listener-history (current-buffer)))

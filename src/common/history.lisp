@@ -1,6 +1,7 @@
 (defpackage :lem/common/history
   (:use :cl)
   (:export :make-history
+           :save-file
            :last-history
            :add-history
            :previous-history
@@ -13,6 +14,7 @@
 (in-package :lem/common/history)
 
 (defstruct (history (:constructor %make-history))
+  pathname
   data
   index
   edit-string)
@@ -21,10 +23,23 @@
   (and (not (equal input last-input))
        (not (equal input ""))))
 
-(defun make-history ()
-  (%make-history
-   :data (make-array 0 :fill-pointer 0 :adjustable t)
-   :index 0))
+(defun make-history (&key pathname)
+  (let* ((initial-contents
+           (when (and pathname (uiop:file-exists-p pathname))
+             (uiop:read-file-form pathname)))
+         (num-contents (length initial-contents)))
+    (%make-history
+     :pathname pathname
+     :data (make-array num-contents :fill-pointer num-contents :adjustable t :initial-contents initial-contents)
+     :index num-contents)))
+
+(defun save-file (history)
+  (ensure-directories-exist (history-pathname history))
+  (with-open-file (stream (history-pathname history)
+                          :direction :output
+                          :if-exists :supersede
+                          :if-does-not-exist :create)
+    (print (coerce (history-data history) 'list) stream)))
 
 (defun last-history (history)
   (when (< 0 (length (history-data history)))

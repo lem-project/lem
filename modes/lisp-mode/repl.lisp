@@ -7,7 +7,7 @@
   (cond
     ((eq (repl-buffer) (current-buffer))
      (repl-reset-input)
-     (lem.listener-mode:start-listener-mode)
+     (lem.listener-mode:start-listener-mode (merge-pathnames "history/lisp-repl" (lem-home)))
      (setf *write-string-function* 'write-string-to-repl)
      (setf (variable-value 'completion-spec) 'repl-completion))
     (t

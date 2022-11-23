@@ -7,7 +7,7 @@
   (cond
     ((eq (repl-buffer) (current-buffer))
      (repl-reset-input)
-     (lem.listener-mode:listener-mode t)
+     (lem.listener-mode:start-listener-mode)
      (setf *write-string-function* 'write-string-to-repl)
      (setf (variable-value 'completion-spec) 'repl-completion))
     (t

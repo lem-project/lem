@@ -4,6 +4,7 @@
    ;; keymap
    :*listener-mode-keymap*
    ;; functions
+   :start-listener-mode
    :input-start-point
    :listener-start
    :change-input-start-point
@@ -50,13 +51,7 @@
 
 (define-minor-mode listener-mode
     (:name "listener"
-     :keymap *listener-mode-keymap*)
-  (setf (variable-value 'enable-syntax-highlight) nil)
-  (unless (listener-history (current-buffer))
-    (setf (listener-history (current-buffer))
-          (lem/common/history:make-history)))
-  (unless (input-start-point (current-buffer))
-    (change-input-start-point (current-point))))
+     :keymap *listener-mode-keymap*))
 
 (define-key *listener-mode-keymap* "Return" 'listener-return)
 (define-key *listener-mode-keymap* "M-p" 'listener-previous-input)
@@ -64,6 +59,15 @@
 (define-key *listener-mode-keymap* "M-r" 'listener-previous-matching-input)
 (define-key *listener-mode-keymap* "C-c M-o" 'listener-clear-buffer)
 (define-key *listener-mode-keymap* "C-c C-u" 'listener-clear-input)
+
+(defun start-listener-mode ()
+  (listener-mode t)
+  (setf (variable-value 'enable-syntax-highlight) nil)
+  (unless (listener-history (current-buffer))
+    (setf (listener-history (current-buffer))
+          (lem/common/history:make-history)))
+  (unless (input-start-point (current-buffer))
+    (change-input-start-point (current-point))))
 
 (defun current-listener-history ()
   (listener-history (current-buffer)))

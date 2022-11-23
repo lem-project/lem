@@ -29,7 +29,7 @@
     (:name "Shell"
      :keymap *run-shell-mode-keymap*)
   (reset-listener-variable (current-buffer))
-  (lem.listener-mode:listener-mode t))
+  (lem.listener-mode:start-listener-mode))
 
 (defun reset-listener-variable (buffer)
   (setf (variable-value 'lem.listener-mode:listener-set-prompt-function :buffer buffer)

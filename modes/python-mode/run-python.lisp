@@ -14,7 +14,7 @@
      :keymap *run-python-mode-keymap*
      :syntax-table lem-python-mode::*python-syntax-table*)
   (reset-listener-variables (current-buffer))
-  (lem.listener-mode:listener-mode t))
+  (lem.listener-mode:start-listener-mode))
 
 (define-key lem-python-mode::*python-mode-keymap* "C-c C-r" 'python-eval-region)
 

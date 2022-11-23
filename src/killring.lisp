@@ -12,7 +12,7 @@
 (defun copy-to-clipboard-with-killring (string)
   (push-killring-item (current-killring) string)
   (when (enable-clipboard-p)
-    (copy-to-clipboard string)))
+    (copy-to-clipboard (peek-killring-item (current-killring) 0))))
 
 (defun yank-from-clipboard-or-killring ()
   (or (and (enable-clipboard-p) (get-clipboard-data))

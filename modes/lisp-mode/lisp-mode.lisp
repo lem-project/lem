@@ -316,7 +316,7 @@
            (new-package name prompt-string)
            (lem.listener-mode:refresh-prompt (repl-buffer))))
         (t
-         (setf (buffer-value (current-buffer) "package") package-name))))
+         (setf (buffer-package (current-buffer)) package-name))))
 
 (define-command lisp-listen-in-current-package () ()
   (check-connection)
@@ -614,7 +614,7 @@
   (macroexpand-internal 'swank:swank-macroexpand-all))
 
 (define-command lisp-quickload (system-name)
-    ((prompt-for-symbol-name "System: " (lem-lisp-mode::buffer-package (current-buffer))))
+    ((prompt-for-symbol-name "System: " (buffer-package (current-buffer))))
   (check-connection)
   (eval-with-transcript `(,(uiop:find-symbol* :quickload :quicklisp) ,(string system-name))))
 

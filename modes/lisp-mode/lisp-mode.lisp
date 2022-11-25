@@ -135,10 +135,10 @@
 
 (defun self-connection-p (c)
   (and (typep c 'connection)
-       (integerp *self-connected-port*)
+       (integerp (self-connected-port))
        (member (connection-hostname c) '("127.0.0.1" "localhost") :test 'equal)
        (ignore-errors (equal (connection-pid c) (swank/backend:getpid)))
-       (= (connection-port c) *self-connected-port*)
+       (= (connection-port c) (self-connected-port))
        :self))
 
 (defun check-connection ()

@@ -271,10 +271,10 @@
                                 '(swank:list-all-package-names t)))))
     (string-upcase (prompt-for-string
                     "Package: "
-                    :completion-function (lambda (str)
-                                           (completion str package-names))
-                    :test-function (lambda (str)
-                                     (find str package-names :test #'string=))
+                    :completion-function (lambda (string)
+                                           (completion string package-names))
+                    :test-function (lambda (string)
+                                     (find string package-names :test #'string=))
                     :history-symbol 'mh-lisp-package))))
 
 (defun lisp-beginning-of-defun (point n)
@@ -338,8 +338,8 @@
 (defun prompt-for-sexp (string &optional initial)
   (prompt-for-string string
                      :initial-value initial
-                     :completion-function (lambda (str)
-                                            (declare (ignore str))
+                     :completion-function (lambda (string)
+                                            (declare (ignore string))
                                             (completion-symbol (current-point)))
                      :history-symbol 'mh-sexp))
 
@@ -628,22 +628,22 @@
 
 (defvar *completion-symbol-with-fuzzy* t)
 
-(defun symbol-completion (str &optional (package (current-package)))
+(defun symbol-completion (string &optional (package (current-package)))
   (let* ((fuzzy *completion-symbol-with-fuzzy*)
          (result (lisp-eval-from-string
-                  (make-completions-form-string str package :fuzzy fuzzy)
+                  (make-completions-form-string string package :fuzzy fuzzy)
                   "COMMON-LISP")))
     (when result
       (destructuring-bind (completions timeout-p) result
         (declare (ignore timeout-p))
-        (completion-hypheen str (mapcar (if fuzzy #'first #'identity) completions))))))
+        (completion-hypheen string (mapcar (if fuzzy #'first #'identity) completions))))))
 
 (defun prompt-for-symbol-name (prompt &optional (initial ""))
   (let ((package (current-package)))
     (prompt-for-string prompt
                        :initial-value initial
-                       :completion-function (lambda (str)
-                                              (symbol-completion str package))
+                       :completion-function (lambda (string)
+                                              (symbol-completion string package))
                        :history-symbol 'mh-read-symbol)))
 
 (defun definition-to-location (definition)
@@ -1037,8 +1037,8 @@
         (loop :for f :in *slime-command-impls*
               :append (funcall f))))
 
-(defun completion-impls (str &optional (command-list (get-slime-command-list)))
-  (completion-strings str command-list))
+(defun completion-impls (string &optional (command-list (get-slime-command-list)))
+  (completion-strings string command-list))
 
 (defun prompt-for-impl (&key (existing t))
   (let* ((default-impl (config :slime-lisp-implementation ""))

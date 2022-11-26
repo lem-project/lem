@@ -618,17 +618,20 @@
   (check-connection)
   (eval-with-transcript `(,(uiop:find-symbol* :quickload :quicklisp) ,(string system-name))))
 
+(defun make-completions-form-string (string package-name &key (fuzzy t))
+  (format nil "(~A ~S ~S)"
+          (if fuzzy
+              "swank:fuzzy-completions"
+              "swank:completions")
+          string
+          package-name))
+
 (defvar *completion-symbol-with-fuzzy* t)
 
 (defun symbol-completion (str &optional (package (current-package)))
   (let* ((fuzzy *completion-symbol-with-fuzzy*)
          (result (lisp-eval-from-string
-                  (format nil "(~A ~S ~S)"
-                          (if fuzzy
-                              "swank:fuzzy-completions"
-                              "swank:completions")
-                          str
-                          package)
+                  (make-completions-form-string str package :fuzzy fuzzy)
                   "COMMON-LISP")))
     (when result
       (destructuring-bind (completions timeout-p) result
@@ -695,12 +698,10 @@
     (when (point< start end)
       (let* ((fuzzy *completion-symbol-with-fuzzy*)
              (result
-               (lisp-eval-from-string (format nil "(~A ~S ~S)"
-                                              (if fuzzy
-                                                  "swank:fuzzy-completions"
-                                                  "swank:completions")
-                                              (points-to-string start end)
-                                              (current-package)))))
+               (lisp-eval-from-string
+                (make-completions-form-string (points-to-string start end)
+                                              (current-package)
+                                              :fuzzy fuzzy))))
         (when result
           (destructuring-bind (completions timeout-p) result
             (declare (ignore timeout-p))

@@ -258,8 +258,7 @@
             :non-focus-attribute 'non-focus-completion-attribute
             :style '(:use-border nil :offset-y 1))
            (start-completion-mode completion-spec)
-           (unless repeat
-             (narrowing-down *last-items*))))))
+           (narrowing-down *last-items*)))))
 
 (defun run-completion (completion)
   (let ((completion-spec

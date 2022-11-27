@@ -289,7 +289,8 @@
    :make-overlay
    :delete-overlay
    :overlay-put
-   :overlay-get)
+   :overlay-get
+   :clear-overlays)
   ;; streams.lisp
   (:export
    :buffer-input-stream

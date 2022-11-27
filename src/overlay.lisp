@@ -70,3 +70,6 @@
 
 (defun overlays (buffer)
   (buffer-value buffer 'overlays))
+
+(defun clear-overlays (buffer)
+  (mapc #'delete-overlay (overlays buffer)))

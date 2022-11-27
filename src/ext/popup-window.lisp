@@ -13,22 +13,21 @@
 (defvar *extra-right-margin* 0)
 (defvar *extra-width-margin* 0)
 
+(defvar *popup-menu*)
+
 (defclass popup-menu ()
   ((buffer :initarg :buffer
            :accessor popup-menu-buffer)
    (window :initarg :window
            :accessor popup-menu-window)
-   (focus-overlay :accessor popup-menu-focus-overlay)
+   (focus-overlay :initarg :focus-overlay
+                  :accessor popup-menu-focus-overlay)
    (action-callback :initarg :action-callback
                     :accessor popup-menu-action-callback)
    (focus-attribute :initarg :focus-attribute
                     :accessor popup-menu-focus-attribute)
    (non-focus-attribute :initarg :non-focus-attribute
                         :accessor popup-menu-non-focus-attribute)))
-
-(defvar *popup-menu*)
-
-(defvar *focus-overlay* nil)
 
 (define-attribute popup-menu-attribute
   (t :foreground "white" :background "RoyalBlue"))
@@ -275,15 +274,17 @@
 (defun focus-point ()
   (buffer-point (popup-menu-buffer *popup-menu*)))
 
-(defun update-focus-overlay (point focus-attribute)
-  (when *focus-overlay*
-    (delete-overlay *focus-overlay*))
+(defun make-focus-overlay (point focus-attribute)
   (with-point ((start point)
                (end point))
-    (setf *focus-overlay*
-          (make-overlay (line-start start)
-                        (line-end end)
-                        focus-attribute))))
+    (line-start start)
+    (line-end end)
+    (make-overlay start end focus-attribute)))
+
+(defun update-focus-overlay (popup-menu point)
+  (delete-overlay (popup-menu-focus-overlay popup-menu))
+  (setf (popup-menu-focus-overlay popup-menu)
+        (make-focus-overlay point (popup-menu-focus-attribute popup-menu))))
 
 (defgeneric apply-print-spec (print-spec point item)
   (:method ((print-spec function) point item)
@@ -352,13 +353,14 @@
   (make-buffer "*popup menu*" :enable-undo-p nil :temporary t))
 
 (defun setup-menu-buffer (buffer items print-spec focus-attribute non-focus-attribute)
+  (clear-overlays buffer)
   (erase-buffer buffer)
   (setf (variable-value 'line-wrap :buffer buffer) nil)
   (insert-items (buffer-point buffer) items print-spec)
-  (update-focus-overlay (buffer-start-point buffer)
-                        focus-attribute)
-  (let ((width (fill-background buffer non-focus-attribute)))
-    width))
+  (let ((focus-overlay (make-focus-overlay (buffer-start-point buffer) focus-attribute))
+        (width (fill-background buffer non-focus-attribute)))
+    (values width
+            focus-overlay)))
 
 (defmethod lem-if:display-popup-menu (implementation items
                                       &key action-callback
@@ -368,59 +370,61 @@
                                            style)
   (let ((style (ensure-style style))
         (focus-attribute (ensure-attribute focus-attribute))
-        (non-focus-attribute (ensure-attribute non-focus-attribute)))
-    (let* ((buffer (make-menu-buffer))
-           (menu-width (setup-menu-buffer buffer
-                                          items
-                                          print-spec
-                                          focus-attribute
-                                          non-focus-attribute))
-           (window (make-popup-window :source-window (current-window)
-                                      :buffer buffer
-                                      :width menu-width
-                                      :height (min 20 (length items))
-                                      :style (merge-style
-                                              style
-                                              :background-color (or (style-background-color style)
-                                                                    (attribute-background
-                                                                     non-focus-attribute))))))
-      (setf *popup-menu*
-            (make-instance 'popup-menu
-                           :buffer buffer
-                           :window window
-                           :action-callback action-callback
-                           :focus-attribute focus-attribute
-                           :non-focus-attribute non-focus-attribute)))))
+        (non-focus-attribute (ensure-attribute non-focus-attribute))
+        (buffer (make-menu-buffer)))
+    (multiple-value-bind (menu-width focus-overlay)
+        (setup-menu-buffer buffer
+                           items
+                           print-spec
+                           focus-attribute
+                           non-focus-attribute)
+      (let ((window (make-popup-window :source-window (current-window)
+                                       :buffer buffer
+                                       :width menu-width
+                                       :height (min 20 (length items))
+                                       :style (merge-style
+                                               style
+                                               :background-color (or (style-background-color style)
+                                                                     (attribute-background
+                                                                      non-focus-attribute))))))
+        (setf *popup-menu*
+              (make-instance 'popup-menu
+                             :buffer buffer
+                             :window window
+                             :focus-overlay focus-overlay
+                             :action-callback action-callback
+                             :focus-attribute focus-attribute
+                             :non-focus-attribute non-focus-attribute))))))
 
 (defmethod lem-if:popup-menu-update (implementation items &key print-spec)
-  (let ((menu-width (setup-menu-buffer (popup-menu-buffer *popup-menu*)
-                                       items
-                                       print-spec
-                                       (popup-menu-focus-attribute *popup-menu*)
-                                       (popup-menu-non-focus-attribute *popup-menu*)))
-        (source-window (current-window)))
-    (when (eq source-window
-              (frame-prompt-window (current-frame)))
-      ;; prompt-window内でcompletion-windowを出している場合,
-      ;; completion-windowの位置を決める前にprompt-windowの調整を先にしておかないとずれるため,
-      ;; ここで更新する
-      (lem::update-floating-prompt-window (current-frame)))
-    (update-popup-window :source-window source-window
-                         :width menu-width
-                         :height (min 20 (length items))
-                         :destination-window (popup-menu-window *popup-menu*))))
+  (multiple-value-bind (menu-width focus-overlay)
+      (setup-menu-buffer (popup-menu-buffer *popup-menu*)
+                         items
+                         print-spec
+                         (popup-menu-focus-attribute *popup-menu*)
+                         (popup-menu-non-focus-attribute *popup-menu*))
+    (setf (popup-menu-focus-overlay *popup-menu*) focus-overlay)
+    (let ((source-window (current-window)))
+      (when (eq source-window
+                (frame-prompt-window (current-frame)))
+        ;; prompt-window内でcompletion-windowを出している場合,
+        ;; completion-windowの位置を決める前にprompt-windowの調整を先にしておかないとずれるため,
+        ;; ここで更新する
+        (lem::update-floating-prompt-window (current-frame)))
+      (update-popup-window :source-window source-window
+                           :width menu-width
+                           :height (min 20 (length items))
+                           :destination-window (popup-menu-window *popup-menu*)))))
 
 (defmethod lem-if:popup-menu-quit (implementation)
-  (when *focus-overlay*
-    (delete-overlay *focus-overlay*))
   (quit-popup-window (popup-menu-window *popup-menu*))
   (delete-buffer (popup-menu-buffer *popup-menu*)))
 
 (defun move-focus (popup-menu function)
   (alexandria:when-let (point (focus-point))
     (funcall function point)
-    (window-see (popup-menu-window *popup-menu*))
-    (update-focus-overlay point (popup-menu-focus-attribute popup-menu))))
+    (window-see (popup-menu-window popup-menu))
+    (update-focus-overlay popup-menu point)))
 
 (defmethod lem-if:popup-menu-down (implementation)
   (move-focus

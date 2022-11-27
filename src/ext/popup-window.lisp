@@ -16,7 +16,6 @@
 (defvar *menu-buffer* nil)
 (defvar *menu-window* nil)
 (defvar *focus-overlay* nil)
-(defvar *print-spec* nil)
 (defvar *action-callback* nil)
 (defvar *focus-attribute* nil)
 (defvar *non-focus-attribute* nil)
@@ -369,7 +368,6 @@
   (let ((style (ensure-style style))
         (focus-attribute (ensure-attribute focus-attribute))
         (non-focus-attribute (ensure-attribute non-focus-attribute)))
-    (setf *print-spec* print-spec)
     (setf *action-callback* action-callback)
     (setf *focus-attribute* focus-attribute)
     (setf *non-focus-attribute* non-focus-attribute)
@@ -386,9 +384,9 @@
                                                              (attribute-background
                                                               non-focus-attribute))))))))
 
-(defmethod lem-if:popup-menu-update (implementation items)
+(defmethod lem-if:popup-menu-update (implementation items &key print-spec)
   (multiple-value-bind (buffer width)
-      (create-menu-buffer items *print-spec*)
+      (create-menu-buffer items print-spec)
     (update-focus-overlay (buffer-point buffer))
     (let ((source-window (current-window)))
       (when (eq source-window

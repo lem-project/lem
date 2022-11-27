@@ -83,6 +83,15 @@
     :initarg :label-width
     :reader label-width)))
 
+(defun compute-label-width (items)
+  (loop :for item :in items
+        :maximize (1+ (length (completion-item-label item)))))
+
+(defun make-print-spec (items)
+  (make-instance 'print-spec
+                 :label-width
+                 (compute-label-width items)))
+
 (defmethod lem.popup-window:apply-print-spec ((print-spec print-spec) point item)
   (insert-string point " ")
   (insert-string point (completion-item-label item))
@@ -240,7 +249,8 @@
           ((and (not repeat) (null (rest items)))
            (completion-insert (current-point) (first items)))
           (repeat
-           (lem-if:popup-menu-update (implementation) items))
+           (lem-if:popup-menu-update (implementation) items
+                                     :print-spec (make-print-spec items)))
           (t
            (lem-if:display-popup-menu
             (implementation)
@@ -249,11 +259,7 @@
             (lambda (item)
               (completion-insert (current-point) item)
               (completion-end))
-            :print-spec
-            (make-instance 'print-spec
-                           :label-width
-                           (loop :for item :in items
-                                 :maximize (1+ (length (completion-item-label item)))))
+            :print-spec (make-print-spec items)
             :focus-attribute 'completion-attribute
             :non-focus-attribute 'non-focus-completion-attribute
             :style '(:use-border nil :offset-y 1))

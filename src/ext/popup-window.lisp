@@ -401,7 +401,7 @@
                           print-spec
                           (popup-menu-focus-attribute *popup-menu*)
                           (popup-menu-non-focus-attribute *popup-menu*))
-    (update-focus-overlay (buffer-point buffer) (popup-menu-focus-attribute *popup-menu*))
+    (declare (ignore buffer))
     (let ((source-window (current-window)))
       (when (eq source-window
                 (frame-prompt-window (current-frame)))

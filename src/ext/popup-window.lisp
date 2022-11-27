@@ -15,7 +15,8 @@
 
 (defclass popup-menu ()
   ((buffer :accessor popup-menu-buffer)
-   (window :accessor popup-menu-window)
+   (window :initarg :window
+           :accessor popup-menu-window)
    (focus-overlay :accessor popup-menu-focus-overlay)
    (action-callback :initarg :action-callback
                     :accessor popup-menu-action-callback)
@@ -27,7 +28,6 @@
 (defvar *popup-menu*)
 
 (defvar *menu-buffer* nil)
-(defvar *menu-window* nil)
 (defvar *focus-overlay* nil)
 
 (define-attribute popup-menu-attribute
@@ -374,26 +374,26 @@
   (let ((style (ensure-style style))
         (focus-attribute (ensure-attribute focus-attribute))
         (non-focus-attribute (ensure-attribute non-focus-attribute)))
-    (setf *popup-menu*
-          (make-instance 'popup-menu
-                         :action-callback action-callback
-                         :focus-attribute focus-attribute
-                         :non-focus-attribute non-focus-attribute))
     (multiple-value-bind (buffer width)
         (create-menu-buffer items
                             print-spec
                             focus-attribute
                             non-focus-attribute)
-      (setf *menu-window*
-            (make-popup-window :source-window (current-window)
-                               :buffer buffer
-                               :width width
-                               :height (min 20 (length items))
-                               :style (merge-style
-                                       style
-                                       :background-color (or (style-background-color style)
-                                                             (attribute-background
-                                                              non-focus-attribute))))))))
+      (let ((window (make-popup-window :source-window (current-window)
+                                       :buffer buffer
+                                       :width width
+                                       :height (min 20 (length items))
+                                       :style (merge-style
+                                               style
+                                               :background-color (or (style-background-color style)
+                                                                     (attribute-background
+                                                                      non-focus-attribute))))))
+        (setf *popup-menu*
+              (make-instance 'popup-menu
+                             :window window
+                             :action-callback action-callback
+                             :focus-attribute focus-attribute
+                             :non-focus-attribute non-focus-attribute))))))
 
 (defmethod lem-if:popup-menu-update (implementation items &key print-spec)
   (multiple-value-bind (buffer width)
@@ -412,12 +412,12 @@
       (update-popup-window :source-window source-window
                            :width width
                            :height (min 20 (length items))
-                           :destination-window *menu-window*))))
+                           :destination-window (popup-menu-window *popup-menu*)))))
 
 (defmethod lem-if:popup-menu-quit (implementation)
   (when *focus-overlay*
     (delete-overlay *focus-overlay*))
-  (quit-popup-window *menu-window*)
+  (quit-popup-window (popup-menu-window *popup-menu*))
   (when *menu-buffer*
     (delete-buffer *menu-buffer*)
     (setf *menu-buffer* nil)))
@@ -425,7 +425,7 @@
 (defun move-focus (popup-menu function)
   (alexandria:when-let (point (focus-point))
     (funcall function point)
-    (window-see *menu-window*)
+    (window-see (popup-menu-window *popup-menu*))
     (update-focus-overlay point (popup-menu-focus-attribute popup-menu))))
 
 (defmethod lem-if:popup-menu-down (implementation)

@@ -271,8 +271,8 @@
 (defun quit-popup-window (floating-window)
   (delete-window floating-window))
 
-(defun focus-point ()
-  (buffer-point (popup-menu-buffer *popup-menu*)))
+(defun focus-point (popup-menu)
+  (buffer-point (popup-menu-buffer popup-menu)))
 
 (defun make-focus-overlay (point focus-attribute)
   (with-point ((start point)
@@ -346,7 +346,7 @@
     (buffer-start point)))
 
 (defun get-focus-item ()
-  (alexandria:when-let (p (focus-point))
+  (alexandria:when-let (p (focus-point *popup-menu*))
     (text-property-at (line-start p) :item)))
 
 (defun make-menu-buffer ()
@@ -421,7 +421,7 @@
   (delete-buffer (popup-menu-buffer *popup-menu*)))
 
 (defun move-focus (popup-menu function)
-  (alexandria:when-let (point (focus-point))
+  (alexandria:when-let (point (focus-point popup-menu))
     (funcall function point)
     (window-see (popup-menu-window popup-menu))
     (update-focus-overlay popup-menu point)))

@@ -382,8 +382,8 @@
     (multiple-value-bind (buffer width)
         (create-menu-buffer items
                             print-spec
-                            (popup-menu-focus-attribute *popup-menu*)
-                            (popup-menu-non-focus-attribute *popup-menu*))
+                            focus-attribute
+                            non-focus-attribute)
       (setf *menu-window*
             (make-popup-window :source-window (current-window)
                                :buffer buffer

@@ -276,7 +276,7 @@
   (alexandria:when-let (buffer *menu-buffer*)
     (buffer-point buffer)))
 
-(defun update-focus-overlay (point)
+(defun update-focus-overlay (point focus-attribute)
   (when *focus-overlay*
     (delete-overlay *focus-overlay*))
   (with-point ((start point)
@@ -284,14 +284,14 @@
     (setf *focus-overlay*
           (make-overlay (line-start start)
                         (line-end end)
-                        (popup-menu-focus-attribute *popup-menu*)))))
+                        focus-attribute))))
 
 (defgeneric apply-print-spec (print-spec point item)
   (:method ((print-spec function) point item)
     (let ((string (funcall print-spec item)))
       (insert-string point string))))
 
-(defun fill-background-color (buffer background-color)
+(defun fill-background-color (buffer non-focus-attribute)
   (with-point ((p (buffer-start-point buffer))
                (start (buffer-start-point buffer)))
     (flet ((put-attribute (start end attribute)
@@ -301,8 +301,8 @@
                           :foreground
                           (or (and attribute
                                    (attribute-foreground attribute))
-                              (attribute-foreground (popup-menu-non-focus-attribute *popup-menu*)))
-                          :background background-color
+                              (attribute-foreground non-focus-attribute))
+                          :background (attribute-background non-focus-attribute)
                           :bold-p (and attribute
                                        (attribute-bold-p attribute))
                           :underline-p (and attribute
@@ -329,11 +329,9 @@
       (fill-space width)
       width)))
 
-(defun fill-background (buffer)
+(defun fill-background (buffer non-focus-attribute)
   (let ((width (fill-in-the-background-with-space buffer)))
-    (fill-background-color buffer
-                           (attribute-background
-                            (popup-menu-non-focus-attribute *popup-menu*)))
+    (fill-background-color buffer non-focus-attribute)
     width))
 
 (defun insert-items (point items print-spec)
@@ -352,14 +350,15 @@
       (setq *menu-buffer*
             (make-buffer "*popup menu*" :enable-undo-p nil :temporary t))))
 
-(defun create-menu-buffer (items print-spec)
+(defun create-menu-buffer (items print-spec focus-attribute non-focus-attribute)
   (let* ((buffer (make-menu-buffer))
          (point (buffer-point buffer)))
     (erase-buffer buffer)
     (setf (variable-value 'line-wrap :buffer buffer) nil)
     (insert-items point items print-spec)
-    (update-focus-overlay (buffer-start-point buffer))
-    (let ((width (fill-background buffer)))
+    (update-focus-overlay (buffer-start-point buffer)
+                          focus-attribute)
+    (let ((width (fill-background buffer non-focus-attribute)))
       (values buffer width))))
 
 (defun get-focus-item ()
@@ -381,7 +380,10 @@
                          :focus-attribute focus-attribute
                          :non-focus-attribute non-focus-attribute))
     (multiple-value-bind (buffer width)
-        (create-menu-buffer items print-spec)
+        (create-menu-buffer items
+                            print-spec
+                            (popup-menu-focus-attribute *popup-menu*)
+                            (popup-menu-non-focus-attribute *popup-menu*))
       (setf *menu-window*
             (make-popup-window :source-window (current-window)
                                :buffer buffer
@@ -395,8 +397,11 @@
 
 (defmethod lem-if:popup-menu-update (implementation items &key print-spec)
   (multiple-value-bind (buffer width)
-      (create-menu-buffer items print-spec)
-    (update-focus-overlay (buffer-point buffer))
+      (create-menu-buffer items
+                          print-spec
+                          (popup-menu-focus-attribute *popup-menu*)
+                          (popup-menu-non-focus-attribute *popup-menu*))
+    (update-focus-overlay (buffer-point buffer) (popup-menu-focus-attribute *popup-menu*))
     (let ((source-window (current-window)))
       (when (eq source-window
                 (frame-prompt-window (current-frame)))
@@ -417,31 +422,35 @@
     (delete-buffer *menu-buffer*)
     (setf *menu-buffer* nil)))
 
-(defun move-focus (function)
+(defun move-focus (popup-menu function)
   (alexandria:when-let (point (focus-point))
     (funcall function point)
     (window-see *menu-window*)
-    (update-focus-overlay point)))
+    (update-focus-overlay point (popup-menu-focus-attribute popup-menu))))
 
 (defmethod lem-if:popup-menu-down (implementation)
   (move-focus
+   *popup-menu*
    (lambda (point)
      (unless (line-offset point 1)
        (buffer-start point)))))
 
 (defmethod lem-if:popup-menu-up (implementation)
   (move-focus
+   *popup-menu*
    (lambda (point)
      (unless (line-offset point -1)
        (buffer-end point)))))
 
 (defmethod lem-if:popup-menu-first (implementation)
   (move-focus
+   *popup-menu*
    (lambda (point)
      (buffer-start point))))
 
 (defmethod lem-if:popup-menu-last (implementation)
   (move-focus
+   *popup-menu*
    (lambda (point)
      (buffer-end point))))
 

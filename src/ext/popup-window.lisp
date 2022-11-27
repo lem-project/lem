@@ -13,12 +13,22 @@
 (defvar *extra-right-margin* 0)
 (defvar *extra-width-margin* 0)
 
+(defclass popup-menu ()
+  ((buffer :accessor popup-menu-buffer)
+   (window :accessor popup-menu-window)
+   (focus-overlay :accessor popup-menu-focus-overlay)
+   (action-callback :initarg :action-callback
+                    :accessor popup-menu-action-callback)
+   (focus-attribute :initarg :focus-attribute
+                    :accessor popup-menu-focus-attribute)
+   (non-focus-attribute :initarg :non-focus-attribute
+                        :accessor popup-menu-non-focus-attribute)))
+
+(defvar *popup-menu*)
+
 (defvar *menu-buffer* nil)
 (defvar *menu-window* nil)
 (defvar *focus-overlay* nil)
-(defvar *action-callback* nil)
-(defvar *focus-attribute* nil)
-(defvar *non-focus-attribute* nil)
 
 (define-attribute popup-menu-attribute
   (t :foreground "white" :background "RoyalBlue"))
@@ -274,7 +284,7 @@
     (setf *focus-overlay*
           (make-overlay (line-start start)
                         (line-end end)
-                        *focus-attribute*))))
+                        (popup-menu-focus-attribute *popup-menu*)))))
 
 (defgeneric apply-print-spec (print-spec point item)
   (:method ((print-spec function) point item)
@@ -291,9 +301,7 @@
                           :foreground
                           (or (and attribute
                                    (attribute-foreground attribute))
-                              (alexandria:when-let
-                                  (attribute (ensure-attribute *non-focus-attribute* nil))
-                                (attribute-foreground attribute)))
+                              (attribute-foreground (popup-menu-non-focus-attribute *popup-menu*)))
                           :background background-color
                           :bold-p (and attribute
                                        (attribute-bold-p attribute))
@@ -322,11 +330,10 @@
       width)))
 
 (defun fill-background (buffer)
-  (let ((width (fill-in-the-background-with-space buffer))
-        (attribute (ensure-attribute *non-focus-attribute* nil)))
-    (if attribute
-        (fill-background-color buffer (attribute-background attribute))
-        (log:error "*non-focus-attribute* is an invalid value" *non-focus-attribute*))
+  (let ((width (fill-in-the-background-with-space buffer)))
+    (fill-background-color buffer
+                           (attribute-background
+                            (popup-menu-non-focus-attribute *popup-menu*)))
     width))
 
 (defun insert-items (point items print-spec)
@@ -368,9 +375,11 @@
   (let ((style (ensure-style style))
         (focus-attribute (ensure-attribute focus-attribute))
         (non-focus-attribute (ensure-attribute non-focus-attribute)))
-    (setf *action-callback* action-callback)
-    (setf *focus-attribute* focus-attribute)
-    (setf *non-focus-attribute* non-focus-attribute)
+    (setf *popup-menu*
+          (make-instance 'popup-menu
+                         :action-callback action-callback
+                         :focus-attribute focus-attribute
+                         :non-focus-attribute non-focus-attribute))
     (multiple-value-bind (buffer width)
         (create-menu-buffer items print-spec)
       (setf *menu-window*
@@ -437,7 +446,7 @@
      (buffer-end point))))
 
 (defmethod lem-if:popup-menu-select (implementation)
-  (alexandria:when-let ((f *action-callback*)
+  (alexandria:when-let ((f (popup-menu-action-callback *popup-menu*))
                         (item (get-focus-item)))
     (funcall f item)))
 

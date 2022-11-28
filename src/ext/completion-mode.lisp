@@ -10,6 +10,8 @@
   (:lock t))
 (in-package :lem.completion-mode)
 
+(defparameter *limit-number-of-items* 100)
+
 (defvar *completion-context*)
 
 (defclass completion-context ()
@@ -110,8 +112,6 @@
     (insert-string point (completion-item-detail item)
                    :attribute 'detail-attribute)
     (insert-string point " ")))
-
-(defparameter *limit-number-of-items* 100)
 
 (defun completion-end ()
   (completion-mode nil)

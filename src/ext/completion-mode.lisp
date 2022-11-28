@@ -266,13 +266,13 @@
            (start-completion-mode completion-spec)
            (narrowing-down items)))))
 
-(defun run-completion (completion)
+(defun run-completion (completion-spec)
   (let ((completion-spec
-          (typecase completion
+          (typecase completion-spec
             (completion-spec
-             completion)
+             completion-spec)
             (otherwise
-             (make-completion-spec (alexandria:ensure-function completion))))))
+             (make-completion-spec (alexandria:ensure-function completion-spec))))))
     (when (spec-prefix-search completion-spec)
       (setf *initial-point*
             (copy-point (current-point) :right-inserting))

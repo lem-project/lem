@@ -226,12 +226,12 @@
     (setf (completion-context-last-items completion-context) items)
     (cond ((null items)
            (when repeat (completion-end)))
-          ((and (not repeat) (null (rest items)))
-           (completion-insert (current-point) (first items)))
           (repeat
            (lem-if:popup-menu-update (implementation)
                                      items
                                      :print-spec (make-print-spec items)))
+          ((alexandria:length= items 1)
+           (completion-insert (current-point) (first items)))
           (t
            (lem-if:display-popup-menu
             (implementation)

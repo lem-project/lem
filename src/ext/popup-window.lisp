@@ -274,9 +274,6 @@
                            (+ y border-size))
       destination-window)))
 
-(defun quit-popup-window (floating-window)
-  (delete-window floating-window))
-
 (defun focus-point (popup-menu)
   (buffer-point (popup-menu-buffer popup-menu)))
 
@@ -423,7 +420,7 @@
                            :destination-window (popup-menu-window *popup-menu*)))))
 
 (defmethod lem-if:popup-menu-quit (implementation)
-  (quit-popup-window (popup-menu-window *popup-menu*))
+  (delete-window (popup-menu-window *popup-menu*))
   (delete-buffer (popup-menu-buffer *popup-menu*)))
 
 (defun move-focus (popup-menu function)

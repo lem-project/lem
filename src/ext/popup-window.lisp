@@ -16,18 +16,24 @@
 (defvar *popup-menu*)
 
 (defclass popup-menu ()
-  ((buffer :initarg :buffer
-           :accessor popup-menu-buffer)
-   (window :initarg :window
-           :accessor popup-menu-window)
-   (focus-overlay :initarg :focus-overlay
-                  :accessor popup-menu-focus-overlay)
-   (action-callback :initarg :action-callback
-                    :accessor popup-menu-action-callback)
-   (focus-attribute :initarg :focus-attribute
-                    :accessor popup-menu-focus-attribute)
-   (non-focus-attribute :initarg :non-focus-attribute
-                        :accessor popup-menu-non-focus-attribute)))
+  ((buffer
+    :initarg :buffer
+    :accessor popup-menu-buffer)
+   (window
+    :initarg :window
+    :accessor popup-menu-window)
+   (focus-overlay
+    :initarg :focus-overlay
+    :accessor popup-menu-focus-overlay)
+   (action-callback
+    :initarg :action-callback
+    :accessor popup-menu-action-callback)
+   (focus-attribute
+    :initarg :focus-attribute
+    :accessor popup-menu-focus-attribute)
+   (non-focus-attribute
+    :initarg :non-focus-attribute
+    :accessor popup-menu-non-focus-attribute)))
 
 (define-attribute popup-menu-attribute
   (t :foreground "white" :background "RoyalBlue"))

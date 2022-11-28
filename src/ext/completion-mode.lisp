@@ -249,16 +249,16 @@
           ((and (not repeat) (null (rest items)))
            (completion-insert (current-point) (first items)))
           (repeat
-           (lem-if:popup-menu-update (implementation) items
+           (lem-if:popup-menu-update (implementation)
+                                     items
                                      :print-spec (make-print-spec items)))
           (t
            (lem-if:display-popup-menu
             (implementation)
             items
-            :action-callback
-            (lambda (item)
-              (completion-insert (current-point) item)
-              (completion-end))
+            :action-callback (lambda (item)
+                               (completion-insert (current-point) item)
+                               (completion-end))
             :print-spec (make-print-spec items)
             :focus-attribute 'completion-attribute
             :non-focus-attribute 'non-focus-completion-attribute

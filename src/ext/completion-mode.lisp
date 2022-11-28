@@ -24,13 +24,10 @@
 (defclass completion-spec ()
   ((function
     :initarg :function
-    :reader spec-function)
-   (prefix-search
-    :initarg :prefix-search
-    :reader spec-prefix-search)))
+    :reader spec-function)))
 
-(defun make-completion-spec (function &key prefix-search)
-  (make-instance 'completion-spec :function function :prefix-search prefix-search))
+(defun make-completion-spec (function)
+  (make-instance 'completion-spec :function function))
 
 (defclass completion-item ()
   ((label
@@ -116,10 +113,7 @@
 
 (defparameter *limit-number-of-items* 100)
 
-(defvar *initial-point* nil)
-
 (defun completion-end ()
-  (when *initial-point* (delete-point *initial-point*))
   (completion-mode nil)
   (lem-if:popup-menu-quit (implementation)))
 
@@ -220,35 +214,15 @@
       (delete-between-points start end)
       (insert-string point (subseq (completion-item-label item) 0 begin)))))
 
-(defun prefix-search (prefix-string items)
-  (completion prefix-string
-              items
-              :test #'alexandria:starts-with-subseq
-              :key #'completion-item-label))
-
 (defun compute-completion-items (completion-spec)
   (let ((items (funcall (spec-function completion-spec) (current-point))))
     (when (and *limit-number-of-items*
                (< *limit-number-of-items* (length items)))
       (setf items (subseq items 0 *limit-number-of-items*)))
-    (when (spec-prefix-search completion-spec)
-      (setf items
-            (prefix-search (points-to-string *initial-point* (current-point))
-                           items)))
     items))
 
-(defun completion-items (completion-spec repeat last-items)
-  (cond ((and repeat (spec-prefix-search completion-spec))
-         (prefix-search (points-to-string *initial-point* (current-point))
-                        last-items))
-        (t
-         (compute-completion-items completion-spec))))
-
 (defun run-completion-1 (completion-context repeat)
-  (let ((items
-          (completion-items (completion-context-spec completion-context)
-                            repeat
-                            (completion-context-last-items completion-context))))
+  (let ((items (compute-completion-items (completion-context-spec completion-context))))
     (setf (completion-context-last-items completion-context) items)
     (cond ((null items)
            (when repeat (completion-end)))
@@ -280,14 +254,9 @@
      (make-completion-spec (alexandria:ensure-function completion-spec)))))
 
 (defun run-completion (completion-spec)
-  (let ((completion-spec (ensure-completion-spec completion-spec)))
-    (when (spec-prefix-search completion-spec)
-      (setf *initial-point*
-            (copy-point (current-point) :right-inserting))
-      (skip-chars-backward *initial-point* #'syntax-symbol-char-p))
-    (let ((completion-context
-            (make-instance 'completion-context
-                           :spec completion-spec)))
-      (setf *completion-context* completion-context)
-      (run-completion-1 completion-context
-                        nil))))
+  (let ((completion-context
+          (make-instance 'completion-context
+                         :spec (ensure-completion-spec completion-spec))))
+    (setf *completion-context* completion-context)
+    (run-completion-1 completion-context
+                      nil)))

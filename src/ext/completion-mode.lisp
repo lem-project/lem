@@ -16,7 +16,10 @@
   ((spec
     :initarg :spec
     :reader completion-context-spec
-    :type completion-spec)))
+    :type completion-spec)
+   (last-items
+    :initform '()
+    :accessor completion-context-last-items)))
 
 (defclass completion-spec ()
   ((function
@@ -113,11 +116,9 @@
 
 (defparameter *limit-number-of-items* 100)
 
-(defvar *last-items* nil)
 (defvar *initial-point* nil)
 
 (defun completion-end ()
-  (setf *last-items* nil)
   (when *initial-point* (delete-point *initial-point*))
   (completion-mode nil)
   (lem-if:popup-menu-quit (implementation)))
@@ -201,9 +202,8 @@
                nil))))))
 
 (define-command completion-narrowing-down-or-next-line () ()
-  (when *last-items*
-    (or (narrowing-down *last-items*)
-        (completion-next-line))))
+  (or (narrowing-down (completion-context-last-items *completion-context*))
+      (completion-next-line)))
 
 (defun completion-item-range (point item)
   (let ((start (or (completion-item-start item)
@@ -237,17 +237,19 @@
                            items)))
     items))
 
-(defun completion-items (completion-spec repeat)
+(defun completion-items (completion-spec repeat last-items)
   (cond ((and repeat (spec-prefix-search completion-spec))
          (prefix-search (points-to-string *initial-point* (current-point))
-                        *last-items*))
+                        last-items))
         (t
-         (setf *last-items* (compute-completion-items completion-spec)))))
+         (compute-completion-items completion-spec))))
 
 (defun run-completion-1 (completion-context repeat)
   (let ((items
           (completion-items (completion-context-spec completion-context)
-                            repeat)))
+                            repeat
+                            (completion-context-last-items completion-context))))
+    (setf (completion-context-last-items completion-context) items)
     (cond ((null items)
            (when repeat (completion-end)))
           ((and (not repeat) (null (rest items)))

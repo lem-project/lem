@@ -10,6 +10,14 @@
   (:lock t))
 (in-package :lem.completion-mode)
 
+(defvar *completion-context*)
+
+(defclass completion-context ()
+  ((spec
+    :initarg :spec
+    :reader completion-context-spec
+    :type completion-spec)))
+
 (defclass completion-spec ()
   ((function
     :initarg :function
@@ -105,7 +113,6 @@
 
 (defparameter *limit-number-of-items* 100)
 
-(defvar *current-completion-spec* nil)
 (defvar *last-items* nil)
 (defvar *initial-point* nil)
 
@@ -116,8 +123,7 @@
   (lem-if:popup-menu-quit (implementation)))
 
 (defun completion-again ()
-  (when *current-completion-spec*
-    (run-completion-1 *current-completion-spec* t)))
+  (run-completion-1 *completion-context* t))
 
 (defun call-focus-action ()
   (alexandria:when-let* ((item (lem.popup-window:get-focus-item))
@@ -199,10 +205,6 @@
     (or (narrowing-down *last-items*)
         (completion-next-line))))
 
-(defun start-completion-mode (completion-spec)
-  (setf *current-completion-spec* completion-spec)
-  (completion-mode t))
-
 (defun completion-item-range (point item)
   (let ((start (or (completion-item-start item)
                    (with-point ((start point))
@@ -242,8 +244,10 @@
         (t
          (setf *last-items* (compute-completion-items completion-spec)))))
 
-(defun run-completion-1 (completion-spec repeat)
-  (let ((items (completion-items completion-spec repeat)))
+(defun run-completion-1 (completion-context repeat)
+  (let ((items
+          (completion-items (completion-context-spec completion-context)
+                            repeat)))
     (cond ((null items)
            (when repeat (completion-end)))
           ((and (not repeat) (null (rest items)))
@@ -263,7 +267,7 @@
             :focus-attribute 'completion-attribute
             :non-focus-attribute 'non-focus-completion-attribute
             :style '(:use-border nil :offset-y 1))
-           (start-completion-mode completion-spec)
+           (completion-mode t)
            (narrowing-down items)))))
 
 (defun run-completion (completion-spec)
@@ -277,5 +281,9 @@
       (setf *initial-point*
             (copy-point (current-point) :right-inserting))
       (skip-chars-backward *initial-point* #'syntax-symbol-char-p))
-    (run-completion-1 completion-spec
-                      nil)))
+    (let ((completion-context
+            (make-instance 'completion-context
+                           :spec completion-spec)))
+      (setf *completion-context* completion-context)
+      (run-completion-1 completion-context
+                        nil))))

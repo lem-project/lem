@@ -185,7 +185,15 @@
   (:export
    :*default-popup-message-timeout*
    :display-popup-message
-   :delete-popup-message)
+   :delete-popup-message
+   :display-popup-menu
+   :popup-menu-update
+   :popup-menu-quit
+   :popup-menu-down
+   :popup-menu-up
+   :popup-menu-first
+   :popup-menu-last
+   :popup-menu-select)
   ;; modeline.lisp
   (:export
    :modeline-format

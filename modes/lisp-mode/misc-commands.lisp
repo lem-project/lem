@@ -98,26 +98,25 @@
 
 (defun select-menu (items)
   (let (selected-item)
-    (lem-if:display-popup-menu (implementation)
-                               items
-                               :print-spec #'princ-to-string
-                               :action-callback (lambda (item)
-                                                  (setf selected-item item)))
+    (display-popup-menu items
+                        :print-spec #'princ-to-string
+                        :action-callback (lambda (item)
+                                           (setf selected-item item)))
     (loop
       (redraw-display)
       (let ((key (read-key)))
         (cond ((or (match-key key :sym "Down")
                    (match-key key :ctrl t :sym "n"))
-               (lem-if:popup-menu-down (implementation)))
+               (popup-menu-down))
               ((or (match-key key :sym "Up")
                    (match-key key :ctrl t :sym "p"))
-               (lem-if:popup-menu-up (implementation)))
+               (popup-menu-up))
               ((match-key key :sym "Return")
-               (lem-if:popup-menu-select (implementation))
-               (lem-if:popup-menu-quit (implementation))
+               (popup-menu-select)
+               (popup-menu-quit)
                (return selected-item))
               ((match-key key :sym "q")
-               (lem-if:popup-menu-quit (implementation))
+               (popup-menu-quit)
                (return nil)))))))
 
 #|

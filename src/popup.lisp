@@ -14,3 +14,36 @@
 
 (defun delete-popup-message (popup-message)
   (lem-if:delete-popup-message (implementation) popup-message))
+
+(defun display-popup-menu (items
+                           &rest args
+                           &key action-callback
+                                print-spec
+                                focus-attribute
+                                non-focus-attribute
+                                style)
+  (declare (ignore action-callback print-spec focus-attribute non-focus-attribute style))
+  (apply #'lem-if:display-popup-menu (implementation)
+         items
+         args))
+
+(defun popup-menu-update (items &key print-spec)
+  (lem-if:popup-menu-update (implementation) items :print-spec print-spec))
+
+(defun popup-menu-quit ()
+  (lem-if:popup-menu-quit (implementation)))
+
+(defun popup-menu-down ()
+  (lem-if:popup-menu-down (implementation)))
+
+(defun popup-menu-up ()
+  (lem-if:popup-menu-up (implementation)))
+
+(defun popup-menu-first ()
+  (lem-if:popup-menu-first (implementation)))
+
+(defun popup-menu-last ()
+  (lem-if:popup-menu-last (implementation)))
+
+(defun popup-menu-select ()
+  (lem-if:popup-menu-select (implementation)))

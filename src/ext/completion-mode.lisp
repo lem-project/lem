@@ -115,7 +115,7 @@
 
 (defun completion-end ()
   (completion-mode nil)
-  (lem-if:popup-menu-quit (implementation)))
+  (popup-menu-quit))
 
 (defun completion-again ()
   (run-completion-1 *completion-context* t))
@@ -141,23 +141,23 @@
   (completion-again))
 
 (define-command completion-next-line () ()
-  (lem-if:popup-menu-down (implementation))
+  (popup-menu-down)
   (call-focus-action))
 
 (define-command completion-previous-line () ()
-  (lem-if:popup-menu-up (implementation))
+  (popup-menu-up)
   (call-focus-action))
 
 (define-command completion-end-of-buffer () ()
-  (lem-if:popup-menu-last (implementation))
+  (popup-menu-last)
   (call-focus-action))
 
 (define-command completion-beginning-of-buffer () ()
-  (lem-if:popup-menu-first (implementation))
+  (popup-menu-first)
   (call-focus-action))
 
 (define-command completion-select () ()
-  (lem-if:popup-menu-select (implementation)))
+  (popup-menu-select))
 
 (define-command completion-insert-space-and-cancel () ()
   (insert-character (current-point) #\space)
@@ -227,14 +227,12 @@
     (cond ((null items)
            (when repeat (completion-end)))
           (repeat
-           (lem-if:popup-menu-update (implementation)
-                                     items
-                                     :print-spec (make-print-spec items)))
+           (popup-menu-update items
+                              :print-spec (make-print-spec items)))
           ((alexandria:length= items 1)
            (completion-insert (current-point) (first items)))
           (t
-           (lem-if:display-popup-menu
-            (implementation)
+           (display-popup-menu
             items
             :action-callback (lambda (item)
                                (completion-insert (current-point) item)

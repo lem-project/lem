@@ -36,6 +36,7 @@
                (:file "prompt")
                (:file "window-tree")
                (:file "window")
+               (:file "popup")
                (:file "modeline")
                (:file "command-table")
                (:file "command")

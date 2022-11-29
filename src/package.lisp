@@ -129,7 +129,6 @@
   ;; window.lisp
   (:export
    :line-wrap
-   :*default-popup-message-timeout*
    :*window-sufficient-width*
    :*scroll-recenter-p*
    :*window-scroll-functions*
@@ -181,7 +180,10 @@
    :floating-window-border
    :floating-window-p
    :header-window
-   :redraw-display
+   :redraw-display)
+  ;; popup.lisp
+  (:export
+   :*default-popup-message-timeout*
    :display-popup-message
    :delete-popup-message)
   ;; modeline.lisp

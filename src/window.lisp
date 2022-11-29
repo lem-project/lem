@@ -2,7 +2,6 @@
 
 (define-editor-variable line-wrap t)
 
-(defparameter *default-popup-message-timeout* 5)
 (defparameter *window-sufficient-width* 150)
 (defparameter *scroll-recenter-p* t)
 
@@ -1212,17 +1211,3 @@ window width is changed, we must recalc the window view point."
           (adjust-all-window-size))
         (redraw-all-windows)
         (notify-frame-redraw-finished (current-frame))))))
-
-;;; popup-message
-(defun display-popup-message (buffer-or-string
-                              &key (timeout *default-popup-message-timeout*)
-                                   destination-window
-                                   style)
-  (lem-if:display-popup-message (implementation)
-                                buffer-or-string
-                                :timeout timeout
-                                :destination-window destination-window
-                                :style style))
-
-(defun delete-popup-message (popup-message)
-  (lem-if:delete-popup-message (implementation) popup-message))

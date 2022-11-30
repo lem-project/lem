@@ -420,8 +420,10 @@
                            :destination-window (popup-menu-window *popup-menu*)))))
 
 (defmethod lem-if:popup-menu-quit (implementation)
-  (delete-window (popup-menu-window *popup-menu*))
-  (delete-buffer (popup-menu-buffer *popup-menu*)))
+  (when *popup-menu*
+    (delete-window (popup-menu-window *popup-menu*))
+    (delete-buffer (popup-menu-buffer *popup-menu*))
+    (setf *popup-menu* nil)))
 
 (defun move-focus (popup-menu function)
   (alexandria:when-let (point (focus-point popup-menu))

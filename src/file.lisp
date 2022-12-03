@@ -46,7 +46,7 @@
 (defun program-name-to-mode (program)
   (get-program-mode program))
 
-(defun parse-file-mode (buffer)
+(defun guess-file-mode-from-shebang (buffer)
   (with-point ((point (buffer-point buffer)))
     (buffer-start point)
     (let ((header-line (line-string point)))
@@ -55,7 +55,7 @@
 
 (defun detect-file-mode (buffer)
   (or (get-file-mode (buffer-filename buffer))
-      (parse-file-mode buffer)))
+      (guess-file-mode-from-shebang buffer)))
 
 (defun process-file (buffer)
   (alexandria:when-let (mode (detect-file-mode buffer))

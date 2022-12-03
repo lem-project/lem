@@ -53,9 +53,29 @@
       (when (alexandria:starts-with-subseq "#!" header-line)
         (program-name-to-mode (parse-shebang header-line))))))
 
+(defun parse-property-line (string)
+  (log:info string)
+  (ppcre:do-register-groups (key value) ("(\\w+)\\s*:\\s*(\\w+)" string)
+    (when (string-equal key "mode")
+      (alexandria:when-let ((mode (find-mode value)))
+        (return-from parse-property-line mode)))))
+
+(defun guess-file-mode-from-property-line (buffer)
+  (with-point ((point (buffer-point buffer)))
+    (buffer-start point)
+    (loop
+      :until (blank-line-p point)
+      :do (let ((line (line-string point)))
+            (ppcre:register-groups-bind (content)
+                ("-\\*-(.*)-\\*-" line)
+              (when content
+                (return (parse-property-line content)))))
+      :while (line-offset point 1))))
+
 (defun detect-file-mode (buffer)
   (or (get-file-mode (buffer-filename buffer))
-      (guess-file-mode-from-shebang buffer)))
+      (guess-file-mode-from-shebang buffer)
+      (guess-file-mode-from-property-line buffer)))
 
 (defun process-file (buffer)
   (alexandria:when-let (mode (detect-file-mode buffer))

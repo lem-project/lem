@@ -94,6 +94,9 @@
 (defun minor-modes ()
   (mapcar #'mode-identifier-name (collect-modes #'minor-mode-p)))
 
+(defun find-mode (mode-name)
+  (find mode-name (major-modes) :key #'mode-name :test #'string-equal))
+
 (defun active-global-minor-modes ()
   *active-global-minor-modes*)
 

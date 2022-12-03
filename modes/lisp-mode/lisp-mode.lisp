@@ -920,17 +920,29 @@
      (unless no-errors
        (editor-error "~A" message)))))
 
+(defvar *file-conversion-map* '())
+
+(defun convert-file (filename)
+  (loop :for (src . dst) :in *file-conversion-map*
+        :do (when (alexandria:starts-with-subseq src filename)
+              (etypecase dst
+                ((or symbol function)
+                 (return (funcall dst filename)))
+                (string
+                 (return (concatenate 'string dst (subseq filename (length src)))))))
+        :finally (return filename)))
+
 (defun location-buffer-to-buffer (location-buffer)
   (alexandria:destructuring-ecase location-buffer
     ((:file filename)
-     (find-file-buffer filename))
+     (find-file-buffer (convert-file filename)))
     ((:buffer buffer-name)
      (let ((buffer (get-buffer buffer-name)))
        (unless buffer (editor-error "~A is already deleted buffer" buffer-name))
        buffer))
     ((:buffer-and-file buffer filename)
      (or (get-buffer buffer)
-         (find-file-buffer filename)))
+         (find-file-buffer (convert-file filename))))
     ((:source-form string)
      (let ((buffer (make-buffer "*lisp-source*")))
        (erase-buffer buffer)

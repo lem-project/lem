@@ -29,7 +29,7 @@
                (:file "attribute")
                (:file "clipboard")
                (:file "killring")
-               (:file "file-ext")
+               (:file "file")
                (:file "screen")
                (:file "frame")
                (:file "echo")

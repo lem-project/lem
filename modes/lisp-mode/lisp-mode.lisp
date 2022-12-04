@@ -434,8 +434,7 @@
                       :default nil
                       :existing t))
   (check-connection)
-  (when (and (probe-file filename)
-             (not (uiop:directory-pathname-p filename)))
+  (when (uiop:file-exists-p filename)
     (run-hooks (variable-value 'load-file-functions) filename)
     (interactive-eval
      (prin1-to-string

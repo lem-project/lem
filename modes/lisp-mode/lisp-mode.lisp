@@ -435,13 +435,14 @@
                       :existing t))
   (check-connection)
   (when (uiop:file-exists-p filename)
-    (run-hooks (variable-value 'load-file-functions) filename)
-    (interactive-eval
-     (prin1-to-string
-      `(if (and (find-package :roswell)
-                (find-symbol (string :load) :roswell))
-           (uiop:symbol-call :roswell :load ,filename)
-           (swank:load-file ,filename))))))
+    (let ((filename (convert-local-to-remote-file filename)))
+      (run-hooks (variable-value 'load-file-functions) filename)
+      (interactive-eval
+       (prin1-to-string
+        `(if (and (find-package :roswell)
+                  (find-symbol (string :load) :roswell))
+             (uiop:symbol-call :roswell :load ,filename)
+             (swank:load-file ,filename)))))))
 
 (defun get-operator-name ()
   (with-point ((point (current-point)))
@@ -476,7 +477,7 @@
                              (and fastfile successp)))
     (highlight-notes notes)
     (when (and loadp fastfile successp)
-      (lisp-eval-async `(swank:load-file ,fastfile)))))
+      (lisp-eval-async `(swank:load-file ,(convert-local-to-remote-file fastfile))))))
 
 (defun show-compile-result (notes secs successp)
   (display-message (format nil "~{~A~^ ~}"
@@ -546,7 +547,7 @@
       (save-current-buffer)))
   (let ((file (buffer-filename (current-buffer))))
     (run-hooks (variable-value 'load-file-functions) file)
-    (lisp-eval-async `(swank:compile-file-for-emacs ,file t)
+    (lisp-eval-async `(swank:compile-file-for-emacs ,(convert-local-to-remote-file file) t)
                      #'compilation-finished)))
 
 (define-command lisp-compile-region (start end) ("r")

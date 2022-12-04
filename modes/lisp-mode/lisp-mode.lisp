@@ -820,9 +820,11 @@
     (when (funcall e message)
       (return-from dispatch-message)))
   (alexandria:destructuring-case message
-    ((:write-string string &rest rest)
-     (declare (ignore rest))
-     (funcall *write-string-function* string))
+    ((:write-string string &optional target thread)
+     (declare (ignore target))
+     (funcall *write-string-function* string)
+     (when thread
+       (send-message *connection* `(:write-done ,thread))))
     ((:read-string thread tag)
      (repl-read-string thread tag))
     ((:read-aborted thread tag)

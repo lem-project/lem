@@ -16,6 +16,7 @@
                (:file "lisp-ui-mode")
                (:file "grammer")
                (:file "message")
+               (:file "file-conversion")
                (:file "lisp-mode")
                (:file "repl")
                (:file "sldb")

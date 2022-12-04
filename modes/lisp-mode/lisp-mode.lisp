@@ -919,18 +919,6 @@
      (unless no-errors
        (editor-error "~A" message)))))
 
-(defvar *file-conversion-map* '())
-
-(defun convert-remote-to-local-file (filename)
-  (loop :for (remote-file . local-file) :in *file-conversion-map*
-        :do (when (alexandria:starts-with-subseq remote-file filename)
-              (etypecase local-file
-                ((or symbol function)
-                 (return (funcall local-file filename)))
-                (string
-                 (return (concatenate 'string local-file (subseq filename (length remote-file)))))))
-        :finally (return filename)))
-
 (defun location-buffer-to-buffer (location-buffer)
   (alexandria:destructuring-ecase location-buffer
     ((:file filename)

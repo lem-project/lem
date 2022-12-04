@@ -1,6 +1,14 @@
 (in-package :lem-lisp-mode)
 
-(defvar *file-conversion-map* '())
+(defvar *file-conversion-map* '()
+  "This variable is a alist for converting remote file names to local file names.
+Uses include mapping files in docker to files in the local environment.
+
+For example, set the following.
+\(setf *file-conversion-map*
+      `((\"/app/\" .
+         ,(merge-pathnames \"common-lisp/my-project/\" (user-homedir-pathname)))))
+")
 
 (defun convert-remote-to-local-file (filename)
   (loop :for (remote-file . local-file) :in *file-conversion-map*

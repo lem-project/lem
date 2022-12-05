@@ -120,8 +120,7 @@
                               `(:sequence
                                 "("
                                 (:group :case-insensitive-p
-                                 (:register (:sequence "define-"
-                                             (:greedy-repetition 0 nil symbol))))
+                                 (:register (:sequence "define-" symbol)))
                                 (:alternation (:greedy-repetition 1 nil :whitespace-char-class)
                                  :end-anchor)
                                 (:greedy-repetition 0 1 (:register symbol)))

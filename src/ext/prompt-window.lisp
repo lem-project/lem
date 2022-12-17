@@ -309,19 +309,19 @@
     (lem::command-loop)))
 
 (defmethod lem::%prompt-for-line (prompt-string
-                                  initial-string
-                                  completion-function
-                                  existing-test-function
-                                  history-name
-                                  &optional (syntax-table (current-syntax))
-                                            gravity)
+                                  &key initial-value
+                                       completion-function
+                                       test-function
+                                       history-symbol
+                                       (syntax-table (current-syntax))
+                                       gravity)
   (prompt-for-aux :prompt-string prompt-string
-                  :initial-string initial-string
+                  :initial-string initial-value
                   :parameters (make-instance 'prompt-parameters
                                              :completion-function completion-function
-                                             :existing-test-function existing-test-function
+                                             :existing-test-function test-function
                                              :caller-of-prompt-window (current-window)
-                                             :history (get-history history-name)
+                                             :history (get-history history-symbol)
                                              :gravity (or gravity :center))
                   :syntax-table syntax-table
                   :body-function #'prompt-for-line-command-loop))

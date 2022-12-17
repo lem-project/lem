@@ -13,7 +13,8 @@
 (defgeneric active-prompt-window ())
 (defgeneric get-prompt-input-string (prompt))
 (defgeneric %prompt-for-character (prompt &key gravity))
-(defgeneric %prompt-for-line (prompt initial comp-f existing-p history-name &optional syntax-table gravity))
+(defgeneric %prompt-for-line (prompt &key initial-value completion-function test-function
+                                          history-symbol syntax-table gravity))
 
 (defun prompt-for-character (prompt &key (gravity *default-prompt-gravity*))
   (%prompt-for-character prompt :gravity gravity))
@@ -24,19 +25,20 @@
               (#\y (return t))
               (#\n (return nil)))))
 
-(defun prompt-for-string (prompt &key initial-value
+(defun prompt-for-string (prompt &rest args
+                                 &key initial-value
                                       completion-function
                                       test-function
                                       (history-symbol nil)
                                       (syntax-table (current-syntax))
                                       (gravity *default-prompt-gravity*))
-  (%prompt-for-line prompt
-                    initial-value
-                    completion-function
-                    test-function
-                    history-symbol
-                    syntax-table
-                    gravity))
+  (declare (ignore initial-value
+                   completion-function
+                   test-function
+                   history-symbol
+                   syntax-table
+                   gravity))
+  (apply #'%prompt-for-line prompt args))
 
 (defun prompt-for-integer (prompt &key min max (gravity *default-prompt-gravity*))
   (parse-integer

@@ -14,7 +14,7 @@
 (defgeneric get-prompt-input-string (prompt))
 (defgeneric %prompt-for-character (prompt &key gravity))
 (defgeneric %prompt-for-line (prompt &key initial-value completion-function test-function
-                                          history-symbol syntax-table gravity))
+                                          history-symbol syntax-table gravity edit-callback))
 
 (defun prompt-for-character (prompt &key (gravity *default-prompt-gravity*))
   (%prompt-for-character prompt :gravity gravity))
@@ -31,13 +31,15 @@
                                       test-function
                                       (history-symbol nil)
                                       (syntax-table (current-syntax))
-                                      (gravity *default-prompt-gravity*))
+                                      (gravity *default-prompt-gravity*)
+                                      edit-callback)
   (declare (ignore initial-value
                    completion-function
                    test-function
                    history-symbol
                    syntax-table
-                   gravity))
+                   gravity
+                   edit-callback))
   (apply #'%prompt-for-line prompt args))
 
 (defun prompt-for-integer (prompt &key min max (gravity *default-prompt-gravity*))

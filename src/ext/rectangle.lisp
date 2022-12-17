@@ -108,16 +108,14 @@
 
 (define-condition update-rectangle (after-executing-command) ())
 
-(defun handle-update-rectangle (update-rectangle)
-  (declare (ignore update-rectangle))
-  (let ((string (get-prompt-input-string (active-prompt-window))))
-    (replace-rectangle string)))
+(defun handle-update-rectangle (string)
+  (replace-rectangle string))
 
 (define-command rectangle-string () ()
   (with-editing-savepoint (current-buffer)
     (replace-rectangle
-     (handler-bind ((update-rectangle #'handle-update-rectangle))
-       (prompt-for-string "String rectangle: "))))
+     (prompt-for-string "String rectangle: "
+                        :edit-callback #'handle-update-rectangle)))
   (rectangle-end))
 
 (define-command rectangle-exchange-point-mark () ()

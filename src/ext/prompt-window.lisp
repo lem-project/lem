@@ -17,6 +17,8 @@
     :initarg :input
     :reader execute-input)))
 
+(define-condition edit-callback-signal (after-executing-command) ())
+
 (defclass prompt-parameters ()
   ((completion-function
     :initarg :completion-function
@@ -264,7 +266,8 @@
                             (initial-string (alexandria:required-argument :initial-string))
                             (parameters (alexandria:required-argument :parameters))
                             (body-function (alexandria:required-argument :body-function))
-                            (syntax-table nil))
+                            (syntax-table nil)
+                            (edit-callback nil))
   (when (frame-floating-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (run-hooks *prompt-activate-hook*)
@@ -276,10 +279,15 @@
       (handler-case
           (with-unwind-setf (((frame-floating-prompt-window (current-frame))
                               prompt-window))
-              (if syntax-table
-                  (with-current-syntax syntax-table
-                    (funcall body-function))
-                  (funcall body-function))
+              (handler-bind ((edit-callback-signal
+                               (lambda (c)
+                                 (declare (ignore c))
+                                 (when edit-callback
+                                   (funcall edit-callback (get-input-string))))))
+                (if syntax-table
+                    (with-current-syntax syntax-table
+                      (funcall body-function))
+                    (funcall body-function)))
             (delete-prompt prompt-window)
             (run-hooks *prompt-deactivate-hook*))
         (execute-condition (e)
@@ -314,7 +322,8 @@
                                        test-function
                                        history-symbol
                                        (syntax-table (current-syntax))
-                                       gravity)
+                                       gravity
+                                       edit-callback)
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string initial-value
                   :parameters (make-instance 'prompt-parameters
@@ -324,7 +333,8 @@
                                              :history (get-history history-symbol)
                                              :gravity (or gravity :center))
                   :syntax-table syntax-table
-                  :body-function #'prompt-for-line-command-loop))
+                  :body-function #'prompt-for-line-command-loop
+                  :edit-callback edit-callback))
 
 (defmethod active-prompt-window ()
   (current-prompt-window))

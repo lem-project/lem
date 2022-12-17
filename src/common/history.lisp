@@ -85,8 +85,6 @@
     (setf (history-index history) (length (history-data history)))))
 
 (defun restore-edit-string (history)
-  (when (= (history-index history)
-           (1- (length (history-data history))))
-    (setf (history-index history) (length (history-data history)))
-    (values (history-edit-string history)
-            t)))
+  (setf (history-index history) (length (history-data history)))
+  (values (history-edit-string history)
+          t))

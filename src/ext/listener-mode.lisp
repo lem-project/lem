@@ -175,11 +175,11 @@
 
 (define-command listener-next-input () ()
   (%backup-edit-string (current-listener-history))
-  (%restore-edit-string (current-listener-history))
   (multiple-value-bind (str win)
       (lem/common/history:next-history (current-listener-history))
-    (when win
-      (replace-textarea str))))
+    (if win
+        (replace-textarea str)
+        (%restore-edit-string (current-listener-history)))))
 
 (define-command listener-previous-matching-input (regexp)
     ((prompt-for-string "Previous element matching (regexp): "))

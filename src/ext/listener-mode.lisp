@@ -276,6 +276,7 @@
 
 (define-command listener-isearch-history () ()
   (let ((buffer (current-buffer)))
+    (buffer-end (buffer-point buffer))
     (let ((*listener-buffer* buffer)
           (*history-matched-index* nil)
           (*history-popup-window* nil)

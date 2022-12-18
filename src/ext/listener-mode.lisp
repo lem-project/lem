@@ -145,49 +145,49 @@
             (change-input-start-point (current-point))
             (funcall (variable-value 'listener-execute-function) point str))))))
 
-(defun backup-edit-string (history)
+(defun backup-edit-string (buffer)
   (lem/common/history:backup-edit-string
-   history
-   (points-to-string (input-start-point (current-buffer))
-                     (buffer-end-point (current-buffer)))))
+   (listener-history buffer)
+   (points-to-string (input-start-point buffer)
+                     (buffer-end-point buffer))))
 
-(defun restore-edit-string (history)
+(defun restore-edit-string (buffer)
   (multiple-value-bind (str win)
-      (lem/common/history:restore-edit-string history)
+      (lem/common/history:restore-edit-string (listener-history buffer))
     (when win
-      (replace-textarea str))))
+      (replace-textarea buffer str))))
 
-(defun replace-textarea (str)
-  (let ((start (input-start-point (current-buffer)))
-        (end (buffer-end-point (current-buffer))))
+(defun replace-textarea (buffer str)
+  (let ((start (input-start-point buffer))
+        (end (buffer-end-point buffer)))
     (save-excursion
       (delete-between-points start end)
       (insert-string start str)
-      (move-point (input-start-point (current-buffer)) start))
-    (buffer-end (current-point))))
+      (move-point (input-start-point buffer) start))
+    (buffer-end (buffer-point buffer))))
 
 (define-command listener-previous-input () ()
-  (backup-edit-string (current-listener-history))
+  (backup-edit-string (current-buffer))
   (multiple-value-bind (str win)
       (lem/common/history:previous-history (current-listener-history))
     (when win
-      (replace-textarea str))))
+      (replace-textarea (current-buffer) str))))
 
 (define-command listener-next-input () ()
-  (backup-edit-string (current-listener-history))
+  (backup-edit-string (current-buffer))
   (multiple-value-bind (str win)
       (lem/common/history:next-history (current-listener-history))
     (if win
-        (replace-textarea str)
-        (restore-edit-string (current-listener-history)))))
+        (replace-textarea (current-buffer) str)
+        (restore-edit-string (current-buffer)))))
 
 (define-command listener-previous-matching-input (regexp)
     ((prompt-for-string "Previous element matching (regexp): "))
-  (backup-edit-string (current-listener-history))
+  (backup-edit-string (current-buffer))
   (multiple-value-bind (str win)
       (lem/common/history:previous-matching (current-listener-history) regexp)
     (when win
-      (replace-textarea str))))
+      (replace-textarea (current-buffer) str))))
 
 (defun clear-listener (buffer)
   (let ((*inhibit-read-only* t))

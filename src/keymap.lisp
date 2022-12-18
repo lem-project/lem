@@ -2,6 +2,8 @@
 
 (defvar *keymaps* nil)
 
+(defvar *special-keymap* nil)
+
 (deftype key-sequence ()
   '(trivial-types:proper-list key))
 
@@ -141,12 +143,20 @@
                 (match-key key :sym sym))
            (char sym 0)))))
 
+(defun all-keymaps ()
+  (let ((keymaps
+          (loop :for mode :in (all-active-modes (current-buffer))
+                :when (mode-keymap mode)
+                :collect :it)))
+    (when *special-keymap*
+      (push *special-keymap* keymaps))
+    (nreverse keymaps)))
+
 (defun lookup-keybind (key)
   (let (cmd)
-    (loop with buffer = (current-buffer)
-          for mode in (nreverse (all-active-modes (current-buffer)))
-          do (when (mode-keymap mode)
-               (setf cmd (keymap-find-keybind (mode-keymap mode) key cmd))))
+    (loop :with buffer := (current-buffer)
+          :for keymap :in (all-keymaps)
+          :do (setf cmd (keymap-find-keybind keymap key cmd)))
     cmd))
 
 (defun find-keybind (key)
@@ -157,3 +167,7 @@
 (defun abort-key-p (key)
   (and (key-p key)
        (eq 'keyboard-quit (lookup-keybind key))))
+
+(defmacro with-special-keymap ((keymap) &body body)
+  `(let ((*special-keymap* (or ,keymap *special-keymap*)))
+     ,@body))

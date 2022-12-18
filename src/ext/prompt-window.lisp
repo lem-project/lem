@@ -267,7 +267,8 @@
                             (parameters (alexandria:required-argument :parameters))
                             (body-function (alexandria:required-argument :body-function))
                             (syntax-table nil)
-                            (edit-callback nil))
+                            (edit-callback nil)
+                            (special-keymap nil))
   (when (frame-floating-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (run-hooks *prompt-activate-hook*)
@@ -285,10 +286,11 @@
                                    (when (typep (lem::executing-command-command c)
                                                 'lem:editable-advice)
                                      (funcall edit-callback (get-input-string)))))))
-                (if syntax-table
-                    (with-current-syntax syntax-table
-                      (funcall body-function))
-                    (funcall body-function)))
+                (lem::with-special-keymap (special-keymap)
+                  (if syntax-table
+                      (with-current-syntax syntax-table
+                        (funcall body-function))
+                      (funcall body-function))))
             (delete-prompt prompt-window)
             (run-hooks *prompt-deactivate-hook*))
         (execute-condition (e)
@@ -324,7 +326,8 @@
                                        history-symbol
                                        (syntax-table (current-syntax))
                                        gravity
-                                       edit-callback)
+                                       edit-callback
+                                       special-keymap)
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string initial-value
                   :parameters (make-instance 'prompt-parameters
@@ -335,7 +338,8 @@
                                              :gravity (or gravity :center))
                   :syntax-table syntax-table
                   :body-function #'prompt-for-line-command-loop
-                  :edit-callback edit-callback))
+                  :edit-callback edit-callback
+                  :special-keymap special-keymap))
 
 (defmethod active-prompt-window ()
   (current-prompt-window))

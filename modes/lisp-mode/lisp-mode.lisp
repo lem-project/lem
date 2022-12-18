@@ -628,15 +628,25 @@
 
 (defvar *completion-symbol-with-fuzzy* t)
 
+(defun eval-completions (string package &key (fuzzy *completion-symbol-with-fuzzy*))
+  (let ((completions
+          (first
+           (lisp-eval-from-string (make-completions-form-string string package :fuzzy fuzzy)
+                                  "COMMON-LISP-USER"))))
+    (if fuzzy
+        completions
+        ;; fuzzy-completionsと形式を合わせる
+        (mapcar (lambda (item)
+                  (list item nil nil nil))
+                completions))))
+
 (defun symbol-completion (string &optional (package (current-package)))
-  (let* ((fuzzy *completion-symbol-with-fuzzy*)
-         (result (lisp-eval-from-string
-                  (make-completions-form-string string package :fuzzy fuzzy)
-                  "COMMON-LISP")))
-    (when result
-      (destructuring-bind (completions timeout-p) result
-        (declare (ignore timeout-p))
-        (completion-hypheen string (mapcar (if fuzzy #'first #'identity) completions))))))
+  (let ((completions (eval-completions string package)))
+    (mapcar (lambda (completion)
+              (make-completion-item
+               :label (first completion)
+               :detail (fourth completion)))
+            completions)))
 
 (defun prompt-for-symbol-name (prompt &optional (initial ""))
   (let ((package (current-package)))
@@ -696,26 +706,15 @@
     (skip-chars-backward start #'syntax-symbol-char-p)
     (skip-chars-forward end #'syntax-symbol-char-p)
     (when (point< start end)
-      (let* ((fuzzy *completion-symbol-with-fuzzy*)
-             (result
-               (lisp-eval-from-string
-                (make-completions-form-string (points-to-string start end)
-                                              (current-package)
-                                              :fuzzy fuzzy))))
-        (when result
-          (destructuring-bind (completions timeout-p) result
-            (declare (ignore timeout-p))
-            (mapcar (lambda (completion)
-                      (make-completion-item
-                       :label (if fuzzy
-                                  (first completion)
-                                  completion)
-                       :detail (if fuzzy
-                                   (fourth completion)
-                                   "")
-                       :start start
-                       :end end))
-                    completions)))))))
+      (let* ((completions (eval-completions (points-to-string start end)
+                                            (current-package))))
+        (mapcar (lambda (completion)
+                  (make-completion-item
+                   :label (first completion)
+                   :detail (or (fourth completion) "")
+                   :start start
+                   :end end))
+                completions)))))
 
 (defun show-description (string)
   (let ((buffer (make-buffer "*lisp-description*")))

@@ -281,9 +281,10 @@
                               prompt-window))
               (handler-bind ((edit-callback-signal
                                (lambda (c)
-                                 (declare (ignore c))
                                  (when edit-callback
-                                   (funcall edit-callback (get-input-string))))))
+                                   (when (typep (lem::executing-command-command c)
+                                                'lem:editable-advice)
+                                     (funcall edit-callback (get-input-string)))))))
                 (if syntax-table
                     (with-current-syntax syntax-table
                       (funcall body-function))

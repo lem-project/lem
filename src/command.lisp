@@ -35,11 +35,12 @@
     (make-instance class)))
 
 (defun call-command (this-command universal-argument)
-  (signal-subconditions 'before-executing-command :command this-command)
-  (prog1 (alexandria:if-let (*this-command* (get-command this-command))
-           (execute (get-active-modes-class-instance (current-buffer))
+  (let ((*this-command* (get-command this-command)))
+    (unless *this-command*
+      (editor-error "~A: command not found" this-command))
+    (signal-subconditions 'before-executing-command :command *this-command*)
+    (prog1 (execute (get-active-modes-class-instance (current-buffer))
                     *this-command*
                     universal-argument)
-           (editor-error "~A: command not found" this-command))
-    (buffer-undo-boundary)
-    (signal-subconditions 'after-executing-command :command this-command)))
+      (buffer-undo-boundary)
+      (signal-subconditions 'after-executing-command :command *this-command*))))

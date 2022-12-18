@@ -246,6 +246,7 @@
                  (listener-history buffer))
       (cond ((null matched-string)
              (when *history-popup-window*
+               (show-message "Failed" :timeout 1 :style '(:offset-y 1 :use-border nil))
                (redisplay-popup (window-buffer *history-popup-window*))))
             (t
              (redisplay-popup (make-highlight-matches-buffer matched-string matches))

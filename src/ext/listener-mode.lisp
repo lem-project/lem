@@ -189,6 +189,19 @@
     (when win
       (replace-textarea (current-buffer) str))))
 
+(defun clear-listener (buffer)
+  (let ((*inhibit-read-only* t))
+    (erase-buffer buffer))
+  (refresh-prompt buffer))
+
+(define-command listener-clear-buffer () ()
+  (clear-listener (current-buffer)))
+
+(define-command listener-clear-input () ()
+  (delete-between-points (input-start-point (current-buffer))
+                         (buffer-end-point (current-buffer))))
+
+;;;
 (defvar *history-isearch-keymap* (make-keymap))
 (define-key *history-isearch-keymap* "M-r" 'listener-isearch-history-previous)
 (define-key *history-isearch-keymap* "C-r" 'listener-isearch-history-previous)
@@ -249,15 +262,3 @@
                (replace-textarea buffer *history-matched-string*)))
         (when *history-popup-window*
           (delete-popup-message *history-popup-window*))))))
-
-(defun clear-listener (buffer)
-  (let ((*inhibit-read-only* t))
-    (erase-buffer buffer))
-  (refresh-prompt buffer))
-
-(define-command listener-clear-buffer () ()
-  (clear-listener (current-buffer)))
-
-(define-command listener-clear-input () ()
-  (delete-between-points (input-start-point (current-buffer))
-                         (buffer-end-point (current-buffer))))

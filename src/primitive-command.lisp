@@ -76,7 +76,7 @@
       (forward-char (or n 1))
       (error e))))
 
-(define-command delete-previous-char (&optional n) ("P")
+(define-command (delete-previous-char (:advice-classes editable-advice)) (&optional n) ("P")
   (cond ((mark-active-p (cursor-mark (current-point)))
          (delete-cursor-region (current-point)))
         (t

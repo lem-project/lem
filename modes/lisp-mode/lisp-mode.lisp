@@ -645,6 +645,8 @@
     (mapcar (lambda (completion)
               (make-completion-item
                :label (first completion)
+               :chunks (loop :for (offset substring) :in (third completion)
+                             :collect (cons offset (+ offset (length substring))))
                :detail (fourth completion)))
             completions)))
 
@@ -713,7 +715,7 @@
                    :label (first completion)
                    :chunks (loop :for (offset substring) :in (third completion)
                                  :collect (cons offset (+ offset (length substring))))
-                   :detail (or (fourth completion) "")
+                   :detail (fourth completion)
                    :start start
                    :end end))
                 completions)))))

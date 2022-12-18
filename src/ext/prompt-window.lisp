@@ -176,8 +176,6 @@
 (defmethod update-prompt-window ((window floating-prompt))
   (destructuring-bind (x y width height)
       (compute-window-rectangle (window-buffer window)
-                                ;; source-windowを決められないのでnilにする
-                                ;; centerの場合は使わないのでとりあえずは動く
                                 :gravity (prompt-gravity window)
                                 :source-window (prompt-window-caller-of-prompt-window window))
     (unless (and (= x (window-x window))

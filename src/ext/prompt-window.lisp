@@ -39,7 +39,11 @@
    (gravity
     :initarg :gravity
     :initform :center
-    :reader prompt-gravity)))
+    :reader prompt-gravity)
+   (use-border
+    :initarg :use-border
+    :initform t
+    :reader prompt-use-border-p)))
 
 (defclass floating-prompt (floating-window prompt-parameters)
   ((start-charpos
@@ -171,7 +175,7 @@
                    :caller-of-prompt-window (prompt-window-caller-of-prompt-window parameters)
                    :history (prompt-window-history parameters)
                    :gravity (prompt-gravity parameters)
-                   :border +border-size+)))
+                   :border (if (prompt-use-border-p parameters) +border-size+ 0))))
 
 (defmethod update-prompt-window ((window floating-prompt))
   (destructuring-bind (x y width height)
@@ -325,7 +329,8 @@
                                        (syntax-table (current-syntax))
                                        gravity
                                        edit-callback
-                                       special-keymap)
+                                       special-keymap
+                                       (use-border t))
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string initial-value
                   :parameters (make-instance 'prompt-parameters
@@ -333,7 +338,8 @@
                                              :existing-test-function test-function
                                              :caller-of-prompt-window (current-window)
                                              :history (get-history history-symbol)
-                                             :gravity (or gravity :center))
+                                             :gravity (or gravity :center)
+                                             :use-border use-border)
                   :syntax-table syntax-table
                   :body-function #'prompt-for-line-command-loop
                   :edit-callback edit-callback

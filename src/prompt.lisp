@@ -15,7 +15,7 @@
 (defgeneric %prompt-for-character (prompt &key gravity))
 (defgeneric %prompt-for-line (prompt &key initial-value completion-function test-function
                                           history-symbol syntax-table gravity edit-callback
-                                          special-keymap))
+                                          special-keymap use-border))
 
 (defun prompt-for-character (prompt &key (gravity *default-prompt-gravity*))
   (%prompt-for-character prompt :gravity gravity))
@@ -34,7 +34,8 @@
                                       (syntax-table (current-syntax))
                                       (gravity *default-prompt-gravity*)
                                       edit-callback
-                                      special-keymap)
+                                      special-keymap
+                                      use-border)
   (declare (ignore initial-value
                    completion-function
                    test-function
@@ -42,7 +43,8 @@
                    syntax-table
                    gravity
                    edit-callback
-                   special-keymap))
+                   special-keymap
+                   use-border))
   (apply #'%prompt-for-line prompt args))
 
 (defun prompt-for-integer (prompt &key min max (gravity *default-prompt-gravity*))

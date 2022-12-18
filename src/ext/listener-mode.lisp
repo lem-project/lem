@@ -243,7 +243,8 @@
                                 (lambda (history index)
                                   (declare (ignore index))
                                   (lem/common/history:previous-matching history input-string))))
-              :gravity :cursor)
+              :gravity :cursor
+              :use-border nil)
              (when *history-matched-string*
                (replace-textarea buffer *history-matched-string*)))
         (when *history-popup-window*

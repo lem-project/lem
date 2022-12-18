@@ -213,18 +213,37 @@
 (defvar *history-popup-window*)
 (defvar *history-matched-string*)
 
+(defun make-highlight-matches-buffer (target-string matches)
+  (let* ((buffer (make-buffer nil :enable-undo-p nil :temporary t))
+         (point (buffer-point buffer))
+         (attribute (make-attribute :foreground "black" :background "yellow")))
+    (setf (variable-value 'line-wrap :buffer buffer) nil)
+    (insert-string point target-string)
+    (loop :for position :in matches
+          :do (buffer-start point)
+              (character-offset point position)
+              (with-point ((start point)
+                           (end point))
+                (character-offset end 1)
+                (put-text-property start end :attribute attribute)))
+    (buffer-start point)
+    (insert-string point ": ")
+    (buffer-start point)
+    buffer))
+
 (defun isearch-continue (next-or-previous-matching)
   (let ((buffer *listener-buffer*))
-    (multiple-value-bind (matched-string matched-index)
+    (multiple-value-bind (matched-string matched-index matches)
         (funcall next-or-previous-matching
                  (listener-history buffer)
                  *history-matched-index*)
       (when matched-string
         (when *history-popup-window*
           (delete-popup-message *history-popup-window*))
-        (setf *history-popup-window* (display-popup-message (format nil ": ~A" matched-string)
-                                                            :timeout nil
-                                                            :style '(:use-border nil :offset-y 0)))
+        (setf *history-popup-window*
+              (display-popup-message (make-highlight-matches-buffer matched-string matches)
+                                     :timeout nil
+                                     :style '(:use-border nil :offset-y 0)))
         (setf *history-matched-index* matched-index)
         (setf *history-matched-string* matched-string)))))
 

@@ -69,17 +69,37 @@
                   (incf (history-index history)))
             t)))
 
+(defun matchp (sub-string whole-string)
+  ;; fuzzy matcher
+  #+(or)
+  (loop :with start := 0 :and matches := '()
+        :for c :across sub-string
+        :do (let ((pos (position c whole-string :start start)))
+              (unless pos (return))
+              (push pos matches)
+              (setf start pos))
+        :finally (return (nreverse matches)))
+  (let ((pos (search sub-string whole-string)))
+    (when pos
+      (loop :for offset :from 0
+            :repeat (length sub-string)
+            :collect (+ pos offset)))))
+
 (defun previous-matching (history string &key (start-index (1- (history-index history))))
   (loop :for i :downfrom start-index :to 0
-        :do (when (search string (aref (history-data history) i))
+        :for matches := (matchp string (aref (history-data history) i))
+        :do (when matches
               (return (values (aref (history-data history) i)
-                              i)))))
+                              i
+                              matches)))))
 
 (defun next-matching (history string &key (start-index (1+ (history-index history))))
   (loop :for i :from start-index :below (length (history-data history))
-        :do (when (search string (aref (history-data history) i))
+        :for matches := (matchp string (aref (history-data history) i))
+        :do (when matches
               (return (values (aref (history-data history) i)
-                              i)))))
+                              i
+                              matches)))))
 
 (defun backup-edit-string (history input)
   (when (or (>= (history-index history)

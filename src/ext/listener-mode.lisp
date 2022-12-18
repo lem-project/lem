@@ -257,16 +257,22 @@
     (let ((input-string (get-prompt-input-string (current-window))))
       (isearch-continue
        (lambda (history)
-         (lem/common/history:previous-matching history input-string
-                                               :start-index (1- *history-matched-index*)))))))
+         (lem/common/history::previous-matching-exclude-duplicates
+          history
+          input-string
+          *history-matched-string*
+          :start-index (1- *history-matched-index*)))))))
 
 (define-command listener-isearch-history-next () ()
   (when *history-matched-index*
     (let ((input-string (get-prompt-input-string (current-window))))
       (isearch-continue
        (lambda (history)
-         (lem/common/history:next-matching history input-string
-                                           :start-index (1+ *history-matched-index*)))))))
+         (lem/common/history::next-matching-exclude-duplicates
+          history
+          input-string
+          *history-matched-string*
+          :start-index (1+ *history-matched-index*)))))))
 
 (define-command listener-isearch-history () ()
   (let ((buffer (current-buffer)))

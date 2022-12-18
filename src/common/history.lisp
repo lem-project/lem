@@ -101,6 +101,30 @@
                               i
                               matches)))))
 
+(defun previous-matching-exclude-duplicates (history string last-matched-string
+                                             &key (start-index (1- (history-index history))))
+  (loop :with index := start-index
+        :do (multiple-value-bind (matched-string matched-index matches)
+                (previous-matching history string :start-index index)
+              (cond ((null matched-string)
+                     (return))
+                    ((string/= matched-string last-matched-string)
+                     (return (values matched-string matched-index matches)))
+                    (t
+                     (setf index (1- matched-index)))))))
+
+(defun next-matching-exclude-duplicates (history string last-matched-string
+                                         &key (start-index (1- (history-index history))))
+  (loop :with index := start-index
+        :do (multiple-value-bind (matched-string matched-index matches)
+                (next-matching history string :start-index index)
+              (cond ((null matched-string)
+                     (return))
+                    ((string/= matched-string last-matched-string)
+                     (return (values matched-string matched-index matches)))
+                    (t
+                     (setf index (1+ matched-index)))))))
+
 (defun backup-edit-string (history input)
   (when (or (>= (history-index history)
                 (length (history-data history)))

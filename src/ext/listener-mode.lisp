@@ -208,9 +208,9 @@
 (define-key *history-isearch-keymap* "M-s" 'listener-isearch-history-next)
 (define-key *history-isearch-keymap* "C-s" 'listener-isearch-history-next)
 
-(defvar *history-matched-index*)
 (defvar *listener-buffer*)
 (defvar *history-popup-window*)
+(defvar *history-matched-index*)
 (defvar *history-matched-string*)
 
 (defun make-highlight-matches-buffer (target-string matches)

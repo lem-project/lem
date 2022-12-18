@@ -37,6 +37,11 @@
     :initform ""
     :reader completion-item-label
     :type string)
+   (chunks
+    :initarg :chunks
+    :initform nil
+    :reader completion-item-chunks
+    :type list)
    (detail
     :initarg :detail
     :initform ""
@@ -80,13 +85,16 @@
 (define-key *completion-mode-keymap* 'backward-delete-word 'completion-backward-delete-word)
 
 (define-attribute completion-attribute
-  (t :foreground "white" :background "RoyalBlue"))
+  (t :background "RoyalBlue"))
 (define-attribute non-focus-completion-attribute
   (:dark :foreground "white" :background "#444")
   (:light :foreground "black" :background "#DDD"))
 (define-attribute detail-attribute
   (:dark :foreground "gray" :background "#444")
   (:light :foreground "#777" :background "#DDD"))
+(define-attribute chunk-attribute
+  (:dark :foreground "dark blue" :background "#444")
+  (:light :foreground "dark blue" :background "#DDD"))
 
 (defclass print-spec ()
   ((label-width
@@ -105,6 +113,11 @@
 (defmethod lem.popup-window:apply-print-spec ((print-spec print-spec) point item)
   (insert-string point " ")
   (insert-string point (completion-item-label item))
+  (loop :for (offset-start . offset-end) :in (completion-item-chunks item)
+        :do (with-point ((start point) (end point))
+              (character-offset (line-start start) (1+ offset-start))
+              (character-offset (line-start end) (1+ offset-end))
+              (put-text-property start end :attribute 'chunk-attribute)))
   (move-to-column point (label-width print-spec) t)
   (line-end point)
   (insert-string point "  ")

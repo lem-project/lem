@@ -71,14 +71,14 @@
 
 (defun matchp (sub-string whole-string)
   ;; fuzzy matcher
-  #+(or)
   (loop :with start := 0 :and matches := '()
         :for c :across sub-string
         :do (let ((pos (position c whole-string :start start)))
               (unless pos (return))
               (push pos matches)
-              (setf start pos))
+              (setf start (1+ pos)))
         :finally (return (nreverse matches)))
+  #+(or)
   (let ((pos (search sub-string whole-string)))
     (when pos
       (loop :for offset :from 0

@@ -640,15 +640,18 @@
                   (list item nil nil nil))
                 completions))))
 
+(defun make-completion-item* (completion &optional start end)
+  (make-completion-item
+   :label (first completion)
+   :chunks (loop :for (offset substring) :in (third completion)
+                 :collect (cons offset (+ offset (length substring))))
+   :detail (fourth completion)
+   :start start
+   :end end))
+
 (defun symbol-completion (string &optional (package (current-package)))
   (let ((completions (eval-completions string package)))
-    (mapcar (lambda (completion)
-              (make-completion-item
-               :label (first completion)
-               :chunks (loop :for (offset substring) :in (third completion)
-                             :collect (cons offset (+ offset (length substring))))
-               :detail (fourth completion)))
-            completions)))
+    (mapcar #'make-completion-item* completions)))
 
 (defun prompt-for-symbol-name (prompt &optional (initial ""))
   (let ((package (current-package)))
@@ -711,13 +714,7 @@
       (let* ((completions (eval-completions (points-to-string start end)
                                             (current-package))))
         (mapcar (lambda (completion)
-                  (make-completion-item
-                   :label (first completion)
-                   :chunks (loop :for (offset substring) :in (third completion)
-                                 :collect (cons offset (+ offset (length substring))))
-                   :detail (fourth completion)
-                   :start start
-                   :end end))
+                  (make-completion-item* completion start end))
                 completions)))))
 
 (defun show-description (string)

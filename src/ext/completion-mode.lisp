@@ -93,8 +93,7 @@
   (:dark :foreground "gray" :background "#444")
   (:light :foreground "#777" :background "#DDD"))
 (define-attribute chunk-attribute
-  (:dark :foreground "dark blue" :background "#444")
-  (:light :foreground "dark blue" :background "#DDD"))
+  (t :foreground "SkyBlue1" :background "#444"))
 
 (defclass print-spec ()
   ((label-width

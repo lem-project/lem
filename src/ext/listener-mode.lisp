@@ -216,7 +216,7 @@
 (defun make-highlight-matches-buffer (target-string matches)
   (let* ((buffer (make-buffer nil :enable-undo-p nil :temporary t))
          (point (buffer-point buffer))
-         (attribute (make-attribute :foreground "black" :background "yellow")))
+         (attribute (make-attribute :foreground "black" :background "SkyBlue1")))
     (setf (variable-value 'line-wrap :buffer buffer) nil)
     (insert-string point target-string)
     (loop :for position :in matches

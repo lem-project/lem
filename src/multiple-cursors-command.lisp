@@ -30,9 +30,9 @@
   (prog1 (call-next-method)
     (clear-cursors (current-buffer))))
 
-(defmethod execute (mode
-                    (command delete-previous-char)
-                    argument)
+(defmethod execute :around (mode
+                            (command delete-previous-char)
+                            argument)
   (cond ((mark-active-p (cursor-mark (current-point)))
          (do-each-cursors ()
            (delete-cursor-region (current-point))))

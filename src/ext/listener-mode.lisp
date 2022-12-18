@@ -231,21 +231,27 @@
     (buffer-start point)
     buffer))
 
+(defun redisplay-popup (buffer)
+  (when *history-popup-window*
+    (delete-popup-message *history-popup-window*))
+  (setf *history-popup-window*
+        (display-popup-message buffer
+                               :timeout nil
+                               :style '(:use-border nil :offset-x 1 :offset-y 0))))
+
 (defun isearch-continue (next-or-previous-matching)
   (let ((buffer *listener-buffer*))
     (multiple-value-bind (matched-string matched-index matches)
         (funcall next-or-previous-matching
                  (listener-history buffer)
                  *history-matched-index*)
-      (when matched-string
-        (when *history-popup-window*
-          (delete-popup-message *history-popup-window*))
-        (setf *history-popup-window*
-              (display-popup-message (make-highlight-matches-buffer matched-string matches)
-                                     :timeout nil
-                                     :style '(:use-border nil :offset-y 0)))
-        (setf *history-matched-index* matched-index)
-        (setf *history-matched-string* matched-string)))))
+      (cond ((null matched-string)
+             (when *history-popup-window*
+               (redisplay-popup (window-buffer *history-popup-window*))))
+            (t
+             (redisplay-popup (make-highlight-matches-buffer matched-string matches))
+             (setf *history-matched-index* matched-index)
+             (setf *history-matched-string* matched-string))))))
 
 (define-command listener-isearch-history-previous () ()
   (let ((input-string (get-prompt-input-string (current-window))))

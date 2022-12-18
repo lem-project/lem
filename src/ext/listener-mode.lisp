@@ -56,7 +56,7 @@
 (define-key *listener-mode-keymap* "Return" 'listener-return)
 (define-key *listener-mode-keymap* "M-p" 'listener-previous-input)
 (define-key *listener-mode-keymap* "M-n" 'listener-next-input)
-(define-key *listener-mode-keymap* "M-r" 'listener-previous-matching-input)
+(define-key *listener-mode-keymap* "M-r" 'listener-isearch-history)
 (define-key *listener-mode-keymap* "C-c M-o" 'listener-clear-buffer)
 (define-key *listener-mode-keymap* "C-c C-u" 'listener-clear-input)
 
@@ -188,6 +188,56 @@
       (lem/common/history:previous-matching (current-listener-history) regexp)
     (when win
       (replace-textarea (current-buffer) str))))
+
+(defvar *history-isearch-keymap* (make-keymap))
+(define-key *history-isearch-keymap* "M-r" 'listener-isearch-history-previous)
+(define-key *history-isearch-keymap* "C-r" 'listener-isearch-history-previous)
+(define-key *history-isearch-keymap* "M-s" 'listener-isearch-history-next)
+(define-key *history-isearch-keymap* "C-s" 'listener-isearch-history-next)
+
+(defvar *history-matched-index* nil)
+(defvar *listener-buffer*)
+
+(defun isearch-continue (next-or-previous-matching)
+  (let ((buffer *listener-buffer*))
+    (multiple-value-bind (matched-string matched-index)
+        (funcall next-or-previous-matching
+                 (listener-history buffer)
+                 *history-matched-index*)
+      (when matched-string
+        (replace-textarea buffer matched-string)
+        (setf *history-matched-index* matched-index)))))
+
+(define-command listener-isearch-history-previous () ()
+  (let ((input-string (get-prompt-input-string (current-window))))
+    (isearch-continue
+     (lambda (history index)
+       (lem/common/history:previous-matching history input-string :start-index (1- index))))))
+
+(define-command listener-isearch-history-next () ()
+  (let ((input-string (get-prompt-input-string (current-window))))
+    (isearch-continue
+     (lambda (history index)
+       (lem/common/history:next-matching history input-string :start-index (1+ index))))))
+
+(define-command listener-isearch-history () ()
+  (let ((buffer (current-buffer)))
+    (backup-edit-string buffer)
+    (handler-bind ((editor-abort
+                     (lambda (c)
+                       (declare (ignore c))
+                       (restore-edit-string buffer))))
+      (let ((*listener-buffer* buffer)
+            (*history-matched-index* nil))
+        (prompt-for-string
+         ""
+         :special-keymap *history-isearch-keymap*
+         :edit-callback (lambda (input-string)
+                          (isearch-continue
+                           (lambda (history index)
+                             (declare (ignore index))
+                             (lem/common/history:previous-matching history input-string))))
+         :gravity :cursor)))))
 
 (defun clear-listener (buffer)
   (let ((*inhibit-read-only* t))

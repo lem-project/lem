@@ -7,6 +7,7 @@
            :previous-history
            :next-history
            :previous-matching
+           :next-matching
            :backup-edit-string
            :restore-edit-string)
   #+sbcl
@@ -68,12 +69,17 @@
                   (incf (history-index history)))
             t)))
 
-(defun previous-matching (history regexp)
-  (loop :for i :downfrom (1- (history-index history)) :to 0
-        :do (when (ppcre:scan regexp (aref (history-data history) i))
-              (setf (history-index history) i)
+(defun previous-matching (history string &key (start-index (1- (history-index history))))
+  (loop :for i :downfrom start-index :to 0
+        :do (when (search string (aref (history-data history) i))
               (return (values (aref (history-data history) i)
-                              t)))))
+                              i)))))
+
+(defun next-matching (history string &key (start-index (1+ (history-index history))))
+  (loop :for i :from start-index :below (length (history-data history))
+        :do (when (search string (aref (history-data history) i))
+              (return (values (aref (history-data history) i)
+                              i)))))
 
 (defun backup-edit-string (history input)
   (when (or (>= (history-index history)

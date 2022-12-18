@@ -80,6 +80,9 @@
     (character-offset (copy-point (buffer-start-point buffer) :temporary)
                       (prompt-window-start-charpos prompt))))
 
+(defmethod window-parent ((prompt floating-prompt))
+  (prompt-window-caller-of-prompt-window prompt))
+
 (defmethod lem::caller-of-prompt-window ((prompt floating-prompt))
   (prompt-window-caller-of-prompt-window prompt))
 

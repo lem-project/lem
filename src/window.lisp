@@ -13,6 +13,9 @@
 (defparameter *use-cursor-movement-workaround* t)
 
 (defgeneric %delete-window (window))
+(defgeneric window-parent (window)
+  (:method (window)
+    nil))
 
 (defclass window ()
   ((x

@@ -71,6 +71,9 @@
     :initarg :style
     :reader popup-window-style)))
 
+(defmethod lem:window-parent ((window popup-window))
+  (popup-window-source-window window))
+
 (defun ensure-gravity (gravity)
   (if (typep gravity 'gravity)
       gravity

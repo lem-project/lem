@@ -134,6 +134,7 @@
    :*window-scroll-functions*
    :*window-size-change-functions*
    :*window-show-buffer-functions*
+   :window-parent
    :window-view-point
    :windowp
    :window-id

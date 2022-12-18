@@ -145,13 +145,13 @@
             (change-input-start-point (current-point))
             (funcall (variable-value 'listener-execute-function) point str))))))
 
-(defun %backup-edit-string (history)
+(defun backup-edit-string (history)
   (lem/common/history:backup-edit-string
    history
    (points-to-string (input-start-point (current-buffer))
                      (buffer-end-point (current-buffer)))))
 
-(defun %restore-edit-string (history)
+(defun restore-edit-string (history)
   (multiple-value-bind (str win)
       (lem/common/history:restore-edit-string history)
     (when win
@@ -167,23 +167,23 @@
     (buffer-end (current-point))))
 
 (define-command listener-previous-input () ()
-  (%backup-edit-string (current-listener-history))
+  (backup-edit-string (current-listener-history))
   (multiple-value-bind (str win)
       (lem/common/history:previous-history (current-listener-history))
     (when win
       (replace-textarea str))))
 
 (define-command listener-next-input () ()
-  (%backup-edit-string (current-listener-history))
+  (backup-edit-string (current-listener-history))
   (multiple-value-bind (str win)
       (lem/common/history:next-history (current-listener-history))
     (if win
         (replace-textarea str)
-        (%restore-edit-string (current-listener-history)))))
+        (restore-edit-string (current-listener-history)))))
 
 (define-command listener-previous-matching-input (regexp)
     ((prompt-for-string "Previous element matching (regexp): "))
-  (%backup-edit-string (current-listener-history))
+  (backup-edit-string (current-listener-history))
   (multiple-value-bind (str win)
       (lem/common/history:previous-matching (current-listener-history) regexp)
     (when win

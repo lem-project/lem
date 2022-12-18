@@ -145,6 +145,15 @@
             (change-input-start-point (current-point))
             (funcall (variable-value 'listener-execute-function) point str))))))
 
+(defun replace-textarea (buffer str)
+  (let ((start (input-start-point buffer))
+        (end (buffer-end-point buffer)))
+    (save-excursion
+      (delete-between-points start end)
+      (insert-string start str)
+      (move-point (input-start-point buffer) start))
+    (buffer-end (buffer-point buffer))))
+
 (defun backup-edit-string (buffer)
   (lem/common/history:backup-edit-string
    (listener-history buffer)
@@ -156,15 +165,6 @@
       (lem/common/history:restore-edit-string (listener-history buffer))
     (when win
       (replace-textarea buffer str))))
-
-(defun replace-textarea (buffer str)
-  (let ((start (input-start-point buffer))
-        (end (buffer-end-point buffer)))
-    (save-excursion
-      (delete-between-points start end)
-      (insert-string start str)
-      (move-point (input-start-point buffer) start))
-    (buffer-end (buffer-point buffer))))
 
 (define-command listener-previous-input () ()
   (backup-edit-string (current-buffer))

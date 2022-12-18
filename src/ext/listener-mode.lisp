@@ -243,8 +243,7 @@
   (let ((buffer *listener-buffer*))
     (multiple-value-bind (matched-string matched-index matches)
         (funcall next-or-previous-matching
-                 (listener-history buffer)
-                 *history-matched-index*)
+                 (listener-history buffer))
       (cond ((null matched-string)
              (when *history-popup-window*
                (redisplay-popup (window-buffer *history-popup-window*))))
@@ -254,16 +253,20 @@
              (setf *history-matched-string* matched-string))))))
 
 (define-command listener-isearch-history-previous () ()
-  (let ((input-string (get-prompt-input-string (current-window))))
-    (isearch-continue
-     (lambda (history index)
-       (lem/common/history:previous-matching history input-string :start-index (1- index))))))
+  (when *history-matched-index*
+    (let ((input-string (get-prompt-input-string (current-window))))
+      (isearch-continue
+       (lambda (history)
+         (lem/common/history:previous-matching history input-string
+                                               :start-index (1- *history-matched-index*)))))))
 
 (define-command listener-isearch-history-next () ()
-  (let ((input-string (get-prompt-input-string (current-window))))
-    (isearch-continue
-     (lambda (history index)
-       (lem/common/history:next-matching history input-string :start-index (1+ index))))))
+  (when *history-matched-index*
+    (let ((input-string (get-prompt-input-string (current-window))))
+      (isearch-continue
+       (lambda (history)
+         (lem/common/history:next-matching history input-string
+                                           :start-index (1+ *history-matched-index*)))))))
 
 (define-command listener-isearch-history () ()
   (let ((buffer (current-buffer)))
@@ -274,12 +277,11 @@
       (unwind-protect
            (progn
              (prompt-for-string
-              ""
+              "(reverse-i-search) "
               :special-keymap *history-isearch-keymap*
               :edit-callback (lambda (input-string)
                                (isearch-continue
-                                (lambda (history index)
-                                  (declare (ignore index))
+                                (lambda (history)
                                   (lem/common/history:previous-matching history input-string))))
               :gravity :cursor
               :use-border nil)

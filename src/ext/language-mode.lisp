@@ -32,7 +32,8 @@
    :xref-filespec-to-filename
    :move-to-xref-location-position
    :display-xref-locations
-   :display-xref-references)
+   :display-xref-references
+   :find-root-directory)
   #+sbcl
   (:lock t))
 (in-package :lem.language-mode)
@@ -471,3 +472,16 @@
         (progn
           (scan-lists (current-point) 1 1 T)
           (newline-and-indent 1)))))
+
+(defun find-root-directory (buffer)
+  (let ((patterns (variable-value 'root-uri-patterns :buffer buffer)))
+    (labels ((matchp (directory)
+               (dolist (pathname (list-directory directory))
+                 (dolist (pattern patterns)
+                   (when (search pattern (file-namestring pathname))
+                     (return-from matchp t)))))
+             (recursive (directory)
+               (cond ((matchp directory) directory)
+                     ((uiop:pathname-equal directory (user-homedir-pathname)) nil)
+                     (t (recursive (uiop:pathname-parent-directory-pathname directory))))))
+      (recursive (buffer-directory buffer)))))

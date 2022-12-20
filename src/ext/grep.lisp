@@ -9,15 +9,17 @@
   (let ((table (make-syntax-table))
         (tmlanguage (make-tmlanguage
                      :patterns (make-tm-patterns
-                                (make-tm-match "^(.*?):(\\d+):(\\d+):(?:.*)"
-                                               :captures (vector nil
-                                                                 (make-tm-name 'lem.sourcelist:title-attribute)
-                                                                 (make-tm-name 'lem.sourcelist:position-attribute)
-                                                                 (make-tm-name 'lem.sourcelist:position-attribute)))
-                                (make-tm-match "^(.*?):(\\d+):(?:.*)"
-                                               :captures (vector nil
-                                                                 (make-tm-name 'lem.sourcelist:title-attribute)
-                                                                 (make-tm-name 'lem.sourcelist:position-attribute)))))))
+                                (make-tm-match
+                                 "^(.*?):(\\d+):(\\d+):(?:.*)"
+                                 :captures (vector nil
+                                                   (make-tm-name 'lem.sourcelist:title-attribute)
+                                                   (make-tm-name 'lem.sourcelist:position-attribute)
+                                                   (make-tm-name 'lem.sourcelist:position-attribute)))
+                                (make-tm-match
+                                 "^(.*?):(\\d+):(?:.*)"
+                                 :captures (vector nil
+                                                   (make-tm-name 'lem.sourcelist:title-attribute)
+                                                   (make-tm-name 'lem.sourcelist:position-attribute)))))))
     (set-syntax-parser table tmlanguage)
     table))
 

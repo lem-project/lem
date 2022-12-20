@@ -39,6 +39,7 @@
   (setf (variable-value 'find-references-function) 'find-references)
   (setf (variable-value 'completion-spec) 'completion-symbol)
   (setf (variable-value 'idle-function) 'lisp-idle-function)
+  (setf (variable-value 'root-uri-patterns) '(".asd"))
   (set-syntax-parser lem-lisp-syntax:*syntax-table*
                      (make-tmlanguage-lisp :enable-feature-support *enable-feature-highlight*))
   (unless (connected-p) (self-connect)))

@@ -12,6 +12,8 @@
    :find-references-function
    :xref-mode-tag
    :completion-spec
+   :indent-size
+   :root-uri-patterns
    :go-to-location
    :indent
    :newline-and-indent
@@ -29,7 +31,6 @@
    :xref-filespec-to-buffer
    :xref-filespec-to-filename
    :move-to-xref-location-position
-   :indent-size
    :display-xref-locations
    :display-xref-references)
   #+sbcl
@@ -46,6 +47,7 @@
 (define-editor-variable xref-mode-tag nil)
 (define-editor-variable completion-spec nil)
 (define-editor-variable indent-size 2)
+(define-editor-variable root-uri-patterns '())
 
 (defun prompt-for-symbol (prompt history-name)
   (prompt-for-string prompt :history-symbol history-name))

@@ -247,7 +247,9 @@
       (cond ((null matched-string)
              (when *history-popup-window*
                (redisplay-popup (window-buffer *history-popup-window*))
-               (show-message "Failed" :timeout 1 :style '(:offset-x -4 :offset-y 1 :use-border nil))))
+               (show-message "Failed"
+                             :timeout 1
+                             :style '(:offset-x -5 :offset-y 1 :use-border nil))))
             (t
              (redisplay-popup (make-highlight-matches-buffer matched-string matches))
              (setf *history-matched-index* matched-index)

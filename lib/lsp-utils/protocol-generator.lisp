@@ -12,6 +12,8 @@
 
 (cl-package-locks:lock-package :lem-lsp-utils/protocol-generator)
 
+(defvar *protocol-package-name* :lem-lsp-utils/protocol)
+
 (define-condition ts-parse-error ()
   ((message :initarg :message
             :reader ts-parse-error-message)
@@ -561,8 +563,8 @@
     (prin1 form stream)))
 
 (defun ensure-protocol-package ()
-  (or (find-package :lem-lsp-utils/protocol)
-      (make-package :lem-lsp-utils/protocol :use '())))
+  (or (find-package *protocol-package-name*)
+      (make-package *protocol-package-name* :use '())))
 
 (defun translate-text (file-part &optional (stream *standard-output*))
   (loop :with protocol-package := (ensure-protocol-package)
@@ -617,13 +619,13 @@
               :lem-lsp-utils/protocol-generator
               (make-pathname :name (pathname-name spec-file)
                              :type (pathname-type spec-file)))
-      (pprint `(defpackage :lem-lsp-utils/protocol
+      (pprint `(defpackage ,*protocol-package-name*
                  (:import-from :lem-lsp-utils/json)
                  (:import-from :lem-lsp-utils/type)
                  (:export ,@(mapcar #'make-keyword *export-list*)))
               out)
-      (pprint '(in-package :lem-lsp-utils/protocol) out)
-      (format out "~&~A" "(cl-package-locks:lock-package :lem-lsp-utils/protocol)")
+      (pprint `(in-package ,*protocol-package-name*) out)
+      (format out "~&(cl-package-locks:lock-package :~A)" (string-downcase *protocol-package-name*))
       (write-string body-text out)))
   (values))
 

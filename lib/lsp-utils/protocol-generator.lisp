@@ -12,6 +12,14 @@
 
 (cl-package-locks:lock-package :lem-lsp-utils/protocol-generator)
 
+(defparameter *specifications*
+  '(("specification/language-server-protocol/_specifications/specification-3-15.md"
+     "protocol-3-15.lisp"
+     :lem-lsp-utils/protocol-3-15)
+    ("specification/language-server-protocol/_specifications/lsp/3.17/"
+     "protocol-3-17.lisp"
+     :lem-lsp-utils/protocol-3-17)))
+
 (defvar *protocol-package-name*)
 
 (define-condition ts-parse-error ()
@@ -667,14 +675,6 @@
         (emit-package-definition stream *protocol-package-name* *export-list*)
         (write-string body-text stream))))
   (values))
-
-(defparameter *specifications*
-  '(("specification/language-server-protocol/_specifications/specification-3-15.md"
-     "protocol-3-15.lisp"
-     :lem-lsp-utils/protocol-3-15)
-    ("specification/language-server-protocol/_specifications/lsp/3.17/"
-     "protocol-3-17.lisp"
-     :lem-lsp-utils/protocol-3-17)))
 
 (defun deploy ()
   (loop :for (spec-file output-file package-name) :in *specifications*

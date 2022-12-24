@@ -792,12 +792,12 @@
 * Line position in a document (zero-based)."
                         :TYPE COMMON-LISP:NUMBER :READER POSITION-LINE)
                        (CHARACTER :INITARG :CHARACTER :DOCUMENTATION "*
-* Character offset on a line in a document (zero-based). Assuming that the line is
-* represented as a string, the `character` value represents the gap between the
-* `character` and `character + 1`.
+* Character offset on a line in a document (zero-based). Assuming that the
+* line is represented as a string, the `character` value represents the gap
+* between the `character` and `character + 1`.
 *
-* If the character value is greater than the line length it defaults back to the
-* line length."
+* If the character value is greater than the line length it defaults back
+* to the line length."
                         :TYPE COMMON-LISP:NUMBER :READER POSITION-CHARACTER)))
 
 (COMMON-LISP:DEFCLASS RANGE (LEM-LSP-UTILS/JSON:OBJECT)
@@ -818,20 +818,24 @@
                       ((ORIGIN-SELECTION-RANGE? :INITARG :ORIGIN-SELECTION-RANGE :DOCUMENTATION "*
 * Span of the origin of this link.
 *
-* Used as the underlined span for mouse interaction. Defaults to the word range at
-* the mouse position."
+* Used as the underlined span for mouse interaction.
+* Defaults to the word range at the mouse position."
                         :TYPE RANGE :READER LOCATION-LINK-ORIGIN-SELECTION-RANGE)
                        (TARGET-URI :INITARG :TARGET-URI :DOCUMENTATION "*
 * The target resource identifier of this link."
                         :TYPE DOCUMENT-URI :READER LOCATION-LINK-TARGET-URI)
                        (TARGET-RANGE :INITARG :TARGET-RANGE :DOCUMENTATION "*
-* The full target range of this link. If the target for example is a symbol then target range is the
-* range enclosing this symbol not including leading/trailing whitespace but everything else
-* like comments. This information is typically used to highlight the range in the editor."
+* The full target range of this link.
+* For example, if the target is a symbol, then target range is the range
+* enclosing this symbol not including leading/trailing whitespace but
+* everything else like comments.
+* This information is typically used to highlight the range in the editor."
                         :TYPE RANGE :READER LOCATION-LINK-TARGET-RANGE)
                        (TARGET-SELECTION-RANGE :INITARG :TARGET-SELECTION-RANGE :DOCUMENTATION "*
-* The range that should be selected and revealed when this link is being followed, e.g the name of a function.
-* Must be contained by the the `targetRange`. See also `DocumentSymbol#range`"
+* The range that should be selected and revealed when this link is being
+* followed, for example, the name of a function.
+* Must be contained by the `targetRange`.
+* See also `DocumentSymbol#range`"
                         :TYPE RANGE :READER LOCATION-LINK-TARGET-SELECTION-RANGE)))
 
 (COMMON-LISP:DEFCLASS DIAGNOSTIC (LEM-LSP-UTILS/JSON:OBJECT)
@@ -1004,16 +1008,19 @@
                           :OPTIONAL-P COMMON-LISP:T))
                         :READER WORKSPACE-EDIT-CHANGES)
                        (DOCUMENT-CHANGES? :INITARG :DOCUMENT-CHANGES :DOCUMENTATION "*
-* Depending on the client capability `workspace.workspaceEdit.resourceOperations` document changes
-* are either an array of `TextDocumentEdit`s to express changes to n different text documents
-* where each text document edit addresses a specific version of a text document. Or it can contain
-* above `TextDocumentEdit`s mixed with create, rename and delete file / folder operations.
+* The client capability `workspace.workspaceEdit.resourceOperations`
+* determines whether document changes are either an array of
+* `TextDocumentEdit`s to express changes to different text documents,
+* where each text document edit addresses a specific version
+* of a text document, or it can contains the above `TextDocumentEdit`s
+* mixed with create, rename, and delete file / folder operations.
 *
 * Whether a client supports versioned document edits is expressed via
 * `workspace.workspaceEdit.documentChanges` client capability.
 *
-* If a client neither supports `documentChanges` nor `workspace.workspaceEdit.resourceOperations` then
-* only plain `TextEdit`s using the `changes` property are supported."
+* If a client doesn't support `documentChanges` or
+* `workspace.workspaceEdit.resourceOperations`, then only plain
+* `TextEdit`s using the `changes` property are supported."
                         :TYPE
                         (COMMON-LISP:OR (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-DOCUMENT-EDIT)
                                         (LEM-LSP-UTILS/TYPE:TS-ARRAY
@@ -1087,14 +1094,15 @@
 
 (COMMON-LISP:DEFCLASS VERSIONED-TEXT-DOCUMENT-IDENTIFIER (TEXT-DOCUMENT-IDENTIFIER)
                       ((VERSION :INITARG :VERSION :DOCUMENTATION "*
-* The version number of this document. If a versioned text document identifier
-* is sent from the server to the client and the file is not open in the editor
-* (the server has not received an open notification before) the server can send
-* `null` to indicate that the version is known and the content on disk is the
-* master (as speced with document content ownership).
+* The version number of this document.
+* If a versioned text document identifier is sent from the server to the
+* client and the file is not open in the editor (the server has not
+* received an open notification before), the server can send `null` to
+* indicate that the version is known and the content on disk is the
+* master (as specified with document content ownership).
 *
-* The version number of a document will increase after each change, including
-* undo/redo. The number doesn't need to be consecutive."
+* The version number of a document will increase after each change,
+* including undo/redo. The number doesn't need to be consecutive."
                         :TYPE
                         (COMMON-LISP:OR COMMON-LISP:NUMBER
                                         (COMMON-LISP:OR COMMON-LISP:NULL (COMMON-LISP:EQL :NULL)))
@@ -1123,9 +1131,13 @@
 * - `*` to match one or more characters in a path segment
 * - `?` to match on one character in a path segment
 * - `**` to match any number of path segments, including none
-* - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
-* - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
-* - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)"
+* - `{}` to group conditions
+*   (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
+* - `[]` to declare a range of characters to match in a path segment
+*   (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+* - `[!...]` to negate a range of characters to match in a path segment
+*   (e.g., `example.[!0-9]` to match on `example.a`, `example.b`,
+*    but not `example.0`)"
                         :TYPE COMMON-LISP:STRING :READER DOCUMENT-FILTER-PATTERN)))
 
 (COMMON-LISP:DEFTYPE DOCUMENT-SELECTOR () '(LEM-LSP-UTILS/TYPE:TS-ARRAY DOCUMENT-FILTER))
@@ -1138,8 +1150,9 @@
 
 (COMMON-LISP:DEFCLASS TEXT-DOCUMENT-REGISTRATION-OPTIONS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DOCUMENT-SELECTOR :INITARG :DOCUMENT-SELECTOR :DOCUMENTATION "*
-* A document selector to identify the scope of the registration. If set to null
-* the document selector provided on the client side will be used."
+* A document selector to identify the scope of the registration.
+* If set to null, the document selector provided on the client side
+* will be used."
                         :TYPE
                         (COMMON-LISP:OR DOCUMENT-SELECTOR
                                         (COMMON-LISP:OR COMMON-LISP:NULL (COMMON-LISP:EQL :NULL)))
@@ -1174,8 +1187,8 @@
                         :TYPE COMMON-LISP:STRING :READER WORK-DONE-PROGRESS-BEGIN-TITLE)
                        (CANCELLABLE? :INITARG :CANCELLABLE :DOCUMENTATION "*
 * Controls if a cancel button should show to allow the user to cancel the
-* long running operation. Clients that don't support cancellation are allowed
-* to ignore the setting."
+* long running operation.
+* Clients that don't support cancellation can ignore the setting."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         WORK-DONE-PROGRESS-BEGIN-CANCELLABLE)
                        (MESSAGE? :INITARG :MESSAGE :DOCUMENTATION "*
@@ -1199,11 +1212,12 @@
                         (LEM-LSP-UTILS/TYPE:TS-EQUAL-SPECIALIZER "report") :READER
                         WORK-DONE-PROGRESS-REPORT-KIND)
                        (CANCELLABLE? :INITARG :CANCELLABLE :DOCUMENTATION "*
-* Controls enablement state of a cancel button. This property is only valid if a cancel
-* button got requested in the `WorkDoneProgressStart` payload.
+* Controls enablement state of a cancel button. T
+* This property is only valid if a cancel button is requested in
+* the `WorkDoneProgressStart` payload.
 *
-* Clients that don't support cancellation or don't support control the button's
-* enablement state are allowed to ignore the setting."
+* Clients that don't support cancellation or don't support controlling
+* the button's enablement state are allowed to ignore the setting."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         WORK-DONE-PROGRESS-REPORT-CANCELLABLE)
                        (MESSAGE? :INITARG :MESSAGE :DOCUMENTATION "*
@@ -1243,15 +1257,16 @@
 
 (COMMON-LISP:DEFCLASS PARTIAL-RESULT-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((PARTIAL-RESULT-TOKEN? :INITARG :PARTIAL-RESULT-TOKEN :DOCUMENTATION "*
-* An optional token that a server can use to report partial results (e.g. streaming) to
-* the client."
+* An optional token that a server can use to report partial results
+* (for example, streaming) to the client."
                         :TYPE PROGRESS-TOKEN :READER PARTIAL-RESULT-PARAMS-PARTIAL-RESULT-TOKEN)))
 
 (COMMON-LISP:DEFCLASS INITIALIZE-PARAMS (WORK-DONE-PROGRESS-PARAMS)
                       ((PROCESS-ID :INITARG :PROCESS-ID :DOCUMENTATION "*
-* The process Id of the parent process that started
-* the server. Is null if the process has not been started by another process.
-* If the parent process is not alive then the server should exit (see exit notification) its process."
+* The process ID of the parent process that started the server.
+* Is null if the process has not been started by another process.
+* If the parent process is not alive, then the server should exit
+* (see exit notification) its process."
                         :TYPE
                         (COMMON-LISP:OR COMMON-LISP:NUMBER
                                         (COMMON-LISP:OR COMMON-LISP:NULL (COMMON-LISP:EQL :NULL)))
@@ -1393,7 +1408,8 @@
                         :TYPE RENAME-CLIENT-CAPABILITIES :READER
                         TEXT-DOCUMENT-CLIENT-CAPABILITIES-RENAME)
                        (PUBLISH-DIAGNOSTICS? :INITARG :PUBLISH-DIAGNOSTICS :DOCUMENTATION "*
-* Capabilities specific to the `textDocument/publishDiagnostics` notification."
+* Capabilities specific to the `textDocument/publishDiagnostics`
+* notification."
                         :TYPE PUBLISH-DIAGNOSTICS-CLIENT-CAPABILITIES :READER
                         TEXT-DOCUMENT-CLIENT-CAPABILITIES-PUBLISH-DIAGNOSTICS)
                        (FOLDING-RANGE? :INITARG :FOLDING-RANGE :DOCUMENTATION "*
@@ -1474,8 +1490,10 @@
 
 (COMMON-LISP:DEFCLASS SERVER-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((TEXT-DOCUMENT-SYNC? :INITARG :TEXT-DOCUMENT-SYNC :DOCUMENTATION "*
-* Defines how text documents are synced. Is either a detailed structure defining each notification or
-* for backwards compatibility the TextDocumentSyncKind number. If omitted it defaults to `TextDocumentSyncKind.None`."
+* Defines how text documents are synced.
+* Is either a detailed structure defining each notification
+* or for backwards compatibility, the TextDocumentSyncKind number.
+* If omitted, it defaults to `TextDocumentSyncKind.None`."
                         :TYPE (COMMON-LISP:OR TEXT-DOCUMENT-SYNC-OPTIONS COMMON-LISP:NUMBER)
                         :READER SERVER-CAPABILITIES-TEXT-DOCUMENT-SYNC)
                        (COMPLETION-PROVIDER? :INITARG :COMPLETION-PROVIDER :DOCUMENTATION "*
@@ -1535,13 +1553,14 @@
                         (COMMON-LISP:OR LEM-LSP-UTILS/TYPE:TS-BOOLEAN DOCUMENT-SYMBOL-OPTIONS)
                         :READER SERVER-CAPABILITIES-DOCUMENT-SYMBOL-PROVIDER)
                        (CODE-ACTION-PROVIDER? :INITARG :CODE-ACTION-PROVIDER :DOCUMENTATION "*
-* The server provides code actions. The `CodeActionOptions` return type is only
-* valid if the client signals code action literal support via the property
+* The server provides code actions.
+* The `CodeActionOptions` return type is only valid if the client signals
+* code action literal support via the property
 * `textDocument.codeAction.codeActionLiteralSupport`."
                         :TYPE (COMMON-LISP:OR LEM-LSP-UTILS/TYPE:TS-BOOLEAN CODE-ACTION-OPTIONS)
                         :READER SERVER-CAPABILITIES-CODE-ACTION-PROVIDER)
                        (CODE-LENS-PROVIDER? :INITARG :CODE-LENS-PROVIDER :DOCUMENTATION "*
-* The server provides code lens."
+* The server provides CodeLens."
                         :TYPE CODE-LENS-OPTIONS :READER SERVER-CAPABILITIES-CODE-LENS-PROVIDER)
                        (DOCUMENT-LINK-PROVIDER? :INITARG :DOCUMENT-LINK-PROVIDER :DOCUMENTATION "*
 * The server provides document link support."
@@ -1604,8 +1623,9 @@
                        (WORKSPACE-SYMBOL-PROVIDER? :INITARG :WORKSPACE-SYMBOL-PROVIDER
                         :DOCUMENTATION "*
 * The server provides workspace symbol support."
-                        :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
-                        SERVER-CAPABILITIES-WORKSPACE-SYMBOL-PROVIDER)
+                        :TYPE
+                        (COMMON-LISP:OR LEM-LSP-UTILS/TYPE:TS-BOOLEAN WORKSPACE-SYMBOL-OPTIONS)
+                        :READER SERVER-CAPABILITIES-WORKSPACE-SYMBOL-PROVIDER)
                        (WORKSPACE? :INITARG :WORKSPACE :DOCUMENTATION "*
 * Workspace specific server capabilities"
                         :TYPE
@@ -1770,9 +1790,9 @@
 
 (COMMON-LISP:DEFCLASS DID-CHANGE-WATCHED-FILES-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
-* Did change watched files notification supports dynamic registration. Please note
-* that the current protocol doesn't support static configuration for file changes
-* from the server side."
+* Did change watched files notification supports dynamic registration.
+* Please note that the current protocol doesn't support static
+* configuration for file changes from the server side."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         DID-CHANGE-WATCHED-FILES-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
@@ -1790,9 +1810,13 @@
 * - `*` to match one or more characters in a path segment
 * - `?` to match on one character in a path segment
 * - `**` to match any number of path segments, including none
-* - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript and JavaScript files)
-* - `[]` to declare a range of characters to match in a path segment (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
-* - `[!...]` to negate a range of characters to match in a path segment (e.g., `example.[!0-9]` to match on `example.a`, `example.b`, but not `example.0`)"
+* - `{}` to group conditions (e.g. `**​/*.{ts,js}` matches all TypeScript
+*   and JavaScript files)
+* - `[]` to declare a range of characters to match in a path segment
+*   (e.g., `example.[0-9]` to match on `example.0`, `example.1`, …)
+* - `[!...]` to negate a range of characters to match in a path segment
+*   (e.g., `example.[!0-9]` to match on `example.a`, `example.b`,
+*    but not `example.0`)"
                         :TYPE COMMON-LISP:STRING :READER FILE-SYSTEM-WATCHER-GLOB-PATTERN)
                        (KIND? :INITARG :KIND :DOCUMENTATION "*
 * The kind of events of interest. If omitted it defaults
@@ -1832,7 +1856,8 @@
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         WORKSPACE-SYMBOL-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (SYMBOL-KIND? :INITARG :SYMBOL-KIND :DOCUMENTATION "*
-* Specific capabilities for the `SymbolKind` in the `workspace/symbol` request."
+* Specific capabilities for the `SymbolKind` in the
+* `workspace/symbol` request."
                         :TYPE
                         (LEM-LSP-UTILS/TYPE:TS-INTERFACE
                          ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY SYMBOL-KIND) :OPTIONAL-P
@@ -1905,13 +1930,15 @@
 
 (COMMON-LISP:DEFCLASS TEXT-DOCUMENT-SYNC-OPTIONS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((OPEN-CLOSE? :INITARG :OPEN-CLOSE :DOCUMENTATION "*
-* Open and close notifications are sent to the server. If omitted open close notification should not
-* be sent."
+* Open and close notifications are sent to the server.
+* If omitted open close notification should not be sent."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         TEXT-DOCUMENT-SYNC-OPTIONS-OPEN-CLOSE)
                        (CHANGE? :INITARG :CHANGE :DOCUMENTATION "*
-* Change notifications are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
-* and TextDocumentSyncKind.Incremental. If omitted it defaults to TextDocumentSyncKind.None."
+* Change notifications are sent to the server.
+* See TextDocumentSyncKind.None, TextDocumentSyncKind.Full,
+* and TextDocumentSyncKind.Incremental.
+* If omitted, it defaults to TextDocumentSyncKind.None."
                         :TYPE TEXT-DOCUMENT-SYNC-KIND :READER TEXT-DOCUMENT-SYNC-OPTIONS-CHANGE)))
 
 (COMMON-LISP:DEFCLASS DID-OPEN-TEXT-DOCUMENT-PARAMS (LEM-LSP-UTILS/JSON:OBJECT)
@@ -1936,17 +1963,20 @@
                         :TYPE VERSIONED-TEXT-DOCUMENT-IDENTIFIER :READER
                         DID-CHANGE-TEXT-DOCUMENT-PARAMS-TEXT-DOCUMENT)
                        (CONTENT-CHANGES :INITARG :CONTENT-CHANGES :DOCUMENTATION "*
-* The actual content changes. The content changes describe single state changes
-* to the document. So if there are two content changes c1 (at array index 0) and
-* c2 (at array index 1) for a document in state S then c1 moves the document from
-* S to S' and c2 from S' to S''. So c1 is computed on the state S and c2 is computed
-* on the state S'.
+* The actual content changes.
+* The content changes describe single state changes to the document.
+* If there are two content changes c1 (at array index 0) and
+* c2 (at array index 1) for a document in state S, then c1 moves the
+* document from S to S' and c2 from S' to S''.
+* So c1 is computed on the state S and c2 is computed on the state S'.
 *
-* To mirror the content of a document using change events use the following approach:
+* To mirror the content of a document using change events,
+* use the following approach:
 * - start with the same initial content
-* - apply the 'textDocument/didChange' notifications in the order you recevie them.
-* - apply the `TextDocumentContentChangeEvent`s in a single notification in the order
-*   you receive them."
+* - apply the 'textDocument/didChange' notifications
+*     in the order you receive them.
+* - apply the `TextDocumentContentChangeEvent`s
+*     in a single notification in the order you receive them."
                         :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-DOCUMENT-CONTENT-CHANGE-EVENT)
                         :READER DID-CHANGE-TEXT-DOCUMENT-PARAMS-CONTENT-CHANGES)))
 
@@ -2028,27 +2058,29 @@
 
 (COMMON-LISP:DEFCLASS TEXT-DOCUMENT-SYNC-OPTIONS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((OPEN-CLOSE? :INITARG :OPEN-CLOSE :DOCUMENTATION "*
-* Open and close notifications are sent to the server. If omitted open close notification should not
-* be sent."
+* Open and close notifications are sent to the server.
+* If omitted, open close notification should not be sent."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         TEXT-DOCUMENT-SYNC-OPTIONS-OPEN-CLOSE)
                        (CHANGE? :INITARG :CHANGE :DOCUMENTATION "*
-* Change notifications are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
-* and TextDocumentSyncKind.Incremental. If omitted it defaults to TextDocumentSyncKind.None."
+* Change notifications are sent to the server.
+* See TextDocumentSyncKind.None, TextDocumentSyncKind.Full,
+* and TextDocumentSyncKind.Incremental.
+* If omitted, it defaults to TextDocumentSyncKind.None."
                         :TYPE COMMON-LISP:NUMBER :READER TEXT-DOCUMENT-SYNC-OPTIONS-CHANGE)
                        (WILL-SAVE? :INITARG :WILL-SAVE :DOCUMENTATION "*
-* If present will save notifications are sent to the server. If omitted the notification should not be
-* sent."
+* If present will save notifications are sent to the server.
+* If omitted, the notification should not be sent."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         TEXT-DOCUMENT-SYNC-OPTIONS-WILL-SAVE)
                        (WILL-SAVE-WAIT-UNTIL? :INITARG :WILL-SAVE-WAIT-UNTIL :DOCUMENTATION "*
-* If present will save wait until requests are sent to the server. If omitted the request should not be
-* sent."
+* If present will save wait until requests are sent to the server.
+* If omitted, the request should not be sent."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         TEXT-DOCUMENT-SYNC-OPTIONS-WILL-SAVE-WAIT-UNTIL)
                        (SAVE? :INITARG :SAVE :DOCUMENTATION "*
-* If present save notifications are sent to the server. If omitted the notification should not be
-* sent."
+* If present save notifications are sent to the server.
+* If omitted, the notification should not be sent."
                         :TYPE (COMMON-LISP:OR LEM-LSP-UTILS/TYPE:TS-BOOLEAN SAVE-OPTIONS) :READER
                         TEXT-DOCUMENT-SYNC-OPTIONS-SAVE)))
 
@@ -2080,8 +2112,8 @@
 * The URI for which diagnostic information is reported."
                         :TYPE DOCUMENT-URI :READER PUBLISH-DIAGNOSTICS-PARAMS-URI)
                        (VERSION? :INITARG :VERSION :DOCUMENTATION "*
-* Optional the version number of the document the diagnostics are published for.
-*
+* The version number of the document the diagnostics are published for.
+* Optional.
 * @since 3.15.0"
                         :TYPE COMMON-LISP:NUMBER :READER PUBLISH-DIAGNOSTICS-PARAMS-VERSION)
                        (DIAGNOSTICS :INITARG :DIAGNOSTICS :DOCUMENTATION "*
@@ -2129,23 +2161,27 @@
 
 (COMMON-LISP:DEFCLASS COMPLETION-OPTIONS (WORK-DONE-PROGRESS-OPTIONS)
                       ((TRIGGER-CHARACTERS? :INITARG :TRIGGER-CHARACTERS :DOCUMENTATION "*
-* Most tools trigger completion request automatically without explicitly requesting
-* it using a keyboard shortcut (e.g. Ctrl+Space). Typically they do so when the user
-* starts to type an identifier. For example if the user types `c` in a JavaScript file
-* code complete will automatically pop up present `console` besides others as a
-* completion item. Characters that make up identifiers don't need to be listed here.
+* Most tools trigger completion request automatically without explicitly
+* requesting it using a keyboard shortcut (for example Ctrl+Space).
+* Typically they do so when the user starts to type an identifier.
+* For example, if the user types `c` in a JavaScript file, code complete
+* will automatically display `console` along with others as a
+* completion item.
+* Characters that make up identifiers don't need to be listed here.
 *
-* If code complete should automatically be trigger on characters not being valid inside
-* an identifier (for example `.` in JavaScript) list them in `triggerCharacters`."
+* If code complete should automatically be triggered on characters
+* not being valid inside an identifier (for example `.` in JavaScript),
+* list them in `triggerCharacters`."
                         :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER
                         COMPLETION-OPTIONS-TRIGGER-CHARACTERS)
                        (ALL-COMMIT-CHARACTERS? :INITARG :ALL-COMMIT-CHARACTERS :DOCUMENTATION "*
-* The list of all possible characters that commit a completion. This field can be used
-* if clients don't support individual commit characters per completion item. See
-* `ClientCapabilities.textDocument.completion.completionItem.commitCharactersSupport`.
+* The list of all possible characters that commit a completion.
+* This field can be used if clients don't support individual commit
+* characters per completion item. See `ClientCapabilities.`
+* `textDocument.completion.completionItem.commitCharactersSupport`.
 *
-* If a server provides both `allCommitCharacters` and commit characters on an individual
-* completion item the ones on the completion item win.
+* If a server provides both `allCommitCharacters` and commit characters
+* on an individual completion item, the ones on the completion item win.
 *
 * @since 3.2.0"
                         :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER
@@ -2163,8 +2199,9 @@
                       (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS
                        PARTIAL-RESULT-PARAMS)
                       ((CONTEXT? :INITARG :CONTEXT :DOCUMENTATION "*
-* The completion context. This is only available if the client specifies
-* to send this using `ClientCapabilities.textDocument.completion.contextSupport === true`"
+* The completion context.
+* This is only available if the client specifies to send this using
+* `ClientCapabilities.textDocument.completion.contextSupport === true`"
                         :TYPE COMPLETION-CONTEXT :READER COMPLETION-PARAMS-CONTEXT)))
 
 (COMMON-LISP:PROGN
@@ -2183,14 +2220,17 @@
 * How the completion was triggered."
                         :TYPE COMPLETION-TRIGGER-KIND :READER COMPLETION-CONTEXT-TRIGGER-KIND)
                        (TRIGGER-CHARACTER? :INITARG :TRIGGER-CHARACTER :DOCUMENTATION "*
-* The trigger character (a single character) that has trigger code complete.
+* The trigger character (single character) that has trigger code complete.
 * Is undefined if `triggerKind !== CompletionTriggerKind.TriggerCharacter`"
                         :TYPE COMMON-LISP:STRING :READER COMPLETION-CONTEXT-TRIGGER-CHARACTER)))
 
 (COMMON-LISP:DEFCLASS COMPLETION-LIST (LEM-LSP-UTILS/JSON:OBJECT)
                       ((IS-INCOMPLETE :INITARG :IS-INCOMPLETE :DOCUMENTATION "*
-* This list it not complete. Further typing should result in recomputing
-* this list."
+* This list is not complete. Further typing should result in recomputing
+* this list.
+*
+* Recomputed lists have all their items replaced (not appended) in the
+* incomplete completion sessions."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER COMPLETION-LIST-IS-INCOMPLETE)
                        (ITEMS :INITARG :ITEMS :DOCUMENTATION "*
 * The completion items."
@@ -2262,44 +2302,48 @@
 * this completion. When `falsy` the label is used.
 *
 * The `insertText` is subject to interpretation by the client side.
-* Some tools might not take the string literally. For example
-* VS Code when code complete is requested in this example `con<cursor position>`
-* and a completion item with an `insertText` of `console` is provided it
-* will only insert `sole`. Therefore it is recommended to use `textEdit` instead
-* since it avoids additional client side interpretation."
+* Some tools might not take the string literally.
+* For example, VS Code when code complete is requested in this example
+* `con<cursor position>` and a completion item with an `insertText` of
+* `console` is provided, it will only insert `sole`.
+* Therefore, it is recommended to use `textEdit` instead since it avoids
+* additional client side interpretation."
                         :TYPE COMMON-LISP:STRING :READER COMPLETION-ITEM-INSERT-TEXT)
                        (INSERT-TEXT-FORMAT? :INITARG :INSERT-TEXT-FORMAT :DOCUMENTATION "*
-* The format of the insert text. The format applies to both the `insertText` property
-* and the `newText` property of a provided `textEdit`. If omitted defaults to
-* `InsertTextFormat.PlainText`."
+* The format of the insert text.
+* The format applies to both the `insertText` property and the `newText`
+* property of a provided `textEdit`.
+* If omitted, defaults to `InsertTextFormat.PlainText`."
                         :TYPE INSERT-TEXT-FORMAT :READER COMPLETION-ITEM-INSERT-TEXT-FORMAT)
                        (TEXT-EDIT? :INITARG :TEXT-EDIT :DOCUMENTATION "*
-* An edit which is applied to a document when selecting this completion. When an edit is provided the value of
-* `insertText` is ignored.
+* An edit that is applied to a document when selecting this completion.
+* When an edit is provided, the value of `insertText` is ignored.
 *
-* *Note:* The range of the edit must be a single line range and it must contain the position at which completion
-* has been requested."
+* *Note:* The range of the edit must be a single line range and it must
+* contain the position at which completion has been requested."
                         :TYPE TEXT-EDIT :READER COMPLETION-ITEM-TEXT-EDIT)
                        (ADDITIONAL-TEXT-EDITS? :INITARG :ADDITIONAL-TEXT-EDITS :DOCUMENTATION "*
 * An optional array of additional text edits that are applied when
-* selecting this completion. Edits must not overlap (including the same insert position)
-* with the main edit nor with themselves.
+* selecting this completion.
+* Edits must not overlap (including the same insert position) with the
+* main edit nor with themselves.
 *
-* Additional text edits should be used to change text unrelated to the current cursor position
-* (for example adding an import statement at the top of the file if the completion item will
-* insert an unqualified type)."
+* Additional text edits should be used to change text unrelated to the
+* current cursor position (for example adding an import statement at the
+* top of the file if the completion item will insert an unqualified type)."
                         :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-EDIT) :READER
                         COMPLETION-ITEM-ADDITIONAL-TEXT-EDITS)
                        (COMMIT-CHARACTERS? :INITARG :COMMIT-CHARACTERS :DOCUMENTATION "*
-* An optional set of characters that when pressed while this completion is active will accept it first and
-* then type that character. *Note* that all commit characters should have `length=1` and that superfluous
-* characters will be ignored."
+* An optional set of characters that when pressed, while this completion
+* is active, will accept it first and then type that character.
+* *Note* that all commit characters should have `length=1` and that
+* superfluous characters will be ignored."
                         :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER
                         COMPLETION-ITEM-COMMIT-CHARACTERS)
                        (COMMAND? :INITARG :COMMAND :DOCUMENTATION "*
-* An optional command that is executed *after* inserting this completion. *Note* that
-* additional modifications to the current document should be described with the
-* additionalTextEdits-property."
+* An optional command that is executed *after* inserting this completion.
+* *Note* that additional modifications to the current document should be
+* described with the additionalTextEdits-property."
                         :TYPE COMMAND :READER COMPLETION-ITEM-COMMAND)
                        (DATA? :INITARG :DATA :DOCUMENTATION "*
 * A data entry field that is preserved on a completion item between
@@ -2408,8 +2452,9 @@
                        (RETRIGGER-CHARACTERS? :INITARG :RETRIGGER-CHARACTERS :DOCUMENTATION "*
 * List of characters that re-trigger signature help.
 *
-* These trigger characters are only active when signature help is already showing. All trigger characters
-* are also counted as re-trigger characters.
+* These trigger characters are only active when signature help is already
+* showing.
+* All trigger characters are also counted as re-trigger characters.
 *
 * @since 3.15.0"
                         :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY COMMON-LISP:STRING) :READER
@@ -2421,8 +2466,9 @@
 (COMMON-LISP:DEFCLASS SIGNATURE-HELP-PARAMS
                       (TEXT-DOCUMENT-POSITION-PARAMS WORK-DONE-PROGRESS-PARAMS)
                       ((CONTEXT? :INITARG :CONTEXT :DOCUMENTATION "*
-* The signature help context. This is only available if the client specifies
-* to send this using the client capability  `textDocument.signatureHelp.contextSupport === true`
+* The signature help context.
+* This is only available if the client specifies to send this using the
+* client capability `textDocument.signatureHelp.contextSupport === true`.
 *
 * @since 3.15.0"
                         :TYPE SIGNATURE-HELP-CONTEXT :READER SIGNATURE-HELP-PARAMS-CONTEXT)))
@@ -2446,25 +2492,27 @@
                        (TRIGGER-CHARACTER? :INITARG :TRIGGER-CHARACTER :DOCUMENTATION "*
 * Character that caused signature help to be triggered.
 *
-* This is undefined when `triggerKind !== SignatureHelpTriggerKind.TriggerCharacter`"
+* This is undefined when
+* `triggerKind !== SignatureHelpTriggerKind.TriggerCharacter`."
                         :TYPE COMMON-LISP:STRING :READER SIGNATURE-HELP-CONTEXT-TRIGGER-CHARACTER)
                        (IS-RETRIGGER :INITARG :IS-RETRIGGER :DOCUMENTATION "*
 * `true` if signature help was already showing when it was triggered.
 *
-* Retriggers occur when the signature help is already active and can be caused by actions such as
-* typing a trigger character, a cursor move, or document content changes."
+* Retriggers occur when the signature help is already active and can be
+* caused by actions such as typing a trigger character, a cursor move,
+* or document content changes."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         SIGNATURE-HELP-CONTEXT-IS-RETRIGGER)
                        (ACTIVE-SIGNATURE-HELP? :INITARG :ACTIVE-SIGNATURE-HELP :DOCUMENTATION "*
 * The currently active `SignatureHelp`.
 *
-* The `activeSignatureHelp` has its `SignatureHelp.activeSignature` field updated based on
-* the user navigating through available signatures."
+* The `activeSignatureHelp` has its `SignatureHelp.activeSignature` field
+* updated based on the user navigating through available signatures."
                         :TYPE SIGNATURE-HELP :READER SIGNATURE-HELP-CONTEXT-ACTIVE-SIGNATURE-HELP)))
 
 (COMMON-LISP:DEFCLASS SIGNATURE-HELP (LEM-LSP-UTILS/JSON:OBJECT)
                       ((SIGNATURES :INITARG :SIGNATURES :DOCUMENTATION "*
-* One or more signatures. If no signaures are availabe the signature help
+* One or more signatures. If no signatures are available the signature help
 * request should return `null`."
                         :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY SIGNATURE-INFORMATION) :READER
                         SIGNATURE-HELP-SIGNATURES)
@@ -2508,12 +2556,14 @@
                       ((LABEL :INITARG :LABEL :DOCUMENTATION "*
 * The label of this parameter information.
 *
-* Either a string or an inclusive start and exclusive end offsets within its containing
-* signature label. (see SignatureInformation.label). The offsets are based on a UTF-16
-* string representation as `Position` and `Range` does.
+* Either a string or an inclusive start and exclusive end offsets within
+* its containing signature label. (see SignatureInformation.label).
+* The offsets are based on a UTF-16 string representation
+* as `Position` and `Range` does.
 *
-* *Note*: a label of type string should be a substring of its containing signature label.
-* Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`."
+* *Note*: a label of type string should be a substring of its containing
+* signature label. Its intended use case is to highlight the
+* parameter label part in the `SignatureInformation.label`."
                         :TYPE
                         (COMMON-LISP:OR COMMON-LISP:STRING
                                         (LEM-LSP-UTILS/TYPE:TS-TUPLE COMMON-LISP:NUMBER
@@ -2527,9 +2577,10 @@
 
 (COMMON-LISP:DEFCLASS DECLARATION-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
-* Whether declaration supports dynamic registration. If this is set to `true`
-* the client supports the new `DeclarationRegistrationOptions` return value
-* for the corresponding server capability as well."
+* Whether declaration supports dynamic registration.
+* If this is set to `true`, the client supports the new
+* `DeclarationRegistrationOptions` return value for the
+* corresponding server capability as well."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         DECLARATION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (LINK-SUPPORT? :INITARG :LINK-SUPPORT :DOCUMENTATION "*
@@ -2573,9 +2624,10 @@
 
 (COMMON-LISP:DEFCLASS TYPE-DEFINITION-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
-* Whether implementation supports dynamic registration. If this is set to `true`
-* the client supports the new `TypeDefinitionRegistrationOptions` return value
-* for the corresponding server capability as well."
+* Whether implementation supports dynamic registration.
+* If this is set to `true`, the client supports the new `
+* TypeDefinitionRegistrationOptions` return value for the
+* corresponding server capability as well."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         TYPE-DEFINITION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (LINK-SUPPORT? :INITARG :LINK-SUPPORT :DOCUMENTATION "*
@@ -2599,9 +2651,10 @@
 
 (COMMON-LISP:DEFCLASS IMPLEMENTATION-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
-* Whether implementation supports dynamic registration. If this is set to `true`
-* the client supports the new `ImplementationRegistrationOptions` return value
-* for the corresponding server capability as well."
+* Whether implementation supports dynamic registration.
+* If this is set to `true`, the client supports the new
+* `ImplementationRegistrationOptions` return value for the
+* corresponding server capability as well."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         IMPLEMENTATION-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (LINK-SUPPORT? :INITARG :LINK-SUPPORT :DOCUMENTATION "*
@@ -2683,7 +2736,8 @@
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         DOCUMENT-SYMBOL-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (SYMBOL-KIND? :INITARG :SYMBOL-KIND :DOCUMENTATION "*
-* Specific capabilities for the `SymbolKind` in the `textDocument/documentSymbol` request."
+* Specific capabilities for the `SymbolKind` in the
+* `textDocument/documentSymbol` request."
                         :TYPE
                         (LEM-LSP-UTILS/TYPE:TS-INTERFACE
                          ("valueSet" :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY SYMBOL-KIND) :OPTIONAL-P
@@ -2737,7 +2791,8 @@
 
 (COMMON-LISP:DEFCLASS DOCUMENT-SYMBOL (LEM-LSP-UTILS/JSON:OBJECT)
                       ((NAME :INITARG :NAME :DOCUMENTATION "*
-* The name of this symbol. Will be displayed in the user interface and therefore must not be
+* The name of this symbol.
+* Will be displayed in the user interface and therefore must not be
 * an empty string or a string only consisting of white spaces."
                         :TYPE COMMON-LISP:STRING :READER DOCUMENT-SYMBOL-NAME)
                        (DETAIL? :INITARG :DETAIL :DOCUMENTATION "*
@@ -2750,12 +2805,14 @@
 * Indicates if this symbol is deprecated."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER DOCUMENT-SYMBOL-DEPRECATED)
                        (RANGE :INITARG :RANGE :DOCUMENTATION "*
-* The range enclosing this symbol not including leading/trailing whitespace but everything else
-* like comments. This information is typically used to determine if the clients cursor is
-* inside the symbol to reveal in the symbol in the UI."
+* The range enclosing this symbol not including leading/trailing
+* whitespace but everything else like comments.
+* This information is typically used to determine if the client's cursor
+* is inside the symbol to reveal in the symbol in the UI."
                         :TYPE RANGE :READER DOCUMENT-SYMBOL-RANGE)
                        (SELECTION-RANGE :INITARG :SELECTION-RANGE :DOCUMENTATION "*
-* The range that should be selected and revealed when this symbol is being picked, e.g the name of a function.
+* The range that should be selected and revealed when this symbol
+* is being picked, for example, the name of a function.
 * Must be contained by the `range`."
                         :TYPE RANGE :READER DOCUMENT-SYMBOL-SELECTION-RANGE)
                        (CHILDREN? :INITARG :CHILDREN :DOCUMENTATION "*
@@ -2820,8 +2877,8 @@
                       ((CODE-ACTION-KINDS? :INITARG :CODE-ACTION-KINDS :DOCUMENTATION "*
 * CodeActionKinds that this server may return.
 *
-* The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
-* may list out every specific kind they provide."
+* The list of kinds may be generic, such as `CodeActionKind.Refactor`,
+* or the server may list out every specific kind they provide."
                         :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY CODE-ACTION-KIND) :READER
                         CODE-ACTION-OPTIONS-CODE-ACTION-KINDS)))
 
@@ -2854,18 +2911,19 @@
 
 (COMMON-LISP:DEFCLASS CODE-ACTION-CONTEXT (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DIAGNOSTICS :INITARG :DIAGNOSTICS :DOCUMENTATION "*
-* An array of diagnostics known on the client side overlapping the range provided to the
-* `textDocument/codeAction` request. They are provided so that the server knows which
-* errors are currently presented to the user for the given range. There is no guarantee
-* that these accurately reflect the error state of the resource. The primary parameter
-* to compute code actions is the provided range."
+* An array of diagnostics known on the client side overlapping the range
+* provided to the `textDocument/codeAction` request.
+* They are provided so that the server knows which errors are currently
+* presented to the user for the given range. There is no guarantee that
+* these accurately reflect the error state of the resource.
+* The primary parameter to compute code actions is the provided range."
                         :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DIAGNOSTIC) :READER
                         CODE-ACTION-CONTEXT-DIAGNOSTICS)
                        (ONLY? :INITARG :ONLY :DOCUMENTATION "*
 * Requested kind of actions to return.
 *
-* Actions not of this kind are filtered out by the client before being shown. So servers
-* can omit computing them."
+* Actions not of this kind are filtered out by the client before
+* being shown, so servers can omit computing them."
                         :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY CODE-ACTION-KIND) :READER
                         CODE-ACTION-CONTEXT-ONLY)))
 
@@ -2883,11 +2941,14 @@
                         :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY DIAGNOSTIC) :READER
                         CODE-ACTION-DIAGNOSTICS)
                        (IS-PREFERRED? :INITARG :IS-PREFERRED :DOCUMENTATION "*
-* Marks this as a preferred action. Preferred actions are used by the `auto fix` command and can be targeted
-* by keybindings.
+* Marks this as a preferred action.
+* Preferred actions are used by the `auto fix` command and can be
+* targeted by keybindings.
 *
-* A quick fix should be marked preferred if it properly addresses the underlying error.
-* A refactoring should be marked preferred if it is the most reasonable choice of actions to take.
+* A quick fix should be marked preferred if it properly addresses the
+* underlying error.
+* A refactoring should be marked preferred if it is the most reasonable
+* choice of actions to take.
 *
 * @since 3.15.0"
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER CODE-ACTION-IS-PREFERRED)
@@ -2902,7 +2963,7 @@
 
 (COMMON-LISP:DEFCLASS CODE-LENS-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
-* Whether code lens supports dynamic registration."
+* Whether CodeLens supports dynamic registration."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         CODE-LENS-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
@@ -2917,19 +2978,19 @@
 
 (COMMON-LISP:DEFCLASS CODE-LENS-PARAMS (WORK-DONE-PROGRESS-PARAMS PARTIAL-RESULT-PARAMS)
                       ((TEXT-DOCUMENT :INITARG :TEXT-DOCUMENT :DOCUMENTATION "*
-* The document to request code lens for."
+* The document to request CodeLens for."
                         :TYPE TEXT-DOCUMENT-IDENTIFIER :READER CODE-LENS-PARAMS-TEXT-DOCUMENT)))
 
 (COMMON-LISP:DEFCLASS CODE-LENS (LEM-LSP-UTILS/JSON:OBJECT)
                       ((RANGE :INITARG :RANGE :DOCUMENTATION "*
-* The range in which this code lens is valid. Should only span a single line."
+* The range in which the CodeLens is valid. Should only span a single line."
                         :TYPE RANGE :READER CODE-LENS-RANGE)
                        (COMMAND? :INITARG :COMMAND :DOCUMENTATION "*
-* The command this code lens represents."
+* The command this CodeLens represents."
                         :TYPE COMMAND :READER CODE-LENS-COMMAND)
                        (DATA? :INITARG :DATA :DOCUMENTATION "*
-* A data entry field that is preserved on a code lens item between
-* a code lens and a code lens resolve request."
+* A data entry field that is preserved on a CodeLens item between
+* a CodeLens and a CodeLens resolve request."
                         :TYPE COMMON-LISP:T :READER CODE-LENS-DATA)))
 
 (COMMON-LISP:DEFCLASS DOCUMENT-LINK-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
@@ -2968,9 +3029,11 @@
                        (TOOLTIP? :INITARG :TOOLTIP :DOCUMENTATION "*
 * The tooltip text when you hover over this link.
 *
-* If a tooltip is provided, is will be displayed in a string that includes instructions on how to
-* trigger the link, such as `{0} (ctrl + click)`. The specific instructions vary depending on OS,
-* user settings, and localization.
+* If a tooltip is provided, it will be displayed in a string that
+* includes instructions on how to trigger the link,
+* such as `{0} (ctrl + click)`.
+* The specific instructions vary depending on OS, user settings,
+* and localization.
 *
 * @since 3.15.0"
                         :TYPE COMMON-LISP:STRING :READER DOCUMENT-LINK-TOOLTIP)
@@ -3035,17 +3098,20 @@
 (COMMON-LISP:DEFCLASS COLOR-PRESENTATION (LEM-LSP-UTILS/JSON:OBJECT)
                       ((LABEL :INITARG :LABEL :DOCUMENTATION "*
 * The label of this color presentation. It will be shown on the color
-* picker header. By default this is also the text that is inserted when selecting
+* picker header.
+* By default, this is also the text that is inserted when selecting
 * this color presentation."
                         :TYPE COMMON-LISP:STRING :READER COLOR-PRESENTATION-LABEL)
                        (TEXT-EDIT? :INITARG :TEXT-EDIT :DOCUMENTATION "*
 * An [edit](#TextEdit) which is applied to a document when selecting
-* this presentation for the color.  When `falsy` the [label](#ColorPresentation.label)
-* is used."
+* this presentation for the color.
+* When `falsy`, the [label](#ColorPresentation.label) is used."
                         :TYPE TEXT-EDIT :READER COLOR-PRESENTATION-TEXT-EDIT)
                        (ADDITIONAL-TEXT-EDITS? :INITARG :ADDITIONAL-TEXT-EDITS :DOCUMENTATION "*
-* An optional array of additional [text edits](#TextEdit) that are applied when
-* selecting this color presentation. Edits must not overlap with the main [edit](#ColorPresentation.textEdit) nor with themselves."
+* An optional array of additional [text edits](#TextEdit) that are
+* applied when selecting this color presentation.
+* Edits must not overlap with the main [edit](#ColorPresentation.textEdit)
+* nor with themselves."
                         :TYPE (LEM-LSP-UTILS/TYPE:TS-ARRAY TEXT-EDIT) :READER
                         COLOR-PRESENTATION-ADDITIONAL-TEXT-EDITS)))
 
@@ -3192,19 +3258,23 @@
 
 (COMMON-LISP:DEFCLASS FOLDING-RANGE-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
-* Whether implementation supports dynamic registration for folding range providers. If this is set to `true`
-* the client supports the new `FoldingRangeRegistrationOptions` return value for the corresponding server
-* capability as well."
+* Whether the implementation supports dynamic registration for
+* folding range providers.
+* If this is set to `true`, the client supports the new
+* `FoldingRangeRegistrationOptions` return value for the corresponding
+* server capability as well."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         FOLDING-RANGE-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)
                        (RANGE-LIMIT? :INITARG :RANGE-LIMIT :DOCUMENTATION "*
-* The maximum number of folding ranges that the client prefers to receive per document. The value serves as a
-* hint, servers are free to follow the limit."
+* The maximum number of folding ranges that the client prefers to
+* receive per document.
+* The value serves as a hint, servers are free to follow the limit."
                         :TYPE COMMON-LISP:NUMBER :READER
                         FOLDING-RANGE-CLIENT-CAPABILITIES-RANGE-LIMIT)
                        (LINE-FOLDING-ONLY? :INITARG :LINE-FOLDING-ONLY :DOCUMENTATION "*
-* If set, the client signals that it only supports folding complete lines. If set, client will
-* ignore specified `startCharacter` and `endCharacter` properties in a FoldingRange."
+* If set, the client signals that it only supports folding complete lines.
+* If set, the client will ignore specified `startCharacter` and
+* `endCharacter` properties in a FoldingRange."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         FOLDING-RANGE-CLIENT-CAPABILITIES-LINE-FOLDING-ONLY)))
 
@@ -3227,25 +3297,31 @@ COMMON-LISP:NIL
 * The zero-based line number from where the folded range starts."
                         :TYPE COMMON-LISP:NUMBER :READER FOLDING-RANGE-START-LINE)
                        (START-CHARACTER? :INITARG :START-CHARACTER :DOCUMENTATION "*
-* The zero-based character offset from where the folded range starts. If not defined, defaults to the length of the start line."
+* The zero-based character offset from where the folded range starts.
+* If not defined, defaults to the length of the start line."
                         :TYPE COMMON-LISP:NUMBER :READER FOLDING-RANGE-START-CHARACTER)
                        (END-LINE :INITARG :END-LINE :DOCUMENTATION "*
 * The zero-based line number where the folded range ends."
                         :TYPE COMMON-LISP:NUMBER :READER FOLDING-RANGE-END-LINE)
                        (END-CHARACTER? :INITARG :END-CHARACTER :DOCUMENTATION "*
-* The zero-based character offset before the folded range ends. If not defined, defaults to the length of the end line."
+* The zero-based character offset before the folded range ends.
+* If not defined, defaults to the length of the end line."
                         :TYPE COMMON-LISP:NUMBER :READER FOLDING-RANGE-END-CHARACTER)
                        (KIND? :INITARG :KIND :DOCUMENTATION "*
-* Describes the kind of the folding range such as `comment` or `region`. The kind
-* is used to categorize folding ranges and used by commands like 'Fold all comments'. See
-* [FoldingRangeKind](#FoldingRangeKind) for an enumeration of standardized kinds."
+* Describes the kind of the folding range such as `comment` or `region`.
+* The kind is used to categorize folding ranges and used by commands
+* like 'Fold all comments'.
+* See [FoldingRangeKind](#FoldingRangeKind) for an enumeration of
+* standardized kinds."
                         :TYPE COMMON-LISP:STRING :READER FOLDING-RANGE-KIND)))
 
 (COMMON-LISP:DEFCLASS SELECTION-RANGE-CLIENT-CAPABILITIES (LEM-LSP-UTILS/JSON:OBJECT)
                       ((DYNAMIC-REGISTRATION? :INITARG :DYNAMIC-REGISTRATION :DOCUMENTATION "*
-* Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
-* the client supports the new `SelectionRangeRegistrationOptions` return value for the corresponding server
-* capability as well."
+* Whether implementation supports dynamic registration for selection
+* range providers.
+* If set to `true`, the client supports the new
+* `SelectionRangeRegistrationOptions` return value for the corresponding
+* server capability as well."
                         :TYPE LEM-LSP-UTILS/TYPE:TS-BOOLEAN :READER
                         SELECTION-RANGE-CLIENT-CAPABILITIES-DYNAMIC-REGISTRATION)))
 
@@ -3271,5 +3347,7 @@ COMMON-LISP:NIL
 * The [range](#Range) of this selection range."
                         :TYPE RANGE :READER SELECTION-RANGE-RANGE)
                        (PARENT? :INITARG :PARENT :DOCUMENTATION "*
-* The parent selection range containing this range. Therefore `parent.range` must contain `this.range`."
+* The parent selection range containing this range.
+* Therefore `parent.range` must
+* contain `this.range`."
                         :TYPE SELECTION-RANGE :READER SELECTION-RANGE-PARENT)))

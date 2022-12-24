@@ -668,7 +668,15 @@
         (write-string body-text stream))))
   (values))
 
+(defparameter *specifications*
+  '(("specification/language-server-protocol/_specifications/specification-3-15.md"
+     "protocol-3-15.lisp"
+     :lem-lsp-utils/protocol-3-15)))
+
 (defun deploy ()
-  (generate (asdf:system-relative-pathname :lem-lsp-utils "specification/specification-3-15.md")
-            (asdf:system-relative-pathname :lem-lsp-utils "protocol-3-15.lisp")
-            :lem-lsp-utils/protocol-3-15))
+  (loop :for (spec-file output-file package-name) :in *specifications*
+        :do (format t "~&generating ~S~%" output-file)
+            (generate (asdf:system-relative-pathname :lem-lsp-utils spec-file)
+                      (asdf:system-relative-pathname :lem-lsp-utils output-file)
+                      package-name)
+            (format t "~&generated ~S~%" output-file)))

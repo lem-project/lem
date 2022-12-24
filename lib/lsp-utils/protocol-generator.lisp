@@ -12,7 +12,7 @@
 
 (cl-package-locks:lock-package :lem-lsp-utils/protocol-generator)
 
-(defvar *protocol-package-name* :lem-lsp-utils/protocol)
+(defvar *protocol-package-name*)
 
 (define-condition ts-parse-error ()
   ((message :initarg :message
@@ -653,7 +653,7 @@
         (mapc #'gen (collect-all-markdown-files-in-directory spec-pathname))
         (gen spec-pathname))))
 
-(defun generate (spec-pathname out-file)
+(defun generate (spec-pathname out-file *protocol-package-name*)
   (let ((*print-right-margin* 100))
     (with-open-file (stream out-file
                             :direction :output
@@ -670,4 +670,5 @@
 
 (defun deploy ()
   (generate (asdf:system-relative-pathname :lem-lsp-utils "specification/specification-3-15.md")
-            (asdf:system-relative-pathname :lem-lsp-utils "protocol.lisp")))
+            (asdf:system-relative-pathname :lem-lsp-utils "protocol-3-15.lisp")
+            :lem-lsp-utils/protocol-3-15))

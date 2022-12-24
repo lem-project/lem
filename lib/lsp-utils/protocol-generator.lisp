@@ -638,9 +638,20 @@
   (pprint `(cl-package-locks:lock-package ,package-name) stream)
   (terpri stream))
 
+(defun collect-all-markdown-files-in-directory (directory)
+  (append (mapcan #'collect-all-markdown-files-in-directory
+                  (uiop:subdirectories directory))
+          (loop :for file :in (uiop:directory-files directory)
+                :when (equal "md" (pathname-type file))
+                :collect file)))
+
 (defun generate-interface-definitions (stream spec-pathname)
-  (dolist (file-part (extract-typescript spec-pathname))
-    (translate-text file-part stream)))
+  (flet ((gen (spec-file)
+           (dolist (file-part (extract-typescript spec-file))
+             (translate-text file-part stream))))
+    (if (uiop:directory-pathname-p spec-pathname)
+        (mapc #'gen (collect-all-markdown-files-in-directory spec-pathname))
+        (gen spec-pathname))))
 
 (defun generate (spec-pathname out-file)
   (let ((*print-right-margin* 100))

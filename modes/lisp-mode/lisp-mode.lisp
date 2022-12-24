@@ -235,7 +235,7 @@
               :thread (current-swank-thread)
               :package package)))
 
-(defun eval-with-transcript (form)
+(defun eval-with-transcript (form &optional (package (current-package)))
   (lisp-rex form
             :continuation (lambda (value)
                             (alexandria:destructuring-ecase value
@@ -243,13 +243,13 @@
                                (display-message "~A" x))
                               ((:abort condition)
                                (display-message "Evaluation aborted on ~A." condition))))
-            :package (current-package)))
+            :package package))
 
 (defun re-eval-defvar (string)
   (eval-with-transcript `(swank:re-evaluate-defvar ,string)))
 
-(defun interactive-eval (string)
-  (eval-with-transcript `(swank:interactive-eval ,string)))
+(defun interactive-eval (string &optional (package (current-package)))
+  (eval-with-transcript `(swank:interactive-eval ,string) package))
 
 (defun eval-print (string &optional print-right-margin)
   (let ((value (lisp-eval (if print-right-margin
@@ -440,10 +440,11 @@
       (run-hooks (variable-value 'load-file-functions) filename)
       (interactive-eval
        (prin1-to-string
-        `(if (and (find-package :roswell)
-                  (find-symbol (string :load) :roswell))
+        `(if (and (cl:find-package :roswell)
+                  (cl:find-symbol (cl:string :load) :roswell))
              (uiop:symbol-call :roswell :load ,filename)
-             (swank:load-file ,filename)))))))
+             (swank:load-file ,filename)))
+       "CL-USER"))))
 
 (defun get-operator-name ()
   (with-point ((point (current-point)))

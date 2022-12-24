@@ -645,9 +645,9 @@
 (defun generate (spec-pathname out-file)
   (let ((*print-right-margin* 100))
     (with-open-file (stream out-file
-                         :direction :output
-                         :if-exists :supersede
-                         :if-does-not-exist :create)
+                            :direction :output
+                            :if-exists :supersede
+                            :if-does-not-exist :create)
       (emit-header-comment stream spec-pathname)
       (let* ((*export-list* '())
              (body-text

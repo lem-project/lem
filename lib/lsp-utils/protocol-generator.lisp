@@ -636,6 +636,12 @@
   (pprint `(cl-package-locks:lock-package ,package-name) out)
   (terpri out))
 
+(defun generate-interface-definitions (body-out spec-pathname)
+  (dolist (file-part (extract-typescript spec-pathname))
+    (handler-case (translate-text file-part body-out)
+      (ts-parse-error (c)
+        (warn "~A" c)))))
+
 (defun generate (spec-pathname out-file)
   (let ((*print-right-margin* 100))
     (with-open-file (out out-file
@@ -645,10 +651,7 @@
       (let* ((*export-list* '())
              (body-text
                (with-output-to-string (body-out)
-                 (dolist (file-part (extract-typescript spec-pathname))
-                   (handler-case (translate-text file-part body-out)
-                     (ts-parse-error (c)
-                       (warn "~A" c)))))))
+                 (generate-interface-definitions body-out spec-pathname))))
         (emit-header-comment out spec-pathname)
         (emit-package-definition out *protocol-package-name* *export-list*)
         (write-string body-text out))))

@@ -648,11 +648,11 @@
                          :direction :output
                          :if-exists :supersede
                          :if-does-not-exist :create)
+      (emit-header-comment stream spec-pathname)
       (let* ((*export-list* '())
              (body-text
                (with-output-to-string (stream)
                  (generate-interface-definitions stream spec-pathname))))
-        (emit-header-comment stream spec-pathname)
         (emit-package-definition stream *protocol-package-name* *export-list*)
         (write-string body-text stream))))
   (values))

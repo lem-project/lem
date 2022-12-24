@@ -580,13 +580,15 @@
       (make-package *protocol-package-name* :use '())))
 
 (defun translate-text (file-part &optional (stream *standard-output*))
-  (loop :with protocol-package := (ensure-protocol-package)
-        :for result :in (parse-text file-part)
-        :do (let ((*package* protocol-package))
-              (fresh-line stream)
-              (terpri stream)
-              (print-form (to-lisp result) stream)
-              (terpri stream))))
+  (handler-case (loop :with protocol-package := (ensure-protocol-package)
+                      :for result :in (parse-text file-part)
+                      :do (let ((*package* protocol-package))
+                            (fresh-line stream)
+                            (terpri stream)
+                            (print-form (to-lisp result) stream)
+                            (terpri stream)))
+    (ts-parse-error (c)
+      (warn "~A" c))))
 
 (defun extract-typescript (spec-file)
   (flet ((lines-to-string (lines)
@@ -638,9 +640,7 @@
 
 (defun generate-interface-definitions (stream spec-pathname)
   (dolist (file-part (extract-typescript spec-pathname))
-    (handler-case (translate-text file-part stream)
-      (ts-parse-error (c)
-        (warn "~A" c)))))
+    (translate-text file-part stream)))
 
 (defun generate (spec-pathname out-file)
   (let ((*print-right-margin* 100))

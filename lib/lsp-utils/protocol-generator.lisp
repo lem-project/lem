@@ -20,22 +20,28 @@
    (position :initarg :position
              :initform nil
              :reader ts-parse-error-position)
+   (filename :initarg :filename
+             :initform nil
+             :reader ts-parse-error-filename)
    (file-line-number :initarg :file-line-number
                      :initform nil
                      :reader ts-parse-error-file-line-number))
   (:report (lambda (c s)
              (format s
-                     "line ~A, offset ~A: ~A"
+                     "~A:~A:~A: ~A"
+                     (file-namestring (ts-parse-error-filename c))
                      (ts-parse-error-file-line-number c)
                      (ts-parse-error-position c)
                      (ts-parse-error-message c)))))
 
 (defstruct file-part
   text
+  filename
   line-number)
 
 (defclass token ()
-  ((file-line-number :initarg :file-line-number :reader token-file-line-number)
+  ((filename :initarg :filename :reader token-filename)
+   (file-line-number :initarg :file-line-number :reader token-file-line-number)
    (string :initarg :string :reader token-string)
    (position :initarg :position :reader token-position)))
 
@@ -95,6 +101,7 @@
                (assert end)
                (push (make-instance 'block-comment
                                     :position pos
+                                    :filename (file-part-filename file-part)
                                     :file-line-number (file-part-line-number file-part)
                                     :string (subseq text pos end)
                                     :start-column (get-column text pos))
@@ -105,6 +112,7 @@
                (assert end)
                (push (make-instance 'line-comment
                                     :position pos
+                                    :filename (file-part-filename file-part)
                                     :file-line-number (file-part-line-number file-part)
                                     :string (subseq text pos end))
                      tokens)
@@ -114,6 +122,7 @@
                (assert end)
                (push (make-instance 'string-literal
                                     :position pos
+                                    :filename (file-part-filename file-part)
                                     :file-line-number (file-part-line-number file-part)
                                     :string (subseq text pos end))
                      tokens)
@@ -121,18 +130,21 @@
             ((digit-char-p (char str 0))
              (push (make-instance 'number-literal
                                   :position pos
+                                  :filename (file-part-filename file-part)
                                   :file-line-number (file-part-line-number file-part)
                                   :string str)
                    tokens))
             ((word-char-p (char str 0))
              (push (make-instance 'word
                                   :position pos
+                                  :filename (file-part-filename file-part)
                                   :file-line-number (file-part-line-number file-part)
                                   :string str)
                    tokens))
             (t
              (push (make-instance 'operator
                                   :position pos
+                                  :filename (file-part-filename file-part)
                                   :file-line-number (file-part-line-number file-part)
                                   :string str)
                    tokens))))
@@ -226,6 +238,7 @@
 (defun ts-parse-error ()
   (error 'ts-parse-error
          :position (token-position (ahead-token))
+         :filename (token-filename (ahead-token))
          :file-line-number (token-file-line-number (ahead-token))
          :message (format nil "Token not expected: ~S" (ahead-token))))
 
@@ -592,7 +605,8 @@
                     (if in-code-p
                         (cond ((ppcre:scan "^```" line)
                                (setf in-code-p nil)
-                               (push (make-file-part :line-number (1+ start-line-number)
+                               (push (make-file-part :filename spec-file
+                                                     :line-number (1+ start-line-number)
                                                      :text (lines-to-string (nreverse lines)))
                                      code-list))
                               (t

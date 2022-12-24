@@ -3,7 +3,8 @@
   (:import-from :cl-package-locks)
   (:import-from :lem-lsp-utils/json
                 :json-array-p
-                :json-object-p)
+                :json-object-p
+                :json-boolean-p)
   (:export :ts-array
            :ts-interface
            :ts-equal-specializer

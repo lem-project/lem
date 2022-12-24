@@ -671,7 +671,10 @@
 (defparameter *specifications*
   '(("specification/language-server-protocol/_specifications/specification-3-15.md"
      "protocol-3-15.lisp"
-     :lem-lsp-utils/protocol-3-15)))
+     :lem-lsp-utils/protocol-3-15)
+    ("specification/language-server-protocol/_specifications/lsp/3.17/"
+     "protocol-3-17.lisp"
+     :lem-lsp-utils/protocol-3-17)))
 
 (defun deploy ()
   (loop :for (spec-file output-file package-name) :in *specifications*

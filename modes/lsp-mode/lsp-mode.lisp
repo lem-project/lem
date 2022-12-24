@@ -9,7 +9,7 @@
 (in-package :lem-lsp-mode/lsp-mode)
 
 (cl-package-locks:lock-package :lem-lsp-mode/lsp-mode)
-(lem-lsp-mode/project:local-nickname :protocol :lem-lsp-utils/protocol)
+(lem-lsp-mode/project:local-nickname :protocol :lem-lsp-utils/protocol-3-15)
 (lem-lsp-mode/project:local-nickname :json :lem-lsp-utils/json)
 (lem-lsp-mode/project:local-nickname :utils :lem-lsp-mode/utils)
 (lem-lsp-mode/project:local-nickname :request :lem-lsp-mode/request)

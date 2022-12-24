@@ -1,7 +1,7 @@
 (lem-lsp-server/defpackage:defpackage :lem-lsp-server/test/test-server
   (:use :cl
         :lem-lsp-server/server)
-  (:local-nicknames (:protocol :lem-lsp-utils/protocol)
+  (:local-nicknames (:protocol :lem-lsp-utils/protocol-3-15)
                     (:json :lem-lsp-utils/json))
   (:export :test-server
            :call-lsp-method))

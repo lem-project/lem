@@ -13,7 +13,7 @@
   (:import-from :lem-lisp-syntax
                 :*syntax-table*
                 :search-local-definition)
-  (:local-nicknames (:protocol :lem-lsp-utils/protocol)
+  (:local-nicknames (:protocol :lem-lsp-utils/protocol-3-15)
                     (:json :lem-lsp-utils/json))
   (:export :*initialized-hooks*
            :get-buffer-from-uri

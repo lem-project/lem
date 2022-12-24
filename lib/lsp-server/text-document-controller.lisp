@@ -1,6 +1,6 @@
 (lem-lsp-server/defpackage:defpackage :lem-lsp-server/text-document-controller
   (:use :cl)
-  (:local-nicknames (:protocol :lem-lsp-utils/protocol)
+  (:local-nicknames (:protocol :lem-lsp-utils/protocol-3-15)
                     (:json :lem-lsp-utils/json)
                     (:editor :lem-lsp-server/editor))
   (:export :text-document-uri

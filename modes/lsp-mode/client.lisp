@@ -10,7 +10,7 @@
            :stdio-client))
 (in-package :lem-lsp-mode/client)
 
-(lem-lsp-mode/project:local-nickname :protocol :lem-lsp-utils/protocol)
+(lem-lsp-mode/project:local-nickname :protocol :lem-lsp-utils/protocol-3-15)
 (cl-package-locks:lock-package :lem-lsp-mode/client)
 
 (defgeneric jsonrpc-connect (client))

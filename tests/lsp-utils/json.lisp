@@ -4,11 +4,11 @@
         :lem-lsp-utils/json)
   (:import-from :trivial-package-local-nicknames)
   ;; TODO
-  (:import-from :lem-lsp-utils/protocol))
+  (:import-from :lem-lsp-utils/protocol-3-15))
 (in-package :lem-tests/lsp-utils/json)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (trivial-package-local-nicknames:add-package-local-nickname :protocol :lem-lsp-utils/protocol))
+  (trivial-package-local-nicknames:add-package-local-nickname :protocol :lem-lsp-utils/protocol-3-15))
 
 (defclass test-params (object)
   ((a

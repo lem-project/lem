@@ -3,7 +3,7 @@
         :testif
         :lem-lsp-server/server
         :lem-lsp-server/test/test-server)
-  (:local-nicknames (:protocol :lem-lsp-utils/protocol)
+  (:local-nicknames (:protocol :lem-lsp-utils/protocol-3-15)
                     (:json :lem-lsp-utils/json)))
 (in-package :lem-lsp-server/test/initialized)
 

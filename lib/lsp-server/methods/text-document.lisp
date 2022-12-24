@@ -6,7 +6,7 @@
                 :this-server
                 :server-text-document-controller
                 :set-server-text-document-controller)
-  (:local-nicknames (:protocol :lem-lsp-utils/protocol)
+  (:local-nicknames (:protocol :lem-lsp-utils/protocol-3-15)
                     (:json :lem-lsp-utils/json)
                     (:editor :lem-lsp-server/editor)))
 (in-package :lem-lsp-server/methods/text-document)

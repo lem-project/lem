@@ -2,7 +2,7 @@
   (:use :cl)
   (:import-from :lem-lsp-server/logger
                 :log-format)
-  (:local-nicknames (:protocol :lem-lsp-utils/protocol)
+  (:local-nicknames (:protocol :lem-lsp-utils/protocol-3-15)
                     (:json :lem-lsp-utils/json))
   (:export
    :call
@@ -75,7 +75,7 @@
      (alexandria:switch ((symbol-package params-type))
        ((load-time-value (find-package :lem-lsp-server/protocol)) ;fallback
         (lem-lsp-server/protocol:convert-from-hash-table params-type params))
-       ((load-time-value (find-package :lem-lsp-utils/protocol))
+       ((load-time-value (find-package :lem-lsp-utils/protocol-3-15))
         (json:coerce-json params params-type))))))
 
 (defun convert-response (response)

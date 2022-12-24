@@ -4,7 +4,7 @@
         :lem-lsp-server/server
         :lem-lsp-server/test/test-server
         :lem-lsp-server/text-document-controller)
-  (:local-nicknames (:protocol :lem-lsp-utils/protocol)
+  (:local-nicknames (:protocol :lem-lsp-utils/protocol-3-15)
                     (:json :lem-lsp-utils/json)))
 (in-package :lem-lsp-server/test/text-document-did-open)
 

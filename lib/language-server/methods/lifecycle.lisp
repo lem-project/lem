@@ -1,6 +1,7 @@
 (in-package :lem-language-server)
 
 (define-request (initialize "initialize") (params protocol:initialize-params)
+  (log:info "initialize")
   (setf (server-client-capabilities *server*) params)
   (json:object-to-json
    (make-instance 'protocol:initialize-result

@@ -34,4 +34,7 @@
 
 (defun start-tcp-server ()
   (setf *server* (make-instance 'tcp-server :port 10003))
-  (start-server *server*))
+  (bt:make-thread (lambda ()
+                    (start-server *server*))
+                  :initial-bindings `((*standard-output* . ,*standard-output*)
+                                      (*error-output* . ,*error-output*))))

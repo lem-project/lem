@@ -3,9 +3,11 @@
 (defsystem "lem-language-server"
   :depends-on ("jsonrpc"
                "lem-lsp-utils"
-               "lem")
+               "lem"
+               "lem-lisp-syntax")
   :serial t
   :components ((:file "package")
+               (:file "print-object")
                (:file "variables")
                (:file "method")
                (:file "server")

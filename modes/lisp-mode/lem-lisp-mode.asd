@@ -25,4 +25,5 @@
                (:file "autodoc")
                (:file "paren-coloring")
                (:file "misc-commands")
-               (:file "package-inferred-system")))
+               (:file "package-inferred-system")
+               (:file "organize-imports")))

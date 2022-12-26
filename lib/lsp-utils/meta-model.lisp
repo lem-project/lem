@@ -1,32 +1,81 @@
 (defpackage :lem-lsp-utils/meta-model
   (:use :cl :alexandria)
+  (:import-from :closer-mop)
   (:import-from :cl-change-case))
 (in-package :lem-lsp-utils/meta-model)
 
-(declaim (optimize (speed 0) (safety 3) (debug 3)))
+(defvar *protocol-package*)
+(defvar *exports* '())
 
 ;;; types
-(deftype lsp-uri () t)
-(deftype lsp-document-uri () t)
-(deftype lsp-integer () t)
-(deftype lsp-uinteger () t)
-(deftype lsp-decimal () t)
-(deftype lsp-regexp () t)
-(deftype lsp-string () t)
-(deftype lsp-boolean () t)
+(deftype lsp-uri () 'string)
+(deftype lsp-document-uri () 'string)
+(deftype lsp-integer () 'integer)
+(deftype lsp-uinteger () '(integer 0 *))
+(deftype lsp-decimal () 'integer)
+(deftype lsp-regexp () 'string)
+(deftype lsp-string () 'string)
+(deftype lsp-boolean () 'boolean)
 (deftype lsp-null () '(eql :null))
 
-(deftype lsp-array (&optional (element-type *))
+(deftype lsp-array (element-type)
   (declare (ignore element-type))
-  t)
+  'vector)
 
 (deftype lsp-map (key value)
   (declare (ignore key value))
-  t)
+  'hash-table)
 
 (deftype lsp-tuple (&rest types)
   (declare (ignore types))
+  'vector)
+
+(defclass protocol-class (c2mop:standard-class)
+  ((deprecated :initarg :deprecated
+               :reader protocol-class-deprecated)
+   (proposed :initarg :proposed
+             :reader protocol-class-proposed)
+   (since :initarg :since
+          :reader protocol-class-since)))
+
+(defmethod c2mop:validate-superclass ((class protocol-class)
+                                      (super c2mop:standard-class))
   t)
+
+(defclass protocol-slot (c2mop:standard-direct-slot-definition)
+  ((deprecated :initarg deprecated
+               :initform nil
+               :accessor protocol-slot-deprecated)
+   (proposed :initarg :proposed
+             :accessor protocol-slot-proposed)
+   (since :initarg :since
+          :accessor protocol-slot-since)))
+
+(defmethod c2mop:direct-slot-definition-class ((class protocol-class) &rest initargs)
+  (declare (ignore initargs))
+  (find-class 'protocol-slot))
+
+(defmacro define-enum (name (&rest fields) &body options)
+  (declare (ignore options))
+  (with-unique-names (f x anon-name)
+    (let ((field-values (mapcar #'second fields)))
+      `(progn
+         (deftype ,name ()
+           (labels ((,f (,x) (member ,x ',field-values :test #'string=)))
+             (let ((,anon-name (gensym)))
+               (setf (symbol-function ,anon-name) #',f)
+               `(satisfies ,,anon-name))))
+         ,@(loop :for (field-name value) :in fields
+                 :for variable := (intern (format nil "~A-~A" name field-name) *protocol-package*)
+                 :collect `(defparameter ,variable ,value))
+         ',name))))
+
+(defmacro define-type-alias (name type &body options)
+  (let ((doc (second (assoc :documentation options))))
+    `(deftype ,name () ,@(when `(,doc)) ,type)))
+
+(defmacro define-class (name superclasses &body args)
+  `(defclass ,name ,superclasses ,@args))
 
 ;;; utils
 (defun exists-key-p (key hash)
@@ -52,11 +101,17 @@
                                         `(gethash ,key ,hash-table))))
          ,@body))))
 
-(defun symbolize (string &optional package)
+(defun symbolize (string &optional (package *protocol-package*))
   (let ((name (string-upcase (cl-change-case:param-case string))))
     (if package
         (intern name package)
         (intern name))))
+
+(defun unimplemented ()
+  (error "unimplemented"))
+
+(defun add-export (name)
+  (pushnew name *exports*))
 
 ;;; parser
 (defun parse-and-type (hash)
@@ -65,7 +120,7 @@
               (items "items" :required t))
       hash
     (assert (equal kind "and"))
-    `(and ,@(mapcar #'parse-type items))))
+    `(and ,@(map 'list #'parse-type items))))
 
 (defun parse-array-type (hash)
   (check-type hash hash-table)
@@ -108,15 +163,53 @@
 
 (defun parse-enumeration (hash)
   (check-type hash hash-table)
-  )
+  (with-hash ((deprecated "deprecated")
+              (documentation "documentation")
+              (name "name" :required t)
+              (proposed "proposed")
+              (since "since")
+              (supports-custom-values "supports-custom-values")
+              (type "type" :required t)
+              (values "values" :required t))
+      hash
+    (declare (ignore supports-custom-values))
+    (let ((enum-name (symbolize name)))
+      (add-export enum-name)
+      `(define-enum ,enum-name
+         ,(map 'list #'parse-enumeration-entry values)
+         (:type ,(parse-enumeration-type type))
+         ,@(when deprecated `(:since ,deprecated))
+         ,@(when documentation `(:since ,documentation))
+         ,@(when proposed `(:since ,proposed))
+         ,@(when since `(:since ,since))))))
 
 (defun parse-enumeration-entry (hash)
   (check-type hash hash-table)
-  )
+  (with-hash ((deprecated "deprecated")
+              (documentation "documentation")
+              (name "name" :required t)
+              (proposed "proposed")
+              (since "since")
+              (value "value" :required t))
+      hash
+    (let ((field-name (symbolize name)))
+      (add-export field-name)
+      `(,field-name ,value
+                    ,@(when deprecated `(:deprecated ,deprecated))
+                    ,@(when documentation `(:documentation ,documentation))
+                    ,@(when proposed `(:proposed ,proposed))
+                    ,@(when since `(:since ,since))))))
 
 (defun parse-enumeration-type (hash)
   (check-type hash hash-table)
-  )
+  (with-hash ((kind "kind" :required t)
+              (name "name" :required t))
+      hash
+    (assert (string= kind "base"))
+    (eswitch (name :test #'string=)
+      ("string" 'lsp-string)
+      ("integer" 'lsp-integer)
+      ("uinteger" 'lsp-uinteger))))
 
 (defun parse-integer-literal-type (hash)
   (check-type hash hash-table)
@@ -154,24 +247,22 @@
 
 (defun parse-message-direction (string)
   (check-type string string)
-  (assert (member string '("clientToServer"
-                           "serverToClient"
-                           "both")
+  (assert (member string
+                  '("clientToServer"
+                    "serverToClient"
+                    "both")
                   :test #'string=))
-  ;; TODO
-  )
+  (unimplemented))
 
-(defun parse-metadata (hash)
+(defun parse-meta-data (hash)
   (check-type hash hash-table)
-  )
-
-(defun parse-meta-model (hash)
-  (check-type hash hash-table)
-  )
+  (with-hash ((version "version" :required t))
+      hash
+    version))
 
 (defun parse-notification (hash)
   (check-type hash hash-table)
-  )
+  (unimplemented))
 
 (defun parse-or-type (hash)
   (check-type hash hash-table)
@@ -179,7 +270,7 @@
               (kind "kind" :required t))
       hash
     (assert (string= kind "or"))
-    `(or ,@(mapcar #'parse-type items))))
+    `(or ,@(map 'list #'parse-type items))))
 
 (defun parse-property (hash)
   (check-type hash hash-table)
@@ -191,14 +282,16 @@
               (since "since")
               (type "type" :required t))
       hash
-    (declare (ignore documentation))
-    `(,(symbolize name)
-      :type ,(parse-type type)
-      ;; ,@(when documentation `(:documentation ,documentation))
-      ,@(when deprecated `(:deprecated ,deprecated))
-      ,@(when optional `(:optional t))
-      ,@(when proposed `(:proposed t))
-      ,@(when since `(:since ,since)))))
+    (let ((property-name (symbolize name)))
+      `(,property-name
+        :type ,(parse-type type)
+        ,@(unless optional
+            `(:initform (required-argument
+                         (make-keyword name))))
+        ,@(when deprecated `(:deprecated ,deprecated))
+        ,@(when proposed `(:proposed t))
+        ,@(when since `(:since ,since))
+        ,@(when documentation `(:documentation ,documentation))))))
 
 (defun parse-reference-type (hash)
   (check-type hash hash-table)
@@ -210,7 +303,7 @@
 
 (defun parse-request (hash)
   (check-type hash hash-table)
-  )
+  (unimplemented))
 
 (defun parse-string-literal-type (hash)
   (check-type hash hash-table)
@@ -223,15 +316,51 @@
 
 (defun parse-structure (hash)
   (check-type hash hash-table)
-  )
+  (with-hash ((deprecated "deprecated")
+              (documentation "documentation")
+              (extends "extends")
+              (mixins "mixins")
+              (name "name" :required t)
+              (properties "properties" :required t)
+              (proposed "proposed")
+              (since "since"))
+      hash
+    (let ((structure-name (symbolize name))
+          (slot-definitions (map 'list #'parse-property properties)))
+      (add-export structure-name)
+      (loop :for (slot-name) :in slot-definitions
+            :do (add-export slot-name))
+      `(define-class ,structure-name (,@(map 'list #'parse-type extends)
+                                      ,@(map 'list #'parse-type mixins))
+           ,slot-definitions
+         ,@(when deprecated `((:deprecated ,deprecated)))
+         ,@(when proposed `((:proposed ,proposed)))
+         ,@(when since `((:since ,since)))
+         ,@(when documentation `((:documentation ,documentation)))
+         (:metaclass protocol-class)))))
 
 (defun parse-structure-literal (hash)
   (check-type hash hash-table)
-  )
+  (with-hash ((deprecated "deprecated")
+              (documentation "documentation")
+              (properties "properties" :required t)
+              (proposed "proposed")
+              (since "since"))
+      hash
+    (check-type properties vector)
+    `(lsp-interface ,(map 'list #'parse-property properties)
+                    ,@(when deprecated `(:deprecated ,deprecated))
+                    ,@(when documentation `(:documentation ,documentation))
+                    ,@(when proposed `(:proposed ,proposed))
+                    ,@(when since `(:since ,since)))))
 
 (defun parse-structure-literal-type (hash)
   (check-type hash hash-table)
-  )
+  (with-hash ((kind "kind" :required t)
+              (value "value" :required t))
+      hash
+    (assert (string= kind "literal"))
+    (parse-structure-literal value)))
 
 (defun parse-tuple-type (hash)
   (check-type hash hash-table)
@@ -239,8 +368,8 @@
               (kind "kind" :required t))
       hash
     (assert (string= kind "tuple"))
-    (let ((items (mapcar #'parse-type items)))
-      `(ts-tuple ,@items))))
+    (let ((items (map 'list #'parse-type items)))
+      `(lsp-tuple ,@items))))
 
 (defun parse-type (hash)
   (check-type hash hash-table)
@@ -270,34 +399,68 @@
 
 (defun parse-type-alias (hash)
   (check-type hash hash-table)
-  )
-
-(defun parse-type-kind (hash)
-  (check-type hash hash-table)
-  )
-
-;;; read metaModel.json
-(defun read-structure (hash)
   (with-hash ((deprecated "deprecated")
               (documentation "documentation")
-              (extends "extends")
-              (mixins "mixins")
               (name "name" :required t)
-              (properties "properties" :required t)
               (proposed "proposed")
-              (since "since"))
+              (since "since")
+              (type "type" :required t))
       hash
-    (declare (ignore documentation))
-    `(define-structure-protocol ,(symbolize name) (,@(mapcar #'parse-type extends)
-                                                   ,@(mapcar #'parse-type mixins))
-       ,(mapcar #'parse-property properties)
-       ,@(when deprecated `(:deprecated ,deprecated))
-       ;; ,@(when documentation `(:documentation ,documentation))
-       ,@(when proposed `(:proposed ,proposed))
-       ,@(when since `(:since ,since)))))
+    (let ((alias-name (symbolize name)))
+      (add-export alias-name)
+      `(define-type-alias ,alias-name ,(parse-type type)
+         ,@(when deprecated `((:deprecated ,deprecated)))
+         ,@(when documentation `((:documentation ,documentation)))
+         ,@(when proposed `((:proposed ,proposed)))
+         ,@(when since `((:since ,since)))))))
 
-(defun parse ()
+(defun read-meta-model ()
   (yason:parse (asdf:system-relative-pathname
                 :lem-lsp-utils
                 "specification/language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json")
-               :json-nulls-as-keyword t))
+               :json-nulls-as-keyword t
+               :json-arrays-as-vectors t))
+
+(defun pretty-print (form &optional (stream *standard-output*))
+  (let ((*print-case* :downcase)
+        (*print-right-margin* 100)
+        (*package* *protocol-package*))
+    (pprint form stream)))
+
+(defun newline-and-pretty-print (form &optional (stream *standard-output*))
+  (terpri stream)
+  (pretty-print form stream))
+
+(defun find-or-make-package (package-name)
+  (or (find-package package-name)
+      (make-package package-name :use '())))
+
+(defun convert-version (version)
+  (substitute #\- #\. version))
+
+(defun generate ()
+  (with-hash ((enumerations "enumerations" :required t)
+              (meta-data "metaData" :required t)
+              (notifications "notifications" :required t) ; TODO
+              (requests "requests" :required t)           ; TODO
+              (structures "structures" :required t)
+              (type-aliases "typeAliases" :required t))
+      (read-meta-model)
+    (declare (ignore requests notifications))
+    (let* ((version (parse-meta-data meta-data))
+           (package-name (make-keyword (format nil "LEM-LSP-UTILS/PROTOCOL-~A" (convert-version version))))
+           (*protocol-package* (find-or-make-package package-name))
+           (*exports* '()))
+      (add-export :*version*)
+      (let ((enumerations (map 'list #'parse-enumeration enumerations))
+            (structures (map 'list #'parse-structure structures))
+            (type-aliases (map 'list #'parse-type-alias type-aliases)))
+        (pretty-print `(defpackage ,package-name
+                         (:use :cl)
+                         (:export . ,(mapcar #'make-keyword (nreverse *exports*)))))
+        (pretty-print `(in-package ,package-name))
+        (newline-and-pretty-print `(defparameter *version* ,version))
+        (mapc #'newline-and-pretty-print enumerations)
+        (mapc #'newline-and-pretty-print structures)
+        (mapc #'newline-and-pretty-print type-aliases)
+        (values)))))

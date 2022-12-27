@@ -5,7 +5,6 @@
   (:import-from :lem-lsp-utils/type)
   (:import-from :lem-lsp-utils/json-lsp-utils)
   (:import-from :lem-lsp-utils/protocol-3-15)
-  (:import-from :lem-lsp-utils/protocol-3-17)
   (:import-from :lem-lsp-utils/protocol-generator)
   (:import-from :lem-lsp-utils/uri))
 (in-package :lem-lsp-utils/main)

@@ -1,10 +1,11 @@
 (defpackage :lem-language-server/protocol-generator
-  (:use :cl :alexandria))
+  (:use :cl :alexandria)
+  (:export :deploy))
 (in-package :lem-language-server/protocol-generator)
 
 (defparameter *specifications*
   '(("language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json"
-     "protocol-3-17.lisp"
+     "protocol/protocol-3-17.lisp"
      :lem-language-server/protocol-3-17)))
 
 (defvar *protocol-package*)
@@ -33,6 +34,8 @@
   (declare (ignore types))
   'vector)
 
+(defclass protocol-object () ())
+
 (defclass protocol-class (c2mop:standard-class)
   ((deprecated :initarg :deprecated
                :reader protocol-class-deprecated)
@@ -46,7 +49,7 @@
   t)
 
 (defclass protocol-slot (c2mop:standard-direct-slot-definition)
-  ((deprecated :initarg deprecated
+  ((deprecated :initarg :deprecated
                :initform nil
                :accessor protocol-slot-deprecated)
    (proposed :initarg :proposed
@@ -64,21 +67,24 @@
     (let ((field-values (mapcar #'second fields)))
       `(progn
          (deftype ,name ()
-           (labels ((,f (,x) (member ,x ',field-values :test #'string=)))
+           (labels ((,f (,x) (member ,x ',field-values :test #'equal)))
              (let ((,anon-name (gensym)))
                (setf (symbol-function ,anon-name) #',f)
                `(satisfies ,,anon-name))))
          ,@(loop :for (field-name value) :in fields
-                 :for variable := (intern (format nil "~A-~A" name field-name) *protocol-package*)
+                 :for variable := (intern (format nil "~A-~A" name field-name))
                  :collect `(defparameter ,variable ,value))
          ',name))))
 
 (defmacro define-type-alias (name type &body options)
   (let ((doc (second (assoc :documentation options))))
-    `(deftype ,name () ,@(when `(,doc)) ,type)))
+    `(deftype ,name () ,@(when `(,doc)) ',type)))
 
 (defmacro define-class (name superclasses &body args)
-  `(defclass ,name ,superclasses ,@args))
+  `(defclass ,name ,(if (null superclasses)
+                        '(protocol-object)
+                        superclasses)
+     ,@args))
 
 ;;; utils
 (defun exists-key-p (key hash)
@@ -104,8 +110,11 @@
                                         `(gethash ,key ,hash-table))))
          ,@body))))
 
+(defun pascal-to-lisp-case (string)
+  (string-upcase (ppcre:regex-replace-all "([A-Z][a-z]*)(?=[A-Z])" string "\\1-")))
+
 (defun symbolize (string &optional (package *protocol-package*))
-  (let ((name (string-upcase (cl-change-case:param-case string))))
+  (let ((name (pascal-to-lisp-case string)))
     (if package
         (intern name package)
         (intern name))))
@@ -290,7 +299,7 @@
         :type ,(parse-type type)
         ,@(unless optional
             `(:initform (required-argument
-                         (make-keyword name))))
+                         ,(make-keyword property-name))))
         ,@(when deprecated `(:deprecated ,deprecated))
         ,@(when proposed `(:proposed t))
         ,@(when since `(:since ,since))
@@ -460,7 +469,7 @@
                 ";;; Code generated based on '~A'; DO NOT EDIT.~%"
                 meta-model-file)
         (pretty-print `(defpackage ,package-name
-                         (:use :cl)
+                         (:use)
                          (:export . ,(mapcar #'make-keyword (nreverse *exports*))))
                       output-stream)
         (pretty-print `(in-package ,package-name) output-stream)

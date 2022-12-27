@@ -1,8 +1,14 @@
 (defpackage :lem-lsp-utils/meta-model
   (:use :cl :alexandria)
   (:import-from :closer-mop)
+  (:import-from :yason)
   (:import-from :cl-change-case))
 (in-package :lem-lsp-utils/meta-model)
+
+(defparameter *specifications*
+  '(("specification/language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json"
+     "protocol-3-17.lisp"
+     :lem-lsp-utils/protocol-3-17)))
 
 (defvar *protocol-package*)
 (defvar *exports* '())
@@ -414,10 +420,8 @@
          ,@(when proposed `((:proposed ,proposed)))
          ,@(when since `((:since ,since)))))))
 
-(defun read-meta-model ()
-  (yason:parse (asdf:system-relative-pathname
-                :lem-lsp-utils
-                "specification/language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json")
+(defun read-meta-model (meta-model-file)
+  (yason:parse meta-model-file
                :json-nulls-as-keyword t
                :json-arrays-as-vectors t))
 
@@ -435,32 +439,42 @@
   (or (find-package package-name)
       (make-package package-name :use '())))
 
-(defun convert-version (version)
-  (substitute #\- #\. version))
-
-(defun generate ()
+(defun generate (meta-model-file output-file package-name)
   (with-hash ((enumerations "enumerations" :required t)
               (meta-data "metaData" :required t)
               (notifications "notifications" :required t) ; TODO
               (requests "requests" :required t)           ; TODO
               (structures "structures" :required t)
               (type-aliases "typeAliases" :required t))
-      (read-meta-model)
+      (read-meta-model meta-model-file)
     (declare (ignore requests notifications))
-    (let* ((version (parse-meta-data meta-data))
-           (package-name (make-keyword (format nil "LEM-LSP-UTILS/PROTOCOL-~A" (convert-version version))))
-           (*protocol-package* (find-or-make-package package-name))
-           (*exports* '()))
-      (add-export :*version*)
-      (let ((enumerations (map 'list #'parse-enumeration enumerations))
-            (structures (map 'list #'parse-structure structures))
-            (type-aliases (map 'list #'parse-type-alias type-aliases)))
+    (let* ((*protocol-package* (find-or-make-package package-name))
+           (*exports* '(:*version*))
+           (version (parse-meta-data meta-data))
+           (enumerations (map 'list #'parse-enumeration enumerations))
+           (structures (map 'list #'parse-structure structures))
+           (type-aliases (map 'list #'parse-type-alias type-aliases)))
+      (declare (ignore version))
+      (with-open-file (output-stream output-file
+                                     :direction :output
+                                     :if-exists :supersede
+                                     :if-does-not-exist :create)
+        (format output-stream
+                ";;; Code generated based on '~A'; DO NOT EDIT.~%"
+                meta-model-file)
         (pretty-print `(defpackage ,package-name
                          (:use :cl)
-                         (:export . ,(mapcar #'make-keyword (nreverse *exports*)))))
-        (pretty-print `(in-package ,package-name))
-        (newline-and-pretty-print `(defparameter *version* ,version))
-        (mapc #'newline-and-pretty-print enumerations)
-        (mapc #'newline-and-pretty-print structures)
-        (mapc #'newline-and-pretty-print type-aliases)
-        (values)))))
+                         (:export . ,(mapcar #'make-keyword (nreverse *exports*))))
+                      output-stream)
+        (pretty-print `(in-package ,package-name) output-stream)
+        (mapc (rcurry #'newline-and-pretty-print output-stream) enumerations)
+        (mapc (rcurry #'newline-and-pretty-print output-stream) structures)
+        (mapc (rcurry #'newline-and-pretty-print output-stream) type-aliases))))
+  (format t "~&generated ~S~%" output-file)
+  (values))
+
+(defun deploy ()
+  (loop :for (meta-model-file output-file package-name) :in *specifications*
+        :do (generate (asdf:system-relative-pathname :lem-lsp-utils meta-model-file)
+                      (asdf:system-relative-pathname :lem-lsp-utils output-file)
+                      package-name)))

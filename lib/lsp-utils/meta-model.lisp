@@ -6,7 +6,7 @@
 (in-package :lem-lsp-utils/meta-model)
 
 (defparameter *specifications*
-  '(("specification/language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json"
+  '(("language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json"
      "protocol-3-17.lisp"
      :lem-lsp-utils/protocol-3-17)))
 
@@ -475,6 +475,6 @@
 
 (defun deploy ()
   (loop :for (meta-model-file output-file package-name) :in *specifications*
-        :do (generate (asdf:system-relative-pathname :lem-lsp-utils meta-model-file)
+        :do (generate (asdf:system-relative-pathname :lem meta-model-file)
                       (asdf:system-relative-pathname :lem-lsp-utils output-file)
                       package-name)))

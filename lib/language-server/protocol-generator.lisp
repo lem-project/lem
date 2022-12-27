@@ -1,14 +1,11 @@
-(defpackage :lem-lsp-utils/meta-model
-  (:use :cl :alexandria)
-  (:import-from :closer-mop)
-  (:import-from :yason)
-  (:import-from :cl-change-case))
-(in-package :lem-lsp-utils/meta-model)
+(defpackage :lem-language-server/protocol-generator
+  (:use :cl :alexandria))
+(in-package :lem-language-server/protocol-generator)
 
 (defparameter *specifications*
   '(("language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json"
      "protocol-3-17.lisp"
-     :lem-lsp-utils/protocol-3-17)))
+     :lem-language-server/protocol-3-17)))
 
 (defvar *protocol-package*)
 (defvar *exports* '())
@@ -476,5 +473,5 @@
 (defun deploy ()
   (loop :for (meta-model-file output-file package-name) :in *specifications*
         :do (generate (asdf:system-relative-pathname :lem meta-model-file)
-                      (asdf:system-relative-pathname :lem-lsp-utils output-file)
+                      (asdf:system-relative-pathname :lem-language-server output-file)
                       package-name)))

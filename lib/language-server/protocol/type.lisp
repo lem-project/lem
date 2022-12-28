@@ -152,12 +152,12 @@
 
 (defun pascal-to-lisp-case (string)
   (string-upcase
-   (if (starts-with-subseq "_" string)
+   (if (alexandria:starts-with-subseq "_" string)
        (uiop:strcat "_" (cl-change-case:param-case string))
        (cl-change-case:param-case string))))
 
 (defun lisp-to-pascal-case (string)
-  (if (starts-with-subseq "_" string)
+  (if (alexandria:starts-with-subseq "_" string)
       (uiop:strcat "_" (cl-change-case:pascal-case string))
       (cl-change-case:pascal-case string)))
 

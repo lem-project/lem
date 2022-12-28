@@ -17,7 +17,8 @@
            :protocol-class
            :define-enum
            :define-type-alias
-           :define-class))
+           :define-class
+           :protocol-class-slots))
 (in-package :lem-language-server/type)
 
 (define-condition required-argument-error (error)
@@ -91,7 +92,7 @@
 (defclass protocol-object () ()
   (:metaclass protocol-class))
 
-(defun class-slots (class)
+(defun protocol-class-slots (class)
   (unless (c2mop:class-finalized-p class)
     (c2mop:finalize-inheritance class))
   (loop :with base := (find-class 'protocol-class)
@@ -101,7 +102,7 @@
 
 (defun check-required-initarg (protocol-object)
   (loop :with class := (class-of protocol-object)
-        :for slot :in (class-slots class)
+        :for slot :in (protocol-class-slots class)
         :for slot-name := (c2mop:slot-definition-name slot)
         :do (unless (protocol-slot-optional-p slot)
               (unless (slot-boundp protocol-object slot-name)

@@ -3,53 +3,54 @@
 (define-request (initialize "initialize") (params protocol:initialize-params)
   (log:info "initialize")
   (setf (server-client-capabilities *server*) params)
-  (json:object-to-json
-   (make-instance 'protocol:initialize-result
-                  :capabilities (make-instance
-                                 'protocol:server-capabilities
-                                 ;; :position-encoding 
-                                 :text-document-sync (make-instance
-                                                      'protocol:text-document-sync-options
-                                                      :open-close (json:json-true)
-                                                      :change protocol:text-document-sync-kind.incremental
-                                                      :will-save (json:json-false)
-                                                      :will-save-wait-until (json:json-false)
-                                                      :save (json:json-false))
-                                 ;; :notebook-document-sync
-                                 ;; :completion-provider
-                                 ;; :hover-provider
-                                 ;; :signature-help-provider
-                                 ;; :declaration-provider
-                                 ;; :definition-provider
-                                 ;; :type-definition-provider
-                                 ;; :implementation-provider
-                                 ;; :references-provider
-                                 ;; :document-highlight-provider
-                                 ;; :document-symbol-provider
-                                 ;; :code-action-provider
-                                 ;; :code-lens-provider
-                                 ;; :document-link-provider
-                                 ;; :color-provider
-                                 ;; :document-formatting-provider
-                                 ;; :document-range-formatting-provider
-                                 ;; :document-on-type-formatting-provider
-                                 ;; :rename-provider
-                                 ;; :folding-range-provider
-                                 ;; :execute-command-provider
-                                 ;; :selection-range-provider
-                                 ;; :linked-editing-range-provider
-                                 ;; :call-hierarchy-provider
-                                 ;; :semantic-tokens-provider
-                                 ;; :moniker-provider
-                                 ;; :type-hierarchy-provider
-                                 ;; :inline-value-provider
-                                 ;; :inlay-hint-provider
-                                 ;; :diagnostic-provider
-                                 ;; :workspace-symbol-provider
-                                 ;; :workspace
-                                 :experimental (json:json-false))
-                  :server-info (json:make-json :name *language-server-name*
-                                               :version *language-server-version*))))
+  (convert-to-json
+   (make-instance
+    'protocol:initialize-result
+    :capabilities (make-instance
+                   'protocol:server-capabilities
+                   ;; :position-encoding
+                   :text-document-sync (make-instance
+                                        'protocol:text-document-sync-options
+                                        :open-close t
+                                        :change protocol:text-document-sync-kind-incremental
+                                        :will-save nil
+                                        :will-save-wait-until nil
+                                        :save t)
+                   ;; :notebook-document-sync
+                   ;; :completion-provider
+                   ;; :hover-provider
+                   ;; :signature-help-provider
+                   ;; :declaration-provider
+                   ;; :definition-provider
+                   ;; :type-definition-provider
+                   ;; :implementation-provider
+                   ;; :references-provider
+                   ;; :document-highlight-provider
+                   ;; :document-symbol-provider
+                   ;; :code-action-provider
+                   ;; :code-lens-provider
+                   ;; :document-link-provider
+                   ;; :color-provider
+                   ;; :document-formatting-provider
+                   ;; :document-range-formatting-provider
+                   ;; :document-on-type-formatting-provider
+                   ;; :rename-provider
+                   ;; :folding-range-provider
+                   ;; :execute-command-provider
+                   ;; :selection-range-provider
+                   ;; :linked-editing-range-provider
+                   ;; :call-hierarchy-provider
+                   ;; :semantic-tokens-provider
+                   ;; :moniker-provider
+                   ;; :type-hierarchy-provider
+                   ;; :inline-value-provider
+                   ;; :inlay-hint-provider
+                   ;; :diagnostic-provider
+                   ;; :workspace-symbol-provider
+                   ;; :workspace
+                   :experimental nil)
+    :server-info (make-lsp-map :name *language-server-name*
+                               :version *language-server-version*))))
 
 (define-request (initialized "initialized") (params protocol:initialized-params)
   (declare (ignore params))
@@ -73,7 +74,7 @@
 
 (define-request (shutdown "shutdown") ()
   (setf (shutdown-request-received-p (current-server)) t)
-  (json:json-null))
+  nil)
 
 (define-request (exit "exit") ()
   (if (shutdown-request-received-p (current-server))

@@ -9,13 +9,12 @@
   :components ((:module "protocol"
                 :components ((:file "type")
                              (:file "protocol-generator")
-                             ;; (:file "protocol-3-17")
+                             (:file "protocol-3-17")
                              (:file "converter")))
                (:file "package")
-               ;; (:file "print-object")
-               ;; (:file "variables")
-               ;; (:file "method")
-               ;; (:file "server")
+               (:file "variables")
+               (:file "method")
+               (:file "server")
                ;; (:module "methods"
                ;;  :components ((:file "lifecycle")
                ;;               (:file "document-synchronization")))

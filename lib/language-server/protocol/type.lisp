@@ -20,7 +20,8 @@
            :define-class
            :protocol-class-slots
            :pascal-to-lisp-case
-           :lisp-to-pascal-case))
+           :lisp-to-pascal-case
+           :make-lsp-map))
 (in-package :lem-language-server/protocol/type)
 
 (define-condition required-argument-error (error)
@@ -161,3 +162,8 @@
       (uiop:strcat "_" (cl-change-case:pascal-case string))
       (cl-change-case:pascal-case string)))
 
+(defun make-lsp-map (&rest key-value-pairs)
+  (let ((hash-table (make-hash-table :test 'equal)))
+    (loop :for (key value) :on key-value-pairs :by #'cddr
+          :do (setf (gethash key hash-table) value))
+    hash-table))

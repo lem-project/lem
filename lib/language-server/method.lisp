@@ -18,7 +18,7 @@
          (:default-initargs :name ,method-name))
        (defmethod call ((,instance ,class-name) ,json)
          (let ((,params ,(if params-type-p
-                             `(json:coerce-json ,json ',params-type)
+                             `(convert-from-json ,json ',params-type)
                              json)))
            ,@(unless params-type-p `((declare (ignore ,params))))
            ,@body))

@@ -4,168 +4,220 @@
   (:use :lem-language-server/protocol/type)
   (:export :*version*
            :semantic-token-types
-           :namespace
-           :type
-           :class
-           :enum
-           :interface
-           :struct
-           :type-parameter
-           :parameter
-           :variable
-           :property
-           :enum-member
-           :event
-           :function
-           :method
-           :macro
-           :keyword
-           :modifier
-           :comment
-           :string
-           :number
-           :regexp
-           :operator
-           :decorator
+           :semantic-token-types-namespace
+           :semantic-token-types-type
+           :semantic-token-types-class
+           :semantic-token-types-enum
+           :semantic-token-types-interface
+           :semantic-token-types-struct
+           :semantic-token-types-type-parameter
+           :semantic-token-types-parameter
+           :semantic-token-types-variable
+           :semantic-token-types-property
+           :semantic-token-types-enum-member
+           :semantic-token-types-event
+           :semantic-token-types-function
+           :semantic-token-types-method
+           :semantic-token-types-macro
+           :semantic-token-types-keyword
+           :semantic-token-types-modifier
+           :semantic-token-types-comment
+           :semantic-token-types-string
+           :semantic-token-types-number
+           :semantic-token-types-regexp
+           :semantic-token-types-operator
+           :semantic-token-types-decorator
            :semantic-token-modifiers
-           :declaration
-           :definition
-           :readonly
-           :static
-           :deprecated
-           :abstract
-           :async
-           :modification
-           :documentation
-           :default-library
+           :semantic-token-modifiers-declaration
+           :semantic-token-modifiers-definition
+           :semantic-token-modifiers-readonly
+           :semantic-token-modifiers-static
+           :semantic-token-modifiers-deprecated
+           :semantic-token-modifiers-abstract
+           :semantic-token-modifiers-async
+           :semantic-token-modifiers-modification
+           :semantic-token-modifiers-documentation
+           :semantic-token-modifiers-default-library
            :document-diagnostic-report-kind
-           :full
-           :unchanged
+           :document-diagnostic-report-kind-full
+           :document-diagnostic-report-kind-unchanged
            :error-codes
-           :parse-error
-           :invalid-request
-           :method-not-found
-           :invalid-params
-           :internal-error
-           :server-not-initialized
-           :unknown-error-code
+           :error-codes-parse-error
+           :error-codes-invalid-request
+           :error-codes-method-not-found
+           :error-codes-invalid-params
+           :error-codes-internal-error
+           :error-codes-server-not-initialized
+           :error-codes-unknown-error-code
            :lsp-error-codes
-           :request-failed
-           :server-cancelled
-           :content-modified
-           :request-cancelled
+           :lsp-error-codes-request-failed
+           :lsp-error-codes-server-cancelled
+           :lsp-error-codes-content-modified
+           :lsp-error-codes-request-cancelled
            :folding-range-kind
-           :imports
-           :region
+           :folding-range-kind-comment
+           :folding-range-kind-imports
+           :folding-range-kind-region
            :symbol-kind
-           :file
-           :module
-           :package
-           :field
-           :constructor
-           :constant
-           :boolean
-           :array
-           :object
-           :key
-           :null
+           :symbol-kind-file
+           :symbol-kind-module
+           :symbol-kind-namespace
+           :symbol-kind-package
+           :symbol-kind-class
+           :symbol-kind-method
+           :symbol-kind-property
+           :symbol-kind-field
+           :symbol-kind-constructor
+           :symbol-kind-enum
+           :symbol-kind-interface
+           :symbol-kind-function
+           :symbol-kind-variable
+           :symbol-kind-constant
+           :symbol-kind-string
+           :symbol-kind-number
+           :symbol-kind-boolean
+           :symbol-kind-array
+           :symbol-kind-object
+           :symbol-kind-key
+           :symbol-kind-null
+           :symbol-kind-enum-member
+           :symbol-kind-struct
+           :symbol-kind-event
+           :symbol-kind-operator
+           :symbol-kind-type-parameter
            :symbol-tag
+           :symbol-tag-deprecated
            :uniqueness-level
-           :document
-           :project
-           :group
-           :scheme
-           :global
+           :uniqueness-level-document
+           :uniqueness-level-project
+           :uniqueness-level-group
+           :uniqueness-level-scheme
+           :uniqueness-level-global
            :moniker-kind
-           :import
-           :export
-           :local
+           :moniker-kind-import
+           :moniker-kind-export
+           :moniker-kind-local
            :inlay-hint-kind
+           :inlay-hint-kind-type
+           :inlay-hint-kind-parameter
            :message-type
-           :error
-           :warning
-           :info
-           :log
+           :message-type-error
+           :message-type-warning
+           :message-type-info
+           :message-type-log
            :text-document-sync-kind
-           :none
-           :incremental
+           :text-document-sync-kind-none
+           :text-document-sync-kind-full
+           :text-document-sync-kind-incremental
            :text-document-save-reason
-           :manual
-           :after-delay
-           :focus-out
+           :text-document-save-reason-manual
+           :text-document-save-reason-after-delay
+           :text-document-save-reason-focus-out
            :completion-item-kind
-           :text
-           :unit
-           :value
-           :snippet
-           :color
-           :reference
-           :folder
+           :completion-item-kind-text
+           :completion-item-kind-method
+           :completion-item-kind-function
+           :completion-item-kind-constructor
+           :completion-item-kind-field
+           :completion-item-kind-variable
+           :completion-item-kind-class
+           :completion-item-kind-interface
+           :completion-item-kind-module
+           :completion-item-kind-property
+           :completion-item-kind-unit
+           :completion-item-kind-value
+           :completion-item-kind-enum
+           :completion-item-kind-keyword
+           :completion-item-kind-snippet
+           :completion-item-kind-color
+           :completion-item-kind-file
+           :completion-item-kind-reference
+           :completion-item-kind-folder
+           :completion-item-kind-enum-member
+           :completion-item-kind-constant
+           :completion-item-kind-struct
+           :completion-item-kind-event
+           :completion-item-kind-operator
+           :completion-item-kind-type-parameter
            :completion-item-tag
+           :completion-item-tag-deprecated
            :insert-text-format
-           :plain-text
+           :insert-text-format-plain-text
+           :insert-text-format-snippet
            :insert-text-mode
-           :as-is
-           :adjust-indentation
+           :insert-text-mode-as-is
+           :insert-text-mode-adjust-indentation
            :document-highlight-kind
-           :read
-           :write
+           :document-highlight-kind-text
+           :document-highlight-kind-read
+           :document-highlight-kind-write
            :code-action-kind
-           :empty
-           :quick-fix
-           :refactor
-           :refactor-extract
-           :refactor-inline
-           :refactor-rewrite
-           :source
-           :source-organize-imports
-           :source-fix-all
+           :code-action-kind-empty
+           :code-action-kind-quick-fix
+           :code-action-kind-refactor
+           :code-action-kind-refactor-extract
+           :code-action-kind-refactor-inline
+           :code-action-kind-refactor-rewrite
+           :code-action-kind-source
+           :code-action-kind-source-organize-imports
+           :code-action-kind-source-fix-all
            :trace-values
-           :off
-           :messages
-           :verbose
+           :trace-values-off
+           :trace-values-messages
+           :trace-values-verbose
            :markup-kind
-           :markdown
+           :markup-kind-plain-text
+           :markup-kind-markdown
            :position-encoding-kind
-           :utf8
-           :utf16
-           :utf32
+           :position-encoding-kind-utf8
+           :position-encoding-kind-utf16
+           :position-encoding-kind-utf32
            :file-change-type
-           :created
-           :changed
-           :deleted
+           :file-change-type-created
+           :file-change-type-changed
+           :file-change-type-deleted
            :watch-kind
-           :create
-           :change
-           :delete
+           :watch-kind-create
+           :watch-kind-change
+           :watch-kind-delete
            :diagnostic-severity
-           :information
-           :hint
+           :diagnostic-severity-error
+           :diagnostic-severity-warning
+           :diagnostic-severity-information
+           :diagnostic-severity-hint
            :diagnostic-tag
-           :unnecessary
+           :diagnostic-tag-unnecessary
+           :diagnostic-tag-deprecated
            :completion-trigger-kind
-           :invoked
-           :trigger-character
-           :trigger-for-incomplete-completions
+           :completion-trigger-kind-invoked
+           :completion-trigger-kind-trigger-character
+           :completion-trigger-kind-trigger-for-incomplete-completions
            :signature-help-trigger-kind
-           :content-change
+           :signature-help-trigger-kind-invoked
+           :signature-help-trigger-kind-trigger-character
+           :signature-help-trigger-kind-content-change
            :code-action-trigger-kind
-           :automatic
+           :code-action-trigger-kind-invoked
+           :code-action-trigger-kind-automatic
            :file-operation-pattern-kind
+           :file-operation-pattern-kind-file
+           :file-operation-pattern-kind-folder
            :notebook-cell-kind
-           :markup
-           :code
+           :notebook-cell-kind-markup
+           :notebook-cell-kind-code
            :resource-operation-kind
-           :rename
+           :resource-operation-kind-create
+           :resource-operation-kind-rename
+           :resource-operation-kind-delete
            :failure-handling-kind
-           :abort
-           :transactional
-           :text-only-transactional
-           :undo
+           :failure-handling-kind-abort
+           :failure-handling-kind-transactional
+           :failure-handling-kind-text-only-transactional
+           :failure-handling-kind-undo
            :prepare-support-default-behavior
-           :identifier
+           :prepare-support-default-behavior-identifier
            :token-format
-           :relative
+           :token-format-relative
            :implementation-params
            :location-uri
            :location-range
@@ -181,6 +233,7 @@
            :name
            :did-change-workspace-folders-params-event
            :did-change-workspace-folders-params
+           :event
            :configuration-params-items
            :configuration-params
            :items
@@ -190,6 +243,7 @@
            :color-information-range
            :color-information-color
            :color-information
+           :color
            :document-color-registration-options
            :color-presentation-params-text-document
            :color-presentation-params-color
@@ -329,6 +383,8 @@
            :moniker-identifier
            :moniker-unique
            :moniker
+           :scheme
+           :identifier
            :unique
            :moniker-registration-options
            :type-hierarchy-prepare-params
@@ -396,6 +452,7 @@
            :did-change-notebook-document-params-notebook-document
            :did-change-notebook-document-params-change
            :did-change-notebook-document-params
+           :change
            :did-save-notebook-document-params-notebook-document
            :did-save-notebook-document-params
            :did-close-notebook-document-params-notebook-document
@@ -426,6 +483,7 @@
            :show-message-params-type
            :show-message-params-message
            :show-message-params
+           :type
            :message
            :show-message-request-params-type
            :show-message-request-params-message
@@ -452,6 +510,7 @@
            :did-save-text-document-params-text-document
            :did-save-text-document-params-text
            :did-save-text-document-params
+           :text
            :text-document-save-registration-options
            :will-save-text-document-params-text-document
            :will-save-text-document-params-reason
@@ -493,6 +552,8 @@
            :completion-item-data
            :completion-item
            :label-details
+           :documentation
+           :deprecated
            :preselect
            :sort-text
            :filter-text
@@ -647,9 +708,11 @@
            :work-done-progress-end
            :set-trace-params-value
            :set-trace-params
+           :value
            :log-trace-params-message
            :log-trace-params-verbose
            :log-trace-params
+           :verbose
            :cancel-params-id
            :cancel-params
            :id
@@ -715,6 +778,7 @@
            :semantic-tokens-options-full
            :semantic-tokens-options
            :legend
+           :full
            :semantic-tokens-edit-start
            :semantic-tokens-edit-delete-count
            :semantic-tokens-edit-data
@@ -833,6 +897,7 @@
            :registration-method
            :registration-register-options
            :registration
+           :method
            :register-options
            :unregistration-id
            :unregistration-method
@@ -949,12 +1014,15 @@
            :diagnostic-data
            :diagnostic
            :severity
+           :code
            :code-description
+           :source
            :related-information
            :completion-context-trigger-kind
            :completion-context-trigger-character
            :completion-context
            :trigger-kind
+           :trigger-character
            :completion-item-label-details-detail
            :completion-item-label-details-description
            :insert-replace-edit-new-text
@@ -1079,6 +1147,7 @@
            :notebook-cell-metadata
            :notebook-cell-execution-summary
            :notebook-cell
+           :document
            :execution-summary
            :notebook-cell-array-change-start
            :notebook-cell-array-change-delete-count
@@ -1199,12 +1268,15 @@
            :text-document-client-capabilities
            :synchronization
            :completion
+           :declaration
+           :definition
            :type-definition
            :implementation
            :references
            :formatting
            :range-formatting
            :on-type-formatting
+           :rename
            :publish-diagnostics
            :call-hierarchy
            :linked-editing-range
@@ -1224,6 +1296,7 @@
            :general-client-capabilities
            :stale-request-support
            :regular-expressions
+           :markdown
            :position-encodings
            :relative-pattern-base-uri
            :relative-pattern-pattern
@@ -5918,9 +5991,10 @@ details (see also `CompletionItemLabelDetails`).
     common-lisp:t :documentation "The client supports the following `CompletionItem` specific
 capabilities.")
    (completion-item-kind :type
-    (lsp-interface
-     ((value-set :type (lsp-array completion-item-kind) :optional common-lisp:t :documentation
-       "The completion item kind values the client supports. When this
+                         (lsp-interface
+                          ((value-set :type (lsp-array completion-item-kind) :optional
+                            common-lisp:t :documentation
+                            "The completion item kind values the client supports. When this
 property exists the client also guarantees that it will
 handle values outside its set gracefully and falls back
 to a default value when unknown.
@@ -5928,8 +6002,9 @@ to a default value when unknown.
 If this property is not present the client only supports
 the completion items kinds from `Text` to `Reference` as defined in
 the initial version of the protocol.")))
-    :initarg :completion-item-kind :accessor completion-client-capabilities-completion-item-kind
-    :optional common-lisp:t)
+                         :initarg :completion-item-kind :accessor
+                         completion-client-capabilities-completion-item-kind :optional
+                         common-lisp:t)
    (insert-text-mode :type insert-text-mode :initarg :insert-text-mode :accessor
     completion-client-capabilities-insert-text-mode :optional common-lisp:t :since "3.17.0"
     :documentation "Defines how the client handles whitespace and indentation
@@ -6125,13 +6200,13 @@ registering a document symbol provider.
    (code-action-literal-support :type
     (lsp-interface
      ((code-action-kind :type
-       (lsp-interface
-        ((value-set :type (lsp-array code-action-kind) :documentation
-          "The code action kind values the client supports. When this
+                        (lsp-interface
+                         ((value-set :type (lsp-array code-action-kind) :documentation
+                           "The code action kind values the client supports. When this
 property exists the client also guarantees that it will
 handle values outside its set gracefully and falls back
 to a default value when unknown.")))
-       :documentation "The code action kind is support with the following value
+                        :documentation "The code action kind is support with the following value
 set.")))
     :initarg :code-action-literal-support :accessor
     code-action-client-capabilities-code-action-literal-support :optional common-lisp:t :since
@@ -6275,15 +6350,16 @@ limit.")
 If set, client will ignore specified `startCharacter` and `endCharacter`
 properties in a FoldingRange.")
    (folding-range-kind :type
-    (lsp-interface
-     ((value-set :type (lsp-array folding-range-kind) :optional common-lisp:t :documentation
-       "The folding range kind values the client supports. When this
+                       (lsp-interface
+                        ((value-set :type (lsp-array folding-range-kind) :optional common-lisp:t
+                          :documentation
+                          "The folding range kind values the client supports. When this
 property exists the client also guarantees that it will
 handle values outside its set gracefully and falls back
 to a default value when unknown.")))
-    :initarg :folding-range-kind :accessor folding-range-client-capabilities-folding-range-kind
-    :optional common-lisp:t :since "3.17.0" :documentation
-    "Specific options for the folding range kind.
+                       :initarg :folding-range-kind :accessor
+                       folding-range-client-capabilities-folding-range-kind :optional common-lisp:t
+                       :since "3.17.0" :documentation "Specific options for the folding range kind.
 
 @since 3.17.0")
    (folding-range :type

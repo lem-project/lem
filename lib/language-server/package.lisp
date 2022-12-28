@@ -1,2 +1,6 @@
 (defpackage :lem-language-server
-  (:use :cl :alexandria))
+  (:use :cl
+        :alexandria
+        :lem-language-server/protocol/type
+        :lem-language-server/protocol/converter)
+  (:local-nicknames (:protocol :lem-language-server/protocol/protocol-3-17)))

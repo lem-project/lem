@@ -112,14 +112,14 @@
     (let ((enum-name (symbolize name)))
       (add-export enum-name)
       `(define-enum ,enum-name
-         ,(map 'list #'parse-enumeration-entry values)
+         ,(map 'list (rcurry #'parse-enumeration-entry enum-name) values)
          (:type ,(parse-enumeration-type type))
          ,@(when deprecated `(:since ,deprecated))
          ,@(when documentation `(:since ,documentation))
          ,@(when proposed `(:since ,proposed))
          ,@(when since `(:since ,since))))))
 
-(defun parse-enumeration-entry (hash)
+(defun parse-enumeration-entry (hash enum-name)
   (check-type hash hash-table)
   (with-hash ((deprecated "deprecated")
               (documentation "documentation")
@@ -129,7 +129,7 @@
               (value "value" :required t))
       hash
     (let ((field-name (symbolize name)))
-      (add-export field-name)
+      (add-export (intern (format nil "~A-~A" enum-name field-name) *protocol-package*))
       `(,field-name ,value
                     ,@(when deprecated `(:deprecated ,deprecated))
                     ,@(when documentation `(:documentation ,documentation))

@@ -26,27 +26,42 @@
               words)))
     (nreverse words)))
 
-(defun scan-buffer-words (buffer word)
-  (let ((words))
-    (with-open-stream (in (make-buffer-input-stream (buffer-start-point buffer)))
-      (loop :for str := (read-line in nil)
-            :while str
-            :do (dolist (w (remove-if-not #'(lambda (tok)
-                                              (and (string/= word tok)
-                                                   (eql 0 (search word tok))))
-                                          (scan-line-words str)))
-                  (push w words))))
-    (nreverse words)))
+(defun scan-buffer-words (buffer)
+  (with-open-stream (in (make-buffer-input-stream (buffer-start-point buffer)))
+    (loop :for str := (read-line in nil)
+          :while str
+          :append (scan-line-words str))))
 
-(defun scan-all-buffer-words (word)
+(defun collect-buffer-words-order-proximity (point)
+  (with-point ((point point)
+               (start-point point))
+    (let ((words '()))
+      (loop :repeat 1000
+            :do (setf words (append (scan-line-words (line-string point)) words))
+                (unless (line-offset point -1)
+                  (buffer-end point))
+                (when (point= start-point point)
+                  (return)))
+      (nreverse (remove-duplicates words :test #'equal)))))
+
+(defun filter-word (current-word words)
+  (remove-if-not (lambda (word)
+                   (and (string/= word current-word)
+                        (alexandria:starts-with-subseq current-word word)))
+                 words))
+
+(defun scan-all-buffer-words (word &optional point)
   (unless (string= word "")
-    (remove-duplicates
-     (nconc (scan-buffer-words (current-buffer) word)
-            (mapcan #'(lambda (buffer)
-                        (unless (eq buffer (current-buffer))
-                          (scan-buffer-words buffer word)))
-                    (buffer-list)))
-     :test #'equal)))
+    (filter-word word
+                 (append (if point
+                             (collect-buffer-words-order-proximity point)
+                             (scan-buffer-words (current-buffer)))
+                         (remove-duplicates
+                          (mapcan (lambda (buffer)
+                                    (unless (eq buffer (current-buffer))
+                                      (scan-buffer-words buffer)))
+                                  (buffer-list))
+                          :test #'equal)))))
 
 (define-key *global-keymap* "C-x /" 'abbrev-with-pop-up-window)
 (define-command abbrev-with-pop-up-window () ()
@@ -79,7 +94,7 @@
            (setf *rest-words* (rest *rest-words*)))
           (t
            (let* ((src-word (preceding-word point))
-                  (words (scan-all-buffer-words src-word)))
+                  (words (scan-all-buffer-words src-word point)))
              (when words (delete-character point (- (length src-word))))
              (setf *rest-words* (rest words))
              (setf *all-words* words)

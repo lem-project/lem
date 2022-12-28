@@ -37,17 +37,6 @@
                                         `(gethash ,key ,hash-table))))
          ,@body))))
 
-(defun pascal-to-lisp-case (string)
-  (string-upcase
-   (if (starts-with-subseq "_" string)
-       (uiop:strcat "_" (cl-change-case:param-case string))
-       (cl-change-case:param-case string))))
-
-(defun lisp-to-pascal-case (string)
-  (if (starts-with-subseq "_" string)
-      (uiop:strcat "_" (cl-change-case:pascal-case string))
-      (cl-change-case:pascal-case string)))
-
 (defun symbolize (string &optional (package *protocol-package*))
   (let ((name (pascal-to-lisp-case string)))
     (if package

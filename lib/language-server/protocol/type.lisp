@@ -18,7 +18,9 @@
            :define-enum
            :define-type-alias
            :define-class
-           :protocol-class-slots))
+           :protocol-class-slots
+           :pascal-to-lisp-case
+           :lisp-to-pascal-case))
 (in-package :lem-language-server/protocol/type)
 
 (define-condition required-argument-error (error)
@@ -147,4 +149,15 @@
                         superclasses)
      ,@args
      (:metaclass protocol-class)))
+
+(defun pascal-to-lisp-case (string)
+  (string-upcase
+   (if (starts-with-subseq "_" string)
+       (uiop:strcat "_" (cl-change-case:param-case string))
+       (cl-change-case:param-case string))))
+
+(defun lisp-to-pascal-case (string)
+  (if (starts-with-subseq "_" string)
+      (uiop:strcat "_" (cl-change-case:pascal-case string))
+      (cl-change-case:pascal-case string)))
 

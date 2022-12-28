@@ -1,7 +1,7 @@
-;;; Code generated based on '/Users/user/common-lisp/lem/language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json'; DO NOT EDIT.
+;;; Code generated based on 'language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json'; DO NOT EDIT.
 
-(common-lisp:defpackage :lem-language-server/protocol-3-17
-  (:use :lem-language-server/type)
+(common-lisp:defpackage :lem-language-server/protocol/protocol-3-17
+  (:use :lem-language-server/protocol/type)
   (:export :*version*
            :semantic-token-types
            :namespace
@@ -1439,7 +1439,7 @@
            :lsp-object
            :text-document-filter
            :notebook-document-filter))
-(common-lisp:in-package :lem-language-server/protocol-3-17)
+(common-lisp:in-package :lem-language-server/protocol/protocol-3-17)
 
 (define-enum semantic-token-types
     ((namespace "namespace")

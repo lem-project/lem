@@ -1,14 +1,14 @@
-(defpackage :lem-language-server/protocol-generator
+(defpackage :lem-language-server/protocol/protocol-generator
   (:use :cl
         :alexandria
-        :lem-language-server/type)
+        :lem-language-server/protocol/type)
   (:export :deploy))
-(in-package :lem-language-server/protocol-generator)
+(in-package :lem-language-server/protocol/protocol-generator)
 
 (defparameter *specifications*
   '(("language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json"
      "protocol/protocol-3-17.lisp"
-     :lem-language-server/protocol-3-17)))
+     :lem-language-server/protocol/protocol-3-17)))
 
 (defvar *protocol-package*)
 (defvar *exports* '())
@@ -384,7 +384,7 @@
 
 (defun find-or-make-package (package-name)
   (or (find-package package-name)
-      (make-package package-name :use '(:lem-language-server/type))))
+      (make-package package-name :use '(:lem-language-server/protocol/type))))
 
 (defun generate (meta-model-file output-file package-name)
   (with-hash ((enumerations "enumerations" :required t)
@@ -408,9 +408,10 @@
                                      :if-does-not-exist :create)
         (format output-stream
                 ";;; Code generated based on '~A'; DO NOT EDIT.~%"
-                meta-model-file)
+                (enough-namestring meta-model-file
+                                   (asdf:system-source-directory :lem)))
         (pretty-print `(defpackage ,package-name
-                         (:use :lem-language-server/type)
+                         (:use :lem-language-server/protocol/type)
                          (:export . ,(mapcar #'make-keyword (nreverse *exports*))))
                       output-stream)
         (pretty-print `(in-package ,package-name) output-stream)

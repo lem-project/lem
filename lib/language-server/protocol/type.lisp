@@ -1,4 +1,4 @@
-(defpackage :lem-language-server/type
+(defpackage :lem-language-server/protocol/type
   (:use :cl)
   (:export :lsp-uri
            :lsp-document-uri
@@ -19,7 +19,7 @@
            :define-type-alias
            :define-class
            :protocol-class-slots))
-(in-package :lem-language-server/type)
+(in-package :lem-language-server/protocol/type)
 
 (define-condition required-argument-error (error)
   ((slot-name :initarg :slot-name)

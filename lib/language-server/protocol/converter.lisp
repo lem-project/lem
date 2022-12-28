@@ -1,11 +1,11 @@
-(defpackage :lem-language-server/converter
-  (:use :cl :lem-language-server/type)
-  (:import-from :lem-language-server/protocol-generator
+(defpackage :lem-language-server/protocol/converter
+  (:use :cl :lem-language-server/protocol/type)
+  (:import-from :lem-language-server/protocol/protocol-generator
                 :lisp-to-pascal-case
                 :protocol-object)
   (:export :convert-from-json
            :convert-to-json))
-(in-package :lem-language-server/converter)
+(in-package :lem-language-server/protocol/converter)
 
 ;; yason options: json-nulls-as-keyword = t json-arrays-as-vectors = t
 
@@ -45,8 +45,7 @@
                         :for slot :in (protocol-class-slots class)
                         :for slot-name := (c2mop:slot-definition-name slot)
                         :for type := (c2mop:slot-definition-type slot)
-                        :for key := (lem-language-server/protocol-generator::lisp-to-pascal-case
-                                     (string slot-name))
+                        :for key := (lisp-to-pascal-case (string slot-name))
                         :for value := (gethash key hash-table default)
                         :unless (eq value default)
                         :append (list (alexandria:make-keyword slot-name)

@@ -9,7 +9,7 @@
   :components ((:module "protocol"
                 :components ((:file "type")
                              (:file "protocol-generator")
-                             (:file "protocol-3-17")
+                             ;; (:file "protocol-3-17")
                              (:file "converter")))
                (:file "package")
                ;; (:file "print-object")

@@ -1,8 +1,7 @@
 (defpackage :lem-language-server/protocol/converter
   (:use :cl :lem-language-server/protocol/type)
   (:import-from :lem-language-server/protocol/protocol-generator
-                :lisp-to-pascal-case
-                :protocol-object)
+                :lisp-to-pascal-case)
   (:export :convert-from-json
            :convert-to-json))
 (in-package :lem-language-server/protocol/converter)

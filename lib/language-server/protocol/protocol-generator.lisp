@@ -1,5 +1,7 @@
 (defpackage :lem-language-server/protocol-generator
-  (:use :cl :alexandria)
+  (:use :cl
+        :alexandria
+        :lem-language-server/type)
   (:export :deploy))
 (in-package :lem-language-server/protocol-generator)
 
@@ -10,81 +12,6 @@
 
 (defvar *protocol-package*)
 (defvar *exports* '())
-
-;;; types
-(deftype lsp-uri () 'string)
-(deftype lsp-document-uri () 'string)
-(deftype lsp-integer () 'integer)
-(deftype lsp-uinteger () '(integer 0 *))
-(deftype lsp-decimal () 'integer)
-(deftype lsp-regexp () 'string)
-(deftype lsp-string () 'string)
-(deftype lsp-boolean () 'boolean)
-(deftype lsp-null () '(eql :null))
-
-(deftype lsp-array (element-type)
-  (declare (ignore element-type))
-  'vector)
-
-(deftype lsp-map (key value)
-  (declare (ignore key value))
-  'hash-table)
-
-(deftype lsp-tuple (&rest types)
-  (declare (ignore types))
-  'vector)
-
-(defclass protocol-object () ())
-
-(defclass protocol-class (c2mop:standard-class)
-  ((deprecated :initarg :deprecated
-               :reader protocol-class-deprecated)
-   (proposed :initarg :proposed
-             :reader protocol-class-proposed)
-   (since :initarg :since
-          :reader protocol-class-since)))
-
-(defmethod c2mop:validate-superclass ((class protocol-class)
-                                      (super c2mop:standard-class))
-  t)
-
-(defclass protocol-slot (c2mop:standard-direct-slot-definition)
-  ((deprecated :initarg :deprecated
-               :initform nil
-               :accessor protocol-slot-deprecated)
-   (proposed :initarg :proposed
-             :accessor protocol-slot-proposed)
-   (since :initarg :since
-          :accessor protocol-slot-since)))
-
-(defmethod c2mop:direct-slot-definition-class ((class protocol-class) &rest initargs)
-  (declare (ignore initargs))
-  (find-class 'protocol-slot))
-
-(defmacro define-enum (name (&rest fields) &body options)
-  (declare (ignore options))
-  (with-unique-names (f x anon-name)
-    (let ((field-values (mapcar #'second fields)))
-      `(progn
-         (deftype ,name ()
-           (labels ((,f (,x) (member ,x ',field-values :test #'equal)))
-             (let ((,anon-name (gensym)))
-               (setf (symbol-function ,anon-name) #',f)
-               `(satisfies ,,anon-name))))
-         ,@(loop :for (field-name value) :in fields
-                 :for variable := (intern (format nil "~A-~A" name field-name))
-                 :collect `(defparameter ,variable ,value))
-         ',name))))
-
-(defmacro define-type-alias (name type &body options)
-  (let ((doc (second (assoc :documentation options))))
-    `(deftype ,name () ,@(when `(,doc)) ',type)))
-
-(defmacro define-class (name superclasses &body args)
-  `(defclass ,name ,(if (null superclasses)
-                        '(protocol-object)
-                        superclasses)
-     ,@args))
 
 ;;; utils
 (defun exists-key-p (key hash)
@@ -111,7 +38,15 @@
          ,@body))))
 
 (defun pascal-to-lisp-case (string)
-  (string-upcase (ppcre:regex-replace-all "([A-Z][a-z]*)(?=[A-Z])" string "\\1-")))
+  (string-upcase
+   (if (starts-with-subseq "_" string)
+       (uiop:strcat "_" (cl-change-case:param-case string))
+       (cl-change-case:param-case string))))
+
+(defun lisp-to-pascal-case (string)
+  (if (starts-with-subseq "_" string)
+      (uiop:strcat "_" (cl-change-case:pascal-case string))
+      (cl-change-case:pascal-case string)))
 
 (defun symbolize (string &optional (package *protocol-package*))
   (let ((name (pascal-to-lisp-case string)))
@@ -284,7 +219,7 @@
     (assert (string= kind "or"))
     `(or ,@(map 'list #'parse-type items))))
 
-(defun parse-property (hash)
+(defun parse-property (hash &key class-name)
   (check-type hash hash-table)
   (with-hash ((deprecated "deprecated")
               (documentation "documentation")
@@ -294,12 +229,17 @@
               (since "since")
               (type "type" :required t))
       hash
-    (let ((property-name (symbolize name)))
+    (let* ((property-name (symbolize name))
+           (accessor (when class-name
+                       (intern (format nil "~A-~A" class-name property-name)
+                               *protocol-package*))))
+      (when class-name (add-export accessor))
       `(,property-name
         :type ,(parse-type type)
-        ,@(unless optional
-            `(:initform (required-argument
-                         ,(make-keyword property-name))))
+        ,@(when class-name
+            `(:initarg ,(make-keyword property-name)
+              :accessor ,accessor))
+        ,@(when optional `(:optional ,optional))
         ,@(when deprecated `(:deprecated ,deprecated))
         ,@(when proposed `(:proposed t))
         ,@(when since `(:since ,since))
@@ -337,8 +277,10 @@
               (proposed "proposed")
               (since "since"))
       hash
-    (let ((structure-name (symbolize name))
-          (slot-definitions (map 'list #'parse-property properties)))
+    (let* ((structure-name (symbolize name))
+           (slot-definitions (map 'list
+                                  (rcurry #'parse-property :class-name structure-name)
+                                  properties)))
       (add-export structure-name)
       (loop :for (slot-name) :in slot-definitions
             :do (add-export slot-name))
@@ -348,8 +290,7 @@
          ,@(when deprecated `((:deprecated ,deprecated)))
          ,@(when proposed `((:proposed ,proposed)))
          ,@(when since `((:since ,since)))
-         ,@(when documentation `((:documentation ,documentation)))
-         (:metaclass protocol-class)))))
+         ,@(when documentation `((:documentation ,documentation)))))))
 
 (defun parse-structure-literal (hash)
   (check-type hash hash-table)
@@ -443,7 +384,7 @@
 
 (defun find-or-make-package (package-name)
   (or (find-package package-name)
-      (make-package package-name :use '())))
+      (make-package package-name :use '(:lem-language-server/type))))
 
 (defun generate (meta-model-file output-file package-name)
   (with-hash ((enumerations "enumerations" :required t)
@@ -469,7 +410,7 @@
                 ";;; Code generated based on '~A'; DO NOT EDIT.~%"
                 meta-model-file)
         (pretty-print `(defpackage ,package-name
-                         (:use)
+                         (:use :lem-language-server/type)
                          (:export . ,(mapcar #'make-keyword (nreverse *exports*))))
                       output-stream)
         (pretty-print `(in-package ,package-name) output-stream)

@@ -53,7 +53,9 @@
   (unless (c2mop:class-finalized-p class)
     (c2mop:finalize-inheritance class))
   (and (not (typep class 'c2mop:built-in-class))
-       (member 'protocol-object (c2mop:class-precedence-list class) :key #'class-name)))
+       (not (null (member 'protocol-object
+                          (c2mop:class-precedence-list class)
+                          :key #'class-name)))))
 
 (defun convert-from-json (value type)
   (trivia:match type
@@ -87,7 +89,7 @@
      (unless (alexandria:length= value types)
        (error 'json-type-error :type type :value value))
      (map 'vector #'convert-from-json value types))
-    ((cons 'lsp-interface properties)
+    ((list 'lsp-interface properties)
      (assert-type value 'hash-table)
      (loop :with hash-table := (make-hash-table :test 'equal)
            :for (name . options) :in properties

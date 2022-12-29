@@ -36,12 +36,12 @@
   (with-point ((point point)
                (start-point point))
     (let ((words '()))
-      (loop :repeat 1000
-            :do (setf words (append (scan-line-words (line-string point)) words))
-                (unless (line-offset point -1)
-                  (buffer-end point))
-                (when (point= start-point point)
-                  (return)))
+      (loop
+        (setf words (append (scan-line-words (line-string point)) words))
+        (unless (line-offset point -1)
+          (buffer-end point))
+        (when (same-line-p start-point point)
+          (return)))
       (nreverse (remove-duplicates words :test #'equal)))))
 
 (defun filter-word (current-word words)

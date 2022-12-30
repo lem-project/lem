@@ -20,10 +20,19 @@
   ((port :initarg :port
          :reader tcp-server-port)))
 
+(defmacro with-yason-bindings (() &body body)
+  `(let ((bt:*default-special-bindings*
+           `(,@*yason-bindings*
+             ,@bt:*default-special-bindings*)))
+     (progv (mapcar #'car *yason-bindings*)
+         (mapcar #'cdr *yason-bindings*)
+       ,@body)))
+
 (defmethod start-server ((server tcp-server))
-  (jsonrpc:server-listen (server-jsonrpc-server server)
-                         :mode :tcp
-                         :port (tcp-server-port server)))
+  (with-yason-bindings ()
+    (jsonrpc:server-listen (server-jsonrpc-server server)
+                           :mode :tcp
+                           :port (tcp-server-port server))))
 
 (defmethod expose-all-methods ((server server))
   (loop :for class :in *method-classes*

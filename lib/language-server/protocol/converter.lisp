@@ -59,6 +59,13 @@
 
 (defun convert-from-json (value type)
   (trivia:match type
+    ('lsp-boolean
+     (cond ((eq value :null)
+            ;; If null, treat as false
+            nil)
+           (t
+            (assert-type value type)
+            value)))
     ((or 'lsp-uri
          'lsp-document-uri
          'lsp-integer
@@ -66,7 +73,6 @@
          'lsp-decimal
          'lsp-regexp
          'lsp-string
-         'lsp-boolean
          'lsp-null)
      (assert-type value type)
      value)

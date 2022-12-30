@@ -44,7 +44,7 @@
 (deftype lsp-boolean () 'boolean)
 (deftype lsp-null () '(eql :null))
 
-(deftype lsp-array (element-type)
+(deftype lsp-array (&optional element-type)
   (declare (ignore element-type))
   'vector)
 

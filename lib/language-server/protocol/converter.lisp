@@ -4,17 +4,9 @@
            :convert-to-json))
 (in-package :lem-language-server/protocol/converter)
 
-;; yason options: json-nulls-as-keyword = t json-arrays-as-vectors = t
+(declaim (optimize (speed 0) (safety 3) (debug 3)))
 
-(define-condition json-type-error ()
-  ((type :initarg :type)
-   (value :initarg :value)
-   (context :initarg :context :initform nil))
-  (:report (lambda (c s)
-             (with-slots (value type context) c
-               (if context
-                   (format s "~S is not a ~S in ~S" value type context)
-                   (format s "~S is not a ~S" value type))))))
+;; yason options: json-nulls-as-keyword = t json-arrays-as-vectors = t
 
 (define-condition missing-value ()
   ((key :initarg :key)
@@ -46,7 +38,7 @@
                         :for value := (gethash key hash-table default)
                         :unless (eq value default)
                         :append (list (alexandria:make-keyword slot-name)
-                                      (convert-from-json value type)))))
+                                      (convert-from-json value type key)))))
     (apply #'make-instance class initargs)))
 
 (defun protocol-class-p (class)
@@ -57,7 +49,8 @@
                           (c2mop:class-precedence-list class)
                           :key #'class-name)))))
 
-(defun convert-from-json (value type)
+(defun convert-from-json (value type &optional context)
+  (declare (ignorable context))
   (trivia:match type
     ('lsp-boolean
      (cond ((eq value :null)
@@ -102,15 +95,21 @@
            :do (destructuring-bind (&key (initform nil initform-p) type &allow-other-keys)
                    options
                  (declare (ignore initform))
-                 (cond ((exist-key-p value name)
-                        (setf (gethash name hash-table)
-                              (convert-from-json (gethash name value) type)))
-                       (initform-p ; is not optional
-                        (error 'missing-value
-                               :key name
-                               :value value
-                               :type type))))
+                 (let ((key (lisp-to-pascal-case (string name))))
+                   (cond ((exist-key-p value (lisp-to-pascal-case key))
+                          (setf (gethash key hash-table)
+                                (convert-from-json (gethash key value) type)))
+                         (initform-p ; is not optional
+                          (error 'missing-value
+                                 :key key
+                                 :value value
+                                 :type type)))))
            :finally (return hash-table)))
+    ((cons 'or types)
+     (dolist (type types (error 'json-type-error :type type :value value))
+       (handler-case
+           (return (convert-from-json value type))
+         (json-type-error ()))))
     (otherwise
      (let ((class (and (symbolp type)
                        (find-class type nil))))

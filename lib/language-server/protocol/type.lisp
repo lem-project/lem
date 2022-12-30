@@ -1,6 +1,8 @@
 (defpackage :lem-language-server/protocol/type
   (:use :cl)
-  (:export :lsp-uri
+  (:export :json-type-error
+           :required-argument-error
+           :lsp-uri
            :lsp-document-uri
            :lsp-integer
            :lsp-uinteger
@@ -23,6 +25,18 @@
            :lisp-to-pascal-case
            :make-lsp-map))
 (in-package :lem-language-server/protocol/type)
+
+(declaim (optimize (speed 0) (safety 3) (debug 3)))
+
+(define-condition json-type-error ()
+  ((type :initarg :type)
+   (value :initarg :value)
+   (context :initarg :context :initform nil))
+  (:report (lambda (c s)
+             (with-slots (value type context) c
+               (if context
+                   (format s "~S is not a ~S in ~S" value type context)
+                   (format s "~S is not a ~S" value type))))))
 
 (define-condition required-argument-error (error)
   ((slot-name :initarg :slot-name)
@@ -120,9 +134,10 @@
                        (if (eq value :null)
                            ;; If null, treat as no argument
                            (check-argument-is-required class slot)
-                           (error 'type-error
-                                  :datum value
-                                  :expected-type expected-type)))))
+                           (error 'json-type-error
+                                  :type expected-type
+                                  :value value
+                                  :context slot-name)))))
                   (t
                    (check-argument-is-required class slot)))))
 

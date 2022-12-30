@@ -373,7 +373,7 @@
 
 (defun find-or-make-package (package-name)
   (or (find-package package-name)
-      (make-package package-name :use '(:lem-language-server/protocol/type))))
+      (make-package package-name :use '())))
 
 (defun generate (meta-model-file output-file package-name)
   (with-hash ((enumerations "enumerations" :required t)
@@ -400,7 +400,7 @@
                 (enough-namestring meta-model-file
                                    (asdf:system-source-directory :lem)))
         (pretty-print `(defpackage ,package-name
-                         (:use :lem-language-server/protocol/type)
+                         (:use)
                          (:export . ,(mapcar #'make-keyword (nreverse *exports*))))
                       output-stream)
         (pretty-print `(in-package ,package-name) output-stream)

@@ -159,8 +159,8 @@
 
 (defun lisp-to-pascal-case (string)
   (if (alexandria:starts-with-subseq "_" string)
-      (uiop:strcat "_" (cl-change-case:pascal-case string))
-      (cl-change-case:pascal-case string)))
+      (uiop:strcat "_" (cl-change-case:camel-case string))
+      (cl-change-case:camel-case string)))
 
 (defun make-lsp-map (&rest key-value-pairs)
   (let ((hash-table (make-hash-table :test 'equal)))

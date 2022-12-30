@@ -107,17 +107,17 @@
   (loop :with class := (class-of protocol-object)
         :for slot :in (protocol-class-slots class)
         :for slot-name := (c2mop:slot-definition-name slot)
-        :do (unless (protocol-slot-optional-p slot)
-              (unless (slot-boundp protocol-object slot-name)
-                (error 'required-argument-error
-                       :slot-name slot-name
-                       :class-name (class-name class))))
-            (let ((value (slot-value protocol-object slot-name))
-                  (expected-type (c2mop:slot-definition-type slot)))
-              (unless (typep value expected-type)
-                (error 'type-error
-                       :datum value
-                       :expected-type expected-type)))))
+        :do (cond ((slot-boundp protocol-object slot-name)
+                   (let ((value (slot-value protocol-object slot-name))
+                         (expected-type (c2mop:slot-definition-type slot)))
+                     (unless (typep value expected-type)
+                       (error 'type-error
+                              :datum value
+                              :expected-type expected-type))))
+                  ((not (protocol-slot-optional-p slot))
+                   (error 'required-argument-error
+                          :slot-name slot-name
+                          :class-name (class-name class))))))
 
 (defmethod initialize-instance ((instance protocol-object) &rest initargs &key &allow-other-keys)
   (declare (ignore initargs))

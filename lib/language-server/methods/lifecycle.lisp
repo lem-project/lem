@@ -49,8 +49,8 @@
                    ;; :workspace-symbol-provider
                    ;; :workspace
                    :experimental nil)
-    :server-info (make-lsp-map :name *language-server-name*
-                               :version *language-server-version*))))
+    :server-info (make-lsp-map "name" *language-server-name*
+                               "version" *language-server-version*))))
 
 (define-request (initialized "initialized") (params protocol:initialized-params)
   (declare (ignore params))

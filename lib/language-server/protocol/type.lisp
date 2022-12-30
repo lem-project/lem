@@ -172,5 +172,6 @@
 (defun make-lsp-map (&rest key-value-pairs)
   (let ((hash-table (make-hash-table :test 'equal)))
     (loop :for (key value) :on key-value-pairs :by #'cddr
-          :do (setf (gethash key hash-table) value))
+          :do (check-type key string)
+              (setf (gethash key hash-table) value))
     hash-table))

@@ -103,7 +103,13 @@
         :while (eq base (class-of superclass))
         :append (c2mop:class-direct-slots superclass)))
 
-(defun check-required-initarg (protocol-object)
+(defun check-argument-is-required (class slot)
+  (unless (protocol-slot-optional-p slot)
+    (error 'required-argument-error
+           :slot-name (c2mop:slot-definition-name slot)
+           :class-name (class-name class))))
+
+(defun check-initargs (protocol-object)
   (loop :with class := (class-of protocol-object)
         :for slot :in (protocol-class-slots class)
         :for slot-name := (c2mop:slot-definition-name slot)
@@ -111,18 +117,19 @@
                    (let ((value (slot-value protocol-object slot-name))
                          (expected-type (c2mop:slot-definition-type slot)))
                      (unless (typep value expected-type)
-                       (error 'type-error
-                              :datum value
-                              :expected-type expected-type))))
-                  ((not (protocol-slot-optional-p slot))
-                   (error 'required-argument-error
-                          :slot-name slot-name
-                          :class-name (class-name class))))))
+                       (if (eq value :null)
+                           ;; If null, treat as no argument
+                           (check-argument-is-required class slot)
+                           (error 'type-error
+                                  :datum value
+                                  :expected-type expected-type)))))
+                  (t
+                   (check-argument-is-required class slot)))))
 
 (defmethod initialize-instance ((instance protocol-object) &rest initargs &key &allow-other-keys)
   (declare (ignore initargs))
   (let ((instance (call-next-method)))
-    (check-required-initarg instance)
+    (check-initargs instance)
     instance))
 
 (defmacro define-enum (name (&rest fields) &body options)

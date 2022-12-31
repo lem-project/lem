@@ -1201,7 +1201,7 @@
   (with-point ((p point))
     (loop
       (ppcre:register-groups-bind (package-name)
-          ("^\\s*\\(\\s*(?:cl:)?in-package (?:#?:|')?([^\)\\s]*)\\s*\\)"
+          ("^\\s*\\(\\s*(?:cl:|common-lisp:)?in-package (?:#?:|')?([^\)\\s]*)\\s*\\)"
            (string-downcase (line-string p)))
         (return package-name))
       (unless (line-offset p -1)

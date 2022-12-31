@@ -47,16 +47,7 @@
                              `(if (< ,code ,a)
                                   ,then
                                   ,else)))))))
-      (rec 0 (1- (length vector)))
-      #+(or)
-      (compile name
-               (eval
-                `(lambda (code)
-                   (declare (optimize (speed 3) (safety 0) (debug 0)))
-                   (declare (fixnum code))
-                   ,(rec 0 (1- (length vector))))))))
-  #+(or)
-  (gen-binary-search-function '%binary-search eastasian-full))
+      (rec 0 (1- (length vector))))))
 
 (defmacro %eastasian-code-p (code)
   (let ((g-code (gensym "CODE")))

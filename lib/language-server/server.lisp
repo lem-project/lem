@@ -20,6 +20,9 @@
   ((port :initarg :port
          :reader tcp-server-port)))
 
+(defclass stdio-server (server)
+  ())
+
 (defmacro with-yason-bindings (() &body body)
   `(let ((bt:*default-special-bindings*
            `(,@*yason-bindings*
@@ -34,6 +37,11 @@
                            :mode :tcp
                            :port (tcp-server-port server))))
 
+(defmethod start-server ((server stdio-server))
+  (with-yason-bindings ()
+    (jsonrpc:server-listen (server-jsonrpc-server server)
+                           :mode :stdio)))
+
 (defmethod expose-all-methods ((server server))
   (loop :for class :in *method-classes*
         :for instance := (make-instance class)
@@ -47,3 +55,7 @@
                     (start-server *server*))
                   :initial-bindings `((*standard-output* . ,*standard-output*)
                                       (*error-output* . ,*error-output*))))
+
+(defun start-stdio-server ()
+  (setf *server* (make-instance 'stdio-server))
+  (start-server *server*))

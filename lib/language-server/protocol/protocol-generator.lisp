@@ -373,7 +373,7 @@
 
 (defun find-or-make-package (package-name)
   (or (find-package package-name)
-      (make-package package-name :use '())))
+      (make-package package-name :use '() :nicknames '(:lsp))))
 
 (defun generate (meta-model-file output-file package-name)
   (with-hash ((enumerations "enumerations" :required t)
@@ -400,6 +400,7 @@
                 (enough-namestring meta-model-file
                                    (asdf:system-source-directory :lem)))
         (pretty-print `(defpackage ,package-name
+                         (:nicknames :lsp)
                          (:use)
                          (:export . ,(mapcar #'make-keyword (nreverse *exports*))))
                       output-stream)

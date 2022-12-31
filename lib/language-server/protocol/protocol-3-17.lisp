@@ -1,6 +1,7 @@
 ;;; Code generated based on 'language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json'; DO NOT EDIT.
 
 (common-lisp:defpackage :lem-language-server/protocol/protocol-3-17
+  (:nicknames :lsp)
   (:use)
   (:export :*version*
            :semantic-token-types
@@ -6190,9 +6191,11 @@ details (see also `CompletionItemLabelDetails`).
     common-lisp:t :documentation "The client supports the following `CompletionItem` specific
 capabilities.")
    (completion-item-kind :type
-    (lem-language-server/protocol/type:lsp-interface
-     ((value-set :type (lem-language-server/protocol/type:lsp-array completion-item-kind) :optional
-       common-lisp:t :documentation "The completion item kind values the client supports. When this
+                         (lem-language-server/protocol/type:lsp-interface
+                          ((value-set :type
+                            (lem-language-server/protocol/type:lsp-array completion-item-kind)
+                            :optional common-lisp:t :documentation
+                            "The completion item kind values the client supports. When this
 property exists the client also guarantees that it will
 handle values outside its set gracefully and falls back
 to a default value when unknown.
@@ -6200,8 +6203,9 @@ to a default value when unknown.
 If this property is not present the client only supports
 the completion items kinds from `Text` to `Reference` as defined in
 the initial version of the protocol.")))
-    :initarg :completion-item-kind :accessor completion-client-capabilities-completion-item-kind
-    :optional common-lisp:t)
+                         :initarg :completion-item-kind :accessor
+                         completion-client-capabilities-completion-item-kind :optional
+                         common-lisp:t)
    (insert-text-mode :type insert-text-mode :initarg :insert-text-mode :accessor
     completion-client-capabilities-insert-text-mode :optional common-lisp:t :since "3.17.0"
     :documentation "Defines how the client handles whitespace and indentation
@@ -6409,13 +6413,15 @@ registering a document symbol provider.
    (code-action-literal-support :type
     (lem-language-server/protocol/type:lsp-interface
      ((code-action-kind :type
-       (lem-language-server/protocol/type:lsp-interface
-        ((value-set :type (lem-language-server/protocol/type:lsp-array code-action-kind)
-          :documentation "The code action kind values the client supports. When this
+                        (lem-language-server/protocol/type:lsp-interface
+                         ((value-set :type
+                           (lem-language-server/protocol/type:lsp-array code-action-kind)
+                           :documentation
+                           "The code action kind values the client supports. When this
 property exists the client also guarantees that it will
 handle values outside its set gracefully and falls back
 to a default value when unknown.")))
-       :documentation "The code action kind is support with the following value
+                        :documentation "The code action kind is support with the following value
 set.")))
     :initarg :code-action-literal-support :accessor
     code-action-client-capabilities-code-action-literal-support :optional common-lisp:t :since
@@ -6568,15 +6574,17 @@ limit.")
 If set, client will ignore specified `startCharacter` and `endCharacter`
 properties in a FoldingRange.")
    (folding-range-kind :type
-    (lem-language-server/protocol/type:lsp-interface
-     ((value-set :type (lem-language-server/protocol/type:lsp-array folding-range-kind) :optional
-       common-lisp:t :documentation "The folding range kind values the client supports. When this
+                       (lem-language-server/protocol/type:lsp-interface
+                        ((value-set :type
+                          (lem-language-server/protocol/type:lsp-array folding-range-kind)
+                          :optional common-lisp:t :documentation
+                          "The folding range kind values the client supports. When this
 property exists the client also guarantees that it will
 handle values outside its set gracefully and falls back
 to a default value when unknown.")))
-    :initarg :folding-range-kind :accessor folding-range-client-capabilities-folding-range-kind
-    :optional common-lisp:t :since "3.17.0" :documentation
-    "Specific options for the folding range kind.
+                       :initarg :folding-range-kind :accessor
+                       folding-range-client-capabilities-folding-range-kind :optional common-lisp:t
+                       :since "3.17.0" :documentation "Specific options for the folding range kind.
 
 @since 3.17.0")
    (folding-range :type

@@ -15,6 +15,8 @@
                (:file "variables")
                (:file "method")
                (:file "server")
+               (:file "text-document")
                (:module "methods"
                 :components ((:file "lifecycle")
-                             (:file "document-synchronization")))))
+                             (:file "document-synchronization")
+                             (:file "language-features")))))

@@ -18,7 +18,7 @@
                                         :save t)
                    ;; :notebook-document-sync
                    ;; :completion-provider
-                   ;; :hover-provider
+                   :hover-provider (make-instance 'lsp:hover-options :work-done-progress nil)
                    ;; :signature-help-provider
                    ;; :declaration-provider
                    ;; :definition-provider

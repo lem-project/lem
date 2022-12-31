@@ -17,9 +17,16 @@
          ()
          (:default-initargs :name ,method-name))
        (defmethod call ((,instance ,class-name) ,json)
+         (log-request ,method-name ,json)
          (let ((,params ,(if params-type-p
                              `(convert-from-json ,json ',params-type)
                              json)))
            ,@(unless params-type-p `((declare (ignore ,params))))
            ,@body))
        (pushnew ',class-name *method-classes*))))
+
+(defun log-request (method-name json)
+  (let ((json-string (with-output-to-string (stream)
+                       (yason:encode json stream))))
+    (log:info method-name
+              json-string)))

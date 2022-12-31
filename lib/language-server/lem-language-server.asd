@@ -20,3 +20,10 @@
                 :components ((:file "lifecycle")
                              (:file "document-synchronization")
                              (:file "language-features")))))
+
+(defsystem "lem-language-server/internal-rpc"
+  :depends-on ()
+  :serial t
+  :components ((:module "internal-rpc"
+                :components ((:file "server")
+                             (:file "client")))))

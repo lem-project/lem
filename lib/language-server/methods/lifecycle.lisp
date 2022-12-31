@@ -1,18 +1,18 @@
 (in-package :lem-language-server)
 
-(define-request (initialize "initialize") (params protocol:initialize-params)
+(define-request (initialize "initialize") (params lsp:initialize-params)
   (log:info "initialize")
   (setf (server-client-capabilities *server*) params)
   (convert-to-json
    (make-instance
-    'protocol:initialize-result
+    'lsp:initialize-result
     :capabilities (make-instance
-                   'protocol:server-capabilities
+                   'lsp:server-capabilities
                    ;; :position-encoding
                    :text-document-sync (make-instance
-                                        'protocol:text-document-sync-options
+                                        'lsp:text-document-sync-options
                                         :open-close t
-                                        :change protocol:text-document-sync-kind-incremental
+                                        :change lsp:text-document-sync-kind-incremental
                                         :will-save nil
                                         :will-save-wait-until nil
                                         :save t)
@@ -52,24 +52,24 @@
     :server-info (make-lsp-map "name" *language-server-name*
                                "version" *language-server-version*))))
 
-(define-request (initialized "initialized") (params protocol:initialized-params)
+(define-request (initialized "initialized") (params lsp:initialized-params)
   (declare (ignore params))
   (values))
 
 #+TODO
-(define-request (client-register-capability "client/registerCapability") (params protocol:registration-params)
+(define-request (client-register-capability "client/registerCapability") (params lsp:registration-params)
   )
 
 #+TODO
-(define-request (client-unregister-capability "client/unregisterCapability") (params protocol:unregistration-params)
+(define-request (client-unregister-capability "client/unregisterCapability") (params lsp:unregistration-params)
   )
 
 #+TODO
-(define-request (set-trace "$/setTrace") (params protocol:set-trace-params)
+(define-request (set-trace "$/setTrace") (params lsp:set-trace-params)
   )
 
 #+TODO
-(define-request (log-trace "$/logTrace") (params protocol:log-trace-params)
+(define-request (log-trace "$/logTrace") (params lsp:log-trace-params)
   )
 
 (define-request (shutdown "shutdown") ()

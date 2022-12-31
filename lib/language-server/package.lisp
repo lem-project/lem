@@ -2,5 +2,4 @@
   (:use :cl
         :alexandria
         :lem-language-server/protocol/type
-        :lem-language-server/protocol/converter)
-  (:local-nicknames (:protocol :lem-language-server/protocol/protocol-3-17)))
+        :lem-language-server/protocol/converter))

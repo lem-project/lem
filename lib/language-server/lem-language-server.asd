@@ -1,5 +1,7 @@
 ;;; reimplementation of lem-lsp-server
 
+(require :sb-concurrency)
+
 (defsystem "lem-language-server"
   :depends-on ("jsonrpc"
                "lem-lsp-utils"
@@ -21,9 +23,16 @@
                              (:file "document-synchronization")
                              (:file "language-features")))))
 
-(defsystem "lem-language-server/internal-rpc"
+(defsystem "lem-language-server/internal-rpc/server"
   :depends-on ()
   :serial t
   :components ((:module "internal-rpc"
-                :components ((:file "server")
+                :components ((:file "rpc")
+                             (:file "server")))))
+
+(defsystem "lem-language-server/internal-rpc/client"
+  :depends-on ("async-process")
+  :serial t
+  :components ((:module "internal-rpc"
+                :components ((:file "rpc")
                              (:file "client")))))

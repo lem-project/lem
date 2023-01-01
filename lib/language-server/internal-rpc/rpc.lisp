@@ -3,7 +3,9 @@
   (:export :prin1-to-string-for-rpc
            :read-from-string-for-rpc
            :write-message
-           :read-message))
+           :read-message
+           :write-message-to-string
+           :read-message-from-string))
 (in-package :lem-language-server/internal-rpc/rpc)
 
 (defvar *io-package*
@@ -36,15 +38,30 @@
          (length (length string)))
     (write-header length stream)
     (write-sequence string stream)
+    (force-output stream)
     (values)))
 
 (defun read-header (stream)
   (let ((buffer (make-array 6 :element-type 'character)))
     (read-sequence buffer stream)
-    (parse-integer buffer :radix 16)))
+    (ignore-errors (parse-integer buffer :radix 16))))
 
 (defun read-message (&optional (stream *standard-input*))
-  (let* ((length (read-header stream))
-         (buffer (make-array length :element-type 'character)))
-    (read-sequence buffer stream)
-    (read-from-string-for-rpc buffer)))
+  (let ((length (read-header stream)))
+    (if (null length)
+        '(:invalid-header)
+        (let ((buffer (make-array length :element-type 'character)))
+          (read-sequence buffer stream)
+          (handler-case
+              (read-from-string-for-rpc buffer)
+            (reader-error (e)
+              `(:read-error ,(prin1-to-string e)
+                :message ,(princ-to-string e))))))))
+
+(defun write-message-to-string (message)
+  (with-output-to-string (stream)
+    (write-message message stream)))
+
+(defun read-message-from-string (string)
+  (with-input-from-string (stream string)
+    (read-message stream)))

@@ -31,7 +31,7 @@
                              (:file "server")))))
 
 (defsystem "lem-language-server/internal-rpc/client"
-  :depends-on ("async-process")
+  :depends-on ("async-process" "log4cl")
   :serial t
   :components ((:module "internal-rpc"
                 :components ((:file "rpc")

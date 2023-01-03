@@ -54,6 +54,7 @@
 
 (define-request (initialized "initialized") (params lsp:initialized-params)
   (declare (ignore params))
+  (run-backend)
   (values))
 
 #+TODO

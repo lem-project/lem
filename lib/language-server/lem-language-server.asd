@@ -6,7 +6,9 @@
   :depends-on ("jsonrpc"
                "lem-lsp-utils"
                "lem"
-               "lem-lisp-syntax")
+               "lem-lisp-syntax"
+               "async-process"
+               "lsp-backend/client")
   :serial t
   :components ((:module "protocol"
                 :components ((:file "type")
@@ -18,6 +20,7 @@
                (:file "method")
                (:file "server")
                (:file "text-document")
+               (:file "backend")
                (:module "methods"
                 :components ((:file "lifecycle")
                              (:file "document-synchronization")

@@ -11,8 +11,8 @@
         (return default)))))
 
 (defun describe-symbol-at-point (point)
-  (let ((package-name (scan-current-package point))
-        (symbol-string (lem:symbol-string-at-point point)))
+  (when-let* ((package-name (scan-current-package point))
+              (symbol-string (lem:symbol-string-at-point point)))
     (describe-symbol symbol-string package-name)))
 
 (define-request (hover "textDocument/hover") (params lsp:hover-params)

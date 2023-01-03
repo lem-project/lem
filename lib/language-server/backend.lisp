@@ -7,5 +7,5 @@
 
 (defun describe-symbol (symbol-name package-name)
   (lsp-backend/client:remote-eval-sync (server-backend-connection *server*)
-                                       `(lsp-backend/lsp-api:describe-symbol ,symbol-name)
+                                       `(lsp-backend/lsp-api:hover-symbol ,symbol-name)
                                        :package-name package-name))

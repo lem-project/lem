@@ -77,7 +77,7 @@
   nil)
 
 (define-request (exit "exit") ()
-  (if (shutdown-request-received-p (current-server))
+  (if (server-shutdown-request-received-p (current-server))
       (uiop:quit 0)
       (uiop:quit 1))
   (values))

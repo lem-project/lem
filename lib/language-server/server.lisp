@@ -14,7 +14,7 @@
                    :reader server-jsonrpc-server)
    (client-capabilities :accessor server-client-capabilities)
    (shutdown-request-received :initform nil
-                              :accessor shutdown-request-received-p)))
+                              :accessor server-shutdown-request-received-p)))
 
 (defclass tcp-server (server)
   ((port :initarg :port

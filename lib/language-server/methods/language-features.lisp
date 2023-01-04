@@ -13,7 +13,9 @@
 (defun describe-symbol-at-point (point)
   (when-let* ((package-name (scan-current-package point))
               (symbol-string (lem:symbol-string-at-point point)))
-    (describe-symbol symbol-string package-name)))
+    (micros/client:remote-eval-sync (server-backend-connection *server*)
+                                    `(micros/lsp-api:hover-symbol ,symbol-string)
+                                    :package-name package-name)))
 
 (define-request (hover "textDocument/hover") (params lsp:hover-params)
   (let* ((point (convert-to-point params))

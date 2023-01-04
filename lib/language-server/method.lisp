@@ -3,10 +3,7 @@
 (defvar *method-classes* '())
 
 (defgeneric call (lsp-method json))
-
-(defclass lsp-method ()
-  ((name :initarg :name
-         :reader lsp-method-name)))
+(defgeneric call-aux (lsp-method params))
 
 (defun call-with-error-handler (function)
   (handler-bind ((error (lambda (condition)
@@ -21,23 +18,35 @@
 (defmacro with-error-handler (() &body body)
   `(call-with-error-handler (lambda () ,@body)))
 
+(defclass lsp-method ()
+  ((name :initarg :name
+         :reader lsp-method-name)
+   (params-type :initarg :params-type
+                :reader lsp-method-params-type)))
+
+(defmethod call :before (lsp-method json)
+  (log-request (lsp-method-name lsp-method) json))
+
+(defmethod call (lsp-method json)
+  (with-error-handler ()
+    (let ((params (if-let ((params-type (lsp-method-params-type lsp-method)))
+                    (convert-from-json json params-type)
+                    json)))
+      (call-aux lsp-method params))))
+
 (defmacro define-request ((class-name method-name)
-                          (&optional (params (gensym "params")) (params-type nil params-type-p))
+                          (&optional (params (gensym "params")) params-type)
                           &body body)
-  (with-unique-names (instance json)
+  (with-unique-names (instance)
     `(progn
+       (pushnew ',class-name *method-classes*)
        (defclass ,class-name (lsp-method)
          ()
-         (:default-initargs :name ,method-name))
-       (defmethod call ((,instance ,class-name) ,json)
-         (log-request ,method-name ,json)
-         (with-error-handler ()
-           (let ((,params ,(if params-type-p
-                               `(convert-from-json ,json ',params-type)
-                               json)))
-             ,@(unless params-type-p `((declare (ignore ,params))))
-             ,@body)))
-       (pushnew ',class-name *method-classes*))))
+         (:default-initargs
+          :name ,method-name
+          :params-type ',params-type))
+       (defmethod call-aux ((,instance ,class-name) ,params)
+         ,@body))))
 
 (defun log-request (method-name json)
   (let ((json-string (with-output-to-string (stream)

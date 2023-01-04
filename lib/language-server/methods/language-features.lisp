@@ -10,7 +10,7 @@
       (unless (lem:line-offset p -1)
         (return default)))))
 
-(defun describe-symbol-at-point (point)
+(defun hover-at-point (point)
   (when-let* ((package-name (scan-current-package point))
               (symbol-string (lem:symbol-string-at-point point)))
     (micros/client:remote-eval-sync (server-backend-connection *server*)
@@ -19,5 +19,5 @@
 
 (define-request (hover "textDocument/hover") (params lsp:hover-params)
   (let* ((point (convert-to-point params))
-         (text (or (describe-symbol-at-point point) "")))
+         (text (or (hover-at-point point) "")))
     (convert-to-json (make-instance 'lsp:hover :contents text))))

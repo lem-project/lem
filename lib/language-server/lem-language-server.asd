@@ -8,7 +8,7 @@
                "lem"
                "lem-lisp-syntax"
                "async-process"
-               "lsp-backend/client")
+               "micros/client")
   :serial t
   :components ((:module "protocol"
                 :components ((:file "type")

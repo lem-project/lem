@@ -44,11 +44,15 @@
     (form-offset point 2) ; skip defpackage and in-package forms
     (search-symbol point symbol-name)))
 
+(defun annotation (symbol)
+  (concatenate 'string "@" (string-downcase symbol)))
+
 (defun collect-unused-import-symbols (buffer)
   (alexandria:when-let ((defpackage-form (get-defpackage buffer)))
     (loop :for (import-package . import-symbols) :in (defpackage-import-from-list defpackage-form)
           :append (loop :for import-symbol :in import-symbols
-                        :unless (find-symbol-in-buffer buffer (string import-symbol))
+                        :unless (or (find-symbol-in-buffer buffer (string import-symbol))
+                                    (find-symbol-in-buffer buffer (annotation import-symbol)))
                         :collect (list import-package import-symbol)))))
 
 (defun read-symbol-name (symbol-string)

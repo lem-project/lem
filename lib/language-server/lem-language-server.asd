@@ -20,7 +20,6 @@
                (:file "method")
                (:file "server")
                (:file "text-document")
-               (:file "backend")
                (:module "methods"
                 :components ((:file "lifecycle")
                              (:file "document-synchronization")

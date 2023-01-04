@@ -61,3 +61,8 @@
 (defun start-stdio-server ()
   (setf *server* (make-instance 'stdio-server))
   (start-server *server*))
+
+(defun run-backend ()
+  (unless (server-backend-connection *server*)
+    (setf (server-backend-connection *server*)
+          (micros/client:start-server-and-connect))))

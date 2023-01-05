@@ -22,6 +22,7 @@
                (:file "method")
                (:file "server")
                (:file "text-document")
+               (:file "converter")
                (:module "methods"
                 :components ((:file "lifecycle")
                              (:file "document-synchronization")

@@ -99,11 +99,18 @@
       (when (string= symbol-name (read-symbol-name (symbol-string-at-point point)))
         (delete-symbol-at-point point)))))
 
-(defun remove-import (buffer package-name symbol-names)
+(defun call-with-point-to-defpackage-form (buffer function)
   (with-point ((point (buffer-point buffer) :left-inserting))
     (buffer-start point)
     (scan-lists point 1 -1)
     (assert (defpackage-p (take-symbol point)))
+    (funcall function point)))
+
+(defmacro with-point-to-defpackage-form ((point buffer) &body body)
+  `(call-with-point-to-defpackage-form ,buffer (lambda (,point) ,@body)))
+
+(defun remove-import (buffer package-name symbol-names)
+  (with-point-to-defpackage-form (point buffer)
     (loop :while (search-import-package point package-name)
           :do (dolist (symbol-name symbol-names)
                 (with-point ((point point))

@@ -1,5 +1,9 @@
 (in-package :lem-language-server)
 
+(defun make-buffer (uri version)
+  (lem:make-buffer (format nil "*lsp ~A ~A*" uri version)
+                   :syntax-table lem-lisp-syntax:*syntax-table*))
+
 (define-request (text-document-did-open "textDocument/didOpen")
     (params lsp:did-open-text-document-params)
   (with-accessors ((item lsp:did-open-text-document-params-text-document))
@@ -9,9 +13,7 @@
                      (version lsp:text-document-item-version)
                      (text lsp:text-document-item-text))
         item
-      (let ((buffer (lem:make-buffer (format nil "*lsp ~A ~A*" uri version)
-                                     :enable-undo-p nil
-                                     :syntax-table lem-lisp-syntax:*syntax-table*)))
+      (let ((buffer (make-buffer uri version)))
         (lem:insert-string (lem:buffer-point buffer) text)
         (register-text-document :uri uri
                                 :language-id language-id

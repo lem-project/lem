@@ -77,7 +77,7 @@
              (t
               (lem:with-point ((point (lem:buffer-point buffer)))
                 (when (move-to-location-position point position)
-                  point))))))
+                  (point-to-lsp-location point)))))))
     ((:error message)
      ;; TODO: send message to client
      (log:debug message)
@@ -88,19 +88,6 @@
         :when (resolve-location location)
         :collect :it))
 
-(defun buffer-uri (buffer)
-  (if-let ((text-document (buffer-text-document buffer)))
-    (text-document-uri text-document)
-    (pathname-to-uri (lem:buffer-filename buffer))))
-
-(defun point-to-location (point)
-  (let ((uri (buffer-uri (lem:point-buffer point))))
-    (lem:with-point ((end point))
-      (lem:form-offset end 1)
-      (make-instance 'lsp:location
-                     :uri uri
-                     :range (points-to-lsp-range point end)))))
-
 (define-request (go-to-definition "textDocument/definition") (params lsp:definition-params)
   (let* ((point (text-document-position-params-to-point params))
          (definitions (definitions-at-point point))
@@ -108,10 +95,8 @@
     (when-let ((point (lem-lisp-syntax:search-local-definition
                        point
                        (lem:symbol-string-at-point point))))
-      (push point definition-points))
-    (convert-to-json (map 'vector
-                          #'point-to-location
-                          definition-points))))
+      (push (point-to-lsp-location point) definition-points))
+    (convert-to-json (coerce definition-points 'vector))))
 
 (defun hover-at-point (point)
   (when-let* ((package-name (scan-current-package point))

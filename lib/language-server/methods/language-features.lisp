@@ -12,10 +12,10 @@
 
 (defun definitions-at-point (point)
   (when-let* ((package-name (scan-current-package point))
-                (symbol-string (lem:symbol-string-at-point point)))
-      (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                      `(micros:find-definitions-for-emacs ,symbol-string)
-                                      :package-name package-name)))
+              (symbol-string (lem:symbol-string-at-point point)))
+    (micros/client:remote-eval-sync (server-backend-connection *server*)
+                                    `(micros:find-definitions-for-emacs ,symbol-string)
+                                    :package-name package-name)))
 
 (defun move-to-location-position (point location-position)
   (destructuring-ecase location-position
@@ -88,8 +88,13 @@
         :when (resolve-location location)
         :collect :it))
 
+(defun buffer-uri (buffer)
+  (if-let ((text-document (buffer-text-document buffer)))
+    (text-document-uri text-document)
+    (pathname-to-uri (lem:buffer-filename buffer))))
+
 (defun point-to-location (point)
-  (let ((uri (pathname-to-uri (lem:buffer-filename (lem:point-buffer point)))))
+  (let ((uri (buffer-uri (lem:point-buffer point))))
     (lem:with-point ((end point))
       (lem:form-offset end 1)
       (make-instance 'lsp:location
@@ -98,9 +103,15 @@
 
 (define-request (go-to-definition "textDocument/definition") (params lsp:definition-params)
   (let* ((point (convert-to-point params))
-         (definitions (definitions-at-point point)))
-    (convert-to-json
-     (map 'vector #'point-to-location (collect-points-from-definitions definitions)))))
+         (definitions (definitions-at-point point))
+         (definition-points (collect-points-from-definitions definitions)))
+    (when-let ((point (lem-lisp-syntax:search-local-definition
+                       point
+                       (lem:symbol-string-at-point point))))
+      (push point definition-points))
+    (convert-to-json (map 'vector
+                          #'point-to-location
+                          definition-points))))
 
 (defun hover-at-point (point)
   (when-let* ((package-name (scan-current-package point))

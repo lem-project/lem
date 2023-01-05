@@ -1,5 +1,11 @@
 (in-package :lem-language-server)
 
+(defun buffer-text-document (buffer)
+  (lem:buffer-value buffer 'text-document))
+
+(defun (setf buffer-text-document) (text-document buffer)
+  (setf (lem:buffer-value buffer 'text-document) text-document))
+
 (defvar *text-document-table* (make-hash-table :test 'equal))
 
 (defclass text-document ()
@@ -15,6 +21,7 @@
 (defun register-text-document (&rest initargs &key uri language-id version buffer)
   (declare (ignore uri language-id version))
   (let ((text-document (apply #'make-instance 'text-document initargs)))
+    (setf (buffer-text-document buffer) text-document)
     (setf (gethash (text-document-uri text-document) *text-document-table*)
           text-document)))
 

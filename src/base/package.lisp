@@ -186,6 +186,7 @@
    :position-at-point
    :move-to-position
    :point-bytes
+   :move-to-bytes
    :move-to-line
    :check-marked
    :set-current-mark

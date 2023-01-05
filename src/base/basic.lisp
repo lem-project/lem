@@ -395,6 +395,19 @@
         (incf nbytes (1+ (babel:string-size-in-octets (line-string point)))))
       nbytes)))
 
+(defun move-to-bytes (point bytes)
+  (buffer-start point)
+  (loop
+    (let ((size (1+ (babel:string-size-in-octets (line-string point)))))
+      (when (<= bytes size)
+        (loop :for i :from 0
+              :do (decf bytes (babel:string-size-in-octets (string (character-at point i))))
+                  (when (<= bytes 0)
+                    (character-offset point i)
+                    (return-from move-to-bytes point))))
+      (decf bytes size)
+      (unless (line-offset point 1) (return)))))
+
 (defun move-to-line (point line-number)
   "`point`を行番号`line-number`に移動し、移動後の位置を返します。
 `line-number`がバッファの範囲外なら`point`は移動せず、NILを返します。"

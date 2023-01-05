@@ -58,7 +58,6 @@
    :lisp-eval-describe
    :lisp-describe-symbol
    :slime-connect
-   :move-to-bytes
    :*impl-name*
    :get-lisp-command
    :run-slime

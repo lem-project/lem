@@ -70,7 +70,7 @@
     (lem:character-offset (lem:line-start point) character)
     point))
 
-(defun convert-to-point (params)
+(defun text-document-position-params-to-point (params)
   (check-type params lsp:text-document-position-params)
   (let ((text-document-identifier (lsp:text-document-position-params-text-document params))
         (position (lsp:text-document-position-params-position params)))

@@ -102,7 +102,7 @@
                      :range (points-to-lsp-range point end)))))
 
 (define-request (go-to-definition "textDocument/definition") (params lsp:definition-params)
-  (let* ((point (convert-to-point params))
+  (let* ((point (text-document-position-params-to-point params))
          (definitions (definitions-at-point point))
          (definition-points (collect-points-from-definitions definitions)))
     (when-let ((point (lem-lisp-syntax:search-local-definition
@@ -121,6 +121,6 @@
                                     :package-name package-name)))
 
 (define-request (hover "textDocument/hover") (params lsp:hover-params)
-  (let* ((point (convert-to-point params))
+  (let* ((point (text-document-position-params-to-point params))
          (text (or (hover-at-point point) "")))
     (convert-to-json (make-instance 'lsp:hover :contents text))))

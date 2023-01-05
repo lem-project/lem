@@ -37,10 +37,6 @@
   (remhash (text-document-uri text-document)
            *text-document-table*))
 
-(defun find-text-document-buffer (uri)
-  (let ((text-document (gethash uri *text-document-table*)))
-    (text-document-buffer text-document)))
-
 (defun edit-text-document (text-document content-change)
   (check-type text-document text-document)
   (check-type content-change lsp:text-document-content-change-event)

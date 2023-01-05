@@ -12,9 +12,11 @@
   (print-unreadable-object (object stream :type t)
     (format stream "uri:~S version:~A" (text-document-uri object) (text-document-version object))))
 
-(defun register-text-document (text-document)
-  (setf (gethash (text-document-uri text-document) *text-document-table*)
-        text-document))
+(defun register-text-document (&rest initargs &key uri language-id version buffer)
+  (declare (ignore uri language-id version))
+  (let ((text-document (apply #'make-instance 'text-document initargs)))
+    (setf (gethash (text-document-uri text-document) *text-document-table*)
+          text-document)))
 
 (defun find-text-document (text-document-identifier)
   (check-type text-document-identifier
@@ -27,6 +29,10 @@
   (lem:delete-buffer (text-document-buffer text-document))
   (remhash (text-document-uri text-document)
            *text-document-table*))
+
+(defun find-text-document-buffer (uri)
+  (let ((text-document (gethash uri *text-document-table*)))
+    (text-document-buffer text-document)))
 
 (defun edit-text-document (text-document content-change)
   (check-type text-document text-document)
@@ -66,3 +72,13 @@
       (lem:with-point ((point (lem:buffer-point buffer)))
         (move-to-lsp-position point position)
         point))))
+
+(defun point-to-lsp-position (point)
+  (make-instance 'lsp:position
+                 :line (1- (lem:line-number-at-point point))
+                 :character (lem:point-charpos point)))
+
+(defun points-to-lsp-range (start end)
+  (make-instance 'lsp:range
+                 :start (point-to-lsp-position start)
+                 :end (point-to-lsp-position end)))

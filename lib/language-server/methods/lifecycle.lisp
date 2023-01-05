@@ -2,6 +2,7 @@
 
 (define-request (initialize "initialize") (params lsp:initialize-params)
   (log:info "initialize")
+  (run-backend)
   (setf (server-client-capabilities *server*) params)
   (convert-to-json
    (make-instance
@@ -21,7 +22,7 @@
                    :hover-provider (make-instance 'lsp:hover-options :work-done-progress nil)
                    ;; :signature-help-provider
                    ;; :declaration-provider
-                   ;; :definition-provider
+                   :definition-provider (make-instance 'lsp:definition-options :work-done-progress nil)
                    ;; :type-definition-provider
                    ;; :implementation-provider
                    ;; :references-provider
@@ -54,7 +55,6 @@
 
 (define-request (initialized "initialized") (params lsp:initialized-params)
   (declare (ignore params))
-  (run-backend)
   (values))
 
 #+TODO

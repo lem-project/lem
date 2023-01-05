@@ -9,15 +9,14 @@
                      (version lsp:text-document-item-version)
                      (text lsp:text-document-item-text))
         item
-      (let ((buffer (lem:make-buffer (format nil "*lsp-server ~A ~A*" uri version)
+      (let ((buffer (lem:make-buffer (format nil "*lsp ~A ~A*" uri version)
                                      :enable-undo-p nil
                                      :syntax-table lem-lisp-syntax:*syntax-table*)))
         (lem:insert-string (lem:buffer-point buffer) text)
-        (register-text-document (make-instance 'text-document
-                                               :uri uri
-                                               :language-id language-id
-                                               :version version
-                                               :buffer buffer)))
+        (register-text-document :uri uri
+                                :language-id language-id
+                                :version version
+                                :buffer buffer))
       (values))))
 
 (define-request (text-document-did-change "textDocument/didChange")

@@ -8,6 +8,7 @@
                "lem"
                "lem-lisp-syntax"
                "async-process"
+               "quri"
                "micros/client")
   :serial t
   :components ((:module "protocol"
@@ -17,6 +18,7 @@
                              (:file "converter")))
                (:file "package")
                (:file "variables")
+               (:file "uri")
                (:file "method")
                (:file "server")
                (:file "text-document")

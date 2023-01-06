@@ -26,7 +26,7 @@
                    ;; :type-definition-provider
                    ;; :implementation-provider
                    ;; :references-provider
-                   ;; :document-highlight-provider
+                   :document-highlight-provider (make-instance 'lsp:document-highlight-options)
                    ;; :document-symbol-provider
                    ;; :code-action-provider
                    ;; :code-lens-provider

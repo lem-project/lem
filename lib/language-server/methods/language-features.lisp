@@ -109,3 +109,19 @@
   (let* ((point (text-document-position-params-to-point params))
          (text (or (hover-at-point point) "")))
     (convert-to-json (make-instance 'lsp:hover :contents text))))
+
+(define-request (document-highlight "textDocument/documentHighlight")
+    (params lsp:document-highlight-params)
+  (let* ((point (text-document-position-params-to-point params))
+         (symbol-string (lem:symbol-string-at-point point))
+         (buffer (lem:point-buffer point)))
+    (lem:with-point ((point (lem:buffer-point buffer)))
+      (lem:buffer-start point)
+      (convert-to-json
+       (coerce (loop :while (lem:search-forward-symbol point symbol-string)
+                     :collect (lem:with-point ((start point))
+                                (lem:search-backward-symbol start symbol-string)
+                                (make-instance 'lsp:document-highlight
+                                               :kind lsp:document-highlight-kind-text
+                                               :range (points-to-lsp-range start point))))
+               'vector)))))

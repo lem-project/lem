@@ -1,6 +1,6 @@
 (in-package :lem-language-server)
 
-(define-request (initialize "initialize") (params lsp:initialize-params)
+(define-request (initialize-request "initialize") (params lsp:initialize-params)
   (log:info "initialize")
   (run-backend)
   (setf (server-client-capabilities *server*) params)
@@ -53,31 +53,31 @@
     :server-info (make-lsp-map "name" *language-server-name*
                                "version" *language-server-version*))))
 
-(define-request (initialized "initialized") (params lsp:initialized-params)
+(define-request (initialized-request "initialized") (params lsp:initialized-params)
   (declare (ignore params))
   (values))
 
 #+TODO
-(define-request (client-register-capability "client/registerCapability") (params lsp:registration-params)
+(define-request (client-register-capability-request "client/registerCapability") (params lsp:registration-params)
   )
 
 #+TODO
-(define-request (client-unregister-capability "client/unregisterCapability") (params lsp:unregistration-params)
+(define-request (client-unregister-capability-request "client/unregisterCapability") (params lsp:unregistration-params)
   )
 
 #+TODO
-(define-request (set-trace "$/setTrace") (params lsp:set-trace-params)
+(define-request (set-trace-request "$/setTrace") (params lsp:set-trace-params)
   )
 
 #+TODO
-(define-request (log-trace "$/logTrace") (params lsp:log-trace-params)
+(define-request (log-trace-request "$/logTrace") (params lsp:log-trace-params)
   )
 
-(define-request (shutdown "shutdown") ()
+(define-request (shutdown-request "shutdown") ()
   (setf (shutdown-request-received-p (current-server)) t)
   nil)
 
-(define-request (exit "exit") ()
+(define-request (exit-request "exit") ()
   (if (server-shutdown-request-received-p (current-server))
       (uiop:quit 0)
       (uiop:quit 1))

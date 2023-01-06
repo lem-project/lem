@@ -88,7 +88,7 @@
         :when (resolve-location location)
         :collect :it))
 
-(define-request (go-to-definition "textDocument/definition") (params lsp:definition-params)
+(define-request (go-to-definition-request "textDocument/definition") (params lsp:definition-params)
   (let* ((point (text-document-position-params-to-point params))
          (definitions (definitions-at-point point))
          (definition-points (collect-points-from-definitions definitions)))
@@ -105,12 +105,12 @@
                                     `(micros/lsp-api:hover-symbol ,symbol-string)
                                     :package-name package-name)))
 
-(define-request (hover "textDocument/hover") (params lsp:hover-params)
+(define-request (hover-request "textDocument/hover") (params lsp:hover-params)
   (let* ((point (text-document-position-params-to-point params))
          (text (or (hover-at-point point) "")))
     (convert-to-json (make-instance 'lsp:hover :contents text))))
 
-(define-request (document-highlight "textDocument/documentHighlight")
+(define-request (document-highlight-request "textDocument/documentHighlight")
     (params lsp:document-highlight-params)
   (let* ((point (text-document-position-params-to-point params))
          (symbol-string (lem:symbol-string-at-point point))

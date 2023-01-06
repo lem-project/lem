@@ -29,10 +29,12 @@
 
 (defmethod call (lsp-method json)
   (with-error-handler ()
-    (let ((params (if-let ((params-type (lsp-method-params-type lsp-method)))
-                    (convert-from-json json params-type)
-                    json)))
-      (call-aux lsp-method params))))
+    (let* ((params (if-let ((params-type (lsp-method-params-type lsp-method)))
+                     (convert-from-json json params-type)
+                     json))
+           (response (call-aux lsp-method params)))
+      (log-response response)
+      response)))
 
 (defmacro define-request ((class-name method-name)
                           (&optional (params (gensym "params")) params-type)
@@ -53,3 +55,10 @@
                        (yason:encode json stream))))
     (log:info method-name
               json-string)))
+
+(defun log-response (response)
+  (let ((json
+          (with-output-to-string (output)
+            (with-open-stream (stream (yason:make-json-output-stream output))
+              (yason:encode response stream)))))
+    (log:info json)))

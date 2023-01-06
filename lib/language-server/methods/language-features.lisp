@@ -98,6 +98,24 @@
       (push point definition-points))
     (convert-to-json (map 'vector #'point-to-lsp-location definition-points))))
 
+(defun find-references-at-point (point)
+  (when-let* ((package-name (scan-current-package point))
+              (symbol-string (lem:symbol-string-at-point point)))
+    (micros/client:remote-eval-sync (server-backend-connection *server*)
+                                    `(micros:xrefs '(:calls :macroexpands :binds
+                                                     :references :sets :specializes)
+                                                   ,symbol-string)
+                                    :package-name package-name)))
+
+(define-request (find-references-request "textDocument/references") (params lsp:reference-params)
+  (let* ((point (text-document-position-params-to-point params))
+         (result (find-references-at-point point)))
+    (convert-to-json
+     (map 'vector
+          #'point-to-lsp-location
+          (loop :for (type . definitions) :in result
+                :append (collect-points-from-definitions definitions))))))
+
 (defun hover-at-point (point)
   (when-let* ((package-name (scan-current-package point))
               (symbol-string (lem:symbol-string-at-point point)))

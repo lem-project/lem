@@ -25,7 +25,7 @@
                    :definition-provider (make-instance 'lsp:definition-options :work-done-progress nil)
                    ;; :type-definition-provider
                    ;; :implementation-provider
-                   ;; :references-provider
+                   :references-provider (make-instance 'lsp:reference-options)
                    :document-highlight-provider (make-instance 'lsp:document-highlight-options)
                    ;; :document-symbol-provider
                    ;; :code-action-provider

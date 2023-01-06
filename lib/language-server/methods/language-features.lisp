@@ -20,7 +20,7 @@
 (defun move-to-location-position (point location-position)
   (destructuring-ecase location-position
     ((:position position)
-     (lem:move-to-bytes point position))
+     (lem:move-to-bytes point (1+ position)))
     ((:offset start offset)
      (lem:move-to-position point start)
      (lem:character-offset point offset))
@@ -77,7 +77,7 @@
              (t
               (lem:with-point ((point (lem:buffer-point buffer)))
                 (when (move-to-location-position point position)
-                  (point-to-lsp-location point)))))))
+                  point))))))
     ((:error message)
      ;; TODO: send message to client
      (log:debug message)
@@ -95,8 +95,8 @@
     (when-let ((point (lem-lisp-syntax:search-local-definition
                        point
                        (lem:symbol-string-at-point point))))
-      (push (point-to-lsp-location point) definition-points))
-    (convert-to-json (coerce definition-points 'vector))))
+      (push point definition-points))
+    (convert-to-json (map 'vector #'point-to-lsp-location definition-points))))
 
 (defun hover-at-point (point)
   (when-let* ((package-name (scan-current-package point))

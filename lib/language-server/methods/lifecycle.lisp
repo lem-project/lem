@@ -73,7 +73,7 @@
   )
 
 (define-request (shutdown-request "shutdown") ()
-  (setf (shutdown-request-received-p (current-server)) t)
+  (setf (server-shutdown-request-received-p (current-server)) t)
   nil)
 
 (define-request (exit-request "exit") ()

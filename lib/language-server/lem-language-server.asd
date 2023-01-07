@@ -19,6 +19,7 @@
                (:file "package")
                (:file "variables")
                (:file "uri")
+               (:file "editor-utils")
                (:file "method")
                (:file "server")
                (:file "text-document")

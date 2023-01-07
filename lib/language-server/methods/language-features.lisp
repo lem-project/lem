@@ -164,19 +164,38 @@
       (convert-to-json signature-help)
       :null)))
 
+(defun make-text-edit (point string)
+  (lem:with-point ((start point)
+                   (end point))
+    (lem:skip-symbol-backward start)
+    (lem:skip-symbol-forward end)
+    (make-instance 'lsp:text-edit
+                   :new-text string
+                   :range (points-to-lsp-range start end))))
+
 (define-request (completion-request "textDocument/completion") (params lsp:completion-params)
   (let* ((point (text-document-position-params-to-point params))
          (symbol-string (lem:symbol-string-at-point point))
          (package-name (scan-current-package point)))
     (if (null symbol-string)
         :null
-        (let ((result (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                                      `(micros:fuzzy-completions ,symbol-string
-                                                                                 ,package-name))))
-          (destructuring-bind (completions timeout-p) result
-            (declare (ignore timeout-p))
-            (let ((items
-                    (loop :for (completed-string score chunks classification-string) :in completions
-                          :collect (make-instance 'lsp:completion-item
-                                                  :label completed-string))))
-              (convert-to-json (coerce items 'vector))))))))
+        (convert-to-json
+         (map 'vector
+              (lambda (completed-item)
+                (destructuring-bind (label classification signature documentation)
+                    completed-item
+                  (make-instance 'lsp:completion-item
+                                 :label label
+                                 :label-details (make-instance 'lsp:completion-item-label-details
+                                                               ;; :description "" ; TODO: set value
+                                                               :detail (if signature
+                                                                           (format nil " ~A" signature)
+                                                                           ""))
+                                 :detail classification
+                                 :text-edit (make-text-edit point label)
+                                 :documentation (make-instance 'lsp:markup-content
+                                                               :kind lsp:markup-kind-markdown
+                                                               :value documentation))))
+              (micros/client:remote-eval-sync (server-backend-connection *server*)
+                                              `(micros/lsp-api:completions ,symbol-string
+                                                                           ,package-name)))))))

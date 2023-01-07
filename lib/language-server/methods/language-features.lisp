@@ -159,7 +159,24 @@
 
 (define-request (signature-help-request "textDocument/signatureHelp")
     (params lsp:signature-help-params)
-  (let* ((point (text-document-position-params-to-point params)))
+  (let ((point (text-document-position-params-to-point params)))
     (if-let (signature-help (signature-help-at-point point))
       (convert-to-json signature-help)
       :null)))
+
+(define-request (completion-request "textDocument/completion") (params lsp:completion-params)
+  (let* ((point (text-document-position-params-to-point params))
+         (symbol-string (lem:symbol-string-at-point point))
+         (package-name (scan-current-package point)))
+    (if (null symbol-string)
+        :null
+        (let ((result (micros/client:remote-eval-sync (server-backend-connection *server*)
+                                                      `(micros:fuzzy-completions ,symbol-string
+                                                                                 ,package-name))))
+          (destructuring-bind (completions timeout-p) result
+            (declare (ignore timeout-p))
+            (let ((items
+                    (loop :for (completed-string score chunks classification-string) :in completions
+                          :collect (make-instance 'lsp:completion-item
+                                                  :label completed-string))))
+              (convert-to-json (coerce items 'vector))))))))

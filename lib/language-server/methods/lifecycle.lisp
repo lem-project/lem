@@ -19,7 +19,9 @@
                    ;; :notebook-document-sync
                    ;; :completion-provider
                    :hover-provider (make-instance 'lsp:hover-options :work-done-progress nil)
-                   ;; :signature-help-provider
+                   :signature-help-provider (make-instance 'lsp:signature-help-options
+                                                           :trigger-characters (vector " ")
+                                                           :retrigger-characters (vector))
                    ;; :declaration-provider
                    :definition-provider (make-instance 'lsp:definition-options :work-done-progress nil)
                    ;; :type-definition-provider

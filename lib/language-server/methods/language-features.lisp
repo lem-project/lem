@@ -143,3 +143,23 @@
                                                :kind lsp:document-highlight-kind-text
                                                :range (points-to-lsp-range start point))))
                'vector)))))
+
+(defun signature-help-at-point (point)
+  (when (and (backward-up-list point)
+             (forward-down-list point))
+    (let* ((symbol-string (lem:symbol-string-at-point point))
+           (package-name (scan-current-package point))
+           (arglist
+             (micros/client:remote-eval-sync (server-backend-connection *server*)
+                                             `(micros:operator-arglist ,symbol-string ,package-name))))
+      (when arglist
+        (make-instance 'lsp:signature-help
+                       :signatures (vector (make-instance 'lsp:signature-information
+                                                          :label (string-downcase arglist))))))))
+
+(define-request (signature-help-request "textDocument/signatureHelp")
+    (params lsp:signature-help-params)
+  (let* ((point (text-document-position-params-to-point params)))
+    (if-let (signature-help (signature-help-at-point point))
+      (convert-to-json signature-help)
+      :null)))

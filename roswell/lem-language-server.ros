@@ -1,0 +1,19 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  #+quicklisp(ql:quickload '(:swank :lem-language-server) :silent t)
+  )
+
+(defpackage :ros.script.lem-language-server.3881471585
+  (:use :cl))
+(in-package :ros.script.lem-language-server.3881471585)
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (log:config :sane :daily "~/lem-language-server.log" :debug)
+  (lem-language-server::start-stdio-server))
+;;; vim: set ft=lisp lisp:

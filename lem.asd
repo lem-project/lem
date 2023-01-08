@@ -112,6 +112,7 @@
                "lem-posix-shell-mode"
                "lem-markdown-mode"
                "lem-js-mode"
+               "lem-json-mode"
                "lem-css-mode"
                "lem-rust-mode"
                "lem-paredit-mode"

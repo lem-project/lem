@@ -237,4 +237,4 @@ link :
                          *prettier-options*
                          (list (buffer-filename (current-buffer))))))
 
-(define-file-type ("js" "json" "jsx") js-mode)
+(define-file-type ("js" "jsx") js-mode)

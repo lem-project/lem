@@ -36,7 +36,7 @@
                    ;; :code-lens-provider
                    ;; :document-link-provider
                    ;; :color-provider
-                   ;; :document-formatting-provider
+                   :document-formatting-provider (make-instance 'lsp:document-formatting-options)
                    ;; :document-range-formatting-provider
                    ;; :document-on-type-formatting-provider
                    ;; :rename-provider

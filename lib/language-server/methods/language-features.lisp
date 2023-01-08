@@ -291,3 +291,128 @@
   (let* ((text-document-identifier (lsp:document-symbol-params-text-document params))
          (text-document (find-text-document text-document-identifier)))
     (document-symbol (text-document-buffer text-document))))
+
+(defun make-indenting-text-edit (new-text line-number start-character end-character)
+  (make-instance 'lsp:text-edit
+                 :new-text new-text
+                 :range (make-instance 'lsp:range
+                                       :start (make-instance 'lsp:position
+                                                             :line line-number
+                                                             :character start-character)
+                                       :end (make-instance 'lsp:position
+                                                           :line line-number
+                                                           :character end-character))))
+
+(defun insert-indent-space (point old-column new-column options)
+  (check-type options lsp:formatting-options)
+  (lem:line-start point)
+  (lem:delete-character point old-column)
+  (let ((line-number (point-lsp-line-number point)))
+    (cond ((lsp:formatting-options-insert-spaces options)
+           (lem:insert-character point #\space new-column)
+           (unless (= old-column new-column)
+             (make-indenting-text-edit (make-string new-column :initial-element #\space)
+                                       line-number
+                                       0
+                                       old-column)))
+          (t
+           (let ((tab-size (lsp:formatting-options-tab-size options)))
+             (multiple-value-bind (num-tabs num-spaces) (floor new-column tab-size)
+               (lem:insert-character point #\tab num-tabs)
+               (lem:insert-character point #\space num-spaces)
+               (make-indenting-text-edit (concatenate 'string
+                                                      (make-string num-tabs :initial-element #\tab)
+                                                      (make-string num-spaces :initial-element #\space))
+                                         line-number
+                                         0
+                                         old-column)))))))
+
+(defun delete-trailing-line (point)
+  (lem:with-point ((start point :left-inserting)
+                   (end point :left-inserting))
+    (lem:skip-whitespace-backward (lem:line-end start))
+    (lem:line-end end)
+    (unless (lem:point= start end)
+      (let ((range (points-to-lsp-range start end)))
+        (lem:delete-between-points start end)
+        (make-instance 'lsp:text-edit
+                       :new-text ""
+                       :range range)))))
+
+(defun edit-indent-line (point old-column new-column options)
+  (let ((text-edits '()))
+    (when-let (text-edit (insert-indent-space point old-column new-column options))
+      (push text-edit text-edits))
+    (when (handler-case (lsp:formatting-options-trim-trailing-whitespace options)
+            (unbound-slot () nil))
+      (when-let ((text-edit (delete-trailing-line point)))
+        (push text-edit text-edits)))
+    text-edits))
+
+(defun indent-line (point options)
+  (check-type options lsp:formatting-options)
+  (unless (lem:blank-line-p point)
+    (let ((old-column (lem:point-charpos (lem:back-to-indentation point)))
+          (new-column (lem-lisp-syntax:calc-indent (lem:copy-point point :temporary))))
+      (when new-column
+        (edit-indent-line point old-column new-column options)))))
+
+(defun indent-lines (buffer options)
+  (let ((text-edits '()))
+    (lem:apply-region-lines (lem:buffer-start-point buffer)
+                            (lem:buffer-end-point buffer)
+                            (lambda (point)
+                              (setf text-edits
+                                    (nconc (indent-line point options)
+                                           text-edits))))
+    text-edits))
+
+(defun trim-and-insert-final-newlines-edit (buffer options)
+  (let ((text-edits '()))
+    (lem:with-point ((start (lem:buffer-point buffer))
+                     (end (lem:buffer-point buffer)))
+      (when (lsp:formatting-options-trim-final-newlines options)
+        (lem:buffer-end start)
+        (lem:buffer-end end)
+        (lem:skip-whitespace-backward start)
+        (let ((text-edit (make-instance 'lsp:text-edit
+                                        :new-text ""
+                                        :range (points-to-lsp-range start end))))
+          (lem:delete-between-points start end)
+          (push text-edit text-edits)))
+      (when (lsp:formatting-options-insert-final-newline options)
+        (lem:buffer-end start)
+        (lem:buffer-end end)
+        (lem:skip-whitespace-backward start)
+        (when (and (lem:point= start end)
+                   ;; is buffer empty?
+                   (not (lem:start-buffer-p start)))
+          (let ((text-edit (make-instance 'lsp:text-edit
+                                          :new-text (string #\newline)
+                                          :range (points-to-lsp-range start end))))
+            (lem:delete-between-points start end)
+            (push text-edit text-edits)))))
+    text-edits))
+
+(defun indent-text-document (text-document options)
+  (check-type text-document text-document)
+  (check-type options lsp:formatting-options)
+  (let* ((buffer (text-document-buffer text-document))
+         (old-buffer-text (lem:buffer-text buffer)))
+    (lem:buffer-enable-undo buffer)
+    (let ((text-edits (indent-lines buffer options)))
+      (setf text-edits
+            (nconc (trim-and-insert-final-newlines-edit buffer options)
+                   text-edits))
+      (lem:buffer-undo (lem:buffer-point buffer))
+      (lem:buffer-disable-undo buffer)
+      (assert (string= old-buffer-text (lem:buffer-text buffer)))
+      (coerce (nreverse text-edits) 'vector))))
+
+(define-request (document-formatting-request "textDocument/formatting")
+    (params lsp:document-formatting-params)
+  (let ((options (lsp:document-formatting-params-options params))
+        (text-document-identifier (lsp:document-formatting-params-text-document params)))
+    (if-let (text-document (find-text-document text-document-identifier))
+      (convert-to-json (indent-text-document text-document options))
+      :null)))

@@ -2,7 +2,8 @@
 
 (defun make-buffer (uri version)
   (lem:make-buffer (format nil "*lsp ~A ~A*" uri version)
-                   :syntax-table lem-lisp-syntax:*syntax-table*))
+                   :syntax-table lem-lisp-syntax:*syntax-table*
+                   :enable-undo-p nil))
 
 (define-request (text-document-did-open-request "textDocument/didOpen")
     (params lsp:did-open-text-document-params)

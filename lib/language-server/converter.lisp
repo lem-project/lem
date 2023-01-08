@@ -1,5 +1,8 @@
 (in-package :lem-language-server)
 
+(defun point-lsp-line-number (point)
+  (1- (lem:line-number-at-point point)))
+
 (defun point-to-lsp-position (point)
   (make-instance 'lsp:position
                  :line (1- (lem:line-number-at-point point))

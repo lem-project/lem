@@ -29,7 +29,9 @@
                    ;; :implementation-provider
                    :references-provider (make-instance 'lsp:reference-options)
                    :document-highlight-provider (make-instance 'lsp:document-highlight-options)
-                   ;; :document-symbol-provider
+                   :document-symbol-provider (make-instance 'lsp:document-symbol-options
+                                                            ;; :label ; ** TODO **
+                                                            )
                    ;; :code-action-provider
                    ;; :code-lens-provider
                    ;; :document-link-provider

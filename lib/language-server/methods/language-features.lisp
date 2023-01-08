@@ -1,12 +1,23 @@
 (in-package :lem-language-server)
 
+(defun in-package-line-p (line)
+  (ppcre:register-groups-bind (package-name)
+      ("^\\s*\\(\\s*(?:cl:|common-lisp:)?in-package (?:#?:|')?([^\)\\s]*)\\s*\\)"
+       (string-downcase line))
+    package-name))
+
+(defun buffer-package (buffer)
+  (lem:with-point ((point (lem:buffer-start-point buffer)))
+    (loop :when (in-package-line-p (lem:line-string point))
+          :return :it
+          :while (lem:line-offset point 1))))
+
 (defun scan-current-package (point &optional (default "COMMON-LISP-USER"))
   (lem:with-point ((p point))
     (loop
-      (ppcre:register-groups-bind (package-name)
-          ("^\\s*\\(\\s*(?:cl:|common-lisp:)?in-package (?:#?:|')?([^\)\\s]*)\\s*\\)"
-           (string-downcase (lem:line-string p)))
-        (return package-name))
+      (let ((package-name (in-package-line-p (lem:line-string p))))
+        (when package-name
+          (return package-name)))
       (unless (lem:line-offset p -1)
         (return default)))))
 
@@ -199,3 +210,84 @@
               (micros/client:remote-eval-sync (server-backend-connection *server*)
                                               `(micros/lsp-api:completions ,symbol-string
                                                                            ,package-name)))))))
+
+(defstruct symbol-definition
+  symbol-spec
+  range
+  line-string)
+
+(defun collect-definition-symbols-in-buffer (buffer default-package-name)
+  (lem:with-point ((point (lem:buffer-point buffer)))
+    (lem:buffer-start point)
+    (loop :while (lem:search-forward-regexp point "^\\s*\\(def")
+          :when (cond ((lem:in-comment-p point)
+                       (lem:maybe-beginning-of-comment point)
+                       (lem:skip-space-and-comment-forward point))
+                      ((lem:in-string-p point)
+                       (lem:maybe-beginning-of-string point)
+                       (lem:form-offset point 1))
+                      (t
+                       (when (and (lem:form-offset point 1)
+                                  (lem:skip-space-and-comment-forward point)
+                                  (or (lem:syntax-symbol-char-p (lem:character-at point))
+                                      (forward-down-list point)))
+                         (let ((symbol-string (lem:symbol-string-at-point point)))
+                           (multiple-value-bind (symbol-name package-name internalp)
+                               (micros::tokenize-symbol-thoroughly symbol-string)
+                             (declare (ignore internalp))
+                             (when symbol-name
+                               (cond ((equal package-name "") nil) ; keyword
+                                     ((equal package-name "#") nil) ; uninternal symbol
+                                     (t
+                                      (lem:with-point ((start point)
+                                                       (end point))
+                                        (lem:skip-symbol-forward start)
+                                        (lem:skip-symbol-forward end)
+                                        (make-symbol-definition
+                                         :symbol-spec (micros/lsp-api:make-symbol-spec
+                                                       :name symbol-name
+                                                       :package (or package-name default-package-name))
+                                         :range (points-to-lsp-range start end)
+                                         :line-string (lem:line-string point)))))))))))
+          :collect :it)))
+
+(defun document-symbol (buffer)
+  ;; in-packageがファイル先頭に一つだけあることを前提にしている
+  (let* ((package-name (buffer-package buffer))
+         (symbol-definitions (collect-definition-symbols-in-buffer buffer package-name)))
+    (convert-to-json
+     (map 'vector
+          (lambda (symbol-information symbol-definition)
+            (let ((range (symbol-definition-range symbol-definition))
+                  (line-string (symbol-definition-line-string symbol-definition))
+                  (name (micros/lsp-api::symbol-information-name symbol-information))
+                  ;; (detail (micros/lsp-api::symbol-information-detail symbol-information))
+                  (kind (micros/lsp-api::symbol-information-kind symbol-information)))
+              ;; symbolに複数の束縛があることを考慮していない(variableとfunctionなど)
+              (make-instance 'lsp:document-symbol
+                             :name name
+                             :detail line-string ;(or detail "")
+                             :kind (case kind
+                                     (:variable
+                                      lsp:symbol-kind-variable)
+                                     (:function
+                                      lsp:symbol-kind-function)
+                                     (:class
+                                      lsp:symbol-kind-class)
+                                     (:package
+                                      lsp:symbol-kind-package)
+                                     (otherwise
+                                      lsp:symbol-kind-null))
+                             :range range
+                             :selection-range range)))
+          (micros/client:remote-eval-sync (server-backend-connection *server*)
+                                          `(micros/lsp-api:symbol-informations
+                                            ',(mapcar #'symbol-definition-symbol-spec symbol-definitions))
+                                          :package-name package-name)
+          symbol-definitions))))
+
+(define-request (document-symbol-request "textDocument/documentSymbol")
+    (params lsp:document-symbol-params)
+  (let* ((text-document-identifier (lsp:document-symbol-params-text-document params))
+         (text-document (find-text-document text-document-identifier)))
+    (document-symbol (text-document-buffer text-document))))

@@ -425,3 +425,22 @@
     (if-let (text-document (find-text-document text-document-identifier))
       (convert-to-json (indent-text-document text-document options))
       :null)))
+
+(defun indent-range-text-document (text-document range options)
+  (call-with-indent-text-document
+   text-document
+   (lambda (buffer)
+     (lem:with-point ((start (lem:buffer-point buffer))
+                      (end (lem:buffer-point buffer)))
+       (move-to-lsp-position start (lsp:range-start range))
+       (move-to-lsp-position end (lsp:range-end range))
+       (indent-lines start end options)))))
+
+(define-request (document-range-formatting-request "textDocument/rangeFormatting")
+    (params lsp:document-range-formatting-params)
+  (let ((options (lsp:document-range-formatting-params-options params))
+        (range (lsp:document-range-formatting-params-range params))
+        (text-document-identifier (lsp:document-range-formatting-params-text-document params)))
+    (if-let (text-document (find-text-document text-document-identifier))
+      (convert-to-json (indent-range-text-document text-document range options))
+      :null)))

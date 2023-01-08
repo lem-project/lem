@@ -37,7 +37,8 @@
                    ;; :document-link-provider
                    ;; :color-provider
                    :document-formatting-provider (make-instance 'lsp:document-formatting-options)
-                   ;; :document-range-formatting-provider
+                   :document-range-formatting-provider (make-instance
+                                                        'lsp:document-range-formatting-options)
                    ;; :document-on-type-formatting-provider
                    ;; :rename-provider
                    ;; :folding-range-provider

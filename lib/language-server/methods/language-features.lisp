@@ -444,3 +444,22 @@
     (if-let (text-document (find-text-document text-document-identifier))
       (convert-to-json (indent-range-text-document text-document range options))
       :null)))
+
+(defun on-type-formatting (text-document position trigger-character options)
+  (declare (ignore trigger-character))
+  (call-with-indent-text-document
+   text-document
+   (lambda (buffer)
+     (lem:with-point ((point (lem:buffer-point buffer)))
+       (move-to-lsp-position point position)
+       (indent-line point options)))))
+
+(define-request (on-type-formatting-request "textDocument/onTypeFormatting")
+    (params lsp:document-on-type-formatting-params)
+  (let ((options (lsp:document-on-type-formatting-params-options params))
+        (text-document-identifier (lsp:document-on-type-formatting-params-text-document params))
+        (position (lsp:document-on-type-formatting-params-position params))
+        (trigger-character (lsp:document-on-type-formatting-params-ch params)))
+    (if-let (text-document (find-text-document text-document-identifier))
+      (on-type-formatting text-document position trigger-character options)
+      :null)))

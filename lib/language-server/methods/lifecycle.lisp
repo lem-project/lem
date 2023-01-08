@@ -39,7 +39,10 @@
                    :document-formatting-provider (make-instance 'lsp:document-formatting-options)
                    :document-range-formatting-provider (make-instance
                                                         'lsp:document-range-formatting-options)
-                   ;; :document-on-type-formatting-provider
+                   :document-on-type-formatting-provider (make-instance
+                                                          'lsp:document-on-type-formatting-options
+                                                          :first-trigger-character "("
+                                                          :more-trigger-character #(")"))
                    ;; :rename-provider
                    ;; :folding-range-provider
                    ;; :execute-command-provider

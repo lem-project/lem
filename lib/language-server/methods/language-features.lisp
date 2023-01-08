@@ -357,10 +357,10 @@
       (when new-column
         (edit-indent-line point old-column new-column options)))))
 
-(defun indent-lines (buffer options)
+(defun indent-lines (start end options)
   (let ((text-edits '()))
-    (lem:apply-region-lines (lem:buffer-start-point buffer)
-                            (lem:buffer-end-point buffer)
+    (lem:apply-region-lines start
+                            end
                             (lambda (point)
                               (setf text-edits
                                     (nconc (indent-line point options)
@@ -396,20 +396,27 @@
             (push text-edit text-edits)))))
     text-edits))
 
-(defun indent-text-document (text-document options)
-  (check-type text-document text-document)
-  (check-type options lsp:formatting-options)
+(defun call-with-indent-text-document (text-document function)
   (let* ((buffer (text-document-buffer text-document))
          (old-buffer-text (lem:buffer-text buffer)))
     (lem:buffer-enable-undo buffer)
-    (let ((text-edits (indent-lines buffer options)))
-      (setf text-edits
-            (nconc (trim-and-insert-final-newlines-edit buffer options)
-                   text-edits))
+    (let ((text-edits (funcall function buffer)))
       (lem:buffer-undo (lem:buffer-point buffer))
       (lem:buffer-disable-undo buffer)
       (assert (string= old-buffer-text (lem:buffer-text buffer)))
       (coerce (nreverse text-edits) 'vector))))
+
+(defun indent-text-document (text-document options)
+  (call-with-indent-text-document
+   text-document
+   (lambda (buffer)
+     (let ((text-edits
+             (indent-lines (lem:buffer-start-point buffer)
+                           (lem:buffer-end-point buffer)
+                           options)))
+       (nconc (trim-and-insert-final-newlines-edit buffer options)
+              text-edits)
+       text-edits))))
 
 (define-request (document-formatting-request "textDocument/formatting")
     (params lsp:document-formatting-params)

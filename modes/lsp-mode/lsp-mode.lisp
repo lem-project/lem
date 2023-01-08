@@ -5,18 +5,18 @@
   (:import-from :lem-lsp-mode/utils)
   (:import-from :lem-lsp-mode/request)
   (:import-from :lem-lsp-mode/client)
-  (:import-from :lem-lsp-mode/context-menu))
+  (:import-from :lem-lsp-mode/context-menu)
+  (:local-nicknames (:protocol :lem-lsp-utils/protocol-3-15))
+  (:local-nicknames (:json :lem-lsp-utils/json))
+  (:local-nicknames (:utils :lem-lsp-mode/utils))
+  (:local-nicknames (:request :lem-lsp-mode/request))
+  (:local-nicknames (:client :lem-lsp-mode/client))
+  (:local-nicknames (:completion :lem.completion-mode))
+  (:local-nicknames (:context-menu :lem-lsp-mode/context-menu))
+  (:local-nicknames (:spinner :lem.loading-spinner)))
 (in-package :lem-lsp-mode/lsp-mode)
 
 (cl-package-locks:lock-package :lem-lsp-mode/lsp-mode)
-(lem-lsp-mode/project:local-nickname :protocol :lem-lsp-utils/protocol-3-15)
-(lem-lsp-mode/project:local-nickname :json :lem-lsp-utils/json)
-(lem-lsp-mode/project:local-nickname :utils :lem-lsp-mode/utils)
-(lem-lsp-mode/project:local-nickname :request :lem-lsp-mode/request)
-(lem-lsp-mode/project:local-nickname :client :lem-lsp-mode/client)
-(lem-lsp-mode/project:local-nickname :completion :lem.completion-mode)
-(lem-lsp-mode/project:local-nickname :context-menu :lem-lsp-mode/context-menu)
-(lem-lsp-mode/project:local-nickname :spinner :lem.loading-spinner)
 
 ;;;
 (defparameter *client-capabilities-text*

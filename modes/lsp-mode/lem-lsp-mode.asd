@@ -7,11 +7,9 @@
                "jsonrpc/transport/stdio"
                "jsonrpc/transport/tcp"
                "quri"
-               "trivia"
-               "trivial-package-local-nicknames")
+               "trivia")
   :serial t
-  :components ((:file "project")
-               (:file "utils")
+  :components ((:file "utils")
                (:file "async-process-stream")
                (:file "lem-stdio-transport")
                (:file "client")

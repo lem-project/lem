@@ -8,6 +8,8 @@
   (:import-from :lem-lsp-mode/client
                 :client-connection)
   (:import-from :lem-lsp-mode/utils)
+  (:local-nicknames (:protocol :lem-lsp-utils/protocol-3-15))
+  (:local-nicknames (:utils :lem-lsp-mode/utils))
   (:export :request
            :request-async
            :initialize-request
@@ -34,9 +36,6 @@
 (in-package :lem-lsp-mode/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
-
-(lem-lsp-mode/project:local-nickname :protocol :lem-lsp-utils/protocol-3-15)
-(lem-lsp-mode/project:local-nickname :utils :lem-lsp-mode/utils)
 
 (defvar *log-pathname* (merge-pathnames "lsp.log" (lem:lem-home)))
 (defvar *log-enable* nil)

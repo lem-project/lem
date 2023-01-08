@@ -17,8 +17,11 @@
                                         :will-save-wait-until nil
                                         :save t)
                    ;; :notebook-document-sync
-                   :completion-provider (make-instance 'lsp:completion-options
-                                                       :trigger-characters (vector ":"))
+                   :completion-provider (make-instance
+                                         'lsp:completion-options
+                                         :trigger-characters (vector ":")
+                                         :resolve-provider t
+                                         :completion-item (make-lsp-map "labelDetailsSupport" t))
                    :hover-provider (make-instance 'lsp:hover-options :work-done-progress nil)
                    :signature-help-provider (make-instance 'lsp:signature-help-options
                                                            :trigger-characters (vector " ")

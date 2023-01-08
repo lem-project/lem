@@ -211,6 +211,10 @@
                                               `(micros/lsp-api:completions ,symbol-string
                                                                            ,package-name)))))))
 
+(define-request (completion-item-resolve-request "completionItem/resolve")
+    (params lsp:completion-item)
+  (convert-to-json params))
+
 (defstruct symbol-definition
   symbol-spec
   range

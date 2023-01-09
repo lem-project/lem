@@ -1,12 +1,12 @@
 (defpackage :lem-lsp-mode/request
-  (:use :cl)
+  (:use :cl
+        :lem-language-server/protocol/lsp-type)
   (:import-from :lem-lsp-mode/client
                 :client-connection)
   (:import-from :lem-lsp-mode/utils)
   (:import-from :lem-language-server/protocol/converter
                 :convert-from-json
                 :convert-to-json)
-  (:local-nicknames (:lsp-type :lem-language-server/protocol/lsp-type))
   (:export :request
            :request-async
            :initialize-request
@@ -170,22 +170,22 @@
   ((params :type lsp:hover-params))
   (:default-initargs
    :method "textDocument/hover"
-   :response-class-name '(or null lsp:hover)))
+   :response-class-name '(or lsp-null lsp:hover)))
 
 (defclass completion-request (request)
   ((params :type lsp:completion-params))
   (:default-initargs
    :method "textDocument/completion"
    :response-class-name '(or
-                          (lsp-type:lsp-array lsp:completion-item)
+                          (lsp-array lsp:completion-item)
                           lsp:completion-list
-                          null)))
+                          lsp-null)))
 
 (defclass signature-help (request)
   ((params :type lsp:signature-help-params))
   (:default-initargs
    :method "textDocument/signatureHelp"
-   :response-class-name '(or lsp:signature-help null)))
+   :response-class-name '(or lsp:signature-help lsp-null)))
 
 (defclass definition (request)
   ((params :type lsp:definition-params))
@@ -193,9 +193,9 @@
    :method "textDocument/definition"
    :response-class-name '(or
                           lsp:location
-                          (lsp-type:lsp-array lsp:location)
-                          (lsp-type:lsp-array lsp:location-link)
-                          null)))
+                          (lsp-array lsp:location)
+                          (lsp-array lsp:location-link)
+                          lsp-null)))
 
 (defclass type-definition (request)
   ((params :type lsp:type-definition-params))
@@ -203,9 +203,9 @@
    :method "textDocument/typeDefinition"
    :response-class-name '(or
                           lsp:location
-                          (lsp-type:lsp-array lsp:location)
-                          (lsp-type:lsp-array lsp:location-link)
-                          null)))
+                          (lsp-array lsp:location)
+                          (lsp-array lsp:location-link)
+                          lsp-null)))
 
 (defclass implementation (request)
   ((params :type lsp:implementation-params))
@@ -213,34 +213,34 @@
    :method "textDocument/implementation"
    :response-class-name '(or
                           lsp:location
-                          (lsp-type:lsp-array lsp:location)
-                          (lsp-type:lsp-array lsp:location-link)
-                          null)))
+                          (lsp-array lsp:location)
+                          (lsp-array lsp:location-link)
+                          lsp-null)))
 
 (defclass references (request)
   ((parmas :type lsp:reference-params))
   (:default-initargs
    :method "textDocument/references"
    :response-class-name '(or
-                          (lsp-type:lsp-array lsp:location)
-                          null)))
+                          (lsp-array lsp:location)
+                          lsp-null)))
 
 (defclass document-highlight (request)
   ((params :type lsp:document-highlight-params))
   (:default-initargs
    :method "textDocument/documentHighlight"
    :response-class-name '(or
-                          (lsp-type:lsp-array lsp:document-highlight)
-                          null)))
+                          (lsp-array lsp:document-highlight)
+                          lsp-null)))
 
 (defclass document-symbol (request)
   ((params :type lsp:document-symbol-params))
   (:default-initargs
    :method "textDocument/documentSymbol"
    :response-class-name '(or
-                          (lsp-type:lsp-array lsp:document-symbol)
-                          (lsp-type:lsp-array lsp:symbol-information)
-                          null)))
+                          (lsp-array lsp:document-symbol)
+                          (lsp-array lsp:symbol-information)
+                          lsp-null)))
 
 (defclass code-action (request)
   ((params :type lsp:code-action-params))
@@ -248,32 +248,32 @@
    :method "textDocument/codeAction"
    :response-class-name '(or
                           lsp:command
-                          (lsp-type:lsp-array lsp:code-action)
-                          null)))
+                          (lsp-array lsp:code-action)
+                          lsp-null)))
 
 (defclass document-formatting (request)
   ((params :type lsp:document-formatting-params))
   (:default-initargs
    :method "textDocument/formatting"
    :response-class-name '(or
-                          (lsp-type:lsp-array lsp:text-edit)
-                          null)))
+                          (lsp-array lsp:text-edit)
+                          lsp-null)))
 
 (defclass document-range-formatting (request)
   ((params :type lsp:document-range-formatting-params))
   (:default-initargs
    :method "textDocument/rangeFormatting"
    :response-class-name '(or
-                          (lsp-type:lsp-array lsp:text-edit)
-                          null)))
+                          (lsp-array lsp:text-edit)
+                          lsp-null)))
 
 (defclass document-on-type-formatting (request)
   ((params :type lsp:document-on-type-formatting-params))
   (:default-initargs
    :method "textDocument/onTyepFormatting"
    :response-class-name '(or
-                          (lsp-type:lsp-array lsp:text-edit)
-                          null)))
+                          (lsp-array lsp:text-edit)
+                          lsp-null)))
 
 (defclass rename (request)
   ((params :type lsp:rename-params))
@@ -281,7 +281,7 @@
    :method "textDocument/rename"
    :response-class-name '(or
                           lsp:workspace-edit
-                          null)))
+                          lsp-null)))
 
 ;;; TODO
 ;;; response-class-nameのnullは特定のjsonライブラリに依存していないか確認する

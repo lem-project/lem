@@ -164,8 +164,10 @@
 (defun jsonrpc-editor-error (message code)
   (editor-error "JSONRPC-CALLBACK-ERROR: ~A (Code=~A)" message code))
 
-(defun async-request (client request &key then)
-  (request:request-async client request
+(defun async-request (client request params &key then)
+  (request:request-async client
+                         request
+                         params
                          (lambda (response)
                            (send-event (lambda () (funcall then response))))
                          (lambda (message code)
@@ -551,18 +553,17 @@
 (defun initialize (workspace continuation)
   (async-request
    (workspace-client workspace)
-   (make-instance
-    'request:initialize-request
-    :params (apply #'make-instance
-                   'lsp:initialize-params
-                   :process-id (utils:get-pid)
-                   :client-info (make-lsp-map :name "lem" #|:version "0.0.0"|#)
-                   :root-uri (workspace-root-uri workspace)
-                   :capabilities (client-capabilities)
-                   :trace "off"
-                   :workspace-folders +null+
-                   (when-let ((value (spec-initialization-options (workspace-spec workspace))))
-                     (list :initialization-options value))))
+   (make-instance 'lsp:initialize)
+   (apply #'make-instance
+          'lsp:initialize-params
+          :process-id (utils:get-pid)
+          :client-info (make-lsp-map :name "lem" #|:version "0.0.0"|#)
+          :root-uri (workspace-root-uri workspace)
+          :capabilities (client-capabilities)
+          :trace "off"
+          :workspace-folders +null+
+          (when-let ((value (spec-initialization-options (workspace-spec workspace))))
+            (list :initialization-options value)))
    :then (lambda (initialize-result)
            (setf (workspace-server-capabilities workspace)
                  (lsp:initialize-result-capabilities initialize-result))
@@ -575,7 +576,8 @@
 
 (defun initialized (workspace)
   (request:request (workspace-client workspace)
-                   (make-instance 'request:initialized-request)))
+                   (make-instance 'lsp:initialized)
+                   (make-instance 'lsp:initialized-params)))
 
 ;;; Window
 
@@ -609,20 +611,20 @@
 (defun text-document/did-open (buffer)
   (request:request
    (workspace-client (buffer-workspace buffer))
-   (make-instance 'request:text-document-did-open
-                  :params (make-instance 'lsp:did-open-text-document-params
-                                         :text-document (buffer-to-text-document-item buffer)))))
+   (make-instance 'lsp:text-document/did-open)
+   (make-instance 'lsp:did-open-text-document-params
+                  :text-document (buffer-to-text-document-item buffer))))
 
 (defun text-document/did-change (buffer content-changes)
   (request:request
    (workspace-client (buffer-workspace buffer))
    (make-instance
-    'request:text-document-did-change
-    :params (make-instance 'lsp:did-change-text-document-params
-                           :text-document (make-instance 'lsp:versioned-text-document-identifier
-                                                         :version (buffer-version buffer)
-                                                         :uri (buffer-uri buffer))
-                           :content-changes content-changes))))
+    'lsp:text-document/did-change)
+   (make-instance 'lsp:did-change-text-document-params
+                  :text-document (make-instance 'lsp:versioned-text-document-identifier
+                                                :version (buffer-version buffer)
+                                                :uri (buffer-uri buffer))
+                  :content-changes content-changes)))
 
 (defun provide-did-save-text-document-p (workspace)
   (let ((sync (lsp:server-capabilities-text-document-sync
@@ -641,17 +643,17 @@
   (when (provide-did-save-text-document-p (buffer-workspace buffer))
     (request:request
      (workspace-client (buffer-workspace buffer))
-     (make-instance 'request:text-document-did-save
-                    :params (make-instance 'lsp:did-save-text-document-params
-                                           :text-document (make-text-document-identifier buffer)
-                                           :text (buffer-text buffer))))))
+     (make-instance 'lsp:text-document/did-save)
+     (make-instance 'lsp:did-save-text-document-params
+                    :text-document (make-text-document-identifier buffer)
+                    :text (buffer-text buffer)))))
 
 (defun text-document/did-close (buffer)
   (request:request
    (workspace-client (buffer-workspace buffer))
-   (make-instance 'request:text-document-did-close
-                  :params (make-instance 'lsp:did-close-text-document-params
-                                         :text-document (make-text-document-identifier buffer)))))
+   (make-instance 'lsp:text-document/did-close)
+   (make-instance 'lsp:did-close-text-document-params
+                  :text-document (make-text-document-identifier buffer))))
 
 ;;; publishDiagnostics
 
@@ -840,11 +842,11 @@
       (let ((result
               (request:request
                (workspace-client workspace)
-               (make-instance 'request:hover-request
-                              :params (apply #'make-instance
-                                             'lsp:hover-params
-                                             (make-text-document-position-arguments point))))))
-        (when result
+               (make-instance 'lsp:text-document/hover)
+               (apply #'make-instance
+                      'lsp:hover-params
+                      (make-text-document-position-arguments point)))))
+        (unless (lsp-null-p result)
           (hover-to-string result))))))
 
 (define-command lsp-hover () ()
@@ -925,10 +927,10 @@
        point
        (request:request
         (workspace-client workspace)
-        (make-instance 'request:completion-request
-                       :params (apply #'make-instance
-                                      'lsp:completion-params
-                                      (make-text-document-position-arguments point))))))))
+        (make-instance 'lsp:text-document/completion)
+        (apply #'make-instance
+               'lsp:completion-params
+               (make-text-document-position-arguments point)))))))
 
 (defun completion-with-trigger-character (c)
   (declare (ignore c))
@@ -1000,13 +1002,13 @@
     (when (provide-signature-help-p workspace)
       (let ((result (request:request
                      (workspace-client workspace)
-                     (make-instance 'request:signature-help
-                                    :params (apply #'make-instance
-                                                   'lsp:signature-help-params
-                                                   (append (when signature-help-context
-                                                             `(:context ,signature-help-context))
-                                                           (make-text-document-position-arguments point)))))))
-        (when result
+                     (make-instance 'lsp:text-document/signature-help)
+                     (apply #'make-instance
+                            'lsp:signature-help-params
+                            (append (when signature-help-context
+                                      `(:context ,signature-help-context))
+                                    (make-text-document-position-arguments point))))))
+        (unless (lsp-null-p result)
           (display-signature-help result))))))
 
 (defun lsp-signature-help-with-trigger-character (character)
@@ -1089,10 +1091,10 @@
     (when (provide-definition-p workspace)
       (async-request
        (workspace-client workspace)
-       (make-instance 'request:definition
-                      :params (apply #'make-instance
-                                     'lsp:definition-params
-                                     (make-text-document-position-arguments point)))
+       (make-instance 'lsp:text-document/definition)
+       (apply #'make-instance
+              'lsp:definition-params
+              (make-text-document-position-arguments point))
        :then (lambda (response)
                (funcall then (convert-definition-response response)))))))
 
@@ -1114,10 +1116,10 @@
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-type-definition-p workspace)
       (async-request (workspace-client workspace)
-                     (make-instance 'request:type-definition
-                                    :params (apply #'make-instance
-                                                   'lsp:type-definition-params
-                                                   (make-text-document-position-arguments point)))
+                     (make-instance 'lsp:text-document/type-definition)
+                     (apply #'make-instance
+                            'lsp:type-definition-params
+                            (make-text-document-position-arguments point))
                      :then (lambda (response)
                              (funcall then (convert-type-definition-response response)))))))
 
@@ -1139,10 +1141,10 @@
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-implementation-p workspace)
       (async-request (workspace-client workspace)
-                     (make-instance 'request:implementation
-                                    :params (apply #'make-instance
-                                                   'lsp:type-definition-params
-                                                   (make-text-document-position-arguments point)))
+                     (make-instance 'lsp:text-document/implementation)
+                     (apply #'make-instance
+                            'lsp:type-definition-params
+                            (make-text-document-position-arguments point))
                      :then (lambda (response)
                              (funcall then (convert-implementation-response response)))))))
 
@@ -1180,12 +1182,12 @@
     (when (provide-references-p workspace)
       (async-request
        (workspace-client workspace)
-       (make-instance 'request:references
-                      :params (apply #'make-instance
-                                     'lsp:reference-params
-                                     :context (make-instance 'lsp:reference-context
-                                                             :include-declaration include-declaration)
-                                     (make-text-document-position-arguments point)))
+       (make-instance 'lsp:text-document/references)
+       (apply #'make-instance
+              'lsp:reference-params
+              :context (make-instance 'lsp:reference-context
+                                      :include-declaration include-declaration)
+              (make-text-document-position-arguments point))
        :then (lambda (response)
                (funcall then (convert-references-response response)))))))
 
@@ -1225,10 +1227,10 @@
     (when (provide-document-highlight-p workspace)
       (async-request
        (workspace-client workspace)
-       (make-instance 'request:document-highlight
-                      :params (apply #'make-instance
-                                     'lsp:document-highlight-params
-                                     (make-text-document-position-arguments point)))
+       (make-instance 'lsp:text-document/document-highlight)
+       (apply #'make-instance
+              'lsp:document-highlight-params
+              (make-text-document-position-arguments point))
        :then (lambda (value)
                (display-document-highlights (point-buffer point)
                                             value)
@@ -1478,10 +1480,10 @@
     (when (provide-document-symbol-p workspace)
       (request:request
        (workspace-client workspace)
-       (make-instance 'request:document-symbol
-                      :params (make-instance
-                               'lsp:document-symbol-params
-                               :text-document (make-text-document-identifier buffer)))))))
+       (make-instance 'lsp:text-document/document-symbol)
+       (make-instance
+        'lsp:document-symbol-params
+        :text-document (make-text-document-identifier buffer))))))
 
 (define-command lsp-document-symbol () ()
   (check-connection)
@@ -1505,10 +1507,10 @@
   ;; この機能はgoplsで使われる事が今のところないので動作テストをできていない
   (request:request
    (workspace-client workspace)
-   (make-instance 'request:execute-command
-                  :params (make-instance 'lsp:execute-command-params
-                                         :command (lsp:command-command command)
-                                         :arguments (lsp:command-arguments command)))))
+   (make-instance 'lsp:workspace/execute-command)
+   (make-instance 'lsp:execute-command-params
+                  :command (lsp:command-command command)
+                  :arguments (lsp:command-arguments command))))
 
 (defun execute-code-action (workspace code-action)
   (handler-case (lsp:code-action-edit code-action)
@@ -1539,14 +1541,13 @@
       (when (provide-code-action-p workspace)
         (request:request
          (workspace-client workspace)
+         (make-instance 'lsp:text-document/code-action)
          (make-instance
-          'request:code-action
-          :params (make-instance
-                   'lsp:code-action-params
-                   :text-document (make-text-document-identifier (point-buffer point))
-                   :range (point-to-line-range point)
-                   :context (make-instance 'lsp:code-action-context
-                                           :diagnostics (make-lsp-array)))))))))
+          'lsp:code-action-params
+          :text-document (make-text-document-identifier (point-buffer point))
+          :range (point-to-line-range point)
+          :context (make-instance 'lsp:code-action-context
+                                  :diagnostics (make-lsp-array))))))))
 
 (define-command lsp-code-action () ()
   (check-connection)
@@ -1599,11 +1600,11 @@
        buffer
        (request:request
         (workspace-client workspace)
-        (make-instance 'request:document-formatting
-                       :params (make-instance
-                                'lsp:document-formatting-params
-                                :text-document (make-text-document-identifier buffer)
-                                :options (make-formatting-options buffer))))))))
+        (make-instance 'lsp:text-document/formatting)
+        (make-instance
+         'lsp:document-formatting-params
+         :text-document (make-text-document-identifier buffer)
+         :options (make-formatting-options buffer)))))))
 
 (define-command lsp-document-format () ()
   (check-connection)
@@ -1627,12 +1628,12 @@
          buffer
          (request:request
           (workspace-client workspace)
-          (make-instance 'request:document-range-formatting
-                         :params (make-instance
-                                  'lsp:document-range-formatting-params
-                                  :text-document (make-text-document-identifier buffer)
-                                  :range (make-lsp-range start end)
-                                  :options (make-formatting-options buffer)))))))))
+          (make-instance 'lsp:text-document/range-formatting)
+          (make-instance
+           'lsp:document-range-formatting-params
+           :text-document (make-text-document-identifier buffer)
+           :range (make-lsp-range start end)
+           :options (make-formatting-options buffer))))))))
 
 (define-command lsp-document-range-format (start end) ("r")
   (check-connection)
@@ -1655,12 +1656,12 @@
                   (with-jsonrpc-error ()
                     (request:request
                      (workspace-client workspace)
-                     (make-instance 'request:document-on-type-formatting
-                                    :params (apply #'make-instance
-                                                   'lsp:document-on-type-formatting-params
-                                                   :ch typed-character
-                                                   :options (make-formatting-options (point-buffer point))
-                                                   (make-text-document-position-arguments point)))))))
+                     (make-instance 'lsp:text-document-client-capabilities-on-type-formatting)
+                     (apply #'make-instance
+                            'lsp:document-on-type-formatting-params
+                            :ch typed-character
+                            :options (make-formatting-options (point-buffer point))
+                            (make-text-document-position-arguments point))))))
         (apply-text-edits (point-buffer point) response)))))
 
 ;;; rename
@@ -1680,11 +1681,11 @@
                   (with-jsonrpc-error ()
                     (request:request
                      (workspace-client workspace)
-                     (make-instance 'request:rename
-                                    :params (apply #'make-instance
-                                                   'lsp:rename-params
-                                                   :new-name new-name
-                                                   (make-text-document-position-arguments point)))))))
+                     (make-instance 'lsp:text-document/rename)
+                     (apply #'make-instance
+                            'lsp:rename-params
+                            :new-name new-name
+                            (make-text-document-position-arguments point))))))
         (apply-workspace-edit response)))))
 
 (define-command lsp-rename (new-name) ("sNew name: ")

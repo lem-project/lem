@@ -24,7 +24,28 @@
            :define-type-alias
            :define-class
            :request-message
+           :request-message-deprecated
+           :request-message-documentation
+           :request-message-error-data
+           :request-message-message-direction
+           :request-message-method
+           :request-message-params
+           :request-message-partial-result
+           :request-message-proposed
+           :request-message-registration-method
+           :request-message-registration-options
+           :request-message-result
+           :request-message-since
            :notification-message
+           :notification-message-deprecated
+           :notification-message-documentation
+           :notification-message-message-direction
+           :notification-message-method
+           :notification-message-params
+           :notification-message-proposed
+           :notification-message-registration-method
+           :notification-message-registration-options
+           :notification-message-since
            :define-request-message
            :define-notification-message
            :protocol-class-slots
@@ -33,7 +54,8 @@
            :make-lsp-map
            :make-lsp-array
            :get-map
-           :lsp-array-p))
+           :lsp-array-p
+           :lsp-null-p))
 (in-package :lem-language-server/protocol/lsp-type)
 
 (declaim (optimize (speed 0) (safety 3) (debug 3)))
@@ -301,3 +323,6 @@
 
 (defun lsp-array-p (value)
   (typep value 'lsp-array))
+
+(defun lsp-null-p (value)
+  (eq value +null+))

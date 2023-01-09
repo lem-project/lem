@@ -1,6 +1,6 @@
 (defsystem "lem-jsonrpc"
   :depends-on ("lem"
-               "lem-extensions"
+               "lem/extensions"
                "jsonrpc"
                "trivial-utf-8"
                "jsonrpc/transport/stdio")

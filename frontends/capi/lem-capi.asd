@@ -1,5 +1,5 @@
 (defsystem "lem-capi"
-  :depends-on ("lem" "lem-extensions")
+  :depends-on ("lem" "lem/extensions")
   :serial t
   :components ((:file "package")
                (:file "util")

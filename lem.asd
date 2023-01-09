@@ -101,7 +101,7 @@
                              (:file "tabbar")
                              (:file "frame-multiplexer")))))
 
-(defsystem "lem-extensions"
+(defsystem "lem/extensions"
   :depends-on ("lem-vi-mode"
                "lem-lisp-mode"
                "lem-go-mode"

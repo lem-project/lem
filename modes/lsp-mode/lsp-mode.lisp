@@ -373,8 +373,8 @@
              (with-point ((end point))
                (character-offset end count)
                (make-lsp-map :range (lem-language-server/protocol/utils:points-to-lsp-range
-                                     (point-to-lsp-position point)
-                                     (point-to-lsp-position end))
+                                     point
+                                     end)
                              :range-length (count-characters point end)
                              :text ""))))
     (etypecase arg
@@ -421,7 +421,8 @@
     (let ((client (make-client spec)))
       (loop :with condition := nil
             :repeat 6
-            :do (handler-case (client:jsonrpc-connect client)
+            :do (handler-case (with-yason-bindings ()
+                                (client:jsonrpc-connect client))
                   (:no-error (&rest values)
                     (declare (ignore values))
                     (return client))

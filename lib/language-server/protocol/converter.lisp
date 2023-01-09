@@ -125,7 +125,7 @@
 
 (defmethod convert-to-json ((object protocol-object))
   (loop :with hash-table := (make-hash-table :test 'equal)
-        :for slot :in (c2mop:class-direct-slots (class-of object))
+        :for slot :in (protocol-class-slots (class-of object))
         :for slot-name := (c2mop:slot-definition-name slot)
         :when (slot-boundp object slot-name)
         :do (let ((value (slot-value object slot-name))

@@ -13,7 +13,7 @@
   :serial t
   :components ((:module "protocol"
                 :components ((:file "yason-utils")
-                             (:file "type")
+                             (:file "lsp-type")
                              (:file "protocol-generator")
                              (:file "protocol-3-17")
                              (:file "converter")

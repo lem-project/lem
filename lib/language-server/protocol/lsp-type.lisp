@@ -1,4 +1,4 @@
-(defpackage :lem-language-server/protocol/type
+(defpackage :lem-language-server/protocol/lsp-type
   (:use :cl)
   (:export :+null+
            :+true+
@@ -31,7 +31,7 @@
            :pascal-to-lisp-case
            :lisp-to-pascal-case
            :make-lsp-map))
-(in-package :lem-language-server/protocol/type)
+(in-package :lem-language-server/protocol/lsp-type)
 
 (declaim (optimize (speed 0) (safety 3) (debug 3)))
 

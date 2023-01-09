@@ -1,5 +1,5 @@
 (defpackage :lem-language-server/protocol/converter
-  (:use :cl :lem-language-server/protocol/type)
+  (:use :cl :lem-language-server/protocol/lsp-type)
   (:export :convert-from-json
            :convert-to-json))
 (in-package :lem-language-server/protocol/converter)

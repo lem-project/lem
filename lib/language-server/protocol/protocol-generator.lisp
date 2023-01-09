@@ -1,7 +1,7 @@
 (defpackage :lem-language-server/protocol/protocol-generator
   (:use :cl
         :alexandria
-        :lem-language-server/protocol/type)
+        :lem-language-server/protocol/lsp-type)
   (:import-from :lem-language-server/protocol/yason-utils
                 :parse-json)
   (:export :deploy))

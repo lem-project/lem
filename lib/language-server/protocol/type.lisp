@@ -21,7 +21,9 @@
            :define-type-alias
            :define-class
            :request-message
+           :notification-message
            :define-request-message
+           :define-notification-message
            :protocol-class-slots
            :pascal-to-lisp-case
            :lisp-to-pascal-case
@@ -217,8 +219,42 @@
     :initarg :since
     :reader request-message-since)))
 
+(defclass notification-message ()
+  ((deprecated
+    :initarg :deprecated
+    :reader notification-message-deprecated)
+   (documentation
+    :initarg :documentation
+    :reader notification-message-documentation)
+   (message-direction
+    :initarg :message-direction
+    :reader notification-message-message-direction)
+   (method
+    :initarg :method
+    :reader notification-message-method)
+   (params
+    :initarg :params
+    :reader notification-message-params)
+   (proposed
+    :initarg :proposed
+    :reader notification-message-proposed)
+   (registration-method
+    :initarg :registration-method
+    :reader notification-message-registration-method)
+   (registration-options
+    :initarg :registration-options
+    :reader notification-message-registration-options)
+   (since
+    :initarg :since
+    :reader notification-message-since)))
+
 (defmacro define-request-message (name () &body default-initargs)
   `(defclass ,name (request-message)
+     ()
+     (:default-initargs ,@default-initargs)))
+
+(defmacro define-notification-message (name () &body default-initargs)
+  `(defclass ,name (notification-message)
      ()
      (:default-initargs ,@default-initargs)))
 

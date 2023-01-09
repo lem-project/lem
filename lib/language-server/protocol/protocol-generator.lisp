@@ -198,7 +198,29 @@
 
 (defun parse-notification (hash)
   (check-type hash hash-table)
-  (unimplemented))
+  (with-hash ((deprecated "deprecated")
+              (documentation "documentation")
+              (message-direction "messageDirection" :required t)
+              (method "method" :required t)
+              (params "params")
+              (proposed "proposed")
+              (registration-method "registrationMethod")
+              (registration-options "registrationOptions")
+              (since "since"))
+      hash
+    (let ((method-name (symbolize method))
+          (params (parse-request-or-notification-params params)))
+      (add-export method-name)
+      `(define-notification-message ,method-name ()
+         :deprecated ,deprecated
+         :documentation ,documentation
+         :message-direction ,(parse-message-direction message-direction)
+         :method ,method
+         :params ',params
+         :proposed ,proposed
+         :registration-method ,registration-method
+         :registration-options ',(when registration-options (parse-type registration-options))
+         :since ,since))))
 
 (defun parse-or-type (hash)
   (check-type hash hash-table)
@@ -242,6 +264,12 @@
     (assert (string= kind "reference"))
     (symbolize name)))
 
+(defun parse-request-or-notification-params (params)
+  (when params
+    (if (vectorp params)
+        `(or ,@(map 'list #'parse-type params))
+        (parse-type params))))
+
 (defun parse-request (hash)
   (check-type hash hash-table)
   (with-hash ((deprecated "deprecated")
@@ -258,10 +286,7 @@
               (since "since"))
       hash
     (let ((method-name (symbolize method))
-          (params (when params
-                    (if (vectorp params)
-                        `(or ,@(map 'list #'parse-type params))
-                        (parse-type params)))))
+          (params (parse-request-or-notification-params params)))
       (add-export method-name)
       `(define-request-message ,method-name ()
          :deprecated ,deprecated
@@ -414,7 +439,6 @@
               (structures "structures" :required t)
               (type-aliases "typeAliases" :required t))
       (read-meta-model meta-model-file)
-    (declare (ignore notifications))
     (let* ((*protocol-package* (find-or-make-package package-name))
            (*exports* '(:*version*))
            (version (parse-meta-data meta-data))
@@ -422,8 +446,7 @@
            (structures (map 'list #'parse-structure structures))
            (type-aliases (map 'list #'parse-type-alias type-aliases))
            (requests (map 'list #'parse-request requests))
-           ;; (notifications (map 'list #'parse-notification notifications))
-           )
+           (notifications (map 'list #'parse-notification notifications)))
       (declare (ignore version))
       (with-open-file (output-stream output-file
                                      :direction :output
@@ -442,7 +465,8 @@
         (mapc (rcurry #'newline-and-pretty-print output-stream) enumerations)
         (mapc (rcurry #'newline-and-pretty-print output-stream) structures)
         (mapc (rcurry #'newline-and-pretty-print output-stream) type-aliases)
-        (mapc (rcurry #'newline-and-pretty-print output-stream) requests))))
+        (mapc (rcurry #'newline-and-pretty-print output-stream) requests)
+        (mapc (rcurry #'newline-and-pretty-print output-stream) notifications))))
   (format t "~&generated ~S~%" output-file)
   (values))
 

@@ -176,7 +176,7 @@
   (when text
     (show-message text
                   :style '(:gravity :cursor
-                           :use-border nil
+                           :use-border t
                            :background-color "#404040")
                   :timeout nil)))
 

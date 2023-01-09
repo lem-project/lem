@@ -1,6 +1,9 @@
 (defpackage :lem-language-server/protocol/type
   (:use :cl)
-  (:export :json-type-error
+  (:export :+null+
+           :+true+
+           :+false+
+           :json-type-error
            :required-argument-error
            :lsp-uri
            :lsp-document-uri
@@ -31,6 +34,10 @@
 (in-package :lem-language-server/protocol/type)
 
 (declaim (optimize (speed 0) (safety 3) (debug 3)))
+
+(defconstant +null+ :null)
+(defconstant +true+ t)
+(defconstant +false+ nil)
 
 (define-condition json-type-error ()
   ((type :initarg :type)

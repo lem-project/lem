@@ -20,7 +20,7 @@
 
 (defun point-to-lsp-position (point)
   (make-instance 'lsp:position
-                 :line (1- (lem:line-number-at-point point))
+                 :line (point-lsp-line-number point)
                  :character (lem:point-charpos point)))
 
 (defun points-to-lsp-range (start end)

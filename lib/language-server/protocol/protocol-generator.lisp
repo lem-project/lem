@@ -2,6 +2,8 @@
   (:use :cl
         :alexandria
         :lem-language-server/protocol/type)
+  (:import-from :lem-language-server/protocol/yason-utils
+                :parse-json)
   (:export :deploy))
 (in-package :lem-language-server/protocol/protocol-generator)
 
@@ -413,9 +415,7 @@
          ,@(when since `((:since ,since)))))))
 
 (defun read-meta-model (meta-model-file)
-  (yason:parse meta-model-file
-               :json-nulls-as-keyword t
-               :json-arrays-as-vectors t))
+  (parse-json meta-model-file))
 
 (defun pretty-print (form &optional (stream *standard-output*))
   (let ((*print-case* :downcase)

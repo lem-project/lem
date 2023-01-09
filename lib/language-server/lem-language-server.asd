@@ -12,11 +12,11 @@
                "micros/client")
   :serial t
   :components ((:module "protocol"
-                :components ((:file "type")
+                :components ((:file "yason-utils")
+                             (:file "type")
                              (:file "protocol-generator")
                              (:file "protocol-3-17")
                              (:file "converter")
-                             (:file "yason")
                              (:file "uri")))
                (:file "package")
                (:file "variables")

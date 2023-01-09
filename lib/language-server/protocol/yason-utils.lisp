@@ -1,10 +1,10 @@
-(defpackage :lem-language-server/protocol/yason
+(defpackage :lem-language-server/protocol/yason-utils
   (:use :cl)
   (:import-from :bordeaux-threads
                 :*default-special-bindings*)
   (:export :with-yason-bindings
-           :parse))
-(in-package :lem-language-server/protocol/yason)
+           :parse-json))
+(in-package :lem-language-server/protocol/yason-utils)
 
 (defparameter *yason-bindings*
   '((yason:*parse-json-null-as-keyword* . t)
@@ -21,6 +21,6 @@
         (mapcar #'cdr *yason-bindings*)
       (funcall function))))
 
-(defun parse (input)
+(defun parse-json (input)
   (with-yason-bindings ()
     (yason:parse input)))

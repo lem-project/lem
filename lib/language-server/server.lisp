@@ -26,13 +26,13 @@
   ())
 
 (defmethod start-server ((server tcp-server))
-  (lem-language-server/protocol/yason:with-yason-bindings ()
+  (lem-language-server/protocol/yason-utils:with-yason-bindings ()
     (jsonrpc:server-listen (server-jsonrpc-server server)
                            :mode :tcp
                            :port (tcp-server-port server))))
 
 (defmethod start-server ((server stdio-server))
-  (lem-language-server/protocol/yason:with-yason-bindings ()
+  (lem-language-server/protocol/yason-utils:with-yason-bindings ()
     (jsonrpc:server-listen (server-jsonrpc-server server)
                            :mode :stdio)))
 

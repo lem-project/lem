@@ -43,12 +43,9 @@
                             (lsp-method-name instance)
                             (curry #'call instance))))
 
-(defun start-tcp-server ()
-  (setf *server* (make-instance 'tcp-server :port 10003))
-  (bt:make-thread (lambda ()
-                    (start-server *server*))
-                  :initial-bindings `((*standard-output* . ,*standard-output*)
-                                      (*error-output* . ,*error-output*))))
+(defun start-tcp-server (port)
+  (setf *server* (make-instance 'tcp-server :port port))
+  (start-server *server*))
 
 (defun start-stdio-server ()
   (setf *server* (make-instance 'stdio-server))

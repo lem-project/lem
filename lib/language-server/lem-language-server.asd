@@ -4,7 +4,7 @@
 
 (defsystem "lem-language-server"
   :depends-on ("jsonrpc"
-               "lem-lsp-utils"
+               "cl-change-case"
                "lem"
                "lem-lisp-syntax"
                "async-process"

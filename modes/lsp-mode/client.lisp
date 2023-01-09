@@ -3,7 +3,6 @@
   (:import-from :jsonrpc)
   (:import-from :lem-lsp-mode/lem-stdio-transport
                 :lem-stdio-transport)
-  (:local-nicknames (:protocol :lem-lsp-utils/protocol-3-15))
   (:export :jsonrpc-connect
            :client
            :client-connection
@@ -25,7 +24,7 @@
     :writer set-server-info)
    (server-capabilities
     :initarg :server-capabilities
-    :type protocol:server-capabilities
+    :type lsp:server-capabilities
     :writer set-server-capabilities)))
 
 (defclass tcp-client (client)

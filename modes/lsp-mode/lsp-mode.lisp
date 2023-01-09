@@ -7,7 +7,6 @@
         :lem-language-server/protocol/yason-utils
         :lem-language-server/protocol/utils)
   (:shadow :execute-command)
-  (:import-from :lem-lsp-utils)
   (:import-from :lem-lsp-mode/utils)
   (:import-from :lem-lsp-mode/request)
   (:import-from :lem-lsp-mode/client)
@@ -262,7 +261,7 @@
 
 (defun buffer-uri (buffer)
   ;; TODO: lem-language-server::buffer-uri
-  (lem-lsp-utils/uri:pathname-to-uri (buffer-filename buffer)))
+  (pathname-to-uri (buffer-filename buffer)))
 
 (defun get-workspace-from-point (point)
   (buffer-workspace (point-buffer point)))
@@ -438,7 +437,7 @@
 
 (defun ensure-lsp-buffer (buffer &optional continuation)
   (let* ((spec (buffer-language-spec buffer))
-         (root-uri (lem-lsp-utils/uri:pathname-to-uri
+         (root-uri (pathname-to-uri
                     (find-root-pathname (buffer-directory buffer)
                                         (spec-root-uri-patterns spec)))))
     (handler-bind ((error (lambda (c)
@@ -485,7 +484,7 @@
         :position (point-to-lsp-position point)))
 
 (defun find-buffer-from-uri (uri)
-  (let ((pathname (lem-lsp-utils/uri:uri-to-pathname uri)))
+  (let ((pathname (uri-to-pathname uri)))
     (find-file-buffer pathname)))
 
 (defun get-buffer-from-text-document-identifier (text-document-identifier)
@@ -1064,7 +1063,7 @@
     (let* ((start-position (lsp:range-start (lsp:location-range location)))
            (end-position (lsp:range-end (lsp:location-range location)))
            (uri (lsp:location-uri location))
-           (file (lem-lsp-utils/uri:uri-to-pathname uri)))
+           (file (uri-to-pathname uri)))
       (declare (ignore end-position))
       (when (uiop:file-exists-p file)
         (lem.language-mode:make-xref-location

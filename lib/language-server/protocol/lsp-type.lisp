@@ -30,7 +30,10 @@
            :protocol-class-slots
            :pascal-to-lisp-case
            :lisp-to-pascal-case
-           :make-lsp-map))
+           :make-lsp-map
+           :make-lsp-array
+           :get-map
+           :lsp-array-p))
 (in-package :lem-language-server/protocol/lsp-type)
 
 (declaim (optimize (speed 0) (safety 3) (debug 3)))
@@ -289,3 +292,12 @@
                            (keyword (lisp-to-pascal-case key)))))
                 (setf (gethash key hash-table) value)))
     hash-table))
+
+(defun make-lsp-array (&rest args)
+  (apply #'vector args))
+
+(defun get-map (lsp-map key &optional default)
+  (gethash key lsp-map default))
+
+(defun lsp-array-p (value)
+  (typep value 'lsp-array))

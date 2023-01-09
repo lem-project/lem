@@ -4,7 +4,8 @@
         :alexandria
         :lem-language-server/protocol/lsp-type
         :lem-language-server/protocol/converter
-        :lem-language-server/protocol/yason-utils)
+        :lem-language-server/protocol/yason-utils
+        :lem-language-server/protocol/utils)
   (:shadow :execute-command)
   (:import-from :lem-lsp-utils)
   (:import-from :lem-lsp-mode/utils)
@@ -372,7 +373,7 @@
            (deleting-content-change-event (count)
              (with-point ((end point))
                (character-offset end count)
-               (make-lsp-map :range (lem-language-server/protocol/utils:points-to-lsp-range
+               (make-lsp-map :range (points-to-lsp-range
                                      point
                                      end)
                              :range-length (count-characters point end)
@@ -465,18 +466,6 @@
          (spec (buffer-language-spec buffer)))
     (unless (get-running-server-info spec)
       (ensure-lsp-buffer buffer))))
-
-(defun point-to-lsp-position (point)
-  ;; TODO: inline function
-  (lem-language-server/protocol/utils:point-to-lsp-position point))
-
-(defun move-to-lsp-position (point position)
-  ;; TODO: inline function
-  (lem-language-server/protocol/utils:move-to-lsp-position point position))
-
-(defun make-lsp-range (start end)
-  ;; TODO: inline function
-  (lem-language-server/protocol/utils:points-to-lsp-range start end))
 
 (defun buffer-to-text-document-item (buffer)
   (make-instance 'lsp:text-document-item

@@ -1512,7 +1512,97 @@
            :document-filter
            :lsp-object
            :text-document-filter
-           :notebook-document-filter))
+           :notebook-document-filter
+           :text-document/implementation
+           :text-document/type-definition
+           :workspace/workspace-folders
+           :workspace/configuration
+           :text-document/document-color
+           :text-document/color-presentation
+           :text-document/folding-range
+           :text-document/declaration
+           :text-document/selection-range
+           :window/work-done-progress/create
+           :text-document/prepare-call-hierarchy
+           :call-hierarchy/incoming-calls
+           :call-hierarchy/outgoing-calls
+           :text-document/semantic-tokens/full
+           :text-document/semantic-tokens/full/delta
+           :text-document/semantic-tokens/range
+           :workspace/semantic-tokens/refresh
+           :window/show-document
+           :text-document/linked-editing-range
+           :workspace/will-create-files
+           :workspace/will-rename-files
+           :workspace/will-delete-files
+           :text-document/moniker
+           :text-document/prepare-type-hierarchy
+           :type-hierarchy/supertypes
+           :type-hierarchy/subtypes
+           :text-document/inline-value
+           :workspace/inline-value/refresh
+           :text-document/inlay-hint
+           :inlay-hint/resolve
+           :workspace/inlay-hint/refresh
+           :text-document/diagnostic
+           :workspace/diagnostic
+           :workspace/diagnostic/refresh
+           :client/register-capability
+           :client/unregister-capability
+           :initialize
+           :shutdown
+           :window/show-message-request
+           :text-document/will-save-wait-until
+           :text-document/completion
+           :completion-item/resolve
+           :text-document/hover
+           :text-document/signature-help
+           :text-document/definition
+           :text-document/references
+           :text-document/document-highlight
+           :text-document/document-symbol
+           :text-document/code-action
+           :code-action/resolve
+           :workspace/symbol
+           :workspace-symbol/resolve
+           :text-document/code-lens
+           :code-lens/resolve
+           :workspace/code-lens/refresh
+           :text-document/document-link
+           :document-link/resolve
+           :text-document/formatting
+           :text-document/range-formatting
+           :text-document/on-type-formatting
+           :text-document/rename
+           :text-document/prepare-rename
+           :workspace/execute-command
+           :workspace/apply-edit
+           :workspace/did-change-workspace-folders
+           :window/work-done-progress/cancel
+           :workspace/did-create-files
+           :workspace/did-rename-files
+           :workspace/did-delete-files
+           :notebook-document/did-open
+           :notebook-document/did-change
+           :notebook-document/did-save
+           :notebook-document/did-close
+           :initialized
+           :exit
+           :workspace/did-change-configuration
+           :window/show-message
+           :window/log-message
+           :telemetry/event
+           :text-document/did-open
+           :text-document/did-change
+           :text-document/did-close
+           :text-document/did-save
+           :text-document/will-save
+           :workspace/did-change-watched-files
+           :text-document/publish-diagnostics
+           :/set-trace
+           :/log-trace
+           :/cancel-request
+           :/progress))
 (common-lisp:in-package :lem-language-server/protocol/protocol-3-17)
 
 (lem-language-server/protocol/type:define-enum semantic-token-types
@@ -7143,3 +7233,2498 @@ against the notebook's URI (same as with documents)
 
 @since 3.17.0")
   (:since "3.17.0"))
+
+(lem-language-server/protocol/type:define-request-message text-document/implementation
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to resolve the implementation locations of a symbol at a given text
+document position. The request's parameter is of type [TextDocumentPositionParams]
+(#TextDocumentPositionParams) the response is of type {@link Definition} or a
+Thenable that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/implementation"
+  :params
+  'implementation-params
+  :partial-result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array location)
+                   (lem-language-server/protocol/type:lsp-array definition-link))
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'implementation-registration-options
+  :result
+  '(common-lisp:or definition (lem-language-server/protocol/type:lsp-array definition-link)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/type-definition
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to resolve the type definition locations of a symbol at a given text
+document position. The request's parameter is of type [TextDocumentPositionParams]
+(#TextDocumentPositionParams) the response is of type {@link Definition} or a
+Thenable that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/typeDefinition"
+  :params
+  'type-definition-params
+  :partial-result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array location)
+                   (lem-language-server/protocol/type:lsp-array definition-link))
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'type-definition-registration-options
+  :result
+  '(common-lisp:or definition (lem-language-server/protocol/type:lsp-array definition-link)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message workspace/workspace-folders
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The `workspace/workspaceFolders` is sent from the server to the client to fetch the open workspace folders."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "workspace/workspaceFolders"
+  :params
+  'common-lisp:nil
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array workspace-folder)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message workspace/configuration
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The 'workspace/configuration' request is sent from the server to the client to fetch a certain
+configuration setting.
+
+This pull model replaces the old push model were the client signaled configuration change via an
+event. If the server still needs to react to configuration changes (since the server caches the
+result of `workspace/configuration` requests) the server should register for an empty configuration
+change event and empty the cache if such an event is received."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "workspace/configuration"
+  :params
+  'configuration-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  '(lem-language-server/protocol/type:lsp-array lsp-any)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/document-color
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to list all color symbols found in a given text document. The request's
+parameter is of type {@link DocumentColorParams} the
+response is of type {@link ColorInformation ColorInformation[]} or a Thenable
+that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/documentColor"
+  :params
+  'document-color-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array color-information)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'document-color-registration-options
+  :result
+  '(lem-language-server/protocol/type:lsp-array color-information)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/color-presentation
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to list all presentation for a color. The request's
+parameter is of type {@link ColorPresentationParams} the
+response is of type {@link ColorInformation ColorInformation[]} or a Thenable
+that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/colorPresentation"
+  :params
+  'color-presentation-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array color-presentation)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  '(common-lisp:and work-done-progress-options text-document-registration-options)
+  :result
+  '(lem-language-server/protocol/type:lsp-array color-presentation)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/folding-range
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to provide folding ranges in a document. The request's
+parameter is of type {@link FoldingRangeParams}, the
+response is of type {@link FoldingRangeList} or a Thenable
+that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/foldingRange"
+  :params
+  'folding-range-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array folding-range)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'folding-range-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array folding-range)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/declaration
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to resolve the type definition locations of a symbol at a given text
+document position. The request's parameter is of type [TextDocumentPositionParams]
+(#TextDocumentPositionParams) the response is of type {@link Declaration}
+or a typed array of {@link DeclarationLink} or a Thenable that resolves
+to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/declaration"
+  :params
+  'declaration-params
+  :partial-result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array location)
+                   (lem-language-server/protocol/type:lsp-array declaration-link))
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'declaration-registration-options
+  :result
+  '(common-lisp:or declaration (lem-language-server/protocol/type:lsp-array declaration-link)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/selection-range
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to provide selection ranges in a document. The request's
+parameter is of type {@link SelectionRangeParams}, the
+response is of type {@link SelectionRange SelectionRange[]} or a Thenable
+that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/selectionRange"
+  :params
+  'selection-range-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array selection-range)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'selection-range-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array selection-range)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message window/work-done-progress/create
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The `window/workDoneProgress/create` request is sent from the server to the client to initiate progress
+reporting from the server."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "window/workDoneProgress/create"
+  :params
+  'work-done-progress-create-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'lem-language-server/protocol/type:lsp-null
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/prepare-call-hierarchy
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to result a `CallHierarchyItem` in a document at a given position.
+Can be used as an input to an incoming or outgoing call hierarchy.
+
+@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/prepareCallHierarchy"
+  :params
+  'call-hierarchy-prepare-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'call-hierarchy-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array call-hierarchy-item)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message call-hierarchy/incoming-calls
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to resolve the incoming calls for a given `CallHierarchyItem`.
+
+@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "callHierarchy/incomingCalls"
+  :params
+  'call-hierarchy-incoming-calls-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array call-hierarchy-incoming-call)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array call-hierarchy-incoming-call)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message call-hierarchy/outgoing-calls
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to resolve the outgoing calls for a given `CallHierarchyItem`.
+
+@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "callHierarchy/outgoingCalls"
+  :params
+  'call-hierarchy-outgoing-calls-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array call-hierarchy-outgoing-call)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array call-hierarchy-outgoing-call)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message text-document/semantic-tokens/full
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/semanticTokens/full"
+  :params
+  'semantic-tokens-params
+  :partial-result
+  'semantic-tokens-partial-result
+  :proposed
+  common-lisp:nil
+  :registration-method
+  "textDocument/semanticTokens"
+  :registration-options
+  'semantic-tokens-registration-options
+  :result
+  '(common-lisp:or semantic-tokens lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message text-document/semantic-tokens/full/delta
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/semanticTokens/full/delta"
+  :params
+  'semantic-tokens-delta-params
+  :partial-result
+  '(common-lisp:or semantic-tokens-partial-result semantic-tokens-delta-partial-result)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  "textDocument/semanticTokens"
+  :registration-options
+  'semantic-tokens-registration-options
+  :result
+  '(common-lisp:or semantic-tokens semantic-tokens-delta lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message text-document/semantic-tokens/range
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/semanticTokens/range"
+  :params
+  'semantic-tokens-range-params
+  :partial-result
+  'semantic-tokens-partial-result
+  :proposed
+  common-lisp:nil
+  :registration-method
+  "textDocument/semanticTokens"
+  :registration-options
+  'common-lisp:nil
+  :result
+  '(common-lisp:or semantic-tokens lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message workspace/semantic-tokens/refresh
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "workspace/semanticTokens/refresh"
+  :params
+  'common-lisp:nil
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'lem-language-server/protocol/type:lsp-null
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message window/show-document
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to show a document. This request might open an
+external program depending on the value of the URI to open.
+For example a request to open `https://code.visualstudio.com/`
+will very likely open the URI in a WEB browser.
+
+@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "window/showDocument"
+  :params
+  'show-document-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'show-document-result
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message text-document/linked-editing-range
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to provide ranges that can be edited together.
+
+@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/linkedEditingRange"
+  :params
+  'linked-editing-range-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'linked-editing-range-registration-options
+  :result
+  '(common-lisp:or linked-editing-ranges lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message workspace/will-create-files
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The will create files request is sent from the client to the server before files are actually
+created as long as the creation is triggered from within the client.
+
+@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "workspace/willCreateFiles"
+  :params
+  'create-files-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'file-operation-registration-options
+  :result
+  '(common-lisp:or workspace-edit lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message workspace/will-rename-files
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The will rename files request is sent from the client to the server before files are actually
+renamed as long as the rename is triggered from within the client.
+
+@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "workspace/willRenameFiles"
+  :params
+  'rename-files-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'file-operation-registration-options
+  :result
+  '(common-lisp:or workspace-edit lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message workspace/will-delete-files
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The did delete files notification is sent from the client to the server when
+files were deleted from within the client.
+
+@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "workspace/willDeleteFiles"
+  :params
+  'delete-files-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'file-operation-registration-options
+  :result
+  '(common-lisp:or workspace-edit lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message text-document/moniker
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to get the moniker of a symbol at a given text document position.
+The request parameter is of type {@link TextDocumentPositionParams}.
+The response is of type {@link Moniker Moniker[]} or `null`."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/moniker"
+  :params
+  'moniker-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array moniker)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'moniker-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array moniker)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/prepare-type-hierarchy
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to result a `TypeHierarchyItem` in a document at a given position.
+Can be used as an input to a subtypes or supertypes type hierarchy.
+
+@since 3.17.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/prepareTypeHierarchy"
+  :params
+  'type-hierarchy-prepare-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'type-hierarchy-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array type-hierarchy-item)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-request-message type-hierarchy/supertypes
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to resolve the supertypes for a given `TypeHierarchyItem`.
+
+@since 3.17.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "typeHierarchy/supertypes"
+  :params
+  'type-hierarchy-supertypes-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array type-hierarchy-item)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array type-hierarchy-item)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-request-message type-hierarchy/subtypes
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to resolve the subtypes for a given `TypeHierarchyItem`.
+
+@since 3.17.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "typeHierarchy/subtypes"
+  :params
+  'type-hierarchy-subtypes-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array type-hierarchy-item)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array type-hierarchy-item)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-request-message text-document/inline-value
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to provide inline values in a document. The request's parameter is of
+type {@link InlineValueParams}, the response is of type
+{@link InlineValue InlineValue[]} or a Thenable that resolves to such.
+
+@since 3.17.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/inlineValue"
+  :params
+  'inline-value-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array inline-value)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'inline-value-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array inline-value)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-request-message workspace/inline-value/refresh
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "@since 3.17.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "workspace/inlineValue/refresh"
+  :params
+  'common-lisp:nil
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'lem-language-server/protocol/type:lsp-null
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-request-message text-document/inlay-hint
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to provide inlay hints in a document. The request's parameter is of
+type {@link InlayHintsParams}, the response is of type
+{@link InlayHint InlayHint[]} or a Thenable that resolves to such.
+
+@since 3.17.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/inlayHint"
+  :params
+  'inlay-hint-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array inlay-hint)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'inlay-hint-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array inlay-hint)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-request-message inlay-hint/resolve
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to resolve additional properties for an inlay hint.
+The request's parameter is of type {@link InlayHint}, the response is
+of type {@link InlayHint} or a Thenable that resolves to such.
+
+@since 3.17.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "inlayHint/resolve"
+  :params
+  'inlay-hint
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'inlay-hint
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-request-message workspace/inlay-hint/refresh
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "@since 3.17.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "workspace/inlayHint/refresh"
+  :params
+  'common-lisp:nil
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'lem-language-server/protocol/type:lsp-null
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-request-message text-document/diagnostic
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The document diagnostic request definition.
+
+@since 3.17.0"
+  :error-data
+  'diagnostic-server-cancellation-data
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/diagnostic"
+  :params
+  'document-diagnostic-params
+  :partial-result
+  'document-diagnostic-report-partial-result
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'diagnostic-registration-options
+  :result
+  'document-diagnostic-report
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-request-message workspace/diagnostic
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The workspace diagnostic request definition.
+
+@since 3.17.0"
+  :error-data
+  'diagnostic-server-cancellation-data
+  :message-direction
+  "clientToServer"
+  :method
+  "workspace/diagnostic"
+  :params
+  'workspace-diagnostic-params
+  :partial-result
+  'workspace-diagnostic-report-partial-result
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'workspace-diagnostic-report
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-request-message workspace/diagnostic/refresh
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The diagnostic refresh request definition.
+
+@since 3.17.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "workspace/diagnostic/refresh"
+  :params
+  'common-lisp:nil
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'lem-language-server/protocol/type:lsp-null
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-request-message client/register-capability
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The `client/registerCapability` request is sent from the server to the client to register a new capability
+handler on the client side."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "client/registerCapability"
+  :params
+  'registration-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'lem-language-server/protocol/type:lsp-null
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message client/unregister-capability
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The `client/unregisterCapability` request is sent from the server to the client to unregister a previously registered capability
+handler on the client side."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "client/unregisterCapability"
+  :params
+  'unregistration-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'lem-language-server/protocol/type:lsp-null
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message initialize
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The initialize request is sent from the client to the server.
+It is sent once as the request after starting up the server.
+The requests parameter is of type {@link InitializeParams}
+the response if of type {@link InitializeResult} of a Thenable that
+resolves to such."
+  :error-data
+  'initialize-error
+  :message-direction
+  "clientToServer"
+  :method
+  "initialize"
+  :params
+  'initialize-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'initialize-result
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message shutdown
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A shutdown request is sent from the client to the server.
+It is sent once when the client decides to shutdown the
+server. The only notification that is sent after a shutdown request
+is the exit event."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "shutdown"
+  :params
+  'common-lisp:nil
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'lem-language-server/protocol/type:lsp-null
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message window/show-message-request
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The show message request is sent from the server to the client to show a message
+and a set of options actions to the user."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "window/showMessageRequest"
+  :params
+  'show-message-request-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  '(common-lisp:or message-action-item lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/will-save-wait-until
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A document will save request is sent from the client to the server before
+the document is actually saved. The request can return an array of TextEdits
+which will be applied to the text document before it is saved. Please note that
+clients might drop results if computing the text edits took too long or if a
+server constantly fails on this request. This is done to keep the save fast and
+reliable."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/willSaveWaitUntil"
+  :params
+  'will-save-text-document-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'text-document-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array text-edit)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/completion
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "Request to request completion at a given text document position. The request's
+parameter is of type {@link TextDocumentPosition} the response
+is of type {@link CompletionItem CompletionItem[]} or {@link CompletionList}
+or a Thenable that resolves to such.
+
+The request can delay the computation of the {@link CompletionItem.detail `detail`}
+and {@link CompletionItem.documentation `documentation`} properties to the `completionItem/resolve`
+request. However, properties that are needed for the initial sorting and filtering, like `sortText`,
+`filterText`, `insertText`, and `textEdit`, must not be changed during resolve."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/completion"
+  :params
+  'completion-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array completion-item)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'completion-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array completion-item) completion-list
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message completion-item/resolve
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "Request to resolve additional information for a given completion item.The request's
+parameter is of type {@link CompletionItem} the response
+is of type {@link CompletionItem} or a Thenable that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "completionItem/resolve"
+  :params
+  'completion-item
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'completion-item
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/hover
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "Request to request hover information at a given text document position. The request's
+parameter is of type {@link TextDocumentPosition} the response is of
+type {@link Hover} or a Thenable that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/hover"
+  :params
+  'hover-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'hover-registration-options
+  :result
+  '(common-lisp:or hover lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/signature-help
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  common-lisp:nil
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/signatureHelp"
+  :params
+  'signature-help-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'signature-help-registration-options
+  :result
+  '(common-lisp:or signature-help lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/definition
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to resolve the definition location of a symbol at a given text
+document position. The request's parameter is of type [TextDocumentPosition]
+(#TextDocumentPosition) the response is of either type {@link Definition}
+or a typed array of {@link DefinitionLink} or a Thenable that resolves
+to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/definition"
+  :params
+  'definition-params
+  :partial-result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array location)
+                   (lem-language-server/protocol/type:lsp-array definition-link))
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'definition-registration-options
+  :result
+  '(common-lisp:or definition (lem-language-server/protocol/type:lsp-array definition-link)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/references
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to resolve project-wide references for the symbol denoted
+by the given text document position. The request's parameter is of
+type {@link ReferenceParams} the response is of type
+{@link Location Location[]} or a Thenable that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/references"
+  :params
+  'reference-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array location)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'reference-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array location)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/document-highlight
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "Request to resolve a {@link DocumentHighlight} for a given
+text document position. The request's parameter is of type [TextDocumentPosition]
+(#TextDocumentPosition) the request response is of type [DocumentHighlight[]]
+(#DocumentHighlight) or a Thenable that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/documentHighlight"
+  :params
+  'document-highlight-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array document-highlight)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'document-highlight-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array document-highlight)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/document-symbol
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to list all symbols found in a given text document. The request's
+parameter is of type {@link TextDocumentIdentifier} the
+response is of type {@link SymbolInformation SymbolInformation[]} or a Thenable
+that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/documentSymbol"
+  :params
+  'document-symbol-params
+  :partial-result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array symbol-information)
+                   (lem-language-server/protocol/type:lsp-array document-symbol))
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'document-symbol-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array symbol-information)
+                   (lem-language-server/protocol/type:lsp-array document-symbol)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/code-action
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to provide commands for the given text document and range."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/codeAction"
+  :params
+  'code-action-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array (common-lisp:or command code-action))
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'code-action-registration-options
+  :result
+  '(common-lisp:or
+    (lem-language-server/protocol/type:lsp-array (common-lisp:or command code-action))
+    lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message code-action/resolve
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "Request to resolve additional information for a given code action.The request's
+parameter is of type {@link CodeAction} the response
+is of type {@link CodeAction} or a Thenable that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "codeAction/resolve"
+  :params
+  'code-action
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'code-action
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message workspace/symbol
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to list project-wide symbols matching the query string given
+by the {@link WorkspaceSymbolParams}. The response is
+of type {@link SymbolInformation SymbolInformation[]} or a Thenable that
+resolves to such.
+
+@since 3.17.0 - support for WorkspaceSymbol in the returned data. Clients
+ need to advertise support for WorkspaceSymbols via the client capability
+ `workspace.symbol.resolveSupport`.
+"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "workspace/symbol"
+  :params
+  'workspace-symbol-params
+  :partial-result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array symbol-information)
+                   (lem-language-server/protocol/type:lsp-array workspace-symbol))
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'workspace-symbol-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array symbol-information)
+                   (lem-language-server/protocol/type:lsp-array workspace-symbol)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.17.0 - support for WorkspaceSymbol in the returned data. Clients
+need to advertise support for WorkspaceSymbols via the client capability
+`workspace.symbol.resolveSupport`.")
+
+(lem-language-server/protocol/type:define-request-message workspace-symbol/resolve
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to resolve the range inside the workspace
+symbol's location.
+
+@since 3.17.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "workspaceSymbol/resolve"
+  :params
+  'workspace-symbol
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'workspace-symbol
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-request-message text-document/code-lens
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to provide code lens for the given text document."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/codeLens"
+  :params
+  'code-lens-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array code-lens)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'code-lens-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array code-lens)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message code-lens/resolve
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to resolve a command for a given code lens."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "codeLens/resolve"
+  :params
+  'code-lens
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'code-lens
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message workspace/code-lens/refresh
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to refresh all code actions
+
+@since 3.16.0"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "workspace/codeLens/refresh"
+  :params
+  'common-lisp:nil
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'lem-language-server/protocol/type:lsp-null
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-request-message text-document/document-link
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to provide document links"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/documentLink"
+  :params
+  'document-link-params
+  :partial-result
+  '(lem-language-server/protocol/type:lsp-array document-link)
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'document-link-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array document-link)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message document-link/resolve
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "Request to resolve additional information for a given document link. The request's
+parameter is of type {@link DocumentLink} the response
+is of type {@link DocumentLink} or a Thenable that resolves to such."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "documentLink/resolve"
+  :params
+  'document-link
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'document-link
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/formatting
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to to format a whole document."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/formatting"
+  :params
+  'document-formatting-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'document-formatting-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array text-edit)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/range-formatting
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to to format a range in a document."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/rangeFormatting"
+  :params
+  'document-range-formatting-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'document-range-formatting-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array text-edit)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/on-type-formatting
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to format a document on type."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/onTypeFormatting"
+  :params
+  'document-on-type-formatting-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'document-on-type-formatting-registration-options
+  :result
+  '(common-lisp:or (lem-language-server/protocol/type:lsp-array text-edit)
+                   lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/rename
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to rename a symbol."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/rename"
+  :params
+  'rename-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'rename-registration-options
+  :result
+  '(common-lisp:or workspace-edit lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message text-document/prepare-rename
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request to test and perform the setup necessary for a rename.
+
+@since 3.16 - support for default behavior"
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/prepareRename"
+  :params
+  'prepare-rename-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  '(common-lisp:or prepare-rename-result lem-language-server/protocol/type:lsp-null)
+  :since
+  "3.16 - support for default behavior")
+
+(lem-language-server/protocol/type:define-request-message workspace/execute-command
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request send from the client to the server to execute a command. The request might return
+a workspace edit which the client will apply to the workspace."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "workspace/executeCommand"
+  :params
+  'execute-command-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'execute-command-registration-options
+  :result
+  '(common-lisp:or lsp-any lem-language-server/protocol/type:lsp-null)
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-request-message workspace/apply-edit
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A request sent from the server to the client to modified certain resources."
+  :error-data
+  'common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "workspace/applyEdit"
+  :params
+  'apply-workspace-edit-params
+  :partial-result
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :result
+  'apply-workspace-edit-result
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message workspace/did-change-workspace-folders
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The `workspace/didChangeWorkspaceFolders` notification is sent from the client to the server when the workspace
+folder configuration changes."
+  :message-direction
+  "clientToServer"
+  :method
+  "workspace/didChangeWorkspaceFolders"
+  :params
+  'did-change-workspace-folders-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message window/work-done-progress/cancel
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The `window/workDoneProgress/cancel` notification is sent from  the client to the server to cancel a progress
+initiated on the server side."
+  :message-direction
+  "clientToServer"
+  :method
+  "window/workDoneProgress/cancel"
+  :params
+  'work-done-progress-cancel-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message workspace/did-create-files
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The did create files notification is sent from the client to the server when
+files were created from within the client.
+
+@since 3.16.0"
+  :message-direction
+  "clientToServer"
+  :method
+  "workspace/didCreateFiles"
+  :params
+  'create-files-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'file-operation-registration-options
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-notification-message workspace/did-rename-files
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The did rename files notification is sent from the client to the server when
+files were renamed from within the client.
+
+@since 3.16.0"
+  :message-direction
+  "clientToServer"
+  :method
+  "workspace/didRenameFiles"
+  :params
+  'rename-files-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'file-operation-registration-options
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-notification-message workspace/did-delete-files
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The will delete files request is sent from the client to the server before files are actually
+deleted as long as the deletion is triggered from within the client.
+
+@since 3.16.0"
+  :message-direction
+  "clientToServer"
+  :method
+  "workspace/didDeleteFiles"
+  :params
+  'delete-files-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'file-operation-registration-options
+  :since
+  "3.16.0")
+
+(lem-language-server/protocol/type:define-notification-message notebook-document/did-open
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A notification sent when a notebook opens.
+
+@since 3.17.0"
+  :message-direction
+  "clientToServer"
+  :method
+  "notebookDocument/didOpen"
+  :params
+  'did-open-notebook-document-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  "notebookDocument/sync"
+  :registration-options
+  'common-lisp:nil
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-notification-message notebook-document/did-change
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "notebookDocument/didChange"
+  :params
+  'did-change-notebook-document-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  "notebookDocument/sync"
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message notebook-document/did-save
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A notification sent when a notebook document is saved.
+
+@since 3.17.0"
+  :message-direction
+  "clientToServer"
+  :method
+  "notebookDocument/didSave"
+  :params
+  'did-save-notebook-document-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  "notebookDocument/sync"
+  :registration-options
+  'common-lisp:nil
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-notification-message notebook-document/did-close
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A notification sent when a notebook closes.
+
+@since 3.17.0"
+  :message-direction
+  "clientToServer"
+  :method
+  "notebookDocument/didClose"
+  :params
+  'did-close-notebook-document-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  "notebookDocument/sync"
+  :registration-options
+  'common-lisp:nil
+  :since
+  "3.17.0")
+
+(lem-language-server/protocol/type:define-notification-message initialized
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The initialized notification is sent from the client to the
+server after the client is fully initialized and the server
+is allowed to send requests from the server to the client."
+  :message-direction
+  "clientToServer"
+  :method
+  "initialized"
+  :params
+  'initialized-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message exit
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The exit event is sent from the client to the server to
+ask the server to exit its process."
+  :message-direction
+  "clientToServer"
+  :method
+  "exit"
+  :params
+  'common-lisp:nil
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message workspace/did-change-configuration
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The configuration change notification is sent from the client to the server
+when the client's configuration has changed. The notification contains
+the changed configuration as defined by the language client."
+  :message-direction
+  "clientToServer"
+  :method
+  "workspace/didChangeConfiguration"
+  :params
+  'did-change-configuration-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'did-change-configuration-registration-options
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message window/show-message
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The show message notification is sent from a server to a client to ask
+the client to display a particular message in the user interface."
+  :message-direction
+  "serverToClient"
+  :method
+  "window/showMessage"
+  :params
+  'show-message-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message window/log-message
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The log message notification is sent from the server to the client to ask
+the client to log a particular message."
+  :message-direction
+  "serverToClient"
+  :method
+  "window/logMessage"
+  :params
+  'log-message-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message telemetry/event
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The telemetry event notification is sent from the server to the client to ask
+the client to log telemetry data."
+  :message-direction
+  "serverToClient"
+  :method
+  "telemetry/event"
+  :params
+  'lsp-any
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message text-document/did-open
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The document open notification is sent from the client to the server to signal
+newly opened text documents. The document's truth is now managed by the client
+and the server must not try to read the document's truth using the document's
+uri. Open in this sense means it is managed by the client. It doesn't necessarily
+mean that its content is presented in an editor. An open notification must not
+be sent more than once without a corresponding close notification send before.
+This means open and close notification must be balanced and the max open count
+is one."
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/didOpen"
+  :params
+  'did-open-text-document-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'text-document-registration-options
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message text-document/did-change
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The document change notification is sent from the client to the server to signal
+changes to a text document."
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/didChange"
+  :params
+  'did-change-text-document-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'text-document-change-registration-options
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message text-document/did-close
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The document close notification is sent from the client to the server when
+the document got closed in the client. The document's truth now exists where
+the document's uri points to (e.g. if the document's uri is a file uri the
+truth now exists on disk). As with the open notification the close notification
+is about managing the document's content. Receiving a close notification
+doesn't mean that the document was open in an editor before. A close
+notification requires a previous open notification to be sent."
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/didClose"
+  :params
+  'did-close-text-document-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'text-document-registration-options
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message text-document/did-save
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The document save notification is sent from the client to the server when
+the document got saved in the client."
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/didSave"
+  :params
+  'did-save-text-document-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'text-document-save-registration-options
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message text-document/will-save
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "A document will save notification is sent from the client to the server before
+the document is actually saved."
+  :message-direction
+  "clientToServer"
+  :method
+  "textDocument/willSave"
+  :params
+  'will-save-text-document-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'text-document-registration-options
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message workspace/did-change-watched-files
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "The watched files notification is sent from the client to the server when
+the client detects changes to file watched by the language client."
+  :message-direction
+  "clientToServer"
+  :method
+  "workspace/didChangeWatchedFiles"
+  :params
+  'did-change-watched-files-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'did-change-watched-files-registration-options
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message text-document/publish-diagnostics
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  "Diagnostics notification are sent from the server to the client to signal
+results of validation runs."
+  :message-direction
+  "serverToClient"
+  :method
+  "textDocument/publishDiagnostics"
+  :params
+  'publish-diagnostics-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message /set-trace
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  common-lisp:nil
+  :message-direction
+  "clientToServer"
+  :method
+  "$/setTrace"
+  :params
+  'set-trace-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message /log-trace
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  common-lisp:nil
+  :message-direction
+  "serverToClient"
+  :method
+  "$/logTrace"
+  :params
+  'log-trace-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message /cancel-request
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  common-lisp:nil
+  :message-direction
+  "both"
+  :method
+  "$/cancelRequest"
+  :params
+  'cancel-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)
+
+(lem-language-server/protocol/type:define-notification-message /progress
+    common-lisp:nil
+  :deprecated
+  common-lisp:nil
+  :documentation
+  common-lisp:nil
+  :message-direction
+  "both"
+  :method
+  "$/progress"
+  :params
+  'progress-params
+  :proposed
+  common-lisp:nil
+  :registration-method
+  common-lisp:nil
+  :registration-options
+  'common-lisp:nil
+  :since
+  common-lisp:nil)

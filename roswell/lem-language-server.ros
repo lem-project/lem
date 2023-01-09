@@ -5,15 +5,30 @@ exec ros -Q -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  #+quicklisp(ql:quickload '(:swank :lem-language-server) :silent t)
+  #+quicklisp(ql:quickload '(:swank :lem-language-server :command-line-arguments) :silent t)
   )
 
 (defpackage :ros.script.lem-language-server.3881471585
   (:use :cl))
 (in-package :ros.script.lem-language-server.3881471585)
 
+(defparameter *command-line-spec*
+  '((("tcp") :type boolean :optional t)
+    (("stdio") :type boolean :optional t)
+    (("port") :type integer :optional t)))
+
+(defun entry-point (&key tcp stdio port)
+  (declare (ignore stdio))
+  (cond (tcp
+         (lem-language-server:start-tcp-server port))
+        (t
+         (lem-language-server:start-stdio-server))))
+
 (defun main (&rest argv)
   (declare (ignorable argv))
-  (log:config :sane :daily "~/lem-language-server.log" :debug)
-  (lem-language-server::start-stdio-server))
+  (command-line-arguments:handle-command-line
+   *command-line-spec*
+   'entry-point
+   :command-line argv))
+
 ;;; vim: set ft=lisp lisp:

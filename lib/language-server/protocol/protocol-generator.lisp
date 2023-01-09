@@ -188,7 +188,7 @@
                     "serverToClient"
                     "both")
                   :test #'string=))
-  (unimplemented))
+  string)
 
 (defun parse-meta-data (hash)
   (check-type hash hash-table)
@@ -244,7 +244,38 @@
 
 (defun parse-request (hash)
   (check-type hash hash-table)
-  (unimplemented))
+  (with-hash ((deprecated "deprecated")
+              (documentation "documentation")
+              (error-data "errorData")
+              (message-direction "messageDirection" :required t)
+              (method "method" :required t)
+              (params "params")
+              (partial-result "partialResult")
+              (proposed "proposed")
+              (registration-method "registrationMethod")
+              (registration-options "registrationOptions")
+              (result "result" :required t)
+              (since "since"))
+      hash
+    (let ((method-name (symbolize method))
+          (params (when params
+                    (if (vectorp params)
+                        `(or ,@(map 'list #'parse-type params))
+                        (parse-type params)))))
+      (add-export method-name)
+      `(define-request-message ,method-name ()
+         :deprecated ,deprecated
+         :documentation ,documentation
+         :error-data ',(when error-data (parse-type error-data))
+         :message-direction ,(parse-message-direction message-direction)
+         :method ,method
+         :params ',params
+         :partial-result ',(when partial-result (parse-type partial-result))
+         :proposed ,proposed
+         :registration-method ,registration-method
+         :registration-options ',(when registration-options (parse-type registration-options))
+         :result ',(parse-type result)
+         :since ,since))))
 
 (defun parse-string-literal-type (hash)
   (check-type hash hash-table)
@@ -378,18 +409,21 @@
 (defun generate (meta-model-file output-file package-name)
   (with-hash ((enumerations "enumerations" :required t)
               (meta-data "metaData" :required t)
-              (notifications "notifications" :required t) ; TODO
-              (requests "requests" :required t)           ; TODO
+              (notifications "notifications" :required t)
+              (requests "requests" :required t)
               (structures "structures" :required t)
               (type-aliases "typeAliases" :required t))
       (read-meta-model meta-model-file)
-    (declare (ignore requests notifications))
+    (declare (ignore notifications))
     (let* ((*protocol-package* (find-or-make-package package-name))
            (*exports* '(:*version*))
            (version (parse-meta-data meta-data))
            (enumerations (map 'list #'parse-enumeration enumerations))
            (structures (map 'list #'parse-structure structures))
-           (type-aliases (map 'list #'parse-type-alias type-aliases)))
+           (type-aliases (map 'list #'parse-type-alias type-aliases))
+           (requests (map 'list #'parse-request requests))
+           ;; (notifications (map 'list #'parse-notification notifications))
+           )
       (declare (ignore version))
       (with-open-file (output-stream output-file
                                      :direction :output
@@ -407,7 +441,8 @@
         (pretty-print `(in-package ,package-name) output-stream)
         (mapc (rcurry #'newline-and-pretty-print output-stream) enumerations)
         (mapc (rcurry #'newline-and-pretty-print output-stream) structures)
-        (mapc (rcurry #'newline-and-pretty-print output-stream) type-aliases))))
+        (mapc (rcurry #'newline-and-pretty-print output-stream) type-aliases)
+        (mapc (rcurry #'newline-and-pretty-print output-stream) requests))))
   (format t "~&generated ~S~%" output-file)
   (values))
 

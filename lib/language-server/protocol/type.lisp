@@ -20,6 +20,8 @@
            :define-enum
            :define-type-alias
            :define-class
+           :request-message
+           :define-request-message
            :protocol-class-slots
            :pascal-to-lisp-case
            :lisp-to-pascal-case
@@ -91,16 +93,20 @@
   t)
 
 (defclass protocol-slot (c2mop:standard-direct-slot-definition)
-  ((optional :initarg :optional
-             :initform nil
-             :reader protocol-slot-optional-p)
-   (deprecated :initarg :deprecated
-               :initform nil
-               :reader protocol-slot-deprecated)
-   (proposed :initarg :proposed
-             :reader protocol-slot-proposed)
-   (since :initarg :since
-          :reader protocol-slot-since)))
+  ((optional
+    :initarg :optional
+    :initform nil
+    :reader protocol-slot-optional-p)
+   (deprecated
+    :initarg :deprecated
+    :initform nil
+    :reader protocol-slot-deprecated)
+   (proposed
+    :initarg :proposed
+    :reader protocol-slot-proposed)
+   (since
+    :initarg :since
+    :reader protocol-slot-since)))
 
 (defmethod c2mop:direct-slot-definition-class ((class protocol-class) &rest initargs)
   (declare (ignore initargs))
@@ -173,11 +179,59 @@
      ,@args
      (:metaclass protocol-class)))
 
+(defclass request-message ()
+  ((deprecated
+    :initarg :deprecated
+    :reader request-message-deprecated)
+   (documentation
+    :initarg :documentation
+    :reader request-message-documentation)
+   (error-data
+    :initarg :error-data
+    :reader request-message-error-data)
+   (message-direction
+    :initarg :message-direction
+    :reader request-message-message-direction)
+   (method
+    :initarg :method
+    :reader request-message-method)
+   (params
+    :initarg :params
+    :reader request-message-params)
+   (partial-result
+    :initarg :partial-result
+    :reader request-message-partial-result)
+   (proposed
+    :initarg :proposed
+    :reader request-message-proposed)
+   (registration-method
+    :initarg :registration-method
+    :reader request-message-registration-method)
+   (registration-options
+    :initarg :registration-options
+    :reader request-message-registration-options)
+   (result
+    :initarg :result
+    :reader request-message-result)
+   (since
+    :initarg :since
+    :reader request-message-since)))
+
+(defmacro define-request-message (name () &body default-initargs)
+  `(defclass ,name (request-message)
+     ()
+     (:default-initargs ,@default-initargs)))
+
+(defun param-case (string)
+  (format nil "~{~A~^/~}"
+          (loop :for string-part :in (split-sequence:split-sequence #\/ string)
+                :collect (cl-change-case:param-case string-part))))
+
 (defun pascal-to-lisp-case (string)
   (string-upcase
    (if (alexandria:starts-with-subseq "_" string)
-       (uiop:strcat "_" (cl-change-case:param-case string))
-       (cl-change-case:param-case string))))
+       (uiop:strcat "_" (param-case string))
+       (param-case string))))
 
 (defun lisp-to-pascal-case (string)
   (if (alexandria:starts-with-subseq "_" string)

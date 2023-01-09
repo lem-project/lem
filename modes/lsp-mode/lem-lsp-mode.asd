@@ -7,7 +7,8 @@
                "jsonrpc/transport/stdio"
                "jsonrpc/transport/tcp"
                "quri"
-               "trivia")
+               "trivia"
+               "lem-language-server")
   :serial t
   :components ((:file "utils")
                (:file "async-process-stream")

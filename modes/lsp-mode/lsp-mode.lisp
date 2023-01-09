@@ -1,13 +1,16 @@
 (defpackage :lem-lsp-mode/lsp-mode
-  (:use :cl :lem :alexandria)
+  (:use :cl
+        :lem
+        :alexandria
+        :lem-language-server/protocol/lsp-type
+        :lem-language-server/protocol/converter
+        :lem-language-server/protocol/yason-utils)
   (:shadow :execute-command)
   (:import-from :lem-lsp-utils)
   (:import-from :lem-lsp-mode/utils)
   (:import-from :lem-lsp-mode/request)
   (:import-from :lem-lsp-mode/client)
   (:import-from :lem-lsp-mode/context-menu)
-  (:local-nicknames (:protocol :lem-lsp-utils/protocol-3-15))
-  (:local-nicknames (:json :lem-lsp-utils/json))
   (:local-nicknames (:utils :lem-lsp-mode/utils))
   (:local-nicknames (:request :lem-lsp-mode/request))
   (:local-nicknames (:client :lem-lsp-mode/client))
@@ -26,9 +29,9 @@
                                    "client-capabilities.json"))))
 
 (defun client-capabilities ()
-  (json:coerce-json
-   (yason:parse *client-capabilities-text* :json-booleans-as-symbols t)
-   'protocol:client-capabilities))
+  (convert-from-json
+   (parse-json *client-capabilities-text*)
+   'lsp:client-capabilities))
 
 ;;;
 (defvar *language-id-server-info-map* (make-hash-table :test 'equal))
@@ -255,6 +258,7 @@
   (buffer-modified-tick buffer))
 
 (defun buffer-uri (buffer)
+  ;; TODO: lem-language-server::buffer-uri
   (lem-lsp-utils/uri:pathname-to-uri (buffer-filename buffer)))
 
 (defun get-workspace-from-point (point)
@@ -337,8 +341,8 @@
 (defun get-completion-trigger-characters (workspace)
   (convert-to-characters
    (handler-case
-       (protocol:completion-options-trigger-characters
-        (protocol:server-capabilities-completion-provider
+       (lsp:completion-options-trigger-characters
+        (lsp:server-capabilities-completion-provider
          (workspace-server-capabilities workspace)))
      (unbound-slot ()
        nil))))
@@ -346,8 +350,8 @@
 (defun get-signature-help-trigger-characters (workspace)
   (convert-to-characters
    (handler-case
-       (protocol:signature-help-options-trigger-characters
-        (protocol:server-capabilities-signature-help-provider
+       (lsp:signature-help-options-trigger-characters
+        (lsp:server-capabilities-signature-help-provider
          (workspace-server-capabilities workspace)))
      (unbound-slot ()
        nil))))
@@ -360,19 +364,19 @@
 (defun buffer-change-event-to-content-change-event (point arg)
   (labels ((inserting-content-change-event (string)
              (let ((position (point-to-lsp-position point)))
-               (json:make-json :range (make-instance 'protocol:range
-                                                     :start position
-                                                     :end position)
-                               :range-length 0
-                               :text string)))
+               (make-lsp-map :range (make-instance 'lsp:range
+                                                   :start position
+                                                   :end position)
+                             :range-length 0
+                             :text string)))
            (deleting-content-change-event (count)
              (with-point ((end point))
                (character-offset end count)
-               (json:make-json :range (make-instance 'protocol:range
-                                                     :start (point-to-lsp-position point)
-                                                     :end (point-to-lsp-position end))
-                               :range-length (count-characters point end)
-                               :text ""))))
+               (make-lsp-map :range (lem-language-server/protocol/utils:points-to-lsp-range
+                                     (point-to-lsp-position point)
+                                     (point-to-lsp-position end))
+                             :range-length (count-characters point end)
+                             :text ""))))
     (etypecase arg
       (character
        (inserting-content-change-event (string arg)))
@@ -384,7 +388,7 @@
 (defun handle-change-buffer (point arg)
   (let ((buffer (point-buffer point))
         (change-event (buffer-change-event-to-content-change-event point arg)))
-    (text-document/did-change buffer (json:json-array change-event))))
+    (text-document/did-change buffer (make-lsp-array change-event))))
 
 (defun assign-workspace-to-buffer (buffer workspace)
   (setf (buffer-workspace buffer) workspace)
@@ -462,33 +466,27 @@
       (ensure-lsp-buffer buffer))))
 
 (defun point-to-lsp-position (point)
-  (make-instance 'protocol:position
-                 :line (1- (line-number-at-point point))
-                 :character (point-charpos point)))
+  ;; TODO: inline function
+  (lem-language-server/protocol/utils:point-to-lsp-position point))
 
 (defun move-to-lsp-position (point position)
-  (buffer-start point)
-  (or (line-offset point
-                   (protocol:position-line position)
-                   (protocol:position-character position))
-      (buffer-end point)))
+  ;; TODO: inline function
+  (lem-language-server/protocol/utils:move-to-lsp-position point position))
 
 (defun make-lsp-range (start end)
-  (make-instance 'protocol:range
-                 :start (point-to-lsp-position start)
-                 :end (point-to-lsp-position end)))
+  ;; TODO: inline function
+  (lem-language-server/protocol/utils:points-to-lsp-range start end))
 
 (defun buffer-to-text-document-item (buffer)
-  (make-instance 'protocol:text-document-item
+  (make-instance 'lsp:text-document-item
                  :uri (buffer-uri buffer)
                  :language-id (buffer-language-id buffer)
                  :version (buffer-version buffer)
                  :text (buffer-text buffer)))
 
 (defun make-text-document-identifier (buffer)
-  (make-instance
-   'protocol:text-document-identifier
-   :uri (buffer-uri buffer)))
+  (make-instance 'lsp:text-document-identifier
+                 :uri (buffer-uri buffer)))
 
 (defun make-text-document-position-arguments (point)
   (list :text-document (make-text-document-identifier (point-buffer point))
@@ -499,7 +497,7 @@
     (find-file-buffer pathname)))
 
 (defun get-buffer-from-text-document-identifier (text-document-identifier)
-  (let ((uri (protocol:text-document-identifier-uri text-document-identifier)))
+  (let ((uri (lsp:text-document-identifier-uri text-document-identifier)))
     (find-buffer-from-uri uri)))
 
 (defun apply-text-edits (buffer text-edits)
@@ -508,10 +506,10 @@
              (with-point ((start (buffer-point buffer) :left-inserting)
                           (end (buffer-point buffer) :left-inserting))
                (do-sequence (text-edit text-edits)
-                 (let ((range (protocol:text-edit-range text-edit))
-                       (new-text (protocol:text-edit-new-text text-edit)))
-                   (move-to-lsp-position start (protocol:range-start range))
-                   (move-to-lsp-position end (protocol:range-end range))
+                 (let ((range (lsp:text-edit-range text-edit))
+                       (new-text (lsp:text-edit-new-text text-edit)))
+                   (move-to-lsp-position start (lsp:range-start range))
+                   (move-to-lsp-position end (lsp:range-end range))
                    (push (list (copy-point start)
                                (copy-point end)
                                new-text)
@@ -528,19 +526,19 @@
 
 (defgeneric apply-document-change (document-change))
 
-(defmethod apply-document-change ((document-change protocol:text-document-edit))
+(defmethod apply-document-change ((document-change lsp:text-document-edit))
   (let* ((buffer
            (get-buffer-from-text-document-identifier
-            (protocol:text-document-edit-text-document document-change))))
-    (apply-text-edits buffer (protocol:text-document-edit-edits document-change))))
+            (lsp:text-document-edit-text-document document-change))))
+    (apply-text-edits buffer (lsp:text-document-edit-edits document-change))))
 
-(defmethod apply-document-change ((document-change protocol:create-file))
+(defmethod apply-document-change ((document-change lsp:create-file))
   (error "createFile is not yet supported"))
 
-(defmethod apply-document-change ((document-change protocol:rename-file))
+(defmethod apply-document-change ((document-change lsp:rename-file))
   (error "renameFile is not yet supported"))
 
-(defmethod apply-document-change ((document-change protocol:delete-file))
+(defmethod apply-document-change ((document-change lsp:delete-file))
   (error "deleteFile is not yet supported"))
 
 (defun apply-workspace-edit (workspace-edit)
@@ -551,10 +549,10 @@
              (declare (ignore changes))
              (error "Not yet implemented")))
     (if-let ((document-changes (handler-case
-                                   (protocol:workspace-edit-document-changes workspace-edit)
+                                   (lsp:workspace-edit-document-changes workspace-edit)
                                  (unbound-slot () nil))))
       (apply-document-changes document-changes)
-      (when-let ((changes (handler-case (protocol:workspace-edit-changes workspace-edit)
+      (when-let ((changes (handler-case (lsp:workspace-edit-changes workspace-edit)
                             (unbound-slot () nil))))
         (apply-changes changes)))))
 
@@ -566,19 +564,19 @@
    (make-instance
     'request:initialize-request
     :params (apply #'make-instance
-                   'protocol:initialize-params
+                   'lsp:initialize-params
                    :process-id (utils:get-pid)
-                   :client-info (json:make-json :name "lem" #|:version "0.0.0"|#)
+                   :client-info (make-lsp-map :name "lem" #|:version "0.0.0"|#)
                    :root-uri (workspace-root-uri workspace)
                    :capabilities (client-capabilities)
                    :trace "off"
-                   :workspace-folders (json:json-null)
+                   :workspace-folders +null+
                    (when-let ((value (spec-initialization-options (workspace-spec workspace))))
                      (list :initialization-options value))))
    :then (lambda (initialize-result)
            (setf (workspace-server-capabilities workspace)
-                 (protocol:initialize-result-capabilities initialize-result))
-           (handler-case (protocol:initialize-result-server-info initialize-result)
+                 (lsp:initialize-result-capabilities initialize-result))
+           (handler-case (lsp:initialize-result-server-info initialize-result)
              (unbound-slot () nil)
              (:no-error (server-info)
                (setf (workspace-server-info workspace)
@@ -599,18 +597,18 @@
 
 (defun window/show-message (params)
   (request::do-request-log "window/showMessage" params :from :server)
-  (let* ((params (json:coerce-json params 'protocol:show-message-params))
+  (let* ((params (convert-from-json params 'lsp:show-message-params))
          (text (format nil "~A: ~A"
-                       (switch ((protocol:show-message-params-type params) :test #'=)
-                         (protocol:message-type.error
+                       (switch ((lsp:show-message-params-type params) :test #'=)
+                         (lsp:message-type-error
                           "Error")
-                         (protocol:message-type.warning
+                         (lsp:message-type-warning
                           "Warning")
-                         (protocol:message-type.info
+                         (lsp:message-type-info
                           "Info")
-                         (protocol:message-type.log
+                         (lsp:message-type-log
                           "Log"))
-                       (protocol:show-message-params-message params))))
+                       (lsp:show-message-params-message params))))
     (send-event (lambda ()
                   (display-popup-message text
                                          :style '(:gravity :top)
@@ -622,7 +620,7 @@
   (request:request
    (workspace-client (buffer-workspace buffer))
    (make-instance 'request:text-document-did-open
-                  :params (make-instance 'protocol:did-open-text-document-params
+                  :params (make-instance 'lsp:did-open-text-document-params
                                          :text-document (buffer-to-text-document-item buffer)))))
 
 (defun text-document/did-change (buffer content-changes)
@@ -630,22 +628,22 @@
    (workspace-client (buffer-workspace buffer))
    (make-instance
     'request:text-document-did-change
-    :params (make-instance 'protocol:did-change-text-document-params
-                           :text-document (make-instance 'protocol:versioned-text-document-identifier
+    :params (make-instance 'lsp:did-change-text-document-params
+                           :text-document (make-instance 'lsp:versioned-text-document-identifier
                                                          :version (buffer-version buffer)
                                                          :uri (buffer-uri buffer))
                            :content-changes content-changes))))
 
 (defun provide-did-save-text-document-p (workspace)
-  (let ((sync (protocol:server-capabilities-text-document-sync
+  (let ((sync (lsp:server-capabilities-text-document-sync
                (workspace-server-capabilities workspace))))
     (etypecase sync
       (number
        (member sync
-               (list protocol:text-document-sync-kind.full
-                     protocol:text-document-sync-kind.incremental)))
-      (protocol:text-document-sync-options
-       (handler-case (protocol:text-document-sync-options-save sync)
+               (list lsp:text-document-sync-kind-full
+                     lsp:text-document-sync-kind-incremental)))
+      (lsp:text-document-sync-options
+       (handler-case (lsp:text-document-sync-options-save sync)
          (unbound-slot ()
            nil))))))
 
@@ -654,7 +652,7 @@
     (request:request
      (workspace-client (buffer-workspace buffer))
      (make-instance 'request:text-document-did-save
-                    :params (make-instance 'protocol:did-save-text-document-params
+                    :params (make-instance 'lsp:did-save-text-document-params
                                            :text-document (make-text-document-identifier buffer)
                                            :text (buffer-text buffer))))))
 
@@ -662,7 +660,7 @@
   (request:request
    (workspace-client (buffer-workspace buffer))
    (make-instance 'request:text-document-did-close
-                  :params (make-instance 'protocol:did-close-text-document-params
+                  :params (make-instance 'lsp:did-close-text-document-params
                                          :text-document (make-text-document-identifier buffer)))))
 
 ;;; publishDiagnostics
@@ -685,13 +683,13 @@
 
 (defun diagnostic-severity-attribute (diagnostic-severity)
   (switch (diagnostic-severity :test #'=)
-    (protocol:diagnostic-severity.error
+    (lsp:diagnostic-severity-error
      'diagnostic-error-attribute)
-    (protocol:diagnostic-severity.warning
+    (lsp:diagnostic-severity-warning
      'diagnostic-warning-attribute)
-    (protocol:diagnostic-severity.information
+    (lsp:diagnostic-severity-information
      'diagnostic-information-attribute)
-    (protocol:diagnostic-severity.hint
+    (lsp:diagnostic-severity-hint
      'diagnostic-hint-attribute)))
 
 (defstruct diagnostic
@@ -734,9 +732,9 @@
 (defun highlight-diagnostic (buffer diagnostic)
   (with-point ((start (buffer-point buffer))
                (end (buffer-point buffer)))
-    (let ((range (protocol:diagnostic-range diagnostic)))
-      (move-to-lsp-position start (protocol:range-start range))
-      (move-to-lsp-position end (protocol:range-end range))
+    (let ((range (lsp:diagnostic-range diagnostic)))
+      (move-to-lsp-position start (lsp:range-start range))
+      (move-to-lsp-position end (lsp:range-end range))
       (when (point= start end)
         ;; XXX: gopls用
         ;; func main() {
@@ -747,7 +745,7 @@
             (character-offset start -1)
             (character-offset end 1)))
       (let ((overlay (make-overlay start end
-                                   (handler-case (protocol:diagnostic-severity diagnostic)
+                                   (handler-case (lsp:diagnostic-severity diagnostic)
                                      (unbound-slot ()
                                        'diagnostic-error-attribute)
                                      (:no-error (severity)
@@ -756,13 +754,13 @@
                      'diagnostic
                      (make-diagnostic :buffer buffer
                                       :position (point-to-xref-position start)
-                                      :message (protocol:diagnostic-message diagnostic)))
+                                      :message (lsp:diagnostic-message diagnostic)))
         (push overlay (buffer-diagnostic-overlays buffer))))))
 
 (defun highlight-diagnostics (params)
-  (when-let ((buffer (find-buffer-from-uri (protocol:publish-diagnostics-params-uri params))))
+  (when-let ((buffer (find-buffer-from-uri (lsp:publish-diagnostics-params-uri params))))
     (reset-buffer-diagnostic buffer)
-    (do-sequence (diagnostic (protocol:publish-diagnostics-params-diagnostics params))
+    (do-sequence (diagnostic (lsp:publish-diagnostics-params-diagnostics params))
       (highlight-diagnostic buffer diagnostic))
     (setf (buffer-diagnostic-idle-timer buffer)
           (start-idle-timer 1000 t #'popup-diagnostic nil "lsp-diagnostic"))))
@@ -777,7 +775,7 @@
 
 (defun text-document/publish-diagnostics (params)
   (request::do-request-log "textDocument/publishDiagnostics" params :from :server)
-  (let ((params (json:coerce-json params 'protocol:publish-diagnostics-params)))
+  (let ((params (convert-from-json params 'lsp:publish-diagnostics-params)))
     (send-event (lambda () (highlight-diagnostics params)))))
 
 (define-command lsp-document-diagnostics () ()
@@ -822,27 +820,27 @@
   (flet ((marked-string-to-string (marked-string)
            (if (stringp marked-string)
                marked-string
-               (or (json:json-get marked-string "value")
+               (or (get-map marked-string "value")
                    ""))))
-    (let ((contents (protocol:hover-contents hover)))
+    (let ((contents (lsp:hover-contents hover)))
       (cond
         ;; MarkedString
-        ((typep contents 'protocol::marked-string)
+        ((typep contents 'lsp:marked-string)
          (marked-string-to-string contents))
         ;; MarkedString[]
-        ((json:json-array-p contents)
+        ((lsp-array-p contents)
          (with-output-to-string (out)
            (do-sequence (content contents)
              (write-string (marked-string-to-string content)
                            out))))
         ;; MarkupContent
-        ((typep contents 'protocol:markup-content)
-         (protocol:markup-content-value contents))
+        ((typep contents 'lsp:markup-content)
+         (lsp:markup-content-value contents))
         (t
          "")))))
 
 (defun provide-hover-p (workspace)
-  (handler-case (protocol:server-capabilities-hover-provider
+  (handler-case (lsp:server-capabilities-hover-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
@@ -854,7 +852,7 @@
                (workspace-client workspace)
                (make-instance 'request:hover-request
                               :params (apply #'make-instance
-                                             'protocol:hover-params
+                                             'lsp:hover-params
                                              (make-text-document-position-arguments point))))))
         (when result
           (hover-to-string result))))))
@@ -879,8 +877,8 @@
     :reader completion-item-sort-text)))
 
 (defun convert-to-range (point range)
-  (let ((range-start (protocol:range-start range))
-        (range-end (protocol:range-end range)))
+  (let ((range-start (lsp:range-start range))
+        (range-end (lsp:range-end range)))
     (with-point ((start point)
                  (end point))
       (move-to-lsp-position start range-start)
@@ -891,42 +889,42 @@
   (sort (map 'list
              (lambda (item)
                (let ((text-edit
-                       (handler-case (protocol:completion-item-text-edit item)
+                       (handler-case (lsp:completion-item-text-edit item)
                          (unbound-slot () nil)))
                      start
                      end
-                     (label (protocol:completion-item-label item)))
+                     (label (lsp:completion-item-label item)))
                  (when text-edit
                    (setf (values start end)
-                         (convert-to-range point (protocol:text-edit-range text-edit)))
-                   (setf label (protocol:text-edit-new-text text-edit)))
+                         (convert-to-range point (lsp:text-edit-range text-edit)))
+                   (setf label (lsp:text-edit-new-text text-edit)))
                  (make-instance 'completion-item
                                 :start start
                                 ;; 補完候補を表示した後に文字を入力し, 候補選択をするとendがずれるので使えない
                                 ;; :end end
                                 :label label
-                                :detail (handler-case (protocol:completion-item-detail item)
+                                :detail (handler-case (lsp:completion-item-detail item)
                                           (unbound-slot () ""))
-                                :sort-text (handler-case (protocol:completion-item-sort-text item)
+                                :sort-text (handler-case (lsp:completion-item-sort-text item)
                                              (unbound-slot ()
-                                               (protocol:completion-item-label item))))))
+                                               (lsp:completion-item-label item))))))
              items)
         #'string<
         :key #'completion-item-sort-text))
 
 (defun convert-completion-list (point completion-list)
-  (convert-completion-items point (protocol:completion-list-items completion-list)))
+  (convert-completion-items point (lsp:completion-list-items completion-list)))
 
 (defun convert-completion-response (point value)
-  (cond ((typep value 'protocol:completion-list)
+  (cond ((typep value 'lsp:completion-list)
          (convert-completion-list point value))
-        ((json:json-array-p value)
+        ((lsp-array-p value)
          (convert-completion-items point value))
         (t
          nil)))
 
 (defun provide-completion-p (workspace)
-  (handler-case (protocol:server-capabilities-completion-provider
+  (handler-case (lsp:server-capabilities-completion-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
@@ -939,7 +937,7 @@
         (workspace-client workspace)
         (make-instance 'request:completion-request
                        :params (apply #'make-instance
-                                      'protocol:completion-params
+                                      'lsp:completion-params
                                       (make-text-document-position-arguments point))))))))
 
 (defun completion-with-trigger-character (c)
@@ -953,7 +951,7 @@
   (t :underline-p t))
 
 (defun provide-signature-help-p (workspace)
-  (handler-case (protocol:server-capabilities-signature-help-provider
+  (handler-case (lsp:server-capabilities-signature-help-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
@@ -962,28 +960,28 @@
          (point (buffer-point buffer)))
     (setf (lem:variable-value 'lem::truncate-character :buffer buffer) #\space)
     (let ((active-parameter
-            (handler-case (protocol:signature-help-active-parameter signature-help)
+            (handler-case (lsp:signature-help-active-parameter signature-help)
               (unbound-slot () nil)))
           (active-signature
-            (handler-case (protocol:signature-help-active-signature signature-help)
+            (handler-case (lsp:signature-help-active-signature signature-help)
               (unbound-slot () nil))))
-      (do-sequence ((signature index) (protocol:signature-help-signatures signature-help))
+      (do-sequence ((signature index) (lsp:signature-help-signatures signature-help))
         (when (plusp index) (insert-character point #\newline))
         (let ((active-signature-p (eql index active-signature)))
           (if active-signature-p
               (insert-string point "* ")
               (insert-string point "- "))
           (insert-string point
-                         (protocol:signature-information-label signature))
+                         (lsp:signature-information-label signature))
           (when active-signature-p
             (let ((parameters
                     (handler-case
-                        (protocol:signature-information-parameters signature)
+                        (lsp:signature-information-parameters signature)
                       (unbound-slot () nil))))
               (when (and (plusp (length parameters))
                          (< active-parameter (length parameters)))
                 ;; TODO: labelが[number, number]の場合に対応する
-                (let ((label (protocol:parameter-information-label
+                (let ((label (lsp:parameter-information-label
                               (elt parameters
                                    (if (<= 0 active-parameter (1- (length parameters)))
                                        active-parameter
@@ -998,11 +996,11 @@
                                              :attribute 'signature-help-active-parameter-attribute)))))))))
           (insert-character point #\space)
           (insert-character point #\newline)
-          (handler-case (protocol:signature-information-documentation signature)
+          (handler-case (lsp:signature-information-documentation signature)
             (unbound-slot () nil)
             (:no-error (documentation)
-              (if (typep documentation 'protocol:markup-content)
-                  (insert-string point (protocol:markup-content-value documentation))
+              (if (typep documentation 'lsp:markup-content)
+                  (insert-string point (lsp:markup-content-value documentation))
                   (insert-string point documentation))))))
       (buffer-start (buffer-point buffer))
       (message-buffer buffer))))
@@ -1014,7 +1012,7 @@
                      (workspace-client workspace)
                      (make-instance 'request:signature-help
                                     :params (apply #'make-instance
-                                                   'protocol:signature-help-params
+                                                   'lsp:signature-help-params
                                                    (append (when signature-help-context
                                                              `(:context ,signature-help-context))
                                                            (make-text-document-position-arguments point)))))))
@@ -1024,23 +1022,23 @@
 (defun lsp-signature-help-with-trigger-character (character)
   (text-document/signature-help
    (current-point)
-   (make-instance 'protocol:signature-help-context
-                  :trigger-kind protocol:signature-help-trigger-kind.trigger-character
+   (make-instance 'lsp:signature-help-context
+                  :trigger-kind lsp:signature-help-trigger-kind-trigger-character
                   :trigger-character (string character)
-                  :is-retrigger (json:json-false)
+                  :is-retrigger +false+
                   #|:active-signature-help|#)))
 
 (define-command lsp-signature-help () ()
   (check-connection)
   (text-document/signature-help (current-point)
-                                (make-instance 'protocol:signature-help-context
-                                               :trigger-kind protocol:signature-help-trigger-kind.invoked
-                                               :is-retrigger (json:json-false))))
+                                (make-instance 'lsp:signature-help-context
+                                               :trigger-kind lsp:signature-help-trigger-kind-invoked
+                                               :is-retrigger +false+)))
 
 ;;; declaration
 
 (defun provide-declaration-p (workspace)
-  (handler-case (protocol:server-capabilities-declaration-provider
+  (handler-case (lsp:server-capabilities-declaration-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
@@ -1052,45 +1050,45 @@
 ;;; definition
 
 (defun provide-definition-p (workspace)
-  (handler-case (protocol:server-capabilities-definition-provider
+  (handler-case (lsp:server-capabilities-definition-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
 (defun definition-location-to-content (file location)
   (when-let* ((buffer (find-file-buffer file))
               (point (buffer-point buffer))
-              (range (protocol:location-range location)))
+              (range (lsp:location-range location)))
     (with-point ((start point)
                  (end point))
-      (move-to-lsp-position start (protocol:range-start range))
-      (move-to-lsp-position end (protocol:range-end range))
+      (move-to-lsp-position start (lsp:range-start range))
+      (move-to-lsp-position end (lsp:range-end range))
       (line-start start)
       (line-end end)
       (points-to-string start end))))
 
 (defgeneric convert-location (location)
-  (:method ((location protocol:location))
+  (:method ((location lsp:location))
     ;; TODO: end-positionも使い、定義位置への移動後のハイライトをstart/endの範囲にする
-    (let* ((start-position (protocol:range-start (protocol:location-range location)))
-           (end-position (protocol:range-end (protocol:location-range location)))
-           (uri (protocol:location-uri location))
+    (let* ((start-position (lsp:range-start (lsp:location-range location)))
+           (end-position (lsp:range-end (lsp:location-range location)))
+           (uri (lsp:location-uri location))
            (file (lem-lsp-utils/uri:uri-to-pathname uri)))
       (declare (ignore end-position))
       (when (uiop:file-exists-p file)
         (lem.language-mode:make-xref-location
          :filespec file
          :position (lem.language-mode::make-position
-                    (1+ (protocol:position-line start-position))
-                    (protocol:position-character start-position))
+                    (1+ (lsp:position-line start-position))
+                    (lsp:position-character start-position))
          :content (definition-location-to-content file location)))))
-  (:method ((location protocol:location-link))
+  (:method ((location lsp:location-link))
     (error "locationLink is unsupported")))
 
 (defun convert-definition-response (value)
   (remove nil
-          (cond ((typep value 'protocol:location)
+          (cond ((typep value 'lsp:location)
                  (list (convert-location value)))
-                ((json:json-array-p value)
+                ((lsp-array-p value)
                  ;; TODO: location-link
                  (map 'list #'convert-location value))
                 (t
@@ -1103,7 +1101,7 @@
        (workspace-client workspace)
        (make-instance 'request:definition
                       :params (apply #'make-instance
-                                     'protocol:definition-params
+                                     'lsp:definition-params
                                      (make-text-document-position-arguments point)))
        :then (lambda (response)
                (funcall then (convert-definition-response response)))))))
@@ -1115,7 +1113,7 @@
 ;;; type definition
 
 (defun provide-type-definition-p (workspace)
-  (handler-case (protocol:server-capabilities-type-definition-provider
+  (handler-case (lsp:server-capabilities-type-definition-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
@@ -1128,7 +1126,7 @@
       (async-request (workspace-client workspace)
                      (make-instance 'request:type-definition
                                     :params (apply #'make-instance
-                                                   'protocol:type-definition-params
+                                                   'lsp:type-definition-params
                                                    (make-text-document-position-arguments point)))
                      :then (lambda (response)
                              (funcall then (convert-type-definition-response response)))))))
@@ -1140,7 +1138,7 @@
 ;;; implementation
 
 (defun provide-implementation-p (workspace)
-  (handler-case (protocol:server-capabilities-implementation-provider
+  (handler-case (lsp:server-capabilities-implementation-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
@@ -1153,7 +1151,7 @@
       (async-request (workspace-client workspace)
                      (make-instance 'request:implementation
                                     :params (apply #'make-instance
-                                                   'protocol:type-definition-params
+                                                   'lsp:type-definition-params
                                                    (make-text-document-position-arguments point)))
                      :then (lambda (response)
                              (funcall then (convert-implementation-response response)))))))
@@ -1166,7 +1164,7 @@
 ;;; references
 
 (defun provide-references-p (workspace)
-  (handler-case (protocol:server-capabilities-references-provider
+  (handler-case (lsp:server-capabilities-references-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
@@ -1194,10 +1192,9 @@
        (workspace-client workspace)
        (make-instance 'request:references
                       :params (apply #'make-instance
-                                     'protocol:reference-params
-                                     :context (make-instance 'protocol:reference-context
-                                                             :include-declaration (json:to-json-boolean
-                                                                                   include-declaration))
+                                     'lsp:reference-params
+                                     :context (make-instance 'lsp:reference-context
+                                                             :include-declaration include-declaration)
                                      (make-text-document-position-arguments point)))
        :then (lambda (response)
                (funcall then (convert-references-response response)))))))
@@ -1213,7 +1210,7 @@
   (t :background "yellow4"))
 
 (defun provide-document-highlight-p (workspace)
-  (handler-case (protocol:server-capabilities-document-highlight-provider
+  (handler-case (lsp:server-capabilities-document-highlight-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
@@ -1227,9 +1224,9 @@
   (with-point ((start (buffer-point buffer))
                (end (buffer-point buffer)))
     (do-sequence (document-highlight document-highlights)
-      (let* ((range (protocol:document-highlight-range document-highlight)))
-        (move-to-lsp-position start (protocol:range-start range))
-        (move-to-lsp-position end (protocol:range-end range))
+      (let* ((range (lsp:document-highlight-range document-highlight)))
+        (move-to-lsp-position start (lsp:range-start range))
+        (move-to-lsp-position end (lsp:range-end range))
         (push (make-overlay start end 'document-highlight-text-attribute)
               *document-highlight-overlays*)))))
 
@@ -1240,7 +1237,7 @@
        (workspace-client workspace)
        (make-instance 'request:document-highlight
                       :params (apply #'make-instance
-                                     'protocol:document-highlight-params
+                                     'lsp:document-highlight-params
                                      (make-text-document-position-arguments point)))
        :then (lambda (value)
                (display-document-highlights (point-buffer point)
@@ -1386,98 +1383,98 @@
       (insert-character point #\newline))))
 
 (defun provide-document-symbol-p (workspace)
-  (handler-case (protocol:server-capabilities-document-symbol-provider
+  (handler-case (lsp:server-capabilities-document-symbol-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
 (defun symbol-kind-to-string-and-attribute (symbol-kind)
   (switch (symbol-kind :test #'=)
-    (protocol:symbol-kind.file
+    (lsp:symbol-kind-file
      (values "File" 'symbol-kind-file-attribute))
-    (protocol:symbol-kind.module
+    (lsp:symbol-kind-module
      (values "Module" 'symbol-kind-module-attribute))
-    (protocol:symbol-kind.namespace
+    (lsp:symbol-kind-namespace
      (values "Namespace" 'symbol-kind-namespace-attribute))
-    (protocol:symbol-kind.package
+    (lsp:symbol-kind-package
      (values "Package" 'symbol-kind-package-attribute))
-    (protocol:symbol-kind.class
+    (lsp:symbol-kind-class
      (values "Class" 'symbol-kind-class-attribute))
-    (protocol:symbol-kind.method
+    (lsp:symbol-kind-method
      (values "Method" 'symbol-kind-method-attribute))
-    (protocol:symbol-kind.property
+    (lsp:symbol-kind-property
      (values "Property" 'symbol-kind-property-attribute))
-    (protocol:symbol-kind.field
+    (lsp:symbol-kind-field
      (values "Field" 'symbol-kind-field-attribute))
-    (protocol:symbol-kind.constructor
+    (lsp:symbol-kind-constructor
      (values "Constructor" 'symbol-kind-constructor-attribute))
-    (protocol:symbol-kind.enum
+    (lsp:symbol-kind-enum
      (values "Enum" 'symbol-kind-enum-attribute))
-    (protocol:symbol-kind.interface
+    (lsp:symbol-kind-interface
      (values "Interface" 'symbol-kind-interface-attribute))
-    (protocol:symbol-kind.function
+    (lsp:symbol-kind-function
      (values "Function" 'symbol-kind-function-attribute))
-    (protocol:symbol-kind.variable
+    (lsp:symbol-kind-variable
      (values "Variable" 'symbol-kind-variable-attribute))
-    (protocol:symbol-kind.constant
+    (lsp:symbol-kind-constant
      (values "Constant" 'symbol-kind-constant-attribute))
-    (protocol:symbol-kind.string
+    (lsp:symbol-kind-string
      (values "String" 'symbol-kind-string-attribute))
-    (protocol:symbol-kind.number
+    (lsp:symbol-kind-number
      (values "Number" 'symbol-kind-number-attribute))
-    (protocol:symbol-kind.boolean
+    (lsp:symbol-kind-boolean
      (values "Boolean" 'symbol-kind-boolean-attribute))
-    (protocol:symbol-kind.array
+    (lsp:symbol-kind-array
      (values "Array" 'symbol-kind-array-attribute))
-    (protocol:symbol-kind.object
+    (lsp:symbol-kind-object
      (values "Object" 'symbol-kind-object-attribute))
-    (protocol:symbol-kind.key
+    (lsp:symbol-kind-key
      (values "Key" 'symbol-kind-key-attribute))
-    (protocol:symbol-kind.null
+    (lsp:symbol-kind-null
      (values "Null" 'symbol-kind-null-attribute))
-    (protocol:symbol-kind.enum-member
+    (lsp:symbol-kind-enum-member
      (values "EnumMember" 'symbol-kind-enum-member-attribute))
-    (protocol:symbol-kind.struct
+    (lsp:symbol-kind-struct
      (values "Struct" 'symbol-kind-struct-attribute))
-    (protocol:symbol-kind.event
+    (lsp:symbol-kind-event
      (values "Event" 'symbol-kind-event-attribute))
-    (protocol:symbol-kind.operator
+    (lsp:symbol-kind-operator
      (values "Operator" 'symbol-kind-operator-attribute))
-    (protocol:symbol-kind.type-parameter
+    (lsp:symbol-kind-type-parameter
      (values "TypeParameter" 'symbol-kind-type-attribute))))
 
 (define-attribute document-symbol-detail-attribute
   (t :foreground "gray"))
 
 (defun append-document-symbol-item (sourcelist buffer document-symbol nest-level)
-  (let ((selection-range (protocol:document-symbol-selection-range document-symbol))
-        (range (protocol:document-symbol-range document-symbol)))
+  (let ((selection-range (lsp:document-symbol-selection-range document-symbol))
+        (range (lsp:document-symbol-range document-symbol)))
     (lem.sourcelist:append-sourcelist
      sourcelist
      (lambda (point)
        (multiple-value-bind (kind-name attribute)
-           (symbol-kind-to-string-and-attribute (protocol:document-symbol-kind document-symbol))
+           (symbol-kind-to-string-and-attribute (lsp:document-symbol-kind document-symbol))
          (insert-string point (make-string (* 2 nest-level) :initial-element #\space))
          (insert-string point (format nil "[~A]" kind-name) :attribute attribute)
          (insert-character point #\space)
-         (insert-string point (protocol:document-symbol-name document-symbol))
+         (insert-string point (lsp:document-symbol-name document-symbol))
          (insert-string point " ")
-         (when-let (detail (handler-case (protocol:document-symbol-detail document-symbol)
+         (when-let (detail (handler-case (lsp:document-symbol-detail document-symbol)
                              (unbound-slot () nil)))
            (insert-string point detail :attribute 'document-symbol-detail-attribute))))
      (lambda (set-buffer-fn)
        (funcall set-buffer-fn buffer)
        (let ((point (buffer-point buffer)))
-         (move-to-lsp-position point (protocol:range-start selection-range))))
+         (move-to-lsp-position point (lsp:range-start selection-range))))
      :highlight-overlay-function (lambda (point)
                                    (with-point ((start point)
                                                 (end point))
                                      (make-overlay
-                                      (move-to-lsp-position start (protocol:range-start range))
-                                      (move-to-lsp-position end (protocol:range-end range))
+                                      (move-to-lsp-position start (lsp:range-start range))
+                                      (move-to-lsp-position end (lsp:range-end range))
                                       'lem.sourcelist::jump-highlight)))))
   (do-sequence
       (document-symbol
-       (handler-case (protocol:document-symbol-children document-symbol)
+       (handler-case (lsp:document-symbol-children document-symbol)
          (unbound-slot () nil)))
     (append-document-symbol-item sourcelist buffer document-symbol (1+ nest-level))))
 
@@ -1493,7 +1490,7 @@
        (workspace-client workspace)
        (make-instance 'request:document-symbol
                       :params (make-instance
-                               'protocol:document-symbol-params
+                               'lsp:document-symbol-params
                                :text-document (make-text-document-identifier buffer)))))))
 
 (define-command lsp-document-symbol () ()
@@ -1508,7 +1505,7 @@
 ;; - codeAction.isPreferred
 
 (defun provide-code-action-p (workspace)
-  (handler-case (protocol:server-capabilities-code-action-provider
+  (handler-case (lsp:server-capabilities-code-action-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
@@ -1519,16 +1516,16 @@
   (request:request
    (workspace-client workspace)
    (make-instance 'request:execute-command
-                  :params (make-instance 'protocol:execute-command-params
-                                         :command (protocol:command-command command)
-                                         :arguments (protocol:command-arguments command)))))
+                  :params (make-instance 'lsp:execute-command-params
+                                         :command (lsp:command-command command)
+                                         :arguments (lsp:command-arguments command)))))
 
 (defun execute-code-action (workspace code-action)
-  (handler-case (protocol:code-action-edit code-action)
+  (handler-case (lsp:code-action-edit code-action)
     (unbound-slot () nil)
     (:no-error (workspace-edit)
       (apply-workspace-edit workspace-edit)))
-  (handler-case (protocol:code-action-command code-action)
+  (handler-case (lsp:code-action-command code-action)
     (unbound-slot () nil)
     (:no-error (command)
       (execute-command workspace command))))
@@ -1536,7 +1533,7 @@
 (defun convert-code-actions (code-actions workspace)
   (let ((items '()))
     (do-sequence (code-action code-actions)
-      (push (context-menu:make-item :label (protocol:code-action-title code-action)
+      (push (context-menu:make-item :label (lsp:code-action-title code-action)
                                     :callback (curry #'execute-code-action workspace code-action))
             items))
     (nreverse items)))
@@ -1555,19 +1552,19 @@
          (make-instance
           'request:code-action
           :params (make-instance
-                   'protocol:code-action-params
+                   'lsp:code-action-params
                    :text-document (make-text-document-identifier (point-buffer point))
                    :range (point-to-line-range point)
-                   :context (make-instance 'protocol:code-action-context
-                                           :diagnostics (json:json-array)))))))))
+                   :context (make-instance 'lsp:code-action-context
+                                           :diagnostics (make-lsp-array)))))))))
 
 (define-command lsp-code-action () ()
   (check-connection)
   (let ((response (text-document/code-action (current-point)))
         (workspace (buffer-workspace (current-buffer))))
-    (cond ((typep response 'protocol:command)
+    (cond ((typep response 'lsp:command)
            (execute-command workspace response))
-          ((and (json:json-array-p response)
+          ((and (lsp-array-p response)
                 (not (length= response 0)))
            (context-menu:display-context-menu
             (convert-code-actions response
@@ -1577,7 +1574,7 @@
 
 (defun find-organize-imports (code-actions)
   (do-sequence (code-action code-actions)
-    (when (equal "source.organizeImports" (protocol:code-action-kind code-action))
+    (when (equal "source.organizeImports" (lsp:code-action-kind code-action))
       (return-from find-organize-imports code-action))))
 
 (defun organize-imports (buffer)
@@ -1592,13 +1589,13 @@
 ;;; formatting
 
 (defun provide-formatting-p (workspace)
-  (handler-case (protocol:server-capabilities-document-formatting-provider
+  (handler-case (lsp:server-capabilities-document-formatting-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
 (defun make-formatting-options (buffer)
   (make-instance
-   'protocol:formatting-options
+   'lsp:formatting-options
    :tab-size (variable-value 'tab-width :buffer buffer)
    :insert-spaces (not (variable-value 'indent-tabs-mode :buffer buffer))
    :trim-trailing-whitespace t
@@ -1614,7 +1611,7 @@
         (workspace-client workspace)
         (make-instance 'request:document-formatting
                        :params (make-instance
-                                'protocol:document-formatting-params
+                                'lsp:document-formatting-params
                                 :text-document (make-text-document-identifier buffer)
                                 :options (make-formatting-options buffer))))))))
 
@@ -1627,7 +1624,7 @@
 ;; WARNING: goplsでサポートされていないので動作未確認
 
 (defun provide-range-formatting-p (workspace)
-  (handler-case (protocol:server-capabilities-document-range-formatting-provider
+  (handler-case (lsp:server-capabilities-document-range-formatting-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
@@ -1642,7 +1639,7 @@
           (workspace-client workspace)
           (make-instance 'request:document-range-formatting
                          :params (make-instance
-                                  'protocol:document-range-formatting-params
+                                  'lsp:document-range-formatting-params
                                   :text-document (make-text-document-identifier buffer)
                                   :range (make-lsp-range start end)
                                   :options (make-formatting-options buffer)))))))))
@@ -1657,7 +1654,7 @@
 ;; - バッファの初期化時にtext-document/on-type-formattingを呼び出すフックを追加する
 
 (defun provide-on-type-formatting-p (workspace)
-  (handler-case (protocol:server-capabilities-document-on-type-formatting-provider
+  (handler-case (lsp:server-capabilities-document-on-type-formatting-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
@@ -1670,7 +1667,7 @@
                      (workspace-client workspace)
                      (make-instance 'request:document-on-type-formatting
                                     :params (apply #'make-instance
-                                                   'protocol:document-on-type-formatting-params
+                                                   'lsp:document-on-type-formatting-params
                                                    :ch typed-character
                                                    :options (make-formatting-options (point-buffer point))
                                                    (make-text-document-position-arguments point)))))))
@@ -1682,7 +1679,7 @@
 ;; - prepareSupport
 
 (defun provide-rename-p (workspace)
-  (handler-case (protocol:server-capabilities-rename-provider
+  (handler-case (lsp:server-capabilities-rename-provider
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
@@ -1695,7 +1692,7 @@
                      (workspace-client workspace)
                      (make-instance 'request:rename
                                     :params (apply #'make-instance
-                                                   'protocol:rename-params
+                                                   'lsp:rename-params
                                                    :new-name new-name
                                                    (make-text-document-position-arguments point)))))))
         (apply-workspace-edit response)))))
@@ -1731,8 +1728,8 @@
   :mode :tcp)
 
 (defmethod spec-initialization-options ((spec go-spec))
-  (json:make-json "completeUnimported" (json:json-true)
-                  "matcher" "fuzzy"))
+  (make-lsp-map "completeUnimported" +true+
+                "matcher" "fuzzy"))
 
 (define-language-spec (js-spec lem-js-mode:js-mode)
   :language-id "javascript"
@@ -1790,8 +1787,8 @@
     (editor-error "dart language server not found")))
 
 (defmethod spec-initialization-options ((spec dart-spec))
-  (json:make-json "onlyAnalyzeProjectsWithOpenFiles" (json:json-true)
-                  "suggestFromUnimportedLibraries" (json:json-true)))
+  (make-lsp-map "onlyAnalyzeProjectsWithOpenFiles" +true+
+                "suggestFromUnimportedLibraries" +true+))
 
 #|
 Language Features

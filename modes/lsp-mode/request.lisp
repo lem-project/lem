@@ -1,15 +1,12 @@
 (defpackage :lem-lsp-mode/request
   (:use :cl)
-  (:import-from :lem-lsp-utils/json
-                :coerce-json
-                :object-to-json)
-  (:import-from :lem-lsp-utils/type
-                :ts-array)
   (:import-from :lem-lsp-mode/client
                 :client-connection)
   (:import-from :lem-lsp-mode/utils)
-  (:local-nicknames (:protocol :lem-lsp-utils/protocol-3-15))
-  (:local-nicknames (:utils :lem-lsp-mode/utils))
+  (:import-from :lem-language-server/protocol/converter
+                :convert-from-json
+                :convert-to-json)
+  (:local-nicknames (:lsp-type :lem-language-server/protocol/lsp-type))
   (:export :request
            :request-async
            :initialize-request
@@ -109,18 +106,19 @@
   ())
 
 (defun coerce-response (request response)
-  (coerce-json response (request-response-class-name request)))
+  (convert-from-json response
+                     (request-response-class-name request)))
 
 (defmethod request (client (request request))
   (coerce-response request
                    (jsonrpc-call (client-connection client)
                                  (request-method request)
-                                 (object-to-json (request-params request)))))
+                                 (convert-to-json (request-params request)))))
 
 (defmethod request-async (client (request request) callback &optional error-callback)
   (jsonrpc-call-async (client-connection client)
                       (request-method request)
-                      (object-to-json (request-params request))
+                      (convert-to-json (request-params request))
                       (lambda (response)
                         (let ((value (coerce-response request response)))
                           (funcall callback value)))
@@ -129,160 +127,160 @@
 (defmethod request (client (request notification))
   (jsonrpc-notify (client-connection client)
                   (request-method request)
-                  (object-to-json (request-params request))))
+                  (convert-to-json (request-params request))))
 
 (defclass initialize-request (request)
-  ((params :type protocol:initialize-params))
+  ((params :type lsp:initialize-params))
   (:default-initargs
    :method "initialize"
-   :response-class-name 'protocol:initialize-result))
+   :response-class-name 'lsp:initialize-result))
 
 (defclass initialized-request (notification)
-  ((params :type protocol:initialized-params))
+  ((params :type lsp:initialized-params))
   (:default-initargs
    :method "initialized"
-   :params (make-instance 'protocol:initialized-params)))
+   :params (make-instance 'lsp:initialized-params)))
 
 (defclass text-document-did-open (notification)
-  ((params :type protocol:did-open-text-document-params))
+  ((params :type lsp:did-open-text-document-params))
   (:default-initargs
    :method "textDocument/didOpen"))
 
 (defclass text-document-did-change (notification)
-  ((params :type protocol:did-change-text-document-params))
+  ((params :type lsp:did-change-text-document-params))
   (:default-initargs
    :method "textDocument/didChange"))
 
 (defclass text-document-did-save (notification)
-  ((params :type protocol:did-save-text-document-params))
+  ((params :type lsp:did-save-text-document-params))
   (:default-initargs
    :method "textDocument/didSave"))
 
 (defclass text-document-did-close (notification)
-  ((params :type protocol:did-close-text-document-params))
+  ((params :type lsp:did-close-text-document-params))
   (:default-initargs
    :method "textDocument/didClose"))
 
 (defclass execute-command (request)
-  ((params :type protocol:execute-command-params))
+  ((params :type lsp:execute-command-params))
   (:default-initargs
    :method "workspace/executeCommand"))
 
 (defclass hover-request (request)
-  ((params :type protocol:hover-params))
+  ((params :type lsp:hover-params))
   (:default-initargs
    :method "textDocument/hover"
-   :response-class-name '(or null protocol:hover)))
+   :response-class-name '(or null lsp:hover)))
 
 (defclass completion-request (request)
-  ((params :type protocol:completion-params))
+  ((params :type lsp:completion-params))
   (:default-initargs
    :method "textDocument/completion"
    :response-class-name '(or
-                          (ts-array protocol:completion-item)
-                          protocol:completion-list
+                          (lsp-type:lsp-array lsp:completion-item)
+                          lsp:completion-list
                           null)))
 
 (defclass signature-help (request)
-  ((params :type protocol:signature-help-params))
+  ((params :type lsp:signature-help-params))
   (:default-initargs
    :method "textDocument/signatureHelp"
-   :response-class-name '(or protocol:signature-help null)))
+   :response-class-name '(or lsp:signature-help null)))
 
 (defclass definition (request)
-  ((params :type protocol:definition-params))
+  ((params :type lsp:definition-params))
   (:default-initargs
    :method "textDocument/definition"
    :response-class-name '(or
-                          protocol:location
-                          (ts-array protocol:location)
-                          (ts-array protocol:location-link)
+                          lsp:location
+                          (lsp-type:lsp-array lsp:location)
+                          (lsp-type:lsp-array lsp:location-link)
                           null)))
 
 (defclass type-definition (request)
-  ((params :type protocol:type-definition-params))
+  ((params :type lsp:type-definition-params))
   (:default-initargs
    :method "textDocument/typeDefinition"
    :response-class-name '(or
-                          protocol:location
-                          (ts-array protocol:location)
-                          (ts-array protocol:location-link)
+                          lsp:location
+                          (lsp-type:lsp-array lsp:location)
+                          (lsp-type:lsp-array lsp:location-link)
                           null)))
 
 (defclass implementation (request)
-  ((params :type protocol:implementation-params))
+  ((params :type lsp:implementation-params))
   (:default-initargs
    :method "textDocument/implementation"
    :response-class-name '(or
-                          protocol:location
-                          (ts-array protocol:location)
-                          (ts-array protocol:location-link)
+                          lsp:location
+                          (lsp-type:lsp-array lsp:location)
+                          (lsp-type:lsp-array lsp:location-link)
                           null)))
 
 (defclass references (request)
-  ((parmas :type protocol:reference-params))
+  ((parmas :type lsp:reference-params))
   (:default-initargs
    :method "textDocument/references"
    :response-class-name '(or
-                          (ts-array protocol:location)
+                          (lsp-type:lsp-array lsp:location)
                           null)))
 
 (defclass document-highlight (request)
-  ((params :type protocol:document-highlight-params))
+  ((params :type lsp:document-highlight-params))
   (:default-initargs
    :method "textDocument/documentHighlight"
    :response-class-name '(or
-                          (ts-array protocol:document-highlight)
+                          (lsp-type:lsp-array lsp:document-highlight)
                           null)))
 
 (defclass document-symbol (request)
-  ((params :type protocol:document-symbol-params))
+  ((params :type lsp:document-symbol-params))
   (:default-initargs
    :method "textDocument/documentSymbol"
    :response-class-name '(or
-                          (ts-array protocol:document-symbol)
-                          (ts-array protocol:symbol-information)
+                          (lsp-type:lsp-array lsp:document-symbol)
+                          (lsp-type:lsp-array lsp:symbol-information)
                           null)))
 
 (defclass code-action (request)
-  ((params :type protocol:code-action-params))
+  ((params :type lsp:code-action-params))
   (:default-initargs
    :method "textDocument/codeAction"
    :response-class-name '(or
-                          protocol:command
-                          (ts-array protocol:code-action)
+                          lsp:command
+                          (lsp-type:lsp-array lsp:code-action)
                           null)))
 
 (defclass document-formatting (request)
-  ((params :type protocol:document-formatting-params))
+  ((params :type lsp:document-formatting-params))
   (:default-initargs
    :method "textDocument/formatting"
    :response-class-name '(or
-                          (ts-array protocol:text-edit)
+                          (lsp-type:lsp-array lsp:text-edit)
                           null)))
 
 (defclass document-range-formatting (request)
-  ((params :type protocol:document-range-formatting-params))
+  ((params :type lsp:document-range-formatting-params))
   (:default-initargs
    :method "textDocument/rangeFormatting"
    :response-class-name '(or
-                          (ts-array protocol:text-edit)
+                          (lsp-type:lsp-array lsp:text-edit)
                           null)))
 
 (defclass document-on-type-formatting (request)
-  ((params :type protocol:document-on-type-formatting-params))
+  ((params :type lsp:document-on-type-formatting-params))
   (:default-initargs
    :method "textDocument/onTyepFormatting"
    :response-class-name '(or
-                          (ts-array protocol:text-edit)
+                          (lsp-type:lsp-array lsp:text-edit)
                           null)))
 
 (defclass rename (request)
-  ((params :type protocol:rename-params))
+  ((params :type lsp:rename-params))
   (:default-initargs
    :method "textDocument/rename"
    :response-class-name '(or
-                          protocol:workspace-edit
+                          lsp:workspace-edit
                           null)))
 
 ;;; TODO

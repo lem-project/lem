@@ -277,6 +277,8 @@
 (defun make-lsp-map (&rest key-value-pairs)
   (let ((hash-table (make-hash-table :test 'equal)))
     (loop :for (key value) :on key-value-pairs :by #'cddr
-          :do (check-type key string)
-              (setf (gethash key hash-table) value))
+          :do (let ((key (ecase key
+                           (string key)
+                           (keyword (lisp-to-pascal-case key)))))
+                (setf (gethash key hash-table) value)))
     hash-table))

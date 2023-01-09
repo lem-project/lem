@@ -17,7 +17,7 @@
                              (:file "protocol-generator")
                              (:file "protocol-3-17")
                              (:file "converter")
-                             (:file "uri")))
+                             (:file "utils")))
                (:file "package")
                (:file "variables")
                (:file "editor-utils")

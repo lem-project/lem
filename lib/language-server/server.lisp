@@ -25,22 +25,14 @@
 (defclass stdio-server (server)
   ())
 
-(defmacro with-yason-bindings (() &body body)
-  `(let ((bt:*default-special-bindings*
-           `(,@*yason-bindings*
-             ,@bt:*default-special-bindings*)))
-     (progv (mapcar #'car *yason-bindings*)
-         (mapcar #'cdr *yason-bindings*)
-       ,@body)))
-
 (defmethod start-server ((server tcp-server))
-  (with-yason-bindings ()
+  (lem-language-server/protocol/yason:with-yason-bindings ()
     (jsonrpc:server-listen (server-jsonrpc-server server)
                            :mode :tcp
                            :port (tcp-server-port server))))
 
 (defmethod start-server ((server stdio-server))
-  (with-yason-bindings ()
+  (lem-language-server/protocol/yason:with-yason-bindings ()
     (jsonrpc:server-listen (server-jsonrpc-server server)
                            :mode :stdio)))
 

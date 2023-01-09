@@ -120,8 +120,14 @@
                       (request-method request)
                       (convert-to-json (request-params request))
                       (lambda (response)
-                        (let ((value (coerce-response request response)))
-                          (funcall callback value)))
+                        (handler-bind ((error (lambda (e)
+                                                (log:error "~A"
+                                                          (with-output-to-string (stream)
+                                                            (uiop:println e stream)
+                                                            (uiop:print-backtrace :stream stream
+                                                                                  :condition e))))))
+                          (let ((value (coerce-response request response)))
+                            (funcall callback value))))
                       error-callback))
 
 (defmethod request (client (request notification))
@@ -282,6 +288,3 @@
    :response-class-name '(or
                           lsp:workspace-edit
                           lsp-null)))
-
-;;; TODO
-;;; response-class-nameのnullは特定のjsonライブラリに依存していないか確認する

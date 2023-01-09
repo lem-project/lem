@@ -15,10 +15,13 @@ exec ros -Q -- $0 "$@"
 (defparameter *command-line-spec*
   '((("tcp") :type boolean :optional t)
     (("stdio") :type boolean :optional t)
-    (("port") :type integer :optional t)))
+    (("port") :type integer :optional t)
+    (("log-file") :type string :optional t)))
 
-(defun entry-point (&key tcp stdio port)
+(defun entry-point (&key tcp stdio port log-file)
   (declare (ignore stdio))
+  (when log-file
+    (log:config :sane :daily log-file :debug))
   (cond (tcp
          (lem-language-server:start-tcp-server port))
         (t

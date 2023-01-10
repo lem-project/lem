@@ -1,15 +1,5 @@
 (in-package :lem-language-server)
 
-(defun text-document-position-params-to-point (params)
-  (check-type params lsp:text-document-position-params)
-  (let ((text-document-identifier (lsp:text-document-position-params-text-document params))
-        (position (lsp:text-document-position-params-position params)))
-    (let* ((text-document (find-text-document text-document-identifier))
-           (buffer (text-document-buffer text-document)))
-      (lem:with-point ((point (lem:buffer-point buffer)))
-        (move-to-lsp-position point position)
-        point))))
-
 (defun buffer-uri (buffer)
   (let ((text-document (buffer-text-document buffer)))
     (cond (text-document

@@ -1535,7 +1535,7 @@
                         (end point))
              (line-start start)
              (line-end end)
-             (make-lsp-range start end))))
+             (points-to-lsp-range start end))))
     (when-let ((workspace (get-workspace-from-point point)))
       (when (provide-code-action-p workspace)
         (request:request
@@ -1631,7 +1631,7 @@
           (make-instance
            'lsp:document-range-formatting-params
            :text-document (make-text-document-identifier buffer)
-           :range (make-lsp-range start end)
+           :range (points-to-lsp-range start end)
            :options (make-formatting-options buffer))))))))
 
 (define-command lsp-document-range-format (start end) ("r")

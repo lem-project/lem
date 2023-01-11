@@ -33,7 +33,7 @@
                      (convert-from-json json params-type)
                      json))
            (response (call-aux lsp-method params)))
-      (log-response response)
+      (log-response (lsp-method-name lsp-method) response)
       response)))
 
 (defmacro define-request ((class-name method-name)
@@ -55,9 +55,9 @@
                        (yason:encode json stream))))
     (log:info "~A: ~A" method-name json-string)))
 
-(defun log-response (response)
+(defun log-response (method-name response)
   (let ((json
           (with-output-to-string (output)
             (with-open-stream (stream (yason:make-json-output-stream output))
               (yason:encode response stream)))))
-    (log:info "~A" json)))
+    (log:info "~A: ~A" method-name json)))

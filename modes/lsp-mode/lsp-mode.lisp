@@ -1586,7 +1586,7 @@
 (defun make-formatting-options (buffer)
   (make-instance
    'lsp:formatting-options
-   :tab-size (variable-value 'tab-width :buffer buffer)
+   :tab-size (or (variable-value 'tab-width :buffer buffer) +default-tab-size+)
    :insert-spaces (not (variable-value 'indent-tabs-mode :buffer buffer))
    :trim-trailing-whitespace t
    :insert-final-newline t

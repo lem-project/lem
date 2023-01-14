@@ -143,23 +143,6 @@
        (jsonrpc/errors:jsonrpc-callback-error (,c)
          (editor-error "~A" ,c)))))
 
-(defun invoke-async (function then catch)
-  (bt:make-thread
-   (lambda ()
-     (handler-case
-         (let ((response (funcall function)))
-           (when then (send-event (lambda () (funcall then response)))))
-       (jsonrpc/errors:jsonrpc-callback-error (c)
-         (when catch (send-event (lambda () (funcall catch c)))))))))
-
-(defmacro async (form &key then catch)
-  `(invoke-async (lambda () ,form)
-                 ,then
-                 ,catch))
-
-(defun simple-editor-error (message)
-  (editor-error "~A" message))
-
 (defun jsonrpc-editor-error (message code)
   (editor-error "JSONRPC-CALLBACK-ERROR: ~A (Code=~A)" message code))
 

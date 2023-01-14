@@ -285,10 +285,11 @@
                                       lsp:symbol-kind-null))
                              :range range
                              :selection-range range)))
-          (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                          `(micros/lsp-api:symbol-informations
-                                            ',(mapcar #'symbol-definition-symbol-spec symbol-definitions))
-                                          :package-name package-name)
+          (micros/client:remote-eval-sync
+           (server-backend-connection *server*)
+           `(micros/lsp-api:symbol-informations
+             ',(mapcar #'symbol-definition-symbol-spec symbol-definitions))
+           :package-name package-name)
           symbol-definitions))))
 
 (define-request (document-symbol-request "textDocument/documentSymbol")
@@ -325,12 +326,13 @@
              (multiple-value-bind (num-tabs num-spaces) (floor new-column tab-size)
                (lem:insert-character point #\tab num-tabs)
                (lem:insert-character point #\space num-spaces)
-               (make-indenting-text-edit (concatenate 'string
-                                                      (make-string num-tabs :initial-element #\tab)
-                                                      (make-string num-spaces :initial-element #\space))
-                                         line-number
-                                         0
-                                         old-column)))))))
+               (make-indenting-text-edit
+                (concatenate 'string
+                             (make-string num-tabs :initial-element #\tab)
+                             (make-string num-spaces :initial-element #\space))
+                line-number
+                0
+                old-column)))))))
 
 (defun delete-trailing-line (point)
   (lem:with-point ((start point :left-inserting)

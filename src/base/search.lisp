@@ -213,6 +213,8 @@
                   (setf start (1+ (or pos start)))))))
 
 (defun search-forward-symbol (point name &optional limit-point)
+  (check-type point point)
+  (check-type name string)
   ;; NOTE:
   ;; search-symbol関数ないで使っているsyntax-symbol-char-pがcurrent-syntaxを参照しているので
   ;; ここでcurrent-syntaxを一時的にpointのものに切り替える
@@ -230,6 +232,8 @@
                    (search-forward-endp-function limit-point)))))
 
 (defun search-backward-symbol (point name &optional limit-point)
+  (check-type point point)
+  (check-type name string)
   ;; NOTE:
   ;; search-symbol関数ないで使っているsyntax-symbol-char-pがcurrent-syntaxを参照しているので
   ;; ここでcurrent-syntaxを一時的にpointのものに切り替える

@@ -68,7 +68,9 @@
   (with-output-to-string (out)
     (format out "\"~A\" is not installed." program)
     (when (spec-install-command spec)
-      (format out "~&You can install it with the following command.~2% $ ~A" (spec-install-command spec)))
+      (format out
+              "~&You can install it with the following command.~2% $ ~A"
+              (spec-install-command spec)))
     (when (spec-readme-url spec)
       (format out "~&~%See follow for the readme URL~2% ~A ~%" (spec-readme-url spec)))))
 
@@ -1146,7 +1148,9 @@
   (when-let*
       ((buffer (find-file-buffer (lem.language-mode:xref-location-filespec location) :temporary t))
        (point (buffer-point buffer)))
-    (lem.language-mode::move-to-location-position point (lem.language-mode:xref-location-position location))
+    (lem.language-mode::move-to-location-position
+     point
+     (lem.language-mode:xref-location-position location))
     (string-trim '(#\space #\tab) (line-string point))))
 
 (defun convert-references-response (value)

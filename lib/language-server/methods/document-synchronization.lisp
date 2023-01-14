@@ -20,6 +20,7 @@
                                 :language-id language-id
                                 :version version
                                 :buffer buffer))
+      (on-load (uri-to-pathname uri))
       (values))))
 
 (define-request (text-document-did-change-request "textDocument/didChange")
@@ -47,8 +48,10 @@
 ;; TODO
 (define-request (text-document-did-save-request "textDocument/didSave")
     (params lsp:did-save-text-document-params)
-  (declare (ignore params))
-  )
+  (let ((uri (lsp:text-document-identifier-uri
+              (lsp:did-save-text-document-params-text-document params))))
+    (on-load (uri-to-pathname uri)))
+  (values))
 
 (define-request (text-document-did-close-request "textDocument/didClose")
     (params lsp:did-close-text-document-params)

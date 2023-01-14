@@ -23,6 +23,7 @@
                (:file "editor-utils")
                (:file "method")
                (:file "server")
+               (:file "runtime")
                (:file "text-document")
                (:module "methods"
                 :components ((:file "lifecycle")

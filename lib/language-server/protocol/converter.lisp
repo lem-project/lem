@@ -96,7 +96,7 @@
                    options
                  (declare (ignore initform))
                  (let ((key (lisp-to-pascal-case (string name))))
-                   (cond ((exist-key-p value (lisp-to-pascal-case key))
+                   (cond ((exist-key-p value key)
                           (setf (gethash key hash-table)
                                 (convert-from-json (gethash key value) type)))
                          (initform-p ; is not optional

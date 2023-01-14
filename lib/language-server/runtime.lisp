@@ -39,16 +39,17 @@
                   :collect (second form))))))))
 
 (defun on-load (filename)
-  (let ((asd-files (find-asd-files filename)))
-    (cond (asd-files
-           (let ((system-names (loop :for asd-file :in asd-files
-                                     :append (collect-defsystem-name asd-file))))
-             (log:info "load systems" system-names)
+  (when (uiop:file-exists-p filename)
+    (let ((asd-files (find-asd-files filename)))
+      (cond (asd-files
+             (let ((system-names (loop :for asd-file :in asd-files
+                                       :append (collect-defsystem-name asd-file))))
+               (log:info "load systems" system-names)
+               (micros/client:remote-eval-sync (server-backend-connection *server*)
+                                               `(micros/lsp-api:load-systems ',system-names)
+                                               :package-name "CL-USER")))
+            ((lisp-pathname-p filename)
+             (log:info "compile and load file" filename)
              (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                             `(micros/lsp-api:load-systems ',system-names)
-                                             :package-name "CL-USER")))
-          ((lisp-pathname-p filename)
-           (log:info "compile and load file" filename)
-           (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                           `(micros/lsp-api:compile-and-load-file ,filename)
-                                           :package-name "CL-USER")))))
+                                             `(micros/lsp-api:compile-and-load-file ,filename)
+                                             :package-name "CL-USER"))))))

@@ -33,19 +33,16 @@
         (edit-text-document text-document content-change))))
   (values))
 
-;; TODO
 (define-request (text-document-will-save-request "textDocument/willSave")
     (params lsp:will-save-text-document-params)
   (declare (ignore params))
-  )
+  (values))
 
-;; TODO
 (define-request (text-document-will-save-wait-until-request "textDocument/willSaveWaitUntil")
     (params lsp:will-save-text-document-params)
   (declare (ignore params))
-  )
+  (values))
 
-;; TODO
 (define-request (text-document-did-save-request "textDocument/didSave")
     (params lsp:did-save-text-document-params)
   (let ((uri (lsp:text-document-identifier-uri

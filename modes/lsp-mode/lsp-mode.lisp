@@ -19,8 +19,6 @@
   (:local-nicknames (:spinner :lem.loading-spinner)))
 (in-package :lem-lsp-mode/lsp-mode)
 
-(cl-package-locks:lock-package :lem-lsp-mode/lsp-mode)
-
 ;;;
 (defparameter *client-capabilities-text*
   (load-time-value
@@ -234,7 +232,7 @@
   (setf (buffer-value buffer 'workspace) workspace))
 
 (defun buffer-language-spec (buffer)
-  (get-language-spec (buffer-major-mode buffer)))
+  (get-language-spec (lem.language-mode:language-mode-tag buffer)))
 
 (defun buffer-language-id (buffer)
   (let ((spec (buffer-language-spec buffer)))

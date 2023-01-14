@@ -10,7 +10,7 @@
    :insertion-line-comment
    :find-definitions-function
    :find-references-function
-   :xref-mode-tag
+   :language-mode-tag
    :completion-spec
    :indent-size
    :root-uri-patterns
@@ -45,7 +45,7 @@
 (define-editor-variable insertion-line-comment nil)
 (define-editor-variable find-definitions-function nil)
 (define-editor-variable find-references-function nil)
-(define-editor-variable xref-mode-tag nil)
+(define-editor-variable language-mode-tag nil)
 (define-editor-variable completion-spec nil)
 (define-editor-variable indent-size 2)
 (define-editor-variable root-uri-patterns '())
@@ -389,14 +389,14 @@
 (defvar *xref-stack-table* (make-hash-table :test 'equal))
 (defvar *xref-history-table* (make-hash-table :test 'equal))
 
-(defun xref-table-key (buffer)
-  (or (variable-value 'xref-mode-tag :buffer buffer)
+(defun language-mode-tag (buffer)
+  (or (variable-value 'language-mode-tag :buffer buffer)
       (buffer-major-mode buffer)))
 
 (defun push-location-stack (point)
   (run-hooks *set-location-hook* point)
   (let* ((buffer (point-buffer point))
-         (key (xref-table-key buffer))
+         (key (language-mode-tag buffer))
          (elt (list (buffer-name buffer)
                     (line-number-at-point point)
                     (point-charpos point))))
@@ -406,7 +406,7 @@
     (push elt (gethash key *xref-stack-table*))))
 
 (define-command pop-definition-stack () ()
-  (let ((elt (pop (gethash (xref-table-key (current-buffer))
+  (let ((elt (pop (gethash (language-mode-tag (current-buffer))
                            *xref-stack-table*))))
     (when elt
       (destructuring-bind (buffer-name line-number charpos) elt

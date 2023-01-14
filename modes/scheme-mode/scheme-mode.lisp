@@ -13,7 +13,7 @@
   (setf (variable-value 'calc-indent-function) 'scheme-calc-indent)
   (setf (variable-value 'line-comment) ";")
   (setf (variable-value 'insertion-line-comment) ";; ")
-  (setf (variable-value 'xref-mode-tag) 'scheme-mode)
+  (setf (variable-value 'language-mode-tag) 'scheme-mode)
   (setf (variable-value 'find-definitions-function) 'find-definitions)
   (setf (variable-value 'find-references-function) 'find-references)
   (setf (variable-value 'completion-spec) 'completion-symbol)

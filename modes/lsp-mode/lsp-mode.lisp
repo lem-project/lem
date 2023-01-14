@@ -1529,10 +1529,18 @@
 
 (defun convert-code-actions (code-actions workspace)
   (let ((items '()))
-    (do-sequence (code-action code-actions)
-      (push (context-menu:make-item :label (lsp:code-action-title code-action)
-                                    :callback (curry #'execute-code-action workspace code-action))
-            items))
+    (do-sequence (command-or-code-action code-actions)
+      (etypecase command-or-code-action
+        (lsp:code-action
+         (let ((code-action command-or-code-action))
+           (push (context-menu:make-item :label (lsp:code-action-title code-action)
+                                         :callback (curry #'execute-code-action workspace code-action))
+                 items)))
+        (lsp:command
+         (let ((command command-or-code-action))
+           (push (context-menu:make-item :label (lsp:command-title command)
+                                         :callback (curry #'execute-command workspace command))
+                 items)))))
     (nreverse items)))
 
 (defun text-document/code-action (point)

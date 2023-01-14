@@ -3,13 +3,17 @@
 (require :sb-concurrency)
 
 (defsystem "lem-language-server"
-  :depends-on ("jsonrpc"
+  :depends-on ("alexandria"
+               "jsonrpc"
+               "usocket"
+               "log4cl"
+               "quri"
                "cl-change-case"
+               "async-process"
+               "micros"
                "lem"
                "lem-lisp-syntax"
-               "async-process"
-               "quri"
-               "micros/client")
+               "lem-socket-utils")
   :serial t
   :components ((:module "protocol"
                 :components ((:file "yason-utils")
@@ -18,6 +22,7 @@
                              (:file "protocol-3-17")
                              (:file "converter")
                              (:file "utils")))
+               (:file "micros-client")
                (:file "package")
                (:file "variables")
                (:file "editor-utils")

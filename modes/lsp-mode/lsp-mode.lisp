@@ -244,9 +244,25 @@
 (defun buffer-version (buffer)
   (buffer-modified-tick buffer))
 
+(defun random-string (length)
+  (with-output-to-string (out)
+              (loop :repeat length
+                    :do (loop :for code := (random 128)
+                              :for char := (code-char code)
+                              :until (alphanumericp char)
+                              :finally (write-char char out)))))
+
+(defun temporary-buffer-uri (buffer)
+  (or (buffer-value buffer 'uri)
+      (setf (buffer-value buffer 'uri)
+            (format nil "/tmp/~A" (random-string 32)))))
+
 (defun buffer-uri (buffer)
   ;; TODO: lem-language-server::buffer-uri
-  (pathname-to-uri (buffer-filename buffer)))
+  (if (buffer-filename buffer)
+      (pathname-to-uri (buffer-filename buffer))
+      ;; ファイルに関連付けられていないバッファ(*tmp*やRPEL)は一時ファイルという扱いにしている
+      (temporary-buffer-uri buffer)))
 
 (defun get-workspace-from-point (point)
   (buffer-workspace (point-buffer point)))

@@ -1218,9 +1218,10 @@
               'lsp:document-highlight-params
               (make-text-document-position-arguments point))
        :then (lambda (value)
-               (display-document-highlights (point-buffer point)
-                                            value)
-               (redraw-display))))))
+               (unless (lsp-null-p value)
+                 (display-document-highlights (point-buffer point)
+                                              value)
+                 (redraw-display)))))))
 
 (defun document-highlight-calls-timer ()
   (when (mode-active-p (current-buffer) 'lsp-mode)

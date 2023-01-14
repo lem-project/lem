@@ -104,7 +104,13 @@
                                  :key key
                                  :value value
                                  :type type)))))
-           :finally (return hash-table)))
+           :finally (let* ((src-keys (alexandria:hash-table-keys value))
+                           (dst-keys (alexandria:hash-table-keys hash-table))
+                           (additional-keys (set-difference src-keys dst-keys :test #'equal)))
+                      (loop :for key :in additional-keys
+                            :do (setf (gethash key hash-table)
+                                      (gethash key value)))
+                      (return hash-table))))
     ((cons 'or types)
      (dolist (type types (error 'json-type-error :type type :value value))
        (handler-case

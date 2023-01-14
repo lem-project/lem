@@ -459,7 +459,8 @@
                   (lambda (workspace)
                     (assign-workspace-to-buffer buffer workspace)
                     (when continuation (funcall continuation))
-                    (spinner:stop-loading-spinner spinner))))))))))
+                    (spinner:stop-loading-spinner spinner)
+                    (redraw-display))))))))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))

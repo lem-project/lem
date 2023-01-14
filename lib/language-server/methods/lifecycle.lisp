@@ -1,7 +1,6 @@
 (in-package :lem-language-server)
 
 (define-request (initialize-request "initialize") (params lsp:initialize-params)
-  (run-backend)
   (setf (server-client-capabilities *server*) params)
   (convert-to-json
    (make-instance

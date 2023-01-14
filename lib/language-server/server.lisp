@@ -7,7 +7,8 @@
 (defgeneric start-server (server))
 
 (defmethod start-server :before (server)
-  (expose-all-methods *server*))
+  (expose-all-methods *server*)
+  (run-backend))
 
 (defclass server ()
   ((jsonrpc-server :initform (jsonrpc:make-server)

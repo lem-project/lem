@@ -1,4 +1,5 @@
 (defpackage :lem-lsp-mode/lsp-mode
+  (:nicknames :lem-lsp-mode)
   (:use :cl
         :lem
         :alexandria
@@ -16,7 +17,9 @@
   (:local-nicknames (:client :lem-lsp-mode/client))
   (:local-nicknames (:completion :lem.completion-mode))
   (:local-nicknames (:context-menu :lem-lsp-mode/context-menu))
-  (:local-nicknames (:spinner :lem.loading-spinner)))
+  (:local-nicknames (:spinner :lem.loading-spinner))
+  (:export :spec-initialization-options
+           :define-language-spec))
 (in-package :lem-lsp-mode/lsp-mode)
 
 ;;;
@@ -1712,18 +1715,7 @@
      (defclass ,spec-name (spec) ()
        (:default-initargs ,@initargs))))
 
-(define-language-spec (go-spec lem-go-mode:go-mode)
-  :language-id "go"
-  :root-uri-patterns '("go.mod")
-  :command (lambda (port) `("gopls" "serve" "-port" ,(princ-to-string port)))
-  :install-command "go install golang.org/x/tools/gopls@latest"
-  :readme-url "https://github.com/golang/tools/tree/master/gopls"
-  :mode :tcp)
-
-(defmethod spec-initialization-options ((spec go-spec))
-  (make-lsp-map "completeUnimported" +true+
-                "matcher" "fuzzy"))
-
+#|
 (define-language-spec (js-spec lem-js-mode:js-mode)
   :language-id "javascript"
   :root-uri-patterns '("package.json" "tsconfig.json")
@@ -1782,6 +1774,7 @@
 (defmethod spec-initialization-options ((spec dart-spec))
   (make-lsp-map "onlyAnalyzeProjectsWithOpenFiles" +true+
                 "suggestFromUnimportedLibraries" +true+))
+|#
 
 #|
 Language Features

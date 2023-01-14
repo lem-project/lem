@@ -102,7 +102,8 @@
                              (:file "frame-multiplexer")))))
 
 (defsystem "lem/extensions"
-  :depends-on ("lem-vi-mode"
+  :depends-on ("lem-lsp-mode"
+               "lem-vi-mode"
                "lem-lisp-mode"
                "lem-go-mode"
                "lem-c-mode"
@@ -131,8 +132,7 @@
                "lem-asm-mode"
                "lem-makefile-mode"
                "lem-shell-mode"
-               "lem-sql-mode"
-               "lem-lsp-mode"))
+               "lem-sql-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

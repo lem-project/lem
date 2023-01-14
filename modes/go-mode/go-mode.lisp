@@ -1,5 +1,8 @@
 (defpackage :lem-go-mode
-  (:use :cl :lem :lem.completion-mode :lem.language-mode)
+  (:use :cl
+        :lem
+        :lem.completion-mode
+        :lem.language-mode)
   (:import-from
    :lem.tmlanguage
    :load-tmlanguage)
@@ -41,6 +44,8 @@
   (setf (variable-value 'completion-spec) 'go-completion)
   (setf (variable-value 'idle-function) 'go-idle-function)
   (add-hook (variable-value 'after-save-hook :buffer (current-buffer)) 'goflymake))
+
+(define-file-type ("go") go-mode)
 
 (define-key *go-mode-keymap* "}" 'go-electric-close)
 (define-key *go-mode-keymap* "C-c C-d" 'godef-describe)
@@ -320,5 +325,3 @@
 
 (defun go-idle-function ()
   (goflymake-message))
-
-(define-file-type ("go") go-mode)

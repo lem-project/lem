@@ -7,6 +7,7 @@
                "jsonrpc/transport/tcp"
                "quri"
                "trivia"
+               "lem-process"
                "lem-language-server")
   :serial t
   :components ((:file "utils")

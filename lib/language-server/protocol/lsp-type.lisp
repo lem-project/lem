@@ -184,7 +184,7 @@
 (defmethod initialize-instance ((instance protocol-object) &rest initargs &key &allow-other-keys)
   (declare (ignore initargs))
   (let ((instance (call-next-method)))
-    (check-initargs instance)
+    ;; (check-initargs instance)
     instance))
 
 (defmacro define-enum (name (&rest fields) &body options)

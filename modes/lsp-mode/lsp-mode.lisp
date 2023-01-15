@@ -817,8 +817,64 @@
 ;; - partialResult
 ;; - hoverClientCapabilitiesのcontentFormatを設定する
 ;; - hoverのrangeを使って範囲に背景色をつける
-;; - markdownの中のコード表示時に対象の言語のシンタックスハイライトをする
 ;; - serverでサポートしているかのチェックをする
+
+(defun markdown-buffer (markdown-text)
+  (labels ((make-markdown-buffer (markdown-text)
+             (let* ((buffer (make-buffer nil
+                                         :temporary t
+                                         :enable-undo-p nil))
+                    (point (buffer-point buffer)))
+               (setf (variable-value 'lem:line-wrap :buffer buffer) nil)
+               (setf (variable-value 'enable-syntax-highlight :buffer buffer) t)
+               (erase-buffer buffer)
+               (insert-string point markdown-text)
+               (put-foreground buffer)
+               buffer))
+           (delete-line (point)
+             (with-point ((start point)
+                          (end point))
+               (line-start start)
+               (line-end end)
+               (delete-between-points start end)))
+           (put-foreground (buffer)
+             (put-text-property (buffer-start-point buffer)
+                                (buffer-end-point buffer)
+                                :attribute (make-attribute :foreground "#F0F0F0")))
+           (get-syntax-table-from-mode (mode-name)
+             (when-let* ((mode (lem::find-mode mode-name))
+                         (syntax-table (mode-syntax-table mode)))
+               syntax-table)))
+    (let* ((buffer (make-markdown-buffer markdown-text))
+           (point (buffer-point buffer)))
+      (buffer-start point)
+      (loop :while (search-forward-regexp point "^#+\\s*")
+            :do (with-point ((start point))
+                  (line-start start)
+                  (delete-between-points start point)
+                  (line-end point)
+                  (put-text-property start
+                                     point
+                                     :attribute (make-attribute :bold-p t))))
+      (buffer-start point)
+      (loop :while (search-forward-regexp point "^```")
+            :do (with-point ((start point :right-inserting)
+                             (end point :right-inserting))
+                  (let* ((mode-name (looking-at start "[\\w-]+"))
+                         (syntax-table (get-syntax-table-from-mode mode-name)))
+                    (line-start start)
+                    (unless (search-forward-regexp end "^```") (return))
+                    (delete-line start)
+                    (delete-line end)
+                    (syntax-scan-region start end :syntax-table syntax-table)
+                    (apply-region-lines start
+                                        end
+                                        (lambda (point)
+                                          (line-start point)
+                                          (insert-string point " ")
+                                          (line-end point)
+                                          (insert-string point " "))))))
+      buffer)))
 
 (defun hover-to-string (hover)
   (flet ((marked-string-to-string (marked-string)
@@ -859,7 +915,7 @@
                       'lsp:hover-params
                       (make-text-document-position-arguments point)))))
         (unless (lsp-null-p result)
-          (hover-to-string result))))))
+          (markdown-buffer (hover-to-string result)))))))
 
 (define-command lsp-hover () ()
   (check-connection)

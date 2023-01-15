@@ -20,24 +20,27 @@
 
 (defvar *recursive-syntax-scan* nil)
 
-(defun syntax-scan-region (start end)
-  (assert (eq (point-buffer start)
-              (point-buffer end)))
-  (unless *recursive-syntax-scan*
-    (let ((*recursive-syntax-scan* t))
-      (run-hooks (make-per-buffer-hook :var 'before-syntax-scan-hook :buffer start)
-                 start end)
-      (without-interrupts
-        (let ((buffer (point-buffer start)))
-          (when (and (enable-syntax-highlight-p buffer)
-                     (buffer-syntax-table buffer)
-                     (syntax-table-parser (buffer-syntax-table buffer)))
-            (let ((*current-syntax*
-                    (buffer-syntax-table buffer)))
-              (with-point ((start start)
-                           (end end))
-                (line-start start)
-                (line-end end)
-                (%syntax-scan-region (syntax-table-parser *current-syntax*) start end))))))
-      (run-hooks (make-per-buffer-hook :var 'after-syntax-scan-hook :buffer start)
-                 start end))))
+(defun syntax-scan-region (start end &key (syntax-table nil))
+  (flet ((enable-syntax-table-p (syntax-table)
+           (when (and syntax-table
+                      (syntax-table-parser syntax-table))
+             syntax-table)))
+    (assert (eq (point-buffer start)
+                (point-buffer end)))
+    (unless *recursive-syntax-scan*
+      (let ((*recursive-syntax-scan* t))
+        (run-hooks (make-per-buffer-hook :var 'before-syntax-scan-hook :buffer start)
+                   start end)
+        (without-interrupts
+          (let ((buffer (point-buffer start)))
+            (when (enable-syntax-highlight-p buffer)
+              (alexandria:when-let (*current-syntax*
+                                    (or (enable-syntax-table-p syntax-table)
+                                        (enable-syntax-table-p (buffer-syntax-table buffer))))
+                (with-point ((start start)
+                             (end end))
+                  (line-start start)
+                  (line-end end)
+                  (%syntax-scan-region (syntax-table-parser *current-syntax*) start end))))))
+        (run-hooks (make-per-buffer-hook :var 'after-syntax-scan-hook :buffer start)
+                   start end)))))

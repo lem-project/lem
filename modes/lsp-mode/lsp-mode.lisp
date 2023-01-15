@@ -968,19 +968,19 @@
                    (list (lsp:completion-item-label item) nil nil))))
            (make-completion-item (item)
              (destructuring-bind (label start end)
-                (label-and-points item)
-              (declare (ignore end))
-              (make-instance
-               'completion-item
-               :start start
-               ;; 補完候補を表示した後に文字を入力し, 候補選択をするとendがずれるので使えない
-               ;; :end end
-               :label label
-               :detail (handler-case (lsp:completion-item-detail item)
-                         (unbound-slot () ""))
-               :sort-text (handler-case (lsp:completion-item-sort-text item)
-                            (unbound-slot ()
-                              (lsp:completion-item-label item)))))))
+                 (label-and-points item)
+               (declare (ignore end))
+               (make-instance
+                'completion-item
+                :start start
+                ;; 補完候補を表示した後に文字を入力し, 候補選択をするとendがずれるので使えない
+                ;; :end end
+                :label label
+                :detail (handler-case (lsp:completion-item-detail item)
+                          (unbound-slot () ""))
+                :sort-text (handler-case (lsp:completion-item-sort-text item)
+                             (unbound-slot ()
+                               (lsp:completion-item-label item)))))))
     (sort-items
      (map 'list
           #'make-completion-item

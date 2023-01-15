@@ -21,6 +21,13 @@
       (unless (lem:line-offset p -1)
         (return default)))))
 
+(defun symbol-points-to-lsp-range (point)
+  (lem:with-point ((start point)
+                   (end point))
+    (lem:skip-symbol-backward start)
+    (lem:skip-symbol-forward end)
+    (points-to-lsp-range start end)))
+
 (defun definitions-at-point (point)
   (when-let* ((package-name (scan-current-package point))
               (symbol-string (lem:symbol-string-at-point point)))
@@ -177,13 +184,10 @@
       :null)))
 
 (defun make-text-edit (point string)
-  (lem:with-point ((start point)
-                   (end point))
-    (lem:skip-symbol-backward start)
-    (lem:skip-symbol-forward end)
+  (let ((range (symbol-points-to-lsp-range point)))
     (make-instance 'lsp:text-edit
                    :new-text string
-                   :range (points-to-lsp-range start end))))
+                   :range range)))
 
 (define-request (completion-request "textDocument/completion") (params lsp:completion-params)
   (let* ((point (text-document-position-params-to-point params))

@@ -202,7 +202,7 @@
         (convert-to-json
          (map 'vector
               (lambda (completed-item)
-                (destructuring-bind (label classification signature documentation)
+                (destructuring-bind (label classification signature documentation sort-text)
                     completed-item
                   (make-instance 'lsp:completion-item
                                  :label label
@@ -215,7 +215,8 @@
                                  :text-edit (make-text-edit point label)
                                  :documentation (make-instance 'lsp:markup-content
                                                                :kind lsp:markup-kind-markdown
-                                                               :value documentation))))
+                                                               :value documentation)
+                                 :sort-text sort-text)))
               (micros/client:remote-eval-sync (server-backend-connection *server*)
                                               `(micros/lsp-api:completions ,symbol-string
                                                                            ,package-name)))))))

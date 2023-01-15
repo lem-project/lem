@@ -90,7 +90,14 @@
 (deftype lsp-uinteger () '(integer 0 *))
 (deftype lsp-decimal () 'integer)
 (deftype lsp-regexp () 'string)
-(deftype lsp-string () 'string)
+(deftype lsp-string (&optional (string nil stringp))
+  (if stringp
+      (labels ((f (value)
+                 (equal value string)))
+        (let ((g (gensym)))
+          (setf (symbol-function g) #'f)
+          `(satisfies ,g)))
+      'string))
 (deftype lsp-boolean () 'boolean)
 (deftype lsp-null () '(eql :null))
 

@@ -144,7 +144,9 @@
 (define-request (hover-request "textDocument/hover") (params lsp:hover-params)
   (let* ((point (text-document-position-params-to-point params))
          (text (or (hover-at-point point) "")))
-    (convert-to-json (make-instance 'lsp:hover :contents text))))
+    (convert-to-json (make-instance 'lsp:hover
+                                    :contents text
+                                    :range (symbol-points-to-lsp-range point)))))
 
 (define-request (document-highlight-request "textDocument/documentHighlight")
     (params lsp:document-highlight-params)

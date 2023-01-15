@@ -158,13 +158,14 @@
                          (lambda (message code)
                            (send-event (lambda () (jsonrpc-editor-error message code))))))
 
-(defun display-message (text)
+(defun display-message (text &key (gravity :cursor) source-window)
   (when text
     (show-message text
-                  :style '(:gravity :cursor
+                  :style `(:gravity ,gravity
                            :use-border t
                            :background-color "#404040")
-                  :timeout nil)))
+                  :timeout nil
+                  :source-window source-window)))
 
 ;;;
 (defun buffer-language-mode (buffer)
@@ -980,7 +981,14 @@
                           (unbound-slot () ""))
                 :sort-text (handler-case (lsp:completion-item-sort-text item)
                              (unbound-slot ()
-                               (lsp:completion-item-label item)))))))
+                               (lsp:completion-item-label item)))
+                :focus-action (lambda ()
+                                (when-let ((result (contents-to-markdown-buffer
+                                                    (lsp:completion-item-documentation item))))
+                                  (display-message result
+                                                   :gravity :adjacent-window
+                                                   :source-window (lem.popup-window::popup-menu-window
+                                                                   lem.popup-window::*popup-menu*))))))))
     (sort-items
      (map 'list
           #'make-completion-item

@@ -273,8 +273,13 @@
 (defun get-workspace-from-point (point)
   (buffer-workspace (point-buffer point)))
 
+(defvar *lsp-mode-keymap* (make-keymap))
+
+(define-key *lsp-mode-keymap* "C-c h" 'lsp-hover)
+
 (define-minor-mode lsp-mode
     (:name "lsp"
+     :keymap *lsp-mode-keymap*
      :enable-hook 'enable-hook)
   (setf (variable-value 'lem.language-mode:completion-spec)
         #'text-document/completion)

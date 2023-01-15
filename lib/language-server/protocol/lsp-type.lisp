@@ -74,7 +74,7 @@
                    (format s "~S is not a ~S in ~S" value type context)
                    (format s "~S is not a ~S" value type))))))
 
-(define-condition required-argument-error (error)
+(define-condition required-argument-error (json-type-error)
   ((slot-name :initarg :slot-name)
    (class-name :initarg :class-name))
   (:report (lambda (condition stream)
@@ -184,7 +184,7 @@
 (defmethod initialize-instance ((instance protocol-object) &rest initargs &key &allow-other-keys)
   (declare (ignore initargs))
   (let ((instance (call-next-method)))
-    ;; (check-initargs instance)
+    (check-initargs instance)
     instance))
 
 (defmacro define-enum (name (&rest fields) &body options)

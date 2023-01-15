@@ -920,11 +920,14 @@
                       'lsp:hover-params
                       (make-text-document-position-arguments point)))))
         (unless (lsp-null-p result)
-          (markdown-buffer (hover-to-string result)))))))
+          (let ((string (hover-to-string result)))
+            (unless (emptyp (string-trim '(#\space #\newline) string))
+              (markdown-buffer string))))))))
 
 (define-command lsp-hover () ()
   (check-connection)
-  (display-message (text-document/hover (current-point))))
+  (when-let ((result (text-document/hover (current-point))))
+    (display-message result)))
 
 ;;; completion
 

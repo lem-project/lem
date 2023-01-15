@@ -178,15 +178,7 @@
     ((:return value request-id)
      (call-continuation connection value request-id))))
 
-(defun connect (hostname port)
-  (let* ((connection (create-connection hostname port))
-         (thread (sb-thread:make-thread #'dispatch-message-loop
-                                        :name "micros/client dispatch-message-loop"
-                                        :arguments (list connection))))
-    (setf (connection-message-dispatcher-thread connection) thread)
-    connection))
-
-(defun connect* (hostname port)
+(defun connect-until-successful (hostname port)
   (loop :for second :in '(0.1 0.2 0.4 0.8 1.6 3.2 6.4)
         :do (sleep second)
             (handler-case (create-connection hostname port)
@@ -221,22 +213,31 @@
       (when output-string
         (log:info "process output" output-string)))))
 
+(defun make-dispatch-message-loop-thread (connection)
+  (sb-thread:make-thread #'dispatch-message-loop
+                         :name "micros/client dispatch-message-loop"
+                         :arguments (list connection)))
+
 (defun start-server-and-connect ()
   (let* ((micros-port (random-available-port))
          (swank-port (random-available-port)) ; FIXME: micros-portとの衝突を考慮する
          (process (create-server-process micros-port :swank-port swank-port)))
     (log:debug process (async-process::process-pid process))
     (log:info "swank port: ~D" swank-port)
-    (let* ((connection (connect* "localhost" micros-port))
-           (thread (sb-thread:make-thread #'dispatch-message-loop
-                                          :name "micros/client dispatch-message-loop"
-                                          :arguments (list connection))))
+    (let* ((connection (connect-until-successful "localhost" micros-port))
+           (thread (make-dispatch-message-loop-thread connection)))
       (setf (connection-message-dispatcher-thread connection) thread
             (connection-server-process connection) process
             (connection-swank-port connection) swank-port)
       (sb-thread:make-thread (lambda ()
                                (receive-process-output-loop process)))
       connection)))
+
+(defun connect (hostname port)
+  (let* ((connection (create-connection hostname port))
+         (thread (make-dispatch-message-loop-thread connection)))
+    (setf (connection-message-dispatcher-thread connection) thread)
+    connection))
 
 (defun stop-server (connection)
   (sb-thread:terminate-thread (connection-message-dispatcher-thread connection))

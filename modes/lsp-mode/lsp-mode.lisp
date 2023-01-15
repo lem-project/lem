@@ -167,6 +167,11 @@
                   :timeout nil)))
 
 ;;;
+(defun buffer-language-mode (buffer)
+  (or (lem.language-mode:language-mode-tag buffer)
+      (buffer-major-mode buffer)))
+
+;;;
 (defgeneric spec-initialization-options (spec)
   (:method (spec) nil))
 
@@ -235,7 +240,7 @@
   (setf (buffer-value buffer 'workspace) workspace))
 
 (defun buffer-language-spec (buffer)
-  (get-language-spec (lem.language-mode:language-mode-tag buffer)))
+  (get-language-spec (buffer-language-mode buffer)))
 
 (defun buffer-language-id (buffer)
   (let ((spec (buffer-language-spec buffer)))

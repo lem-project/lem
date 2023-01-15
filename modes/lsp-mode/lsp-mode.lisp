@@ -881,28 +881,32 @@
                                           (insert-string point " "))))))
       buffer)))
 
-(defun hover-to-string (hover)
+(defun contents-to-string (contents)
   (flet ((marked-string-to-string (marked-string)
            (if (stringp marked-string)
                marked-string
                (or (get-map marked-string "value")
                    ""))))
-    (let ((contents (lsp:hover-contents hover)))
-      (cond
-        ;; MarkedString
-        ((typep contents 'lsp:marked-string)
-         (marked-string-to-string contents))
-        ;; MarkedString[]
-        ((lsp-array-p contents)
-         (with-output-to-string (out)
-           (do-sequence (content contents)
-             (write-string (marked-string-to-string content)
-                           out))))
-        ;; MarkupContent
-        ((typep contents 'lsp:markup-content)
-         (lsp:markup-content-value contents))
-        (t
-         "")))))
+    (cond
+      ;; MarkedString
+      ((typep contents 'lsp:marked-string)
+       (marked-string-to-string contents))
+      ;; MarkedString[]
+      ((lsp-array-p contents)
+       (with-output-to-string (out)
+         (do-sequence (content contents)
+           (write-string (marked-string-to-string content)
+                         out))))
+      ;; MarkupContent
+      ((typep contents 'lsp:markup-content)
+       (lsp:markup-content-value contents))
+      (t
+       ""))))
+
+(defun contents-to-markdown-buffer (contents)
+  (let ((string (contents-to-string contents)))
+    (unless (emptyp (string-trim '(#\space #\newline) string))
+      (markdown-buffer string))))
 
 (defun provide-hover-p (workspace)
   (handler-case (lsp:server-capabilities-hover-provider
@@ -920,9 +924,7 @@
                       'lsp:hover-params
                       (make-text-document-position-arguments point)))))
         (unless (lsp-null-p result)
-          (let ((string (hover-to-string result)))
-            (unless (emptyp (string-trim '(#\space #\newline) string))
-              (markdown-buffer string))))))))
+          (contents-to-markdown-buffer (lsp:hover-contents result)))))))
 
 (define-command lsp-hover () ()
   (check-connection)

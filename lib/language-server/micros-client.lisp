@@ -52,7 +52,10 @@
     :accessor connection-message-dispatcher-thread)
    (server-process
     :initform nil
-    :accessor connection-server-process)))
+    :accessor connection-server-process)
+   (swank-port
+    :initform nil
+    :accessor connection-swank-port)))
 
 (defun new-request-id (connection)
   (incf (connection-request-id-counter connection)))
@@ -194,10 +197,15 @@
                         :hostname hostname
                         :port port)))
 
-(defun create-server-process (port)
+(defun create-server-process (port &key (swank-port nil))
   (let ((command
           `("ros"
             "run"
+            "-s"
+            ,@(when swank-port
+                (list "swank"
+                      "-e"
+                      (format nil "(swank:create-server :dont-close t :port ~D)" swank-port)))
             "-s"
             "micros"
             "-e"
@@ -214,15 +222,18 @@
         (log:info "process output" output-string)))))
 
 (defun start-server-and-connect ()
-  (let* ((port (random-available-port))
-         (process (create-server-process port)))
+  (let* ((micros-port (random-available-port))
+         (swank-port (random-available-port)) ; FIXME: micros-portとの衝突を考慮する
+         (process (create-server-process micros-port :swank-port swank-port)))
     (log:debug process (async-process::process-pid process))
-    (let* ((connection (connect* "localhost" port))
+    (log:info "swank port: ~D" swank-port)
+    (let* ((connection (connect* "localhost" micros-port))
            (thread (sb-thread:make-thread #'dispatch-message-loop
                                           :name "micros/client dispatch-message-loop"
                                           :arguments (list connection))))
       (setf (connection-message-dispatcher-thread connection) thread
-            (connection-server-process connection) process)
+            (connection-server-process connection) process
+            (connection-swank-port connection) swank-port)
       (sb-thread:make-thread (lambda ()
                                (receive-process-output-loop process)))
       connection)))

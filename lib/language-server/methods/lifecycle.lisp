@@ -61,7 +61,9 @@
                    ;; :workspace
                    :experimental nil)
     :server-info (make-lsp-map "name" *language-server-name*
-                               "version" *language-server-version*))))
+                               "version" *language-server-version*
+                               "swankPort" (lem-language-server/micros-client::connection-swank-port
+                                            (server-backend-connection *server*))))))
 
 (define-request (initialized-request "initialized") (params lsp:initialized-params)
   (declare (ignore params))

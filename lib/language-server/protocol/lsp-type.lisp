@@ -74,7 +74,7 @@
                    (format s "~S is not a ~S in ~S" value type context)
                    (format s "~S is not a ~S" value type))))))
 
-(define-condition required-argument-error (error)
+(define-condition required-argument-error (json-type-error)
   ((slot-name :initarg :slot-name)
    (class-name :initarg :class-name))
   (:report (lambda (condition stream)
@@ -90,7 +90,14 @@
 (deftype lsp-uinteger () '(integer 0 *))
 (deftype lsp-decimal () 'integer)
 (deftype lsp-regexp () 'string)
-(deftype lsp-string () 'string)
+(deftype lsp-string (&optional (string nil stringp))
+  (if stringp
+      (labels ((f (value)
+                 (equal value string)))
+        (let ((g (gensym)))
+          (setf (symbol-function g) #'f)
+          `(satisfies ,g)))
+      'string))
 (deftype lsp-boolean () 'boolean)
 (deftype lsp-null () '(eql :null))
 
@@ -184,7 +191,7 @@
 (defmethod initialize-instance ((instance protocol-object) &rest initargs &key &allow-other-keys)
   (declare (ignore initargs))
   (let ((instance (call-next-method)))
-    ;; (check-initargs instance)
+    (check-initargs instance)
     instance))
 
 (defmacro define-enum (name (&rest fields) &body options)

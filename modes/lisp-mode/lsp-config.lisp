@@ -9,10 +9,9 @@
              `("lem-language-server"
                "--tcp"
                "--port" ,(princ-to-string port)
-               ;; "--log-file" ,(namestring
-               ;;                (merge-pathnames "language-server.log"
-               ;;                                 (user-homedir-pathname)))
-               ))
+               "--log-file" ,(namestring
+                              (merge-pathnames "language-server.log"
+                                               (lem:lem-home)))))
   :mode :tcp
   ;; :port 12345
   )

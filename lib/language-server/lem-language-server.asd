@@ -24,7 +24,7 @@
                              (:file "utils")))
                (:file "micros-client")
                (:file "package")
-               (:file "variables")
+               (:file "config")
                (:file "editor-utils")
                (:file "method")
                (:file "server")

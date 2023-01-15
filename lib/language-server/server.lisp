@@ -8,7 +8,9 @@
 
 (defmethod start-server :before (server)
   (expose-all-methods *server*)
-  (run-backend))
+  (unless (server-backend-connection *server*)
+    (setf (server-backend-connection *server*)
+          (run-backend))))
 
 (defclass server ()
   ((jsonrpc-server :initform (jsonrpc:make-server)
@@ -53,6 +55,8 @@
   (start-server *server*))
 
 (defun run-backend ()
-  (unless (server-backend-connection *server*)
-    (setf (server-backend-connection *server*)
-          (micros/client:start-server-and-connect))))
+  (let ((hostname (config :backend-hostname))
+        (port (config :backend-port)))
+    (if (and hostname port)
+        (micros/client:connect hostname port)
+        (micros/client:start-server-and-connect))))

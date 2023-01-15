@@ -442,6 +442,9 @@
                       "Could not establish a connection with the Language Server (condition: ~A)"
                       condition)))))
 
+(defgeneric initialized-workspace (mode workspace)
+  (:method (mode workspace)))
+
 (defun ensure-lsp-buffer (buffer &optional continuation)
   (let* ((spec (buffer-language-spec buffer))
          (root-uri (pathname-to-uri
@@ -468,6 +471,8 @@
                     (assign-workspace-to-buffer buffer workspace)
                     (when continuation (funcall continuation))
                     (spinner:stop-loading-spinner spinner)
+                    (let ((mode (lem::ensure-mode-object (buffer-language-mode buffer))))
+                      (initialized-workspace mode workspace))
                     (redraw-display))))))))))
 
 (defun check-connection ()

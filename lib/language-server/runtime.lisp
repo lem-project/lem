@@ -40,6 +40,7 @@
 
 (defun on-load (filename)
   (when (uiop:file-exists-p filename)
+    #+(or)
     (let ((asd-files (find-asd-files filename)))
       (cond (asd-files
              (let ((system-names (loop :for asd-file :in asd-files

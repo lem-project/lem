@@ -17,7 +17,7 @@
     (loop
       (let ((package-name (in-package-line-p (lem:line-string p))))
         (when package-name
-          (return package-name)))
+          (return (string-upcase package-name))))
       (unless (lem:line-offset p -1)
         (return default)))))
 

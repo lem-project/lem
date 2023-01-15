@@ -150,20 +150,22 @@
 
 (define-request (document-highlight-request "textDocument/documentHighlight")
     (params lsp:document-highlight-params)
-  (let* ((point (text-document-position-params-to-point params))
-         (symbol-string (lem:symbol-string-at-point point))
-         (buffer (lem:point-buffer point)))
-    (when symbol-string
-      (lem:with-point ((point (lem:buffer-point buffer)))
-        (lem:buffer-start point)
-        (convert-to-json
-         (coerce (loop :while (lem:search-forward-symbol point symbol-string)
-                       :collect (lem:with-point ((start point))
-                                  (lem:search-backward-symbol start symbol-string)
-                                  (make-instance 'lsp:document-highlight
-                                                 :kind lsp:document-highlight-kind-text
-                                                 :range (points-to-lsp-range start point))))
-                 'vector))))))
+  (let ((point (text-document-position-params-to-point params)))
+    (unless (lem:in-string-or-comment-p point)
+      (let ((symbol-string (lem:symbol-string-at-point point))
+            (buffer (lem:point-buffer point)))
+        (when symbol-string
+          (lem:with-point ((point (lem:buffer-point buffer)))
+            (lem:buffer-start point)
+            (convert-to-json
+             (coerce (loop :while (lem:search-forward-symbol point symbol-string)
+                           :unless (lem:in-string-or-comment-p point)
+                           :collect (lem:with-point ((start point))
+                                      (lem:search-backward-symbol start symbol-string)
+                                      (make-instance 'lsp:document-highlight
+                                                     :kind lsp:document-highlight-kind-text
+                                                     :range (points-to-lsp-range start point))))
+                     'vector))))))))
 
 (defun signature-help-at-point (point)
   (when (and (backward-up-list point)

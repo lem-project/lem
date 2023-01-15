@@ -97,7 +97,7 @@
       hash
     (assert (equal kind "booleanLiteral"))
     (check-type value boolean)
-    value))
+    `(eql ,value)))
 
 (defun parse-enumeration (hash)
   (check-type hash hash-table)
@@ -156,7 +156,7 @@
       hash
     (assert (string= kind "integerLiteral"))
     (check-type value integer)
-    value))
+    `(integer ,value ,value)))
 
 (defun parse-map-key-type (hash)
   (check-type hash hash-table)
@@ -311,7 +311,7 @@
       hash
     (assert (string= kind "stringLiteral"))
     (check-type value string)
-    value))
+    `(lsp-string ,value)))
 
 (defun parse-structure (hash)
   (check-type hash hash-table)

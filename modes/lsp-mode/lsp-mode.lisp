@@ -953,34 +953,38 @@
                  (end point))
       (move-to-lsp-position start range-start)
       (move-to-lsp-position end range-end)
-      (values start end))))
+      (list start end))))
 
 (defun convert-completion-items (point items)
-  (sort (map 'list
-             (lambda (item)
-               (let ((text-edit
-                       (handler-case (lsp:completion-item-text-edit item)
-                         (unbound-slot () nil)))
-                     start
-                     end
-                     (label (lsp:completion-item-label item)))
-                 (when text-edit
-                   (setf (values start end)
+  (labels ((sort-items (items)
+             (sort items #'string< :key #'completion-item-sort-text))
+           (label-and-points (item)
+             (let ((text-edit
+                     (handler-case (lsp:completion-item-text-edit item)
+                       (unbound-slot () nil))))
+               (if text-edit
+                   (cons (lsp:text-edit-new-text text-edit)
                          (convert-to-range point (lsp:text-edit-range text-edit)))
-                   (setf label (lsp:text-edit-new-text text-edit)))
-                 (make-instance 'completion-item
-                                :start start
-                                ;; 補完候補を表示した後に文字を入力し, 候補選択をするとendがずれるので使えない
-                                ;; :end end
-                                :label label
-                                :detail (handler-case (lsp:completion-item-detail item)
-                                          (unbound-slot () ""))
-                                :sort-text (handler-case (lsp:completion-item-sort-text item)
-                                             (unbound-slot ()
-                                               (lsp:completion-item-label item))))))
-             items)
-        #'string<
-        :key #'completion-item-sort-text))
+                   (list (lsp:completion-item-label item) nil nil))))
+           (make-completion-item (item)
+             (destructuring-bind (label start end)
+                (label-and-points item)
+              (declare (ignore end))
+              (make-instance
+               'completion-item
+               :start start
+               ;; 補完候補を表示した後に文字を入力し, 候補選択をするとendがずれるので使えない
+               ;; :end end
+               :label label
+               :detail (handler-case (lsp:completion-item-detail item)
+                         (unbound-slot () ""))
+               :sort-text (handler-case (lsp:completion-item-sort-text item)
+                            (unbound-slot ()
+                              (lsp:completion-item-label item)))))))
+    (sort-items
+     (map 'list
+          #'make-completion-item
+          items))))
 
 (defun convert-completion-list (point completion-list)
   (convert-completion-items point (lsp:completion-list-items completion-list)))

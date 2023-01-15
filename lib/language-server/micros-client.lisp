@@ -6,6 +6,7 @@
   (:export :remote-eval
            :remote-eval-sync
            :start-server-and-connect
+           :connect
            :stop-server))
 (in-package :lem-language-server/micros-client)
 

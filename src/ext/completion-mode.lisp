@@ -240,7 +240,8 @@
            (when repeat (completion-end)))
           (repeat
            (popup-menu-update items
-                              :print-spec (make-print-spec items)))
+                              :print-spec (make-print-spec items))
+           (call-focus-action))
           ((alexandria:length= items 1)
            (completion-insert (current-point) (first items)))
           (t
@@ -254,7 +255,8 @@
             :non-focus-attribute 'non-focus-completion-attribute
             :style '(:use-border nil :offset-y 1))
            (completion-mode t)
-           (narrowing-down items)))))
+           (narrowing-down items)
+           (call-focus-action)))))
 
 (defun ensure-completion-spec (completion-spec)
   (typecase completion-spec

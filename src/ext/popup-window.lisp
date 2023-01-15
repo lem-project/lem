@@ -491,6 +491,7 @@
 (defmethod lem-if:display-popup-message (implementation buffer-or-string
                                          &key timeout
                                               destination-window
+                                              source-window
                                               style)
   (let ((buffer (etypecase buffer-or-string
                   (string (make-popup-buffer buffer-or-string))
@@ -498,7 +499,7 @@
     (destructuring-bind (width height)
         (compute-size-from-buffer buffer)
       (delete-popup-message destination-window)
-      (let ((window (make-popup-window :source-window (current-window)
+      (let ((window (make-popup-window :source-window (or source-window (current-window))
                                        :buffer buffer
                                        :width width
                                        :height height
@@ -518,12 +519,13 @@
   (when (and popup-message (not (deleted-window-p popup-message)))
     (delete-window popup-message)))
 
-(defmethod lem:show-message (value &key timeout (style '(:gravity :follow-cursor)))
+(defmethod lem:show-message (value &rest args &key timeout (style '(:gravity :follow-cursor)))
+  (declare (ignore style timeout))
   (setf (frame-message-window (current-frame))
-        (display-popup-message value
-                               :timeout timeout
-                               :destination-window (frame-message-window (current-frame))
-                               :style style)))
+        (apply #'display-popup-message
+               value
+               :destination-window (frame-message-window (current-frame))
+               args)))
 
 (defmethod lem:clear-message ()
   (delete-popup-message (frame-message-window (current-frame)))

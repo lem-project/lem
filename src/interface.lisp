@@ -80,6 +80,7 @@
 (defgeneric lem-if:popup-menu-select (implementation))
 (defgeneric lem-if:display-popup-message (implementation buffer-or-string &key timeout
                                                                                destination-window
+                                                                               source-window
                                                                                style))
 (defgeneric lem-if:delete-popup-message (implementation popup-message))
 

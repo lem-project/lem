@@ -5,11 +5,13 @@
 (defun display-popup-message (buffer-or-string
                               &key (timeout *default-popup-message-timeout*)
                                    destination-window
+                                   source-window
                                    style)
   (lem-if:display-popup-message (implementation)
                                 buffer-or-string
                                 :timeout timeout
                                 :destination-window destination-window
+                                :source-window source-window
                                 :style style))
 
 (defun delete-popup-message (popup-message)

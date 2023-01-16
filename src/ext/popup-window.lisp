@@ -520,11 +520,12 @@
     (delete-window popup-message)))
 
 (defmethod lem:show-message (value &rest args &key timeout (style '(:gravity :follow-cursor)))
-  (declare (ignore style timeout))
   (setf (frame-message-window (current-frame))
         (apply #'display-popup-message
                value
                :destination-window (frame-message-window (current-frame))
+               :style style
+               :timeout timeout
                args)))
 
 (defmethod lem:clear-message ()

@@ -17,44 +17,35 @@
            (string-equal x y :end2 (length x))
            (string= x y :end2 (length x)))))
 
-(defun %comp-split (string separator)
-  (let ((list nil) (words 0) (end (length string)))
-    (when (zerop end) (return-from %comp-split nil))
-    (flet ((separatorp (char) (find char separator))
-           (done () (return-from %comp-split (cons (subseq string 0 end) list))))
-      (loop :for start = (position-if #'separatorp string :end end :from-end t)
-            :do (when (null start) (done))
-                (push (subseq string (1+ start) end) list)
-                (push (string (aref string start)) list)
-                (incf words)
-                (setf end start)))))
+(defun explode-string (string separator)
+  (if (string= string "")
+      '()
+      (flet ((separatorp (char) (find char separator)))
+        (loop :for start := 0 :then (1+ pos)
+              :for pos := (position-if #'separatorp string :start start)
+              :collect (subseq string start pos)
+              :when pos :collect (string (char string pos))
+              :while pos))))
 
-(defun completion (name list &key (test #'search) separator key)
-  (let ((strings
-          (remove-if-not (if separator
-                             (let* ((parts1 (%comp-split name separator))
-                                    (parts1-length (length parts1)))
-                               (lambda (elt)
-                                 (when key
-                                   (setf elt (funcall key elt)))
-                                 (let* ((parts2 (%comp-split elt separator))
-                                        (parts2-length (length parts2)))
-                                   (and (<= parts1-length parts2-length)
-                                        (loop
-                                          :for p1 :in parts1
-                                          :for p2 :in parts2
-                                          :unless (funcall test p1 p2)
-                                          :do (return nil)
-                                          :finally (return t))))))
-                             (lambda (elt)
-                               (when key
-                                 (setf elt (funcall key elt)))
-                               (funcall test name elt)))
-                         list)))
-    strings))
+(defun completion (name elements &key (test #'search) separator key)
+  (labels ((apply-key (elt) (if key (funcall key elt) elt))
+           (test-with-separator (elt)
+             (let* ((elt (apply-key elt))
+                    (parts1 (explode-string name separator))
+                    (parts2 (explode-string elt separator)))
+               (and (<= (length parts1) (length parts2))
+                    (loop :for p1 :in parts1
+                          :for p2 :in parts2
+                          :always (funcall test p1 p2)))))
+           (test-without-separator (elt)
+             (funcall test name (apply-key elt))))
+    (remove-if-not (if separator
+                       #'test-with-separator
+                       #'test-without-separator)
+                   elements)))
 
-(defun completion-hypheen (name list &key key)
-  (completion name list :test #'completion-test :separator "-" :key key))
+(defun completion-hypheen (name elements &key key)
+  (completion name elements :test #'completion-test :separator "-" :key key))
 
 (defun completion-file (str directory &key (ignore-case *file-completion-ignore-case*) directory-only)
   (setf str (expand-file-name str directory))

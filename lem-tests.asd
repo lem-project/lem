@@ -37,6 +37,7 @@
                (:file "cursors")
                (:file "self-insert-command")
                (:file "interp")
-               (:file "file"))
+               (:file "file")
+               (:file "completion"))
   :perform (test-op (o c)
                     (symbol-call :testif :run-tests)))

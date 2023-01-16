@@ -50,7 +50,7 @@
                (:file "overlay")
                (:file "streams")
                (:file "fundamental-mode")
-               (:file "comp")
+               (:file "completion")
                (:file "typeout")
                (:file "cursors")
                (:file "lem")

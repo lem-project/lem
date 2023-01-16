@@ -982,13 +982,15 @@
                 :sort-text (handler-case (lsp:completion-item-sort-text item)
                              (unbound-slot ()
                                (lsp:completion-item-label item)))
-                :focus-action (lambda ()
-                                (when-let ((result (contents-to-markdown-buffer
-                                                    (lsp:completion-item-documentation item))))
-                                  (display-message result
-                                                   :gravity :adjacent-window
-                                                   :source-window (lem.popup-window::popup-menu-window
-                                                                   lem.popup-window::*popup-menu*))))))))
+                :focus-action (when-let ((documentation
+                                          (handler-case (lsp:completion-item-documentation item)
+                                            (unbound-slot () nil))))
+                                (lambda ()
+                                  (when-let ((result (contents-to-markdown-buffer documentation)))
+                                    (display-message result
+                                                     :gravity :adjacent-window
+                                                     :source-window (lem.popup-window::popup-menu-window
+                                                                     lem.popup-window::*popup-menu*)))))))))
     (sort-items
      (map 'list
           #'make-completion-item

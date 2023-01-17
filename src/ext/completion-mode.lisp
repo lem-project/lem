@@ -17,11 +17,11 @@
 (defclass completion-context ()
   ((spec
     :initarg :spec
-    :reader completion-context-spec
+    :reader context-spec
     :type completion-spec)
    (last-items
     :initform '()
-    :accessor completion-context-last-items)))
+    :accessor context-last-items)))
 
 (defclass completion-spec ()
   ((function
@@ -208,7 +208,7 @@
                nil))))))
 
 (define-command completion-narrowing-down-or-next-line () ()
-  (or (narrowing-down (completion-context-last-items *completion-context*))
+  (or (narrowing-down (context-last-items *completion-context*))
       (completion-next-line)))
 
 (defun completion-item-range (point item)
@@ -234,8 +234,8 @@
     items))
 
 (defun run-completion-1 (completion-context repeat)
-  (let ((items (compute-completion-items (completion-context-spec completion-context))))
-    (setf (completion-context-last-items completion-context) items)
+  (let ((items (compute-completion-items (context-spec completion-context))))
+    (setf (context-last-items completion-context) items)
     (cond ((null items)
            (when repeat (completion-end)))
           (repeat

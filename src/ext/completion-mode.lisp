@@ -26,10 +26,14 @@
 (defclass completion-spec ()
   ((function
     :initarg :function
-    :reader spec-function)))
+    :reader spec-function)
+   (async
+    :initarg :async
+    :initform nil
+    :reader spec-async-p)))
 
-(defun make-completion-spec (function)
-  (make-instance 'completion-spec :function function))
+(defun make-completion-spec (function &key async)
+  (make-instance 'completion-spec :function function :async async))
 
 (defclass completion-item ()
   ((label
@@ -266,9 +270,13 @@
      (make-completion-spec (alexandria:ensure-function completion-spec)))))
 
 (defun run-completion (completion-spec)
-  (let ((completion-context
-          (make-instance 'completion-context
-                         :spec (ensure-completion-spec completion-spec))))
+  (let* ((completion-spec
+           (ensure-completion-spec completion-spec))
+         (completion-context
+           (make-instance 'completion-context
+                          :spec completion-spec)))
     (setf *completion-context* completion-context)
-    (run-completion-sync completion-context
-                         nil)))
+    (if (spec-async-p completion-spec)
+        (error "unimplemented")
+        (run-completion-sync completion-context
+                             nil))))

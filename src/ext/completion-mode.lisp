@@ -35,6 +35,21 @@
 (defun make-completion-spec (function &key async)
   (make-instance 'completion-spec :function function :async async))
 
+(defun ensure-completion-spec (completion-spec)
+  (typecase completion-spec
+    (completion-spec
+     completion-spec)
+    (otherwise
+     (make-completion-spec (alexandria:ensure-function completion-spec)))))
+
+(defun call-sync-function (completion-spec point)
+  (assert (not (spec-async-p completion-spec)))
+  (funcall (spec-function completion-spec) point))
+
+(defun call-async-function (completion-spec point then)
+  (assert (spec-async-p completion-spec))
+  (funcall (spec-function completion-spec) point then))
+
 (defclass completion-item ()
   ((label
     :initarg :label
@@ -133,9 +148,6 @@
   (completion-mode nil)
   (popup-menu-quit))
 
-(defun completion-again ()
-  (run-completion-sync *completion-context* t))
-
 (defun call-focus-action ()
   (alexandria:when-let* ((item (lem.popup-window:get-focus-item))
                          (fn (completion-item-focus-action item)))
@@ -144,17 +156,17 @@
 (define-command completion-self-insert () ()
   (let ((c (insertion-key-p (last-read-key-sequence))))
     (cond (c (insert-character (current-point) c)
-             (completion-again))
+             (continue-completion *completion-context*))
           (t (unread-key-sequence (last-read-key-sequence))
              (completion-end)))))
 
 (define-command completion-delete-previous-char (n) ("p")
   (delete-previous-char n)
-  (completion-again))
+  (continue-completion *completion-context*))
 
 (define-command completion-backward-delete-word (n) ("p")
   (backward-delete-word n)
-  (completion-again))
+  (continue-completion *completion-context*))
 
 (define-command completion-next-line () ()
   (popup-menu-down)
@@ -179,42 +191,6 @@
   (insert-character (current-point) #\space)
   (completion-end))
 
-(defun partial-match (strings)
-  (when strings
-    (let ((n nil))
-      (loop :for rest :on strings
-            :do (loop :for rest2 :on (cdr rest)
-                      :for mismatch := (mismatch (first rest) (first rest2))
-                      :do (and mismatch
-                               (setf n
-                                     (if n
-                                         (min n mismatch)
-                                         mismatch)))))
-      n)))
-
-(defun narrowing-down (last-items)
-  (when last-items
-    (let ((n (partial-match (mapcar #'completion-item-label last-items))))
-      (multiple-value-bind (start end)
-          (completion-item-range (current-point) (first last-items))
-        (cond ((and n (plusp n) (< (count-characters start end) n))
-               (completion-insert (current-point)
-                                  (first last-items)
-                                  n)
-               (completion-again)
-               t)
-              ((alexandria:length= last-items 1)
-               (completion-insert (current-point)
-                                  (first last-items))
-               (completion-again)
-               t)
-              (t
-               nil))))))
-
-(define-command completion-narrowing-down-or-next-line () ()
-  (or (narrowing-down (context-last-items *completion-context*))
-      (completion-next-line)))
-
 (defun completion-item-range (point item)
   (let ((start (or (completion-item-start item)
                    (with-point ((start point))
@@ -230,53 +206,97 @@
       (delete-between-points start end)
       (insert-string point (subseq (completion-item-label item) 0 begin)))))
 
-(defun compute-completion-items (completion-spec)
-  (let ((items (funcall (spec-function completion-spec) (current-point))))
-    (when (and *limit-number-of-items*
-               (< *limit-number-of-items* (length items)))
-      (setf items (subseq items 0 *limit-number-of-items*)))
-    items))
+(defun partial-match (strings)
+  (when strings
+    (let ((n nil))
+      (loop :for rest :on strings
+            :do (loop :for rest2 :on (cdr rest)
+                      :for mismatch := (mismatch (first rest) (first rest2))
+                      :do (and mismatch
+                               (setf n
+                                     (if n
+                                         (min n mismatch)
+                                         mismatch)))))
+      n)))
 
-(defun run-completion-sync (completion-context repeat)
-  (let ((items (compute-completion-items (context-spec completion-context))))
-    (setf (context-last-items completion-context) items)
-    (cond ((null items)
-           (when repeat (completion-end)))
-          (repeat
-           (popup-menu-update items
-                              :print-spec (make-print-spec items))
-           (call-focus-action))
-          ((alexandria:length= items 1)
-           (completion-insert (current-point) (first items)))
-          (t
-           (display-popup-menu
-            items
-            :action-callback (lambda (item)
-                               (completion-insert (current-point) item)
-                               (completion-end))
-            :print-spec (make-print-spec items)
-            :focus-attribute 'completion-attribute
-            :non-focus-attribute 'non-focus-completion-attribute
-            :style '(:use-border nil :offset-y 1))
-           (completion-mode t)
-           (narrowing-down items)
-           (call-focus-action)))))
+(defun narrowing-down (context last-items)
+  (when last-items
+    (let ((n (partial-match (mapcar #'completion-item-label last-items))))
+      (multiple-value-bind (start end)
+          (completion-item-range (current-point) (first last-items))
+        (cond ((and n (plusp n) (< (count-characters start end) n))
+               (completion-insert (current-point)
+                                  (first last-items)
+                                  n)
+               (continue-completion context)
+               t)
+              ((alexandria:length= last-items 1)
+               (completion-insert (current-point)
+                                  (first last-items))
+               (continue-completion context)
+               t)
+              (t
+               nil))))))
 
-(defun ensure-completion-spec (completion-spec)
-  (typecase completion-spec
-    (completion-spec
-     completion-spec)
-    (otherwise
-     (make-completion-spec (alexandria:ensure-function completion-spec)))))
+(define-command completion-narrowing-down-or-next-line () ()
+  (or (narrowing-down *completion-context* (context-last-items *completion-context*))
+      (completion-next-line)))
+
+(defun limitation-items (items)
+  (if (and *limit-number-of-items*
+           (< *limit-number-of-items* (length items)))
+      (subseq items 0 *limit-number-of-items*)
+      items))
+
+(defun compute-completion-items (context then)
+  (flet ((update-items-and-then (items)
+           (let ((items (limitation-items items)))
+             (setf (context-last-items context) items)
+             (funcall then items))))
+    (let ((spec (context-spec context)))
+      (if (spec-async-p spec)
+          (call-async-function spec
+                               (current-point)
+                               #'update-items-and-then)
+          (update-items-and-then (call-sync-function spec (current-point)))))))
+
+(defun start-completion (context items)
+  (display-popup-menu
+   items
+   :action-callback (lambda (item)
+                      (completion-insert (current-point) item)
+                      (completion-end))
+   :print-spec (make-print-spec items)
+   :focus-attribute 'completion-attribute
+   :non-focus-attribute 'non-focus-completion-attribute
+   :style '(:use-border nil :offset-y 1))
+  (completion-mode t)
+  (narrowing-down context items)
+  (call-focus-action))
+
+(defun continue-completion (context)
+  (compute-completion-items
+   context
+   (lambda (items)
+     (cond ((null items)
+            (completion-end))
+           (t
+            (popup-menu-update items :print-spec (make-print-spec items))
+            (call-focus-action))))))
+
+(defun run-completion-sync (context)
+  (compute-completion-items
+   context
+   (lambda (items)
+     (when items
+       (if (alexandria:length= items 1)
+           (completion-insert (current-point) (first items))
+           (start-completion context items))))))
 
 (defun run-completion (completion-spec)
-  (let* ((completion-spec
-           (ensure-completion-spec completion-spec))
-         (completion-context
-           (make-instance 'completion-context
-                          :spec completion-spec)))
-    (setf *completion-context* completion-context)
-    (if (spec-async-p completion-spec)
+  (let* ((spec (ensure-completion-spec completion-spec))
+         (context (make-instance 'completion-context :spec spec)))
+    (setf *completion-context* context)
+    (if (spec-async-p spec)
         (error "unimplemented")
-        (run-completion-sync completion-context
-                             nil))))
+        (run-completion-sync context))))

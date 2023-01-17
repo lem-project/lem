@@ -130,7 +130,7 @@
   (popup-menu-quit))
 
 (defun completion-again ()
-  (run-completion-1 *completion-context* t))
+  (run-completion-sync *completion-context* t))
 
 (defun call-focus-action ()
   (alexandria:when-let* ((item (lem.popup-window:get-focus-item))
@@ -233,7 +233,7 @@
       (setf items (subseq items 0 *limit-number-of-items*)))
     items))
 
-(defun run-completion-1 (completion-context repeat)
+(defun run-completion-sync (completion-context repeat)
   (let ((items (compute-completion-items (context-spec completion-context))))
     (setf (context-last-items completion-context) items)
     (cond ((null items)
@@ -270,5 +270,5 @@
           (make-instance 'completion-context
                          :spec (ensure-completion-spec completion-spec))))
     (setf *completion-context* completion-context)
-    (run-completion-1 completion-context
-                      nil)))
+    (run-completion-sync completion-context
+                         nil)))

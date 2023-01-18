@@ -224,7 +224,7 @@
          (swank-port (random-available-port)) ; FIXME: micros-portとの衝突を考慮する
          (process (create-server-process micros-port :swank-port swank-port)))
     (log:debug process (async-process::process-pid process))
-    (log:info "swank port: ~D" swank-port)
+    (log:info "swank port: ~D, micros port: ~D" swank-port micros-port)
     (let* ((connection (connect-until-successful "localhost" micros-port))
            (thread (make-dispatch-message-loop-thread connection)))
       (setf (connection-message-dispatcher-thread connection) thread

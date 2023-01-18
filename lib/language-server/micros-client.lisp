@@ -119,13 +119,13 @@
 
 (defun read-message (connection)
   (micros/rpc:read-message (usocket:socket-stream (connection-socket connection))
-                                micros::*swank-io-package*
-                                :validate-input t))
+                           micros::*swank-io-package*
+                           :validate-input t))
 
 (defun send-message (connection message)
   (micros/rpc:write-message message
-                                 micros::*swank-io-package*
-                                 (usocket:socket-stream (connection-socket connection))))
+                            micros::*swank-io-package*
+                            (usocket:socket-stream (connection-socket connection))))
 
 (defun remote-eval (connection
                     expression

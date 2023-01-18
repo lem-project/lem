@@ -288,13 +288,15 @@
   (let* ((spec (ensure-completion-spec completion-spec))
          (context (make-instance 'completion-context :spec spec)))
     (setf *completion-context* context)
-    (compute-completion-items
-     context
-     (if (spec-async-p (context-spec context))
-         (lambda (items)
-           (start-completion context items))
-         (lambda (items)
-           (when items
-             (if (alexandria:length= items 1)
-                 (completion-insert (current-point) (first items))
-                 (start-completion context items))))))))
+    (with-point ((before-point (current-point)))
+      (compute-completion-items
+       context
+       (if (spec-async-p (context-spec context))
+           (lambda (items)
+             (when (point= before-point (current-point))
+               (start-completion context items)))
+           (lambda (items)
+             (when items
+               (if (alexandria:length= items 1)
+                   (completion-insert (current-point) (first items))
+                   (start-completion context items)))))))))

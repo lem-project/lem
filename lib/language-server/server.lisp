@@ -59,4 +59,6 @@
         (port (config :backend-port)))
     (if (and hostname port)
         (micros/client:connect hostname port)
-        (micros/client:start-server-and-connect))))
+        (micros/client:start-server-and-connect
+         (when (typep *server* 'tcp-server)
+           (tcp-server-port *server*))))))

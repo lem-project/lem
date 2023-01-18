@@ -219,9 +219,9 @@
                          :name "micros/client dispatch-message-loop"
                          :arguments (list connection)))
 
-(defun start-server-and-connect ()
-  (let* ((micros-port (random-available-port))
-         (swank-port (random-available-port)) ; FIXME: micros-portとの衝突を考慮する
+(defun start-server-and-connect (deny-port)
+  (let* ((micros-port (random-available-port deny-port))
+         (swank-port (random-available-port deny-port micros-port))
          (process (create-server-process micros-port :swank-port swank-port)))
     (log:debug process (async-process::process-pid process))
     (log:info "swank port: ~D, micros port: ~D" swank-port micros-port)

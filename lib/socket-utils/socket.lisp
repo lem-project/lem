@@ -28,9 +28,10 @@
         (usocket:socket-close socket)
         port))))
 
-(defun random-available-port ()
+(defun random-available-port (&rest deny-ports)
   (loop :for port := (random-port)
-        :when (port-available-p port)
+        :when (and (port-available-p port)
+                   (not (find port deny-ports :test #'equal)))
         :return port))
 
 (defun random-port ()

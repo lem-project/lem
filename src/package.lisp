@@ -11,6 +11,7 @@
   ;; config.lisp
   (:export
    :lem-home
+   :lem-logdir-pathname
    :config)
   ;; errors.lisp
   (:export

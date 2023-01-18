@@ -11,7 +11,7 @@
                "--port" ,(princ-to-string port)
                "--log-file" ,(namestring
                               (merge-pathnames "language-server.log"
-                                               (lem:lem-home)))))
+                                               (lem:lem-logdir-pathname)))))
   :mode :tcp
   ;; :port 12345
   )

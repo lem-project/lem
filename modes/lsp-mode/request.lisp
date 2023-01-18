@@ -13,13 +13,14 @@
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
 
-(defvar *log-pathname* (merge-pathnames "language-client.log" (lem:lem-home)))
+(defvar *log-pathname* (merge-pathnames "language-client.log" (lem:lem-logdir-pathname)))
 (defvar *log-enable* t)
 (defvar *log-mutex* (bt:make-lock))
 
 (defun do-log (string &rest args)
   (when *log-enable*
     (bt:with-lock-held (*log-mutex*)
+      (ensure-directories-exist *log-pathname*)
       (with-open-file (out *log-pathname*
                            :direction :output
                            :if-exists :append

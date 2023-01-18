@@ -4,6 +4,9 @@
   (or (uiop:getenv "LEM_HOME")
       (merge-pathnames ".lem/" (user-homedir-pathname))))
 
+(defun lem-logdir-pathname ()
+  (merge-pathnames "logs/" (lem-home)))
+
 (defun config-pathname ()
   (merge-pathnames "config.lisp" (lem-home)))
 

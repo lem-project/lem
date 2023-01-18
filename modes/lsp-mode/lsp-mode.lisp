@@ -283,7 +283,7 @@
      :keymap *lsp-mode-keymap*
      :enable-hook 'enable-hook)
   (setf (variable-value 'lem.language-mode:completion-spec)
-        #'text-document/completion)
+        (lem.completion-mode:make-completion-spec 'text-document/completion :async t))
   (setf (variable-value 'lem.language-mode:find-definitions-function)
         #'find-definitions)
   (setf (variable-value 'lem.language-mode:find-references-function)
@@ -1012,17 +1012,17 @@
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
-(defun text-document/completion (point)
+(defun text-document/completion (point then)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-completion-p workspace)
-      (convert-completion-response
-       point
-       (request:request
-        (workspace-client workspace)
-        (make-instance 'lsp:text-document/completion)
-        (apply #'make-instance
-               'lsp:completion-params
-               (make-text-document-position-arguments point)))))))
+      (async-request
+       (workspace-client workspace)
+       (make-instance 'lsp:text-document/completion)
+       (apply #'make-instance
+              'lsp:completion-params
+              (make-text-document-position-arguments point))
+       :then (lambda (response)
+               (funcall then (convert-completion-response point response)))))))
 
 (defun completion-with-trigger-character (c)
   (declare (ignore c))

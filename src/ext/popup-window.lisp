@@ -13,7 +13,7 @@
 (defvar *extra-right-margin* 0)
 (defvar *extra-width-margin* 0)
 
-(defvar *popup-menu*)
+(defvar *popup-menu* nil)
 
 (defclass popup-menu ()
   ((buffer
@@ -413,24 +413,25 @@
                              :non-focus-attribute non-focus-attribute))))))
 
 (defmethod lem-if:popup-menu-update (implementation items &key print-spec)
-  (multiple-value-bind (menu-width focus-overlay)
-      (setup-menu-buffer (popup-menu-buffer *popup-menu*)
-                         items
-                         print-spec
-                         (popup-menu-focus-attribute *popup-menu*)
-                         (popup-menu-non-focus-attribute *popup-menu*))
-    (setf (popup-menu-focus-overlay *popup-menu*) focus-overlay)
-    (let ((source-window (current-window)))
-      (when (eq source-window
-                (frame-prompt-window (current-frame)))
-        ;; prompt-window内でcompletion-windowを出している場合,
-        ;; completion-windowの位置を決める前にprompt-windowの調整を先にしておかないとずれるため,
-        ;; ここで更新する
-        (lem::update-floating-prompt-window (current-frame)))
-      (update-popup-window :source-window source-window
-                           :width menu-width
-                           :height (min 20 (length items))
-                           :destination-window (popup-menu-window *popup-menu*)))))
+  (when *popup-menu*
+    (multiple-value-bind (menu-width focus-overlay)
+        (setup-menu-buffer (popup-menu-buffer *popup-menu*)
+                           items
+                           print-spec
+                           (popup-menu-focus-attribute *popup-menu*)
+                           (popup-menu-non-focus-attribute *popup-menu*))
+      (setf (popup-menu-focus-overlay *popup-menu*) focus-overlay)
+      (let ((source-window (current-window)))
+        (when (eq source-window
+                  (frame-prompt-window (current-frame)))
+          ;; prompt-window内でcompletion-windowを出している場合,
+          ;; completion-windowの位置を決める前にprompt-windowの調整を先にしておかないとずれるため,
+          ;; ここで更新する
+          (lem::update-floating-prompt-window (current-frame)))
+        (update-popup-window :source-window source-window
+                             :width menu-width
+                             :height (min 20 (length items))
+                             :destination-window (popup-menu-window *popup-menu*))))))
 
 (defmethod lem-if:popup-menu-quit (implementation)
   (when *popup-menu*

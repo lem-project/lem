@@ -37,7 +37,8 @@
   (setf (variable-value 'language-mode-tag) 'lisp-mode)
   (setf (variable-value 'find-definitions-function) 'find-definitions)
   (setf (variable-value 'find-references-function) 'find-references)
-  (setf (variable-value 'completion-spec) 'completion-symbol)
+  (setf (variable-value 'completion-spec)
+        (make-completion-spec 'completion-symbol-async :async t))
   (setf (variable-value 'idle-function) 'lisp-idle-function)
   (setf (variable-value 'root-uri-patterns) '(".asd"))
   (set-syntax-parser lem-lisp-syntax:*syntax-table*
@@ -712,6 +713,11 @@
        :collect (make-xref-references :type type
                                       :locations defs)))))
 
+(defun make-completion-items (completions &optional start end)
+  (mapcar (lambda (completion)
+            (make-completion-item* completion start end))
+          completions))
+
 (defun completion-symbol (point)
   (check-connection)
   (with-point ((start point)
@@ -721,9 +727,26 @@
     (when (point< start end)
       (let* ((completions (eval-completions (points-to-string start end)
                                             (current-package))))
-        (mapcar (lambda (completion)
-                  (make-completion-item* completion start end))
-                completions)))))
+        (make-completion-items completions start end)))))
+
+(defun completion-symbol-async (point then)
+  (check-connection)
+  (let ((string (symbol-string-at-point point)))
+    (when string
+      (emacs-rex-string *connection*
+                        (make-completions-form-string string
+                                                      (current-package)
+                                                      :fuzzy t)
+                        :continuation (lambda (result)
+                                        (alexandria:destructuring-ecase result
+                                          ((:ok value)
+                                           (destructuring-bind (completions timeout) value
+                                             (declare (ignore timeout))
+                                             (funcall then (make-completion-items completions))))
+                                          ((:abort condition)
+                                           (editor-error "abort ~A" condition))))
+                        :thread (current-swank-thread)
+                        :package (current-package)))))
 
 (defun show-description (string)
   (let ((buffer (make-buffer "*lisp-description*")))

@@ -284,19 +284,17 @@
             (popup-menu-update items :print-spec (make-print-spec items))
             (call-focus-action))))))
 
-(defun run-completion-sync (context)
-  (compute-completion-items
-   context
-   (lambda (items)
-     (when items
-       (if (alexandria:length= items 1)
-           (completion-insert (current-point) (first items))
-           (start-completion context items))))))
-
 (defun run-completion (completion-spec)
   (let* ((spec (ensure-completion-spec completion-spec))
          (context (make-instance 'completion-context :spec spec)))
     (setf *completion-context* context)
-    (if (spec-async-p spec)
-        (error "unimplemented")
-        (run-completion-sync context))))
+    (compute-completion-items
+     context
+     (if (spec-async-p (context-spec context))
+         (lambda (items)
+           (start-completion context items))
+         (lambda (items)
+           (when items
+             (if (alexandria:length= items 1)
+                 (completion-insert (current-point) (first items))
+                 (start-completion context items))))))))

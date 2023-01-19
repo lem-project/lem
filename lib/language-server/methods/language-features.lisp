@@ -4,7 +4,7 @@
   (ppcre:register-groups-bind (package-name)
       ("^\\s*\\(\\s*(?:cl:|common-lisp:)?in-package (?:#?:|')?([^\)\\s]*)\\s*\\)"
        (string-downcase line))
-    package-name))
+    (string-upcase package-name)))
 
 (defun buffer-package (buffer)
   (lem:with-point ((point (lem:buffer-start-point buffer)))
@@ -17,7 +17,7 @@
     (loop
       (let ((package-name (in-package-line-p (lem:line-string p))))
         (when package-name
-          (return (string-upcase package-name))))
+          (return package-name)))
       (unless (lem:line-offset p -1)
         (return default)))))
 
@@ -236,10 +236,12 @@
     (loop :while (lem:search-forward-regexp point "^\\s*\\(def")
           :when (cond ((lem:in-comment-p point)
                        (lem:maybe-beginning-of-comment point)
-                       (lem:skip-space-and-comment-forward point))
+                       (lem:skip-space-and-comment-forward point)
+                       nil)
                       ((lem:in-string-p point)
                        (lem:maybe-beginning-of-string point)
-                       (lem:form-offset point 1))
+                       (lem:form-offset point 1)
+                       nil)
                       (t
                        (when (and (lem:form-offset point 1)
                                   (lem:skip-space-and-comment-forward point)
@@ -257,12 +259,13 @@
                                                        (end point))
                                         (lem:skip-symbol-forward start)
                                         (lem:skip-symbol-forward end)
-                                        (make-symbol-definition
-                                         :symbol-spec (micros/lsp-api:make-symbol-spec
-                                                       :name symbol-name
-                                                       :package (or package-name default-package-name))
-                                         :range (points-to-lsp-range start end)
-                                         :line-string (lem:line-string point)))))))))))
+                                        (let ((package (or package-name default-package-name)))
+                                          (make-symbol-definition
+                                           :symbol-spec (micros/lsp-api:make-symbol-spec
+                                                         :name symbol-name
+                                                         :package package)
+                                           :range (points-to-lsp-range start end)
+                                           :line-string (lem:line-string point))))))))))))
           :collect :it)))
 
 (defun document-symbol (buffer)
@@ -291,7 +294,7 @@
                                      (:package
                                       lsp:symbol-kind-package)
                                      (otherwise
-                                      lsp:symbol-kind-null))
+                                      lsp:symbol-kind-function))
                              :range range
                              :selection-range range)))
           (micros/client:remote-eval-sync

@@ -52,4 +52,8 @@ AC_ARG_ENABLE([rpc],
     AS_HELP_STRING([--enable-rpc], [Enable rpc]))
 AM_CONDITIONAL(GENERATE_RPC,[test "x$enable_rpc" = "xyes"])
 
+AC_ARG_ENABLE([language_server],
+    AS_HELP_STRING([--disable-language_server], [Disable language_server]))
+AM_CONDITIONAL(GENERATE_LANGUAGE_SERVER,[test "x$enable_language_server" != "xno"])
+
 AC_OUTPUT

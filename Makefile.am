@@ -18,6 +18,11 @@ if GENERATE_RPC
  EXTRA_DIST += bin/lem-rpc$(EXEEXT)
 endif
 
+if GENERATE_LANGUAGE_SERVER
+ bin_SCRIPTS += bin/lem-language-server$(EXEEXT)
+ EXTRA_DIST += bin/lem-language-server$(EXEEXT)
+endif
+
 lem-icon.svg: scripts/gen-desktop.ros
 	cd $(PWD);ros scripts/gen-desktop.ros --prefix ${prefix} --icon blue
 

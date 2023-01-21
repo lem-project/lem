@@ -95,8 +95,7 @@
     (let* ((port (or (spec-port spec) (lem-socket-utils:random-available-port)))
            (process (when-let (command (get-spec-command spec port))
                       (check-exist-program (first command) spec)
-                      (lem-process:run-process command
-                                               :output-callback #'output-callback))))
+                      (lem-process:run-process command :output-callback #'output-callback))))
       (make-server-info :process process
                         :port port
                         :disposable (lambda ()

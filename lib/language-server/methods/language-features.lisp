@@ -134,12 +134,15 @@
           (loop :for (type . definitions) :in result
                 :append (collect-points-from-definitions definitions))))))
 
+(defun hover-symbol (symbol-string package-name)
+  (micros/client:remote-eval-sync (server-backend-connection *server*)
+                                  `(micros/lsp-api:hover-symbol ,symbol-string)
+                                  :package-name package-name))
+
 (defun hover-at-point (point)
   (when-let* ((package-name (scan-current-package point))
               (symbol-string (lem:symbol-string-at-point point)))
-    (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                    `(micros/lsp-api:hover-symbol ,symbol-string)
-                                    :package-name package-name)))
+    (hover-symbol symbol-string package-name)))
 
 (define-request (hover-request "textDocument/hover") (params lsp:hover-params)
   (let* ((point (text-document-position-params-to-point params))

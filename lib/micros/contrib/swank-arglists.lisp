@@ -1141,6 +1141,38 @@ If the arglist is not available, return :NOT-AVAILABLE."))
 ;;; %CURSOR-MARKER%)). Only the forms up to point should be
 ;;; considered.
 
+(defun call-with-autodoc-error-handler (function print-right-margin)
+  (handler-bind ((serious-condition
+                   #'(lambda (c)
+                       (unless (debug-on-swank-error)
+                         (let ((*print-right-margin* print-right-margin))
+                           (return-from call-with-autodoc-error-handler
+                             (format nil "Arglist Error: \"~A\"" c)))))))
+    (funcall function)))
+
+(defmacro with-autodoc-error-handler ((&key print-right-margin) &body body)
+  `(call-with-autodoc-error-handler (lambda () ,@body)
+                                    ,print-right-margin))
+
+(defun autodoc-function (raw-form &key print-right-margin)
+  (with-autodoc-error-handler (:print-right-margin print-right-margin)
+    (with-buffer-syntax ()
+      (multiple-value-bind (form arglist obj-at-cursor form-path)
+          (find-subform-with-arglist (parse-raw-form raw-form))
+        (declare (ignore obj-at-cursor))
+        (list
+         (with-available-arglist (arglist) arglist
+           (decoded-arglist-to-string
+            arglist
+            :print-right-margin print-right-margin
+            :operator (car form)
+            :highlight (form-path-to-arglist-path form-path
+                                                  form
+                                                  arglist)))
+         (let ((*package* (find-package :cl-user)))
+           (prin1-to-string
+            (first form))))))))
+
 (defslimefun autodoc (raw-form &key print-right-margin)
   "Return a list of two elements.
 First, a string representing the arglist for the deepest subform in
@@ -1148,12 +1180,7 @@ RAW-FORM that does have an arglist. The highlighted parameter is
 wrapped in ===> X <===.
 
 Second, a boolean value telling whether the returned string can be cached."
-  (handler-bind ((serious-condition
-                  #'(lambda (c)
-                      (unless (debug-on-swank-error)
-                        (let ((*print-right-margin* print-right-margin))
-                          (return-from autodoc
-                            (format nil "Arglist Error: \"~A\"" c)))))))
+  (with-autodoc-error-handler (:print-right-margin print-right-margin)
     (with-buffer-syntax ()
       (multiple-value-bind (form arglist obj-at-cursor form-path)
           (find-subform-with-arglist (parse-raw-form raw-form))

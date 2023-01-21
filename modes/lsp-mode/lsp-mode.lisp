@@ -1039,6 +1039,26 @@
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
+(defun insert-markdown (point markdown-text)
+  (insert-buffer point (markdown-buffer markdown-text)))
+
+(defun insert-markup-content (point markup-content)
+  (switch ((lsp:markup-content-kind markup-content) :test #'equal)
+    ("markdown"
+     (insert-markdown point (lsp:markup-content-value markup-content)))
+    ("plaintext"
+     (insert-string point (lsp:markup-content-value markup-content)))
+    (otherwise
+     (insert-string point (lsp:markup-content-value markup-content)))))
+
+(defun insert-documentation (point documentation)
+  (insert-character point #\newline)
+  (etypecase documentation
+    (lsp:markup-content
+     (insert-markup-content point documentation))
+    (string
+     (insert-string point documentation))))
+
 (defun make-signature-help-buffer (signature-help)
   (let* ((buffer (make-buffer nil :temporary t))
          (point (buffer-point buffer)))
@@ -1083,9 +1103,7 @@
           (handler-case (lsp:signature-information-documentation signature)
             (unbound-slot () nil)
             (:no-error (documentation)
-              (if (typep documentation 'lsp:markup-content)
-                  (insert-string point (lsp:markup-content-value documentation))
-                  (insert-string point documentation))))))
+              (insert-documentation point documentation)))))
       (buffer-start (buffer-point buffer))
       buffer)))
 

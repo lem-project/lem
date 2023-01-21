@@ -19,3 +19,7 @@
 (defmethod lem-lsp-mode::initialized-workspace ((mode lem-lisp-mode:lisp-mode) workspace)
   (let ((swank-port (gethash "swankPort" (lem-lsp-mode::workspace-server-info workspace))))
     (lem-lisp-mode:slime-connect "localhost" swank-port nil)))
+
+;; override lisp-mode autodoc
+(defmethod lem:execute :after ((mode lem-lisp-mode:lisp-mode) (command lem:self-insert) argument)
+  )

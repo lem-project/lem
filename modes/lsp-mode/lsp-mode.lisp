@@ -109,7 +109,7 @@
       (make-server-info :process process
                         :disposable (lambda () (async-process:delete-process process))))))
 
-(defun run-server (spec)
+(defmethod run-server (spec)
   (run-server-using-mode (spec-mode spec) spec))
 
 (defun get-running-server-info (spec)

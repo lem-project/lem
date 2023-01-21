@@ -19,12 +19,15 @@
     "signatureHelp":{
       "signatureInformation":{
         "documentationFormat":[
-          "plaintext"
+          "plaintext",
+          "markdown"
         ],
         "parameterInformation":{
-          "labelOffsetSupport":false
-        }
-      }
+          "labelOffsetSupport":true
+        },
+        "activeParameterSupport": true
+      },
+      "contextSupport": true
     },
     "definition":{
       "linkSupport":false

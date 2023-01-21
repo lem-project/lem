@@ -1,6 +1,3 @@
 [submodule "lib/lsp-utils/specification/language-server-protocol"]
 	path = language-server-protocol
 	url = https://github.com/microsoft/language-server-protocol.git
-[submodule "submodules/micros"]
-	path = submodules/micros
-	url = git@github.com:lem-project/micros.git

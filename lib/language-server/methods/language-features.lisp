@@ -168,17 +168,36 @@
                      'vector))))))))
 
 (defun signature-help-at-point (point)
-  (when (and (backward-up-list point)
-             (forward-down-list point))
-    (let* ((symbol-string (lem:symbol-string-at-point point))
-           (package-name (scan-current-package point))
-           (arglist
-             (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                             `(micros:operator-arglist ,symbol-string ,package-name))))
-      (when arglist
-        (make-instance 'lsp:signature-help
-                       :signatures (vector (make-instance 'lsp:signature-information
-                                                          :label (string-downcase arglist))))))))
+  (let ((raw-form
+          (let ((lem-lisp-syntax.parse-for-swank-autodoc::*cursor-marker* 'micros::%cursor-marker%))
+            (lem-lisp-syntax:parse-for-swank-autodoc point))))
+    (let ((result (micros/client:remote-eval-sync (server-backend-connection *server*)
+                                                  `(micros:autodoc ',raw-form))))
+      (destructuring-bind (doc functionp) result
+        (when (and functionp (not (eq doc :not-variable)))
+          (let* ((form (read-from-string doc))
+                 (start (position "===>" form :test #'string-equal))
+                 (end (position "<===" form :test #'string-equal)))
+            (make-instance
+             'lsp:signature-help
+             :signatures (vector
+                          (if (not (and start end))
+                              (make-instance 'lsp:signature-information
+                                             ;; TODO: documentation
+                                             :label (prin1-to-string form))
+                              (let* ((form (append (subseq form 0 start)
+                                                   (list (elt form (1+ start)))
+                                                   (subseq form (1+ end)))))
+                                (make-instance
+                                 'lsp:signature-information
+                                 ;; TODO: documentation
+                                 :label (prin1-to-string form)
+                                 :parameters (map 'vector
+                                                  (lambda (parameter)
+                                                    (make-instance 'lsp:parameter-information
+                                                                   :label (prin1-to-string parameter)))
+                                                  (rest form))
+                                 :active-parameter (1- start))))))))))))
 
 (define-request (signature-help-request "textDocument/signatureHelp")
     (params lsp:signature-help-params)

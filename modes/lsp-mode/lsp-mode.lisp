@@ -1039,7 +1039,7 @@
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
-(defun display-signature-help (signature-help)
+(defun make-signature-help-buffer (signature-help)
   (let* ((buffer (make-buffer nil :temporary t))
          (point (buffer-point buffer)))
     (setf (lem:variable-value 'lem::truncate-character :buffer buffer) #\space)
@@ -1087,7 +1087,11 @@
                   (insert-string point (lsp:markup-content-value documentation))
                   (insert-string point documentation))))))
       (buffer-start (buffer-point buffer))
-      (message-buffer buffer))))
+      buffer)))
+
+(defun display-signature-help (signature-help)
+  (let ((buffer (make-signature-help-buffer signature-help)))
+    (message-buffer buffer)))
 
 (defun text-document/signature-help (point &optional signature-help-context)
   (when-let ((workspace (get-workspace-from-point point)))

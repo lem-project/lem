@@ -12,9 +12,7 @@
                "--log-file" ,(namestring
                               (merge-pathnames "language-server.log"
                                                (lem:lem-logdir-pathname)))))
-  :mode :tcp
-  ;; :port 12345
-  )
+  :mode :tcp)
 
 (defmethod lem-lsp-mode::initialized-workspace ((mode lem-lisp-mode:lisp-mode) workspace)
   (let ((swank-port (gethash "swankPort" (lem-lsp-mode::workspace-server-info workspace))))

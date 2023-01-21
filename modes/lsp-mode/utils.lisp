@@ -1,10 +1,11 @@
 (defpackage :lem-lsp-mode/utils
-  (:use :cl)
+  (:use :cl :alexandria)
   (:import-from :quri)
   (:import-from :alexandria)
   (:import-from :trivia)
   (:export :get-pid
-           :find-root-pathname))
+           :find-root-pathname
+           :elt-clamp))
 (in-package :lem-lsp-mode/utils)
 
 (defun get-pid ()
@@ -23,3 +24,6 @@
              (return directory))))
         ((uiop:pathname-equal directory (user-homedir-pathname)) nil)
         ((find-root-pathname (uiop:pathname-parent-directory-pathname directory) root-test-function))))
+
+(defun elt-clamp (elements index)
+  (elt elements (clamp index 0 (1- (length elements)))))

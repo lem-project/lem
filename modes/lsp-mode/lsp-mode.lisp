@@ -1032,7 +1032,7 @@
 ;;; signatureHelp
 
 (define-attribute signature-help-active-parameter-attribute
-  (t :underline-p t))
+  (t :background "blue" :underline-p t))
 
 (defun provide-signature-help-p (workspace)
   (handler-case (lsp:server-capabilities-signature-help-provider
@@ -1065,65 +1065,60 @@
     (setf (lem:variable-value 'lem:line-wrap :buffer buffer) nil)
     (let ((active-parameter
             (handler-case (lsp:signature-help-active-parameter signature-help)
-              (unbound-slot () nil)))
+              (unbound-slot () 0)))
           (active-signature
             (handler-case (lsp:signature-help-active-signature signature-help)
-              (unbound-slot () nil))))
-      (do-sequence ((signature index) (lsp:signature-help-signatures signature-help))
+              (unbound-slot () nil)))
+          (signatures (lsp:signature-help-signatures signature-help)))
+      (do-sequence ((signature index) signatures)
         (when (plusp index) (insert-character point #\newline))
-        (let ((active-signature-p (eql index active-signature)))
-          (if active-signature-p
-              (insert-string point "* ")
-              (insert-string point "- "))
-          (insert-string point
-                         (lsp:signature-information-label signature))
-          (when active-signature-p
-            (let ((parameters
-                    (handler-case
-                        (lsp:signature-information-parameters signature)
-                      (unbound-slot () nil))))
-              (when (and (plusp (length parameters))
-                         (< active-parameter (length parameters)))
-                ;; TODO: labelが[number, number]の場合に対応する
-                (let ((label (lsp:parameter-information-label
-                              (elt parameters
-                                   (if (<= 0 active-parameter (1- (length parameters)))
-                                       active-parameter
-                                       0)))))
-                  (when (stringp label)
-                    (with-point ((p point))
-                      (line-start p)
-                      (when (search-forward p label)
-                        (with-point ((start p))
-                          (character-offset start (- (length label)))
-                          (put-text-property start p
-                                             :attribute 'signature-help-active-parameter-attribute)))))))))
-          (insert-character point #\space)
-          (insert-character point #\newline)
-          (handler-case (lsp:signature-information-documentation signature)
-            (unbound-slot () nil)
-            (:no-error (documentation)
-              (insert-documentation point documentation)))))
-      (buffer-start (buffer-point buffer))
+        (insert-string point (lsp:signature-information-label signature))
+        (when (or (eql index active-signature)
+                  (length= 1 signatures))
+          (let ((parameters
+                  (handler-case (lsp:signature-information-parameters signature)
+                    (unbound-slot () nil)))
+                (active-parameter
+                  (handler-case (lsp:signature-information-active-parameter signature)
+                    (unbound-slot () active-parameter))))
+            (when (and (plusp (length parameters))
+                       (< active-parameter (length parameters)))
+              (let ((label (lsp:parameter-information-label
+                            (utils:elt-clamp parameters active-parameter))))
+                ;; TODO: labelの型が[number, number]の場合に対応する
+                (when (stringp label)
+                  (with-point ((p point))
+                    (buffer-start p)
+                    (when (search-forward p label)
+                      (with-point ((start p))
+                        (character-offset start (- (length label)))
+                        (put-text-property start p
+                                           :attribute 'signature-help-active-parameter-attribute)))))))))
+        (insert-character point #\newline)
+        (handler-case (lsp:signature-information-documentation signature)
+          (unbound-slot () nil)
+          (:no-error (documentation)
+            (insert-documentation point documentation))))
+      (buffer-start point)
       buffer)))
 
 (defun display-signature-help (signature-help)
   (let ((buffer (make-signature-help-buffer signature-help)))
-    (message-buffer buffer)))
+    (display-message buffer)))
 
 (defun text-document/signature-help (point &optional signature-help-context)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-signature-help-p workspace)
-      (let ((result (request:request
-                     (workspace-client workspace)
+      (async-request (workspace-client workspace)
                      (make-instance 'lsp:text-document/signature-help)
                      (apply #'make-instance
                             'lsp:signature-help-params
                             (append (when signature-help-context
                                       `(:context ,signature-help-context))
-                                    (make-text-document-position-arguments point))))))
-        (unless (lsp-null-p result)
-          (display-signature-help result))))))
+                                    (make-text-document-position-arguments point)))
+                     :then (lambda (result)
+                             (unless (lsp-null-p result)
+                               (display-signature-help result)))))))
 
 (defun lsp-signature-help-with-trigger-character (character)
   (text-document/signature-help

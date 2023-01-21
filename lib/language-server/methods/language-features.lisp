@@ -185,12 +185,17 @@
                  :kind lsp:markup-kind-markdown
                  :value documentation))
 
+(defun symbol-matcher (string)
+  (lambda (x)
+    (and (symbolp x)
+         (string-equal string x))))
+
 (defun signature-help-at-point (point)
   (multiple-value-bind (doc function-name) (autodoc point)
     (when doc
       (let* ((form (read-from-string doc))
-             (start (position "===>" form :test #'string-equal))
-             (end (position "<===" form :test #'string-equal))
+             (start (position-if (symbol-matcher "===>") form))
+             (end (position-if (symbol-matcher "<===") form))
              (documentation (hover-symbol function-name
                                           (buffer-package (lem:point-buffer point))))
              (*print-case* :downcase))

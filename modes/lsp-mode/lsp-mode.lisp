@@ -1042,7 +1042,7 @@
 (defun make-signature-help-buffer (signature-help)
   (let* ((buffer (make-buffer nil :temporary t))
          (point (buffer-point buffer)))
-    (setf (lem:variable-value 'lem::truncate-character :buffer buffer) #\space)
+    (setf (lem:variable-value 'lem:line-wrap :buffer buffer) nil)
     (let ((active-parameter
             (handler-case (lsp:signature-help-active-parameter signature-help)
               (unbound-slot () nil)))

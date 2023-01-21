@@ -10,7 +10,7 @@
 (defun parsing-safe-p (point)
   (not (in-string-or-comment-p point)))
 
-(defun parse-for-swank-autodoc (point)
+(defun parse-for-swank-autodoc (point &optional (*cursor-marker* *cursor-marker*))
   (and (parsing-safe-p point)
        (parse-form-upto-toplevel point 10)))
 

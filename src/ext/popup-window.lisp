@@ -362,8 +362,9 @@
     (buffer-start point)))
 
 (defun get-focus-item ()
-  (alexandria:when-let (p (focus-point *popup-menu*))
-    (text-property-at (line-start p) :item)))
+  (when *popup-menu*
+    (alexandria:when-let (p (focus-point *popup-menu*))
+      (text-property-at (line-start p) :item))))
 
 (defun make-menu-buffer ()
   (make-buffer "*popup menu*" :enable-undo-p nil :temporary t))

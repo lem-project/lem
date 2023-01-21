@@ -180,6 +180,11 @@
       (unless (eq doc :not-variable)
         (values doc function-name)))))
 
+(defun make-markdown-documentation (documentation)
+  (make-instance 'lsp:markup-content
+                 :kind lsp:markup-kind-markdown
+                 :value documentation))
+
 (defun signature-help-at-point (point)
   (multiple-value-bind (doc function-name) (autodoc point)
     (when doc
@@ -196,7 +201,9 @@
                           (apply #'make-instance
                                  'lsp:signature-information
                                  :label (prin1-to-string form)
-                                 (when documentation (list :documentation documentation)))
+                                 (when documentation
+                                   (list :documentation
+                                         (make-markdown-documentation documentation))))
                           (let* ((form (append (subseq form 0 start)
                                                (list (elt form (1+ start)))
                                                (subseq form (1+ end)))))
@@ -210,7 +217,8 @@
                                                     (rest form))
                                    :active-parameter (1- start)
                                    (when documentation
-                                     (list :documentation documentation)))))))))))
+                                     (list :documentation
+                                           (make-markdown-documentation documentation))))))))))))
 
 (define-request (signature-help-request "textDocument/signatureHelp")
     (params lsp:signature-help-params)

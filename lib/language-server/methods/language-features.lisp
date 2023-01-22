@@ -175,7 +175,8 @@
            (let ((lem-lisp-syntax.parse-for-swank-autodoc::*cursor-marker* 'micros::%cursor-marker%))
              (lem-lisp-syntax:parse-for-swank-autodoc point)))
          (result (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                                 `(micros::autodoc-function ',raw-form))))
+                                                 `(micros::autodoc-function ',raw-form)
+                                                 :package-name (scan-current-package point))))
     (destructuring-bind (doc function-name) result
       (unless (eq doc :not-available)
         (values doc function-name)))))

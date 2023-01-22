@@ -2,6 +2,7 @@
 
 (defun make-buffer (uri version)
   (lem:make-buffer (format nil "*lsp ~A ~A*" uri version)
+                   :temporary t
                    :syntax-table lem-lisp-syntax:*syntax-table*
                    :enable-undo-p nil))
 

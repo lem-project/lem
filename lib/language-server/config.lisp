@@ -9,6 +9,9 @@
 (defun config (name)
   (getf *config* name))
 
+(defun (setf config) (value name)
+  (setf (getf *config* name) value))
+
 (defun language-server-name ()
   (config :name))
 

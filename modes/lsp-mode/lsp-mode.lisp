@@ -824,6 +824,14 @@
 ;; - hoverのrangeを使って範囲に背景色をつける
 ;; - serverでサポートしているかのチェックをする
 
+(defun trim-final-newlines (point)
+  (with-point ((start point :left-inserting)
+               (end point :left-inserting))
+    (buffer-end start)
+    (buffer-end end)
+    (skip-whitespace-backward start)
+    (delete-between-points start end)))
+
 (defun markdown-buffer (markdown-text)
   (labels ((make-markdown-buffer (markdown-text)
              (let* ((buffer (make-buffer nil
@@ -897,6 +905,7 @@
       (process-header point)
       (process-code-block point)
       (process-horizontal-line point)
+      (trim-final-newlines point)
       buffer)))
 
 (defun contents-to-string (contents)

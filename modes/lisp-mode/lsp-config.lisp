@@ -2,10 +2,13 @@
   (:use :cl :lem-lsp-mode))
 (in-package :lem-lisp-mode/language-client/lsp-config)
 
+(defvar *self-connection* nil)
+
 (define-language-spec (micros-spec lem-lisp-mode:lisp-mode)
   :language-id "lisp"
   :root-uri-patterns '(".asd")
   :command (lambda (port)
+             (assert (not *self-connection*))
              `("lem-language-server"
                "--tcp"
                "--port" ,(princ-to-string port)
@@ -15,8 +18,26 @@
   :mode :tcp)
 
 (defmethod lem-lsp-mode::initialized-workspace ((mode lem-lisp-mode:lisp-mode) workspace)
-  (let ((swank-port (gethash "swankPort" (lem-lsp-mode::workspace-server-info workspace))))
-    (lem-lisp-mode:slime-connect "localhost" swank-port nil)))
+  (unless *self-connection*
+    (let ((swank-port (gethash "swankPort" (lem-lsp-mode::workspace-server-info workspace))))
+      (lem-lisp-mode:slime-connect "localhost" swank-port nil))))
+
+(defun start-micros-server (port)
+  (setf (lem-language-server::config :backend-port) port)
+  (micros:create-server :port port))
+
+(defun start-language-server (port)
+  (bt:make-thread (lambda ()
+                    (lem-language-server:start-tcp-server port))))
+
+(defmethod lem-lsp-mode::run-server ((spec micros-spec))
+  (if (not *self-connection*)
+      (call-next-method)
+      (let* ((lsp-port (lem-socket-utils:random-available-port))
+             (micros-port (lem-socket-utils:random-available-port lsp-port)))
+        (start-language-server lsp-port)
+        (start-micros-server micros-port)
+        (lem-lsp-mode::make-server-info :port lsp-port))))
 
 ;; override lisp-mode autodoc
 (defmethod lem:execute :after ((mode lem-lisp-mode:lisp-mode) (command lem:self-insert) argument)

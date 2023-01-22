@@ -177,7 +177,7 @@
          (result (micros/client:remote-eval-sync (server-backend-connection *server*)
                                                  `(micros::autodoc-function ',raw-form))))
     (destructuring-bind (doc function-name) result
-      (unless (eq doc :not-variable)
+      (unless (eq doc :not-available)
         (values doc function-name)))))
 
 (defun make-markdown-documentation (documentation)

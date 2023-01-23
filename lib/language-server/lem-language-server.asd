@@ -30,7 +30,9 @@
                (:file "server")
                (:file "runtime")
                (:file "text-document")
+               (:file "commands")
                (:module "methods"
                 :components ((:file "lifecycle")
                              (:file "document-synchronization")
-                             (:file "language-features")))))
+                             (:file "language-features")
+                             (:file "workspace")))))

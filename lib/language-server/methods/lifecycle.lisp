@@ -47,7 +47,8 @@
                                                           :more-trigger-character #(")"))
                    ;; :rename-provider
                    ;; :folding-range-provider
-                   ;; :execute-command-provider
+                   :execute-command-provider (make-instance 'lsp:execute-command-options
+                                                            :commands (coerce (command-names) 'vector))
                    ;; :selection-range-provider
                    ;; :linked-editing-range-provider
                    ;; :call-hierarchy-provider

@@ -5,5 +5,7 @@
         :lem-language-server/protocol/converter
         :lem-language-server/protocol/utils
         :lem-language-server/protocol/yason-utils)
-  (:export :start-tcp-server
+  (:export :call-lsp-method
+           :start-server
+           :start-tcp-server
            :start-stdio-server))

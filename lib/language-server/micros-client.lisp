@@ -3,7 +3,8 @@
   (:use :cl)
   (:import-from :lem-socket-utils
                 :random-available-port)
-  (:export :remote-eval
+  (:export :connection-swank-port
+           :remote-eval
            :remote-eval-sync
            :start-server-and-connect
            :connect

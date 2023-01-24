@@ -1,19 +1,23 @@
 (in-package :lem-language-server)
 
+(defvar *debug-on-error* nil)
 (defvar *method-classes* '())
 
-(defgeneric call (lsp-method json))
-(defgeneric call-aux (lsp-method params))
+(defgeneric call-lsp-method (lsp-method json))
+(defgeneric call-lsp-method-aux (lsp-method params))
 
 (defun call-with-error-handler (function)
-  (handler-bind ((error (lambda (condition)
-                          (let ((error-message
-                                  (with-output-to-string (stream)
-                                    (format stream "~&~A~%" condition)
-                                    (uiop:print-backtrace :stream stream :condition condition))))
-                            (log:debug error-message)
-                            (return-from call-with-error-handler)))))
-    (funcall function)))
+  (if *debug-on-error*
+      (funcall function)
+      (handler-bind ((error (lambda (condition)
+                              (let ((error-message
+                                      (with-output-to-string (stream)
+                                        (format stream "~&~A~%" condition)
+                                        (uiop:print-backtrace :stream stream
+                                                              :condition condition))))
+                                (log:debug error-message)
+                                (return-from call-with-error-handler)))))
+        (funcall function))))
 
 (defmacro with-error-handler (() &body body)
   `(call-with-error-handler (lambda () ,@body)))
@@ -24,15 +28,15 @@
    (params-type :initarg :params-type
                 :reader lsp-method-params-type)))
 
-(defmethod call :before (lsp-method json)
+(defmethod call-lsp-method :before (lsp-method json)
   (log-request (lsp-method-name lsp-method) json))
 
-(defmethod call (lsp-method json)
+(defmethod call-lsp-method (lsp-method json)
   (with-error-handler ()
     (let* ((params (if-let ((params-type (lsp-method-params-type lsp-method)))
                      (convert-from-json json params-type)
                      json))
-           (response (call-aux lsp-method params)))
+           (response (call-lsp-method-aux lsp-method params)))
       (log-response (lsp-method-name lsp-method) response)
       response)))
 
@@ -47,7 +51,7 @@
          (:default-initargs
           :name ,method-name
           :params-type ',params-type))
-       (defmethod call-aux ((,instance ,class-name) ,params)
+       (defmethod call-lsp-method-aux ((,instance ,class-name) ,params)
          ,@body))))
 
 (defun log-request (method-name json)

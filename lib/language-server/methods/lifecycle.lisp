@@ -26,7 +26,8 @@
                                                            :trigger-characters (vector " ")
                                                            :retrigger-characters (vector))
                    ;; :declaration-provider
-                   :definition-provider (make-instance 'lsp:definition-options :work-done-progress nil)
+                   :definition-provider (make-instance 'lsp:definition-options
+                                                       :work-done-progress nil)
                    ;; :type-definition-provider
                    ;; :implementation-provider
                    :references-provider (make-instance 'lsp:reference-options)
@@ -48,7 +49,8 @@
                    ;; :rename-provider
                    ;; :folding-range-provider
                    :execute-command-provider (make-instance 'lsp:execute-command-options
-                                                            :commands (coerce (command-names) 'vector))
+                                                            :commands (coerce (command-names)
+                                                                              'vector))
                    ;; :selection-range-provider
                    ;; :linked-editing-range-provider
                    ;; :call-hierarchy-provider
@@ -63,27 +65,30 @@
                    :experimental nil)
     :server-info (make-lsp-map "name" (language-server-name)
                                "version" (language-server-version)
-                               "swankPort" (lem-language-server/micros-client::connection-swank-port
-                                            (server-backend-connection *server*))))))
+                               "swankPort" (swank-port *server*)))))
 
 (define-request (initialized-request "initialized") (params lsp:initialized-params)
   (declare (ignore params))
   (values))
 
 #+TODO
-(define-request (client-register-capability-request "client/registerCapability") (params lsp:registration-params)
+(define-request (client-register-capability-request "client/registerCapability")
+    (params lsp:registration-params)
   )
 
 #+TODO
-(define-request (client-unregister-capability-request "client/unregisterCapability") (params lsp:unregistration-params)
+(define-request (client-unregister-capability-request "client/unregisterCapability")
+    (params lsp:unregistration-params)
   )
 
 #+TODO
-(define-request (set-trace-request "$/setTrace") (params lsp:set-trace-params)
+(define-request (set-trace-request "$/setTrace")
+    (params lsp:set-trace-params)
   )
 
 #+TODO
-(define-request (log-trace-request "$/logTrace") (params lsp:log-trace-params)
+(define-request (log-trace-request "$/logTrace")
+    (params lsp:log-trace-params)
   )
 
 (define-request (shutdown-request "shutdown") ()

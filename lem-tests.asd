@@ -23,6 +23,8 @@
                              (:file "initialize")
                              (:file "initialized")
                              (:file "text-document-did-open")))
+               (:module "language-server"
+                :components ((:file "tests")))
                (:module "lisp-syntax"
                 :components ((:file "indent-test")
                              (:file "defstruct-to-defclass")))

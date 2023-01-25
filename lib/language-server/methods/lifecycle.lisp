@@ -1,7 +1,7 @@
 (in-package :lem-language-server)
 
 (define-request (initialize-request "initialize") (params lsp:initialize-params)
-  (setf (server-client-capabilities *server*) params)
+  (setf (server-client-capabilities (current-server)) params)
   (convert-to-json
    (make-instance
     'lsp:initialize-result
@@ -65,7 +65,7 @@
                    :experimental nil)
     :server-info (make-lsp-map "name" (language-server-name)
                                "version" (language-server-version)
-                               "swankPort" (swank-port *server*)))))
+                               "swankPort" (swank-port (current-server))))))
 
 (define-request (initialized-request "initialized") (params lsp:initialized-params)
   (declare (ignore params))
@@ -96,7 +96,8 @@
   nil)
 
 (define-request (exit-request "exit") ()
-  (if (server-shutdown-request-received-p (current-server))
-      (uiop:quit 0)
-      (uiop:quit 1))
+  (exit-server (current-server)
+               (if (server-shutdown-request-received-p (current-server))
+                   0
+                   1))
   (values))

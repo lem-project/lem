@@ -3,6 +3,10 @@
 (defvar *debug-on-error* nil)
 (defvar *method-classes* '())
 
+(define-condition uninitialized-error (jsonrpc:jsonrpc-error)
+  ((code :initform -32002)
+   (message :initform "\"initialize\" request has not been called.")))
+
 (defgeneric call-lsp-method (lsp-method json))
 (defgeneric call-lsp-method-aux (lsp-method params))
 
@@ -28,8 +32,14 @@
    (params-type :initarg :params-type
                 :reader lsp-method-params-type)))
 
+(defun check-initialized (lsp-method)
+  (unless (typep lsp-method 'initialize-request)
+    (unless (server-client-capabilities (current-server))
+      (error 'uninitialized-error))))
+
 (defmethod call-lsp-method :before (lsp-method json)
-  (log-request (lsp-method-name lsp-method) json))
+  (log-request (lsp-method-name lsp-method) json)
+  (check-initialized lsp-method))
 
 (defmethod call-lsp-method (lsp-method json)
   (with-error-handler ()

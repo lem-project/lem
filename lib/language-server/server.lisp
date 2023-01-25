@@ -7,6 +7,7 @@
 (defgeneric start-server (server))
 (defgeneric run-backend (server))
 (defgeneric swank-port (server))
+(defgeneric exit-server (server status-code))
 
 (defmethod start-server :before (server)
   (setf *server* server)
@@ -18,14 +19,15 @@
 (defclass server ()
   ((jsonrpc-server :initform (jsonrpc:make-server)
                    :reader server-jsonrpc-server)
-   (client-capabilities :accessor server-client-capabilities)
+   (client-capabilities :initform nil :accessor server-client-capabilities)
    (shutdown-request-received :initform nil
                               :accessor server-shutdown-request-received-p)
    (backend-connection :initform nil
                        :accessor server-backend-connection)))
 
 (defclass mock-server (server)
-  ())
+  ((exit-status :initform nil
+                :accessor mock-server-exit-status)))
 
 (defclass tcp-server (server)
   ((port :initarg :port
@@ -54,6 +56,9 @@
         :do (jsonrpc:expose (server-jsonrpc-server server)
                             (lsp-method-name instance)
                             (curry #'call-lsp-method instance))))
+
+(defun start-mock-server ()
+  (start-server (make-instance 'mock-server)))
 
 (defun start-tcp-server (port)
   (start-server (make-instance 'tcp-server :port port)))
@@ -87,3 +92,12 @@
 
 (defmethod swank-port ((server mock-server))
   nil)
+
+(defmethod exit-server ((server tcp-server) status-code)
+  (uiop:quit status-code))
+
+(defmethod exit-server ((server stdio-server) status-code)
+  (uiop:quit status-code))
+
+(defmethod exit-server ((server mock-server) status-code)
+  (setf (mock-server-exit-status server) status-code))

@@ -1,7 +1,8 @@
 (defpackage :lem-tests/language-server/tests
   (:use :cl
         :testif
-        :lem-language-server)
+        :lem-language-server
+        :lem-tests/language-server/utils)
   (:import-from :lem-language-server/protocol/yason-utils
                 :parse-json)
   (:import-from :lem-language-server/protocol/lsp-type
@@ -10,15 +11,6 @@
                 :convert-to-json
                 :convert-from-json))
 (in-package :lem-tests/language-server/tests)
-
-(defun call-with-mock-server (function)
-  (let ((lem-language-server::*debug-on-error* t)
-        (lem-language-server::*server*))
-    (start-mock-server)
-    (funcall function)))
-
-(defmacro with-mock-server (() &body body)
-  `(call-with-mock-server (lambda () ,@body)))
 
 (defun call-initialize-request ()
   (call-lsp-method (make-instance 'initialize-request)
@@ -65,7 +57,7 @@
     (call-exit-request)
     (ok (eql 1 (mock-server-exit-status (current-server))))))
 
-(defun did-open-text-document (&key uri language-id version text)
+(defun call-did-open-text-document-request (&key uri language-id version text)
   (call-lsp-method (make-instance 'text-document-did-open-request)
                    (convert-to-json
                     (make-instance 'lsp:did-open-text-document-params
@@ -78,10 +70,10 @@
 (test "textDocument/didOpen"
   (with-mock-server ()
     (call-initialize-request)
-    (did-open-text-document :uri "file:///hoge/piyo/foo.lisp"
-                            :language-id "lisp"
-                            :version 1
-                            :text "(cons 1 2)")
+    (call-did-open-text-document-request :uri "file:///hoge/piyo/foo.lisp"
+                                         :language-id "lisp"
+                                         :version 1
+                                         :text "(cons 1 2)")
     (let ((text-document
             (find-text-document (make-instance 'lsp:text-document-identifier
                                                :uri "file:///hoge/piyo/foo.lisp"))))
@@ -93,7 +85,7 @@
         (ok (eq lem-lisp-syntax:*syntax-table* (lem:buffer-syntax-table buffer)))
         (ok (equal "(cons 1 2)" (lem:buffer-text buffer)))))))
 
-(defun did-change-text-document (uri content-changes)
+(defun call-did-change-text-document-request (uri content-changes)
   (call-lsp-method
    (make-instance 'text-document-did-change-request)
    (convert-to-json
@@ -118,18 +110,15 @@
    :text text
    :range range))
 
-(defun lines (&rest strings)
-  (format nil "~{~A~%~}" strings))
-
 (test "textDocument/didChange"
   (flet ((make-document (text)
-           (did-open-text-document :uri "file:///hoge/piyo/foo.lisp"
-                                   :language-id "lisp"
-                                   :version 1
-                                   :text text))
+           (call-did-open-text-document-request :uri "file:///hoge/piyo/foo.lisp"
+                                                :language-id "lisp"
+                                                :version 1
+                                                :text text))
          (change-content (content-change)
-           (did-change-text-document "file:///hoge/piyo/foo.lisp"
-                                     content-change))
+           (call-did-change-text-document-request "file:///hoge/piyo/foo.lisp"
+                                                  content-change))
          (get-text ()
            (let ((text-document
                    (find-text-document (make-instance 'lsp:text-document-identifier
@@ -179,10 +168,10 @@
 (test "textDocument/didClose"
   (with-mock-server ()
     (call-initialize-request)
-    (did-open-text-document :uri "file:///hoge/piyo/foo.lisp"
-                            :language-id "lisp"
-                            :version 1
-                            :text "")
+    (call-did-open-text-document-request :uri "file:///hoge/piyo/foo.lisp"
+                                         :language-id "lisp"
+                                         :version 1
+                                         :text "")
     (call-lsp-method
      (make-instance 'text-document-did-close-request)
      (convert-to-json

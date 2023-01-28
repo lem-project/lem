@@ -82,13 +82,15 @@
 (defmethod run-backend ((server mock-server))
   nil)
 
-(defmethod swank-port ((server tcp-server))
+(defun swank-port-internal (server)
   (micros/client:connection-swank-port
    (server-backend-connection server)))
 
+(defmethod swank-port ((server tcp-server))
+  (swank-port-internal server))
+
 (defmethod swank-port ((server stdio-server))
-  (micros/client:connection-swank-port
-   (server-backend-connection server)))
+  (swank-port-internal server))
 
 (defmethod swank-port ((server mock-server))
   nil)

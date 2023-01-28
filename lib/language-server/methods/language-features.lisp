@@ -31,9 +31,9 @@
 (defun definitions-at-point (point)
   (when-let* ((package-name (scan-current-package point))
               (symbol-string (lem:symbol-string-at-point point)))
-    (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                    `(micros:find-definitions-for-emacs ,symbol-string)
-                                    :package-name package-name)))
+    (remote-eval-sync *server*
+                      `(micros:find-definitions-for-emacs ,symbol-string)
+                      package-name)))
 
 (defun move-to-location-position (point location-position)
   (destructuring-ecase location-position
@@ -119,11 +119,11 @@
 (defun find-references-at-point (point)
   (when-let* ((package-name (scan-current-package point))
               (symbol-string (lem:symbol-string-at-point point)))
-    (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                    `(micros:xrefs '(:calls :macroexpands :binds
-                                                     :references :sets :specializes)
-                                                   ,symbol-string)
-                                    :package-name package-name)))
+    (remote-eval-sync *server*
+                      `(micros:xrefs '(:calls :macroexpands :binds
+                                       :references :sets :specializes)
+                                     ,symbol-string)
+                      package-name)))
 
 (define-request (find-references-request "textDocument/references") (params lsp:reference-params)
   (let* ((point (text-document-position-params-to-point params))
@@ -135,9 +135,9 @@
                 :append (collect-points-from-definitions definitions))))))
 
 (defun hover-symbol (symbol-string package-name)
-  (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                  `(micros/lsp-api:hover-symbol ,symbol-string)
-                                  :package-name package-name))
+  (remote-eval-sync *server*
+                    `(micros/lsp-api:hover-symbol ,symbol-string)
+                    package-name))
 
 (defun hover-at-point (point)
   (when-let* ((package-name (scan-current-package point))
@@ -174,9 +174,9 @@
   (let* ((raw-form
            (let ((lem-lisp-syntax.parse-for-swank-autodoc::*cursor-marker* 'micros::%cursor-marker%))
              (lem-lisp-syntax:parse-for-swank-autodoc point)))
-         (result (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                                 `(micros::autodoc-function ',raw-form)
-                                                 :package-name (scan-current-package point))))
+         (result (remote-eval-sync *server*
+                                   `(micros::autodoc-function ',raw-form)
+                                   (scan-current-package point))))
     (destructuring-bind (doc function-name) result
       (unless (eq doc :not-available)
         (values doc function-name)))))
@@ -263,9 +263,10 @@
                                                                :kind lsp:markup-kind-markdown
                                                                :value documentation)
                                  :sort-text sort-text)))
-              (micros/client:remote-eval-sync (server-backend-connection *server*)
-                                              `(micros/lsp-api:completions ,symbol-string
-                                                                           ,package-name)))))))
+              (remote-eval-sync *server*
+                                `(micros/lsp-api:completions ,symbol-string
+                                                             ,package-name)
+                                package-name))))))
 
 (define-request (completion-item-resolve-request "completionItem/resolve")
     (params lsp:completion-item)
@@ -343,11 +344,10 @@
                                       lsp:symbol-kind-function))
                              :range range
                              :selection-range range)))
-          (micros/client:remote-eval-sync
-           (server-backend-connection *server*)
-           `(micros/lsp-api:symbol-informations
-             ',(mapcar #'symbol-definition-symbol-spec symbol-definitions))
-           :package-name package-name)
+          (remote-eval-sync *server*
+                            `(micros/lsp-api:symbol-informations
+                              ',(mapcar #'symbol-definition-symbol-spec symbol-definitions))
+                            package-name)
           symbol-definitions))))
 
 (define-request (document-symbol-request "textDocument/documentSymbol")

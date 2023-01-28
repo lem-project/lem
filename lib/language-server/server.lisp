@@ -8,6 +8,7 @@
 (defgeneric run-backend (server))
 (defgeneric swank-port (server))
 (defgeneric exit-server (server status-code))
+(defgeneric remote-eval-sync (server expression package-name))
 
 (defmethod start-server :before (server)
   (setf *server* server)
@@ -103,3 +104,17 @@
 
 (defmethod exit-server ((server mock-server) status-code)
   (setf (mock-server-exit-status server) status-code))
+
+(defun remote-eval-sync-internal (server expression package-name)
+  (micros/client:remote-eval-sync (server-backend-connection server)
+                                  expression
+                                  :package-name package-name))
+
+(defmethod remote-eval-sync ((server tcp-server) expression package-name)
+  (remote-eval-sync-internal server expression package-name))
+
+(defmethod remote-eval-sync ((server stdio-server) expression package-name)
+  (remote-eval-sync-internal server expression package-name))
+
+(defmethod remote-eval-sync ((server mock-server) expression package-name)
+  )

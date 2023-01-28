@@ -58,3 +58,7 @@
     (let ((text-document (find-text-document text-document-identifier)))
       (close-text-document text-document)))
   (values))
+
+(defun on-load (pathname)
+  (declare (ignore pathname))
+  )

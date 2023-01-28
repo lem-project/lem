@@ -28,7 +28,6 @@
                (:file "editor-utils")
                (:file "method")
                (:file "server")
-               (:file "runtime")
                (:file "text-document")
                (:file "commands")
                (:module "methods"

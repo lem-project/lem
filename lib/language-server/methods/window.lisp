@@ -7,8 +7,6 @@
                   (convert-to-json params)))
 
 (defun notify-show-message (type message)
-  (check-type type lsp:message-type)
-  (check-type message string)
   (notify-to-client (make-instance 'lsp:window/show-message)
                     (make-instance 'lsp:show-message-params
                                    :type type

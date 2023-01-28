@@ -35,26 +35,39 @@
 
 (test "initialize"
   (with-mock-server ()
+    ;; act
     (let ((response (call-initialize-request)))
+      ;; assert
       (ok (convert-from-json response 'lsp:initialize-result)))))
 
 (test "shutdown"
   (with-mock-server ()
-    (ok (signals (call-shutdown-request) 'uninitialized-error)))
+    (ok (signals (call-shutdown-request) 'uninitialized-error)
+        "shutdown without initialize-request results in uninitialized-error"))
   (with-mock-server ()
+    ;; arrange
     (let ((response (call-initialize-request)))
-      (ok (convert-from-json response 'lsp:initialize-result))
-      (call-shutdown-request))))
+      (ok (convert-from-json response 'lsp:initialize-result)))
+    ;; act
+    (call-shutdown-request)
+    ;; assert
+    (ok (server-shutdown-request-received-p (current-server)))))
 
 (test "exit"
   (with-mock-server ()
+    ;; arrange
     (call-initialize-request)
     (call-shutdown-request)
+    ;; act
     (call-exit-request)
+    ;; assert
     (ok (eql 0 (mock-server-exit-status (current-server)))))
   (with-mock-server ()
+    ;; arrange
     (call-initialize-request)
+    ;; act
     (call-exit-request)
+    ;; assert
     (ok (eql 1 (mock-server-exit-status (current-server))))))
 
 (defun call-did-open-text-document-request (&key uri language-id version text)
@@ -69,14 +82,17 @@
 
 (test "textDocument/didOpen"
   (with-mock-server ()
+    ;; arrange
     (call-initialize-request)
     (call-did-open-text-document-request :uri "file:///hoge/piyo/foo.lisp"
                                          :language-id "lisp"
                                          :version 1
                                          :text "(cons 1 2)")
+    ;; act
     (let ((text-document
             (find-text-document (make-instance 'lsp:text-document-identifier
                                                :uri "file:///hoge/piyo/foo.lisp"))))
+      ;; assert
       (ok (equal "file:///hoge/piyo/foo.lisp" (text-document-uri text-document)))
       (ok (equal "lisp" (text-document-language-id text-document)))
       (ok (equal 1 (text-document-version text-document)))
@@ -127,15 +143,20 @@
 
     (test "Change the whole document"
       (with-mock-server ()
+        ;; arrange
         (call-initialize-request)
         (make-document "(list 1 2)")
+        ;; act
         (change-content (vector (make-lsp-map :text "x")))
+        ;; assert
         (ok (equal "x" (get-text)))))
 
     (test "insert"
       (with-mock-server ()
+        ;; arrange
         (call-initialize-request)
         (make-document (lines "hoge" "piyo" "fuga"))
+        ;; act
         (change-content (vector (make-content-change
                                  "abc"
                                  (make-range (make-position 0 0)
@@ -144,39 +165,52 @@
                                  "xyz"
                                  (make-range (make-position 1 0)
                                              (make-position 1 0)))))
+        ;; assert
         (ok (equal (lines "abchoge" "xyzpiyo" "fuga")
                    (get-text)))))
 
     (test "delete"
       (with-mock-server ()
+        ;; arrange
         (call-initialize-request)
         (make-document (lines "hoge" "piyo" "fuga"))
+        ;; act
         (change-content (vector
                          (make-content-change
                           ""
                           (make-range (make-position 1 0)
                                       (make-position 1 2)))))
-        (ok (equal (lines "hoge" "yo" "fuga") (get-text)))
+        ;; assert
+        (ok (equal (lines "hoge" "yo" "fuga") (get-text))))
+      (with-mock-server ()
+        ;; arrange
+        (call-initialize-request)
+        (make-document (lines "hoge" "piyo" "fuga"))
+        ;; act
         (change-content (vector
                          (make-content-change
                           ""
                           (make-range (make-position 1 0)
                                       (make-position 2 0)))))
+        ;; assert
         (ok (equal (lines "hoge" "fuga")
                    (get-text)))))))
 
 (test "textDocument/didClose"
   (with-mock-server ()
+    ;; arrange
     (call-initialize-request)
     (call-did-open-text-document-request :uri "file:///hoge/piyo/foo.lisp"
                                          :language-id "lisp"
                                          :version 1
                                          :text "")
+    ;; act
     (call-lsp-method
      (make-instance 'text-document-did-close-request)
      (convert-to-json
       (make-instance 'lsp:did-close-text-document-params
                      :text-document (make-instance 'lsp:text-document-identifier
                                                    :uri "file:///hoge/piyo/foo.lisp"))))
+    ;; assert
     (ok (null (find-text-document (make-instance 'lsp:text-document-identifier
                                                  :uri "file:///hoge/piyo/foo.lisp"))))))

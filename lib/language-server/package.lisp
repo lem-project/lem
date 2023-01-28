@@ -13,6 +13,7 @@
            :start-tcp-server
            :start-stdio-server
            :mock-server-exit-status
+           :server-shutdown-request-received-p
            ;; text-document.lisp
            :text-document-uri
            :text-document-language-id

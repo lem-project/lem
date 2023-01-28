@@ -35,4 +35,5 @@
                 :components ((:file "lifecycle")
                              (:file "document-synchronization")
                              (:file "language-features")
-                             (:file "workspace")))))
+                             (:file "workspace")
+                             (:file "window")))))

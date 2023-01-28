@@ -118,3 +118,12 @@
 
 (defmethod remote-eval-sync ((server mock-server) expression package-name)
   )
+
+(defun call-with-mock-server (function)
+  (let ((*debug-on-error* t)
+        (*server* nil))
+    (start-mock-server)
+    (funcall function)))
+
+(defmacro with-mock-server (() &body body)
+  `(call-with-mock-server (lambda () ,@body)))

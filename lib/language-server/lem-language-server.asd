@@ -29,6 +29,7 @@
                (:file "method")
                (:file "server")
                (:file "text-document")
+               (:file "eval")
                (:file "commands")
                (:module "methods"
                 :components ((:file "lifecycle")

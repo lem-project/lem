@@ -36,4 +36,5 @@
                              (:file "document-synchronization")
                              (:file "language-features")
                              (:file "workspace")
-                             (:file "window")))))
+                             (:file "window")
+                             (:file "commands")))))

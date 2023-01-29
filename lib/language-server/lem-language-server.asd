@@ -31,7 +31,7 @@
                (:file "text-document")
                (:file "eval")
                (:file "commands")
-               (:module "methods"
+               (:module "controller"
                 :components ((:file "lifecycle")
                              (:file "document-synchronization")
                              (:file "language-features")

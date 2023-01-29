@@ -37,11 +37,9 @@
     (unless (server-client-capabilities (current-server))
       (error 'uninitialized-error))))
 
-(defmethod call-lsp-method :before (lsp-method json)
-  (log-request (lsp-method-name lsp-method) json)
-  (check-initialized lsp-method))
-
 (defmethod call-lsp-method (lsp-method json)
+  (log-request (lsp-method-name lsp-method) json)
+  (check-initialized lsp-method)
   (with-error-handler ()
     (let* ((params (if-let ((params-type (lsp-method-params-type lsp-method)))
                      (convert-from-json json params-type)

@@ -35,9 +35,7 @@
 
 (test "initialize"
   (with-mock-server ()
-    ;; act
     (let ((response (call-initialize-request)))
-      ;; assert
       (ok (convert-from-json response 'lsp:initialize-result)))))
 
 (test "shutdown"
@@ -46,8 +44,7 @@
         "shutdown without initialize-request results in uninitialized-error"))
   (with-mock-server ()
     ;; arrange
-    (let ((response (call-initialize-request)))
-      (ok (convert-from-json response 'lsp:initialize-result)))
+    (call-initialize-request)
     ;; act
     (call-shutdown-request)
     ;; assert

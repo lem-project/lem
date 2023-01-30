@@ -25,6 +25,7 @@
                              (:file "text-document-did-open")))
                (:module "language-server"
                 :components ((:file "utils")
+                             (:file "micros-tests")
                              (:file "tests")))
                (:module "lisp-syntax"
                 :components ((:file "indent-test")

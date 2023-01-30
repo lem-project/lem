@@ -165,6 +165,12 @@
     (when continuation
       (funcall (continuation-function continuation) value))))
 
+(defun dispatch-message (connection message)
+  (log:debug message)
+  (alexandria:destructuring-case message
+    ((:return value request-id)
+     (call-continuation connection value request-id))))
+
 (defun dispatch-waiting-messages (connection)
   (loop :while (message-waiting-p connection)
         :for message := (read-message connection)
@@ -173,12 +179,6 @@
 (defun dispatch-message-loop (connection)
   (loop
     (dispatch-waiting-messages connection)))
-
-(defun dispatch-message (connection message)
-  (log:debug message)
-  (alexandria:destructuring-case message
-    ((:return value request-id)
-     (call-continuation connection value request-id))))
 
 (defun connect-until-successful (hostname port)
   (loop :for second :in '(0.1 0.2 0.4 0.8 1.6 3.2 6.4)

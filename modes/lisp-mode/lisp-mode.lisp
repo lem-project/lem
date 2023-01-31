@@ -742,7 +742,14 @@
                                           ((:ok value)
                                            (destructuring-bind (completions timeout) value
                                              (declare (ignore timeout))
-                                             (funcall then (make-completion-items completions))))
+                                             (with-point ((start (current-point))
+                                                          (end (current-point)))
+                                               (skip-symbol-backward start)
+                                               (skip-symbol-forward end)
+                                               (funcall then
+                                                        (make-completion-items completions
+                                                                               start
+                                                                               end)))))
                                           ((:abort condition)
                                            (editor-error "abort ~A" condition))))
                         :thread (current-swank-thread)

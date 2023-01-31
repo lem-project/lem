@@ -434,7 +434,7 @@
   (when (ensure-running-server-process spec)
     (let ((client (make-client spec)))
       (loop :with condition := nil
-            :repeat 6
+            :repeat 20
             :do (handler-case (with-yason-bindings ()
                                 (client:jsonrpc-connect client))
                   (:no-error (&rest values)

@@ -230,27 +230,29 @@
                          :name "micros/client dispatch-message-loop"
                          :arguments (list connection)))
 
+(defun setup (connection &key server-process swank-port)
+  (let ((thread (make-dispatch-message-loop-thread connection)))
+    (setf (connection-message-dispatcher-thread connection) thread
+          (connection-server-process connection) server-process
+          (connection-swank-port connection) swank-port)
+    (setup-repl connection)
+    connection))
+
 (defun start-server-and-connect (deny-port)
   (let* ((micros-port (random-available-port deny-port))
          (swank-port (random-available-port deny-port micros-port))
          (process (create-server-process micros-port :swank-port swank-port)))
     (log:debug process (async-process::process-pid process))
     (log:info "swank port: ~D, micros port: ~D" swank-port micros-port)
-    (let* ((connection (connect-until-successful "localhost" micros-port))
-           (thread (make-dispatch-message-loop-thread connection)))
-      (setf (connection-message-dispatcher-thread connection) thread
-            (connection-server-process connection) process
-            (connection-swank-port connection) swank-port)
-      (setup-repl connection)
+    (let ((connection (connect-until-successful "localhost" micros-port)))
+      (setup connection :server-process process :swank-port swank-port)
       (sb-thread:make-thread (lambda ()
                                (receive-process-output-loop process)))
       connection)))
 
 (defun connect (hostname port)
-  (let* ((connection (create-connection hostname port))
-         (thread (make-dispatch-message-loop-thread connection)))
-    (setf (connection-message-dispatcher-thread connection) thread)
-    (setup-repl connection)
+  (let ((connection (create-connection hostname port)))
+    (setup connection)
     connection))
 
 (defun stop-server (connection)

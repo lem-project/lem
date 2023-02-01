@@ -19,3 +19,9 @@
   (multiple-value-bind (message type)
       (convert-eval-result value)
     (notify-show-message type message)))
+
+(defun micros-write-string (string target)
+  (declare (ignore string target))
+  (with-error-handler ()
+    (let ((jsonrpc/connection:*connection* (server-jsonrpc-connection *server*)))
+      (notify-show-message lsp:message-type-log string))))

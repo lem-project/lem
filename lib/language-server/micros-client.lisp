@@ -3,13 +3,16 @@
   (:use :cl)
   (:import-from :lem-socket-utils
                 :random-available-port)
-  (:export :connection-swank-port
+  (:export :*write-string-function*
+           :connection-swank-port
            :remote-eval
            :remote-eval-sync
            :start-server-and-connect
            :connect
            :stop-server))
 (in-package :lem-language-server/micros-client)
+
+(defvar *write-string-function* nil)
 
 (define-condition give-up-connection-to-server (error)
   ((hostname :initarg :hostname)
@@ -179,7 +182,10 @@
   (log:debug message)
   (alexandria:destructuring-case message
     ((:return value request-id)
-     (call-continuation connection value request-id))))
+     (call-continuation connection value request-id))
+    ((:write-string string &optional target)
+     (when *write-string-function*
+       (funcall *write-string-function* string target)))))
 
 (defun dispatch-waiting-messages (connection)
   (loop :while (message-waiting-p connection)

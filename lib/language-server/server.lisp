@@ -12,6 +12,7 @@
 
 (defmethod start-server :before (server)
   (setf *server* server)
+  (setf micros/client:*write-string-function* 'micros-write-string)
   (expose-all-methods server)
   (unless (server-backend-connection server)
     (setf (server-backend-connection server)

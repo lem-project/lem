@@ -6,11 +6,10 @@
             (convert-from-json (elt arguments 0)
                                'lsp:text-document-position-params)))
          (string (previous-form-string point)))
-    (micros/client:remote-eval
-     (server-backend-connection *server*)
-     `(micros/lsp-api:eval-for-language-server ,string)
-     :package-name (scan-current-package point)
-     :callback (lambda (value)
-                 (with-error-handler ()
-                   (notify-eval-result value)))))
+    (remote-eval string (scan-current-package point)))
+  :null)
+
+(define-lsp-command interrupt-eval "cl-lsp.interrupt" (arguments)
+  (declare (ignore arguments))
+  (interrupt-eval)
   :null)

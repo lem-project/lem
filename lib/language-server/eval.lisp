@@ -20,8 +20,24 @@
       (convert-eval-result value)
     (notify-show-message type message)))
 
-(defun micros-write-string (string target)
-  (declare (ignore string target))
+(defun remote-eval (string package-name)
+  (micros/client:remote-eval
+   (server-backend-connection *server*)
+   `(micros/lsp-api:eval-for-language-server ,string)
+   :package-name package-name
+   :callback (lambda (value)
+               (with-error-handler ()
+                 (notify-eval-result value)))
+   :thread :repl-thread))
+
+(defun interrupt-eval ()
+  (micros/client:interrupt (server-backend-connection *server*) :repl-thread))
+
+(defun micros-write-string (string target info)
+  (declare (ignore target))
   (with-error-handler ()
-    (let ((jsonrpc/connection:*connection* (server-jsonrpc-connection *server*)))
-      (notify-show-message lsp:message-type-log string))))
+    (let ((info (ecase info
+                  (:log lsp:message-type-log)
+                  (:error lsp:message-type-error))))
+      (let ((jsonrpc/connection:*connection* (server-jsonrpc-connection *server*)))
+        (notify-show-message info string)))))

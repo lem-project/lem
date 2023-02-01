@@ -7,6 +7,7 @@
            :connection-swank-port
            :remote-eval
            :remote-eval-sync
+           :interrupt
            :start-server-and-connect
            :connect
            :stop-server))
@@ -163,6 +164,9 @@
         ((:abort condition)
          (error 'remote-eval-abort :condition condition))))))
 
+(defun interrupt (connection thread)
+  (send-message connection `(:emacs-interrupt ,thread)))
+
 (defun setup-repl (connection)
   (let ((result
           (remote-eval-sync connection
@@ -178,14 +182,25 @@
     (when continuation
       (funcall (continuation-function continuation) value))))
 
+(defun micros-write-string (string &key target (info :log))
+  (check-type info (member :log :error))
+  (when *write-string-function*
+    (funcall *write-string-function* string target info)))
+
 (defun dispatch-message (connection message)
   (log:debug message)
   (alexandria:destructuring-case message
     ((:return value request-id)
      (call-continuation connection value request-id))
     ((:write-string string &optional target)
-     (when *write-string-function*
-       (funcall *write-string-function* string target)))))
+     (micros-write-string string :target target))
+    ((:debug thread level condition restarts frames conts)
+     (declare (ignore level condition restarts frames conts))
+     (remote-eval connection
+                  '(micros:sldb-abort)
+                  :thread thread
+                  :callback (lambda (value)
+                              (declare (ignore value)))))))
 
 (defun dispatch-waiting-messages (connection)
   (loop :while (message-waiting-p connection)

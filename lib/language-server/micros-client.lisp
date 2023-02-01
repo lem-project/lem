@@ -83,6 +83,7 @@
 (defun socket-connect (hostname port)
   (let ((socket (usocket:socket-connect hostname port :element-type '(unsigned-byte 8))))
     (setf (sb-bsd-sockets:sockopt-keep-alive (usocket:socket socket)) t)
+    (log:debug "socket connected" hostname port)
     socket))
 
 (defun create-connection (hostname port)
@@ -91,7 +92,6 @@
                                     :socket socket
                                     :hostname hostname
                                     :port port)))
-    (log:debug "socket connected" hostname port)
     connection))
 
 (defun message-waiting-p (connection &key (timeout 0))
@@ -159,6 +159,16 @@
          result)
         ((:abort condition)
          (error 'remote-eval-abort :condition condition))))))
+
+(defun setup-repl (connection)
+  (let ((result
+          (remote-eval-sync connection
+                            '(micros/contrib/repl:create-repl nil :coding-system "utf-8-unix")
+                            :package-name "CL-USER")))
+    (destructuring-bind (package-name package-string-for-prompt) result
+      (declare (ignore package-string-for-prompt))
+      (setf (connection-package connection) package-name)))
+  (values))
 
 (defun call-continuation (connection value request-id)
   (let ((continuation (get-and-drop-continuation connection request-id)))
@@ -231,6 +241,7 @@
       (setf (connection-message-dispatcher-thread connection) thread
             (connection-server-process connection) process
             (connection-swank-port connection) swank-port)
+      (setup-repl connection)
       (sb-thread:make-thread (lambda ()
                                (receive-process-output-loop process)))
       connection)))
@@ -239,6 +250,7 @@
   (let* ((connection (create-connection hostname port))
          (thread (make-dispatch-message-loop-thread connection)))
     (setf (connection-message-dispatcher-thread connection) thread)
+    (setup-repl connection)
     connection))
 
 (defun stop-server (connection)

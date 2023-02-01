@@ -8,7 +8,6 @@
            :compile-and-load-file
            :eval-for-language-server
            :eval-result-value
-           :eval-result-output
            :eval-result-error))
 (in-package :micros/lsp-api)
 
@@ -194,25 +193,19 @@
 ;;;
 (defstruct (eval-result (:type list))
   value
-  output
   error)
 
 (defun eval-for-language-server (string)
   (micros::with-buffer-syntax ()
-    (let* ((s (make-string-output-stream))
-           (*standard-output* s))
-      (multiple-value-bind (form error)
-          (safety-read-from-string string)
-        (if error
-            (make-eval-result :value nil
-                              :output (get-output-stream-string s)
-                              :error (princ-to-string error))
-            (handler-case (eval form)
-              (error (e)
-                (make-eval-result :value nil
-                                  :output (get-output-stream-string s)
-                                  :error (princ-to-string e)))
-              (:no-error (&rest values)
-                (make-eval-result :value (format nil "~{~S~^~%~}" values)
-                                  :output (get-output-stream-string s)
-                                  :error nil))))))))
+    (multiple-value-bind (form error)
+        (safety-read-from-string string)
+      (if error
+          (make-eval-result :value nil
+                            :error (princ-to-string error))
+          (handler-case (eval form)
+            (error (e)
+              (make-eval-result :value nil
+                                :error (princ-to-string e)))
+            (:no-error (&rest values)
+              (make-eval-result :value (format nil "~{~S~^~%~}" values)
+                                :error nil)))))))

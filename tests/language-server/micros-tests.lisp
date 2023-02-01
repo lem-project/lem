@@ -14,26 +14,12 @@
     (with-micros-syntax ()
       (let ((result (eval-for-language-server "(cons 1 2)")))
         (ok (equal "(1 . 2)" (eval-result-value result)))
-        (ok (equal "" (eval-result-output result)))
         (ok (null (eval-result-error result))))))
   (test "reader error"
     (with-micros-syntax ()
       (let ((result (eval-for-language-server "(cons 1")))
         (ok (null (eval-result-value result)))
-        (ok (equal "" (eval-result-output result)))
-        (ok (stringp (eval-result-error result))))))
-  (test "standard output"
-    (with-micros-syntax ()
-      (let ((result (eval-for-language-server "(write-line \"hello\")")))
-        (ok (equal "\"hello\"" (eval-result-value result)))
-        (ok (equal (format nil "hello~%") (eval-result-output result)))
-        (ok (null (eval-result-error result))))))
-  (test "standard output and error"
-    (with-micros-syntax ()
-      (let ((result (eval-for-language-server "(progn (prin1 \"test\") (error \"foo\"))")))
-        (ok (null (eval-result-value result)))
-        (ok (equal "\"test\"" (eval-result-output result)))
-        (ok (equal "foo" (eval-result-error result)))))))
+        (ok (stringp (eval-result-error result)))))))
 
 (defun call-with-micros-connection (function)
   (let ((connection (micros/client:start-server-and-connect nil)))

@@ -120,6 +120,9 @@
 (defmethod remote-eval-sync ((server mock-server) expression package-name)
   )
 
+(defmethod server-jsonrpc-connection ((server server))
+  (jsonrpc::transport-connection (jsonrpc::jsonrpc-transport (server-jsonrpc-server server))))
+
 (defun call-with-mock-server (function)
   (let ((*debug-on-error* t)
         (*server* nil))

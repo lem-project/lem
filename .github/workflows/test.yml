@@ -27,7 +27,7 @@ jobs:
         ros config set dynamic-space-size 2048
 
         ros install lem-project/async-process lem
-        ros install cxxxr/sblint
+        ros install cxxxr/sblint fukamachi/rove
 
         export PATH=$HOME/.roswell/bin:$PATH
 
@@ -37,4 +37,4 @@ jobs:
         sblint modes/lisp-mode/lem-lisp-mode.asd
         sblint lib/micros/micros.asd
 
-        lem-test
+        rove lem-tests.asd

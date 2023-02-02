@@ -1,6 +1,6 @@
 (defpackage :lem-tests/language-server/tests
   (:use :cl
-        :testif
+        :rove
         :lem-language-server
         :lem-tests/language-server/utils)
   (:import-from :lem-language-server/protocol/yason-utils
@@ -33,12 +33,12 @@
   (call-lsp-method (make-instance 'exit-request)
                    nil))
 
-(test "initialize"
+(deftest initialize
   (with-mock-server ()
     (let ((response (call-initialize-request)))
       (ok (convert-from-json response 'lsp:initialize-result)))))
 
-(test "shutdown"
+(deftest shutdown
   (with-mock-server ()
     (ok (signals (call-shutdown-request) 'uninitialized-error)
         "shutdown without initialize-request results in uninitialized-error"))
@@ -50,7 +50,7 @@
     ;; assert
     (ok (server-shutdown-request-received-p (current-server)))))
 
-(test "exit"
+(deftest exit
   (with-mock-server ()
     ;; arrange
     (call-initialize-request)
@@ -77,7 +77,7 @@
                                                                  :version version
                                                                  :text text)))))
 
-(test "textDocument/didOpen"
+(deftest textDocument/didOpen
   (with-mock-server ()
     ;; arrange
     (call-initialize-request)
@@ -123,7 +123,7 @@
    :text text
    :range range))
 
-(test "textDocument/didChange"
+(deftest textDocument/didChange
   (flet ((make-document (text)
            (call-did-open-text-document-request :uri "file:///hoge/piyo/foo.lisp"
                                                 :language-id "lisp"
@@ -138,7 +138,7 @@
                                                       :uri "file:///hoge/piyo/foo.lisp"))))
              (lem:buffer-text (text-document-buffer text-document)))))
 
-    (test "Change the whole document"
+    (testing "Change the whole document"
       (with-mock-server ()
         ;; arrange
         (call-initialize-request)
@@ -148,7 +148,7 @@
         ;; assert
         (ok (equal "x" (get-text)))))
 
-    (test "insert"
+    (testing "insert"
       (with-mock-server ()
         ;; arrange
         (call-initialize-request)
@@ -166,7 +166,7 @@
         (ok (equal (lines "abchoge" "xyzpiyo" "fuga")
                    (get-text)))))
 
-    (test "delete"
+    (testing "delete"
       (with-mock-server ()
         ;; arrange
         (call-initialize-request)
@@ -193,7 +193,7 @@
         (ok (equal (lines "hoge" "fuga")
                    (get-text)))))))
 
-(test "textDocument/didClose"
+(deftest textDocument/didClose
   (with-mock-server ()
     ;; arrange
     (call-initialize-request)

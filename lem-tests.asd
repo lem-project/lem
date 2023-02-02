@@ -8,7 +8,7 @@
                "lem-lisp-mode"
                "cl-ansi-text"
                "trivial-package-local-nicknames"
-               "testif")
+               "rove")
   :pathname "tests"
   :components ((:file "utilities")
                (:module "common"
@@ -44,4 +44,4 @@
                (:file "file")
                (:file "completion"))
   :perform (test-op (o c)
-                    (symbol-call :testif :run-tests)))
+                    (symbol-call :rove :run c)))

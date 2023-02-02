@@ -1,9 +1,9 @@
 (defpackage :lem-tests/lisp-mode/package-inferred-system
-  (:use :cl :testif)
+  (:use :cl :rove)
   (:import-from :lem-lisp-mode))
 (in-package :lem-tests/lisp-mode/package-inferred-system)
 
-(test infer-package-name-1
+(deftest infer-package-name-1
   (ok (equal "project-root/foo/bar"
              (lem-lisp-mode.package-inferred-system::infer-package-name-1
               (lem-lisp-mode.package-inferred-system::make-project-root

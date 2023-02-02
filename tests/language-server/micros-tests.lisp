@@ -1,6 +1,6 @@
 (defpackage :lem-language-server/micros-tests
   (:use :cl
-        :testif
+        :rove
         :micros/lsp-api))
 (in-package :lem-language-server/micros-tests)
 
@@ -9,13 +9,13 @@
          (micros::*buffer-readtable* *readtable*))
      ,@body))
 
-(test "eval tests"
-  (test "return evaluated value"
+(deftest eval-tests
+  (testing "return evaluated value"
     (with-micros-syntax ()
       (let ((result (eval-for-language-server "(cons 1 2)")))
         (ok (equal "(1 . 2)" (eval-result-value result)))
         (ok (null (eval-result-error result))))))
-  (test "reader error"
+  (testing "reader error"
     (with-micros-syntax ()
       (let ((result (eval-for-language-server "(cons 1")))
         (ok (null (eval-result-value result)))
@@ -29,7 +29,7 @@
 (defmacro with-micros-connection ((connection) &body body)
   `(call-with-micros-connection (lambda (,connection) ,@body)))
 
-(test "simple eval test"
+(deftest simple-eval-test
   (with-micros-connection (connection)
     (let ((result
             (micros/client:remote-eval-sync connection

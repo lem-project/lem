@@ -1,8 +1,8 @@
 (defpackage :lem-tests/common/ring
-  (:use :cl :testif :lem/common/ring))
+  (:use :cl :rove :lem/common/ring))
 (in-package :lem-tests/common/ring)
 
-(test copy-ring
+(deftest copy-ring
   (let ((ring (make-ring 10)))
     (ring-push ring 100)
     (ring-push ring 200)
@@ -13,7 +13,7 @@
       (ok (equal (ring-ref ring 1)
                  (ring-ref ring2 1))))))
 
-(test ring-push
+(deftest ring-push
   (let ((ring (make-ring 10)))
     (ok (string= (with-output-to-string (out)
                    (loop :for v :across "abcdefghijklmnopqrstuvwxyz"
@@ -47,14 +47,14 @@
 #<RING data: #(u v w x y z q r s t) front: 6 rear: 6>
 "))))
 
-(test ring-empty-p
+(deftest ring-empty-p
   (let ((ring (make-ring 3)))
     (ok (ring-empty-p ring))
     (loop :for i :from 1 :to 10
           :do (ring-push ring i)
               (ok (not (ring-empty-p ring))))))
 
-(test ring-length
+(deftest ring-length
   (let ((ring (make-ring 3)))
     (ok (= 0 (ring-length ring)))
     (loop :for i :from 1 :to 10
@@ -62,7 +62,7 @@
               (ok (= (min 3 i)
                      (ring-length ring))))))
 
-(test ring-ref
+(deftest ring-ref
   (let ((ring (make-ring 10)))
     (loop :for i :from 1 :to 5
           :do (ring-push ring i))

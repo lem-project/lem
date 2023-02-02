@@ -1,6 +1,6 @@
 (lem-lsp-server/defpackage:defpackage :lem-lsp-server/test/text-document-did-open
   (:use :cl
-        :testif
+        :rove
         :lem-lsp-server/server
         :lem-lsp-server/test/test-server
         :lem-lsp-server/text-document-controller)
@@ -9,7 +9,7 @@
 (in-package :lem-lsp-server/test/text-document-did-open)
 
 #+(or)
-(test test
+(deftest test
   (let ((server (make-instance 'test-server))
         (whole-text "(defun test (x) (cons x x))"))
     (server-listen server)

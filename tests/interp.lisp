@@ -1,5 +1,5 @@
 (defpackage :lem/tests/interp
-  (:use :cl :testif))
+  (:use :cl :rove))
 (in-package :lem/tests/interp)
 
 (defvar *result*)
@@ -13,7 +13,7 @@
     (lem:call-command command-name argument)
     (unless (plusp (decf n)) (return))))
 
-(test "Execute the same command consecutively"
+(deftest Execute-the-same-command-consecutively
   (lem-fake-interface:with-fake-interface ()
     (lem-base::with-current-buffers ()
       (let ((*result* '()))

@@ -1,5 +1,5 @@
 (defpackage :lem-tests/string-width-utils
-  (:use :cl :testif)
+  (:use :cl :rove)
   (:import-from :lem-base
                 :control-char
                 :wide-char-p
@@ -327,7 +327,7 @@
     (#\UE0FE "\\254")
     (#\UE0FF "\\255")))
 
-(test control-char
+(deftest control-char
   (loop :for code :from 0 :below 128
         :for char := (code-char code)
         :when (alphanumericp char)
@@ -335,7 +335,7 @@
   (loop :for (char control-char) :in +control-char-pairs+
         :do (ok (equal (control-char char) control-char))))
 
-(test wide-char-p
+(deftest wide-char-p
   (ok (loop :for code :from 0 :below 256
             :for char := (code-char code)
             :always (not (wide-char-p char))))
@@ -345,23 +345,23 @@
   (ok (not (wide-char-p (code-char #x1f336))))
   (ok (not (wide-char-p (code-char #x1f4fd)))))
 
-(test char-width
-  (test "alphabet"
+(deftest char-width
+  (testing "alphabet"
     (ok (eql 1 (char-width #\a 0)))
     (ok (eql 2 (char-width #\a 1))))
-  (test "tab"
+  (testing "tab"
     (ok (loop :for i :from 0 :below 8
               :always (eql 8 (char-width #\tab i))))
     (ok (loop :for i :from 8 :below 16
               :always (eql 16 (char-width #\tab i))))
     (ok (eql 10 (char-width #\tab 9 :tab-size 10))))
-  (test "control"
+  (testing "control"
     (ok (eql 2 (char-width #\Nul 0)))
     (ok (eql 3 (char-width #\Nul 1)))
     (ok (eql 4 (char-width #\UE0FF 0)))
     (ok (eql 5 (char-width #\UE0FF 1)))
     (ok (eql 6 (char-width #\UE0FF 2))))
-  (test "wide"
+  (testing "wide"
     (ok (eql 2 (char-width #\あ 0)))
     (ok (eql 3 (char-width #\あ 1)))
     (dotimes (code 127)
@@ -370,7 +370,7 @@
                     (char= char #\tab))
           (ok (eql 2 (char-width (code-char code) 0))))))))
 
-(test string-width
+(deftest string-width
   (ok (eql 1 (string-width "a")))
   (ok (eql 2 (string-width "ab")))
   (ok (eql 3 (string-width "abc")))
@@ -394,7 +394,7 @@
   (ok (eql 3 (string-width (format nil "~Aaあ" #\tab) :start 1)))
   (ok (eql 6 (string-width (format nil "~Aaあ" #\tab) :tab-size 5 :start 0 :end 2))))
 
-(test wide-index
+(deftest wide-index
   (ok (eql 1 (wide-index "abc" 1)))
   (ok (eql 2 (wide-index "abc" 2)))
   (ok (eql nil (wide-index "abc" 3)))

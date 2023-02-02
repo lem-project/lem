@@ -1,6 +1,6 @@
 (defpackage :lem-tests/lisp-syntax/defstruct-to-defclass
   (:use :cl
-        :testif)
+        :rove)
   (:import-from :lem-base)
   (:import-from :lem-lisp-mode)
   (:import-from :lem-tests/utilities
@@ -66,37 +66,37 @@
           'lem-lisp-syntax:calc-indent)
     buffer))
 
-(test parse-name-and-options
+(deftest parse-name-and-options
   (let ((lem-lisp-mode::*disable-self-connect* t))
-    (test "(name)"
+    (testing "(name)"
       (let ((values (multiple-value-list (parse-name-and-options '(foo)))))
         (ok (= 2 (length values)))
         (destructuring-bind (name options-info) values
           (ok (eq 'foo name))
           (ok (options-info-p options-info))
           (ok (null (options-conc-name options-info))))))
-    (test ":conc-name"
+    (testing ":conc-name"
       (let ((values (multiple-value-list (parse-name-and-options '(foo :conc-name)))))
         (ok (= 2 (length values)))
         (destructuring-bind (name options-info) values
           (ok (eq 'foo name))
           (ok (options-info-p options-info))
           (ok (string= "" (options-conc-name options-info))))))
-    (test "(:conc-name)"
+    (testing "(:conc-name)"
       (let ((values (multiple-value-list (parse-name-and-options '(foo (:conc-name))))))
         (ok (= 2 (length values)))
         (destructuring-bind (name options-info) values
           (ok (eq 'foo name))
           (ok (options-info-p options-info))
           (ok (string= "" (options-conc-name options-info))))))
-    (test "(:conc-name conc-name)"
+    (testing "(:conc-name conc-name)"
       (let ((values (multiple-value-list (parse-name-and-options '(foo (:conc-name prefix-))))))
         (ok (= 2 (length values)))
         (destructuring-bind (name options-info) values
           (ok (eq 'foo name))
           (ok (options-info-p options-info))
           (ok (string= "PREFIX-" (options-conc-name options-info))))))
-    (test "invalid"
+    (testing "invalid"
       (dolist (input (list
                       '(1)
                       '(1 :conc-name)
@@ -111,9 +111,9 @@
   (let ((*package* package))
     (read-from-string string)))
 
-(test analyze-defstruct
+(deftest analyze-defstruct
   (let ((lem-lisp-mode::*disable-self-connect* t))
-    (test "simple"
+    (testing "simple"
              (let* ((buffer (make-test-buffer))
                     (point (lem-base:buffer-point buffer)))
                (search-input-defstruct point 1)
@@ -140,7 +140,7 @@
                      (ok (not (slot-description-complex-p slot)))
                      (ok (equal (slot-description-name slot) "slot-c"))
                      (ok (expected-point-position-p (slot-description-point slot) 6 2)))))))
-    (test "complex slot-description"
+    (testing "complex slot-description"
              (let* ((buffer (make-test-buffer))
                     (point (lem-base:buffer-point buffer)))
                (search-input-defstruct point 3)
@@ -179,7 +179,7 @@
                             (if expected-read-only-p
                                 (ok (eq t (slot-description-read-only-p slot)))
                                 (ok (not (slot-description-read-only-p slot))))))
-                     (test "a"
+                     (testing "a"
                               (%test (elt slots 0)
                                     :expected-slot-name "a"
                                     :expected-point-line-number 17
@@ -187,7 +187,7 @@
                                     :expected-initform 12
                                     :expected-type nil
                                     :expected-read-only-p nil))
-                     (test "b"
+                     (testing "b"
                               (%test (elt slots 1)
                                     :expected-slot-name "b"
                                     :expected-point-line-number 18
@@ -195,7 +195,7 @@
                                     ;; :expected-initform nil
                                     :expected-type nil
                                     :expected-read-only-p nil))
-                     (test "c"
+                     (testing "c"
                               (%test (elt slots 2)
                                     :expected-slot-name "c"
                                     :expected-point-line-number 19
@@ -203,7 +203,7 @@
                                     :expected-initform '(let ((x 0)) (f x))
                                     :expected-type nil
                                     :expected-read-only-p nil))
-                     (test "d"
+                     (testing "d"
                               (%test (elt slots 3)
                                     :expected-slot-name "d"
                                     :expected-point-line-number 21
@@ -211,7 +211,7 @@
                                     :expected-initform 100
                                     :expected-type 'integer
                                     :expected-read-only-p nil))
-                     (test "e"
+                     (testing "e"
                               (%test (elt slots 4)
                                     :expected-slot-name "e"
                                     :expected-point-line-number 22
@@ -219,7 +219,7 @@
                                     :expected-initform nil
                                     :expected-type '(or nil string)
                                     :expected-read-only-p nil))
-                     (test "f"
+                     (testing "f"
                               (%test (elt slots 5)
                                     :expected-slot-name "f"
                                     :expected-point-line-number 24
@@ -227,7 +227,7 @@
                                     :expected-initform '(progn (foo))
                                     :expected-type 'symbol
                                     :expected-read-only-p nil))
-                     (test "g"
+                     (testing "g"
                               (%test (elt slots 6)
                                     :expected-slot-name "g"
                                     :expected-point-line-number 27
@@ -235,7 +235,7 @@
                                     :expected-initform nil
                                     :expected-type nil
                                     :expected-read-only-p t))
-                     (test "h"
+                     (testing "h"
                               (%test (elt slots 7)
                                     :expected-slot-name "h"
                                     :expected-point-line-number 28
@@ -243,7 +243,7 @@
                                     :expected-initform nil
                                     :expected-type nil
                                     :expected-read-only-p nil))
-                     (test "i"
+                     (testing "i"
                               (%test (elt slots 8)
                                     :expected-slot-name "i"
                                     :expected-point-line-number 29
@@ -251,7 +251,7 @@
                                     :expected-initform nil
                                     :expected-type nil
                                     :expected-read-only-p t))
-                     (test "j"
+                     (testing "j"
                               (%test (elt slots 9)
                                     :expected-slot-name "j"
                                     :expected-point-line-number 30
@@ -259,7 +259,7 @@
                                     :expected-initform 1
                                     :expected-type 'integer
                                     :expected-read-only-p t))
-                     (test "k"
+                     (testing "k"
                               (%test (elt slots 10)
                                     :expected-slot-name "k"
                                     :expected-point-line-number 33
@@ -267,7 +267,7 @@
                                     :expected-initform 2
                                     :expected-type 'integer
                                     :expected-read-only-p t)))))))
-    (test "name-and-options"
+    (testing "name-and-options"
              (let* ((buffer (make-test-buffer))
                     (point (lem-base:buffer-point buffer)))
                (search-input-defstruct point 4)
@@ -277,10 +277,10 @@
                  (ok (options-info-p (struct-options info)))
                  (equal "xxx-" (options-conc-name (struct-options info))))))))
 
-(test defstruct-to-defclass
+(deftest defstruct-to-defclass
   (let ((lem-lisp-mode::*disable-self-connect* t))
     (flet ((%test (n)
-             (test (format nil "case-~D" n)
+             (testing (format nil "case-~D" n)
                (let* ((buffer (make-test-buffer))
                       (expected-form-string (fetch-expected-form-string buffer n))
                       (point (lem-base:buffer-point buffer)))

@@ -1,6 +1,6 @@
 (defpackage :lem-tests/lsp-utils/json
   (:use :cl
-        :testif
+        :rove
         :lem-lsp-utils/json)
   (:import-from :trivial-package-local-nicknames)
   ;; TODO
@@ -18,8 +18,8 @@
    (c
     :initarg :c)))
 
-(test check-required-initarg
-  (test "Missing parameters"
+(deftest check-required-initarg
+  (testing "Missing parameters"
     (flet ((make ()
              (let ((conditions '()))
                (handler-bind ((missing-parameter
@@ -36,37 +36,37 @@
         (ok (equals (first conditions) 'test-params 'a))
         (ok (equals (second conditions) 'test-params 'c))))))
 
-(test primitive-value
-  (test "st-json"
+(deftest primitive-value
+  (testing "st-json"
     (let ((*json-backend* (make-instance 'st-json-backend)))
       (ok (eq :null (json-null)))
       (ok (eq :true (json-true)))
       (ok (eq :false (json-false)))))
-  (test "yason"
+  (testing "yason"
     (let ((*json-backend* (make-instance 'yason-backend)))
       (ok (eq :null (json-null)))
       (ok (eq t (json-true)))
       (ok (eq 'yason:false (json-false))))))
 
-(test json-array
-  (test "st-json"
+(deftest json-array
+  (testing "st-json"
     (let ((*json-backend* (make-instance 'st-json-backend)))
       (ok (equal '(1 2 3)
                  (json-array 1 2 3)))))
-  (test "yason"
+  (testing "yason"
     (let ((*json-backend* (make-instance 'yason-backend)))
       (ok (equalp #(1 2 3)
                   (json-array 1 2 3))))))
 
-(test make-json
-  (test "st-json"
+(deftest make-json
+  (testing "st-json"
     (let ((*json-backend* (make-instance 'st-json-backend)))
       (let ((json (make-json "foo" 100 "bar" 200 :foo-bar 300)))
         (ok (typep json 'st-json:jso))
         (ok (equal (json-get json "foo") 100))
         (ok (equal (json-get json "bar") 200))
         (ok (equal (json-get json "fooBar") 300)))))
-  (test "yason"
+  (testing "yason"
     (let ((*json-backend* (make-instance 'yason-backend)))
       (let ((json (make-json "foo" 100 "bar" 200 :foo-bar 300)))
         (ok (hash-table-p json))
@@ -75,29 +75,29 @@
         (ok (equal (json-get json "fooBar") 300))
         json))))
 
-(test object-to-json
+(deftest object-to-json
   (let ((test-params
           (make-instance 'test-params
-                         :a "test"
+                         :a "testing"
                          :b 100
                          :c '(1 2))))
-    (test "st-json"
+    (testing "st-json"
       (let* ((*json-backend* (make-instance 'st-json-backend))
              (json (object-to-json test-params)))
         (ok (typep json 'st-json:jso))
-        (ok (equal (st-json:getjso "a" json) "test"))
+        (ok (equal (st-json:getjso "a" json) "testing"))
         (ok (equal (st-json:getjso "b" json) 100))
         (ok (equal (st-json:getjso "c" json) '(1 2)))))
-    (test "yason"
+    (testing "yason"
       (let* ((*json-backend* (make-instance 'yason-backend))
              (json (object-to-json test-params)))
         (ok (hash-table-p json))
         (ok (= 3 (hash-table-count json)))
-        (ok (equal "test" (gethash "a" json)))
+        (ok (equal "testing" (gethash "a" json)))
         (ok (equal 100 (gethash "b" json)))
         (ok (equal '(1 2) (gethash "c" json)))))))
 
-(test object-to-json/nest-structure
+(deftest object-to-json/nest-structure
   (let ((json
           (object-to-json
            (make-instance
@@ -136,8 +136,8 @@
       (ok (equal 5 (json-get* content-change "range" "end" "line")))
       (ok (equal 3 (json-get* content-change "range" "end" "character"))))))
 
-(test json-get
-  (test "st-json"
+(deftest json-get
+  (testing "st-json"
     (let ((*json-backend* (make-instance 'st-json-backend)))
       (ok (equal 1
                  (json-get (st-json:jso "foo" 1 "bar" 2)
@@ -149,7 +149,7 @@
               (json-get (st-json:jso "foo" 1)
                         "xxx"
                         :unbound)))))
-  (test "yason"
+  (testing "yason"
     (let ((*json-backend* (make-instance 'yason-backend)))
       (ok (equal 1
                  (json-get (alexandria:plist-hash-table (list "foo" 1 "bar" 2) :test 'equal)
@@ -162,15 +162,15 @@
                         "xxx"
                         :unbound))))))
 
-(test json-array-p
-  (test "st-json"
+(deftest json-array-p
+  (testing "st-json"
     (let ((*json-backend* (make-instance 'st-json-backend)))
       (ok (not (json-array-p 1)))
       (ok (not (json-array-p #(1 2 3))))
       (ok (not (json-array-p '(1 2 . 3))))
       (ok (json-array-p '()))
       (ok (json-array-p '(1 2 3)))))
-  (test "yason"
+  (testing "yason"
     (let ((*json-backend* (make-instance 'yason-backend)))
       (ok (not (json-array-p 1)))
       (ok (json-array-p #(1 2 3)))
@@ -178,15 +178,15 @@
       (ok (not (json-array-p '())))
       (ok (not (json-array-p '(1 2 3)))))))
 
-(test json-object-p
-  (test "st-json"
+(deftest json-object-p
+  (testing "st-json"
     (let ((*json-backend* (make-instance 'st-json-backend)))
       (ok (not (json-object-p 1)))
       (ok (not (json-object-p #())))
       (ok (not (json-object-p nil)))
       (ok (json-object-p (st-json:jso "foo" 1)))
       (ok (not (json-object-p (make-hash-table))))))
-  (test "yason"
+  (testing "yason"
     (let ((*json-backend* (make-instance 'yason-backend)))
       (ok (not (json-object-p 1)))
       (ok (not (json-object-p #())))

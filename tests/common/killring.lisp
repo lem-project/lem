@@ -1,10 +1,10 @@
 (defpackage :lem-tests/killring
   (:use :cl
-        :testif
+        :rove
         :lem/common/killring))
 (in-package :lem-tests/killring)
 
-(test simple-test
+(deftest simple-test
   (let ((killring (make-killring 10)))
     (ok (push-killring-item killring "abc"))
     (ok (equal "abc" (peek-killring-item killring 0)))
@@ -13,22 +13,22 @@
     (ok (equal "def" (peek-killring-item killring 0)))
     (ok (equal "abc" (peek-killring-item killring 1)))
     (ok (equal "def" (peek-killring-item killring 2)))
-    (test "appending"
+    (testing "appending"
       (with-killring-context (:appending t)
         (push-killring-item killring "!!"))
       (ok (equal "def!!" (peek-killring-item killring 0))))
-    (test "before-inserting"
+    (testing "before-inserting"
       (with-killring-context (:appending t :before-inserting t)
         (push-killring-item killring "??"))
       (ok (equal "??def!!" (peek-killring-item killring 0))))))
 
-(test appending-if-empty
+(deftest appending-if-empty
   (let ((killring (make-killring 10)))
     (with-killring-context (:appending t)
       (push-killring-item killring "abc")
       (ok (equal "abc" (peek-killring-item killring 0))))))
 
-(test before-inserting
+(deftest before-inserting
   (let ((killring (make-killring 10)))
     (push-killring-item killring "a")
     (with-killring-context (:appending t :before-inserting t)
@@ -39,13 +39,13 @@
         (push-killring-item killring "c")))
     (ok (equal "cba" (peek-killring-item killring 0)))))
 
-(test rotate-to-empty-killring
+(deftest rotate-to-empty-killring
   (let ((killring (make-killring 10)))
     (rotate-killring killring)
     (rotate-killring-undo killring)
     (pass "no error")))
 
-(test rotate
+(deftest rotate
   (let ((killring (make-killring 10)))
     (push-killring-item killring "a")
     (push-killring-item killring "b")
@@ -56,7 +56,7 @@
     (ok (equal "b" (peek-killring-item killring 0)))
     (ok (equal "a" (peek-killring-item killring 1)))))
 
-(test option
+(deftest option
   (let ((killring (make-killring 10)))
     (push-killring-item killring "foo" :options :test)
     (ok (equal '("foo" (:test))
@@ -72,6 +72,6 @@
     (ok (equal '("bazfoobar" (:test3 :test :test2))
                (multiple-value-list (peek-killring-item killring 0))))))
 
-(test peek-killring-item-when-empty
+(deftest peek-killring-item-when-empty
   (let ((killring (make-killring 10)))
     (ok (null (peek-killring-item killring 0)))))

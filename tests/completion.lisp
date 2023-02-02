@@ -1,9 +1,9 @@
 (defpackage :lem-tests/completion
   (:use :cl
-        :testif))
+        :rove))
 (in-package :lem-tests/completion)
 
-(test test-completion ()
+(deftest test-completion ()
   (let ((items '("apple" "banana" "orange" "pineapple")))
     (ok (equal '("apple" "banana" "orange" "pineapple") (lem:completion "a" items)))
     (ok (equal '("apple" "pineapple") (lem:completion "app" items)))

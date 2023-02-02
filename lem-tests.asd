@@ -1,8 +1,6 @@
 (defsystem "lem-tests"
   :depends-on ("lem-base"
                "lem"
-               "lem-lsp-utils"
-               "lem-lsp-server"
                "lem-fake-interface"
                "lem-lisp-syntax"
                "lem-lisp-mode"
@@ -15,14 +13,6 @@
                 :components ((:file "ring")
                              (:file "killring")
                              (:file "history")))
-               (:module "lsp-utils"
-                :components ((:file "json")
-                             (:file "json-lsp-utils")))
-               (:module "lsp-server"
-                :components ((:file "test-server")
-                             (:file "initialize")
-                             (:file "initialized")
-                             (:file "text-document-did-open")))
                (:module "language-server"
                 :components ((:file "utils")
                              (:file "micros-tests")

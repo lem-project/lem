@@ -1,5 +1,3 @@
-;;; reimplementation of lem-lsp-server
-
 (require :sb-concurrency)
 
 (defsystem "lem-language-server"

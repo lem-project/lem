@@ -9,7 +9,7 @@
     (remote-eval string (scan-current-package point)))
   :null)
 
-(define-lsp-command interrupt-eval "cl-lsp.interrupt" (arguments)
+(define-lsp-command interrupt-eval-command "cl-lsp.interrupt" (arguments)
   (declare (ignore arguments))
   (interrupt-eval)
   :null)

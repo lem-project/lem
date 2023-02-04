@@ -19,7 +19,11 @@
     (("log-file")
      :type string
      :optional t
-     :documentation "Specify the file to output the log")))
+     :documentation "Specify the file to output the log")
+    (("help" #\h)
+     :type boolean
+     :optional t
+     :documentation "display help")))
 
 (defun main (&optional (args (uiop:command-line-arguments)))
   (command-line-arguments:handle-command-line
@@ -31,7 +35,10 @@
   (apply #'format t control-string format-arguments)
   (command-line-arguments:show-option-help *command-line-spec*))
 
-(defun run-server (&key tcp stdio (port 10007) log-file)
+(defun run-server (&key tcp stdio (port 10007) log-file help)
+  (when help
+    (command-line-arguments:show-option-help *command-line-spec*)
+    (return-from run-server))
   (when (and tcp stdio)
     (command-line-error "These arguments cannot be used together: (tcp, stdio)")
     (return-from run-server))

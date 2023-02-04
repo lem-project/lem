@@ -271,7 +271,8 @@
    :non-focus-attribute 'non-focus-completion-attribute
    :style '(:use-border nil :offset-y 1))
   (completion-mode t)
-  (narrowing-down context items)
+  (unless (spec-async-p (context-spec context))
+    (narrowing-down context items))
   (call-focus-action))
 
 (defun continue-completion (context)

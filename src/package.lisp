@@ -16,6 +16,9 @@
   ;; errors.lisp
   (:export
    :editor-abort)
+  ;; system.lisp
+  (:export
+   :get-pid)
   ;; key.lisp
   (:export
    :make-key

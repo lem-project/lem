@@ -573,7 +573,7 @@
    (make-instance 'lsp:initialize)
    (apply #'make-instance
           'lsp:initialize-params
-          :process-id (utils:get-pid)
+          :process-id (get-pid)
           :client-info (make-lsp-map :name "lem" #|:version "0.0.0"|#)
           :root-uri (workspace-root-uri workspace)
           :capabilities (client-capabilities)

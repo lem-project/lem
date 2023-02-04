@@ -3,20 +3,9 @@
   (:import-from :quri)
   (:import-from :alexandria)
   (:import-from :trivia)
-  (:export :get-pid
-           :find-root-pathname
+  (:export :find-root-pathname
            :elt-clamp))
 (in-package :lem-lsp-mode/utils)
-
-(defun get-pid ()
-  #+sbcl
-  (sb-posix:getpid)
-  #+ccl
-  (ccl::getpid)
-  #+lispworks
-  (progn
-    #+win32 (win32:get-current-process-id)
-    #-win32 (system::getpid)))
 
 (defun find-root-pathname (directory root-test-function)
   (cond ((dolist (file (uiop:directory-files directory))

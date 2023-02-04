@@ -36,3 +36,9 @@
                              (:file "workspace")
                              (:file "window")
                              (:file "commands")))))
+
+(defsystem "lem-language-server/cli"
+  :depends-on ("lem-language-server"
+               "command-line-arguments")
+  :serial t
+  :components ((:file "cli")))

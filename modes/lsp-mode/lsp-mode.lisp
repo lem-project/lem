@@ -3,10 +3,10 @@
   (:use :cl
         :lem
         :alexandria
-        :lem-language-server/protocol/lsp-type
-        :lem-language-server/protocol/converter
-        :lem-language-server/protocol/yason-utils
-        :lem-language-server/protocol/utils)
+        :lem-lsp-base/type
+        :lem-lsp-base/converter
+        :lem-lsp-base/yason-utils
+        :lem-lsp-base/utils)
   (:shadow :execute-command)
   (:import-from :lem-lsp-mode/request)
   (:import-from :lem-lsp-mode/client)

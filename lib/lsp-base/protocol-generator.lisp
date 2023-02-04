@@ -1,16 +1,16 @@
-(defpackage :lem-language-server/protocol/protocol-generator
+(defpackage :lem-lsp-base/protocol-generator
   (:use :cl
         :alexandria
-        :lem-language-server/protocol/lsp-type)
-  (:import-from :lem-language-server/protocol/yason-utils
+        :lem-lsp-base/type)
+  (:import-from :lem-lsp-base/yason-utils
                 :parse-json)
   (:export :deploy))
-(in-package :lem-language-server/protocol/protocol-generator)
+(in-package :lem-lsp-base/protocol-generator)
 
 (defparameter *specifications*
   '(("language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json"
      "protocol/protocol-3-17.lisp"
-     :lem-language-server/protocol/protocol-3-17)))
+     :lem-lsp-base/protocol-3-17)))
 
 (defvar *protocol-package*)
 (defvar *exports* '())

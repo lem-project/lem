@@ -1,8 +1,8 @@
-(defpackage :lem-language-server/protocol/converter
-  (:use :cl :lem-language-server/protocol/lsp-type)
+(defpackage :lem-lsp-base/converter
+  (:use :cl :lem-lsp-base/type)
   (:export :convert-from-json
            :convert-to-json))
-(in-package :lem-language-server/protocol/converter)
+(in-package :lem-lsp-base/converter)
 
 (declaim (optimize (speed 0) (safety 3) (debug 3)))
 

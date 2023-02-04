@@ -1,7 +1,7 @@
 (defpackage :lem-go-mode/lsp-config
   (:use :cl
          :lem-lsp-mode
-         :lem-language-server/protocol/lsp-type))
+         :lem-lsp-base/type))
 (in-package :lem-go-mode/lsp-config)
 
 (define-language-spec (go-spec lem-go-mode:go-mode)

@@ -1,4 +1,4 @@
-(defpackage :lem-language-server/protocol/lsp-type
+(defpackage :lem-lsp-base/type
   (:use :cl)
   (:export :+null+
            :+true+
@@ -56,7 +56,7 @@
            :get-map
            :lsp-array-p
            :lsp-null-p))
-(in-package :lem-language-server/protocol/lsp-type)
+(in-package :lem-lsp-base/type)
 
 (declaim (optimize (speed 0) (safety 3) (debug 3)))
 

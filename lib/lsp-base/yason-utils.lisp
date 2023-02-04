@@ -1,10 +1,10 @@
-(defpackage :lem-language-server/protocol/yason-utils
+(defpackage :lem-lsp-base/yason-utils
   (:use :cl)
   (:import-from :bordeaux-threads
                 :*default-special-bindings*)
   (:export :with-yason-bindings
            :parse-json))
-(in-package :lem-language-server/protocol/yason-utils)
+(in-package :lem-lsp-base/yason-utils)
 
 (defparameter *yason-bindings*
   '((yason:*parse-json-null-as-keyword* . t)

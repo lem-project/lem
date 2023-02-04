@@ -1,9 +1,9 @@
 (defpackage :lem-lsp-mode/request
   (:use :cl
-        :lem-language-server/protocol/lsp-type)
+        :lem-lsp-base/type)
   (:import-from :lem-lsp-mode/client
                 :client-connection)
-  (:import-from :lem-language-server/protocol/converter
+  (:import-from :lem-lsp-base/converter
                 :convert-from-json
                 :convert-to-json)
   (:export :request

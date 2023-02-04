@@ -3,11 +3,11 @@
         :rove
         :lem-language-server
         :lem-tests/language-server/utils)
-  (:import-from :lem-language-server/protocol/yason-utils
+  (:import-from :lem-lsp-base/yason-utils
                 :parse-json)
-  (:import-from :lem-language-server/protocol/lsp-type
+  (:import-from :lem-lsp-base/type
                 :make-lsp-map)
-  (:import-from :lem-language-server/protocol/converter
+  (:import-from :lem-lsp-base/converter
                 :convert-to-json
                 :convert-from-json))
 (in-package :lem-tests/language-server/tests)

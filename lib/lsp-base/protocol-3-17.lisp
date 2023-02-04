@@ -1,6 +1,6 @@
 ;;; Code generated based on 'language-server-protocol/_specifications/lsp/3.17/metaModel/metaModel.json'; DO NOT EDIT.
 
-(common-lisp:defpackage :lem-language-server/protocol/protocol-3-17
+(common-lisp:defpackage :lem-lsp-base/protocol-3-17
   (:nicknames :lsp)
   (:use)
   (:export :*version*
@@ -1603,9 +1603,9 @@
            :/log-trace
            :/cancel-request
            :/progress))
-(common-lisp:in-package :lem-language-server/protocol/protocol-3-17)
+(common-lisp:in-package :lem-lsp-base/protocol-3-17)
 
-(lem-language-server/protocol/lsp-type:define-enum semantic-token-types
+(lem-lsp-base/type:define-enum semantic-token-types
     ((namespace "namespace")
      (type "type" :documentation
       "Represents a generic type. Acts as a fallback for types which can't be mapped to
@@ -1616,7 +1616,7 @@ a specific type like class or enum.")
      (method "method") (macro "macro") (keyword "keyword") (modifier "modifier")
      (comment "comment") (string "string") (number "number") (regexp "regexp")
      (operator "operator") (decorator "decorator" :documentation "@since 3.17.0" :since "3.17.0"))
-  (:type lem-language-server/protocol/lsp-type:lsp-string)
+  (:type lem-lsp-base/type:lsp-string)
   :since
   "A set of predefined token types. This set is not fixed
 an clients can specify additional token types via the
@@ -1626,11 +1626,11 @@ corresponding client capabilities.
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-enum semantic-token-modifiers
+(lem-lsp-base/type:define-enum semantic-token-modifiers
     ((declaration "declaration") (definition "definition") (readonly "readonly") (static "static")
      (deprecated "deprecated") (abstract "abstract") (async "async") (modification "modification")
      (documentation "documentation") (default-library "defaultLibrary"))
-  (:type lem-language-server/protocol/lsp-type:lsp-string)
+  (:type lem-lsp-base/type:lsp-string)
   :since
   "A set of predefined token modifiers. This set is not fixed
 an clients can specify additional token types via the
@@ -1640,12 +1640,12 @@ corresponding client capabilities.
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-enum document-diagnostic-report-kind
+(lem-lsp-base/type:define-enum document-diagnostic-report-kind
     ((full "full" :documentation "A diagnostic report with a full
 set of problems.")
      (unchanged "unchanged" :documentation "A report indicating that the last
 returned report is still accurate."))
-  (:type lem-language-server/protocol/lsp-type:lsp-string)
+  (:type lem-lsp-base/type:lsp-string)
   :since
   "The document diagnostic report kinds.
 
@@ -1653,18 +1653,18 @@ returned report is still accurate."))
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-enum error-codes
+(lem-lsp-base/type:define-enum error-codes
     ((parse-error -32700) (invalid-request -32600) (method-not-found -32601)
      (invalid-params -32602) (internal-error -32603)
      (server-not-initialized -32002 :documentation
       "Error code indicating that a server received a notification or
 request before the server has received the `initialize` request.")
      (unknown-error-code -32001))
-  (:type lem-language-server/protocol/lsp-type:lsp-integer)
+  (:type lem-lsp-base/type:lsp-integer)
   :since
   "Predefined error codes.")
 
-(lem-language-server/protocol/lsp-type:define-enum lsp-error-codes
+(lem-lsp-base/type:define-enum lsp-error-codes
     ((request-failed -32803 :documentation
       "A request failed but it was syntactically correct, e.g the
 method name was known and the parameters were valid. The error
@@ -1691,28 +1691,28 @@ the client should cancel the request.")
      (request-cancelled -32800 :documentation
       "The client has canceled a request and a server as detected
 the cancel."))
-  (:type lem-language-server/protocol/lsp-type:lsp-integer))
+  (:type lem-lsp-base/type:lsp-integer))
 
-(lem-language-server/protocol/lsp-type:define-enum folding-range-kind
+(lem-lsp-base/type:define-enum folding-range-kind
     ((comment "comment" :documentation "Folding range for a comment")
      (imports "imports" :documentation "Folding range for an import or include")
      (region "region" :documentation "Folding range for a region (e.g. `#region`)"))
-  (:type lem-language-server/protocol/lsp-type:lsp-string)
+  (:type lem-lsp-base/type:lsp-string)
   :since
   "A set of predefined range kinds.")
 
-(lem-language-server/protocol/lsp-type:define-enum symbol-kind
+(lem-lsp-base/type:define-enum symbol-kind
     ((file 1) (module 2) (namespace 3) (package 4) (class 5) (method 6) (property 7) (field 8)
      (constructor 9) (enum 10) (interface 11) (function 12) (variable 13) (constant 14) (string 15)
      (number 16) (boolean 17) (array 18) (object 19) (key 20) (null 21) (enum-member 22)
      (struct 23) (event 24) (operator 25) (type-parameter 26))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "A symbol kind.")
 
-(lem-language-server/protocol/lsp-type:define-enum symbol-tag
+(lem-lsp-base/type:define-enum symbol-tag
     ((deprecated 1 :documentation "Render a symbol as obsolete, usually using a strike-out."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "Symbol tags are extra annotations that tweak the rendering of a symbol.
 
@@ -1720,7 +1720,7 @@ the cancel."))
   :since
   "3.16")
 
-(lem-language-server/protocol/lsp-type:define-enum uniqueness-level
+(lem-lsp-base/type:define-enum uniqueness-level
     ((document "document" :documentation "The moniker is only unique inside a document")
      (project "project" :documentation
       "The moniker is unique inside a project for which a dump got created")
@@ -1728,7 +1728,7 @@ the cancel."))
       "The moniker is unique inside the group to which a project belongs")
      (scheme "scheme" :documentation "The moniker is unique inside the moniker scheme.")
      (global "global" :documentation "The moniker is globally unique"))
-  (:type lem-language-server/protocol/lsp-type:lsp-string)
+  (:type lem-lsp-base/type:lsp-string)
   :since
   "Moniker uniqueness level to define scope of the moniker.
 
@@ -1736,7 +1736,7 @@ the cancel."))
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-enum moniker-kind
+(lem-lsp-base/type:define-enum moniker-kind
     ((import "import" :documentation
       "The moniker represent a symbol that is imported into a project")
      (export "export" :documentation
@@ -1744,7 +1744,7 @@ the cancel."))
      (local "local" :documentation
       "The moniker represents a symbol that is local to a project (e.g. a local
 variable of a function, a class not visible outside the project, ...)"))
-  (:type lem-language-server/protocol/lsp-type:lsp-string)
+  (:type lem-lsp-base/type:lsp-string)
   :since
   "The moniker kind.
 
@@ -1752,10 +1752,10 @@ variable of a function, a class not visible outside the project, ...)"))
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-enum inlay-hint-kind
+(lem-lsp-base/type:define-enum inlay-hint-kind
     ((type 1 :documentation "An inlay hint that for a type annotation.")
      (parameter 2 :documentation "An inlay hint that is for a parameter."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "Inlay hint kinds.
 
@@ -1763,47 +1763,47 @@ variable of a function, a class not visible outside the project, ...)"))
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-enum message-type
+(lem-lsp-base/type:define-enum message-type
     ((error 1 :documentation "An error message.") (warning 2 :documentation "A warning message.")
      (info 3 :documentation "An information message.") (log 4 :documentation "A log message."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "The message type")
 
-(lem-language-server/protocol/lsp-type:define-enum text-document-sync-kind
+(lem-lsp-base/type:define-enum text-document-sync-kind
     ((none 0 :documentation "Documents should not be synced at all.")
      (full 1 :documentation "Documents are synced by always sending the full content
 of the document.")
      (incremental 2 :documentation "Documents are synced by sending the full content on open.
 After that only incremental updates to the document are
 send."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "Defines how the host (editor) should sync
 document changes to the language server.")
 
-(lem-language-server/protocol/lsp-type:define-enum text-document-save-reason
+(lem-lsp-base/type:define-enum text-document-save-reason
     ((manual 1 :documentation
       "Manually triggered, e.g. by the user pressing save, by starting debugging,
 or by an API call.")
      (after-delay 2 :documentation "Automatic after a delay.")
      (focus-out 3 :documentation "When the editor lost focus."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "Represents reasons why a text document is saved.")
 
-(lem-language-server/protocol/lsp-type:define-enum completion-item-kind
+(lem-lsp-base/type:define-enum completion-item-kind
     ((text 1) (method 2) (function 3) (constructor 4) (field 5) (variable 6) (class 7)
      (interface 8) (module 9) (property 10) (unit 11) (value 12) (enum 13) (keyword 14)
      (snippet 15) (color 16) (file 17) (reference 18) (folder 19) (enum-member 20) (constant 21)
      (struct 22) (event 23) (operator 24) (type-parameter 25))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "The kind of a completion entry.")
 
-(lem-language-server/protocol/lsp-type:define-enum completion-item-tag
+(lem-lsp-base/type:define-enum completion-item-tag
     ((deprecated 1 :documentation "Render a completion as obsolete, usually using a strike-out."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "Completion item tags are extra annotations that tweak the rendering of a completion
 item.
@@ -1812,7 +1812,7 @@ item.
   :since
   "3.15.0")
 
-(lem-language-server/protocol/lsp-type:define-enum insert-text-format
+(lem-lsp-base/type:define-enum insert-text-format
     ((plain-text 1 :documentation "The primary text to be inserted is treated as a plain string.")
      (snippet 2 :documentation "The primary text to be inserted is treated as a snippet.
 
@@ -1822,12 +1822,12 @@ the end of the snippet. Placeholders with equal identifiers are linked,
 that is typing in one will update others too.
 
 See also: https://microsoft.github.io/language-server-protocol/specifications/specification-current/#snippet_syntax"))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "Defines whether the insert text in a completion item should be interpreted as
 plain text or a snippet.")
 
-(lem-language-server/protocol/lsp-type:define-enum insert-text-mode
+(lem-lsp-base/type:define-enum insert-text-mode
     ((as-is 1 :documentation "The insertion or replace strings is taken as it is. If the
 value is multi line the lines below the cursor will be
 inserted using the indentation defined in the string value.
@@ -1841,7 +1841,7 @@ which the item is accepted.
 Consider a line like this: <2tabs><cursor><3tabs>foo. Accepting a
 multi line completion item is indented using 2 tabs and all
 following lines inserted will be indented using 2 tabs as well."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "How whitespace and indentation is handled during completion
 item insertion.
@@ -1850,15 +1850,15 @@ item insertion.
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-enum document-highlight-kind
+(lem-lsp-base/type:define-enum document-highlight-kind
     ((text 1 :documentation "A textual occurrence.")
      (read 2 :documentation "Read-access of a symbol, like reading a variable.")
      (write 3 :documentation "Write-access of a symbol, like writing to a variable."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "A document highlight kind.")
 
-(lem-language-server/protocol/lsp-type:define-enum code-action-kind
+(lem-lsp-base/type:define-enum code-action-kind
     ((empty "" :documentation "Empty kind.")
      (quick-fix "quickfix" :documentation "Base kind for quickfix actions: 'quickfix'")
      (refactor "refactor" :documentation "Base kind for refactoring actions: 'refactor'")
@@ -1905,20 +1905,20 @@ They should not suppress errors or perform unsafe fixes such as generating new t
 
 @since 3.15.0"
       :since "3.15.0"))
-  (:type lem-language-server/protocol/lsp-type:lsp-string)
+  (:type lem-lsp-base/type:lsp-string)
   :since
   "A set of predefined code action kinds")
 
-(lem-language-server/protocol/lsp-type:define-enum trace-values
+(lem-lsp-base/type:define-enum trace-values
     ((off "off" :documentation "Turn tracing off.")
      (messages "messages" :documentation "Trace messages only.")
      (verbose "verbose" :documentation "Verbose message tracing."))
-  (:type lem-language-server/protocol/lsp-type:lsp-string))
+  (:type lem-lsp-base/type:lsp-string))
 
-(lem-language-server/protocol/lsp-type:define-enum markup-kind
+(lem-lsp-base/type:define-enum markup-kind
     ((plain-text "plaintext" :documentation "Plain text is supported as a content format")
      (markdown "markdown" :documentation "Markdown is supported as a content format"))
-  (:type lem-language-server/protocol/lsp-type:lsp-string)
+  (:type lem-lsp-base/type:lsp-string)
   :since
   "Describes the content type that a client supports in various
 result literals like `Hover`, `ParameterInfo` or `CompletionItem`.
@@ -1926,7 +1926,7 @@ result literals like `Hover`, `ParameterInfo` or `CompletionItem`.
 Please note that `MarkupKinds` must not start with a `$`. This kinds
 are reserved for internal usage.")
 
-(lem-language-server/protocol/lsp-type:define-enum position-encoding-kind
+(lem-lsp-base/type:define-enum position-encoding-kind
     ((utf8 "utf-8" :documentation "Character offsets count UTF-8 code units.")
      (utf16 "utf-16" :documentation "Character offsets count UTF-16 code units.
 
@@ -1937,7 +1937,7 @@ by servers")
 Implementation note: these are the same as Unicode code points,
 so this `PositionEncodingKind` may also be used for an
 encoding-agnostic representation of character offsets."))
-  (:type lem-language-server/protocol/lsp-type:lsp-string)
+  (:type lem-lsp-base/type:lsp-string)
   :since
   "A set of predefined position encoding kinds.
 
@@ -1945,29 +1945,29 @@ encoding-agnostic representation of character offsets."))
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-enum file-change-type
+(lem-lsp-base/type:define-enum file-change-type
     ((created 1 :documentation "The file got created.")
      (changed 2 :documentation "The file got changed.")
      (deleted 3 :documentation "The file got deleted."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "The file event type")
 
-(lem-language-server/protocol/lsp-type:define-enum watch-kind
+(lem-lsp-base/type:define-enum watch-kind
     ((create 1 :documentation "Interested in create events.")
      (change 2 :documentation "Interested in change events")
      (delete 4 :documentation "Interested in delete events"))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger))
+  (:type lem-lsp-base/type:lsp-uinteger))
 
-(lem-language-server/protocol/lsp-type:define-enum diagnostic-severity
+(lem-lsp-base/type:define-enum diagnostic-severity
     ((error 1 :documentation "Reports an error.") (warning 2 :documentation "Reports a warning.")
      (information 3 :documentation "Reports an information.")
      (hint 4 :documentation "Reports a hint."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "The diagnostic's severity.")
 
-(lem-language-server/protocol/lsp-type:define-enum diagnostic-tag
+(lem-lsp-base/type:define-enum diagnostic-tag
     ((unnecessary 1 :documentation "Unused or unnecessary code.
 
 Clients are allowed to render diagnostics with this tag faded out instead of having
@@ -1975,7 +1975,7 @@ an error squiggle.")
      (deprecated 2 :documentation "Deprecated or obsolete code.
 
 Clients are allowed to rendered diagnostics with this tag strike through."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "The diagnostic tags.
 
@@ -1983,7 +1983,7 @@ Clients are allowed to rendered diagnostics with this tag strike through."))
   :since
   "3.15.0")
 
-(lem-language-server/protocol/lsp-type:define-enum completion-trigger-kind
+(lem-lsp-base/type:define-enum completion-trigger-kind
     ((invoked 1 :documentation "Completion was triggered by typing an identifier (24x7 code
 complete), manual invocation (e.g Ctrl+Space) or via API.")
      (trigger-character 2 :documentation
@@ -1991,16 +1991,16 @@ complete), manual invocation (e.g Ctrl+Space) or via API.")
 the `triggerCharacters` properties of the `CompletionRegistrationOptions`.")
      (trigger-for-incomplete-completions 3 :documentation
       "Completion was re-triggered as current completion list is incomplete"))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "How a completion was triggered")
 
-(lem-language-server/protocol/lsp-type:define-enum signature-help-trigger-kind
+(lem-lsp-base/type:define-enum signature-help-trigger-kind
     ((invoked 1 :documentation "Signature help was invoked manually by the user or by a command.")
      (trigger-character 2 :documentation "Signature help was triggered by a trigger character.")
      (content-change 3 :documentation
       "Signature help was triggered by the cursor moving or by the document content changing."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "How a signature help was triggered.
 
@@ -2008,14 +2008,14 @@ the `triggerCharacters` properties of the `CompletionRegistrationOptions`.")
   :since
   "3.15.0")
 
-(lem-language-server/protocol/lsp-type:define-enum code-action-trigger-kind
+(lem-lsp-base/type:define-enum code-action-trigger-kind
     ((invoked 1 :documentation
       "Code actions were explicitly requested by the user or by an extension.")
      (automatic 2 :documentation "Code actions were requested automatically.
 
 This typically happens when current selection in a file changes, but can
 also be triggered when file content changes."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "The reason why code actions were requested.
 
@@ -2023,10 +2023,10 @@ also be triggered when file content changes."))
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-enum file-operation-pattern-kind
+(lem-lsp-base/type:define-enum file-operation-pattern-kind
     ((file "file" :documentation "The pattern matches a file only.")
      (folder "folder" :documentation "The pattern matches a folder only."))
-  (:type lem-language-server/protocol/lsp-type:lsp-string)
+  (:type lem-lsp-base/type:lsp-string)
   :since
   "A pattern kind describing if a glob pattern matches a file a folder or
 both.
@@ -2035,10 +2035,10 @@ both.
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-enum notebook-cell-kind
+(lem-lsp-base/type:define-enum notebook-cell-kind
     ((markup 1 :documentation "A markup-cell is formatted source that is used for display.")
      (code 2 :documentation "A code-cell is source code."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger)
+  (:type lem-lsp-base/type:lsp-uinteger)
   :since
   "A notebook cell kind.
 
@@ -2046,13 +2046,13 @@ both.
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-enum resource-operation-kind
+(lem-lsp-base/type:define-enum resource-operation-kind
     ((create "create" :documentation "Supports creating new files and folders.")
      (rename "rename" :documentation "Supports renaming existing files and folders.")
      (delete "delete" :documentation "Supports deleting existing files and folders."))
-  (:type lem-language-server/protocol/lsp-type:lsp-string))
+  (:type lem-lsp-base/type:lsp-string))
 
-(lem-language-server/protocol/lsp-type:define-enum failure-handling-kind
+(lem-lsp-base/type:define-enum failure-handling-kind
     ((abort "abort" :documentation
       "Applying the workspace change is simply aborted if one of the changes provided
 fails. All operations executed before the failing operation stay executed.")
@@ -2066,70 +2066,70 @@ handling strategy is abort.")
      (undo "undo" :documentation
       "The client tries to undo the operations already executed. But there is no
 guarantee that this is succeeding."))
-  (:type lem-language-server/protocol/lsp-type:lsp-string))
+  (:type lem-lsp-base/type:lsp-string))
 
-(lem-language-server/protocol/lsp-type:define-enum prepare-support-default-behavior
+(lem-lsp-base/type:define-enum prepare-support-default-behavior
     ((identifier 1 :documentation "The client's default behavior is to select the identifier
 according the to language's syntax rule."))
-  (:type lem-language-server/protocol/lsp-type:lsp-uinteger))
+  (:type lem-lsp-base/type:lsp-uinteger))
 
-(lem-language-server/protocol/lsp-type:define-enum token-format
+(lem-lsp-base/type:define-enum token-format
     ((relative "relative"))
-  (:type lem-language-server/protocol/lsp-type:lsp-string))
+  (:type lem-lsp-base/type:lsp-string))
 
-(lem-language-server/protocol/lsp-type:define-class implementation-params
+(lem-lsp-base/type:define-class implementation-params
     (text-document-position-params work-done-progress-params partial-result-params)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class location
+(lem-lsp-base/type:define-class location
     common-lisp:nil
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-document-uri :initarg :uri :accessor
     location-uri)
    (range :type range :initarg :range :accessor location-range))
   (:documentation "Represents a location inside a resource, such as a line
 inside a text file."))
 
-(lem-language-server/protocol/lsp-type:define-class implementation-registration-options
+(lem-lsp-base/type:define-class implementation-registration-options
     (text-document-registration-options implementation-options static-registration-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class type-definition-params
+(lem-lsp-base/type:define-class type-definition-params
     (text-document-position-params work-done-progress-params partial-result-params)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class type-definition-registration-options
+(lem-lsp-base/type:define-class type-definition-registration-options
     (text-document-registration-options type-definition-options static-registration-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class workspace-folder
+(lem-lsp-base/type:define-class workspace-folder
     common-lisp:nil
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-uri :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-uri :initarg :uri :accessor
     workspace-folder-uri :documentation "The associated URI for this workspace folder.")
-   (name :type lem-language-server/protocol/lsp-type:lsp-string :initarg :name :accessor
+   (name :type lem-lsp-base/type:lsp-string :initarg :name :accessor
     workspace-folder-name :documentation "The name of the workspace folder. Used to refer to this
 workspace folder in the user interface."))
   (:documentation "A workspace folder inside a client."))
 
-(lem-language-server/protocol/lsp-type:define-class did-change-workspace-folders-params
+(lem-lsp-base/type:define-class did-change-workspace-folders-params
     common-lisp:nil
   ((event :type workspace-folders-change-event :initarg :event :accessor
     did-change-workspace-folders-params-event :documentation
     "The actual workspace folder change event."))
   (:documentation "The parameters of a `workspace/didChangeWorkspaceFolders` notification."))
 
-(lem-language-server/protocol/lsp-type:define-class configuration-params
+(lem-lsp-base/type:define-class configuration-params
     common-lisp:nil
-  ((items :type (lem-language-server/protocol/lsp-type:lsp-array configuration-item) :initarg
+  ((items :type (lem-lsp-base/type:lsp-array configuration-item) :initarg
     :items :accessor configuration-params-items))
   (:documentation "The parameters of a configuration request."))
 
-(lem-language-server/protocol/lsp-type:define-class document-color-params
+(lem-lsp-base/type:define-class document-color-params
     (work-done-progress-params partial-result-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     document-color-params-text-document :documentation "The text document."))
   (:documentation "Parameters for a {@link DocumentColorRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class color-information
+(lem-lsp-base/type:define-class color-information
     common-lisp:nil
   ((range :type range :initarg :range :accessor color-information-range :documentation
     "The range in the document where this color appears.")
@@ -2137,11 +2137,11 @@ workspace folder in the user interface."))
     "The actual color value for this color range."))
   (:documentation "Represents a color range from a document."))
 
-(lem-language-server/protocol/lsp-type:define-class document-color-registration-options
+(lem-lsp-base/type:define-class document-color-registration-options
     (text-document-registration-options document-color-options static-registration-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class color-presentation-params
+(lem-lsp-base/type:define-class color-presentation-params
     (work-done-progress-params partial-result-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     color-presentation-params-text-document :documentation "The text document.")
@@ -2151,9 +2151,9 @@ workspace folder in the user interface."))
     "The range where the color would be inserted. Serves as a context."))
   (:documentation "Parameters for a {@link ColorPresentationRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class color-presentation
+(lem-lsp-base/type:define-class color-presentation
     common-lisp:nil
-  ((label :type lem-language-server/protocol/lsp-type:lsp-string :initarg :label :accessor
+  ((label :type lem-lsp-base/type:lsp-string :initarg :label :accessor
     color-presentation-label :documentation
     "The label of this color presentation. It will be shown on the color
 picker header. By default this is also the text that is inserted when selecting
@@ -2163,47 +2163,47 @@ this color presentation.")
     "An {@link TextEdit edit} which is applied to a document when selecting
 this presentation for the color.  When `falsy` the {@link ColorPresentation.label label}
 is used.")
-   (additional-text-edits :type (lem-language-server/protocol/lsp-type:lsp-array text-edit)
+   (additional-text-edits :type (lem-lsp-base/type:lsp-array text-edit)
     :initarg :additional-text-edits :accessor color-presentation-additional-text-edits :optional
     common-lisp:t :documentation
     "An optional array of additional {@link TextEdit text edits} that are applied when
 selecting this color presentation. Edits must not overlap with the main {@link ColorPresentation.textEdit edit} nor with themselves.")))
 
-(lem-language-server/protocol/lsp-type:define-class work-done-progress-options
+(lem-lsp-base/type:define-class work-done-progress-options
     common-lisp:nil
-  ((work-done-progress :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((work-done-progress :type lem-lsp-base/type:lsp-boolean :initarg
     :work-done-progress :accessor work-done-progress-options-work-done-progress :optional
     common-lisp:t)))
 
-(lem-language-server/protocol/lsp-type:define-class text-document-registration-options
+(lem-lsp-base/type:define-class text-document-registration-options
     common-lisp:nil
   ((document-selector :type
-    (common-lisp:or document-selector lem-language-server/protocol/lsp-type:lsp-null) :initarg
+    (common-lisp:or document-selector lem-lsp-base/type:lsp-null) :initarg
     :document-selector :accessor text-document-registration-options-document-selector
     :documentation "A document selector to identify the scope of the registration. If set to null
 the document selector provided on the client side will be used."))
   (:documentation "General text document registration options."))
 
-(lem-language-server/protocol/lsp-type:define-class folding-range-params
+(lem-lsp-base/type:define-class folding-range-params
     (work-done-progress-params partial-result-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     folding-range-params-text-document :documentation "The text document."))
   (:documentation "Parameters for a {@link FoldingRangeRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class folding-range
+(lem-lsp-base/type:define-class folding-range
     common-lisp:nil
-  ((start-line :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :start-line
+  ((start-line :type lem-lsp-base/type:lsp-uinteger :initarg :start-line
     :accessor folding-range-start-line :documentation
     "The zero-based start line of the range to fold. The folded area starts after the line's last character.
 To be valid, the end must be zero or larger and smaller than the number of lines in the document.")
-   (start-character :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg
+   (start-character :type lem-lsp-base/type:lsp-uinteger :initarg
     :start-character :accessor folding-range-start-character :optional common-lisp:t :documentation
     "The zero-based character offset from where the folded range starts. If not defined, defaults to the length of the start line.")
-   (end-line :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :end-line :accessor
+   (end-line :type lem-lsp-base/type:lsp-uinteger :initarg :end-line :accessor
     folding-range-end-line :documentation
     "The zero-based end line of the range to fold. The folded area ends with the line's last character.
 To be valid, the end must be zero or larger and smaller than the number of lines in the document.")
-   (end-character :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :end-character
+   (end-character :type lem-lsp-base/type:lsp-uinteger :initarg :end-character
     :accessor folding-range-end-character :optional common-lisp:t :documentation
     "The zero-based character offset before the folded range ends. If not defined, defaults to the length of the end line.")
    (kind :type folding-range-kind :initarg :kind :accessor folding-range-kind :optional
@@ -2211,7 +2211,7 @@ To be valid, the end must be zero or larger and smaller than the number of lines
     "Describes the kind of the folding range such as `comment' or 'region'. The kind
 is used to categorize folding ranges and used by commands like 'Fold all comments'.
 See {@link FoldingRangeKind} for an enumeration of standardized kinds.")
-   (collapsed-text :type lem-language-server/protocol/lsp-type:lsp-string :initarg :collapsed-text
+   (collapsed-text :type lem-lsp-base/type:lsp-string :initarg :collapsed-text
     :accessor folding-range-collapsed-text :optional common-lisp:t :since "3.17.0" :documentation
     "The text that the client should show when the specified range is
 collapsed. If not defined or not supported by the client, a default
@@ -2222,28 +2222,28 @@ will be chosen by the client.
    "Represents a folding range. To be valid, start and end line must be bigger than zero and smaller
 than the number of lines in the document. Clients are free to ignore invalid ranges."))
 
-(lem-language-server/protocol/lsp-type:define-class folding-range-registration-options
+(lem-lsp-base/type:define-class folding-range-registration-options
     (text-document-registration-options folding-range-options static-registration-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class declaration-params
+(lem-lsp-base/type:define-class declaration-params
     (text-document-position-params work-done-progress-params partial-result-params)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class declaration-registration-options
+(lem-lsp-base/type:define-class declaration-registration-options
     (declaration-options text-document-registration-options static-registration-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class selection-range-params
+(lem-lsp-base/type:define-class selection-range-params
     (work-done-progress-params partial-result-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     selection-range-params-text-document :documentation "The text document.")
-   (positions :type (lem-language-server/protocol/lsp-type:lsp-array position) :initarg :positions
+   (positions :type (lem-lsp-base/type:lsp-array position) :initarg :positions
     :accessor selection-range-params-positions :documentation
     "The positions inside the text document."))
   (:documentation "A parameter literal used in selection range requests."))
 
-(lem-language-server/protocol/lsp-type:define-class selection-range
+(lem-lsp-base/type:define-class selection-range
     common-lisp:nil
   ((range :type range :initarg :range :accessor selection-range-range :documentation
     "The {@link Range range} of this selection range.")
@@ -2253,21 +2253,21 @@ than the number of lines in the document. Clients are free to ignore invalid ran
   (:documentation "A selection range represents a part of a selection hierarchy. A selection range
 may have a parent selection range that contains it."))
 
-(lem-language-server/protocol/lsp-type:define-class selection-range-registration-options
+(lem-lsp-base/type:define-class selection-range-registration-options
     (selection-range-options text-document-registration-options static-registration-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class work-done-progress-create-params
+(lem-lsp-base/type:define-class work-done-progress-create-params
     common-lisp:nil
   ((token :type progress-token :initarg :token :accessor work-done-progress-create-params-token
     :documentation "The token to be used to report progress.")))
 
-(lem-language-server/protocol/lsp-type:define-class work-done-progress-cancel-params
+(lem-lsp-base/type:define-class work-done-progress-cancel-params
     common-lisp:nil
   ((token :type progress-token :initarg :token :accessor work-done-progress-cancel-params-token
     :documentation "The token to be used to report progress.")))
 
-(lem-language-server/protocol/lsp-type:define-class call-hierarchy-prepare-params
+(lem-lsp-base/type:define-class call-hierarchy-prepare-params
     (text-document-position-params work-done-progress-params)
   common-lisp:nil
   (:since "3.16.0")
@@ -2275,19 +2275,19 @@ may have a parent selection range that contains it."))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class call-hierarchy-item
+(lem-lsp-base/type:define-class call-hierarchy-item
     common-lisp:nil
-  ((name :type lem-language-server/protocol/lsp-type:lsp-string :initarg :name :accessor
+  ((name :type lem-lsp-base/type:lsp-string :initarg :name :accessor
     call-hierarchy-item-name :documentation "The name of this item.")
    (kind :type symbol-kind :initarg :kind :accessor call-hierarchy-item-kind :documentation
     "The kind of this item.")
-   (tags :type (lem-language-server/protocol/lsp-type:lsp-array symbol-tag) :initarg :tags
+   (tags :type (lem-lsp-base/type:lsp-array symbol-tag) :initarg :tags
     :accessor call-hierarchy-item-tags :optional common-lisp:t :documentation
     "Tags for this item.")
-   (detail :type lem-language-server/protocol/lsp-type:lsp-string :initarg :detail :accessor
+   (detail :type lem-lsp-base/type:lsp-string :initarg :detail :accessor
     call-hierarchy-item-detail :optional common-lisp:t :documentation
     "More detail for this item, e.g. the signature of a function.")
-   (uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :uri :accessor
+   (uri :type lem-lsp-base/type:lsp-document-uri :initarg :uri :accessor
     call-hierarchy-item-uri :documentation "The resource identifier of this item.")
    (range :type range :initarg :range :accessor call-hierarchy-item-range :documentation
     "The range enclosing this symbol not including leading/trailing whitespace but everything else, e.g. comments and code.")
@@ -2304,7 +2304,7 @@ of call hierarchy.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class call-hierarchy-registration-options
+(lem-lsp-base/type:define-class call-hierarchy-registration-options
     (text-document-registration-options call-hierarchy-options static-registration-options)
   common-lisp:nil
   (:since "3.16.0")
@@ -2312,7 +2312,7 @@ of call hierarchy.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class call-hierarchy-incoming-calls-params
+(lem-lsp-base/type:define-class call-hierarchy-incoming-calls-params
     (work-done-progress-params partial-result-params)
   ((item :type call-hierarchy-item :initarg :item :accessor
     call-hierarchy-incoming-calls-params-item))
@@ -2321,11 +2321,11 @@ of call hierarchy.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class call-hierarchy-incoming-call
+(lem-lsp-base/type:define-class call-hierarchy-incoming-call
     common-lisp:nil
   ((from :type call-hierarchy-item :initarg :from :accessor call-hierarchy-incoming-call-from
     :documentation "The item that makes the call.")
-   (from-ranges :type (lem-language-server/protocol/lsp-type:lsp-array range) :initarg :from-ranges
+   (from-ranges :type (lem-lsp-base/type:lsp-array range) :initarg :from-ranges
     :accessor call-hierarchy-incoming-call-from-ranges :documentation
     "The ranges at which the calls appear. This is relative to the caller
 denoted by {@link CallHierarchyIncomingCall.from `this.from`}."))
@@ -2334,7 +2334,7 @@ denoted by {@link CallHierarchyIncomingCall.from `this.from`}."))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class call-hierarchy-outgoing-calls-params
+(lem-lsp-base/type:define-class call-hierarchy-outgoing-calls-params
     (work-done-progress-params partial-result-params)
   ((item :type call-hierarchy-item :initarg :item :accessor
     call-hierarchy-outgoing-calls-params-item))
@@ -2343,11 +2343,11 @@ denoted by {@link CallHierarchyIncomingCall.from `this.from`}."))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class call-hierarchy-outgoing-call
+(lem-lsp-base/type:define-class call-hierarchy-outgoing-call
     common-lisp:nil
   ((to :type call-hierarchy-item :initarg :to :accessor call-hierarchy-outgoing-call-to
     :documentation "The item that is called.")
-   (from-ranges :type (lem-language-server/protocol/lsp-type:lsp-array range) :initarg :from-ranges
+   (from-ranges :type (lem-lsp-base/type:lsp-array range) :initarg :from-ranges
     :accessor call-hierarchy-outgoing-call-from-ranges :documentation
     "The range at which this item is called. This is the range relative to the caller, e.g the item
 passed to {@link CallHierarchyItemProvider.provideCallHierarchyOutgoingCalls `provideCallHierarchyOutgoingCalls`}
@@ -2358,72 +2358,72 @@ and not {@link CallHierarchyOutgoingCall.to `this.to`}."))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens-params
+(lem-lsp-base/type:define-class semantic-tokens-params
     (work-done-progress-params partial-result-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     semantic-tokens-params-text-document :documentation "The text document."))
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens
+(lem-lsp-base/type:define-class semantic-tokens
     common-lisp:nil
-  ((result-id :type lem-language-server/protocol/lsp-type:lsp-string :initarg :result-id :accessor
+  ((result-id :type lem-lsp-base/type:lsp-string :initarg :result-id :accessor
     semantic-tokens-result-id :optional common-lisp:t :documentation
     "An optional result id. If provided and clients support delta updating
 the client will include the result id in the next semantic token request.
 A server can then instead of computing all semantic tokens again simply
 send a delta.")
    (data :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-uinteger)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-uinteger)
     :initarg :data :accessor semantic-tokens-data :documentation "The actual tokens."))
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens-partial-result
+(lem-lsp-base/type:define-class semantic-tokens-partial-result
     common-lisp:nil
   ((data :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-uinteger)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-uinteger)
     :initarg :data :accessor semantic-tokens-partial-result-data))
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens-registration-options
+(lem-lsp-base/type:define-class semantic-tokens-registration-options
     (text-document-registration-options semantic-tokens-options static-registration-options)
   common-lisp:nil
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens-delta-params
+(lem-lsp-base/type:define-class semantic-tokens-delta-params
     (work-done-progress-params partial-result-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     semantic-tokens-delta-params-text-document :documentation "The text document.")
-   (previous-result-id :type lem-language-server/protocol/lsp-type:lsp-string :initarg
+   (previous-result-id :type lem-lsp-base/type:lsp-string :initarg
     :previous-result-id :accessor semantic-tokens-delta-params-previous-result-id :documentation
     "The result id of a previous response. The result Id can either point to a full response
 or a delta response depending on what was received last."))
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens-delta
+(lem-lsp-base/type:define-class semantic-tokens-delta
     common-lisp:nil
-  ((result-id :type lem-language-server/protocol/lsp-type:lsp-string :initarg :result-id :accessor
+  ((result-id :type lem-lsp-base/type:lsp-string :initarg :result-id :accessor
     semantic-tokens-delta-result-id :optional common-lisp:t)
-   (edits :type (lem-language-server/protocol/lsp-type:lsp-array semantic-tokens-edit) :initarg
+   (edits :type (lem-lsp-base/type:lsp-array semantic-tokens-edit) :initarg
     :edits :accessor semantic-tokens-delta-edits :documentation
     "The semantic token edits to transform a previous result into a new result."))
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens-delta-partial-result
+(lem-lsp-base/type:define-class semantic-tokens-delta-partial-result
     common-lisp:nil
-  ((edits :type (lem-language-server/protocol/lsp-type:lsp-array semantic-tokens-edit) :initarg
+  ((edits :type (lem-lsp-base/type:lsp-array semantic-tokens-edit) :initarg
     :edits :accessor semantic-tokens-delta-partial-result-edits))
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens-range-params
+(lem-lsp-base/type:define-class semantic-tokens-range-params
     (work-done-progress-params partial-result-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     semantic-tokens-range-params-text-document :documentation "The text document.")
@@ -2432,16 +2432,16 @@ or a delta response depending on what was received last."))
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class show-document-params
+(lem-lsp-base/type:define-class show-document-params
     common-lisp:nil
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-uri :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-uri :initarg :uri :accessor
     show-document-params-uri :documentation "The document uri to show.")
-   (external :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :external :accessor
+   (external :type lem-lsp-base/type:lsp-boolean :initarg :external :accessor
     show-document-params-external :optional common-lisp:t :documentation
     "Indicates to show the resource in an external program.
 To show for example `https://code.visualstudio.com/`
 in the default WEB browser set `external` to `true`.")
-   (take-focus :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :take-focus
+   (take-focus :type lem-lsp-base/type:lsp-boolean :initarg :take-focus
     :accessor show-document-params-take-focus :optional common-lisp:t :documentation
     "An optional property to indicate whether the editor
 showing the document should take focus or not.
@@ -2457,26 +2457,26 @@ file."))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class show-document-result
+(lem-lsp-base/type:define-class show-document-result
     common-lisp:nil
-  ((success :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :success :accessor
+  ((success :type lem-lsp-base/type:lsp-boolean :initarg :success :accessor
     show-document-result-success :documentation "A boolean indicating if the show was successful."))
   (:since "3.16.0")
   (:documentation "The result of a showDocument request.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class linked-editing-range-params
+(lem-lsp-base/type:define-class linked-editing-range-params
     (text-document-position-params work-done-progress-params)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class linked-editing-ranges
+(lem-lsp-base/type:define-class linked-editing-ranges
     common-lisp:nil
-  ((ranges :type (lem-language-server/protocol/lsp-type:lsp-array range) :initarg :ranges :accessor
+  ((ranges :type (lem-lsp-base/type:lsp-array range) :initarg :ranges :accessor
     linked-editing-ranges-ranges :documentation
     "A list of ranges that can be edited together. The ranges must have
 identical length and contain identical text content. The ranges cannot overlap.")
-   (word-pattern :type lem-language-server/protocol/lsp-type:lsp-string :initarg :word-pattern
+   (word-pattern :type lem-lsp-base/type:lsp-string :initarg :word-pattern
     :accessor linked-editing-ranges-word-pattern :optional common-lisp:t :documentation
     "An optional word pattern (regular expression) that describes valid contents for
 the given ranges. If no pattern is provided, the client configuration's word
@@ -2486,13 +2486,13 @@ pattern will be used."))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class linked-editing-range-registration-options
+(lem-lsp-base/type:define-class linked-editing-range-registration-options
     (text-document-registration-options linked-editing-range-options static-registration-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class create-files-params
+(lem-lsp-base/type:define-class create-files-params
     common-lisp:nil
-  ((files :type (lem-language-server/protocol/lsp-type:lsp-array file-create) :initarg :files
+  ((files :type (lem-lsp-base/type:lsp-array file-create) :initarg :files
     :accessor create-files-params-files :documentation
     "An array of all files/folders created in this operation."))
   (:since "3.16.0")
@@ -2501,15 +2501,15 @@ files.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-edit
+(lem-lsp-base/type:define-class workspace-edit
     common-lisp:nil
   ((changes :type
-    (lem-language-server/protocol/lsp-type:lsp-map document-uri
-     (lem-language-server/protocol/lsp-type:lsp-array text-edit))
+    (lem-lsp-base/type:lsp-map document-uri
+     (lem-lsp-base/type:lsp-array text-edit))
     :initarg :changes :accessor workspace-edit-changes :optional common-lisp:t :documentation
     "Holds changes to existing resources.")
    (document-changes :type
-    (lem-language-server/protocol/lsp-type:lsp-array
+    (lem-lsp-base/type:lsp-array
      (common-lisp:or text-document-edit create-file rename-file delete-file))
     :initarg :document-changes :accessor workspace-edit-document-changes :optional common-lisp:t
     :documentation
@@ -2524,7 +2524,7 @@ Whether a client supports versioned document edits is expressed via
 If a client neither supports `documentChanges` nor `workspace.workspaceEdit.resourceOperations` then
 only plain `TextEdit`s using the `changes` property are supported.")
    (change-annotations :type
-    (lem-language-server/protocol/lsp-type:lsp-map change-annotation-identifier change-annotation)
+    (lem-lsp-base/type:lsp-map change-annotation-identifier change-annotation)
     :initarg :change-annotations :accessor workspace-edit-change-annotations :optional
     common-lisp:t :since "3.16.0" :documentation
     "A map of change annotations that can be referenced in `AnnotatedTextEdit`s or create, rename and
@@ -2547,9 +2547,9 @@ An invalid sequence (e.g. (1) delete file a.txt and (2) insert text into file a.
 cause failure of the operation. How the client recovers from the failure is described by
 the client capability: `workspace.workspaceEdit.failureHandling`"))
 
-(lem-language-server/protocol/lsp-type:define-class file-operation-registration-options
+(lem-lsp-base/type:define-class file-operation-registration-options
     common-lisp:nil
-  ((filters :type (lem-language-server/protocol/lsp-type:lsp-array file-operation-filter) :initarg
+  ((filters :type (lem-lsp-base/type:lsp-array file-operation-filter) :initarg
     :filters :accessor file-operation-registration-options-filters :documentation
     "The actual filters."))
   (:since "3.16.0")
@@ -2557,9 +2557,9 @@ the client capability: `workspace.workspaceEdit.failureHandling`"))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class rename-files-params
+(lem-lsp-base/type:define-class rename-files-params
     common-lisp:nil
-  ((files :type (lem-language-server/protocol/lsp-type:lsp-array file-rename) :initarg :files
+  ((files :type (lem-lsp-base/type:lsp-array file-rename) :initarg :files
     :accessor rename-files-params-files :documentation
     "An array of all files/folders renamed in this operation. When a folder is renamed, only
 the folder will be included, and not its children."))
@@ -2569,9 +2569,9 @@ files.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class delete-files-params
+(lem-lsp-base/type:define-class delete-files-params
     common-lisp:nil
-  ((files :type (lem-language-server/protocol/lsp-type:lsp-array file-delete) :initarg :files
+  ((files :type (lem-lsp-base/type:lsp-array file-delete) :initarg :files
     :accessor delete-files-params-files :documentation
     "An array of all files/folders deleted in this operation."))
   (:since "3.16.0")
@@ -2580,15 +2580,15 @@ files.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class moniker-params
+(lem-lsp-base/type:define-class moniker-params
     (text-document-position-params work-done-progress-params partial-result-params)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class moniker
+(lem-lsp-base/type:define-class moniker
     common-lisp:nil
-  ((scheme :type lem-language-server/protocol/lsp-type:lsp-string :initarg :scheme :accessor
+  ((scheme :type lem-lsp-base/type:lsp-string :initarg :scheme :accessor
     moniker-scheme :documentation "The scheme of the moniker. For example tsc or .Net")
-   (identifier :type lem-language-server/protocol/lsp-type:lsp-string :initarg :identifier
+   (identifier :type lem-lsp-base/type:lsp-string :initarg :identifier
     :accessor moniker-identifier :documentation
     "The identifier of the moniker. The value is opaque in LSIF however
 schema owners are allowed to define the structure if they want.")
@@ -2601,11 +2601,11 @@ schema owners are allowed to define the structure if they want.")
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class moniker-registration-options
+(lem-lsp-base/type:define-class moniker-registration-options
     (text-document-registration-options moniker-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class type-hierarchy-prepare-params
+(lem-lsp-base/type:define-class type-hierarchy-prepare-params
     (text-document-position-params work-done-progress-params)
   common-lisp:nil
   (:since "3.17.0")
@@ -2613,19 +2613,19 @@ schema owners are allowed to define the structure if they want.")
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class type-hierarchy-item
+(lem-lsp-base/type:define-class type-hierarchy-item
     common-lisp:nil
-  ((name :type lem-language-server/protocol/lsp-type:lsp-string :initarg :name :accessor
+  ((name :type lem-lsp-base/type:lsp-string :initarg :name :accessor
     type-hierarchy-item-name :documentation "The name of this item.")
    (kind :type symbol-kind :initarg :kind :accessor type-hierarchy-item-kind :documentation
     "The kind of this item.")
-   (tags :type (lem-language-server/protocol/lsp-type:lsp-array symbol-tag) :initarg :tags
+   (tags :type (lem-lsp-base/type:lsp-array symbol-tag) :initarg :tags
     :accessor type-hierarchy-item-tags :optional common-lisp:t :documentation
     "Tags for this item.")
-   (detail :type lem-language-server/protocol/lsp-type:lsp-string :initarg :detail :accessor
+   (detail :type lem-lsp-base/type:lsp-string :initarg :detail :accessor
     type-hierarchy-item-detail :optional common-lisp:t :documentation
     "More detail for this item, e.g. the signature of a function.")
-   (uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :uri :accessor
+   (uri :type lem-lsp-base/type:lsp-document-uri :initarg :uri :accessor
     type-hierarchy-item-uri :documentation "The resource identifier of this item.")
    (range :type range :initarg :range :accessor type-hierarchy-item-range :documentation
     "The range enclosing this symbol not including leading/trailing whitespace
@@ -2643,7 +2643,7 @@ resolving supertypes and subtypes."))
   (:since "3.17.0")
   (:documentation "@since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class type-hierarchy-registration-options
+(lem-lsp-base/type:define-class type-hierarchy-registration-options
     (text-document-registration-options type-hierarchy-options static-registration-options)
   common-lisp:nil
   (:since "3.17.0")
@@ -2651,7 +2651,7 @@ resolving supertypes and subtypes."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class type-hierarchy-supertypes-params
+(lem-lsp-base/type:define-class type-hierarchy-supertypes-params
     (work-done-progress-params partial-result-params)
   ((item :type type-hierarchy-item :initarg :item :accessor type-hierarchy-supertypes-params-item))
   (:since "3.17.0")
@@ -2659,7 +2659,7 @@ resolving supertypes and subtypes."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class type-hierarchy-subtypes-params
+(lem-lsp-base/type:define-class type-hierarchy-subtypes-params
     (work-done-progress-params partial-result-params)
   ((item :type type-hierarchy-item :initarg :item :accessor type-hierarchy-subtypes-params-item))
   (:since "3.17.0")
@@ -2667,7 +2667,7 @@ resolving supertypes and subtypes."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inline-value-params
+(lem-lsp-base/type:define-class inline-value-params
     (work-done-progress-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     inline-value-params-text-document :documentation "The text document.")
@@ -2681,7 +2681,7 @@ requested."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inline-value-registration-options
+(lem-lsp-base/type:define-class inline-value-registration-options
     (inline-value-options text-document-registration-options static-registration-options)
   common-lisp:nil
   (:since "3.17.0")
@@ -2689,7 +2689,7 @@ requested."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inlay-hint-params
+(lem-lsp-base/type:define-class inlay-hint-params
     (work-done-progress-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     inlay-hint-params-text-document :documentation "The text document.")
@@ -2700,13 +2700,13 @@ requested."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inlay-hint
+(lem-lsp-base/type:define-class inlay-hint
     common-lisp:nil
   ((position :type position :initarg :position :accessor inlay-hint-position :documentation
     "The position of this hint.")
    (label :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string
-                    (lem-language-server/protocol/lsp-type:lsp-array inlay-hint-label-part))
+    (common-lisp:or lem-lsp-base/type:lsp-string
+                    (lem-lsp-base/type:lsp-array inlay-hint-label-part))
     :initarg :label :accessor inlay-hint-label :documentation
     "The label of this hint. A human readable string or an array of
 InlayHintLabelPart label parts.
@@ -2715,24 +2715,24 @@ InlayHintLabelPart label parts.
    (kind :type inlay-hint-kind :initarg :kind :accessor inlay-hint-kind :optional common-lisp:t
     :documentation "The kind of this hint. Can be omitted in which case the client
 should fall back to a reasonable default.")
-   (text-edits :type (lem-language-server/protocol/lsp-type:lsp-array text-edit) :initarg
+   (text-edits :type (lem-lsp-base/type:lsp-array text-edit) :initarg
     :text-edits :accessor inlay-hint-text-edits :optional common-lisp:t :documentation
     "Optional text edits that are performed when accepting this inlay hint.
 
 *Note* that edits are expected to change the document so that the inlay
 hint (or its nearest variant) is now part of the document and the inlay
 hint itself is now obsolete.")
-   (tooltip :type (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string markup-content)
+   (tooltip :type (common-lisp:or lem-lsp-base/type:lsp-string markup-content)
     :initarg :tooltip :accessor inlay-hint-tooltip :optional common-lisp:t :documentation
     "The tooltip text when you hover over this item.")
-   (padding-left :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :padding-left
+   (padding-left :type lem-lsp-base/type:lsp-boolean :initarg :padding-left
     :accessor inlay-hint-padding-left :optional common-lisp:t :documentation
     "Render padding before the hint.
 
 Note: Padding should use the editor's background color, not the
 background color of the hint itself. That means padding can be used
 to visually align/separate an inlay hint.")
-   (padding-right :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :padding-right
+   (padding-right :type lem-lsp-base/type:lsp-boolean :initarg :padding-right
     :accessor inlay-hint-padding-right :optional common-lisp:t :documentation
     "Render padding after the hint.
 
@@ -2747,7 +2747,7 @@ a `textDocument/inlayHint` and a `inlayHint/resolve` request."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inlay-hint-registration-options
+(lem-lsp-base/type:define-class inlay-hint-registration-options
     (inlay-hint-options text-document-registration-options static-registration-options)
   common-lisp:nil
   (:since "3.17.0")
@@ -2755,14 +2755,14 @@ a `textDocument/inlayHint` and a `inlayHint/resolve` request."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class document-diagnostic-params
+(lem-lsp-base/type:define-class document-diagnostic-params
     (work-done-progress-params partial-result-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     document-diagnostic-params-text-document :documentation "The text document.")
-   (identifier :type lem-language-server/protocol/lsp-type:lsp-string :initarg :identifier
+   (identifier :type lem-lsp-base/type:lsp-string :initarg :identifier
     :accessor document-diagnostic-params-identifier :optional common-lisp:t :documentation
     "The additional identifier  provided during registration.")
-   (previous-result-id :type lem-language-server/protocol/lsp-type:lsp-string :initarg
+   (previous-result-id :type lem-lsp-base/type:lsp-string :initarg
     :previous-result-id :accessor document-diagnostic-params-previous-result-id :optional
     common-lisp:t :documentation "The result id of a previous response if provided."))
   (:since "3.17.0")
@@ -2770,10 +2770,10 @@ a `textDocument/inlayHint` and a `inlayHint/resolve` request."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class document-diagnostic-report-partial-result
+(lem-lsp-base/type:define-class document-diagnostic-report-partial-result
     common-lisp:nil
   ((related-documents :type
-    (lem-language-server/protocol/lsp-type:lsp-map document-uri
+    (lem-lsp-base/type:lsp-map document-uri
      (common-lisp:or full-document-diagnostic-report unchanged-document-diagnostic-report))
     :initarg :related-documents :accessor
     document-diagnostic-report-partial-result-related-documents))
@@ -2782,16 +2782,16 @@ a `textDocument/inlayHint` and a `inlayHint/resolve` request."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class diagnostic-server-cancellation-data
+(lem-lsp-base/type:define-class diagnostic-server-cancellation-data
     common-lisp:nil
-  ((retrigger-request :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((retrigger-request :type lem-lsp-base/type:lsp-boolean :initarg
     :retrigger-request :accessor diagnostic-server-cancellation-data-retrigger-request))
   (:since "3.17.0")
   (:documentation "Cancellation data returned from a diagnostic request.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class diagnostic-registration-options
+(lem-lsp-base/type:define-class diagnostic-registration-options
     (text-document-registration-options diagnostic-options static-registration-options)
   common-lisp:nil
   (:since "3.17.0")
@@ -2799,12 +2799,12 @@ a `textDocument/inlayHint` and a `inlayHint/resolve` request."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-diagnostic-params
+(lem-lsp-base/type:define-class workspace-diagnostic-params
     (work-done-progress-params partial-result-params)
-  ((identifier :type lem-language-server/protocol/lsp-type:lsp-string :initarg :identifier
+  ((identifier :type lem-lsp-base/type:lsp-string :initarg :identifier
     :accessor workspace-diagnostic-params-identifier :optional common-lisp:t :documentation
     "The additional identifier provided during registration.")
-   (previous-result-ids :type (lem-language-server/protocol/lsp-type:lsp-array previous-result-id)
+   (previous-result-ids :type (lem-lsp-base/type:lsp-array previous-result-id)
     :initarg :previous-result-ids :accessor workspace-diagnostic-params-previous-result-ids
     :documentation "The currently known diagnostic reports with their
 previous result ids."))
@@ -2813,32 +2813,32 @@ previous result ids."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-diagnostic-report
+(lem-lsp-base/type:define-class workspace-diagnostic-report
     common-lisp:nil
   ((items :type
-    (lem-language-server/protocol/lsp-type:lsp-array workspace-document-diagnostic-report) :initarg
+    (lem-lsp-base/type:lsp-array workspace-document-diagnostic-report) :initarg
     :items :accessor workspace-diagnostic-report-items))
   (:since "3.17.0")
   (:documentation "A workspace diagnostic report.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-diagnostic-report-partial-result
+(lem-lsp-base/type:define-class workspace-diagnostic-report-partial-result
     common-lisp:nil
   ((items :type
-    (lem-language-server/protocol/lsp-type:lsp-array workspace-document-diagnostic-report) :initarg
+    (lem-lsp-base/type:lsp-array workspace-document-diagnostic-report) :initarg
     :items :accessor workspace-diagnostic-report-partial-result-items))
   (:since "3.17.0")
   (:documentation "A partial result for a workspace diagnostic report.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class did-open-notebook-document-params
+(lem-lsp-base/type:define-class did-open-notebook-document-params
     common-lisp:nil
   ((notebook-document :type notebook-document :initarg :notebook-document :accessor
     did-open-notebook-document-params-notebook-document :documentation
     "The notebook document that got opened.")
-   (cell-text-documents :type (lem-language-server/protocol/lsp-type:lsp-array text-document-item)
+   (cell-text-documents :type (lem-lsp-base/type:lsp-array text-document-item)
     :initarg :cell-text-documents :accessor did-open-notebook-document-params-cell-text-documents
     :documentation "The text documents that represent the content
 of a notebook cell."))
@@ -2847,7 +2847,7 @@ of a notebook cell."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class did-change-notebook-document-params
+(lem-lsp-base/type:define-class did-change-notebook-document-params
     common-lisp:nil
   ((notebook-document :type versioned-notebook-document-identifier :initarg :notebook-document
     :accessor did-change-notebook-document-params-notebook-document :documentation
@@ -2875,7 +2875,7 @@ To mirror the content of a notebook using change events use the following approa
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class did-save-notebook-document-params
+(lem-lsp-base/type:define-class did-save-notebook-document-params
     common-lisp:nil
   ((notebook-document :type notebook-document-identifier :initarg :notebook-document :accessor
     did-save-notebook-document-params-notebook-document :documentation
@@ -2885,13 +2885,13 @@ To mirror the content of a notebook using change events use the following approa
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class did-close-notebook-document-params
+(lem-lsp-base/type:define-class did-close-notebook-document-params
     common-lisp:nil
   ((notebook-document :type notebook-document-identifier :initarg :notebook-document :accessor
     did-close-notebook-document-params-notebook-document :documentation
     "The notebook document that got closed.")
    (cell-text-documents :type
-    (lem-language-server/protocol/lsp-type:lsp-array text-document-identifier) :initarg
+    (lem-lsp-base/type:lsp-array text-document-identifier) :initarg
     :cell-text-documents :accessor did-close-notebook-document-params-cell-text-documents
     :documentation "The text documents that represent the content
 of a notebook cell that got closed."))
@@ -2900,29 +2900,29 @@ of a notebook cell that got closed."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class registration-params
+(lem-lsp-base/type:define-class registration-params
     common-lisp:nil
-  ((registrations :type (lem-language-server/protocol/lsp-type:lsp-array registration) :initarg
+  ((registrations :type (lem-lsp-base/type:lsp-array registration) :initarg
     :registrations :accessor registration-params-registrations)))
 
-(lem-language-server/protocol/lsp-type:define-class unregistration-params
+(lem-lsp-base/type:define-class unregistration-params
     common-lisp:nil
-  ((unregisterations :type (lem-language-server/protocol/lsp-type:lsp-array unregistration)
+  ((unregisterations :type (lem-lsp-base/type:lsp-array unregistration)
     :initarg :unregisterations :accessor unregistration-params-unregisterations)))
 
-(lem-language-server/protocol/lsp-type:define-class initialize-params
+(lem-lsp-base/type:define-class initialize-params
     (_initialize-params workspace-folders-initialize-params)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class initialize-result
+(lem-lsp-base/type:define-class initialize-result
     common-lisp:nil
   ((capabilities :type server-capabilities :initarg :capabilities :accessor
     initialize-result-capabilities :documentation "The capabilities the language server provides.")
    (server-info :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((name :type lem-language-server/protocol/lsp-type:lsp-string :documentation
+    (lem-lsp-base/type:lsp-interface
+     ((name :type lem-lsp-base/type:lsp-string :documentation
        "The name of the server as defined by the server.")
-      (version :type lem-language-server/protocol/lsp-type:lsp-string :optional common-lisp:t
+      (version :type lem-lsp-base/type:lsp-string :optional common-lisp:t
        :documentation "The server's version as defined by the server.")))
     :initarg :server-info :accessor initialize-result-server-info :optional common-lisp:t :since
     "3.15.0" :documentation "Information about the server.
@@ -2930,9 +2930,9 @@ of a notebook cell that got closed."))
 @since 3.15.0"))
   (:documentation "The result returned from an initialize request."))
 
-(lem-language-server/protocol/lsp-type:define-class initialize-error
+(lem-lsp-base/type:define-class initialize-error
     common-lisp:nil
-  ((retry :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :retry :accessor
+  ((retry :type lem-lsp-base/type:lsp-boolean :initarg :retry :accessor
     initialize-error-retry :documentation
     "Indicates whether the client execute the following retry logic:
 (1) show the message provided by the ResponseError to the user
@@ -2941,63 +2941,63 @@ of a notebook cell that got closed."))
   (:documentation "The data type of the ResponseError if the
 initialize request fails."))
 
-(lem-language-server/protocol/lsp-type:define-class initialized-params
+(lem-lsp-base/type:define-class initialized-params
     common-lisp:nil
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class did-change-configuration-params
+(lem-lsp-base/type:define-class did-change-configuration-params
     common-lisp:nil
   ((settings :type lsp-any :initarg :settings :accessor did-change-configuration-params-settings
     :documentation "The actual changed settings"))
   (:documentation "The parameters of a change configuration notification."))
 
-(lem-language-server/protocol/lsp-type:define-class did-change-configuration-registration-options
+(lem-lsp-base/type:define-class did-change-configuration-registration-options
     common-lisp:nil
   ((section :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string
-                    (lem-language-server/protocol/lsp-type:lsp-array
-                     lem-language-server/protocol/lsp-type:lsp-string))
+    (common-lisp:or lem-lsp-base/type:lsp-string
+                    (lem-lsp-base/type:lsp-array
+                     lem-lsp-base/type:lsp-string))
     :initarg :section :accessor did-change-configuration-registration-options-section :optional
     common-lisp:t)))
 
-(lem-language-server/protocol/lsp-type:define-class show-message-params
+(lem-lsp-base/type:define-class show-message-params
     common-lisp:nil
   ((type :type message-type :initarg :type :accessor show-message-params-type :documentation
     "The message type. See {@link MessageType}")
-   (message :type lem-language-server/protocol/lsp-type:lsp-string :initarg :message :accessor
+   (message :type lem-lsp-base/type:lsp-string :initarg :message :accessor
     show-message-params-message :documentation "The actual message."))
   (:documentation "The parameters of a notification message."))
 
-(lem-language-server/protocol/lsp-type:define-class show-message-request-params
+(lem-lsp-base/type:define-class show-message-request-params
     common-lisp:nil
   ((type :type message-type :initarg :type :accessor show-message-request-params-type
     :documentation "The message type. See {@link MessageType}")
-   (message :type lem-language-server/protocol/lsp-type:lsp-string :initarg :message :accessor
+   (message :type lem-lsp-base/type:lsp-string :initarg :message :accessor
     show-message-request-params-message :documentation "The actual message.")
-   (actions :type (lem-language-server/protocol/lsp-type:lsp-array message-action-item) :initarg
+   (actions :type (lem-lsp-base/type:lsp-array message-action-item) :initarg
     :actions :accessor show-message-request-params-actions :optional common-lisp:t :documentation
     "The message action items to present.")))
 
-(lem-language-server/protocol/lsp-type:define-class message-action-item
+(lem-lsp-base/type:define-class message-action-item
     common-lisp:nil
-  ((title :type lem-language-server/protocol/lsp-type:lsp-string :initarg :title :accessor
+  ((title :type lem-lsp-base/type:lsp-string :initarg :title :accessor
     message-action-item-title :documentation "A short title like 'Retry', 'Open Log' etc.")))
 
-(lem-language-server/protocol/lsp-type:define-class log-message-params
+(lem-lsp-base/type:define-class log-message-params
     common-lisp:nil
   ((type :type message-type :initarg :type :accessor log-message-params-type :documentation
     "The message type. See {@link MessageType}")
-   (message :type lem-language-server/protocol/lsp-type:lsp-string :initarg :message :accessor
+   (message :type lem-lsp-base/type:lsp-string :initarg :message :accessor
     log-message-params-message :documentation "The actual message."))
   (:documentation "The log message parameters."))
 
-(lem-language-server/protocol/lsp-type:define-class did-open-text-document-params
+(lem-lsp-base/type:define-class did-open-text-document-params
     common-lisp:nil
   ((text-document :type text-document-item :initarg :text-document :accessor
     did-open-text-document-params-text-document :documentation "The document that was opened."))
   (:documentation "The parameters sent in an open text document notification"))
 
-(lem-language-server/protocol/lsp-type:define-class did-change-text-document-params
+(lem-lsp-base/type:define-class did-change-text-document-params
     common-lisp:nil
   ((text-document :type versioned-text-document-identifier :initarg :text-document :accessor
     did-change-text-document-params-text-document :documentation
@@ -3005,7 +3005,7 @@ initialize request fails."))
 to the version after all provided content changes have
 been applied.")
    (content-changes :type
-    (lem-language-server/protocol/lsp-type:lsp-array text-document-content-change-event) :initarg
+    (lem-lsp-base/type:lsp-array text-document-content-change-event) :initarg
     :content-changes :accessor did-change-text-document-params-content-changes :documentation
     "The actual content changes. The content changes describe single state changes
 to the document. So if there are two content changes c1 (at array index 0) and
@@ -3020,35 +3020,35 @@ To mirror the content of a document using change events use the following approa
   you receive them."))
   (:documentation "The change text document notification's parameters."))
 
-(lem-language-server/protocol/lsp-type:define-class text-document-change-registration-options
+(lem-lsp-base/type:define-class text-document-change-registration-options
     (text-document-registration-options)
   ((sync-kind :type text-document-sync-kind :initarg :sync-kind :accessor
     text-document-change-registration-options-sync-kind :documentation
     "How documents are synced to the server."))
   (:documentation "Describe options to be used when registered for text document change events."))
 
-(lem-language-server/protocol/lsp-type:define-class did-close-text-document-params
+(lem-lsp-base/type:define-class did-close-text-document-params
     common-lisp:nil
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     did-close-text-document-params-text-document :documentation "The document that was closed."))
   (:documentation "The parameters sent in a close text document notification"))
 
-(lem-language-server/protocol/lsp-type:define-class did-save-text-document-params
+(lem-lsp-base/type:define-class did-save-text-document-params
     common-lisp:nil
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     did-save-text-document-params-text-document :documentation "The document that was saved.")
-   (text :type lem-language-server/protocol/lsp-type:lsp-string :initarg :text :accessor
+   (text :type lem-lsp-base/type:lsp-string :initarg :text :accessor
     did-save-text-document-params-text :optional common-lisp:t :documentation
     "Optional the content when saved. Depends on the includeText value
 when the save notification was requested."))
   (:documentation "The parameters sent in a save text document notification"))
 
-(lem-language-server/protocol/lsp-type:define-class text-document-save-registration-options
+(lem-lsp-base/type:define-class text-document-save-registration-options
     (text-document-registration-options save-options)
   common-lisp:nil
   (:documentation "Save registration options."))
 
-(lem-language-server/protocol/lsp-type:define-class will-save-text-document-params
+(lem-lsp-base/type:define-class will-save-text-document-params
     common-lisp:nil
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     will-save-text-document-params-text-document :documentation "The document that will be saved.")
@@ -3056,45 +3056,45 @@ when the save notification was requested."))
     will-save-text-document-params-reason :documentation "The 'TextDocumentSaveReason'."))
   (:documentation "The parameters sent in a will save text document notification."))
 
-(lem-language-server/protocol/lsp-type:define-class text-edit
+(lem-lsp-base/type:define-class text-edit
     common-lisp:nil
   ((range :type range :initarg :range :accessor text-edit-range :documentation
     "The range of the text document to be manipulated. To insert
 text into a document create a range where start === end.")
-   (new-text :type lem-language-server/protocol/lsp-type:lsp-string :initarg :new-text :accessor
+   (new-text :type lem-lsp-base/type:lsp-string :initarg :new-text :accessor
     text-edit-new-text :documentation "The string to be inserted. For delete operations use an
 empty string."))
   (:documentation "A text edit applicable to a text document."))
 
-(lem-language-server/protocol/lsp-type:define-class did-change-watched-files-params
+(lem-lsp-base/type:define-class did-change-watched-files-params
     common-lisp:nil
-  ((changes :type (lem-language-server/protocol/lsp-type:lsp-array file-event) :initarg :changes
+  ((changes :type (lem-lsp-base/type:lsp-array file-event) :initarg :changes
     :accessor did-change-watched-files-params-changes :documentation "The actual file events."))
   (:documentation "The watched files change notification's parameters."))
 
-(lem-language-server/protocol/lsp-type:define-class did-change-watched-files-registration-options
+(lem-lsp-base/type:define-class did-change-watched-files-registration-options
     common-lisp:nil
-  ((watchers :type (lem-language-server/protocol/lsp-type:lsp-array file-system-watcher) :initarg
+  ((watchers :type (lem-lsp-base/type:lsp-array file-system-watcher) :initarg
     :watchers :accessor did-change-watched-files-registration-options-watchers :documentation
     "The watchers to register."))
   (:documentation "Describe options to be used when registered for text document change events."))
 
-(lem-language-server/protocol/lsp-type:define-class publish-diagnostics-params
+(lem-lsp-base/type:define-class publish-diagnostics-params
     common-lisp:nil
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-document-uri :initarg :uri :accessor
     publish-diagnostics-params-uri :documentation
     "The URI for which diagnostic information is reported.")
-   (version :type lem-language-server/protocol/lsp-type:lsp-integer :initarg :version :accessor
+   (version :type lem-lsp-base/type:lsp-integer :initarg :version :accessor
     publish-diagnostics-params-version :optional common-lisp:t :since "3.15.0" :documentation
     "Optional the version number of the document the diagnostics are published for.
 
 @since 3.15.0")
-   (diagnostics :type (lem-language-server/protocol/lsp-type:lsp-array diagnostic) :initarg
+   (diagnostics :type (lem-lsp-base/type:lsp-array diagnostic) :initarg
     :diagnostics :accessor publish-diagnostics-params-diagnostics :documentation
     "An array of diagnostic information items."))
   (:documentation "The publish diagnostic notification's parameters."))
 
-(lem-language-server/protocol/lsp-type:define-class completion-params
+(lem-lsp-base/type:define-class completion-params
     (text-document-position-params work-done-progress-params partial-result-params)
   ((context :type completion-context :initarg :context :accessor completion-params-context
     :optional common-lisp:t :documentation
@@ -3102,9 +3102,9 @@ empty string."))
 to send this using the client capability `textDocument.completion.contextSupport === true`"))
   (:documentation "Completion parameters"))
 
-(lem-language-server/protocol/lsp-type:define-class completion-item
+(lem-lsp-base/type:define-class completion-item
     common-lisp:nil
-  ((label :type lem-language-server/protocol/lsp-type:lsp-string :initarg :label :accessor
+  ((label :type lem-lsp-base/type:lsp-string :initarg :label :accessor
     completion-item-label :documentation "The label of this completion item.
 
 The label property is also by default the text that
@@ -3120,40 +3120,40 @@ be an unqualified name of the completion item.")
    (kind :type completion-item-kind :initarg :kind :accessor completion-item-kind :optional
     common-lisp:t :documentation "The kind of this completion item. Based of the kind
 an icon is chosen by the editor.")
-   (tags :type (lem-language-server/protocol/lsp-type:lsp-array completion-item-tag) :initarg :tags
+   (tags :type (lem-lsp-base/type:lsp-array completion-item-tag) :initarg :tags
     :accessor completion-item-tags :optional common-lisp:t :since "3.15.0" :documentation
     "Tags for this completion item.
 
 @since 3.15.0")
-   (detail :type lem-language-server/protocol/lsp-type:lsp-string :initarg :detail :accessor
+   (detail :type lem-lsp-base/type:lsp-string :initarg :detail :accessor
     completion-item-detail :optional common-lisp:t :documentation
     "A human-readable string with additional information
 about this item, like type or symbol information.")
    (documentation :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string markup-content) :initarg
+    (common-lisp:or lem-lsp-base/type:lsp-string markup-content) :initarg
     :documentation :accessor completion-item-documentation :optional common-lisp:t :documentation
     "A human-readable string that represents a doc-comment.")
-   (deprecated :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :deprecated
+   (deprecated :type lem-lsp-base/type:lsp-boolean :initarg :deprecated
     :accessor completion-item-deprecated :optional common-lisp:t :deprecated "Use `tags` instead."
     :documentation "Indicates if this item is deprecated.
 @deprecated Use `tags` instead.")
-   (preselect :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :preselect :accessor
+   (preselect :type lem-lsp-base/type:lsp-boolean :initarg :preselect :accessor
     completion-item-preselect :optional common-lisp:t :documentation "Select this item when showing.
 
 *Note* that only one completion item can be selected and that the
 tool / client decides which item that is. The rule is that the *first*
 item of those that match best is selected.")
-   (sort-text :type lem-language-server/protocol/lsp-type:lsp-string :initarg :sort-text :accessor
+   (sort-text :type lem-lsp-base/type:lsp-string :initarg :sort-text :accessor
     completion-item-sort-text :optional common-lisp:t :documentation
     "A string that should be used when comparing this item
 with other items. When `falsy` the {@link CompletionItem.label label}
 is used.")
-   (filter-text :type lem-language-server/protocol/lsp-type:lsp-string :initarg :filter-text
+   (filter-text :type lem-lsp-base/type:lsp-string :initarg :filter-text
     :accessor completion-item-filter-text :optional common-lisp:t :documentation
     "A string that should be used when filtering a set of
 completion items. When `falsy` the {@link CompletionItem.label label}
 is used.")
-   (insert-text :type lem-language-server/protocol/lsp-type:lsp-string :initarg :insert-text
+   (insert-text :type lem-lsp-base/type:lsp-string :initarg :insert-text
     :accessor completion-item-insert-text :optional common-lisp:t :documentation
     "A string that should be inserted into a document when selecting
 this completion. When `falsy` the {@link CompletionItem.label label}
@@ -3204,7 +3204,7 @@ must be a prefix of the edit's replace range, that means it must be
 contained and starting at the same position.
 
 @since 3.16.0 additional type `InsertReplaceEdit`")
-   (text-edit-text :type lem-language-server/protocol/lsp-type:lsp-string :initarg :text-edit-text
+   (text-edit-text :type lem-lsp-base/type:lsp-string :initarg :text-edit-text
     :accessor completion-item-text-edit-text :optional common-lisp:t :since "3.17.0" :documentation
     "The edit text used if the completion item is part of a CompletionList and
 CompletionList defines an item default for the text edit range.
@@ -3216,7 +3216,7 @@ If not provided and a list's default range is provided the label
 property is used as a text.
 
 @since 3.17.0")
-   (additional-text-edits :type (lem-language-server/protocol/lsp-type:lsp-array text-edit)
+   (additional-text-edits :type (lem-lsp-base/type:lsp-array text-edit)
     :initarg :additional-text-edits :accessor completion-item-additional-text-edits :optional
     common-lisp:t :documentation
     "An optional array of additional {@link TextEdit text edits} that are applied when
@@ -3227,8 +3227,8 @@ Additional text edits should be used to change text unrelated to the current cur
 (for example adding an import statement at the top of the file if the completion item will
 insert an unqualified type).")
    (commit-characters :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-string)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-string)
     :initarg :commit-characters :accessor completion-item-commit-characters :optional common-lisp:t
     :documentation
     "An optional set of characters that when pressed while this completion is active will accept it first and
@@ -3245,25 +3245,25 @@ additional modifications to the current document should be described with the
   (:documentation "A completion item represents a text snippet that is
 proposed to complete text that is being typed."))
 
-(lem-language-server/protocol/lsp-type:define-class completion-list
+(lem-lsp-base/type:define-class completion-list
     common-lisp:nil
-  ((is-incomplete :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :is-incomplete
+  ((is-incomplete :type lem-lsp-base/type:lsp-boolean :initarg :is-incomplete
     :accessor completion-list-is-incomplete :documentation
     "This list it not complete. Further typing results in recomputing this list.
 
 Recomputed lists have all their items replaced (not appended) in the
 incomplete completion sessions.")
    (item-defaults :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
+    (lem-lsp-base/type:lsp-interface
      ((commit-characters :type
-       (lem-language-server/protocol/lsp-type:lsp-array
-        lem-language-server/protocol/lsp-type:lsp-string)
+       (lem-lsp-base/type:lsp-array
+        lem-lsp-base/type:lsp-string)
        :optional common-lisp:t :since "3.17.0" :documentation "A default commit character set.
 
 @since 3.17.0")
       (edit-range :type
        (common-lisp:or range
-                       (lem-language-server/protocol/lsp-type:lsp-interface
+                       (lem-lsp-base/type:lsp-interface
                         ((insert :type range) (replace :type range))))
        :optional common-lisp:t :since "3.17.0" :documentation "A default edit range.
 
@@ -3294,39 +3294,39 @@ signals support for this via the `completionList.itemDefaults`
 capability.
 
 @since 3.17.0")
-   (items :type (lem-language-server/protocol/lsp-type:lsp-array completion-item) :initarg :items
+   (items :type (lem-lsp-base/type:lsp-array completion-item) :initarg :items
     :accessor completion-list-items :documentation "The completion items."))
   (:documentation
    "Represents a collection of {@link CompletionItem completion items} to be presented
 in the editor."))
 
-(lem-language-server/protocol/lsp-type:define-class completion-registration-options
+(lem-lsp-base/type:define-class completion-registration-options
     (text-document-registration-options completion-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link CompletionRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class hover-params
+(lem-lsp-base/type:define-class hover-params
     (text-document-position-params work-done-progress-params)
   common-lisp:nil
   (:documentation "Parameters for a {@link HoverRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class hover
+(lem-lsp-base/type:define-class hover
     common-lisp:nil
   ((contents :type
     (common-lisp:or markup-content marked-string
-                    (lem-language-server/protocol/lsp-type:lsp-array marked-string))
+                    (lem-lsp-base/type:lsp-array marked-string))
     :initarg :contents :accessor hover-contents :documentation "The hover's content")
    (range :type range :initarg :range :accessor hover-range :optional common-lisp:t :documentation
     "An optional range inside the text document that is used to
 visualize the hover, e.g. by changing the background color."))
   (:documentation "The result of a hover request."))
 
-(lem-language-server/protocol/lsp-type:define-class hover-registration-options
+(lem-lsp-base/type:define-class hover-registration-options
     (text-document-registration-options hover-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link HoverRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class signature-help-params
+(lem-lsp-base/type:define-class signature-help-params
     (text-document-position-params work-done-progress-params)
   ((context :type signature-help-context :initarg :context :accessor signature-help-params-context
     :optional common-lisp:t :since "3.15.0" :documentation
@@ -3336,12 +3336,12 @@ to send this using the client capability `textDocument.signatureHelp.contextSupp
 @since 3.15.0"))
   (:documentation "Parameters for a {@link SignatureHelpRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class signature-help
+(lem-lsp-base/type:define-class signature-help
     common-lisp:nil
-  ((signatures :type (lem-language-server/protocol/lsp-type:lsp-array signature-information)
+  ((signatures :type (lem-lsp-base/type:lsp-array signature-information)
     :initarg :signatures :accessor signature-help-signatures :documentation
     "One or more signatures.")
-   (active-signature :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg
+   (active-signature :type lem-lsp-base/type:lsp-uinteger :initarg
     :active-signature :accessor signature-help-active-signature :optional common-lisp:t
     :documentation "The active signature. If omitted or the value lies outside the
 range of `signatures` the value defaults to zero or is ignored if
@@ -3352,7 +3352,7 @@ the active signature and shouldn't rely on a default value.
 
 In future version of the protocol this property might become
 mandatory to better express this.")
-   (active-parameter :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg
+   (active-parameter :type lem-lsp-base/type:lsp-uinteger :initarg
     :active-parameter :accessor signature-help-active-parameter :optional common-lisp:t
     :documentation "The active parameter of the active signature. If omitted or the value
 lies outside the range of `signatures[activeSignature].parameters`
@@ -3365,37 +3365,37 @@ active signature does have any."))
 callable. There can be multiple signature but only one
 active and only one active parameter."))
 
-(lem-language-server/protocol/lsp-type:define-class signature-help-registration-options
+(lem-lsp-base/type:define-class signature-help-registration-options
     (text-document-registration-options signature-help-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link SignatureHelpRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class definition-params
+(lem-lsp-base/type:define-class definition-params
     (text-document-position-params work-done-progress-params partial-result-params)
   common-lisp:nil
   (:documentation "Parameters for a {@link DefinitionRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class definition-registration-options
+(lem-lsp-base/type:define-class definition-registration-options
     (text-document-registration-options definition-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link DefinitionRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class reference-params
+(lem-lsp-base/type:define-class reference-params
     (text-document-position-params work-done-progress-params partial-result-params)
   ((context :type reference-context :initarg :context :accessor reference-params-context))
   (:documentation "Parameters for a {@link ReferencesRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class reference-registration-options
+(lem-lsp-base/type:define-class reference-registration-options
     (text-document-registration-options reference-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link ReferencesRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-highlight-params
+(lem-lsp-base/type:define-class document-highlight-params
     (text-document-position-params work-done-progress-params partial-result-params)
   common-lisp:nil
   (:documentation "Parameters for a {@link DocumentHighlightRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-highlight
+(lem-lsp-base/type:define-class document-highlight
     common-lisp:nil
   ((range :type range :initarg :range :accessor document-highlight-range :documentation
     "The range this highlight applies to.")
@@ -3406,20 +3406,20 @@ active and only one active parameter."))
 special attention. Usually a document highlight is visualized by changing
 the background color of its range."))
 
-(lem-language-server/protocol/lsp-type:define-class document-highlight-registration-options
+(lem-lsp-base/type:define-class document-highlight-registration-options
     (text-document-registration-options document-highlight-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link DocumentHighlightRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-symbol-params
+(lem-lsp-base/type:define-class document-symbol-params
     (work-done-progress-params partial-result-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     document-symbol-params-text-document :documentation "The text document."))
   (:documentation "Parameters for a {@link DocumentSymbolRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class symbol-information
+(lem-lsp-base/type:define-class symbol-information
     (base-symbol-information)
-  ((deprecated :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :deprecated
+  ((deprecated :type lem-lsp-base/type:lsp-boolean :initarg :deprecated
     :accessor symbol-information-deprecated :optional common-lisp:t :deprecated "Use tags instead"
     :documentation "Indicates if this symbol is deprecated.
 
@@ -3437,23 +3437,23 @@ the symbols."))
   (:documentation "Represents information about programming constructs like variables, classes,
 interfaces etc."))
 
-(lem-language-server/protocol/lsp-type:define-class document-symbol
+(lem-lsp-base/type:define-class document-symbol
     common-lisp:nil
-  ((name :type lem-language-server/protocol/lsp-type:lsp-string :initarg :name :accessor
+  ((name :type lem-lsp-base/type:lsp-string :initarg :name :accessor
     document-symbol-name :documentation
     "The name of this symbol. Will be displayed in the user interface and therefore must not be
 an empty string or a string only consisting of white spaces.")
-   (detail :type lem-language-server/protocol/lsp-type:lsp-string :initarg :detail :accessor
+   (detail :type lem-lsp-base/type:lsp-string :initarg :detail :accessor
     document-symbol-detail :optional common-lisp:t :documentation
     "More detail for this symbol, e.g the signature of a function.")
    (kind :type symbol-kind :initarg :kind :accessor document-symbol-kind :documentation
     "The kind of this symbol.")
-   (tags :type (lem-language-server/protocol/lsp-type:lsp-array symbol-tag) :initarg :tags
+   (tags :type (lem-lsp-base/type:lsp-array symbol-tag) :initarg :tags
     :accessor document-symbol-tags :optional common-lisp:t :since "3.16.0" :documentation
     "Tags for this document symbol.
 
 @since 3.16.0")
-   (deprecated :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :deprecated
+   (deprecated :type lem-lsp-base/type:lsp-boolean :initarg :deprecated
     :accessor document-symbol-deprecated :optional common-lisp:t :deprecated "Use tags instead"
     :documentation "Indicates if this symbol is deprecated.
 
@@ -3466,7 +3466,7 @@ inside the symbol to reveal in the symbol in the UI.")
     :documentation
     "The range that should be selected and revealed when this symbol is being picked, e.g the name of a function.
 Must be contained by the `range`.")
-   (children :type (lem-language-server/protocol/lsp-type:lsp-array document-symbol) :initarg
+   (children :type (lem-lsp-base/type:lsp-array document-symbol) :initarg
     :children :accessor document-symbol-children :optional common-lisp:t :documentation
     "Children of this symbol, e.g. properties of a class."))
   (:documentation "Represents programming constructs like variables, classes, interfaces etc.
@@ -3474,12 +3474,12 @@ that appear in a document. Document symbols can be hierarchical and they
 have two ranges: one that encloses its definition and one that points to
 its most interesting range, e.g. the range of an identifier."))
 
-(lem-language-server/protocol/lsp-type:define-class document-symbol-registration-options
+(lem-lsp-base/type:define-class document-symbol-registration-options
     (text-document-registration-options document-symbol-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link DocumentSymbolRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class code-action-params
+(lem-lsp-base/type:define-class code-action-params
     (work-done-progress-params partial-result-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     code-action-params-text-document :documentation
@@ -3490,13 +3490,13 @@ its most interesting range, e.g. the range of an identifier."))
     :documentation "Context carrying additional information."))
   (:documentation "The parameters of a {@link CodeActionRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class command
+(lem-lsp-base/type:define-class command
     common-lisp:nil
-  ((title :type lem-language-server/protocol/lsp-type:lsp-string :initarg :title :accessor
+  ((title :type lem-lsp-base/type:lsp-string :initarg :title :accessor
     command-title :documentation "Title of the command, like `save`.")
-   (command :type lem-language-server/protocol/lsp-type:lsp-string :initarg :command :accessor
+   (command :type lem-lsp-base/type:lsp-string :initarg :command :accessor
     command-command :documentation "The identifier of the actual command handler.")
-   (arguments :type (lem-language-server/protocol/lsp-type:lsp-array lsp-any) :initarg :arguments
+   (arguments :type (lem-lsp-base/type:lsp-array lsp-any) :initarg :arguments
     :accessor command-arguments :optional common-lisp:t :documentation
     "Arguments that the command handler should be
 invoked with."))
@@ -3505,18 +3505,18 @@ will be used to represent a command in the UI and, optionally,
 an array of arguments which will be passed to the command handler
 function when invoked."))
 
-(lem-language-server/protocol/lsp-type:define-class code-action
+(lem-lsp-base/type:define-class code-action
     common-lisp:nil
-  ((title :type lem-language-server/protocol/lsp-type:lsp-string :initarg :title :accessor
+  ((title :type lem-lsp-base/type:lsp-string :initarg :title :accessor
     code-action-title :documentation "A short, human-readable, title for this code action.")
    (kind :type code-action-kind :initarg :kind :accessor code-action-kind :optional common-lisp:t
     :documentation "The kind of the code action.
 
 Used to filter code actions.")
-   (diagnostics :type (lem-language-server/protocol/lsp-type:lsp-array diagnostic) :initarg
+   (diagnostics :type (lem-lsp-base/type:lsp-array diagnostic) :initarg
     :diagnostics :accessor code-action-diagnostics :optional common-lisp:t :documentation
     "The diagnostics that this code action resolves.")
-   (is-preferred :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :is-preferred
+   (is-preferred :type lem-lsp-base/type:lsp-boolean :initarg :is-preferred
     :accessor code-action-is-preferred :optional common-lisp:t :since "3.15.0" :documentation
     "Marks this as a preferred action. Preferred actions are used by the `auto fix` command and can be targeted
 by keybindings.
@@ -3526,8 +3526,8 @@ A refactoring should be marked preferred if it is the most reasonable choice of 
 
 @since 3.15.0")
    (disabled :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((reason :type lem-language-server/protocol/lsp-type:lsp-string :documentation
+    (lem-lsp-base/type:lsp-interface
+     ((reason :type lem-lsp-base/type:lsp-string :documentation
        "Human readable description of why the code action is currently disabled.
 
 This is displayed in the code actions UI.")))
@@ -3564,25 +3564,25 @@ to refactor code.
 
 A CodeAction must set either `edit` and/or a `command`. If both are supplied, the `edit` is applied first, then the `command` is executed."))
 
-(lem-language-server/protocol/lsp-type:define-class code-action-registration-options
+(lem-lsp-base/type:define-class code-action-registration-options
     (text-document-registration-options code-action-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link CodeActionRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-symbol-params
+(lem-lsp-base/type:define-class workspace-symbol-params
     (work-done-progress-params partial-result-params)
-  ((query :type lem-language-server/protocol/lsp-type:lsp-string :initarg :query :accessor
+  ((query :type lem-lsp-base/type:lsp-string :initarg :query :accessor
     workspace-symbol-params-query :documentation
     "A query string to filter symbols by. Clients may send an empty
 string here to request all symbols."))
   (:documentation "The parameters of a {@link WorkspaceSymbolRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-symbol
+(lem-lsp-base/type:define-class workspace-symbol
     (base-symbol-information)
   ((location :type
     (common-lisp:or location
-                    (lem-language-server/protocol/lsp-type:lsp-interface
-                     ((uri :type lem-language-server/protocol/lsp-type:lsp-document-uri))))
+                    (lem-lsp-base/type:lsp-interface
+                     ((uri :type lem-lsp-base/type:lsp-document-uri))))
     :initarg :location :accessor workspace-symbol-location :documentation
     "The location of the symbol. Whether a server is allowed to
 return a location without a range depends on the client
@@ -3599,18 +3599,18 @@ See also SymbolInformation.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-symbol-registration-options
+(lem-lsp-base/type:define-class workspace-symbol-registration-options
     (workspace-symbol-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link WorkspaceSymbolRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class code-lens-params
+(lem-lsp-base/type:define-class code-lens-params
     (work-done-progress-params partial-result-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     code-lens-params-text-document :documentation "The document to request code lens for."))
   (:documentation "The parameters of a {@link CodeLensRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class code-lens
+(lem-lsp-base/type:define-class code-lens
     common-lisp:nil
   ((range :type range :initarg :range :accessor code-lens-range :documentation
     "The range in which this code lens is valid. Should only span a single line.")
@@ -3626,26 +3626,26 @@ source text, like the number of references, a way to run tests, etc.
 A code lens is _unresolved_ when no command is associated to it. For performance
 reasons the creation of a code lens and resolving should be done in two stages."))
 
-(lem-language-server/protocol/lsp-type:define-class code-lens-registration-options
+(lem-lsp-base/type:define-class code-lens-registration-options
     (text-document-registration-options code-lens-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link CodeLensRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-link-params
+(lem-lsp-base/type:define-class document-link-params
     (work-done-progress-params partial-result-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     document-link-params-text-document :documentation
     "The document to provide document links for."))
   (:documentation "The parameters of a {@link DocumentLinkRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-link
+(lem-lsp-base/type:define-class document-link
     common-lisp:nil
   ((range :type range :initarg :range :accessor document-link-range :documentation
     "The range this link applies to.")
-   (target :type lem-language-server/protocol/lsp-type:lsp-string :initarg :target :accessor
+   (target :type lem-lsp-base/type:lsp-string :initarg :target :accessor
     document-link-target :optional common-lisp:t :documentation
     "The uri this link points to. If missing a resolve request is sent later.")
-   (tooltip :type lem-language-server/protocol/lsp-type:lsp-string :initarg :tooltip :accessor
+   (tooltip :type lem-lsp-base/type:lsp-string :initarg :tooltip :accessor
     document-link-tooltip :optional common-lisp:t :since "3.15.0" :documentation
     "The tooltip text when you hover over this link.
 
@@ -3661,12 +3661,12 @@ DocumentLinkRequest and a DocumentLinkResolveRequest."))
    "A document link is a range in a text document that links to an internal or external resource, like another
 text document or a web site."))
 
-(lem-language-server/protocol/lsp-type:define-class document-link-registration-options
+(lem-lsp-base/type:define-class document-link-registration-options
     (text-document-registration-options document-link-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link DocumentLinkRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-formatting-params
+(lem-lsp-base/type:define-class document-formatting-params
     (work-done-progress-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     document-formatting-params-text-document :documentation "The document to format.")
@@ -3674,12 +3674,12 @@ text document or a web site."))
     :documentation "The format options."))
   (:documentation "The parameters of a {@link DocumentFormattingRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-formatting-registration-options
+(lem-lsp-base/type:define-class document-formatting-registration-options
     (text-document-registration-options document-formatting-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link DocumentFormattingRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-range-formatting-params
+(lem-lsp-base/type:define-class document-range-formatting-params
     (work-done-progress-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     document-range-formatting-params-text-document :documentation "The document to format.")
@@ -3689,12 +3689,12 @@ text document or a web site."))
     document-range-formatting-params-options :documentation "The format options"))
   (:documentation "The parameters of a {@link DocumentRangeFormattingRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-range-formatting-registration-options
+(lem-lsp-base/type:define-class document-range-formatting-registration-options
     (text-document-registration-options document-range-formatting-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link DocumentRangeFormattingRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-on-type-formatting-params
+(lem-lsp-base/type:define-class document-on-type-formatting-params
     common-lisp:nil
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     document-on-type-formatting-params-text-document :documentation "The document to format.")
@@ -3703,7 +3703,7 @@ text document or a web site."))
     "The position around which the on type formatting should happen.
 This is not necessarily the exact position where the character denoted
 by the property `ch` got typed.")
-   (ch :type lem-language-server/protocol/lsp-type:lsp-string :initarg :ch :accessor
+   (ch :type lem-lsp-base/type:lsp-string :initarg :ch :accessor
     document-on-type-formatting-params-ch :documentation
     "The character that has been typed that triggered the formatting
 on type request. That is not necessarily the last character that
@@ -3713,50 +3713,50 @@ characters as well (e.g. like automatic brace completion).")
     document-on-type-formatting-params-options :documentation "The formatting options."))
   (:documentation "The parameters of a {@link DocumentOnTypeFormattingRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-on-type-formatting-registration-options
+(lem-lsp-base/type:define-class document-on-type-formatting-registration-options
     (text-document-registration-options document-on-type-formatting-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link DocumentOnTypeFormattingRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class rename-params
+(lem-lsp-base/type:define-class rename-params
     (work-done-progress-params)
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     rename-params-text-document :documentation "The document to rename.")
    (position :type position :initarg :position :accessor rename-params-position :documentation
     "The position at which this request was sent.")
-   (new-name :type lem-language-server/protocol/lsp-type:lsp-string :initarg :new-name :accessor
+   (new-name :type lem-lsp-base/type:lsp-string :initarg :new-name :accessor
     rename-params-new-name :documentation
     "The new name of the symbol. If the given name is not valid the
 request must return a {@link ResponseError} with an
 appropriate message set."))
   (:documentation "The parameters of a {@link RenameRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class rename-registration-options
+(lem-lsp-base/type:define-class rename-registration-options
     (text-document-registration-options rename-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link RenameRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class prepare-rename-params
+(lem-lsp-base/type:define-class prepare-rename-params
     (text-document-position-params work-done-progress-params)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class execute-command-params
+(lem-lsp-base/type:define-class execute-command-params
     (work-done-progress-params)
-  ((command :type lem-language-server/protocol/lsp-type:lsp-string :initarg :command :accessor
+  ((command :type lem-lsp-base/type:lsp-string :initarg :command :accessor
     execute-command-params-command :documentation "The identifier of the actual command handler.")
-   (arguments :type (lem-language-server/protocol/lsp-type:lsp-array lsp-any) :initarg :arguments
+   (arguments :type (lem-lsp-base/type:lsp-array lsp-any) :initarg :arguments
     :accessor execute-command-params-arguments :optional common-lisp:t :documentation
     "Arguments that the command should be invoked with."))
   (:documentation "The parameters of a {@link ExecuteCommandRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class execute-command-registration-options
+(lem-lsp-base/type:define-class execute-command-registration-options
     (execute-command-options)
   common-lisp:nil
   (:documentation "Registration options for a {@link ExecuteCommandRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class apply-workspace-edit-params
+(lem-lsp-base/type:define-class apply-workspace-edit-params
     common-lisp:nil
-  ((label :type lem-language-server/protocol/lsp-type:lsp-string :initarg :label :accessor
+  ((label :type lem-lsp-base/type:lsp-string :initarg :label :accessor
     apply-workspace-edit-params-label :optional common-lisp:t :documentation
     "An optional label of the workspace edit. This label is
 presented in the user interface for example on an undo
@@ -3765,17 +3765,17 @@ stack to undo the workspace edit.")
     :documentation "The edits to apply."))
   (:documentation "The parameters passed via a apply workspace edit request."))
 
-(lem-language-server/protocol/lsp-type:define-class apply-workspace-edit-result
+(lem-lsp-base/type:define-class apply-workspace-edit-result
     common-lisp:nil
-  ((applied :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :applied :accessor
+  ((applied :type lem-lsp-base/type:lsp-boolean :initarg :applied :accessor
     apply-workspace-edit-result-applied :documentation
     "Indicates whether the edit was applied or not.")
-   (failure-reason :type lem-language-server/protocol/lsp-type:lsp-string :initarg :failure-reason
+   (failure-reason :type lem-lsp-base/type:lsp-string :initarg :failure-reason
     :accessor apply-workspace-edit-result-failure-reason :optional common-lisp:t :documentation
     "An optional textual description for why the edit was not applied.
 This may be used by the server for diagnostic logging or to provide
 a suitable error for a request that triggered the edit.")
-   (failed-change :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :failed-change
+   (failed-change :type lem-lsp-base/type:lsp-uinteger :initarg :failed-change
     :accessor apply-workspace-edit-result-failed-change :optional common-lisp:t :documentation
     "Depending on the client's failure handling strategy `failedChange` might
 contain the index of the change that failed. This property is only available
@@ -3785,29 +3785,29 @@ if the client signals a `failureHandlingStrategy` in its client capabilities."))
 
 @since 3.17 renamed from ApplyWorkspaceEditResponse"))
 
-(lem-language-server/protocol/lsp-type:define-class work-done-progress-begin
+(lem-lsp-base/type:define-class work-done-progress-begin
     common-lisp:nil
-  ((kind :type (lem-language-server/protocol/lsp-type:lsp-string "begin") :initarg :kind :accessor
+  ((kind :type (lem-lsp-base/type:lsp-string "begin") :initarg :kind :accessor
     work-done-progress-begin-kind)
-   (title :type lem-language-server/protocol/lsp-type:lsp-string :initarg :title :accessor
+   (title :type lem-lsp-base/type:lsp-string :initarg :title :accessor
     work-done-progress-begin-title :documentation
     "Mandatory title of the progress operation. Used to briefly inform about
 the kind of operation being performed.
 
 Examples: \"Indexing\" or \"Linking dependencies\".")
-   (cancellable :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :cancellable
+   (cancellable :type lem-lsp-base/type:lsp-boolean :initarg :cancellable
     :accessor work-done-progress-begin-cancellable :optional common-lisp:t :documentation
     "Controls if a cancel button should show to allow the user to cancel the
 long running operation. Clients that don't support cancellation are allowed
 to ignore the setting.")
-   (message :type lem-language-server/protocol/lsp-type:lsp-string :initarg :message :accessor
+   (message :type lem-lsp-base/type:lsp-string :initarg :message :accessor
     work-done-progress-begin-message :optional common-lisp:t :documentation
     "Optional, more detailed associated progress message. Contains
 complementary information to the `title`.
 
 Examples: \"3/25 files\", \"project/src/module2\", \"node_modules/some_dep\".
 If unset, the previous progress message (if any) is still valid.")
-   (percentage :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :percentage
+   (percentage :type lem-lsp-base/type:lsp-uinteger :initarg :percentage
     :accessor work-done-progress-begin-percentage :optional common-lisp:t :documentation
     "Optional progress percentage to display (value 100 is considered 100%).
 If not provided infinite progress is assumed and clients are allowed
@@ -3816,24 +3816,24 @@ to ignore the `percentage` value in subsequent in report notifications.
 The value should be steadily rising. Clients are free to ignore values
 that are not following this rule. The value range is [0, 100].")))
 
-(lem-language-server/protocol/lsp-type:define-class work-done-progress-report
+(lem-lsp-base/type:define-class work-done-progress-report
     common-lisp:nil
-  ((kind :type (lem-language-server/protocol/lsp-type:lsp-string "report") :initarg :kind :accessor
+  ((kind :type (lem-lsp-base/type:lsp-string "report") :initarg :kind :accessor
     work-done-progress-report-kind)
-   (cancellable :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :cancellable
+   (cancellable :type lem-lsp-base/type:lsp-boolean :initarg :cancellable
     :accessor work-done-progress-report-cancellable :optional common-lisp:t :documentation
     "Controls enablement state of a cancel button.
 
 Clients that don't support cancellation or don't support controlling the button's
 enablement state are allowed to ignore the property.")
-   (message :type lem-language-server/protocol/lsp-type:lsp-string :initarg :message :accessor
+   (message :type lem-lsp-base/type:lsp-string :initarg :message :accessor
     work-done-progress-report-message :optional common-lisp:t :documentation
     "Optional, more detailed associated progress message. Contains
 complementary information to the `title`.
 
 Examples: \"3/25 files\", \"project/src/module2\", \"node_modules/some_dep\".
 If unset, the previous progress message (if any) is still valid.")
-   (percentage :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :percentage
+   (percentage :type lem-lsp-base/type:lsp-uinteger :initarg :percentage
     :accessor work-done-progress-report-percentage :optional common-lisp:t :documentation
     "Optional progress percentage to display (value 100 is considered 100%).
 If not provided infinite progress is assumed and clients are allowed
@@ -3842,41 +3842,41 @@ to ignore the `percentage` value in subsequent in report notifications.
 The value should be steadily rising. Clients are free to ignore values
 that are not following this rule. The value range is [0, 100]")))
 
-(lem-language-server/protocol/lsp-type:define-class work-done-progress-end
+(lem-lsp-base/type:define-class work-done-progress-end
     common-lisp:nil
-  ((kind :type (lem-language-server/protocol/lsp-type:lsp-string "end") :initarg :kind :accessor
+  ((kind :type (lem-lsp-base/type:lsp-string "end") :initarg :kind :accessor
     work-done-progress-end-kind)
-   (message :type lem-language-server/protocol/lsp-type:lsp-string :initarg :message :accessor
+   (message :type lem-lsp-base/type:lsp-string :initarg :message :accessor
     work-done-progress-end-message :optional common-lisp:t :documentation
     "Optional, a final message indicating to for example indicate the outcome
 of the operation.")))
 
-(lem-language-server/protocol/lsp-type:define-class set-trace-params
+(lem-lsp-base/type:define-class set-trace-params
     common-lisp:nil
   ((value :type trace-values :initarg :value :accessor set-trace-params-value)))
 
-(lem-language-server/protocol/lsp-type:define-class log-trace-params
+(lem-lsp-base/type:define-class log-trace-params
     common-lisp:nil
-  ((message :type lem-language-server/protocol/lsp-type:lsp-string :initarg :message :accessor
+  ((message :type lem-lsp-base/type:lsp-string :initarg :message :accessor
     log-trace-params-message)
-   (verbose :type lem-language-server/protocol/lsp-type:lsp-string :initarg :verbose :accessor
+   (verbose :type lem-lsp-base/type:lsp-string :initarg :verbose :accessor
     log-trace-params-verbose :optional common-lisp:t)))
 
-(lem-language-server/protocol/lsp-type:define-class cancel-params
+(lem-lsp-base/type:define-class cancel-params
     common-lisp:nil
   ((id :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-integer
-                    lem-language-server/protocol/lsp-type:lsp-string)
+    (common-lisp:or lem-lsp-base/type:lsp-integer
+                    lem-lsp-base/type:lsp-string)
     :initarg :id :accessor cancel-params-id :documentation "The request id to cancel.")))
 
-(lem-language-server/protocol/lsp-type:define-class progress-params
+(lem-lsp-base/type:define-class progress-params
     common-lisp:nil
   ((token :type progress-token :initarg :token :accessor progress-params-token :documentation
     "The progress token provided by the client or server.")
    (value :type lsp-any :initarg :value :accessor progress-params-value :documentation
     "The progress data.")))
 
-(lem-language-server/protocol/lsp-type:define-class text-document-position-params
+(lem-lsp-base/type:define-class text-document-position-params
     common-lisp:nil
   ((text-document :type text-document-identifier :initarg :text-document :accessor
     text-document-position-params-text-document :documentation "The text document.")
@@ -3886,20 +3886,20 @@ of the operation.")))
    "A parameter literal used in requests to pass a text document and a position inside that
 document."))
 
-(lem-language-server/protocol/lsp-type:define-class work-done-progress-params
+(lem-lsp-base/type:define-class work-done-progress-params
     common-lisp:nil
   ((work-done-token :type progress-token :initarg :work-done-token :accessor
     work-done-progress-params-work-done-token :optional common-lisp:t :documentation
     "An optional token that a server can use to report work done progress.")))
 
-(lem-language-server/protocol/lsp-type:define-class partial-result-params
+(lem-lsp-base/type:define-class partial-result-params
     common-lisp:nil
   ((partial-result-token :type progress-token :initarg :partial-result-token :accessor
     partial-result-params-partial-result-token :optional common-lisp:t :documentation
     "An optional token that a server can use to report partial results (e.g. streaming) to
 the client.")))
 
-(lem-language-server/protocol/lsp-type:define-class location-link
+(lem-lsp-base/type:define-class location-link
     common-lisp:nil
   ((origin-selection-range :type range :initarg :origin-selection-range :accessor
     location-link-origin-selection-range :optional common-lisp:t :documentation
@@ -3907,7 +3907,7 @@ the client.")))
 
 Used as the underlined span for mouse interaction. Defaults to the word range at
 the definition position.")
-   (target-uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :target-uri
+   (target-uri :type lem-lsp-base/type:lsp-document-uri :initarg :target-uri
     :accessor location-link-target-uri :documentation
     "The target resource identifier of this link.")
    (target-range :type range :initarg :target-range :accessor location-link-target-range
@@ -3923,7 +3923,7 @@ Must be contained by the `targetRange`. See also `DocumentSymbol#range`"))
    "Represents the connection of two locations. Provides additional metadata over normal {@link Location locations},
 including an origin range."))
 
-(lem-language-server/protocol/lsp-type:define-class range
+(lem-lsp-base/type:define-class range
     common-lisp:nil
   ((start :type position :initarg :start :accessor range-start :documentation
     "The range's start position.")
@@ -3941,80 +3941,80 @@ For example:
 }
 ```"))
 
-(lem-language-server/protocol/lsp-type:define-class implementation-options
+(lem-lsp-base/type:define-class implementation-options
     (work-done-progress-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class static-registration-options
+(lem-lsp-base/type:define-class static-registration-options
     common-lisp:nil
-  ((id :type lem-language-server/protocol/lsp-type:lsp-string :initarg :id :accessor
+  ((id :type lem-lsp-base/type:lsp-string :initarg :id :accessor
     static-registration-options-id :optional common-lisp:t :documentation
     "The id used to register the request. The id can be used to deregister
 the request again. See also Registration#id."))
   (:documentation "Static registration options to be returned in the initialize
 request."))
 
-(lem-language-server/protocol/lsp-type:define-class type-definition-options
+(lem-lsp-base/type:define-class type-definition-options
     (work-done-progress-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class workspace-folders-change-event
+(lem-lsp-base/type:define-class workspace-folders-change-event
     common-lisp:nil
-  ((added :type (lem-language-server/protocol/lsp-type:lsp-array workspace-folder) :initarg :added
+  ((added :type (lem-lsp-base/type:lsp-array workspace-folder) :initarg :added
     :accessor workspace-folders-change-event-added :documentation
     "The array of added workspace folders")
-   (removed :type (lem-language-server/protocol/lsp-type:lsp-array workspace-folder) :initarg
+   (removed :type (lem-lsp-base/type:lsp-array workspace-folder) :initarg
     :removed :accessor workspace-folders-change-event-removed :documentation
     "The array of the removed workspace folders"))
   (:documentation "The workspace folder change event."))
 
-(lem-language-server/protocol/lsp-type:define-class configuration-item
+(lem-lsp-base/type:define-class configuration-item
     common-lisp:nil
-  ((scope-uri :type lem-language-server/protocol/lsp-type:lsp-string :initarg :scope-uri :accessor
+  ((scope-uri :type lem-lsp-base/type:lsp-string :initarg :scope-uri :accessor
     configuration-item-scope-uri :optional common-lisp:t :documentation
     "The scope to get the configuration section for.")
-   (section :type lem-language-server/protocol/lsp-type:lsp-string :initarg :section :accessor
+   (section :type lem-lsp-base/type:lsp-string :initarg :section :accessor
     configuration-item-section :optional common-lisp:t :documentation
     "The configuration section asked for.")))
 
-(lem-language-server/protocol/lsp-type:define-class text-document-identifier
+(lem-lsp-base/type:define-class text-document-identifier
     common-lisp:nil
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-document-uri :initarg :uri :accessor
     text-document-identifier-uri :documentation "The text document's uri."))
   (:documentation "A literal to identify a text document in the client."))
 
-(lem-language-server/protocol/lsp-type:define-class color
+(lem-lsp-base/type:define-class color
     common-lisp:nil
-  ((red :type lem-language-server/protocol/lsp-type:lsp-decimal :initarg :red :accessor color-red
+  ((red :type lem-lsp-base/type:lsp-decimal :initarg :red :accessor color-red
     :documentation "The red component of this color in the range [0-1].")
-   (green :type lem-language-server/protocol/lsp-type:lsp-decimal :initarg :green :accessor
+   (green :type lem-lsp-base/type:lsp-decimal :initarg :green :accessor
     color-green :documentation "The green component of this color in the range [0-1].")
-   (blue :type lem-language-server/protocol/lsp-type:lsp-decimal :initarg :blue :accessor
+   (blue :type lem-lsp-base/type:lsp-decimal :initarg :blue :accessor
     color-blue :documentation "The blue component of this color in the range [0-1].")
-   (alpha :type lem-language-server/protocol/lsp-type:lsp-decimal :initarg :alpha :accessor
+   (alpha :type lem-lsp-base/type:lsp-decimal :initarg :alpha :accessor
     color-alpha :documentation "The alpha component of this color in the range [0-1]."))
   (:documentation "Represents a color in RGBA space."))
 
-(lem-language-server/protocol/lsp-type:define-class document-color-options
+(lem-lsp-base/type:define-class document-color-options
     (work-done-progress-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class folding-range-options
+(lem-lsp-base/type:define-class folding-range-options
     (work-done-progress-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class declaration-options
+(lem-lsp-base/type:define-class declaration-options
     (work-done-progress-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class position
+(lem-lsp-base/type:define-class position
     common-lisp:nil
-  ((line :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :line :accessor
+  ((line :type lem-lsp-base/type:lsp-uinteger :initarg :line :accessor
     position-line :documentation "Line position in a document (zero-based).
 
 If a line number is greater than the number of lines in a document, it defaults back to the number of lines in the document.
 If a line number is negative, it defaults to 0.")
-   (character :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :character
+   (character :type lem-lsp-base/type:lsp-uinteger :initarg :character
     :accessor position-character :documentation
     "Character offset on a line in a document (zero-based).
 
@@ -4052,11 +4052,11 @@ that denotes `\\r|\\n` or `\\n|` where `|` represents the character offset.
 
 @since 3.17.0 - support for negotiated position encoding."))
 
-(lem-language-server/protocol/lsp-type:define-class selection-range-options
+(lem-lsp-base/type:define-class selection-range-options
     (work-done-progress-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class call-hierarchy-options
+(lem-lsp-base/type:define-class call-hierarchy-options
     (work-done-progress-options)
   common-lisp:nil
   (:since "3.16.0")
@@ -4064,20 +4064,20 @@ that denotes `\\r|\\n` or `\\n|` where `|` represents the character offset.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens-options
+(lem-lsp-base/type:define-class semantic-tokens-options
     (work-done-progress-options)
   ((legend :type semantic-tokens-legend :initarg :legend :accessor semantic-tokens-options-legend
     :documentation "The legend used by the server")
    (range :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean
-                    (lem-language-server/protocol/lsp-type:lsp-interface common-lisp:nil))
+    (common-lisp:or lem-lsp-base/type:lsp-boolean
+                    (lem-lsp-base/type:lsp-interface common-lisp:nil))
     :initarg :range :accessor semantic-tokens-options-range :optional common-lisp:t :documentation
     "Server supports providing semantic tokens for a specific range
 of a document.")
    (full :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean
-                    (lem-language-server/protocol/lsp-type:lsp-interface
-                     ((delta :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+    (common-lisp:or lem-lsp-base/type:lsp-boolean
+                    (lem-lsp-base/type:lsp-interface
+                     ((delta :type lem-lsp-base/type:lsp-boolean :optional
                        common-lisp:t :documentation
                        "The server supports deltas for full documents."))))
     :initarg :full :accessor semantic-tokens-options-full :optional common-lisp:t :documentation
@@ -4085,27 +4085,27 @@ of a document.")
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens-edit
+(lem-lsp-base/type:define-class semantic-tokens-edit
     common-lisp:nil
-  ((start :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :start :accessor
+  ((start :type lem-lsp-base/type:lsp-uinteger :initarg :start :accessor
     semantic-tokens-edit-start :documentation "The start offset of the edit.")
-   (delete-count :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :delete-count
+   (delete-count :type lem-lsp-base/type:lsp-uinteger :initarg :delete-count
     :accessor semantic-tokens-edit-delete-count :documentation "The count of elements to remove.")
    (data :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-uinteger)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-uinteger)
     :initarg :data :accessor semantic-tokens-edit-data :optional common-lisp:t :documentation
     "The elements to insert."))
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class linked-editing-range-options
+(lem-lsp-base/type:define-class linked-editing-range-options
     (work-done-progress-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class file-create
+(lem-lsp-base/type:define-class file-create
     common-lisp:nil
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-string :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-string :initarg :uri :accessor
     file-create-uri :documentation
     "A file:// URI for the location of the file/folder being created."))
   (:since "3.16.0")
@@ -4113,12 +4113,12 @@ of a document.")
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class text-document-edit
+(lem-lsp-base/type:define-class text-document-edit
     common-lisp:nil
   ((text-document :type optional-versioned-text-document-identifier :initarg :text-document
     :accessor text-document-edit-text-document :documentation "The text document to change.")
    (edits :type
-    (lem-language-server/protocol/lsp-type:lsp-array
+    (lem-lsp-base/type:lsp-array
      (common-lisp:or text-edit annotated-text-edit))
     :initarg :edits :accessor text-document-edit-edits :since
     "3.16.0 - support for AnnotatedTextEdit. This is guarded using a
@@ -4133,49 +4133,49 @@ on a document version Si and after they are applied move the document to version
 So the creator of a TextDocumentEdit doesn't need to sort the array of edits or do any
 kind of ordering. However the edits must be non overlapping."))
 
-(lem-language-server/protocol/lsp-type:define-class create-file
+(lem-lsp-base/type:define-class create-file
     (resource-operation)
-  ((kind :type (lem-language-server/protocol/lsp-type:lsp-string "create") :initarg :kind :accessor
+  ((kind :type (lem-lsp-base/type:lsp-string "create") :initarg :kind :accessor
     create-file-kind :documentation "A create")
-   (uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :uri :accessor
+   (uri :type lem-lsp-base/type:lsp-document-uri :initarg :uri :accessor
     create-file-uri :documentation "The resource to create.")
    (options :type create-file-options :initarg :options :accessor create-file-options :optional
     common-lisp:t :documentation "Additional options"))
   (:documentation "Create file operation."))
 
-(lem-language-server/protocol/lsp-type:define-class rename-file
+(lem-lsp-base/type:define-class rename-file
     (resource-operation)
-  ((kind :type (lem-language-server/protocol/lsp-type:lsp-string "rename") :initarg :kind :accessor
+  ((kind :type (lem-lsp-base/type:lsp-string "rename") :initarg :kind :accessor
     rename-file-kind :documentation "A rename")
-   (old-uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :old-uri
+   (old-uri :type lem-lsp-base/type:lsp-document-uri :initarg :old-uri
     :accessor rename-file-old-uri :documentation "The old (existing) location.")
-   (new-uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :new-uri
+   (new-uri :type lem-lsp-base/type:lsp-document-uri :initarg :new-uri
     :accessor rename-file-new-uri :documentation "The new location.")
    (options :type rename-file-options :initarg :options :accessor rename-file-options :optional
     common-lisp:t :documentation "Rename options."))
   (:documentation "Rename file operation"))
 
-(lem-language-server/protocol/lsp-type:define-class delete-file
+(lem-lsp-base/type:define-class delete-file
     (resource-operation)
-  ((kind :type (lem-language-server/protocol/lsp-type:lsp-string "delete") :initarg :kind :accessor
+  ((kind :type (lem-lsp-base/type:lsp-string "delete") :initarg :kind :accessor
     delete-file-kind :documentation "A delete")
-   (uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :uri :accessor
+   (uri :type lem-lsp-base/type:lsp-document-uri :initarg :uri :accessor
     delete-file-uri :documentation "The file to delete.")
    (options :type delete-file-options :initarg :options :accessor delete-file-options :optional
     common-lisp:t :documentation "Delete options."))
   (:documentation "Delete file operation"))
 
-(lem-language-server/protocol/lsp-type:define-class change-annotation
+(lem-lsp-base/type:define-class change-annotation
     common-lisp:nil
-  ((label :type lem-language-server/protocol/lsp-type:lsp-string :initarg :label :accessor
+  ((label :type lem-lsp-base/type:lsp-string :initarg :label :accessor
     change-annotation-label :documentation
     "A human-readable string describing the actual change. The string
 is rendered prominent in the user interface.")
-   (needs-confirmation :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (needs-confirmation :type lem-lsp-base/type:lsp-boolean :initarg
     :needs-confirmation :accessor change-annotation-needs-confirmation :optional common-lisp:t
     :documentation "A flag which indicates that user confirmation is needed
 before applying the change.")
-   (description :type lem-language-server/protocol/lsp-type:lsp-string :initarg :description
+   (description :type lem-lsp-base/type:lsp-string :initarg :description
     :accessor change-annotation-description :optional common-lisp:t :documentation
     "A human-readable string which is rendered less prominent in
 the user interface."))
@@ -4184,9 +4184,9 @@ the user interface."))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class file-operation-filter
+(lem-lsp-base/type:define-class file-operation-filter
     common-lisp:nil
-  ((scheme :type lem-language-server/protocol/lsp-type:lsp-string :initarg :scheme :accessor
+  ((scheme :type lem-lsp-base/type:lsp-string :initarg :scheme :accessor
     file-operation-filter-scheme :optional common-lisp:t :documentation
     "A Uri scheme like `file` or `untitled`.")
    (pattern :type file-operation-pattern :initarg :pattern :accessor file-operation-filter-pattern
@@ -4197,12 +4197,12 @@ the server is interested in receiving.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class file-rename
+(lem-lsp-base/type:define-class file-rename
     common-lisp:nil
-  ((old-uri :type lem-language-server/protocol/lsp-type:lsp-string :initarg :old-uri :accessor
+  ((old-uri :type lem-lsp-base/type:lsp-string :initarg :old-uri :accessor
     file-rename-old-uri :documentation
     "A file:// URI for the original location of the file/folder being renamed.")
-   (new-uri :type lem-language-server/protocol/lsp-type:lsp-string :initarg :new-uri :accessor
+   (new-uri :type lem-lsp-base/type:lsp-string :initarg :new-uri :accessor
     file-rename-new-uri :documentation
     "A file:// URI for the new location of the file/folder being renamed."))
   (:since "3.16.0")
@@ -4210,9 +4210,9 @@ the server is interested in receiving.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class file-delete
+(lem-lsp-base/type:define-class file-delete
     common-lisp:nil
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-string :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-string :initarg :uri :accessor
     file-delete-uri :documentation
     "A file:// URI for the location of the file/folder being deleted."))
   (:since "3.16.0")
@@ -4220,11 +4220,11 @@ the server is interested in receiving.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class moniker-options
+(lem-lsp-base/type:define-class moniker-options
     (work-done-progress-options)
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-class type-hierarchy-options
+(lem-lsp-base/type:define-class type-hierarchy-options
     (work-done-progress-options)
   common-lisp:nil
   (:since "3.17.0")
@@ -4232,9 +4232,9 @@ the server is interested in receiving.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inline-value-context
+(lem-lsp-base/type:define-class inline-value-context
     common-lisp:nil
-  ((frame-id :type lem-language-server/protocol/lsp-type:lsp-integer :initarg :frame-id :accessor
+  ((frame-id :type lem-lsp-base/type:lsp-integer :initarg :frame-id :accessor
     inline-value-context-frame-id :documentation
     "The stack frame (as a DAP Id) where the execution has stopped.")
    (stopped-location :type range :initarg :stopped-location :accessor
@@ -4244,26 +4244,26 @@ Typically the end position of the range denotes the line where the inline values
   (:since "3.17.0")
   (:documentation "@since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inline-value-text
+(lem-lsp-base/type:define-class inline-value-text
     common-lisp:nil
   ((range :type range :initarg :range :accessor inline-value-text-range :documentation
     "The document range for which the inline value applies.")
-   (text :type lem-language-server/protocol/lsp-type:lsp-string :initarg :text :accessor
+   (text :type lem-lsp-base/type:lsp-string :initarg :text :accessor
     inline-value-text-text :documentation "The text of the inline value."))
   (:since "3.17.0")
   (:documentation "Provide inline value as text.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inline-value-variable-lookup
+(lem-lsp-base/type:define-class inline-value-variable-lookup
     common-lisp:nil
   ((range :type range :initarg :range :accessor inline-value-variable-lookup-range :documentation
     "The document range for which the inline value applies.
 The range is used to extract the variable name from the underlying document.")
-   (variable-name :type lem-language-server/protocol/lsp-type:lsp-string :initarg :variable-name
+   (variable-name :type lem-lsp-base/type:lsp-string :initarg :variable-name
     :accessor inline-value-variable-lookup-variable-name :optional common-lisp:t :documentation
     "If specified the name of the variable to look up.")
-   (case-sensitive-lookup :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (case-sensitive-lookup :type lem-lsp-base/type:lsp-boolean :initarg
     :case-sensitive-lookup :accessor inline-value-variable-lookup-case-sensitive-lookup
     :documentation "How to perform the lookup."))
   (:since "3.17.0")
@@ -4273,12 +4273,12 @@ An optional variable name can be used to override the extracted name.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inline-value-evaluatable-expression
+(lem-lsp-base/type:define-class inline-value-evaluatable-expression
     common-lisp:nil
   ((range :type range :initarg :range :accessor inline-value-evaluatable-expression-range
     :documentation "The document range for which the inline value applies.
 The range is used to extract the evaluatable expression from the underlying document.")
-   (expression :type lem-language-server/protocol/lsp-type:lsp-string :initarg :expression
+   (expression :type lem-lsp-base/type:lsp-string :initarg :expression
     :accessor inline-value-evaluatable-expression-expression :optional common-lisp:t :documentation
     "If specified the expression overrides the extracted expression."))
   (:since "3.17.0")
@@ -4288,7 +4288,7 @@ An optional expression can be used to override the extracted expression.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inline-value-options
+(lem-lsp-base/type:define-class inline-value-options
     (work-done-progress-options)
   common-lisp:nil
   (:since "3.17.0")
@@ -4296,11 +4296,11 @@ An optional expression can be used to override the extracted expression.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inlay-hint-label-part
+(lem-lsp-base/type:define-class inlay-hint-label-part
     common-lisp:nil
-  ((value :type lem-language-server/protocol/lsp-type:lsp-string :initarg :value :accessor
+  ((value :type lem-lsp-base/type:lsp-string :initarg :value :accessor
     inlay-hint-label-part-value :documentation "The value of this label part.")
-   (tooltip :type (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string markup-content)
+   (tooltip :type (common-lisp:or lem-lsp-base/type:lsp-string markup-content)
     :initarg :tooltip :accessor inlay-hint-label-part-tooltip :optional common-lisp:t
     :documentation "The tooltip text when you hover over this label part. Depending on
 the client capability `inlayHint.resolveSupport` clients might resolve
@@ -4328,11 +4328,11 @@ of inlay hints.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class markup-content
+(lem-lsp-base/type:define-class markup-content
     common-lisp:nil
   ((kind :type markup-kind :initarg :kind :accessor markup-content-kind :documentation
     "The type of the Markup")
-   (value :type lem-language-server/protocol/lsp-type:lsp-string :initarg :value :accessor
+   (value :type lem-lsp-base/type:lsp-string :initarg :value :accessor
     markup-content-value :documentation "The content itself"))
   (:documentation
    "A `MarkupContent` literal represents a string value which content is interpreted base on its
@@ -4358,9 +4358,9 @@ let markdown: MarkdownContent = {
 *Please Note* that clients might sanitize the return markdown. A client could decide to
 remove HTML from the markdown to avoid script execution."))
 
-(lem-language-server/protocol/lsp-type:define-class inlay-hint-options
+(lem-lsp-base/type:define-class inlay-hint-options
     (work-done-progress-options)
-  ((resolve-provider :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((resolve-provider :type lem-lsp-base/type:lsp-boolean :initarg
     :resolve-provider :accessor inlay-hint-options-resolve-provider :optional common-lisp:t
     :documentation "The server provides support to resolve additional
 information for an inlay hint item."))
@@ -4369,10 +4369,10 @@ information for an inlay hint item."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class related-full-document-diagnostic-report
+(lem-lsp-base/type:define-class related-full-document-diagnostic-report
     (full-document-diagnostic-report)
   ((related-documents :type
-    (lem-language-server/protocol/lsp-type:lsp-map document-uri
+    (lem-lsp-base/type:lsp-map document-uri
      (common-lisp:or full-document-diagnostic-report unchanged-document-diagnostic-report))
     :initarg :related-documents :accessor related-full-document-diagnostic-report-related-documents
     :optional common-lisp:t :since "3.17.0" :documentation
@@ -4388,10 +4388,10 @@ a.cpp and result in errors in a header file b.hpp.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class related-unchanged-document-diagnostic-report
+(lem-lsp-base/type:define-class related-unchanged-document-diagnostic-report
     (unchanged-document-diagnostic-report)
   ((related-documents :type
-    (lem-language-server/protocol/lsp-type:lsp-map document-uri
+    (lem-lsp-base/type:lsp-map document-uri
      (common-lisp:or full-document-diagnostic-report unchanged-document-diagnostic-report))
     :initarg :related-documents :accessor
     related-unchanged-document-diagnostic-report-related-documents :optional common-lisp:t :since
@@ -4407,31 +4407,31 @@ a.cpp and result in errors in a header file b.hpp.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class full-document-diagnostic-report
+(lem-lsp-base/type:define-class full-document-diagnostic-report
     common-lisp:nil
-  ((kind :type (lem-language-server/protocol/lsp-type:lsp-string "full") :initarg :kind :accessor
+  ((kind :type (lem-lsp-base/type:lsp-string "full") :initarg :kind :accessor
     full-document-diagnostic-report-kind :documentation "A full document diagnostic report.")
-   (result-id :type lem-language-server/protocol/lsp-type:lsp-string :initarg :result-id :accessor
+   (result-id :type lem-lsp-base/type:lsp-string :initarg :result-id :accessor
     full-document-diagnostic-report-result-id :optional common-lisp:t :documentation
     "An optional result id. If provided it will
 be sent on the next diagnostic request for the
 same document.")
-   (items :type (lem-language-server/protocol/lsp-type:lsp-array diagnostic) :initarg :items
+   (items :type (lem-lsp-base/type:lsp-array diagnostic) :initarg :items
     :accessor full-document-diagnostic-report-items :documentation "The actual items."))
   (:since "3.17.0")
   (:documentation "A diagnostic report with a full set of problems.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class unchanged-document-diagnostic-report
+(lem-lsp-base/type:define-class unchanged-document-diagnostic-report
     common-lisp:nil
-  ((kind :type (lem-language-server/protocol/lsp-type:lsp-string "unchanged") :initarg :kind
+  ((kind :type (lem-lsp-base/type:lsp-string "unchanged") :initarg :kind
     :accessor unchanged-document-diagnostic-report-kind :documentation
     "A document diagnostic report indicating
 no changes to the last result. A server can
 only return `unchanged` if result ids are
 provided.")
-   (result-id :type lem-language-server/protocol/lsp-type:lsp-string :initarg :result-id :accessor
+   (result-id :type lem-lsp-base/type:lsp-string :initarg :result-id :accessor
     unchanged-document-diagnostic-report-result-id :documentation
     "A result id which will be sent on the next
 diagnostic request for the same document."))
@@ -4441,19 +4441,19 @@ report is still accurate.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class diagnostic-options
+(lem-lsp-base/type:define-class diagnostic-options
     (work-done-progress-options)
-  ((identifier :type lem-language-server/protocol/lsp-type:lsp-string :initarg :identifier
+  ((identifier :type lem-lsp-base/type:lsp-string :initarg :identifier
     :accessor diagnostic-options-identifier :optional common-lisp:t :documentation
     "An optional identifier under which the diagnostics are
 managed by the client.")
-   (inter-file-dependencies :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (inter-file-dependencies :type lem-lsp-base/type:lsp-boolean :initarg
     :inter-file-dependencies :accessor diagnostic-options-inter-file-dependencies :documentation
     "Whether the language has inter file dependencies meaning that
 editing code in one file can result in a different diagnostic
 set in another file. Inter file dependencies are common for
 most programming languages and typically uncommon for linters.")
-   (workspace-diagnostics :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (workspace-diagnostics :type lem-lsp-base/type:lsp-boolean :initarg
     :workspace-diagnostics :accessor diagnostic-options-workspace-diagnostics :documentation
     "The server provides support for workspace diagnostics as well."))
   (:since "3.17.0")
@@ -4461,25 +4461,25 @@ most programming languages and typically uncommon for linters.")
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class previous-result-id
+(lem-lsp-base/type:define-class previous-result-id
     common-lisp:nil
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-document-uri :initarg :uri :accessor
     previous-result-id-uri :documentation "The URI for which the client knowns a
 result id.")
-   (value :type lem-language-server/protocol/lsp-type:lsp-string :initarg :value :accessor
+   (value :type lem-lsp-base/type:lsp-string :initarg :value :accessor
     previous-result-id-value :documentation "The value of the previous result id."))
   (:since "3.17.0")
   (:documentation "A previous result id in a workspace pull request.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class notebook-document
+(lem-lsp-base/type:define-class notebook-document
     common-lisp:nil
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-uri :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-uri :initarg :uri :accessor
     notebook-document-uri :documentation "The notebook document's uri.")
-   (notebook-type :type lem-language-server/protocol/lsp-type:lsp-string :initarg :notebook-type
+   (notebook-type :type lem-lsp-base/type:lsp-string :initarg :notebook-type
     :accessor notebook-document-notebook-type :documentation "The type of the notebook.")
-   (version :type lem-language-server/protocol/lsp-type:lsp-integer :initarg :version :accessor
+   (version :type lem-lsp-base/type:lsp-integer :initarg :version :accessor
     notebook-document-version :documentation
     "The version number of this document (it will increase after each
 change, including undo/redo).")
@@ -4488,68 +4488,68 @@ change, including undo/redo).")
 document.
 
 Note: should always be an object literal (e.g. LSPObject)")
-   (cells :type (lem-language-server/protocol/lsp-type:lsp-array notebook-cell) :initarg :cells
+   (cells :type (lem-lsp-base/type:lsp-array notebook-cell) :initarg :cells
     :accessor notebook-document-cells :documentation "The cells of a notebook."))
   (:since "3.17.0")
   (:documentation "A notebook document.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class text-document-item
+(lem-lsp-base/type:define-class text-document-item
     common-lisp:nil
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-document-uri :initarg :uri :accessor
     text-document-item-uri :documentation "The text document's uri.")
-   (language-id :type lem-language-server/protocol/lsp-type:lsp-string :initarg :language-id
+   (language-id :type lem-lsp-base/type:lsp-string :initarg :language-id
     :accessor text-document-item-language-id :documentation
     "The text document's language identifier.")
-   (version :type lem-language-server/protocol/lsp-type:lsp-integer :initarg :version :accessor
+   (version :type lem-lsp-base/type:lsp-integer :initarg :version :accessor
     text-document-item-version :documentation
     "The version number of this document (it will increase after each
 change, including undo/redo).")
-   (text :type lem-language-server/protocol/lsp-type:lsp-string :initarg :text :accessor
+   (text :type lem-lsp-base/type:lsp-string :initarg :text :accessor
     text-document-item-text :documentation "The content of the opened text document."))
   (:documentation "An item to transfer a text document from the client to the
 server."))
 
-(lem-language-server/protocol/lsp-type:define-class versioned-notebook-document-identifier
+(lem-lsp-base/type:define-class versioned-notebook-document-identifier
     common-lisp:nil
-  ((version :type lem-language-server/protocol/lsp-type:lsp-integer :initarg :version :accessor
+  ((version :type lem-lsp-base/type:lsp-integer :initarg :version :accessor
     versioned-notebook-document-identifier-version :documentation
     "The version number of this notebook document.")
-   (uri :type lem-language-server/protocol/lsp-type:lsp-uri :initarg :uri :accessor
+   (uri :type lem-lsp-base/type:lsp-uri :initarg :uri :accessor
     versioned-notebook-document-identifier-uri :documentation "The notebook document's uri."))
   (:since "3.17.0")
   (:documentation "A versioned notebook document identifier.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class notebook-document-change-event
+(lem-lsp-base/type:define-class notebook-document-change-event
     common-lisp:nil
   ((metadata :type lsp-object :initarg :metadata :accessor notebook-document-change-event-metadata
     :optional common-lisp:t :documentation "The changed meta data if any.
 
 Note: should always be an object literal (e.g. LSPObject)")
    (cells :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
+    (lem-lsp-base/type:lsp-interface
      ((structure :type
-       (lem-language-server/protocol/lsp-type:lsp-interface
+       (lem-lsp-base/type:lsp-interface
         ((array :type notebook-cell-array-change :documentation "The change to the cell array.")
-         (did-open :type (lem-language-server/protocol/lsp-type:lsp-array text-document-item)
+         (did-open :type (lem-lsp-base/type:lsp-array text-document-item)
           :optional common-lisp:t :documentation "Additional opened cell text documents.")
          (did-close :type
-          (lem-language-server/protocol/lsp-type:lsp-array text-document-identifier) :optional
+          (lem-lsp-base/type:lsp-array text-document-identifier) :optional
           common-lisp:t :documentation "Additional closed cell text documents.")))
        :optional common-lisp:t :documentation "Changes to the cell structure to add or
 remove cells.")
-      (data :type (lem-language-server/protocol/lsp-type:lsp-array notebook-cell) :optional
+      (data :type (lem-lsp-base/type:lsp-array notebook-cell) :optional
        common-lisp:t :documentation "Changes to notebook cells properties like its
 kind, execution summary or metadata.")
       (text-content :type
-       (lem-language-server/protocol/lsp-type:lsp-array
-        (lem-language-server/protocol/lsp-type:lsp-interface
+       (lem-lsp-base/type:lsp-array
+        (lem-lsp-base/type:lsp-interface
          ((document :type versioned-text-document-identifier)
           (changes :type
-           (lem-language-server/protocol/lsp-type:lsp-array text-document-content-change-event)))))
+           (lem-lsp-base/type:lsp-array text-document-content-change-event)))))
        :optional common-lisp:t :documentation "Changes to the text content of notebook cells.")))
     :initarg :cells :accessor notebook-document-change-event-cells :optional common-lisp:t
     :documentation "Changes to cells"))
@@ -4558,22 +4558,22 @@ kind, execution summary or metadata.")
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class notebook-document-identifier
+(lem-lsp-base/type:define-class notebook-document-identifier
     common-lisp:nil
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-uri :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-uri :initarg :uri :accessor
     notebook-document-identifier-uri :documentation "The notebook document's uri."))
   (:since "3.17.0")
   (:documentation "A literal to identify a notebook document in the client.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class registration
+(lem-lsp-base/type:define-class registration
     common-lisp:nil
-  ((id :type lem-language-server/protocol/lsp-type:lsp-string :initarg :id :accessor
+  ((id :type lem-lsp-base/type:lsp-string :initarg :id :accessor
     registration-id :documentation
     "The id used to register the request. The id can be used to deregister
 the request again.")
-   (method :type lem-language-server/protocol/lsp-type:lsp-string :initarg :method :accessor
+   (method :type lem-lsp-base/type:lsp-string :initarg :method :accessor
     registration-method :documentation "The method / capability to register for.")
    (register-options :type lsp-any :initarg :register-options :accessor
     registration-register-options :optional common-lisp:t :documentation
@@ -4581,21 +4581,21 @@ the request again.")
   (:documentation
    "General parameters to to register for an notification or to register a provider."))
 
-(lem-language-server/protocol/lsp-type:define-class unregistration
+(lem-lsp-base/type:define-class unregistration
     common-lisp:nil
-  ((id :type lem-language-server/protocol/lsp-type:lsp-string :initarg :id :accessor
+  ((id :type lem-lsp-base/type:lsp-string :initarg :id :accessor
     unregistration-id :documentation
     "The id used to unregister the request or notification. Usually an id
 provided during the register request.")
-   (method :type lem-language-server/protocol/lsp-type:lsp-string :initarg :method :accessor
+   (method :type lem-lsp-base/type:lsp-string :initarg :method :accessor
     unregistration-method :documentation "The method to unregister for."))
   (:documentation "General parameters to unregister a request or notification."))
 
-(lem-language-server/protocol/lsp-type:define-class _initialize-params
+(lem-lsp-base/type:define-class _initialize-params
     (work-done-progress-params)
   ((process-id :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-integer
-                    lem-language-server/protocol/lsp-type:lsp-null)
+    (common-lisp:or lem-lsp-base/type:lsp-integer
+                    lem-lsp-base/type:lsp-null)
     :initarg :process-id :accessor _initialize-params-process-id :documentation
     "The process Id of the parent process that started
 the server.
@@ -4603,16 +4603,16 @@ the server.
 Is `null` if the process has not been started by another process.
 If the parent process is not alive then the server should exit.")
    (client-info :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((name :type lem-language-server/protocol/lsp-type:lsp-string :documentation
+    (lem-lsp-base/type:lsp-interface
+     ((name :type lem-lsp-base/type:lsp-string :documentation
        "The name of the client as defined by the client.")
-      (version :type lem-language-server/protocol/lsp-type:lsp-string :optional common-lisp:t
+      (version :type lem-lsp-base/type:lsp-string :optional common-lisp:t
        :documentation "The client's version as defined by the client.")))
     :initarg :client-info :accessor _initialize-params-client-info :optional common-lisp:t :since
     "3.15.0" :documentation "Information about the client
 
 @since 3.15.0")
-   (locale :type lem-language-server/protocol/lsp-type:lsp-string :initarg :locale :accessor
+   (locale :type lem-lsp-base/type:lsp-string :initarg :locale :accessor
     _initialize-params-locale :optional common-lisp:t :since "3.16.0" :documentation
     "The locale the client is currently showing the user interface
 in. This must not necessarily be the locale of the operating
@@ -4623,16 +4623,16 @@ Uses IETF language tags as the value's syntax
 
 @since 3.16.0")
    (root-path :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string
-                    lem-language-server/protocol/lsp-type:lsp-null)
+    (common-lisp:or lem-lsp-base/type:lsp-string
+                    lem-lsp-base/type:lsp-null)
     :initarg :root-path :accessor _initialize-params-root-path :optional common-lisp:t :deprecated
     "in favour of rootUri." :documentation "The rootPath of the workspace. Is null
 if no folder is open.
 
 @deprecated in favour of rootUri.")
    (root-uri :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-document-uri
-                    lem-language-server/protocol/lsp-type:lsp-null)
+    (common-lisp:or lem-lsp-base/type:lsp-document-uri
+                    lem-lsp-base/type:lsp-null)
     :initarg :root-uri :accessor _initialize-params-root-uri :deprecated
     "in favour of workspaceFolders." :documentation "The rootUri of the workspace. Is null if no
 folder is open. If both `rootPath` and `rootUri` are set
@@ -4650,11 +4650,11 @@ folder is open. If both `rootPath` and `rootUri` are set
     "The initial trace setting. If omitted trace is disabled ('off')."))
   (:documentation "The initialize parameters"))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-folders-initialize-params
+(lem-lsp-base/type:define-class workspace-folders-initialize-params
     common-lisp:nil
   ((workspace-folders :type
-    (common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array workspace-folder)
-                    lem-language-server/protocol/lsp-type:lsp-null)
+    (common-lisp:or (lem-lsp-base/type:lsp-array workspace-folder)
+                    lem-lsp-base/type:lsp-null)
     :initarg :workspace-folders :accessor workspace-folders-initialize-params-workspace-folders
     :optional common-lisp:t :since "3.6.0" :documentation
     "The workspace folders configured in the client when the server starts.
@@ -4665,7 +4665,7 @@ configured.
 
 @since 3.6.0")))
 
-(lem-language-server/protocol/lsp-type:define-class server-capabilities
+(lem-lsp-base/type:define-class server-capabilities
     common-lisp:nil
   ((position-encoding :type position-encoding-kind :initarg :position-encoding :accessor
     server-capabilities-position-encoding :optional common-lisp:t :since "3.17.0" :documentation
@@ -4694,45 +4694,45 @@ TextDocumentSyncKind number.")
     server-capabilities-completion-provider :optional common-lisp:t :documentation
     "The server provides completion support.")
    (hover-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean hover-options) :initarg
+    (common-lisp:or lem-lsp-base/type:lsp-boolean hover-options) :initarg
     :hover-provider :accessor server-capabilities-hover-provider :optional common-lisp:t
     :documentation "The server provides hover support.")
    (signature-help-provider :type signature-help-options :initarg :signature-help-provider
     :accessor server-capabilities-signature-help-provider :optional common-lisp:t :documentation
     "The server provides signature help support.")
    (declaration-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean declaration-options
+    (common-lisp:or lem-lsp-base/type:lsp-boolean declaration-options
                     declaration-registration-options)
     :initarg :declaration-provider :accessor server-capabilities-declaration-provider :optional
     common-lisp:t :documentation "The server provides Goto Declaration support.")
    (definition-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean definition-options) :initarg
+    (common-lisp:or lem-lsp-base/type:lsp-boolean definition-options) :initarg
     :definition-provider :accessor server-capabilities-definition-provider :optional common-lisp:t
     :documentation "The server provides goto definition support.")
    (type-definition-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean type-definition-options
+    (common-lisp:or lem-lsp-base/type:lsp-boolean type-definition-options
                     type-definition-registration-options)
     :initarg :type-definition-provider :accessor server-capabilities-type-definition-provider
     :optional common-lisp:t :documentation "The server provides Goto Type Definition support.")
    (implementation-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean implementation-options
+    (common-lisp:or lem-lsp-base/type:lsp-boolean implementation-options
                     implementation-registration-options)
     :initarg :implementation-provider :accessor server-capabilities-implementation-provider
     :optional common-lisp:t :documentation "The server provides Goto Implementation support.")
    (references-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean reference-options) :initarg
+    (common-lisp:or lem-lsp-base/type:lsp-boolean reference-options) :initarg
     :references-provider :accessor server-capabilities-references-provider :optional common-lisp:t
     :documentation "The server provides find references support.")
    (document-highlight-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean document-highlight-options)
+    (common-lisp:or lem-lsp-base/type:lsp-boolean document-highlight-options)
     :initarg :document-highlight-provider :accessor server-capabilities-document-highlight-provider
     :optional common-lisp:t :documentation "The server provides document highlight support.")
    (document-symbol-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean document-symbol-options)
+    (common-lisp:or lem-lsp-base/type:lsp-boolean document-symbol-options)
     :initarg :document-symbol-provider :accessor server-capabilities-document-symbol-provider
     :optional common-lisp:t :documentation "The server provides document symbol support.")
    (code-action-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean code-action-options) :initarg
+    (common-lisp:or lem-lsp-base/type:lsp-boolean code-action-options) :initarg
     :code-action-provider :accessor server-capabilities-code-action-provider :optional
     common-lisp:t :documentation "The server provides code actions. CodeActionOptions may only be
 specified if the client states that it supports
@@ -4744,21 +4744,21 @@ specified if the client states that it supports
     server-capabilities-document-link-provider :optional common-lisp:t :documentation
     "The server provides document link support.")
    (color-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean document-color-options
+    (common-lisp:or lem-lsp-base/type:lsp-boolean document-color-options
                     document-color-registration-options)
     :initarg :color-provider :accessor server-capabilities-color-provider :optional common-lisp:t
     :documentation "The server provides color provider support.")
    (workspace-symbol-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean workspace-symbol-options)
+    (common-lisp:or lem-lsp-base/type:lsp-boolean workspace-symbol-options)
     :initarg :workspace-symbol-provider :accessor server-capabilities-workspace-symbol-provider
     :optional common-lisp:t :documentation "The server provides workspace symbol support.")
    (document-formatting-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean document-formatting-options)
+    (common-lisp:or lem-lsp-base/type:lsp-boolean document-formatting-options)
     :initarg :document-formatting-provider :accessor
     server-capabilities-document-formatting-provider :optional common-lisp:t :documentation
     "The server provides document formatting.")
    (document-range-formatting-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean
+    (common-lisp:or lem-lsp-base/type:lsp-boolean
                     document-range-formatting-options)
     :initarg :document-range-formatting-provider :accessor
     server-capabilities-document-range-formatting-provider :optional common-lisp:t :documentation
@@ -4768,18 +4768,18 @@ specified if the client states that it supports
     server-capabilities-document-on-type-formatting-provider :optional common-lisp:t :documentation
     "The server provides document formatting on typing.")
    (rename-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean rename-options) :initarg
+    (common-lisp:or lem-lsp-base/type:lsp-boolean rename-options) :initarg
     :rename-provider :accessor server-capabilities-rename-provider :optional common-lisp:t
     :documentation "The server provides rename support. RenameOptions may only be
 specified if the client states that it supports
 `prepareSupport` in its initial `initialize` request.")
    (folding-range-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean folding-range-options
+    (common-lisp:or lem-lsp-base/type:lsp-boolean folding-range-options
                     folding-range-registration-options)
     :initarg :folding-range-provider :accessor server-capabilities-folding-range-provider :optional
     common-lisp:t :documentation "The server provides folding provider support.")
    (selection-range-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean selection-range-options
+    (common-lisp:or lem-lsp-base/type:lsp-boolean selection-range-options
                     selection-range-registration-options)
     :initarg :selection-range-provider :accessor server-capabilities-selection-range-provider
     :optional common-lisp:t :documentation "The server provides selection range support.")
@@ -4787,7 +4787,7 @@ specified if the client states that it supports
     :accessor server-capabilities-execute-command-provider :optional common-lisp:t :documentation
     "The server provides execute command support.")
    (call-hierarchy-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean call-hierarchy-options
+    (common-lisp:or lem-lsp-base/type:lsp-boolean call-hierarchy-options
                     call-hierarchy-registration-options)
     :initarg :call-hierarchy-provider :accessor server-capabilities-call-hierarchy-provider
     :optional common-lisp:t :since "3.16.0" :documentation
@@ -4795,7 +4795,7 @@ specified if the client states that it supports
 
 @since 3.16.0")
    (linked-editing-range-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean linked-editing-range-options
+    (common-lisp:or lem-lsp-base/type:lsp-boolean linked-editing-range-options
                     linked-editing-range-registration-options)
     :initarg :linked-editing-range-provider :accessor
     server-capabilities-linked-editing-range-provider :optional common-lisp:t :since "3.16.0"
@@ -4809,14 +4809,14 @@ specified if the client states that it supports
 
 @since 3.16.0")
    (moniker-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean moniker-options
+    (common-lisp:or lem-lsp-base/type:lsp-boolean moniker-options
                     moniker-registration-options)
     :initarg :moniker-provider :accessor server-capabilities-moniker-provider :optional
     common-lisp:t :since "3.16.0" :documentation "The server provides moniker support.
 
 @since 3.16.0")
    (type-hierarchy-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean type-hierarchy-options
+    (common-lisp:or lem-lsp-base/type:lsp-boolean type-hierarchy-options
                     type-hierarchy-registration-options)
     :initarg :type-hierarchy-provider :accessor server-capabilities-type-hierarchy-provider
     :optional common-lisp:t :since "3.17.0" :documentation
@@ -4824,14 +4824,14 @@ specified if the client states that it supports
 
 @since 3.17.0")
    (inline-value-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean inline-value-options
+    (common-lisp:or lem-lsp-base/type:lsp-boolean inline-value-options
                     inline-value-registration-options)
     :initarg :inline-value-provider :accessor server-capabilities-inline-value-provider :optional
     common-lisp:t :since "3.17.0" :documentation "The server provides inline values.
 
 @since 3.17.0")
    (inlay-hint-provider :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean inlay-hint-options
+    (common-lisp:or lem-lsp-base/type:lsp-boolean inlay-hint-options
                     inlay-hint-registration-options)
     :initarg :inlay-hint-provider :accessor server-capabilities-inlay-hint-provider :optional
     common-lisp:t :since "3.17.0" :documentation "The server provides inlay hints.
@@ -4843,7 +4843,7 @@ specified if the client states that it supports
 
 @since 3.17.0")
    (workspace :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
+    (lem-lsp-base/type:lsp-interface
      ((workspace-folders :type workspace-folders-server-capabilities :optional common-lisp:t :since
        "3.6.0" :documentation "The server supports workspace folder.
 
@@ -4859,29 +4859,29 @@ specified if the client states that it supports
   (:documentation "Defines the capabilities provided by a language
 server."))
 
-(lem-language-server/protocol/lsp-type:define-class versioned-text-document-identifier
+(lem-lsp-base/type:define-class versioned-text-document-identifier
     (text-document-identifier)
-  ((version :type lem-language-server/protocol/lsp-type:lsp-integer :initarg :version :accessor
+  ((version :type lem-lsp-base/type:lsp-integer :initarg :version :accessor
     versioned-text-document-identifier-version :documentation
     "The version number of this document."))
   (:documentation "A text document identifier to denote a specific version of a text document."))
 
-(lem-language-server/protocol/lsp-type:define-class save-options
+(lem-lsp-base/type:define-class save-options
     common-lisp:nil
-  ((include-text :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :include-text
+  ((include-text :type lem-lsp-base/type:lsp-boolean :initarg :include-text
     :accessor save-options-include-text :optional common-lisp:t :documentation
     "The client is supposed to include the content on save."))
   (:documentation "Save options."))
 
-(lem-language-server/protocol/lsp-type:define-class file-event
+(lem-lsp-base/type:define-class file-event
     common-lisp:nil
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-document-uri :initarg :uri :accessor
     file-event-uri :documentation "The file's uri.")
    (type :type file-change-type :initarg :type :accessor file-event-type :documentation
     "The change type."))
   (:documentation "An event describing a file change."))
 
-(lem-language-server/protocol/lsp-type:define-class file-system-watcher
+(lem-lsp-base/type:define-class file-system-watcher
     common-lisp:nil
   ((glob-pattern :type glob-pattern :initarg :glob-pattern :accessor
     file-system-watcher-glob-pattern :since "3.17.0 support for relative patterns." :documentation
@@ -4893,7 +4893,7 @@ server."))
 to WatchKind.Create | WatchKind.Change | WatchKind.Delete
 which is 7.")))
 
-(lem-language-server/protocol/lsp-type:define-class diagnostic
+(lem-lsp-base/type:define-class diagnostic
     common-lisp:nil
   ((range :type range :initarg :range :accessor diagnostic-range :documentation
     "The range at which the message applies")
@@ -4902,8 +4902,8 @@ which is 7.")))
     "The diagnostic's severity. Can be omitted. If omitted it is up to the
 client to interpret diagnostics as error, warning, info or hint.")
    (code :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-integer
-                    lem-language-server/protocol/lsp-type:lsp-string)
+    (common-lisp:or lem-lsp-base/type:lsp-integer
+                    lem-lsp-base/type:lsp-string)
     :initarg :code :accessor diagnostic-code :optional common-lisp:t :documentation
     "The diagnostic's code, which usually appear in the user interface.")
    (code-description :type code-description :initarg :code-description :accessor
@@ -4912,21 +4912,21 @@ client to interpret diagnostics as error, warning, info or hint.")
 Requires the code field (above) to be present/not null.
 
 @since 3.16.0")
-   (source :type lem-language-server/protocol/lsp-type:lsp-string :initarg :source :accessor
+   (source :type lem-lsp-base/type:lsp-string :initarg :source :accessor
     diagnostic-source :optional common-lisp:t :documentation
     "A human-readable string describing the source of this
 diagnostic, e.g. 'typescript' or 'super lint'. It usually
 appears in the user interface.")
-   (message :type lem-language-server/protocol/lsp-type:lsp-string :initarg :message :accessor
+   (message :type lem-lsp-base/type:lsp-string :initarg :message :accessor
     diagnostic-message :documentation
     "The diagnostic's message. It usually appears in the user interface")
-   (tags :type (lem-language-server/protocol/lsp-type:lsp-array diagnostic-tag) :initarg :tags
+   (tags :type (lem-lsp-base/type:lsp-array diagnostic-tag) :initarg :tags
     :accessor diagnostic-tags :optional common-lisp:t :since "3.15.0" :documentation
     "Additional metadata about the diagnostic.
 
 @since 3.15.0")
    (related-information :type
-    (lem-language-server/protocol/lsp-type:lsp-array diagnostic-related-information) :initarg
+    (lem-lsp-base/type:lsp-array diagnostic-related-information) :initarg
     :related-information :accessor diagnostic-related-information :optional common-lisp:t
     :documentation "An array of related diagnostic information, e.g. when symbol-names within
 a scope collide all definitions can be marked via this property.")
@@ -4939,24 +4939,24 @@ notification and `textDocument/codeAction` request.
   (:documentation "Represents a diagnostic, such as a compiler error or warning. Diagnostic objects
 are only valid in the scope of a resource."))
 
-(lem-language-server/protocol/lsp-type:define-class completion-context
+(lem-lsp-base/type:define-class completion-context
     common-lisp:nil
   ((trigger-kind :type completion-trigger-kind :initarg :trigger-kind :accessor
     completion-context-trigger-kind :documentation "How the completion was triggered.")
-   (trigger-character :type lem-language-server/protocol/lsp-type:lsp-string :initarg
+   (trigger-character :type lem-lsp-base/type:lsp-string :initarg
     :trigger-character :accessor completion-context-trigger-character :optional common-lisp:t
     :documentation "The trigger character (a single character) that has trigger code complete.
 Is undefined if `triggerKind !== CompletionTriggerKind.TriggerCharacter`"))
   (:documentation
    "Contains additional information about the context in which a completion request is triggered."))
 
-(lem-language-server/protocol/lsp-type:define-class completion-item-label-details
+(lem-lsp-base/type:define-class completion-item-label-details
     common-lisp:nil
-  ((detail :type lem-language-server/protocol/lsp-type:lsp-string :initarg :detail :accessor
+  ((detail :type lem-lsp-base/type:lsp-string :initarg :detail :accessor
     completion-item-label-details-detail :optional common-lisp:t :documentation
     "An optional string which is rendered less prominently directly after {@link CompletionItem.label label},
 without any spacing. Should be used for function signatures and type annotations.")
-   (description :type lem-language-server/protocol/lsp-type:lsp-string :initarg :description
+   (description :type lem-lsp-base/type:lsp-string :initarg :description
     :accessor completion-item-label-details-description :optional common-lisp:t :documentation
     "An optional string which is rendered less prominently after {@link CompletionItem.detail}. Should be used
 for fully qualified names and file paths."))
@@ -4965,9 +4965,9 @@ for fully qualified names and file paths."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class insert-replace-edit
+(lem-lsp-base/type:define-class insert-replace-edit
     common-lisp:nil
-  ((new-text :type lem-language-server/protocol/lsp-type:lsp-string :initarg :new-text :accessor
+  ((new-text :type lem-lsp-base/type:lsp-string :initarg :new-text :accessor
     insert-replace-edit-new-text :documentation "The string to be inserted.")
    (insert :type range :initarg :insert :accessor insert-replace-edit-insert :documentation
     "The range if the insert is requested")
@@ -4978,11 +4978,11 @@ for fully qualified names and file paths."))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class completion-options
+(lem-lsp-base/type:define-class completion-options
     (work-done-progress-options)
   ((trigger-characters :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-string)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-string)
     :initarg :trigger-characters :accessor completion-options-trigger-characters :optional
     common-lisp:t :documentation
     "Most tools trigger completion request automatically without explicitly requesting
@@ -4994,8 +4994,8 @@ completion item. Characters that make up identifiers don't need to be listed her
 If code complete should automatically be trigger on characters not being valid inside
 an identifier (for example `.` in JavaScript) list them in `triggerCharacters`.")
    (all-commit-characters :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-string)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-string)
     :initarg :all-commit-characters :accessor completion-options-all-commit-characters :optional
     common-lisp:t :since "3.2.0" :documentation
     "The list of all possible characters that commit a completion. This field can be used
@@ -5006,13 +5006,13 @@ If a server provides both `allCommitCharacters` and commit characters on an indi
 completion item the ones on the completion item win.
 
 @since 3.2.0")
-   (resolve-provider :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (resolve-provider :type lem-lsp-base/type:lsp-boolean :initarg
     :resolve-provider :accessor completion-options-resolve-provider :optional common-lisp:t
     :documentation "The server provides support to resolve additional
 information for a completion item.")
    (completion-item :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((label-details-support :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+    (lem-lsp-base/type:lsp-interface
+     ((label-details-support :type lem-lsp-base/type:lsp-boolean :optional
        common-lisp:t :since "3.17.0" :documentation
        "The server has support for completion item label
 details (see also `CompletionItemLabelDetails`) when
@@ -5026,22 +5026,22 @@ capabilities.
 @since 3.17.0"))
   (:documentation "Completion options."))
 
-(lem-language-server/protocol/lsp-type:define-class hover-options
+(lem-lsp-base/type:define-class hover-options
     (work-done-progress-options)
   common-lisp:nil
   (:documentation "Hover options."))
 
-(lem-language-server/protocol/lsp-type:define-class signature-help-context
+(lem-lsp-base/type:define-class signature-help-context
     common-lisp:nil
   ((trigger-kind :type signature-help-trigger-kind :initarg :trigger-kind :accessor
     signature-help-context-trigger-kind :documentation
     "Action that caused signature help to be triggered.")
-   (trigger-character :type lem-language-server/protocol/lsp-type:lsp-string :initarg
+   (trigger-character :type lem-lsp-base/type:lsp-string :initarg
     :trigger-character :accessor signature-help-context-trigger-character :optional common-lisp:t
     :documentation "Character that caused signature help to be triggered.
 
 This is undefined when `triggerKind !== SignatureHelpTriggerKind.TriggerCharacter`")
-   (is-retrigger :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :is-retrigger
+   (is-retrigger :type lem-lsp-base/type:lsp-boolean :initarg :is-retrigger
     :accessor signature-help-context-is-retrigger :documentation
     "`true` if signature help was already showing when it was triggered.
 
@@ -5059,20 +5059,20 @@ the user navigating through available signatures."))
 
 @since 3.15.0"))
 
-(lem-language-server/protocol/lsp-type:define-class signature-information
+(lem-lsp-base/type:define-class signature-information
     common-lisp:nil
-  ((label :type lem-language-server/protocol/lsp-type:lsp-string :initarg :label :accessor
+  ((label :type lem-lsp-base/type:lsp-string :initarg :label :accessor
     signature-information-label :documentation "The label of this signature. Will be shown in
 the UI.")
    (documentation :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string markup-content) :initarg
+    (common-lisp:or lem-lsp-base/type:lsp-string markup-content) :initarg
     :documentation :accessor signature-information-documentation :optional common-lisp:t
     :documentation "The human-readable doc-comment of this signature. Will be shown
 in the UI but can be omitted.")
-   (parameters :type (lem-language-server/protocol/lsp-type:lsp-array parameter-information)
+   (parameters :type (lem-lsp-base/type:lsp-array parameter-information)
     :initarg :parameters :accessor signature-information-parameters :optional common-lisp:t
     :documentation "The parameters of this signature.")
-   (active-parameter :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg
+   (active-parameter :type lem-lsp-base/type:lsp-uinteger :initarg
     :active-parameter :accessor signature-information-active-parameter :optional common-lisp:t
     :since "3.16.0" :documentation "The index of the active parameter.
 
@@ -5083,16 +5083,16 @@ If provided, this is used in place of `SignatureHelp.activeParameter`.
 can have a label, like a function-name, a doc-comment, and
 a set of parameters."))
 
-(lem-language-server/protocol/lsp-type:define-class signature-help-options
+(lem-lsp-base/type:define-class signature-help-options
     (work-done-progress-options)
   ((trigger-characters :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-string)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-string)
     :initarg :trigger-characters :accessor signature-help-options-trigger-characters :optional
     common-lisp:t :documentation "List of characters that trigger signature help automatically.")
    (retrigger-characters :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-string)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-string)
     :initarg :retrigger-characters :accessor signature-help-options-retrigger-characters :optional
     common-lisp:t :since "3.15.0" :documentation "List of characters that re-trigger signature help.
 
@@ -5102,41 +5102,41 @@ are also counted as re-trigger characters.
 @since 3.15.0"))
   (:documentation "Server Capabilities for a {@link SignatureHelpRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class definition-options
+(lem-lsp-base/type:define-class definition-options
     (work-done-progress-options)
   common-lisp:nil
   (:documentation "Server Capabilities for a {@link DefinitionRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class reference-context
+(lem-lsp-base/type:define-class reference-context
     common-lisp:nil
-  ((include-declaration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((include-declaration :type lem-lsp-base/type:lsp-boolean :initarg
     :include-declaration :accessor reference-context-include-declaration :documentation
     "Include the declaration of the current symbol."))
   (:documentation "Value-object that contains additional information when
 requesting references."))
 
-(lem-language-server/protocol/lsp-type:define-class reference-options
+(lem-lsp-base/type:define-class reference-options
     (work-done-progress-options)
   common-lisp:nil
   (:documentation "Reference options."))
 
-(lem-language-server/protocol/lsp-type:define-class document-highlight-options
+(lem-lsp-base/type:define-class document-highlight-options
     (work-done-progress-options)
   common-lisp:nil
   (:documentation "Provider options for a {@link DocumentHighlightRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class base-symbol-information
+(lem-lsp-base/type:define-class base-symbol-information
     common-lisp:nil
-  ((name :type lem-language-server/protocol/lsp-type:lsp-string :initarg :name :accessor
+  ((name :type lem-lsp-base/type:lsp-string :initarg :name :accessor
     base-symbol-information-name :documentation "The name of this symbol.")
    (kind :type symbol-kind :initarg :kind :accessor base-symbol-information-kind :documentation
     "The kind of this symbol.")
-   (tags :type (lem-language-server/protocol/lsp-type:lsp-array symbol-tag) :initarg :tags
+   (tags :type (lem-lsp-base/type:lsp-array symbol-tag) :initarg :tags
     :accessor base-symbol-information-tags :optional common-lisp:t :since "3.16.0" :documentation
     "Tags for this symbol.
 
 @since 3.16.0")
-   (container-name :type lem-language-server/protocol/lsp-type:lsp-string :initarg :container-name
+   (container-name :type lem-lsp-base/type:lsp-string :initarg :container-name
     :accessor base-symbol-information-container-name :optional common-lisp:t :documentation
     "The name of the symbol containing this symbol. This information is for
 user interface purposes (e.g. to render a qualifier in the user interface
@@ -5144,9 +5144,9 @@ if necessary). It can't be used to re-infer a hierarchy for the document
 symbols."))
   (:documentation "A base for all symbol information."))
 
-(lem-language-server/protocol/lsp-type:define-class document-symbol-options
+(lem-lsp-base/type:define-class document-symbol-options
     (work-done-progress-options)
-  ((label :type lem-language-server/protocol/lsp-type:lsp-string :initarg :label :accessor
+  ((label :type lem-lsp-base/type:lsp-string :initarg :label :accessor
     document-symbol-options-label :optional common-lisp:t :since "3.16.0" :documentation
     "A human-readable string that is shown when multiple outlines trees
 are shown for the same document.
@@ -5154,16 +5154,16 @@ are shown for the same document.
 @since 3.16.0"))
   (:documentation "Provider options for a {@link DocumentSymbolRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class code-action-context
+(lem-lsp-base/type:define-class code-action-context
     common-lisp:nil
-  ((diagnostics :type (lem-language-server/protocol/lsp-type:lsp-array diagnostic) :initarg
+  ((diagnostics :type (lem-lsp-base/type:lsp-array diagnostic) :initarg
     :diagnostics :accessor code-action-context-diagnostics :documentation
     "An array of diagnostics known on the client side overlapping the range provided to the
 `textDocument/codeAction` request. They are provided so that the server knows which
 errors are currently presented to the user for the given range. There is no guarantee
 that these accurately reflect the error state of the resource. The primary parameter
 to compute code actions is the provided range.")
-   (only :type (lem-language-server/protocol/lsp-type:lsp-array code-action-kind) :initarg :only
+   (only :type (lem-lsp-base/type:lsp-array code-action-kind) :initarg :only
     :accessor code-action-context-only :optional common-lisp:t :documentation
     "Requested kind of actions to return.
 
@@ -5177,15 +5177,15 @@ can omit computing them.")
   (:documentation "Contains additional diagnostic information about the context in which
 a {@link CodeActionProvider.provideCodeActions code action} is run."))
 
-(lem-language-server/protocol/lsp-type:define-class code-action-options
+(lem-lsp-base/type:define-class code-action-options
     (work-done-progress-options)
-  ((code-action-kinds :type (lem-language-server/protocol/lsp-type:lsp-array code-action-kind)
+  ((code-action-kinds :type (lem-lsp-base/type:lsp-array code-action-kind)
     :initarg :code-action-kinds :accessor code-action-options-code-action-kinds :optional
     common-lisp:t :documentation "CodeActionKinds that this server may return.
 
 The list of kinds may be generic, such as `CodeActionKind.Refactor`, or the server
 may list out every specific kind they provide.")
-   (resolve-provider :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (resolve-provider :type lem-lsp-base/type:lsp-boolean :initarg
     :resolve-provider :accessor code-action-options-resolve-provider :optional common-lisp:t :since
     "3.16.0" :documentation "The server provides support to resolve additional
 information for a code action.
@@ -5193,9 +5193,9 @@ information for a code action.
 @since 3.16.0"))
   (:documentation "Provider options for a {@link CodeActionRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-symbol-options
+(lem-lsp-base/type:define-class workspace-symbol-options
     (work-done-progress-options)
-  ((resolve-provider :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((resolve-provider :type lem-lsp-base/type:lsp-boolean :initarg
     :resolve-provider :accessor workspace-symbol-options-resolve-provider :optional common-lisp:t
     :since "3.17.0" :documentation "The server provides support to resolve additional
 information for a workspace symbol.
@@ -5203,38 +5203,38 @@ information for a workspace symbol.
 @since 3.17.0"))
   (:documentation "Server capabilities for a {@link WorkspaceSymbolRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class code-lens-options
+(lem-lsp-base/type:define-class code-lens-options
     (work-done-progress-options)
-  ((resolve-provider :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((resolve-provider :type lem-lsp-base/type:lsp-boolean :initarg
     :resolve-provider :accessor code-lens-options-resolve-provider :optional common-lisp:t
     :documentation "Code lens has a resolve provider as well."))
   (:documentation "Code Lens provider options of a {@link CodeLensRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-link-options
+(lem-lsp-base/type:define-class document-link-options
     (work-done-progress-options)
-  ((resolve-provider :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((resolve-provider :type lem-lsp-base/type:lsp-boolean :initarg
     :resolve-provider :accessor document-link-options-resolve-provider :optional common-lisp:t
     :documentation "Document links have a resolve provider as well."))
   (:documentation "Provider options for a {@link DocumentLinkRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class formatting-options
+(lem-lsp-base/type:define-class formatting-options
     common-lisp:nil
-  ((tab-size :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :tab-size :accessor
+  ((tab-size :type lem-lsp-base/type:lsp-uinteger :initarg :tab-size :accessor
     formatting-options-tab-size :documentation "Size of a tab in spaces.")
-   (insert-spaces :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :insert-spaces
+   (insert-spaces :type lem-lsp-base/type:lsp-boolean :initarg :insert-spaces
     :accessor formatting-options-insert-spaces :documentation "Prefer spaces over tabs.")
-   (trim-trailing-whitespace :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (trim-trailing-whitespace :type lem-lsp-base/type:lsp-boolean :initarg
     :trim-trailing-whitespace :accessor formatting-options-trim-trailing-whitespace :optional
     common-lisp:t :since "3.15.0" :documentation "Trim trailing whitespace on a line.
 
 @since 3.15.0")
-   (insert-final-newline :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (insert-final-newline :type lem-lsp-base/type:lsp-boolean :initarg
     :insert-final-newline :accessor formatting-options-insert-final-newline :optional common-lisp:t
     :since "3.15.0" :documentation
     "Insert a newline character at the end of the file if one does not exist.
 
 @since 3.15.0")
-   (trim-final-newlines :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (trim-final-newlines :type lem-lsp-base/type:lsp-boolean :initarg
     :trim-final-newlines :accessor formatting-options-trim-final-newlines :optional common-lisp:t
     :since "3.15.0" :documentation
     "Trim all newlines after the final newline at the end of the file.
@@ -5242,67 +5242,67 @@ information for a workspace symbol.
 @since 3.15.0"))
   (:documentation "Value-object describing what options formatting should use."))
 
-(lem-language-server/protocol/lsp-type:define-class document-formatting-options
+(lem-lsp-base/type:define-class document-formatting-options
     (work-done-progress-options)
   common-lisp:nil
   (:documentation "Provider options for a {@link DocumentFormattingRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-range-formatting-options
+(lem-lsp-base/type:define-class document-range-formatting-options
     (work-done-progress-options)
   common-lisp:nil
   (:documentation "Provider options for a {@link DocumentRangeFormattingRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-on-type-formatting-options
+(lem-lsp-base/type:define-class document-on-type-formatting-options
     common-lisp:nil
-  ((first-trigger-character :type lem-language-server/protocol/lsp-type:lsp-string :initarg
+  ((first-trigger-character :type lem-lsp-base/type:lsp-string :initarg
     :first-trigger-character :accessor document-on-type-formatting-options-first-trigger-character
     :documentation "A character on which formatting should be triggered, like `{`.")
    (more-trigger-character :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-string)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-string)
     :initarg :more-trigger-character :accessor
     document-on-type-formatting-options-more-trigger-character :optional common-lisp:t
     :documentation "More trigger characters."))
   (:documentation "Provider options for a {@link DocumentOnTypeFormattingRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class rename-options
+(lem-lsp-base/type:define-class rename-options
     (work-done-progress-options)
-  ((prepare-provider :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((prepare-provider :type lem-lsp-base/type:lsp-boolean :initarg
     :prepare-provider :accessor rename-options-prepare-provider :optional common-lisp:t :since
     "version 3.12.0" :documentation "Renames should be checked and tested before being executed.
 
 @since version 3.12.0"))
   (:documentation "Provider options for a {@link RenameRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class execute-command-options
+(lem-lsp-base/type:define-class execute-command-options
     (work-done-progress-options)
   ((commands :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-string)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-string)
     :initarg :commands :accessor execute-command-options-commands :documentation
     "The commands to be executed on the server"))
   (:documentation "The server capabilities of a {@link ExecuteCommandRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens-legend
+(lem-lsp-base/type:define-class semantic-tokens-legend
     common-lisp:nil
   ((token-types :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-string)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-string)
     :initarg :token-types :accessor semantic-tokens-legend-token-types :documentation
     "The token types a server uses.")
    (token-modifiers :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-string)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-string)
     :initarg :token-modifiers :accessor semantic-tokens-legend-token-modifiers :documentation
     "The token modifiers a server uses."))
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class optional-versioned-text-document-identifier
+(lem-lsp-base/type:define-class optional-versioned-text-document-identifier
     (text-document-identifier)
   ((version :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-integer
-                    lem-language-server/protocol/lsp-type:lsp-null)
+    (common-lisp:or lem-lsp-base/type:lsp-integer
+                    lem-lsp-base/type:lsp-null)
     :initarg :version :accessor optional-versioned-text-document-identifier-version :documentation
     "The version number of this document. If a versioned text document identifier
 is sent from the server to the client and the file is not open in the editor
@@ -5312,7 +5312,7 @@ truth (as specified with document content ownership)."))
   (:documentation
    "A text document identifier to optionally denote a specific version of a text document."))
 
-(lem-language-server/protocol/lsp-type:define-class annotated-text-edit
+(lem-lsp-base/type:define-class annotated-text-edit
     (text-edit)
   ((annotation-id :type change-annotation-identifier :initarg :annotation-id :accessor
     annotated-text-edit-annotation-id :documentation
@@ -5322,9 +5322,9 @@ truth (as specified with document content ownership)."))
 
 @since 3.16.0."))
 
-(lem-language-server/protocol/lsp-type:define-class resource-operation
+(lem-lsp-base/type:define-class resource-operation
     common-lisp:nil
-  ((kind :type lem-language-server/protocol/lsp-type:lsp-string :initarg :kind :accessor
+  ((kind :type lem-lsp-base/type:lsp-string :initarg :kind :accessor
     resource-operation-kind :documentation "The resource operation kind.")
    (annotation-id :type change-annotation-identifier :initarg :annotation-id :accessor
     resource-operation-annotation-id :optional common-lisp:t :since "3.16.0" :documentation
@@ -5333,39 +5333,39 @@ truth (as specified with document content ownership)."))
 @since 3.16.0"))
   (:documentation "A generic resource operation."))
 
-(lem-language-server/protocol/lsp-type:define-class create-file-options
+(lem-lsp-base/type:define-class create-file-options
     common-lisp:nil
-  ((overwrite :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :overwrite :accessor
+  ((overwrite :type lem-lsp-base/type:lsp-boolean :initarg :overwrite :accessor
     create-file-options-overwrite :optional common-lisp:t :documentation
     "Overwrite existing file. Overwrite wins over `ignoreIfExists`")
-   (ignore-if-exists :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (ignore-if-exists :type lem-lsp-base/type:lsp-boolean :initarg
     :ignore-if-exists :accessor create-file-options-ignore-if-exists :optional common-lisp:t
     :documentation "Ignore if exists."))
   (:documentation "Options to create a file."))
 
-(lem-language-server/protocol/lsp-type:define-class rename-file-options
+(lem-lsp-base/type:define-class rename-file-options
     common-lisp:nil
-  ((overwrite :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :overwrite :accessor
+  ((overwrite :type lem-lsp-base/type:lsp-boolean :initarg :overwrite :accessor
     rename-file-options-overwrite :optional common-lisp:t :documentation
     "Overwrite target if existing. Overwrite wins over `ignoreIfExists`")
-   (ignore-if-exists :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (ignore-if-exists :type lem-lsp-base/type:lsp-boolean :initarg
     :ignore-if-exists :accessor rename-file-options-ignore-if-exists :optional common-lisp:t
     :documentation "Ignores if target exists."))
   (:documentation "Rename file options"))
 
-(lem-language-server/protocol/lsp-type:define-class delete-file-options
+(lem-lsp-base/type:define-class delete-file-options
     common-lisp:nil
-  ((recursive :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :recursive :accessor
+  ((recursive :type lem-lsp-base/type:lsp-boolean :initarg :recursive :accessor
     delete-file-options-recursive :optional common-lisp:t :documentation
     "Delete the content recursively if a folder is denoted.")
-   (ignore-if-not-exists :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (ignore-if-not-exists :type lem-lsp-base/type:lsp-boolean :initarg
     :ignore-if-not-exists :accessor delete-file-options-ignore-if-not-exists :optional
     common-lisp:t :documentation "Ignore the operation if the file doesn't exist."))
   (:documentation "Delete file options"))
 
-(lem-language-server/protocol/lsp-type:define-class file-operation-pattern
+(lem-lsp-base/type:define-class file-operation-pattern
     common-lisp:nil
-  ((glob :type lem-language-server/protocol/lsp-type:lsp-string :initarg :glob :accessor
+  ((glob :type lem-lsp-base/type:lsp-string :initarg :glob :accessor
     file-operation-pattern-glob :documentation
     "The glob pattern to match. Glob patterns can have the following syntax:
 - `*` to match one or more characters in a path segment
@@ -5388,14 +5388,14 @@ the server is interested in receiving.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-full-document-diagnostic-report
+(lem-lsp-base/type:define-class workspace-full-document-diagnostic-report
     (full-document-diagnostic-report)
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-document-uri :initarg :uri :accessor
     workspace-full-document-diagnostic-report-uri :documentation
     "The URI for which diagnostic information is reported.")
    (version :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-integer
-                    lem-language-server/protocol/lsp-type:lsp-null)
+    (common-lisp:or lem-lsp-base/type:lsp-integer
+                    lem-lsp-base/type:lsp-null)
     :initarg :version :accessor workspace-full-document-diagnostic-report-version :documentation
     "The version number for which the diagnostics are reported.
 If the document is not marked as open `null` can be provided."))
@@ -5404,14 +5404,14 @@ If the document is not marked as open `null` can be provided."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-unchanged-document-diagnostic-report
+(lem-lsp-base/type:define-class workspace-unchanged-document-diagnostic-report
     (unchanged-document-diagnostic-report)
-  ((uri :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :uri :accessor
+  ((uri :type lem-lsp-base/type:lsp-document-uri :initarg :uri :accessor
     workspace-unchanged-document-diagnostic-report-uri :documentation
     "The URI for which diagnostic information is reported.")
    (version :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-integer
-                    lem-language-server/protocol/lsp-type:lsp-null)
+    (common-lisp:or lem-lsp-base/type:lsp-integer
+                    lem-lsp-base/type:lsp-null)
     :initarg :version :accessor workspace-unchanged-document-diagnostic-report-version
     :documentation "The version number for which the diagnostics are reported.
 If the document is not marked as open `null` can be provided."))
@@ -5420,11 +5420,11 @@ If the document is not marked as open `null` can be provided."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class notebook-cell
+(lem-lsp-base/type:define-class notebook-cell
     common-lisp:nil
   ((kind :type notebook-cell-kind :initarg :kind :accessor notebook-cell-kind :documentation
     "The cell's kind")
-   (document :type lem-language-server/protocol/lsp-type:lsp-document-uri :initarg :document
+   (document :type lem-lsp-base/type:lsp-document-uri :initarg :document
     :accessor notebook-cell-document :documentation "The URI of the cell's text document
 content.")
    (metadata :type lsp-object :initarg :metadata :accessor notebook-cell-metadata :optional
@@ -5444,13 +5444,13 @@ notebook cell or the cell's text document.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class notebook-cell-array-change
+(lem-lsp-base/type:define-class notebook-cell-array-change
     common-lisp:nil
-  ((start :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :start :accessor
+  ((start :type lem-lsp-base/type:lsp-uinteger :initarg :start :accessor
     notebook-cell-array-change-start :documentation "The start oftest of the cell that changed.")
-   (delete-count :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :delete-count
+   (delete-count :type lem-lsp-base/type:lsp-uinteger :initarg :delete-count
     :accessor notebook-cell-array-change-delete-count :documentation "The deleted cells")
-   (cells :type (lem-language-server/protocol/lsp-type:lsp-array notebook-cell) :initarg :cells
+   (cells :type (lem-lsp-base/type:lsp-array notebook-cell) :initarg :cells
     :accessor notebook-cell-array-change-cells :optional common-lisp:t :documentation
     "The new cells, if any"))
   (:since "3.17.0")
@@ -5459,7 +5459,7 @@ array from state S to S'.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class client-capabilities
+(lem-lsp-base/type:define-class client-capabilities
     common-lisp:nil
   ((workspace :type workspace-client-capabilities :initarg :workspace :accessor
     client-capabilities-workspace :optional common-lisp:t :documentation
@@ -5483,9 +5483,9 @@ array from state S to S'.
     :optional common-lisp:t :documentation "Experimental client capabilities."))
   (:documentation "Defines the capabilities provided by the client."))
 
-(lem-language-server/protocol/lsp-type:define-class text-document-sync-options
+(lem-lsp-base/type:define-class text-document-sync-options
     common-lisp:nil
-  ((open-close :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :open-close
+  ((open-close :type lem-lsp-base/type:lsp-boolean :initarg :open-close
     :accessor text-document-sync-options-open-close :optional common-lisp:t :documentation
     "Open and close notifications are sent to the server. If omitted open close notification should not
 be sent.")
@@ -5493,51 +5493,51 @@ be sent.")
     text-document-sync-options-change :optional common-lisp:t :documentation
     "Change notifications are sent to the server. See TextDocumentSyncKind.None, TextDocumentSyncKind.Full
 and TextDocumentSyncKind.Incremental. If omitted it defaults to TextDocumentSyncKind.None.")
-   (will-save :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :will-save :accessor
+   (will-save :type lem-lsp-base/type:lsp-boolean :initarg :will-save :accessor
     text-document-sync-options-will-save :optional common-lisp:t :documentation
     "If present will save notifications are sent to the server. If omitted the notification should not be
 sent.")
-   (will-save-wait-until :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (will-save-wait-until :type lem-lsp-base/type:lsp-boolean :initarg
     :will-save-wait-until :accessor text-document-sync-options-will-save-wait-until :optional
     common-lisp:t :documentation
     "If present will save wait until requests are sent to the server. If omitted the request should not be
 sent.")
-   (save :type (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean save-options)
+   (save :type (common-lisp:or lem-lsp-base/type:lsp-boolean save-options)
     :initarg :save :accessor text-document-sync-options-save :optional common-lisp:t :documentation
     "If present save notifications are sent to the server. If omitted the notification should not be
 sent.")))
 
-(lem-language-server/protocol/lsp-type:define-class notebook-document-sync-options
+(lem-lsp-base/type:define-class notebook-document-sync-options
     common-lisp:nil
   ((notebook-selector :type
-    (lem-language-server/protocol/lsp-type:lsp-array
+    (lem-lsp-base/type:lsp-array
      (common-lisp:or
-      (lem-language-server/protocol/lsp-type:lsp-interface
+      (lem-lsp-base/type:lsp-interface
        ((notebook :type
-         (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string notebook-document-filter)
+         (common-lisp:or lem-lsp-base/type:lsp-string notebook-document-filter)
          :documentation "The notebook to be synced If a string
 value is provided it matches against the
 notebook type. '*' matches every notebook.")
         (cells :type
-         (lem-language-server/protocol/lsp-type:lsp-array
-          (lem-language-server/protocol/lsp-type:lsp-interface
-           ((language :type lem-language-server/protocol/lsp-type:lsp-string))))
+         (lem-lsp-base/type:lsp-array
+          (lem-lsp-base/type:lsp-interface
+           ((language :type lem-lsp-base/type:lsp-string))))
          :optional common-lisp:t :documentation
          "The cells of the matching notebook to be synced.")))
-      (lem-language-server/protocol/lsp-type:lsp-interface
+      (lem-lsp-base/type:lsp-interface
        ((notebook :type
-         (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string notebook-document-filter)
+         (common-lisp:or lem-lsp-base/type:lsp-string notebook-document-filter)
          :optional common-lisp:t :documentation "The notebook to be synced If a string
 value is provided it matches against the
 notebook type. '*' matches every notebook.")
         (cells :type
-         (lem-language-server/protocol/lsp-type:lsp-array
-          (lem-language-server/protocol/lsp-type:lsp-interface
-           ((language :type lem-language-server/protocol/lsp-type:lsp-string))))
+         (lem-lsp-base/type:lsp-array
+          (lem-lsp-base/type:lsp-interface
+           ((language :type lem-lsp-base/type:lsp-string))))
          :documentation "The cells of the matching notebook to be synced.")))))
     :initarg :notebook-selector :accessor notebook-document-sync-options-notebook-selector
     :documentation "The notebooks to be synced")
-   (save :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :save :accessor
+   (save :type lem-lsp-base/type:lsp-boolean :initarg :save :accessor
     notebook-document-sync-options-save :optional common-lisp:t :documentation
     "Whether save notification should be forwarded to
 the server. Will only be honored if mode === `notebook`."))
@@ -5556,7 +5556,7 @@ cell will be synced.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class notebook-document-sync-registration-options
+(lem-lsp-base/type:define-class notebook-document-sync-registration-options
     (notebook-document-sync-options static-registration-options)
   common-lisp:nil
   (:since "3.17.0")
@@ -5564,14 +5564,14 @@ cell will be synced.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-folders-server-capabilities
+(lem-lsp-base/type:define-class workspace-folders-server-capabilities
     common-lisp:nil
-  ((supported :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :supported :accessor
+  ((supported :type lem-lsp-base/type:lsp-boolean :initarg :supported :accessor
     workspace-folders-server-capabilities-supported :optional common-lisp:t :documentation
     "The server has support for workspace folders")
    (change-notifications :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string
-                    lem-language-server/protocol/lsp-type:lsp-boolean)
+    (common-lisp:or lem-lsp-base/type:lsp-string
+                    lem-lsp-base/type:lsp-boolean)
     :initarg :change-notifications :accessor
     workspace-folders-server-capabilities-change-notifications :optional common-lisp:t
     :documentation "Whether the server wants to receive workspace folder
@@ -5582,7 +5582,7 @@ under which the notification is registered on the client
 side. The ID can be used to unregister for these events
 using the `client/unregisterCapability` request.")))
 
-(lem-language-server/protocol/lsp-type:define-class file-operation-options
+(lem-lsp-base/type:define-class file-operation-options
     common-lisp:nil
   ((did-create :type file-operation-registration-options :initarg :did-create :accessor
     file-operation-options-did-create :optional common-lisp:t :documentation
@@ -5607,9 +5607,9 @@ using the `client/unregisterCapability` request.")))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class code-description
+(lem-lsp-base/type:define-class code-description
     common-lisp:nil
-  ((href :type lem-language-server/protocol/lsp-type:lsp-uri :initarg :href :accessor
+  ((href :type lem-lsp-base/type:lsp-uri :initarg :href :accessor
     code-description-href :documentation
     "An URI to open with more information about the diagnostic error."))
   (:since "3.16.0")
@@ -5617,11 +5617,11 @@ using the `client/unregisterCapability` request.")))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class diagnostic-related-information
+(lem-lsp-base/type:define-class diagnostic-related-information
     common-lisp:nil
   ((location :type location :initarg :location :accessor diagnostic-related-information-location
     :documentation "The location of this related diagnostic information.")
-   (message :type lem-language-server/protocol/lsp-type:lsp-string :initarg :message :accessor
+   (message :type lem-lsp-base/type:lsp-string :initarg :message :accessor
     diagnostic-related-information-message :documentation
     "The message of this related diagnostic information."))
   (:documentation
@@ -5629,13 +5629,13 @@ using the `client/unregisterCapability` request.")))
 used to point to code locations that cause or related to a diagnostics, e.g when duplicating
 a symbol in a scope."))
 
-(lem-language-server/protocol/lsp-type:define-class parameter-information
+(lem-lsp-base/type:define-class parameter-information
     common-lisp:nil
   ((label :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string
-                    (lem-language-server/protocol/lsp-type:lsp-tuple
-                     lem-language-server/protocol/lsp-type:lsp-uinteger
-                     lem-language-server/protocol/lsp-type:lsp-uinteger))
+    (common-lisp:or lem-lsp-base/type:lsp-string
+                    (lem-lsp-base/type:lsp-tuple
+                     lem-lsp-base/type:lsp-uinteger
+                     lem-lsp-base/type:lsp-uinteger))
     :initarg :label :accessor parameter-information-label :documentation
     "The label of this parameter information.
 
@@ -5646,23 +5646,23 @@ string representation as `Position` and `Range` does.
 *Note*: a label of type string should be a substring of its containing signature label.
 Its intended use case is to highlight the parameter label part in the `SignatureInformation.label`.")
    (documentation :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string markup-content) :initarg
+    (common-lisp:or lem-lsp-base/type:lsp-string markup-content) :initarg
     :documentation :accessor parameter-information-documentation :optional common-lisp:t
     :documentation "The human-readable doc-comment of this parameter. Will be shown
 in the UI but can be omitted."))
   (:documentation "Represents a parameter of a callable-signature. A parameter can
 have a label and a doc-comment."))
 
-(lem-language-server/protocol/lsp-type:define-class notebook-cell-text-document-filter
+(lem-lsp-base/type:define-class notebook-cell-text-document-filter
     common-lisp:nil
   ((notebook :type
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string notebook-document-filter)
+    (common-lisp:or lem-lsp-base/type:lsp-string notebook-document-filter)
     :initarg :notebook :accessor notebook-cell-text-document-filter-notebook :documentation
     "A filter that matches against the notebook
 containing the notebook cell. If a string
 value is provided it matches against the
 notebook type. '*' matches every notebook.")
-   (language :type lem-language-server/protocol/lsp-type:lsp-string :initarg :language :accessor
+   (language :type lem-lsp-base/type:lsp-string :initarg :language :accessor
     notebook-cell-text-document-filter-language :optional common-lisp:t :documentation
     "A language id like `python`.
 
@@ -5674,9 +5674,9 @@ document by different properties.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class file-operation-pattern-options
+(lem-lsp-base/type:define-class file-operation-pattern-options
     common-lisp:nil
-  ((ignore-case :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :ignore-case
+  ((ignore-case :type lem-lsp-base/type:lsp-boolean :initarg :ignore-case
     :accessor file-operation-pattern-options-ignore-case :optional common-lisp:t :documentation
     "The pattern should be matched ignoring casing."))
   (:since "3.16.0")
@@ -5684,21 +5684,21 @@ document by different properties.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class execution-summary
+(lem-lsp-base/type:define-class execution-summary
     common-lisp:nil
-  ((execution-order :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg
+  ((execution-order :type lem-lsp-base/type:lsp-uinteger :initarg
     :execution-order :accessor execution-summary-execution-order :documentation
     "A strict monotonically increasing value
 indicating the execution order of a cell
 inside a notebook.")
-   (success :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :success :accessor
+   (success :type lem-lsp-base/type:lsp-boolean :initarg :success :accessor
     execution-summary-success :optional common-lisp:t :documentation
     "Whether the execution was successful or
 not if known by the client.")))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-client-capabilities
+(lem-lsp-base/type:define-class workspace-client-capabilities
     common-lisp:nil
-  ((apply-edit :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :apply-edit
+  ((apply-edit :type lem-lsp-base/type:lsp-boolean :initarg :apply-edit
     :accessor workspace-client-capabilities-apply-edit :optional common-lisp:t :documentation
     "The client supports applying batch edits
 to the workspace by supporting the request
@@ -5720,12 +5720,12 @@ to the workspace by supporting the request
    (execute-command :type execute-command-client-capabilities :initarg :execute-command :accessor
     workspace-client-capabilities-execute-command :optional common-lisp:t :documentation
     "Capabilities specific to the `workspace/executeCommand` request.")
-   (workspace-folders :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (workspace-folders :type lem-lsp-base/type:lsp-boolean :initarg
     :workspace-folders :accessor workspace-client-capabilities-workspace-folders :optional
     common-lisp:t :since "3.6.0" :documentation "The client has support for workspace folders.
 
 @since 3.6.0")
-   (configuration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :configuration
+   (configuration :type lem-lsp-base/type:lsp-boolean :initarg :configuration
     :accessor workspace-client-capabilities-configuration :optional common-lisp:t :since "3.6.0"
     :documentation "The client supports `workspace/configuration` requests.
 
@@ -5767,7 +5767,7 @@ workspace.
 @since 3.17.0."))
   (:documentation "Workspace specific client capabilities."))
 
-(lem-language-server/protocol/lsp-type:define-class text-document-client-capabilities
+(lem-lsp-base/type:define-class text-document-client-capabilities
     common-lisp:nil
   ((synchronization :type text-document-sync-client-capabilities :initarg :synchronization
     :accessor text-document-client-capabilities-synchronization :optional common-lisp:t
@@ -5892,7 +5892,7 @@ workspace.
 @since 3.17.0"))
   (:documentation "Text document specific client capabilities."))
 
-(lem-language-server/protocol/lsp-type:define-class notebook-document-client-capabilities
+(lem-lsp-base/type:define-class notebook-document-client-capabilities
     common-lisp:nil
   ((synchronization :type notebook-document-sync-client-capabilities :initarg :synchronization
     :accessor notebook-document-client-capabilities-synchronization :since "3.17.0" :documentation
@@ -5904,9 +5904,9 @@ workspace.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class window-client-capabilities
+(lem-lsp-base/type:define-class window-client-capabilities
     common-lisp:nil
-  ((work-done-progress :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((work-done-progress :type lem-lsp-base/type:lsp-boolean :initarg
     :work-done-progress :accessor window-client-capabilities-work-done-progress :optional
     common-lisp:t :since "3.15.0" :documentation
     "It indicates whether the client supports server initiated
@@ -5929,15 +5929,15 @@ capabilities.
 
 @since 3.16.0")))
 
-(lem-language-server/protocol/lsp-type:define-class general-client-capabilities
+(lem-lsp-base/type:define-class general-client-capabilities
     common-lisp:nil
   ((stale-request-support :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((cancel :type lem-language-server/protocol/lsp-type:lsp-boolean :documentation
+    (lem-lsp-base/type:lsp-interface
+     ((cancel :type lem-lsp-base/type:lsp-boolean :documentation
        "The client will actively cancel the request.")
       (retry-on-content-modified :type
-       (lem-language-server/protocol/lsp-type:lsp-array
-        lem-language-server/protocol/lsp-type:lsp-string)
+       (lem-lsp-base/type:lsp-array
+        lem-lsp-base/type:lsp-string)
        :documentation "The list of requests for which the client
 will retry the request if it receives a
 response with error code `ContentModified`")))
@@ -5960,7 +5960,7 @@ anymore since the information is outdated).
 
 @since 3.16.0")
    (position-encodings :type
-    (lem-language-server/protocol/lsp-type:lsp-array position-encoding-kind) :initarg
+    (lem-lsp-base/type:lsp-array position-encoding-kind) :initarg
     :position-encodings :accessor general-client-capabilities-position-encodings :optional
     common-lisp:t :since "3.17.0" :documentation
     "The position encodings supported by the client. Client and server
@@ -5986,9 +5986,9 @@ side.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class relative-pattern
+(lem-lsp-base/type:define-class relative-pattern
     common-lisp:nil
-  ((base-uri :type (common-lisp:or workspace-folder lem-language-server/protocol/lsp-type:lsp-uri)
+  ((base-uri :type (common-lisp:or workspace-folder lem-lsp-base/type:lsp-uri)
     :initarg :base-uri :accessor relative-pattern-base-uri :documentation
     "A workspace folder or a base URI to which this pattern will be matched
 against relatively.")
@@ -6001,14 +6001,14 @@ folder root, but it can be another absolute URI as well.
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-edit-client-capabilities
+(lem-lsp-base/type:define-class workspace-edit-client-capabilities
     common-lisp:nil
-  ((document-changes :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((document-changes :type lem-lsp-base/type:lsp-boolean :initarg
     :document-changes :accessor workspace-edit-client-capabilities-document-changes :optional
     common-lisp:t :documentation
     "The client supports versioned document changes in `WorkspaceEdit`s")
    (resource-operations :type
-    (lem-language-server/protocol/lsp-type:lsp-array resource-operation-kind) :initarg
+    (lem-lsp-base/type:lsp-array resource-operation-kind) :initarg
     :resource-operations :accessor workspace-edit-client-capabilities-resource-operations :optional
     common-lisp:t :since "3.13.0" :documentation
     "The resource operations the client supports. Clients should at least
@@ -6021,7 +6021,7 @@ support 'create', 'rename' and 'delete' files and folders.
 fails.
 
 @since 3.13.0")
-   (normalizes-line-endings :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (normalizes-line-endings :type lem-lsp-base/type:lsp-boolean :initarg
     :normalizes-line-endings :accessor workspace-edit-client-capabilities-normalizes-line-endings
     :optional common-lisp:t :since "3.16.0" :documentation
     "Whether the client normalizes line endings to the client specific
@@ -6032,8 +6032,8 @@ character.
 
 @since 3.16.0")
    (change-annotation-support :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((groups-on-label :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+    (lem-lsp-base/type:lsp-interface
+     ((groups-on-label :type lem-lsp-base/type:lsp-boolean :optional
        common-lisp:t :documentation
        "Whether the client groups edits with equal labels into tree nodes,
 for instance all edits labelled with \"Changes in Strings\" would
@@ -6046,22 +6046,22 @@ create file, rename file and delete file changes.
 
 @since 3.16.0")))
 
-(lem-language-server/protocol/lsp-type:define-class did-change-configuration-client-capabilities
+(lem-lsp-base/type:define-class did-change-configuration-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor
     did-change-configuration-client-capabilities-dynamic-registration :optional common-lisp:t
     :documentation "Did change configuration notification supports dynamic registration.")))
 
-(lem-language-server/protocol/lsp-type:define-class did-change-watched-files-client-capabilities
+(lem-lsp-base/type:define-class did-change-watched-files-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor
     did-change-watched-files-client-capabilities-dynamic-registration :optional common-lisp:t
     :documentation "Did change watched files notification supports dynamic registration. Please note
 that the current protocol doesn't support static configuration for file changes
 from the server side.")
-   (relative-pattern-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (relative-pattern-support :type lem-lsp-base/type:lsp-boolean :initarg
     :relative-pattern-support :accessor
     did-change-watched-files-client-capabilities-relative-pattern-support :optional common-lisp:t
     :since "3.17.0" :documentation
@@ -6070,14 +6070,14 @@ or not.
 
 @since 3.17.0")))
 
-(lem-language-server/protocol/lsp-type:define-class workspace-symbol-client-capabilities
+(lem-lsp-base/type:define-class workspace-symbol-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor workspace-symbol-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation "Symbol request supports dynamic registration.")
    (symbol-kind :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((value-set :type (lem-language-server/protocol/lsp-type:lsp-array symbol-kind) :optional
+    (lem-lsp-base/type:lsp-interface
+     ((value-set :type (lem-lsp-base/type:lsp-array symbol-kind) :optional
        common-lisp:t :documentation "The symbol kind values the client supports. When this
 property exists the client also guarantees that it will
 handle values outside its set gracefully and falls back
@@ -6090,8 +6090,8 @@ the initial version of the protocol.")))
     common-lisp:t :documentation
     "Specific capabilities for the `SymbolKind` in the `workspace/symbol` request.")
    (tag-support :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((value-set :type (lem-language-server/protocol/lsp-type:lsp-array symbol-tag) :documentation
+    (lem-lsp-base/type:lsp-interface
+     ((value-set :type (lem-lsp-base/type:lsp-array symbol-tag) :documentation
        "The tags supported by the client.")))
     :initarg :tag-support :accessor workspace-symbol-client-capabilities-tag-support :optional
     common-lisp:t :since "3.16.0" :documentation "The client supports tags on `SymbolInformation`.
@@ -6099,10 +6099,10 @@ Clients supporting tags have to handle unknown tags gracefully.
 
 @since 3.16.0")
    (resolve-support :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
+    (lem-lsp-base/type:lsp-interface
      ((properties :type
-       (lem-language-server/protocol/lsp-type:lsp-array
-        lem-language-server/protocol/lsp-type:lsp-string)
+       (lem-lsp-base/type:lsp-array
+        lem-lsp-base/type:lsp-string)
        :documentation "The properties that a client can resolve lazily. Usually
 `location.range`")))
     :initarg :resolve-support :accessor workspace-symbol-client-capabilities-resolve-support
@@ -6114,16 +6114,16 @@ properties.
 @since 3.17.0"))
   (:documentation "Client capabilities for a {@link WorkspaceSymbolRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class execute-command-client-capabilities
+(lem-lsp-base/type:define-class execute-command-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor execute-command-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation "Execute command supports dynamic registration."))
   (:documentation "The client capabilities of a {@link ExecuteCommandRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens-workspace-client-capabilities
+(lem-lsp-base/type:define-class semantic-tokens-workspace-client-capabilities
     common-lisp:nil
-  ((refresh-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((refresh-support :type lem-lsp-base/type:lsp-boolean :initarg
     :refresh-support :accessor semantic-tokens-workspace-client-capabilities-refresh-support
     :optional common-lisp:t :documentation
     "Whether the client implementation supports a refresh request sent from
@@ -6136,9 +6136,9 @@ wide change that requires such a calculation."))
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class code-lens-workspace-client-capabilities
+(lem-lsp-base/type:define-class code-lens-workspace-client-capabilities
     common-lisp:nil
-  ((refresh-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((refresh-support :type lem-lsp-base/type:lsp-boolean :initarg
     :refresh-support :accessor code-lens-workspace-client-capabilities-refresh-support :optional
     common-lisp:t :documentation
     "Whether the client implementation supports a refresh request sent from the
@@ -6151,28 +6151,28 @@ change that requires such a calculation."))
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class file-operation-client-capabilities
+(lem-lsp-base/type:define-class file-operation-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor file-operation-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether the client supports dynamic registration for file requests/notifications.")
-   (did-create :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :did-create
+   (did-create :type lem-lsp-base/type:lsp-boolean :initarg :did-create
     :accessor file-operation-client-capabilities-did-create :optional common-lisp:t :documentation
     "The client has support for sending didCreateFiles notifications.")
-   (will-create :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :will-create
+   (will-create :type lem-lsp-base/type:lsp-boolean :initarg :will-create
     :accessor file-operation-client-capabilities-will-create :optional common-lisp:t :documentation
     "The client has support for sending willCreateFiles requests.")
-   (did-rename :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :did-rename
+   (did-rename :type lem-lsp-base/type:lsp-boolean :initarg :did-rename
     :accessor file-operation-client-capabilities-did-rename :optional common-lisp:t :documentation
     "The client has support for sending didRenameFiles notifications.")
-   (will-rename :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :will-rename
+   (will-rename :type lem-lsp-base/type:lsp-boolean :initarg :will-rename
     :accessor file-operation-client-capabilities-will-rename :optional common-lisp:t :documentation
     "The client has support for sending willRenameFiles requests.")
-   (did-delete :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :did-delete
+   (did-delete :type lem-lsp-base/type:lsp-boolean :initarg :did-delete
     :accessor file-operation-client-capabilities-did-delete :optional common-lisp:t :documentation
     "The client has support for sending didDeleteFiles notifications.")
-   (will-delete :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :will-delete
+   (will-delete :type lem-lsp-base/type:lsp-boolean :initarg :will-delete
     :accessor file-operation-client-capabilities-will-delete :optional common-lisp:t :documentation
     "The client has support for sending willDeleteFiles requests."))
   (:since "3.16.0")
@@ -6183,9 +6183,9 @@ like renaming a file in the UI.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inline-value-workspace-client-capabilities
+(lem-lsp-base/type:define-class inline-value-workspace-client-capabilities
     common-lisp:nil
-  ((refresh-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((refresh-support :type lem-lsp-base/type:lsp-boolean :initarg
     :refresh-support :accessor inline-value-workspace-client-capabilities-refresh-support :optional
     common-lisp:t :documentation
     "Whether the client implementation supports a refresh request sent from the
@@ -6200,9 +6200,9 @@ change that requires such a calculation."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inlay-hint-workspace-client-capabilities
+(lem-lsp-base/type:define-class inlay-hint-workspace-client-capabilities
     common-lisp:nil
-  ((refresh-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((refresh-support :type lem-lsp-base/type:lsp-boolean :initarg
     :refresh-support :accessor inlay-hint-workspace-client-capabilities-refresh-support :optional
     common-lisp:t :documentation
     "Whether the client implementation supports a refresh request sent from
@@ -6217,9 +6217,9 @@ change that requires such a calculation."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class diagnostic-workspace-client-capabilities
+(lem-lsp-base/type:define-class diagnostic-workspace-client-capabilities
     common-lisp:nil
-  ((refresh-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((refresh-support :type lem-lsp-base/type:lsp-boolean :initarg
     :refresh-support :accessor diagnostic-workspace-client-capabilities-refresh-support :optional
     common-lisp:t :documentation
     "Whether the client implementation supports a refresh request sent from
@@ -6234,52 +6234,52 @@ change that requires such a calculation."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class text-document-sync-client-capabilities
+(lem-lsp-base/type:define-class text-document-sync-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor text-document-sync-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether text document synchronization supports dynamic registration.")
-   (will-save :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :will-save :accessor
+   (will-save :type lem-lsp-base/type:lsp-boolean :initarg :will-save :accessor
     text-document-sync-client-capabilities-will-save :optional common-lisp:t :documentation
     "The client supports sending will save notifications.")
-   (will-save-wait-until :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (will-save-wait-until :type lem-lsp-base/type:lsp-boolean :initarg
     :will-save-wait-until :accessor text-document-sync-client-capabilities-will-save-wait-until
     :optional common-lisp:t :documentation "The client supports sending a will save request and
 waits for a response providing text edits which will
 be applied to the document before it is saved.")
-   (did-save :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :did-save :accessor
+   (did-save :type lem-lsp-base/type:lsp-boolean :initarg :did-save :accessor
     text-document-sync-client-capabilities-did-save :optional common-lisp:t :documentation
     "The client supports did save notifications.")))
 
-(lem-language-server/protocol/lsp-type:define-class completion-client-capabilities
+(lem-lsp-base/type:define-class completion-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor completion-client-capabilities-dynamic-registration :optional
     common-lisp:t :documentation "Whether completion supports dynamic registration.")
    (completion-item :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((snippet-support :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+    (lem-lsp-base/type:lsp-interface
+     ((snippet-support :type lem-lsp-base/type:lsp-boolean :optional
        common-lisp:t :documentation "Client supports snippets as insert text.
 
 A snippet can define tab stops and placeholders with `$1`, `$2`
 and `${3:foo}`. `$0` defines the final tab stop, it defaults to
 the end of the snippet. Placeholders with equal identifiers are linked,
 that is typing in one will update others too.")
-      (commit-characters-support :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+      (commit-characters-support :type lem-lsp-base/type:lsp-boolean :optional
        common-lisp:t :documentation "Client supports commit characters on a completion item.")
-      (documentation-format :type (lem-language-server/protocol/lsp-type:lsp-array markup-kind)
+      (documentation-format :type (lem-lsp-base/type:lsp-array markup-kind)
        :optional common-lisp:t :documentation
        "Client supports the following content formats for the documentation
 property. The order describes the preferred format of the client.")
-      (deprecated-support :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+      (deprecated-support :type lem-lsp-base/type:lsp-boolean :optional
        common-lisp:t :documentation
        "Client supports the deprecated property on a completion item.")
-      (preselect-support :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+      (preselect-support :type lem-lsp-base/type:lsp-boolean :optional
        common-lisp:t :documentation "Client supports the preselect property on a completion item.")
       (tag-support :type
-       (lem-language-server/protocol/lsp-type:lsp-interface
-        ((value-set :type (lem-language-server/protocol/lsp-type:lsp-array completion-item-tag)
+       (lem-lsp-base/type:lsp-interface
+        ((value-set :type (lem-lsp-base/type:lsp-array completion-item-tag)
           :documentation "The tags supported by the client.")))
        :optional common-lisp:t :since "3.15.0" :documentation
        "Client supports the tag property on a completion item. Clients supporting
@@ -6288,17 +6288,17 @@ preserve unknown tags when sending a completion item back to the server in
 a resolve call.
 
 @since 3.15.0")
-      (insert-replace-support :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+      (insert-replace-support :type lem-lsp-base/type:lsp-boolean :optional
        common-lisp:t :since "3.16.0" :documentation
        "Client support insert replace edit to control different behavior if a
 completion item is inserted in the text or should replace text.
 
 @since 3.16.0")
       (resolve-support :type
-       (lem-language-server/protocol/lsp-type:lsp-interface
+       (lem-lsp-base/type:lsp-interface
         ((properties :type
-          (lem-language-server/protocol/lsp-type:lsp-array
-           lem-language-server/protocol/lsp-type:lsp-string)
+          (lem-lsp-base/type:lsp-array
+           lem-lsp-base/type:lsp-string)
           :documentation "The properties that a client can resolve lazily.")))
        :optional common-lisp:t :since "3.16.0" :documentation
        "Indicates which properties a client can resolve lazily on a completion
@@ -6307,15 +6307,15 @@ and `details` could be resolved lazily.
 
 @since 3.16.0")
       (insert-text-mode-support :type
-       (lem-language-server/protocol/lsp-type:lsp-interface
-        ((value-set :type (lem-language-server/protocol/lsp-type:lsp-array insert-text-mode))))
+       (lem-lsp-base/type:lsp-interface
+        ((value-set :type (lem-lsp-base/type:lsp-array insert-text-mode))))
        :optional common-lisp:t :since "3.16.0" :documentation
        "The client supports the `insertTextMode` property on
 a completion item to override the whitespace handling mode
 as defined by the client (see `insertTextMode`).
 
 @since 3.16.0")
-      (label-details-support :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+      (label-details-support :type lem-lsp-base/type:lsp-boolean :optional
        common-lisp:t :since "3.17.0" :documentation
        "The client has support for completion item label
 details (see also `CompletionItemLabelDetails`).
@@ -6325,9 +6325,9 @@ details (see also `CompletionItemLabelDetails`).
     common-lisp:t :documentation "The client supports the following `CompletionItem` specific
 capabilities.")
    (completion-item-kind :type
-                         (lem-language-server/protocol/lsp-type:lsp-interface
+                         (lem-lsp-base/type:lsp-interface
                           ((value-set :type
-                            (lem-language-server/protocol/lsp-type:lsp-array completion-item-kind)
+                            (lem-lsp-base/type:lsp-array completion-item-kind)
                             :optional common-lisp:t :documentation
                             "The completion item kind values the client supports. When this
 property exists the client also guarantees that it will
@@ -6347,15 +6347,15 @@ when accepting a completion item that uses multi line
 text in either `insertText` or `textEdit`.
 
 @since 3.17.0")
-   (context-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (context-support :type lem-lsp-base/type:lsp-boolean :initarg
     :context-support :accessor completion-client-capabilities-context-support :optional
     common-lisp:t :documentation "The client supports to send additional context information for a
 `textDocument/completion` request.")
    (completion-list :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
+    (lem-lsp-base/type:lsp-interface
      ((item-defaults :type
-       (lem-language-server/protocol/lsp-type:lsp-array
-        lem-language-server/protocol/lsp-type:lsp-string)
+       (lem-lsp-base/type:lsp-array
+        lem-lsp-base/type:lsp-string)
        :optional common-lisp:t :since "3.17.0" :documentation
        "The client supports the following itemDefaults on
 a completion list.
@@ -6373,30 +6373,30 @@ capabilities.
 @since 3.17.0"))
   (:documentation "Completion client capabilities"))
 
-(lem-language-server/protocol/lsp-type:define-class hover-client-capabilities
+(lem-lsp-base/type:define-class hover-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor hover-client-capabilities-dynamic-registration :optional
     common-lisp:t :documentation "Whether hover supports dynamic registration.")
-   (content-format :type (lem-language-server/protocol/lsp-type:lsp-array markup-kind) :initarg
+   (content-format :type (lem-lsp-base/type:lsp-array markup-kind) :initarg
     :content-format :accessor hover-client-capabilities-content-format :optional common-lisp:t
     :documentation "Client supports the following content formats for the content
 property. The order describes the preferred format of the client.")))
 
-(lem-language-server/protocol/lsp-type:define-class signature-help-client-capabilities
+(lem-lsp-base/type:define-class signature-help-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor signature-help-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation "Whether signature help supports dynamic registration.")
    (signature-information :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((documentation-format :type (lem-language-server/protocol/lsp-type:lsp-array markup-kind)
+    (lem-lsp-base/type:lsp-interface
+     ((documentation-format :type (lem-lsp-base/type:lsp-array markup-kind)
        :optional common-lisp:t :documentation
        "Client supports the following content formats for the documentation
 property. The order describes the preferred format of the client.")
       (parameter-information :type
-       (lem-language-server/protocol/lsp-type:lsp-interface
-        ((label-offset-support :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+       (lem-lsp-base/type:lsp-interface
+        ((label-offset-support :type lem-lsp-base/type:lsp-boolean :optional
           common-lisp:t :since "3.14.0" :documentation
           "The client supports processing label offsets instead of a
 simple label string.
@@ -6404,7 +6404,7 @@ simple label string.
 @since 3.14.0")))
        :optional common-lisp:t :documentation
        "Client capabilities specific to parameter information.")
-      (active-parameter-support :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+      (active-parameter-support :type lem-lsp-base/type:lsp-boolean :optional
        common-lisp:t :since "3.16.0" :documentation
        "The client supports the `activeParameter` property on `SignatureInformation`
 literal.
@@ -6414,7 +6414,7 @@ literal.
     signature-help-client-capabilities-signature-information :optional common-lisp:t :documentation
     "The client supports the following `SignatureInformation`
 specific properties.")
-   (context-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (context-support :type lem-lsp-base/type:lsp-boolean :initarg
     :context-support :accessor signature-help-client-capabilities-context-support :optional
     common-lisp:t :since "3.15.0" :documentation
     "The client supports to send additional context information for a
@@ -6425,56 +6425,56 @@ contextSupport will also support the `retriggerCharacters` on
 @since 3.15.0"))
   (:documentation "Client Capabilities for a {@link SignatureHelpRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class declaration-client-capabilities
+(lem-lsp-base/type:define-class declaration-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor declaration-client-capabilities-dynamic-registration :optional
     common-lisp:t :documentation
     "Whether declaration supports dynamic registration. If this is set to `true`
 the client supports the new `DeclarationRegistrationOptions` return value
 for the corresponding server capability as well.")
-   (link-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :link-support
+   (link-support :type lem-lsp-base/type:lsp-boolean :initarg :link-support
     :accessor declaration-client-capabilities-link-support :optional common-lisp:t :documentation
     "The client supports additional metadata in the form of declaration links."))
   (:since "3.14.0")
   (:documentation "@since 3.14.0"))
 
-(lem-language-server/protocol/lsp-type:define-class definition-client-capabilities
+(lem-lsp-base/type:define-class definition-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor definition-client-capabilities-dynamic-registration :optional
     common-lisp:t :documentation "Whether definition supports dynamic registration.")
-   (link-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :link-support
+   (link-support :type lem-lsp-base/type:lsp-boolean :initarg :link-support
     :accessor definition-client-capabilities-link-support :optional common-lisp:t :since "3.14.0"
     :documentation "The client supports additional metadata in the form of definition links.
 
 @since 3.14.0"))
   (:documentation "Client Capabilities for a {@link DefinitionRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class type-definition-client-capabilities
+(lem-lsp-base/type:define-class type-definition-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor type-definition-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether implementation supports dynamic registration. If this is set to `true`
 the client supports the new `TypeDefinitionRegistrationOptions` return value
 for the corresponding server capability as well.")
-   (link-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :link-support
+   (link-support :type lem-lsp-base/type:lsp-boolean :initarg :link-support
     :accessor type-definition-client-capabilities-link-support :optional common-lisp:t
     :documentation "The client supports additional metadata in the form of definition links.
 
 Since 3.14.0"))
   (:documentation "Since 3.6.0"))
 
-(lem-language-server/protocol/lsp-type:define-class implementation-client-capabilities
+(lem-lsp-base/type:define-class implementation-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor implementation-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether implementation supports dynamic registration. If this is set to `true`
 the client supports the new `ImplementationRegistrationOptions` return value
 for the corresponding server capability as well.")
-   (link-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :link-support
+   (link-support :type lem-lsp-base/type:lsp-boolean :initarg :link-support
     :accessor implementation-client-capabilities-link-support :optional common-lisp:t :since
     "3.14.0" :documentation
     "The client supports additional metadata in the form of definition links.
@@ -6483,30 +6483,30 @@ for the corresponding server capability as well.")
   (:since "3.6.0")
   (:documentation "@since 3.6.0"))
 
-(lem-language-server/protocol/lsp-type:define-class reference-client-capabilities
+(lem-lsp-base/type:define-class reference-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor reference-client-capabilities-dynamic-registration :optional
     common-lisp:t :documentation "Whether references supports dynamic registration."))
   (:documentation "Client Capabilities for a {@link ReferencesRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-highlight-client-capabilities
+(lem-lsp-base/type:define-class document-highlight-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor document-highlight-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether document highlight supports dynamic registration."))
   (:documentation "Client Capabilities for a {@link DocumentHighlightRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-symbol-client-capabilities
+(lem-lsp-base/type:define-class document-symbol-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor document-symbol-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether document symbol supports dynamic registration.")
    (symbol-kind :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((value-set :type (lem-language-server/protocol/lsp-type:lsp-array symbol-kind) :optional
+    (lem-lsp-base/type:lsp-interface
+     ((value-set :type (lem-lsp-base/type:lsp-array symbol-kind) :optional
        common-lisp:t :documentation "The symbol kind values the client supports. When this
 property exists the client also guarantees that it will
 handle values outside its set gracefully and falls back
@@ -6518,13 +6518,13 @@ the initial version of the protocol.")))
     :initarg :symbol-kind :accessor document-symbol-client-capabilities-symbol-kind :optional
     common-lisp:t :documentation "Specific capabilities for the `SymbolKind` in the
 `textDocument/documentSymbol` request.")
-   (hierarchical-document-symbol-support :type lem-language-server/protocol/lsp-type:lsp-boolean
+   (hierarchical-document-symbol-support :type lem-lsp-base/type:lsp-boolean
     :initarg :hierarchical-document-symbol-support :accessor
     document-symbol-client-capabilities-hierarchical-document-symbol-support :optional
     common-lisp:t :documentation "The client supports hierarchical document symbols.")
    (tag-support :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((value-set :type (lem-language-server/protocol/lsp-type:lsp-array symbol-tag) :documentation
+    (lem-lsp-base/type:lsp-interface
+     ((value-set :type (lem-lsp-base/type:lsp-array symbol-tag) :documentation
        "The tags supported by the client.")))
     :initarg :tag-support :accessor document-symbol-client-capabilities-tag-support :optional
     common-lisp:t :since "3.16.0" :documentation
@@ -6533,7 +6533,7 @@ the initial version of the protocol.")))
 Clients supporting tags have to handle unknown tags gracefully.
 
 @since 3.16.0")
-   (label-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :label-support
+   (label-support :type lem-lsp-base/type:lsp-boolean :initarg :label-support
     :accessor document-symbol-client-capabilities-label-support :optional common-lisp:t :since
     "3.16.0" :documentation "The client supports an additional label presented in the UI when
 registering a document symbol provider.
@@ -6541,17 +6541,17 @@ registering a document symbol provider.
 @since 3.16.0"))
   (:documentation "Client Capabilities for a {@link DocumentSymbolRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class code-action-client-capabilities
+(lem-lsp-base/type:define-class code-action-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor code-action-client-capabilities-dynamic-registration :optional
     common-lisp:t :documentation "Whether code action supports dynamic registration.")
    (code-action-literal-support :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
+    (lem-lsp-base/type:lsp-interface
      ((code-action-kind :type
-                        (lem-language-server/protocol/lsp-type:lsp-interface
+                        (lem-lsp-base/type:lsp-interface
                          ((value-set :type
-                           (lem-language-server/protocol/lsp-type:lsp-array code-action-kind)
+                           (lem-lsp-base/type:lsp-array code-action-kind)
                            :documentation
                            "The code action kind values the client supports. When this
 property exists the client also guarantees that it will
@@ -6566,19 +6566,19 @@ response of the `textDocument/codeAction` request. If the property is not
 set the request can only return `Command` literals.
 
 @since 3.8.0")
-   (is-preferred-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (is-preferred-support :type lem-lsp-base/type:lsp-boolean :initarg
     :is-preferred-support :accessor code-action-client-capabilities-is-preferred-support :optional
     common-lisp:t :since "3.15.0" :documentation
     "Whether code action supports the `isPreferred` property.
 
 @since 3.15.0")
-   (disabled-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (disabled-support :type lem-lsp-base/type:lsp-boolean :initarg
     :disabled-support :accessor code-action-client-capabilities-disabled-support :optional
     common-lisp:t :since "3.16.0" :documentation
     "Whether code action supports the `disabled` property.
 
 @since 3.16.0")
-   (data-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :data-support
+   (data-support :type lem-lsp-base/type:lsp-boolean :initarg :data-support
     :accessor code-action-client-capabilities-data-support :optional common-lisp:t :since "3.16.0"
     :documentation "Whether code action supports the `data` property which is
 preserved between a `textDocument/codeAction` and a
@@ -6586,10 +6586,10 @@ preserved between a `textDocument/codeAction` and a
 
 @since 3.16.0")
    (resolve-support :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
+    (lem-lsp-base/type:lsp-interface
      ((properties :type
-       (lem-language-server/protocol/lsp-type:lsp-array
-        lem-language-server/protocol/lsp-type:lsp-string)
+       (lem-lsp-base/type:lsp-array
+        lem-lsp-base/type:lsp-string)
        :documentation "The properties that a client can resolve lazily.")))
     :initarg :resolve-support :accessor code-action-client-capabilities-resolve-support :optional
     common-lisp:t :since "3.16.0" :documentation
@@ -6597,7 +6597,7 @@ preserved between a `textDocument/codeAction` and a
 properties via a separate `codeAction/resolve` request.
 
 @since 3.16.0")
-   (honors-change-annotations :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (honors-change-annotations :type lem-lsp-base/type:lsp-boolean :initarg
     :honors-change-annotations :accessor code-action-client-capabilities-honors-change-annotations
     :optional common-lisp:t :since "3.16.0" :documentation
     "Whether the client honors the change annotations in
@@ -6609,19 +6609,19 @@ for confirmation.
 @since 3.16.0"))
   (:documentation "The Client Capabilities of a {@link CodeActionRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class code-lens-client-capabilities
+(lem-lsp-base/type:define-class code-lens-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor code-lens-client-capabilities-dynamic-registration :optional
     common-lisp:t :documentation "Whether code lens supports dynamic registration."))
   (:documentation "The client capabilities  of a {@link CodeLensRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-link-client-capabilities
+(lem-lsp-base/type:define-class document-link-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor document-link-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation "Whether document link supports dynamic registration.")
-   (tooltip-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (tooltip-support :type lem-lsp-base/type:lsp-boolean :initarg
     :tooltip-support :accessor document-link-client-capabilities-tooltip-support :optional
     common-lisp:t :since "3.15.0" :documentation
     "Whether the client supports the `tooltip` property on `DocumentLink`.
@@ -6629,44 +6629,44 @@ for confirmation.
 @since 3.15.0"))
   (:documentation "The client capabilities of a {@link DocumentLinkRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-color-client-capabilities
+(lem-lsp-base/type:define-class document-color-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor document-color-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether implementation supports dynamic registration. If this is set to `true`
 the client supports the new `DocumentColorRegistrationOptions` return value
 for the corresponding server capability as well.")))
 
-(lem-language-server/protocol/lsp-type:define-class document-formatting-client-capabilities
+(lem-lsp-base/type:define-class document-formatting-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor document-formatting-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation "Whether formatting supports dynamic registration."))
   (:documentation "Client capabilities of a {@link DocumentFormattingRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-range-formatting-client-capabilities
+(lem-lsp-base/type:define-class document-range-formatting-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor
     document-range-formatting-client-capabilities-dynamic-registration :optional common-lisp:t
     :documentation "Whether range formatting supports dynamic registration."))
   (:documentation "Client capabilities of a {@link DocumentRangeFormattingRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class document-on-type-formatting-client-capabilities
+(lem-lsp-base/type:define-class document-on-type-formatting-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor
     document-on-type-formatting-client-capabilities-dynamic-registration :optional common-lisp:t
     :documentation "Whether on type formatting supports dynamic registration."))
   (:documentation "Client capabilities of a {@link DocumentOnTypeFormattingRequest}."))
 
-(lem-language-server/protocol/lsp-type:define-class rename-client-capabilities
+(lem-lsp-base/type:define-class rename-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor rename-client-capabilities-dynamic-registration :optional
     common-lisp:t :documentation "Whether rename supports dynamic registration.")
-   (prepare-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (prepare-support :type lem-lsp-base/type:lsp-boolean :initarg
     :prepare-support :accessor rename-client-capabilities-prepare-support :optional common-lisp:t
     :since "3.12.0" :documentation "Client supports testing for validity of rename operations
 before execution.
@@ -6681,7 +6681,7 @@ The value indicates the default behavior used by the
 client.
 
 @since 3.16.0")
-   (honors-change-annotations :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (honors-change-annotations :type lem-lsp-base/type:lsp-boolean :initarg
     :honors-change-annotations :accessor rename-client-capabilities-honors-change-annotations
     :optional common-lisp:t :since "3.16.0" :documentation
     "Whether the client honors the change annotations in
@@ -6692,30 +6692,30 @@ for confirmation.
 
 @since 3.16.0")))
 
-(lem-language-server/protocol/lsp-type:define-class folding-range-client-capabilities
+(lem-lsp-base/type:define-class folding-range-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor folding-range-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether implementation supports dynamic registration for folding range
 providers. If this is set to `true` the client supports the new
 `FoldingRangeRegistrationOptions` return value for the corresponding
 server capability as well.")
-   (range-limit :type lem-language-server/protocol/lsp-type:lsp-uinteger :initarg :range-limit
+   (range-limit :type lem-lsp-base/type:lsp-uinteger :initarg :range-limit
     :accessor folding-range-client-capabilities-range-limit :optional common-lisp:t :documentation
     "The maximum number of folding ranges that the client prefers to receive
 per document. The value serves as a hint, servers are free to follow the
 limit.")
-   (line-folding-only :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (line-folding-only :type lem-lsp-base/type:lsp-boolean :initarg
     :line-folding-only :accessor folding-range-client-capabilities-line-folding-only :optional
     common-lisp:t :documentation
     "If set, the client signals that it only supports folding complete lines.
 If set, client will ignore specified `startCharacter` and `endCharacter`
 properties in a FoldingRange.")
    (folding-range-kind :type
-                       (lem-language-server/protocol/lsp-type:lsp-interface
+                       (lem-lsp-base/type:lsp-interface
                         ((value-set :type
-                          (lem-language-server/protocol/lsp-type:lsp-array folding-range-kind)
+                          (lem-lsp-base/type:lsp-array folding-range-kind)
                           :optional common-lisp:t :documentation
                           "The folding range kind values the client supports. When this
 property exists the client also guarantees that it will
@@ -6727,8 +6727,8 @@ to a default value when unknown.")))
 
 @since 3.17.0")
    (folding-range :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((collapsed-text :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+    (lem-lsp-base/type:lsp-interface
+     ((collapsed-text :type lem-lsp-base/type:lsp-boolean :optional
        common-lisp:t :since "3.17.0" :documentation
        "If set, the client signals that it supports setting collapsedText on
 folding ranges to display custom labels instead of the default text.
@@ -6739,24 +6739,24 @@ folding ranges to display custom labels instead of the default text.
 
 @since 3.17.0")))
 
-(lem-language-server/protocol/lsp-type:define-class selection-range-client-capabilities
+(lem-lsp-base/type:define-class selection-range-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor selection-range-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether implementation supports dynamic registration for selection range providers. If this is set to `true`
 the client supports the new `SelectionRangeRegistrationOptions` return value for the corresponding server
 capability as well.")))
 
-(lem-language-server/protocol/lsp-type:define-class publish-diagnostics-client-capabilities
+(lem-lsp-base/type:define-class publish-diagnostics-client-capabilities
     common-lisp:nil
-  ((related-information :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((related-information :type lem-lsp-base/type:lsp-boolean :initarg
     :related-information :accessor publish-diagnostics-client-capabilities-related-information
     :optional common-lisp:t :documentation
     "Whether the clients accepts diagnostics with related information.")
    (tag-support :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((value-set :type (lem-language-server/protocol/lsp-type:lsp-array diagnostic-tag)
+    (lem-lsp-base/type:lsp-interface
+     ((value-set :type (lem-lsp-base/type:lsp-array diagnostic-tag)
        :documentation "The tags supported by the client.")))
     :initarg :tag-support :accessor publish-diagnostics-client-capabilities-tag-support :optional
     common-lisp:t :since "3.15.0" :documentation
@@ -6764,20 +6764,20 @@ capability as well.")))
 Clients supporting tags have to handle unknown tags gracefully.
 
 @since 3.15.0")
-   (version-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (version-support :type lem-lsp-base/type:lsp-boolean :initarg
     :version-support :accessor publish-diagnostics-client-capabilities-version-support :optional
     common-lisp:t :since "3.15.0" :documentation
     "Whether the client interprets the version property of the
 `textDocument/publishDiagnostics` notification's parameter.
 
 @since 3.15.0")
-   (code-description-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (code-description-support :type lem-lsp-base/type:lsp-boolean :initarg
     :code-description-support :accessor
     publish-diagnostics-client-capabilities-code-description-support :optional common-lisp:t :since
     "3.16.0" :documentation "Client supports a codeDescription property
 
 @since 3.16.0")
-   (data-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :data-support
+   (data-support :type lem-lsp-base/type:lsp-boolean :initarg :data-support
     :accessor publish-diagnostics-client-capabilities-data-support :optional common-lisp:t :since
     "3.16.0" :documentation "Whether code action supports the `data` property which is
 preserved between a `textDocument/publishDiagnostics` and
@@ -6786,9 +6786,9 @@ preserved between a `textDocument/publishDiagnostics` and
 @since 3.16.0"))
   (:documentation "The publish diagnostic client capabilities."))
 
-(lem-language-server/protocol/lsp-type:define-class call-hierarchy-client-capabilities
+(lem-lsp-base/type:define-class call-hierarchy-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor call-hierarchy-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether implementation supports dynamic registration. If this is set to `true`
@@ -6797,26 +6797,26 @@ return value for the corresponding server capability as well."))
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class semantic-tokens-client-capabilities
+(lem-lsp-base/type:define-class semantic-tokens-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor semantic-tokens-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether implementation supports dynamic registration. If this is set to `true`
 the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 return value for the corresponding server capability as well.")
    (requests :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
+    (lem-lsp-base/type:lsp-interface
      ((range :type
-       (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean
-                       (lem-language-server/protocol/lsp-type:lsp-interface common-lisp:nil))
+       (common-lisp:or lem-lsp-base/type:lsp-boolean
+                       (lem-lsp-base/type:lsp-interface common-lisp:nil))
        :optional common-lisp:t :documentation
        "The client will send the `textDocument/semanticTokens/range` request if
 the server provides a corresponding handler.")
       (full :type
-       (common-lisp:or lem-language-server/protocol/lsp-type:lsp-boolean
-                       (lem-language-server/protocol/lsp-type:lsp-interface
-                        ((delta :type lem-language-server/protocol/lsp-type:lsp-boolean :optional
+       (common-lisp:or lem-lsp-base/type:lsp-boolean
+                       (lem-lsp-base/type:lsp-interface
+                        ((delta :type lem-lsp-base/type:lsp-boolean :optional
                           common-lisp:t :documentation
                           "The client will send the `textDocument/semanticTokens/full/delta` request if
 the server provides a corresponding handler."))))
@@ -6833,27 +6833,27 @@ server. If for example the client capability `requests.full` and
 range provider the client might not render a minimap correctly or might
 even decide to not show any semantic tokens at all.")
    (token-types :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-string)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-string)
     :initarg :token-types :accessor semantic-tokens-client-capabilities-token-types :documentation
     "The token types that the client supports.")
    (token-modifiers :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-string)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-string)
     :initarg :token-modifiers :accessor semantic-tokens-client-capabilities-token-modifiers
     :documentation "The token modifiers that the client supports.")
-   (formats :type (lem-language-server/protocol/lsp-type:lsp-array token-format) :initarg :formats
+   (formats :type (lem-lsp-base/type:lsp-array token-format) :initarg :formats
     :accessor semantic-tokens-client-capabilities-formats :documentation
     "The token formats the clients supports.")
-   (overlapping-token-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (overlapping-token-support :type lem-lsp-base/type:lsp-boolean :initarg
     :overlapping-token-support :accessor
     semantic-tokens-client-capabilities-overlapping-token-support :optional common-lisp:t
     :documentation "Whether the client supports tokens that can overlap each other.")
-   (multiline-token-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (multiline-token-support :type lem-lsp-base/type:lsp-boolean :initarg
     :multiline-token-support :accessor semantic-tokens-client-capabilities-multiline-token-support
     :optional common-lisp:t :documentation
     "Whether the client supports tokens that can span multiple lines.")
-   (server-cancel-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (server-cancel-support :type lem-lsp-base/type:lsp-boolean :initarg
     :server-cancel-support :accessor semantic-tokens-client-capabilities-server-cancel-support
     :optional common-lisp:t :since "3.17.0" :documentation
     "Whether the client allows the server to actively cancel a
@@ -6862,7 +6862,7 @@ LSPErrorCodes.ServerCancelled. If a server does the client
 needs to retrigger the request.
 
 @since 3.17.0")
-   (augments-syntax-tokens :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (augments-syntax-tokens :type lem-lsp-base/type:lsp-boolean :initarg
     :augments-syntax-tokens :accessor semantic-tokens-client-capabilities-augments-syntax-tokens
     :optional common-lisp:t :since "3.17.0" :documentation
     "Whether the client uses semantic tokens to augment existing
@@ -6878,9 +6878,9 @@ specified.
   (:since "3.16.0")
   (:documentation "@since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class linked-editing-range-client-capabilities
+(lem-lsp-base/type:define-class linked-editing-range-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor linked-editing-range-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether implementation supports dynamic registration. If this is set to `true`
@@ -6891,9 +6891,9 @@ return value for the corresponding server capability as well."))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class moniker-client-capabilities
+(lem-lsp-base/type:define-class moniker-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor moniker-client-capabilities-dynamic-registration :optional
     common-lisp:t :documentation
     "Whether moniker supports dynamic registration. If this is set to `true`
@@ -6904,9 +6904,9 @@ for the corresponding server capability as well."))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class type-hierarchy-client-capabilities
+(lem-lsp-base/type:define-class type-hierarchy-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor type-hierarchy-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether implementation supports dynamic registration. If this is set to `true`
@@ -6915,9 +6915,9 @@ return value for the corresponding server capability as well."))
   (:since "3.17.0")
   (:documentation "@since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inline-value-client-capabilities
+(lem-lsp-base/type:define-class inline-value-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor inline-value-client-capabilities-dynamic-registration :optional
     common-lisp:t :documentation
     "Whether implementation supports dynamic registration for inline value providers."))
@@ -6926,16 +6926,16 @@ return value for the corresponding server capability as well."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class inlay-hint-client-capabilities
+(lem-lsp-base/type:define-class inlay-hint-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor inlay-hint-client-capabilities-dynamic-registration :optional
     common-lisp:t :documentation "Whether inlay hints support dynamic registration.")
    (resolve-support :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
+    (lem-lsp-base/type:lsp-interface
      ((properties :type
-       (lem-language-server/protocol/lsp-type:lsp-array
-        lem-language-server/protocol/lsp-type:lsp-string)
+       (lem-lsp-base/type:lsp-array
+        lem-lsp-base/type:lsp-string)
        :documentation "The properties that a client can resolve lazily.")))
     :initarg :resolve-support :accessor inlay-hint-client-capabilities-resolve-support :optional
     common-lisp:t :documentation "Indicates which properties a client can resolve lazily on an inlay
@@ -6945,15 +6945,15 @@ hint."))
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class diagnostic-client-capabilities
+(lem-lsp-base/type:define-class diagnostic-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor diagnostic-client-capabilities-dynamic-registration :optional
     common-lisp:t :documentation
     "Whether implementation supports dynamic registration. If this is set to `true`
 the client supports the new `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 return value for the corresponding server capability as well.")
-   (related-document-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (related-document-support :type lem-lsp-base/type:lsp-boolean :initarg
     :related-document-support :accessor diagnostic-client-capabilities-related-document-support
     :optional common-lisp:t :documentation
     "Whether the clients supports related documents for document diagnostic pulls."))
@@ -6962,16 +6962,16 @@ return value for the corresponding server capability as well.")
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class notebook-document-sync-client-capabilities
+(lem-lsp-base/type:define-class notebook-document-sync-client-capabilities
     common-lisp:nil
-  ((dynamic-registration :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+  ((dynamic-registration :type lem-lsp-base/type:lsp-boolean :initarg
     :dynamic-registration :accessor notebook-document-sync-client-capabilities-dynamic-registration
     :optional common-lisp:t :documentation
     "Whether implementation supports dynamic registration. If this is
 set to `true` the client supports the new
 `(TextDocumentRegistrationOptions & StaticRegistrationOptions)`
 return value for the corresponding server capability as well.")
-   (execution-summary-support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg
+   (execution-summary-support :type lem-lsp-base/type:lsp-boolean :initarg
     :execution-summary-support :accessor
     notebook-document-sync-client-capabilities-execution-summary-support :optional common-lisp:t
     :documentation "The client supports sending execution summary data per cell."))
@@ -6980,11 +6980,11 @@ return value for the corresponding server capability as well.")
 
 @since 3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-class show-message-request-client-capabilities
+(lem-lsp-base/type:define-class show-message-request-client-capabilities
     common-lisp:nil
   ((message-action-item :type
-    (lem-language-server/protocol/lsp-type:lsp-interface
-     ((additional-properties-support :type lem-language-server/protocol/lsp-type:lsp-boolean
+    (lem-lsp-base/type:lsp-interface
+     ((additional-properties-support :type lem-lsp-base/type:lsp-boolean
        :optional common-lisp:t :documentation
        "Whether the client supports additional attributes which
 are preserved and send back to the server in the
@@ -6994,9 +6994,9 @@ request's response.")))
     :documentation "Capabilities specific to the `MessageActionItem` type."))
   (:documentation "Show message request client capabilities"))
 
-(lem-language-server/protocol/lsp-type:define-class show-document-client-capabilities
+(lem-lsp-base/type:define-class show-document-client-capabilities
     common-lisp:nil
-  ((support :type lem-language-server/protocol/lsp-type:lsp-boolean :initarg :support :accessor
+  ((support :type lem-lsp-base/type:lsp-boolean :initarg :support :accessor
     show-document-client-capabilities-support :documentation
     "The client has support for the showDocument
 request."))
@@ -7005,11 +7005,11 @@ request."))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class regular-expressions-client-capabilities
+(lem-lsp-base/type:define-class regular-expressions-client-capabilities
     common-lisp:nil
-  ((engine :type lem-language-server/protocol/lsp-type:lsp-string :initarg :engine :accessor
+  ((engine :type lem-lsp-base/type:lsp-string :initarg :engine :accessor
     regular-expressions-client-capabilities-engine :documentation "The engine's name.")
-   (version :type lem-language-server/protocol/lsp-type:lsp-string :initarg :version :accessor
+   (version :type lem-lsp-base/type:lsp-string :initarg :version :accessor
     regular-expressions-client-capabilities-version :optional common-lisp:t :documentation
     "The engine's version."))
   (:since "3.16.0")
@@ -7017,16 +7017,16 @@ request."))
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-class markdown-client-capabilities
+(lem-lsp-base/type:define-class markdown-client-capabilities
     common-lisp:nil
-  ((parser :type lem-language-server/protocol/lsp-type:lsp-string :initarg :parser :accessor
+  ((parser :type lem-lsp-base/type:lsp-string :initarg :parser :accessor
     markdown-client-capabilities-parser :documentation "The name of the parser.")
-   (version :type lem-language-server/protocol/lsp-type:lsp-string :initarg :version :accessor
+   (version :type lem-lsp-base/type:lsp-string :initarg :version :accessor
     markdown-client-capabilities-version :optional common-lisp:t :documentation
     "The version of the parser.")
    (allowed-tags :type
-    (lem-language-server/protocol/lsp-type:lsp-array
-     lem-language-server/protocol/lsp-type:lsp-string)
+    (lem-lsp-base/type:lsp-array
+     lem-lsp-base/type:lsp-string)
     :initarg :allowed-tags :accessor markdown-client-capabilities-allowed-tags :optional
     common-lisp:t :since "3.17.0" :documentation
     "A list of HTML tags that the client allows / supports in
@@ -7038,8 +7038,8 @@ Markdown.
 
 @since 3.16.0"))
 
-(lem-language-server/protocol/lsp-type:define-type-alias definition
-    (common-lisp:or location (lem-language-server/protocol/lsp-type:lsp-array location))
+(lem-lsp-base/type:define-type-alias definition
+    (common-lisp:or location (lem-lsp-base/type:lsp-array location))
   (:documentation "The definition of a symbol represented as one or many {@link Location locations}.
 For most programming languages there is only one location at which a symbol is
 defined.
@@ -7047,26 +7047,26 @@ defined.
 Servers should prefer returning `DefinitionLink` over `Definition` if supported
 by the client."))
 
-(lem-language-server/protocol/lsp-type:define-type-alias definition-link
+(lem-lsp-base/type:define-type-alias definition-link
     location-link
   (:documentation "Information about where a symbol is defined.
 
 Provides additional metadata over normal {@link Location location} definitions, including the range of
 the defining symbol"))
 
-(lem-language-server/protocol/lsp-type:define-type-alias lsp-array
-    (lem-language-server/protocol/lsp-type:lsp-array lsp-any)
+(lem-lsp-base/type:define-type-alias lsp-array
+    (lem-lsp-base/type:lsp-array lsp-any)
   (:documentation "LSP arrays.
 @since 3.17.0")
   (:since "3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-type-alias lsp-any
-    (common-lisp:or lsp-object lsp-array lem-language-server/protocol/lsp-type:lsp-string
-                    lem-language-server/protocol/lsp-type:lsp-integer
-                    lem-language-server/protocol/lsp-type:lsp-uinteger
-                    lem-language-server/protocol/lsp-type:lsp-decimal
-                    lem-language-server/protocol/lsp-type:lsp-boolean
-                    lem-language-server/protocol/lsp-type:lsp-null)
+(lem-lsp-base/type:define-type-alias lsp-any
+    (common-lisp:or lsp-object lsp-array lem-lsp-base/type:lsp-string
+                    lem-lsp-base/type:lsp-integer
+                    lem-lsp-base/type:lsp-uinteger
+                    lem-lsp-base/type:lsp-decimal
+                    lem-lsp-base/type:lsp-boolean
+                    lem-lsp-base/type:lsp-null)
   (:documentation "The LSP any type.
 Please note that strictly speaking a property with the value `undefined`
 can't be converted into JSON preserving the property name. However for
@@ -7075,12 +7075,12 @@ optional as well.
 @since 3.17.0")
   (:since "3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-type-alias declaration
-    (common-lisp:or location (lem-language-server/protocol/lsp-type:lsp-array location))
+(lem-lsp-base/type:define-type-alias declaration
+    (common-lisp:or location (lem-lsp-base/type:lsp-array location))
   (:documentation
    "The declaration of a symbol representation as one or many {@link Location locations}."))
 
-(lem-language-server/protocol/lsp-type:define-type-alias declaration-link
+(lem-lsp-base/type:define-type-alias declaration-link
     location-link
   (:documentation "Information about where a symbol is declared.
 
@@ -7090,7 +7090,7 @@ the declaring symbol.
 Servers should prefer returning `DeclarationLink` over `Declaration` if supported
 by the client."))
 
-(lem-language-server/protocol/lsp-type:define-type-alias inline-value
+(lem-lsp-base/type:define-type-alias inline-value
     (common-lisp:or inline-value-text inline-value-variable-lookup
                     inline-value-evaluatable-expression)
   (:documentation "Inline value information can be provided by different means:
@@ -7102,7 +7102,7 @@ The InlineValue types combines all inline value types into one type.
 @since 3.17.0")
   (:since "3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-type-alias document-diagnostic-report
+(lem-lsp-base/type:define-type-alias document-diagnostic-report
     (common-lisp:or related-full-document-diagnostic-report
                     related-unchanged-document-diagnostic-report)
   (:documentation "The result of a document diagnostic pull request. A report can
@@ -7114,16 +7114,16 @@ pull request.
 @since 3.17.0")
   (:since "3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-type-alias prepare-rename-result
+(lem-lsp-base/type:define-type-alias prepare-rename-result
     (common-lisp:or range
-                    (lem-language-server/protocol/lsp-type:lsp-interface
+                    (lem-lsp-base/type:lsp-interface
                      ((range :type range)
-                      (placeholder :type lem-language-server/protocol/lsp-type:lsp-string)))
-                    (lem-language-server/protocol/lsp-type:lsp-interface
-                     ((default-behavior :type lem-language-server/protocol/lsp-type:lsp-boolean)))))
+                      (placeholder :type lem-lsp-base/type:lsp-string)))
+                    (lem-lsp-base/type:lsp-interface
+                     ((default-behavior :type lem-lsp-base/type:lsp-boolean)))))
 
-(lem-language-server/protocol/lsp-type:define-type-alias document-selector
-    (lem-language-server/protocol/lsp-type:lsp-array document-filter)
+(lem-lsp-base/type:define-type-alias document-selector
+    (lem-lsp-base/type:lsp-array document-filter)
   (:documentation "A document selector is the combination of one or many document filters.
 
 @sample `let sel:DocumentSelector = [{ language: 'typescript' }, { language: 'json', pattern: '**∕tsconfig.json' }]`;
@@ -7131,15 +7131,15 @@ pull request.
 The use of a string as a document filter is deprecated @since 3.16.0.")
   (:since "3.16.0."))
 
-(lem-language-server/protocol/lsp-type:define-type-alias progress-token
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-integer
-                    lem-language-server/protocol/lsp-type:lsp-string))
+(lem-lsp-base/type:define-type-alias progress-token
+    (common-lisp:or lem-lsp-base/type:lsp-integer
+                    lem-lsp-base/type:lsp-string))
 
-(lem-language-server/protocol/lsp-type:define-type-alias change-annotation-identifier
-    lem-language-server/protocol/lsp-type:lsp-string
+(lem-lsp-base/type:define-type-alias change-annotation-identifier
+    lem-lsp-base/type:lsp-string
   (:documentation "An identifier to refer to a change annotation stored with a workspace edit."))
 
-(lem-language-server/protocol/lsp-type:define-type-alias workspace-document-diagnostic-report
+(lem-lsp-base/type:define-type-alias workspace-document-diagnostic-report
     (common-lisp:or workspace-full-document-diagnostic-report
                     workspace-unchanged-document-diagnostic-report)
   (:documentation "A workspace diagnostic document report.
@@ -7147,27 +7147,27 @@ The use of a string as a document filter is deprecated @since 3.16.0.")
 @since 3.17.0")
   (:since "3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-type-alias text-document-content-change-event
+(lem-lsp-base/type:define-type-alias text-document-content-change-event
     (common-lisp:or
-     (lem-language-server/protocol/lsp-type:lsp-interface
+     (lem-lsp-base/type:lsp-interface
       ((range :type range :documentation "The range of the document that changed.")
-       (range-length :type lem-language-server/protocol/lsp-type:lsp-uinteger :optional
+       (range-length :type lem-lsp-base/type:lsp-uinteger :optional
         common-lisp:t :documentation "The optional length of the range that got replaced.
 
 @deprecated use range instead.")
-       (text :type lem-language-server/protocol/lsp-type:lsp-string :documentation
+       (text :type lem-lsp-base/type:lsp-string :documentation
         "The new text for the provided range.")))
-     (lem-language-server/protocol/lsp-type:lsp-interface
-      ((text :type lem-language-server/protocol/lsp-type:lsp-string :documentation
+     (lem-lsp-base/type:lsp-interface
+      ((text :type lem-lsp-base/type:lsp-string :documentation
         "The new text of the whole document."))))
   (:documentation "An event describing a change to a text document. If only a text is provided
 it is considered to be the full content of the document."))
 
-(lem-language-server/protocol/lsp-type:define-type-alias marked-string
-    (common-lisp:or lem-language-server/protocol/lsp-type:lsp-string
-                    (lem-language-server/protocol/lsp-type:lsp-interface
-                     ((language :type lem-language-server/protocol/lsp-type:lsp-string)
-                      (value :type lem-language-server/protocol/lsp-type:lsp-string))))
+(lem-lsp-base/type:define-type-alias marked-string
+    (common-lisp:or lem-lsp-base/type:lsp-string
+                    (lem-lsp-base/type:lsp-interface
+                     ((language :type lem-lsp-base/type:lsp-string)
+                      (value :type lem-lsp-base/type:lsp-string))))
   (:deprecated "use MarkupContent instead.")
   (:documentation
    "MarkedString can be used to render human readable text. It is either a markdown string
@@ -7183,7 +7183,7 @@ ${value}
 Note that markdown strings will be sanitized - that means html will be escaped.
 @deprecated use MarkupContent instead."))
 
-(lem-language-server/protocol/lsp-type:define-type-alias document-filter
+(lem-lsp-base/type:define-type-alias document-filter
     (common-lisp:or text-document-filter notebook-cell-text-document-filter)
   (:documentation "A document filter describes a top level text document or
 a notebook cell document.
@@ -7191,41 +7191,41 @@ a notebook cell document.
 @since 3.17.0 - proposed support for NotebookCellTextDocumentFilter.")
   (:since "3.17.0 - proposed support for NotebookCellTextDocumentFilter."))
 
-(lem-language-server/protocol/lsp-type:define-type-alias lsp-object
-    (lem-language-server/protocol/lsp-type:lsp-map string lsp-any)
+(lem-lsp-base/type:define-type-alias lsp-object
+    (lem-lsp-base/type:lsp-map string lsp-any)
   (:documentation "LSP object definition.
 @since 3.17.0")
   (:since "3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-type-alias glob-pattern
+(lem-lsp-base/type:define-type-alias glob-pattern
     (common-lisp:or pattern relative-pattern)
   (:documentation "The glob pattern. Either a string pattern or a relative pattern.
 
 @since 3.17.0")
   (:since "3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-type-alias text-document-filter
+(lem-lsp-base/type:define-type-alias text-document-filter
     (common-lisp:or
-     (lem-language-server/protocol/lsp-type:lsp-interface
-      ((language :type lem-language-server/protocol/lsp-type:lsp-string :documentation
+     (lem-lsp-base/type:lsp-interface
+      ((language :type lem-lsp-base/type:lsp-string :documentation
         "A language id, like `typescript`.")
-       (scheme :type lem-language-server/protocol/lsp-type:lsp-string :optional common-lisp:t
+       (scheme :type lem-lsp-base/type:lsp-string :optional common-lisp:t
         :documentation "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.")
-       (pattern :type lem-language-server/protocol/lsp-type:lsp-string :optional common-lisp:t
+       (pattern :type lem-lsp-base/type:lsp-string :optional common-lisp:t
         :documentation "A glob pattern, like `*.{ts,js}`.")))
-     (lem-language-server/protocol/lsp-type:lsp-interface
-      ((language :type lem-language-server/protocol/lsp-type:lsp-string :optional common-lisp:t
+     (lem-lsp-base/type:lsp-interface
+      ((language :type lem-lsp-base/type:lsp-string :optional common-lisp:t
         :documentation "A language id, like `typescript`.")
-       (scheme :type lem-language-server/protocol/lsp-type:lsp-string :documentation
+       (scheme :type lem-lsp-base/type:lsp-string :documentation
         "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.")
-       (pattern :type lem-language-server/protocol/lsp-type:lsp-string :optional common-lisp:t
+       (pattern :type lem-lsp-base/type:lsp-string :optional common-lisp:t
         :documentation "A glob pattern, like `*.{ts,js}`.")))
-     (lem-language-server/protocol/lsp-type:lsp-interface
-      ((language :type lem-language-server/protocol/lsp-type:lsp-string :optional common-lisp:t
+     (lem-lsp-base/type:lsp-interface
+      ((language :type lem-lsp-base/type:lsp-string :optional common-lisp:t
         :documentation "A language id, like `typescript`.")
-       (scheme :type lem-language-server/protocol/lsp-type:lsp-string :optional common-lisp:t
+       (scheme :type lem-lsp-base/type:lsp-string :optional common-lisp:t
         :documentation "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.")
-       (pattern :type lem-language-server/protocol/lsp-type:lsp-string :documentation
+       (pattern :type lem-lsp-base/type:lsp-string :documentation
         "A glob pattern, like `*.{ts,js}`."))))
   (:documentation "A document filter denotes a document by different properties like
 the {@link TextDocument.languageId language}, the {@link Uri.scheme scheme} of
@@ -7245,28 +7245,28 @@ Glob patterns can have the following syntax:
 @since 3.17.0")
   (:since "3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-type-alias notebook-document-filter
+(lem-lsp-base/type:define-type-alias notebook-document-filter
     (common-lisp:or
-     (lem-language-server/protocol/lsp-type:lsp-interface
-      ((notebook-type :type lem-language-server/protocol/lsp-type:lsp-string :documentation
+     (lem-lsp-base/type:lsp-interface
+      ((notebook-type :type lem-lsp-base/type:lsp-string :documentation
         "The type of the enclosing notebook.")
-       (scheme :type lem-language-server/protocol/lsp-type:lsp-string :optional common-lisp:t
+       (scheme :type lem-lsp-base/type:lsp-string :optional common-lisp:t
         :documentation "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.")
-       (pattern :type lem-language-server/protocol/lsp-type:lsp-string :optional common-lisp:t
+       (pattern :type lem-lsp-base/type:lsp-string :optional common-lisp:t
         :documentation "A glob pattern.")))
-     (lem-language-server/protocol/lsp-type:lsp-interface
-      ((notebook-type :type lem-language-server/protocol/lsp-type:lsp-string :optional
+     (lem-lsp-base/type:lsp-interface
+      ((notebook-type :type lem-lsp-base/type:lsp-string :optional
         common-lisp:t :documentation "The type of the enclosing notebook.")
-       (scheme :type lem-language-server/protocol/lsp-type:lsp-string :documentation
+       (scheme :type lem-lsp-base/type:lsp-string :documentation
         "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.")
-       (pattern :type lem-language-server/protocol/lsp-type:lsp-string :optional common-lisp:t
+       (pattern :type lem-lsp-base/type:lsp-string :optional common-lisp:t
         :documentation "A glob pattern.")))
-     (lem-language-server/protocol/lsp-type:lsp-interface
-      ((notebook-type :type lem-language-server/protocol/lsp-type:lsp-string :optional
+     (lem-lsp-base/type:lsp-interface
+      ((notebook-type :type lem-lsp-base/type:lsp-string :optional
         common-lisp:t :documentation "The type of the enclosing notebook.")
-       (scheme :type lem-language-server/protocol/lsp-type:lsp-string :optional common-lisp:t
+       (scheme :type lem-lsp-base/type:lsp-string :optional common-lisp:t
         :documentation "A Uri {@link Uri.scheme scheme}, like `file` or `untitled`.")
-       (pattern :type lem-language-server/protocol/lsp-type:lsp-string :documentation
+       (pattern :type lem-lsp-base/type:lsp-string :documentation
         "A glob pattern."))))
   (:documentation "A notebook document filter denotes a notebook document by
 different properties. The properties will be match
@@ -7275,8 +7275,8 @@ against the notebook's URI (same as with documents)
 @since 3.17.0")
   (:since "3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-type-alias pattern
-    lem-language-server/protocol/lsp-type:lsp-string
+(lem-lsp-base/type:define-type-alias pattern
+    lem-lsp-base/type:lsp-string
   (:documentation
    "The glob pattern to watch relative to the base path. Glob patterns can have the following syntax:
 - `*` to match one or more characters in a path segment
@@ -7289,7 +7289,7 @@ against the notebook's URI (same as with documents)
 @since 3.17.0")
   (:since "3.17.0"))
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/implementation
+(lem-lsp-base/type:define-request-message text-document/implementation
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7307,8 +7307,8 @@ Thenable that resolves to such."
   :params
   'implementation-params
   :partial-result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array location)
-                   (lem-language-server/protocol/lsp-type:lsp-array definition-link))
+  '(common-lisp:or (lem-lsp-base/type:lsp-array location)
+                   (lem-lsp-base/type:lsp-array definition-link))
   :proposed
   common-lisp:nil
   :registration-method
@@ -7316,12 +7316,12 @@ Thenable that resolves to such."
   :registration-options
   'implementation-registration-options
   :result
-  '(common-lisp:or definition (lem-language-server/protocol/lsp-type:lsp-array definition-link)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or definition (lem-lsp-base/type:lsp-array definition-link)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/type-definition
+(lem-lsp-base/type:define-request-message text-document/type-definition
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7339,8 +7339,8 @@ Thenable that resolves to such."
   :params
   'type-definition-params
   :partial-result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array location)
-                   (lem-language-server/protocol/lsp-type:lsp-array definition-link))
+  '(common-lisp:or (lem-lsp-base/type:lsp-array location)
+                   (lem-lsp-base/type:lsp-array definition-link))
   :proposed
   common-lisp:nil
   :registration-method
@@ -7348,12 +7348,12 @@ Thenable that resolves to such."
   :registration-options
   'type-definition-registration-options
   :result
-  '(common-lisp:or definition (lem-language-server/protocol/lsp-type:lsp-array definition-link)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or definition (lem-lsp-base/type:lsp-array definition-link)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/workspace-folders
+(lem-lsp-base/type:define-request-message workspace/workspace-folders
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7376,12 +7376,12 @@ Thenable that resolves to such."
   :registration-options
   'common-lisp:nil
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array workspace-folder)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array workspace-folder)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/configuration
+(lem-lsp-base/type:define-request-message workspace/configuration
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7410,11 +7410,11 @@ change event and empty the cache if such an event is received."
   :registration-options
   'common-lisp:nil
   :result
-  '(lem-language-server/protocol/lsp-type:lsp-array lsp-any)
+  '(lem-lsp-base/type:lsp-array lsp-any)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/document-color
+(lem-lsp-base/type:define-request-message text-document/document-color
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7432,7 +7432,7 @@ that resolves to such."
   :params
   'document-color-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array color-information)
+  '(lem-lsp-base/type:lsp-array color-information)
   :proposed
   common-lisp:nil
   :registration-method
@@ -7440,11 +7440,11 @@ that resolves to such."
   :registration-options
   'document-color-registration-options
   :result
-  '(lem-language-server/protocol/lsp-type:lsp-array color-information)
+  '(lem-lsp-base/type:lsp-array color-information)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/color-presentation
+(lem-lsp-base/type:define-request-message text-document/color-presentation
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7462,7 +7462,7 @@ that resolves to such."
   :params
   'color-presentation-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array color-presentation)
+  '(lem-lsp-base/type:lsp-array color-presentation)
   :proposed
   common-lisp:nil
   :registration-method
@@ -7470,11 +7470,11 @@ that resolves to such."
   :registration-options
   '(common-lisp:and work-done-progress-options text-document-registration-options)
   :result
-  '(lem-language-server/protocol/lsp-type:lsp-array color-presentation)
+  '(lem-lsp-base/type:lsp-array color-presentation)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/folding-range
+(lem-lsp-base/type:define-request-message text-document/folding-range
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7492,7 +7492,7 @@ that resolves to such."
   :params
   'folding-range-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array folding-range)
+  '(lem-lsp-base/type:lsp-array folding-range)
   :proposed
   common-lisp:nil
   :registration-method
@@ -7500,12 +7500,12 @@ that resolves to such."
   :registration-options
   'folding-range-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array folding-range)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array folding-range)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/declaration
+(lem-lsp-base/type:define-request-message text-document/declaration
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7524,8 +7524,8 @@ to such."
   :params
   'declaration-params
   :partial-result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array location)
-                   (lem-language-server/protocol/lsp-type:lsp-array declaration-link))
+  '(common-lisp:or (lem-lsp-base/type:lsp-array location)
+                   (lem-lsp-base/type:lsp-array declaration-link))
   :proposed
   common-lisp:nil
   :registration-method
@@ -7533,12 +7533,12 @@ to such."
   :registration-options
   'declaration-registration-options
   :result
-  '(common-lisp:or declaration (lem-language-server/protocol/lsp-type:lsp-array declaration-link)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or declaration (lem-lsp-base/type:lsp-array declaration-link)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/selection-range
+(lem-lsp-base/type:define-request-message text-document/selection-range
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7556,7 +7556,7 @@ that resolves to such."
   :params
   'selection-range-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array selection-range)
+  '(lem-lsp-base/type:lsp-array selection-range)
   :proposed
   common-lisp:nil
   :registration-method
@@ -7564,12 +7564,12 @@ that resolves to such."
   :registration-options
   'selection-range-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array selection-range)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array selection-range)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message window/work-done-progress/create
+(lem-lsp-base/type:define-request-message window/work-done-progress/create
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7593,11 +7593,11 @@ reporting from the server."
   :registration-options
   'common-lisp:nil
   :result
-  'lem-language-server/protocol/lsp-type:lsp-null
+  'lem-lsp-base/type:lsp-null
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/prepare-call-hierarchy
+(lem-lsp-base/type:define-request-message text-document/prepare-call-hierarchy
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7623,12 +7623,12 @@ Can be used as an input to an incoming or outgoing call hierarchy.
   :registration-options
   'call-hierarchy-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array call-hierarchy-item)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array call-hierarchy-item)
+                   lem-lsp-base/type:lsp-null)
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message call-hierarchy/incoming-calls
+(lem-lsp-base/type:define-request-message call-hierarchy/incoming-calls
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7645,7 +7645,7 @@ Can be used as an input to an incoming or outgoing call hierarchy.
   :params
   'call-hierarchy-incoming-calls-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array call-hierarchy-incoming-call)
+  '(lem-lsp-base/type:lsp-array call-hierarchy-incoming-call)
   :proposed
   common-lisp:nil
   :registration-method
@@ -7653,12 +7653,12 @@ Can be used as an input to an incoming or outgoing call hierarchy.
   :registration-options
   'common-lisp:nil
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array call-hierarchy-incoming-call)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array call-hierarchy-incoming-call)
+                   lem-lsp-base/type:lsp-null)
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message call-hierarchy/outgoing-calls
+(lem-lsp-base/type:define-request-message call-hierarchy/outgoing-calls
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7675,7 +7675,7 @@ Can be used as an input to an incoming or outgoing call hierarchy.
   :params
   'call-hierarchy-outgoing-calls-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array call-hierarchy-outgoing-call)
+  '(lem-lsp-base/type:lsp-array call-hierarchy-outgoing-call)
   :proposed
   common-lisp:nil
   :registration-method
@@ -7683,12 +7683,12 @@ Can be used as an input to an incoming or outgoing call hierarchy.
   :registration-options
   'common-lisp:nil
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array call-hierarchy-outgoing-call)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array call-hierarchy-outgoing-call)
+                   lem-lsp-base/type:lsp-null)
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/semantic-tokens/full
+(lem-lsp-base/type:define-request-message text-document/semantic-tokens/full
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7711,11 +7711,11 @@ Can be used as an input to an incoming or outgoing call hierarchy.
   :registration-options
   'semantic-tokens-registration-options
   :result
-  '(common-lisp:or semantic-tokens lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or semantic-tokens lem-lsp-base/type:lsp-null)
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/semantic-tokens/full/delta
+(lem-lsp-base/type:define-request-message text-document/semantic-tokens/full/delta
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7739,11 +7739,11 @@ Can be used as an input to an incoming or outgoing call hierarchy.
   'semantic-tokens-registration-options
   :result
   '(common-lisp:or semantic-tokens semantic-tokens-delta
-                   lem-language-server/protocol/lsp-type:lsp-null)
+                   lem-lsp-base/type:lsp-null)
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/semantic-tokens/range
+(lem-lsp-base/type:define-request-message text-document/semantic-tokens/range
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7766,11 +7766,11 @@ Can be used as an input to an incoming or outgoing call hierarchy.
   :registration-options
   'common-lisp:nil
   :result
-  '(common-lisp:or semantic-tokens lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or semantic-tokens lem-lsp-base/type:lsp-null)
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/semantic-tokens/refresh
+(lem-lsp-base/type:define-request-message workspace/semantic-tokens/refresh
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7793,11 +7793,11 @@ Can be used as an input to an incoming or outgoing call hierarchy.
   :registration-options
   'common-lisp:nil
   :result
-  'lem-language-server/protocol/lsp-type:lsp-null
+  'lem-lsp-base/type:lsp-null
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message window/show-document
+(lem-lsp-base/type:define-request-message window/show-document
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7829,7 +7829,7 @@ will very likely open the URI in a WEB browser.
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/linked-editing-range
+(lem-lsp-base/type:define-request-message text-document/linked-editing-range
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7854,11 +7854,11 @@ will very likely open the URI in a WEB browser.
   :registration-options
   'linked-editing-range-registration-options
   :result
-  '(common-lisp:or linked-editing-ranges lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or linked-editing-ranges lem-lsp-base/type:lsp-null)
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/will-create-files
+(lem-lsp-base/type:define-request-message workspace/will-create-files
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7884,11 +7884,11 @@ created as long as the creation is triggered from within the client.
   :registration-options
   'file-operation-registration-options
   :result
-  '(common-lisp:or workspace-edit lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or workspace-edit lem-lsp-base/type:lsp-null)
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/will-rename-files
+(lem-lsp-base/type:define-request-message workspace/will-rename-files
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7914,11 +7914,11 @@ renamed as long as the rename is triggered from within the client.
   :registration-options
   'file-operation-registration-options
   :result
-  '(common-lisp:or workspace-edit lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or workspace-edit lem-lsp-base/type:lsp-null)
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/will-delete-files
+(lem-lsp-base/type:define-request-message workspace/will-delete-files
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7944,11 +7944,11 @@ files were deleted from within the client.
   :registration-options
   'file-operation-registration-options
   :result
-  '(common-lisp:or workspace-edit lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or workspace-edit lem-lsp-base/type:lsp-null)
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/moniker
+(lem-lsp-base/type:define-request-message text-document/moniker
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -7965,7 +7965,7 @@ The response is of type {@link Moniker Moniker[]} or `null`."
   :params
   'moniker-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array moniker)
+  '(lem-lsp-base/type:lsp-array moniker)
   :proposed
   common-lisp:nil
   :registration-method
@@ -7973,12 +7973,12 @@ The response is of type {@link Moniker Moniker[]} or `null`."
   :registration-options
   'moniker-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array moniker)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array moniker)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/prepare-type-hierarchy
+(lem-lsp-base/type:define-request-message text-document/prepare-type-hierarchy
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8004,12 +8004,12 @@ Can be used as an input to a subtypes or supertypes type hierarchy.
   :registration-options
   'type-hierarchy-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array type-hierarchy-item)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array type-hierarchy-item)
+                   lem-lsp-base/type:lsp-null)
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message type-hierarchy/supertypes
+(lem-lsp-base/type:define-request-message type-hierarchy/supertypes
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8026,7 +8026,7 @@ Can be used as an input to a subtypes or supertypes type hierarchy.
   :params
   'type-hierarchy-supertypes-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array type-hierarchy-item)
+  '(lem-lsp-base/type:lsp-array type-hierarchy-item)
   :proposed
   common-lisp:nil
   :registration-method
@@ -8034,12 +8034,12 @@ Can be used as an input to a subtypes or supertypes type hierarchy.
   :registration-options
   'common-lisp:nil
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array type-hierarchy-item)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array type-hierarchy-item)
+                   lem-lsp-base/type:lsp-null)
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message type-hierarchy/subtypes
+(lem-lsp-base/type:define-request-message type-hierarchy/subtypes
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8056,7 +8056,7 @@ Can be used as an input to a subtypes or supertypes type hierarchy.
   :params
   'type-hierarchy-subtypes-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array type-hierarchy-item)
+  '(lem-lsp-base/type:lsp-array type-hierarchy-item)
   :proposed
   common-lisp:nil
   :registration-method
@@ -8064,12 +8064,12 @@ Can be used as an input to a subtypes or supertypes type hierarchy.
   :registration-options
   'common-lisp:nil
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array type-hierarchy-item)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array type-hierarchy-item)
+                   lem-lsp-base/type:lsp-null)
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/inline-value
+(lem-lsp-base/type:define-request-message text-document/inline-value
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8088,7 +8088,7 @@ type {@link InlineValueParams}, the response is of type
   :params
   'inline-value-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array inline-value)
+  '(lem-lsp-base/type:lsp-array inline-value)
   :proposed
   common-lisp:nil
   :registration-method
@@ -8096,12 +8096,12 @@ type {@link InlineValueParams}, the response is of type
   :registration-options
   'inline-value-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array inline-value)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array inline-value)
+                   lem-lsp-base/type:lsp-null)
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/inline-value/refresh
+(lem-lsp-base/type:define-request-message workspace/inline-value/refresh
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8124,11 +8124,11 @@ type {@link InlineValueParams}, the response is of type
   :registration-options
   'common-lisp:nil
   :result
-  'lem-language-server/protocol/lsp-type:lsp-null
+  'lem-lsp-base/type:lsp-null
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/inlay-hint
+(lem-lsp-base/type:define-request-message text-document/inlay-hint
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8147,7 +8147,7 @@ type {@link InlayHintsParams}, the response is of type
   :params
   'inlay-hint-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array inlay-hint)
+  '(lem-lsp-base/type:lsp-array inlay-hint)
   :proposed
   common-lisp:nil
   :registration-method
@@ -8155,12 +8155,12 @@ type {@link InlayHintsParams}, the response is of type
   :registration-options
   'inlay-hint-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array inlay-hint)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array inlay-hint)
+                   lem-lsp-base/type:lsp-null)
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message inlay-hint/resolve
+(lem-lsp-base/type:define-request-message inlay-hint/resolve
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8191,7 +8191,7 @@ of type {@link InlayHint} or a Thenable that resolves to such.
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/inlay-hint/refresh
+(lem-lsp-base/type:define-request-message workspace/inlay-hint/refresh
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8214,11 +8214,11 @@ of type {@link InlayHint} or a Thenable that resolves to such.
   :registration-options
   'common-lisp:nil
   :result
-  'lem-language-server/protocol/lsp-type:lsp-null
+  'lem-lsp-base/type:lsp-null
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/diagnostic
+(lem-lsp-base/type:define-request-message text-document/diagnostic
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8247,7 +8247,7 @@ of type {@link InlayHint} or a Thenable that resolves to such.
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/diagnostic
+(lem-lsp-base/type:define-request-message workspace/diagnostic
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8276,7 +8276,7 @@ of type {@link InlayHint} or a Thenable that resolves to such.
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/diagnostic/refresh
+(lem-lsp-base/type:define-request-message workspace/diagnostic/refresh
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8301,11 +8301,11 @@ of type {@link InlayHint} or a Thenable that resolves to such.
   :registration-options
   'common-lisp:nil
   :result
-  'lem-language-server/protocol/lsp-type:lsp-null
+  'lem-lsp-base/type:lsp-null
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message client/register-capability
+(lem-lsp-base/type:define-request-message client/register-capability
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8329,11 +8329,11 @@ handler on the client side."
   :registration-options
   'common-lisp:nil
   :result
-  'lem-language-server/protocol/lsp-type:lsp-null
+  'lem-lsp-base/type:lsp-null
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message client/unregister-capability
+(lem-lsp-base/type:define-request-message client/unregister-capability
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8357,11 +8357,11 @@ handler on the client side."
   :registration-options
   'common-lisp:nil
   :result
-  'lem-language-server/protocol/lsp-type:lsp-null
+  'lem-lsp-base/type:lsp-null
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message initialize
+(lem-lsp-base/type:define-request-message initialize
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8392,7 +8392,7 @@ resolves to such."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message shutdown
+(lem-lsp-base/type:define-request-message shutdown
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8418,11 +8418,11 @@ is the exit event."
   :registration-options
   'common-lisp:nil
   :result
-  'lem-language-server/protocol/lsp-type:lsp-null
+  'lem-lsp-base/type:lsp-null
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message window/show-message-request
+(lem-lsp-base/type:define-request-message window/show-message-request
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8446,11 +8446,11 @@ and a set of options actions to the user."
   :registration-options
   'common-lisp:nil
   :result
-  '(common-lisp:or message-action-item lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or message-action-item lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/will-save-wait-until
+(lem-lsp-base/type:define-request-message text-document/will-save-wait-until
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8478,12 +8478,12 @@ reliable."
   :registration-options
   'text-document-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array text-edit)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array text-edit)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/completion
+(lem-lsp-base/type:define-request-message text-document/completion
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8506,7 +8506,7 @@ request. However, properties that are needed for the initial sorting and filteri
   :params
   'completion-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array completion-item)
+  '(lem-lsp-base/type:lsp-array completion-item)
   :proposed
   common-lisp:nil
   :registration-method
@@ -8514,12 +8514,12 @@ request. However, properties that are needed for the initial sorting and filteri
   :registration-options
   'completion-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array completion-item)
-                   completion-list lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array completion-item)
+                   completion-list lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message completion-item/resolve
+(lem-lsp-base/type:define-request-message completion-item/resolve
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8548,7 +8548,7 @@ is of type {@link CompletionItem} or a Thenable that resolves to such."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/hover
+(lem-lsp-base/type:define-request-message text-document/hover
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8573,11 +8573,11 @@ type {@link Hover} or a Thenable that resolves to such."
   :registration-options
   'hover-registration-options
   :result
-  '(common-lisp:or hover lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or hover lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/signature-help
+(lem-lsp-base/type:define-request-message text-document/signature-help
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8600,11 +8600,11 @@ type {@link Hover} or a Thenable that resolves to such."
   :registration-options
   'signature-help-registration-options
   :result
-  '(common-lisp:or signature-help lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or signature-help lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/definition
+(lem-lsp-base/type:define-request-message text-document/definition
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8623,8 +8623,8 @@ to such."
   :params
   'definition-params
   :partial-result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array location)
-                   (lem-language-server/protocol/lsp-type:lsp-array definition-link))
+  '(common-lisp:or (lem-lsp-base/type:lsp-array location)
+                   (lem-lsp-base/type:lsp-array definition-link))
   :proposed
   common-lisp:nil
   :registration-method
@@ -8632,12 +8632,12 @@ to such."
   :registration-options
   'definition-registration-options
   :result
-  '(common-lisp:or definition (lem-language-server/protocol/lsp-type:lsp-array definition-link)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or definition (lem-lsp-base/type:lsp-array definition-link)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/references
+(lem-lsp-base/type:define-request-message text-document/references
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8655,7 +8655,7 @@ type {@link ReferenceParams} the response is of type
   :params
   'reference-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array location)
+  '(lem-lsp-base/type:lsp-array location)
   :proposed
   common-lisp:nil
   :registration-method
@@ -8663,12 +8663,12 @@ type {@link ReferenceParams} the response is of type
   :registration-options
   'reference-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array location)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array location)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/document-highlight
+(lem-lsp-base/type:define-request-message text-document/document-highlight
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8686,7 +8686,7 @@ text document position. The request's parameter is of type [TextDocumentPosition
   :params
   'document-highlight-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array document-highlight)
+  '(lem-lsp-base/type:lsp-array document-highlight)
   :proposed
   common-lisp:nil
   :registration-method
@@ -8694,12 +8694,12 @@ text document position. The request's parameter is of type [TextDocumentPosition
   :registration-options
   'document-highlight-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array document-highlight)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array document-highlight)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/document-symbol
+(lem-lsp-base/type:define-request-message text-document/document-symbol
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8717,8 +8717,8 @@ that resolves to such."
   :params
   'document-symbol-params
   :partial-result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array symbol-information)
-                   (lem-language-server/protocol/lsp-type:lsp-array document-symbol))
+  '(common-lisp:or (lem-lsp-base/type:lsp-array symbol-information)
+                   (lem-lsp-base/type:lsp-array document-symbol))
   :proposed
   common-lisp:nil
   :registration-method
@@ -8726,13 +8726,13 @@ that resolves to such."
   :registration-options
   'document-symbol-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array symbol-information)
-                   (lem-language-server/protocol/lsp-type:lsp-array document-symbol)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array symbol-information)
+                   (lem-lsp-base/type:lsp-array document-symbol)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/code-action
+(lem-lsp-base/type:define-request-message text-document/code-action
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8747,7 +8747,7 @@ that resolves to such."
   :params
   'code-action-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array (common-lisp:or command code-action))
+  '(lem-lsp-base/type:lsp-array (common-lisp:or command code-action))
   :proposed
   common-lisp:nil
   :registration-method
@@ -8756,12 +8756,12 @@ that resolves to such."
   'code-action-registration-options
   :result
   '(common-lisp:or
-    (lem-language-server/protocol/lsp-type:lsp-array (common-lisp:or command code-action))
-    lem-language-server/protocol/lsp-type:lsp-null)
+    (lem-lsp-base/type:lsp-array (common-lisp:or command code-action))
+    lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message code-action/resolve
+(lem-lsp-base/type:define-request-message code-action/resolve
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8790,7 +8790,7 @@ is of type {@link CodeAction} or a Thenable that resolves to such."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/symbol
+(lem-lsp-base/type:define-request-message workspace/symbol
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8813,8 +8813,8 @@ resolves to such.
   :params
   'workspace-symbol-params
   :partial-result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array symbol-information)
-                   (lem-language-server/protocol/lsp-type:lsp-array workspace-symbol))
+  '(common-lisp:or (lem-lsp-base/type:lsp-array symbol-information)
+                   (lem-lsp-base/type:lsp-array workspace-symbol))
   :proposed
   common-lisp:nil
   :registration-method
@@ -8822,15 +8822,15 @@ resolves to such.
   :registration-options
   'workspace-symbol-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array symbol-information)
-                   (lem-language-server/protocol/lsp-type:lsp-array workspace-symbol)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array symbol-information)
+                   (lem-lsp-base/type:lsp-array workspace-symbol)
+                   lem-lsp-base/type:lsp-null)
   :since
   "3.17.0 - support for WorkspaceSymbol in the returned data. Clients
 need to advertise support for WorkspaceSymbols via the client capability
 `workspace.symbol.resolveSupport`.")
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace-symbol/resolve
+(lem-lsp-base/type:define-request-message workspace-symbol/resolve
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8860,7 +8860,7 @@ symbol's location.
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/code-lens
+(lem-lsp-base/type:define-request-message text-document/code-lens
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8875,7 +8875,7 @@ symbol's location.
   :params
   'code-lens-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array code-lens)
+  '(lem-lsp-base/type:lsp-array code-lens)
   :proposed
   common-lisp:nil
   :registration-method
@@ -8883,12 +8883,12 @@ symbol's location.
   :registration-options
   'code-lens-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array code-lens)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array code-lens)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message code-lens/resolve
+(lem-lsp-base/type:define-request-message code-lens/resolve
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8915,7 +8915,7 @@ symbol's location.
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/code-lens/refresh
+(lem-lsp-base/type:define-request-message workspace/code-lens/refresh
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8940,11 +8940,11 @@ symbol's location.
   :registration-options
   'common-lisp:nil
   :result
-  'lem-language-server/protocol/lsp-type:lsp-null
+  'lem-lsp-base/type:lsp-null
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/document-link
+(lem-lsp-base/type:define-request-message text-document/document-link
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -8959,7 +8959,7 @@ symbol's location.
   :params
   'document-link-params
   :partial-result
-  '(lem-language-server/protocol/lsp-type:lsp-array document-link)
+  '(lem-lsp-base/type:lsp-array document-link)
   :proposed
   common-lisp:nil
   :registration-method
@@ -8967,12 +8967,12 @@ symbol's location.
   :registration-options
   'document-link-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array document-link)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array document-link)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message document-link/resolve
+(lem-lsp-base/type:define-request-message document-link/resolve
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9001,7 +9001,7 @@ is of type {@link DocumentLink} or a Thenable that resolves to such."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/formatting
+(lem-lsp-base/type:define-request-message text-document/formatting
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9024,12 +9024,12 @@ is of type {@link DocumentLink} or a Thenable that resolves to such."
   :registration-options
   'document-formatting-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array text-edit)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array text-edit)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/range-formatting
+(lem-lsp-base/type:define-request-message text-document/range-formatting
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9052,12 +9052,12 @@ is of type {@link DocumentLink} or a Thenable that resolves to such."
   :registration-options
   'document-range-formatting-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array text-edit)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array text-edit)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/on-type-formatting
+(lem-lsp-base/type:define-request-message text-document/on-type-formatting
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9080,12 +9080,12 @@ is of type {@link DocumentLink} or a Thenable that resolves to such."
   :registration-options
   'document-on-type-formatting-registration-options
   :result
-  '(common-lisp:or (lem-language-server/protocol/lsp-type:lsp-array text-edit)
-                   lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or (lem-lsp-base/type:lsp-array text-edit)
+                   lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/rename
+(lem-lsp-base/type:define-request-message text-document/rename
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9108,11 +9108,11 @@ is of type {@link DocumentLink} or a Thenable that resolves to such."
   :registration-options
   'rename-registration-options
   :result
-  '(common-lisp:or workspace-edit lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or workspace-edit lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message text-document/prepare-rename
+(lem-lsp-base/type:define-request-message text-document/prepare-rename
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9137,11 +9137,11 @@ is of type {@link DocumentLink} or a Thenable that resolves to such."
   :registration-options
   'common-lisp:nil
   :result
-  '(common-lisp:or prepare-rename-result lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or prepare-rename-result lem-lsp-base/type:lsp-null)
   :since
   "3.16 - support for default behavior")
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/execute-command
+(lem-lsp-base/type:define-request-message workspace/execute-command
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9165,11 +9165,11 @@ a workspace edit which the client will apply to the workspace."
   :registration-options
   'execute-command-registration-options
   :result
-  '(common-lisp:or lsp-any lem-language-server/protocol/lsp-type:lsp-null)
+  '(common-lisp:or lsp-any lem-lsp-base/type:lsp-null)
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-request-message workspace/apply-edit
+(lem-lsp-base/type:define-request-message workspace/apply-edit
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9196,7 +9196,7 @@ a workspace edit which the client will apply to the workspace."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message workspace/did-change-workspace-folders
+(lem-lsp-base/type:define-notification-message workspace/did-change-workspace-folders
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9218,7 +9218,7 @@ folder configuration changes."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message window/work-done-progress/cancel
+(lem-lsp-base/type:define-notification-message window/work-done-progress/cancel
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9240,7 +9240,7 @@ initiated on the server side."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message workspace/did-create-files
+(lem-lsp-base/type:define-notification-message workspace/did-create-files
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9264,7 +9264,7 @@ files were created from within the client.
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-notification-message workspace/did-rename-files
+(lem-lsp-base/type:define-notification-message workspace/did-rename-files
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9288,7 +9288,7 @@ files were renamed from within the client.
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-notification-message workspace/did-delete-files
+(lem-lsp-base/type:define-notification-message workspace/did-delete-files
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9312,7 +9312,7 @@ deleted as long as the deletion is triggered from within the client.
   :since
   "3.16.0")
 
-(lem-language-server/protocol/lsp-type:define-notification-message notebook-document/did-open
+(lem-lsp-base/type:define-notification-message notebook-document/did-open
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9335,7 +9335,7 @@ deleted as long as the deletion is triggered from within the client.
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-notification-message notebook-document/did-change
+(lem-lsp-base/type:define-notification-message notebook-document/did-change
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9356,7 +9356,7 @@ deleted as long as the deletion is triggered from within the client.
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message notebook-document/did-save
+(lem-lsp-base/type:define-notification-message notebook-document/did-save
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9379,7 +9379,7 @@ deleted as long as the deletion is triggered from within the client.
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-notification-message notebook-document/did-close
+(lem-lsp-base/type:define-notification-message notebook-document/did-close
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9402,7 +9402,7 @@ deleted as long as the deletion is triggered from within the client.
   :since
   "3.17.0")
 
-(lem-language-server/protocol/lsp-type:define-notification-message initialized
+(lem-lsp-base/type:define-notification-message initialized
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9425,7 +9425,7 @@ is allowed to send requests from the server to the client."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message exit
+(lem-lsp-base/type:define-notification-message exit
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9447,7 +9447,7 @@ ask the server to exit its process."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message workspace/did-change-configuration
+(lem-lsp-base/type:define-notification-message workspace/did-change-configuration
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9470,7 +9470,7 @@ the changed configuration as defined by the language client."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message window/show-message
+(lem-lsp-base/type:define-notification-message window/show-message
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9492,7 +9492,7 @@ the client to display a particular message in the user interface."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message window/log-message
+(lem-lsp-base/type:define-notification-message window/log-message
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9514,7 +9514,7 @@ the client to log a particular message."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message telemetry/event
+(lem-lsp-base/type:define-notification-message telemetry/event
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9536,7 +9536,7 @@ the client to log telemetry data."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message text-document/did-open
+(lem-lsp-base/type:define-notification-message text-document/did-open
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9564,7 +9564,7 @@ is one."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message text-document/did-change
+(lem-lsp-base/type:define-notification-message text-document/did-change
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9586,7 +9586,7 @@ changes to a text document."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message text-document/did-close
+(lem-lsp-base/type:define-notification-message text-document/did-close
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9613,7 +9613,7 @@ notification requires a previous open notification to be sent."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message text-document/did-save
+(lem-lsp-base/type:define-notification-message text-document/did-save
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9635,7 +9635,7 @@ the document got saved in the client."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message text-document/will-save
+(lem-lsp-base/type:define-notification-message text-document/will-save
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9657,7 +9657,7 @@ the document is actually saved."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message workspace/did-change-watched-files
+(lem-lsp-base/type:define-notification-message workspace/did-change-watched-files
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9679,7 +9679,7 @@ the client detects changes to file watched by the language client."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message text-document/publish-diagnostics
+(lem-lsp-base/type:define-notification-message text-document/publish-diagnostics
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9701,7 +9701,7 @@ results of validation runs."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message /set-trace
+(lem-lsp-base/type:define-notification-message /set-trace
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9722,7 +9722,7 @@ results of validation runs."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message /log-trace
+(lem-lsp-base/type:define-notification-message /log-trace
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9743,7 +9743,7 @@ results of validation runs."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message /cancel-request
+(lem-lsp-base/type:define-notification-message /cancel-request
     common-lisp:nil
   :deprecated
   common-lisp:nil
@@ -9764,7 +9764,7 @@ results of validation runs."
   :since
   common-lisp:nil)
 
-(lem-language-server/protocol/lsp-type:define-notification-message /progress
+(lem-lsp-base/type:define-notification-message /progress
     common-lisp:nil
   :deprecated
   common-lisp:nil

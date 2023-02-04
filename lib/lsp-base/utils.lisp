@@ -1,4 +1,4 @@
-(defpackage :lem-language-server/protocol/utils
+(defpackage :lem-lsp-base/utils
   (:use :cl)
   (:import-from :quri)
   (:export :pathname-to-uri
@@ -7,7 +7,7 @@
            :point-to-lsp-position
            :points-to-lsp-range
            :move-to-lsp-position))
-(in-package :lem-language-server/protocol/utils)
+(in-package :lem-lsp-base/utils)
 
 (defun pathname-to-uri (pathname)
   (format nil "file://~A" (namestring pathname)))

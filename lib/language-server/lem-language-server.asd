@@ -11,16 +11,10 @@
                "micros"
                "lem"
                "lem-lisp-syntax"
-               "lem-socket-utils")
+               "lem-socket-utils"
+               "lem-lsp-base")
   :serial t
-  :components ((:module "protocol"
-                :components ((:file "yason-utils")
-                             (:file "lsp-type")
-                             (:file "protocol-generator")
-                             (:file "protocol-3-17")
-                             (:file "converter")
-                             (:file "utils")))
-               (:file "micros-client")
+  :components ((:file "micros-client")
                (:file "package")
                (:file "config")
                (:file "editor-utils")

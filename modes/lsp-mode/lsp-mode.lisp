@@ -8,11 +8,9 @@
         :lem-language-server/protocol/yason-utils
         :lem-language-server/protocol/utils)
   (:shadow :execute-command)
-  (:import-from :lem-lsp-mode/utils)
   (:import-from :lem-lsp-mode/request)
   (:import-from :lem-lsp-mode/client)
   (:import-from :lem-lsp-mode/context-menu)
-  (:local-nicknames (:utils :lem-lsp-mode/utils))
   (:local-nicknames (:request :lem-lsp-mode/request))
   (:local-nicknames (:client :lem-lsp-mode/client))
   (:local-nicknames (:completion :lem.completion-mode))
@@ -319,13 +317,19 @@
     (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)))
 
 (defun find-root-pathname (directory uri-patterns)
-  (or (utils:find-root-pathname directory
-                                (lambda (file)
-                                  (let ((file-name (file-namestring file)))
-                                    (dolist (uri-pattern uri-patterns)
-                                      (when (search uri-pattern file-name)
-                                        (return t))))))
-      (pathname directory)))
+  (labels ((root-file-p (file)
+             (let ((file-name (file-namestring file)))
+               (dolist (uri-pattern uri-patterns)
+                 (when (search uri-pattern file-name)
+                   (return t)))))
+           (recursive (directory)
+             (cond ((dolist (file (uiop:directory-files directory))
+                      (when (root-file-p file)
+                        (return directory))))
+                   ((uiop:pathname-equal directory (user-homedir-pathname)) nil)
+                   ((recursive (uiop:pathname-parent-directory-pathname directory))))))
+    (or (recursive directory)
+        (pathname directory))))
 
 (defun get-connected-port (spec)
   (let ((server-info (get-running-server-info spec)))
@@ -1110,7 +1114,7 @@
             (when (and (plusp (length parameters))
                        (< active-parameter (length parameters)))
               (let ((label (lsp:parameter-information-label
-                            (utils:elt-clamp parameters active-parameter))))
+                            (elt parameters active-parameter))))
                 ;; TODO: labelの型が[number, number]の場合に対応する
                 (when (stringp label)
                   (with-point ((p point))

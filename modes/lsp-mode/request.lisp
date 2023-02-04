@@ -3,7 +3,6 @@
         :lem-language-server/protocol/lsp-type)
   (:import-from :lem-lsp-mode/client
                 :client-connection)
-  (:import-from :lem-lsp-mode/utils)
   (:import-from :lem-language-server/protocol/converter
                 :convert-from-json
                 :convert-to-json)

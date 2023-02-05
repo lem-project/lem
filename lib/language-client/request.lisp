@@ -1,14 +1,14 @@
-(defpackage :lem-lsp-mode/request
+(defpackage :lem-language-client/request
   (:use :cl
         :lem-lsp-base/type)
-  (:import-from :lem-lsp-mode/client
+  (:import-from :lem-language-client/client
                 :client-connection)
   (:import-from :lem-lsp-base/converter
                 :convert-from-json
                 :convert-to-json)
   (:export :request
            :request-async))
-(in-package :lem-lsp-mode/request)
+(in-package :lem-language-client/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
 

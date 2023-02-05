@@ -8,11 +8,11 @@
                "quri"
                "trivia"
                "lem-process"
+               "lem-language-client"
                "lem-language-server")
   :serial t
   :components ((:file "async-process-stream")
                (:file "lem-stdio-transport")
                (:file "client")
-               (:file "request")
                (:file "context-menu")
                (:file "lsp-mode")))

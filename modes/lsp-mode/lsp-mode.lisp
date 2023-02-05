@@ -8,11 +8,10 @@
         :lem-lsp-base/yason-utils
         :lem-lsp-base/utils)
   (:shadow :execute-command)
-  (:import-from :lem-lsp-mode/request)
+  (:import-from :lem-language-client/request)
   (:import-from :lem-lsp-mode/client)
   (:import-from :lem-lsp-mode/context-menu)
-  (:local-nicknames (:request :lem-lsp-mode/request))
-  (:local-nicknames (:client :lem-lsp-mode/client))
+  (:local-nicknames (:request :lem-language-client/request))
   (:local-nicknames (:completion :lem.completion-mode))
   (:local-nicknames (:context-menu :lem-lsp-mode/context-menu))
   (:local-nicknames (:spinner :lem.loading-spinner))
@@ -343,12 +342,12 @@
 
 (defun make-client (spec)
   (ecase (spec-mode spec)
-    (:tcp (make-instance 'client:tcp-client :port (get-connected-port spec)))
-    (:stdio (make-instance 'client:stdio-client :process (get-spec-process spec)))))
+    (:tcp (make-instance 'lem-lsp-mode/client:tcp-client :port (get-connected-port spec)))
+    (:stdio (make-instance 'lem-lsp-mode/client:stdio-client :process (get-spec-process spec)))))
 
 (defun make-client-and-connect (spec)
   (let ((client (make-client spec)))
-    (client:jsonrpc-connect client)
+    (lem-language-client/client:jsonrpc-connect client)
     client))
 
 (defun convert-to-characters (string-characters)
@@ -422,10 +421,10 @@
           #'lsp-signature-help-with-trigger-character)))
 
 (defun initialize-workspace (workspace continuation)
-  (jsonrpc:expose (client:client-connection (workspace-client workspace))
+  (jsonrpc:expose (lem-language-client/client:client-connection (workspace-client workspace))
                   "textDocument/publishDiagnostics"
                   'text-document/publish-diagnostics)
-  (jsonrpc:expose (client:client-connection (workspace-client workspace))
+  (jsonrpc:expose (lem-language-client/client:client-connection (workspace-client workspace))
                   "window/showMessage"
                   'window/show-message)
   (initialize workspace
@@ -440,7 +439,7 @@
       (loop :with condition := nil
             :repeat 20
             :do (handler-case (with-yason-bindings ()
-                                (client:jsonrpc-connect client))
+                                (lem-language-client/client:jsonrpc-connect client))
                   (:no-error (&rest values)
                     (declare (ignore values))
                     (return client))

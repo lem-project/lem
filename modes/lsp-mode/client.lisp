@@ -17,15 +17,7 @@
 (defclass client ()
   ((connection
     :initform (jsonrpc:make-client)
-    :reader client-connection)
-   (server-info
-    :initarg :server-info
-    :type server-info
-    :writer set-server-info)
-   (server-capabilities
-    :initarg :server-capabilities
-    :type lsp:server-capabilities
-    :writer set-server-capabilities)))
+    :reader client-connection)))
 
 (defclass tcp-client (client)
   ((port

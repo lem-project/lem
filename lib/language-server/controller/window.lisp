@@ -12,3 +12,9 @@
                     (make-instance 'lsp:show-message-params
                                    :type type
                                    :message message)))
+
+(defun notify-log-message (type message)
+  (notify-to-client (make-instance 'lsp:window/log-message)
+                    (make-instance 'lsp:log-message-params
+                                   :type type
+                                   :message message)))

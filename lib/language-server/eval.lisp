@@ -40,4 +40,4 @@
                   (:log lsp:message-type-log)
                   (:error lsp:message-type-error))))
       (let ((jsonrpc/connection:*connection* (server-jsonrpc-connection *server*)))
-        (notify-show-message info string)))))
+        (notify-log-message info string)))))

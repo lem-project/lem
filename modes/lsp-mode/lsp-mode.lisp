@@ -427,6 +427,9 @@
   (jsonrpc:expose (lem-language-client/client:client-connection (workspace-client workspace))
                   "window/showMessage"
                   'window/show-message)
+  (jsonrpc:expose (lem-language-client/client:client-connection (workspace-client workspace))
+                  "window/logMessage"
+                  'window/log-message)
   (initialize workspace
               (lambda ()
                 (initialized workspace)
@@ -503,6 +506,11 @@
 (defun make-text-document-position-arguments (point)
   (list :text-document (make-text-document-identifier (point-buffer point))
         :position (point-to-lsp-position point)))
+
+(defun make-text-document-position-params (point)
+  (apply #'make-instance
+         'lsp:text-document-position-params
+         (make-text-document-position-arguments point)))
 
 (defun find-buffer-from-uri (uri)
   (let ((pathname (uri-to-pathname uri)))
@@ -603,7 +611,6 @@
 
 ;; TODO
 ;; - window/showMessageRequest
-;; - window/logMessage
 ;; - window/workDoneProgress/create
 ;; - window/workDoenProgress/cancel
 
@@ -625,6 +632,23 @@
                   (display-popup-message text
                                          :style '(:gravity :top)
                                          :timeout 3)))))
+
+(defun log-message (text)
+  (let ((buffer (make-buffer "*lsp output*")))
+    (with-point ((point (buffer-point buffer) :left-inserting))
+      (buffer-end point)
+      (unless (start-line-p point)
+        (insert-character point #\newline))
+      (insert-string point text))
+    (when (get-buffer-windows buffer)
+      (redraw-display))))
+
+(defun window/log-message (params)
+  (request::do-request-log "window/logMessage" params :from :server)
+  (let* ((params (convert-from-json params 'lsp:log-message-params))
+         (text (lsp:log-message-params-message params)))
+    (send-event (lambda ()
+                  (log-message text)))))
 
 ;;; Text Synchronization
 

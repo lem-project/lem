@@ -420,16 +420,21 @@
     (setf (gethash character (workspace-trigger-characters workspace))
           #'lsp-signature-help-with-trigger-character)))
 
+(defun register-lsp-method (workspace method function)
+  (jsonrpc:expose (lem-language-client/client:client-connection (workspace-client workspace))
+                  method
+                  function))
+
 (defun initialize-workspace (workspace continuation)
-  (jsonrpc:expose (lem-language-client/client:client-connection (workspace-client workspace))
-                  "textDocument/publishDiagnostics"
-                  'text-document/publish-diagnostics)
-  (jsonrpc:expose (lem-language-client/client:client-connection (workspace-client workspace))
-                  "window/showMessage"
-                  'window/show-message)
-  (jsonrpc:expose (lem-language-client/client:client-connection (workspace-client workspace))
-                  "window/logMessage"
-                  'window/log-message)
+  (register-lsp-method workspace
+                       "textDocument/publishDiagnostics"
+                       'text-document/publish-diagnostics)
+  (register-lsp-method workspace
+                       "window/showMessage"
+                       'window/show-message)
+  (register-lsp-method workspace
+                       "window/logMessage"
+                       'window/log-message)
   (initialize workspace
               (lambda ()
                 (initialized workspace)

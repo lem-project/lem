@@ -97,3 +97,10 @@
   (jsonrpc-notify (client-connection client)
                   (notification-message-method message)
                   (convert-to-json params)))
+
+(defun execute-command (client command &rest arguments)
+  (request client
+           (make-instance 'lsp:workspace/execute-command)
+           (make-instance 'lsp:execute-command-params
+                          :command command
+                          :arguments (coerce arguments 'vector))))

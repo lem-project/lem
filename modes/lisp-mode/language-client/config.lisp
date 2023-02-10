@@ -7,7 +7,7 @@
 
 (defvar *self-connection* nil)
 
-(define-language-spec (micros-spec lem-lisp-mode:lisp-mode)
+(define-language-spec (lisp-spec lem-lisp-mode:lisp-mode)
   :language-id "lisp"
   :root-uri-patterns '(".asd")
   :command (lambda (port)
@@ -36,7 +36,7 @@
   (bt:make-thread (lambda ()
                     (lem-language-server:start-tcp-server port))))
 
-(defmethod lem-lsp-mode::run-server ((spec micros-spec))
+(defmethod lem-lsp-mode::run-server ((spec lisp-spec))
   (if (not *self-connection*)
       (call-next-method)
       (let* ((lsp-port (lem-socket-utils:random-available-port))
@@ -72,4 +72,3 @@
                                          :style '(:gravity :cursor
                                                   :use-border nil
                                                   :background-color "dark cyan"))))))
-

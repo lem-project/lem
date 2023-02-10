@@ -31,4 +31,5 @@
 (defsystem "lem-lisp-mode/language-client"
   :depends-on ("lem-lisp-mode")
   :serial t
-  :components ((:file "lsp-config")))
+  :pathname "language-client"
+  :components ((:file "config")))

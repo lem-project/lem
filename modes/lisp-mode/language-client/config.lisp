@@ -1,9 +1,9 @@
-(defpackage :lem-lisp-mode/language-client/lsp-config
+(defpackage :lem-lisp-mode/language-client/config
   (:use :cl
         :lem
         :lem-lsp-mode
         :lem-lsp-base/converter))
-(in-package :lem-lisp-mode/language-client/lsp-config)
+(in-package :lem-lisp-mode/language-client/config)
 
 (defvar *self-connection* nil)
 
@@ -72,3 +72,4 @@
                                          :style '(:gravity :cursor
                                                   :use-border nil
                                                   :background-color "dark cyan"))))))
+

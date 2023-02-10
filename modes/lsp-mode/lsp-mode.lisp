@@ -1749,8 +1749,9 @@
 (defun organize-imports (buffer)
   (let ((response (text-document/code-action (buffer-point buffer)))
         (workspace (buffer-workspace buffer)))
-    (when-let (code-action (find-organize-imports response))
-      (execute-code-action workspace code-action))))
+    (let ((code-action (find-organize-imports response)))
+      (unless (lsp-null-p code-action)
+        (execute-code-action workspace code-action)))))
 
 (define-command lsp-organize-imports () ()
   (organize-imports (current-buffer)))

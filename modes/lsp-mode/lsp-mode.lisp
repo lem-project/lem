@@ -804,7 +804,7 @@
     (do-sequence (diagnostic (lsp:publish-diagnostics-params-diagnostics params))
       (highlight-diagnostic buffer diagnostic))
     (setf (buffer-diagnostic-idle-timer buffer)
-          (start-idle-timer 1000 t #'popup-diagnostic nil "lsp-diagnostic"))))
+          (start-idle-timer 200 t #'popup-diagnostic nil "lsp-diagnostic"))))
 
 (defun popup-diagnostic ()
   (dolist (overlay (buffer-diagnostic-overlays (current-buffer)))

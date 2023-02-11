@@ -7,7 +7,8 @@
                 :convert-from-json
                 :convert-to-json)
   (:export :request
-           :request-async))
+           :request-async
+           :execute-command))
 (in-package :lem-language-client/request)
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)

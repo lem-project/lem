@@ -217,7 +217,14 @@
   spec
   server-capabilities
   server-info
-  (trigger-characters (make-hash-table)))
+  (trigger-characters (make-hash-table))
+  plist)
+
+(defun workspace-value (workspace key)
+  (getf (workspace-plist workspace) key))
+
+(defun (setf workspace-value) (value workspace key)
+  (setf (getf (workspace-plist workspace) key) value))
 
 (defun workspace-language-id (workspace)
   (spec-language-id (workspace-spec workspace)))

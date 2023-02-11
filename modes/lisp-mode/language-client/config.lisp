@@ -27,7 +27,10 @@
 
 (defun start-micros-server (port)
   (setf (lem-language-server::config :backend-port) port)
-  (micros:create-server :port port))
+  (let* ((output (make-broadcast-stream))
+         (*standard-output* output)
+         (*error-output* output))
+    (micros:create-server :port port)))
 
 (defun start-language-server (port)
   (bt:make-thread (lambda ()

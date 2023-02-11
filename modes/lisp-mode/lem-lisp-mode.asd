@@ -32,4 +32,5 @@
   :depends-on ("lem-lisp-mode")
   :serial t
   :pathname "language-client"
-  :components ((:file "config")))
+  :components ((:file "config")
+               (:file "eval")))

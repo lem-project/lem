@@ -65,7 +65,8 @@
                    :experimental nil)
     :server-info (make-lsp-map "name" (language-server-name)
                                "version" (language-server-version)
-                               "swankPort" (swank-port (current-server))))))
+                               "swankPort" (swank-port (current-server))
+                               "microsPort" (micros-port (current-server))))))
 
 (define-request (initialized-request "initialized") (params lsp:initialized-params)
   (declare (ignore params))

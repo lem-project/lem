@@ -4,6 +4,7 @@
   (:import-from :lem-socket-utils
                 :random-available-port)
   (:export :*write-string-function*
+           :connection-port
            :connection-swank-port
            :remote-eval
            :remote-eval-sync

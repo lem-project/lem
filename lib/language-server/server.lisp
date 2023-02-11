@@ -7,6 +7,7 @@
 (defgeneric start-server (server))
 (defgeneric run-backend (server))
 (defgeneric swank-port (server))
+(defgeneric micros-port (server))
 (defgeneric exit-server (server status-code))
 (defgeneric remote-eval-sync (server expression package-name))
 
@@ -95,6 +96,19 @@
   (swank-port-internal server))
 
 (defmethod swank-port ((server mock-server))
+  nil)
+
+(defun micros-port-internal (server)
+  (micros/client::connection-port
+   (server-backend-connection server)))
+
+(defmethod micros-port ((server tcp-server))
+  (micros-port-internal server))
+
+(defmethod micros-port ((server stdio-server))
+  (micros-port-internal server))
+
+(defmethod micros-port ((server mock-server))
   nil)
 
 (defmethod exit-server ((server tcp-server) status-code)

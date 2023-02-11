@@ -18,11 +18,7 @@
 (defun notify-eval-result (value)
   (multiple-value-bind (message type)
       (convert-eval-result value)
-    (declare (ignore type))
-    (notify-to-client (make-instance 'micros/eval-result)
-                      (make-instance 'eval-result-params
-                                     :id 0 ; TODO: evalの結果をinspectできるようにする
-                                     :message message))))
+    (notify-show-message type message)))
 
 (defun remote-eval (string package-name)
   (micros/client:remote-eval

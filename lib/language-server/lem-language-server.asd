@@ -23,7 +23,6 @@
                (:file "text-document")
                (:file "eval")
                (:file "commands")
-               (:file "protocol-ext")
                (:module "controller"
                 :components ((:file "lifecycle")
                              (:file "document-synchronization")

@@ -1,6 +1,6 @@
 (in-package :lem-language-server)
 
-(define-lsp-command eval-previous-form-command "cl-lsp.eval-previous-form" (arguments)
+(define-lsp-command eval-previous-form-command "cl-lsp.eval-last-expression" (arguments)
   (let* ((point
            (text-document-position-params-to-point
             (convert-from-json (elt arguments 0)

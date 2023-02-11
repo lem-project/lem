@@ -12,7 +12,7 @@
 
 (define-command lisp-language-client/eval-at-point () ()
   (execute-command (get-client (current-buffer))
-                   "cl-lsp.micros.eval-last-expression"
+                   "cl-lsp.eval-last-expression"
                    (convert-to-json
                     (lem-lsp-mode::make-text-document-position-params
                      (current-point)))))

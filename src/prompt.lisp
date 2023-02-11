@@ -47,9 +47,11 @@
                    use-border))
   (apply #'%prompt-for-line prompt args))
 
-(defun prompt-for-integer (prompt &key min max (gravity *default-prompt-gravity*))
+(defun prompt-for-integer (prompt &key initial-value min max (gravity *default-prompt-gravity*))
+  (check-type initial-value integer)
   (parse-integer
    (prompt-for-string prompt
+                      :initial-value (princ-to-string initial-value)
                       :test-function (lambda (str)
                                        (multiple-value-bind (n len)
                                            (parse-integer str :junk-allowed t)

@@ -33,3 +33,9 @@
   :serial t
   :pathname "language-client"
   :components ((:file "config")))
+
+(defsystem "lem-lisp-mode/micros"
+  :depends-on ("lem-lisp-mode")
+  :serial t
+  :pathname "micros"
+  :components ((:file "micros")))

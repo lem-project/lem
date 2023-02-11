@@ -273,7 +273,7 @@
       connection)))
 
 (defun connect (hostname port)
-  (let ((connection (create-connection hostname port)))
+  (let ((connection (connect-until-successful hostname port)))
     (setup connection)
     connection))
 

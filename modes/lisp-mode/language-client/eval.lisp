@@ -18,6 +18,9 @@
                     (lem-lsp-mode::make-text-document-position-params
                      (current-point)))))
 
+(define-command lisp-language-client/clear-eval-results () ()
+  (clear-eval-results (current-buffer)))
+
 (defun fold-one-line-message (message)
   (let ((pos (position #\newline message)))
     (if (not pos)
@@ -29,6 +32,10 @@
 
 (defun (setf buffer-eval-result-overlays) (value buffer)
   (setf (buffer-value buffer 'eval-result-overlays) value))
+
+(defun clear-eval-results (buffer)
+  (mapc #'remove-eval-result-overlay
+        (buffer-eval-result-overlays buffer)))
 
 (defun show-eval-result (params)
   (let* ((message (lem-language-server::show-eval-result-params-message
@@ -56,6 +63,12 @@
 (defun remove-touch-overlay (start end old-len)
   (declare (ignore old-len))
   (remove-overlay-between start end))
+
+(defun remove-eval-result-overlay (overlay)
+  (delete-overlay overlay)
+  (delete-overlay (overlay-get overlay 'relation-overlay))
+  (alexandria:removef (buffer-eval-result-overlays (current-buffer))
+                      overlay))
 
 (defun remove-overlay-between (start end)
   (dolist (ov (buffer-eval-result-overlays (current-buffer)))

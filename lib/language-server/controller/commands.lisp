@@ -1,11 +1,10 @@
 (in-package :lem-language-server)
 
 (define-lsp-command eval-previous-form-command "cl-lsp.eval-last-expression" (arguments)
-  (let* ((point
-           (text-document-position-params-to-point
-            (convert-from-json (elt arguments 0)
-                               'lsp:text-document-position-params))))
-    (eval-last-expression point))
+  (let ((text-document-position-params
+          (convert-from-json (elt arguments 0)
+                             'lsp:text-document-position-params)))
+    (eval-last-expression text-document-position-params))
   :null)
 
 (define-lsp-command eval-range-command "cl-lsp.eval-range" (arguments)
@@ -19,7 +18,9 @@
       (move-to-lsp-position end (lsp:range-end range))
       (remote-eval (lem:points-to-string start end)
                    (scan-current-package start)
-                   (lambda (value) (notify-eval-result value range)))))
+                   (lambda (value) (notify-eval-result value
+                                                       range
+                                                       :text-document text-document-identifier)))))
   :null)
 
 (define-lsp-command interrupt-eval-command "cl-lsp.interrupt" (arguments)

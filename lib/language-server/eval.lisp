@@ -11,7 +11,10 @@
        :accessor show-eval-result-params-id)
    (range :initarg :range
           :type lsp:range
-          :accessor show-eval-result-params-range)))
+          :accessor show-eval-result-params-range)
+   (text-document :initarg :text-document
+                  :type lsp:text-document-identifier
+                  :accessor show-eval-result-params-text-document)))
 
 (lem-lsp-base/type:define-notification-message lisp/show-eval-result ()
   :message-direction "serverToClient"
@@ -24,7 +27,10 @@
        :accessor start-eval-params-id)
    (range :initarg :range
           :type lsp:range
-          :accessor start-eval-params-range)))
+          :accessor start-eval-params-range)
+   (text-document :initarg :text-document
+                  :type lsp:text-document-identifier
+                  :accessor start-eval-params-text-document)))
 
 (lem-lsp-base/type:define-notification-message lisp/start-eval ()
   :message-direction "serverToClient"
@@ -46,7 +52,7 @@
      (values condition
              lsp:message-type-error))))
 
-(defun notify-eval-result (value range &optional (id 0))
+(defun notify-eval-result (value range &key (id 0) text-document)
   (multiple-value-bind (message type)
       (convert-eval-result value)
     (notify-log-message type message)
@@ -55,7 +61,8 @@
                                      :id id
                                      :type type
                                      :message message
-                                     :range range))))
+                                     :range range
+                                     :text-document text-document))))
 
 (defun remote-eval (string package-name &optional continue)
   (micros/client:remote-eval
@@ -73,21 +80,27 @@
 (declaim (fixnum *id-counter*))
 (sb-ext:defglobal *id-counter* 0)
 
-(defun eval-last-expression (point)
-  (lem:with-point ((start point :left-inserting)
-                   (end point :left-inserting))
-    (when (lem:form-offset start -1) ; TODO: nilの場合を考慮する
-      (let ((string (lem:points-to-string start end))
-            (range (points-to-lsp-range start end))
-            (id (sb-ext:atomic-incf *id-counter*)))
-        (notify-to-client (make-instance 'lisp/start-eval)
-                          (make-instance 'start-eval-params
-                                         :range range
-                                         :id id))
-        (remote-eval string
-                     (scan-current-package point)
-                     (lambda (value)
-                       (notify-eval-result value range id)))))))
+(defun eval-last-expression (params)
+  (let ((point (text-document-position-params-to-point params))
+        (text-document-identifier
+          (lsp:text-document-position-params-text-document params)))
+    (lem:with-point ((start point :left-inserting)
+                     (end point :left-inserting))
+      (when (lem:form-offset start -1) ; TODO: nilの場合を考慮する
+        (let ((string (lem:points-to-string start end))
+              (range (points-to-lsp-range start end))
+              (id (sb-ext:atomic-incf *id-counter*)))
+          (notify-to-client (make-instance 'lisp/start-eval)
+                            (make-instance 'start-eval-params
+                                           :range range
+                                           :id id
+                                           :text-document text-document-identifier))
+          (remote-eval string
+                       (scan-current-package point)
+                       (lambda (value)
+                         (notify-eval-result value range
+                                             :id id
+                                             :text-document text-document-identifier))))))))
 
 (defun micros-write-string (string target info)
   (declare (ignore target))

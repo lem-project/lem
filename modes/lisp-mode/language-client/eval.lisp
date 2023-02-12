@@ -8,6 +8,8 @@
                           :execute-command))
 (in-package :lem-lisp-mode/language-client/eval)
 
+(define-key lem-lisp-mode:*lisp-mode-keymap* "M-Return" 'lisp-language-client/eval-at-point)
+
 (defun message-type-to-attribute (message-type)
   (alexandria:switch (message-type)
     (lsp:message-type-warning
@@ -49,11 +51,35 @@
   (mapc #'remove-eval-result-overlay
         (buffer-eval-result-overlays buffer)))
 
+(defun register-eval-spinner (buffer id spinner)
+  (let ((hash-table
+          (or (buffer-value buffer 'eval-loading-spinner)
+              (setf (buffer-value buffer 'eval-loading-spinner)
+                    (make-hash-table)))))
+    (setf (gethash id hash-table) spinner)))
+
+(defun stop-eval-spinner (buffer id)
+  (let ((spinner (gethash id (buffer-value buffer 'eval-loading-spinner))))
+    (remhash id (buffer-value buffer 'eval-loading-spinner))
+    (lem.loading-spinner:stop-loading-spinner spinner)))
+
+(defun start-eval (params)
+  (let* ((params (convert-from-json params 'lem-language-server::start-eval-params))
+         (range (lem-language-server::start-eval-params-range params))
+         (id (lem-language-server::start-eval-params-id params)))
+    (send-event (lambda ()
+                  (with-point ((start (current-point))
+                               (end (current-point)))
+                    (remove-eval-result-overlay-between start end)
+                    (lem-lsp-base/utils:destructuring-lsp-range start end range)
+                    (let ((spinner (lem.loading-spinner:start-loading-spinner :line :point end)))
+                      (register-eval-spinner (current-buffer) id spinner)))))))
+
 (defun show-eval-result (params)
-  (let* ((params (convert-from-json params
-                                    'lem-language-server::show-eval-result-params))
+  (let* ((params (convert-from-json params 'lem-language-server::show-eval-result-params))
          (type (lem-language-server::show-eval-result-params-type params))
          (range (lem-language-server::show-eval-result-params-range params))
+         (id (lem-language-server::show-eval-result-params-id params))
          (attribute (message-type-to-attribute type))
          (message (lem-language-server::show-eval-result-params-message params))
          (folding-message (fold-one-line-message message)))
@@ -61,7 +87,7 @@
                   (with-point ((start (current-point))
                                (end (current-point)))
                     (lem-lsp-base/utils:destructuring-lsp-range start end range)
-                    (remove-overlay-between start end)
+                    (stop-eval-spinner (current-buffer) id)
                     (let ((popup-overlay (make-overlay start end attribute))
                           (background-overlay
                             (make-overlay start end (make-attribute :underline-p t))))
@@ -76,7 +102,7 @@
 
 (defun remove-touch-overlay (start end old-len)
   (declare (ignore old-len))
-  (remove-overlay-between start end))
+  (remove-eval-result-overlay-between start end))
 
 (defun remove-eval-result-overlay (overlay)
   (delete-overlay overlay)
@@ -84,7 +110,7 @@
   (alexandria:removef (buffer-eval-result-overlays (current-buffer))
                       overlay))
 
-(defun remove-overlay-between (start end)
+(defun remove-eval-result-overlay-between (start end)
   (dolist (ov (buffer-eval-result-overlays (current-buffer)))
     (unless (or (point< end (overlay-start ov))
                 (point< (overlay-end ov) start))

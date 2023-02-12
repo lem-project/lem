@@ -18,6 +18,19 @@
   :method "lisp/showEvalResult"
   :params 'show-eval-result-params)
 
+(lem-lsp-base/type:define-class start-eval-params ()
+  ((id :initarg :id
+       :type lem-lsp-base/type:lsp-uinteger
+       :accessor start-eval-params-id)
+   (range :initarg :range
+          :type lsp:range
+          :accessor start-eval-params-range)))
+
+(lem-lsp-base/type:define-notification-message lisp/start-eval ()
+  :message-direction "serverToClient"
+  :method "lisp/startEval"
+  :params 'start-eval-params)
+
 (defun convert-eval-result (value)
   (alexandria:destructuring-ecase value
     ((:ok result)
@@ -33,13 +46,13 @@
      (values condition
              lsp:message-type-error))))
 
-(defun notify-eval-result (value range)
+(defun notify-eval-result (value range &optional (id 0))
   (multiple-value-bind (message type)
       (convert-eval-result value)
     (notify-log-message type message)
     (notify-to-client (make-instance 'lisp/show-eval-result)
                       (make-instance 'show-eval-result-params
-                                     :id 0
+                                     :id id
                                      :type type
                                      :message message
                                      :range range))))
@@ -57,16 +70,24 @@
 (defun interrupt-eval ()
   (micros/client:interrupt (server-backend-connection *server*) :repl-thread))
 
+(declaim (fixnum *id-counter*))
+(sb-ext:defglobal *id-counter* 0)
+
 (defun eval-last-expression (point)
   (lem:with-point ((start point :left-inserting)
                    (end point :left-inserting))
     (when (lem:form-offset start -1) ; TODO: nilの場合を考慮する
       (let ((string (lem:points-to-string start end))
-            (range (points-to-lsp-range start end)))
+            (range (points-to-lsp-range start end))
+            (id (sb-ext:atomic-incf *id-counter*)))
+        (notify-to-client (make-instance 'lisp/start-eval)
+                          (make-instance 'start-eval-params
+                                         :range range
+                                         :id id))
         (remote-eval string
                      (scan-current-package point)
                      (lambda (value)
-                       (notify-eval-result value range)))))))
+                       (notify-eval-result value range id)))))))
 
 (defun micros-write-string (string target info)
   (declare (ignore target))

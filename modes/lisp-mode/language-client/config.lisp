@@ -26,7 +26,10 @@
       (lem-lisp-mode:slime-connect "localhost" swank-port nil)))
   (lem-lsp-mode::register-lsp-method workspace
                                      "lisp/showEvalResult"
-                                     'lem-lisp-mode/language-client/eval::show-eval-result))
+                                     'lem-lisp-mode/language-client/eval::show-eval-result)
+  (lem-lsp-mode::register-lsp-method workspace
+                                     "lisp/startEval"
+                                     'lem-lisp-mode/language-client/eval::start-eval))
 
 (defun start-micros-server (port)
   (setf (lem-language-server::config :backend-port) port)

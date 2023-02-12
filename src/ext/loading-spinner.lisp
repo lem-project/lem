@@ -29,14 +29,19 @@
 (defun (setf buffer-spinner) (spinner buffer)
   (setf (buffer-value buffer 'spinner) spinner))
 
+(defun spinner-character (spinner)
+  (elt (spinner-frames spinner)
+       (spinner-frame-index spinner)))
+
+(defun spinner-text (spinner)
+  (format nil "~A ~A"
+          (spinner-character spinner)
+          (or (spinner-loading-message spinner) "")))
+
 (defmethod convert-modeline-element ((spinner spinner) window)
   (let ((attribute (merge-attribute (ensure-attribute 'modeline t)
                                     (ensure-attribute 'spinner-attribute))))
-    (values (format nil
-                    "~A ~A  "
-                    (elt (spinner-frames spinner)
-                         (spinner-frame-index spinner))
-                    (or (spinner-loading-message spinner) ""))
+    (values (format nil "~A  " (spinner-text spinner))
             attribute
             :right)))
 
@@ -70,4 +75,38 @@
   (let ((buffer (modeline-spinner-buffer spinner)))
     (modeline-remove-status-list spinner buffer)
     (stop-timer (spinner-timer spinner))
-    (setf (buffer-spinner buffer) nil)))
+    (setf (buffer-spinner buffer) nil))
+  (values))
+
+(defclass line-spinner (spinner)
+  ((overlay :initarg :overlay
+            :reader line-spinner-overlay)))
+
+(defun update-line-spinner (spinner)
+  (update-spinner-frame spinner)
+  (overlay-put (line-spinner-overlay spinner)
+               :text
+               (spinner-text spinner)))
+
+(defmethod start-loading-spinner ((type (eql :line)) &key point loading-message)
+  (check-type point point)
+  (let* ((spinner)
+         (timer (start-timer +loading-interval+
+                             t
+                             (lambda ()
+                               (update-line-spinner spinner))))
+         (overlay (make-overlay point point 'spinner-attribute)))
+    (setf spinner
+          (make-instance 'line-spinner
+                         :timer timer
+                         :loading-message loading-message
+                         :overlay overlay))
+    (overlay-put overlay :display-line-end t)
+    (overlay-put overlay :display-line-end-offset 1)
+    (overlay-put overlay :text (spinner-text spinner))
+    spinner))
+
+(defmethod stop-loading-spinner ((spinner line-spinner))
+  (let ((overlay (line-spinner-overlay spinner)))
+    (delete-overlay overlay))
+  (values))

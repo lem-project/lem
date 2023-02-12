@@ -130,7 +130,7 @@
                     ((overlay-get overlay :display-line-end)
                      (when (and (point<= view-point start)
                                 (point<= end view-end-point))
-                       (let ((i (calc-row start)))
+                       (let ((i (calc-row end)))
                          (when (< i (screen-height screen))
                            (let ((str (overlay-get overlay :text)))
                              (setf (aref (screen-lines screen) i)

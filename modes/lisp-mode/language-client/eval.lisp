@@ -38,17 +38,22 @@
         (buffer-eval-result-overlays buffer)))
 
 (defun show-eval-result (params)
-  (let* ((message (lem-language-server::show-eval-result-params-message
-                   (convert-from-json params
-                                      'lem-language-server::show-eval-result-params)))
+  (let* ((params (convert-from-json params
+                                    'lem-language-server::show-eval-result-params))
+         (type (lem-language-server::show-eval-result-params-type params))
+         (range (lem-language-server::show-eval-result-params-range params))
+         (attribute (if (= type lsp:message-type-error)
+                        (make-attribute :foreground "white"
+                                        :background "dark red")
+                        (make-attribute :foreground "cyan"
+                                        :background "dark cyan")))
+         (message (lem-language-server::show-eval-result-params-message params))
          (folding-message (fold-one-line-message message)))
     (send-event (lambda ()
                   (with-point ((start (current-point))
                                (end (current-point)))
-                    (form-offset start -1)
-                    (let ((popup-overlay (make-overlay start end
-                                                       (make-attribute :foreground "cyan"
-                                                                       :background "dark cyan")))
+                    (lem-lsp-base/utils:destructuring-lsp-range start end range)
+                    (let ((popup-overlay (make-overlay start end attribute))
                           (background-overlay
                             (make-overlay start end (make-attribute :underline-p t))))
                       (overlay-put popup-overlay 'relation-overlay background-overlay)

@@ -6,7 +6,8 @@
            :point-lsp-line-number
            :point-to-lsp-position
            :points-to-lsp-range
-           :move-to-lsp-position))
+           :move-to-lsp-position
+           :destructuring-lsp-range))
 (in-package :lem-lsp-base/utils)
 
 (defun pathname-to-uri (pathname)
@@ -36,3 +37,8 @@
     (lem:move-to-line point (1+ line))
     (lem:character-offset (lem:line-start point) character)
     point))
+
+(defun destructuring-lsp-range (start end range)
+  (move-to-lsp-position start (lsp:range-start range))
+  (move-to-lsp-position end (lsp:range-end range))
+  (values))

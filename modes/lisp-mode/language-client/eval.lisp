@@ -24,6 +24,12 @@
         message
         (format nil "~A..." (subseq message 0 pos)))))
 
+(defun buffer-eval-result-overlays (buffer)
+  (buffer-value buffer 'eval-result-overlays))
+
+(defun (setf buffer-eval-result-overlays) (value buffer)
+  (setf (buffer-value buffer 'eval-result-overlays) value))
+
 (defun show-eval-result (params)
   (let* ((message (lem-language-server::show-eval-result-params-message
                    (convert-from-json params
@@ -43,7 +49,7 @@
                       (overlay-put popup-overlay :display-line-end-offset 1)
                       (overlay-put popup-overlay :text folding-message)
                       (overlay-put popup-overlay 'whole-message message)
-                      (push popup-overlay (buffer-value (current-buffer) 'eval-result-overlays))
+                      (push popup-overlay (buffer-eval-result-overlays (current-buffer)))
                       (add-hook (variable-value 'after-change-functions :buffer (current-buffer))
                                 'remove-touch-overlay)))))))
 
@@ -52,10 +58,10 @@
   (remove-overlay-between start end))
 
 (defun remove-overlay-between (start end)
-  (dolist (ov (buffer-value (current-buffer) 'eval-result-overlays))
+  (dolist (ov (buffer-eval-result-overlays (current-buffer)))
     (unless (or (point< end (overlay-start ov))
                 (point< (overlay-end ov) start))
       (delete-overlay ov)
       (delete-overlay (overlay-get ov 'relation-overlay))
-      (alexandria:removef (buffer-value (current-buffer) 'eval-result-overlays)
+      (alexandria:removef (buffer-eval-result-overlays (current-buffer))
                           ov))))

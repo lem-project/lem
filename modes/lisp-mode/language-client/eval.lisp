@@ -1,11 +1,14 @@
 (defpackage :lem-lisp-mode/language-client/eval
   (:use :cl
         :lem)
+  (:import-from :lem-lsp-mode
+                :register-lsp-method)
   (:import-from :lem-lsp-base/converter
                 :convert-to-json
                 :convert-from-json)
   (:shadowing-import-from :lem-language-client/request
-                          :execute-command))
+                          :execute-command)
+  (:export :register-eval-methods))
 (in-package :lem-lisp-mode/language-client/eval)
 
 (define-key lem-lisp-mode:*lisp-mode-keymap* "M-Return" 'lisp-language-client/eval-at-point)
@@ -34,6 +37,14 @@
 
 (define-command lisp-language-client/clear-eval-results () ()
   (clear-eval-results (current-buffer)))
+
+(defun register-eval-methods (workspace)
+  (register-lsp-method workspace
+                       "lisp/showEvalResult"
+                       'show-eval-result)
+  (register-lsp-method workspace
+                       "lisp/startEval"
+                       'start-eval))
 
 (defun fold-one-line-message (message)
   (let ((pos (position #\newline message)))

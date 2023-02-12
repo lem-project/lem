@@ -16,6 +16,7 @@
   (:local-nicknames (:context-menu :lem-lsp-mode/context-menu))
   (:local-nicknames (:spinner :lem.loading-spinner))
   (:export :spec-initialization-options
+           :register-lsp-method
            :define-language-spec))
 (in-package :lem-lsp-mode/lsp-mode)
 

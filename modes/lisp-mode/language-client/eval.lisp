@@ -53,6 +53,7 @@
                   (with-point ((start (current-point))
                                (end (current-point)))
                     (lem-lsp-base/utils:destructuring-lsp-range start end range)
+                    (remove-overlay-between start end)
                     (let ((popup-overlay (make-overlay start end attribute))
                           (background-overlay
                             (make-overlay start end (make-attribute :underline-p t))))

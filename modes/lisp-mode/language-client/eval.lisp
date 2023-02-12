@@ -18,23 +18,31 @@
                     (lem-lsp-mode::make-text-document-position-params
                      (current-point)))))
 
+(defun fold-one-line-message (message)
+  (let ((pos (position #\newline message)))
+    (if (not pos)
+        message
+        (format nil "~A..." (subseq message 0 pos)))))
+
 (defun show-eval-result (params)
-  (let ((message (lem-language-server::show-eval-result-params-message
-                  (convert-from-json params
-                                     'lem-language-server::show-eval-result-params))))
+  (let* ((message (lem-language-server::show-eval-result-params-message
+                   (convert-from-json params
+                                      'lem-language-server::show-eval-result-params)))
+         (folding-message (fold-one-line-message message)))
     (send-event (lambda ()
                   (with-point ((start (current-point))
                                (end (current-point)))
                     (form-offset start -1)
                     (let ((popup-overlay (make-overlay start end
-                                            (make-attribute :foreground "cyan"
-                                                            :background "dark cyan")))
+                                                       (make-attribute :foreground "cyan"
+                                                                       :background "dark cyan")))
                           (background-overlay
                             (make-overlay start end (make-attribute :underline-p t))))
                       (overlay-put popup-overlay 'relation-overlay background-overlay)
                       (overlay-put popup-overlay :display-line-end t)
                       (overlay-put popup-overlay :display-line-end-offset 1)
-                      (overlay-put popup-overlay :text message)
+                      (overlay-put popup-overlay :text folding-message)
+                      (overlay-put popup-overlay 'whole-message message)
                       (push popup-overlay (buffer-value (current-buffer) 'eval-result-overlays))
                       (add-hook (variable-value 'after-change-functions :buffer (current-buffer))
                                 'remove-touch-overlay)))))))

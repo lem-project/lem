@@ -1,5 +1,17 @@
 (in-package :lem-language-server)
 
+(lem-lsp-base/type:define-class show-eval-result-params ()
+  ((message :type lem-lsp-base/type:lsp-string
+            :initarg :message
+            :accessor show-eval-result-params-message)
+   (id :initarg :id
+       :accessor show-eval-result-params-id)))
+
+(lem-lsp-base/type:define-notification-message lisp/show-eval-result ()
+  :message-direction "serverToClient"
+  :method "lisp/showEvalResult"
+  :params 'show-eval-result-params)
+
 (defun convert-eval-result (value)
   (alexandria:destructuring-ecase value
     ((:ok result)
@@ -18,7 +30,11 @@
 (defun notify-eval-result (value)
   (multiple-value-bind (message type)
       (convert-eval-result value)
-    (notify-show-message type message)))
+    (notify-log-message type message)
+    (notify-to-client (make-instance 'lisp/show-eval-result)
+                      (make-instance 'show-eval-result-params
+                                     :id 0
+                                     :message message))))
 
 (defun remote-eval (string package-name)
   (micros/client:remote-eval

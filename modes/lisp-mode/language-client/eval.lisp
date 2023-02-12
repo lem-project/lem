@@ -8,6 +8,18 @@
                           :execute-command))
 (in-package :lem-lisp-mode/language-client/eval)
 
+(defun message-type-to-attribute (message-type)
+  (alexandria:switch (message-type)
+    (lsp:message-type-warning
+     (make-attribute :foreground "yellow"
+                     :background "dark yellow"))
+    (lsp:message-type-error
+     (make-attribute :foreground "white"
+                     :background "dark red"))
+    (t
+     (make-attribute :foreground "cyan"
+                     :background "dark cyan"))))
+
 (defun get-client (buffer)
   (lem-lsp-mode::workspace-client (lem-lsp-mode::buffer-workspace buffer)))
 
@@ -42,11 +54,7 @@
                                     'lem-language-server::show-eval-result-params))
          (type (lem-language-server::show-eval-result-params-type params))
          (range (lem-language-server::show-eval-result-params-range params))
-         (attribute (if (= type lsp:message-type-error)
-                        (make-attribute :foreground "white"
-                                        :background "dark red")
-                        (make-attribute :foreground "cyan"
-                                        :background "dark cyan")))
+         (attribute (message-type-to-attribute type))
          (message (lem-language-server::show-eval-result-params-message params))
          (folding-message (fold-one-line-message message)))
     (send-event (lambda ()

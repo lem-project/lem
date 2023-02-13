@@ -39,7 +39,7 @@ After that, please follow the steps bellow.
 
 ```
 1. install lem by roswell
-$ ros install follow-dependency=t lem-project/lem
+$ ros follow-dependency=t install lem-project/lem
 
 2. add the PATH in the initialization file(such as ~/.bashrc)
 export PATH=$PATH:~/.roswell/bin

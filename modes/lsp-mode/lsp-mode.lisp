@@ -527,7 +527,7 @@
 
 (defun find-buffer-from-uri (uri)
   (let ((pathname (uri-to-pathname uri)))
-    (find-file-buffer pathname)))
+    (find pathname (buffer-list) :key #'buffer-filename :test #'uiop:pathname-equal)))
 
 (defun get-buffer-from-text-document-identifier (text-document-identifier)
   (let ((uri (lsp:text-document-identifier-uri text-document-identifier)))

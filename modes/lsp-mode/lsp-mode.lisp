@@ -1382,13 +1382,35 @@
                  (workspace-server-capabilities workspace))
     (unbound-slot () nil)))
 
-(defvar *document-highlight-overlays* '())
+(defstruct document-highlight-context
+  (overlays '())
+  (last-modified-tick 0))
+
+(defvar *document-highlight-context* (make-document-highlight-context))
+
+(defun document-highlight-overlays ()
+  (document-highlight-context-overlays *document-highlight-context*))
+
+(defun (setf document-highlight-overlays) (value)
+  (setf (document-highlight-context-overlays *document-highlight-context*)
+        value))
+
+(defun cursor-in-document-highlight-p ()
+  (dolist (ov (document-highlight-overlays))
+    (when (point<= (overlay-start ov) (current-point) (overlay-end ov))
+      (return t))))
 
 (defun clear-document-highlight-overlays ()
-  (mapc #'delete-overlay *document-highlight-overlays*))
+  (unless (and (= (document-highlight-context-last-modified-tick *document-highlight-context*)
+                  (buffer-modified-tick (current-buffer)))
+               (cursor-in-document-highlight-p))
+    (mapc #'delete-overlay (document-highlight-overlays))
+    (setf (document-highlight-overlays) '())
+    (setf (document-highlight-context-last-modified-tick *document-highlight-context*)
+          (buffer-modified-tick (current-buffer)))
+    t))
 
 (defun display-document-highlights (buffer document-highlights)
-  (clear-document-highlight-overlays)
   (with-point ((start (buffer-point buffer))
                (end (buffer-point buffer)))
     (do-sequence (document-highlight document-highlights)
@@ -1396,22 +1418,25 @@
         (move-to-lsp-position start (lsp:range-start range))
         (move-to-lsp-position end (lsp:range-end range))
         (push (make-overlay start end 'document-highlight-text-attribute)
-              *document-highlight-overlays*)))))
+              (document-highlight-overlays))))))
 
 (defun text-document/document-highlight (point)
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-document-highlight-p workspace)
-      (async-request
-       (workspace-client workspace)
-       (make-instance 'lsp:text-document/document-highlight)
-       (apply #'make-instance
-              'lsp:document-highlight-params
-              (make-text-document-position-arguments point))
-       :then (lambda (value)
-               (unless (lsp-null-p value)
-                 (display-document-highlights (point-buffer point)
-                                              value)
-                 (redraw-display)))))))
+      (unless (cursor-in-document-highlight-p)
+        (let ((counter (lem::command-loop-counter)))
+          (async-request
+           (workspace-client workspace)
+           (make-instance 'lsp:text-document/document-highlight)
+           (apply #'make-instance
+                  'lsp:document-highlight-params
+                  (make-text-document-position-arguments point))
+           :then (lambda (value)
+                   (unless (lsp-null-p value)
+                     (when (= counter (lem::command-loop-counter))
+                       (display-document-highlights (point-buffer point)
+                                                    value)
+                       (redraw-display))))))))))
 
 (defun document-highlight-calls-timer ()
   (when (mode-active-p (current-buffer) 'lsp-mode)
@@ -1427,7 +1452,7 @@
 (defun enable-document-highlight-idle-timer ()
   (unless *document-highlight-idle-timer*
     (setf *document-highlight-idle-timer*
-          (start-idle-timer 500 t #'document-highlight-calls-timer nil
+          (start-idle-timer 200 t #'document-highlight-calls-timer nil
                             "lsp-document-highlight"))))
 
 (define-condition lsp-after-executing-command (after-executing-command) ())

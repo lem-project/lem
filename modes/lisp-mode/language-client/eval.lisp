@@ -2,7 +2,8 @@
   (:use :cl
         :lem)
   (:import-from :lem-lsp-mode
-                :register-lsp-method)
+                :register-lsp-method
+                :get-buffer-from-text-document-identifier)
   (:import-from :lem-lsp-base/converter
                 :convert-to-json
                 :convert-from-json)
@@ -80,7 +81,7 @@
          (id (lem-language-server::start-eval-params-id params))
          (text-document-identifier (lem-language-server::start-eval-params-text-document params)))
     (send-event (lambda ()
-                  (let ((buffer (lem-lsp-mode::get-buffer-from-text-document-identifier text-document-identifier)))
+                  (let ((buffer (get-buffer-from-text-document-identifier text-document-identifier)))
                     (when buffer
                       (with-point ((start (buffer-point buffer))
                                    (end (buffer-point buffer)))
@@ -97,7 +98,7 @@
          (text-document-identifier (lem-language-server::show-eval-result-params-text-document params))
          (message (lem-language-server::show-eval-result-params-message params)))
     (send-event (lambda ()
-                  (let ((buffer (lem-lsp-mode::get-buffer-from-text-document-identifier text-document-identifier))
+                  (let ((buffer (get-buffer-from-text-document-identifier text-document-identifier))
                         (attribute (message-type-to-attribute type))
                         (folding-message (fold-one-line-message message)))
                     (when buffer

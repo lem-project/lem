@@ -15,7 +15,8 @@
   (:local-nicknames (:completion :lem.completion-mode))
   (:local-nicknames (:context-menu :lem-lsp-mode/context-menu))
   (:local-nicknames (:spinner :lem.loading-spinner))
-  (:export :spec-initialization-options
+  (:export :get-buffer-from-text-document-identifier
+           :spec-initialization-options
            :register-lsp-method
            :define-language-spec))
 (in-package :lem-lsp-mode/lsp-mode)

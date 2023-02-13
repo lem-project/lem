@@ -1392,7 +1392,7 @@
   (with-point ((start (buffer-point buffer))
                (end (buffer-point buffer)))
     (do-sequence (document-highlight document-highlights)
-      (let* ((range (lsp:document-highlight-range document-highlight)))
+      (let ((range (lsp:document-highlight-range document-highlight)))
         (move-to-lsp-position start (lsp:range-start range))
         (move-to-lsp-position end (lsp:range-end range))
         (push (make-overlay start end 'document-highlight-text-attribute)

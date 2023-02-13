@@ -71,9 +71,10 @@
 (defun resolve-location-buffer (location-buffer)
   (destructuring-ecase location-buffer
     ((:file filename)
-     (lem:find-file-buffer filename
-                           :syntax-table lem-lisp-syntax:*syntax-table*
-                           :temporary t))
+     (when (probe-file filename)
+       (lem:find-file-buffer filename
+                             :syntax-table lem-lisp-syntax:*syntax-table*
+                             :temporary t)))
     ;; maybe unused
     ((:buffer buffer-name)
      (declare (ignore buffer-name)))

@@ -39,6 +39,10 @@
 (define-command lisp-language-client/clear-eval-results () ()
   (clear-eval-results (current-buffer)))
 
+(define-command lisp-language-client/interrupt () ()
+  (execute-command (get-client (current-buffer))
+                   "cl-lsp.interrupt"))
+
 (defun register-eval-methods (workspace)
   (register-lsp-method workspace
                        "lisp/showEvalResult"

@@ -1397,13 +1397,15 @@
 
 (defun cursor-in-document-highlight-p ()
   (dolist (ov (document-highlight-overlays))
+    (unless (eq (current-buffer) (overlay-buffer ov))
+      (return nil))
     (when (point<= (overlay-start ov) (current-point) (overlay-end ov))
       (return t))))
 
 (defun clear-document-highlight-overlays ()
-  (unless (and (= (document-highlight-context-last-modified-tick *document-highlight-context*)
-                  (buffer-modified-tick (current-buffer)))
-               (cursor-in-document-highlight-p))
+  (unless (and (cursor-in-document-highlight-p)
+               (= (document-highlight-context-last-modified-tick *document-highlight-context*)
+                  (buffer-modified-tick (current-buffer))))
     (mapc #'delete-overlay (document-highlight-overlays))
     (setf (document-highlight-overlays) '())
     (setf (document-highlight-context-last-modified-tick *document-highlight-context*)

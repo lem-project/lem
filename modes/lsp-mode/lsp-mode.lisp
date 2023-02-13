@@ -1270,7 +1270,8 @@
               'lsp:definition-params
               (make-text-document-position-arguments point))
        :then (lambda (response)
-               (funcall then (convert-definition-response response)))))))
+               (funcall then (convert-definition-response response))
+               (redraw-display))))))
 
 (defun find-definitions (point)
   (check-connection)

@@ -78,7 +78,10 @@
     ((:buffer buffer-name)
      (declare (ignore buffer-name)))
     ((:buffer-and-file buffer filename)
-     (declare (ignore buffer filename)))
+     (declare (ignore buffer))
+     (lem:find-file-buffer filename
+                           :syntax-table lem-lisp-syntax:*syntax-table*
+                           :temporary t))
     ((:source-form string)
      (declare (ignore string)))
     ((:zip file entry)

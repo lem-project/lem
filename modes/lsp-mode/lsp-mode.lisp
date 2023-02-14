@@ -264,17 +264,11 @@
                               :until (alphanumericp char)
                               :finally (write-char char out)))))
 
-(defun temporary-buffer-uri (buffer)
-  (or (buffer-value buffer 'uri)
-      (setf (buffer-value buffer 'uri)
-            (format nil "/tmp/~A" (random-string 32)))))
-
 (defun buffer-uri (buffer)
   ;; TODO: lem-language-server::buffer-uri
   (if (buffer-filename buffer)
       (pathname-to-uri (buffer-filename buffer))
-      ;; ファイルに関連付けられていないバッファ(*tmp*やRPEL)は一時ファイルという扱いにしている
-      (temporary-buffer-uri buffer)))
+      (format nil "buffer://~A" (buffer-name buffer))))
 
 (defun get-workspace-from-point (point)
   (buffer-workspace (point-buffer point)))
@@ -527,8 +521,7 @@
          (make-text-document-position-arguments point)))
 
 (defun find-buffer-from-uri (uri)
-  (let ((pathname (uri-to-pathname uri)))
-    (find pathname (buffer-list) :key #'buffer-filename :test #'uiop:pathname-equal)))
+  (find uri (buffer-list) :key #'buffer-uri :test #'equal))
 
 (defun get-buffer-from-text-document-identifier (text-document-identifier)
   (let ((uri (lsp:text-document-identifier-uri text-document-identifier)))

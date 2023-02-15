@@ -1457,10 +1457,8 @@
           (start-idle-timer 200 t #'document-highlight-calls-timer nil
                             "lsp-document-highlight"))))
 
-(define-condition lsp-after-executing-command (after-executing-command) ())
-(defmethod handle-signal ((condition lsp-after-executing-command))
-  (when (mode-active-p (current-buffer) 'lsp-mode)
-    (clear-document-highlight-overlays)))
+(defmethod execute :after ((mode lsp-mode) command argument)
+  (clear-document-highlight-overlays-if-required))
 
 ;;; document symbols
 

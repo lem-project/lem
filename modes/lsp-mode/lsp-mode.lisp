@@ -1399,9 +1399,10 @@
       (return t))))
 
 (defun clear-document-highlight-overlays ()
-  (unless (and (cursor-in-document-highlight-p)
-               (= (document-highlight-context-last-modified-tick *document-highlight-context*)
-                  (buffer-modified-tick (current-buffer))))
+  (when (or (not (cursor-in-document-highlight-p))
+            (not (= (document-highlight-context-last-modified-tick *document-highlight-context*)
+                    (buffer-modified-tick (current-buffer))))
+            (mode-active-p (current-buffer) 'lem.isearch:isearch-mode))
     (mapc #'delete-overlay (document-highlight-overlays))
     (setf (document-highlight-overlays) '())
     (setf (document-highlight-context-last-modified-tick *document-highlight-context*)

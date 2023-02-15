@@ -1,6 +1,7 @@
 (defpackage :lem.isearch
   (:use :cl :lem)
   (:export :*isearch-keymap*
+           :isearch-mode
            :isearch-highlight-attribute
            :isearch-highlight-active-attribute
            :isearch-forward

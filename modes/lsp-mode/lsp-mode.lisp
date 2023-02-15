@@ -1361,7 +1361,8 @@
                                       :include-declaration include-declaration)
               (make-text-document-position-arguments point))
        :then (lambda (response)
-               (funcall then (convert-references-response response)))))))
+               (funcall then (convert-references-response response))
+               (redraw-display))))))
 
 (defun find-references (point)
   (check-connection)

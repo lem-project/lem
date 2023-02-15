@@ -74,11 +74,10 @@
     timer))
 
 (defun stop-timer (timer)
-  (progn
-    (setf (timer-alive-p timer) nil)
-    (if (timer-idle-p timer)
-        (setf *idle-timer-list* (delete timer *idle-timer-list*))
-        (setf *timer-list* (delete timer *timer-list*)))))
+  (setf (timer-alive-p timer) nil)
+  (if (timer-idle-p timer)
+      (setf *idle-timer-list* (delete timer *idle-timer-list*))
+      (setf *timer-list* (delete timer *timer-list*))))
 
 (defun update-timer ()
   (let* ((tick-time (get-microsecond-time))

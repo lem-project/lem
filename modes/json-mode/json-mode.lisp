@@ -42,7 +42,7 @@
     table))
 
 (define-major-mode json-mode language-mode
-    (:name "js"
+    (:name "json"
      :keymap *json-mode-keymap*
      :syntax-table *json-syntax-table*
      :mode-hook *json-mode-hook*)

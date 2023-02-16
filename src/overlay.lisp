@@ -73,3 +73,8 @@
 
 (defun clear-overlays (buffer)
   (mapc #'delete-overlay (overlays buffer)))
+
+(defun point-overlays (point)
+  (loop :for ov :in (overlays (point-buffer point))
+        :when (point<= (overlay-start ov) point (overlay-end ov))
+        :collect ov))

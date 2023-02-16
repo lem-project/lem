@@ -64,21 +64,19 @@
                                      :range range
                                      :text-document text-document))))
 
-(defun remote-eval (string package-name &optional continue)
+(defun remote-eval (string package-name &key callback request-id)
   (micros/client:remote-eval
    (server-backend-connection *server*)
    `(micros/lsp-api:eval-for-language-server ,string)
    :package-name package-name
    :callback (lambda (value)
                (with-error-handler ()
-                 (funcall continue value)))
-   :thread :repl-thread))
+                 (funcall callback value)))
+   :thread t
+   :request-id request-id))
 
-(defun interrupt-eval ()
-  (micros/client:interrupt (server-backend-connection *server*) :repl-thread))
-
-(declaim (fixnum *id-counter*))
-(sb-ext:defglobal *id-counter* 0)
+(defun interrupt-eval (request-id)
+  (micros/client:interrupt (server-backend-connection *server*) request-id))
 
 (defun eval-last-expression (params)
   (let ((point (text-document-position-params-to-point params))
@@ -89,18 +87,19 @@
       (when (lem:form-offset start -1) ; TODO: nilの場合を考慮する
         (let ((string (lem:points-to-string start end))
               (range (points-to-lsp-range start end))
-              (id (sb-ext:atomic-incf *id-counter*)))
+              (request-id (micros/client::new-request-id (server-backend-connection *server*))))
           (notify-to-client (make-instance 'lisp/start-eval)
                             (make-instance 'start-eval-params
                                            :range range
-                                           :id id
+                                           :id request-id
                                            :text-document text-document-identifier))
           (remote-eval string
                        (scan-current-package point)
-                       (lambda (value)
-                         (notify-eval-result value range
-                                             :id id
-                                             :text-document text-document-identifier))))))))
+                       :callback (lambda (value)
+                                   (notify-eval-result value range
+                                                       :id request-id
+                                                       :text-document text-document-identifier))
+                       :request-id request-id))))))
 
 (defun micros-write-string (string target info)
   (declare (ignore target))

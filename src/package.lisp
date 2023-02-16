@@ -305,7 +305,8 @@
    :delete-overlay
    :overlay-put
    :overlay-get
-   :clear-overlays)
+   :clear-overlays
+   :point-overlays)
   ;; streams.lisp
   (:export
    :buffer-input-stream

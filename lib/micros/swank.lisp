@@ -1035,6 +1035,8 @@ The processing is done in the extent of the toplevel restart."
          (encode-message `(:return ,@args) (current-socket-io)))
         ((:emacs-interrupt thread-id)
          (interrupt-worker-thread connection thread-id))
+        ((:interrupt-thread request-id)
+         (interrupt-worker-thread connection (get-thread-id request-id)))
         (((:write-string
            :debug :debug-condition :debug-activate :debug-return :channel-send
            :presentation-start :presentation-end
@@ -1701,6 +1703,12 @@ Return nil if no package matches."
 (defvar *pending-continuations* '()
   "List of continuations for Emacs. (thread local)")
 
+(defvar *request-thread-pair-table* (make-hash-table))
+
+(defun get-thread-id (request-id)
+  (sb-ext:with-locked-hash-table (*request-thread-pair-table*)
+    (gethash request-id *request-thread-pair-table*)))
+
 (defun guess-buffer-package (string)
   "Return a package for STRING. 
 Fall back to the current if no such package exists."
@@ -1716,6 +1724,9 @@ Errors are trapped and invoke our debugger."
          (let ((*buffer-package* (guess-buffer-package buffer-package))
                (*buffer-readtable* (guess-buffer-readtable buffer-package))
                (*pending-continuations* (cons id *pending-continuations*)))
+           (sb-ext:with-locked-hash-table (*request-thread-pair-table*)
+             (setf (gethash id *request-thread-pair-table*)
+                   (thread-id (current-thread))))
            (check-type *buffer-package* package)
            (check-type *buffer-readtable* readtable)
            ;; APPLY would be cleaner than EVAL. 
@@ -1724,6 +1735,8 @@ Errors are trapped and invoke our debugger."
              (setq result (with-slime-interrupts (eval form))))
            (run-hook *pre-reply-hook*)
            (setq ok t))
+      (sb-ext:with-locked-hash-table (*request-thread-pair-table*)
+        (remhash id *request-thread-pair-table*))
       (send-to-emacs `(:return ,(current-thread)
                                ,(if ok
                                     `(:ok ,result)

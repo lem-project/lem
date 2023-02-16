@@ -1,7 +1,9 @@
 (defpackage :lem.loading-spinner
   (:use :cl :lem :alexandria)
-  (:export :start-loading-spinner
-           :stop-loading-spinner)
+  (:export :spinner-value
+           :start-loading-spinner
+           :stop-loading-spinner
+           :get-line-spinners)
   #+sbcl
   (:lock t))
 (in-package :lem.loading-spinner)
@@ -19,7 +21,9 @@
    (timer :initarg :timer
           :reader spinner-timer)
    (loading-message :initarg :loading-message
-                    :reader spinner-loading-message)))
+                    :reader spinner-loading-message)
+   (variables :initform (make-hash-table :test 'equal)
+              :reader spinner-variables)))
 
 (defvar *spinner-table* (make-hash-table))
 
@@ -28,6 +32,15 @@
 
 (defun (setf buffer-spinner) (spinner buffer)
   (setf (buffer-value buffer 'spinner) spinner))
+
+(defun spinner-value (spinner name &optional default)
+  (multiple-value-bind (value foundp)
+      (gethash name (spinner-variables spinner))
+    (if foundp value default)))
+
+(defun (setf spinner-value) (value spinner name &optional default)
+  (declare (ignore default))
+  (setf (gethash name (spinner-variables spinner)) value))
 
 (defun spinner-character (spinner)
   (elt (spinner-frames spinner)
@@ -101,6 +114,7 @@
                          :timer timer
                          :loading-message loading-message
                          :overlay overlay))
+    (overlay-put overlay 'line-spinner spinner)
     (overlay-put overlay :display-line-end t)
     (overlay-put overlay :display-line-end-offset 1)
     (overlay-put overlay :text (spinner-text spinner))
@@ -110,3 +124,8 @@
   (let ((overlay (line-spinner-overlay spinner)))
     (delete-overlay overlay))
   (values))
+
+(defun get-line-spinners (point)
+  (loop :for ov :in (point-overlays point)
+        :when (overlay-get ov 'line-spinner)
+        :collect :it))

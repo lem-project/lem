@@ -40,8 +40,10 @@
   (clear-eval-results (current-buffer)))
 
 (define-command lisp-language-client/interrupt () ()
-  (execute-command (get-client (current-buffer))
-                   "cl-lsp.interrupt"))
+  (dolist (spinner (lem.loading-spinner:get-line-spinners (current-point)))
+    (execute-command (get-client (current-buffer))
+                     "cl-lsp.interrupt"
+                     (spinner-eval-id spinner))))
 
 (defun register-eval-methods (workspace)
   (register-lsp-method workspace
@@ -67,12 +69,21 @@
   (mapc #'remove-eval-result-overlay
         (buffer-eval-result-overlays buffer)))
 
+(defun spinner-eval-id (spinner)
+  (lem.loading-spinner:spinner-value spinner 'eval-id))
+
 (defun register-eval-spinner (buffer id spinner)
   (let ((hash-table
           (or (buffer-value buffer 'eval-loading-spinner)
               (setf (buffer-value buffer 'eval-loading-spinner)
                     (make-hash-table)))))
     (setf (gethash id hash-table) spinner)))
+
+(defun start-eval-spinner (point id)
+  (let ((spinner (lem.loading-spinner:start-loading-spinner :line :point point)))
+    (setf (lem.loading-spinner:spinner-value spinner 'eval-id) id)
+    (register-eval-spinner (point-buffer point) id spinner)
+    spinner))
 
 (defun stop-eval-spinner (buffer id)
   (let ((spinner (gethash id (buffer-value buffer 'eval-loading-spinner))))
@@ -91,8 +102,7 @@
                                    (end (buffer-point buffer)))
                         (remove-eval-result-overlay-between start end)
                         (lem-lsp-base/utils:destructuring-lsp-range start end range)
-                        (let ((spinner (lem.loading-spinner:start-loading-spinner :line :point end)))
-                          (register-eval-spinner buffer id spinner)))))))))
+                        (start-eval-spinner end id))))))))
 
 (defun show-eval-result (params)
   (let* ((params (convert-from-json params 'lem-language-server::show-eval-result-params))

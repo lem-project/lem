@@ -6,6 +6,7 @@
   (:export :*write-string-function*
            :connection-port
            :connection-swank-port
+           :new-request-id
            :remote-eval
            :remote-eval-sync
            :interrupt
@@ -169,8 +170,8 @@
         ((:abort condition)
          (error 'remote-eval-abort :condition condition))))))
 
-(defun interrupt (connection thread)
-  (send-message connection `(:emacs-interrupt ,thread)))
+(defun interrupt (connection request-id)
+  (send-message connection `(:interrupt-thread ,request-id)))
 
 (defun setup-repl (connection)
   (let ((result

@@ -16,14 +16,12 @@
                      (end (lem:buffer-point buffer)))
       (move-to-lsp-position start (lsp:range-start range))
       (move-to-lsp-position end (lsp:range-end range))
-      (remote-eval (lem:points-to-string start end)
-                   (scan-current-package start)
-                   (lambda (value) (notify-eval-result value
-                                                       range
-                                                       :text-document text-document-identifier)))))
+      ;; TODO
+      ;; (eval-range start end)
+      ))
   :null)
 
 (define-lsp-command interrupt-eval-command "cl-lsp.interrupt" (arguments)
-  (declare (ignore arguments))
-  (interrupt-eval)
+  (let ((id (elt arguments 0)))
+    (interrupt-eval id))
   :null)

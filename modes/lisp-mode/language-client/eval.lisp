@@ -100,8 +100,8 @@
                     (when buffer
                       (with-point ((start (buffer-point buffer))
                                    (end (buffer-point buffer)))
-                        (remove-eval-result-overlay-between start end)
                         (lem-lsp-base/utils:destructuring-lsp-range start end range)
+                        (remove-eval-result-overlay-between start end)
                         (start-eval-spinner end id))))))))
 
 (defun show-eval-result (params)

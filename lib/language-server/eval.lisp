@@ -85,6 +85,7 @@
     (lem:with-point ((start point :left-inserting)
                      (end point :left-inserting))
       (when (lem:form-offset start -1) ; TODO: nilの場合を考慮する
+        (lem:form-offset (lem:move-point end start) 1)
         (let ((string (lem:points-to-string start end))
               (range (points-to-lsp-range start end))
               (request-id (micros/client::new-request-id (server-backend-connection *server*))))

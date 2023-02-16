@@ -49,6 +49,9 @@
    (request-id-counter
     :initform 0
     :accessor connection-request-id-counter)
+   (request-id-counter-mutex
+    :initform (sb-thread:make-mutex)
+    :reader connection-request-id-counter-mutex)
    (continuations
     :initform '()
     :accessor connection-continuations)
@@ -65,7 +68,8 @@
     :accessor connection-swank-port)))
 
 (defun new-request-id (connection)
-  (incf (connection-request-id-counter connection)))
+  (sb-thread:with-mutex ((connection-request-id-counter-mutex connection))
+    (incf (connection-request-id-counter connection))))
 
 (defun add-continuation (connection request-id continuation)
   (sb-thread:with-mutex ((connection-continuations-mutex connection))
@@ -137,16 +141,16 @@
                     expression
                     &key (package-name (connection-package connection))
                          (thread t)
+                         (request-id (new-request-id connection))
                          callback)
   (check-type callback function)
-  (let ((request-id (new-request-id connection)))
-    (add-continuation connection request-id callback)
-    (send-message connection
-                  `(:emacs-rex
-                    ,expression
-                    ,package-name
-                    ,thread
-                    ,request-id))))
+  (add-continuation connection request-id callback)
+  (send-message connection
+                `(:emacs-rex
+                  ,expression
+                  ,package-name
+                  ,thread
+                  ,request-id)))
 
 (defun remote-eval-sync (connection
                          expression

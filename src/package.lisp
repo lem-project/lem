@@ -260,7 +260,6 @@
   (:export
    :*running-timer*
    :timer
-   :timer-p
    :timer-name
    :timer-ms
    :timer-alive-p

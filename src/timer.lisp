@@ -52,9 +52,6 @@
   (print-unreadable-object (object stream :identity t :type t)
     (format stream "~S" (timer-name object))))
 
-(defun timer-p (x)
-  (typep x 'timer))
-
 (defun timer-next-time (timer)
   (+ (timer-last-time timer) (timer-ms timer)))
 

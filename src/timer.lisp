@@ -50,7 +50,7 @@
 
 (defmethod print-object ((object timer) stream)
   (print-unreadable-object (object stream :identity t :type t)
-    (format stream "~S" (timer-name object))))
+    (prin1 (timer-name object) stream)))
 
 (defun timer-next-time (timer)
   (+ (timer-last-time timer) (timer-ms timer)))

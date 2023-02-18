@@ -9,9 +9,6 @@
          :accessor show-eval-result-params-type)
    (id :initarg :id
        :accessor show-eval-result-params-id)
-   (range :initarg :range
-          :type lsp:range
-          :accessor show-eval-result-params-range)
    (text-document :initarg :text-document
                   :type lsp:text-document-identifier
                   :accessor show-eval-result-params-text-document)))
@@ -52,7 +49,7 @@
      (values condition
              lsp:message-type-error))))
 
-(defun notify-eval-result (value range &key (id 0) text-document)
+(defun notify-eval-result (value &key (id 0) text-document)
   (multiple-value-bind (message type)
       (convert-eval-result value)
     (notify-log-message type message)
@@ -61,7 +58,6 @@
                                      :id id
                                      :type type
                                      :message message
-                                     :range range
                                      :text-document text-document))))
 
 (defun remote-eval (string package-name &key callback request-id)
@@ -97,7 +93,7 @@
           (remote-eval string
                        (scan-current-package point)
                        :callback (lambda (value)
-                                   (notify-eval-result value range
+                                   (notify-eval-result value
                                                        :id request-id
                                                        :text-document text-document-identifier))
                        :request-id request-id))))))

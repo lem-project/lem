@@ -63,7 +63,7 @@
     (:name "language"
      :keymap *language-mode-keymap*)
   (when (or (null *idle-timer*)
-            (not (timer-alive-p *idle-timer*)))
+            (timer-expired-p *idle-timer*))
     (setf *idle-timer*
           (start-idle-timer 200 t 'language-idle-function
                             (lambda (condition)

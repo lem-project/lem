@@ -262,11 +262,10 @@
    :timer
    :timer-name
    :timer-ms
-   :timer-alive-p
+   :timer-expired-p
    :start-timer
    :start-idle-timer
-   :stop-timer
-   :alive-timer-p)
+   :stop-timer)
   ;; event-queue.lisp
   (:export
    :send-event

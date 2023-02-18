@@ -36,9 +36,10 @@
     :initarg :handle-function
     :reader timer-handle-function
     :type (or null function))
-   (alive-p
-    :initarg :alive-p
-    :accessor timer-alive-p
+   (expired-p
+    :initform nil
+    :reader timer-expired-p
+    :writer set-timer-expired-p
     :type boolean)
    (idle-p
     :initarg :idle-p
@@ -55,6 +56,12 @@
 (defun timer-next-time (timer)
   (+ (timer-last-time timer) (timer-ms timer)))
 
+(defun expire-timer (timer)
+  (set-timer-expired-p t timer))
+
+(defun inspire-timer (timer)
+  (set-timer-expired-p nil timer))
+
 (defun start-timer (ms repeat-p function &optional handle-function name)
   (let ((timer (make-instance 'timer
                               :name (or name
@@ -65,13 +72,12 @@
                               :last-time (get-microsecond-time)
                               :function function
                               :handle-function handle-function
-                              :alive-p t
                               :idle-p nil)))
     (push timer *timer-list*)
     timer))
 
 (defun stop-timer (timer)
-  (setf (timer-alive-p timer) nil)
+  (expire-timer timer)
   (if (timer-idle-p timer)
       (setf *idle-timer-list* (delete timer *idle-timer-list*))
       (setf *timer-list* (delete timer *timer-list*))))
@@ -94,7 +100,7 @@
                                                   updating-timers)
                                    '())))
     (dolist (timer deleting-timers)
-      (setf (timer-alive-p timer) nil))
+      (expire-timer timer))
     ;; Not so efficient, but it will be enough.
     (setf *timer-list* (set-difference *timer-list* deleting-timers))
     (when *is-in-idle*
@@ -138,7 +144,6 @@
                               :repeat-p repeat-p
                               :function function
                               :handle-function handle-function
-                              :alive-p t
                               :idle-p t)))
     (push timer *idle-timer-list*)
     timer))
@@ -148,7 +153,7 @@
     (setf *is-in-idle* t)
     (dolist (timer *idle-timer-list*)
       (setf (timer-last-time timer) (get-microsecond-time))
-      (setf (timer-alive-p timer) t))))
+      (inspire-timer timer))))
 
 (defun stop-idle-timers ()
   (progn

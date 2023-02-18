@@ -13,7 +13,7 @@
    (floor (/ (get-internal-real-time)
              (load-time-value (/ internal-time-units-per-second 1000))))))
 
-(defclass timer ()
+(defclass <timer> ()
   ((name
     :initarg :name
     :reader timer-name
@@ -26,10 +26,6 @@
     :initarg :repeat-p
     :reader timer-repeat-p
     :type boolean)
-   (last-time
-    :initarg :last-time
-    :accessor timer-last-time
-    :type (integer 1 *))
    (function
     :initarg :function
     :reader timer-function
@@ -43,10 +39,22 @@
     :reader timer-expired-p
     :writer set-timer-expired-p
     :type boolean)
+   (last-time
+    :initarg :last-time
+    :accessor timer-last-time
+    :type (integer 1 *))
    (idle-p
     :initarg :idle-p
     :accessor timer-idle-p
     :type boolean)))
+
+(defclass timer (<timer>)
+  ()
+  (:default-initargs :idle-p nil))
+
+(defclass idle-timer (<timer>)
+  ()
+  (:default-initargs :idle-p t))
 
 (defun timer-has-last-time (timer)
   (slot-boundp timer 'last-time))
@@ -74,8 +82,7 @@
                               :last-time (get-microsecond-time)
                               :function (alexandria:ensure-function function)
                               :handle-function (when handle-function
-                                                 (alexandria:ensure-function handle-function))
-                              :idle-p nil)))
+                                                 (alexandria:ensure-function handle-function)))))
     (push timer *timer-list*)
     timer))
 
@@ -86,15 +93,14 @@
       (setf *timer-list* (delete timer *timer-list*))))
 
 (defun start-idle-timer (ms repeat-p function &optional handle-function name)
-  (let ((timer (make-instance 'timer
+  (let ((timer (make-instance 'idle-timer
                               :name (or name (and (symbolp function)
                                                   (symbol-name function)))
                               :ms ms
                               :repeat-p repeat-p
                               :function (alexandria:ensure-function function)
                               :handle-function (when handle-function
-                                                 (alexandria:ensure-function handle-function))
-                              :idle-p t)))
+                                                 (alexandria:ensure-function handle-function)))))
     (push timer *idle-timer-list*)
     timer))
 

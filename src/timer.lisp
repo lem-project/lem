@@ -130,12 +130,6 @@
                  :minimize (timer-next-time timer))
            (get-microsecond-time)))))
 
-(defun exist-running-timer-p ()
-  (if *is-in-idle*
-      (or (not (null *timer-list*))
-          (not (null *idle-timer-list*)))
-      (not (null *timer-list*))))
-
 (defun start-idle-timer (ms repeat-p function &optional handle-function name)
   (let ((timer (make-instance 'timer
                               :name (or name (and (symbolp function)

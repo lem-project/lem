@@ -72,8 +72,9 @@
                               :ms ms
                               :repeat-p repeat-p
                               :last-time (get-microsecond-time)
-                              :function function
-                              :handle-function handle-function
+                              :function (alexandria:ensure-function function)
+                              :handle-function (when handle-function
+                                                 (alexandria:ensure-function handle-function))
                               :idle-p nil)))
     (push timer *timer-list*)
     timer))
@@ -90,8 +91,9 @@
                                                   (symbol-name function)))
                               :ms ms
                               :repeat-p repeat-p
-                              :function function
-                              :handle-function handle-function
+                              :function (alexandria:ensure-function function)
+                              :handle-function (when handle-function
+                                                 (alexandria:ensure-function handle-function))
                               :idle-p t)))
     (push timer *idle-timer-list*)
     timer))

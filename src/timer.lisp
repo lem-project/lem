@@ -42,19 +42,17 @@
    (last-time
     :initarg :last-time
     :accessor timer-last-time
-    :type (integer 1 *))
-   (idle-p
-    :initarg :idle-p
-    :accessor timer-idle-p
-    :type boolean)))
+    :type (integer 1 *))))
 
 (defclass timer (<timer>)
-  ()
-  (:default-initargs :idle-p nil))
+  ())
 
 (defclass idle-timer (<timer>)
-  ()
-  (:default-initargs :idle-p t))
+  ())
+
+(defgeneric idle-timer-p (timer)
+  (:method ((timer timer)) nil)
+  (:method ((timer idle-timer)) t))
 
 (defun timer-has-last-time (timer)
   (slot-boundp timer 'last-time))
@@ -88,7 +86,7 @@
 
 (defun stop-timer (timer)
   (expire-timer timer)
-  (if (timer-idle-p timer)
+  (if (idle-timer-p timer)
       (setf *idle-timer-list* (delete timer *idle-timer-list*))
       (setf *timer-list* (delete timer *timer-list*))))
 
@@ -150,7 +148,7 @@
                                          updating-timers))
          (updating-idle-timers (if *is-in-idle*
                                    (remove-if-not (lambda (timer)
-                                                    (and (timer-idle-p timer)
+                                                    (and (idle-timer-p timer)
                                                          (timer-repeat-p timer)))
                                                   updating-timers)
                                    '())))
@@ -164,7 +162,7 @@
       (setf *processed-idle-timer-list* (nconc updating-idle-timers *processed-idle-timer-list*)))
 
     (dolist (timer updating-timers)
-      (unless (and (timer-idle-p timer)
+      (unless (and (idle-timer-p timer)
                    (timer-repeat-p timer))
         (setf (timer-last-time timer) tick-time)))
     (mapc #'run-timer updating-timers)

@@ -258,7 +258,7 @@
    :lookup-keybind)
   ;; timer.lisp
   (:export
-   :*running-timer*
+   :running-timer
    :timer
    :timer-name
    :timer-ms

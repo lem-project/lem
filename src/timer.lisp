@@ -6,6 +6,8 @@
 (defvar *processed-idle-timer-list* nil)
 (defvar *running-timer* nil)
 
+(defun running-timer () *running-timer*)
+
 (defun get-microsecond-time ()
   (values
    (floor (/ (get-internal-real-time)

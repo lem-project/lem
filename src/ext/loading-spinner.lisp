@@ -129,6 +129,7 @@
     spinner))
 
 (defmethod stop-loading-spinner ((spinner line-spinner))
+  (stop-timer (spinner-timer spinner))
   (let ((overlay (line-spinner-overlay spinner)))
     (delete-overlay overlay))
   (values))

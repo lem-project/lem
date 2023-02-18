@@ -151,21 +151,18 @@
     timer))
 
 (defun start-idle-timers ()
-  (progn
-    (setf *is-in-idle* t)
-    (dolist (timer *idle-timer-list*)
-      (setf (timer-last-time timer) (get-microsecond-time))
-      (inspire-timer timer))))
+  (dolist (timer *idle-timer-list*)
+    (setf (timer-last-time timer) (get-microsecond-time))
+    (inspire-timer timer)))
 
 (defun stop-idle-timers ()
-  (progn
-    (setf *is-in-idle* nil)
-    (setf *idle-timer-list* (nconc *processed-idle-timer-list* *idle-timer-list*))
-    (setf *processed-idle-timer-list* '())))
+  (setf *idle-timer-list* (nconc *processed-idle-timer-list* *idle-timer-list*))
+  (setf *processed-idle-timer-list* '()))
 
 (defun call-with-idle-timers (function)
   (start-idle-timers)
-  (prog1 (funcall function)
+  (prog1 (let ((*is-in-idle* t))
+           (funcall function))
     (stop-idle-timers)))
 
 (defmacro with-idle-timers (() &body body)

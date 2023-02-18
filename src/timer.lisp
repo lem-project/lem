@@ -119,6 +119,16 @@
 (defmacro with-idle-timers (() &body body)
   `(call-with-idle-timers (lambda () ,@body)))
 
+(defun run-timer (timer)
+  (handler-case
+      (let ((*running-timer* timer))
+        (if (timer-handle-function timer)
+            (handler-bind ((error (timer-handle-function timer)))
+              (funcall (timer-function timer)))
+            (funcall (timer-function timer))))
+    (error (condition)
+      (show-message (format nil "Error running timer ~S: ~A" (timer-name timer) condition)))))
+
 (defun update-timer ()
   (let* ((tick-time (get-microsecond-time))
          (target-timers (if *is-in-idle*
@@ -149,15 +159,7 @@
       (unless (and (timer-idle-p timer)
                    (timer-repeat-p timer))
         (setf (timer-last-time timer) tick-time)))
-    (dolist (timer updating-timers)
-      (handler-case
-          (let ((*running-timer* timer))
-            (if (timer-handle-function timer)
-                (handler-bind ((error (timer-handle-function timer)))
-                  (funcall (timer-function timer)))
-                (funcall (timer-function timer))))
-        (error (condition)
-          (show-message (format nil "Error running timer ~S: ~A" (timer-name timer) condition)))))
+    (mapc #'run-timer updating-timers)
     (redraw-display)
     (not (null updating-timers))))
 

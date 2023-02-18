@@ -9,6 +9,16 @@
                 :convert-from-json)
   (:shadowing-import-from :lem-language-client/request
                           :execute-command)
+  (:import-from :lem-language-server
+                :start-eval-params
+                :start-eval-params-range
+                :start-eval-params-id
+                :start-eval-params-text-document
+                :show-eval-result-params
+                :show-eval-result-params-type
+                :show-eval-result-params-id
+                :show-eval-result-params-text-document
+                :show-eval-result-params-message)
   (:export :register-eval-methods))
 (in-package :lem-lisp-mode/language-client/eval)
 
@@ -97,10 +107,10 @@
     (lem.loading-spinner:stop-loading-spinner spinner)))
 
 (defun start-eval (params)
-  (let* ((params (convert-from-json params 'lem-language-server::start-eval-params))
-         (range (lem-language-server::start-eval-params-range params))
-         (id (lem-language-server::start-eval-params-id params))
-         (text-document-identifier (lem-language-server::start-eval-params-text-document params)))
+  (with-accessors ((range start-eval-params-range)
+                   (id start-eval-params-id)
+                   (text-document-identifier start-eval-params-text-document))
+      (convert-from-json params 'start-eval-params)
     (send-event (lambda ()
                   (let ((buffer (get-buffer-from-text-document-identifier text-document-identifier)))
                     (when buffer
@@ -111,11 +121,11 @@
                         (start-eval-spinner start end id))))))))
 
 (defun show-eval-result (params)
-  (let* ((params (convert-from-json params 'lem-language-server::show-eval-result-params))
-         (type (lem-language-server::show-eval-result-params-type params))
-         (id (lem-language-server::show-eval-result-params-id params))
-         (text-document-identifier (lem-language-server::show-eval-result-params-text-document params))
-         (message (lem-language-server::show-eval-result-params-message params)))
+  (with-accessors ((type show-eval-result-params-type)
+                   (id show-eval-result-params-id)
+                   (text-document-identifier show-eval-result-params-text-document)
+                   (message show-eval-result-params-message))
+      (convert-from-json params 'show-eval-result-params)
     (send-event (lambda ()
                   (alexandria:when-let* ((buffer (get-buffer-from-text-document-identifier text-document-identifier))
                                          (spinner (get-eval-spinner buffer id)))

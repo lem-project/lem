@@ -3,6 +3,7 @@
   (:export :spinner-value
            :start-loading-spinner
            :stop-loading-spinner
+           :with-line-spinner-points
            :get-line-spinners)
   #+sbcl
   (:lock t))
@@ -102,13 +103,20 @@
                (spinner-text spinner)))
 
 (defmethod start-loading-spinner ((type (eql :line)) &key point loading-message)
-  (check-type point point)
+  (start-loading-spinner :region
+                         :start point
+                         :end point
+                         :loading-message loading-message))
+
+(defmethod start-loading-spinner ((type (eql :region)) &key start end loading-message)
+  (check-type start point)
+  (check-type end point)
   (let* ((spinner)
          (timer (start-timer +loading-interval+
                              t
                              (lambda ()
                                (update-line-spinner spinner))))
-         (overlay (make-overlay point point 'spinner-attribute)))
+         (overlay (make-overlay start end 'spinner-attribute)))
     (setf spinner
           (make-instance 'line-spinner
                          :timer timer
@@ -124,6 +132,14 @@
   (let ((overlay (line-spinner-overlay spinner)))
     (delete-overlay overlay))
   (values))
+
+(defmacro with-line-spinner-points ((start end spinner) &body body)
+  (once-only (spinner)
+    (with-unique-names (overlay)
+      `(let* ((,overlay (line-spinner-overlay ,spinner))
+              (,start (copy-point (overlay-start ,overlay) :temporary))
+              (,end (copy-point (overlay-end ,overlay) :temporary)))
+         ,@body))))
 
 (defun get-line-spinners (point)
   (loop :for ov :in (point-overlays point)

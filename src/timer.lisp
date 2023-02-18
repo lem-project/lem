@@ -151,9 +151,14 @@
     timer))
 
 (defun start-idle-timers ()
-  (dolist (timer *idle-timer-list*)
-    (setf (timer-last-time timer) (get-microsecond-time))
-    (inspire-timer timer)))
+  (flet ((update-last-time-in-idle-timers ()
+           (loop :with last-time := (get-microsecond-time)
+                 :for timer :in *idle-timer-list*
+                 :do (setf (timer-last-time timer) last-time)))
+         (inspire-idle-timers ()
+           (mapc #'inspire-timer *idle-timer-list*)))
+    (update-last-time-in-idle-timers)
+    (inspire-idle-timers)))
 
 (defun stop-idle-timers ()
   (setf *idle-timer-list* (nconc *processed-idle-timer-list* *idle-timer-list*))

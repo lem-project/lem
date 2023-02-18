@@ -112,7 +112,8 @@
                    (text-document-identifier start-eval-params-text-document))
       (convert-from-json params 'start-eval-params)
     (send-event (lambda ()
-                  (let ((buffer (get-buffer-from-text-document-identifier text-document-identifier)))
+                  (let ((buffer (get-buffer-from-text-document-identifier
+                                 text-document-identifier)))
                     (when buffer
                       (with-point ((start (buffer-point buffer))
                                    (end (buffer-point buffer)))
@@ -127,11 +128,15 @@
                    (message show-eval-result-params-message))
       (convert-from-json params 'show-eval-result-params)
     (send-event (lambda ()
-                  (alexandria:when-let* ((buffer (get-buffer-from-text-document-identifier text-document-identifier))
+                  (alexandria:when-let* ((buffer (get-buffer-from-text-document-identifier
+                                                  text-document-identifier))
                                          (spinner (get-eval-spinner buffer id)))
                     (lem.loading-spinner:with-line-spinner-points (start end spinner)
                       (stop-eval-spinner buffer id)
-                      (let ((popup-overlay (make-overlay start end (message-type-to-attribute type)))
+                      (let ((popup-overlay
+                              (make-overlay start
+                                            end
+                                            (message-type-to-attribute type)))
                             (background-overlay
                               (make-overlay start end (make-attribute :underline-p t))))
                         (overlay-put popup-overlay 'relation-overlay background-overlay)

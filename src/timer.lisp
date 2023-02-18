@@ -161,3 +161,11 @@
     (setf *is-in-idle* nil)
     (setf *idle-timer-list* (nconc *processed-idle-timer-list* *idle-timer-list*))
     (setf *processed-idle-timer-list* '())))
+
+(defun call-with-idle-timers (function)
+  (start-idle-timers)
+  (prog1 (funcall function)
+    (stop-idle-timers)))
+
+(defmacro with-idle-timers (() &body body)
+  `(call-with-idle-timers (lambda () ,@body)))

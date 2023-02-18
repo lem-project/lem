@@ -71,10 +71,8 @@
                  (redraw-display)))))
 
          (read-command-and-call ()
-           (let ((cmd (progn
-                        (start-idle-timers)
-                        (prog1 (read-command)
-                          (stop-idle-timers)))))
+           (let ((cmd (with-idle-timers ()
+                        (read-command))))
              (message nil)
              (call-command cmd nil)))
 

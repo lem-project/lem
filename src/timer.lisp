@@ -83,7 +83,7 @@
                             *timer-list*))
          (updating-timers (remove-if-not (lambda (timer)
                                            (< (timer-next-time timer) tick-time))
-                                         (remove-if-not 'timer-has-last-time target-timers)))
+                                         (remove-if-not #'timer-has-last-time target-timers)))
          (deleting-timers (remove-if-not (lambda (timer)
                                            (not (timer-repeat-p timer)))
                                          updating-timers))
@@ -123,7 +123,7 @@
                     (append *timer-list* *idle-timer-list*)
                     *timer-list*)))
     ;;Remove timers without a last-time
-    (setf timers (remove-if-not 'timer-has-last-time timers))
+    (setf timers (remove-if-not #'timer-has-last-time timers))
     (if (null timers)
         nil
         (- (loop :for timer :in timers

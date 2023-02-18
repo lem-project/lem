@@ -84,6 +84,41 @@
       (setf *idle-timer-list* (delete timer *idle-timer-list*))
       (setf *timer-list* (delete timer *timer-list*))))
 
+(defun start-idle-timer (ms repeat-p function &optional handle-function name)
+  (let ((timer (make-instance 'timer
+                              :name (or name (and (symbolp function)
+                                                  (symbol-name function)))
+                              :ms ms
+                              :repeat-p repeat-p
+                              :function function
+                              :handle-function handle-function
+                              :idle-p t)))
+    (push timer *idle-timer-list*)
+    timer))
+
+(defun start-idle-timers ()
+  (flet ((update-last-time-in-idle-timers ()
+           (loop :with last-time := (get-microsecond-time)
+                 :for timer :in *idle-timer-list*
+                 :do (setf (timer-last-time timer) last-time)))
+         (inspire-idle-timers ()
+           (mapc #'inspire-timer *idle-timer-list*)))
+    (update-last-time-in-idle-timers)
+    (inspire-idle-timers)))
+
+(defun stop-idle-timers ()
+  (setf *idle-timer-list* (nconc *processed-idle-timer-list* *idle-timer-list*))
+  (setf *processed-idle-timer-list* '()))
+
+(defun call-with-idle-timers (function)
+  (start-idle-timers)
+  (prog1 (let ((*is-in-idle* t))
+           (funcall function))
+    (stop-idle-timers)))
+
+(defmacro with-idle-timers (() &body body)
+  `(call-with-idle-timers (lambda () ,@body)))
+
 (defun update-timer ()
   (let* ((tick-time (get-microsecond-time))
          (target-timers (if *is-in-idle*
@@ -137,38 +172,3 @@
         (- (loop :for timer :in timers
                  :minimize (timer-next-time timer))
            (get-microsecond-time)))))
-
-(defun start-idle-timer (ms repeat-p function &optional handle-function name)
-  (let ((timer (make-instance 'timer
-                              :name (or name (and (symbolp function)
-                                                  (symbol-name function)))
-                              :ms ms
-                              :repeat-p repeat-p
-                              :function function
-                              :handle-function handle-function
-                              :idle-p t)))
-    (push timer *idle-timer-list*)
-    timer))
-
-(defun start-idle-timers ()
-  (flet ((update-last-time-in-idle-timers ()
-           (loop :with last-time := (get-microsecond-time)
-                 :for timer :in *idle-timer-list*
-                 :do (setf (timer-last-time timer) last-time)))
-         (inspire-idle-timers ()
-           (mapc #'inspire-timer *idle-timer-list*)))
-    (update-last-time-in-idle-timers)
-    (inspire-idle-timers)))
-
-(defun stop-idle-timers ()
-  (setf *idle-timer-list* (nconc *processed-idle-timer-list* *idle-timer-list*))
-  (setf *processed-idle-timer-list* '()))
-
-(defun call-with-idle-timers (function)
-  (start-idle-timers)
-  (prog1 (let ((*is-in-idle* t))
-           (funcall function))
-    (stop-idle-timers)))
-
-(defmacro with-idle-timers (() &body body)
-  `(call-with-idle-timers (lambda () ,@body)))

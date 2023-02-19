@@ -13,6 +13,26 @@
    (floor (/ (get-internal-real-time)
              (load-time-value (/ internal-time-units-per-second 1000))))))
 
+(defclass timer-internal ()
+  ((ms
+    :initarg :ms
+    :accessor timer-internal-ms
+    :type (integer 1 *))
+   (repeat-p
+    :initarg :repeat-p
+    :reader timer-internal-repeat-p
+    :type boolean)
+   (expired-p
+    :initform nil
+    :reader timer-internal-expired-p
+    :writer set-timer-internal-expired-p
+    :type boolean)
+   (last-time
+    :initform nil
+    :initarg :last-time
+    :accessor timer-internal-last-time
+    :type (or null (integer 1 *)))))
+
 (defclass <timer> ()
   ((name
     :initarg :name
@@ -25,32 +45,16 @@
    (handle-function
     :initarg :handle-function
     :reader timer-handle-function
-    :type (or null function))))
+    :type (or null function))
+   (state
+    :initarg :state
+    :reader timer-internal
+    :type timer-internal)))
 
-(defclass <timer-state> ()
-  ((ms
-    :initarg :ms
-    :accessor timer-ms
-    :type (integer 1 *))
-   (repeat-p
-    :initarg :repeat-p
-    :reader timer-repeat-p
-    :type boolean)
-   (expired-p
-    :initform nil
-    :reader timer-expired-p
-    :writer set-timer-expired-p
-    :type boolean)
-   (last-time
-    :initform nil
-    :initarg :last-time
-    :accessor timer-last-time
-    :type (or null (integer 1 *)))))
-
-(defclass timer (<timer> <timer-state>)
+(defclass timer (<timer>)
   ())
 
-(defclass idle-timer (<timer> <timer-state>)
+(defclass idle-timer (<timer>)
   ())
 
 (defmethod print-object ((object timer) stream)
@@ -61,6 +65,21 @@
   (:method ((timer timer)) nil)
   (:method ((timer idle-timer)) t))
 
+(defun timer-ms (timer)
+  (timer-internal-ms (timer-internal timer)))
+
+(defun timer-repeat-p (timer)
+  (timer-internal-repeat-p (timer-internal timer)))
+
+(defun timer-expired-p (timer)
+  (timer-internal-expired-p (timer-internal timer)))
+
+(defun timer-last-time (timer)
+  (timer-internal-last-time (timer-internal timer)))
+
+(defun set-timer-last-time (value timer)
+  (setf (timer-internal-last-time (timer-internal timer)) value))
+
 (defun timer-has-last-time (timer)
   (not (null (timer-last-time timer))))
 
@@ -68,22 +87,23 @@
   (+ (timer-last-time timer) (timer-ms timer)))
 
 (defun expire-timer (timer)
-  (set-timer-expired-p t timer))
+  (set-timer-internal-expired-p t (timer-internal timer)))
 
 (defun inspire-timer (timer)
-  (set-timer-expired-p nil timer))
+  (set-timer-internal-expired-p nil (timer-internal timer)))
 
 (defun start-timer (ms repeat-p function &optional handle-function name)
   (let ((timer (make-instance 'timer
                               :name (or name
                                         (and (symbolp function)
                                              (symbol-name function)))
-                              :ms ms
-                              :repeat-p repeat-p
-                              :last-time (get-microsecond-time)
                               :function (alexandria:ensure-function function)
                               :handle-function (when handle-function
-                                                 (alexandria:ensure-function handle-function)))))
+                                                 (alexandria:ensure-function handle-function))
+                              :state (make-instance 'timer-internal
+                                                    :ms ms
+                                                    :repeat-p repeat-p
+                                                    :last-time (get-microsecond-time)))))
     (push timer *timer-list*)
     timer))
 
@@ -91,11 +111,12 @@
   (let ((timer (make-instance 'idle-timer
                               :name (or name (and (symbolp function)
                                                   (symbol-name function)))
-                              :ms ms
-                              :repeat-p repeat-p
                               :function (alexandria:ensure-function function)
                               :handle-function (when handle-function
-                                                 (alexandria:ensure-function handle-function)))))
+                                                 (alexandria:ensure-function handle-function))
+                              :state (make-instance 'timer-internal
+                                                    :ms ms
+                                                    :repeat-p repeat-p))))
     (push timer *idle-timer-list*)
     timer))
 
@@ -109,7 +130,7 @@
   (flet ((update-last-time-in-idle-timers ()
            (loop :with last-time := (get-microsecond-time)
                  :for timer :in *idle-timer-list*
-                 :do (setf (timer-last-time timer) last-time)))
+                 :do (set-timer-last-time last-time timer)))
          (inspire-idle-timers ()
            (mapc #'inspire-timer *idle-timer-list*)))
     (update-last-time-in-idle-timers)
@@ -167,7 +188,7 @@
     (dolist (timer updating-timers)
       (unless (and (idle-timer-p timer)
                    (timer-repeat-p timer))
-        (setf (timer-last-time timer) tick-time)))
+        (set-timer-last-time tick-time timer)))
     (mapc #'run-timer updating-timers)
     (redraw-display)
     (not (null updating-timers))))

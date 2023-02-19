@@ -55,7 +55,7 @@
   (when read-only
     (setf (buffer-read-only-p buffer) t))
   (let* ((window-height
-           (min (floor (display-height) 2) (buffer-nlines buffer)))
+           (min (floor (display-height) 2) (1+ (buffer-nlines buffer))))
          (window
            (cond (*typeout-window*
                   (lem::window-set-size *typeout-window* (display-width) window-height)

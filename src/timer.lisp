@@ -50,16 +50,16 @@
 (defclass idle-timer (<timer>)
   ())
 
+(defmethod print-object ((object timer) stream)
+  (print-unreadable-object (object stream :identity t :type t)
+    (prin1 (timer-name object) stream)))
+
 (defgeneric idle-timer-p (timer)
   (:method ((timer timer)) nil)
   (:method ((timer idle-timer)) t))
 
 (defun timer-has-last-time (timer)
   (slot-boundp timer 'last-time))
-
-(defmethod print-object ((object timer) stream)
-  (print-unreadable-object (object stream :identity t :type t)
-    (prin1 (timer-name object) stream)))
 
 (defun timer-next-time (timer)
   (+ (timer-last-time timer) (timer-ms timer)))
@@ -84,12 +84,6 @@
     (push timer *timer-list*)
     timer))
 
-(defun stop-timer (timer)
-  (expire-timer timer)
-  (if (idle-timer-p timer)
-      (setf *idle-timer-list* (delete timer *idle-timer-list*))
-      (setf *timer-list* (delete timer *timer-list*))))
-
 (defun start-idle-timer (ms repeat-p function &optional handle-function name)
   (let ((timer (make-instance 'idle-timer
                               :name (or name (and (symbolp function)
@@ -101,6 +95,12 @@
                                                  (alexandria:ensure-function handle-function)))))
     (push timer *idle-timer-list*)
     timer))
+
+(defun stop-timer (timer)
+  (expire-timer timer)
+  (if (idle-timer-p timer)
+      (setf *idle-timer-list* (delete timer *idle-timer-list*))
+      (setf *timer-list* (delete timer *timer-list*))))
 
 (defun start-idle-timers ()
   (flet ((update-last-time-in-idle-timers ()

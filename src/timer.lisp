@@ -190,7 +190,6 @@
                    (timer-repeat-p timer))
         (set-timer-last-time tick-time timer)))
     (mapc #'run-timer updating-timers)
-    (redraw-display)
     (not (null updating-timers))))
 
 (defun get-next-timer-timing-ms ()

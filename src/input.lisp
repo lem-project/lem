@@ -38,7 +38,8 @@
                 (when (key-p e)
                   (return-from read-key-1 e)))))
             ((minusp ms)
-             (update-timer))
+             (update-timer)
+             (redraw-display))
             (t
              (let ((e (read-event (float (/ ms 1000)))))
                (when (key-p e)

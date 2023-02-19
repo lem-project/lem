@@ -18,14 +18,6 @@
     :initarg :name
     :reader timer-name
     :type (or null string))
-   (ms
-    :initarg :ms
-    :accessor timer-ms
-    :type (integer 1 *))
-   (repeat-p
-    :initarg :repeat-p
-    :reader timer-repeat-p
-    :type boolean)
    (function
     :initarg :function
     :reader timer-function
@@ -33,7 +25,17 @@
    (handle-function
     :initarg :handle-function
     :reader timer-handle-function
-    :type (or null function))
+    :type (or null function))))
+
+(defclass <timer-state> ()
+  ((ms
+    :initarg :ms
+    :accessor timer-ms
+    :type (integer 1 *))
+   (repeat-p
+    :initarg :repeat-p
+    :reader timer-repeat-p
+    :type boolean)
    (expired-p
     :initform nil
     :reader timer-expired-p
@@ -44,10 +46,10 @@
     :accessor timer-last-time
     :type (integer 1 *))))
 
-(defclass timer (<timer>)
+(defclass timer (<timer> <timer-state>)
   ())
 
-(defclass idle-timer (<timer>)
+(defclass idle-timer (<timer> <timer-state>)
   ())
 
 (defmethod print-object ((object timer) stream)

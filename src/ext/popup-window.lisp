@@ -385,6 +385,8 @@
                                            (focus-attribute 'popup-menu-attribute)
                                            (non-focus-attribute 'non-focus-popup-menu-attribute)
                                            style)
+  (when *popup-menu*
+    (lem-if:popup-menu-quit implementation))
   (let ((style (ensure-style style))
         (focus-attribute (ensure-attribute focus-attribute))
         (non-focus-attribute (ensure-attribute non-focus-attribute))

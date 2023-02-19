@@ -42,9 +42,10 @@
     :writer set-timer-expired-p
     :type boolean)
    (last-time
+    :initform nil
     :initarg :last-time
     :accessor timer-last-time
-    :type (integer 1 *))))
+    :type (or null (integer 1 *)))))
 
 (defclass timer (<timer> <timer-state>)
   ())
@@ -61,7 +62,7 @@
   (:method ((timer idle-timer)) t))
 
 (defun timer-has-last-time (timer)
-  (slot-boundp timer 'last-time))
+  (not (null (timer-last-time timer))))
 
 (defun timer-next-time (timer)
   (+ (timer-last-time timer) (timer-ms timer)))

@@ -41,20 +41,20 @@
              (handler-bind ((timer-error
                               (lambda (e)
                                 (show-message (princ-to-string e)))))
-               (update-timer))
+               (update-timers))
              (redraw-display))
             (t
              (let ((e (read-event (float (/ ms 1000)))))
                (when (key-p e)
                  (return e)))
              ;; Note:
-             ;;   This call of `update-timer` is essentially redundant.
+             ;;   This call of `update-timers` is essentially redundant.
              ;;   The call have effect iff `cond` of next iteration falls into `minusp` clause.
              ;;   The difference of existance of the call is, there was possibility of consecutive
-             ;;   two call of `update-timer` both have effect.
+             ;;   two call of `update-timers` both have effect.
              ;;   I think we should forbid this case.  It may include difficulty, e.g., for debugging.
              ;;   c.f. https://github.com/cxxxr/lem/pull/430
-             ;; (update-timer)
+             ;; (update-timers)
              )))))
 
 (defun read-key ()

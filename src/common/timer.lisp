@@ -9,7 +9,7 @@
            :start-idle-timer
            :stop-timer
            :with-idle-timers
-           :update-timer
+           :update-timers
            :get-next-timer-timing-ms))
 (in-package :lem/common/timer)
 
@@ -169,7 +169,7 @@
 (defmacro with-idle-timers (() &body body)
   `(call-with-idle-timers (lambda () ,@body)))
 
-(defun run-timer (timer)
+(defun call-timer-function (timer)
   (handler-case
       (let ((*running-timer* timer))
         (if (timer-handle-function timer)
@@ -179,7 +179,7 @@
     (error (condition)
       (error 'timer-error :timer timer :condition condition))))
 
-(defun update-timer ()
+(defun update-timers ()
   (let* ((tick-time (get-microsecond-time))
          (target-timers (if *is-in-idle*
                             (append *timer-list* *idle-timer-list*)
@@ -209,7 +209,7 @@
       (unless (and (idle-timer-p timer)
                    (timer-repeat-p timer))
         (set-timer-last-time tick-time timer)))
-    (mapc #'run-timer updating-timers)
+    (mapc #'call-timer-function updating-timers)
     (not (null updating-timers))))
 
 (defun get-next-timer-timing-ms ()

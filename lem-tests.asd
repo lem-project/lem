@@ -12,7 +12,8 @@
                (:module "common"
                 :components ((:file "ring")
                              (:file "killring")
-                             (:file "history")))
+                             (:file "history")
+                             (:file "timer")))
                (:module "language-server"
                 :components ((:file "utils")
                              (:file "micros-tests")

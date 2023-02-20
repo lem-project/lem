@@ -1,4 +1,17 @@
-(in-package :lem)
+(defpackage :lem/common/timer
+  (:use :cl)
+  (:export :timer-error
+           :running-timer
+           :timer
+           :timer-name
+           :timer-expired-p
+           :start-timer
+           :start-idle-timer
+           :stop-timer
+           :with-idle-timers
+           :update-timer
+           :get-next-timer-timing-ms))
+(in-package :lem/common/timer)
 
 (defvar *is-in-idle* nil)
 (defvar *timer-list* nil)

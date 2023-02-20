@@ -1,7 +1,8 @@
 (defpackage :lem
   (:use :cl
         :lem-base
-        :lem/common/killring)
+        :lem/common/killring
+        :lem/common/timer)
   ;; reexport common/killring
   (:export
    :with-killring-context)
@@ -256,12 +257,11 @@
    :find-keybind
    :insertion-key-p
    :lookup-keybind)
-  ;; timer.lisp
+  ;; reexport common/timer
   (:export
    :running-timer
    :timer
    :timer-name
-   :timer-ms
    :timer-expired-p
    :start-timer
    :start-idle-timer

@@ -17,7 +17,8 @@
   :components ((:module "common"
                 :components ((:file "ring")
                              (:file "killring")
-                             (:file "history")))
+                             (:file "history")
+                             (:file "timer")))
                (:file "package")
                (:file "quicklisp-utils")
                (:file "config")
@@ -44,7 +45,6 @@
                (:file "defcommand")
                (:file "mode")
                (:file "keymap")
-               (:file "timer")
                (:file "event-queue")
                (:file "interp")
                (:file "input")

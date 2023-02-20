@@ -257,13 +257,15 @@
     (when buffer
       (cond (stepping
              (setf (buffer-value buffer 'level) nil)
-             (start-idle-timer 0 nil (lambda ()
-                                       (when (get-buffer (buffer-name buffer))
-                                         (let ((window (car (get-buffer-windows buffer))))
-                                           (when (and window
-                                                      (not (deleted-window-p window))
-                                                      (not (buffer-value buffer 'level)))
-                                             (quit-window window :kill-buffer t)))))))
+             (start-idle-timer (make-timer
+                                (lambda ()
+                                  (when (get-buffer (buffer-name buffer))
+                                    (let ((window (car (get-buffer-windows buffer))))
+                                      (when (and window
+                                                 (not (deleted-window-p window))
+                                                 (not (buffer-value buffer 'level)))
+                                        (quit-window window :kill-buffer t))))))
+                               0))
             ((eq buffer (window-buffer (current-window)))
              (quit-window (current-window) :kill-buffer t))
             (t

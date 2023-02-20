@@ -512,11 +512,10 @@
         (window-see window)
         (when timeout
           (check-type timeout number)
-          (start-timer (round (* timeout 1000))
-                       nil
-                       (lambda ()
-                         (unless (deleted-window-p window)
-                           (delete-window window)))))
+          (start-timer (make-timer (lambda ()
+                                     (unless (deleted-window-p window)
+                                       (delete-window window))))
+                       (round (* timeout 1000))))
         window))))
 
 (defmethod lem-if:delete-popup-message (implementation popup-message)

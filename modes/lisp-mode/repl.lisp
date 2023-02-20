@@ -194,11 +194,12 @@
      (declare (ignore value))
      (lem.listener-mode:refresh-prompt (ensure-repl-buffer-exist))
      (when *record-history-of-repl*
-       (start-idle-timer 0 nil
-                         (lambda ()
-                           (when (position-if (complement #'syntax-space-char-p) string)
-                             (push (cons string (lisp-eval-from-string "CL:/" "CL"))
-                                   *repl-history*))))))
+       (start-idle-timer (make-timer
+                          (lambda ()
+                            (when (position-if (complement #'syntax-space-char-p) string)
+                              (push (cons string (lisp-eval-from-string "CL:/" "CL"))
+                                    *repl-history*))))
+                         0)))
    (repl-buffer-width)))
 
 (defun repl-read-string (thread tag)

@@ -38,10 +38,10 @@
     (setup-first-frame)
     (unless once
       (setf once t)
-      (start-idle-timer 100 t
-                        (lambda ()
-                          (syntax-scan-window (current-window)))
-                        nil "syntax-scan")
+      (start-idle-timer (make-timer (lambda ()
+                                      (syntax-scan-window (current-window)))
+                                    :name "syntax-scan")
+                        100 t)
       (add-hook *window-scroll-functions*
                 (lambda (window)
                   (syntax-scan-window window)))

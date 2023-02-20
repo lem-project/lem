@@ -1124,15 +1124,14 @@
 
 (defun highlight-region (start end attribute name)
   (let ((overlay (make-overlay start end attribute)))
-    (start-timer 100
-                 nil
-                 (lambda ()
-                   (delete-overlay overlay))
-                 (lambda (err)
-                   (declare (ignore err))
-                   (ignore-errors
-                    (delete-overlay overlay)))
-                 name)))
+    (start-timer (make-timer (lambda ()
+                               (delete-overlay overlay))
+                             :handle-function (lambda (err)
+                                                (declare (ignore err))
+                                                (ignore-errors
+                                                  (delete-overlay overlay)))
+                             :name name)
+                 100)))
 
 (defun highlight-compilation-region (start end)
   (highlight-region start

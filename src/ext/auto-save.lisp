@@ -47,10 +47,14 @@
   (unless *timer*
     (let ((interval (variable-value 'auto-save-checkpoint-frequency)))
       (when (and (numberp interval) (plusp interval))
-        (setf *timer* (start-idle-timer (* interval 1000) t 'checkpoint-all-buffers
-                                        (lambda (condition)
-                                          (pop-up-backtrace condition)
-                                          (disable)) "autosave"))))
+        (setf *timer*
+              (start-idle-timer (make-timer 'checkpoint-all-buffers
+                                            :handle-function (lambda (condition)
+                                                               (pop-up-backtrace condition)
+                                                               (disable))
+                                            :name "autosave")
+                                (* interval 1000)
+                                t))))
     (add-hook *input-hook* 'count-keys)))
 
 (defun disable ()

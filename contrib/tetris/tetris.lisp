@@ -302,9 +302,9 @@
     (init-player)
     (draw)
     (setq *playing-p* t)
-    (setq *timer* (start-timer 1000
-                               t
-                               (lambda () (update buffer))
-                               (lambda (condition)
-                                 (pop-up-backtrace condition)
-                                 (stop-timer *timer*))))))
+    (setq *timer* (start-timer (make-timer (lambda () (update buffer))
+                                           :handle-function (lambda (condition)
+                                                              (pop-up-backtrace condition)
+                                                              (stop-timer *timer*)))
+                               1000
+                               t))))

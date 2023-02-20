@@ -1,10 +1,11 @@
 (defpackage :lem/common/timer
-  (:use :cl)
+  (:use :cl :alexandria)
   (:export :timer-error
            :running-timer
            :timer
            :timer-name
            :timer-expired-p
+           :make-timer
            :start-timer
            :start-idle-timer
            :stop-timer
@@ -42,6 +43,10 @@
     :initarg :repeat-p
     :reader timer-internal-repeat-p
     :type boolean)
+   (idle-timer-p
+    :initarg :idle-timer-p
+    :reader timer-internal-idle-timer-p
+    :type boolean)
    (expired-p
     :initform nil
     :reader timer-internal-expired-p
@@ -53,7 +58,7 @@
     :accessor timer-internal-last-time
     :type (or null (integer 1 *)))))
 
-(defclass <timer> ()
+(defclass timer ()
   ((name
     :initarg :name
     :reader timer-name
@@ -68,22 +73,15 @@
     :type (or null function))
    (state
     :initarg :state
-    :reader timer-internal
+    :accessor timer-internal
     :type timer-internal)))
-
-(defclass timer (<timer>)
-  ())
-
-(defclass idle-timer (<timer>)
-  ())
 
 (defmethod print-object ((object timer) stream)
   (print-unreadable-object (object stream :identity t :type t)
     (prin1 (timer-name object) stream)))
 
-(defgeneric idle-timer-p (timer)
-  (:method ((timer timer)) nil)
-  (:method ((timer idle-timer)) t))
+(defun idle-timer-p (timer)
+  (timer-internal-idle-timer-p (timer-internal timer)))
 
 (defun timer-ms (timer)
   (timer-internal-ms (timer-internal timer)))
@@ -112,33 +110,37 @@
 (defun inspire-timer (timer)
   (set-timer-internal-expired-p nil (timer-internal timer)))
 
-(defun start-timer (ms repeat-p function &optional handle-function name)
-  (let ((timer (make-instance 'timer
-                              :name (or name
-                                        (and (symbolp function)
-                                             (symbol-name function)))
-                              :function (alexandria:ensure-function function)
-                              :handle-function (when handle-function
-                                                 (alexandria:ensure-function handle-function))
-                              :state (make-instance 'timer-internal
-                                                    :ms ms
-                                                    :repeat-p repeat-p
-                                                    :last-time (get-microsecond-time)))))
-    (push timer *timer-list*)
-    timer))
+(defun guess-function-name (function)
+  (etypecase function
+    (function (sb-impl::%fun-name function))
+    (symbol (symbol-name function))))
 
-(defun start-idle-timer (ms repeat-p function &optional handle-function name)
-  (let ((timer (make-instance 'idle-timer
-                              :name (or name (and (symbolp function)
-                                                  (symbol-name function)))
-                              :function (alexandria:ensure-function function)
-                              :handle-function (when handle-function
-                                                 (alexandria:ensure-function handle-function))
-                              :state (make-instance 'timer-internal
-                                                    :ms ms
-                                                    :repeat-p repeat-p))))
-    (push timer *idle-timer-list*)
-    timer))
+(defun make-timer (function &key name handle-function)
+  (make-instance 'timer
+                 :name (or name
+                           (guess-function-name function))
+                 :function (ensure-function function)
+                 :handle-function (when handle-function
+                                    (ensure-function handle-function))))
+
+(defun start-timer (timer ms &optional repeat-p)
+  (setf (timer-internal timer)
+        (make-instance 'timer-internal
+                       :ms ms
+                       :repeat-p repeat-p
+                       :last-time (get-microsecond-time)
+                       :idle-timer-p nil))
+  (push timer *timer-list*)
+  timer)
+
+(defun start-idle-timer (timer ms &optional repeat-p)
+  (setf (timer-internal timer)
+        (make-instance 'timer-internal
+                       :ms ms
+                       :repeat-p repeat-p
+                       :idle-timer-p t))
+  (push timer *idle-timer-list*)
+  timer)
 
 (defun stop-timer (timer)
   (expire-timer timer)

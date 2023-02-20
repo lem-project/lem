@@ -352,11 +352,12 @@
          (declare (ignore value))
          (lem.listener-mode:refresh-prompt (repl-buffer))
          (when *record-history-of-repl*
-           (start-idle-timer 0 nil
-                             (lambda ()
-                               (when (position-if (complement #'syntax-space-char-p) string)
-                                 (push (cons string (scheme-eval-from-string "CL:/" "CL"))
-                                       *repl-history*))))))
+           (start-idle-timer (make-timer
+                              (lambda ()
+                                (when (position-if (complement #'syntax-space-char-p) string)
+                                  (push (cons string (scheme-eval-from-string "CL:/" "CL"))
+                                        *repl-history*))))
+                             0)))
        ;(repl-buffer-width)
        )
     (error () (scheme-slime-quit)

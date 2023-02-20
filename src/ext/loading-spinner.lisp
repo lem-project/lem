@@ -75,7 +75,9 @@
   (check-type buffer buffer)
   (unless (buffer-spinner buffer)
     (let* ((spinner)
-           (timer (start-timer +loading-interval+ t (lambda () (update-spinner-frame spinner)))))
+           (timer (start-timer (make-timer (lambda () (update-spinner-frame spinner)))
+                               +loading-interval+
+                               t)))
       (setf spinner
             (make-instance 'modeline-spinner
                            :timer timer
@@ -112,10 +114,11 @@
   (check-type start point)
   (check-type end point)
   (let* ((spinner)
-         (timer (start-timer +loading-interval+
-                             t
-                             (lambda ()
-                               (update-line-spinner spinner))))
+         (timer (start-timer (make-timer 
+                              (lambda ()
+                                (update-line-spinner spinner)))
+                             +loading-interval+
+                             t))
          (overlay (make-overlay start end 'spinner-attribute)))
     (setf spinner
           (make-instance 'line-spinner

@@ -263,6 +263,7 @@
    :timer
    :timer-name
    :timer-expired-p
+   :make-timer
    :start-timer
    :start-idle-timer
    :stop-timer)

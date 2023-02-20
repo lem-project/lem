@@ -55,8 +55,9 @@
           (when *show-paren-timer*
             (stop-timer *show-paren-timer*))
           (setf *show-paren-timer*
-                (start-idle-timer 100 t
-                                  'show-paren-function nil "show paren timer"))
+                (start-idle-timer (make-timer 'show-paren-function :name "show paren timer")
+                                  100
+                                  t))
           t)
         (progn
           (when *show-paren-timer*

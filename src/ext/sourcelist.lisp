@@ -105,12 +105,10 @@
                      fn
                      #'get-highlight-overlay-default)
                    point)))
-    (start-timer 300
-                 nil
-                 (lambda ()
-                   (delete-overlay overlay))
-                 nil
-                 "jump-highlighting")))
+    (start-timer (make-timer (lambda ()
+                               (delete-overlay overlay))
+                             :name "jump-highlighting")
+                 300)))
 
 (defun jump-current-element (index sourcelist)
   (let ((jump (aref (sourcelist-elements sourcelist) index)))

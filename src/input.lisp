@@ -30,32 +30,22 @@
   (receive-event timeout))
 
 (defun read-key-1 ()
-  (loop
-    (let ((ms (get-next-timer-timing-ms)))
-      (cond ((null ms)
-             (loop
-               (let ((e (read-event nil)))
-                 (when (key-p e)
-                   (return-from read-key-1 e)))))
-            ((minusp ms)
-             (handler-bind ((timer-error
-                              (lambda (e)
-                                (show-message (princ-to-string e)))))
-               (update-timers))
-             (redraw-display))
-            (t
-             (let ((e (read-event (float (/ ms 1000)))))
-               (when (key-p e)
-                 (return e)))
-             ;; Note:
-             ;;   This call of `update-timers` is essentially redundant.
-             ;;   The call have effect iff `cond` of next iteration falls into `minusp` clause.
-             ;;   The difference of existance of the call is, there was possibility of consecutive
-             ;;   two call of `update-timers` both have effect.
-             ;;   I think we should forbid this case.  It may include difficulty, e.g., for debugging.
-             ;;   c.f. https://github.com/cxxxr/lem/pull/430
-             ;; (update-timers)
-             )))))
+  (loop :for ms := (get-next-timer-timing-ms)
+        :do (cond ((null ms)
+                   (loop
+                     (let ((e (read-event nil)))
+                       (when (key-p e)
+                         (return-from read-key-1 e)))))
+                  ((minusp ms)
+                   (handler-bind ((timer-error
+                                    (lambda (e)
+                                      (show-message (princ-to-string e)))))
+                     (update-timers))
+                   (redraw-display))
+                  (t
+                   (let ((e (read-event (float (/ ms 1000)))))
+                     (when (key-p e)
+                       (return e)))))))
 
 (defun read-key ()
   (let ((key (if (null *unread-keys*)

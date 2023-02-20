@@ -6,6 +6,13 @@
 (defvar *processed-idle-timer-list* nil)
 (defvar *running-timer* nil)
 
+(define-condition timer-error (error)
+  ((timer :initarg :timer)
+   (condition :initarg :condition))
+  (:report (lambda (c s)
+             (with-slots (timer condition) c
+               (format s "Error running timer ~S: ~A" (timer-name timer) condition)))))
+
 (defun running-timer () *running-timer*)
 
 (defun get-microsecond-time ()
@@ -157,7 +164,7 @@
               (funcall (timer-function timer)))
             (funcall (timer-function timer))))
     (error (condition)
-      (show-message (format nil "Error running timer ~S: ~A" (timer-name timer) condition)))))
+      (error 'timer-error :timer timer :condition condition))))
 
 (defun update-timer ()
   (let* ((tick-time (get-microsecond-time))

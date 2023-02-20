@@ -34,11 +34,14 @@
     (let ((ms (get-next-timer-timing-ms)))
       (cond ((null ms)
              (loop
-              (let ((e (read-event nil)))
-                (when (key-p e)
-                  (return-from read-key-1 e)))))
+               (let ((e (read-event nil)))
+                 (when (key-p e)
+                   (return-from read-key-1 e)))))
             ((minusp ms)
-             (update-timer)
+             (handler-bind ((timer-error
+                              (lambda (e)
+                                (show-message (princ-to-string e)))))
+               (update-timer))
              (redraw-display))
             (t
              (let ((e (read-event (float (/ ms 1000)))))

@@ -33,8 +33,8 @@
     (map-frame (implementation) frame)
     (setup-frame frame (primordial-buffer))))
 
-(defclass timer-manager () ())
-(defmethod send-timer-notification ((timer-manager timer-manager) continue)
+(defclass lem-timer-manager () ())
+(defmethod send-timer-notification ((lem-timer-manager timer-manager) continue)
   (send-event (lambda ()
                 (funcall continue)
                 (redraw-display))))

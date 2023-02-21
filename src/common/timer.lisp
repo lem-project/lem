@@ -1,6 +1,7 @@
 (defpackage :lem/common/timer
   (:use :cl :alexandria)
   (:export :*timer-manager*
+           :timer-manager
            :send-timer-notification
            :timer-error
            :running-timer
@@ -39,7 +40,7 @@
 
 (defun running-timer () *running-timer*)
 
-(defun get-microsecond-time ()
+(defmethod get-microsecond-time ((timer-manager timer-manager))
   (values
    (floor (/ (get-internal-real-time)
              (load-time-value (/ internal-time-units-per-second 1000))))))
@@ -165,7 +166,7 @@
         (make-instance 'timer-internal
                        :ms ms
                        :repeat-p repeat-p
-                       :last-time (get-microsecond-time)
+                       :last-time (get-microsecond-time *timer-manager*)
                        :mutex (sb-thread:make-mutex :name "timer internal mutex")))
   (start-timer-thread timer ms repeat-p)
   timer)
@@ -215,7 +216,7 @@
 
 (defun start-idle-timers ()
   (flet ((update-last-time-in-idle-timers ()
-           (loop :with last-time := (get-microsecond-time)
+           (loop :with last-time := (get-microsecond-time *timer-manager*)
                  :for timer :in *idle-timer-list*
                  :do (set-timer-last-time last-time timer)))
          (inspire-idle-timers ()
@@ -247,7 +248,7 @@
       (error 'timer-error :timer timer :condition condition))))
 
 (defun update-timers ()
-  (let* ((tick-time (get-microsecond-time))
+  (let* ((tick-time (get-microsecond-time *timer-manager*))
          (target-timers (if *is-in-idle*
                             (append *timer-list* *idle-timer-list*)
                             *timer-list*))
@@ -285,7 +286,7 @@
         nil
         (- (loop :for timer :in timers
                  :minimize (timer-next-time timer))
-           (get-microsecond-time)))))
+           (get-microsecond-time *timer-manager*)))))
 
 (defun init-timer-manager (timer-manager)
   (setf *timer-manager* timer-manager))

@@ -254,13 +254,10 @@
          (updating-timers (remove-if-not (lambda (timer)
                                            (< (timer-next-time timer) tick-time))
                                          (remove-if-not #'timer-has-last-time target-timers)))
-         (deleting-timers (remove-if-not (lambda (timer)
-                                           (not (timer-repeat-p timer)))
-                                         updating-timers))
+         (deleting-timers (remove-if #'timer-repeat-p
+                                     updating-timers))
          (updating-idle-timers (if *is-in-idle*
-                                   (remove-if-not (lambda (timer)
-                                                    (and (idle-timer-p timer)
-                                                         (timer-repeat-p timer)))
+                                   (remove-if-not #'timer-repeat-p
                                                   updating-timers)
                                    '())))
     (dolist (timer deleting-timers)
@@ -273,8 +270,7 @@
       (setf *processed-idle-timer-list* (nconc updating-idle-timers *processed-idle-timer-list*)))
 
     (dolist (timer updating-timers)
-      (unless (and (idle-timer-p timer)
-                   (timer-repeat-p timer))
+      (unless (timer-repeat-p timer)
         (set-timer-last-time tick-time timer)))
     (mapc #'call-timer-function updating-timers)
     (not (null updating-timers))))

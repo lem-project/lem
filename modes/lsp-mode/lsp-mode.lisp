@@ -806,9 +806,9 @@
     (do-sequence (diagnostic (lsp:publish-diagnostics-params-diagnostics params))
       (highlight-diagnostic buffer diagnostic))
     (setf (buffer-diagnostic-idle-timer buffer)
-          (start-idle-timer (make-timer #'popup-diagnostic :name "lsp-diagnostic")
-                            200
-                            t))))
+          (start-timer (make-idle-timer #'popup-diagnostic :name "lsp-diagnostic")
+                       200
+                       t))))
 
 (defun popup-diagnostic ()
   (dolist (overlay (buffer-diagnostic-overlays (current-buffer)))
@@ -1457,10 +1457,10 @@
 (defun enable-document-highlight-idle-timer ()
   (unless *document-highlight-idle-timer*
     (setf *document-highlight-idle-timer*
-          (start-idle-timer (make-timer #'document-highlight-calls-timer
+          (start-timer (make-idle-timer #'document-highlight-calls-timer
                                         :name "lsp-document-highlight")
-                            200
-                            t))))
+                       200
+                       t))))
 
 (defmethod execute :after ((mode lsp-mode) command argument)
   (clear-document-highlight-overlays-if-required))

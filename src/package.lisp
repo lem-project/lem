@@ -264,8 +264,8 @@
    :timer-name
    :timer-expired-p
    :make-timer
+   :make-idle-timer
    :start-timer
-   :start-idle-timer
    :stop-timer)
   ;; event-queue.lisp
   (:export

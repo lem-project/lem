@@ -65,13 +65,13 @@
   (when (or (null *idle-timer*)
             (timer-expired-p *idle-timer*))
     (setf *idle-timer*
-          (start-idle-timer (make-timer 'language-idle-function
+          (start-timer (make-idle-timer 'language-idle-function
                                         :handle-function (lambda (condition)
                                                            (stop-timer *idle-timer*)
                                                            (pop-up-backtrace condition)
                                                            (setf *idle-timer* nil))
                                         :name "language-idle-function")
-                            200 t))))
+                       200 t))))
 
 (define-key *language-mode-keymap* "C-M-a" 'beginning-of-defun)
 (define-key *language-mode-keymap* "C-M-e" 'end-of-defun)

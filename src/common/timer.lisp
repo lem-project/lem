@@ -8,12 +8,13 @@
            :timer-name
            :timer-expired-p
            :make-timer
+           :make-idle-timer
            :start-timer
-           :start-idle-timer
            :stop-timer
            :with-idle-timers
            :update-timers
-           :get-next-timer-timing-ms))
+           :get-next-timer-timing-ms
+           :init-timer-manager))
 (in-package :lem/common/timer)
 
 (defvar *timer-manager*)
@@ -80,7 +81,7 @@
     :accessor timer-internal-thread
     :type sb-thread:thread)))
 
-(defclass timer ()
+(defclass <timer> ()
   ((name
     :initarg :name
     :reader timer-name
@@ -96,6 +97,12 @@
    (internal
     :accessor timer-internal
     :type timer-internal)))
+
+(defclass timer (<timer>)
+  ())
+
+(defclass idle-timer (<timer>)
+  ())
 
 (defmethod print-object ((object timer) stream)
   (print-unreadable-object (object stream :identity t :type t)
@@ -145,15 +152,21 @@
     (function (sb-impl::%fun-name function))
     (symbol (symbol-name function))))
 
-(defun make-timer (function &key name handle-function)
-  (make-instance 'timer
+(defun make-timer-instance (timer-class function name handle-function)
+  (make-instance timer-class
                  :name (or name
                            (guess-function-name function))
                  :function (ensure-function function)
                  :handle-function (when handle-function
                                     (ensure-function handle-function))))
 
-(defun start-timer (timer ms &optional repeat-p)
+(defun make-timer (function &key name handle-function)
+  (make-timer-instance 'timer function name handle-function))
+
+(defun make-idle-timer (function &key name handle-function)
+  (make-timer-instance 'idle-timer function name handle-function))
+
+(defmethod start-timer ((timer timer) ms &optional repeat-p)
   (setf (timer-internal timer)
         (make-instance 'timer-internal
                        :ms ms
@@ -164,7 +177,7 @@
   (start-timer-thread timer ms repeat-p)
   timer)
 
-(defun start-idle-timer (timer ms &optional repeat-p)
+(defmethod start-timer ((timer idle-timer) ms &optional repeat-p)
   (setf (timer-internal timer)
         (make-instance 'timer-internal
                        :ms ms
@@ -285,3 +298,6 @@
         (- (loop :for timer :in timers
                  :minimize (timer-next-time timer))
            (get-microsecond-time)))))
+
+(defun init-timer-manager (timer-manager)
+  (setf *timer-manager* timer-manager))

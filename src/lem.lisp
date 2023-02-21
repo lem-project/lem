@@ -33,15 +33,22 @@
     (map-frame (implementation) frame)
     (setup-frame frame (primordial-buffer))))
 
+(defclass timer-manager () ())
+(defmethod send-timer-notification ((timer-manager timer-manager) continue)
+  (send-event (lambda ()
+                (funcall continue)
+                (redraw-display))))
+
 (let ((once nil))
   (defun setup ()
     (setup-first-frame)
     (unless once
       (setf once t)
-      (start-idle-timer (make-timer (lambda ()
+      (init-timer-manager (make-instance 'timer-manager))
+      (start-timer (make-idle-timer (lambda ()
                                       (syntax-scan-window (current-window)))
                                     :name "syntax-scan")
-                        100 t)
+                   100 t)
       (add-hook *window-scroll-functions*
                 (lambda (window)
                   (syntax-scan-window window)))

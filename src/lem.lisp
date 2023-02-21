@@ -33,7 +33,7 @@
     (map-frame (implementation) frame)
     (setup-frame frame (primordial-buffer))))
 
-(defclass lem-timer-manager () ())
+(defclass lem-timer-manager (timer-manager) ())
 (defmethod send-timer-notification ((lem-timer-manager timer-manager) continue)
   (send-event (lambda ()
                 (funcall continue)
@@ -44,7 +44,6 @@
     (setup-first-frame)
     (unless once
       (setf once t)
-      (init-timer-manager (make-instance 'timer-manager))
       (start-timer (make-idle-timer (lambda ()
                                       (syntax-scan-window (current-window)))
                                     :name "syntax-scan")
@@ -192,11 +191,12 @@
      (unwind-protect
           (let (#+lispworks (lw:*default-character-element-type* 'character))
             (with-editor-stream ()
-              (setf *in-the-editor* t)
-              (setup)
-              (let ((report (toplevel-command-loop (lambda () (init args)))))
-                (when finalize (funcall finalize report))
-                (teardown))))
+              (with-timer-manager (make-instance 'lem-timer-manager)
+                (setf *in-the-editor* t)
+                (setup)
+                (let ((report (toplevel-command-loop (lambda () (init args)))))
+                  (when finalize (funcall finalize report))
+                  (teardown)))))
        (setf *in-the-editor* nil)))
    :name "editor"))
 

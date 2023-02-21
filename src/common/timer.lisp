@@ -1,7 +1,6 @@
 (defpackage :lem/common/timer
   (:use :cl :alexandria)
-  (:export :*timer-manager*
-           :timer-manager
+  (:export :timer-manager
            :send-timer-notification
            :timer-error
            :running-timer
@@ -15,7 +14,7 @@
            :with-idle-timers
            :update-timers
            :get-next-timer-timing-ms
-           :init-timer-manager))
+           :with-timer-manager))
 (in-package :lem/common/timer)
 
 (defvar *timer-manager*)
@@ -288,5 +287,12 @@
                  :minimize (timer-next-time timer))
            (get-microsecond-time *timer-manager*)))))
 
-(defun init-timer-manager (timer-manager)
-  (setf *timer-manager* timer-manager))
+(defun call-with-timer-manager (timer-manager function)
+  (let ((*timer-manager* timer-manager)
+        (bt:*default-special-bindings* (acons '*timer-manager*
+                                              timer-manager
+                                              bt:*default-special-bindings*)))
+    (funcall function)))
+
+(defmacro with-timer-manager (timer-manager &body body)
+  `(call-with-timer-manager ,timer-manager (lambda () ,@body)))

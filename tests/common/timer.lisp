@@ -21,7 +21,7 @@
          (value (timer-name timer)))
     (ok (string= "foo" value))))
 
-(defclass testing-timer-manager () ())
+(defclass testing-timer-manager (timer-manager) ())
 
 (defmethod send-timer-notification ((timer-manager testing-timer-manager)
                                     continue)

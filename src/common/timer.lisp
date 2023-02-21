@@ -111,9 +111,6 @@
 (defun idle-timer-p (timer)
   (timer-internal-idle-timer-p (timer-internal timer)))
 
-(defun timer-ms (timer)
-  (timer-internal-ms (timer-internal timer)))
-
 (defun timer-repeat-p (timer)
   (timer-internal-repeat-p (timer-internal timer)))
 
@@ -127,7 +124,7 @@
   (not (null (timer-last-time timer))))
 
 (defun timer-next-time (timer)
-  (+ (timer-last-time timer) (timer-ms timer)))
+  (+ (timer-last-time timer) (timer-internal-ms (timer-internal timer))))
 
 (defun timer-expired-p (timer)
   (if (idle-timer-p timer)

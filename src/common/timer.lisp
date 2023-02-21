@@ -1,6 +1,8 @@
 (defpackage :lem/common/timer
   (:use :cl :alexandria)
-  (:export :timer-error
+  (:export :*timer-manager*
+           :send-timer-notification
+           :timer-error
            :running-timer
            :timer
            :timer-name
@@ -13,6 +15,13 @@
            :update-timers
            :get-next-timer-timing-ms))
 (in-package :lem/common/timer)
+
+(defvar *timer-manager*)
+
+(defgeneric send-timer-notification (timer-manager continue))
+
+(defclass timer-manager ()
+  ())
 
 (defvar *is-in-idle* nil)
 (defvar *timer-list* nil)
@@ -56,7 +65,20 @@
     :initform nil
     :initarg :last-time
     :accessor timer-internal-last-time
-    :type (or null (integer 1 *)))))
+    :type (or null (integer 1 *)))
+
+   (mutex
+    :initarg :mutex
+    :reader timer-internal-mutex
+    :type sb-thread:mutex)
+   (stop-mailbox
+    :initarg :stop-mailbox
+    :accessor timer-internal-stop-mailbox
+    :type sb-concurrency:mailbox)
+   (thread
+    :initarg :thread
+    :accessor timer-internal-thread
+    :type sb-thread:thread)))
 
 (defclass timer ()
   ((name
@@ -71,8 +93,7 @@
     :initarg :handle-function
     :reader timer-handle-function
     :type (or null function))
-   (state
-    :initarg :state
+   (internal
     :accessor timer-internal
     :type timer-internal)))
 
@@ -89,9 +110,6 @@
 (defun timer-repeat-p (timer)
   (timer-internal-repeat-p (timer-internal timer)))
 
-(defun timer-expired-p (timer)
-  (timer-internal-expired-p (timer-internal timer)))
-
 (defun timer-last-time (timer)
   (timer-internal-last-time (timer-internal timer)))
 
@@ -104,11 +122,23 @@
 (defun timer-next-time (timer)
   (+ (timer-last-time timer) (timer-ms timer)))
 
+(defun timer-expired-p (timer)
+  (if (idle-timer-p timer)
+      (timer-internal-expired-p (timer-internal timer))
+      (sb-thread:with-mutex ((timer-internal-mutex (timer-internal timer)))
+        (timer-internal-expired-p (timer-internal timer)))))
+
 (defun expire-timer (timer)
-  (set-timer-internal-expired-p t (timer-internal timer)))
+  (if (idle-timer-p timer)
+      (set-timer-internal-expired-p t (timer-internal timer))
+      (sb-thread:with-mutex ((timer-internal-mutex (timer-internal timer)))
+        (set-timer-internal-expired-p t (timer-internal timer)))))
 
 (defun inspire-timer (timer)
-  (set-timer-internal-expired-p nil (timer-internal timer)))
+  (if (idle-timer-p timer)
+      (set-timer-internal-expired-p nil (timer-internal timer))
+      (sb-thread:with-mutex ((timer-internal-mutex (timer-internal timer)))
+        (set-timer-internal-expired-p nil (timer-internal timer)))))
 
 (defun guess-function-name (function)
   (etypecase function
@@ -129,8 +159,9 @@
                        :ms ms
                        :repeat-p repeat-p
                        :last-time (get-microsecond-time)
-                       :idle-timer-p nil))
-  (push timer *timer-list*)
+                       :idle-timer-p nil
+                       :mutex (sb-thread:make-mutex :name "timer internal mutex")))
+  (start-timer-thread timer ms repeat-p)
   timer)
 
 (defun start-idle-timer (timer ms &optional repeat-p)
@@ -142,11 +173,40 @@
   (push timer *idle-timer-list*)
   timer)
 
-(defun stop-timer (timer)
+(defun stop-idle-timer (timer)
   (expire-timer timer)
+  (setf *idle-timer-list* (delete timer *idle-timer-list*)))
+
+(defun stop-timer (timer)
   (if (idle-timer-p timer)
-      (setf *idle-timer-list* (delete timer *idle-timer-list*))
-      (setf *timer-list* (delete timer *timer-list*))))
+      (stop-idle-timer timer)
+      (stop-timer-thread timer)))
+
+(defun start-timer-thread (timer ms repeat-p)
+  (let ((stop-mailbox (sb-concurrency:make-mailbox))
+        (timer-manager *timer-manager*)
+        (seconds (float (/ ms 1000))))
+    (setf (timer-internal-stop-mailbox (timer-internal timer))
+          stop-mailbox)
+    (setf (timer-internal-thread (timer-internal timer))
+          (bt:make-thread
+           (lambda ()
+             (loop
+               (let ((recv-stop-msg
+                       (nth-value 1
+                                  (sb-concurrency:receive-message stop-mailbox
+                                                                  :timeout seconds))))
+                 (when recv-stop-msg
+                   (expire-timer timer)
+                   (return)))
+               (send-timer-notification timer-manager
+                                        (lambda () (call-timer-function timer)))
+               (unless repeat-p
+                 (return))))
+           :name (format nil "Timer ~A" (timer-name timer))))))
+
+(defun stop-timer-thread (timer)
+  (sb-concurrency:send-message (timer-internal-stop-mailbox (timer-internal timer)) t))
 
 (defun start-idle-timers ()
   (flet ((update-last-time-in-idle-timers ()

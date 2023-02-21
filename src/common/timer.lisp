@@ -53,10 +53,6 @@
     :initarg :repeat-p
     :reader timer-internal-repeat-p
     :type boolean)
-   (idle-timer-p
-    :initarg :idle-timer-p
-    :reader timer-internal-idle-timer-p
-    :type boolean)
    (expired-p
     :initform nil
     :reader timer-internal-expired-p
@@ -108,8 +104,9 @@
   (print-unreadable-object (object stream :identity t :type t)
     (prin1 (timer-name object) stream)))
 
-(defun idle-timer-p (timer)
-  (timer-internal-idle-timer-p (timer-internal timer)))
+(defgeneric idle-timer-p (timer)
+  (:method ((timer idle-timer)) t)
+  (:method ((timer timer)) nil))
 
 (defun timer-repeat-p (timer)
   (timer-internal-repeat-p (timer-internal timer)))
@@ -169,7 +166,6 @@
                        :ms ms
                        :repeat-p repeat-p
                        :last-time (get-microsecond-time)
-                       :idle-timer-p nil
                        :mutex (sb-thread:make-mutex :name "timer internal mutex")))
   (start-timer-thread timer ms repeat-p)
   timer)
@@ -178,8 +174,7 @@
   (setf (timer-internal timer)
         (make-instance 'timer-internal
                        :ms ms
-                       :repeat-p repeat-p
-                       :idle-timer-p t))
+                       :repeat-p repeat-p))
   (push timer *idle-timer-list*)
   timer)
 

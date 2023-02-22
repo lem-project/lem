@@ -259,7 +259,6 @@
    :lookup-keybind)
   ;; reexport common/timer
   (:export
-   :running-timer
    :timer
    :timer-name
    :timer-expired-p

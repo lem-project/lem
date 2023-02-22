@@ -3,7 +3,6 @@
   (:export :timer-manager
            :send-timer-notification
            :timer-error
-           :running-timer
            :timer
            :timer-name
            :timer-expired-p
@@ -28,7 +27,6 @@
 (defvar *timer-list* nil)
 (defvar *idle-timer-list* nil)
 (defvar *processed-idle-timer-list* nil)
-(defvar *running-timer* nil)
 
 (define-condition timer-error (error)
   ((timer :initarg :timer)
@@ -36,8 +34,6 @@
   (:report (lambda (c s)
              (with-slots (timer condition) c
                (format s "Error running timer ~S: ~A" (timer-name timer) condition)))))
-
-(defun running-timer () *running-timer*)
 
 (defmethod get-microsecond-time ((timer-manager timer-manager))
   (values
@@ -117,11 +113,10 @@
 
 (defun call-timer-function (timer)
   (handler-case
-      (let ((*running-timer* timer))
-        (if (timer-handle-function timer)
-            (handler-bind ((error (timer-handle-function timer)))
-              (funcall (timer-function timer)))
-            (funcall (timer-function timer))))
+      (if (timer-handle-function timer)
+          (handler-bind ((error (timer-handle-function timer)))
+            (funcall (timer-function timer)))
+          (funcall (timer-function timer)))
     (error (condition)
       (error 'timer-error :timer timer :condition condition))))
 

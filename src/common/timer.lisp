@@ -35,39 +35,6 @@
    (floor (/ (get-internal-real-time)
              (load-time-value (/ internal-time-units-per-second 1000))))))
 
-(defclass timer-internal ()
-  ((ms
-    :initarg :ms
-    :accessor timer-internal-ms
-    :type (integer 1 *))
-   (repeat-p
-    :initarg :repeat-p
-    :reader timer-internal-repeat-p
-    :type boolean)
-   (expired-p
-    :initform nil
-    :reader timer-internal-expired-p
-    :writer set-timer-internal-expired-p
-    :type boolean)
-   (last-time
-    :initform nil
-    :initarg :last-time
-    :accessor timer-internal-last-time
-    :type (or null (integer 1 *)))
-
-   (mutex
-    :initarg :mutex
-    :reader timer-internal-mutex
-    :type sb-thread:mutex)
-   (stop-mailbox
-    :initarg :stop-mailbox
-    :accessor timer-internal-stop-mailbox
-    :type sb-concurrency:mailbox)
-   (thread
-    :initarg :thread
-    :accessor timer-internal-thread
-    :type sb-thread:thread)))
-
 (defgeneric timer-expired-p (timer))
 (defgeneric expire-timer (timer))
 (defgeneric inspire-timer (timer))
@@ -85,9 +52,18 @@
     :initarg :handle-function
     :reader timer-handle-function
     :type (or null function))
-   (internal
-    :accessor timer-internal
-    :type timer-internal)))
+   (repeat-p
+    :accessor timer-repeat-p
+    :type boolean)
+   (ms
+    :initarg :ms
+    :accessor timer-ms
+    :type (integer 1 *))
+   (expired-p
+    :initform nil
+    :reader timer-expired-p
+    :writer set-timer-expired-p
+    :type boolean)))
 
 (defmethod print-object ((object <timer>) stream)
   (print-unreadable-object (object stream :identity t :type t)
@@ -128,30 +104,38 @@
 
 ;;; timer
 (defclass timer (<timer>)
-  ())
+  ((mutex
+    :initarg :mutex
+    :accessor timer-mutex
+    :type sb-thread:mutex)
+   (stop-mailbox
+    :initarg :stop-mailbox
+    :accessor timer-stop-mailbox
+    :type sb-concurrency:mailbox)
+   (thread
+    :initarg :thread
+    :accessor timer-thread
+    :type sb-thread:thread)))
 
 (defmethod timer-expired-p ((timer timer))
-  (sb-thread:with-mutex ((timer-internal-mutex (timer-internal timer)))
-    (timer-internal-expired-p (timer-internal timer))))
+  (sb-thread:with-mutex ((timer-mutex timer))
+    (call-next-method)))
 
 (defmethod expire-timer ((timer timer))
-  (sb-thread:with-mutex ((timer-internal-mutex (timer-internal timer)))
-    (set-timer-internal-expired-p t (timer-internal timer))))
+  (sb-thread:with-mutex ((timer-mutex timer))
+    (set-timer-expired-p t timer)))
 
 (defmethod inspire-timer ((timer timer))
-  (sb-thread:with-mutex ((timer-internal-mutex (timer-internal timer)))
-    (set-timer-internal-expired-p nil (timer-internal timer))))
+  (sb-thread:with-mutex ((timer-mutex timer))
+    (set-timer-expired-p nil timer)))
 
 (defun make-timer (function &key name handle-function)
   (make-timer-instance 'timer function name handle-function))
 
 (defmethod start-timer ((timer timer) ms &optional repeat-p)
-  (setf (timer-internal timer)
-        (make-instance 'timer-internal
-                       :ms ms
-                       :repeat-p repeat-p
-                       :last-time (get-microsecond-time *timer-manager*)
-                       :mutex (sb-thread:make-mutex :name "timer internal mutex")))
+  (setf (timer-ms timer) ms)
+  (setf (timer-repeat-p timer) repeat-p)
+  (setf (timer-mutex timer) (sb-thread:make-mutex :name "timer internal mutex"))
   (start-timer-thread timer ms repeat-p)
   timer)
 
@@ -162,9 +146,9 @@
   (let ((stop-mailbox (sb-concurrency:make-mailbox))
         (timer-manager *timer-manager*)
         (seconds (float (/ ms 1000))))
-    (setf (timer-internal-stop-mailbox (timer-internal timer))
+    (setf (timer-stop-mailbox timer)
           stop-mailbox)
-    (setf (timer-internal-thread (timer-internal timer))
+    (setf (timer-thread timer)
           (bt:make-thread
            (lambda ()
              (loop
@@ -182,7 +166,7 @@
            :name (format nil "Timer ~A" (timer-name timer))))))
 
 (defun stop-timer-thread (timer)
-  (sb-concurrency:send-message (timer-internal-stop-mailbox (timer-internal timer)) t))
+  (sb-concurrency:send-message (timer-stop-mailbox timer) t))
 
 
 ;;; idle-timer
@@ -192,37 +176,35 @@
 (defvar *idle-p* nil)
 
 (defclass idle-timer (<timer>)
-  ())
-
-(defmethod timer-repeat-p ((timer idle-timer))
-  (timer-internal-repeat-p (timer-internal timer)))
+  ((last-time
+    :initform nil
+    :initarg :last-time
+    :accessor timer-last-time
+    :type (or null (integer 1 *)))))
 
 (defmethod set-timer-last-time (value (timer idle-timer))
   (check-type value positive-integer)
-  (setf (timer-internal-last-time (timer-internal timer)) value))
+  (setf (timer-last-time timer) value))
 
 (defmethod timer-next-time ((timer idle-timer))
-  (+ (timer-internal-last-time (timer-internal timer))
-     (timer-internal-ms (timer-internal timer))))
-
-(defmethod timer-expired-p ((timer idle-timer))
-  (timer-internal-expired-p (timer-internal timer)))
+  (+ (timer-last-time timer)
+     (timer-ms timer)))
 
 (defmethod expire-timer ((timer idle-timer))
-  (set-timer-internal-expired-p t (timer-internal timer)))
+  (set-timer-expired-p t timer))
 
 (defmethod inspire-timer ((timer idle-timer))
-  (set-timer-internal-expired-p nil (timer-internal timer)))
+  (set-timer-expired-p nil timer))
 
 (defun make-idle-timer (function &key name handle-function)
   (make-timer-instance 'idle-timer function name handle-function))
 
 (defmethod start-timer ((timer idle-timer) ms &optional repeat-p)
-  (setf (timer-internal timer)
-        (make-instance 'timer-internal
-                       :ms ms
-                       :repeat-p repeat-p
-                       :last-time (when *idle-p* (get-microsecond-time *timer-manager*))))
+  (setf (timer-ms timer) ms)
+  (setf (timer-repeat-p timer) repeat-p)
+  (when *idle-p*
+    (setf (timer-last-time timer)
+          (get-microsecond-time *timer-manager*)))
   (push timer *idle-timer-list*)
   timer)
 

@@ -196,17 +196,12 @@
 (defmethod timer-repeat-p ((timer idle-timer))
   (timer-internal-repeat-p (timer-internal timer)))
 
-(defmethod timer-last-time ((timer idle-timer))
-  (timer-internal-last-time (timer-internal timer)))
-
 (defmethod set-timer-last-time (value (timer idle-timer))
   (setf (timer-internal-last-time (timer-internal timer)) value))
 
-(defmethod timer-has-last-time ((timer idle-timer))
-  (not (null (timer-last-time timer))))
-
 (defmethod timer-next-time ((timer idle-timer))
-  (+ (timer-last-time timer) (timer-internal-ms (timer-internal timer))))
+  (+ (timer-internal-last-time (timer-internal timer))
+     (timer-internal-ms (timer-internal timer))))
 
 (defmethod timer-expired-p ((timer idle-timer))
   (timer-internal-expired-p (timer-internal timer)))
@@ -261,8 +256,7 @@
   (let* ((tick-time (get-microsecond-time *timer-manager*))
          (updating-timers (remove-if-not (lambda (timer)
                                            (< (timer-next-time timer) tick-time))
-                                         (remove-if-not #'timer-has-last-time
-                                                        *idle-timer-list*)))
+                                         *idle-timer-list*))
          (deleting-timers (remove-if #'timer-repeat-p
                                      updating-timers))
          (updating-idle-timers (remove-if-not #'timer-repeat-p
@@ -280,7 +274,7 @@
     (not (null updating-timers))))
 
 (defun get-next-timer-timing-ms ()
-  (when-let (timers (remove-if-not #'timer-has-last-time *idle-timer-list*))
+  (when-let (timers *idle-timer-list*)
     (- (loop :for timer :in timers
              :minimize (timer-next-time timer))
        (get-microsecond-time *timer-manager*))))

@@ -189,6 +189,7 @@
 
 (defvar *idle-timer-list* nil)
 (defvar *processed-idle-timer-list* nil)
+(defvar *idle-p* nil)
 
 (defclass idle-timer (<timer>)
   ())
@@ -197,6 +198,7 @@
   (timer-internal-repeat-p (timer-internal timer)))
 
 (defmethod set-timer-last-time (value (timer idle-timer))
+  (check-type value positive-integer)
   (setf (timer-internal-last-time (timer-internal timer)) value))
 
 (defmethod timer-next-time ((timer idle-timer))
@@ -219,7 +221,8 @@
   (setf (timer-internal timer)
         (make-instance 'timer-internal
                        :ms ms
-                       :repeat-p repeat-p))
+                       :repeat-p repeat-p
+                       :last-time (when *idle-p* (get-microsecond-time *timer-manager*))))
   (push timer *idle-timer-list*)
   timer)
 
@@ -246,7 +249,8 @@
 
 (defun call-with-idle-timers (function)
   (start-idle-timers)
-  (prog1 (funcall function)
+  (prog1 (let ((*idle-p* t))
+           (funcall function))
     (stop-idle-timers)))
 
 (defmacro with-idle-timers (() &body body)

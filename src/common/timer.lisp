@@ -259,16 +259,15 @@
 
 (defun update-idle-timers ()
   (let* ((tick-time (get-microsecond-time *timer-manager*))
-         (target-timers *idle-timer-list*)
          (updating-timers (remove-if-not (lambda (timer)
                                            (< (timer-next-time timer) tick-time))
-                                         (remove-if-not #'timer-has-last-time target-timers)))
+                                         (remove-if-not #'timer-has-last-time
+                                                        *idle-timer-list*)))
          (deleting-timers (remove-if #'timer-repeat-p
                                      updating-timers))
          (updating-idle-timers (remove-if-not #'timer-repeat-p
                                               updating-timers)))
-    (dolist (timer deleting-timers)
-      (expire-timer timer))
+    (mapc #'expire-timer deleting-timers)
 
     (setf *idle-timer-list* (set-difference *idle-timer-list* deleting-timers))
     (setf *idle-timer-list* (set-difference *idle-timer-list* updating-idle-timers))

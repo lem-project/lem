@@ -77,6 +77,10 @@
     :accessor timer-internal-thread
     :type sb-thread:thread)))
 
+(defgeneric timer-expired-p (timer))
+(defgeneric expire-timer (timer))
+(defgeneric inspire-timer (timer))
+
 (defclass <timer> ()
   ((name
     :initarg :name
@@ -94,52 +98,9 @@
     :accessor timer-internal
     :type timer-internal)))
 
-(defclass timer (<timer>)
-  ())
-
-(defclass idle-timer (<timer>)
-  ())
-
-(defmethod print-object ((object timer) stream)
+(defmethod print-object ((object <timer>) stream)
   (print-unreadable-object (object stream :identity t :type t)
     (prin1 (timer-name object) stream)))
-
-(defgeneric idle-timer-p (timer)
-  (:method ((timer idle-timer)) t)
-  (:method ((timer timer)) nil))
-
-(defun timer-repeat-p (timer)
-  (timer-internal-repeat-p (timer-internal timer)))
-
-(defun timer-last-time (timer)
-  (timer-internal-last-time (timer-internal timer)))
-
-(defun set-timer-last-time (value timer)
-  (setf (timer-internal-last-time (timer-internal timer)) value))
-
-(defun timer-has-last-time (timer)
-  (not (null (timer-last-time timer))))
-
-(defun timer-next-time (timer)
-  (+ (timer-last-time timer) (timer-internal-ms (timer-internal timer))))
-
-(defun timer-expired-p (timer)
-  (if (idle-timer-p timer)
-      (timer-internal-expired-p (timer-internal timer))
-      (sb-thread:with-mutex ((timer-internal-mutex (timer-internal timer)))
-        (timer-internal-expired-p (timer-internal timer)))))
-
-(defun expire-timer (timer)
-  (if (idle-timer-p timer)
-      (set-timer-internal-expired-p t (timer-internal timer))
-      (sb-thread:with-mutex ((timer-internal-mutex (timer-internal timer)))
-        (set-timer-internal-expired-p t (timer-internal timer)))))
-
-(defun inspire-timer (timer)
-  (if (idle-timer-p timer)
-      (set-timer-internal-expired-p nil (timer-internal timer))
-      (sb-thread:with-mutex ((timer-internal-mutex (timer-internal timer)))
-        (set-timer-internal-expired-p nil (timer-internal timer)))))
 
 (defun guess-function-name (function)
   (etypecase function
@@ -154,11 +115,45 @@
                  :handle-function (when handle-function
                                     (ensure-function handle-function))))
 
+(defun call-timer-function (timer)
+  (handler-case
+      (let ((*running-timer* timer))
+        (if (timer-handle-function timer)
+            (handler-bind ((error (timer-handle-function timer)))
+              (funcall (timer-function timer)))
+            (funcall (timer-function timer))))
+    (error (condition)
+      (error 'timer-error :timer timer :condition condition))))
+
+(defun call-with-timer-manager (timer-manager function)
+  (let ((*timer-manager* timer-manager)
+        (bt:*default-special-bindings* (acons '*timer-manager*
+                                              timer-manager
+                                              bt:*default-special-bindings*)))
+    (funcall function)))
+
+(defmacro with-timer-manager (timer-manager &body body)
+  `(call-with-timer-manager ,timer-manager (lambda () ,@body)))
+
+
+;;; timer
+(defclass timer (<timer>)
+  ())
+
+(defmethod timer-expired-p ((timer timer))
+  (sb-thread:with-mutex ((timer-internal-mutex (timer-internal timer)))
+    (timer-internal-expired-p (timer-internal timer))))
+
+(defmethod expire-timer ((timer timer))
+  (sb-thread:with-mutex ((timer-internal-mutex (timer-internal timer)))
+    (set-timer-internal-expired-p t (timer-internal timer))))
+
+(defmethod inspire-timer ((timer timer))
+  (sb-thread:with-mutex ((timer-internal-mutex (timer-internal timer)))
+    (set-timer-internal-expired-p nil (timer-internal timer))))
+
 (defun make-timer (function &key name handle-function)
   (make-timer-instance 'timer function name handle-function))
-
-(defun make-idle-timer (function &key name handle-function)
-  (make-timer-instance 'idle-timer function name handle-function))
 
 (defmethod start-timer ((timer timer) ms &optional repeat-p)
   (setf (timer-internal timer)
@@ -170,22 +165,8 @@
   (start-timer-thread timer ms repeat-p)
   timer)
 
-(defmethod start-timer ((timer idle-timer) ms &optional repeat-p)
-  (setf (timer-internal timer)
-        (make-instance 'timer-internal
-                       :ms ms
-                       :repeat-p repeat-p))
-  (push timer *idle-timer-list*)
-  timer)
-
-(defun stop-idle-timer (timer)
-  (expire-timer timer)
-  (setf *idle-timer-list* (delete timer *idle-timer-list*)))
-
-(defun stop-timer (timer)
-  (if (idle-timer-p timer)
-      (stop-idle-timer timer)
-      (stop-timer-thread timer)))
+(defmethod stop-timer ((timer timer))
+  (stop-timer-thread timer))
 
 (defun start-timer-thread (timer ms repeat-p)
   (let ((stop-mailbox (sb-concurrency:make-mailbox))
@@ -213,6 +194,54 @@
 (defun stop-timer-thread (timer)
   (sb-concurrency:send-message (timer-internal-stop-mailbox (timer-internal timer)) t))
 
+
+;;; idle-timer
+
+(defclass idle-timer (<timer>)
+  ())
+
+(defmethod timer-repeat-p ((timer idle-timer))
+  (timer-internal-repeat-p (timer-internal timer)))
+
+(defmethod timer-last-time ((timer idle-timer))
+  (timer-internal-last-time (timer-internal timer)))
+
+(defmethod set-timer-last-time (value (timer idle-timer))
+  (setf (timer-internal-last-time (timer-internal timer)) value))
+
+(defmethod timer-has-last-time ((timer idle-timer))
+  (not (null (timer-last-time timer))))
+
+(defmethod timer-next-time ((timer idle-timer))
+  (+ (timer-last-time timer) (timer-internal-ms (timer-internal timer))))
+
+(defmethod timer-expired-p ((timer idle-timer))
+  (timer-internal-expired-p (timer-internal timer)))
+
+(defmethod expire-timer ((timer idle-timer))
+  (set-timer-internal-expired-p t (timer-internal timer)))
+
+(defmethod inspire-timer ((timer idle-timer))
+  (set-timer-internal-expired-p nil (timer-internal timer)))
+
+(defun make-idle-timer (function &key name handle-function)
+  (make-timer-instance 'idle-timer function name handle-function))
+
+(defmethod start-timer ((timer idle-timer) ms &optional repeat-p)
+  (setf (timer-internal timer)
+        (make-instance 'timer-internal
+                       :ms ms
+                       :repeat-p repeat-p))
+  (push timer *idle-timer-list*)
+  timer)
+
+(defmethod stop-timer ((timer idle-timer))
+  (stop-idle-timer timer))
+
+(defun stop-idle-timer (timer)
+  (expire-timer timer)
+  (setf *idle-timer-list* (delete timer *idle-timer-list*)))
+
 (defun start-idle-timers ()
   (flet ((update-last-time-in-idle-timers ()
            (loop :with last-time := (get-microsecond-time *timer-manager*)
@@ -235,16 +264,6 @@
 
 (defmacro with-idle-timers (() &body body)
   `(call-with-idle-timers (lambda () ,@body)))
-
-(defun call-timer-function (timer)
-  (handler-case
-      (let ((*running-timer* timer))
-        (if (timer-handle-function timer)
-            (handler-bind ((error (timer-handle-function timer)))
-              (funcall (timer-function timer)))
-            (funcall (timer-function timer))))
-    (error (condition)
-      (error 'timer-error :timer timer :condition condition))))
 
 (defun update-timers ()
   (let* ((tick-time (get-microsecond-time *timer-manager*))
@@ -286,13 +305,3 @@
         (- (loop :for timer :in timers
                  :minimize (timer-next-time timer))
            (get-microsecond-time *timer-manager*)))))
-
-(defun call-with-timer-manager (timer-manager function)
-  (let ((*timer-manager* timer-manager)
-        (bt:*default-special-bindings* (acons '*timer-manager*
-                                              timer-manager
-                                              bt:*default-special-bindings*)))
-    (funcall function)))
-
-(defmacro with-timer-manager (timer-manager &body body)
-  `(call-with-timer-manager ,timer-manager (lambda () ,@body)))

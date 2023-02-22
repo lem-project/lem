@@ -23,11 +23,6 @@
 (defclass timer-manager ()
   ())
 
-(defvar *is-in-idle* nil)
-(defvar *timer-list* nil)
-(defvar *idle-timer-list* nil)
-(defvar *processed-idle-timer-list* nil)
-
 (define-condition timer-error (error)
   ((timer :initarg :timer)
    (condition :initarg :condition))
@@ -192,6 +187,9 @@
 
 ;;; idle-timer
 
+(defvar *idle-timer-list* nil)
+(defvar *processed-idle-timer-list* nil)
+
 (defclass idle-timer (<timer>)
   ())
 
@@ -253,8 +251,7 @@
 
 (defun call-with-idle-timers (function)
   (start-idle-timers)
-  (prog1 (let ((*is-in-idle* t))
-           (funcall function))
+  (prog1 (funcall function)
     (stop-idle-timers)))
 
 (defmacro with-idle-timers (() &body body)
@@ -262,26 +259,20 @@
 
 (defun update-idle-timers ()
   (let* ((tick-time (get-microsecond-time *timer-manager*))
-         (target-timers (if *is-in-idle*
-                            (append *timer-list* *idle-timer-list*)
-                            *timer-list*))
+         (target-timers *idle-timer-list*)
          (updating-timers (remove-if-not (lambda (timer)
                                            (< (timer-next-time timer) tick-time))
                                          (remove-if-not #'timer-has-last-time target-timers)))
          (deleting-timers (remove-if #'timer-repeat-p
                                      updating-timers))
-         (updating-idle-timers (if *is-in-idle*
-                                   (remove-if-not #'timer-repeat-p
-                                                  updating-timers)
-                                   '())))
+         (updating-idle-timers (remove-if-not #'timer-repeat-p
+                                              updating-timers)))
     (dolist (timer deleting-timers)
       (expire-timer timer))
-    ;; Not so efficient, but it will be enough.
-    (setf *timer-list* (set-difference *timer-list* deleting-timers))
-    (when *is-in-idle*
-      (setf *idle-timer-list* (set-difference *idle-timer-list* deleting-timers))
-      (setf *idle-timer-list* (set-difference *idle-timer-list* updating-idle-timers))
-      (setf *processed-idle-timer-list* (nconc updating-idle-timers *processed-idle-timer-list*)))
+
+    (setf *idle-timer-list* (set-difference *idle-timer-list* deleting-timers))
+    (setf *idle-timer-list* (set-difference *idle-timer-list* updating-idle-timers))
+    (setf *processed-idle-timer-list* (nconc updating-idle-timers *processed-idle-timer-list*))
 
     (dolist (timer updating-timers)
       (unless (timer-repeat-p timer)
@@ -290,10 +281,8 @@
     (not (null updating-timers))))
 
 (defun get-next-timer-timing-ms ()
-  (let ((timers (if *is-in-idle*
-                    (append *timer-list* *idle-timer-list*)
-                    *timer-list*)))
-    ;;Remove timers without a last-time
+  (let ((timers *idle-timer-list*))
+    ;; Remove timers without a last-time
     (setf timers (remove-if-not #'timer-has-last-time timers))
     (if (null timers)
         nil

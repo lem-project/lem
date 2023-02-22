@@ -40,7 +40,7 @@
                    (handler-bind ((timer-error
                                     (lambda (e)
                                       (show-message (princ-to-string e)))))
-                     (update-timers))
+                     (update-idle-timers))
                    (redraw-display))
                   (t
                    (let ((e (read-event (float (/ ms 1000)))))

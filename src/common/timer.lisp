@@ -11,7 +11,7 @@
            :start-timer
            :stop-timer
            :with-idle-timers
-           :update-timers
+           :update-idle-timers
            :get-next-timer-timing-ms
            :with-timer-manager))
 (in-package :lem/common/timer)
@@ -260,7 +260,7 @@
 (defmacro with-idle-timers (() &body body)
   `(call-with-idle-timers (lambda () ,@body)))
 
-(defun update-timers ()
+(defun update-idle-timers ()
   (let* ((tick-time (get-microsecond-time *timer-manager*))
          (target-timers (if *is-in-idle*
                             (append *timer-list* *idle-timer-list*)

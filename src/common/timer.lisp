@@ -280,11 +280,7 @@
     (not (null updating-timers))))
 
 (defun get-next-timer-timing-ms ()
-  (let ((timers *idle-timer-list*))
-    ;; Remove timers without a last-time
-    (setf timers (remove-if-not #'timer-has-last-time timers))
-    (if (null timers)
-        nil
-        (- (loop :for timer :in timers
-                 :minimize (timer-next-time timer))
-           (get-microsecond-time *timer-manager*)))))
+  (when-let (timers (remove-if-not #'timer-has-last-time *idle-timer-list*))
+    (- (loop :for timer :in timers
+             :minimize (timer-next-time timer))
+       (get-microsecond-time *timer-manager*))))

@@ -52,13 +52,12 @@
     :initarg :handle-function
     :reader timer-handle-function
     :type (or null function))
+   (ms
+    :accessor timer-ms
+    :type (integer 1 *))
    (repeat-p
     :accessor timer-repeat-p
     :type boolean)
-   (ms
-    :initarg :ms
-    :accessor timer-ms
-    :type (integer 1 *))
    (expired-p
     :initform nil
     :reader timer-expired-p
@@ -105,15 +104,12 @@
 ;;; timer
 (defclass timer (<timer>)
   ((mutex
-    :initarg :mutex
     :accessor timer-mutex
     :type sb-thread:mutex)
    (stop-mailbox
-    :initarg :stop-mailbox
     :accessor timer-stop-mailbox
     :type sb-concurrency:mailbox)
    (thread
-    :initarg :thread
     :accessor timer-thread
     :type sb-thread:thread)))
 

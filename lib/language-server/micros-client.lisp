@@ -250,7 +250,7 @@
       (return))
     (let ((output-string (async-process:process-receive-output process)))
       (when output-string
-        (log:info "process output" output-string)))))
+        (log:debug "process output" output-string)))))
 
 (defun make-dispatch-message-loop-thread (connection)
   (sb-thread:make-thread #'dispatch-message-loop
@@ -270,7 +270,7 @@
          (swank-port (random-available-port deny-port micros-port))
          (process (create-server-process micros-port :swank-port swank-port)))
     (log:debug process (async-process::process-pid process))
-    (log:info "swank port: ~D, micros port: ~D" swank-port micros-port)
+    (log:debug "swank port: ~D, micros port: ~D" swank-port micros-port)
     (let ((connection (connect-until-successful "localhost" micros-port)))
       (setup connection :server-process process :swank-port swank-port)
       (sb-thread:make-thread (lambda ()

@@ -54,7 +54,6 @@
         (program-name-to-mode (parse-shebang header-line))))))
 
 (defun parse-property-line (string)
-  (log:info string)
   (ppcre:do-register-groups (key value) ("(\\w+)\\s*:\\s*(\\w+)" string)
     (when (string-equal key "mode")
       (alexandria:when-let ((mode (find-mode value)))

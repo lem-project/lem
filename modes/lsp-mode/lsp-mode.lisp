@@ -470,7 +470,7 @@
                     (find-root-pathname (buffer-directory buffer)
                                         (spec-root-uri-patterns spec)))))
     (handler-bind ((error (lambda (c)
-                            (log:info c (princ-to-string c))
+                            (log:error c (princ-to-string c))
                             (kill-server-process spec))))
       (let ((new-client (establish-connection spec)))
         (cond ((null new-client)

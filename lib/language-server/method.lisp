@@ -65,11 +65,11 @@
 (defun log-request (method-name json)
   (let ((json-string (with-output-to-string (stream)
                        (yason:encode json stream))))
-    (log:info "~A: ~A" method-name json-string)))
+    (log:debug "~A: ~A" method-name json-string)))
 
 (defun log-response (method-name response)
   (let ((json
           (with-output-to-string (output)
             (with-open-stream (stream (yason:make-json-output-stream output))
               (yason:encode response stream)))))
-    (log:info "~A: ~A" method-name json)))
+    (log:debug "~A: ~A" method-name json)))

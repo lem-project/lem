@@ -179,7 +179,7 @@
     :type (or null (integer 1 *)))))
 
 (defmethod set-timer-last-time (value (timer idle-timer))
-  (check-type value positive-integer)
+  (check-type value (integer 0 *))
   (setf (timer-last-time timer) value))
 
 (defmethod timer-next-time ((timer idle-timer))

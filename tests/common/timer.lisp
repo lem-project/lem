@@ -34,7 +34,8 @@
 
 (defmacro with-testing-timer-manager (() &body body)
   `(with-timer-manager (make-instance 'testing-timer-manager)
-     (let ((*current-time* 0))
+     (let ((*current-time* 0)
+           (lem/common/timer::*idle-timer-list* '()))
        ,@body)))
 
 (deftest simple-timer-test
@@ -65,8 +66,7 @@
     (ok (null (get-next-timer-timing-ms))))
   (with-testing-timer-manager ()
     (let ((timer1 (make-idle-timer (lambda ()) :name "idle-timer-1"))
-          (timer2 (make-idle-timer (lambda ()) :name "idle-timer-2"))
-          (lem/common/timer::*idle-timer-list* '()))
+          (timer2 (make-idle-timer (lambda ()) :name "idle-timer-2")))
       (start-timer timer1 10)
       (start-timer timer2 20)
       (with-idle-timers ()

@@ -348,11 +348,6 @@
     (:tcp (make-instance 'lem-lsp-mode/client:tcp-client :port (get-connected-port spec)))
     (:stdio (make-instance 'lem-lsp-mode/client:stdio-client :process (get-spec-process spec)))))
 
-(defun make-client-and-connect (spec)
-  (let ((client (make-client spec)))
-    (lem-language-client/client:jsonrpc-connect client)
-    client))
-
 (defun convert-to-characters (string-characters)
   (map 'list
        (lambda (string) (char string 0))

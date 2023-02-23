@@ -2,6 +2,7 @@
   (:use :cl :alexandria)
   (:export :timer-manager
            :send-timer-notification
+           :with-timer-manager
            :timer-error
            :timer
            :timer-name
@@ -12,8 +13,7 @@
            :stop-timer
            :with-idle-timers
            :update-idle-timers
-           :get-next-timer-timing-ms
-           :with-timer-manager))
+           :get-next-timer-timing-ms))
 (in-package :lem/common/timer)
 
 (defvar *timer-manager*)
@@ -23,17 +23,27 @@
 (defclass timer-manager ()
   ())
 
+(defmethod get-microsecond-time ((timer-manager timer-manager))
+  (values
+   (floor (/ (get-internal-real-time)
+             (load-time-value (/ internal-time-units-per-second 1000))))))
+
+(defun call-with-timer-manager (timer-manager function)
+  (let ((*timer-manager* timer-manager)
+        (bt:*default-special-bindings* (acons '*timer-manager*
+                                              timer-manager
+                                              bt:*default-special-bindings*)))
+    (funcall function)))
+
+(defmacro with-timer-manager (timer-manager &body body)
+  `(call-with-timer-manager ,timer-manager (lambda () ,@body)))
+
 (define-condition timer-error (error)
   ((timer :initarg :timer)
    (condition :initarg :condition))
   (:report (lambda (c s)
              (with-slots (timer condition) c
                (format s "Error running timer ~S: ~A" (timer-name timer) condition)))))
-
-(defmethod get-microsecond-time ((timer-manager timer-manager))
-  (values
-   (floor (/ (get-internal-real-time)
-             (load-time-value (/ internal-time-units-per-second 1000))))))
 
 (defgeneric timer-expired-p (timer))
 (defgeneric expire-timer (timer))
@@ -89,16 +99,6 @@
           (funcall (timer-function timer)))
     (error (condition)
       (error 'timer-error :timer timer :condition condition))))
-
-(defun call-with-timer-manager (timer-manager function)
-  (let ((*timer-manager* timer-manager)
-        (bt:*default-special-bindings* (acons '*timer-manager*
-                                              timer-manager
-                                              bt:*default-special-bindings*)))
-    (funcall function)))
-
-(defmacro with-timer-manager (timer-manager &body body)
-  `(call-with-timer-manager ,timer-manager (lambda () ,@body)))
 
 
 ;;; timer

@@ -261,19 +261,20 @@
           (update-items-and-then (call-sync-function spec (current-point)))))))
 
 (defun start-completion (context items)
-  (display-popup-menu
-   items
-   :action-callback (lambda (item)
-                      (completion-insert (current-point) item)
-                      (completion-end))
-   :print-spec (make-print-spec items)
-   :focus-attribute 'completion-attribute
-   :non-focus-attribute 'non-focus-completion-attribute
-   :style '(:use-border nil :offset-y 1))
-  (completion-mode t)
-  (unless (spec-async-p (context-spec context))
-    (narrowing-down context items))
-  (call-focus-action))
+  (when items
+    (display-popup-menu
+     items
+     :action-callback (lambda (item)
+                        (completion-insert (current-point) item)
+                        (completion-end))
+     :print-spec (make-print-spec items)
+     :focus-attribute 'completion-attribute
+     :non-focus-attribute 'non-focus-completion-attribute
+     :style '(:use-border nil :offset-y 1))
+    (completion-mode t)
+    (unless (spec-async-p (context-spec context))
+      (narrowing-down context items))
+    (call-focus-action)))
 
 (defun continue-completion (context)
   (compute-completion-items

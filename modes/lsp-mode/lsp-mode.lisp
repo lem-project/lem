@@ -117,7 +117,7 @@
 (defun remove-server-info (spec)
   (remhash (spec-language-id spec) *language-id-server-info-map*))
 
-(defun ensure-running-server-process (spec)
+(defun run-server-process-if-inactive (spec)
   (unless (get-running-server-info spec)
     (setf (gethash (spec-language-id spec) *language-id-server-info-map*)
           (run-server spec))
@@ -297,10 +297,9 @@
           (progn
             (add-hook *exit-editor-hook* 'quit-all-server-process)
             (ensure-lsp-buffer buffer
-                               (lambda ()
-                                 (text-document/did-open buffer)
-                                 (enable-document-highlight-idle-timer)
-                                 (redraw-display))))
+                               :then (lambda ()
+                                       (text-document/did-open buffer)
+                                       (enable-document-highlight-idle-timer))))
         (editor-error (c)
           (show-message (princ-to-string c)))))))
 
@@ -439,27 +438,32 @@
                 (push workspace *workspaces*)
                 (funcall continuation workspace))))
 
-(defun establish-connection (spec)
-  (when (ensure-running-server-process spec)
-    (let ((client (make-client spec)))
-      (loop :with condition := nil
-            :repeat 20
-            :do (handler-case (with-yason-bindings ()
-                                (lem-language-client/client:jsonrpc-connect client))
-                  (:no-error (&rest values)
-                    (declare (ignore values))
-                    (return client))
-                  (error (c)
-                    (setq condition c)
-                    (sleep 0.5)))
-            :finally (editor-error
-                      "Could not establish a connection with the Language Server (condition: ~A)"
-                      condition)))))
+(defun establish-connection (spec continuation)
+  (let ((client (make-client spec)))
+    (bt:make-thread
+     (lambda ()
+       (loop :with condition := nil
+             :repeat 20
+             :do (handler-case (with-yason-bindings ()
+                                 (lem-language-client/client:jsonrpc-connect client))
+                   (:no-error (&rest values)
+                     (declare (ignore values))
+                     (send-event (lambda ()
+                                   (funcall continuation client)))
+                     (return))
+                   (error (c)
+                     (setq condition c)
+                     (sleep 0.5)))
+             :finally (send-event
+                       (lambda ()
+                         (editor-error
+                          "Could not establish a connection with the Language Server (condition: ~A)"
+                          condition))))))))
 
 (defgeneric initialized-workspace (mode workspace)
   (:method (mode workspace)))
 
-(defun ensure-lsp-buffer (buffer &optional continuation)
+(defun ensure-lsp-buffer (buffer &key ((:then continuation)))
   (let* ((spec (buffer-language-spec buffer))
          (root-uri (pathname-to-uri
                     (find-root-pathname (buffer-directory buffer)
@@ -467,27 +471,28 @@
     (handler-bind ((error (lambda (c)
                             (log:error c (princ-to-string c))
                             (kill-server-process spec))))
-      (let ((new-client (establish-connection spec)))
-        (cond ((null new-client)
-               (let ((workspace (find-workspace (spec-language-id spec) :errorp t)))
-                 (assign-workspace-to-buffer buffer workspace)
-                 (when continuation (funcall continuation))))
-              (t
-               (let ((spinner (spinner:start-loading-spinner
-                               :modeline
-                               :loading-message "initializing"
-                               :buffer buffer)))
-                 (initialize-workspace
-                  (make-workspace :client new-client
-                                  :root-uri root-uri
-                                  :spec spec)
-                  (lambda (workspace)
-                    (assign-workspace-to-buffer buffer workspace)
-                    (when continuation (funcall continuation))
-                    (spinner:stop-loading-spinner spinner)
-                    (let ((mode (lem::ensure-mode-object (buffer-language-mode buffer))))
-                      (initialized-workspace mode workspace))
-                    (redraw-display))))))))))
+      (unless (run-server-process-if-inactive spec)
+        (let ((workspace (find-workspace (spec-language-id spec) :errorp t)))
+          (assign-workspace-to-buffer buffer workspace)
+          (when continuation (funcall continuation))
+          (return-from ensure-lsp-buffer)))
+      (let ((spinner (spinner:start-loading-spinner
+                      :modeline
+                      :loading-message "initializing"
+                      :buffer buffer)))
+        (establish-connection spec
+                              (lambda (new-client)
+                                (initialize-workspace
+                                 (make-workspace :client new-client
+                                                 :root-uri root-uri
+                                                 :spec spec)
+                                 (lambda (workspace)
+                                   (assign-workspace-to-buffer buffer workspace)
+                                   (when continuation (funcall continuation))
+                                   (spinner:stop-loading-spinner spinner)
+                                   (let ((mode (lem::ensure-mode-object (buffer-language-mode buffer))))
+                                     (initialized-workspace mode workspace))
+                                   (redraw-display)))))))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))

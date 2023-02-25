@@ -1,4 +1,4 @@
-(defpackage :lem-lisp-mode/language-client/eval
+(defpackage :lem-lisp-mode/v2/eval
   (:use :cl
         :lem)
   (:import-from :lem-lsp-mode
@@ -20,7 +20,7 @@
                 :show-eval-result-params-text-document
                 :show-eval-result-params-message)
   (:export :register-eval-methods))
-(in-package :lem-lisp-mode/language-client/eval)
+(in-package :lem-lisp-mode/v2/eval)
 
 (define-key lem-lisp-mode:*lisp-mode-keymap* "M-Return" 'lisp-language-client/eval-at-point)
 

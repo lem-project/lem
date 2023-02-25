@@ -1,11 +1,11 @@
-(defpackage :lem-lisp-mode/language-client/config
+(defpackage :lem-lisp-mode/v2/lsp-config
   (:use :cl
         :lem
         :lem-lsp-mode
         :lem-lsp-base/converter)
-  (:import-from :lem-lisp-mode/language-client/eval
+  (:import-from :lem-lisp-mode/v2/eval
                 :register-eval-methods))
-(in-package :lem-lisp-mode/language-client/config)
+(in-package :lem-lisp-mode/v2/lsp-config)
 
 (defvar *self-connection* nil)
 

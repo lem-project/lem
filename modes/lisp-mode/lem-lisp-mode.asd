@@ -28,9 +28,9 @@
                (:file "package-inferred-system")
                (:file "organize-imports")))
 
-(defsystem "lem-lisp-mode/language-client"
+(defsystem "lem-lisp-mode/v2"
   :depends-on ("lem-lisp-mode")
   :serial t
-  :pathname "language-client"
+  :pathname "v2"
   :components ((:file "eval")
-               (:file "config")))
+               (:file "lsp-config")))

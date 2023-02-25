@@ -22,7 +22,7 @@
   (:export :register-eval-methods))
 (in-package :lem-lisp-mode/v2/eval)
 
-(define-key lem-lisp-mode:*lisp-mode-keymap* "M-Return" 'lisp-language-client/eval-at-point)
+(define-key lem-lisp-mode:*lisp-mode-keymap* "M-Return" 'lisp/eval-at-point)
 
 (defun message-type-to-attribute (message-type)
   (alexandria:switch (message-type)
@@ -39,17 +39,17 @@
 (defun get-client (buffer)
   (lem-lsp-mode::workspace-client (lem-lsp-mode::buffer-workspace buffer)))
 
-(define-command lisp-language-client/eval-at-point () ()
+(define-command lisp/eval-at-point () ()
   (execute-command (get-client (current-buffer))
                    "cl-lsp.eval-last-expression"
                    (convert-to-json
                     (lem-lsp-mode::make-text-document-position-params
                      (current-point)))))
 
-(define-command lisp-language-client/clear-eval-results () ()
+(define-command lisp/clear-eval-results () ()
   (clear-eval-results (current-buffer)))
 
-(define-command lisp-language-client/interrupt () ()
+(define-command lisp/interrupt () ()
   (dolist (spinner (lem.loading-spinner:get-line-spinners (current-point)))
     (execute-command (get-client (current-buffer))
                      "cl-lsp.interrupt"

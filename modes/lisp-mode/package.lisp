@@ -57,6 +57,7 @@
    :show-description
    :lisp-eval-describe
    :lisp-describe-symbol
+   :connect-to-swank
    :slime-connect
    :*impl-name*
    :get-lisp-command

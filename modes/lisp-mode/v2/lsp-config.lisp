@@ -25,7 +25,7 @@
 (defmethod lem-lsp-mode::initialized-workspace ((mode lem-lisp-mode:lisp-mode) workspace)
   (unless *self-connection*
     (let ((swank-port (gethash "swankPort" (lem-lsp-mode::workspace-server-info workspace))))
-      (lem-lisp-mode::%slime-connect "localhost" swank-port)))
+      (lem-lisp-mode:connect-to-swank "localhost" swank-port)))
   (register-eval-methods workspace))
 
 (defun start-micros-server (port)

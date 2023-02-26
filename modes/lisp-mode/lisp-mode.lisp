@@ -131,7 +131,7 @@
       (log:debug "Starting internal SWANK and connecting to it" swank:*communication-style*)
       (let ((swank::*swank-debug-p* nil))
         (swank:create-server :port port :style :spawn))
-      (%slime-connect *localhost* port)
+      (connect-to-swank *localhost* port)
       (update-buffer-package)
       (setf *self-connected-port* port))))
 
@@ -821,7 +821,7 @@
    :timeout 1
    :style '(:gravity :center)))
 
-(defun %slime-connect (hostname port)
+(defun connect-to-swank (hostname port)
   (let ((connection
           (handler-case (if (eq hostname *localhost*)
                             (or (ignore-errors (new-connection "127.0.0.1" port))
@@ -839,7 +839,7 @@
             (parse-integer
              (prompt-for-string "Port: "
                                 :initial-value (princ-to-string *default-port*))))))
-  (let ((connection (%slime-connect hostname port)))
+  (let ((connection (connect-to-swank hostname port)))
     (when start-repl (start-lisp-repl))
     (connected-slime-message connection)))
 
@@ -1127,7 +1127,7 @@
             (retry-count 0))
         (labels ((interval ()
                    (handler-case
-                       (let ((conn (%slime-connect *localhost* port)))
+                       (let ((conn (connect-to-swank *localhost* port)))
                          (setf (connection-command conn) command)
                          (setf (connection-process conn) process)
                          (setf (connection-process-directory conn) directory)

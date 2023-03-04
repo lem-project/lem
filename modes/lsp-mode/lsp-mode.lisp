@@ -463,36 +463,41 @@
 (defgeneric initialized-workspace (mode workspace)
   (:method (mode workspace)))
 
+(defun compute-root-uri (spec buffer)
+  (pathname-to-uri
+   (find-root-pathname (buffer-directory buffer)
+                       (spec-root-uri-patterns spec))))
+
+(defun connect (spec buffer continuation)
+  (let ((spinner (spinner:start-loading-spinner
+                  :modeline
+                  :loading-message "initializing"
+                  :buffer buffer)))
+    (establish-connection spec
+                          (lambda (new-client)
+                            (initialize-workspace
+                             (make-workspace :client new-client
+                                             :root-uri (compute-root-uri spec buffer)
+                                             :spec spec)
+                             (lambda (workspace)
+                               (assign-workspace-to-buffer buffer workspace)
+                               (when continuation (funcall continuation))
+                               (spinner:stop-loading-spinner spinner)
+                               (let ((mode (lem::ensure-mode-object (buffer-language-mode buffer))))
+                                 (initialized-workspace mode workspace))
+                               (redraw-display)))))))
+
 (defun ensure-lsp-buffer (buffer &key ((:then continuation)))
-  (let* ((spec (buffer-language-spec buffer))
-         (root-uri (pathname-to-uri
-                    (find-root-pathname (buffer-directory buffer)
-                                        (spec-root-uri-patterns spec)))))
+  (let ((spec (buffer-language-spec buffer)))
     (handler-bind ((error (lambda (c)
                             (log:error c (princ-to-string c))
                             (kill-server-process spec))))
-      (unless (run-server-process-if-inactive spec)
-        (let ((workspace (find-workspace (spec-language-id spec) :errorp t)))
-          (assign-workspace-to-buffer buffer workspace)
-          (when continuation (funcall continuation))
-          (return-from ensure-lsp-buffer)))
-      (let ((spinner (spinner:start-loading-spinner
-                      :modeline
-                      :loading-message "initializing"
-                      :buffer buffer)))
-        (establish-connection spec
-                              (lambda (new-client)
-                                (initialize-workspace
-                                 (make-workspace :client new-client
-                                                 :root-uri root-uri
-                                                 :spec spec)
-                                 (lambda (workspace)
-                                   (assign-workspace-to-buffer buffer workspace)
-                                   (when continuation (funcall continuation))
-                                   (spinner:stop-loading-spinner spinner)
-                                   (let ((mode (lem::ensure-mode-object (buffer-language-mode buffer))))
-                                     (initialized-workspace mode workspace))
-                                   (redraw-display)))))))))
+      (if (run-server-process-if-inactive spec)
+          (connect spec buffer continuation)
+          (let ((workspace (find-workspace (spec-language-id spec) :errorp t)))
+            (assign-workspace-to-buffer buffer workspace)
+            (when continuation (funcall continuation))
+            (return-from ensure-lsp-buffer))))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))

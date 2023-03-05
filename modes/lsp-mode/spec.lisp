@@ -7,7 +7,6 @@
            :spec-readme-url
            :spec-mode
            :spec-port
-           :spec-equal
            :get-language-spec
            :register-language-spec
            :get-spec-command))
@@ -42,10 +41,6 @@
     :initarg :port
     :initform nil
     :reader spec-port)))
-
-(defun spec-equal (spec1 spec2)
-  (equal (spec-language-id spec1)
-         (spec-language-id spec2)))
 
 (defun get-language-spec (major-mode)
   (let ((spec (get major-mode 'spec)))

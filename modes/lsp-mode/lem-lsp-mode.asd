@@ -15,4 +15,5 @@
                (:file "lem-stdio-transport")
                (:file "client")
                (:file "context-menu")
+               (:file "spec")
                (:file "lsp-mode")))

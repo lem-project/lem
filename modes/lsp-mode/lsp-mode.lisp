@@ -6,7 +6,8 @@
         :lem-lsp-base/type
         :lem-lsp-base/converter
         :lem-lsp-base/yason-utils
-        :lem-lsp-base/utils)
+        :lem-lsp-base/utils
+        :lem-lsp-mode/spec)
   (:shadow :execute-command)
   (:import-from :lem-language-client/request)
   (:import-from :lem-lsp-mode/client)
@@ -173,42 +174,6 @@
 ;;;
 (defgeneric spec-initialization-options (spec)
   (:method (spec) nil))
-
-(defclass spec ()
-  ((language-id
-    :initarg :language-id
-    :initform (required-argument :language-id)
-    :reader spec-language-id)
-   (root-uri-patterns
-    :initarg :root-uri-patterns
-    :initform nil
-    :reader spec-root-uri-patterns)
-   (command
-    :initarg :command
-    :initform nil
-    :reader spec-command)
-   (install-command
-    :initarg :install-command
-    :initform nil
-    :reader spec-install-command)
-   (readme-url
-    :initarg :readme-url
-    :initform nil
-    :reader spec-readme-url)
-   (mode
-    :initarg :mode
-    :initform (required-argument :mode)
-    :reader spec-mode)
-   (port
-    :initarg :port
-    :initform nil
-    :reader spec-port)))
-
-(defun get-language-spec (major-mode)
-  (make-instance (get major-mode 'spec)))
-
-(defun register-language-spec (major-mode spec-name)
-  (setf (get major-mode 'spec) spec-name))
 
 ;;;
 (defun buffer-language-spec (buffer)
@@ -1925,7 +1890,7 @@
      (register-language-spec ',major-mode ',spec-name)
      ,(when (lem::mode-hook-variable major-mode)
         `(add-hook ,(lem::mode-hook-variable major-mode) 'enable-lsp-mode))
-     (defclass ,spec-name (spec) ()
+     (defclass ,spec-name (lem-lsp-mode/spec::spec) ()
        (:default-initargs ,@initargs))))
 
 #|

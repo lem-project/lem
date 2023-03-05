@@ -171,18 +171,17 @@
   (when-let (workspace (find-workspace (spec-language-id spec) :errorp nil))
     (workspace-spec workspace)))
 
-(defun destruct-spec-server-info (spec server-info)
+(defun destruct-spec-server-info (server-info)
   (when-let ((disposable (server-info-disposable server-info)))
     (funcall disposable)))
 
 (defun kill-server-process (spec)
   (when-let ((server-info (get-server-info spec)))
-    (destruct-spec-server-info spec server-info)))
+    (destruct-spec-server-info server-info)))
 
 (defun quit-all-server-process ()
   (dolist (workspace *workspaces*)
-    (destruct-spec-server-info (workspace-spec workspace)
-                               (workspace-server-info workspace))))
+    (destruct-spec-server-info (workspace-server-info workspace))))
 
 (defvar *lsp-mode-keymap* (make-keymap))
 

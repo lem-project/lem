@@ -161,6 +161,7 @@
   (dolist (workspace *workspaces*)
     (dispose-workspace workspace)))
 
+;;;
 (defvar *lsp-mode-keymap* (make-keymap))
 
 (define-key *lsp-mode-keymap* "C-c h" 'lsp-hover)

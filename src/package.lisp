@@ -234,6 +234,7 @@
    :define-command)
   ;; mode.lisp
   (:export
+   :ensure-mode-object
    :major-mode
    :mode-name
    :mode-description

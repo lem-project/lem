@@ -334,7 +334,7 @@
                                (assign-workspace-to-buffer buffer workspace)
                                (when continuation (funcall continuation))
                                (spinner:stop-loading-spinner spinner)
-                               (let ((mode (lem::ensure-mode-object
+                               (let ((mode (ensure-mode-object
                                             (language-mode:buffer-language-mode buffer))))
                                  (initialized-workspace mode workspace))
                                (redraw-display)))))))

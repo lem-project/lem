@@ -106,11 +106,6 @@
            *language-id-server-info-map*)
   (clrhash *language-id-server-info-map*))
 
-(defun run-server-process-if-inactive (spec)
-  (unless (get-running-server-info spec)
-    (set-server-info spec (run-server spec))
-    t))
-
 (defun kill-server-process (spec)
   (when-let* ((server-info (get-running-server-info spec))
               (disposable (server-info-disposable server-info)))
@@ -426,7 +421,7 @@
           (assign-workspace-to-buffer buffer workspace)
           (when continuation (funcall continuation)))
         (progn
-          (assert (run-server-process-if-inactive spec))
+          (set-server-info spec (run-server spec))
           (connect spec buffer continuation))))))
 
 (defun check-connection ()

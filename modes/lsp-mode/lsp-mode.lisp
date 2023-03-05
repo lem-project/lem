@@ -53,12 +53,9 @@
 (defun server-process-buffer-name (spec)
   (format nil "*Lsp <~A>*" (spec-language-id spec)))
 
-(defun make-server-process-buffer (spec)
-  (make-buffer (server-process-buffer-name spec)))
-
 (defmethod run-server-using-mode ((mode (eql :tcp)) spec)
   (flet ((output-callback (string)
-           (let* ((buffer (make-server-process-buffer spec))
+           (let* ((buffer (make-buffer (server-process-buffer-name spec)))
                   (point (buffer-point buffer)))
              (buffer-end point)
              (insert-string point string))))

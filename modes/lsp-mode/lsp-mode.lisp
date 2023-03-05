@@ -73,13 +73,6 @@
     (when (spec-readme-url spec)
       (format out "~&~%See follow for the readme URL~2% ~A ~%" (spec-readme-url spec)))))
 
-(defun exist-program-p (program)
-  (let ((status
-          (nth-value 2
-                     (uiop:run-program (list "which" program)
-                                       :ignore-error-status t))))
-    (= status 0)))
-
 (defun check-exist-program (program spec)
   (unless (exist-program-p program)
     (error 'not-found-program :name program :spec spec)))

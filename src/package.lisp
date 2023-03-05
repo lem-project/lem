@@ -19,7 +19,8 @@
    :editor-abort)
   ;; system.lisp
   (:export
-   :get-pid)
+   :get-pid
+   :exist-program-p)
   ;; key.lisp
   (:export
    :make-key

@@ -17,6 +17,7 @@
     :initarg :port
     :reader tcp-client-port)
    (process
+    :initform nil
     :initarg :process
     :reader tcp-client-process)))
 

@@ -50,11 +50,6 @@
     (error 'not-found-program :name program :spec spec)))
 
 ;;;
-(defstruct server-info
-  port
-  process
-  disposable)
-
 (defun server-process-buffer-name (spec)
   (format nil "*Lsp <~A>*" (spec-language-id spec)))
 
@@ -71,18 +66,13 @@
            (process (when-let (command (get-spec-command spec port))
                       (check-exist-program (first command) spec)
                       (lem-process:run-process command :output-callback #'output-callback))))
-      (make-server-info :process process
-                        :port port
-                        :disposable (lambda ()
-                                      (when process
-                                        (lem-process:delete-process process)))))))
+      (make-instance 'client:tcp-client :process process :port port))))
 
 (defmethod run-server-using-mode ((mode (eql :stdio)) spec)
   (let ((command (get-spec-command spec)))
     (check-exist-program (first command) spec)
     (let ((process (async-process:create-process command :nonblock nil)))
-      (make-server-info :process process
-                        :disposable (lambda () (async-process:delete-process process))))))
+      (make-instance 'client:stdio-client :process process))))
 
 (defmethod run-server (spec)
   (run-server-using-mode (spec-mode spec) spec))
@@ -139,7 +129,6 @@
   root-uri
   client
   spec
-  server-info!
   server-capabilities
   server-info
   (trigger-characters (make-hash-table))
@@ -167,10 +156,6 @@
 
 (defun get-workspace-from-point (point)
   (buffer-workspace (point-buffer point)))
-
-(defun get-server-info (spec)
-  (when-let (workspace (find-workspace (spec-language-id spec) :errorp nil))
-    (workspace-spec workspace)))
 
 (defun dispose-workspace (workspace)
   (client:dispose (workspace-client workspace)))
@@ -237,20 +222,6 @@
                    ((recursive (uiop:pathname-parent-directory-pathname directory))))))
     (or (recursive directory)
         (pathname directory))))
-
-(defun get-connected-port (server-info)
-  (server-info-port server-info))
-
-(defun get-spec-process (server-info)
-  (server-info-process server-info))
-
-(defun make-client (spec server-info)
-  (ecase (spec-mode spec)
-    (:tcp (make-instance 'lem-lsp-mode/client:tcp-client
-                         :process (get-spec-process server-info)
-                         :port (get-connected-port server-info)))
-    (:stdio (make-instance 'lem-lsp-mode/client:stdio-client
-                           :process (get-spec-process server-info)))))
 
 (defun convert-to-characters (string-characters)
   (map 'list
@@ -397,14 +368,13 @@
       (progn
         (assign-workspace-to-buffer buffer workspace)
         (when continuation (funcall continuation)))
-      (let ((server-info (run-server spec)))
-        (connect spec (make-client spec server-info) buffer continuation)))))
+      (let ((client (run-server spec)))
+        (connect spec client buffer continuation)))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))
          (spec (buffer-language-spec buffer)))
-    (unless (get-server-info spec)
-      (ensure-lsp-buffer buffer))))
+    (ensure-lsp-buffer buffer)))
 
 (defun buffer-to-text-document-item (buffer)
   (make-instance 'lsp:text-document-item

@@ -46,7 +46,7 @@
              (micros-port (lem-socket-utils:random-available-port lsp-port)))
         (start-language-server lsp-port)
         (start-micros-server micros-port)
-        (lem-lsp-mode::make-server-info :port lsp-port))))
+        (make-instance 'lem-lsp-mode/client:tcp-client :port lsp-port))))
 
 ;; override lisp-mode autodoc
 (defmethod lem:execute :after ((mode lem-lisp-mode:lisp-mode) (command lem:self-insert) argument)

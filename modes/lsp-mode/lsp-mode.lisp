@@ -140,6 +140,9 @@
 (defun workspace-language-id (workspace)
   (spec-language-id (workspace-spec workspace)))
 
+(defun add-workspace (workspace)
+  (push workspace *workspaces*))
+
 (defun find-workspace (language-id &key (errorp t))
   (or (find language-id *workspaces* :test #'equal :key #'workspace-language-id)
       (when errorp
@@ -330,7 +333,7 @@
                             (initialize-workspace
                              workspace
                              (lambda (workspace)
-                               (push workspace *workspaces*)
+                               (add-workspace workspace)
                                (assign-workspace-to-buffer buffer workspace)
                                (when continuation (funcall continuation))
                                (spinner:stop-loading-spinner spinner)

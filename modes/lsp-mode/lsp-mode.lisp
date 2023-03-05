@@ -206,8 +206,8 @@
                  language-id)
       (return workspace))))
 
-(defun buffer-workspace (buffer)
-  (find-workspace (buffer-language-id buffer) :errorp t))
+(defun buffer-workspace (buffer &optional (errorp t))
+  (find-workspace (buffer-language-id buffer) :errorp errorp))
 
 (defun buffer-version (buffer)
   (buffer-modified-tick buffer))
@@ -1405,7 +1405,8 @@
 
 (defun document-highlight-calls-timer ()
   (when (mode-active-p (current-buffer) 'lsp-mode)
-    (text-document/document-highlight (current-point))))
+    (when (buffer-workspace (current-buffer) nil)
+      (text-document/document-highlight (current-point)))))
 
 (define-command lsp-document-highlight () ()
   (when (mode-active-p (current-buffer) 'lsp-mode)

@@ -16,6 +16,7 @@
   (:local-nicknames (:completion :lem.completion-mode))
   (:local-nicknames (:context-menu :lem-lsp-mode/context-menu))
   (:local-nicknames (:spinner :lem.loading-spinner))
+  (:local-nicknames (:language-mode :lem.language-mode))
   (:export :get-buffer-from-text-document-identifier
            :spec-initialization-options
            :register-lsp-method
@@ -144,7 +145,7 @@
 
 ;;;
 (defun buffer-language-spec (buffer)
-  (get-language-spec (lem.language-mode:buffer-language-mode buffer)))
+  (get-language-spec (language-mode:buffer-language-mode buffer)))
 
 (defun buffer-language-id (buffer)
   (let ((spec (buffer-language-spec buffer)))
@@ -211,11 +212,11 @@
     (:name "lsp"
      :keymap *lsp-mode-keymap*
      :enable-hook 'enable-hook)
-  (setf (variable-value 'lem.language-mode:completion-spec)
+  (setf (variable-value 'language-mode:completion-spec)
         (lem.completion-mode:make-completion-spec 'text-document/completion :async t))
-  (setf (variable-value 'lem.language-mode:find-definitions-function)
+  (setf (variable-value 'language-mode:find-definitions-function)
         #'find-definitions)
-  (setf (variable-value 'lem.language-mode:find-references-function)
+  (setf (variable-value 'language-mode:find-references-function)
         #'find-references)
   (setf (buffer-value (current-buffer) 'revert-buffer-function)
         #'lsp-revert-buffer))
@@ -413,7 +414,7 @@
                                (when continuation (funcall continuation))
                                (spinner:stop-loading-spinner spinner)
                                (let ((mode (lem::ensure-mode-object
-                                            (lem.language-mode:buffer-language-mode buffer))))
+                                            (language-mode:buffer-language-mode buffer))))
                                  (initialized-workspace mode workspace))
                                (redraw-display)))))))
 
@@ -718,8 +719,8 @@
     (setf (buffer-diagnostic-idle-timer buffer) nil)))
 
 (defun point-to-xref-position (point)
-  (lem.language-mode::make-xref-position :line-number (line-number-at-point point)
-                                         :charpos (point-charpos point)))
+  (language-mode::make-xref-position :line-number (line-number-at-point point)
+                                     :charpos (point-charpos point)))
 
 (defun highlight-diagnostic (buffer diagnostic)
   (with-point ((start (buffer-point buffer))
@@ -783,12 +784,12 @@
                           :attribute 'lem.sourcelist:title-attribute)
            (insert-string point ":")
            (insert-string point
-                          (princ-to-string (lem.language-mode::xref-position-line-number
+                          (princ-to-string (language-mode::xref-position-line-number
                                             (diagnostic-position diagnostic)))
                           :attribute 'lem.sourcelist:position-attribute)
            (insert-string point ":")
            (insert-string point
-                          (princ-to-string (lem.language-mode::xref-position-charpos
+                          (princ-to-string (language-mode::xref-position-charpos
                                             (diagnostic-position diagnostic)))
                           :attribute 'lem.sourcelist:position-attribute)
            (insert-string point ":")
@@ -796,7 +797,7 @@
          (let ((diagnostic diagnostic))
            (lambda (set-buffer-fn)
              (funcall set-buffer-fn (diagnostic-buffer diagnostic))
-             (lem.language-mode:move-to-xref-location-position
+             (language-mode:move-to-xref-location-position
               (buffer-point (diagnostic-buffer diagnostic))
               (diagnostic-position diagnostic)))))))))
 
@@ -1038,7 +1039,7 @@
 (defun completion-with-trigger-character (c)
   (declare (ignore c))
   (check-connection)
-  (lem.language-mode::complete-symbol))
+  (language-mode::complete-symbol))
 
 ;;; signatureHelp
 
@@ -1187,9 +1188,9 @@
            (file (uri-to-pathname uri)))
       (declare (ignore end-position))
       (when (uiop:file-exists-p file)
-        (lem.language-mode:make-xref-location
+        (language-mode:make-xref-location
          :filespec file
-         :position (lem.language-mode::make-position
+         :position (language-mode::make-position
                     (1+ (lsp:position-line start-position))
                     (lsp:position-character start-position))
          :content (definition-location-to-content file location)))))
@@ -1221,7 +1222,7 @@
 
 (defun find-definitions (point)
   (check-connection)
-  (text-document/definition point #'lem.language-mode:display-xref-locations))
+  (text-document/definition point #'language-mode:display-xref-locations))
 
 ;;; type definition
 
@@ -1246,7 +1247,7 @@
 
 (define-command lsp-type-definition () ()
   (check-connection)
-  (text-document/type-definition (current-point) #'lem.language-mode:display-xref-locations))
+  (text-document/type-definition (current-point) #'language-mode:display-xref-locations))
 
 ;;; implementation
 
@@ -1272,7 +1273,7 @@
 (define-command lsp-implementation () ()
   (check-connection)
   (text-document/implementation (current-point)
-                                #'lem.language-mode:display-xref-locations))
+                                #'language-mode:display-xref-locations))
 
 ;;; references
 
@@ -1283,20 +1284,20 @@
 
 (defun xref-location-to-content (location)
   (when-let*
-      ((buffer (find-file-buffer (lem.language-mode:xref-location-filespec location) :temporary t))
+      ((buffer (find-file-buffer (language-mode:xref-location-filespec location) :temporary t))
        (point (buffer-point buffer)))
-    (lem.language-mode::move-to-location-position
+    (language-mode::move-to-location-position
      point
-     (lem.language-mode:xref-location-position location))
+     (language-mode:xref-location-position location))
     (string-trim '(#\space #\tab) (line-string point))))
 
 (defun convert-references-response (value)
-  (lem.language-mode:make-xref-references
+  (language-mode:make-xref-references
    :type nil
    :locations (mapcar (lambda (location)
-                        (lem.language-mode:make-xref-location
-                         :filespec (lem.language-mode:xref-location-filespec location)
-                         :position (lem.language-mode:xref-location-position location)
+                        (language-mode:make-xref-location
+                         :filespec (language-mode:xref-location-filespec location)
+                         :position (language-mode:xref-location-position location)
                          :content (xref-location-to-content location)))
                       (convert-definition-response value))))
 
@@ -1318,7 +1319,7 @@
 (defun find-references (point)
   (check-connection)
   (text-document/references point
-                            #'lem.language-mode:display-xref-references))
+                            #'language-mode:display-xref-references))
 
 ;;; document highlights
 

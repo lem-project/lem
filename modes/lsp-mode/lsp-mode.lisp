@@ -99,23 +99,22 @@
   (setf (gethash spec *spec-server-info-map*)
         server-info))
 
-(defun cleanup-server-info (function)
+(defun map-server-info (function)
   (maphash (lambda (spec server-info)
-             (declare (ignore spec))
-             (funcall function server-info))
-           *spec-server-info-map*)
-  (clrhash *spec-server-info-map*))
+             (funcall function spec server-info))
+           *spec-server-info-map*))
+
+(defun destruct-spec-server-info (spec server-info)
+  (when-let ((disposable (server-info-disposable server-info)))
+    (funcall disposable))
+  (remove-server-info spec))
 
 (defun kill-server-process (spec)
-  (when-let* ((server-info (get-running-server-info spec))
-              (disposable (server-info-disposable server-info)))
-    (funcall disposable)
-    (remove-server-info spec)))
+  (when-let ((server-info (get-running-server-info spec)))
+    (destruct-spec-server-info spec server-info)))
 
 (defun quit-all-server-process ()
-  (cleanup-server-info (lambda (server-info)
-                         (when-let ((disposable (server-info-disposable server-info)))
-                           (funcall disposable)))))
+  (map-server-info #'destruct-spec-server-info))
 
 ;;;
 (defmacro with-jsonrpc-error (() &body body)

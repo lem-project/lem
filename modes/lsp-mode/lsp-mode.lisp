@@ -277,10 +277,6 @@
     (setf (gethash character (workspace-trigger-characters workspace))
           #'lsp-signature-help-with-trigger-character)))
 
-(defun assign-workspace-to-buffer (buffer workspace)
-  (add-buffer-hooks buffer)
-  (set-trigger-characters workspace))
-
 (defun register-lsp-method (workspace method function)
   (jsonrpc:expose (lem-language-client/client:client-connection (workspace-client workspace))
                   method
@@ -340,7 +336,8 @@
                              workspace
                              (lambda (workspace)
                                (add-workspace workspace)
-                               (assign-workspace-to-buffer buffer workspace)
+                               (add-buffer-hooks buffer)
+                               (set-trigger-characters workspace)
                                (when continuation (funcall continuation))
                                (spinner:stop-loading-spinner spinner)
                                (let ((mode (ensure-mode-object
@@ -352,7 +349,8 @@
   (let ((spec (buffer-language-spec buffer)))
     (if-let ((workspace (find-workspace (spec-language-id spec) :errorp nil)))
       (progn
-        (assign-workspace-to-buffer buffer workspace)
+        (add-buffer-hooks buffer)
+        (set-trigger-characters workspace)
         (when continuation (funcall continuation)))
       (let ((client (run-server spec)))
         (connect (make-workspace :client client

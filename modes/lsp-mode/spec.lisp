@@ -48,10 +48,13 @@
          (spec-language-id spec2)))
 
 (defun get-language-spec (major-mode)
-  (make-instance (get major-mode 'spec)))
+  (let ((spec (get major-mode 'spec)))
+    (assert (typep spec 'spec))
+    spec))
 
-(defun register-language-spec (major-mode spec-name)
-  (setf (get major-mode 'spec) spec-name))
+(defun register-language-spec (major-mode spec)
+  (check-type spec spec)
+  (setf (get major-mode 'spec) spec))
 
 (defun get-spec-command (spec &rest args)
   (let ((command (spec-command spec)))

@@ -1862,11 +1862,12 @@
 
 (defmacro define-language-spec ((spec-name major-mode) &body initargs)
   `(progn
-     (register-language-spec ',major-mode ',spec-name)
      ,(when (lem::mode-hook-variable major-mode)
         `(add-hook ,(lem::mode-hook-variable major-mode) 'enable-lsp-mode))
-     (defclass ,spec-name (lem-lsp-mode/spec::spec) ()
-       (:default-initargs ,@initargs))))
+     (eval-when (:compile-toplevel :load-toplevel :execute)
+       (defclass ,spec-name (lem-lsp-mode/spec::spec) ()
+         (:default-initargs ,@initargs)))
+     (register-language-spec ',major-mode (make-instance ',spec-name))))
 
 #|
 (define-language-spec (js-spec lem-js-mode:js-mode)

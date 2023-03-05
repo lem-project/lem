@@ -146,7 +146,7 @@
 (defun find-workspace (language-id &key (errorp t))
   (or (find language-id *workspaces* :test #'equal :key #'workspace-language-id)
       (when errorp
-        (editor-error "The ~A workspace is not found." language-id))))
+        (error "The ~A workspace is not found." language-id))))
 
 (defun buffer-workspace (buffer &optional (errorp t))
   (find-workspace (buffer-language-id buffer) :errorp errorp))

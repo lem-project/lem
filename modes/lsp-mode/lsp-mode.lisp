@@ -290,7 +290,6 @@
   (initialize workspace
               (lambda ()
                 (initialized workspace)
-                (push workspace *workspaces*)
                 (funcall continuation workspace))))
 
 (defun establish-connection (client continuation)
@@ -331,6 +330,7 @@
                             (initialize-workspace
                              workspace
                              (lambda (workspace)
+                               (push workspace *workspaces*)
                                (assign-workspace-to-buffer buffer workspace)
                                (when continuation (funcall continuation))
                                (spinner:stop-loading-spinner spinner)

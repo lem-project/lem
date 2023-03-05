@@ -240,10 +240,7 @@
       (return workspace))))
 
 (defun buffer-workspace (buffer)
-  (buffer-value buffer 'workspace))
-
-(defun update-buffer-workspace (buffer workspace)
-  (setf (buffer-value buffer 'workspace) workspace))
+  (find-workspace (buffer-language-id buffer) :errorp t))
 
 (defun buffer-language-spec (buffer)
   (get-language-spec (buffer-language-mode buffer)))
@@ -405,7 +402,6 @@
     (text-document/did-change buffer (make-lsp-array change-event))))
 
 (defun assign-workspace-to-buffer (buffer workspace)
-  (update-buffer-workspace buffer workspace)
   (add-hook (variable-value 'kill-buffer-hook :buffer buffer) 'text-document/did-close)
   (add-hook (variable-value 'after-save-hook :buffer buffer) 'text-document/did-save)
   (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)

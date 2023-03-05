@@ -139,6 +139,7 @@
   root-uri
   client
   spec
+  server-info!
   server-capabilities
   server-info
   (trigger-characters (make-hash-table))
@@ -181,7 +182,7 @@
 
 (defun quit-all-server-process ()
   (dolist (workspace *workspaces*)
-    (destruct-spec-server-info (workspace-server-info workspace))))
+    (destruct-spec-server-info (workspace-server-info! workspace))))
 
 (defvar *lsp-mode-keymap* (make-keymap))
 
@@ -386,7 +387,8 @@
                             (initialize-workspace
                              (make-workspace :client new-client
                                              :root-uri (compute-root-uri spec buffer)
-                                             :spec spec)
+                                             :spec spec
+                                             :server-info! server-info)
                              (lambda (workspace)
                                (assign-workspace-to-buffer buffer workspace)
                                (when continuation (funcall continuation))

@@ -143,13 +143,8 @@
                   :source-window source-window)))
 
 ;;;
-(defun buffer-language-mode (buffer)
-  (or (lem.language-mode:language-mode-tag buffer)
-      (buffer-major-mode buffer)))
-
-;;;
 (defun buffer-language-spec (buffer)
-  (get-language-spec (buffer-language-mode buffer)))
+  (get-language-spec (lem.language-mode:buffer-language-mode buffer)))
 
 (defun buffer-language-id (buffer)
   (let ((spec (buffer-language-spec buffer)))
@@ -417,7 +412,8 @@
                                (assign-workspace-to-buffer buffer workspace)
                                (when continuation (funcall continuation))
                                (spinner:stop-loading-spinner spinner)
-                               (let ((mode (lem::ensure-mode-object (buffer-language-mode buffer))))
+                               (let ((mode (lem::ensure-mode-object
+                                            (lem.language-mode:buffer-language-mode buffer))))
                                  (initialized-workspace mode workspace))
                                (redraw-display)))))))
 

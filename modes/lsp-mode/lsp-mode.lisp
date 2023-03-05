@@ -87,24 +87,24 @@
 (defmethod run-server (spec)
   (run-server-using-mode (spec-mode spec) spec))
 
-(defvar *language-id-server-info-map* (make-hash-table :test 'equal))
+(defvar *spec-server-info-map* (make-hash-table :test 'eq))
 
 (defun get-running-server-info (spec)
-  (gethash (spec-language-id spec) *language-id-server-info-map*))
+  (gethash spec *spec-server-info-map*))
 
 (defun remove-server-info (spec)
-  (remhash (spec-language-id spec) *language-id-server-info-map*))
+  (remhash spec *spec-server-info-map*))
 
 (defun set-server-info (spec server-info)
-  (setf (gethash (spec-language-id spec) *language-id-server-info-map*)
+  (setf (gethash spec *spec-server-info-map*)
         server-info))
 
 (defun cleanup-server-info (function)
-  (maphash (lambda (language-id server-info)
-             (declare (ignore language-id))
+  (maphash (lambda (spec server-info)
+             (declare (ignore spec))
              (funcall function server-info))
-           *language-id-server-info-map*)
-  (clrhash *language-id-server-info-map*))
+           *spec-server-info-map*)
+  (clrhash *spec-server-info-map*))
 
 (defun kill-server-process (spec)
   (when-let* ((server-info (get-running-server-info spec))

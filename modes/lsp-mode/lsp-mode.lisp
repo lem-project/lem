@@ -255,20 +255,18 @@
     (or (recursive directory)
         (pathname directory))))
 
-(defun get-connected-port (spec)
-  (let ((server-info (get-running-server-info spec)))
-    (assert server-info)
-    (server-info-port server-info)))
+(defun get-connected-port (server-info)
+  (server-info-port server-info))
 
-(defun get-spec-process (spec)
-  (let ((server-info (get-running-server-info spec)))
-    (assert server-info)
-    (server-info-process server-info)))
+(defun get-spec-process (server-info)
+  (server-info-process server-info))
 
-(defun make-client (spec)
+(defun make-client (spec server-info)
   (ecase (spec-mode spec)
-    (:tcp (make-instance 'lem-lsp-mode/client:tcp-client :port (get-connected-port spec)))
-    (:stdio (make-instance 'lem-lsp-mode/client:stdio-client :process (get-spec-process spec)))))
+    (:tcp (make-instance 'lem-lsp-mode/client:tcp-client
+                         :port (get-connected-port server-info)))
+    (:stdio (make-instance 'lem-lsp-mode/client:stdio-client
+                           :process (get-spec-process server-info)))))
 
 (defun convert-to-characters (string-characters)
   (map 'list
@@ -360,8 +358,8 @@
                 (push workspace *workspaces*)
                 (funcall continuation workspace))))
 
-(defun establish-connection (spec continuation)
-  (let ((client (make-client spec)))
+(defun establish-connection (spec server-info continuation)
+  (let ((client (make-client spec server-info)))
     (bt:make-thread
      (lambda ()
        (loop :with condition := nil
@@ -390,12 +388,13 @@
    (find-root-pathname (buffer-directory buffer)
                        (spec-root-uri-patterns spec))))
 
-(defun connect (spec buffer continuation)
+(defun connect (spec server-info buffer continuation)
   (let ((spinner (spinner:start-loading-spinner
                   :modeline
                   :loading-message "initializing"
                   :buffer buffer)))
     (establish-connection spec
+                          server-info
                           (lambda (new-client)
                             (initialize-workspace
                              (make-workspace :client new-client
@@ -416,9 +415,8 @@
       (progn
         (assign-workspace-to-buffer buffer workspace)
         (when continuation (funcall continuation)))
-      (progn
-        (set-server-info spec (run-server spec))
-        (connect spec buffer continuation)))))
+      (let ((server-info (set-server-info spec (run-server spec))))
+        (connect spec server-info buffer continuation)))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))

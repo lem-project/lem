@@ -413,16 +413,13 @@
 
 (defun ensure-lsp-buffer (buffer &key ((:then continuation)))
   (let ((spec (buffer-language-spec buffer)))
-    (handler-bind ((error (lambda (c)
-                            (log:error c (princ-to-string c))
-                            (kill-server-process spec))))
-      (if-let ((workspace (find-workspace (spec-language-id spec) :errorp nil)))
-        (progn
-          (assign-workspace-to-buffer buffer workspace)
-          (when continuation (funcall continuation)))
-        (progn
-          (set-server-info spec (run-server spec))
-          (connect spec buffer continuation))))))
+    (if-let ((workspace (find-workspace (spec-language-id spec) :errorp nil)))
+      (progn
+        (assign-workspace-to-buffer buffer workspace)
+        (when continuation (funcall continuation)))
+      (progn
+        (set-server-info spec (run-server spec))
+        (connect spec buffer continuation)))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))

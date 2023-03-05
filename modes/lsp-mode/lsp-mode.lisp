@@ -356,7 +356,8 @@
 (defun check-connection ()
   (let* ((buffer (current-buffer))
          (spec (buffer-language-spec buffer)))
-    (ensure-lsp-buffer buffer)))
+    (unless spec
+      (ensure-lsp-buffer buffer))))
 
 (defun buffer-to-text-document-item (buffer)
   (make-instance 'lsp:text-document-item

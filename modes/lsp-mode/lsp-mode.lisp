@@ -34,8 +34,6 @@
    'lsp:client-capabilities))
 
 ;;;
-(defvar *language-id-server-info-map* (make-hash-table :test 'equal))
-
 (defstruct server-info
   port
   process
@@ -110,6 +108,8 @@
 
 (defmethod run-server (spec)
   (run-server-using-mode (spec-mode spec) spec))
+
+(defvar *language-id-server-info-map* (make-hash-table :test 'equal))
 
 (defun get-running-server-info (spec)
   (gethash (spec-language-id spec) *language-id-server-info-map*))
@@ -211,6 +211,15 @@
   (setf (get major-mode 'spec) spec-name))
 
 ;;;
+(defun buffer-language-spec (buffer)
+  (get-language-spec (buffer-language-mode buffer)))
+
+(defun buffer-language-id (buffer)
+  (let ((spec (buffer-language-spec buffer)))
+    (when spec
+      (spec-language-id spec))))
+
+;;;
 (defvar *workspaces* '())
 
 (defstruct workspace
@@ -241,14 +250,6 @@
 
 (defun buffer-workspace (buffer)
   (find-workspace (buffer-language-id buffer) :errorp t))
-
-(defun buffer-language-spec (buffer)
-  (get-language-spec (buffer-language-mode buffer)))
-
-(defun buffer-language-id (buffer)
-  (let ((spec (buffer-language-spec buffer)))
-    (when spec
-      (spec-language-id spec))))
 
 (defun buffer-version (buffer)
   (buffer-modified-tick buffer))

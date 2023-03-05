@@ -325,6 +325,10 @@
    (language-mode:find-root-directory (buffer-directory buffer)
                                       (spec-root-uri-patterns spec))))
 
+(defun activate-lsp-buffer (buffer workspace)
+  (add-buffer-hooks buffer)
+  (set-trigger-characters workspace))
+
 (defun connect (workspace client buffer continuation)
   (let ((spinner (spinner:start-loading-spinner
                   :modeline
@@ -336,8 +340,7 @@
                              workspace
                              (lambda (workspace)
                                (add-workspace workspace)
-                               (add-buffer-hooks buffer)
-                               (set-trigger-characters workspace)
+                               (activate-lsp-buffer buffer workspace)
                                (when continuation (funcall continuation))
                                (spinner:stop-loading-spinner spinner)
                                (let ((mode (ensure-mode-object
@@ -349,8 +352,7 @@
   (let ((spec (buffer-language-spec buffer)))
     (if-let ((workspace (find-workspace (spec-language-id spec) :errorp nil)))
       (progn
-        (add-buffer-hooks buffer)
-        (set-trigger-characters workspace)
+        (activate-lsp-buffer buffer workspace)
         (when continuation (funcall continuation)))
       (let ((client (run-server spec)))
         (connect (make-workspace :client client

@@ -187,14 +187,6 @@
 (defun buffer-version (buffer)
   (buffer-modified-tick buffer))
 
-(defun random-string (length)
-  (with-output-to-string (out)
-              (loop :repeat length
-                    :do (loop :for code := (random 128)
-                              :for char := (code-char code)
-                              :until (alphanumericp char)
-                              :finally (write-char char out)))))
-
 (defun buffer-uri (buffer)
   ;; TODO: lem-language-server::buffer-uri
   (if (buffer-filename buffer)

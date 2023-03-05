@@ -329,15 +329,18 @@
   (add-buffer-hooks buffer)
   (set-trigger-characters workspace))
 
-(defun connect (workspace client buffer continuation)
+(defun connect (client buffer continuation)
   (let ((spinner (spinner:start-loading-spinner
                   :modeline
                   :loading-message "initializing"
-                  :buffer buffer)))
+                  :buffer buffer))
+        (spec (buffer-language-spec buffer)))
     (establish-connection client
                           (lambda ()
                             (initialize-workspace
-                             workspace
+                             (make-workspace :spec spec
+                                             :client client
+                                             :root-uri (compute-root-uri spec buffer))
                              (lambda (workspace)
                                (add-workspace workspace)
                                (activate-lsp-buffer buffer workspace)
@@ -355,12 +358,7 @@
         (activate-lsp-buffer buffer workspace)
         (when continuation (funcall continuation)))
       (let ((client (run-server spec)))
-        (connect (make-workspace :client client
-                                 :root-uri (compute-root-uri spec buffer)
-                                 :spec spec)
-                 client
-                 buffer
-                 continuation)))))
+        (connect client buffer continuation)))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))

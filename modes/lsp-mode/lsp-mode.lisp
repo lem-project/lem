@@ -35,23 +35,6 @@
    'lsp:client-capabilities))
 
 ;;;
-(defstruct server-info
-  port
-  process
-  disposable)
-
-(defun server-process-buffer-name (spec)
-  (format nil "*Lsp <~A>*" (spec-language-id spec)))
-
-(defun make-server-process-buffer (spec)
-  (make-buffer (server-process-buffer-name spec)))
-
-(defun get-spec-command (spec &rest args)
-  (let ((command (spec-command spec)))
-    (if (functionp command)
-        (apply command args)
-        command)))
-
 (define-condition not-found-program (editor-error)
   ((name :initarg :name
          :initform (required-argument :name)
@@ -76,6 +59,24 @@
 (defun check-exist-program (program spec)
   (unless (exist-program-p program)
     (error 'not-found-program :name program :spec spec)))
+
+;;;
+(defstruct server-info
+  port
+  process
+  disposable)
+
+(defun server-process-buffer-name (spec)
+  (format nil "*Lsp <~A>*" (spec-language-id spec)))
+
+(defun make-server-process-buffer (spec)
+  (make-buffer (server-process-buffer-name spec)))
+
+(defun get-spec-command (spec &rest args)
+  (let ((command (spec-command spec)))
+    (if (functionp command)
+        (apply command args)
+        command)))
 
 (defmethod run-server-using-mode ((mode (eql :tcp)) spec)
   (flet ((output-callback (string)

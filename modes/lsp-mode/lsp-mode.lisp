@@ -421,12 +421,13 @@
     (handler-bind ((error (lambda (c)
                             (log:error c (princ-to-string c))
                             (kill-server-process spec))))
-      (if (run-server-process-if-inactive spec)
-          (connect spec buffer continuation)
-          (let ((workspace (find-workspace (spec-language-id spec) :errorp t)))
-            (assign-workspace-to-buffer buffer workspace)
-            (when continuation (funcall continuation))
-            (return-from ensure-lsp-buffer))))))
+      (if-let ((workspace (find-workspace (spec-language-id spec) :errorp nil)))
+        (progn
+          (assign-workspace-to-buffer buffer workspace)
+          (when continuation (funcall continuation)))
+        (progn
+          (assert (run-server-process-if-inactive spec))
+          (connect spec buffer continuation))))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))

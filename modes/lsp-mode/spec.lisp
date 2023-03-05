@@ -8,7 +8,8 @@
            :spec-mode
            :spec-port
            :get-language-spec
-           :register-language-spec))
+           :register-language-spec
+           :get-spec-command))
 (in-package :lem-lsp-mode/spec)
 
 (defclass spec ()
@@ -46,3 +47,9 @@
 
 (defun register-language-spec (major-mode spec-name)
   (setf (get major-mode 'spec) spec-name))
+
+(defun get-spec-command (spec &rest args)
+  (let ((command (spec-command spec)))
+    (if (functionp command)
+        (apply command args)
+        command)))

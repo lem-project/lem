@@ -342,27 +342,26 @@
                 (push workspace *workspaces*)
                 (funcall continuation workspace))))
 
-(defun establish-connection (spec server-info continuation)
-  (let ((client (make-client spec server-info)))
-    (bt:make-thread
-     (lambda ()
-       (loop :with condition := nil
-             :repeat 20
-             :do (handler-case (with-yason-bindings ()
-                                 (lem-language-client/client:jsonrpc-connect client))
-                   (:no-error (&rest values)
-                     (declare (ignore values))
-                     (send-event (lambda ()
-                                   (funcall continuation client)))
-                     (return))
-                   (error (c)
-                     (setq condition c)
-                     (sleep 0.5)))
-             :finally (send-event
-                       (lambda ()
-                         (editor-error
-                          "Could not establish a connection with the Language Server (condition: ~A)"
-                          condition))))))))
+(defun establish-connection (client continuation)
+  (bt:make-thread
+   (lambda ()
+     (loop :with condition := nil
+           :repeat 20
+           :do (handler-case (with-yason-bindings ()
+                               (lem-language-client/client:jsonrpc-connect client))
+                 (:no-error (&rest values)
+                   (declare (ignore values))
+                   (send-event (lambda ()
+                                 (funcall continuation client)))
+                   (return))
+                 (error (c)
+                   (setq condition c)
+                   (sleep 0.5)))
+           :finally (send-event
+                     (lambda ()
+                       (editor-error
+                        "Could not establish a connection with the Language Server (condition: ~A)"
+                        condition)))))))
 
 (defgeneric initialized-workspace (mode workspace)
   (:method (mode workspace)))
@@ -372,19 +371,17 @@
    (find-root-pathname (buffer-directory buffer)
                        (spec-root-uri-patterns spec))))
 
-(defun connect (spec server-info buffer continuation)
+(defun connect (spec client buffer continuation)
   (let ((spinner (spinner:start-loading-spinner
                   :modeline
                   :loading-message "initializing"
                   :buffer buffer)))
-    (establish-connection spec
-                          server-info
+    (establish-connection client
                           (lambda (new-client)
                             (initialize-workspace
                              (make-workspace :client new-client
                                              :root-uri (compute-root-uri spec buffer)
-                                             :spec spec
-                                             :server-info! server-info)
+                                             :spec spec)
                              (lambda (workspace)
                                (assign-workspace-to-buffer buffer workspace)
                                (when continuation (funcall continuation))
@@ -401,7 +398,7 @@
         (assign-workspace-to-buffer buffer workspace)
         (when continuation (funcall continuation)))
       (let ((server-info (run-server spec)))
-        (connect spec server-info buffer continuation)))))
+        (connect spec (make-client spec server-info) buffer continuation)))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))

@@ -95,10 +95,20 @@
 (defun remove-server-info (spec)
   (remhash (spec-language-id spec) *language-id-server-info-map*))
 
+(defun set-server-info (spec server-info)
+  (setf (gethash (spec-language-id spec) *language-id-server-info-map*)
+        server-info))
+
+(defun cleanup-server-info (function)
+  (maphash (lambda (language-id server-info)
+             (declare (ignore language-id))
+             (funcall function server-info))
+           *language-id-server-info-map*)
+  (clrhash *language-id-server-info-map*))
+
 (defun run-server-process-if-inactive (spec)
   (unless (get-running-server-info spec)
-    (setf (gethash (spec-language-id spec) *language-id-server-info-map*)
-          (run-server spec))
+    (set-server-info spec (run-server spec))
     t))
 
 (defun kill-server-process (spec)
@@ -108,12 +118,9 @@
     (remove-server-info spec)))
 
 (defun quit-all-server-process ()
-  (maphash (lambda (language-id server-info)
-             (declare (ignore language-id))
-             (when-let ((disposable (server-info-disposable server-info)))
-               (funcall disposable)))
-           *language-id-server-info-map*)
-  (clrhash *language-id-server-info-map*))
+  (cleanup-server-info (lambda (server-info)
+                         (when-let ((disposable (server-info-disposable server-info)))
+                           (funcall disposable)))))
 
 ;;;
 (defmacro with-jsonrpc-error (() &body body)

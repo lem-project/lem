@@ -203,21 +203,6 @@
                     (reopen-buffer buffer))
     (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)))
 
-(defun find-root-pathname (directory uri-patterns)
-  (labels ((root-file-p (file)
-             (let ((file-name (file-namestring file)))
-               (dolist (uri-pattern uri-patterns)
-                 (when (search uri-pattern file-name)
-                   (return t)))))
-           (recursive (directory)
-             (cond ((dolist (file (uiop:directory-files directory))
-                      (when (root-file-p file)
-                        (return directory))))
-                   ((uiop:pathname-equal directory (user-homedir-pathname)) nil)
-                   ((recursive (uiop:pathname-parent-directory-pathname directory))))))
-    (or (recursive directory)
-        (pathname directory))))
-
 (defun convert-to-characters (string-characters)
   (map 'list
        (lambda (string) (char string 0))
@@ -333,8 +318,8 @@
 
 (defun compute-root-uri (spec buffer)
   (pathname-to-uri
-   (find-root-pathname (buffer-directory buffer)
-                       (spec-root-uri-patterns spec))))
+   (language-mode:find-root-directory (buffer-directory buffer)
+                                      (spec-root-uri-patterns spec))))
 
 (defun connect (workspace client buffer continuation)
   (let ((spinner (spinner:start-loading-spinner

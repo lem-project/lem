@@ -34,7 +34,8 @@
    :move-to-xref-location-position
    :display-xref-locations
    :display-xref-references
-   :find-root-directory)
+   :find-root-directory
+   :buffer-root-directory)
   #+sbcl
   (:lock t))
 (in-package :lem.language-mode)
@@ -492,14 +493,20 @@
                    (t (recursive (uiop:pathname-parent-directory-pathname directory))))))
     (recursive directory)))
 
-(defun find-root-directory (buffer)
+(defun find-root-directory (directory root-uri-patterns)
+  (or (find-root-directory-1 directory
+                             (or root-uri-patterns
+                                 (list (lambda (name) (string= name ".git")))))
+      directory))
+
+(defun buffer-root-directory (buffer)
   (or (find-root-directory-1 (buffer-directory buffer)
                              (or (variable-value 'root-uri-patterns :buffer buffer)
                                  (list (lambda (name) (string= name ".git")))))
       (buffer-directory buffer)))
 
 (define-command project-grep () ()
-  (let* ((directory (find-root-directory (current-buffer)))
+  (let* ((directory (buffer-root-directory (current-buffer)))
          (symbol-string (or (symbol-string-at-point (current-point)) ""))
          (query (prompt-for-string (format nil "(Directory: ~A) " directory)
                                    :initial-value (format nil "git grep -nH ~A" symbol-string))))

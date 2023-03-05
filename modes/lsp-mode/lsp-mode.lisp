@@ -322,8 +322,7 @@
                                (lem-language-client/client:jsonrpc-connect client))
                  (:no-error (&rest values)
                    (declare (ignore values))
-                   (send-event (lambda ()
-                                 (funcall continuation client)))
+                   (send-event continuation)
                    (return))
                  (error (c)
                    (setq condition c)
@@ -342,17 +341,15 @@
    (find-root-pathname (buffer-directory buffer)
                        (spec-root-uri-patterns spec))))
 
-(defun connect (spec client buffer continuation)
+(defun connect (workspace client buffer continuation)
   (let ((spinner (spinner:start-loading-spinner
                   :modeline
                   :loading-message "initializing"
                   :buffer buffer)))
     (establish-connection client
-                          (lambda (new-client)
+                          (lambda ()
                             (initialize-workspace
-                             (make-workspace :client new-client
-                                             :root-uri (compute-root-uri spec buffer)
-                                             :spec spec)
+                             workspace
                              (lambda (workspace)
                                (assign-workspace-to-buffer buffer workspace)
                                (when continuation (funcall continuation))
@@ -369,7 +366,12 @@
         (assign-workspace-to-buffer buffer workspace)
         (when continuation (funcall continuation)))
       (let ((client (run-server spec)))
-        (connect spec client buffer continuation)))))
+        (connect (make-workspace :client client
+                                 :root-uri (compute-root-uri spec buffer)
+                                 :spec spec)
+                 client
+                 buffer
+                 continuation)))))
 
 (defun check-connection ()
   (let* ((buffer (current-buffer))

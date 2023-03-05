@@ -155,9 +155,8 @@
   (get-language-spec (language-mode:buffer-language-mode buffer)))
 
 (defun buffer-language-id (buffer)
-  (let ((spec (buffer-language-spec buffer)))
-    (when spec
-      (spec-language-id spec))))
+  (when-let (spec (buffer-language-spec buffer))
+    (spec-language-id spec)))
 
 ;;;
 (defvar *workspaces* '())

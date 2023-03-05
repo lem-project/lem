@@ -167,7 +167,7 @@
 (defun get-workspace-from-point (point)
   (buffer-workspace (point-buffer point)))
 
-(defun get-running-server-info (spec)
+(defun get-server-info (spec)
   (when-let (workspace (find-workspace (spec-language-id spec) :errorp nil))
     (workspace-spec workspace)))
 
@@ -176,7 +176,7 @@
     (funcall disposable)))
 
 (defun kill-server-process (spec)
-  (when-let ((server-info (get-running-server-info spec)))
+  (when-let ((server-info (get-server-info spec)))
     (destruct-spec-server-info spec server-info)))
 
 (defun quit-all-server-process ()
@@ -409,7 +409,7 @@
 (defun check-connection ()
   (let* ((buffer (current-buffer))
          (spec (buffer-language-spec buffer)))
-    (unless (get-running-server-info spec)
+    (unless (get-server-info spec)
       (ensure-lsp-buffer buffer))))
 
 (defun buffer-to-text-document-item (buffer)

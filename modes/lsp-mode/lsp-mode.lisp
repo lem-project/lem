@@ -123,6 +123,15 @@
   (when-let (spec (buffer-language-spec buffer))
     (spec-language-id spec)))
 
+(defun buffer-version (buffer)
+  (buffer-modified-tick buffer))
+
+(defun buffer-uri (buffer)
+  ;; TODO: lem-language-server::buffer-uri
+  (if (buffer-filename buffer)
+      (pathname-to-uri (buffer-filename buffer))
+      (format nil "buffer://~A" (buffer-name buffer))))
+
 ;;;
 (defvar *workspaces* '())
 
@@ -154,15 +163,6 @@
 
 (defun buffer-workspace (buffer &optional (errorp t))
   (find-workspace (buffer-language-id buffer) :errorp errorp))
-
-(defun buffer-version (buffer)
-  (buffer-modified-tick buffer))
-
-(defun buffer-uri (buffer)
-  ;; TODO: lem-language-server::buffer-uri
-  (if (buffer-filename buffer)
-      (pathname-to-uri (buffer-filename buffer))
-      (format nil "buffer://~A" (buffer-name buffer))))
 
 (defun get-workspace-from-point (point)
   (buffer-workspace (point-buffer point)))

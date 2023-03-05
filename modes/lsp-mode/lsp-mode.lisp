@@ -10,8 +10,8 @@
         :lem-lsp-mode/spec)
   (:shadow :execute-command)
   (:import-from :lem-language-client/request)
-  (:import-from :lem-lsp-mode/client)
   (:import-from :lem-lsp-mode/context-menu)
+  (:local-nicknames (:client :lem-lsp-mode/client))
   (:local-nicknames (:request :lem-language-client/request))
   (:local-nicknames (:completion :lem.completion-mode))
   (:local-nicknames (:context-menu :lem-lsp-mode/context-menu))
@@ -172,17 +172,12 @@
   (when-let (workspace (find-workspace (spec-language-id spec) :errorp nil))
     (workspace-spec workspace)))
 
-(defun destruct-spec-server-info (server-info)
-  (when-let ((disposable (server-info-disposable server-info)))
-    (funcall disposable)))
+(defun dispose-workspace (workspace)
+  (client:dispose (workspace-client workspace)))
 
-(defun kill-server-process (spec)
-  (when-let ((server-info (get-server-info spec)))
-    (destruct-spec-server-info server-info)))
-
-(defun quit-all-server-process ()
+(defun dispose-all-workspaces ()
   (dolist (workspace *workspaces*)
-    (destruct-spec-server-info (workspace-server-info! workspace))))
+    (dispose-workspace workspace)))
 
 (defvar *lsp-mode-keymap* (make-keymap))
 
@@ -206,7 +201,7 @@
     (unless (buffer-temporary-p buffer)
       (handler-case
           (progn
-            (add-hook *exit-editor-hook* 'quit-all-server-process)
+            (add-hook *exit-editor-hook* 'dispose-all-workspaces)
             (ensure-lsp-buffer buffer
                                :then (lambda ()
                                        (text-document/did-open buffer)
@@ -252,6 +247,7 @@
 (defun make-client (spec server-info)
   (ecase (spec-mode spec)
     (:tcp (make-instance 'lem-lsp-mode/client:tcp-client
+                         :process (get-spec-process server-info)
                          :port (get-connected-port server-info)))
     (:stdio (make-instance 'lem-lsp-mode/client:stdio-client
                            :process (get-spec-process server-info)))))
@@ -1838,9 +1834,8 @@
 
 ;;;
 (define-command lsp-restart-server () ()
-  (when-let ((spec (buffer-language-spec (current-buffer))))
-    (kill-server-process spec)
-    (ensure-lsp-buffer (current-buffer))))
+  (dispose-workspace (buffer-workspace (current-buffer)))
+  (ensure-lsp-buffer (current-buffer)))
 
 ;;;
 (defun enable-lsp-mode ()

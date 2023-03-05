@@ -23,18 +23,6 @@
 (in-package :lem-lsp-mode/lsp-mode)
 
 ;;;
-(defparameter *client-capabilities-text*
-  (load-time-value
-   (uiop:read-file-string
-    (asdf:system-relative-pathname :lem-lsp-mode
-                                   "client-capabilities.json"))))
-
-(defun client-capabilities ()
-  (convert-from-json
-   (parse-json *client-capabilities-text*)
-   'lsp:client-capabilities))
-
-;;;
 (define-condition not-found-program (editor-error)
   ((name :initarg :name
          :initform (required-argument :name)
@@ -158,10 +146,6 @@
 (defun buffer-language-mode (buffer)
   (or (lem.language-mode:language-mode-tag buffer)
       (buffer-major-mode buffer)))
-
-;;;
-(defgeneric spec-initialization-options (spec)
-  (:method (spec) nil))
 
 ;;;
 (defun buffer-language-spec (buffer)
@@ -539,6 +523,20 @@
         (apply-changes changes)))))
 
 ;;; General Messages
+
+(defgeneric spec-initialization-options (spec)
+  (:method (spec) nil))
+
+(defparameter *client-capabilities-text*
+  (load-time-value
+   (uiop:read-file-string
+    (asdf:system-relative-pathname :lem-lsp-mode
+                                   "client-capabilities.json"))))
+
+(defun client-capabilities ()
+  (convert-from-json
+   (parse-json *client-capabilities-text*)
+   'lsp:client-capabilities))
 
 (defun initialize (workspace continuation)
   (async-request

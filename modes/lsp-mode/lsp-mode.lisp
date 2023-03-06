@@ -330,11 +330,7 @@
   (set-trigger-characters workspace))
 
 (defun connect (client buffer continuation)
-  (let ((spinner (spinner:start-loading-spinner
-                  :modeline
-                  :loading-message "initializing"
-                  :buffer buffer))
-        (spec (buffer-language-spec buffer)))
+  (let ((spec (buffer-language-spec buffer)))
     (establish-connection client
                           (lambda ()
                             (initialize-workspace
@@ -345,7 +341,6 @@
                                (add-workspace workspace)
                                (activate-lsp-buffer buffer workspace)
                                (when continuation (funcall continuation))
-                               (spinner:stop-loading-spinner spinner)
                                (let ((mode (ensure-mode-object
                                             (language-mode:buffer-language-mode buffer))))
                                  (initialized-workspace mode workspace))
@@ -357,8 +352,16 @@
       (progn
         (activate-lsp-buffer buffer workspace)
         (when continuation (funcall continuation)))
-      (let ((client (run-server spec)))
-        (connect client buffer continuation)))))
+      (let ((spinner (spinner:start-loading-spinner
+                      :modeline
+                      :loading-message "initializing"
+                      :buffer buffer))
+            (client (run-server spec)))
+        (connect client
+                 buffer
+                 (lambda ()
+                   (spinner:stop-loading-spinner spinner)
+                   (funcall continuation)))))))
 
 (defun check-connection ()
   (assert (buffer-language-spec (current-buffer))))

@@ -361,10 +361,7 @@
         (connect client buffer continuation)))))
 
 (defun check-connection ()
-  (let* ((buffer (current-buffer))
-         (spec (buffer-language-spec buffer)))
-    (unless spec
-      (ensure-lsp-buffer buffer))))
+  (assert (buffer-language-spec (current-buffer))))
 
 (defun buffer-to-text-document-item (buffer)
   (make-instance 'lsp:text-document-item

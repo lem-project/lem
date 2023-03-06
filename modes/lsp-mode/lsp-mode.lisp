@@ -335,7 +335,6 @@
                                              :root-uri (compute-root-uri spec buffer))
                              (lambda (workspace)
                                (add-workspace workspace)
-                               (add-buffer-hooks buffer)
                                (set-trigger-characters workspace)
                                (when continuation (funcall continuation))
                                (let ((mode (ensure-mode-object
@@ -348,7 +347,6 @@
     (if-let ((workspace (find-workspace (spec-language-id spec) :errorp nil)))
       (progn
         (add-buffer-hooks buffer)
-        (set-trigger-characters workspace)
         (when continuation (funcall continuation)))
       (let ((spinner (spinner:start-loading-spinner
                       :modeline
@@ -359,6 +357,7 @@
                  buffer
                  (lambda ()
                    (spinner:stop-loading-spinner spinner)
+                   (add-buffer-hooks buffer)
                    (funcall continuation)))))))
 
 (defun check-connection ()

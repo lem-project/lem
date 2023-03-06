@@ -10,7 +10,7 @@
   :command (lambda (port) `("gopls" "serve" "-port" ,(princ-to-string port)))
   :install-command "go install golang.org/x/tools/gopls@latest"
   :readme-url "https://github.com/golang/tools/tree/master/gopls"
-  :mode :tcp)
+  :connection-mode :tcp)
 
 (defmethod spec-initialization-options ((spec go-spec))
   (make-lsp-map "completeUnimported" +true+

@@ -5,7 +5,7 @@
            :spec-command
            :spec-install-command
            :spec-readme-url
-           :spec-mode
+           :spec-connection-mode
            :spec-port
            :get-language-spec
            :register-language-spec
@@ -33,10 +33,10 @@
     :initarg :readme-url
     :initform nil
     :reader spec-readme-url)
-   (mode
-    :initarg :mode
-    :initform (alexandria:required-argument :mode)
-    :reader spec-mode)
+   (connection-mode
+    :initarg :connection-mode
+    :initform (alexandria:required-argument :connection-mode)
+    :reader spec-connection-mode)
    (port
     :initarg :port
     :initform nil

@@ -20,7 +20,7 @@
                "--log-file" ,(namestring
                               (merge-pathnames "language-server.log"
                                                (lem:lem-logdir-pathname)))))
-  :mode :tcp)
+  :connection-mode :tcp)
 
 (defmethod lem-lsp-mode::initialized-workspace ((mode lem-lisp-mode:lisp-mode) workspace)
   (unless *self-connection*

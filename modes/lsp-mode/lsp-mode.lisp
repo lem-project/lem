@@ -72,7 +72,7 @@
       (make-instance 'client:stdio-client :process process))))
 
 (defmethod run-server (spec)
-  (run-server-using-mode (spec-mode spec) spec))
+  (run-server-using-mode (spec-connection-mode spec) spec))
 
 ;;;
 (defmacro with-jsonrpc-error (() &body body)
@@ -1814,21 +1814,21 @@
   :command '("typescript-language-server" "--stdio")
   :install-command "npm install -g typescript-language-server typescript"
   :readme-url "https://github.com/typescript-language-server/typescript-language-server"
-  :mode :stdio)
+  :connection-mode :stdio)
 
 (define-language-spec (rust-spec lem-rust-mode:rust-mode)
   :language-id "rust"
   :root-uri-patterns '("Cargo.toml")
   :command '("rls")
   :readme-url "https://github.com/rust-lang/rls"
-  :mode :stdio)
+  :connection-mode :stdio)
 
 (define-language-spec (sql-spec lem-sql-mode:sql-mode)
   :language-id "sql"
   :root-uri-patterns '()
   :command '("sql-language-server" "up" "--method" "stdio")
   :readme-url "https://github.com/joe-re/sql-language-server"
-  :mode :stdio)
+  :connection-mode :stdio)
 
 (defun find-dart-bin-path ()
   (multiple-value-bind (output error-output status)
@@ -1856,7 +1856,7 @@
 (define-language-spec (dart-spec lem-dart-mode:dart-mode)
   :language-id "dart"
   :root-uri-patterns '("pubspec.yaml")
-  :mode :stdio)
+  :connection-mode :stdio)
 
 (defmethod spec-command ((spec dart-spec))
   (if-let ((lsp-path (find-dart-language-server)))

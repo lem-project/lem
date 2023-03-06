@@ -161,6 +161,14 @@
   (dolist (workspace *workspaces*)
     (dispose-workspace workspace)))
 
+(defun set-trigger-characters (workspace)
+  (dolist (character (get-completion-trigger-characters workspace))
+    (setf (gethash character (workspace-trigger-characters workspace))
+          #'completion-with-trigger-character))
+  (dolist (character (get-signature-help-trigger-characters workspace))
+    (setf (gethash character (workspace-trigger-characters workspace))
+          #'lsp-signature-help-with-trigger-character)))
+
 ;;;
 (defvar *lsp-mode-keymap* (make-keymap))
 
@@ -268,14 +276,6 @@
   (add-hook (variable-value 'after-save-hook :buffer buffer) 'text-document/did-save)
   (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)
   (add-hook (variable-value 'self-insert-after-hook :buffer buffer) 'self-insert-hook))
-
-(defun set-trigger-characters (workspace)
-  (dolist (character (get-completion-trigger-characters workspace))
-    (setf (gethash character (workspace-trigger-characters workspace))
-          #'completion-with-trigger-character))
-  (dolist (character (get-signature-help-trigger-characters workspace))
-    (setf (gethash character (workspace-trigger-characters workspace))
-          #'lsp-signature-help-with-trigger-character)))
 
 (defun register-lsp-method (workspace method function)
   (jsonrpc:expose (lem-language-client/client:client-connection (workspace-client workspace))

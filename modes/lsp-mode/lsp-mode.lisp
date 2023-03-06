@@ -1804,7 +1804,8 @@
         `(add-hook ,(lem::mode-hook-variable major-mode) 'enable-lsp-mode))
      (eval-when (:compile-toplevel :load-toplevel :execute)
        (defclass ,spec-name (lem-lsp-mode/spec::spec) ()
-         (:default-initargs ,@initargs)))
+         (:default-initargs ,@initargs
+          :mode ',major-mode)))
      (register-language-spec ',major-mode (make-instance ',spec-name))))
 
 #|

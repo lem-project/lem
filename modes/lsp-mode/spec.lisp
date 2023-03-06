@@ -9,7 +9,8 @@
            :spec-port
            :get-language-spec
            :register-language-spec
-           :get-spec-command))
+           :get-spec-command
+           :spec-mode))
 (in-package :lem-lsp-mode/spec)
 
 (defclass spec ()
@@ -40,7 +41,10 @@
    (port
     :initarg :port
     :initform nil
-    :reader spec-port)))
+    :reader spec-port)
+   (mode
+    :initarg :mode
+    :reader spec-mode)))
 
 (defun get-language-spec (major-mode)
   (let ((spec (get major-mode 'spec)))

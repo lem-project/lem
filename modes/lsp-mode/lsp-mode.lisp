@@ -1789,6 +1789,9 @@
 ;;;
 (define-command lsp-restart-server () ()
   (dispose-workspace (buffer-workspace (current-buffer)))
+  ;; TODO:
+  ;; 現在のバッファを開き直すだけでは不十分
+  ;; buffer-listを全て見る必要がある
   (ensure-lsp-buffer (current-buffer)))
 
 ;;;

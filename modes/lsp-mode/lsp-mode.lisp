@@ -359,9 +359,9 @@
                                                 :client client
                                                 :buffer buffer)
                                 (lambda ()
-                                  (spinner:stop-loading-spinner spinner)
                                   (add-buffer-hooks buffer)
-                                  (funcall continuation)))))))
+                                  (funcall continuation)
+                                  (spinner:stop-loading-spinner spinner)))))))
 
 (defun check-connection ()
   (assert (buffer-language-spec (current-buffer))))

@@ -297,7 +297,7 @@
                 (initialized workspace)
                 (funcall continuation workspace))))
 
-(defun establish-connection (client continuation)
+(defun connect (client continuation)
   (bt:make-thread
    (lambda ()
      (loop :with condition := nil
@@ -325,20 +325,20 @@
    (language-mode:find-root-directory (buffer-directory buffer)
                                       (spec-root-uri-patterns spec))))
 
-(defun connect (client workspace continuation)
-  (establish-connection client
-                        (lambda ()
-                          (initialize-workspace
-                           workspace
-                           (lambda (workspace)
-                             (add-workspace workspace)
-                             (set-trigger-characters workspace)
-                             (when continuation (funcall continuation))
-                             (let ((mode (ensure-mode-object
-                                          (spec-mode
-                                           (workspace-spec workspace)))))
-                               (initialized-workspace mode workspace))
-                             (redraw-display))))))
+(defun connect-and-initialize (client workspace continuation)
+  (connect client
+           (lambda ()
+             (initialize-workspace
+              workspace
+              (lambda (workspace)
+                (add-workspace workspace)
+                (set-trigger-characters workspace)
+                (when continuation (funcall continuation))
+                (let ((mode (ensure-mode-object
+                             (spec-mode
+                              (workspace-spec workspace)))))
+                  (initialized-workspace mode workspace))
+                (redraw-display))))))
 
 (defun ensure-lsp-buffer (buffer &key ((:then continuation)))
   (let ((spec (buffer-language-spec buffer)))
@@ -351,14 +351,14 @@
                       :loading-message "initializing"
                       :buffer buffer))
             (client (run-server spec)))
-        (connect client
-                 (make-workspace :spec spec
-                                 :client client
-                                 :root-uri (compute-root-uri spec buffer))
-                 (lambda ()
-                   (spinner:stop-loading-spinner spinner)
-                   (add-buffer-hooks buffer)
-                   (funcall continuation)))))))
+        (connect-and-initialize client
+                                (make-workspace :spec spec
+                                                :client client
+                                                :root-uri (compute-root-uri spec buffer))
+                                (lambda ()
+                                  (spinner:stop-loading-spinner spinner)
+                                  (add-buffer-hooks buffer)
+                                  (funcall continuation)))))))
 
 (defun check-connection ()
   (assert (buffer-language-spec (current-buffer))))

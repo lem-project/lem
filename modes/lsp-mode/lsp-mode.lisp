@@ -119,10 +119,15 @@
       (pathname-to-uri (buffer-filename buffer))
       (format nil "buffer://~A" (buffer-name buffer))))
 
+(defun compute-root-uri (spec buffer)
+  (pathname-to-uri
+   (language-mode:find-root-directory (buffer-directory buffer)
+                                      (spec-root-uri-patterns spec))))
+
 ;;;
 (defvar *workspaces* '())
 
-(defstruct workspace
+(defstruct (workspace (:constructor make-workspace-internal))
   root-uri
   client
   spec
@@ -130,6 +135,9 @@
   server-info
   (trigger-characters (make-hash-table))
   plist)
+
+(defun make-workspace (&key spec client buffer)
+  (make-workspace-internal :spec spec :client client :root-uri (compute-root-uri spec buffer)))
 
 (defun workspace-value (workspace key)
   (getf (workspace-plist workspace) key))
@@ -320,11 +328,6 @@
 (defgeneric initialized-workspace (mode workspace)
   (:method (mode workspace)))
 
-(defun compute-root-uri (spec buffer)
-  (pathname-to-uri
-   (language-mode:find-root-directory (buffer-directory buffer)
-                                      (spec-root-uri-patterns spec))))
-
 (defun connect-and-initialize (client workspace continuation)
   (connect client
            (lambda ()
@@ -354,7 +357,7 @@
         (connect-and-initialize client
                                 (make-workspace :spec spec
                                                 :client client
-                                                :root-uri (compute-root-uri spec buffer))
+                                                :buffer buffer)
                                 (lambda ()
                                   (spinner:stop-loading-spinner spinner)
                                   (add-buffer-hooks buffer)

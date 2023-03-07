@@ -328,20 +328,29 @@
 (defgeneric initialized-workspace (mode workspace)
   (:method (mode workspace)))
 
-(defun connect-and-initialize (client workspace continuation)
-  (connect client
-           (lambda ()
-             (initialize-workspace
-              workspace
-              (lambda (workspace)
-                (add-workspace workspace)
-                (set-trigger-characters workspace)
-                (when continuation (funcall continuation))
-                (let ((mode (ensure-mode-object
-                             (spec-mode
-                              (workspace-spec workspace)))))
-                  (initialized-workspace mode workspace))
-                (redraw-display))))))
+(defun connect-and-initialize (client spec buffer continuation)
+  (let ((spinner (spinner:start-loading-spinner
+                  :modeline
+                  :loading-message "initializing"
+                  :buffer buffer))
+        (workspace (make-workspace :spec spec
+                                   :client client
+                                   :buffer buffer)))
+    (connect client
+             (lambda ()
+               (initialize-workspace
+                workspace
+                (lambda (workspace)
+                  (add-workspace workspace)
+                  (set-trigger-characters workspace)
+                  (add-buffer-hooks buffer)
+                  (when continuation (funcall continuation))
+                  (let ((mode (ensure-mode-object
+                               (spec-mode
+                                (workspace-spec workspace)))))
+                    (initialized-workspace mode workspace))
+                  (spinner:stop-loading-spinner spinner)
+                  (redraw-display)))))))
 
 (defun ensure-lsp-buffer (buffer &key ((:then continuation)))
   (let ((spec (buffer-language-spec buffer)))
@@ -349,19 +358,11 @@
       (progn
         (add-buffer-hooks buffer)
         (when continuation (funcall continuation)))
-      (let ((spinner (spinner:start-loading-spinner
-                      :modeline
-                      :loading-message "initializing"
-                      :buffer buffer))
-            (client (run-server spec)))
+      (let ((client (run-server spec)))
         (connect-and-initialize client
-                                (make-workspace :spec spec
-                                                :client client
-                                                :buffer buffer)
-                                (lambda ()
-                                  (add-buffer-hooks buffer)
-                                  (funcall continuation)
-                                  (spinner:stop-loading-spinner spinner)))))))
+                                spec
+                                buffer
+                                continuation)))))
 
 (defun check-connection ()
   (assert (buffer-language-spec (current-buffer))))

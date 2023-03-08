@@ -51,3 +51,18 @@
 ;; override lisp-mode autodoc
 (defmethod lem:execute :after ((mode lem-lisp-mode:lisp-mode) (command lem:self-insert) argument)
   )
+
+(defun reinitialize-all-lisp-buffers ()
+  (dolist (buffer (buffer-list))
+    (when (mode-active-p buffer 'lem-lisp-mode:lisp-mode)
+      (lem-lsp-mode::reopen-buffer buffer))))
+
+(define-command lisp/new-workspace () ()
+  (setf *self-connection* nil)
+  (let* ((spec (lem-lsp-mode/spec:get-language-spec 'lem-lisp-mode:lisp-mode))
+         (client (lem-lsp-mode::run-server spec)))
+    (lem-lsp-mode::connect-and-initialize client
+                                          spec
+                                          (current-buffer)
+                                          (lambda ()
+                                            (reinitialize-all-lisp-buffers)))))

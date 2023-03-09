@@ -75,22 +75,21 @@
                           (connection-pid *connection*)))
               "")))
 
-(defun change-current-connection (conn)
+(defmethod change-current-connection ((connection connection))
   (when *connection*
     (abort-all *connection* "change connection")
     (notify-change-connection-to-wait-message-thread))
-  (setf *connection* conn))
+  (setf *connection* connection))
 
 (defun connected-p ()
   (not (null *connection*)))
 
-(defun add-connection (conn)
-  (push conn *connection-list*)
-  (change-current-connection conn))
+(defun add-connection (connection)
+  (push connection *connection-list*)
+  (change-current-connection connection))
 
-(defun remove-connection (conn)
-  (setf *connection-list* (delete conn *connection-list*))
-  ;(change-current-connection (car *connection-list*))
+(defun remove-connection (connection)
+  (setf *connection-list* (delete connection *connection-list*))
   (setf *connection* (car *connection-list*))
   *connection*)
 

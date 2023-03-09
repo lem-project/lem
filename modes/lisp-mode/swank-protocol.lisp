@@ -35,7 +35,8 @@
            :connection-implementation-version
            :connection-machine-type
            :connection-machine-version
-           :connection-swank-version)
+           :connection-swank-version
+           :connection-value)
   (:documentation "Low-level implementation of a client for the Swank protocol."))
 (in-package :lem-lisp-mode.swank-protocol)
 
@@ -148,6 +149,12 @@ Parses length information to determine how many characters to read."
     :accessor connection-process-directory)
    (plist :initform nil :accessor connection-plist))
   (:documentation "A connection to a remote Lisp."))
+
+(defmethod connection-value ((connection connection) key)
+  (getf (connection-plist connection) key))
+
+(defmethod (setf connection-value) (value (connection connection) key)
+  (setf (getf (connection-plist connection) key) value))
 
 (defun new-connection (hostname port)
   (log:debug "Connecting to SWANK"

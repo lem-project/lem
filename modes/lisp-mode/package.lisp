@@ -8,7 +8,10 @@
         :lem-lisp-mode.errors
         :lem-lisp-mode.swank-protocol)
   (:export
-   ;;lisp-ui-mode.lisp
+   ;; reexport swank-protocol.lisp
+   :connection-value)
+  (:export
+   ;; lisp-ui-mode.lisp
    :*lisp-ui-keymap*
    :lisp-ui-default-action
    :lisp-ui-forward-button

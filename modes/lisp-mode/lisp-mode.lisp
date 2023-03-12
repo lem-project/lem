@@ -75,11 +75,14 @@
                           (connection-pid *connection*)))
               "")))
 
-(defmethod change-current-connection ((connection connection))
+(defun change-current-connection (connection)
   (when *connection*
     (abort-all *connection* "change connection")
     (notify-change-connection-to-wait-message-thread))
   (setf *connection* connection))
+
+(defmethod switch-connection ((connection connection))
+  (change-current-connection connection))
 
 (defun connected-p ()
   (not (null *connection*)))
@@ -107,7 +110,7 @@
                                            (connection-implementation-version c)
                                            (connection-command c)))
                   :select-callback (lambda (menu c)
-                                     (change-current-connection c)
+                                     (switch-connection c)
                                      (lem.menu-mode:update-menu menu *connection-list*)
                                      :close)
                   :update-items-function (lambda () *connection-list*))
@@ -141,6 +144,9 @@
        (ignore-errors (equal (connection-pid c) (swank/backend:getpid)))
        (= (connection-port c) (self-connected-port))
        :self))
+
+(defun self-connection ()
+  (find-if #'self-connection-p *connection-list*))
 
 (defun check-connection ()
   (unless (connected-p)

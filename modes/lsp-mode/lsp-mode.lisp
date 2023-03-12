@@ -125,19 +125,41 @@
                                       (spec-root-uri-patterns spec))))
 
 ;;;
-(defvar *workspaces* '())
-
-(defstruct (workspace (:constructor make-workspace-internal))
-  root-uri
-  client
-  spec
-  server-capabilities
-  server-info
-  (trigger-characters (make-hash-table))
-  plist)
+(defclass workspace ()
+  ((root-uri
+    :initarg :root-uri
+    :initform nil
+    :accessor workspace-root-uri)
+   (client
+    :initarg :client
+    :initform nil
+    :accessor workspace-client)
+   (spec
+    :initarg :spec
+    :initform nil
+    :accessor workspace-spec)
+   (server-capabilities
+    :initarg :server-capabilities
+    :initform nil
+    :accessor workspace-server-capabilities)
+   (server-info
+    :initarg :server-info
+    :initform nil
+    :accessor workspace-server-info)
+   (trigger-characters
+    :initarg :trigger-characters
+    :initform (make-hash-table)
+    :accessor workspace-trigger-characters)
+   (plist
+    :initarg :plist
+    :initform nil
+    :accessor workspace-plist)))
 
 (defun make-workspace (&key spec client buffer)
-  (make-workspace-internal :spec spec :client client :root-uri (compute-root-uri spec buffer)))
+  (make-instance 'workspace
+                 :spec spec
+                 :client client
+                 :root-uri (compute-root-uri spec buffer)))
 
 (defun workspace-value (workspace key)
   (getf (workspace-plist workspace) key))
@@ -148,26 +170,11 @@
 (defun workspace-language-id (workspace)
   (spec-language-id (workspace-spec workspace)))
 
-(defun add-workspace (workspace)
-  (push workspace *workspaces*))
-
-(defun find-workspace (language-id &key (errorp t))
-  (or (find language-id *workspaces* :test #'equal :key #'workspace-language-id)
-      (when errorp
-        (error "The ~A workspace is not found." language-id))))
-
-(defun buffer-workspace (buffer &optional (errorp t))
-  (find-workspace (buffer-language-id buffer) :errorp errorp))
-
 (defun get-workspace-from-point (point)
   (buffer-workspace (point-buffer point)))
 
 (defun dispose-workspace (workspace)
   (client:dispose (workspace-client workspace)))
-
-(defun dispose-all-workspaces ()
-  (dolist (workspace *workspaces*)
-    (dispose-workspace workspace)))
 
 (defun set-trigger-characters (workspace)
   (dolist (character (get-completion-trigger-characters workspace))
@@ -176,6 +183,47 @@
   (dolist (character (get-signature-help-trigger-characters workspace))
     (setf (gethash character (workspace-trigger-characters workspace))
           #'lsp-signature-help-with-trigger-character)))
+
+;;;
+(defvar *workspace-list-per-language-id* (make-hash-table :test 'equal))
+
+(defstruct workspace-list
+  current-workspace
+  workspaces)
+
+(defun add-workspace (workspace)
+  (if-let (workspace-list (gethash (workspace-language-id workspace)
+                                   *workspace-list-per-language-id*))
+    (progn
+      (setf (workspace-list-current-workspace workspace-list)
+            workspace)
+      (push workspace (workspace-list-workspaces workspace-list)))
+    (setf (gethash (workspace-language-id workspace)
+                   *workspace-list-per-language-id*)
+          (make-workspace-list :current-workspace workspace
+                               :workspaces (list workspace)))))
+
+(defun change-workspace (workspace)
+  (let ((workspace-list (gethash (workspace-language-id workspace)
+                                 *workspace-list-per-language-id*)))
+    (assert workspace-list)
+    (setf (workspace-list-current-workspace workspace-list) workspace)))
+
+(defun find-workspace (language-id &key (errorp t))
+  (if-let (workspace-list (gethash language-id *workspace-list-per-language-id*))
+    (workspace-list-current-workspace workspace-list)
+    (when errorp
+      (error "The ~A workspace is not found." language-id))))
+
+(defun buffer-workspace (buffer &optional (errorp t))
+  (find-workspace (buffer-language-id buffer) :errorp errorp))
+
+(defun all-workspaces ()
+  (workspace-list-workspaces (apply #'append (hash-table-values *workspace-list-per-language-id*))))
+
+(defun dispose-all-workspaces ()
+  (dolist (workspace (all-workspaces))
+    (dispose-workspace workspace)))
 
 ;;;
 (defvar *lsp-mode-keymap* (make-keymap))

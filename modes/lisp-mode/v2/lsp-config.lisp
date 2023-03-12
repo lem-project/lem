@@ -22,10 +22,19 @@
                                                (lem:lem-logdir-pathname)))))
   :connection-mode :tcp)
 
+(defun connection-workspace (connection)
+  (lem-lisp-mode:connection-value connection 'workspace))
+
+(defun (setf connection-workspace) (workspace connection)
+  (setf (lem-lisp-mode:connection-value connection 'workspace) workspace))
+
 (defmethod lem-lsp-mode::initialized-workspace ((mode lem-lisp-mode:lisp-mode) workspace)
-  (unless *self-connection*
-    (let ((swank-port (gethash "swankPort" (lem-lsp-mode::workspace-server-info workspace))))
-      (lem-lisp-mode:connect-to-swank "127.0.0.1" swank-port)))
+  (if *self-connection*
+      (let ((connection (lem-lisp-mode::self-connection)))
+        (setf (connection-workspace connection) workspace))
+      (let* ((swank-port (gethash "swankPort" (lem-lsp-mode::workspace-server-info workspace)))
+             (connection (lem-lisp-mode:connect-to-swank "127.0.0.1" swank-port)))
+        (setf (connection-workspace connection) workspace)))
   (register-eval-methods workspace))
 
 (defun start-micros-server (port)
@@ -47,6 +56,10 @@
         (start-language-server lsp-port)
         (start-micros-server micros-port)
         (make-instance 'lem-lsp-mode/client:tcp-client :port lsp-port))))
+
+(defmethod lem-lisp-mode::switch-connection :after ((connection lem-lisp-mode::connection))
+  (let ((workspace (connection-workspace connection)))
+    (lem-lsp-mode::change-workspace workspace)))
 
 ;; override lisp-mode autodoc
 (defmethod lem:execute :after ((mode lem-lisp-mode:lisp-mode) (command lem:self-insert) argument)

@@ -484,8 +484,15 @@
                              successp
                              (and fastfile successp)))
     (highlight-notes notes)
-    (when (and loadp fastfile successp)
-      (lisp-eval-async `(swank:load-file ,(convert-local-to-remote-file fastfile))))))
+    (cond ((and loadp fastfile successp)
+           (lisp-eval-async `(swank:load-file ,(convert-local-to-remote-file fastfile))
+                            (lambda (result)
+                              (declare (ignore result))
+                              (uiop:delete-file-if-exists
+                               (convert-remote-to-local-file fastfile)))))
+          (fastfile
+           (uiop:delete-file-if-exists
+            (convert-remote-to-local-file fastfile))))))
 
 (defun show-compile-result (notes secs successp)
   (display-message (format nil "~{~A~^ ~}"

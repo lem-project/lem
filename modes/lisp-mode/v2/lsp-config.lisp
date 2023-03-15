@@ -28,8 +28,14 @@
 (defun (setf connection-workspace) (workspace connection)
   (setf (lem-lisp-mode:connection-value connection 'workspace) workspace))
 
+(defun self-connection-p (workspace)
+  (lem-lsp-mode::workspace-value workspace 'self-connection *self-connection*))
+
+(defun (setf self-connection-p) (value workspace)
+  (setf (lem-lsp-mode::workspace-value workspace 'self-connection) value))
+
 (defmethod lem-lsp-mode::initialized-workspace ((mode lem-lisp-mode:lisp-mode) workspace)
-  (if *self-connection*
+  (if (self-connection-p workspace)
       (let ((connection (lem-lisp-mode::self-connection)))
         (setf (connection-workspace connection) workspace))
       (let* ((swank-port (gethash "swankPort" (lem-lsp-mode::workspace-server-info workspace)))
@@ -71,12 +77,14 @@
       (lem-lsp-mode::reopen-buffer buffer))))
 
 (define-command lisp/new-workspace () ()
-  (setf *self-connection* nil)
-  (let* ((spec (lem-lsp-mode/spec:get-language-spec 'lem-lisp-mode:lisp-mode))
-         (client (lem-lsp-mode::run-server spec)))
-    (lem-lsp-mode::connect-and-initialize (lem-lsp-mode::make-workspace :spec spec
-                                                                        :client client
-                                                                        :buffer (current-buffer))
-                                          (current-buffer)
-                                          (lambda ()
-                                            (reinitialize-all-lisp-buffers)))))
+  (let ((*self-connection* nil))
+    (let* ((spec (lem-lsp-mode/spec:get-language-spec 'lem-lisp-mode:lisp-mode))
+           (client (lem-lsp-mode::run-server spec))
+           (workspace (lem-lsp-mode::make-workspace :spec spec
+                                                    :client client
+                                                    :buffer (current-buffer))))
+      (setf (self-connection-p workspace) nil)
+      (lem-lsp-mode::connect-and-initialize workspace
+                                            (current-buffer)
+                                            (lambda ()
+                                              (reinitialize-all-lisp-buffers))))))

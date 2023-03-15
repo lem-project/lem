@@ -74,8 +74,9 @@
   (setf *self-connection* nil)
   (let* ((spec (lem-lsp-mode/spec:get-language-spec 'lem-lisp-mode:lisp-mode))
          (client (lem-lsp-mode::run-server spec)))
-    (lem-lsp-mode::connect-and-initialize client
-                                          spec
+    (lem-lsp-mode::connect-and-initialize (lem-lsp-mode::make-workspace :spec spec
+                                                                        :client client
+                                                                        :buffer (current-buffer))
                                           (current-buffer)
                                           (lambda ()
                                             (reinitialize-all-lisp-buffers)))))

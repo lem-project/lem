@@ -376,15 +376,12 @@
 (defgeneric initialized-workspace (mode workspace)
   (:method (mode workspace)))
 
-(defun connect-and-initialize (client spec buffer continuation)
+(defun connect-and-initialize (workspace buffer continuation)
   (let ((spinner (spinner:start-loading-spinner
                   :modeline
                   :loading-message "initializing"
-                  :buffer buffer))
-        (workspace (make-workspace :spec spec
-                                   :client client
-                                   :buffer buffer)))
-    (connect client
+                  :buffer buffer)))
+    (connect (workspace-client workspace)
              (lambda ()
                (initialize-workspace
                 workspace
@@ -407,8 +404,9 @@
         (add-buffer-hooks buffer)
         (when continuation (funcall continuation)))
       (let ((client (run-server spec)))
-        (connect-and-initialize client
-                                spec
+        (connect-and-initialize (make-workspace :spec spec
+                                                :client client
+                                                :buffer buffer)
                                 buffer
                                 continuation)))))
 

@@ -161,10 +161,11 @@
                  :client client
                  :root-uri (compute-root-uri spec buffer)))
 
-(defun workspace-value (workspace key)
-  (getf (workspace-plist workspace) key))
+(defun workspace-value (workspace key &optional default)
+  (getf (workspace-plist workspace) key default))
 
-(defun (setf workspace-value) (value workspace key)
+(defun (setf workspace-value) (value workspace key &optional default)
+  (declare (ignore default))
   (setf (getf (workspace-plist workspace) key) value))
 
 (defun workspace-language-id (workspace)

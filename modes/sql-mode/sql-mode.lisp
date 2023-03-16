@@ -1,10 +1,10 @@
 (defpackage :lem-sql-mode
   (:use :cl
         :lem
-        :lem.language-mode
-        :lem.language-mode-tools)
+        :lem/language-mode
+        :lem/language-mode-tools)
   (:import-from
-   :lem.tmlanguage
+   :lem/tmlanguage
    :load-tmlanguage)
   (:export
    :sql-mode))

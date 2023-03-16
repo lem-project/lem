@@ -1,10 +1,10 @@
-(defpackage :lem.popup-window
+(defpackage :lem/popup-window
   (:use :cl :lem)
   (:export :get-focus-item
            :apply-print-spec)
   #+sbcl
   (:lock t))
-(in-package :lem.popup-window)
+(in-package :lem/popup-window)
 
 (defconstant +border-size+ 1)
 (defconstant +min-width+   3)

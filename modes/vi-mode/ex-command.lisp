@@ -103,7 +103,7 @@
               (flet ((rep (start end count)
                        (lem:with-point ((s start)
                                         (e end))
-                         (lem.isearch::query-replace-internal before
+                         (lem/isearch::query-replace-internal before
                                                               after
                                                               #'lem:search-forward-regexp
                                                               #'lem:search-backward-regexp
@@ -136,4 +136,4 @@
 
 (define-ex-command "^(buffers|ls|files)$" (range argument)
   (declare (ignore range argument))
-  (lem.list-buffers:list-buffers))
+  (lem/list-buffers:list-buffers))

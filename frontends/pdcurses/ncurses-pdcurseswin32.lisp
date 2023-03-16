@@ -53,13 +53,13 @@
 ;; popup window margin setting
 ;;  (extra margin is required to avoid partial loss of popup window display
 ;;   caused by wide characters)
-(setf lem.popup-window::*extra-right-margin* 1)
-(setf lem.popup-window::*extra-width-margin* 1)
+(setf lem/popup-window::*extra-right-margin* 1)
+(setf lem/popup-window::*extra-width-margin* 1)
 
 ;; prompt window margin setting
 ;;  (extra margin is required to avoid partial loss of popup window display
 ;;   caused by wide characters)
-;; (setf lem.prompt-window::*extra-side-margin* 2)
+;; (setf lem/prompt-window::*extra-side-margin* 2)
 
 ;; popup border color for windows
 ;; (it needs subtle adjustments ...)
@@ -477,9 +477,9 @@
                    ((and (<= x disp-x (+ x w -1)) (<= y y1 (+ y h -1)))
                     (lem:with-point ((point (lem:buffer-start-point (lem:window-buffer o))))
                       (when (lem:line-offset point (- y1 y) (- disp-x x))
-                        (let ((button (lem.button:button-at point)))
+                        (let ((button (lem/button:button-at point)))
                           (when button
-                            (lem.button:button-action button)
+                            (lem/button:button-action button)
                             (lem::change-display-size-hook)))))
                     t)
                    (t nil))))

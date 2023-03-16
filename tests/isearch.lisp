@@ -21,7 +21,7 @@ xyz1234
 (deftest replace-string
   (with-current-buffers ()
     (setup-testing-current-buffer *text*)
-    (lem.isearch::query-replace-internal "foo"
+    (lem/isearch::query-replace-internal "foo"
                                          "foobar"
                                          #'search-forward
                                          #'search-backward

@@ -13,10 +13,10 @@
   (:import-from :lem-lsp-mode/context-menu)
   (:local-nicknames (:client :lem-lsp-mode/client))
   (:local-nicknames (:request :lem-language-client/request))
-  (:local-nicknames (:completion :lem.completion-mode))
+  (:local-nicknames (:completion :lem/completion-mode))
   (:local-nicknames (:context-menu :lem-lsp-mode/context-menu))
-  (:local-nicknames (:spinner :lem.loading-spinner))
-  (:local-nicknames (:language-mode :lem.language-mode))
+  (:local-nicknames (:spinner :lem/loading-spinner))
+  (:local-nicknames (:language-mode :lem/language-mode))
   (:export :get-buffer-from-text-document-identifier
            :spec-initialization-options
            :register-lsp-method
@@ -236,7 +236,7 @@
      :keymap *lsp-mode-keymap*
      :enable-hook 'enable-hook)
   (setf (variable-value 'language-mode:completion-spec)
-        (lem.completion-mode:make-completion-spec 'text-document/completion :async t))
+        (lem/completion-mode:make-completion-spec 'text-document/completion :async t))
   (setf (variable-value 'language-mode:find-definitions-function)
         #'find-definitions)
   (setf (variable-value 'language-mode:find-references-function)
@@ -753,23 +753,23 @@
 
 (define-command lsp-document-diagnostics () ()
   (when-let ((diagnostics (buffer-diagnostics (current-buffer))))
-    (lem.sourcelist:with-sourcelist (sourcelist "*Diagnostics*")
+    (lem/sourcelist:with-sourcelist (sourcelist "*Diagnostics*")
       (dolist (diagnostic diagnostics)
-        (lem.sourcelist:append-sourcelist
+        (lem/sourcelist:append-sourcelist
          sourcelist
          (lambda (point)
            (insert-string point (buffer-filename (diagnostic-buffer diagnostic))
-                          :attribute 'lem.sourcelist:title-attribute)
+                          :attribute 'lem/sourcelist:title-attribute)
            (insert-string point ":")
            (insert-string point
                           (princ-to-string (language-mode::xref-position-line-number
                                             (diagnostic-position diagnostic)))
-                          :attribute 'lem.sourcelist:position-attribute)
+                          :attribute 'lem/sourcelist:position-attribute)
            (insert-string point ":")
            (insert-string point
                           (princ-to-string (language-mode::xref-position-charpos
                                             (diagnostic-position diagnostic)))
-                          :attribute 'lem.sourcelist:position-attribute)
+                          :attribute 'lem/sourcelist:position-attribute)
            (insert-string point ":")
            (insert-string point (diagnostic-message diagnostic)))
          (let ((diagnostic diagnostic))
@@ -855,7 +855,7 @@
                                                  (insert-string point " ")))))))
            (process-horizontal-line (point)
              (buffer-start point)
-             (let ((width (lem.popup-window::compute-buffer-width (point-buffer point))))
+             (let ((width (lem/popup-window::compute-buffer-width (point-buffer point))))
                (loop :while (search-forward-regexp point "^-+$")
                      :do (with-point ((start point :right-inserting)
                                       (end point :left-inserting))
@@ -979,8 +979,8 @@
                                   (when-let ((result (contents-to-markdown-buffer documentation)))
                                     (display-message result
                                                      :gravity :adjacent-window
-                                                     :source-window (lem.popup-window::popup-menu-window
-                                                                     lem.popup-window::*popup-menu*)))))))))
+                                                     :source-window (lem/popup-window::popup-menu-window
+                                                                     lem/popup-window::*popup-menu*)))))))))
     (sort-items
      (map 'list
           #'make-completion-item
@@ -1339,7 +1339,7 @@
   (when (or (not (cursor-in-document-highlight-p))
             (not (= (document-highlight-context-last-modified-tick *document-highlight-context*)
                     (buffer-modified-tick (current-buffer))))
-            (mode-active-p (current-buffer) 'lem.isearch:isearch-mode))
+            (mode-active-p (current-buffer) 'lem/isearch:isearch-mode))
     (clear-document-highlight-overlays)
     t))
 
@@ -1576,7 +1576,7 @@
 (defun append-document-symbol-item (sourcelist buffer document-symbol nest-level)
   (let ((selection-range (lsp:document-symbol-selection-range document-symbol))
         (range (lsp:document-symbol-range document-symbol)))
-    (lem.sourcelist:append-sourcelist
+    (lem/sourcelist:append-sourcelist
      sourcelist
      (lambda (point)
        (multiple-value-bind (kind-name attribute)
@@ -1599,7 +1599,7 @@
                                      (make-overlay
                                       (move-to-lsp-position start (lsp:range-start range))
                                       (move-to-lsp-position end (lsp:range-end range))
-                                      'lem.sourcelist::jump-highlight)))))
+                                      'lem/sourcelist::jump-highlight)))))
   (do-sequence
       (document-symbol
        (handler-case (lsp:document-symbol-children document-symbol)
@@ -1607,7 +1607,7 @@
     (append-document-symbol-item sourcelist buffer document-symbol (1+ nest-level))))
 
 (defun display-document-symbol-response (buffer value)
-  (lem.sourcelist:with-sourcelist (sourcelist "*Document Symbol*")
+  (lem/sourcelist:with-sourcelist (sourcelist "*Document Symbol*")
     (do-sequence (item value)
       (append-document-symbol-item sourcelist buffer item 0))))
 

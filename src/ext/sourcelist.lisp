@@ -1,4 +1,4 @@
-(defpackage :lem.sourcelist
+(defpackage :lem/sourcelist
   (:use :cl :lem)
   (:export :title-attribute
            :position-attribute
@@ -8,7 +8,7 @@
            :jump-highlighting)
   #+sbcl
   (:lock t))
-(in-package :lem.sourcelist)
+(in-package :lem/sourcelist)
 
 (define-attribute jump-highlight
   (t :background "cyan"))

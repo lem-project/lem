@@ -1,5 +1,5 @@
 (defpackage :lem-rust-mode
-  (:use :cl :lem :lem.language-mode)
+  (:use :cl :lem :lem/language-mode)
   (:export :*rust-mode-hook*
            :rust-mode
            :rust-format-buffer))
@@ -143,8 +143,8 @@
         (variable-value 'line-comment) "//"
         (variable-value 'insertion-line-comment) "// "
         (variable-value 'tab-width :buffer) 4
-        ;;(variable-value 'find-definitions-function) 'lem.gtags:find-definitions
-        ;;(variable-value 'find-references-function) 'lem.gtags:find-references
+        ;;(variable-value 'find-definitions-function) 'lem/gtags:find-definitions
+        ;;(variable-value 'find-references-function) 'lem/gtags:find-references
         )
   (add-hook (variable-value 'before-save-hook :buffer) 'rust-before-save-hook)
   (add-hook (variable-value 'after-save-hook :buffer) 'rust-after-save-hook)

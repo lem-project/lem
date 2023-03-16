@@ -1,7 +1,7 @@
 #| link : https://daringfireball.net/projects/markdown/syntax |#
 
 (defpackage :lem-markdown-mode
-  (:use :cl :lem :lem.language-mode)
+  (:use :cl :lem :lem/language-mode)
   (:export :*markdown-mode-hook*
            :markdown-mode))
 (in-package :lem-markdown-mode)

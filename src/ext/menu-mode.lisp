@@ -1,11 +1,11 @@
-(defpackage :lem.menu-mode
+(defpackage :lem/menu-mode
   (:use :cl :lem)
   (:export :menu
            :display-menu
            :update-menu)
   #+sbcl
   (:lock t))
-(in-package :lem.menu-mode)
+(in-package :lem/menu-mode)
 
 (define-attribute head-line-attribute
   (:light :background "gray85")

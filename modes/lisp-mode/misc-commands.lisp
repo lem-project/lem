@@ -151,7 +151,7 @@
                              (buffer-directory (current-buffer)))))
               (unless (probe-file filename)
                 (editor-error "~A does not exists" filename))
-              (lem.language-mode:make-xref-location
+              (lem/language-mode:make-xref-location
                :filespec (probe-file filename)
                :position (let ((buffer (find-file-buffer filename
                                                          :temporary t

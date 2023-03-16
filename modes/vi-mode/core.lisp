@@ -1,7 +1,7 @@
 (defpackage :lem-vi-mode.core
   (:use :cl
         :lem
-        :lem.universal-argument)
+        :lem/universal-argument)
   (:export :*enable-hook*
            :*disable-hook*
            :vi-mode

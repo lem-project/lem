@@ -1,11 +1,11 @@
-(defpackage :lem.gtags
-  (:use :cl :lem :lem.language-mode)
+(defpackage :lem/gtags
+  (:use :cl :lem :lem/language-mode)
   (:export :find-definitions
            :find-references
            :gtags-definition-list)
   #+sbcl
   (:lock t))
-(in-package :lem.gtags)
+(in-package :lem/gtags)
 
 (defclass content ()
   ((name
@@ -27,11 +27,11 @@
   (insert-string point (content-name content) :attribute 'xref-content-attribute))
 
 (defmethod xref-insert-content ((content reference-content) point level)
-  (insert-string point (content-file content) :attribute 'lem.sourcelist:title-attribute)
+  (insert-string point (content-file content) :attribute 'lem/sourcelist:title-attribute)
   (insert-string point ":")
   (insert-string point
                  (princ-to-string (content-line-number content))
-                 :attribute 'lem.sourcelist:position-attribute)
+                 :attribute 'lem/sourcelist:position-attribute)
   (insert-string point ":")
   (insert-string point (content-desc content)))
 
@@ -64,7 +64,7 @@
 (defun result-to-xref-locations (text content-name)
   (loop :for (name line-number file desc) :in (parse-global-output text)
         :collect (make-xref-location :filespec (merge-pathnames file (buffer-directory))
-                                     :position (lem.language-mode::make-position line-number 0)
+                                     :position (lem/language-mode::make-position line-number 0)
                                      :content (make-instance content-name
                                                              :name name
                                                              :line-number line-number
@@ -106,20 +106,20 @@
   (let ((max-len (loop :for parts :in parts-list
                        :for name := (parts-name parts)
                        :maximize (+ 3 (length name)))))
-    (lem.sourcelist:with-sourcelist (sourcelist "*gtags-definitions*")
+    (lem/sourcelist:with-sourcelist (sourcelist "*gtags-definitions*")
       (dolist (parts parts-list)
         (let ((name (parts-name parts))
               (file (parts-file parts))
               (linum (parts-line-number parts)))
-          (lem.sourcelist:append-sourcelist
+          (lem/sourcelist:append-sourcelist
            sourcelist
            (lambda (p)
              (insert-string p name)
              (move-to-column p max-len t)
-             (insert-string p file :attribute 'lem.sourcelist:title-attribute)
+             (insert-string p file :attribute 'lem/sourcelist:title-attribute)
              (insert-string p ":")
              (insert-string p (princ-to-string linum)
-                            :attribute 'lem.sourcelist:position-attribute))
+                            :attribute 'lem/sourcelist:position-attribute))
            (lambda (set-buffer-fn)
              (alexandria:when-let ((buffer (or (get-buffer file)
                                                (find-file-buffer

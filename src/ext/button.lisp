@@ -1,4 +1,4 @@
-(defpackage :lem.button
+(defpackage :lem/button
   (:use :cl :lem)
   (:export :button
            :button-start
@@ -11,7 +11,7 @@
            :button-at)
   #+sbcl
   (:lock t))
-(in-package :lem.button)
+(in-package :lem/button)
 
 (defstruct button
   start

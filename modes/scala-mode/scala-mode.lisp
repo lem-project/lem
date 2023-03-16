@@ -1,5 +1,5 @@
 (defpackage :lem-scala-mode
-  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
+  (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
   (:export :scala-mode))
 (in-package :lem-scala-mode)
 

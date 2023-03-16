@@ -1,12 +1,12 @@
-(defpackage :lem.go-back
-  (:use :cl :lem :lem.sourcelist)
+(defpackage :lem/go-back
+  (:use :cl :lem :lem/sourcelist)
   (:export :*max*
            :select-go-back
            :go-back-global
            :go-back)
   #+sbcl
   (:lock t))
-(in-package :lem.go-back)
+(in-package :lem/go-back)
 
 (defparameter *max* 100)
 
@@ -68,10 +68,10 @@
                 (append-sourcelist
                  sourcelist
                  (lambda (point)
-                   (insert-string point filename :attribute 'lem.sourcelist:title-attribute)
+                   (insert-string point filename :attribute 'lem/sourcelist:title-attribute)
                    (insert-string point ":")
                    (insert-string point (princ-to-string linum)
-                                  :attribute 'lem.sourcelist:position-attribute)
+                                  :attribute 'lem/sourcelist:position-attribute)
                    (insert-string point ":")
                    (insert-string point linestr))
                  (lambda (set-buffer-fn)

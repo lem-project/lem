@@ -1,5 +1,5 @@
 (defpackage :lem-json-mode
-  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
+  (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
   (:export :*json-mode-hook*
            :json-mode))
 (in-package :lem-json-mode)

@@ -1,6 +1,6 @@
 #| link : http://pubs.opengroup.org/onlinepubs/9699919799/utilities/V3_chap02.html |#
 (defpackage :lem-posix-shell-mode
-  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
+  (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
   (:export :*posix-shell-mode-hook*
            :posix-shell-mode))
 (in-package :lem-posix-shell-mode)

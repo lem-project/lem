@@ -4,7 +4,7 @@ link : https://github.com/kmuto/review/blob/master/doc/format.ja.md
 |#
 
 (defpackage :lem-review-mode
-  (:use :cl :lem :lem.language-mode)
+  (:use :cl :lem :lem/language-mode)
   (:export :*review-mode-hook*
            :review-mode))
 (in-package :lem-review-mode)

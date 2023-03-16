@@ -1,5 +1,5 @@
 (defpackage :lem-patch-mode
-  (:use :cl :lem :lem.language-mode)
+  (:use :cl :lem :lem/language-mode)
   (:export :*patch-mode-hook*
            :patch-mode))
 (in-package :lem-patch-mode)

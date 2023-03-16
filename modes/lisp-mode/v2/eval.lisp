@@ -50,7 +50,7 @@
   (clear-eval-results (current-buffer)))
 
 (define-command lisp/interrupt () ()
-  (dolist (spinner (lem.loading-spinner:get-line-spinners (current-point)))
+  (dolist (spinner (lem/loading-spinner:get-line-spinners (current-point)))
     (execute-command (get-client (current-buffer))
                      "cl-lsp.interrupt"
                      (spinner-eval-id spinner))))
@@ -80,7 +80,7 @@
         (buffer-eval-result-overlays buffer)))
 
 (defun spinner-eval-id (spinner)
-  (lem.loading-spinner:spinner-value spinner 'eval-id))
+  (lem/loading-spinner:spinner-value spinner 'eval-id))
 
 (defun register-eval-spinner (buffer id spinner)
   (let ((hash-table
@@ -96,15 +96,15 @@
   (remhash id (buffer-value buffer 'eval-loading-spinner)))
 
 (defun start-eval-spinner (start end id)
-  (let ((spinner (lem.loading-spinner:start-loading-spinner :region :start start :end end)))
-    (setf (lem.loading-spinner:spinner-value spinner 'eval-id) id)
+  (let ((spinner (lem/loading-spinner:start-loading-spinner :region :start start :end end)))
+    (setf (lem/loading-spinner:spinner-value spinner 'eval-id) id)
     (register-eval-spinner (point-buffer start) id spinner)
     spinner))
 
 (defun stop-eval-spinner (buffer id)
   (let ((spinner (get-eval-spinner buffer id)))
     (remove-eval-spinner buffer id)
-    (lem.loading-spinner:stop-loading-spinner spinner)))
+    (lem/loading-spinner:stop-loading-spinner spinner)))
 
 (defun start-eval (params)
   (with-accessors ((range start-eval-params-range)
@@ -131,7 +131,7 @@
                   (alexandria:when-let* ((buffer (get-buffer-from-text-document-identifier
                                                   text-document-identifier))
                                          (spinner (get-eval-spinner buffer id)))
-                    (lem.loading-spinner:with-line-spinner-points (start end spinner)
+                    (lem/loading-spinner:with-line-spinner-points (start end spinner)
                       (stop-eval-spinner buffer id)
                       (let ((popup-overlay
                               (make-overlay start

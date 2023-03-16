@@ -1,5 +1,5 @@
 (defpackage :lem-nim-mode
-  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
+  (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
   (:export :*nim-mode-hook*
            :nim-mode)
   #+sbcl

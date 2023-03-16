@@ -1,8 +1,8 @@
 (defpackage :lem-vi-mode.commands
   (:use :cl
         :lem
-        :lem.universal-argument
-        :lem.show-paren
+        :lem/universal-argument
+        :lem/show-paren
         :lem-vi-mode.core
         :lem-vi-mode.word
         :lem-vi-mode.visual
@@ -576,25 +576,25 @@
 
 (define-command vi-search-forward () ()
   (with-jump-motion
-    (lem.isearch:isearch-forward-regexp "/")))
+    (lem/isearch:isearch-forward-regexp "/")))
 
 (define-command vi-search-backward () ()
   (with-jump-motion
-    (lem.isearch:isearch-backward-regexp "?")))
+    (lem/isearch:isearch-backward-regexp "?")))
 
 (define-command vi-search-next (n) ("p")
   (with-jump-motion
-    (dotimes (i n) (lem.isearch:isearch-next))))
+    (dotimes (i n) (lem/isearch:isearch-next))))
 
 (define-command vi-search-previous (n) ("p")
   (with-jump-motion
-    (dotimes (i n) (lem.isearch:isearch-prev))))
+    (dotimes (i n) (lem/isearch:isearch-prev))))
 
 (define-command vi-search-forward-symbol-at-point () ()
   (with-jump-motion
-    (lem.isearch:isearch-forward-symbol-at-point)
-    (lem.isearch:isearch-finish)
-    (lem.isearch:isearch-next)))
+    (lem/isearch:isearch-forward-symbol-at-point)
+    (lem/isearch:isearch-finish)
+    (lem/isearch:isearch-next)))
 
 (define-command vi-goto-first-line () ()
   (with-jump-motion

@@ -1,5 +1,5 @@
 (defpackage :lem-ocaml-mode
-  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
+  (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
   (:export :*ocaml-mode-hook*
            :ocaml-mode))
 (in-package :lem-ocaml-mode)

@@ -1,5 +1,5 @@
 (defpackage :lem-yaml-mode
-  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
+  (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
   (:export :*yaml-mode-hook*
            :yaml-mode))
 (in-package :lem-yaml-mode)

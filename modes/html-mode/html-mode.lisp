@@ -1,7 +1,7 @@
 (defpackage #:lem-html-mode
   (:use #:cl
         #:lem
-        #:lem.language-mode)
+        #:lem/language-mode)
   (:import-from #:lem-xml-mode
                 #:xml-mode
                 #:*xml-open-tag-p*

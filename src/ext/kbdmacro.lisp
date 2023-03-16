@@ -1,4 +1,4 @@
-(defpackage :lem.kbdmacro
+(defpackage :lem/kbdmacro
   (:use :cl :lem)
   (:export
    :kbdmacro-start
@@ -7,7 +7,7 @@
    :apply-macro-to-region-lines)
   #+sbcl
   (:lock t))
-(in-package :lem.kbdmacro)
+(in-package :lem/kbdmacro)
 
 (defvar *last-macro-chars* nil)
 (defvar *macro-running-p* nil)

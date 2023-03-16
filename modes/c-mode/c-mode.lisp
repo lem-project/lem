@@ -1,5 +1,5 @@
 (defpackage :lem-c-mode
-  (:use :cl :lem :lem.language-mode)
+  (:use :cl :lem :lem/language-mode)
   (:export :*c-mode-hook*
            :c-mode)
   #+sbcl
@@ -35,12 +35,12 @@
   (setf (variable-value 'end-of-defun-function) 'c-end-of-defun)
   (setf (variable-value 'line-comment) "//")
   (setf (variable-value 'insertion-line-comment) "// ")
-  (setf (variable-value 'find-definitions-function) 'lem.gtags:find-definitions)
-  (setf (variable-value 'find-references-function) 'lem.gtags:find-references))
+  (setf (variable-value 'find-definitions-function) 'lem/gtags:find-definitions)
+  (setf (variable-value 'find-references-function) 'lem/gtags:find-references))
 (add-hook *c-mode-hook* 'guess-offset)
 
 (define-key *c-mode-keymap* "}" 'c-electric-brace)
-(define-key *c-mode-keymap* "C-c @" 'lem.gtags:gtags-definition-list)
+(define-key *c-mode-keymap* "C-c @" 'lem/gtags:gtags-definition-list)
 (define-key *c-mode-keymap* "M-C-q" 'c-indent-exp)
 
 (define-command c-electric-brace () ()

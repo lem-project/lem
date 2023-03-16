@@ -1,10 +1,10 @@
-(defpackage :lem.prompt-window
+(defpackage :lem/prompt-window
   (:use :cl :lem)
   (:import-from :alexandria
                 :when-let)
   #+sbcl
   (:lock t))
-(in-package :lem.prompt-window)
+(in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)
 (defconstant +min-width+   3)
@@ -123,7 +123,7 @@
 (define-command prompt-completion () ()
   (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
     (with-point ((start (current-prompt-start-point)))
-      (lem.completion-mode:run-completion
+      (lem/completion-mode:run-completion
        (lambda (point)
          (with-point ((start start)
                       (end point))
@@ -133,10 +133,10 @@
              (loop :for item :in items
                    :when (typecase item
                            (string
-                            (lem.completion-mode:make-completion-item :label item
+                            (lem/completion-mode:make-completion-item :label item
                                                                       :start start
                                                                       :end end))
-                           (lem.completion-mode:completion-item
+                           (lem/completion-mode:completion-item
                             item))
                    :collect :it))))))))
 
@@ -152,9 +152,9 @@
         (replace-if-history-exists #'lem/common/history:restore-edit-string))))
 
 (defun compute-window-rectangle (buffer &key gravity source-window)
-  (destructuring-bind (width height) (lem.popup-window::compute-size-from-buffer buffer)
-    (lem.popup-window::compute-popup-window-rectangle
-     (lem.popup-window::ensure-gravity gravity)
+  (destructuring-bind (width height) (lem/popup-window::compute-size-from-buffer buffer)
+    (lem/popup-window::compute-popup-window-rectangle
+     (lem/popup-window::ensure-gravity gravity)
      :source-window source-window
      ;; Find File: <file-name>|
      ;;                       ^ ここにカーソルがあるとき、widthは1つ余分に幅が必要
@@ -368,7 +368,7 @@
               (let ((label (tail-of-pathname filename)))
                 (with-point ((s (current-prompt-start-point))
                              (e (current-prompt-start-point)))
-                  (lem.completion-mode:make-completion-item
+                  (lem/completion-mode:make-completion-item
                    :label label
                    :start (move-to-file-start s)
                    :end (line-end e)))))
@@ -378,7 +378,7 @@
   (loop :for buffer :in (completion-buffer string)
         :collect (with-point ((s (current-prompt-start-point))
                               (e (current-prompt-start-point)))
-                   (lem.completion-mode:make-completion-item
+                   (lem/completion-mode:make-completion-item
                     :detail (alexandria:if-let (filename (buffer-filename buffer))
                               (enough-namestring filename (probe-file "./"))
                               "")

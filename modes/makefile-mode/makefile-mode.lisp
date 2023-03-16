@@ -1,5 +1,5 @@
 (defpackage :lem-makefile-mode
-  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
+  (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
   (:import-from #:ppcre
                 #:parse-string)
   (:export :*makefile-mode-hook*

@@ -1,5 +1,5 @@
-(defpackage :lem.language-mode
-  (:use :cl :lem :lem.sourcelist)
+(defpackage :lem/language-mode
+  (:use :cl :lem :lem/sourcelist)
   (:export
    :*language-mode-keymap*
    :language-mode
@@ -38,7 +38,7 @@
    :buffer-root-directory)
   #+sbcl
   (:lock t))
-(in-package :lem.language-mode)
+(in-package :lem/language-mode)
 
 (define-editor-variable idle-function nil)
 (define-editor-variable beginning-of-defun-function nil)
@@ -424,7 +424,7 @@
 
 (define-command complete-symbol () ()
   (alexandria:when-let (completion (variable-value 'completion-spec :buffer))
-    (lem.completion-mode:run-completion completion)))
+    (lem/completion-mode:run-completion completion)))
 
 (define-command indent-line-and-complete-symbol () ()
   (if (variable-value 'calc-indent-function :buffer)
@@ -510,4 +510,4 @@
          (symbol-string (or (symbol-string-at-point (current-point)) ""))
          (query (prompt-for-string (format nil "(Directory: ~A) " directory)
                                    :initial-value (format nil "git grep -nH ~A" symbol-string))))
-    (lem.grep:grep query directory)))
+    (lem/grep:grep query directory)))

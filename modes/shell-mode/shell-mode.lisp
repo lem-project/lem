@@ -29,16 +29,16 @@
     (:name "Shell"
      :keymap *run-shell-mode-keymap*)
   (reset-listener-variable (current-buffer))
-  (lem.listener-mode:start-listener-mode))
+  (lem/listener-mode:start-listener-mode))
 
 (defun reset-listener-variable (buffer)
-  (setf (variable-value 'lem.listener-mode:listener-set-prompt-function :buffer buffer)
+  (setf (variable-value 'lem/listener-mode:listener-set-prompt-function :buffer buffer)
         #'identity
-        (variable-value 'lem.listener-mode:listener-check-input-function :buffer buffer)
+        (variable-value 'lem/listener-mode:listener-check-input-function :buffer buffer)
         (constantly t)
-        (variable-value 'lem.listener-mode:listener-execute-function :buffer buffer)
+        (variable-value 'lem/listener-mode:listener-execute-function :buffer buffer)
         'execute-input
-        (variable-value 'lem.listener-mode:listener-prompt-attribute :buffer buffer)
+        (variable-value 'lem/listener-mode:listener-prompt-attribute :buffer buffer)
         nil))
 
 (defun execute-input (point string)
@@ -70,7 +70,7 @@
     (buffer-end point)
     (lem-lisp-mode::insert-escape-sequence-string point string)
     ;; (insert-string point string)
-    (lem.listener-mode:refresh-prompt buffer nil)))
+    (lem/listener-mode:refresh-prompt buffer nil)))
 
 (defun run-shell-internal ()
   (create-shell-buffer

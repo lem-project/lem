@@ -1,4 +1,4 @@
-(defpackage :lem.completion-mode
+(defpackage :lem/completion-mode
   (:use :cl :lem)
   (:export :make-completion-spec
            :make-completion-item
@@ -8,7 +8,7 @@
            :run-completion)
   #+sbcl
   (:lock t))
-(in-package :lem.completion-mode)
+(in-package :lem/completion-mode)
 
 (defparameter *limit-number-of-items* 100)
 
@@ -128,7 +128,7 @@
                  :label-width
                  (compute-label-width items)))
 
-(defmethod lem.popup-window:apply-print-spec ((print-spec print-spec) point item)
+(defmethod lem/popup-window:apply-print-spec ((print-spec print-spec) point item)
   (insert-string point " ")
   (insert-string point (completion-item-label item))
   (loop :for (offset-start . offset-end) :in (completion-item-chunks item)
@@ -149,7 +149,7 @@
   (popup-menu-quit))
 
 (defun call-focus-action ()
-  (alexandria:when-let* ((item (lem.popup-window:get-focus-item))
+  (alexandria:when-let* ((item (lem/popup-window:get-focus-item))
                          (fn (completion-item-focus-action item)))
     (funcall fn)))
 

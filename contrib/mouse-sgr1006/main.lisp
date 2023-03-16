@@ -78,9 +78,9 @@
                ((and (<= x x1 (+ x w -1)) (<= y y1 (+ y h -1)))
                 (lem:with-point ((point (lem:buffer-start-point (lem:window-buffer o))))
                   (when (lem:line-offset point (- y1 y) (- x1 x))
-                    (let ((button (lem.button:button-at point)))
+                    (let ((button (lem/button:button-at point)))
                       (when button
-                        (lem.button:button-action button)
+                        (lem/button:button-action button)
                         (lem::change-display-size-hook)))))
                 t)
                (t nil))))

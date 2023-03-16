@@ -1,6 +1,6 @@
 (in-package :lem-capi)
 
-(defclass menu (lem.menu-mode:menu)
+(defclass menu (lem/menu-mode:menu)
   ((panel
     :initarg :panel
     :accessor menu-panel)))
@@ -11,12 +11,12 @@
                          :filter t
                          :columns (mapcar (lambda (column)
                                             `(:title ,column))
-                                          (lem.menu-mode::menu-columns menu))
-                         :items (lem.menu-mode::menu-items menu)
-                         :column-function (lem.menu-mode::menu-column-function menu)
+                                          (lem/menu-mode::menu-columns menu))
+                         :items (lem/menu-mode::menu-items menu)
+                         :column-function (lem/menu-mode::menu-column-function menu)
                          :callback-type :data
                          :action-callback (lambda (item)
-                                            (let ((result (funcall (lem.menu-mode::menu-select-callback menu)
+                                            (let ((result (funcall (lem/menu-mode::menu-select-callback menu)
                                                                    menu item)))
                                               (when (lem:bufferp result)
                                                 (lem:switch-to-buffer result)
@@ -28,8 +28,8 @@
                       name
                       multi-column-list-panel
                       (lambda ()
-                        (when-let (items (funcall (lem.menu-mode::menu-update-items-function menu)))
-                          (lem.menu-mode:update-menu menu items))))
+                        (when-let (items (funcall (lem/menu-mode::menu-update-items-function menu)))
+                          (lem/menu-mode:update-menu menu items))))
       (change-to-tab *lem-panel* name))))
 
 (defmethod lem-if:update-menu ((implementation capi-impl) menu items)

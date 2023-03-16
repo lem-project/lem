@@ -1,4 +1,4 @@
-(defpackage :lem.listener-mode
+(defpackage :lem/listener-mode
   (:use :cl :lem)
   (:export
    ;; keymap
@@ -25,7 +25,7 @@
    :listener-clear-input)
   #+sbcl
   (:lock t))
-(in-package :lem.listener-mode)
+(in-package :lem/listener-mode)
 
 (define-attribute listener-prompt-attribute
   (:light :foreground "blue" :bold-p t)

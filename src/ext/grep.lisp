@@ -1,9 +1,9 @@
-(defpackage :lem.grep
+(defpackage :lem/grep
   (:use :cl :lem)
   (:export :grep)
   #+sbcl
   (:lock t))
-(in-package :lem.grep)
+(in-package :lem/grep)
 
 (defvar *syntax-table*
   (let ((table (make-syntax-table))
@@ -12,14 +12,14 @@
                                 (make-tm-match
                                  "^(.*?):(\\d+):(\\d+):(?:.*)"
                                  :captures (vector nil
-                                                   (make-tm-name 'lem.sourcelist:title-attribute)
-                                                   (make-tm-name 'lem.sourcelist:position-attribute)
-                                                   (make-tm-name 'lem.sourcelist:position-attribute)))
+                                                   (make-tm-name 'lem/sourcelist:title-attribute)
+                                                   (make-tm-name 'lem/sourcelist:position-attribute)
+                                                   (make-tm-name 'lem/sourcelist:position-attribute)))
                                 (make-tm-match
                                  "^(.*?):(\\d+):(?:.*)"
                                  :captures (vector nil
-                                                   (make-tm-name 'lem.sourcelist:title-attribute)
-                                                   (make-tm-name 'lem.sourcelist:position-attribute)))))))
+                                                   (make-tm-name 'lem/sourcelist:title-attribute)
+                                                   (make-tm-name 'lem/sourcelist:position-attribute)))))))
     (set-syntax-parser table tmlanguage)
     table))
 
@@ -76,7 +76,7 @@
     string))
 
 (defun grep-with-string (buffer-name directory revert-fun output-text)
-  (lem.sourcelist:with-sourcelist (sourcelist buffer-name :read-only-p nil :enable-undo-p t)
+  (lem/sourcelist:with-sourcelist (sourcelist buffer-name :read-only-p nil :enable-undo-p t)
     (let* ((buffer (get-buffer buffer-name))
            (point (buffer-point buffer)))
       (setf (buffer-value buffer 'grep) t)
@@ -91,7 +91,7 @@
             (line-end end)
             (alexandria:when-let ((fn (make-jump-function directory (line-string start))))
               (put-text-property start end 'old-string (line-string start))
-              (lem.sourcelist:append-jump-function sourcelist start end fn)))
+              (lem/sourcelist:append-jump-function sourcelist start end fn)))
           (unless (line-offset p 1) (return))))
       (change-buffer-mode buffer 'grep-mode)))
   (redraw-display))

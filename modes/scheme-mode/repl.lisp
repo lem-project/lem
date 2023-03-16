@@ -6,14 +6,14 @@
   (cond
     ((or (eq (scheme-repl-type :kind :current) :scheme-process)
          (eq (scheme-repl-type :kind :current) :scheme-slime))
-     (lem.listener-mode:start-listener-mode)
+     (lem/listener-mode:start-listener-mode)
      (when (eq (scheme-repl-type :kind :current) :scheme-process)
        ;; disable listener-mode functions
-       (setf (variable-value 'lem.listener-mode:listener-set-prompt-function)
+       (setf (variable-value 'lem/listener-mode:listener-set-prompt-function)
              #'(lambda (point) point)
-             (variable-value 'lem.listener-mode:listener-check-input-function)
+             (variable-value 'lem/listener-mode:listener-check-input-function)
              #'(lambda (point) (declare (ignore point)))
-             (variable-value 'lem.listener-mode:listener-execute-function)
+             (variable-value 'lem/listener-mode:listener-execute-function)
              #'(lambda (point string) (declare (ignore point string)))))
      (repl-reset-input)
      (setf *write-string-function* 'write-string-to-repl)
@@ -58,7 +58,7 @@
 (define-command start-scheme-repl () ()
   (case (scheme-repl-type :kind :initial)
     ((:scheme-slime)
-     (lem.listener-mode:listener-start "*scheme-repl*" 'scheme-repl-mode))
+     (lem/listener-mode:listener-start "*scheme-repl*" 'scheme-repl-mode))
     ((:scheme-process)
      (scheme-run-process)
      (setf (current-window) (pop-to-buffer (scheme-process-buffer))))
@@ -75,22 +75,22 @@
   (cond
     ((eq (scheme-repl-type :kind :current) :scheme-slime)
      (check-connection)
-     (lem.listener-mode:listener-return))
+     (lem/listener-mode:listener-return))
     ((and (eq (scheme-repl-type :kind :current) :scheme-process)
-          (point<= (lem.listener-mode:input-start-point (current-buffer))
+          (point<= (lem/listener-mode:input-start-point (current-buffer))
                    (current-point))
           (repl-paren-correspond-p (current-point)))
      (let ((str (points-to-string
-                 (lem.listener-mode:input-start-point (current-buffer))
+                 (lem/listener-mode:input-start-point (current-buffer))
                  (current-point))))
-       (lem/common/history:add-history (lem.listener-mode::current-listener-history) str)
+       (lem/common/history:add-history (lem/listener-mode::current-listener-history) str)
        (scheme-run-process-and-output-newline)
        (scheme-send-input str)))
     (t
      (insert-character (current-point) #\newline))))
 
 (defun repl-paren-correspond-p (point)
-  (with-point ((start (lem.listener-mode:input-start-point
+  (with-point ((start (lem/listener-mode:input-start-point
                        (point-buffer point))))
     (let ((state (parse-partial-sexp start point)))
       (and (not (member (lem-base::pps-state-type state)
@@ -157,7 +157,7 @@
        (scheme-eval-from-string
         (format nil "(swank:load-file ~S)" filename))
        ;(when (repl-buffer)
-       ;  (lem.listener-mode:refresh-prompt (repl-buffer)))
+       ;  (lem/listener-mode:refresh-prompt (repl-buffer)))
        (message "Loaded")))
     ((eq (scheme-repl-type :kind :initial) :scheme-process)
      (scheme-run-process-and-output-newline)
@@ -212,7 +212,7 @@
     ((or (eq (scheme-repl-type :kind :current) :scheme-process)
          (eq (scheme-repl-type :kind :current) :scheme-slime))
      (with-point ((point (current-point)))
-       (if (point>= (lem.listener-mode:input-start-point (current-buffer)) point)
+       (if (point>= (lem/listener-mode:input-start-point (current-buffer)) point)
            (let ((fun (prompt-for-shortcuts)))
              (when fun
                (funcall fun n)))
@@ -250,23 +250,23 @@
 (defun repl-reset-input ()
   (let ((buffer (repl-buffer)))
     (when buffer
-      (setf (variable-value 'lem.listener-mode:listener-set-prompt-function :buffer buffer)
+      (setf (variable-value 'lem/listener-mode:listener-set-prompt-function :buffer buffer)
             'repl-set-prompt
-            (variable-value 'lem.listener-mode:listener-check-input-function :buffer buffer)
+            (variable-value 'lem/listener-mode:listener-check-input-function :buffer buffer)
             'repl-paren-correspond-p
-            (variable-value 'lem.listener-mode:listener-execute-function :buffer buffer)
+            (variable-value 'lem/listener-mode:listener-execute-function :buffer buffer)
             'repl-eval))))
 
 (defun repl-change-read-line-input ()
-  (setf (variable-value 'lem.listener-mode:listener-set-prompt-function)
+  (setf (variable-value 'lem/listener-mode:listener-set-prompt-function)
         #'identity
-        (variable-value 'lem.listener-mode:listener-check-input-function)
+        (variable-value 'lem/listener-mode:listener-check-input-function)
         (constantly t)
-        (variable-value 'lem.listener-mode:listener-execute-function)
+        (variable-value 'lem/listener-mode:listener-execute-function)
         'repl-read-line))
 
 (defun clear-repl ()
-  (lem.listener-mode:clear-listener (repl-buffer)))
+  (lem/listener-mode:clear-listener (repl-buffer)))
 
 (defun get-repl-window ()
   (let* ((buffer (repl-buffer)))
@@ -288,7 +288,7 @@
          (let* ((xref-loc (source-location-to-xref-location location))
                 (offset (xref-location-position xref-loc)))
            (with-point ((start (buffer-point buffer)))
-             (move-point start (lem.listener-mode:input-start-point buffer))
+             (move-point start (lem/listener-mode:input-start-point buffer))
              (form-offset start -1)
              (character-offset start (if (plusp offset) (1- offset) offset))
              (with-point ((end start))
@@ -350,7 +350,7 @@
        string
        (lambda (value)
          (declare (ignore value))
-         (lem.listener-mode:refresh-prompt (repl-buffer))
+         (lem/listener-mode:refresh-prompt (repl-buffer))
          (when *record-history-of-repl*
            (start-timer (make-idle-timer
                          (lambda ()
@@ -370,7 +370,7 @@
     (push tag (read-string-tag-stack))
     (setf (current-window) (pop-to-buffer buffer))
     (buffer-end (current-point))
-    (lem.listener-mode:change-input-start-point (current-point))
+    (lem/listener-mode:change-input-start-point (current-point))
     (repl-change-read-line-input)))
 
 (defun repl-pop-stack ()
@@ -404,7 +404,7 @@
       (when (text-property-at start :field -1)
         (insert-character start #\newline))
       (insert-escape-sequence-string (buffer-end-point buffer) string))
-    (lem.listener-mode:change-input-start-point (buffer-end-point buffer))
+    (lem/listener-mode:change-input-start-point (buffer-end-point buffer))
     (buffer-end (buffer-point buffer))
     (alexandria:when-let ((window (get-repl-window)))
       (with-current-window window

@@ -1,5 +1,5 @@
 (defpackage :lem-xml-mode
-  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
+  (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
   (:import-from :cl-ppcre
                 :scan
                 :all-matches-as-strings)

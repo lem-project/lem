@@ -1,9 +1,9 @@
-(defpackage :lem.rectangle
+(defpackage :lem/rectangle
   (:use :cl :lem)
   (:export)
   #+sbcl
   (:lock t))
-(in-package :lem.rectangle)
+(in-package :lem/rectangle)
 
 (defvar *mark-point* nil)
 (defvar *overlays* '())

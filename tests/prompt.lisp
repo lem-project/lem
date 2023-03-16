@@ -11,4 +11,4 @@
     (ok (equal #\a
                (lem:prompt-for-character
                 "test: "
-                :gravity (make-instance 'lem.popup-window::gravity-cursor))))))
+                :gravity (make-instance 'lem/popup-window::gravity-cursor))))))

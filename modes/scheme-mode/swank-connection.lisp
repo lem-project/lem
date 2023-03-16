@@ -64,8 +64,8 @@
               "")))
 
 (define-command scheme-connection-list () ()
-  (lem.menu-mode:display-menu
-   (make-instance 'lem.menu-mode:menu
+  (lem/menu-mode:display-menu
+   (make-instance 'lem/menu-mode:menu
                   :columns '(" " "hostname" "port" "pid" "name" "version" "command")
                   :items *connection-list*
                   :column-function (lambda (c)
@@ -78,7 +78,7 @@
                                            (connection-command c)))
                   :select-callback (lambda (menu c)
                                      (change-current-connection c)
-                                     (lem.menu-mode:update-menu menu *connection-list*)
+                                     (lem/menu-mode:update-menu menu *connection-list*)
                                      :close)
                   :update-items-function (lambda () *connection-list*))
    :name "Scheme Connections"))
@@ -293,7 +293,7 @@
              (scheme-eval `(swank:set-package ,package-name))
            (new-package name prompt-string)
            (when (repl-buffer)
-             (lem.listener-mode:refresh-prompt (repl-buffer)))))
+             (lem/listener-mode:refresh-prompt (repl-buffer)))))
         (t
          (check-scheme-mode)
          (setf (buffer-value (current-buffer) "package") package-name))))
@@ -466,7 +466,7 @@
             ((trivia:property :location location)
              (when (source-location-to-xref-location location nil t)
                (return t)))))
-    (lem.sourcelist:with-sourcelist (sourcelist "*scheme-compilations*")
+    (lem/sourcelist:with-sourcelist (sourcelist "*scheme-compilations*")
       (dolist (note notes)
         (trivia:match note
           ((and (trivia:property :location location)
@@ -476,13 +476,13 @@
              (let* ((name (xref-filespec-to-filename (xref-location-filespec xref-location)))
                     (pos (xref-location-position xref-location))
                     (buffer (xref-filespec-to-buffer (xref-location-filespec xref-location))))
-               (lem.sourcelist:append-sourcelist
+               (lem/sourcelist:append-sourcelist
                 sourcelist
                 (lambda (cur-point)
-                  (insert-string cur-point name :attribute 'lem.sourcelist:title-attribute)
+                  (insert-string cur-point name :attribute 'lem/sourcelist:title-attribute)
                   (insert-string cur-point ":")
                   (insert-string cur-point (princ-to-string pos)
-                                 :attribute 'lem.sourcelist:position-attribute)
+                                 :attribute 'lem/sourcelist:position-attribute)
                   (insert-string cur-point ":")
                   (insert-character cur-point #\newline 1)
                   (insert-string cur-point message)

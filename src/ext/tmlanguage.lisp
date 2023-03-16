@@ -1,9 +1,9 @@
-(defpackage :lem.tmlanguage
+(defpackage :lem/tmlanguage
   (:use :cl :lem)
   (:export :load-tmlanguage)
   #+sbcl
   (:lock t))
-(in-package :lem.tmlanguage)
+(in-package :lem/tmlanguage)
 
 (defun name-to-attribute (name)
   (let* ((pos (position #\. name))

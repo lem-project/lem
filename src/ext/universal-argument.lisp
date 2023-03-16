@@ -1,4 +1,4 @@
-(defpackage :lem.universal-argument
+(defpackage :lem/universal-argument
   (:use :cl :lem)
   (:export :*base*
            :*universal-argument-keymap*
@@ -18,7 +18,7 @@
            :universal-argument-minus)
   #+sbcl
   (:lock t))
-(in-package :lem.universal-argument)
+(in-package :lem/universal-argument)
 
 (defparameter *base* 4)
 

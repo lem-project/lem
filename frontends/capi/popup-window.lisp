@@ -50,7 +50,7 @@
     (multiple-value-bind (char-width char-height)
         (window-pane-char-size window-pane)
       (multiple-value-bind (buffer width height)
-          (lem.popup-window::make-popup-buffer text)
+          (lem/popup-window::make-popup-buffer text)
         (let ((lw-buffer (editor:make-buffer "temp" :temporary t)))
           (editor:insert-string (editor:buffer-point lw-buffer)
                                 (lem:points-to-string (lem:buffer-start-point buffer)

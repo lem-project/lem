@@ -1,9 +1,9 @@
-(defpackage :lem.auto-save
+(defpackage :lem/auto-save
   (:use :cl :lem)
   (:export :*make-backup-files*)
   #+sbcl
   (:lock t))
-(in-package :lem.auto-save)
+(in-package :lem/auto-save)
 
 (define-editor-variable auto-save-checkpoint-frequency 5)
 (define-editor-variable auto-save-key-count-threshold 256)

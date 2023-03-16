@@ -1,10 +1,10 @@
 (defpackage :lem-go-mode
   (:use :cl
         :lem
-        :lem.completion-mode
-        :lem.language-mode)
+        :lem/completion-mode
+        :lem/language-mode)
   (:import-from
-   :lem.tmlanguage
+   :lem/tmlanguage
    :load-tmlanguage)
   (:export :gofmt
            :*go-mode-hook*
@@ -205,7 +205,7 @@
       ("(.+):(\\d+):(\\d+)" output)
     (when (and filename line-number charpos)
       (make-xref-location :filespec filename
-                          :position (lem.language-mode::make-position
+                          :position (lem/language-mode::make-position
                                      (parse-integer line-number)
                                      (1- (parse-integer charpos)))))))
 

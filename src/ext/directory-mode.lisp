@@ -1,8 +1,8 @@
-(defpackage :lem.directory-mode
+(defpackage :lem/directory-mode
   (:use :cl :lem)
   #+sbcl
   (:lock t))
-(in-package :lem.directory-mode)
+(in-package :lem/directory-mode)
 
 (define-attribute header-attribute
   (:light :foreground "dark green")
@@ -337,20 +337,20 @@
 
 (defun query-replace-marked-files (query-function)
   (destructuring-bind (before after)
-      (lem.isearch:read-query-replace-args)
+      (lem/isearch:read-query-replace-args)
     (dolist (file (marked-files (current-point)))
       (find-file file)
       (buffer-start (current-point))
       (funcall query-function before after))))
 
 (define-command directory-mode-query-replace () ()
-  (query-replace-marked-files 'lem.isearch:query-replace))
+  (query-replace-marked-files 'lem/isearch:query-replace))
 
 (define-command directory-mode-query-replace-regexp () ()
-  (query-replace-marked-files 'lem.isearch:query-replace-regexp))
+  (query-replace-marked-files 'lem/isearch:query-replace-regexp))
 
 (define-command directory-mode-query-replace-symbol () ()
-  (query-replace-marked-files 'lem.isearch:query-replace-symbol))
+  (query-replace-marked-files 'lem/isearch:query-replace-symbol))
 
 (define-command directory-mode-delete-files () ()
   (when (prompt-for-y-or-n-p "Really delete files")

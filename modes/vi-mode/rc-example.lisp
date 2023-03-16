@@ -2,7 +2,7 @@
 
 ;;; vi-mode
 (define-key lem-vi-mode:*command-keymap* "q" 'quit-active-window)
-(define-key lem-vi-mode:*insert-keymap* "C-n" 'lem.abbrev:abbrev-with-pop-up-window)
+(define-key lem-vi-mode:*insert-keymap* "C-n" 'lem/abbrev:abbrev-with-pop-up-window)
 
 (add-hook lem-vi-mode:*enable-hook*
           (lambda ()

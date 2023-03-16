@@ -1,8 +1,8 @@
 (defpackage :lem-scheme-mode
   (:use :cl
         :lem
-        :lem.completion-mode
-        :lem.language-mode
+        :lem/completion-mode
+        :lem/language-mode
         :lem-scheme-mode.errors
         :lem-scheme-mode.swank-protocol
         :lem-socket-utils)

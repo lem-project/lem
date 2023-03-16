@@ -10,11 +10,11 @@
 (define-editor-variable escape-delay 100)
 
 ;; popup window margin setting
-(setf lem.popup-window::*extra-right-margin* 1)
-(setf lem.popup-window::*extra-width-margin* 0)
+(setf lem/popup-window::*extra-right-margin* 1)
+(setf lem/popup-window::*extra-width-margin* 0)
 
 ;; prompt window margin setting
-;; (setf lem.prompt-window::*extra-side-margin* 2)
+;; (setf lem/prompt-window::*extra-side-margin* 2)
 
 
 (defclass ncurses (lem:implementation)

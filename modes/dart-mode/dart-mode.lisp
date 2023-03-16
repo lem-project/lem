@@ -1,5 +1,5 @@
 (defpackage :lem-dart-mode
-  (:use :cl :lem :lem.language-mode :lem.language-mode-tools)
+  (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
   (:export :*dart-mode-hook*
            :dart-mode))
 (in-package :lem-dart-mode)

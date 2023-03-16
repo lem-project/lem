@@ -1,8 +1,8 @@
 (defpackage :lem-vi-mode.binds
   (:use :cl
         :lem
-        :lem.universal-argument
-        :lem.abbrev
+        :lem/universal-argument
+        :lem/abbrev
         :lem-vi-mode.core
         :lem-vi-mode.commands
         :lem-vi-mode.ex

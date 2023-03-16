@@ -26,17 +26,17 @@
 (define-command eslint () ()
   (let* ((buffer (current-buffer))
          (notes (parse-eslint-output (run-eslint buffer))))
-    (lem.sourcelist:with-sourcelist (sourcelist "*eslint*")
+    (lem/sourcelist:with-sourcelist (sourcelist "*eslint*")
       (dolist (note notes)
         (destructuring-bind (line-number column description) note
-          (lem.sourcelist:append-sourcelist
+          (lem/sourcelist:append-sourcelist
            sourcelist
            (lambda (point)
              (insert-string point (princ-to-string line-number)
-                            :attribute 'lem.sourcelist:position-attribute)
+                            :attribute 'lem/sourcelist:position-attribute)
              (insert-character point #\:)
              (insert-string point (princ-to-string column)
-                            :attribute 'lem.sourcelist:position-attribute)
+                            :attribute 'lem/sourcelist:position-attribute)
              (insert-character point #\:)
              (insert-string point description))
            (lambda (set-buffer-fn)

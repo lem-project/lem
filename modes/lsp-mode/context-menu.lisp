@@ -42,3 +42,8 @@
                                          (funcall (item-callback item)))
                       :print-spec #'item-label)
   (lsp-context-menu-mode t))
+
+(define-command test-context-menu () ()
+  (display-context-menu (list (make-item :label "foo" :callback (lambda () (message "select foo")))
+                              (make-item :label "bar" :callback (lambda () (message "select bar")))
+                              (make-item :label "baz" :callback (lambda () (message "select baz"))))))

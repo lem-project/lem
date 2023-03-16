@@ -1,4 +1,4 @@
-(defpackage :lem.loading-spinner
+(defpackage :lem/loading-spinner
   (:use :cl :lem :alexandria)
   (:export :spinner-value
            :start-loading-spinner
@@ -7,7 +7,7 @@
            :get-line-spinners)
   #+sbcl
   (:lock t))
-(in-package :lem.loading-spinner)
+(in-package :lem/loading-spinner)
 
 (defconstant +loading-interval+ 80)
 

@@ -1,12 +1,12 @@
-(defpackage :lem.tabbar
-  (:use :cl :lem :lem.button)
+(defpackage :lem/tabbar
+  (:use :cl :lem :lem/button)
   (:export :tabbar-active-tab-attribute
            :tabbar-attribute
            :tabbar-background-attribute
            :tabbar)
   #+sbcl
   (:lock t))
-(in-package :lem.tabbar)
+(in-package :lem/tabbar)
 
 (define-attribute tabbar-active-tab-attribute
   (t :foreground "black" :background "dark gray"))

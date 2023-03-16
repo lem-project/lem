@@ -14,7 +14,7 @@
   (let ((buffer (scheme-process-buffer)))
     (insert-string (buffer-end-point buffer) string)
     (buffer-end (buffer-point buffer))
-    (move-point (lem.listener-mode:input-start-point buffer)
+    (move-point (lem/listener-mode:input-start-point buffer)
                 (buffer-point buffer))))
 
 (defun scheme-output-callback (string)

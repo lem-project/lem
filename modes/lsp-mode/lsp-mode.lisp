@@ -10,11 +10,11 @@
         :lem-lsp-mode/spec)
   (:shadow :execute-command)
   (:import-from :lem-language-client/request)
-  (:import-from :lem-lsp-mode/context-menu)
+  (:import-from :lem/context-menu)
   (:local-nicknames (:client :lem-lsp-mode/client))
   (:local-nicknames (:request :lem-language-client/request))
   (:local-nicknames (:completion :lem/completion-mode))
-  (:local-nicknames (:context-menu :lem-lsp-mode/context-menu))
+  (:local-nicknames (:context-menu :lem/context-menu))
   (:local-nicknames (:spinner :lem/loading-spinner))
   (:local-nicknames (:language-mode :lem/language-mode))
   (:export :get-buffer-from-text-document-identifier

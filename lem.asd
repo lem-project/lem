@@ -79,6 +79,7 @@
                 :components ((:file "popup-window")
                              (:file "completion-mode")
                              (:file "prompt-window")
+                             (:file "context-menu")
                              (:file "tmlanguage")
                              (:file "button")
                              (:file "loading-spinner")

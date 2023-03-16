@@ -7,7 +7,7 @@
                 :register-eval-methods))
 (in-package :lem-lisp-mode/v2/lsp-config)
 
-(defvar *self-connection* nil)
+(defvar *self-connection* t)
 
 (define-language-spec (lisp-spec lem-lisp-mode:lisp-mode)
   :language-id "lisp"

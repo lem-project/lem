@@ -93,10 +93,10 @@
                          (lambda (message code)
                            (send-event (lambda () (jsonrpc-editor-error message code))))))
 
-(defun display-message (text &key (gravity :cursor) source-window)
+(defun display-message (text &key style source-window)
   (when text
     (show-message text
-                  :style `(:gravity ,gravity)
+                  :style style
                   :timeout nil
                   :source-window source-window)))
 
@@ -975,10 +975,12 @@
                                             (unbound-slot () nil))))
                                 (lambda ()
                                   (when-let ((result (contents-to-markdown-buffer documentation)))
-                                    (display-message result
-                                                     :gravity :adjacent-window
-                                                     :source-window (lem/popup-window::popup-menu-window
-                                                                     lem/popup-window::*popup-menu*)))))))))
+                                    (display-message
+                                     result
+                                     :style `(:gravity :adjacent-window
+                                              :offset-y -1 :offset-x 0)
+                                     :source-window (lem/popup-window::popup-menu-window
+                                                     lem/popup-window::*popup-menu*)))))))))
     (sort-items
      (map 'list
           #'make-completion-item

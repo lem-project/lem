@@ -1108,7 +1108,8 @@
                                     (make-text-document-position-arguments point)))
                      :then (lambda (result)
                              (unless (lsp-null-p result)
-                               (display-signature-help result)))))))
+                               (display-signature-help result)
+                               (redraw-display)))))))
 
 (defun lsp-signature-help-with-trigger-character (character)
   (text-document/signature-help

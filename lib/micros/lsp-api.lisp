@@ -108,7 +108,7 @@
 (defun symbol-signature (symbol)
   (let ((*print-case* :downcase))
     (handler-case
-        (princ-to-string (micros::arglist symbol))
+        (princ-to-string (cons symbol (micros::arglist symbol)))
       (error ()
         nil))))
 

@@ -254,6 +254,7 @@
               (lambda (completed-item)
                 (destructuring-bind (label classification signature documentation sort-text)
                     completed-item
+                  (declare (ignore classification))
                   (make-instance 'lsp:completion-item
                                  :label label
                                  :label-details (make-instance 'lsp:completion-item-label-details
@@ -261,7 +262,7 @@
                                                                :detail (if signature
                                                                            (format nil " ~A" signature)
                                                                            ""))
-                                 :detail classification
+                                 :detail (ppcre:regex-replace-all "\\s+" (or signature "") " ")
                                  :text-edit (make-text-edit point label)
                                  :documentation (make-instance 'lsp:markup-content
                                                                :kind lsp:markup-kind-markdown

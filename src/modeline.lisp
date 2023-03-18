@@ -30,11 +30,11 @@
 (defun modeline-write-info (window)
   (let ((buffer (window-buffer window)))
     (cond ((buffer-read-only-p buffer)
-           " % ")
+           " 🔏")
           ((buffer-modified-p buffer)
            " * ")
           (t
-           " - "))))
+           "   "))))
 
 (defun modeline-name (window)
   (buffer-name (window-buffer window)))

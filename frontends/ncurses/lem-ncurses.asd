@@ -10,4 +10,5 @@
                (:file "term")
                (:file "clipboard")
                (:file "style")
+               (:file "key")
                (:file "ncurses")))

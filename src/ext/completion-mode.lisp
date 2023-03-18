@@ -105,9 +105,6 @@
 
 (define-attribute completion-attribute
   (t :background "RoyalBlue"))
-(define-attribute non-focus-completion-attribute
-  (:dark :foreground "white" :background "#444")
-  (:light :foreground "black" :background "#DDD"))
 (define-attribute detail-attribute
   (:dark :foreground "gray" :background "#444")
   (:light :foreground "#777" :background "#DDD"))
@@ -269,7 +266,6 @@
                         (completion-end))
      :print-spec (make-print-spec items)
      :focus-attribute 'completion-attribute
-     :non-focus-attribute 'non-focus-completion-attribute
      :style '(:use-border nil :offset-y 1))
     (completion-mode t)
     (unless (spec-async-p (context-spec context))

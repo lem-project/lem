@@ -38,7 +38,8 @@
 (define-attribute popup-menu-attribute
   (t :foreground "white" :background "RoyalBlue"))
 (define-attribute non-focus-popup-menu-attribute
-  (t :background "#444" :foreground "white"))
+  (:dark :foreground "white" :background "#444")
+  (:light :foreground "black" :background "#DDD"))
 
 (defgeneric adjust-for-redrawing (gravity popup-window)
   (:method (gravity popup-window)))

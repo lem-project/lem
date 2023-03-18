@@ -1,5 +1,7 @@
 (defpackage :lem-ncurses
-  (:use :cl :lem)
+  (:use :cl
+        :lem
+        :lem-ncurses/style)
   (:export ;; ncurses.lisp
            :escape-delay
            ;; ncurses-pdcurseswin32.lisp
@@ -571,22 +573,23 @@
          (charms/ll:wmove (ncurses-view-scrwin view) y x)
          (charms/ll:wclrtobot (ncurses-view-scrwin view)))))
 
-(define-attribute popup-border-color
-  (:light :foreground "gray" :reverse-p t)
-  (:dark :foreground "#666666" :reverse-p t))
-
 (defun draw-border (border)
-  (let ((win (border-win border)))
-    ;; (charms/ll:wclear win)
-    ;; (charms/ll:box win 0 0)
-    (let ((attr (attribute-to-bits 'popup-border-color)))
-      (charms/ll:wattron win attr)
-      (charms/ll:mvwaddstr win 0 0 (make-string (border-width border) :initial-element #\space))
-      (loop :for i :from 1 :below (1- (border-height border))
-            :do (charms/ll:mvwaddch win i 0 (char-code #\space))
-                (charms/ll:mvwaddch win i (1- (border-width border)) (char-code #\space)))
-      (charms/ll:mvwaddstr win (1- (border-height border)) 0 (make-string (border-width border) :initial-element #\space))
-      (charms/ll:wattroff win attr))
+  (let ((win (border-win border))
+        (h (1- (border-height border)))
+        (w (1- (border-width border)))
+        (attr (attribute-to-bits (border-attribute))))
+    (charms/ll:wattron win attr)
+    (charms/ll:mvwaddstr win 0 0 (border-upleft))
+    (charms/ll:mvwaddstr win 0 w (border-upright))
+    (charms/ll:mvwaddstr win h 0 (border-downleft))
+    (charms/ll:mvwaddstr win h w (border-downright))
+    (loop :for x :from 1 :below w
+          :do (charms/ll:mvwaddstr win 0 x (border-up))
+              (charms/ll:mvwaddstr win (1- (border-height border)) x (border-down)))
+    (loop :for y :from 1 :below h
+          :do (charms/ll:mvwaddstr win y 0 (border-left))
+              (charms/ll:mvwaddstr win y w (border-right)))
+    (charms/ll:attroff attr)
     (charms/ll:wnoutrefresh win)))
 
 (defmethod lem-if:redraw-view-after ((implementation ncurses) view)
@@ -597,7 +600,10 @@
     (when (and (ncurses-view-modeline-scrwin view)
                (< 0 (ncurses-view-x view)))
       (charms/ll:move (ncurses-view-y view) (1- (ncurses-view-x view)))
-      (charms/ll:vline (char-code #\space) (1+ (ncurses-view-height view))))
+      (loop :for y :from 0 :to (ncurses-view-height view)
+            :do (charms/ll:mvaddstr (+ (ncurses-view-y view) y)
+                                    (1- (ncurses-view-x view))
+                                    (border-left))))
     (charms/ll:attroff attr)
     (charms/ll:wnoutrefresh charms/ll:*stdscr*))
   (when (ncurses-view-modeline-scrwin view)

@@ -860,7 +860,7 @@
                            (line-start start)
                            (line-end end)
                            (delete-between-points start end)
-                           (insert-string start (make-string width :initial-element #\_))
+                           (insert-string start (make-string width :initial-element #\─))
                            (insert-character end #\newline))))))
     (let* ((buffer (make-markdown-buffer markdown-text))
            (point (buffer-point buffer)))

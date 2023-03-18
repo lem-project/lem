@@ -10,13 +10,13 @@
 (defvar *virtual-frame-map* (make-hash-table))
 
 (define-attribute frame-multiplexer-active-frame-name-attribute
-  (t :foreground "white" :background "blue"))
+  (t :foreground "white" :background "CornflowerBlue"))
 
 (define-attribute frame-multiplexer-frame-name-attribute
-  (t :foreground "white" :background "blue"))
+  (t :foreground "white" :background "#303030"))
 
 (define-attribute frame-multiplexer-background-attribute
-  (t :underline-p t))
+  (t :foreground "white" :background "#303030"))
 
 (define-editor-variable frame-multiplexer nil ""
   (lambda (value)
@@ -43,10 +43,12 @@
                                      name)))))
 
 (defun tab-content (tab)
-  (format nil "~A~A:~A "
-          (if (tab-focus-p tab) #\# #\space)
-          (tab-number tab)
-          (tab-buffer-name tab)))
+  (values (format nil " ~A ~A "
+                  (tab-number tab)
+                  (tab-buffer-name tab))
+          (if (tab-focus-p tab)
+              'frame-multiplexer-active-frame-name-attribute
+              'frame-multiplexer-frame-name-attribute)))
 
 (defun tab= (tab1 tab2)
   (and (equal (tab-focus-p tab1) (tab-focus-p tab2))
@@ -189,16 +191,15 @@
     (loop :for frame :in frames
           :for tab :in tabs
           :do (let ((start-pos (point-charpos p)))
-                (insert-button p
-                               ;; virtual frame name on header
-                               (tab-content tab)
-                               ;; set action when click
-                               (let ((frame frame))
-                                 (lambda ()
-                                   (switch-current-frame window frame)))
-                               :attribute (if (tab-focus-p tab)
-                                              'frame-multiplexer-active-frame-name-attribute
-                                              'frame-multiplexer-frame-name-attribute))
+                (multiple-value-bind (text attribute) (tab-content tab)
+                  (insert-button p
+                                 ;; virtual frame name on header
+                                 text
+                                 ;; set action when click
+                                 (let ((frame frame))
+                                   (lambda ()
+                                     (switch-current-frame window frame)))
+                                 :attribute attribute))
                 (when (tab-focus-p tab)
                   ;; set buffer-point to that focused tab position
                   (let ((end-pos (point-charpos p)))

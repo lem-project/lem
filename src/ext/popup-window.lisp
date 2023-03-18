@@ -15,6 +15,8 @@
 
 (defvar *popup-menu* nil)
 
+(defparameter *style* '(:use-border nil :offset-y 1))
+
 (defclass popup-menu ()
   ((buffer
     :initarg :buffer
@@ -382,15 +384,12 @@
 
 (defmethod lem-if:display-popup-menu (implementation items
                                       &key action-callback
-                                           print-spec
-                                           (focus-attribute 'popup-menu-attribute)
-                                           (non-focus-attribute 'non-focus-popup-menu-attribute)
-                                           style)
+                                           print-spec)
   (when *popup-menu*
     (lem-if:popup-menu-quit implementation))
-  (let ((style (ensure-style style))
-        (focus-attribute (ensure-attribute focus-attribute))
-        (non-focus-attribute (ensure-attribute non-focus-attribute))
+  (let ((style (ensure-style *style*))
+        (focus-attribute (ensure-attribute 'popup-menu-attribute))
+        (non-focus-attribute (ensure-attribute 'non-focus-popup-menu-attribute))
         (buffer (make-menu-buffer)))
     (multiple-value-bind (menu-width focus-overlay)
         (setup-menu-buffer buffer

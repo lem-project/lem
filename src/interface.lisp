@@ -67,10 +67,7 @@
 
 (defgeneric lem-if:display-popup-menu (implementation items
                                        &key action-callback
-                                            print-spec
-                                            focus-attribute
-                                            non-focus-attribute
-                                            style))
+                                            print-spec))
 (defgeneric lem-if:popup-menu-update (implementation items &key print-spec))
 (defgeneric lem-if:popup-menu-quit (implementation))
 (defgeneric lem-if:popup-menu-down (implementation))

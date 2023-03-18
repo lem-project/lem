@@ -264,9 +264,7 @@
      :action-callback (lambda (item)
                         (completion-insert (current-point) item)
                         (completion-end))
-     :print-spec (make-print-spec items)
-     :focus-attribute 'completion-attribute
-     :style '(:use-border nil :offset-y 1))
+     :print-spec (make-print-spec items))
     (completion-mode t)
     (unless (spec-async-p (context-spec context))
       (narrowing-down context items))

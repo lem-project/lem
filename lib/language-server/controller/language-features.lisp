@@ -201,19 +201,19 @@
       (let* ((form (read-from-string doc))
              (start (position-if (symbol-matcher "===>") form))
              (end (position-if (symbol-matcher "<===") form))
-             (documentation (hover-symbol function-name
-                                          (buffer-package (lem:point-buffer point))))
+             (documentation (make-markdown-documentation
+                             (hover-symbol function-name
+                                           (buffer-package (lem:point-buffer point)))))
              (*print-case* :downcase))
         (make-instance
          'lsp:signature-help
          :signatures (vector
-                      (if (not (and start end))
+                      (if (or (null start) (null end))
                           (apply #'make-instance
                                  'lsp:signature-information
                                  :label (prin1-to-string form)
                                  (when documentation
-                                   (list :documentation
-                                         (make-markdown-documentation documentation))))
+                                   (list :documentation documentation)))
                           (let* ((form (append (subseq form 0 start)
                                                (list (elt form (1+ start)))
                                                (subseq form (1+ end)))))
@@ -227,8 +227,7 @@
                                                     (rest form))
                                    :active-parameter (1- start)
                                    (when documentation
-                                     (list :documentation
-                                           (make-markdown-documentation documentation))))))))))))
+                                     (list :documentation documentation)))))))))))
 
 (define-request (signature-help-request "textDocument/signatureHelp")
     (params lsp:signature-help-params)

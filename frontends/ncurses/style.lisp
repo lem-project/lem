@@ -55,8 +55,7 @@
               :border-attribute 'space-border-color
               :window-separator " "))
 
-;; (defparameter *style* *double-border-style*)
-(defparameter *style* *space-border-style*)
+(defparameter *style* *double-border-style*)
 
 (defun border-upleft () (border-shapes-upleft (style-border-shapes *style*)))
 (defun border-upright () (border-shapes-upright (style-border-shapes *style*)))

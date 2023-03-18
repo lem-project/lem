@@ -96,9 +96,7 @@
 (defun display-message (text &key (gravity :cursor) source-window)
   (when text
     (show-message text
-                  :style `(:gravity ,gravity
-                           :use-border t
-                           :background-color "#404040")
+                  :style `(:gravity ,gravity)
                   :timeout nil
                   :source-window source-window)))
 

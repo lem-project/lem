@@ -15,7 +15,7 @@
 
 (defvar *popup-menu* nil)
 
-(defparameter *style* '(:use-border nil :offset-y 1))
+(defparameter *style* '(:use-border t :offset-y 0))
 
 (defclass popup-menu ()
   ((buffer
@@ -40,8 +40,8 @@
 (define-attribute popup-menu-attribute
   (t :foreground "white" :background "RoyalBlue"))
 (define-attribute non-focus-popup-menu-attribute
-  (:dark :foreground "white" :background "#444")
-  (:light :foreground "black" :background "#DDD"))
+  (:dark :foreground "white" :background "black")
+  (:light :foreground "black" :background "white"))
 
 (defgeneric adjust-for-redrawing (gravity popup-window)
   (:method (gravity popup-window)))

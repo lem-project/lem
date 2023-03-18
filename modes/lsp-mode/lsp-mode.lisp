@@ -1051,7 +1051,7 @@
     (string
      (insert-string point documentation))))
 
-(defun highlight-active-parameter (point parameters active-parameter)
+(defun highlight-signature-active-parameter (point parameters active-parameter)
   (with-point ((point point))
     (buffer-start point)
     (do-sequence ((parameter index) parameters)
@@ -1065,7 +1065,7 @@
               (put-text-property start
                                  point
                                  :attribute 'signature-help-active-parameter-attribute)
-              (return-from highlight-active-parameter))))))))
+              (return-from highlight-signature-active-parameter))))))))
 
 (defun highlight-signature (point signature active-parameter)
   (let ((parameters
@@ -1076,9 +1076,9 @@
             (unbound-slot () active-parameter))))
     (when (and (plusp (length parameters))
                (< active-parameter (length parameters)))
-      (highlight-active-parameter point
-                                  parameters
-                                  active-parameter))))
+      (highlight-signature-active-parameter point
+                                            parameters
+                                            active-parameter))))
 
 (defun make-signature-help-buffer (signature-help)
   (let ((buffer (make-temporary-unwrap-buffer))

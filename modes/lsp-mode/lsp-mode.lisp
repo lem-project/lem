@@ -223,7 +223,8 @@
   (find-workspace (buffer-language-id buffer) :errorp errorp))
 
 (defun all-workspaces ()
-  (workspace-list-workspaces (apply #'append (hash-table-values *workspace-list-per-language-id*))))
+  (loop :for workspace-list :being :each :hash-value :in *workspace-list-per-language-id*
+        :append (workspace-list-workspaces workspace-list)))
 
 (defun dispose-all-workspaces ()
   (dolist (workspace (all-workspaces))

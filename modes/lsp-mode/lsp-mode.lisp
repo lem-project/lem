@@ -1067,6 +1067,19 @@
                                  :attribute 'signature-help-active-parameter-attribute)
               (return-from highlight-active-parameter))))))))
 
+(defun highlight-signature (point signature active-parameter)
+  (let ((parameters
+          (handler-case (lsp:signature-information-parameters signature)
+            (unbound-slot () nil)))
+        (active-parameter
+          (handler-case (lsp:signature-information-active-parameter signature)
+            (unbound-slot () active-parameter))))
+    (when (and (plusp (length parameters))
+               (< active-parameter (length parameters)))
+      (highlight-active-parameter point
+                                  parameters
+                                  active-parameter))))
+
 (defun make-signature-help-buffer (signature-help)
   (let ((buffer (make-temporary-unwrap-buffer))
         (active-parameter
@@ -1082,17 +1095,7 @@
         (insert-string point (lsp:signature-information-label signature))
         (when (or (eql index active-signature)
                   (length= 1 signatures))
-          (let ((parameters
-                  (handler-case (lsp:signature-information-parameters signature)
-                    (unbound-slot () nil)))
-                (active-parameter
-                  (handler-case (lsp:signature-information-active-parameter signature)
-                    (unbound-slot () active-parameter))))
-            (when (and (plusp (length parameters))
-                       (< active-parameter (length parameters)))
-              (highlight-active-parameter point
-                                          parameters
-                                          active-parameter))))
+          (highlight-signature point signature active-parameter))
         (insert-character point #\newline)
         (handler-case (lsp:signature-information-documentation signature)
           (unbound-slot () nil)

@@ -100,6 +100,11 @@
                   :timeout nil
                   :source-window source-window)))
 
+(defun make-temporary-unwrap-buffer ()
+  (let ((buffer (make-buffer nil :temporary t :enable-undo-p nil)))
+    (setf (variable-value 'lem:line-wrap :buffer buffer) nil)
+    buffer))
+
 ;;;
 (defun buffer-language-spec (buffer)
   (get-language-spec (language-mode:buffer-language-mode buffer)))
@@ -796,11 +801,8 @@
 
 (defun markdown-buffer (markdown-text)
   (labels ((make-markdown-buffer (markdown-text)
-             (let* ((buffer (make-buffer nil
-                                         :temporary t
-                                         :enable-undo-p nil))
+             (let* ((buffer (make-temporary-unwrap-buffer))
                     (point (buffer-point buffer)))
-               (setf (variable-value 'lem:line-wrap :buffer buffer) nil)
                (setf (variable-value 'enable-syntax-highlight :buffer buffer) t)
                (erase-buffer buffer)
                (insert-string point markdown-text)
@@ -1050,9 +1052,7 @@
      (insert-string point documentation))))
 
 (defun make-signature-help-buffer (signature-help)
-  (let* ((buffer (make-buffer nil :temporary t))
-         (point (buffer-point buffer)))
-    (setf (lem:variable-value 'lem:line-wrap :buffer buffer) nil)
+  (let ((buffer (make-temporary-unwrap-buffer)))
     (let ((active-parameter
             (handler-case (lsp:signature-help-active-parameter signature-help)
               (unbound-slot () 0)))

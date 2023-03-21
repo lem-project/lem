@@ -2,7 +2,7 @@
 
 (defvar *command-table*)
 
-(defstruct cmd name form source-location)
+(defstruct cmd name source-location)
 
 (defstruct command-table
   (table (make-hash-table :test 'equal)))

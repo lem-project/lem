@@ -27,7 +27,8 @@
 (defclass mode ()
   ((name :initarg :name :reader mode-name)
    (description :initarg :description :reader mode-description)
-   (keymap :initarg :keymap :reader mode-keymap :writer set-mode-keymap)))
+   (keymap :initarg :keymap :reader mode-keymap :writer set-mode-keymap)
+   (commands :initform '() :accessor mode-commands)))
 
 (defclass major-mode (mode)
   ((syntax-table :initarg :syntax-table :reader mode-syntax-table)
@@ -121,6 +122,12 @@
 
 (defun make-mode-command-class-name (mode-name)
   (make-symbol (format nil "~A~A" mode-name '#:-command)))
+
+(defun associate-command-with-mode (mode-name command-name)
+  (let ((mode (get-mode-object mode-name)))
+    (unless (find command-name (mode-commands mode) :test #'string=)
+      (alexandria:nconcf (mode-commands mode) (list command-name))))
+  (values))
 
 ;;; major mode
 (defmacro define-major-mode (major-mode

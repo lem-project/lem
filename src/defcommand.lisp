@@ -71,7 +71,14 @@
            (assert (alexandria:length= value 1))
            (first value)))))
 
-(defmacro define-command (&whole form name-and-options params (&rest arg-descriptors) &body body)
+(defun register-command (&key (command-name (alexandria:required-argument :command-name))
+                              (mode-name (alexandria:required-argument :mode-name))
+                              (cmd (alexandria:required-argument :cmd)))
+  (when mode-name
+    (associate-command-with-mode mode-name command-name))
+  (add-command command-name cmd))
+
+(defmacro define-command (name-and-options params (&rest arg-descriptors) &body body)
   (destructuring-bind (name . options) (uiop:ensure-list name-and-options)
     (let ((primary-class (primary-class options))
           (advice-classes (alexandria:assoc-value options :advice-classes))
@@ -80,13 +87,16 @@
                         name))
           (command-name (alexandria:if-let (elt (assoc :name options))
                           (second elt)
-                          (string-downcase name))))
+                          (string-downcase name)))
+          (mode-name (second (assoc :mode options))))
+      (check-type command-name string)
+      (check-type mode-name (or null symbol))
       (alexandria:with-unique-names (command universal-argument)
         `(progn
-           (add-command ,command-name
-                        (make-cmd :name ',name
-                                  :form ',form
-                                  :source-location #+sbcl (sb-c:source-location) #-sbcl nil))
+           (register-command :command-name ,command-name
+                             :mode-name ',mode-name
+                             :cmd (make-cmd :name ',name
+                                            :source-location #+sbcl (sb-c:source-location) #-sbcl nil))
            (defun ,name ,params
              ;; コマンドではなく直接この関数を呼び出した場合
              ;; - *this-command*が束縛されない

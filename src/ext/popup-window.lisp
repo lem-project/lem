@@ -32,16 +32,11 @@
     :accessor popup-menu-action-callback)
    (focus-attribute
     :initarg :focus-attribute
-    :accessor popup-menu-focus-attribute)
-   (non-focus-attribute
-    :initarg :non-focus-attribute
-    :accessor popup-menu-non-focus-attribute)))
+    :accessor popup-menu-focus-attribute)))
 
 (define-attribute popup-menu-attribute
   (t :foreground "white" :background "RoyalBlue"))
-(define-attribute non-focus-popup-menu-attribute
-  (:dark :foreground "white" :background "black")
-  (:light :foreground "black" :background "white"))
+(define-attribute non-focus-popup-menu-attribute)
 
 (defgeneric adjust-for-redrawing (gravity popup-window)
   (:method (gravity popup-window)))
@@ -382,8 +377,7 @@
                              :window window
                              :focus-overlay focus-overlay
                              :action-callback action-callback
-                             :focus-attribute focus-attribute
-                             :non-focus-attribute non-focus-attribute))))))
+                             :focus-attribute focus-attribute))))))
 
 (defmethod lem-if:popup-menu-update (implementation items &key print-spec)
   (when *popup-menu*

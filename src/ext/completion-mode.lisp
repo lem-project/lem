@@ -106,10 +106,10 @@
 (define-attribute completion-attribute
   (t :background "RoyalBlue"))
 (define-attribute detail-attribute
-  (:dark :foreground "gray" :background "#444")
-  (:light :foreground "#777" :background "#DDD"))
+  (:dark :foreground "gray")
+  (:light :foreground "#777"))
 (define-attribute chunk-attribute
-  (t :foreground "SkyBlue1" :background "#444"))
+  (t :foreground "SkyBlue1"))
 
 (defclass print-spec ()
   ((label-width

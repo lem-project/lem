@@ -17,8 +17,7 @@
   (:dark :foreground "#666666" :reverse-p t))
 
 (define-attribute ruled-border-color
-  (:light :foreground "black" :background "white")
-  (:dark :foreground "white" :background "black"))
+  )
 
 (defstruct style
   border-shapes

@@ -17,16 +17,18 @@
     (:name "context-menu"
      :keymap *context-menu-mode-keymap*))
 
+(define-key *context-menu-mode-keymap* 'keyboard-quit 'context-menu-finish)
+(define-key *context-menu-mode-keymap* 'lem::escape 'context-menu-finish)
 (define-key *context-menu-mode-keymap* 'next-line 'context-menu-next-line)
 (define-key *context-menu-mode-keymap* 'previous-line 'context-menu-previous-line)
 (define-key *context-menu-mode-keymap* "Return" 'context-menu-select)
 
-(defun context-menu-finish ()
+(define-command context-menu-finish () ()
   (context-menu-mode nil)
   (popup-menu-quit))
 
 (define-command context-menu-default () ()
-  (context-menu-finish))
+  )
 
 (define-command context-menu-next-line () ()
   (popup-menu-down))

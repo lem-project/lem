@@ -94,7 +94,7 @@
   (:display-background-mode :dark)
   ;; (:foreground "#FFFFFF")
   ;; (:background "#000000")
-  (:inactive-window-background "#2A2A2A")
+  (:inactive-window-background nil)
   (region :foreground nil :background "blue")
   (modeline :background "CornflowerBlue" :foreground "white")
   (modeline-inactive :background "#303030" :foreground "gray")

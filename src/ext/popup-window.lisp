@@ -310,30 +310,6 @@
     (let ((string (funcall print-spec item)))
       (insert-string point string))))
 
-(defun fill-background-color (buffer non-focus-attribute)
-  (with-point ((p (buffer-start-point buffer))
-               (start (buffer-start-point buffer)))
-    (flet ((put-attribute (start end attribute)
-             (put-text-property
-              start end
-              :attribute (make-attribute
-                          :foreground
-                          (or (and attribute
-                                   (attribute-foreground attribute))
-                              (attribute-foreground non-focus-attribute))
-                          :background (attribute-background non-focus-attribute)
-                          :bold-p (and attribute
-                                       (attribute-bold-p attribute))
-                          :underline-p (and attribute
-                                            (attribute-underline-p attribute))))))
-      (loop
-        (let ((start-attribute (ensure-attribute (text-property-at p :attribute) nil)))
-          (unless (next-single-property-change p :attribute)
-            (put-attribute start (buffer-end-point buffer) start-attribute)
-            (return))
-          (put-attribute start p start-attribute)
-          (move-point start p))))))
-
 (defun compute-buffer-width (buffer)
   (with-point ((point (buffer-start-point buffer)))
     (loop :maximize (point-column (line-end point))
@@ -347,11 +323,6 @@
     (let ((width (compute-buffer-width buffer)))
       (fill-space width)
       width)))
-
-(defun fill-background (buffer non-focus-attribute)
-  (let ((width (fill-in-the-background-with-space buffer)))
-    (fill-background-color buffer non-focus-attribute)
-    width))
 
 (defun insert-items (point items print-spec)
   (with-point ((start point :right-inserting))
@@ -372,13 +343,13 @@
 (defun make-menu-buffer ()
   (make-buffer "*popup menu*" :enable-undo-p nil :temporary t))
 
-(defun setup-menu-buffer (buffer items print-spec focus-attribute non-focus-attribute)
+(defun setup-menu-buffer (buffer items print-spec focus-attribute)
   (clear-overlays buffer)
   (erase-buffer buffer)
   (setf (variable-value 'line-wrap :buffer buffer) nil)
   (insert-items (buffer-point buffer) items print-spec)
   (let ((focus-overlay (make-focus-overlay (buffer-start-point buffer) focus-attribute))
-        (width (fill-background buffer non-focus-attribute)))
+        (width (fill-in-the-background-with-space buffer)))
     (values width
             focus-overlay)))
 
@@ -395,8 +366,7 @@
         (setup-menu-buffer buffer
                            items
                            print-spec
-                           focus-attribute
-                           non-focus-attribute)
+                           focus-attribute)
       (let ((window (make-popup-window :source-window (current-window)
                                        :buffer buffer
                                        :width menu-width
@@ -421,8 +391,7 @@
         (setup-menu-buffer (popup-menu-buffer *popup-menu*)
                            items
                            print-spec
-                           (popup-menu-focus-attribute *popup-menu*)
-                           (popup-menu-non-focus-attribute *popup-menu*))
+                           (popup-menu-focus-attribute *popup-menu*))
       (setf (popup-menu-focus-overlay *popup-menu*) focus-overlay)
       (let ((source-window (current-window)))
         (when (eq source-window

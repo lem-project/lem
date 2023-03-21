@@ -265,7 +265,7 @@
   (text-document/did-close buffer)
   (text-document/did-open buffer))
 
-(define-command lsp-sync-buffer () ()
+(define-command (lsp-sync-buffer (:mode lsp-mode)) () ()
   (reopen-buffer (current-buffer)))
 
 (defun lsp-revert-buffer (buffer)
@@ -755,7 +755,7 @@
   (let ((params (convert-from-json params 'lsp:publish-diagnostics-params)))
     (send-event (lambda () (highlight-diagnostics params)))))
 
-(define-command lsp-document-diagnostics () ()
+(define-command (lsp-document-diagnostics (:mode lsp-mode)) () ()
   (when-let ((diagnostics (buffer-diagnostics (current-buffer))))
     (lem/sourcelist:with-sourcelist (sourcelist "*Diagnostics*")
       (dolist (diagnostic diagnostics)
@@ -918,7 +918,7 @@
         (unless (lsp-null-p result)
           (contents-to-markdown-buffer (lsp:hover-contents result)))))))
 
-(define-command lsp-hover () ()
+(define-command (lsp-hover (:mode lsp-mode)) () ()
   (check-connection)
   (when-let ((result (text-document/hover (current-point))))
     (display-message result)))
@@ -1133,7 +1133,7 @@
                   :is-retrigger +false+
                   #|:active-signature-help|#)))
 
-(define-command lsp-signature-help () ()
+(define-command (lsp-signature-help (:mode lsp-mode)) () ()
   (check-connection)
   (text-document/signature-help (current-point)
                                 (make-instance 'lsp:signature-help-context
@@ -1237,7 +1237,7 @@
                      :then (lambda (response)
                              (funcall then (convert-type-definition-response response)))))))
 
-(define-command lsp-type-definition () ()
+(define-command (lsp-type-definition (:mode lsp-mode)) () ()
   (check-connection)
   (text-document/type-definition (current-point) #'language-mode:display-xref-locations))
 
@@ -1262,7 +1262,7 @@
                      :then (lambda (response)
                              (funcall then (convert-implementation-response response)))))))
 
-(define-command lsp-implementation () ()
+(define-command (lsp-implementation (:mode lsp-mode)) () ()
   (check-connection)
   (text-document/implementation (current-point)
                                 #'language-mode:display-xref-locations))
@@ -1390,7 +1390,7 @@
     (when (buffer-workspace (current-buffer) nil)
       (text-document/document-highlight (current-point)))))
 
-(define-command lsp-document-highlight () ()
+(define-command (lsp-document-highlight (:mode lsp-mode)) () ()
   (when (mode-active-p (current-buffer) 'lsp-mode)
     (check-connection)
     (text-document/document-highlight (current-point))))
@@ -1635,7 +1635,7 @@
         'lsp:document-symbol-params
         :text-document (make-text-document-identifier buffer))))))
 
-(define-command lsp-document-symbol () ()
+(define-command (lsp-document-symbol (:mode lsp-mode)) () ()
   (check-connection)
   (display-document-symbol-response
    (current-buffer)
@@ -1707,7 +1707,7 @@
           :context (make-instance 'lsp:code-action-context
                                   :diagnostics (make-lsp-array))))))))
 
-(define-command lsp-code-action () ()
+(define-command (lsp-code-action (:mode lsp-mode)) () ()
   (check-connection)
   (let ((response (text-document/code-action (current-point)))
         (workspace (buffer-workspace (current-buffer))))
@@ -1733,7 +1733,7 @@
       (unless (lsp-null-p code-action)
         (execute-code-action workspace code-action)))))
 
-(define-command lsp-organize-imports () ()
+(define-command (lsp-organize-imports (:mode lsp-mode)) () ()
   (organize-imports (current-buffer)))
 
 ;;; formatting
@@ -1765,7 +1765,7 @@
          :text-document (make-text-document-identifier buffer)
          :options (make-formatting-options buffer)))))))
 
-(define-command lsp-document-format () ()
+(define-command (lsp-document-format (:mode lsp-mode)) () ()
   (check-connection)
   (text-document/formatting (current-buffer)))
 
@@ -1794,7 +1794,7 @@
            :range (points-to-lsp-range start end)
            :options (make-formatting-options buffer))))))))
 
-(define-command lsp-document-range-format (start end) ("r")
+(define-command (lsp-document-range-format (:mode lsp-mode)) (start end) ("r")
   (check-connection)
   (text-document/range-formatting start end))
 
@@ -1847,12 +1847,12 @@
                             (make-text-document-position-arguments point))))))
         (apply-workspace-edit response)))))
 
-(define-command lsp-rename (new-name) ("sNew name: ")
+(define-command (lsp-rename (:mode lsp-mode)) (new-name) ("sNew name: ")
   (check-connection)
   (text-document/rename (current-point) new-name))
 
 ;;;
-(define-command lsp-restart-server () ()
+(define-command (lsp-restart-server (:mode lsp-mode)) () ()
   (dispose-workspace (buffer-workspace (current-buffer)))
   ;; TODO:
   ;; 現在のバッファを開き直すだけでは不十分

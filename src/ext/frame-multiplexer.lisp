@@ -10,10 +10,10 @@
 (defvar *virtual-frame-map* (make-hash-table))
 
 (define-attribute frame-multiplexer-active-frame-name-attribute
-  (t :foreground "white" :background "CornflowerBlue"))
+  (t :foreground "white" :background "CornflowerBlue" :bold-p t))
 
 (define-attribute frame-multiplexer-frame-name-attribute
-  (t :foreground "white" :background "#303030"))
+  (t :foreground "black" :background "dark gray" :bold-p t))
 
 (define-attribute frame-multiplexer-background-attribute
   (t :foreground "white" :background "#303030"))
@@ -43,7 +43,7 @@
                                      name)))))
 
 (defun tab-content (tab)
-  (values (format nil " ~A ~A "
+  (values (format nil " ~A: ~A "
                   (tab-number tab)
                   (tab-buffer-name tab))
           (if (tab-focus-p tab)
@@ -183,6 +183,14 @@
   (coerce (remove-if #'null (virtual-frame-id/frame-table virtual-frame))
           'list))
 
+(defun insert-tab-content (point tab action)
+  (insert-string point " " :attribute 'frame-multiplexer-background-attribute)
+  (multiple-value-bind (text attribute) (tab-content tab)
+    (insert-button point
+                   text
+                   action
+                   :attribute attribute)))
+
 (defun write-tabs-to-buffer (window frames tabs)
   (let* ((buffer (virtual-frame-header-buffer window))
          (p (buffer-point buffer))
@@ -191,15 +199,11 @@
     (loop :for frame :in frames
           :for tab :in tabs
           :do (let ((start-pos (point-charpos p)))
-                (multiple-value-bind (text attribute) (tab-content tab)
-                  (insert-button p
-                                 ;; virtual frame name on header
-                                 text
-                                 ;; set action when click
-                                 (let ((frame frame))
-                                   (lambda ()
-                                     (switch-current-frame window frame)))
-                                 :attribute attribute))
+                (insert-tab-content p
+                                    tab
+                                    (let ((frame frame))
+                                      (lambda ()
+                                        (switch-current-frame window frame))))
                 (when (tab-focus-p tab)
                   ;; set buffer-point to that focused tab position
                   (let ((end-pos (point-charpos p)))

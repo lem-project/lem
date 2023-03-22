@@ -63,14 +63,6 @@
              ,(parse-arg-descriptors arg-descriptors universal-argument)
            (apply #',fn-name ,arguments))))))
 
-(defun primary-class (options)
-  (let ((value (alexandria:assoc-value options :primary-class)))
-    (cond ((null value)
-           +primary-command-class-name+)
-          (t
-           (assert (alexandria:length= value 1))
-           (first value)))))
-
 (defun register-command (&key (command-name (alexandria:required-argument :command-name))
                               (mode-name (alexandria:required-argument :mode-name))
                               (cmd (alexandria:required-argument :cmd)))
@@ -80,8 +72,7 @@
 
 (defmacro define-command (name-and-options params (&rest arg-descriptors) &body body)
   (destructuring-bind (name . options) (uiop:ensure-list name-and-options)
-    (let ((primary-class (primary-class options))
-          (advice-classes (alexandria:assoc-value options :advice-classes))
+    (let ((advice-classes (alexandria:assoc-value options :advice-classes))
           (class-name (alexandria:if-let (elt (assoc :class options))
                         (second elt)
                         name))
@@ -102,7 +93,7 @@
              ;; - *this-command*が束縛されない
              ;; - executeのフックが使えない
              ,@body)
-           (defclass ,class-name (,primary-class ,@advice-classes) ())
+           (defclass ,class-name (primary-command ,@advice-classes) ())
            (register-command-class ',name ',class-name)
            (defmethod execute (mode (,command ,class-name) ,universal-argument)
              (declare (ignorable ,universal-argument))
@@ -111,7 +102,6 @@
                                    arg-descriptors)))))))
 
 #|
-;;; example 1
 (defclass foo-advice () ())
 
 (define-command (foo-1 (:advice-classes foo-advice)) (p) ("p")
@@ -122,22 +112,5 @@
 
 (defmethod execute (mode (command foo-advice) argument)
   ;; :advice-classesをfoo-adviceにしたfoo-1とfoo-2コマンドだけが呼び出される
-  )
-
-;;; example 2
-(defclass bar-primary () ())
-
-(define-command (bar-1 (:primary-class bar-primary)) (p) ("p")
-  ...body)
-
-(define-command (bar-2 (:primary-class bar-primary)) (s) ("sInput: ")
-  ...body)
-
-(defmethod execute (mode (command bar-primary) argument)
-  ;; :primary-classをbar-primaryにしたbar-1,bar-2コマンドだけが呼び出される
-  )
-
-(defmethod execute (mode (command primary-command) argument)
-  ;; :primary-classがbar-primaryのときはこれは呼び出されない
   )
 |#

@@ -13,8 +13,6 @@
   (:report (lambda (c s)
              (format s "after executing the ~S command" (executing-command-command c)))))
 
-(defconstant +primary-command-class-name+ 'primary-command)
-
 (defvar *this-command*)
 
 (defun this-command ()

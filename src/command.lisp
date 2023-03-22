@@ -26,6 +26,10 @@
    (source-location :initarg :source-location
                     :reader command-source-location)))
 
+(defun command-equal (command1 command2)
+  (eq (command-name command1)
+      (command-name command2)))
+
 (defun register-command-class (symbol class-name)
   (setf (get symbol 'command-class) class-name))
 

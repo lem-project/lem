@@ -125,7 +125,7 @@
 
 (defun associate-command-with-mode (mode-name command-name)
   (let ((mode (get-mode-object mode-name)))
-    (unless (find command-name (mode-commands mode) :test #'string=)
+    (unless (find command-name (mode-commands mode) :test #'command-equal)
       (alexandria:nconcf (mode-commands mode) (list command-name))))
   (values))
 

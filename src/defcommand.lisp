@@ -109,9 +109,10 @@
                                    arg-descriptors))
 
            (register-command-class ',name ',class-name)
-           ,(when mode-name
-              `(associate-command-with-mode ',mode-name ,command-name))
-           (add-command ,command-name (make-instance ',class-name)))))))
+           (let ((,command (make-instance ',class-name)))
+             ,(when mode-name
+                `(associate-command-with-mode ',mode-name ,command))
+             (add-command ,command-name ,command)))))))
 
 #|
 (defclass foo-advice () ())

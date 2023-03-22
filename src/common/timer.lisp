@@ -13,7 +13,9 @@
            :stop-timer
            :with-idle-timers
            :update-idle-timers
-           :get-next-timer-timing-ms))
+           :get-next-timer-timing-ms)
+  #+sbcl
+  (:lock t))
 (in-package :lem/common/timer)
 
 (defvar *timer-manager*)

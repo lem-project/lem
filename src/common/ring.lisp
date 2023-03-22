@@ -7,7 +7,9 @@
            :ring-empty-p
            :ring-length
            :ring-push
-           :ring-ref))
+           :ring-ref)
+  #+sbcl
+  (:lock t))
 (in-package :lem/common/ring)
 
 (define-condition invalid-index-error (program-error)

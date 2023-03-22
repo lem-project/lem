@@ -6,7 +6,9 @@
            :peek-killring-item
            :rotate-killring
            :rotate-killring-undo
-           :with-killring-context))
+           :with-killring-context)
+  #+sbcl
+  (:lock t))
 (in-package :lem/common/killring)
 
 (defvar *appending* nil)

@@ -1,4 +1,4 @@
 (defsystem "lem-json-mode"
-  :depends-on ()
+  :depends-on ("lem")
   :serial t
   :components ((:file "json-mode")))

@@ -67,11 +67,18 @@
         (save-excursion
           (insert-character p #\newline))))))
 
+(define-editor-variable delete-trailing-whitespace-on-writing-file nil)
+
+(defun clear-trailing-whitespace-on-write (&optional buffer)
+  (when (equal t delete-trailing-whitespace-on-writing-file)
+    (delete-trailing-whitespace buffer)))
+
 (defun save-buffer (buffer &optional force-p)
   (cond
     ((and (or force-p (buffer-modified-p buffer))
           (buffer-filename buffer))
      (add-newline-at-eof buffer)
+     (clear-trailing-whitespace-on-write buffer)
      (write-to-file buffer (buffer-filename buffer))
      (buffer-unmark buffer)
      (buffer-filename buffer))

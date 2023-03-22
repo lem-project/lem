@@ -11,10 +11,15 @@
   (check-type name string)
   (alexandria:when-let (existing-cmd (gethash name (command-table-table command-table)))
     #+sbcl
-    (let ((existing-cmd-file (sb-c:definition-source-location-namestring (cmd-source-location existing-cmd)))
-          (cmd-file (sb-c:definition-source-location-namestring (cmd-source-location cmd)) ))
+    (let ((existing-cmd-file (sb-c:definition-source-location-namestring
+                                 (cmd-source-location existing-cmd)))
+          (cmd-file (sb-c:definition-source-location-namestring
+                        (cmd-source-location cmd))))
       (unless (equal cmd-file existing-cmd-file)
-        (cerror "continue" "~A is already defined in another file ~A" name existing-cmd-file))))
+        (cerror "continue"
+                "~A is already defined in another file ~A"
+                name
+                existing-cmd-file))))
   (setf (gethash name (command-table-table command-table)) cmd))
 
 (defun remove-command (name &optional (command-table *command-table*))

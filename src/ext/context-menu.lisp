@@ -6,8 +6,13 @@
   (:lock t))
 (in-package :lem/context-menu)
 
+(define-attribute description-attribute
+  (:dark :foreground "white")
+  (:light :foreground "#777"))
+
 (defstruct item
   label
+  description
   callback)
 
 (defvar *context-menu-mode-keymap* (make-keymap :name '*context-menu-mode-keymap*
@@ -39,12 +44,31 @@
 (define-command context-menu-select () ()
   (popup-menu-select))
 
+
+(defclass print-spec ()
+  ((label-width :initarg :label-width
+                :reader print-spec-label-width)))
+
+(defun compute-label-width (items)
+  (loop :for item :in items
+        :maximize (1+ (length (item-label item)))))
+
+(defmethod lem/popup-window:apply-print-spec ((print-spec print-spec) point item)
+  (insert-string point " ")
+  (insert-string point (item-label item))
+  (move-to-column point (print-spec-label-width print-spec) t)
+  (insert-string point " ")
+  (when (item-description item)
+    (insert-string point (item-description item) :attribute 'description-attribute)
+    (insert-string point " ")))
+
 (defun display-context-menu (items)
   (display-popup-menu items
                       :action-callback (lambda (item)
                                          (context-menu-finish)
                                          (funcall (item-callback item)))
-                      :print-spec #'item-label)
+                      :print-spec (make-instance 'print-spec
+                                                 :label-width (compute-label-width items)))
   (context-menu-mode t))
 
 (define-command test-context-menu () ()

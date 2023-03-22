@@ -70,6 +70,15 @@
     (associate-command-with-mode mode-name command-name))
   (add-command command-name cmd))
 
+(defun check-already-defined-command (name source-location)
+  (alexandria:when-let ((command (get-command name)))
+    (unless (equal (sb-c:definition-source-location-namestring (command-source-location command))
+                   (sb-c:definition-source-location-namestring source-location))
+      (cerror "continue"
+              "~A is already defined in another file ~A"
+              name
+              (sb-c:definition-source-location-namestring (command-source-location command))))))
+
 (defmacro define-command (name-and-options params (&rest arg-descriptors) &body body)
   (destructuring-bind (name . options) (uiop:ensure-list name-and-options)
     (let ((advice-classes (alexandria:assoc-value options :advice-classes))
@@ -84,16 +93,18 @@
       (check-type mode-name (or null symbol))
       (alexandria:with-unique-names (command universal-argument)
         `(progn
+           (check-already-defined-command ',name (sb-c:source-location))
            (register-command :command-name ,command-name
                              :mode-name ',mode-name
-                             :cmd (make-cmd :name ',name
-                                            :source-location #+sbcl (sb-c:source-location) #-sbcl nil))
+                             :cmd (make-cmd :name ',name))
            (defun ,name ,params
              ;; コマンドではなく直接この関数を呼び出した場合
              ;; - *this-command*が束縛されない
              ;; - executeのフックが使えない
              ,@body)
-           (defclass ,class-name (primary-command ,@advice-classes) ())
+           (defclass ,class-name (primary-command ,@advice-classes)
+             ()
+             (:default-initargs :source-location (sb-c:source-location)))
            (register-command-class ',name ',class-name)
            (defmethod execute (mode (,command ,class-name) ,universal-argument)
              (declare (ignorable ,universal-argument))

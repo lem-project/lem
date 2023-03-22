@@ -20,7 +20,9 @@
 
 (defgeneric execute (mode command argument))
 
-(defclass primary-command () ())
+(defclass primary-command ()
+  ((source-location :initarg :source-location
+                    :reader command-source-location)))
 
 (defun register-command-class (symbol class-name)
   (setf (get symbol 'command-class) class-name))

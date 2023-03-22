@@ -11,6 +11,7 @@
            :add-command
            :remove-command
            :all-command-names
+           :all-commands
            :find-command
            :exist-command-p)
   #+sbcl
@@ -59,6 +60,9 @@
 
 (defun all-command-names (&optional (command-table *command-table*))
   (alexandria:hash-table-keys (command-table-table command-table)))
+
+(defun all-commands (&optional (command-table *command-table*))
+  (alexandria:hash-table-values (command-table-table command-table)))
 
 (defun find-command (command-name &optional (command-table *command-table*))
   (gethash command-name (command-table-table command-table)))

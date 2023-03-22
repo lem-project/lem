@@ -73,6 +73,11 @@
               name
               (sb-c:definition-source-location-namestring (command-source-location command))))))
 
+(defun register-command (command &key mode-name command-name)
+  (when mode-name
+     (associate-command-with-mode mode-name command))
+  (add-command command-name command))
+
 (defmacro define-command (name-and-options params (&rest arg-descriptors) &body body)
   (destructuring-bind (name . options) (uiop:ensure-list name-and-options)
     (let ((advice-classes (alexandria:assoc-value options :advice-classes))
@@ -97,6 +102,7 @@
              ;; - executeのフックが使えない
              ,@body)
 
+           (register-command-class ',name ',class-name)
            (defclass ,class-name (primary-command ,@advice-classes)
              ()
              (:default-initargs :source-location ,source-location
@@ -108,11 +114,9 @@
                                    universal-argument
                                    arg-descriptors))
 
-           (register-command-class ',name ',class-name)
-           (let ((,command (make-instance ',class-name)))
-             ,(when mode-name
-                `(associate-command-with-mode ',mode-name ,command))
-             (add-command ,command-name ,command)))))))
+           (register-command (make-instance ',class-name)
+                             :mode-name ',mode-name
+                             :command-name ,command-name))))))
 
 #|
 (defclass foo-advice () ())

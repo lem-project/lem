@@ -65,10 +65,10 @@
 
 (defun register-command (&key (command-name (alexandria:required-argument :command-name))
                               (mode-name (alexandria:required-argument :mode-name))
-                              (cmd (alexandria:required-argument :cmd)))
+                              (command (alexandria:required-argument :command)))
   (when mode-name
     (associate-command-with-mode mode-name command-name))
-  (add-command command-name cmd))
+  (add-command command-name command))
 
 (defun check-already-defined-command (name source-location)
   (alexandria:when-let ((command (get-command name)))
@@ -94,9 +94,6 @@
       (alexandria:with-unique-names (command universal-argument)
         `(progn
            (check-already-defined-command ',name (sb-c:source-location))
-           (register-command :command-name ,command-name
-                             :mode-name ',mode-name
-                             :cmd (make-cmd :name ',name))
            (defun ,name ,params
              ;; コマンドではなく直接この関数を呼び出した場合
              ;; - *this-command*が束縛されない
@@ -104,13 +101,17 @@
              ,@body)
            (defclass ,class-name (primary-command ,@advice-classes)
              ()
-             (:default-initargs :source-location (sb-c:source-location)))
+             (:default-initargs :source-location (sb-c:source-location)
+              :name ',name))
            (register-command-class ',name ',class-name)
            (defmethod execute (mode (,command ,class-name) ,universal-argument)
              (declare (ignorable ,universal-argument))
              ,(gen-defcommand-body name
                                    universal-argument
-                                   arg-descriptors)))))))
+                                   arg-descriptors))
+           (register-command :command-name ,command-name
+                             :mode-name ',mode-name
+                             :command (make-instance ',class-name)))))))
 
 #|
 (defclass foo-advice () ())

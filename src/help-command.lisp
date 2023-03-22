@@ -98,16 +98,16 @@
                                            (completion str (all-command-names))))
                 :test-function 'exist-command-p
                 :history-symbol 'mh-execute-command))
-         (cmd (find-command-symbol name)))
-    (if cmd
-        (call-command cmd arg)
+         (command (find-command name)))
+    (if command
+        (call-command command arg)
         (message "invalid command"))))
 
 (define-command apropos-command (str) ("sApropos: ")
   (with-pop-up-typeout-window (out (make-buffer "*Apropos*") :focus t :erase t)
     (dolist (name (all-command-names))
       (when (search str name)
-        (describe (find-command-symbol name) out)))))
+        (describe (command-name (find-command name)) out)))))
 
 (defun get-git-hash (&optional (system :lem))
   (let* ((component (asdf:find-system system))

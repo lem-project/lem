@@ -21,7 +21,9 @@
 (defgeneric execute (mode command argument))
 
 (defclass primary-command ()
-  ((source-location :initarg :source-location
+  ((name :initarg :name
+         :reader command-name)
+   (source-location :initarg :source-location
                     :reader command-source-location)))
 
 (defun register-command-class (symbol class-name)
@@ -34,8 +36,14 @@
   (alexandria:when-let (class (get-command-class symbol))
     (make-instance class)))
 
+(defun ensure-command (command)
+  (check-type command (or primary-command symbol))
+  (if (typep command 'primary-command)
+      command
+      (get-command command)))
+
 (defun call-command (this-command universal-argument)
-  (let ((*this-command* (get-command this-command)))
+  (let ((*this-command* (ensure-command this-command)))
     (unless *this-command*
       (editor-error "~A: command not found" this-command))
     (signal-subconditions 'before-executing-command :command *this-command*)

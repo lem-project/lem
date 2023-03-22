@@ -64,6 +64,7 @@
            (apply #',fn-name ,arguments))))))
 
 (defun check-already-defined-command (name source-location)
+  #+sbcl
   (alexandria:when-let ((command (get-command name)))
     (unless (equal (sb-c:definition-source-location-namestring (command-source-location command))
                    (sb-c:definition-source-location-namestring source-location))
@@ -86,9 +87,9 @@
       (check-type command-name string)
       (check-type mode-name (or null symbol))
 
-      (alexandria:with-unique-names (command universal-argument)
-        `(progn
-           (check-already-defined-command ',name (sb-c:source-location))
+      (alexandria:with-unique-names (source-location command universal-argument)
+        `(let ((,source-location #+sbcl (sb-c:source-location) #-sbcl nil))
+           (check-already-defined-command ',name ,source-location)
 
            (defun ,name ,params
              ;; コマンドではなく直接この関数を呼び出した場合
@@ -98,7 +99,7 @@
 
            (defclass ,class-name (primary-command ,@advice-classes)
              ()
-             (:default-initargs :source-location (sb-c:source-location)
+             (:default-initargs :source-location ,source-location
               :name ',name))
 
            (defmethod execute (mode (,command ,class-name) ,universal-argument)

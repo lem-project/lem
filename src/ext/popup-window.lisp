@@ -52,6 +52,7 @@
 (defclass gravity-cursor (gravity) ())
 (defclass gravity-follow-cursor (gravity-cursor) ())
 (defclass gravity-vertically-adjacent-window (gravity) ())
+(defclass gravity-horizontally-adjacent-window (gravity) ())
 
 (defclass popup-window (floating-window)
   ((gravity
@@ -82,7 +83,8 @@
         (:topright (make-instance 'gravity-topright))
         (:cursor (make-instance 'gravity-cursor))
         (:follow-cursor (make-instance 'gravity-follow-cursor))
-        (:vertically-adjacent-window (make-instance 'gravity-vertically-adjacent-window)))))
+        (:vertically-adjacent-window (make-instance 'gravity-vertically-adjacent-window))
+        (:horizontally-adjacent-window (make-instance 'gravity-horizontally-adjacent-window)))))
 
 (defmethod adjust-for-redrawing ((gravity gravity-follow-cursor) popup-window)
   (destructuring-bind (x y width height)
@@ -197,6 +199,16 @@
               (window-width source-window)))
         (y (window-y source-window)))
     (list x y width height)))
+
+(defmethod compute-popup-window-rectangle ((gravity gravity-horizontally-adjacent-window)
+                                           &key source-window width height border-size
+                                           &allow-other-keys)
+  (declare (ignore width))
+  (let ((x (- (window-x source-window) border-size))
+        (y (+ (window-y source-window)
+              (window-height source-window)
+              border-size)))
+    (list x y (window-width source-window) height)))
 
 (defmethod window-redraw ((popup-window popup-window) force)
   (adjust-for-redrawing (popup-window-gravity popup-window) popup-window)

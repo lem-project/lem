@@ -93,8 +93,10 @@
       (check-type mode-name (or null symbol))
 
       (alexandria:with-unique-names (source-location command universal-argument)
-        `(let ((,source-location #+sbcl (sb-c:source-location) #-sbcl nil))
-           (check-already-defined-command ',name ,source-location)
+        `(progn
+           (check-already-defined-command ',name
+                                          #+sbcl (sb-c:source-location)
+                                          #-sbcl nil)
 
            (defun ,name ,params
              ;; コマンドではなく直接この関数を呼び出した場合
@@ -105,7 +107,8 @@
            (register-command-class ',name ',class-name)
            (defclass ,class-name (primary-command ,@advice-classes)
              ()
-             (:default-initargs :source-location ,source-location
+             (:default-initargs
+              :source-location #+sbcl (sb-c:source-location) #-sbcl nil
               :name ',name))
 
            (defmethod execute (mode (,command ,class-name) ,universal-argument)

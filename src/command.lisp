@@ -20,32 +20,6 @@
 
 (defgeneric execute (mode command argument))
 
-(defclass primary-command ()
-  ((name :initarg :name
-         :reader command-name)
-   (source-location :initarg :source-location
-                    :reader command-source-location)))
-
-(defun command-equal (command1 command2)
-  (eq (command-name command1)
-      (command-name command2)))
-
-(defun register-command-class (symbol class-name)
-  (setf (get symbol 'command-class) class-name))
-
-(defun get-command-class (symbol)
-  (get symbol 'command-class))
-
-(defun get-command (symbol)
-  (alexandria:when-let (class (get-command-class symbol))
-    (make-instance class)))
-
-(defun ensure-command (command)
-  (check-type command (or primary-command symbol))
-  (if (typep command 'primary-command)
-      command
-      (get-command command)))
-
 (defun call-command (this-command universal-argument)
   (let ((*this-command* (ensure-command this-command)))
     (unless *this-command*

@@ -2,10 +2,19 @@
   (:use :cl
         :lem-base
         :lem/common/killring
-        :lem/common/timer)
+        :lem/common/timer
+        :lem/common/command)
   ;; reexport common/killring
   (:export
    :with-killring-context)
+  ;; reexport lem/common/command.lisp
+  (:export
+   :primary-command
+   :make-command-table
+   :add-command
+   :remove-command
+   :find-command
+   :exist-command-p)
   ;; quicklisp-utils.lisp
   (:export
    :maybe-quickload)
@@ -213,13 +222,6 @@
    :modeline-position
    :modeline-posline
    :convert-modeline-element)
-  ;; command-table.lisp
-  (:export
-   :make-command-table
-   :add-command
-   :remove-command
-   :find-command
-   :exist-command-p)
   ;; command.lisp
   (:export
    :handle-signal
@@ -227,7 +229,6 @@
    :after-executing-command
    :this-command
    :execute
-   :primary-command
    :call-command)
   ;; defcommand.lisp
   (:export

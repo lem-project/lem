@@ -980,7 +980,7 @@
                                   (when-let ((result (contents-to-markdown-buffer documentation)))
                                     (display-message
                                      result
-                                     :style `(:gravity :adjacent-window
+                                     :style `(:gravity :vertically-adjacent-window
                                               :offset-y -1 :offset-x 1)
                                      :source-window (lem/popup-window::popup-menu-window
                                                      lem/popup-window::*popup-menu*)))))))))

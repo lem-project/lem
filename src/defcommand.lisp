@@ -92,7 +92,7 @@
       (check-type command-name string)
       (check-type mode-name (or null symbol))
 
-      (alexandria:with-unique-names (source-location command universal-argument)
+      (alexandria:with-unique-names (command universal-argument)
         `(progn
            (check-already-defined-command ',name
                                           #+sbcl (sb-c:source-location)

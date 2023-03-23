@@ -219,11 +219,13 @@
   (use-border t)
   (background-color nil)
   (offset-x 0)
-  (offset-y 0))
+  (offset-y 0)
+  shape)
 
 (defun merge-style (style &key (gravity nil gravity-p)
                                (use-border nil use-border-p)
-                               (background-color nil background-color-p))
+                               (background-color nil background-color-p)
+                               (shape nil shape-p))
   (make-style :gravity (if gravity-p
                            gravity
                            (style-gravity style))
@@ -234,7 +236,10 @@
                                     background-color
                                     (style-background-color style))
               :offset-x (style-offset-x style)
-              :offset-y (style-offset-y style)))
+              :offset-y (style-offset-y style)
+              :shape (if shape-p
+                         shape
+                         (style-shape style))))
 
 (defun ensure-style (style)
   (cond ((null style)
@@ -272,6 +277,7 @@
                      :base-width  width
                      :base-height height
                      :border border-size
+                     :border-shape (style-shape style)
                      :background-color (style-background-color style)
                      :style style))))
 
@@ -362,10 +368,11 @@
 
 (defmethod lem-if:display-popup-menu (implementation items
                                       &key action-callback
-                                           print-spec)
+                                           print-spec
+                                           (style *style*))
   (when *popup-menu*
     (lem-if:popup-menu-quit implementation))
-  (let ((style (ensure-style *style*))
+  (let ((style (ensure-style style))
         (focus-attribute (ensure-attribute 'popup-menu-attribute))
         (non-focus-attribute (ensure-attribute 'non-focus-popup-menu-attribute))
         (buffer (make-menu-buffer)))

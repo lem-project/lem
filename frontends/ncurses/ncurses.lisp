@@ -37,7 +37,8 @@
   win
   width
   height
-  size)
+  size
+  (shape nil :type (member nil :drop-curtain)))
 
 (defstruct ncurses-view
   border
@@ -294,7 +295,8 @@
                      (make-border :win win
                                   :width width
                                   :height height
-                                  :size (floating-window-border window))))))
+                                  :size (floating-window-border window)
+                                  :shape (floating-window-border-shape window))))))
      :scrwin (newwin height width y x)
      :modeline-scrwin (when use-modeline (newwin 1 width (+ y height) x))
      :x x
@@ -394,8 +396,12 @@
         (w (1- (border-width border)))
         (attr (attribute-to-bits (border-attribute))))
     (charms/ll:wattron win attr)
-    (charms/ll:mvwaddstr win 0 0 (border-upleft))
-    (charms/ll:mvwaddstr win 0 w (border-upright))
+    (cond ((eq :drop-curtain (border-shape border))
+           (charms/ll:mvwaddstr win 0 0 (border-vertical-and-right))
+           (charms/ll:mvwaddstr win 0 w (border-vertical-and-left)))
+          (t
+           (charms/ll:mvwaddstr win 0 0 (border-upleft))
+           (charms/ll:mvwaddstr win 0 w (border-upright))))
     (charms/ll:mvwaddstr win h 0 (border-downleft))
     (charms/ll:mvwaddstr win h w (border-downright))
     (loop :for x :from 1 :below w

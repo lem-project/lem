@@ -194,6 +194,7 @@
    :make-floating-window
    :floating-window
    :floating-window-border
+   :floating-window-border-shape
    :floating-window-p
    :header-window
    :redraw-display)

@@ -20,8 +20,9 @@
 (defun display-popup-menu (items
                            &rest args
                            &key action-callback
-                                print-spec)
-  (declare (ignore action-callback print-spec))
+                                print-spec
+                                style)
+  (declare (ignore action-callback print-spec style))
   (apply #'lem-if:display-popup-menu (implementation)
          items
          args))

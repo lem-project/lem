@@ -9,6 +9,8 @@
            :border-right
            :border-down
            :border-left
+           :border-vertical-and-right
+           :border-vertical-and-left
            :border-attribute))
 (in-package :lem-ncurses/style)
 
@@ -32,20 +34,22 @@
   downright
   down
   downleft
-  left)
+  left
+  vertical-and-right
+  vertical-and-left)
 
-(defparameter *single-border-style*
-  (make-style :border-shapes '("┌" "─" "┐" "│" "┘" "─" "└" "│")
+(dEfparameter *single-border-style*
+  (make-style :border-shapes '("┌" "─" "┐" "│" "┘" "─" "└" "│" "├" "┤")
               :border-attribute 'ruled-border-color
               :window-separator "║"))
 
 (defparameter *single-border-roundly-style*
-  (make-style :border-shapes '("╭" "─" "╮" "│" "╯" "─" "╰" "│")
+  (make-style :border-shapes '("╭" "─" "╮" "│" "╯" "─" "╰" "│" "├" "┤")
               :border-attribute 'ruled-border-color
               :window-separator "║"))
 
 (defparameter *double-border-style*
-  (make-style :border-shapes '("╔" "═" "╗" "║" "╝" "═" "╚" "║")
+  (make-style :border-shapes '("╔" "═" "╗" "║" "╝" "═" "╚" "║" "╠" "╣")
               :border-attribute 'ruled-border-color
               :window-separator "║"))
 
@@ -64,4 +68,6 @@
 (defun border-right () (border-shapes-right (style-border-shapes *style*)))
 (defun border-down () (border-shapes-down (style-border-shapes *style*)))
 (defun border-left () (border-shapes-left (style-border-shapes *style*)))
+(defun border-vertical-and-right () (border-shapes-vertical-and-right (style-border-shapes *style*)))
+(defun border-vertical-and-left () (border-shapes-vertical-and-left (style-border-shapes *style*)))
 (defun border-attribute () (style-border-attribute *style*))

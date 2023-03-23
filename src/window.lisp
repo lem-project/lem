@@ -1093,6 +1093,11 @@ window width is changed, we must recalc the window view point."
     :initarg :border
     :initform 0
     :reader floating-window-border)
+   (border-shape
+    :type (member nil :drop-curtain)
+    :initarg :border-shape
+    :initform nil
+    :reader floating-window-border-shape)
    (background-color
     :initarg :background-color
     :initform nil

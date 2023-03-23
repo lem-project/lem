@@ -7,7 +7,7 @@
 (in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)
-(defconstant +min-width+   3)
+(defconstant +min-width+   100)
 (defconstant +min-height+  1)
 
 (defvar *history-table* (make-hash-table))
@@ -138,7 +138,10 @@
                                                                       :end end))
                            (lem/completion-mode:completion-item
                             item))
-                   :collect :it))))))))
+                   :collect :it))))
+       :style '(:gravity :horizontally-adjacent-window
+                :offset-y -1
+                :shape :drop-curtain)))))
 
 (define-command prompt-previous-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))
@@ -151,6 +154,9 @@
     (or (replace-if-history-exists #'lem/common/history:next-history)
         (replace-if-history-exists #'lem/common/history:restore-edit-string))))
 
+(defun min-width ()
+  (min +min-width+ (floor (display-width) 1.2)))
+
 (defun compute-window-rectangle (buffer &key gravity source-window)
   (destructuring-bind (width height) (lem/popup-window::compute-size-from-buffer buffer)
     (lem/popup-window::compute-popup-window-rectangle
@@ -158,7 +164,7 @@
      :source-window source-window
      ;; Find File: <file-name>|
      ;;                       ^ ここにカーソルがあるとき、widthは1つ余分に幅が必要
-     :width (alexandria:clamp (1+ width) +min-width+ (- (display-width) 2))
+     :width (alexandria:clamp (1+ width) (min-width) (- (display-width) 2))
      :height (alexandria:clamp height +min-height+ (- (display-height) 2)))))
 
 (defun make-prompt-window (buffer parameters)

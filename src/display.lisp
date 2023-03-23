@@ -53,6 +53,16 @@
                  (< start-charpos end-charpos)))
     (destructuring-bind (string . attributes)
         (aref (screen-lines screen) screen-row)
+
+      (unless end-charpos
+        (let* ((width (string-width string))
+               (n (1+ (floor width (screen-width screen)))))
+          (setf end-charpos
+                (+ (length string)
+                   (- (- (* (screen-width screen) n) (1- n))
+                      width)
+                   -1))))
+
       (when (and end-charpos (<= (length string) end-charpos))
         (setf (car (aref (screen-lines screen) screen-row))
               (concatenate 'string
@@ -63,11 +73,11 @@
             (if transparency
                 (overlay-attributes attributes
                                     start-charpos
-                                    (or end-charpos (length string))
+                                    end-charpos
                                     attribute)
                 (lem-base::put-elements attributes
                                         start-charpos
-                                        (or end-charpos (length string))
+                                        end-charpos
                                         attribute))))))
 
 (defun draw-attribute-to-screen-region (screen attribute screen-row start end)
@@ -144,8 +154,12 @@
                      (draw-attribute-to-screen-line screen
                                                     (overlay-attribute overlay)
                                                     (calc-row start)
-                                                    (point-charpos start)
-                                                    (point-charpos end)))
+                                                    (if (overlay-get overlay :display-line)
+                                                        0
+                                                        (point-charpos start))
+                                                    (if (overlay-get overlay :display-line)
+                                                        nil
+                                                        (point-charpos end))))
                     ((and (point<= view-point start)
                           (point< end view-end-point))
                      (draw-attribute-to-screen-region screen

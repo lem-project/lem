@@ -311,7 +311,9 @@
                (end point))
     (line-start start)
     (line-end end)
-    (make-overlay start end focus-attribute)))
+    (let ((ov (make-overlay start end focus-attribute)))
+      (overlay-put ov :display-line t)
+      ov)))
 
 (defun update-focus-overlay (popup-menu point)
   (delete-overlay (popup-menu-focus-overlay popup-menu))

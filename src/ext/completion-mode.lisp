@@ -257,14 +257,15 @@
                                #'update-items-and-then)
           (update-items-and-then (call-sync-function spec (current-point)))))))
 
-(defun start-completion (context items)
+(defun start-completion (context items style)
   (when items
-    (display-popup-menu
-     items
-     :action-callback (lambda (item)
-                        (completion-insert (current-point) item)
-                        (completion-end))
-     :print-spec (make-print-spec items))
+    (apply #'display-popup-menu
+           items
+           :action-callback (lambda (item)
+                              (completion-insert (current-point) item)
+                              (completion-end))
+           :print-spec (make-print-spec items)
+           (when style `(:style ,style)))
     (completion-mode t)
     (unless (spec-async-p (context-spec context))
       (narrowing-down context items))
@@ -280,7 +281,7 @@
             (popup-menu-update items :print-spec (make-print-spec items))
             (call-focus-action))))))
 
-(defun run-completion (completion-spec)
+(defun run-completion (completion-spec &key style)
   (let* ((spec (ensure-completion-spec completion-spec))
          (context (make-instance 'completion-context :spec spec)))
     (setf *completion-context* context)
@@ -290,9 +291,9 @@
        (if (spec-async-p (context-spec context))
            (lambda (items)
              (when (point= before-point (current-point))
-               (start-completion context items)))
+               (start-completion context items style)))
            (lambda (items)
              (when items
                (if (alexandria:length= items 1)
                    (completion-insert (current-point) (first items))
-                   (start-completion context items)))))))))
+                   (start-completion context items style)))))))))

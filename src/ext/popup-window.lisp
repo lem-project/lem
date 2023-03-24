@@ -74,6 +74,11 @@
 (defmethod lem:window-parent ((window popup-window))
   (popup-window-source-window window))
 
+(defun find-popup-menu (&key parent-window)
+  (when (and *popup-menu*
+             (eq parent-window (window-parent (popup-menu-window *popup-menu*))))
+    *popup-menu*))
+
 (defun ensure-gravity (gravity)
   (if (typep gravity 'gravity)
       gravity
@@ -203,12 +208,14 @@
 (defmethod compute-popup-window-rectangle ((gravity gravity-horizontally-adjacent-window)
                                            &key source-window width height border-size
                                            &allow-other-keys)
-  (declare (ignore width))
   (let ((x (- (window-x source-window) border-size))
         (y (+ (window-y source-window)
               (window-height source-window)
               border-size)))
-    (list x y (window-width source-window) height)))
+    (list x
+          y
+          (max width (window-width source-window))
+          height)))
 
 (defmethod window-redraw ((popup-window popup-window) force)
   (adjust-for-redrawing (popup-window-gravity popup-window) popup-window)

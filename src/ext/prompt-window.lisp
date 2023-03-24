@@ -7,7 +7,7 @@
 (in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)
-(defconstant +min-width+   100)
+(defconstant +min-width+   10)
 (defconstant +min-height+  1)
 
 (defvar *history-table* (make-hash-table))
@@ -155,7 +155,7 @@
         (replace-if-history-exists #'lem/common/history:restore-edit-string))))
 
 (defun min-width ()
-  (min +min-width+ (floor (display-width) 1.2)))
+  +min-width+)
 
 (defun compute-window-rectangle (buffer &key gravity source-window)
   (destructuring-bind (width height) (lem/popup-window::compute-size-from-buffer buffer)
@@ -187,16 +187,23 @@
                    :border (if (prompt-use-border-p parameters) +border-size+ 0))))
 
 (defmethod update-prompt-window ((window floating-prompt))
-  (destructuring-bind (x y width height)
-      (compute-window-rectangle (window-buffer window)
-                                :gravity (prompt-gravity window)
-                                :source-window (prompt-window-caller-of-prompt-window window))
-    (unless (and (= x (window-x window))
-                 (= y (window-y window)))
-      (lem::window-set-pos window x y))
-    (unless (and (= width (window-width window))
-                 (= height (window-height window)))
-      (lem::window-set-size window width height))))
+  (let* ((popup-menu
+           (lem/popup-window::find-popup-menu :parent-window window))
+         (child-width
+           (if popup-menu
+               (window-width (lem/popup-window::popup-menu-window popup-menu))
+               0)))
+    (destructuring-bind (x y width height)
+        (compute-window-rectangle (window-buffer window)
+                                  :gravity (prompt-gravity window)
+                                  :source-window (prompt-window-caller-of-prompt-window window))
+      (unless (and (= x (window-x window))
+                   (= y (window-y window)))
+        (lem::window-set-pos window x y))
+      (let ((width (max width child-width)))
+        (unless (and (= width (window-width window))
+                     (= height (window-height window)))
+          (lem::window-set-size window width height))))))
 
 (defun initialize-prompt-buffer (buffer)
   (let ((*inhibit-read-only* t)

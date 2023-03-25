@@ -376,7 +376,7 @@
 (defun (setf buffer-start-line) (line buffer)
   (setf (buffer-value buffer 'start-line) line))
 
-(defun setup-menu-buffer (buffer items print-spec focus-attribute)
+(defun setup-menu-buffer (buffer items print-spec focus-attribute &optional last-line)
   (clear-overlays buffer)
   (erase-buffer buffer)
   (setf (variable-value 'line-wrap :buffer buffer) nil)
@@ -392,6 +392,7 @@
       (buffer-start point)
       (when header-exists
         (move-to-line point start-line))
+      (when last-line (move-to-line point last-line))
       (let ((focus-overlay (make-focus-overlay point focus-attribute))
             (width (fill-in-the-background-with-space buffer)))
         (values width
@@ -432,25 +433,27 @@
                              :action-callback action-callback
                              :focus-attribute focus-attribute))))))
 
-(defmethod lem-if:popup-menu-update (implementation items &key print-spec)
+(defmethod lem-if:popup-menu-update (implementation items &key print-spec (max-display-items 20) keep-focus)
   (when *popup-menu*
-    (multiple-value-bind (menu-width focus-overlay)
-        (setup-menu-buffer (popup-menu-buffer *popup-menu*)
-                           items
-                           print-spec
-                           (popup-menu-focus-attribute *popup-menu*))
-      (setf (popup-menu-focus-overlay *popup-menu*) focus-overlay)
-      (let ((source-window (current-window)))
-        (when (eq source-window
-                  (frame-prompt-window (current-frame)))
-          ;; prompt-window内でcompletion-windowを出している場合,
-          ;; completion-windowの位置を決める前にprompt-windowの調整を先にしておかないとずれるため,
-          ;; ここで更新する
-          (lem::update-floating-prompt-window (current-frame)))
-        (update-popup-window :source-window source-window
-                             :width menu-width
-                             :height (min 20 (length items))
-                             :destination-window (popup-menu-window *popup-menu*))))))
+    (let ((last-line (line-number-at-point (buffer-point (popup-menu-buffer *popup-menu*)))))
+      (multiple-value-bind (menu-width focus-overlay height)
+          (setup-menu-buffer (popup-menu-buffer *popup-menu*)
+                             items
+                             print-spec
+                             (popup-menu-focus-attribute *popup-menu*)
+                             (if keep-focus last-line))
+        (setf (popup-menu-focus-overlay *popup-menu*) focus-overlay)
+        (let ((source-window (current-window)))
+          (when (eq source-window
+                    (frame-prompt-window (current-frame)))
+            ;; prompt-window内でcompletion-windowを出している場合,
+            ;; completion-windowの位置を決める前にprompt-windowの調整を先にしておかないとずれるため,
+            ;; ここで更新する
+            (lem::update-floating-prompt-window (current-frame)))
+          (update-popup-window :source-window source-window
+                               :width menu-width
+                               :height (min max-display-items height)
+                               :destination-window (popup-menu-window *popup-menu*)))))))
 
 (defmethod lem-if:popup-menu-quit (implementation)
   (when *popup-menu*

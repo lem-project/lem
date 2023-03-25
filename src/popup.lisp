@@ -28,8 +28,9 @@
          items
          args))
 
-(defun popup-menu-update (items &key print-spec)
-  (lem-if:popup-menu-update (implementation) items :print-spec print-spec))
+(defun popup-menu-update (items &rest args &key print-spec max-display-items keep-focus)
+  (declare (ignore print-spec max-display-items keep-focus))
+  (apply #'lem-if:popup-menu-update (implementation) items args))
 
 (defun popup-menu-quit ()
   (lem-if:popup-menu-quit (implementation)))

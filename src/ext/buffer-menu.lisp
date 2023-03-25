@@ -36,4 +36,4 @@
                   :columns '("" "Buffer" "File")
                   :items (mapcar #'make-item (buffer-list)))))
 
-;(define-key *global-keymap* "C-x C-b" 'list-buffer-menu)
+#+(or)(define-key *global-keymap* "C-x C-b" 'list-buffer-menu)

@@ -70,7 +70,7 @@
                                             print-spec
                                             style
                                             max-display-items))
-(defgeneric lem-if:popup-menu-update (implementation items &key print-spec))
+(defgeneric lem-if:popup-menu-update (implementation items &key print-spec max-display-items keep-focus))
 (defgeneric lem-if:popup-menu-quit (implementation))
 (defgeneric lem-if:popup-menu-down (implementation))
 (defgeneric lem-if:popup-menu-up (implementation))

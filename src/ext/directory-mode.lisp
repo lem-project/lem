@@ -65,6 +65,7 @@
           (t
            (with-point ((s point) (e point))
              (setf ov (make-overlay (line-start s) (line-end e) 'current-line-attribute))
+             (overlay-put ov :display-line t)
              (setf (buffer-value point 'line-overlay) ov))))))
 
 (defun move-to-start-line (point)

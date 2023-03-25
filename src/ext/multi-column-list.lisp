@@ -85,8 +85,9 @@
 
 (defun compute-column-width-list (multi-column-list)
   (let ((width-matrix
-          (loop :for item :in (multi-column-list-window-items multi-column-list)
-                :collect (loop :for value :in (row-values item)
+          (loop :for row :in (cons (multi-column-list-window-columns multi-column-list)
+                                   (mapcar #'row-values (multi-column-list-window-items multi-column-list)))
+                :collect (loop :for value :in row
                                :collect (string-width value)))))
     (loop :repeat (length (first width-matrix))
           :for i :from 0

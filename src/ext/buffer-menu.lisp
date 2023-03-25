@@ -23,7 +23,8 @@
 
 (defmethod row-values ((item item))
   (let ((buffer (item-buffer item)))
-    (list (buffer-name buffer)
+    (list (string-trim " " (lem::buffer-attributes buffer))
+          (buffer-name buffer)
           (buffer-filename buffer))))
 
 (defun make-item (buffer)
@@ -32,7 +33,7 @@
 (define-command list-buffer-menu () ()
   (display
    (make-instance 'buffer-menu
-                  :columns '("Buffer" "File")
+                  :columns '("" "Buffer" "File")
                   :items (mapcar #'make-item (buffer-list)))))
 
 ;(define-key *global-keymap* "C-x C-b" 'list-buffer-menu)

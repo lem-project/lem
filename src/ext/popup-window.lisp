@@ -2,6 +2,7 @@
   (:use :cl :lem)
   (:export :get-focus-item
            :write-header
+           :find-popup-menu
            :apply-print-spec)
   #+sbcl
   (:lock t))
@@ -361,9 +362,9 @@
                 (insert-character point #\newline)))
     (buffer-start point)))
 
-(defun get-focus-item ()
-  (when *popup-menu*
-    (alexandria:when-let (p (focus-point *popup-menu*))
+(defun get-focus-item (&optional (popup-menu *popup-menu*))
+  (when popup-menu
+    (alexandria:when-let (p (focus-point popup-menu))
       (text-property-at (line-start p) :item))))
 
 (defun make-menu-buffer ()
@@ -394,7 +395,9 @@
       (let ((focus-overlay (make-focus-overlay point focus-attribute))
             (width (fill-in-the-background-with-space buffer)))
         (values width
-                focus-overlay)))))
+                focus-overlay
+                (+ (1- start-line)
+                   (length items)))))))
 
 (defmethod lem-if:display-popup-menu (implementation items
                                       &key action-callback
@@ -407,7 +410,7 @@
         (focus-attribute (ensure-attribute 'popup-menu-attribute))
         (non-focus-attribute (ensure-attribute 'non-focus-popup-menu-attribute))
         (buffer (make-menu-buffer)))
-    (multiple-value-bind (menu-width focus-overlay)
+    (multiple-value-bind (menu-width focus-overlay height)
         (setup-menu-buffer buffer
                            items
                            print-spec
@@ -415,7 +418,7 @@
       (let ((window (make-popup-window :source-window (current-window)
                                        :buffer buffer
                                        :width menu-width
-                                       :height (min max-display-items (length items))
+                                       :height (min max-display-items height)
                                        :style (merge-style
                                                style
                                                :background-color (or (style-background-color style)

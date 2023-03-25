@@ -21,8 +21,9 @@
                            &rest args
                            &key action-callback
                                 print-spec
-                                style)
-  (declare (ignore action-callback print-spec style))
+                                style
+                                max-display-items)
+  (declare (ignore action-callback print-spec style max-display-items))
   (apply #'lem-if:display-popup-menu (implementation)
          items
          args))

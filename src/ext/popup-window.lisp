@@ -399,7 +399,8 @@
 (defmethod lem-if:display-popup-menu (implementation items
                                       &key action-callback
                                            print-spec
-                                           (style *style*))
+                                           (style *style*)
+                                           (max-display-items 20))
   (when *popup-menu*
     (lem-if:popup-menu-quit implementation))
   (let ((style (ensure-style style))
@@ -414,7 +415,7 @@
       (let ((window (make-popup-window :source-window (current-window)
                                        :buffer buffer
                                        :width menu-width
-                                       :height (min 20 (length items))
+                                       :height (min max-display-items (length items))
                                        :style (merge-style
                                                style
                                                :background-color (or (style-background-color style)

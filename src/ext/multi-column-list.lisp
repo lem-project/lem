@@ -101,7 +101,8 @@
                                        :column-width-list (compute-column-width-list window))
                           :action-callback (lambda (item)
                                              (select-item window item))
-                          :style '(:gravity :center))
+                          :style '(:gravity :center)
+                          :max-display-items 100)
   (multi-column-list-mode t))
 
 (defmethod quit ((window multi-column-list))

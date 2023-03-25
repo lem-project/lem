@@ -1,4 +1,4 @@
-(defpackage :lem/buffer-menu
+(defpackage :lem/list-buffers
   (:use :cl
         :lem)
   (:import-from :lem/multi-column-list
@@ -8,8 +8,9 @@
                 :delete-item
                 :row-values
                 :display
-                :quit))
-(in-package :lem/buffer-menu)
+                :quit)
+  (:export :list-buffers))
+(in-package :lem/list-buffers)
 
 (defclass buffer-menu (multi-column-list)
   ())
@@ -34,10 +35,10 @@
 (defun make-item (buffer)
   (make-instance 'item :buffer buffer))
 
-(define-command list-buffer-menu () ()
+(define-command list-buffers () ()
   (display
    (make-instance 'buffer-menu
                   :columns '("" "Buffer" "File")
                   :items (mapcar #'make-item (buffer-list)))))
 
-#+(or)(define-key *global-keymap* "C-x C-b" 'list-buffer-menu)
+(define-key *global-keymap* "C-x C-b" 'list-buffers)

@@ -154,6 +154,12 @@
   (multi-column-list-mode nil)
   (popup-menu-quit))
 
+(defun update (multi-column-list)
+  (popup-menu-update (multi-column-list-items multi-column-list)
+                     :print-spec (multi-column-list-print-spec multi-column-list)
+                     :max-display-items 100
+                     :keep-focus t))
+
 (defun mark-current-item ()
   (let ((item (lem/popup-window:get-focus-item
                (lem/popup-window:find-popup-menu
@@ -161,10 +167,7 @@
     (setf (multi-column-list-item-check-p item)
           (not (multi-column-list-item-check-p item))))
   (let ((multi-column-list (current-multi-column-list)))
-    (popup-menu-update (multi-column-list-items multi-column-list)
-                       :print-spec (multi-column-list-print-spec multi-column-list)
-                       :max-display-items 100
-                       :keep-focus t)))
+    (update multi-column-list)))
 
 (defun mark-items ()
   (remove-if-not #'multi-column-list-item-check-p
@@ -178,7 +181,4 @@
       (setf whole-items
             (delete item whole-items)))
     (setf (multi-column-list-items multi-column-list) whole-items)
-    (popup-menu-update (multi-column-list-items multi-column-list)
-                       :print-spec (multi-column-list-print-spec multi-column-list)
-                       :max-display-items 100
-                       :keep-focus t)))
+    (update multi-column-list)))

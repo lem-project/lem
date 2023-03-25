@@ -32,11 +32,12 @@
           (location-linum location2))))
 
 (defun append-location (record location &optional tail)
-  (when (if tail
-            (equal-location location
-                            (car (last (record-locations record))))
-            (equal-location location
-                            (car (record-locations record))))
+  (when (and (not (null (record-locations record)))
+             (if tail
+                 (equal-location location
+                                 (car (last (record-locations record))))
+                 (equal-location location
+                                 (car (record-locations record)))))
     (return-from append-location))
   (if (<= *max* (record-len record))
       (progn

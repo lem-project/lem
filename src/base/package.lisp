@@ -95,6 +95,7 @@
    :buffer-directory
    :buffer-unmark
    :buffer-mark-cancel
+   :buffer-attributes
    :buffer-rename
    :buffer-undo
    :buffer-redo

@@ -245,6 +245,16 @@
 (defun buffer-mark-cancel (buffer)
   (mark-cancel (buffer-mark-object buffer)))
 
+(defun buffer-attributes (buffer)
+  (concatenate 'string
+               " "
+               (cond ((buffer-read-only-p buffer)
+                      "% ")
+                     ((buffer-modified-p buffer)
+                      "* ")
+                     (t
+                      "  "))))
+
 (defun check-read-only-buffer (buffer)
   (when (buffer-read-only-p buffer)
     (error 'read-only-error)))

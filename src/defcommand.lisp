@@ -65,8 +65,9 @@
 
 (defun check-already-defined-command (name source-location)
   #+sbcl
-  (alexandria:when-let ((command (get-command name)))
-    (unless (equal (sb-c:definition-source-location-namestring (command-source-location command))
+  (alexandria:when-let* ((command (get-command name))
+                         (command-source-location (command-source-location command)))
+    (unless (equal (sb-c:definition-source-location-namestring command-source-location)
                    (sb-c:definition-source-location-namestring source-location))
       (cerror "continue"
               "~A is already defined in another file ~A"

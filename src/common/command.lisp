@@ -22,6 +22,7 @@
   ((name :initarg :name
          :reader command-name)
    (source-location :initarg :source-location
+                    :initform nil
                     :reader command-source-location)))
 
 (defun command-equal (command1 command2)

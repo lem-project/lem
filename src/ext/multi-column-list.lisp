@@ -64,15 +64,15 @@
                     "✔ "
                     "  "))))
 
-(defmethod multi-column-list-columns :around ((multi-column-list multi-column-list))
-  (append (call-next-method) (list "")))
-
 (defclass multi-column-list ()
   ((columns :initarg :columns
             :reader multi-column-list-columns)
    (items :initarg :items
           :reader multi-column-list-items)
    (print-spec :accessor multi-column-list-print-spec)))
+
+(defmethod multi-column-list-columns :around ((multi-column-list multi-column-list))
+  (append (call-next-method) (list "")))
 
 (defclass multi-column-list-item ()
   ((check :initform nil

@@ -5,6 +5,7 @@
                 :multi-column-list
                 :multi-column-list-item
                 :select-item
+                :delete-item
                 :row-values
                 :display
                 :quit))
@@ -13,13 +14,16 @@
 (defclass buffer-menu (multi-column-list)
   ())
 
-(defmethod select-item ((window buffer-menu) item)
-  (quit window)
-  (switch-to-buffer (item-buffer item)))
-
 (defclass item (multi-column-list-item)
   ((buffer :initarg :buffer
            :reader item-buffer)))
+
+(defmethod select-item ((component buffer-menu) item)
+  (quit component)
+  (switch-to-buffer (item-buffer item)))
+
+(defmethod delete-item ((component buffer-menu) item)
+  (kill-buffer (item-buffer item)))
 
 (defmethod row-values ((item item))
   (let ((buffer (item-buffer item)))

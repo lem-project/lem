@@ -3,6 +3,7 @@
   (:export :multi-column-list
            :multi-column-list-item
            :select-item
+           :delete-item
            :row-values
            :display
            :quit))
@@ -24,6 +25,7 @@
 (define-key *multi-column-list-mode-keymap* "Return" 'multi-column-list/select)
 (define-key *multi-column-list-mode-keymap* "Space" 'multi-column-list/mark-and-down)
 (define-key *multi-column-list-mode-keymap* "M-Space" 'multi-column-list/up-and-mark)
+(define-key *multi-column-list-mode-keymap* "C-k" 'multi-column-list/delete-items)
 
 (define-command multi-column-list/default () ()
   )
@@ -54,8 +56,12 @@
   (multi-column-list/up)
   (mark-current-item))
 
+(define-command multi-column-list/delete-items () ()
+  (delete-marked-items))
+
 ;;
 (defgeneric select-item (component item))
+(defgeneric delete-item (component item))
 (defgeneric row-values (item))
 
 (defmethod row-values :around (item)
@@ -68,7 +74,7 @@
   ((columns :initarg :columns
             :reader multi-column-list-columns)
    (items :initarg :items
-          :reader multi-column-list-items)
+          :accessor multi-column-list-items)
    (print-spec :accessor multi-column-list-print-spec)))
 
 (defmethod multi-column-list-columns :around ((multi-column-list multi-column-list))
@@ -155,6 +161,23 @@
     (setf (multi-column-list-item-check-p item)
           (not (multi-column-list-item-check-p item))))
   (let ((multi-column-list (current-multi-column-list)))
+    (popup-menu-update (multi-column-list-items multi-column-list)
+                       :print-spec (multi-column-list-print-spec multi-column-list)
+                       :max-display-items 100
+                       :keep-focus t)))
+
+(defun mark-items ()
+  (remove-if-not #'multi-column-list-item-check-p
+                 (multi-column-list-items (current-multi-column-list))))
+
+(defun delete-marked-items ()
+  (let* ((multi-column-list (current-multi-column-list))
+         (whole-items (multi-column-list-items multi-column-list)))
+    (dolist (item (mark-items))
+      (delete-item multi-column-list item)
+      (setf whole-items
+            (delete item whole-items)))
+    (setf (multi-column-list-items multi-column-list) whole-items)
     (popup-menu-update (multi-column-list-items multi-column-list)
                        :print-spec (multi-column-list-print-spec multi-column-list)
                        :max-display-items 100

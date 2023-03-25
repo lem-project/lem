@@ -1,6 +1,7 @@
 (defpackage :lem/popup-window
   (:use :cl :lem)
   (:export :get-focus-item
+           :write-header
            :apply-print-spec)
   #+sbcl
   (:lock t))
@@ -327,6 +328,9 @@
   (setf (popup-menu-focus-overlay popup-menu)
         (make-focus-overlay point (popup-menu-focus-attribute popup-menu))))
 
+(defgeneric write-header (print-spec point)
+  (:method (print-spec point)))
+
 (defgeneric apply-print-spec (print-spec point item)
   (:method ((print-spec function) point item)
     (let ((string (funcall print-spec item)))
@@ -365,15 +369,32 @@
 (defun make-menu-buffer ()
   (make-buffer "*popup menu*" :enable-undo-p nil :temporary t))
 
+(defun buffer-start-line (buffer)
+  (buffer-value buffer 'start-line))
+
+(defun (setf buffer-start-line) (line buffer)
+  (setf (buffer-value buffer 'start-line) line))
+
 (defun setup-menu-buffer (buffer items print-spec focus-attribute)
   (clear-overlays buffer)
   (erase-buffer buffer)
   (setf (variable-value 'line-wrap :buffer buffer) nil)
-  (insert-items (buffer-point buffer) items print-spec)
-  (let ((focus-overlay (make-focus-overlay (buffer-start-point buffer) focus-attribute))
-        (width (fill-in-the-background-with-space buffer)))
-    (values width
-            focus-overlay)))
+  (let ((point (buffer-point buffer)))
+    (write-header print-spec point)
+    (let ((header-exists (not (start-line-p point)))
+          (start-line 1))
+      (when header-exists
+        (insert-character point #\newline)
+        (setf start-line (line-number-at-point point)))
+      (setf (buffer-start-line buffer) start-line)
+      (insert-items point items print-spec)
+      (buffer-start point)
+      (when header-exists
+        (move-to-line point start-line))
+      (let ((focus-overlay (make-focus-overlay point focus-attribute))
+            (width (fill-in-the-background-with-space buffer)))
+        (values width
+                focus-overlay)))))
 
 (defmethod lem-if:display-popup-menu (implementation items
                                       &key action-callback
@@ -433,10 +454,17 @@
     (delete-buffer (popup-menu-buffer *popup-menu*))
     (setf *popup-menu* nil)))
 
+(defun header-point-p (point)
+  (< (line-number-at-point point)
+     (buffer-start-line (point-buffer point))))
+
 (defun move-focus (popup-menu function)
   (alexandria:when-let (point (focus-point popup-menu))
     (funcall function point)
     (window-see (popup-menu-window popup-menu))
+    (let ((buffer (point-buffer point)))
+      (when (header-point-p point)
+        (move-to-line point (buffer-start-line buffer))))
     (update-focus-overlay popup-menu point)))
 
 (defmethod lem-if:popup-menu-down (implementation)
@@ -451,6 +479,8 @@
    *popup-menu*
    (lambda (point)
      (unless (line-offset point -1)
+       (buffer-end point))
+     (when (header-point-p point)
        (buffer-end point)))))
 
 (defmethod lem-if:popup-menu-first (implementation)

@@ -19,6 +19,8 @@
 (define-key *multi-column-list-mode-keymap* 'lem::escape 'multi-column-list/quit)
 (define-key *multi-column-list-mode-keymap* 'next-line 'multi-column-list/down)
 (define-key *multi-column-list-mode-keymap* 'previous-line 'multi-column-list/up)
+(define-key *multi-column-list-mode-keymap* 'move-to-end-of-buffer 'multi-column-list/last)
+(define-key *multi-column-list-mode-keymap* 'move-to-beginning-of-buffer 'multi-column-list/first)
 (define-key *multi-column-list-mode-keymap* "Return" 'multi-column-list/select)
 
 (define-command multi-column-list/default () ()
@@ -32,6 +34,12 @@
 
 (define-command multi-column-list/up () ()
   (popup-menu-up))
+
+(define-command multi-column-list/first () ()
+  (popup-menu-first))
+
+(define-command multi-column-list/last () ()
+  (popup-menu-last))
 
 (define-command multi-column-list/select () ()
   (popup-menu-select))
@@ -50,8 +58,21 @@
   ())
 
 (defclass print-spec ()
-  ((column-width-list :initarg :column-width-list
+  ((multi-column-list :initarg :multi-column-list
+                      :reader print-spec-multi-column-list)
+   (column-width-list :initarg :column-width-list
                       :reader print-spec-column-width-list)))
+
+(defmethod lem/popup-window:write-header ((print-spec print-spec) point)
+  (with-point ((start point))
+    (loop :for width :in (print-spec-column-width-list print-spec)
+          :for column-header :in (multi-column-list-window-columns
+                                  (print-spec-multi-column-list print-spec))
+          :do (insert-string point " ")
+              (let ((column (point-column point)))
+                (insert-string point column-header)
+                (move-to-column point (+ column width) t)))
+    (put-text-property start point :attribute (make-attribute :underline-p t))))
 
 (defmethod lem/popup-window:apply-print-spec ((print-spec print-spec) point item)
   (check-type item multi-column-list-item)
@@ -60,8 +81,7 @@
         :do (insert-string point " ")
             (let ((column (point-column point)))
               (insert-string point value)
-              (move-to-column point (+ column width) t))
-            (insert-string point " ")))
+              (move-to-column point (+ column width) t))))
 
 (defun compute-column-width-list (multi-column-list)
   (let ((width-matrix
@@ -76,6 +96,7 @@
   (lem:display-popup-menu (multi-column-list-window-items window)
                           :print-spec (make-instance
                                        'print-spec
+                                       :multi-column-list window
                                        :column-width-list (compute-column-width-list window))
                           :action-callback (lambda (item)
                                              (select-item window item))

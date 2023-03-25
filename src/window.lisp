@@ -1119,7 +1119,8 @@ window width is changed, we must recalc the window view point."
                                   (width (alexandria:required-argument :width))
                                   (height (alexandria:required-argument :height))
                                   (use-modeline-p nil)
-                                  (background-color nil))
+                                  (background-color nil)
+                                  (use-border nil))
   (make-instance 'floating-window
                  :buffer buffer
                  :x x
@@ -1127,7 +1128,8 @@ window width is changed, we must recalc the window view point."
                  :width width
                  :height height
                  :use-modeline-p use-modeline-p
-                 :background-color background-color))
+                 :background-color background-color
+                 :border (if use-border 1 0)))
 
 (defmethod %delete-window ((window floating-window))
   (when (eq window (current-window))

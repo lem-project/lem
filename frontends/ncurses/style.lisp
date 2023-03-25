@@ -38,7 +38,7 @@
   vertical-and-right
   vertical-and-left)
 
-(dEfparameter *single-border-style*
+(defparameter *single-border-style*
   (make-style :border-shapes '("┌" "─" "┐" "│" "┘" "─" "└" "│" "├" "┤")
               :border-attribute 'ruled-border-color
               :window-separator "║"))

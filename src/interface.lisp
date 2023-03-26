@@ -83,9 +83,6 @@
                                                                                style))
 (defgeneric lem-if:delete-popup-message (implementation popup-message))
 
-(defgeneric lem-if:display-menu (implementation menu name))
-(defgeneric lem-if:update-menu (implementation menu items))
-
 (defgeneric lem-if:clipboard-paste (implementation)
   (:method (implementation)))
 (defgeneric lem-if:clipboard-copy (implementation text)

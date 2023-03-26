@@ -542,8 +542,6 @@
    :popup-menu-last
    :popup-menu-select
    :display-popup-message
-   :display-menu
-   :update-menu
    :delete-popup-message
    :clipboard-paste
    :clipboard-copy))

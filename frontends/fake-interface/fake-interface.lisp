@@ -112,8 +112,6 @@
 ;; (defmethod lem-if:popup-menu-select ((implementation fake-interface)))
 ;; (defmethod lem-if:display-popup-message ((implementation fake-interface) text &key timeout size))
 ;; (defmethod lem-if:delete-popup-message ((implementation fake-interface) popup-message))
-;; (defmethod lem-if:display-menu ((implementation fake-interface) menu name))
-;; (defmethod lem-if:update-menu ((implementation fake-interface) menu items))
 
 (defmacro with-fake-interface (() &body body)
   `(with-implementation (make-instance 'fake-interface)

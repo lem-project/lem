@@ -90,7 +90,6 @@
                              (:file "kbdmacro")
                              (:file "isearch")
                              (:file "showparen")
-                             (:file "menu-mode")
                              (:file "line-numbers")
                              (:file "sourcelist")
                              (:file "grep")

@@ -150,7 +150,7 @@
    (column-width-list :initarg :column-width-list
                       :reader print-spec-column-width-list)))
 
-(defmethod lem/popup-window:write-header ((print-spec print-spec) point)
+(defmethod lem/popup-menu:write-header ((print-spec print-spec) point)
   (let ((columns (multi-column-list-columns
                   (print-spec-multi-column-list print-spec))))
     (when columns
@@ -164,7 +164,7 @@
         (insert-string point " ")
         (put-text-property start point :attribute (make-attribute :underline-p t))))))
 
-(defmethod lem/popup-window:apply-print-spec ((print-spec print-spec) point item)
+(defmethod lem/popup-menu:apply-print-spec ((print-spec print-spec) point item)
   (check-type item multi-column-list-item)
   (loop :for value :in (map-columns (print-spec-multi-column-list print-spec) item)
         :for width :in (print-spec-column-width-list print-spec)
@@ -208,15 +208,15 @@
                             :style '(:gravity :center)
                             :max-display-items 100)
     (setf (current-window)
-          (lem/popup-window::popup-menu-window
-           (lem/popup-window:find-popup-menu :parent-window (current-window))))
+          (lem/popup-menu::popup-menu-window
+           (lem/popup-menu:find-popup-menu :parent-window (current-window))))
     (setf (window-multi-column-list (current-window)) component)
     (multi-column-list-mode t)
     (popup-menu-first)))
 
 (defmethod quit ((component multi-column-list))
-  (let* ((popup-menu (lem/popup-window:find-popup-menu :current-window (current-window)))
-         (popup-window (lem/popup-window::popup-menu-window popup-menu)))
+  (let* ((popup-menu (lem/popup-menu:find-popup-menu :current-window (current-window)))
+         (popup-window (lem/popup-menu::popup-menu-window popup-menu)))
     (when (eq (current-window) popup-window)
       (setf (current-window) (window-parent popup-window)))
     (popup-menu-quit)))
@@ -229,8 +229,8 @@
 
 (defun mark-current-item (multi-column-list)
   (when (multi-column-list-use-mark-p multi-column-list)
-    (let ((item (lem/popup-window:get-focus-item
-                 (lem/popup-window:find-popup-menu :current-window (current-window)))))
+    (let ((item (lem/popup-menu:get-focus-item
+                 (lem/popup-menu:find-popup-menu :current-window (current-window)))))
       (setf (multi-column-list-item-mark-p item)
             (not (multi-column-list-item-mark-p item))))
     (update multi-column-list)))

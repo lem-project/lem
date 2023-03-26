@@ -188,10 +188,10 @@
 
 (defmethod update-prompt-window ((window floating-prompt))
   (let* ((popup-menu
-           (lem/popup-window:find-popup-menu :parent-window window))
+           (lem/popup-menu:find-popup-menu :parent-window window))
          (child-width
            (if popup-menu
-               (window-width (lem/popup-window::popup-menu-window popup-menu))
+               (window-width (lem/popup-menu::popup-menu-window popup-menu))
                0)))
     (destructuring-bind (x y width height)
         (compute-window-rectangle (window-buffer window)

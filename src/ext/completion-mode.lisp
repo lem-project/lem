@@ -125,7 +125,7 @@
                  :label-width
                  (compute-label-width items)))
 
-(defmethod lem/popup-window:apply-print-spec ((print-spec print-spec) point item)
+(defmethod lem/popup-menu:apply-print-spec ((print-spec print-spec) point item)
   (insert-string point " ")
   (insert-string point (completion-item-label item))
   (loop :for (offset-start . offset-end) :in (completion-item-chunks item)
@@ -146,7 +146,7 @@
   (popup-menu-quit))
 
 (defun call-focus-action ()
-  (alexandria:when-let* ((item (lem/popup-window:get-focus-item))
+  (alexandria:when-let* ((item (lem/popup-menu:get-focus-item))
                          (fn (completion-item-focus-action item)))
     (funcall fn)))
 

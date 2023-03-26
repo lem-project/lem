@@ -982,8 +982,8 @@
                                      result
                                      :style `(:gravity :vertically-adjacent-window
                                               :offset-y -1 :offset-x 1)
-                                     :source-window (lem/popup-window::popup-menu-window
-                                                     lem/popup-window::*popup-menu*)))))))))
+                                     :source-window (lem/popup-menu::popup-menu-window
+                                                     lem/popup-menu::*popup-menu*)))))))))
     (sort-items
      (map 'list
           #'make-completion-item

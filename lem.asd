@@ -78,6 +78,7 @@
                 :serial t
                 :components ((:file "popup-window")
                              (:file "popup-message")
+                             (:file "popup-menu")
                              (:file "multi-column-list")
                              (:file "list-buffers")
                              (:file "completion-mode")

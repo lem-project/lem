@@ -64,8 +64,8 @@
               "")))
 
 (define-command scheme-connection-list () ()
-  (lem/menu-mode:display-menu
-   (make-instance 'lem/menu-mode:menu
+  (lem/multi-column-list:display
+   (make-instance 'lem/multi-column-list:multi-column-list
                   :columns '(" " "hostname" "port" "pid" "name" "version" "command")
                   :items *connection-list*
                   :column-function (lambda (c)
@@ -78,10 +78,7 @@
                                            (connection-command c)))
                   :select-callback (lambda (menu c)
                                      (change-current-connection c)
-                                     (lem/menu-mode:update-menu menu *connection-list*)
-                                     :close)
-                  :update-items-function (lambda () *connection-list*))
-   :name "Scheme Connections"))
+                                     (lem/menu-mode:update-menu menu *connection-list*)))))
 
 (defun check-connection ()
   (unless (connected-p)

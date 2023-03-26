@@ -23,7 +23,7 @@
      :keymap *context-menu-mode-keymap*))
 
 (define-key *context-menu-mode-keymap* 'keyboard-quit 'context-menu-finish)
-(define-key *context-menu-mode-keymap* 'lem::escape 'context-menu-finish)
+(define-key *context-menu-mode-keymap* 'escape 'context-menu-finish)
 (define-key *context-menu-mode-keymap* 'next-line 'context-menu-next-line)
 (define-key *context-menu-mode-keymap* 'previous-line 'context-menu-previous-line)
 (define-key *context-menu-mode-keymap* "Return" 'context-menu-select)

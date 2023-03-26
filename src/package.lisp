@@ -350,6 +350,7 @@
    :exit-lem
    :quick-exit
    :keyboard-quit
+   :escape
    :nop-command
    :unmark-buffer
    :*read-only-function*

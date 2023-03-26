@@ -18,7 +18,7 @@
      :keymap *multi-column-list-mode-keymap*))
 
 (define-key *multi-column-list-mode-keymap* 'keyboard-quit 'multi-column-list/quit)
-(define-key *multi-column-list-mode-keymap* 'lem::escape 'multi-column-list/quit)
+(define-key *multi-column-list-mode-keymap* 'escape 'multi-column-list/quit)
 (define-key *multi-column-list-mode-keymap* 'next-line 'multi-column-list/down)
 (define-key *multi-column-list-mode-keymap* 'previous-line 'multi-column-list/up)
 (define-key *multi-column-list-mode-keymap* 'move-to-end-of-buffer 'multi-column-list/last)

@@ -354,15 +354,6 @@
     (loop :maximize (point-column (line-end point))
           :while (line-offset point 1))))
 
-(defun fill-in-the-background-with-space (buffer)
-  (labels ((fill-space (width)
-             (with-point ((point (buffer-start-point buffer) :left-inserting))
-               (loop :do (move-to-column point width t)
-                     :while (line-offset point 1)))))
-    (let ((width (compute-buffer-width buffer)))
-      (fill-space width)
-      width)))
-
 (defun insert-items (point items print-spec)
   (with-point ((start point :right-inserting))
     (loop :for (item . continue-p) :on items
@@ -406,7 +397,7 @@
         (move-to-line point start-line))
       (when last-line (move-to-line point last-line))
       (let ((focus-overlay (make-focus-overlay point focus-attribute))
-            (width (fill-in-the-background-with-space buffer)))
+            (width (compute-buffer-width buffer)))
         (values width
                 focus-overlay
                 (+ (1- start-line)

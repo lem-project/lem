@@ -128,38 +128,42 @@
           :for i :from 0
           :collect (loop :for width-list :in width-matrix :maximize (elt width-list i)))))
 
-(defun current-multi-column-list ()
-  (let* ((popup-menu (lem/popup-window:find-popup-menu :parent-window (current-window)))
-         (buffer (lem/popup-window::popup-menu-buffer popup-menu)))
-    (buffer-value buffer 'multi-column-list)))
+(defun window-multi-column-list (window)
+  (window-parameter window 'multi-column-list))
 
-(defun (setf current-multi-column-list) (multi-column-list)
-  (let* ((popup-menu (lem/popup-window:find-popup-menu :parent-window (current-window)))
-         (buffer (lem/popup-window::popup-menu-buffer popup-menu)))
-    (setf (buffer-value buffer 'multi-column-list)
-          multi-column-list)))
+(defun (setf window-multi-column-list) (value window)
+  (setf (window-parameter window 'multi-column-list) value))
+
+(defun current-multi-column-list ()
+  (window-multi-column-list (current-window)))
 
 (defmethod display ((component multi-column-list))
   (let ((print-spec (make-instance
                      'print-spec
                      :multi-column-list component
                      :column-width-list (compute-column-width-list component))))
+    (setf (multi-column-list-print-spec component) print-spec)
     (lem:display-popup-menu (multi-column-list-items component)
                             :print-spec print-spec
                             :action-callback (lambda (item)
                                                (select-item component item))
                             :style '(:gravity :center)
                             :max-display-items 100)
-    (setf (multi-column-list-print-spec component) print-spec)
-    (setf (current-multi-column-list) component)
-    (multi-column-list-mode t)))
+    (setf (current-window)
+          (lem/popup-window::popup-menu-window
+           (lem/popup-window:find-popup-menu :parent-window (current-window))))
+    (setf (window-multi-column-list (current-window)) component)
+    (multi-column-list-mode t)
+    (popup-menu-first)))
 
 (defmethod quit ((component multi-column-list))
   (quit-multi-column-list))
 
 (defun quit-multi-column-list ()
-  (multi-column-list-mode nil)
-  (popup-menu-quit))
+  (when (lem/popup-window:find-popup-menu :current-window (current-window))
+    (multi-column-list-mode nil)
+    (setf (current-window) (window-parent (current-window)))
+    (popup-menu-quit)))
 
 (defun update (multi-column-list)
   (popup-menu-update (multi-column-list-items multi-column-list)
@@ -171,8 +175,7 @@
   (let ((multi-column-list (current-multi-column-list)))
     (when (multi-column-list-use-mark-p multi-column-list)
       (let ((item (lem/popup-window:get-focus-item
-                   (lem/popup-window:find-popup-menu
-                    :parent-window (current-window)))))
+                   (lem/popup-window:find-popup-menu :current-window (current-window)))))
         (setf (multi-column-list-item-mark-p item)
               (not (multi-column-list-item-mark-p item))))
       (update multi-column-list))))

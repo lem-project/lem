@@ -76,10 +76,16 @@
 (defmethod lem:window-parent ((window popup-window))
   (popup-window-source-window window))
 
-(defun find-popup-menu (&key parent-window)
-  (when (and *popup-menu*
-             (eq parent-window (window-parent (popup-menu-window *popup-menu*))))
-    *popup-menu*))
+(defun find-popup-menu (&key parent-window current-window)
+  (assert (alexandria:xor parent-window current-window))
+  (cond (parent-window
+         (when (and *popup-menu*
+                    (eq parent-window (window-parent (popup-menu-window *popup-menu*))))
+           *popup-menu*))
+        (current-window
+         (when (and *popup-menu*
+                    (eq current-window (popup-menu-window *popup-menu*)))
+           *popup-menu*))))
 
 (defun ensure-gravity (gravity)
   (if (typep gravity 'gravity)
@@ -468,6 +474,7 @@
 (defun move-focus (popup-menu function)
   (alexandria:when-let (point (focus-point popup-menu))
     (funcall function point)
+    (line-start point)
     (window-see (popup-menu-window popup-menu))
     (let ((buffer (point-buffer point)))
       (when (header-point-p point)

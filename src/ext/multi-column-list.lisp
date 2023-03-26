@@ -70,7 +70,7 @@
 (defgeneric row-values (item)
   (:method :around (item)
     (append (mapcar #'princ-to-string (call-next-method))
-            (list (if (multi-column-list-item-check-p item)
+            (list (if (multi-column-list-item-mark-p item)
                       "✔ "
                       "  ")))))
 
@@ -79,14 +79,17 @@
             :reader multi-column-list-columns)
    (items :initarg :items
           :accessor multi-column-list-items)
-   (print-spec :accessor multi-column-list-print-spec)))
+   (print-spec :accessor multi-column-list-print-spec)
+   (use-mark :initform nil
+             :initarg :use-mark
+             :reader multi-column-list-use-mark-p)))
 
 (defmethod multi-column-list-columns :around ((multi-column-list multi-column-list))
   (append (call-next-method) (list "")))
 
 (defclass multi-column-list-item ()
-  ((check :initform nil
-          :accessor multi-column-list-item-check-p)))
+  ((mark :initform nil
+          :accessor multi-column-list-item-mark-p)))
 
 (defclass print-spec ()
   ((multi-column-list :initarg :multi-column-list
@@ -165,16 +168,17 @@
                      :keep-focus t))
 
 (defun mark-current-item ()
-  (let ((item (lem/popup-window:get-focus-item
-               (lem/popup-window:find-popup-menu
-                :parent-window (current-window)))))
-    (setf (multi-column-list-item-check-p item)
-          (not (multi-column-list-item-check-p item))))
   (let ((multi-column-list (current-multi-column-list)))
-    (update multi-column-list)))
+    (when (multi-column-list-use-mark-p multi-column-list)
+      (let ((item (lem/popup-window:get-focus-item
+                   (lem/popup-window:find-popup-menu
+                    :parent-window (current-window)))))
+        (setf (multi-column-list-item-mark-p item)
+              (not (multi-column-list-item-mark-p item))))
+      (update multi-column-list))))
 
 (defun mark-items ()
-  (remove-if-not #'multi-column-list-item-check-p
+  (remove-if-not #'multi-column-list-item-mark-p
                  (multi-column-list-items (current-multi-column-list))))
 
 (defun delete-marked-items ()

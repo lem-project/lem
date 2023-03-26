@@ -14,7 +14,9 @@
 
 (defclass buffer-menu (multi-column-list)
   ()
-  (:default-initargs :columns '("" "Buffer" "File")))
+  (:default-initargs
+   :columns '("" "Buffer" "File")
+   :use-mark t))
 
 (defclass item (multi-column-list-item)
   ((buffer :initarg :buffer

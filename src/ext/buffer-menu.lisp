@@ -13,7 +13,8 @@
 (in-package :lem/list-buffers)
 
 (defclass buffer-menu (multi-column-list)
-  ())
+  ()
+  (:default-initargs :columns '("" "Buffer" "File")))
 
 (defclass item (multi-column-list-item)
   ((buffer :initarg :buffer
@@ -38,7 +39,6 @@
 (define-command list-buffers () ()
   (display
    (make-instance 'buffer-menu
-                  :columns '("" "Buffer" "File")
                   :items (mapcar #'make-item (buffer-list)))))
 
 (define-key *global-keymap* "C-x C-b" 'list-buffers)

@@ -6,6 +6,7 @@
            :delete-item
            :row-values
            :display
+           :update
            :quit))
 (in-package :lem/multi-column-list)
 
@@ -60,15 +61,18 @@
   (delete-marked-items))
 
 ;;
-(defgeneric select-item (component item))
-(defgeneric delete-item (component item))
-(defgeneric row-values (item))
+(defgeneric select-item (component item)
+  (:method (component item)))
 
-(defmethod row-values :around (item)
-  (append (mapcar #'princ-to-string (call-next-method))
-          (list (if (multi-column-list-item-check-p item)
-                    "✔ "
-                    "  "))))
+(defgeneric delete-item (component item)
+  (:method (component item)))
+
+(defgeneric row-values (item)
+  (:method :around (item)
+    (append (mapcar #'princ-to-string (call-next-method))
+            (list (if (multi-column-list-item-check-p item)
+                      "✔ "
+                      "  ")))))
 
 (defclass multi-column-list ()
   ((columns :initarg :columns

@@ -96,25 +96,36 @@
   (setf *connection* (car *connection-list*))
   *connection*)
 
+(defclass connection-item (lem/multi-column-list:multi-column-list-item)
+  ((connection :initarg :connection
+               :reader connection-item-connection)))
+
+(defmethod lem/multi-column-list:row-values ((item connection-item))
+  (let ((connection (connection-item-connection item)))
+    (list (if (eq connection *connection*) "*" "")
+          (connection-hostname connection)
+          (connection-port connection)
+          (or (self-connection-p connection) (connection-pid connection))
+          (connection-implementation-name connection)
+          (connection-implementation-version connection)
+          (connection-command connection))))
+
+(defclass connection-menu (lem/multi-column-list:multi-column-list) ()
+  (:default-initargs :columns '("" "hostname" "port" "pid" "name" "version" "command")))
+
+(defmethod lem/multi-column-list:select-item ((component connection-menu) item)
+  (switch-connection (connection-item-connection item))
+  (lem/multi-column-list:update component))
+
+(defmethod lem/multi-column-list:delete-item ((component connection-menu) item)
+  nil)
+
 (define-command lisp-connection-list () ()
-  (lem/menu-mode:display-menu
-   (make-instance 'lem/menu-mode:menu
-                  :columns '(" " "hostname" "port" "pid" "name" "version" "command")
-                  :items *connection-list*
-                  :column-function (lambda (c)
-                                     (list (if (eq c *connection*) "*" "")
-                                           (connection-hostname c)
-                                           (connection-port c)
-                                           (or (self-connection-p c) (connection-pid c))
-                                           (connection-implementation-name c)
-                                           (connection-implementation-version c)
-                                           (connection-command c)))
-                  :select-callback (lambda (menu c)
-                                     (switch-connection c)
-                                     (lem/menu-mode:update-menu menu *connection-list*)
-                                     :close)
-                  :update-items-function (lambda () *connection-list*))
-   :name "Lisp Connections"))
+  (lem/multi-column-list:display
+   (make-instance 'connection-menu
+                  :items (mapcar (lambda (c)
+                                   (make-instance 'connection-item :connection c))
+                                 *connection-list*))))
 
 (defvar *self-connected-port* nil)
 

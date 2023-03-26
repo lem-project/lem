@@ -22,18 +22,18 @@
   ((buffer :initarg :buffer
            :reader item-buffer)))
 
+(defmethod row-values ((component buffer-menu) (item item))
+  (let ((buffer (item-buffer item)))
+    (list (string-trim " " (lem::buffer-attributes buffer))
+          (buffer-name buffer)
+          (buffer-filename buffer))))
+
 (defmethod select-item ((component buffer-menu) item)
   (quit component)
   (switch-to-buffer (item-buffer item)))
 
 (defmethod delete-item ((component buffer-menu) item)
   (kill-buffer (item-buffer item)))
-
-(defmethod row-values ((item item))
-  (let ((buffer (item-buffer item)))
-    (list (string-trim " " (lem::buffer-attributes buffer))
-          (buffer-name buffer)
-          (buffer-filename buffer))))
 
 (defun make-item (buffer)
   (make-instance 'item :buffer buffer))

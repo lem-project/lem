@@ -100,7 +100,10 @@
   ((connection :initarg :connection
                :reader connection-item-connection)))
 
-(defmethod lem/multi-column-list:row-values ((item connection-item))
+(defclass connection-menu (lem/multi-column-list:multi-column-list) ()
+  (:default-initargs :columns '("" "hostname" "port" "pid" "name" "version" "command")))
+
+(defmethod lem/multi-column-list:row-values ((component connection-menu) (item connection-item))
   (let ((connection (connection-item-connection item)))
     (list (if (eq connection *connection*) "*" "")
           (connection-hostname connection)
@@ -109,9 +112,6 @@
           (connection-implementation-name connection)
           (connection-implementation-version connection)
           (connection-command connection))))
-
-(defclass connection-menu (lem/multi-column-list:multi-column-list) ()
-  (:default-initargs :columns '("" "hostname" "port" "pid" "name" "version" "command")))
 
 (defmethod lem/multi-column-list:select-item ((component connection-menu) item)
   (switch-connection (connection-item-connection item))

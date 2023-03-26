@@ -67,15 +67,9 @@
 (defgeneric delete-item (component item)
   (:method (component item)))
 
-(defgeneric row-values (item)
-  (:method :around (item)
-    (append (mapcar #'princ-to-string (call-next-method))
-            (list (if (multi-column-list-item-mark-p item)
-                      "✔ "
-                      "  ")))))
-
 (defclass multi-column-list ()
   ((columns :initarg :columns
+            :initform nil
             :reader multi-column-list-columns)
    (items :initarg :items
           :accessor multi-column-list-items)
@@ -84,8 +78,20 @@
              :initarg :use-mark
              :reader multi-column-list-use-mark-p)))
 
+(defgeneric row-values (component item)
+  (:method :around (component item)
+    (append (if (multi-column-list-use-mark-p component)
+                (list (if (multi-column-list-item-mark-p item)
+                          "✔ "
+                          "  "))
+                nil)
+            (mapcar #'princ-to-string (call-next-method)))))
+
 (defmethod multi-column-list-columns :around ((multi-column-list multi-column-list))
-  (append (call-next-method) (list "")))
+  (append (if (multi-column-list-use-mark-p multi-column-list)
+              (list "")
+              nil)
+          (call-next-method)))
 
 (defclass multi-column-list-item ()
   ((mark :initform nil
@@ -98,19 +104,22 @@
                       :reader print-spec-column-width-list)))
 
 (defmethod lem/popup-window:write-header ((print-spec print-spec) point)
-  (with-point ((start point))
-    (loop :for width :in (print-spec-column-width-list print-spec)
-          :for column-header :in (multi-column-list-columns
-                                  (print-spec-multi-column-list print-spec))
-          :do (insert-string point " ")
-              (let ((column (point-column point)))
-                (insert-string point column-header)
-                (move-to-column point (+ column width) t)))
-    (put-text-property start point :attribute (make-attribute :underline-p t))))
+  (let ((columns (multi-column-list-columns
+                  (print-spec-multi-column-list print-spec))))
+    (log:info columns)
+    (when columns
+      (with-point ((start point))
+        (loop :for width :in (print-spec-column-width-list print-spec)
+              :for column-header :in columns
+              :do (insert-string point " ")
+                  (let ((column (point-column point)))
+                    (insert-string point column-header)
+                    (move-to-column point (+ column width) t)))
+        (put-text-property start point :attribute (make-attribute :underline-p t))))))
 
 (defmethod lem/popup-window:apply-print-spec ((print-spec print-spec) point item)
   (check-type item multi-column-list-item)
-  (loop :for value :in (row-values item)
+  (loop :for value :in (row-values (print-spec-multi-column-list print-spec) item)
         :for width :in (print-spec-column-width-list print-spec)
         :do (insert-string point " ")
             (let ((column (point-column point)))
@@ -120,7 +129,7 @@
 (defun compute-column-width-list (multi-column-list)
   (let ((width-matrix
           (loop :for row :in (cons (multi-column-list-columns multi-column-list)
-                                   (mapcar #'row-values
+                                   (mapcar (lambda (item) (row-values multi-column-list item))
                                            (multi-column-list-items multi-column-list)))
                 :collect (loop :for value :in row
                                :collect (string-width value)))))

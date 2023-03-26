@@ -1,75 +1,38 @@
 (defpackage :lem/context-menu
-  (:use :cl :lem)
+  (:use :cl
+        :lem
+        :lem/multi-column-list)
   (:export :make-item
            :display-context-menu)
   #+sbcl
   (:lock t))
 (in-package :lem/context-menu)
 
-(define-attribute description-attribute
-  (:dark :foreground "white")
-  (:light :foreground "#777"))
+(defclass item (multi-column-list-item)
+  ((label :initarg :label
+          :reader item-label)
+   (description :initarg :description
+                :reader item-description)
+   (callback :initarg :callback
+             :reader item-callback)))
 
-(defstruct item
-  label
-  description
-  callback)
+(defun make-item (&key label description callback)
+  (make-instance 'item
+                 :label label
+                 :description description
+                 :callback callback))
 
-(defvar *context-menu-mode-keymap* (make-keymap :name '*context-menu-mode-keymap*
-                                                :undef-hook 'context-menu-default))
+(defclass context-menu (multi-column-list) ()
+  (:default-initargs :columns '()))
 
-(define-minor-mode context-menu-mode
-    (:name "context-menu"
-     :keymap *context-menu-mode-keymap*))
-
-(define-key *context-menu-mode-keymap* 'keyboard-quit 'context-menu-finish)
-(define-key *context-menu-mode-keymap* 'escape 'context-menu-finish)
-(define-key *context-menu-mode-keymap* 'next-line 'context-menu-next-line)
-(define-key *context-menu-mode-keymap* 'previous-line 'context-menu-previous-line)
-(define-key *context-menu-mode-keymap* "Return" 'context-menu-select)
-
-(define-command context-menu-finish () ()
-  (context-menu-mode nil)
-  (popup-menu-quit))
-
-(define-command context-menu-default () ()
+(defmethod select-item ((component context-menu) item)
   )
 
-(define-command context-menu-next-line () ()
-  (popup-menu-down))
-
-(define-command context-menu-previous-line () ()
-  (popup-menu-up))
-
-(define-command context-menu-select () ()
-  (popup-menu-select))
-
-
-(defclass print-spec ()
-  ((label-width :initarg :label-width
-                :reader print-spec-label-width)))
-
-(defun compute-label-width (items)
-  (loop :for item :in items
-        :maximize (1+ (length (item-label item)))))
-
-(defmethod lem/popup-window:apply-print-spec ((print-spec print-spec) point item)
-  (insert-string point " ")
-  (insert-string point (item-label item))
-  (move-to-column point (print-spec-label-width print-spec) t)
-  (insert-string point " ")
-  (when (item-description item)
-    (insert-string point (item-description item) :attribute 'description-attribute)
-    (insert-string point " ")))
+(defmethod row-values ((component context-menu) (item item))
+  (list (item-label item) (or (item-description item) "")))
 
 (defun display-context-menu (items)
-  (display-popup-menu items
-                      :action-callback (lambda (item)
-                                         (context-menu-finish)
-                                         (funcall (item-callback item)))
-                      :print-spec (make-instance 'print-spec
-                                                 :label-width (compute-label-width items)))
-  (context-menu-mode t))
+  (display (make-instance 'context-menu :items items)))
 
 (define-command test-context-menu () ()
   (display-context-menu (list (make-item :label "foo" :callback (lambda () (message "select foo")))

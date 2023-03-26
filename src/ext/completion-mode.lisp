@@ -23,6 +23,7 @@
     :initform '()
     :accessor context-last-items)
    (popup-menu
+    :initform nil
     :accessor context-popup-menu)))
 
 (defclass completion-spec ()

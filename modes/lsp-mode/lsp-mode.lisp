@@ -973,18 +973,20 @@
                 :sort-text (handler-case (lsp:completion-item-sort-text item)
                              (unbound-slot ()
                                (lsp:completion-item-label item)))
-                :focus-action (when-let ((documentation
-                                          (handler-case (lsp:completion-item-documentation item)
-                                            (unbound-slot () nil))))
+                :focus-action (when-let* ((documentation
+                                           (handler-case (lsp:completion-item-documentation item)
+                                             (unbound-slot () nil)))
+                                          (result
+                                           (contents-to-markdown-buffer documentation)))
                                 (lambda ()
-                                  (when-let ((result (contents-to-markdown-buffer documentation)))
-                                    (display-message
-                                     result
-                                     :style `(:gravity :vertically-adjacent-window
-                                              :offset-y -1 :offset-x 1)
-                                     :source-window (lem/popup-menu::popup-menu-window
-                                                     (lem/popup-menu:find-popup-menu
-                                                      :parent-window (current-window)))))))))))
+                                  (display-message
+                                   result
+                                   :style `(:gravity :vertically-adjacent-window
+                                            :offset-y -1
+                                            :offset-x 1)
+                                   :source-window (lem/popup-menu::popup-menu-window
+                                                   (lem/popup-menu:find-popup-menu
+                                                    :parent-window (current-window))))))))))
     (sort-items
      (map 'list
           #'make-completion-item

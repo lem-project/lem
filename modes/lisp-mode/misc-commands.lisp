@@ -96,29 +96,6 @@
         (pushnew s symbols)))
     symbols))
 
-(defun select-menu (items)
-  (let (selected-item)
-    (display-popup-menu items
-                        :print-spec #'princ-to-string
-                        :action-callback (lambda (item)
-                                           (setf selected-item item)))
-    (loop
-      (redraw-display)
-      (let ((key (read-key)))
-        (cond ((or (match-key key :sym "Down")
-                   (match-key key :ctrl t :sym "n"))
-               (popup-menu-down))
-              ((or (match-key key :sym "Up")
-                   (match-key key :ctrl t :sym "p"))
-               (popup-menu-up))
-              ((match-key key :sym "Return")
-               (popup-menu-select)
-               (popup-menu-quit)
-               (return selected-item))
-              ((match-key key :sym "q")
-               (popup-menu-quit)
-               (return nil)))))))
-
 #|
 (define-command lisp-add-missing-import-from (symbol-name)
     ((list (prompt-for-symbol-name "Symbol: " (symbol-string-at-point (current-point)))))

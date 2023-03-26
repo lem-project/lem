@@ -77,8 +77,7 @@
                                            (connection-implementation-version c)
                                            (connection-command c)))
                   :select-callback (lambda (menu c)
-                                     (change-current-connection c)
-                                     (lem/menu-mode:update-menu menu *connection-list*)))))
+                                     (change-current-connection c)))))
 
 (defun check-connection ()
   (unless (connected-p)

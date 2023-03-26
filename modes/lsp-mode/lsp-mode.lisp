@@ -983,7 +983,8 @@
                                      :style `(:gravity :vertically-adjacent-window
                                               :offset-y -1 :offset-x 1)
                                      :source-window (lem/popup-menu::popup-menu-window
-                                                     lem/popup-menu::*popup-menu*)))))))))
+                                                     (lem/popup-menu:find-popup-menu
+                                                      :parent-window (current-window)))))))))))
     (sort-items
      (map 'list
           #'make-completion-item

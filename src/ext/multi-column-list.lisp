@@ -196,7 +196,7 @@
 (defun current-multi-column-list ()
   (window-multi-column-list (current-window)))
 
-(defmethod display ((component multi-column-list))
+(defmethod display ((component multi-column-list) &key (style '(:gravity :center)))
   (let ((print-spec (make-instance
                      'print-spec
                      :multi-column-list component
@@ -207,7 +207,7 @@
                                 :print-spec print-spec
                                 :action-callback (lambda (item)
                                                    (select-item component item))
-                                :style '(:gravity :center)
+                                :style style
                                 :max-display-items 100)))
       (setf (multi-column-list-popup-menu component) popup-menu)
       (setf (current-window)

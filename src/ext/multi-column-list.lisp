@@ -65,7 +65,7 @@
 (defgeneric row-values (item))
 
 (defmethod row-values :around (item)
-  (append (call-next-method)
+  (append (mapcar #'princ-to-string (call-next-method))
           (list (if (multi-column-list-item-check-p item)
                     "✔ "
                     "  "))))

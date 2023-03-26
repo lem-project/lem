@@ -2,13 +2,10 @@
   (:use :cl :lem)
   (:export :write-header
            :get-focus-item
-           :find-popup-menu
            :apply-print-spec)
   #+sbcl
   (:lock t))
 (in-package :lem/popup-menu)
-
-(defvar *popup-menu* nil)
 
 (defclass popup-menu ()
   ((buffer
@@ -30,17 +27,6 @@
 (define-attribute popup-menu-attribute
   (t :foreground "white" :background "RoyalBlue"))
 (define-attribute non-focus-popup-menu-attribute)
-
-(defun find-popup-menu (&key parent-window current-window)
-  (assert (alexandria:xor parent-window current-window))
-  (cond (parent-window
-         (when (and *popup-menu*
-                    (eq parent-window (window-parent (popup-menu-window *popup-menu*))))
-           *popup-menu*))
-        (current-window
-         (when (and *popup-menu*
-                    (eq current-window (popup-menu-window *popup-menu*)))
-           *popup-menu*))))
 
 (defun focus-point (popup-menu)
   (buffer-point (popup-menu-buffer popup-menu)))

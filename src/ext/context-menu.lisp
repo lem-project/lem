@@ -26,7 +26,8 @@
   (:default-initargs :columns '()))
 
 (defmethod select-item ((component context-menu) item)
-  )
+  (quit component)
+  (funcall (item-callback item)))
 
 (defmethod map-columns ((component context-menu) (item item))
   (list (item-label item) (or (item-description item) "")))

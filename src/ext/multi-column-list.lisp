@@ -114,6 +114,7 @@
                   (let ((column (point-column point)))
                     (insert-string point column-header)
                     (move-to-column point (+ column width) t)))
+        (insert-string point " ")
         (put-text-property start point :attribute (make-attribute :underline-p t))))))
 
 (defmethod lem/popup-window:apply-print-spec ((print-spec print-spec) point item)
@@ -123,7 +124,8 @@
         :do (insert-string point " ")
             (let ((column (point-column point)))
               (insert-string point value)
-              (move-to-column point (+ column width) t))))
+              (move-to-column point (+ column width) t)))
+  (insert-string point " "))
 
 (defun compute-column-width-list (multi-column-list)
   (let ((width-matrix

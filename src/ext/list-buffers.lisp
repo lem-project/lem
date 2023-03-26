@@ -25,5 +25,5 @@
                                      (declare (ignore component))
                                      (list (string-trim " " (lem::buffer-attributes buffer))
                                            (buffer-name buffer)
-                                           (buffer-filename buffer)))
+                                           (or (buffer-filename buffer) "")))
                   :use-mark t)))

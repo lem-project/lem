@@ -68,6 +68,10 @@
    (modeline-format
     :initform nil
     :accessor window-modeline-format)
+   (cursor-invisible
+    :initform nil
+    :initarg :cursor-invisible
+    :accessor window-cursor-invisible-p)
    (parameters
     :initform nil
     :accessor window-parameters)))

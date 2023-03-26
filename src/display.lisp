@@ -226,7 +226,8 @@
 (defun draw-window-to-screen (window)
   (reset-screen-lines-and-left-lines window)
   (draw-window-overlays-to-screen window)
-  (draw-cursor-to-screen window))
+  (unless (window-cursor-invisible-p window)
+    (draw-cursor-to-screen window)))
 
 
 (defvar *printing-tab-size*)

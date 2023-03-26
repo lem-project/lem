@@ -435,11 +435,13 @@
   (let ((scrwin (ncurses-view-scrwin (window-view (current-window)))))
     (let ((cursor-x (last-print-cursor-x (current-window)))
           (cursor-y (last-print-cursor-y (current-window))))
-      (if (lem::covered-with-floating-window-p (current-window) cursor-x cursor-y)
-          (charms/ll:curs-set 0)
-          (progn
-            (charms/ll:curs-set 1)
-            (charms/ll:wmove scrwin cursor-y cursor-x))))
+      (cond ((lem::covered-with-floating-window-p (current-window) cursor-x cursor-y)
+             (charms/ll:curs-set 0))
+            ((lem::window-cursor-invisible-p (current-window))
+             (charms/ll:curs-set 0))
+            (t
+             (charms/ll:curs-set 1)
+             (charms/ll:wmove scrwin cursor-y cursor-x))))
     (charms/ll:wnoutrefresh scrwin)
     (charms/ll:doupdate)))
 

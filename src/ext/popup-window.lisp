@@ -235,11 +235,13 @@
   (background-color nil)
   (offset-x 0)
   (offset-y 0)
+  (cursor-invisible nil)
   shape)
 
 (defun merge-style (style &key (gravity nil gravity-p)
                                (use-border nil use-border-p)
                                (background-color nil background-color-p)
+                               (cursor-invisible nil cursor-invisible-p)
                                (shape nil shape-p))
   (make-style :gravity (if gravity-p
                            gravity
@@ -252,6 +254,9 @@
                                     (style-background-color style))
               :offset-x (style-offset-x style)
               :offset-y (style-offset-y style)
+              :cursor-invisible (if cursor-invisible-p
+                                    cursor-invisible
+                                    (style-cursor-invisible style))
               :shape (if shape-p
                          shape
                          (style-shape style))))
@@ -294,6 +299,7 @@
                      :border border-size
                      :border-shape (style-shape style)
                      :background-color (style-background-color style)
+                     :cursor-invisible (style-cursor-invisible style)
                      :style style))))
 
 (defun update-popup-window (&key (source-window (alexandria:required-argument :source-window))
@@ -430,7 +436,8 @@
                                                style
                                                :background-color (or (style-background-color style)
                                                                      (attribute-background
-                                                                      non-focus-attribute))))))
+                                                                      non-focus-attribute))
+                                               :cursor-invisible t))))
         (setf *popup-menu*
               (make-instance 'popup-menu
                              :buffer buffer

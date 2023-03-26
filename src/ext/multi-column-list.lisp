@@ -106,7 +106,6 @@
 (defmethod lem/popup-window:write-header ((print-spec print-spec) point)
   (let ((columns (multi-column-list-columns
                   (print-spec-multi-column-list print-spec))))
-    (log:info columns)
     (when columns
       (with-point ((start point))
         (loop :for width :in (print-spec-column-width-list print-spec)
@@ -128,9 +127,10 @@
 
 (defun compute-column-width-list (multi-column-list)
   (let ((width-matrix
-          (loop :for row :in (cons (multi-column-list-columns multi-column-list)
-                                   (mapcar (lambda (item) (row-values multi-column-list item))
-                                           (multi-column-list-items multi-column-list)))
+          (loop :for row :in (append (alexandria:when-let (columns (multi-column-list-columns multi-column-list))
+                                       (list columns))
+                                     (mapcar (lambda (item) (row-values multi-column-list item))
+                                             (multi-column-list-items multi-column-list)))
                 :collect (loop :for value :in row
                                :collect (string-width value)))))
     (loop :repeat (length (first width-matrix))

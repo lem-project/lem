@@ -121,7 +121,5 @@
 
 (defun invoke-frontend (function &key (implementation
                                        (get-default-implementation)))
-  (let ((bt:*default-special-bindings*
-          `((*implementation* . ,implementation)
-            ,@bt:*default-special-bindings*)))
-    (lem-if:invoke implementation function)))
+  (setf *implementation* implementation)
+  (lem-if:invoke implementation function))

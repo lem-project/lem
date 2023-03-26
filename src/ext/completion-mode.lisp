@@ -12,7 +12,7 @@
 
 (defparameter *limit-number-of-items* 100)
 
-(defvar *completion-context*)
+(defvar *completion-context* nil)
 
 (defclass completion-context ()
   ((spec
@@ -21,7 +21,9 @@
     :type completion-spec)
    (last-items
     :initform '()
-    :accessor context-last-items)))
+    :accessor context-last-items)
+   (popup-menu
+    :accessor context-popup-menu)))
 
 (defclass completion-spec ()
   ((function
@@ -143,12 +145,14 @@
 
 (defun completion-end ()
   (completion-mode nil)
-  (popup-menu-quit))
+  (popup-menu-quit (context-popup-menu *completion-context*))
+  (setf (context-popup-menu *completion-context*) nil))
 
 (defun call-focus-action ()
-  (alexandria:when-let* ((item (lem/popup-menu:get-focus-item))
+  (alexandria:when-let* ((item (lem/popup-menu:get-focus-item
+                                (context-popup-menu *completion-context*)))
                          (fn (completion-item-focus-action item)))
-    (funcall fn)))
+    (funcall fn *completion-context*)))
 
 (define-command completion-self-insert () ()
   (let ((c (insertion-key-p (last-read-key-sequence))))
@@ -166,23 +170,23 @@
   (continue-completion *completion-context*))
 
 (define-command completion-next-line () ()
-  (popup-menu-down)
+  (popup-menu-down (context-popup-menu *completion-context*))
   (call-focus-action))
 
 (define-command completion-previous-line () ()
-  (popup-menu-up)
+  (popup-menu-up (context-popup-menu *completion-context*))
   (call-focus-action))
 
 (define-command completion-end-of-buffer () ()
-  (popup-menu-last)
+  (popup-menu-last (context-popup-menu *completion-context*))
   (call-focus-action))
 
 (define-command completion-beginning-of-buffer () ()
-  (popup-menu-first)
+  (popup-menu-first (context-popup-menu *completion-context*))
   (call-focus-action))
 
 (define-command completion-select () ()
-  (popup-menu-select))
+  (popup-menu-select (context-popup-menu *completion-context*)))
 
 (define-command completion-insert-space-and-cancel () ()
   (insert-character (current-point) #\space)
@@ -259,13 +263,14 @@
 
 (defun start-completion (context items style)
   (when items
-    (apply #'display-popup-menu
-           items
-           :action-callback (lambda (item)
-                              (completion-insert (current-point) item)
-                              (completion-end))
-           :print-spec (make-print-spec items)
-           (when style `(:style ,style)))
+    (setf (context-popup-menu *completion-context*)
+          (apply #'display-popup-menu
+                 items
+                 :action-callback (lambda (item)
+                                    (completion-insert (current-point) item)
+                                    (completion-end))
+                 :print-spec (make-print-spec items)
+                 (when style `(:style ,style))))
     (completion-mode t)
     (unless (spec-async-p (context-spec context))
       (narrowing-down context items))
@@ -278,7 +283,9 @@
      (cond ((null items)
             (completion-end))
            (t
-            (popup-menu-update items :print-spec (make-print-spec items))
+            (popup-menu-update (context-popup-menu *completion-context*)
+                               items
+                               :print-spec (make-print-spec items))
             (call-focus-action))))))
 
 (defun run-completion (completion-spec &key style)

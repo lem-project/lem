@@ -187,23 +187,25 @@
                    :border (if (prompt-use-border-p parameters) +border-size+ 0))))
 
 (defmethod update-prompt-window ((window floating-prompt))
-  (let* ((popup-menu
-           (lem/popup-menu:find-popup-menu :parent-window window))
-         (child-width
-           (if popup-menu
-               (window-width (lem/popup-menu::popup-menu-window popup-menu))
-               0)))
-    (destructuring-bind (x y width height)
-        (compute-window-rectangle (window-buffer window)
-                                  :gravity (prompt-gravity window)
-                                  :source-window (prompt-window-caller-of-prompt-window window))
-      (unless (and (= x (window-x window))
-                   (= y (window-y window)))
-        (lem::window-set-pos window x y))
-      (let ((width (max width child-width)))
-        (unless (and (= width (window-width window))
-                     (= height (window-height window)))
-          (lem::window-set-size window width height))))))
+  (when lem/completion-mode::*completion-context*
+    (let* ((popup-menu
+             (lem/completion-mode::context-popup-menu
+              lem/completion-mode::*completion-context*))
+           (child-width
+             (if popup-menu
+                 (window-width (lem/popup-menu::popup-menu-window popup-menu))
+                 0)))
+      (destructuring-bind (x y width height)
+          (compute-window-rectangle (window-buffer window)
+                                    :gravity (prompt-gravity window)
+                                    :source-window (prompt-window-caller-of-prompt-window window))
+        (unless (and (= x (window-x window))
+                     (= y (window-y window)))
+          (lem::window-set-pos window x y))
+        (let ((width (max width child-width)))
+          (unless (and (= width (window-width window))
+                       (= height (window-height window)))
+            (lem::window-set-size window width height)))))))
 
 (defun initialize-prompt-buffer (buffer)
   (let ((*inhibit-read-only* t)

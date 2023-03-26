@@ -78,10 +78,9 @@
                 (insert-character point #\newline)))
     (buffer-start point)))
 
-(defun get-focus-item (&optional (popup-menu *popup-menu*))
-  (when popup-menu
-    (alexandria:when-let (p (focus-point popup-menu))
-      (text-property-at (line-start p) :item))))
+(defun get-focus-item (popup-menu)
+  (alexandria:when-let (p (focus-point popup-menu))
+    (text-property-at (line-start p) :item)))
 
 (defun make-menu-buffer ()
   (make-buffer "*popup menu*" :enable-undo-p nil :temporary t))
@@ -123,8 +122,6 @@
                                            print-spec
                                            (style *style*)
                                            (max-display-items 20))
-  (when *popup-menu*
-    (lem-if:popup-menu-quit implementation))
   (let ((style (lem/popup-window::ensure-style style))
         (focus-attribute (ensure-attribute 'popup-menu-attribute))
         (non-focus-attribute (ensure-attribute 'non-focus-popup-menu-attribute))
@@ -144,24 +141,23 @@
                                                                                        (attribute-background
                                                                                         non-focus-attribute))
                                                                  :cursor-invisible t))))
-        (setf *popup-menu*
-              (make-instance 'popup-menu
-                             :buffer buffer
-                             :window window
-                             :focus-overlay focus-overlay
-                             :action-callback action-callback
-                             :focus-attribute focus-attribute))))))
+        (make-instance 'popup-menu
+                       :buffer buffer
+                       :window window
+                       :focus-overlay focus-overlay
+                       :action-callback action-callback
+                       :focus-attribute focus-attribute)))))
 
-(defmethod lem-if:popup-menu-update (implementation items &key print-spec (max-display-items 20) keep-focus)
-  (when *popup-menu*
-    (let ((last-line (line-number-at-point (buffer-point (popup-menu-buffer *popup-menu*)))))
+(defmethod lem-if:popup-menu-update (implementation popup-menu items &key print-spec (max-display-items 20) keep-focus)
+  (when popup-menu
+    (let ((last-line (line-number-at-point (buffer-point (popup-menu-buffer popup-menu)))))
       (multiple-value-bind (menu-width focus-overlay height)
-          (setup-menu-buffer (popup-menu-buffer *popup-menu*)
+          (setup-menu-buffer (popup-menu-buffer popup-menu)
                              items
                              print-spec
-                             (popup-menu-focus-attribute *popup-menu*)
+                             (popup-menu-focus-attribute popup-menu)
                              (if keep-focus last-line))
-        (setf (popup-menu-focus-overlay *popup-menu*) focus-overlay)
+        (setf (popup-menu-focus-overlay popup-menu) focus-overlay)
         (let ((source-window (current-window)))
           (when (eq source-window
                     (frame-prompt-window (current-frame)))
@@ -172,13 +168,11 @@
           (lem/popup-window::update-popup-window :source-window source-window
                                                  :width menu-width
                                                  :height (min max-display-items height)
-                                                 :destination-window (popup-menu-window *popup-menu*)))))))
+                                                 :destination-window (popup-menu-window popup-menu)))))))
 
-(defmethod lem-if:popup-menu-quit (implementation)
-  (when *popup-menu*
-    (delete-window (popup-menu-window *popup-menu*))
-    (delete-buffer (popup-menu-buffer *popup-menu*))
-    (setf *popup-menu* nil)))
+(defmethod lem-if:popup-menu-quit (implementation popup-menu)
+  (delete-window (popup-menu-window popup-menu))
+  (delete-buffer (popup-menu-buffer popup-menu)))
 
 (defun header-point-p (point)
   (< (line-number-at-point point)
@@ -194,35 +188,35 @@
         (move-to-line point (buffer-start-line buffer))))
     (update-focus-overlay popup-menu point)))
 
-(defmethod lem-if:popup-menu-down (implementation)
+(defmethod lem-if:popup-menu-down (implementation popup-menu)
   (move-focus
-   *popup-menu*
+   popup-menu
    (lambda (point)
      (unless (line-offset point 1)
        (buffer-start point)))))
 
-(defmethod lem-if:popup-menu-up (implementation)
+(defmethod lem-if:popup-menu-up (implementation popup-menu)
   (move-focus
-   *popup-menu*
+   popup-menu
    (lambda (point)
      (unless (line-offset point -1)
        (buffer-end point))
      (when (header-point-p point)
        (buffer-end point)))))
 
-(defmethod lem-if:popup-menu-first (implementation)
+(defmethod lem-if:popup-menu-first (implementation popup-menu)
   (move-focus
-   *popup-menu*
+   popup-menu
    (lambda (point)
      (buffer-start point))))
 
-(defmethod lem-if:popup-menu-last (implementation)
+(defmethod lem-if:popup-menu-last (implementation popup-menu)
   (move-focus
-   *popup-menu*
+   popup-menu
    (lambda (point)
      (buffer-end point))))
 
-(defmethod lem-if:popup-menu-select (implementation)
-  (alexandria:when-let ((f (popup-menu-action-callback *popup-menu*))
-                        (item (get-focus-item)))
+(defmethod lem-if:popup-menu-select (implementation popup-menu)
+  (alexandria:when-let ((f (popup-menu-action-callback popup-menu))
+                        (item (get-focus-item popup-menu)))
     (funcall f item)))

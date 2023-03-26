@@ -28,24 +28,24 @@
          items
          args))
 
-(defun popup-menu-update (items &rest args &key print-spec max-display-items keep-focus)
+(defun popup-menu-update (popup-menu items &rest args &key print-spec max-display-items keep-focus)
   (declare (ignore print-spec max-display-items keep-focus))
-  (apply #'lem-if:popup-menu-update (implementation) items args))
+  (apply #'lem-if:popup-menu-update (implementation) popup-menu items args))
 
-(defun popup-menu-quit ()
-  (lem-if:popup-menu-quit (implementation)))
+(defun popup-menu-quit (popup-menu)
+  (lem-if:popup-menu-quit (implementation) popup-menu))
 
-(defun popup-menu-down ()
-  (lem-if:popup-menu-down (implementation)))
+(defun popup-menu-down (popup-menu)
+  (lem-if:popup-menu-down (implementation) popup-menu))
 
-(defun popup-menu-up ()
-  (lem-if:popup-menu-up (implementation)))
+(defun popup-menu-up (popup-menu)
+  (lem-if:popup-menu-up (implementation) popup-menu))
 
-(defun popup-menu-first ()
-  (lem-if:popup-menu-first (implementation)))
+(defun popup-menu-first (popup-menu)
+  (lem-if:popup-menu-first (implementation) popup-menu))
 
-(defun popup-menu-last ()
-  (lem-if:popup-menu-last (implementation)))
+(defun popup-menu-last (popup-menu)
+  (lem-if:popup-menu-last (implementation) popup-menu))
 
-(defun popup-menu-select ()
-  (lem-if:popup-menu-select (implementation)))
+(defun popup-menu-select (popup-menu)
+  (lem-if:popup-menu-select (implementation) popup-menu))

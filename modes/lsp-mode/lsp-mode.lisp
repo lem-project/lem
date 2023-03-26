@@ -978,15 +978,14 @@
                                              (unbound-slot () nil)))
                                           (result
                                            (contents-to-markdown-buffer documentation)))
-                                (lambda ()
+                                (lambda (context)
                                   (display-message
                                    result
                                    :style `(:gravity :vertically-adjacent-window
                                             :offset-y -1
                                             :offset-x 1)
                                    :source-window (lem/popup-menu::popup-menu-window
-                                                   (lem/popup-menu:find-popup-menu
-                                                    :parent-window (current-window))))))))))
+                                                   (lem/completion-mode::context-popup-menu context)))))))))
     (sort-items
      (map 'list
           #'make-completion-item

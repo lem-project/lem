@@ -102,17 +102,6 @@
 (defmethod lem-if:update-display ((implementation fake-interface)))
 (defmethod lem-if:scroll ((implementation fake-interface) view n))
 
-;; (defmethod lem-if:display-popup-menu ((implementation fake-interface) items &key action-callback print-spec))
-;; (defmethod lem-if:popup-menu-update ((implementation fake-interface) items))
-;; (defmethod lem-if:popup-menu-quit ((implementation fake-interface)))
-;; (defmethod lem-if:popup-menu-down ((implementation fake-interface)))
-;; (defmethod lem-if:popup-menu-up ((implementation fake-interface)))
-;; (defmethod lem-if:popup-menu-first ((implementation fake-interface)))
-;; (defmethod lem-if:popup-menu-last ((implementation fake-interface)))
-;; (defmethod lem-if:popup-menu-select ((implementation fake-interface)))
-;; (defmethod lem-if:display-popup-message ((implementation fake-interface) text &key timeout size))
-;; (defmethod lem-if:delete-popup-message ((implementation fake-interface) popup-message))
-
 (defmacro with-fake-interface (() &body body)
   `(with-implementation (make-instance 'fake-interface)
      (lem::setup-first-frame)

@@ -70,13 +70,13 @@
                                             print-spec
                                             style
                                             max-display-items))
-(defgeneric lem-if:popup-menu-update (implementation items &key print-spec max-display-items keep-focus))
-(defgeneric lem-if:popup-menu-quit (implementation))
-(defgeneric lem-if:popup-menu-down (implementation))
-(defgeneric lem-if:popup-menu-up (implementation))
-(defgeneric lem-if:popup-menu-first (implementation))
-(defgeneric lem-if:popup-menu-last (implementation))
-(defgeneric lem-if:popup-menu-select (implementation))
+(defgeneric lem-if:popup-menu-update (implementation popup-menu items &key print-spec max-display-items keep-focus))
+(defgeneric lem-if:popup-menu-quit (implementation popup-menu))
+(defgeneric lem-if:popup-menu-down (implementation popup-menu))
+(defgeneric lem-if:popup-menu-up (implementation popup-menu))
+(defgeneric lem-if:popup-menu-first (implementation popup-menu))
+(defgeneric lem-if:popup-menu-last (implementation popup-menu))
+(defgeneric lem-if:popup-menu-select (implementation popup-menu))
 (defgeneric lem-if:display-popup-message (implementation buffer-or-string &key timeout
                                                                                destination-window
                                                                                source-window

@@ -35,19 +35,19 @@
   (quit (current-multi-column-list)))
 
 (define-command multi-column-list/down () ()
-  (popup-menu-down))
+  (popup-menu-down (multi-column-list-popup-menu (current-multi-column-list))))
 
 (define-command multi-column-list/up () ()
-  (popup-menu-up))
+  (popup-menu-up (multi-column-list-popup-menu (current-multi-column-list))))
 
 (define-command multi-column-list/first () ()
-  (popup-menu-first))
+  (popup-menu-first (multi-column-list-popup-menu (current-multi-column-list))))
 
 (define-command multi-column-list/last () ()
-  (popup-menu-last))
+  (popup-menu-last (multi-column-list-popup-menu (current-multi-column-list))))
 
 (define-command multi-column-list/select () ()
-  (popup-menu-select))
+  (popup-menu-select (multi-column-list-popup-menu (current-multi-column-list))))
 
 (define-command multi-column-list/mark-and-down () ()
   (mark-current-item (current-multi-column-list))
@@ -108,6 +108,7 @@
                     :initform nil
                     :accessor multi-column-list-column-function)
    (print-spec :accessor multi-column-list-print-spec)
+   (popup-menu :accessor multi-column-list-popup-menu)
    (use-mark :initform nil
              :initarg :use-mark
              :reader multi-column-list-use-mark-p)))
@@ -201,28 +202,30 @@
                      :multi-column-list component
                      :column-width-list (compute-column-width-list component))))
     (setf (multi-column-list-print-spec component) print-spec)
-    (lem:display-popup-menu (multi-column-list-items component)
-                            :print-spec print-spec
-                            :action-callback (lambda (item)
-                                               (select-item component item))
-                            :style '(:gravity :center)
-                            :max-display-items 100)
-    (setf (current-window)
-          (lem/popup-menu::popup-menu-window
-           (lem/popup-menu:find-popup-menu :parent-window (current-window))))
-    (setf (window-multi-column-list (current-window)) component)
-    (multi-column-list-mode t)
-    (popup-menu-first)))
+    (let ((popup-menu
+            (display-popup-menu (multi-column-list-items component)
+                                :print-spec print-spec
+                                :action-callback (lambda (item)
+                                                   (select-item component item))
+                                :style '(:gravity :center)
+                                :max-display-items 100)))
+      (setf (multi-column-list-popup-menu component) popup-menu)
+      (setf (current-window)
+            (lem/popup-menu::popup-menu-window popup-menu))
+      (setf (window-multi-column-list (current-window)) component)
+      (multi-column-list-mode t)
+      (popup-menu-first popup-menu))))
 
 (defmethod quit ((component multi-column-list))
-  (let* ((popup-menu (lem/popup-menu:find-popup-menu :current-window (current-window)))
+  (let* ((popup-menu (multi-column-list-popup-menu component))
          (popup-window (lem/popup-menu::popup-menu-window popup-menu)))
     (when (eq (current-window) popup-window)
       (setf (current-window) (window-parent popup-window)))
-    (popup-menu-quit)))
+    (popup-menu-quit popup-menu)))
 
 (defmethod update ((component multi-column-list))
-  (popup-menu-update (multi-column-list-items component)
+  (popup-menu-update (multi-column-list-popup-menu component)
+                     (multi-column-list-items component)
                      :print-spec (multi-column-list-print-spec component)
                      :max-display-items 100
                      :keep-focus t))
@@ -230,7 +233,7 @@
 (defun mark-current-item (multi-column-list)
   (when (multi-column-list-use-mark-p multi-column-list)
     (let ((item (lem/popup-menu:get-focus-item
-                 (lem/popup-menu:find-popup-menu :current-window (current-window)))))
+                 (multi-column-list-popup-menu multi-column-list))))
       (setf (multi-column-list-item-mark-p item)
             (not (multi-column-list-item-mark-p item))))
     (update multi-column-list)))

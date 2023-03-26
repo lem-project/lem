@@ -78,7 +78,7 @@
                 :serial t
                 :components ((:file "popup-window")
                              (:file "multi-column-list")
-                             (:file "buffer-menu")
+                             (:file "list-buffers")
                              (:file "completion-mode")
                              (:file "prompt-window")
                              (:file "context-menu")

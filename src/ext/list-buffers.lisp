@@ -8,6 +8,8 @@
   (:export :list-buffers))
 (in-package :lem/list-buffers)
 
+(define-key *global-keymap* "C-x C-b" 'list-buffers)
+
 (define-command list-buffers () ()
   (display
    (make-instance 'multi-column-list
@@ -25,5 +27,3 @@
                                            (buffer-name buffer)
                                            (buffer-filename buffer)))
                   :use-mark t)))
-
-(define-key *global-keymap* "C-x C-b" 'list-buffers)

@@ -158,7 +158,7 @@
   +min-width+)
 
 (defun compute-window-rectangle (buffer &key gravity source-window)
-  (destructuring-bind (width height) (lem/popup-window::compute-size-from-buffer buffer)
+  (destructuring-bind (width height) (lem/popup-window::compute-buffer-size buffer)
     (lem/popup-window::compute-popup-window-rectangle
      (lem/popup-window::ensure-gravity gravity)
      :source-window source-window

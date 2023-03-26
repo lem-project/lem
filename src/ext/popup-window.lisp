@@ -354,6 +354,13 @@
     (loop :maximize (point-column (line-end point))
           :while (line-offset point 1))))
 
+(defun compute-buffer-height (buffer)
+  (buffer-nlines buffer))
+
+(defun compute-buffer-size (buffer)
+  (list (compute-buffer-width buffer)
+        (compute-buffer-height buffer)))
+
 (defun insert-items (point items print-spec)
   (with-point ((start point :right-inserting))
     (loop :for (item . continue-p) :on items
@@ -511,59 +518,3 @@
   (alexandria:when-let ((f (popup-menu-action-callback *popup-menu*))
                         (item (get-focus-item)))
     (funcall f item)))
-
-(defun compute-size-from-buffer (buffer)
-  (let ((width (compute-buffer-width buffer))
-        (height (buffer-nlines buffer)))
-    (list width height)))
-
-(defun make-popup-buffer (text)
-  (let ((buffer (make-buffer "*Popup Message*" :temporary t :enable-undo-p nil)))
-    (setf (variable-value 'line-wrap :buffer buffer) nil)
-    (erase-buffer buffer)
-    (insert-string (buffer-point buffer) text)
-    (buffer-start (buffer-point buffer))
-    buffer))
-
-(defmethod lem-if:display-popup-message (implementation buffer-or-string
-                                         &key timeout
-                                              destination-window
-                                              source-window
-                                              style)
-  (let ((buffer (etypecase buffer-or-string
-                  (string (make-popup-buffer buffer-or-string))
-                  (buffer buffer-or-string))))
-    (destructuring-bind (width height)
-        (compute-size-from-buffer buffer)
-      (delete-popup-message destination-window)
-      (let ((window (make-popup-window :source-window (or source-window (current-window))
-                                       :buffer buffer
-                                       :width width
-                                       :height height
-                                       :style style)))
-        (buffer-start (window-view-point window))
-        (window-see window)
-        (when timeout
-          (check-type timeout number)
-          (start-timer (make-timer (lambda ()
-                                     (unless (deleted-window-p window)
-                                       (delete-window window))))
-                       (round (* timeout 1000))))
-        window))))
-
-(defmethod lem-if:delete-popup-message (implementation popup-message)
-  (when (and popup-message (not (deleted-window-p popup-message)))
-    (delete-window popup-message)))
-
-(defmethod lem:show-message (value &rest args &key timeout (style '(:gravity :follow-cursor)))
-  (setf (frame-message-window (current-frame))
-        (apply #'display-popup-message
-               value
-               :destination-window (frame-message-window (current-frame))
-               :style style
-               :timeout timeout
-               args)))
-
-(defmethod lem:clear-message ()
-  (delete-popup-message (frame-message-window (current-frame)))
-  (setf (frame-message-window (current-frame)) nil))

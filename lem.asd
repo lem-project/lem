@@ -77,6 +77,7 @@
                (:module "ext"
                 :serial t
                 :components ((:file "popup-window")
+                             (:file "popup-message")
                              (:file "multi-column-list")
                              (:file "list-buffers")
                              (:file "completion-mode")

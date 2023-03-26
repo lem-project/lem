@@ -186,13 +186,15 @@
                    :gravity (prompt-gravity parameters)
                    :border (if (prompt-use-border-p parameters) +border-size+ 0))))
 
+(defun get-child-window-width ()
+  (let* ((context lem/completion-mode::*completion-context*)
+         (popup-menu (and context (lem/completion-mode::context-popup-menu context))))
+    (if popup-menu
+        (window-width (lem/popup-menu::popup-menu-window popup-menu))
+        0)))
+
 (defmethod update-prompt-window ((window floating-prompt))
-  (alexandria:when-let* ((context lem/completion-mode::*completion-context*)
-                         (popup-menu (lem/completion-mode::context-popup-menu context))
-                         (child-width
-                          (if popup-menu
-                              (window-width (lem/popup-menu::popup-menu-window popup-menu))
-                              0)))
+  (let ((child-width (get-child-window-width)))
     (destructuring-bind (x y width height)
         (compute-window-rectangle (window-buffer window)
                                   :gravity (prompt-gravity window)

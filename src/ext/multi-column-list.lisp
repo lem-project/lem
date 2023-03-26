@@ -4,7 +4,7 @@
            :multi-column-list-item
            :select-item
            :delete-item
-           :row-values
+           :map-columns
            :display
            :update
            :quit))
@@ -32,7 +32,7 @@
   )
 
 (define-command multi-column-list/quit () ()
-  (quit-multi-column-list))
+  (quit (current-multi-column-list)))
 
 (define-command multi-column-list/down () ()
   (popup-menu-down))
@@ -50,22 +50,47 @@
   (popup-menu-select))
 
 (define-command multi-column-list/mark-and-down () ()
-  (mark-current-item)
+  (mark-current-item (current-multi-column-list))
   (multi-column-list/down))
 
 (define-command multi-column-list/up-and-mark () ()
   (multi-column-list/up)
-  (mark-current-item))
+  (mark-current-item (current-multi-column-list)))
 
 (define-command multi-column-list/delete-items () ()
-  (delete-marked-items))
+  (delete-marked-items (current-multi-column-list)))
 
 ;;
-(defgeneric select-item (component item)
-  (:method (component item)))
+(defgeneric select-item (component item))
+(defgeneric delete-item (component item))
+(defgeneric map-columns (component item))
 
-(defgeneric delete-item (component item)
-  (:method (component item)))
+(defclass multi-column-list-item ()
+  ((mark :initform nil
+         :accessor multi-column-list-item-mark-p)))
+
+(defclass default-multi-column-list-item (multi-column-list-item)
+  ((value :initarg :value
+          :reader default-multi-column-list-item-value)))
+
+(defun wrap (value)
+  (if (typep value 'multi-column-list-item)
+      value
+      (make-instance 'default-multi-column-list-item :value value)))
+
+(defun unwrap (value)
+  (if (typep value 'default-multi-column-list-item)
+      (default-multi-column-list-item-value value)
+      value))
+
+(defmethod select-item :around (component (item default-multi-column-list-item))
+  (call-next-method component (unwrap item)))
+
+(defmethod delete-item :around (component (item default-multi-column-list-item))
+  (call-next-method component (unwrap item)))
+
+(defmethod map-columns :around (component (item default-multi-column-list-item))
+  (call-next-method component (unwrap item)))
 
 (defclass multi-column-list ()
   ((columns :initarg :columns
@@ -73,29 +98,51 @@
             :reader multi-column-list-columns)
    (items :initarg :items
           :accessor multi-column-list-items)
+   (select-callback :initarg :select-callback
+                    :initform nil
+                    :reader multi-column-list-select-callback)
+   (delete-callback :initarg :delete-callback
+                    :initform nil
+                    :accessor multi-column-list-delete-callback)
+   (column-function :initarg :column-function
+                    :initform nil
+                    :accessor multi-column-list-column-function)
    (print-spec :accessor multi-column-list-print-spec)
    (use-mark :initform nil
              :initarg :use-mark
              :reader multi-column-list-use-mark-p)))
 
-(defgeneric row-values (component item)
-  (:method :around (component item)
-    (append (if (multi-column-list-use-mark-p component)
-                (list (if (multi-column-list-item-mark-p item)
-                          "✔ "
-                          "  "))
-                nil)
-            (mapcar #'princ-to-string (call-next-method)))))
+(defmethod initialize-instance ((instance multi-column-list) &rest initargs &key items &allow-other-keys)
+  (apply #'call-next-method
+         instance
+         :items (mapcar #'wrap items)
+         initargs))
+
+(defmethod map-columns :around ((component multi-column-list) item)
+  (append (if (multi-column-list-use-mark-p component)
+              (list (if (multi-column-list-item-mark-p item)
+                        "✔ "
+                        "  "))
+              nil)
+          (mapcar #'princ-to-string (call-next-method))))
+
+(defmethod select-item ((component multi-column-list) item)
+  (when (multi-column-list-select-callback component)
+    (funcall (multi-column-list-select-callback component) component item)))
+
+(defmethod delete-item ((component multi-column-list) item)
+  (when (multi-column-list-delete-callback component)
+    (funcall (multi-column-list-delete-callback component) component item)))
+
+(defmethod map-columns ((component multi-column-list) item)
+  (when (multi-column-list-column-function component)
+    (funcall (multi-column-list-column-function component) component item)))
 
 (defmethod multi-column-list-columns :around ((multi-column-list multi-column-list))
   (append (if (multi-column-list-use-mark-p multi-column-list)
               (list "")
               nil)
           (call-next-method)))
-
-(defclass multi-column-list-item ()
-  ((mark :initform nil
-          :accessor multi-column-list-item-mark-p)))
 
 (defclass print-spec ()
   ((multi-column-list :initarg :multi-column-list
@@ -119,7 +166,7 @@
 
 (defmethod lem/popup-window:apply-print-spec ((print-spec print-spec) point item)
   (check-type item multi-column-list-item)
-  (loop :for value :in (row-values (print-spec-multi-column-list print-spec) item)
+  (loop :for value :in (map-columns (print-spec-multi-column-list print-spec) item)
         :for width :in (print-spec-column-width-list print-spec)
         :do (insert-string point " ")
             (let ((column (point-column point)))
@@ -131,7 +178,7 @@
   (let ((width-matrix
           (loop :for row :in (append (alexandria:when-let (columns (multi-column-list-columns multi-column-list))
                                        (list columns))
-                                     (mapcar (lambda (item) (row-values multi-column-list item))
+                                     (mapcar (lambda (item) (map-columns multi-column-list item))
                                              (multi-column-list-items multi-column-list)))
                 :collect (loop :for value :in row
                                :collect (string-width value)))))
@@ -168,37 +215,33 @@
     (popup-menu-first)))
 
 (defmethod quit ((component multi-column-list))
-  (quit-multi-column-list))
-
-(defun quit-multi-column-list ()
-  (when (lem/popup-window:find-popup-menu :current-window (current-window))
-    (multi-column-list-mode nil)
-    (setf (current-window) (window-parent (current-window)))
+  (let* ((popup-menu (lem/popup-window:find-popup-menu :current-window (current-window)))
+         (popup-window (lem/popup-window::popup-menu-window popup-menu)))
+    (when (eq (current-window) popup-window)
+      (setf (current-window) (window-parent popup-window)))
     (popup-menu-quit)))
 
-(defun update (multi-column-list)
-  (popup-menu-update (multi-column-list-items multi-column-list)
-                     :print-spec (multi-column-list-print-spec multi-column-list)
+(defmethod update ((component multi-column-list))
+  (popup-menu-update (multi-column-list-items component)
+                     :print-spec (multi-column-list-print-spec component)
                      :max-display-items 100
                      :keep-focus t))
 
-(defun mark-current-item ()
-  (let ((multi-column-list (current-multi-column-list)))
-    (when (multi-column-list-use-mark-p multi-column-list)
-      (let ((item (lem/popup-window:get-focus-item
-                   (lem/popup-window:find-popup-menu :current-window (current-window)))))
-        (setf (multi-column-list-item-mark-p item)
-              (not (multi-column-list-item-mark-p item))))
-      (update multi-column-list))))
+(defun mark-current-item (multi-column-list)
+  (when (multi-column-list-use-mark-p multi-column-list)
+    (let ((item (lem/popup-window:get-focus-item
+                 (lem/popup-window:find-popup-menu :current-window (current-window)))))
+      (setf (multi-column-list-item-mark-p item)
+            (not (multi-column-list-item-mark-p item))))
+    (update multi-column-list)))
 
-(defun mark-items ()
+(defun mark-items (multi-column-list)
   (remove-if-not #'multi-column-list-item-mark-p
-                 (multi-column-list-items (current-multi-column-list))))
+                 (multi-column-list-items multi-column-list)))
 
-(defun delete-marked-items ()
-  (let* ((multi-column-list (current-multi-column-list))
-         (whole-items (multi-column-list-items multi-column-list)))
-    (dolist (item (mark-items))
+(defun delete-marked-items (multi-column-list)
+  (let ((whole-items (multi-column-list-items multi-column-list)))
+    (dolist (item (mark-items multi-column-list))
       (delete-item multi-column-list item)
       (setf whole-items
             (delete item whole-items)))

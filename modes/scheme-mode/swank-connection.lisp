@@ -597,7 +597,7 @@
   (check-connection)
   (macroexpand-internal 'swank:swank-macroexpand-all))
 
-;; for r7rs-swank (fuzzy-completions is not supported) 
+;; for r7rs-swank (fuzzy-completions is not supported)
 ;(defvar *completion-symbol-with-fuzzy* t)
 (defvar *completion-symbol-with-fuzzy* nil)
 
@@ -833,7 +833,7 @@
      (unless *suppress-error-disp*
        (alexandria:destructuring-case value
          ((:abort string)
-          (funcall *write-string-function* 
+          (funcall *write-string-function*
                    (format nil "; Evaluation aborted: ~A~%" string)))))
 
      (finish-evaluated *connection* value id))
@@ -1172,4 +1172,3 @@
               (sockint::shutdown fd sockint::SHUT_RDWR)
               (sockint::close fd)))))))
   (add-hook *exit-editor-hook* 'slime-quit-all-for-win32))
-

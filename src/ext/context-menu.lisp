@@ -28,7 +28,7 @@
 (defmethod select-item ((component context-menu) item)
   )
 
-(defmethod row-values ((component context-menu) (item item))
+(defmethod map-columns ((component context-menu) (item item))
   (list (item-label item) (or (item-description item) "")))
 
 (defun display-context-menu (items)

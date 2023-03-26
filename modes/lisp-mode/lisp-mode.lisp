@@ -103,7 +103,7 @@
 (defclass connection-menu (lem/multi-column-list:multi-column-list) ()
   (:default-initargs :columns '("" "hostname" "port" "pid" "name" "version" "command")))
 
-(defmethod lem/multi-column-list:row-values ((component connection-menu) (item connection-item))
+(defmethod lem/multi-column-list:map-columns ((component connection-menu) (item connection-item))
   (let ((connection (connection-item-connection item)))
     (list (if (eq connection *connection*) "*" "")
           (connection-hostname connection)
@@ -116,9 +116,6 @@
 (defmethod lem/multi-column-list:select-item ((component connection-menu) item)
   (switch-connection (connection-item-connection item))
   (lem/multi-column-list:update component))
-
-(defmethod lem/multi-column-list:delete-item ((component connection-menu) item)
-  nil)
 
 (define-command lisp-connection-list () ()
   (lem/multi-column-list:display

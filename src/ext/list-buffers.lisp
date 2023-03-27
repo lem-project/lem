@@ -14,6 +14,11 @@
   (display
    (make-instance 'multi-column-list
                   :columns '("" "Buffer" "File")
+                  :column-function (lambda (component buffer)
+                                     (declare (ignore component))
+                                     (list (string-trim " " (buffer-attributes buffer))
+                                           (buffer-name buffer)
+                                           (or (buffer-filename buffer) "")))
                   :items (buffer-list)
                   :select-callback (lambda (component buffer)
                                      (quit component)
@@ -21,9 +26,4 @@
                   :delete-callback (lambda (component buffer)
                                      (declare (ignore component))
                                      (kill-buffer buffer))
-                  :column-function (lambda (component buffer)
-                                     (declare (ignore component))
-                                     (list (string-trim " " (lem::buffer-attributes buffer))
-                                           (buffer-name buffer)
-                                           (or (buffer-filename buffer) "")))
                   :use-mark t)))

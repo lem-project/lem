@@ -2,6 +2,7 @@
   (:use :cl :lem)
   (:export :multi-column-list
            :multi-column-list-item
+           :multi-column-list-of-window
            :select-item
            :delete-item
            :map-columns
@@ -27,6 +28,7 @@
 (define-key *multi-column-list-mode-keymap* "Space" 'multi-column-list/mark-and-down)
 (define-key *multi-column-list-mode-keymap* "M-Space" 'multi-column-list/up-and-mark)
 (define-key *multi-column-list-mode-keymap* "C-k" 'multi-column-list/delete-items)
+(define-key *multi-column-list-mode-keymap* 'show-context-menu 'show-context-menu)
 
 (define-command multi-column-list/default () ()
   )
@@ -107,11 +109,14 @@
    (column-function :initarg :column-function
                     :initform nil
                     :accessor multi-column-list-column-function)
-   (print-spec :accessor multi-column-list-print-spec)
-   (popup-menu :accessor multi-column-list-popup-menu)
    (use-mark :initform nil
              :initarg :use-mark
-             :reader multi-column-list-use-mark-p)))
+             :reader multi-column-list-use-mark-p)
+   (context-menu :initform '()
+                 :initarg :context-menu
+                 :reader multi-column-list-context-menu)
+   (print-spec :accessor multi-column-list-print-spec)
+   (popup-menu :accessor multi-column-list-popup-menu)))
 
 (defmethod initialize-instance ((instance multi-column-list) &rest initargs &key items &allow-other-keys)
   (apply #'call-next-method
@@ -187,14 +192,18 @@
           :for i :from 0
           :collect (loop :for width-list :in width-matrix :maximize (elt width-list i)))))
 
-(defun window-multi-column-list (window)
+(defun multi-column-list-of-window (window)
   (window-parameter window 'multi-column-list))
 
-(defun (setf window-multi-column-list) (value window)
+(defun (setf multi-column-list-of-window) (value window)
   (setf (window-parameter window 'multi-column-list) value))
 
 (defun current-multi-column-list ()
-  (window-multi-column-list (current-window)))
+  (multi-column-list-of-window (current-window)))
+
+(defun multi-column-list-window (multi-column-list)
+  (lem/popup-menu::popup-menu-window
+   (multi-column-list-popup-menu multi-column-list)))
 
 (defmethod display ((component multi-column-list) &key (style '(:gravity :center)))
   (let ((print-spec (make-instance
@@ -212,9 +221,12 @@
       (setf (multi-column-list-popup-menu component) popup-menu)
       (setf (current-window)
             (lem/popup-menu::popup-menu-window popup-menu))
-      (setf (window-multi-column-list (current-window)) component)
+      (setf (lem::buffer-context-menu (window-buffer (current-window)))
+            (multi-column-list-context-menu component))
+      (setf (multi-column-list-of-window (current-window)) component)
       (multi-column-list-mode t)
-      (popup-menu-first popup-menu))))
+      (popup-menu-first popup-menu)
+      component)))
 
 (defmethod quit ((component multi-column-list))
   (let* ((popup-menu (multi-column-list-popup-menu component))
@@ -241,6 +253,9 @@
 (defun mark-items (multi-column-list)
   (remove-if-not #'multi-column-list-item-mark-p
                  (multi-column-list-items multi-column-list)))
+
+(defun checked-items (multi-column-list)
+  (mapcar #'unwrap (mark-items multi-column-list)))
 
 (defun delete-marked-items (multi-column-list)
   (let ((whole-items (multi-column-list-items multi-column-list)))

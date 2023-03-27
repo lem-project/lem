@@ -402,7 +402,8 @@
    :filter-buffer
    :pipe-command
    :delete-trailing-whitespace
-   :load-library)
+   :load-library
+   :show-context-menu)
   ;; self-insert-command.lisp
   (:export
    :self-insert-before-hook
@@ -543,6 +544,7 @@
    :popup-menu-select
    :display-popup-message
    :delete-popup-message
+   :display-context-menu
    :clipboard-paste
    :clipboard-copy))
 

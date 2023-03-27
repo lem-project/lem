@@ -493,3 +493,15 @@
   (cond ((ignore-errors (maybe-quickload (format nil "lem-~A" name) :silent t))
          (message "Loaded ~A." name))
         (t (message "Can't find Library ~A." name))))
+
+(defun buffer-context-menu (buffer)
+  (buffer-value buffer 'context-menu))
+
+(defun (setf buffer-context-menu) (context-menu buffer)
+  (setf (buffer-value buffer 'context-menu) context-menu))
+
+(define-command show-context-menu () ()
+  (let ((context-menu (buffer-context-menu (current-buffer))))
+    (log:info context-menu)
+    (when context-menu
+      (lem-if:display-context-menu (implementation) context-menu))))

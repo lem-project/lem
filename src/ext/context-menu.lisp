@@ -2,7 +2,8 @@
   (:use :cl
         :lem
         :lem/multi-column-list)
-  (:export :make-item
+  (:export :context-menu
+           :item
            :display-context-menu)
   #+sbcl
   (:lock t))
@@ -12,6 +13,7 @@
   ((label :initarg :label
           :reader item-label)
    (description :initarg :description
+                :initform nil
                 :reader item-description)
    (callback :initarg :callback
              :reader item-callback)))
@@ -26,16 +28,31 @@
   (:default-initargs :columns '()))
 
 (defmethod select-item ((component context-menu) item)
-  (quit component)
-  (funcall (item-callback item)))
+  (let ((window (window-parent (lem/multi-column-list::multi-column-list-window component))))
+    (quit component)
+    (funcall (item-callback item) window)))
 
 (defmethod map-columns ((component context-menu) (item item))
   (list (item-label item) (or (item-description item) "")))
 
 (defun display-context-menu (items)
-  (display (make-instance 'context-menu :items items)))
+  (display (make-instance 'context-menu :items items)
+           :style '(:gravity :cursor)))
+
+(defmethod lem-if:display-context-menu (implementation context-menu)
+  (display context-menu
+           :style '(:gravity :cursor)))
 
 (define-command test-context-menu () ()
-  (display-context-menu (list (make-item :label "foo" :callback (lambda () (message "select foo")))
-                              (make-item :label "bar" :callback (lambda () (message "select bar")))
-                              (make-item :label "baz" :callback (lambda () (message "select baz"))))))
+  (display-context-menu (list (make-item :label "foo"
+                                         :callback (lambda (window)
+                                                     (declare (ignore window))
+                                                     (message "select foo")))
+                              (make-item :label "bar"
+                                         :callback (lambda (window)
+                                                     (declare (ignore window))
+                                                     (message "select bar")))
+                              (make-item :label "baz"
+                                         :callback (lambda (window)
+                                                     (declare (ignore window))
+                                                     (message "select baz"))))))

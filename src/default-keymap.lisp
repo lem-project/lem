@@ -117,3 +117,5 @@
 (define-key *global-keymap* "M-x" 'execute-command)
 
 (define-key *global-keymap* "M-C" 'add-cursors-to-next-line)
+
+(define-key *global-keymap* "F1" 'show-context-menu)

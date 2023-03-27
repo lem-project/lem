@@ -1680,13 +1680,19 @@
       (etypecase command-or-code-action
         (lsp:code-action
          (let ((code-action command-or-code-action))
-           (push (context-menu:make-item :label (lsp:code-action-title code-action)
-                                         :callback (curry #'execute-code-action workspace code-action))
+           (push (make-instance 'context-menu:item
+                                :label (lsp:code-action-title code-action)
+                                :callback (lambda (window)
+                                            (declare (ignore window))
+                                            (execute-code-action workspace code-action)))
                  items)))
         (lsp:command
          (let ((command command-or-code-action))
-           (push (context-menu:make-item :label (lsp:command-title command)
-                                         :callback (curry #'execute-command workspace command))
+           (push (make-instance 'context-menu:item
+                                :label (lsp:command-title command)
+                                :callback (lambda (window)
+                                            (declare (ignore window))
+                                            (execute-command workspace command)))
                  items)))))
     (nreverse items)))
 

@@ -552,7 +552,7 @@
 
 (defun vi-backward-matching-paren (p)
   (when (syntax-closed-paren-char-p (character-at p))
-    (scan-lists (character-offset (copy-point p :temporary) 1) -1 0)))
+    (scan-lists (character-offset (copy-point p :temporary) 1) -1 0 t)))
 
 (define-command vi-move-to-matching-paren () ()
   (alexandria:when-let ((p (or (vi-backward-matching-paren (current-point))

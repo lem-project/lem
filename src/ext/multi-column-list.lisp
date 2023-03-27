@@ -8,7 +8,9 @@
            :map-columns
            :display
            :update
-           :quit))
+           :quit
+           :collect-checked-items
+           :delete-checked-items))
 (in-package :lem/multi-column-list)
 
 (defvar *multi-column-list-mode-keymap*
@@ -25,8 +27,8 @@
 (define-key *multi-column-list-mode-keymap* 'move-to-end-of-buffer 'multi-column-list/last)
 (define-key *multi-column-list-mode-keymap* 'move-to-beginning-of-buffer 'multi-column-list/first)
 (define-key *multi-column-list-mode-keymap* "Return" 'multi-column-list/select)
-(define-key *multi-column-list-mode-keymap* "Space" 'multi-column-list/mark-and-down)
-(define-key *multi-column-list-mode-keymap* "M-Space" 'multi-column-list/up-and-mark)
+(define-key *multi-column-list-mode-keymap* "Space" 'multi-column-list/check-and-down)
+(define-key *multi-column-list-mode-keymap* "M-Space" 'multi-column-list/up-and-check)
 (define-key *multi-column-list-mode-keymap* "C-k" 'multi-column-list/delete-items)
 (define-key *multi-column-list-mode-keymap* 'show-context-menu 'show-context-menu)
 
@@ -51,16 +53,16 @@
 (define-command multi-column-list/select () ()
   (popup-menu-select (multi-column-list-popup-menu (current-multi-column-list))))
 
-(define-command multi-column-list/mark-and-down () ()
-  (mark-current-item (current-multi-column-list))
+(define-command multi-column-list/check-and-down () ()
+  (check-current-item (current-multi-column-list))
   (multi-column-list/down))
 
-(define-command multi-column-list/up-and-mark () ()
+(define-command multi-column-list/up-and-check () ()
   (multi-column-list/up)
-  (mark-current-item (current-multi-column-list)))
+  (check-current-item (current-multi-column-list)))
 
 (define-command multi-column-list/delete-items () ()
-  (delete-marked-items (current-multi-column-list)))
+  (delete-checked-items (current-multi-column-list)))
 
 ;;
 (defgeneric select-item (component item))
@@ -68,8 +70,8 @@
 (defgeneric map-columns (component item))
 
 (defclass multi-column-list-item ()
-  ((mark :initform nil
-         :accessor multi-column-list-item-mark-p)))
+  ((checked :initform nil
+            :accessor multi-column-list-item-checked-p)))
 
 (defclass default-multi-column-list-item (multi-column-list-item)
   ((value :initarg :value
@@ -109,9 +111,9 @@
    (column-function :initarg :column-function
                     :initform nil
                     :accessor multi-column-list-column-function)
-   (use-mark :initform nil
-             :initarg :use-mark
-             :reader multi-column-list-use-mark-p)
+   (use-check :initform nil
+              :initarg :use-check
+              :reader multi-column-list-use-check-p)
    (context-menu :initform '()
                  :initarg :context-menu
                  :reader multi-column-list-context-menu)
@@ -125,8 +127,8 @@
          initargs))
 
 (defmethod map-columns :around ((component multi-column-list) item)
-  (append (if (multi-column-list-use-mark-p component)
-              (list (if (multi-column-list-item-mark-p item)
+  (append (if (multi-column-list-use-check-p component)
+              (list (if (multi-column-list-item-checked-p item)
                         "✔ "
                         "  "))
               nil)
@@ -145,7 +147,7 @@
     (funcall (multi-column-list-column-function component) component item)))
 
 (defmethod multi-column-list-columns :around ((multi-column-list multi-column-list))
-  (append (if (multi-column-list-use-mark-p multi-column-list)
+  (append (if (multi-column-list-use-check-p multi-column-list)
               (list "")
               nil)
           (call-next-method)))
@@ -242,24 +244,24 @@
                      :max-display-items 100
                      :keep-focus t))
 
-(defun mark-current-item (multi-column-list)
-  (when (multi-column-list-use-mark-p multi-column-list)
+(defun check-current-item (multi-column-list)
+  (when (multi-column-list-use-check-p multi-column-list)
     (let ((item (lem/popup-menu:get-focus-item
                  (multi-column-list-popup-menu multi-column-list))))
-      (setf (multi-column-list-item-mark-p item)
-            (not (multi-column-list-item-mark-p item))))
+      (setf (multi-column-list-item-checked-p item)
+            (not (multi-column-list-item-checked-p item))))
     (update multi-column-list)))
 
-(defun mark-items (multi-column-list)
-  (remove-if-not #'multi-column-list-item-mark-p
+(defun checked-items (multi-column-list)
+  (remove-if-not #'multi-column-list-item-checked-p
                  (multi-column-list-items multi-column-list)))
 
-(defun checked-items (multi-column-list)
-  (mapcar #'unwrap (mark-items multi-column-list)))
+(defun collect-checked-items (multi-column-list)
+  (mapcar #'unwrap (checked-items multi-column-list)))
 
-(defun delete-marked-items (multi-column-list)
+(defun delete-checked-items (multi-column-list)
   (let ((whole-items (multi-column-list-items multi-column-list)))
-    (dolist (item (mark-items multi-column-list))
+    (dolist (item (checked-items multi-column-list))
       (delete-item multi-column-list item)
       (setf whole-items
             (delete item whole-items)))

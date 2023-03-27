@@ -5,7 +5,10 @@
                 :multi-column-list
                 :multi-column-list-of-window
                 :display
-                :quit)
+                :quit
+                :update
+                :collect-checked-items
+                :delete-checked-items)
   (:export :list-buffers))
 (in-package :lem/list-buffers)
 
@@ -13,12 +16,12 @@
 
 (defun kill-buffers (window)
   (let ((multi-column-list (multi-column-list-of-window window)))
-    (lem/multi-column-list::delete-marked-items multi-column-list)))
+    (delete-checked-items multi-column-list)))
 
 (defun save-buffers (window)
   (let ((multi-column-list (multi-column-list-of-window window)))
-    (mapc #'save-buffer (lem/multi-column-list::checked-items multi-column-list))
-    (lem/multi-column-list:update multi-column-list)))
+    (mapc #'save-buffer (collect-checked-items multi-column-list))
+    (update multi-column-list)))
 
 (define-command list-buffers () ()
   (display
@@ -36,7 +39,7 @@
                   :delete-callback (lambda (component buffer)
                                      (declare (ignore component))
                                      (kill-buffer buffer))
-                  :use-mark t
+                  :use-check t
                   :context-menu (make-instance 'lem/context-menu:context-menu
                                                :items (list (make-instance 'lem/context-menu:item
                                                                            :label "Kill selected buffers"

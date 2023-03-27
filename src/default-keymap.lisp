@@ -118,4 +118,4 @@
 
 (define-key *global-keymap* "M-C" 'add-cursors-to-next-line)
 
-(define-key *global-keymap* "F1" 'show-context-menu)
+(define-key *global-keymap* "Shift-F10" 'show-context-menu)

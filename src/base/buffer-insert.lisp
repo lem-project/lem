@@ -14,7 +14,7 @@
         :for charpos := (point-charpos point) :then 0
         :do (unless line
               (return nil))
-            (when (line-search-property-range line :read-only charpos n)
+            (when (line-search-property-range line :read-only charpos (+ charpos n))
               (return t))
             (when (>= 0 (decf n (1+ (- (line-length line) charpos))))
               (return nil))))

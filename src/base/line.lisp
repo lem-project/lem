@@ -146,7 +146,7 @@
   (when (null pos-end)
     (setq pos-end most-positive-fixnum))
   (loop :for (start end value contp) :in (getf (line-plist line) key)
-        :do (when (or (<= pos-start start pos-end)
+        :do (when (or (and (<= pos-start start) (< start pos-end))
                       (if contp
                           (<= start pos-start end)
                           (<= start pos-start (1- end))))
@@ -195,16 +195,22 @@
         :do (setf (cadr plist-rest)
                   (loop :for elt :in (cadr plist-rest)
                         :for (start end value) := elt
-                        :if (<= pos start end (+ pos n))
+
+                        :if (<= pos start end (+ pos n -1))
                         :do (progn)
+
                         :else :if (<= pos (+ pos n) start)
                         :collect (list (- start n) (- end n) value)
+
                         :else :if (< pos start (+ pos n))
                         :collect (list pos (- end n) value)
+
                         :else :if (<= start pos (+ pos n) end)
                         :collect (list start (- end n) value)
+
                         :else :if (<= start pos end (+ pos n))
                         :collect (list start pos value)
+
                         :else
                         :collect elt))))
 

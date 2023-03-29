@@ -150,8 +150,8 @@
   (setf (context-popup-menu *completion-context*) nil))
 
 (defun call-focus-action ()
-  (alexandria:when-let* ((item (lem/popup-menu:get-focus-item
-                                (context-popup-menu *completion-context*)))
+  (alexandria:when-let* ((menu (context-popup-menu *completion-context*))
+                         (item (lem/popup-menu:get-focus-item menu))
                          (fn (completion-item-focus-action item)))
     (funcall fn *completion-context*)))
 

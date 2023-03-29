@@ -60,6 +60,9 @@
    (switch-to-buffer-hook
     :initform nil
     :accessor window-switch-to-buffer-hook)
+   (leave-hook
+    :initform nil
+    :accessor window-leave-hook)
    (use-modeline-p
     :initarg :use-modeline-p
     :initform nil
@@ -158,8 +161,9 @@
 (defun (setf current-window) (new-window)
   (check-type new-window window)
   (notify-frame-redisplay-required (current-frame))
-  (let ((frame (current-frame)))
-    (alexandria:when-let (old-window (frame-current-window frame))
+  (let* ((frame (current-frame))
+         (old-window (frame-current-window frame)))
+    (when old-window
       (move-point (%window-point old-window)
                   (window-buffer-point old-window)))
     (let ((buffer (window-buffer new-window)))

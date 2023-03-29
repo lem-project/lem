@@ -163,6 +163,7 @@
    :last-print-cursor-y
    :window-parameter
    :window-delete-hook
+   :window-leave-hook
    :window-redraw
    :current-window
    :window-list

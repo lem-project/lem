@@ -94,6 +94,7 @@
     (when (minusp n)
       (setf n (- (length window-list) (abs n))))
     (update-last-focused-window)
+    (run-hooks (window-leave-hook (current-window)))
     (dotimes (_ n t)
       (setf (current-window)
             (get-next-window (current-window)

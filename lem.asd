@@ -95,6 +95,7 @@
                              (:file "line-numbers")
                              (:file "sourcelist")
                              (:file "grep")
+                             (:file "peek-source")
                              (:file "go-back")
                              (:file "language-mode")
                              (:file "language-mode-tools")

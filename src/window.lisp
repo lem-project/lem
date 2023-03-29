@@ -1121,6 +1121,13 @@ window width is changed, we must recalc the window view point."
                                        &key (frame (current-frame)) &allow-other-keys)
   (add-floating-window frame floating-window))
 
+(defmethod initialize-instance ((floating-window floating-window) &rest initargs &key use-border &allow-other-keys)
+  (apply #'call-next-method
+         floating-window
+         (if use-border
+             (list* :border 1 initargs)
+             initargs)))
+
 (defun make-floating-window (&key (buffer (alexandria:required-argument :buffer))
                                   (x (alexandria:required-argument :x))
                                   (y (alexandria:required-argument :y))

@@ -56,7 +56,7 @@
               'peek-source-quit)))
 
 (defun make-peek-source-buffer ()
-  (let ((buffer (make-buffer "*peek-source*" :temporary t :enable-undo-p nil)))
+  (let ((buffer (make-buffer "*peek-source*" :temporary t :enable-undo-p t)))
     (setf (variable-value 'line-wrap :buffer buffer) nil)
     buffer))
 

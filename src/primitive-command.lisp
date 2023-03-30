@@ -118,21 +118,22 @@
   (delete-character start (count-characters start end)))
 
 (define-command (kill-line (:advice-classes editable-advice)) (&optional arg) ("P")
-  (with-point ((start (current-point) :right-inserting))
-    (cond
-      ((null arg)
-       (let ((p (current-point)))
-         (cond ((end-buffer-p p)
-                (error 'end-of-buffer :point p))
-               ((end-line-p p)
-                (character-offset p 1))
-               (t (line-end p)))
-         (kill-region start p)))
-      (t
-       (or (line-offset (current-point) arg)
-           (buffer-end (current-point)))
-       (let ((end (current-point)))
-         (kill-region start end))))))
+  (save-excursion
+    (with-point ((start (current-point) :right-inserting))
+      (cond
+        ((null arg)
+         (let ((p (current-point)))
+           (cond ((end-buffer-p p)
+                  (error 'end-of-buffer :point p))
+                 ((end-line-p p)
+                  (character-offset p 1))
+                 (t (line-end p)))
+           (kill-region start p)))
+        (t
+         (or (line-offset (current-point) arg)
+             (buffer-end (current-point)))
+         (let ((end (current-point)))
+           (kill-region start end)))))))
 
 (defun yank-1 (arg)
   (let ((string (if (null arg)

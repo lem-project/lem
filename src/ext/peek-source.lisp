@@ -44,21 +44,21 @@
   (let* ((x-margin 4)
          (y-margin 2)
          (width (- (floor (display-width) 2) 2 x-margin))
-         (height (- (display-height) 2 (* 2 y-margin))))
-    (let* ((peek-window (make-instance 'peek-window
-                                       :buffer buffer
-                                       :x (+ 1 x-margin)
-                                       :y (+ 1 y-margin)
-                                       :width width
-                                       :height height
-                                       :use-border t))
-           (source-window (make-floating-window :buffer (make-buffer "*source*" :temporary t :enable-undo-p nil)
-                                                :x (+ (window-x peek-window) (window-width peek-window) 2)
-                                                :y (+ 1 y-margin)
-                                                :width width
-                                                :height height
-                                                :use-border t)))
-      (list peek-window source-window))))
+         (height (- (display-height) 2 (* 2 y-margin)))
+         (peek-window (make-instance 'peek-window
+                                     :buffer buffer
+                                     :x (+ 1 x-margin)
+                                     :y (+ 1 y-margin)
+                                     :width width
+                                     :height height
+                                     :use-border t))
+         (source-window (make-floating-window :buffer (make-buffer "*source*" :temporary t :enable-undo-p nil)
+                                              :x (+ (window-x peek-window) (window-width peek-window) 2)
+                                              :y (+ 1 y-margin)
+                                              :width width
+                                              :height height
+                                              :use-border t)))
+    (list peek-window source-window)))
 
 (defun display (collector)
   (destructuring-bind (peek-window source-window)

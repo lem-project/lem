@@ -98,6 +98,7 @@
 
 (defun get-matched-point (&key temporary)
   (with-point ((point (buffer-point (window-buffer *peek-window*))))
+    (line-start point)
     (alexandria:when-let* ((move (text-property-at point 'move-function))
                            (point (funcall move :temporary temporary)))
       point)))
@@ -107,11 +108,13 @@
                          (buffer (point-buffer point)))
     (with-current-window *source-window*
       (switch-to-buffer buffer nil nil)
-      (window-see (current-window))
-      (set-highlight-overlay point))))
+      (set-highlight-overlay point)
+      (move-point (buffer-point buffer) point)
+      (window-see (current-window)))))
 
 (defmethod execute :after ((mode peek-source-mode) command argument)
-  (show-matched-line))
+  (when (eq (current-window) *peek-window*)
+    (show-matched-line)))
 
 (define-command peek-source-select () ()
   (alexandria:when-let ((point (get-matched-point :temporary nil)))
@@ -151,7 +154,7 @@
 
 (defun move (directory file line-number temporary)
   (let* ((buffer (find-file-buffer (merge-pathnames file directory) :temporary temporary))
-         (point (buffer-point buffer)))
+         (point (copy-point (buffer-point buffer) :temporary)))
     (move-to-line point line-number)
     point))
 

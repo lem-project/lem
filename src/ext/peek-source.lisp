@@ -18,7 +18,8 @@
 
 (define-minor-mode peek-source-mode
     (:name "Peek"
-     :keymap *peek-source-keymap*))
+     :keymap *peek-source-keymap*)
+  (setf (lem::not-switchable-buffer-p (current-buffer)) t))
 
 (define-key *peek-source-keymap* "Return" 'peek-source-select)
 

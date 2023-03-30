@@ -25,35 +25,55 @@
 (defclass peek-window (floating-window) ())
 
 (defmethod lem::%delete-window :before ((peek-window peek-window))
+  (finalize-peek-source))
+
+(defun finalize-peek-source ()
+  (finalize-highlight-overlays)
   (setf (current-window) *parent-window*)
   (delete-window *source-window*))
 
-(defun display (collector)
+(defun set-move-function (start end move-function)
+  (put-text-property start end 'move-function move-function))
+
+(defun get-move-function (point)
+  (with-point ((point point))
+    (line-start point)
+    (text-property-at point 'move-function)))
+
+(defun make-two-side-by-side-windows (buffer)
   (let* ((x-margin 4)
          (y-margin 2)
          (width (- (floor (display-width) 2) 2 x-margin))
          (height (- (display-height) 2 (* 2 y-margin))))
+    (let* ((peek-window (make-instance 'peek-window
+                                       :buffer buffer
+                                       :x (+ 1 x-margin)
+                                       :y (+ 1 y-margin)
+                                       :width width
+                                       :height height
+                                       :use-border t))
+           (source-window (make-floating-window :buffer (make-buffer "*source*" :temporary t :enable-undo-p nil)
+                                                :x (+ (window-x peek-window) (window-width peek-window) 2)
+                                                :y (+ 1 y-margin)
+                                                :width width
+                                                :height height
+                                                :use-border t)))
+      (list peek-window source-window))))
+
+(defun display (collector)
+  (destructuring-bind (peek-window source-window)
+      (make-two-side-by-side-windows (collector-buffer collector))
+
     (setf *parent-window* (current-window))
-    (setf (current-window)
-          (setf *peek-window*
-                (make-instance 'peek-window
-                               :buffer (collector-buffer collector)
-                               :x (+ 1 x-margin)
-                               :y (+ 1 y-margin)
-                               :width width
-                               :height height
-                               :use-border 1)))
+    (setf *peek-window* peek-window)
+    (setf *source-window* source-window)
+
+    (setf (current-window) peek-window)
     (peek-source-mode t)
-    (setf *source-window*
-          (make-floating-window :buffer (make-buffer "*source*" :temporary t :enable-undo-p nil)
-                                :x (+ (window-x *peek-window*) (window-width *peek-window*) 2)
-                                :y (+ 1 y-margin)
-                                :width width
-                                :height height
-                                :use-border t))
-    (show-matched-line)
-    (add-hook (lem:window-leave-hook *peek-window*)
-              'peek-source-quit)))
+
+    (add-hook (window-leave-hook *peek-window*) 'peek-source-quit)
+
+    (show-matched-line)))
 
 (defun make-peek-source-buffer ()
   (let ((buffer (make-buffer "*peek-source*" :temporary t :enable-undo-p t)))
@@ -62,12 +82,12 @@
 
 (defun call-with-collecting-sources (function)
   (let ((*collector* (make-instance 'collector :buffer (make-peek-source-buffer))))
-    (funcall function)
+    (funcall function *collector*)
     (unless (zerop (collector-count *collector*))
       (display *collector*))))
 
-(defmacro with-collecting-sources (() &body body)
-  `(call-with-collecting-sources (lambda () ,@body)))
+(defmacro with-collecting-sources ((collector) &body body)
+  `(call-with-collecting-sources (lambda (,collector) ,@body)))
 
 (defun call-with-appending-source (insert-function move-function)
   (let ((point (buffer-point (collector-buffer *collector*))))
@@ -75,7 +95,7 @@
       (funcall insert-function point)
       (unless (start-line-p point)
         (insert-string point (string #\newline) :read-only t))
-      (put-text-property start point 'move-function move-function))
+      (set-move-function start point move-function))
     (incf (collector-count *collector*))))
 
 (defmacro with-appending-source ((point &key move-function) &body body)
@@ -86,29 +106,17 @@
 (define-attribute match-line-attribute
   (t :background "#444444"))
 
-(defun set-highlight-overlay (point)
-  (let ((overlay (buffer-value (point-buffer point) 'highlight-overlay)))
-    (cond (overlay
-           (move-point (overlay-start overlay) point)
-           (move-point (overlay-end overlay) point))
-          (t
-           (let ((overlay (make-overlay point point (ensure-attribute 'match-line-attribute))))
-             (overlay-put overlay :display-line t)
-             (setf (buffer-value (point-buffer point) 'highlight-overlay) overlay))))))
-
 (defun get-matched-point (&key temporary)
-  (with-point ((point (buffer-point (window-buffer *peek-window*))))
-    (line-start point)
-    (alexandria:when-let* ((move (text-property-at point 'move-function))
-                           (point (funcall move :temporary temporary)))
-      point)))
+  (alexandria:when-let* ((move (get-move-function (buffer-point (window-buffer *peek-window*))))
+                         (point (funcall move :temporary temporary)))
+    point))
 
 (defun show-matched-line ()
   (alexandria:when-let* ((point (get-matched-point :temporary t))
                          (buffer (point-buffer point)))
     (with-current-window *source-window*
       (switch-to-buffer buffer nil nil)
-      (set-highlight-overlay point)
+      (update-highlight-overlay point)
       (move-point (buffer-point buffer) point)
       (window-see (current-window)))))
 
@@ -132,6 +140,32 @@
    0))
 
 ;;;
+(defvar *highlight-overlays* '())
+
+(defun set-highlight-overlay (point)
+  (let ((overlay (make-overlay point point (ensure-attribute 'match-line-attribute))))
+    (push overlay *highlight-overlays*)
+    (overlay-put overlay :display-line t)
+    (setf (buffer-value (point-buffer point) 'highlight-overlay) overlay)))
+
+(defun get-highlight-overlay (point)
+  (buffer-value (point-buffer point) 'highlight-overlay))
+
+(defun update-highlight-overlay (point)
+  (let ((overlay (get-highlight-overlay point)))
+    (cond (overlay
+           (move-point (overlay-start overlay) point)
+           (move-point (overlay-end overlay) point))
+          (t
+           (set-highlight-overlay point)))))
+
+(defun finalize-highlight-overlays ()
+  (dolist (overlay *highlight-overlays*)
+    (buffer-unbound (overlay-buffer overlay) 'highlight-overlay)
+    (delete-overlay overlay))
+  (setf *highlight-overlays* '()))
+
+;;;
 (defun run-grep (string directory)
   (with-output-to-string (output)
     (uiop:run-program string
@@ -153,24 +187,46 @@
     file-line-content-tuples))
 
 (defun move (directory file line-number temporary)
-  (let* ((buffer (find-file-buffer (merge-pathnames file directory) :temporary temporary))
-         (point (copy-point (buffer-point buffer) :temporary)))
-    (move-to-line point line-number)
-    point))
+  (setf temporary nil) ;TODO
+  (let ((buffer (find-file-buffer (merge-pathnames file directory) :temporary temporary)))
+    (with-point ((point (copy-point (buffer-point buffer) :temporary)))
+      (move-to-line point line-number)
+      point)))
 
 (defun make-move-function (directory file line-number)
   (lambda (&key temporary)
     (move directory file line-number temporary)))
 
+(defun get-content-string (start)
+  (with-point ((start start)
+               (end start))
+    (line-start start)
+    (next-single-property-change start :content-start)
+    (character-offset start 1)
+    (line-end end)
+    (points-to-string start end)))
+
 (defun change-grep-buffer (start end old-len)
-  (declare (ignore start end old-len)))
+  (declare (ignore end old-len))
+  (let ((string (get-content-string start))
+        (move (get-move-function start)))
+    (with-point ((point (funcall move :temporary nil)))
+      (with-point ((start point)
+                   (end point))
+        (line-start start)
+        (line-end end)
+        (buffer-undo-boundary (point-buffer start))
+        (delete-between-points start end)
+        (insert-string start string)
+        (buffer-undo-boundary (point-buffer start)))))
+  (show-matched-line))
 
 (define-command grep (string &optional (directory (buffer-directory)))
     ((prompt-for-string ": " :initial-value "grep -nH "))
   (let ((result (parse-grep-result (run-grep string directory))))
     (if (null result)
         (editor-error "No match")
-        (with-collecting-sources ()
+        (with-collecting-sources (collector)
           (loop :for (file line-number content) :in result
                 :do (with-appending-source (point :move-function (make-move-function directory file line-number))
                       (insert-string point file :attribute 'lem/sourcelist:title-attribute :read-only t)
@@ -178,7 +234,7 @@
                       (insert-string point (princ-to-string line-number)
                                      :attribute 'lem/sourcelist:position-attribute
                                      :read-only t)
-                      (insert-string point ":" :read-only t)
+                      (insert-string point ":" :read-only t :content-start t)
                       (insert-string point content)))
-          (add-hook (variable-value 'after-change-functions :buffer (collector-buffer *collector*))
+          (add-hook (variable-value 'after-change-functions :buffer (collector-buffer collector))
                     'change-grep-buffer)))))

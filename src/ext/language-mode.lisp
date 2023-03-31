@@ -510,4 +510,4 @@
          (symbol-string (or (symbol-string-at-point (current-point)) ""))
          (query (prompt-for-string (format nil "(Directory: ~A) " directory)
                                    :initial-value (format nil "git grep -nH ~A" symbol-string))))
-    (lem/grep:grep query directory)))
+    (lem/grep::grep query directory)))

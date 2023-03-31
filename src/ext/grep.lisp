@@ -1,154 +1,81 @@
 (defpackage :lem/grep
-  (:use :cl :lem)
+  (:use :cl
+        :lem
+        :lem/peek-source)
   (:export :grep)
   #+sbcl
   (:lock t))
 (in-package :lem/grep)
 
-(defvar *syntax-table*
-  (let ((table (make-syntax-table))
-        (tmlanguage (make-tmlanguage
-                     :patterns (make-tm-patterns
-                                (make-tm-match
-                                 "^(.*?):(\\d+):(\\d+):(?:.*)"
-                                 :captures (vector nil
-                                                   (make-tm-name 'lem/sourcelist:title-attribute)
-                                                   (make-tm-name 'lem/sourcelist:position-attribute)
-                                                   (make-tm-name 'lem/sourcelist:position-attribute)))
-                                (make-tm-match
-                                 "^(.*?):(\\d+):(?:.*)"
-                                 :captures (vector nil
-                                                   (make-tm-name 'lem/sourcelist:title-attribute)
-                                                   (make-tm-name 'lem/sourcelist:position-attribute)))))))
-    (set-syntax-parser table tmlanguage)
-    table))
+(defun run-grep (string directory)
+  (with-output-to-string (output)
+    (uiop:run-program string
+                      :directory directory
+                      :output output
+                      :error-output output)))
 
-(define-major-mode grep-mode nil
-    (:name "grep"
-     :keymap *grep-mode-keymap*
-     :syntax-table *syntax-table*)
-  (setf (variable-value 'enable-syntax-highlight) t)
-  (setf (variable-value 'line-wrap) nil))
+(defun parse-grep-result (text)
+  (let* ((text (string-right-trim '(#\newline) text))
+         (lines (uiop:split-string text :separator '(#\newline)))
+         (file-line-content-tuples
+           (mapcar (lambda (line)
+                     (destructuring-bind (file line-number content)
+                         (ppcre:split ":" line :limit 3)
+                       (list file
+                             (parse-integer line-number)
+                             content)))
+                   lines)))
+    file-line-content-tuples))
 
-(define-key *grep-mode-keymap* "Return" 'grep-jump)
-(define-key *grep-mode-keymap* "q" 'quit-active-window)
+(defun move (directory file line-number temporary)
+  (setf temporary nil) ;TODO
+  (let ((buffer (find-file-buffer (merge-pathnames file directory) :temporary temporary)))
+    (with-point ((point (copy-point (buffer-point buffer) :temporary)))
+      (move-to-line point line-number)
+      point)))
 
-(defun grep-parse-line (line)
-  (ignore-errors
-   (let* ((i (position #\: line))
-          (j (position #\: line :start (1+ i)))
-          (filename (subseq line 0 i))
-          (linum (parse-integer (subseq line (1+ i) j))))
-     (when (and (stringp filename) (integerp linum))
-       (list filename linum (subseq line j))))))
+(defun make-move-function (directory file line-number)
+  (lambda (&key temporary)
+    (move directory file line-number temporary)))
 
-(defun grep-parse-lines (lines)
-  (remove nil
-          (mapcar #'grep-parse-line
-                  (remove "" lines :test #'string=))))
-
-(defun grep-parse (string)
-  (grep-parse-lines (uiop:split-string string :separator '(#\newline))))
-
-(defun jump (directory file line-number charpos)
-  (let* ((buffer (find-file-buffer (merge-pathnames file directory)))
-         (point (buffer-point buffer)))
-    (move-to-line point line-number)
-    (if charpos
-        (line-offset point 0 charpos)
-        (back-to-indentation point))
-    buffer))
-
-(defun make-jump-function (directory line-string)
-  (ppcre:register-groups-bind (file line-number charpos)
-      ("^(.*?):(\\d+):(\\d+)?" line-string)
-    (when file
-      (lambda (set-buffer-fn)
-        (funcall set-buffer-fn
-                 (jump directory
-                       file
-                       (parse-integer line-number)
-                       (and charpos (parse-integer charpos :junk-allowed t))))))))
-
-(defun cut-path-info (line-string)
-  (ppcre:register-groups-bind (string)
-      ("^(?:.*?):(?:\\d+):(?:\\d+:)?(.*)" line-string)
-    string))
-
-(defun grep-with-string (buffer-name directory revert-fun output-text)
-  (lem/sourcelist:with-sourcelist (sourcelist buffer-name :read-only-p nil :enable-undo-p t)
-    (let* ((buffer (get-buffer buffer-name))
-           (point (buffer-point buffer)))
-      (setf (buffer-value buffer 'grep) t)
-      (setf (buffer-value buffer 'directory) directory)
-      (setf (revert-buffer-function buffer) revert-fun)
-      (insert-string point output-text)
-      (buffer-start point)
-      (with-point ((p point))
-        (loop
-          (with-point ((start p) (end p))
-            (line-start start)
-            (line-end end)
-            (alexandria:when-let ((fn (make-jump-function directory (line-string start))))
-              (put-text-property start end 'old-string (line-string start))
-              (lem/sourcelist:append-jump-function sourcelist start end fn)))
-          (unless (line-offset p 1) (return))))
-      (change-buffer-mode buffer 'grep-mode)))
-  (redraw-display))
-
-(defun replace-line (point string)
-  (with-point ((start point)
-               (end point))
+(defun get-content-string (start)
+  (with-point ((start start)
+               (end start))
     (line-start start)
+    (next-single-property-change start :content-start)
+    (character-offset start 1)
     (line-end end)
-    (delete-between-points start end)
-    (insert-string point string)))
+    (points-to-string start end)))
 
-(defun replace-diff-with-current-line (point old-string new-string)
-  (ppcre:register-groups-bind (file line-number charpos)
-      ("^(.*?):(\\d+):(\\d+:)?" old-string)
-    (when (and file line-number)
-      (let* ((buffer (jump (buffer-value point 'directory)
-                           file
-                           (parse-integer line-number)
-                           (and charpos (parse-integer charpos))))
-             (point (buffer-point buffer)))
-        (replace-line point new-string)))))
-
-(defun replace-diff (point)
-  (with-point ((p point))
-    (line-start p)
-    (let ((new-string (cut-path-info (line-string p)))
-          (old-string (text-property-at p 'old-string)))
-      (when (and new-string
-                 old-string
-                 (not (string= (cut-path-info old-string) new-string)))
-        (replace-diff-with-current-line p old-string new-string))))
-  (line-offset point 1))
-
-(defun replace-all (buffer)
-  (with-point ((p (buffer-point buffer)))
-    (buffer-start p)
-    (loop :while (replace-diff p))))
+(defun change-grep-buffer (start end old-len)
+  (declare (ignore end old-len))
+  (let ((string (get-content-string start))
+        (move (get-move-function start)))
+    (with-point ((point (funcall move :temporary nil)))
+      (with-point ((start point)
+                   (end point))
+        (line-start start)
+        (line-end end)
+        (buffer-undo-boundary (point-buffer start))
+        (delete-between-points start end)
+        (insert-string start string)
+        (buffer-undo-boundary (point-buffer start)))))
+  (show-matched-line))
 
 (define-command grep (string &optional (directory (buffer-directory)))
     ((prompt-for-string ": " :initial-value "grep -nH "))
-  (labels ((f (&rest args)
-             (declare (ignore args))
-             (call-background-job
-              (lambda ()
-                (with-output-to-string (s)
-                  (uiop:run-program string
-                                    :directory directory
-                                    :output s
-                                    :error-output s
-                                    :ignore-error-status t)))
-              (alexandria:curry #'grep-with-string
-                                "*grep*"
-                                directory
-                                #'f))))
-    (f)))
-
-(define-command grep-replace () ()
-  (when (buffer-value (current-buffer) 'grep-buffer t)
-    (replace-all (current-buffer))))
+  (let ((result (parse-grep-result (run-grep string directory))))
+    (if (null result)
+        (editor-error "No match")
+        (with-collecting-sources (collector)
+          (loop :for (file line-number content) :in result
+                :do (with-appending-source (point :move-function (make-move-function directory file line-number))
+                      (insert-string point file :attribute 'lem/sourcelist:title-attribute :read-only t)
+                      (insert-string point ":" :read-only t)
+                      (insert-string point (princ-to-string line-number)
+                                     :attribute 'lem/sourcelist:position-attribute
+                                     :read-only t)
+                      (insert-string point ":" :read-only t :content-start t)
+                      (insert-string point content)))
+          (add-hook (variable-value 'after-change-functions :buffer (collector-buffer collector))
+                    'change-grep-buffer)))))

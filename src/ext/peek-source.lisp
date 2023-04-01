@@ -1,11 +1,21 @@
 (defpackage :lem/peek-source
   (:use :cl :lem)
-  (:export :with-collecting-sources
+  (:export :filename-attribute
+           :position-attribute
+           :with-collecting-sources
            :with-appending-source
            :collector-buffer
            :get-move-function
            :show-matched-line))
 (in-package :lem/peek-source)
+
+(define-attribute filename-attribute
+  (:light :foreground "blue")
+  (:dark :foreground "cyan"))
+
+(define-attribute position-attribute
+  (:light :foreground "dark red")
+  (:dark :foreground "red"))
 
 (defvar *collector*)
 

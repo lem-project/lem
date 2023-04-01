@@ -70,10 +70,10 @@
         (with-collecting-sources (collector)
           (loop :for (file line-number content) :in result
                 :do (with-appending-source (point :move-function (make-move-function directory file line-number))
-                      (insert-string point file :attribute 'lem/sourcelist:title-attribute :read-only t)
+                      (insert-string point file :attribute 'lem/peek-source:filename-attribute :read-only t)
                       (insert-string point ":" :read-only t)
                       (insert-string point (princ-to-string line-number)
-                                     :attribute 'lem/sourcelist:position-attribute
+                                     :attribute 'lem/peek-source:position-attribute
                                      :read-only t)
                       (insert-string point ":" :read-only t :content-start t)
                       (insert-string point content)))

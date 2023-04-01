@@ -53,6 +53,8 @@
 (define-key *lisp-mode-keymap* "C-c C-e" 'lisp-eval-last-expression)
 (define-key *lisp-mode-keymap* "C-M-x" 'lisp-eval-defun)
 (define-key *lisp-mode-keymap* "C-c C-r" 'lisp-eval-region)
+(define-key *lisp-mode-keymap* "C-c C-n" 'lisp-next-compilation-notes)
+(define-key *lisp-mode-keymap* "C-c C-p" 'lisp-previous-compilation-notes)
 (define-key *lisp-mode-keymap* "C-c C-l" 'lisp-load-file)
 (define-key *lisp-mode-keymap* "C-c M-c" 'lisp-remove-notes)
 (define-key *lisp-mode-keymap* "C-c C-k" 'lisp-compile-and-load-file)
@@ -513,16 +515,35 @@
                                             (when secs
                                               (format nil "[~,2f secs]" secs)))))))
 
-(defun make-highlight-overlay (pos buffer)
+(defun make-highlight-overlay (pos buffer message source-context)
   (with-point ((point (buffer-point buffer)))
     (move-to-position point pos)
     (skip-chars-backward point #'syntax-symbol-char-p)
-    (make-overlay point
-                  (or (form-offset (copy-point point :temporary) 1)
-                      (buffer-end-point buffer))
-                  'compiler-note-attribute)))
+    (let ((overlay (make-overlay point
+                                 (or (form-offset (copy-point point :temporary) 1)
+                                     (buffer-end-point buffer))
+                                 'compiler-note-attribute)))
+      (overlay-put overlay 'message
+                   (with-output-to-string (out)
+                     (write-string message out)
+                     (when source-context
+                       (write-string source-context out))))
+      overlay)))
 
 (defvar *note-overlays* nil)
+
+(defun buffer-compilation-notes-overlays (buffer)
+  (buffer-value buffer 'compilation-notes-overlays))
+
+(defun (setf buffer-compilation-notes-overlays) (overlays buffer)
+  (setf (buffer-value buffer 'compilation-notes-overlays)
+        (sort overlays #'point< :key #'overlay-start)))
+
+(defun buffer-compilation-notes-timer (buffer)
+  (buffer-value buffer 'compilation-notes-timer))
+
+(defun (setf buffer-compilation-notes-timer) (value buffer)
+  (setf (buffer-value buffer 'compilation-notes-timer) value))
 
 (defun convert-notes (notes)
   (loop :for note :in notes
@@ -540,34 +561,62 @@
     (when buffer
       (kill-buffer buffer))))
 
+(defun show-compilation-notes ()
+  (dolist (overlay (buffer-compilation-notes-overlays (current-buffer)))
+    (when (point<= (overlay-start overlay) (current-point) (overlay-end overlay))
+      (display-message "~A" (overlay-get overlay 'message))
+      (return))))
+
+(defun move-to-next-compilation-notes (point)
+  (alexandria:when-let ((overlay (loop :for overlay :in (buffer-compilation-notes-overlays (point-buffer point))
+                                       :when (point< point (overlay-start overlay))
+                                       :return overlay)))
+    (move-point point (overlay-start overlay))))
+
+(defun move-to-previous-compilation-notes (point)
+  (alexandria:when-let ((overlay (loop :for last-overlay := nil :then overlay
+                                       :for overlay :in (buffer-compilation-notes-overlays (point-buffer point))
+                                       :when (point<= point (overlay-start overlay))
+                                       :return last-overlay
+                                       :finally (return last-overlay))))
+    (move-point point (overlay-start overlay))))
+
+(defun remove-compilation-notes-overlay-in-the-changed-point (point arg)
+  (declare (ignore arg))
+  (dolist (overlay (buffer-compilation-notes-overlays (point-buffer point)))
+    (when (point<= (overlay-start overlay) point (overlay-end overlay))
+      (delete-overlay overlay)
+      (alexandria:deletef (buffer-compilation-notes-overlays (point-buffer point)) overlay))))
+
 (defun highlight-notes (notes)
   (lisp-remove-notes)
-  (if (null notes)
-      (delete-compilations-buffer)
-      (lem/sourcelist:with-sourcelist (sourcelist "*lisp-compilations*")
-        (loop :for (xref-location message source-context) :in (convert-notes notes)
-              :do (let* ((name (xref-filespec-to-filename (xref-location-filespec xref-location)))
-                         (pos (xref-location-position xref-location))
-                         (buffer (xref-filespec-to-buffer (xref-location-filespec xref-location))))
-                    (lem/sourcelist:append-sourcelist
-                     sourcelist
-                     (lambda (cur-point)
-                       (insert-string cur-point name :attribute 'lem/sourcelist:title-attribute)
-                       (insert-string cur-point ":")
-                       (insert-string cur-point (princ-to-string pos)
-                                      :attribute 'lem/sourcelist:position-attribute)
-                       (insert-string cur-point ":")
-                       (insert-character cur-point #\newline 1)
-                       (insert-string cur-point message)
-                       (insert-character cur-point #\newline)
-                       (insert-string cur-point source-context))
-                     (alexandria:curry #'go-to-location xref-location))
-                    (push (make-highlight-overlay pos buffer)
-                          *note-overlays*))))))
+
+  (loop :for (xref-location message source-context) :in (convert-notes notes)
+        :do (let* ((pos (xref-location-position xref-location))
+                   (buffer (xref-filespec-to-buffer (xref-location-filespec xref-location))))
+              (push (make-highlight-overlay pos buffer message source-context)
+                    (buffer-compilation-notes-overlays (current-buffer)))))
+
+  (setf (buffer-compilation-notes-timer (current-buffer))
+        (start-timer (make-idle-timer 'show-compilation-notes :name "lisp-show-compilation-notes")
+                     200
+                     t))
+
+  (add-hook (variable-value 'before-change-functions :buffer (current-buffer))
+            'remove-compilation-notes-overlay-in-the-changed-point))
 
 (define-command lisp-remove-notes () ()
-  (mapc #'delete-overlay *note-overlays*)
-  (setf *note-overlays* '()))
+  (alexandria:when-let (timer (buffer-compilation-notes-timer (current-buffer)))
+    (stop-timer timer))
+  (dolist (overlay (buffer-compilation-notes-overlays (current-buffer)))
+    (delete-overlay overlay))
+  (setf (buffer-compilation-notes-overlays (current-buffer)) '()))
+
+(define-command lisp-next-compilation-notes () ()
+  (move-to-next-compilation-notes (current-point)))
+
+(define-command lisp-previous-compilation-notes () ()
+  (move-to-previous-compilation-notes (current-point)))
 
 (define-command lisp-compile-and-load-file () ()
   (check-connection)

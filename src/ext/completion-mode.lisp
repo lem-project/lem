@@ -146,7 +146,8 @@
 
 (defun completion-end ()
   (completion-mode nil)
-  (popup-menu-quit (context-popup-menu *completion-context*))
+  (alexandria:when-let (popup-menu (context-popup-menu *completion-context*))
+    (popup-menu-quit popup-menu))
   (setf (context-popup-menu *completion-context*) nil))
 
 (defun call-focus-action ()

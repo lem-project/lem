@@ -27,6 +27,7 @@
 (define-key *peek-source-keymap* "Return" 'peek-source-select)
 
 (defclass peek-window (floating-window) ())
+(defclass source-window (floating-window) ())
 
 (defmethod lem::%delete-window :before ((peek-window peek-window))
   (finalize-peek-source))
@@ -56,12 +57,13 @@
                                      :width width
                                      :height height
                                      :use-border t))
-         (source-window (make-floating-window :buffer (make-buffer "*source*" :temporary t :enable-undo-p nil)
-                                              :x (+ (window-x peek-window) (window-width peek-window) 2)
-                                              :y (+ 1 y-margin)
-                                              :width width
-                                              :height height
-                                              :use-border t)))
+         (source-window (make-instance 'source-window
+                                       :buffer (make-buffer "*source*" :temporary t :enable-undo-p nil)
+                                       :x (+ (window-x peek-window) (window-width peek-window) 2)
+                                       :y (+ 1 y-margin)
+                                       :width width
+                                       :height height
+                                       :use-border t)))
     (list peek-window source-window)))
 
 (defun display (collector)

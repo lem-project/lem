@@ -86,11 +86,14 @@
 (defun update-last-focused-window ()
   (setf *last-focused-window* (current-window)))
 
+(defmethod compute-window-list (current-window)
+  (append (alexandria:ensure-list
+           (active-prompt-window))
+          (window-list)))
+
 (define-command other-window (&optional (n 1)) ("p")
   (let ((window-list
-          (append (alexandria:ensure-list
-                   (active-prompt-window))
-                  (window-list))))
+          (compute-window-list (current-window))))
     (when (minusp n)
       (setf n (- (length window-list) (abs n))))
     (update-last-focused-window)

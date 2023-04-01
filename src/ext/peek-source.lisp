@@ -32,6 +32,12 @@
 (defmethod lem::%delete-window :before ((peek-window peek-window))
   (finalize-peek-source))
 
+(defmethod lem::compute-window-list ((current-window peek-window))
+  (list *peek-window* *source-window*))
+
+(defmethod lem::compute-window-list ((current-window source-window))
+  (list *source-window* *peek-window*))
+
 (defun finalize-peek-source ()
   (finalize-highlight-overlays)
   (setf (current-window) *parent-window*)
@@ -76,8 +82,6 @@
 
     (setf (current-window) peek-window)
     (peek-source-mode t)
-
-    (add-hook (window-leave-hook *peek-window*) 'peek-source-quit)
 
     (show-matched-line)))
 

@@ -757,31 +757,28 @@
 
 (define-command lsp-document-diagnostics () ()
   (when-let ((diagnostics (buffer-diagnostics (current-buffer))))
-    (lem/sourcelist:with-sourcelist (sourcelist "*Diagnostics*")
+    (lem/peek-source:with-collecting-sources (collector)
       (dolist (diagnostic diagnostics)
-        (lem/sourcelist:append-sourcelist
-         sourcelist
-         (lambda (point)
-           (insert-string point (buffer-filename (diagnostic-buffer diagnostic))
-                          :attribute 'lem/sourcelist:title-attribute)
-           (insert-string point ":")
-           (insert-string point
-                          (princ-to-string (language-mode::xref-position-line-number
-                                            (diagnostic-position diagnostic)))
-                          :attribute 'lem/sourcelist:position-attribute)
-           (insert-string point ":")
-           (insert-string point
-                          (princ-to-string (language-mode::xref-position-charpos
-                                            (diagnostic-position diagnostic)))
-                          :attribute 'lem/sourcelist:position-attribute)
-           (insert-string point ":")
-           (insert-string point (diagnostic-message diagnostic)))
-         (let ((diagnostic diagnostic))
-           (lambda (set-buffer-fn)
-             (funcall set-buffer-fn (diagnostic-buffer diagnostic))
-             (language-mode:move-to-xref-location-position
-              (buffer-point (diagnostic-buffer diagnostic))
-              (diagnostic-position diagnostic)))))))))
+        (lem/peek-source:with-appending-source
+            (point :move-function (let ((diagnostic diagnostic))
+                                    (lambda ()
+                                      (language-mode:move-to-xref-location-position
+                                       (buffer-point (diagnostic-buffer diagnostic))
+                                       (diagnostic-position diagnostic)))))
+          (insert-string point (buffer-filename (diagnostic-buffer diagnostic))
+                         :attribute 'lem/peek-source:filename-attribute)
+          (insert-string point ":")
+          (insert-string point
+                         (princ-to-string (language-mode::xref-position-line-number
+                                           (diagnostic-position diagnostic)))
+                         :attribute 'lem/peek-source:position-attribute)
+          (insert-string point ":")
+          (insert-string point
+                         (princ-to-string (language-mode::xref-position-charpos
+                                           (diagnostic-position diagnostic)))
+                         :attribute 'lem/peek-source:position-attribute)
+          (insert-string point ":")
+          (insert-string point (diagnostic-message diagnostic)))))))
 
 ;;; hover
 
@@ -1589,43 +1586,34 @@
 (define-attribute document-symbol-detail-attribute
   (t :foreground "gray"))
 
-(defun append-document-symbol-item (sourcelist buffer document-symbol nest-level)
+(defun append-document-symbol-item (buffer document-symbol nest-level)
   (let ((selection-range (lsp:document-symbol-selection-range document-symbol))
         (range (lsp:document-symbol-range document-symbol)))
-    (lem/sourcelist:append-sourcelist
-     sourcelist
-     (lambda (point)
-       (multiple-value-bind (kind-name attribute)
-           (symbol-kind-to-string-and-attribute (lsp:document-symbol-kind document-symbol))
-         (insert-string point (make-string (* 2 nest-level) :initial-element #\space))
-         (insert-string point (format nil "[~A]" kind-name) :attribute attribute)
-         (insert-character point #\space)
-         (insert-string point (lsp:document-symbol-name document-symbol))
-         (insert-string point " ")
-         (when-let (detail (handler-case (lsp:document-symbol-detail document-symbol)
-                             (unbound-slot () nil)))
-           (insert-string point detail :attribute 'document-symbol-detail-attribute))))
-     (lambda (set-buffer-fn)
-       (funcall set-buffer-fn buffer)
-       (let ((point (buffer-point buffer)))
-         (move-to-lsp-position point (lsp:range-start selection-range))))
-     :highlight-overlay-function (lambda (point)
-                                   (with-point ((start point)
-                                                (end point))
-                                     (make-overlay
-                                      (move-to-lsp-position start (lsp:range-start range))
-                                      (move-to-lsp-position end (lsp:range-end range))
-                                      'lem/sourcelist::jump-highlight)))))
+    (declare (ignore range)) ; TODO: rangeをリージョンのハイライトに使う
+    (lem/peek-source:with-appending-source
+        (point :move-function (lambda ()
+                                (let ((point (buffer-point buffer)))
+                                  (move-to-lsp-position point (lsp:range-start selection-range)))))
+      (multiple-value-bind (kind-name attribute)
+          (symbol-kind-to-string-and-attribute (lsp:document-symbol-kind document-symbol))
+        (insert-string point (make-string (* 2 nest-level) :initial-element #\space))
+        (insert-string point (format nil "[~A]" kind-name) :attribute attribute)
+        (insert-character point #\space)
+        (insert-string point (lsp:document-symbol-name document-symbol))
+        (insert-string point " ")
+        (when-let (detail (handler-case (lsp:document-symbol-detail document-symbol)
+                            (unbound-slot () nil)))
+          (insert-string point detail :attribute 'document-symbol-detail-attribute)))))
   (do-sequence
       (document-symbol
        (handler-case (lsp:document-symbol-children document-symbol)
          (unbound-slot () nil)))
-    (append-document-symbol-item sourcelist buffer document-symbol (1+ nest-level))))
+    (append-document-symbol-item buffer document-symbol (1+ nest-level))))
 
 (defun display-document-symbol-response (buffer value)
-  (lem/sourcelist:with-sourcelist (sourcelist "*Document Symbol*")
+  (lem/peek-source:with-collecting-sources (collector)
     (do-sequence (item value)
-      (append-document-symbol-item sourcelist buffer item 0))))
+      (append-document-symbol-item buffer item 0))))
 
 (defun text-document/document-symbol (buffer)
   (when-let ((workspace (buffer-workspace buffer)))

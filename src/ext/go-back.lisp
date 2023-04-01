@@ -1,5 +1,7 @@
 (defpackage :lem/go-back
-  (:use :cl :lem :lem/sourcelist)
+  (:use :cl
+        :lem
+        :lem/peek-source)
   (:export :*max*
            :select-go-back
            :go-back-global
@@ -52,7 +54,7 @@
       (push location (record-locations record))))
 
 (define-command select-go-back () ()
-  (with-sourcelist (sourcelist "*select-locations*" :focus t)
+  (with-collecting-sources (collector)
     (loop :for (name linum charpos) :in (remove-duplicates
                                          (record-locations *global-record*)
                                          :test #'equal-location)
@@ -66,21 +68,18 @@
                       (with-point ((p (buffer-start-point buffer)))
                         (move-to-line p linum)
                         (line-string p))))
-                (append-sourcelist
-                 sourcelist
-                 (lambda (point)
-                   (insert-string point filename :attribute 'lem/sourcelist:title-attribute)
-                   (insert-string point ":")
-                   (insert-string point (princ-to-string linum)
-                                  :attribute 'lem/sourcelist:position-attribute)
-                   (insert-string point ":")
-                   (insert-string point linestr))
-                 (lambda (set-buffer-fn)
-                   (let ((buffer (get-buffer name)))
-                     (unless buffer (editor-error "No such buffer: ~A" name))
-                     (move-to-line (buffer-point buffer) linum)
-                     (line-offset (buffer-point buffer) 0 charpos)
-                     (funcall set-buffer-fn buffer))))))))
+                (with-appending-source (point
+                                        :move-function (lambda ()
+                                                         (let ((buffer (get-buffer name)))
+                                                           (unless buffer (editor-error "No such buffer: ~A" name))
+                                                           (move-to-line (buffer-point buffer) linum)
+                                                           (line-offset (buffer-point buffer) 0 charpos))))
+                  (insert-string point filename :attribute 'lem/peek-source:filename-attribute)
+                  (insert-string point ":")
+                  (insert-string point (princ-to-string linum)
+                                 :attribute 'lem/peek-source:position-attribute)
+                  (insert-string point ":")
+                  (insert-string point linestr))))))
 
 (defun go-back-internal (record n)
   (when (plusp n)

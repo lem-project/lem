@@ -27,16 +27,13 @@
                    lines)))
     file-line-content-tuples))
 
-(defun move (directory file line-number temporary)
-  (setf temporary nil) ;TODO
-  (let ((buffer (find-file-buffer (merge-pathnames file directory) :temporary temporary)))
-    (with-point ((point (copy-point (buffer-point buffer) :temporary)))
-      (move-to-line point line-number)
-      point)))
+(defun move (directory file line-number)
+  (let ((buffer (find-file-buffer (merge-pathnames file directory))))
+    (move-to-line (buffer-point buffer) line-number)))
 
 (defun make-move-function (directory file line-number)
-  (lambda (&key temporary)
-    (move directory file line-number temporary)))
+  (lambda ()
+    (move directory file line-number)))
 
 (defun get-content-string (start)
   (with-point ((start start)
@@ -51,7 +48,7 @@
   (declare (ignore end old-len))
   (let ((string (get-content-string start))
         (move (get-move-function start)))
-    (with-point ((point (funcall move :temporary nil)))
+    (with-point ((point (funcall move)))
       (with-point ((start point)
                    (end point))
         (line-start start)

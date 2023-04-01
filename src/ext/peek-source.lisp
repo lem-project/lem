@@ -107,7 +107,9 @@
       (display *collector*))))
 
 (defmacro with-collecting-sources ((collector) &body body)
-  `(call-with-collecting-sources (lambda (,collector) ,@body)))
+  `(call-with-collecting-sources (lambda (,collector)
+                                   (declare (ignorable ,collector))
+                                   ,@body)))
 
 (defun call-with-appending-source (insert-function move-function)
   (let ((point (buffer-point (collector-buffer *collector*))))
@@ -126,26 +128,27 @@
 (define-attribute match-line-attribute
   (t :background "#444444"))
 
-(defun get-matched-point (&key temporary)
+(defun get-matched-point ()
   (alexandria:when-let* ((move (get-move-function (buffer-point (window-buffer *peek-window*))))
-                         (point (funcall move :temporary temporary)))
+                         (point (funcall move)))
     point))
 
 (defun show-matched-line ()
-  (alexandria:when-let* ((point (get-matched-point :temporary t))
-                         (buffer (point-buffer point)))
-    (with-current-window *source-window*
-      (switch-to-buffer buffer nil nil)
-      (update-highlight-overlay point)
-      (move-point (buffer-point buffer) point)
-      (window-see (current-window)))))
+  (alexandria:when-let (point (get-matched-point))
+    (let* ((point (copy-point point :temporary))
+           (buffer (point-buffer point)))
+      (with-current-window *source-window*
+        (switch-to-buffer buffer nil nil)
+        (update-highlight-overlay point)
+        (move-point (buffer-point buffer) point)
+        (window-see (current-window))))))
 
 (defmethod execute :after ((mode peek-source-mode) command argument)
   (when (eq (current-window) *peek-window*)
     (show-matched-line)))
 
 (define-command peek-source-select () ()
-  (alexandria:when-let ((point (get-matched-point :temporary nil)))
+  (alexandria:when-let ((point (get-matched-point)))
     (let ((line (line-number-at-point point)))
       (peek-source-quit)
       (switch-to-buffer (point-buffer point))

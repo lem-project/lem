@@ -88,23 +88,25 @@
     (redraw-display)
     (values)))
 
+(defun make-border-line (length)
+  (with-output-to-string (out)
+    (loop :repeat length :do (write-string "─" out))))
+
 (defun typeout-window-modeline (typeout-window)
   (values (let* ((posline (string-trim " " (modeline-posline typeout-window)))
                  (text (cond ((member posline '("All" "Bot") :test #'string=)
                               "Press Space to continue")
                              (t posline)))
                  (line (concatenate 'string
-                                    (make-string (- (floor (display-width) 2)
-                                                    (floor (length text) 2)
-                                                    1)
-                                                 :initial-element #\_)
+                                    (make-border-line (- (floor (display-width) 2)
+                                                         (floor (length text) 2)
+                                                         1))
                                     " "
                                     text
                                     " "))
                  (line (concatenate 'string
                                     line
-                                    (make-string (- (display-width) (length text))
-                                                 :initial-element #\_))))
+                                    (make-border-line (- (display-width) (length text))))))
             line)
           (make-attribute)
           nil))
@@ -141,7 +143,7 @@
 (defun dismiss-typeout-window-2 ()
   (when (and (eq (current-buffer) (window-buffer (current-window)))
              (find 'typeout-mode (buffer-minor-modes (current-buffer))))
-    (typeout-mode nil) 
+    (typeout-mode nil)
     (quit-active-window)))
 
 (define-command next-page-or-dismiss-typeout-window () ()

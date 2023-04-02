@@ -24,20 +24,25 @@
             :do (fresh-line out)
                 (write-string (gethash "text" tr) out)))))
 
-(defun translate-and-output-to-buffer (source-text buffer)
-  (let* ((is-japanese (ja-text-p source-text))
+(defun output-to-buffer (source-text translated-text buffer)
+  (with-open-stream (stream (make-buffer-output-stream (buffer-end-point buffer)))
+    (fresh-line stream)
+    (format stream "---------- source ----------~%")
+    (format stream "~A~%" source-text)
+    (format stream "---------- target ----------~%")
+    (format stream "~A~2%" translated-text))
+  buffer)
+
+(define-command deepl-translate-region (start end &optional is-replace) ("r" "P")
+  (let* ((source-text (points-to-string start end))
+         (is-japanese (ja-text-p source-text))
          (translated-text (translate (ppcre:regex-replace-all "\\s+" source-text " ")
                                      :source-lang (if is-japanese "JA" "EN")
                                      :target-lang (if is-japanese "EN" "JA"))))
-    (with-open-stream (stream (make-buffer-output-stream (buffer-end-point buffer)))
-      (fresh-line stream)
-      (format stream "---------- source ----------~%")
-      (format stream "~A~%" source-text)
-      (format stream "---------- target ----------~%")
-      (format stream "~A~2%" translated-text))))
-
-(define-command deepl-translate-region (start end) ("r")
-  (let ((source-text (points-to-string start end))
-        (buffer (make-buffer "*deepl*")))
-    (translate-and-output-to-buffer source-text buffer)
-    (display-buffer buffer)))
+    (cond (is-replace
+           (delete-between-points start end)
+           (insert-string start translated-text))
+          (t
+           (display-buffer (output-to-buffer source-text
+                                             translated-text
+                                             (make-buffer "*deepl*")))))))

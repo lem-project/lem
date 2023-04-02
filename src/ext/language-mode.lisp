@@ -271,14 +271,14 @@
   (type nil :read-only t)
   (locations nil :read-only t))
 
-(defun xref-filespec-to-buffer (filespec)
+(defun xref-filespec-to-buffer (filespec &key temporary)
   (cond ((bufferp filespec)
          filespec)
         (t
          (assert (or (stringp filespec) (pathnamep filespec)))
          (when (probe-file filespec)
            (or (get-file-buffer (file-namestring filespec))
-               (find-file-buffer filespec))))))
+               (find-file-buffer filespec :temporary temporary))))))
 
 (defun xref-filespec-to-filename (filespec)
   (etypecase filespec
@@ -299,14 +299,21 @@
        (move-to-line point line-number)
        (line-offset point 0 charpos)))))
 
-(defun go-to-location (location &optional set-buffer-fn)
-  (let ((buffer (xref-filespec-to-buffer (xref-location-filespec location))))
-    (unless buffer (editor-error "~A does not exist." (xref-location-filespec location)))
-    (when set-buffer-fn (funcall set-buffer-fn buffer))
-    (let ((position (xref-location-position location))
-          (point (buffer-point buffer)))
-      (move-to-xref-location-position point position)
+(defun location-to-point (location &key temporary)
+  (alexandria:when-let ((buffer (xref-filespec-to-buffer (xref-location-filespec location)
+                                                         :temporary temporary)))
+    (with-point ((point (buffer-point buffer)))
+      (move-to-xref-location-position point (xref-location-position location))
       point)))
+
+(defun go-to-location (location &optional set-buffer-fn)
+  (let ((point (location-to-point location :temporary nil)))
+    (unless point
+      (editor-error "~A does not exist." (xref-location-filespec location)))
+    (let ((buffer (point-buffer point)))
+      (when set-buffer-fn
+        (funcall set-buffer-fn buffer))
+      (move-point (buffer-point buffer) point))))
 
 (defgeneric location-position< (position1 position2)
   (:method ((position1 integer) (position2 integer))
@@ -334,12 +341,19 @@
                             (location-position< (xref-location-position location1)
                                                 (xref-location-position location2))))))))
 
+(defun same-locations-p (locations)
+  (apply #'=
+         (loop :for location :in locations
+               :for point := (location-to-point location :temporary t)
+               :when point
+               :collect (line-number-at-point point))))
+
 (defun display-xref-locations (locations)
   (unless locations
     (editor-error "No definitions found"))
   (push-location-stack (current-point))
   (setf locations (uiop:ensure-list locations))
-  (cond ((null (rest locations))
+  (cond ((same-locations-p locations)
          (go-to-location (first locations) #'switch-to-buffer)
          (lem/peek-source:highlight-matched-line (current-point)))
         (t
@@ -362,28 +376,38 @@
   (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
     (funcall fn (current-point))))
 
+(defun xref-references-length=1 (xref-references-list)
+  (and (alexandria:length= 1 xref-references-list)
+       (alexandria:length= 1 (xref-references-locations (first xref-references-list)))))
+
 (defun display-xref-references (refs)
   (unless refs
     (editor-error "No references found"))
   (push-location-stack (current-point))
-  (lem/peek-source:with-collecting-sources (collector)
-    (dolist (ref (uiop:ensure-list refs))
-      (let ((type (xref-references-type ref)))
-        (when type
-          (lem/peek-source:with-insert (point)
-            (xref-insert-headline type point 0)))
-        (let ((prev-file nil))
-          (dolist (location (sort-xref-locations (xref-references-locations ref)))
-            (let ((file (xref-filespec-to-filename (xref-location-filespec location)))
-                  (content (xref-location-content location)))
-              (unless (equal prev-file file)
-                (lem/peek-source:with-insert (point)
-                  (xref-insert-headline file point 1)))
-              (lem/peek-source:with-appending-source
-                  (point :move-function (let ((location location))
-                                          (alexandria:curry #'go-to-location location)))
-                (xref-insert-content content point 2))
-              (setf prev-file file))))))))
+  (let ((refs (uiop:ensure-list refs)))
+    (cond ((xref-references-length=1 refs)
+           (go-to-location (first (xref-references-locations (first refs)))
+                           #'switch-to-buffer)
+           (lem/peek-source:highlight-matched-line (current-point)))
+          (t
+           (lem/peek-source:with-collecting-sources (collector)
+             (dolist (ref refs)
+               (let ((type (xref-references-type ref)))
+                 (when type
+                   (lem/peek-source:with-insert (point)
+                     (xref-insert-headline type point 0)))
+                 (let ((prev-file nil))
+                   (dolist (location (sort-xref-locations (xref-references-locations ref)))
+                     (let ((file (xref-filespec-to-filename (xref-location-filespec location)))
+                           (content (xref-location-content location)))
+                       (unless (equal prev-file file)
+                         (lem/peek-source:with-insert (point)
+                           (xref-insert-headline file point 1)))
+                       (lem/peek-source:with-appending-source
+                           (point :move-function (let ((location location))
+                                                   (alexandria:curry #'go-to-location location)))
+                         (xref-insert-content content point 2))
+                       (setf prev-file file)))))))))))
 
 (define-command find-references () ()
   (alexandria:when-let (fn (variable-value 'find-references-function :buffer))

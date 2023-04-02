@@ -7,7 +7,8 @@
            :with-insert
            :collector-buffer
            :get-move-function
-           :show-matched-line)
+           :show-matched-line
+           :highlight-matched-line)
   #+sbcl
   (:lock t))
 (in-package :lem/peek-source)
@@ -19,6 +20,9 @@
 (define-attribute position-attribute
   (:light :foreground "dark red")
   (:dark :foreground "red"))
+
+(define-attribute highlight
+  (t :background "cyan"))
 
 (defvar *collector*)
 
@@ -189,12 +193,21 @@
   (when (eq (current-window) *peek-window*)
     (show-matched-line)))
 
+(defun highlight-matched-line (point)
+  (let ((overlay (make-overlay point point 'highlight)))
+    (overlay-put overlay :display-line t)
+    (start-timer (make-timer (lambda ()
+                               (delete-overlay overlay))
+                             :name "highlight-matched-line")
+                 300)))
+
 (define-command peek-source-select () ()
   (alexandria:when-let ((point (get-matched-point)))
     (let ((line (line-number-at-point point)))
       (peek-source-quit)
       (switch-to-buffer (point-buffer point))
-      (move-to-line (current-point) line))))
+      (move-to-line (current-point) line)
+      (highlight-matched-line (current-point)))))
 
 (define-command peek-source-next () ()
   (next-move-point (current-point)))

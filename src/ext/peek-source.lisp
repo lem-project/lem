@@ -4,6 +4,7 @@
            :position-attribute
            :with-collecting-sources
            :with-appending-source
+           :with-insert
            :collector-buffer
            :get-move-function
            :show-matched-line)
@@ -102,16 +103,19 @@
     (setf (variable-value 'line-wrap :buffer buffer) nil)
     buffer))
 
-(defun call-with-collecting-sources (function)
+(defun call-with-collecting-sources (function &key read-only)
   (let ((*collector* (make-instance 'collector :buffer (make-peek-source-buffer))))
     (funcall function *collector*)
+    (when read-only
+      (setf (buffer-read-only-p (collector-buffer *collector*)) t))
     (unless (zerop (collector-count *collector*))
       (display *collector*))))
 
-(defmacro with-collecting-sources ((collector) &body body)
+(defmacro with-collecting-sources ((collector &key (read-only t)) &body body)
   `(call-with-collecting-sources (lambda (,collector)
                                    (declare (ignorable ,collector))
-                                   ,@body)))
+                                   ,@body)
+                                 :read-only ,read-only))
 
 (defun call-with-appending-source (insert-function move-function)
   (let ((point (buffer-point (collector-buffer *collector*))))
@@ -125,6 +129,13 @@
 (defmacro with-appending-source ((point &key move-function) &body body)
   `(call-with-appending-source (lambda (,point) ,@body)
                                ,move-function))
+
+(defun call-with-insert (function)
+  (let ((point (buffer-point (collector-buffer *collector*))))
+    (funcall function point)))
+
+(defmacro with-insert ((point) &body body)
+  `(call-with-insert (lambda (,point) ,@body)))
 
 ;;;
 (define-attribute match-line-attribute

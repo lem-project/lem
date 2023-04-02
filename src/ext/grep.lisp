@@ -63,7 +63,7 @@
   (let ((result (parse-grep-result (run-grep string directory))))
     (if (null result)
         (editor-error "No match")
-        (lem/peek-source:with-collecting-sources (collector)
+        (lem/peek-source:with-collecting-sources (collector :read-only nil)
           (loop :for (file line-number content) :in result
                 :do (lem/peek-source:with-appending-source
                         (point :move-function (make-move-function directory file line-number))

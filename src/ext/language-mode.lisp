@@ -1,5 +1,5 @@
 (defpackage :lem/language-mode
-  (:use :cl :lem :lem/sourcelist)
+  (:use :cl :lem)
   (:export
    :*language-mode-keymap*
    :language-mode
@@ -299,13 +299,14 @@
        (move-to-line point line-number)
        (line-offset point 0 charpos)))))
 
-(defun go-to-location (location set-buffer-fn)
+(defun go-to-location (location &optional set-buffer-fn)
   (let ((buffer (xref-filespec-to-buffer (xref-location-filespec location))))
     (unless buffer (editor-error "~A does not exist." (xref-location-filespec location)))
-    (funcall set-buffer-fn buffer)
+    (when set-buffer-fn (funcall set-buffer-fn buffer))
     (let ((position (xref-location-position location))
           (point (buffer-point buffer)))
-      (move-to-xref-location-position point position))))
+      (move-to-xref-location-position point position)
+      point)))
 
 (defgeneric location-position< (position1 position2)
   (:method ((position1 integer) (position2 integer))
@@ -339,21 +340,20 @@
   (push-location-stack (current-point))
   (setf locations (uiop:ensure-list locations))
   (if (null (rest locations))
-      (progn
-        (go-to-location (first locations) #'switch-to-buffer)
-        (jump-highlighting))
+      (go-to-location (first locations) #'switch-to-buffer)
       (let ((prev-file nil))
-        (with-sourcelist (sourcelist "*definitions*")
+        (lem/peek-source:with-collecting-sources (collector)
           (dolist (location (sort-xref-locations locations))
             (let ((file (xref-filespec-to-filename (xref-location-filespec location)))
                   (content (xref-location-content location)))
-              (append-sourcelist sourcelist
-                                 (lambda (p)
-                                   (unless (equal prev-file file)
-                                     (xref-insert-headline file p 0))
-                                   (xref-insert-content content p 1))
-                                 (let ((location location))
-                                   (alexandria:curry #'go-to-location location)))
+              (unless (equal prev-file file)
+                (lem/peek-source:with-insert (point)
+                  (xref-insert-headline file point 0)))
+              (lem/peek-source:with-appending-source
+                  (point :move-function (let ((location location))
+                                          (lambda ()
+                                            (go-to-location location))))
+                (xref-insert-content content point 1))
               (setf prev-file file)))))))
 
 (define-command find-definitions () ()
@@ -364,25 +364,23 @@
   (unless refs
     (editor-error "No references found"))
   (push-location-stack (current-point))
-  (with-sourcelist (sourcelist "*references*")
+  (lem/peek-source:with-collecting-sources (collector)
     (dolist (ref (uiop:ensure-list refs))
       (let ((type (xref-references-type ref)))
         (when type
-          (append-sourcelist sourcelist
-                             (lambda (p)
-                               (xref-insert-headline type p 0))
-                             nil))
+          (lem/peek-source:with-insert (point)
+            (xref-insert-headline type point 0)))
         (let ((prev-file nil))
           (dolist (location (sort-xref-locations (xref-references-locations ref)))
             (let ((file (xref-filespec-to-filename (xref-location-filespec location)))
                   (content (xref-location-content location)))
-              (append-sourcelist sourcelist
-                                 (lambda (p)
-                                   (unless (equal prev-file file)
-                                     (xref-insert-headline file p 1))
-                                   (xref-insert-content content p 2))
-                                 (let ((location location))
-                                   (alexandria:curry #'go-to-location location)))
+              (unless (equal prev-file file)
+                (lem/peek-source:with-insert (point)
+                  (xref-insert-headline file point 1)))
+              (lem/peek-source:with-appending-source
+                  (point :move-function (let ((location location))
+                                          (alexandria:curry #'go-to-location location)))
+                (xref-insert-content content point 2))
               (setf prev-file file))))))))
 
 (define-command find-references () ()
@@ -419,8 +417,7 @@
         (run-hooks *set-location-hook* (current-point))
         (select-buffer buffer-name)
         (move-to-line (current-point) line-number)
-        (line-offset (current-point) 0 charpos)
-        (jump-highlighting)))))
+        (line-offset (current-point) 0 charpos)))))
 
 (define-command complete-symbol () ()
   (alexandria:when-let (completion (variable-value 'completion-spec :buffer))

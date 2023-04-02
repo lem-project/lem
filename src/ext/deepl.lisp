@@ -38,11 +38,12 @@
          (is-japanese (ja-text-p source-text))
          (translated-text (translate (ppcre:regex-replace-all "\\s+" source-text " ")
                                      :source-lang (if is-japanese "JA" "EN")
-                                     :target-lang (if is-japanese "EN" "JA"))))
+                                     :target-lang (if is-japanese "EN" "JA")))
+         (buffer (output-to-buffer source-text
+                                   translated-text
+                                   (make-buffer "*deepl*"))))
     (cond (is-replace
            (delete-between-points start end)
            (insert-string start translated-text))
           (t
-           (display-buffer (output-to-buffer source-text
-                                             translated-text
-                                             (make-buffer "*deepl*")))))))
+           (display-buffer buffer)))))

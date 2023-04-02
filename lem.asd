@@ -93,7 +93,6 @@
                              (:file "isearch")
                              (:file "showparen")
                              (:file "line-numbers")
-                             (:file "sourcelist")
                              (:file "peek-source")
                              (:file "grep")
                              (:file "go-back")

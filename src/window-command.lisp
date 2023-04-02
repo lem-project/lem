@@ -103,12 +103,6 @@
             (get-next-window (current-window)
                              window-list)))))
 
-(define-command other-window-or-split-window (&optional (n 1)) ("p")
-  (when (one-window-p)
-    (split-window-sensibly (current-window))
-    (maybe-balance-windows))
-  (other-window n))
-
 (define-command switch-to-last-focused-window () ()
   (let ((window (or (and (not (null *last-focused-window*))
                          (not (deleted-window-p *last-focused-window*))

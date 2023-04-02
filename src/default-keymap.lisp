@@ -68,7 +68,7 @@
 (define-key *global-keymap* "C-x 2" 'split-active-window-vertically)
 (define-key *global-keymap* "C-x 3" 'split-active-window-horizontally)
 (define-key *global-keymap* "C-x o" 'other-window)
-(define-key *global-keymap* "M-o" 'other-window-or-split-window)
+(define-key *global-keymap* "M-o" 'other-window)
 (define-key *global-keymap* "C-x 1" 'delete-other-windows)
 (define-key *global-keymap* "C-x 0" 'delete-active-window)
 (define-key *global-keymap* "C-x ^" 'grow-window)

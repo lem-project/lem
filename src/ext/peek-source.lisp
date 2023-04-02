@@ -38,6 +38,8 @@
   (setf (lem::not-switchable-buffer-p (current-buffer)) t))
 
 (define-key *peek-source-keymap* "Return" 'peek-source-select)
+(define-key *peek-source-keymap* 'next-line 'peek-source-next)
+(define-key *peek-source-keymap* 'previous-line 'peek-source-previous)
 
 (defclass peek-window (floating-window) ())
 (defclass source-window (floating-window) ())
@@ -57,12 +59,30 @@
   (delete-window *source-window*))
 
 (defun set-move-function (start end move-function)
+  (with-point ((end start))
+    (character-offset end 1)
+    (put-text-property start end 'move-marker t))
   (put-text-property start end 'move-function move-function))
 
 (defun get-move-function (point)
   (with-point ((point point))
     (line-start point)
     (text-property-at point 'move-function)))
+
+(defun start-move-point (point)
+  (buffer-start point)
+  (unless (text-property-at point 'move-marker)
+    (next-move-point point)))
+
+(defun next-move-point (point)
+  (when (text-property-at point 'move-marker)
+    (next-single-property-change point 'move-marker))
+  (next-single-property-change point 'move-marker))
+
+(defun previous-move-point (point)
+  (when (text-property-at point 'move-marker)
+    (previous-single-property-change point 'move-marker))
+  (previous-single-property-change point 'move-marker))
 
 (defun make-two-side-by-side-windows (buffer)
   (let* ((x-margin 4)
@@ -96,6 +116,7 @@
     (setf (current-window) peek-window)
     (peek-source-mode t)
 
+    (start-move-point (buffer-point (collector-buffer collector)))
     (show-matched-line)))
 
 (defun make-peek-source-buffer ()
@@ -166,6 +187,12 @@
       (peek-source-quit)
       (switch-to-buffer (point-buffer point))
       (move-to-line (current-point) line))))
+
+(define-command peek-source-next () ()
+  (next-move-point (current-point)))
+
+(define-command peek-source-previous () ()
+  (previous-move-point (current-point)))
 
 (define-command peek-source-quit () ()
   (setf (current-window) *parent-window*)

@@ -104,7 +104,8 @@
                              (:file "rectangle")
                              (:file "auto-save")
                              (:file "tabbar")
-                             (:file "frame-multiplexer")))))
+                             (:file "frame-multiplexer")
+                             (:file "deepl")))))
 
 (defsystem "lem/extensions"
   :depends-on ("lem-lsp-mode"

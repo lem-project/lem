@@ -44,7 +44,10 @@
 (defclass peek-window (floating-window) ())
 (defclass source-window (floating-window) ())
 
-(defmethod lem::%delete-window :before ((peek-window peek-window))
+(defmethod lem::%delete-window :before ((window peek-window))
+  (finalize-peek-source))
+
+(defmethod lem::%delete-window :before ((window source-window))
   (finalize-peek-source))
 
 (defmethod lem::compute-window-list ((current-window peek-window))
@@ -53,10 +56,15 @@
 (defmethod lem::compute-window-list ((current-window source-window))
   (list *source-window* *peek-window*))
 
+(defvar *is-finalzing* nil)
+
 (defun finalize-peek-source ()
-  (finalize-highlight-overlays)
-  (setf (current-window) *parent-window*)
-  (delete-window *source-window*))
+  (unless *is-finalzing*
+    (let ((*is-finalzing* t))
+      (finalize-highlight-overlays)
+      (setf (current-window) *parent-window*)
+      (delete-window *source-window*)
+      (delete-window *peek-window*))))
 
 (defun set-move-function (start end move-function)
   (with-point ((end start))

@@ -522,16 +522,3 @@
                              (or root-uri-patterns
                                  (list (lambda (name) (string= name ".git")))))
       directory))
-
-(defun buffer-root-directory (buffer)
-  (or (find-root-directory-1 (buffer-directory buffer)
-                             (or (variable-value 'root-uri-patterns :buffer buffer)
-                                 (list (lambda (name) (string= name ".git")))))
-      (buffer-directory buffer)))
-
-(define-command project-grep () ()
-  (let* ((directory (buffer-root-directory (current-buffer)))
-         (symbol-string (or (symbol-string-at-point (current-point)) ""))
-         (query (prompt-for-string (format nil "(Directory: ~A) " directory)
-                                   :initial-value (format nil "git grep -nH ~A" symbol-string))))
-    (lem/grep::grep query directory)))

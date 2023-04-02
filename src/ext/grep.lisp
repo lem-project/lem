@@ -58,9 +58,16 @@
         (buffer-undo-boundary (point-buffer start)))))
   (lem/peek-source:show-matched-line))
 
-(define-command grep (string &optional (directory (buffer-directory)))
-    ((prompt-for-string ": " :initial-value "grep -nH "))
-  (let ((result (parse-grep-result (run-grep string directory))))
+(defvar *last-query* "git grep -nH ")
+(defvar *last-directory* nil)
+
+(define-command grep (query &optional (directory (buffer-directory)))
+    ((prompt-for-string "" :initial-value *last-query* :history-symbol 'grep)
+     (princ-to-string (prompt-for-directory "Directory: "
+                                            :directory (if *last-directory*
+                                                           (princ-to-string *last-directory*)
+                                                           (buffer-directory)))))
+  (let ((result (parse-grep-result (run-grep query directory))))
     (if (null result)
         (editor-error "No match")
         (lem/peek-source:with-collecting-sources (collector :read-only nil)
@@ -75,4 +82,6 @@
                       (insert-string point ":" :read-only t :content-start t)
                       (insert-string point content)))
           (add-hook (variable-value 'after-change-functions :buffer (lem/peek-source:collector-buffer collector))
-                    'change-grep-buffer)))))
+                    'change-grep-buffer)))
+    (setf *last-query* query
+          *last-directory* directory)))

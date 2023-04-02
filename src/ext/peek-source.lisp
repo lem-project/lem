@@ -6,7 +6,9 @@
            :with-appending-source
            :collector-buffer
            :get-move-function
-           :show-matched-line))
+           :show-matched-line)
+  #+sbcl
+  (:lock t))
 (in-package :lem/peek-source)
 
 (define-attribute filename-attribute

@@ -1,7 +1,6 @@
 (defpackage :lem/grep
   (:use :cl
-        :lem
-        :lem/peek-source)
+        :lem)
   (:export :grep)
   #+sbcl
   (:lock t))
@@ -47,7 +46,7 @@
 (defun change-grep-buffer (start end old-len)
   (declare (ignore end old-len))
   (let ((string (get-content-string start))
-        (move (get-move-function start)))
+        (move (lem/peek-source:get-move-function start)))
     (with-point ((point (funcall move)))
       (with-point ((start point)
                    (end point))
@@ -57,16 +56,17 @@
         (delete-between-points start end)
         (insert-string start string)
         (buffer-undo-boundary (point-buffer start)))))
-  (show-matched-line))
+  (lem/peek-source:show-matched-line))
 
 (define-command grep (string &optional (directory (buffer-directory)))
     ((prompt-for-string ": " :initial-value "grep -nH "))
   (let ((result (parse-grep-result (run-grep string directory))))
     (if (null result)
         (editor-error "No match")
-        (with-collecting-sources (collector)
+        (lem/peek-source:with-collecting-sources (collector)
           (loop :for (file line-number content) :in result
-                :do (with-appending-source (point :move-function (make-move-function directory file line-number))
+                :do (lem/peek-source:with-appending-source
+                        (point :move-function (make-move-function directory file line-number))
                       (insert-string point file :attribute 'lem/peek-source:filename-attribute :read-only t)
                       (insert-string point ":" :read-only t)
                       (insert-string point (princ-to-string line-number)
@@ -74,5 +74,5 @@
                                      :read-only t)
                       (insert-string point ":" :read-only t :content-start t)
                       (insert-string point content)))
-          (add-hook (variable-value 'after-change-functions :buffer (collector-buffer collector))
+          (add-hook (variable-value 'after-change-functions :buffer (lem/peek-source:collector-buffer collector))
                     'change-grep-buffer)))))

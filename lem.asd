@@ -10,6 +10,7 @@
                "yason"
                "log4cl"
                "split-sequence"
+               "dexador"
                "lem-base"
                "lem-encodings"
                "sb-concurrency")

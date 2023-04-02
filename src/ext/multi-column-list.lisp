@@ -31,9 +31,27 @@
 (define-key *multi-column-list-mode-keymap* "M-Space" 'multi-column-list/up-and-check)
 (define-key *multi-column-list-mode-keymap* "C-k" 'multi-column-list/delete-items)
 (define-key *multi-column-list-mode-keymap* 'show-context-menu 'show-context-menu)
+(define-key *multi-column-list-mode-keymap* 'delete-previous-char 'multi-column-list/delete-previous-char)
 
 (define-command multi-column-list/default () ()
-  )
+  (let ((c (insertion-key-p (last-read-key-sequence))))
+    (cond (c
+           (setf (multi-column-list-search-string (current-multi-column-list))
+                 (concatenate 'string
+                              (multi-column-list-search-string (current-multi-column-list))
+                              (string c)))
+           (update (current-multi-column-list)))
+          (t
+           (unread-key-sequence (last-read-key-sequence))))))
+
+(define-command multi-column-list/delete-previous-char () ()
+  (let ((length (length (multi-column-list-search-string (current-multi-column-list)))))
+    (when (< 0 length)
+      (setf (multi-column-list-search-string (current-multi-column-list))
+            (subseq (multi-column-list-search-string (current-multi-column-list))
+                    0
+                    (1- length)))))
+  (update (current-multi-column-list)))
 
 (define-command multi-column-list/quit () ()
   (quit (current-multi-column-list)))
@@ -102,6 +120,9 @@
             :reader multi-column-list-columns)
    (items :initarg :items
           :accessor multi-column-list-items)
+   (filter-function :initarg :filter-function
+                    :initform nil
+                    :reader multi-column-list-filter-function)
    (select-callback :initarg :select-callback
                     :initform nil
                     :reader multi-column-list-select-callback)
@@ -118,7 +139,9 @@
                  :initarg :context-menu
                  :reader multi-column-list-context-menu)
    (print-spec :accessor multi-column-list-print-spec)
-   (popup-menu :accessor multi-column-list-popup-menu)))
+   (popup-menu :accessor multi-column-list-popup-menu)
+   (search-string :initform ""
+                  :accessor multi-column-list-search-string)))
 
 (defmethod initialize-instance ((instance multi-column-list) &rest initargs &key items &allow-other-keys)
   (apply #'call-next-method
@@ -159,18 +182,28 @@
                       :reader print-spec-column-width-list)))
 
 (defmethod lem/popup-menu:write-header ((print-spec print-spec) point)
-  (let ((columns (multi-column-list-columns
-                  (print-spec-multi-column-list print-spec))))
-    (when columns
-      (with-point ((start point))
-        (loop :for width :in (print-spec-column-width-list print-spec)
-              :for column-header :in columns
-              :do (insert-string point " ")
-                  (let ((column (point-column point)))
-                    (insert-string point column-header)
-                    (move-to-column point (+ column width) t)))
-        (insert-string point " ")
-        (put-text-property start point :attribute (make-attribute :underline-p t))))))
+  (let* ((multi-column-list (print-spec-multi-column-list print-spec))
+         (search-string (multi-column-list-search-string multi-column-list))
+         (columns (multi-column-list-columns multi-column-list)))
+    (cond ((< 0 (length search-string))
+           (with-point ((start point))
+             (insert-string point " ")
+             (insert-string point search-string)
+             (move-to-column point
+                             (1+ (loop :for width :in (print-spec-column-width-list print-spec)
+                                       :sum (1+ width)))
+                             t)
+             (put-text-property start point :attribute (make-attribute :underline-p t))))
+          (columns
+           (with-point ((start point))
+             (loop :for width :in (print-spec-column-width-list print-spec)
+                   :for column-header :in columns
+                   :do (insert-string point " ")
+                       (let ((column (point-column point)))
+                         (insert-string point column-header)
+                         (move-to-column point (+ column width) t)))
+             (insert-string point " ")
+             (put-text-property start point :attribute (make-attribute :underline-p t)))))))
 
 (defmethod lem/popup-menu:apply-print-spec ((print-spec print-spec) point item)
   (check-type item multi-column-list-item)
@@ -238,11 +271,18 @@
     (popup-menu-quit popup-menu)))
 
 (defmethod update ((component multi-column-list))
-  (popup-menu-update (multi-column-list-popup-menu component)
-                     (multi-column-list-items component)
-                     :print-spec (multi-column-list-print-spec component)
-                     :max-display-items 100
-                     :keep-focus t))
+  (let ((items (multi-column-list-items component)))
+    (when (and (multi-column-list-filter-function component)
+               (< 0 (length (multi-column-list-search-string component))))
+      (setf items
+            (mapcar #'wrap
+                    (funcall (multi-column-list-filter-function component)
+                             (multi-column-list-search-string component)))))
+    (popup-menu-update (multi-column-list-popup-menu component)
+                       items
+                       :print-spec (multi-column-list-print-spec component)
+                       :max-display-items 100
+                       :keep-focus t)))
 
 (defun check-current-item (multi-column-list)
   (when (multi-column-list-use-check-p multi-column-list)

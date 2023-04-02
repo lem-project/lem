@@ -33,6 +33,7 @@
                                            (buffer-name buffer)
                                            (or (buffer-filename buffer) "")))
                   :items (buffer-list)
+                  :filter-function #'completion-buffer
                   :select-callback (lambda (component buffer)
                                      (quit component)
                                      (switch-to-buffer buffer))

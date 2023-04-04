@@ -34,15 +34,12 @@
 (define-key *multi-column-list-mode-keymap* 'delete-previous-char 'multi-column-list/delete-previous-char)
 
 (define-command multi-column-list/default () ()
-  (let ((c (insertion-key-p (last-read-key-sequence))))
-    (cond (c
-           (setf (multi-column-list-search-string (current-multi-column-list))
-                 (concatenate 'string
-                              (multi-column-list-search-string (current-multi-column-list))
-                              (string c)))
-           (update (current-multi-column-list)))
-          (t
-           (unread-key-sequence (last-read-key-sequence))))))
+  (alexandria:when-let ((c (insertion-key-p (last-read-key-sequence))))
+    (setf (multi-column-list-search-string (current-multi-column-list))
+          (concatenate 'string
+                       (multi-column-list-search-string (current-multi-column-list))
+                       (string c)))
+    (update (current-multi-column-list))))
 
 (define-command multi-column-list/delete-previous-char () ()
   (let ((length (length (multi-column-list-search-string (current-multi-column-list)))))

@@ -117,7 +117,8 @@
 
 (defmethod lem/multi-column-list:select-item ((component connection-menu) item)
   (switch-connection (connection-item-connection item))
-  (lem/multi-column-list:update component))
+  (lem/multi-column-list:update component)
+  (lem/multi-column-list:quit component))
 
 (define-command lisp-connection-list () ()
   (lem/multi-column-list:display

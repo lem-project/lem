@@ -528,6 +528,7 @@
                    (with-output-to-string (out)
                      (write-string message out)
                      (when source-context
+                       (terpri out)
                        (write-string source-context out))))
       overlay)))
 

@@ -151,3 +151,31 @@
 
 (define-command lisp-defstruct-to-defclass () ()
   (lem-lisp-syntax:defstruct-to-defclass (current-point)))
+
+
+(defun move-to-deftest-toplevel-form (point)
+  (or (looking-at point "\\(deftest\\s")
+      (progn (lisp-beginning-of-defun point 1)
+             (looking-at point "\\(deftest\\s"))))
+
+(defun get-deftest-name (point)
+  (with-point ((point point))
+    (when (and (move-to-deftest-toplevel-form point)
+               (scan-lists point 1 -1 t)
+               (form-offset point 1)
+               (skip-whitespace-forward point))
+      (with-point ((start point)
+                   (end point))
+        (form-offset end 1)
+        (points-to-string start end)))))
+
+(defparameter *run-test-function-name* "rove:run-test")
+
+(define-command lisp-rove-run-test () ()
+  (let* ((package-name (buffer-package (current-buffer)))
+         (test-name (get-deftest-name (current-point)))
+         (form-string (format nil "(~A '~A::~A)" *run-test-function-name* package-name test-name)))
+    (start-lisp-repl)
+    (buffer-end (current-point))
+    (insert-string (current-point) form-string)
+    (lem/listener-mode:listener-return)))

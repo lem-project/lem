@@ -214,4 +214,4 @@
   (:dark :foreground "PaleGreen"))
 
 (define-attribute syntax-builtin-attribute
-  (t :foreground "#D030F0"))
+  (t :foreground "#FF87FF"))

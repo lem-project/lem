@@ -149,7 +149,7 @@
 (defmethod map-columns :around ((component multi-column-list) item)
   (append (if (multi-column-list-use-check-p component)
               (list (if (multi-column-list-item-checked-p item)
-                        "✔ "
+                        "x "
                         "  "))
               nil)
           (mapcar #'princ-to-string (call-next-method))))

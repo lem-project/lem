@@ -530,6 +530,7 @@
    :clear-eol
    :clear-eob
    :redraw-view-after
+   :will-update-display
    :update-display
    :scroll
    :set-first-view

@@ -171,7 +171,7 @@
 
 (defparameter *run-test-function-name* "rove:run-test")
 
-(define-command lisp-rove-run-test () ()
+(define-command lisp-run-test () ()
   (let* ((package-name (buffer-package (current-buffer)))
          (test-name (get-deftest-name (current-point)))
          (form-string (format nil "(~A '~A::~A)" *run-test-function-name* package-name test-name)))

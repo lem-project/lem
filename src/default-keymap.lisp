@@ -45,6 +45,7 @@
 (define-key *global-keymap* "M-m" 'back-to-indentation-command)
 (define-key *global-keymap* "C-\\" 'undo)
 (define-key *global-keymap* "C-_" 'redo)
+(define-key *global-keymap* "C-/" 'redo)
 (define-key *global-keymap* "C-@" 'mark-set)
 (define-key *global-keymap* "C-Space" 'mark-set)
 (define-key *global-keymap* "C-x C-x" 'exchange-point-mark)

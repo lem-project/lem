@@ -221,15 +221,15 @@
 
 (defvar *modifier* (make-modifier))
 
-(defun keydown (keysym)
+(defun on-key-down (keysym)
   (update-modifier *modifier* keysym)
   (alexandria:when-let (key (keysym-to-key keysym))
     (lem:send-event key)))
 
-(defun keyup (keysym)
+(defun on-key-up (keysym)
   (update-modifier *modifier* keysym))
 
-(defun textinput (text)
+(defun on-text-input (text)
   (loop :for c :across text
         :do (multiple-value-bind (sym converted)
                 (convert-to-sym c)
@@ -299,11 +299,11 @@
                     (:quit ()
                      t)
                     (:textinput (:text text)
-                     (textinput text))
+                     (on-text-input text))
                     (:keydown (:keysym keysym)
-                     (keydown keysym))
+                     (on-key-down keysym))
                     (:keyup (:keysym keysym)
-                     (keyup keysym))
+                     (on-key-up keysym))
                     (:mousebuttondown (:button button :x x :y y)
                      (on-mouse-button-down button x y))
                     (:mousebuttonup (:button button :x x :y y)

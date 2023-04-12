@@ -291,7 +291,6 @@
                   (funcall function)
                   (sdl2:with-event-loop (:method :wait)
                     (:quit ()
-                     (log:info "quit")
                      t)
                     (:textinput (:text text)
                      (textinput text))

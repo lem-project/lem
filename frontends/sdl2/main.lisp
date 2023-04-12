@@ -238,6 +238,12 @@
                  (make-key-with-modifier *modifier*
                                          (or sym (string c))))))))
 
+(defun on-mouse-button-down (button x y)
+  (log:info button x y))
+
+(defun on-mouse-button-up (button x y)
+  (log:info button x y))
+
 (defun call-with-renderer (function)
   (bt:with-lock-held ((display-mutex *display*))
     (funcall function)))
@@ -298,6 +304,14 @@
                      (keydown keysym))
                     (:keyup (:keysym keysym)
                      (keyup keysym))
+                    (:mousebuttondown (:button button :x x :y y)
+                     (on-mouse-button-down button x y))
+                    (:mousebuttonup (:button button :x x :y y)
+                     (on-mouse-button-up button x y))
+                    (:mousemotion (:x x :y y :xrel xrel :yrel yrel :state state)
+                     (declare (ignore x y xrel yrel state)))
+                    (:mousewheel (:x x :y y :which which :direction direction)
+                     (declare (ignore x y which direction)))
                     (:windowevent (:event event)
                      (when (equal event sdl2-ffi:+sdl-windowevent-resized+)
                        (update-texture *display*)

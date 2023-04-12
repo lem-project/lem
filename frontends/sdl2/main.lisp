@@ -239,10 +239,34 @@
                                          (or sym (string c))))))))
 
 (defun on-mouse-button-down (button x y)
-  (log:info button x y))
+  (let ((button
+          (cond ((eql button sdl2-ffi:+sdl-button-left+) :button-1)
+                ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
+                ((eql button sdl2-ffi:+sdl-button-middle+) :button-2))))
+    (when button
+      (let ((x (floor x (char-width)))
+            (y (floor y (char-height))))
+        (lem:send-event (lambda ()
+                          (lem::handle-mouse-button-down x y button)
+                          (lem:redraw-display)))))))
 
 (defun on-mouse-button-up (button x y)
-  (log:info button x y))
+  (let ((button
+          (cond ((eql button sdl2-ffi:+sdl-button-left+) :button-1)
+                ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
+                ((eql button sdl2-ffi:+sdl-button-middle+) :button-2))))
+    (lem:send-event (lambda ()
+                      (lem::handle-mouse-button-up x y button)
+                      (lem:redraw-display)))))
+
+(defun on-mouse-motion (x y state)
+  (when (= sdl2-ffi:+sdl-button-lmask+ (logand state sdl2-ffi:+sdl-button-lmask+))
+    (let ((x (floor x (char-width)))
+          (y (floor y (char-height))))
+      (lem:send-event (lambda ()
+                        (lem::handle-mouse-motion x y :button-1)
+                        (when (= 0 (lem::event-queue-length))
+                          (lem:redraw-display)))))))
 
 (defun call-with-renderer (function)
   (bt:with-lock-held ((display-mutex *display*))
@@ -308,8 +332,8 @@
                      (on-mouse-button-down button x y))
                     (:mousebuttonup (:button button :x x :y y)
                      (on-mouse-button-up button x y))
-                    (:mousemotion (:x x :y y :xrel xrel :yrel yrel :state state)
-                     (declare (ignore x y xrel yrel state)))
+                    (:mousemotion (:x x :y y :state state)
+                     (on-mouse-motion x y state))
                     (:mousewheel (:x x :y y :which which :direction direction)
                      (declare (ignore x y which direction)))
                     (:windowevent (:event event)

@@ -75,6 +75,9 @@
     :initform nil
     :initarg :cursor-invisible
     :accessor window-cursor-invisible-p)
+   (last-mouse-button-down-point
+    :initform nil
+    :accessor window-last-mouse-button-down-point)
    (parameters
     :initform nil
     :accessor window-parameters)))

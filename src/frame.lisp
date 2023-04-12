@@ -175,3 +175,16 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
 (defun max-window-height (frame)
   (- (display-height)
      (topleft-window-y frame)))
+
+
+(defun within-window-p (window x y)
+  (and (<= (window-x window) x (+ (window-x window) (window-width window)))
+       (<= (window-y window) y (+ (window-y window) (window-height window)))))
+
+(defun focus-window-position (frame x y)
+  (dolist (window (append (frame-floating-windows frame)
+                          (window-list frame)))
+    (when (within-window-p window x y)
+      (return (values window
+                      (- x (window-x window))
+                      (- y (window-y window)))))))

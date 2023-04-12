@@ -37,6 +37,7 @@
                (:file "file")
                (:file "screen")
                (:file "frame")
+               (:file "mouse")
                (:file "echo")
                (:file "prompt")
                (:file "window-tree")

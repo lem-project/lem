@@ -42,6 +42,16 @@
             (values (string (code-char code))
                     nil))))))
 
+(defun make-key* (&key ctrl meta shift sym)
+  (if (and ctrl (equal sym "i"))
+      (lem:make-key :ctrl nil
+                    :meta meta
+                    :shift shift
+                    :sym "Tab")
+      (lem:make-key :ctrl ctrl
+                    :meta meta
+                    :shift shift
+                    :sym sym)))
 
 (defstruct modifier
   shift
@@ -66,13 +76,13 @@
          (modifier (get-modifier keysym)))
     (multiple-value-bind (sym converted) (convert-to-sym code)
       (when (and sym (or converted (modifier-ctrl modifier)))
-        (lem:make-key :shift (modifier-shift modifier)
-                      :ctrl (modifier-ctrl modifier)
-                      :meta (modifier-meta modifier)
-                      :sym sym)))))
+        (make-key* :shift (modifier-shift modifier)
+                   :ctrl (modifier-ctrl modifier)
+                   :meta (modifier-meta modifier)
+                   :sym sym)))))
 
 (defun make-key-with-modifier (modifier sym &key (without-shift t))
-  (lem:make-key :ctrl (modifier-ctrl modifier)
-                :meta (modifier-meta modifier)
-                :shift (if without-shift nil (modifier-shift modifier))
-                :sym sym))
+  (make-key* :ctrl (modifier-ctrl modifier)
+             :meta (modifier-meta modifier)
+             :shift (if without-shift nil (modifier-shift modifier))
+             :sym sym))

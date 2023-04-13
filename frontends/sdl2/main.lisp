@@ -30,19 +30,23 @@
 (defparameter *display-height* 40)
 
 (defparameter *font*
-  (make-font :size 20
-             :normal-file (asdf:system-relative-pathname
-                           :lem-sdl2
-                           "resources/NotoSansMono/NotoSansMono-Regular.ttf")
-             :bold-file (asdf:system-relative-pathname
-                         :lem-sdl2
-                         "resources/NotoSansMono/NotoSansMono-Bold.ttf")
-             :unicode-normal-file (asdf:system-relative-pathname
-                                   :lem-sdl2
-                                   "resources/NotoSansJP/NotoSansJP-Regular.otf")
-             :unicode-bold-file (asdf:system-relative-pathname
-                                 :lem-sdl2
-                                 "resources/NotoSansJP/NotoSansJP-Bold.otf")))
+  (make-font :size (lem:config :font-size 20)
+             :normal-file (lem:config :normal-font
+                                      (asdf:system-relative-pathname
+                                       :lem-sdl2
+                                       "resources/NotoSansMono/NotoSansMono-Regular.ttf"))
+             :bold-file (lem:config :bold-font
+                                    (asdf:system-relative-pathname
+                                     :lem-sdl2
+                                     "resources/NotoSansMono/NotoSansMono-Bold.ttf"))
+             :unicode-normal-file (lem:config :unicode-normal-font
+                                              (asdf:system-relative-pathname
+                                               :lem-sdl2
+                                               "resources/NotoSansJP/NotoSansJP-Regular.otf"))
+             :unicode-bold-file (lem:config :unicode-bold-font
+                                            (asdf:system-relative-pathname
+                                             :lem-sdl2
+                                             "resources/NotoSansJP/NotoSansJP-Bold.otf"))))
 
 (defvar *display*)
 

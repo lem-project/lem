@@ -1,6 +1,7 @@
 (defpackage :lem-sdl2
   (:use :cl
-        :lem-sdl2/key))
+        :lem-sdl2/key
+        :lem-sdl2/font))
 (in-package :lem-sdl2)
 
 (defmacro with-bindings (bindings &body body)
@@ -27,12 +28,21 @@
 
 (defparameter *display-width* 100)
 (defparameter *display-height* 40)
-(defparameter *font-size* 20)
 
-(defparameter *latin-font-file* "resources/NotoSansMono/NotoSansMono-Regular.ttf")
-(defparameter *latin-bold-font-file* "resources/NotoSansMono/NotoSansMono-Bold.ttf")
-(defparameter *unicode-font-file* "resources/NotoSansJP/NotoSansJP-Regular.otf")
-(defparameter *unicode-bold-font-file* "resources/NotoSansJP/NotoSansJP-Bold.otf")
+(defparameter *font*
+  (make-font :size 20
+             :normal-file (asdf:system-relative-pathname
+                           :lem-sdl2
+                           "resources/NotoSansMono/NotoSansMono-Regular.ttf")
+             :bold-file (asdf:system-relative-pathname
+                         :lem-sdl2
+                         "resources/NotoSansMono/NotoSansMono-Bold.ttf")
+             :unicode-normal-file (asdf:system-relative-pathname
+                                   :lem-sdl2
+                                   "resources/NotoSansJP/NotoSansJP-Regular.otf")
+             :unicode-bold-file (asdf:system-relative-pathname
+                                 :lem-sdl2
+                                 "resources/NotoSansJP/NotoSansJP-Bold.otf")))
 
 (defvar *display*)
 
@@ -296,22 +306,11 @@
 
     (sdl2-ttf:init)
 
-    (let ((latin-font
-            (sdl2-ttf:open-font (asdf:system-relative-pathname
-                                 :lem-sdl2 *latin-font-file*)
-                                *font-size*))
-          (latin-bold-font
-            (sdl2-ttf:open-font (asdf:system-relative-pathname
-                                 :lem-sdl2 *latin-bold-font-file*)
-                                *font-size*))
-          (unicode-font
-            (sdl2-ttf:open-font (asdf:system-relative-pathname
-                                 :lem-sdl2 *unicode-font-file*)
-                                *font-size*))
-          (unicode-bold-font
-            (sdl2-ttf:open-font (asdf:system-relative-pathname
-                                 :lem-sdl2 *unicode-bold-font-file*)
-                                *font-size*)))
+    (multiple-value-bind (latin-font
+                          latin-bold-font
+                          unicode-font
+                          unicode-bold-font)
+        (open-font *font*)
       (destructuring-bind (char-width char-height) (get-character-size latin-font)
         (let ((window-width (* *display-width* char-width))
               (window-height (* *display-height* char-height)))

@@ -118,6 +118,10 @@
    :setup-frame
    :teardown-frame
    :teardown-frames)
+  ;; mouse.lisp
+  (:export
+   :mouse-button-down-functions
+   :mouse-button-up-functions)
   ;; echo.lisp
   (:export
    :show-message

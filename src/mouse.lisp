@@ -1,5 +1,8 @@
 (in-package :lem)
 
+(define-editor-variable mouse-button-down-functions '())
+(define-editor-variable mouse-button-up-functions '())
+
 (deftype mouse-button ()
   '(member :button-1 :button-2 :button-3))
 
@@ -19,13 +22,15 @@
          (move-to-x-y-position window x y)
          (setf (window-last-mouse-button-down-point window)
                (copy-point (current-point) :temporary))
-         (buffer-mark-cancel (current-buffer)))))))
+         (buffer-mark-cancel (current-buffer))
+         (run-hooks (variable-value 'mouse-button-down-functions)))))))
 
 (defun handle-mouse-button-up (x y button)
   (declare (ignore button))
   (let ((window (focus-window-position (current-frame) x y)))
     (when window
-      (setf (window-last-mouse-button-down-point window) nil))))
+      (setf (window-last-mouse-button-down-point window) nil))
+    (run-hooks (variable-value 'mouse-button-up-functions))))
 
 (defun handle-mouse-motion (x y button)
   (check-type button (or null mouse-button))

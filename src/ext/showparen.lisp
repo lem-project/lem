@@ -28,7 +28,7 @@
   (when (syntax-closed-paren-char-p (character-at p -1))
     (scan-lists (copy-point p :temporary) -1 0 t (window-view-point (current-window)))))
 
-(defun show-paren-function ()
+(defun update-show-paren ()
   (mapc #'delete-overlay *brackets-overlays*)
   (setq *brackets-overlays* nil)
   (let ((highlight-points '()))
@@ -55,7 +55,7 @@
           (when *show-paren-timer*
             (stop-timer *show-paren-timer*))
           (setf *show-paren-timer*
-                (start-timer (make-idle-timer 'show-paren-function :name "show paren timer")
+                (start-timer (make-idle-timer 'update-show-paren :name "show paren timer")
                              100
                              t))
           t)
@@ -68,3 +68,6 @@
 
 (unless *show-paren-timer*
   (toggle-show-paren))
+
+(add-hook (variable-value 'mouse-button-down-functions :global) 'update-show-paren)
+(add-hook (variable-value 'mouse-button-up-functions :global) 'update-show-paren)

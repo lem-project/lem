@@ -36,3 +36,10 @@
        (when (and window (window-last-mouse-button-down-point window))
          (move-to-x-y-position window x y)
          (set-current-mark (window-last-mouse-button-down-point window)))))))
+
+(defun handle-mouse-wheel (x y wheel-x wheel-y)
+  (declare (ignore wheel-x))
+  (let ((window (focus-window-position (current-frame) x y)))
+    (when window
+      (with-current-window window
+        (scroll-up wheel-y)))))

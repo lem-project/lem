@@ -12,6 +12,24 @@
                     bt:*default-special-bindings*)))
        ,@body)))
 
+(defun do-log (&rest args)
+  (declare (ignorable args))
+  ;(log:info "~{~A~^ ~}" args)
+  )
+
+(defun call-with-debug (log-function body-function)
+  (funcall log-function)
+  (handler-bind ((error (lambda (e)
+                          (log:info "~A"
+                                    (with-output-to-string (out)
+                                      (format out "~A~%" e)
+                                      (uiop:print-backtrace :condition e :stream out))))))
+    (funcall body-function)))
+
+(defmacro with-debug ((&rest args) &body body)
+  `(call-with-debug (lambda () (do-log ,@args))
+                    (lambda () ,@body)))
+
 (defun create-texture (renderer width height)
   (sdl2:create-texture renderer
                        sdl2:+pixelformat-rgba8888+
@@ -29,30 +47,13 @@
 (defparameter *display-width* 100)
 (defparameter *display-height* 40)
 
-(defparameter *font*
-  (make-font :size (lem:config :font-size 20)
-             :normal-file (lem:config :normal-font
-                                      (asdf:system-relative-pathname
-                                       :lem-sdl2
-                                       "resources/NotoSansMono/NotoSansMono-Regular.ttf"))
-             :bold-file (lem:config :bold-font
-                                    (asdf:system-relative-pathname
-                                     :lem-sdl2
-                                     "resources/NotoSansMono/NotoSansMono-Bold.ttf"))
-             :unicode-normal-file (lem:config :unicode-normal-font
-                                              (asdf:system-relative-pathname
-                                               :lem-sdl2
-                                               "resources/NotoSansJP/NotoSansJP-Regular.otf"))
-             :unicode-bold-file (lem:config :unicode-bold-font
-                                            (asdf:system-relative-pathname
-                                             :lem-sdl2
-                                             "resources/NotoSansJP/NotoSansJP-Bold.otf"))))
-
 (defvar *display*)
 
 (defclass display ()
   ((mutex :initform (bt:make-lock "lem-sdl2 display mutex")
           :reader display-mutex)
+   (font-config :initarg :font-config
+                :accessor display-font-config)
    (latin-font :initarg :latin-font
                :accessor display-latin-font)
    (latin-bold-font :initarg :latin-bold-font
@@ -307,77 +308,59 @@
 
 (defun create-display (function)
   (sdl2:with-init (:video)
-
     (sdl2-ttf:init)
-
-    (multiple-value-bind (latin-font
-                          latin-bold-font
-                          unicode-font
-                          unicode-bold-font)
-        (open-font *font*)
-      (destructuring-bind (char-width char-height) (get-character-size latin-font)
-        (let ((window-width (* *display-width* char-width))
-              (window-height (* *display-height* char-height)))
-          (sdl2:with-window (window :title "Lem"
-                                    :w window-width
-                                    :h window-height
-                                    :flags '(:shown :resizable))
-            (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
-              (let ((texture (create-texture renderer
-                                             window-width
-                                             window-height)))
-                (with-bindings ((*display* (make-instance 'display
-                                                          :latin-font latin-font
-                                                          :latin-bold-font latin-bold-font
-                                                          :unicode-font unicode-font
-                                                          :unicode-bold-font unicode-bold-font
-                                                          :renderer renderer
-                                                          :window window
-                                                          :texture texture
-                                                          :char-width char-width
-                                                          :char-height char-height)))
-                  (sdl2:start-text-input)
-                  (funcall function)
-                  (sdl2:with-event-loop (:method :wait)
-                    (:quit ()
-                     t)
-                    (:textinput (:text text)
-                     (on-text-input text))
-                    (:keydown (:keysym keysym)
-                     (on-key-down keysym))
-                    (:keyup (:keysym keysym)
-                     (on-key-up keysym))
-                    (:mousebuttondown (:button button :x x :y y)
-                     (on-mouse-button-down button x y))
-                    (:mousebuttonup (:button button :x x :y y)
-                     (on-mouse-button-up button x y))
-                    (:mousemotion (:x x :y y :state state)
-                     (on-mouse-motion x y state))
-                    (:mousewheel (:x x :y y :which which :direction direction)
-                     (on-mouse-wheel x y which direction))
-                    (:windowevent (:event event)
-                     (when (equal event sdl2-ffi:+sdl-windowevent-resized+)
-                       (update-texture *display*)
-                       (lem:send-event :resize)))
-                    (:idle ())))))))))))
-
-(defun call-with-debug (log-function body-function)
-  (funcall log-function)
-  (handler-bind ((error (lambda (e)
-                          (log:info "~A"
-                                    (with-output-to-string (out)
-                                      (format out "~A~%" e)
-                                      (uiop:print-backtrace :condition e :stream out))))))
-    (funcall body-function)))
-
-(defun do-log (&rest args)
-  (declare (ignorable args))
-  ;(log:info "~{~A~^ ~}" args)
-  )
-
-(defmacro with-debug ((&rest args) &body body)
-  `(call-with-debug (lambda () (do-log ,@args))
-                    (lambda () ,@body)))
+    (let ((font-config (make-font-config)))
+      (multiple-value-bind (latin-font
+                            latin-bold-font
+                            unicode-font
+                            unicode-bold-font)
+          (open-font font-config)
+        (destructuring-bind (char-width char-height) (get-character-size latin-font)
+          (let ((window-width (* *display-width* char-width))
+                (window-height (* *display-height* char-height)))
+            (sdl2:with-window (window :title "Lem"
+                                      :w window-width
+                                      :h window-height
+                                      :flags '(:shown :resizable))
+              (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
+                (let ((texture (create-texture renderer
+                                               window-width
+                                               window-height)))
+                  (with-bindings ((*display* (make-instance 'display
+                                                            :font-config font-config
+                                                            :latin-font latin-font
+                                                            :latin-bold-font latin-bold-font
+                                                            :unicode-font unicode-font
+                                                            :unicode-bold-font unicode-bold-font
+                                                            :renderer renderer
+                                                            :window window
+                                                            :texture texture
+                                                            :char-width char-width
+                                                            :char-height char-height)))
+                    (sdl2:start-text-input)
+                    (funcall function)
+                    (sdl2:with-event-loop (:method :wait)
+                      (:quit ()
+                       t)
+                      (:textinput (:text text)
+                       (on-text-input text))
+                      (:keydown (:keysym keysym)
+                       (on-key-down keysym))
+                      (:keyup (:keysym keysym)
+                       (on-key-up keysym))
+                      (:mousebuttondown (:button button :x x :y y)
+                       (on-mouse-button-down button x y))
+                      (:mousebuttonup (:button button :x x :y y)
+                       (on-mouse-button-up button x y))
+                      (:mousemotion (:x x :y y :state state)
+                       (on-mouse-motion x y state))
+                      (:mousewheel (:x x :y y :which which :direction direction)
+                       (on-mouse-wheel x y which direction))
+                      (:windowevent (:event event)
+                       (when (equal event sdl2-ffi:+sdl-windowevent-resized+)
+                         (update-texture *display*)
+                         (lem:send-event :resize)))
+                      (:idle ()))))))))))))
 
 (defmethod lem-if:invoke ((implementation sdl2) function)
   (create-display (lambda ()

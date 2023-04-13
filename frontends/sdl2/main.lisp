@@ -101,10 +101,9 @@
   use-modeline)
 
 (defun get-character-size (font)
-  (let* ((surface (sdl2-ttf:render-text-blended font "A" 0 0 0 0))
+  (let* ((surface (sdl2-ttf:render-text-solid font "A" 0 0 0 0))
          (width (sdl2:surface-width surface))
          (height (sdl2:surface-height surface)))
-    (sdl2:free-surface surface)
     (list width height)))
 
 (defun render-line (x1 y1 x2 y2 &key color)

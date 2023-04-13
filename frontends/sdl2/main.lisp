@@ -222,6 +222,7 @@
 (defvar *modifier* (make-modifier))
 
 (defun on-key-down (keysym)
+  (sdl2:hide-cursor)
   (update-modifier *modifier* keysym)
   (alexandria:when-let (key (keysym-to-key keysym))
     (lem:send-event key)))
@@ -230,6 +231,7 @@
   (update-modifier *modifier* keysym))
 
 (defun on-text-input (text)
+  (sdl2:hide-cursor)
   (loop :for c :across text
         :do (multiple-value-bind (sym converted)
                 (convert-to-sym c)
@@ -239,6 +241,7 @@
                                          (or sym (string c))))))))
 
 (defun on-mouse-button-down (button x y)
+  (sdl2:show-cursor)
   (let ((button
           (cond ((eql button sdl2-ffi:+sdl-button-left+) :button-1)
                 ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
@@ -251,6 +254,7 @@
                           (lem:redraw-display)))))))
 
 (defun on-mouse-button-up (button x y)
+  (sdl2:show-cursor)
   (let ((button
           (cond ((eql button sdl2-ffi:+sdl-button-left+) :button-1)
                 ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
@@ -260,6 +264,7 @@
                       (lem:redraw-display)))))
 
 (defun on-mouse-motion (x y state)
+  (sdl2:show-cursor)
   (when (= sdl2-ffi:+sdl-button-lmask+ (logand state sdl2-ffi:+sdl-button-lmask+))
     (let ((x (floor x (char-width)))
           (y (floor y (char-height))))

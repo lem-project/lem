@@ -1,7 +1,8 @@
 (defpackage :lem-sdl2
   (:use :cl
         :lem-sdl2/key
-        :lem-sdl2/font))
+        :lem-sdl2/font)
+  (:export :change-font))
 (in-package :lem-sdl2)
 
 (defmacro with-bindings (bindings &body body)
@@ -233,27 +234,28 @@
                           (display-width display)
                           (display-height display)))))
 
-(defun change-font (display font-config)
+(defun change-font (font-config)
   (with-debug ("change-font")
-    (bt:with-lock-held ((display-mutex display))
-      (let ((font-config (merge-font-config font-config (display-font-config display))))
-        (sdl2-ttf:close-font (display-latin-font display))
-        (sdl2-ttf:close-font (display-latin-bold-font display))
-        (sdl2-ttf:close-font (display-unicode-font display))
-        (sdl2-ttf:close-font (display-unicode-bold-font display))
-        (multiple-value-bind (latin-font
-                              latin-bold-font
-                              unicode-font
-                              unicode-bold-font)
-            (open-font font-config)
-          (destructuring-bind (char-width char-height) (get-character-size latin-font)
-            (setf (display-char-width display) char-width
-                  (display-char-height display) char-height)
-            (setf (display-font-config display) font-config)
-            (setf (display-latin-font display) latin-font
-                  (display-latin-bold-font display) latin-bold-font
-                  (display-unicode-font display) unicode-font
-                  (display-unicode-bold-font display) unicode-bold-font)))))
+    (let ((display *display*))
+      (bt:with-lock-held ((display-mutex display))
+        (let ((font-config (merge-font-config font-config (display-font-config display))))
+          (sdl2-ttf:close-font (display-latin-font display))
+          (sdl2-ttf:close-font (display-latin-bold-font display))
+          (sdl2-ttf:close-font (display-unicode-font display))
+          (sdl2-ttf:close-font (display-unicode-bold-font display))
+          (multiple-value-bind (latin-font
+                                latin-bold-font
+                                unicode-font
+                                unicode-bold-font)
+              (open-font font-config)
+            (destructuring-bind (char-width char-height) (get-character-size latin-font)
+              (setf (display-char-width display) char-width
+                    (display-char-height display) char-height)
+              (setf (display-font-config display) font-config)
+              (setf (display-latin-font display) latin-font
+                    (display-latin-bold-font display) latin-bold-font
+                    (display-unicode-font display) unicode-font
+                    (display-unicode-bold-font display) unicode-bold-font))))))
     (lem:send-event :resize)))
 
 (defvar *modifier* (make-modifier))

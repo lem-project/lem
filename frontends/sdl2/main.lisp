@@ -5,6 +5,9 @@
   (:export :change-font))
 (in-package :lem-sdl2)
 
+(defconstant +display-width+ 100)
+(defconstant +display-height+ 40)
+
 (defmacro with-bindings (bindings &body body)
   `(let ,bindings
      (let ((bt:*default-special-bindings*
@@ -12,11 +15,6 @@
                             :collect `(cons ',var ,var))
                     bt:*default-special-bindings*)))
        ,@body)))
-
-(defun do-log (&rest args)
-  (declare (ignorable args))
-  ;(log:info "~{~A~^ ~}" args)
-  )
 
 (defun call-with-debug (log-function body-function)
   (funcall log-function)
@@ -28,7 +26,7 @@
     (funcall body-function)))
 
 (defmacro with-debug ((&rest args) &body body)
-  `(call-with-debug (lambda () (do-log ,@args))
+  `(call-with-debug (lambda () (log:debug ,@args))
                     (lambda () ,@body)))
 
 (defun create-texture (renderer width height)
@@ -44,23 +42,12 @@
          (height (sdl2:surface-height surface)))
     (list width height)))
 
-(defstruct view
-  window
-  x
-  y
-  width
-  height
-  use-modeline)
-
 (defclass sdl2 (lem:implementation)
   ()
   (:default-initargs
    :name :sdl2
    :native-scroll-support nil
    :redraw-after-modifying-floating-window t))
-
-(defparameter *display-width* 100)
-(defparameter *display-height* 40)
 
 (defvar *display*)
 
@@ -92,20 +79,40 @@
    (background-color :initform (lem:make-color 0 0 0)
                      :accessor display-background-color)))
 
-(defun display-font (&key latin bold)
+(defun char-width () (display-char-width *display*))
+(defun char-height () (display-char-height *display*))
+
+(defun call-with-renderer (function)
+  (bt:with-lock-held ((display-mutex *display*))
+    (funcall function)))
+
+(defmacro with-renderer (() &body body)
+  `(call-with-renderer (lambda () ,@body)))
+
+(defmethod display-font ((display display) &key latin bold)
   (if bold
       (if latin
-          (display-latin-bold-font *display*)
-          (display-unicode-bold-font *display*))
+          (display-latin-bold-font display)
+          (display-unicode-bold-font display))
       (if latin
-          (display-latin-font *display*)
-          (display-unicode-font *display*))))
+          (display-latin-font display)
+          (display-unicode-font display))))
 
-(defun char-width ()
-  (display-char-width *display*))
+(defmethod update-display ((display display))
+  (sdl2:render-present (display-renderer display)))
 
-(defun char-height ()
-  (display-char-height *display*))
+(defmethod display-width ((display display))
+  (nth-value 0 (sdl2:get-window-size (display-window display))))
+
+(defmethod display-height ((display display))
+  (nth-value 1 (sdl2:get-window-size (display-window display))))
+
+(defmethod set-render-color ((display display) color)
+  (sdl2:set-render-draw-color (display-renderer display)
+                              (lem:color-red color)
+                              (lem:color-green color)
+                              (lem:color-blue color)
+                              0))
 
 (defun attribute-foreground-color (attribute)
   (or (and attribute
@@ -117,15 +124,8 @@
            (lem:parse-color (lem:attribute-background attribute)))
       (display-background-color *display*)))
 
-(defun set-render-color (color)
-  (sdl2:set-render-draw-color (display-renderer *display*)
-                              (lem:color-red color)
-                              (lem:color-green color)
-                              (lem:color-blue color)
-                              0))
-
 (defun render-line (x1 y1 x2 y2 &key color)
-  (set-render-color color)
+  (set-render-color  *display* color)
   (sdl2:render-draw-line (display-renderer *display*) x1 y1 x2 y2))
 
 (defun render (renderer texture width height x y)
@@ -146,7 +146,7 @@
                 (let* ((red (lem:color-red color))
                        (green (lem:color-green color))
                        (blue (lem:color-blue color))
-                       (surface (sdl2-ttf:render-utf8-blended (display-font :latin latin-p :bold bold)
+                       (surface (sdl2-ttf:render-utf8-blended (display-font *display* :latin latin-p :bold bold)
                                                               c-string
                                                               red
                                                               green
@@ -188,12 +188,12 @@
         (width (* width (char-width)))
         (height (* height (char-height))))
     (sdl2:with-rects ((rect x y width height))
-      (set-render-color color)
+      (set-render-color *display* color)
       (sdl2:render-fill-rect (display-renderer *display*) rect))))
 
 (defun fill-rect-by-pixels (x y width height &key color)
   (sdl2:with-rects ((rect x y width height))
-    (set-render-color color)
+    (set-render-color *display* color)
     (sdl2:render-fill-rect (display-renderer *display*) rect)))
 
 (defun render-border (x y w h)
@@ -219,25 +219,16 @@
                                  (* (+ 1 w) (char-width))
                                  (* (+ 1 h) (char-height))))
 
-    (set-render-color (display-background-color *display*))
+    (set-render-color *display* (display-background-color *display*))
     (sdl2:render-fill-rect (display-renderer *display*) up-rect)
     (sdl2:render-fill-rect (display-renderer *display*) down-rect)
     (sdl2:render-fill-rect (display-renderer *display*) left-rect)
     (sdl2:render-fill-rect (display-renderer *display*) right-rect)
 
-    (set-render-color (display-foreground-color *display*))
+    (set-render-color *display* (display-foreground-color *display*))
     (sdl2:render-draw-rect (display-renderer *display*) border-rect)))
 
-(defun update-display (display)
-  (sdl2:render-present (display-renderer display)))
-
-(defun display-width (display)
-  (nth-value 0 (sdl2:get-window-size (display-window display))))
-
-(defun display-height (display)
-  (nth-value 1 (sdl2:get-window-size (display-window display))))
-
-(defun update-texture (display)
+(defmethod update-texture ((display display))
   (bt:with-lock-held ((display-mutex display))
     (sdl2:destroy-texture (display-texture display))
     (setf (display-texture display)
@@ -247,33 +238,105 @@
 
 (defun notify-resize ()
   (sdl2:set-render-target (display-renderer *display*) (display-texture *display*))
-  (set-render-color (display-background-color *display*))
+  (set-render-color *display* (display-background-color *display*))
   (sdl2:render-clear (display-renderer *display*))
   (lem:send-event :resize))
 
 (defun change-font (font-config)
-  (with-debug ("change-font")
-    (let ((display *display*))
-      (bt:with-lock-held ((display-mutex display))
-        (let ((font-config (merge-font-config font-config (display-font-config display))))
-          (sdl2-ttf:close-font (display-latin-font display))
-          (sdl2-ttf:close-font (display-latin-bold-font display))
-          (sdl2-ttf:close-font (display-unicode-font display))
-          (sdl2-ttf:close-font (display-unicode-bold-font display))
-          (multiple-value-bind (latin-font
-                                latin-bold-font
-                                unicode-font
-                                unicode-bold-font)
-              (open-font font-config)
-            (destructuring-bind (char-width char-height) (get-character-size latin-font)
-              (setf (display-char-width display) char-width
-                    (display-char-height display) char-height)
-              (setf (display-font-config display) font-config)
-              (setf (display-latin-font display) latin-font
-                    (display-latin-bold-font display) latin-bold-font
-                    (display-unicode-font display) unicode-font
-                    (display-unicode-bold-font display) unicode-bold-font))))))
+  (let ((display *display*))
+    (let ((font-config (merge-font-config font-config (display-font-config display))))
+      (sdl2-ttf:close-font (display-latin-font display))
+      (sdl2-ttf:close-font (display-latin-bold-font display))
+      (sdl2-ttf:close-font (display-unicode-font display))
+      (sdl2-ttf:close-font (display-unicode-bold-font display))
+      (multiple-value-bind (latin-font
+                            latin-bold-font
+                            unicode-font
+                            unicode-bold-font)
+          (open-font font-config)
+        (destructuring-bind (char-width char-height) (get-character-size latin-font)
+          (setf (display-char-width display) char-width
+                (display-char-height display) char-height)
+          (setf (display-font-config display) font-config)
+          (setf (display-latin-font display) latin-font
+                (display-latin-bold-font display) latin-bold-font
+                (display-unicode-font display) unicode-font
+                (display-unicode-bold-font display) unicode-bold-font))))
     (notify-resize)))
+
+(defclass view ()
+  ((window
+    :initarg :window
+    :accessor view-window)
+   (x
+    :initarg :x
+    :accessor view-x)
+   (y
+    :initarg :y
+    :accessor view-y)
+   (width
+    :initarg :width
+    :accessor view-width)
+   (height
+    :initarg :height
+    :accessor view-height)
+   (use-modeline
+    :initarg :use-modeline
+    :accessor view-use-modeline)))
+
+(defun create-view (window x y width height use-modeline)
+  (make-instance 'view
+                 :window window
+                 :x x
+                 :y y
+                 :width width
+                 :height height
+                 :use-modeline use-modeline))
+
+(defmethod delete-view ((view view))
+  nil)
+
+(defmethod render-clear ((view view))
+  (fill-rect (view-x view)
+             (view-y view)
+             (view-width view)
+             (view-height view)
+             :color (display-background-color *display*)))
+
+(defmethod resize ((view view) width height)
+  (setf (view-width view) width
+        (view-height view) height))
+
+(defmethod move-position ((view view) x y)
+  (setf (view-x view) x
+        (view-y view) y))
+
+(defmethod render-text-using-view ((view view) x y string attribute)
+  (render-fill-text string
+                    (+ (view-x view) x)
+                    (+ (view-y view) y)
+                    :attribute attribute))
+
+(defmethod render-text-to-modeline-using-view ((view view) x y string attribute)
+  (render-fill-text string
+                    (+ (view-x view) x)
+                    (+ (view-y view) (view-height view) y)
+                    :attribute attribute))
+
+(defmethod clear-eol ((view view) x y)
+  (fill-rect (+ (view-x view) x)
+             (+ (view-y view) y)
+             (- (view-width view) x)
+             1
+             :color (display-background-color *display*)))
+
+(defmethod clear-eob ((view view) x y)
+  (clear-eol view x y)
+  (fill-rect (view-x view)
+             (+ (view-y view) y 1)
+             (view-width view)
+             (- (view-height view) y 1)
+             :color (display-background-color *display*)))
 
 (defvar *modifier* (make-modifier))
 
@@ -340,13 +403,6 @@
                         (when (= 0 (lem::event-queue-length))
                           (lem:redraw-display)))))))
 
-(defun call-with-renderer (function)
-  (bt:with-lock-held ((display-mutex *display*))
-    (funcall function)))
-
-(defmacro with-renderer (() &body body)
-  `(call-with-renderer (lambda () ,@body)))
-
 (defun event-loop ()
   (sdl2:with-event-loop (:method :wait)
     (:quit ()
@@ -381,8 +437,8 @@
                             unicode-bold-font)
           (open-font font-config)
         (destructuring-bind (char-width char-height) (get-character-size latin-font)
-          (let ((window-width (* *display-width* char-width))
-                (window-height (* *display-height* char-height)))
+          (let ((window-width (* +display-width+ char-width))
+                (window-height (* +display-height+ char-height)))
             (sdl2:with-window (window :title "Lem"
                                       :w window-width
                                       :h window-height
@@ -437,79 +493,60 @@
 
 (defmethod lem-if:display-width ((implementation sdl2))
   (with-debug ("lem-if:display-width")
-    (floor (display-width *display*) (char-width))))
+    (with-renderer ()
+      (floor (display-width *display*) (char-width)))))
 
 (defmethod lem-if:display-height ((implementation sdl2))
   (with-debug ("lem-if:display-height")
-    (floor (display-height *display*) (char-height))))
+    (with-renderer ()
+      (floor (display-height *display*) (char-height)))))
 
 (defmethod lem-if:make-view ((implementation sdl2) window x y width height use-modeline)
   (with-debug ("lem-if:make-view" window x y width height use-modeline)
-    (make-view :window window :x x :y y :width width :height height :use-modeline use-modeline)))
+    (with-renderer ()
+      (create-view window x y width height use-modeline))))
 
 (defmethod lem-if:delete-view ((implementation sdl2) view)
   (with-debug ("lem-if:delete-view")
-    nil))
+    (with-renderer ()
+      (delete-view view))))
 
 (defmethod lem-if:clear ((implementation sdl2) view)
   (with-debug ("lem-if:clear" view)
     (with-renderer ()
-      (fill-rect (view-x view)
-                 (view-y view)
-                 (view-width view)
-                 (view-height view)
-                 :color (display-background-color *display*)))))
+      (render-clear view))))
 
 (defmethod lem-if:set-view-size ((implementation sdl2) view width height)
   (with-debug ("lem-if:set-view-size" view width height)
-    (setf (view-width view) width
-          (view-height view) height)))
+    (with-renderer ()
+      (resize view width height))))
 
 (defmethod lem-if:set-view-pos ((implementation sdl2) view x y)
   (with-debug ("lem-if:set-view-pos" view x y)
-    (setf (view-x view) x
-          (view-y view) y)))
+    (with-renderer ()
+      (move-position view x y))))
 
 (defmethod lem-if:print ((implementation sdl2) view x y string attribute-or-name)
   (with-debug ("lem-if:print" view x y string attribute-or-name)
-    (let ((attribute (lem:ensure-attribute attribute-or-name nil)))
-      (with-renderer ()
-        (render-fill-text string
-                          (+ x (view-x view))
-                          (+ y (view-y view))
-                          :attribute attribute)))))
+    (with-renderer ()
+      (let ((attribute (lem:ensure-attribute attribute-or-name nil)))
+        (render-text-using-view view x y string attribute)))))
 
 (defmethod lem-if:print-modeline ((implementation sdl2) view x y string attribute-or-name)
   (with-debug ("lem-if:print-modeline" view x y string attribute-or-name)
-    (let ((attribute (lem:ensure-attribute attribute-or-name nil)))
-      (with-renderer ()
-        (render-fill-text string
-                          (+ x (view-x view))
-                          (+ y (view-y view) (view-height view))
-                          :attribute attribute)))))
+    (with-renderer ()
+      (let ((attribute (lem:ensure-attribute attribute-or-name nil)))
+        (render-text-to-modeline-using-view view x y string attribute)))))
 
 (defmethod lem-if:clear-eol ((implementation sdl2) view x y)
   (with-debug ("lem-if:clear-eol" view x y)
     (with-renderer ()
-      (fill-rect (+ (view-x view) x)
-                 (+ (view-y view) y)
-                 (- (view-width view) x)
-                 1
-                 :color (display-background-color *display*)))))
+      (clear-eol view x y))))
 
 (defmethod lem-if:clear-eob ((implementation sdl2) view x y)
   (with-debug ("lem-if:clear-eob" view x y)
     (with-renderer ()
-      (fill-rect (+ (view-x view) x)
-                 (+ (view-y view) y)
-                 (- (view-width view) x)
-                 1
-                 :color (display-background-color *display*))
-      (fill-rect (view-x view)
-                 (+ (view-y view) y 1)
-                 (view-width view)
-                 (- (view-height view) y 1)
-                 :color (display-background-color *display*)))))
+      (clear-eob view x y))))
 
 (defun border-exists-p (window)
   (and (lem:floating-window-p window)
@@ -526,7 +563,6 @@
 (defun draw-leftside-border (view)
   (when (and (< 0 (view-x view))
              (lem::window-use-modeline-p (view-window view)))
-
     (let ((attribute (lem:ensure-attribute 'lem:modeline-inactive)))
       (fill-rect (1- (view-x view))
                  (view-y view)
@@ -549,8 +585,9 @@
       (draw-leftside-border view))))
 
 (defmethod lem-if::will-update-display ((implementation sdl2))
-  (with-renderer ()
-    (sdl2:set-render-target (display-renderer *display*) (display-texture *display*))))
+  (with-debug ("will-update-display")
+    (with-renderer ()
+      (sdl2:set-render-target (display-renderer *display*) (display-texture *display*)))))
 
 (defmethod lem-if:update-display ((implementation sdl2))
   (with-debug ("lem-if:update-display")
@@ -564,19 +601,27 @@
     ))
 
 (defmethod lem-if:clipboard-paste ((implementation sdl2))
-  (sdl2-ffi.functions:sdl-get-clipboard-text))
+  (with-debug ("clipboard-paste")
+    (with-renderer ()
+      (sdl2-ffi.functions:sdl-get-clipboard-text))))
 
 (defmethod lem-if:clipboard-copy ((implementation sdl2) text)
-  (sdl2-ffi.functions:sdl-set-clipboard-text text))
+  (with-debug ("clipboard-copy")
+    (with-renderer ()
+      (sdl2-ffi.functions:sdl-set-clipboard-text text))))
 
 (defmethod lem-if:increase-font-size ((implementation sdl2))
-  (let ((font-config (display-font-config *display*)))
-    (change-font (change-size font-config
-                              (1+ (font-config-size font-config))))))
+  (with-debug ("increase-font-size")
+    (with-renderer ()
+      (let ((font-config (display-font-config *display*)))
+        (change-font (change-size font-config
+                                  (1+ (font-config-size font-config))))))))
 
 (defmethod lem-if:decrease-font-size ((implementation sdl2))
-  (let ((font-config (display-font-config *display*)))
-    (change-font (change-size font-config
-                              (1- (font-config-size font-config))))))
+  (with-debug ("decrease-font-size")
+    (with-renderer ()
+      (let ((font-config (display-font-config *display*)))
+        (change-font (change-size font-config
+                                  (1- (font-config-size font-config))))))))
 
 (pushnew :lem-sdl2 *features*)

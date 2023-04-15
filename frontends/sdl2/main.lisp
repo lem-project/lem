@@ -38,6 +38,20 @@
                        width
                        height))
 
+(defun get-character-size (font)
+  (let* ((surface (sdl2-ttf:render-text-solid font "A" 0 0 0 0))
+         (width (sdl2:surface-width surface))
+         (height (sdl2:surface-height surface)))
+    (list width height)))
+
+(defstruct view
+  window
+  x
+  y
+  width
+  height
+  use-modeline)
+
 (defclass sdl2 (lem:implementation)
   ()
   (:default-initargs
@@ -93,19 +107,22 @@
 (defun char-height ()
   (display-char-height *display*))
 
-(defstruct view
-  window
-  x
-  y
-  width
-  height
-  use-modeline)
+(defun attribute-foreground-color (attribute)
+  (or (and attribute
+           (lem:parse-color (lem:attribute-foreground attribute)))
+      (display-foreground-color *display*)))
 
-(defun get-character-size (font)
-  (let* ((surface (sdl2-ttf:render-text-solid font "A" 0 0 0 0))
-         (width (sdl2:surface-width surface))
-         (height (sdl2:surface-height surface)))
-    (list width height)))
+(defun attribute-background-color (attribute)
+  (or (and attribute
+           (lem:parse-color (lem:attribute-background attribute)))
+      (display-background-color *display*)))
+
+(defun set-render-color (color)
+  (sdl2:set-render-draw-color (display-renderer *display*)
+                              (lem:color-red color)
+                              (lem:color-green color)
+                              (lem:color-blue color)
+                              0))
 
 (defun render-line (x1 y1 x2 y2 &key color)
   (set-render-color color)
@@ -164,12 +181,6 @@
                      (* (+ x width) (char-width))
                      (- (* (1+ y) (char-height)) 1)
                      :color foreground-color)))))
-
-(defun set-render-color (color)
-  (sdl2:set-render-draw-color (display-renderer *display*) (lem:color-red color)
-                              (lem:color-green color)
-                              (lem:color-blue color)
-                              0))
 
 (defun fill-rect (x y width height &key color)
   (let ((x (* x (char-width)))
@@ -458,16 +469,6 @@
   (with-debug ("lem-if:set-view-pos" view x y)
     (setf (view-x view) x
           (view-y view) y)))
-
-(defun attribute-foreground-color (attribute)
-  (or (and attribute
-           (lem:parse-color (lem:attribute-foreground attribute)))
-      (display-foreground-color *display*)))
-
-(defun attribute-background-color (attribute)
-  (or (and attribute
-           (lem:parse-color (lem:attribute-background attribute)))
-      (display-background-color *display*)))
 
 (defmethod lem-if:print ((implementation sdl2) view x y string attribute-or-name)
   (with-debug ("lem-if:print" view x y string attribute-or-name)

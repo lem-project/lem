@@ -552,7 +552,9 @@
    :delete-popup-message
    :display-context-menu
    :clipboard-paste
-   :clipboard-copy))
+   :clipboard-copy
+   :increase-font-size
+   :decrease-font-size))
 
 (defpackage :lem-user
   (:use :cl :lem))

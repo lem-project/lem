@@ -234,6 +234,12 @@
                           (display-width display)
                           (display-height display)))))
 
+(defun notify-resize ()
+  (sdl2:set-render-target (display-renderer *display*) (display-texture *display*))
+  (set-render-color (display-background-color *display*))
+  (sdl2:render-clear (display-renderer *display*))
+  (lem:send-event :resize))
+
 (defun change-font (font-config)
   (with-debug ("change-font")
     (let ((display *display*))
@@ -256,7 +262,7 @@
                     (display-latin-bold-font display) latin-bold-font
                     (display-unicode-font display) unicode-font
                     (display-unicode-bold-font display) unicode-bold-font))))))
-    (lem:send-event :resize)))
+    (notify-resize)))
 
 (defvar *modifier* (make-modifier))
 
@@ -351,7 +357,7 @@
     (:windowevent (:event event)
      (when (equal event sdl2-ffi:+sdl-windowevent-resized+)
        (update-texture *display*)
-       (lem:send-event :resize)))
+       (notify-resize)))
     (:idle ())))
 
 (defun create-display (function)
@@ -561,5 +567,15 @@
 
 (defmethod lem-if:clipboard-copy ((implementation sdl2) text)
   (sdl2-ffi.functions:sdl-set-clipboard-text text))
+
+(defmethod lem-if:increase-font-size ((implementation sdl2))
+  (let ((font-config (display-font-config *display*)))
+    (change-font (change-size font-config
+                              (1+ (font-config-size font-config))))))
+
+(defmethod lem-if:decrease-font-size ((implementation sdl2))
+  (let ((font-config (display-font-config *display*)))
+    (change-font (change-size font-config
+                              (1- (font-config-size font-config))))))
 
 (pushnew :lem-sdl2 *features*)

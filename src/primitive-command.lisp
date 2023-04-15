@@ -506,3 +506,9 @@
     (log:info context-menu)
     (when context-menu
       (lem-if:display-context-menu (implementation) context-menu))))
+
+(define-command font-size-increase () ()
+  (lem-if:increase-font-size (implementation)))
+
+(define-command font-size-decrease () ()
+  (lem-if:decrease-font-size (implementation)))

@@ -1,8 +1,10 @@
 (defpackage :lem-sdl2/font
   (:use :cl)
   (:export :make-font-config
+           :font-config-size
            :open-font
-           :merge-font-config))
+           :merge-font-config
+           :change-size))
 (in-package :lem-sdl2/font)
 
 (defstruct (font-config (:constructor %make-font-config))
@@ -62,3 +64,7 @@
                                               (font-config-unicode-normal-file old))
                      :unicode-bold-file (or (font-config-unicode-bold-file new)
                                             (font-config-unicode-bold-file old))))
+
+(defun change-size (font-config size)
+  (setf (font-config-size font-config) size)
+  font-config)

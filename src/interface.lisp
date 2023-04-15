@@ -92,6 +92,11 @@
 (defgeneric lem-if:clipboard-copy (implementation text)
   (:method (implementation text)))
 
+(defgeneric lem-if:increase-font-size (implementation)
+  (:method (implementation)))
+(defgeneric lem-if:decrease-font-size (implementation)
+  (:method (implementation)))
+
 (defvar *display-background-mode* nil)
 
 (defun implementation ()

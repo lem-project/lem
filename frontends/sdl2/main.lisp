@@ -230,14 +230,14 @@
     (render-fill-rect (1- x)
                       y
                       1
-                      (1+ height)
+                      height
                       :color (attribute-background-color attribute))
     (render-fill-rect-by-pixels (+ (* (1- x) (char-width))
                                    (floor (char-width) 2)
                                    -1)
                                 (* y (char-height))
                                 2
-                                (* (+ y height) (char-height))
+                                (* height (char-height))
                                 :color (attribute-foreground-color attribute))))
 
 (defmethod update-texture ((display display))

@@ -128,7 +128,7 @@
   (set-render-color  *display* color)
   (sdl2:render-draw-line (display-renderer *display*) x1 y1 x2 y2))
 
-(defun render (renderer texture width height x y)
+(defun render-texture (renderer texture x y width height)
   (sdl2:with-rects ((dest-rect x y width height))
     (sdl2:render-copy-ex renderer
                          texture
@@ -156,7 +156,7 @@
                        (text-height (sdl2:surface-height surface))
                        (texture (sdl2:create-texture-from-surface (display-renderer *display*)
                                                                   surface)))
-                  (render (display-renderer *display*) texture text-width text-height x y)
+                  (render-texture (display-renderer *display*) texture x y text-width text-height)
                   (sdl2:destroy-texture texture)))
               (incf x (if latin-p
                           (char-width)

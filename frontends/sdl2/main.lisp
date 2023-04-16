@@ -173,7 +173,7 @@
           (foreground-color (if reverse
                                 (attribute-background-color attribute)
                                 (attribute-foreground-color attribute))))
-      (fill-rect x y width 1 :color background-color)
+      (render-fill-rect x y width 1 :color background-color)
       (render-text text x y :color foreground-color :bold bold)
       (when underline
         (render-line (* x (char-width))
@@ -182,7 +182,7 @@
                      (- (* (1+ y) (char-height)) 1)
                      :color foreground-color)))))
 
-(defun fill-rect (x y width height &key color)
+(defun render-fill-rect (x y width height &key color)
   (let ((x (* x (char-width)))
         (y (* y (char-height)))
         (width (* width (char-width)))
@@ -297,7 +297,7 @@
   nil)
 
 (defmethod render-clear ((view view))
-  (fill-rect (view-x view)
+  (render-fill-rect (view-x view)
              (view-y view)
              (view-width view)
              (view-height view)
@@ -324,7 +324,7 @@
                     :attribute attribute))
 
 (defmethod clear-eol ((view view) x y)
-  (fill-rect (+ (view-x view) x)
+  (render-fill-rect (+ (view-x view) x)
              (+ (view-y view) y)
              (- (view-width view) x)
              1
@@ -332,7 +332,7 @@
 
 (defmethod clear-eob ((view view) x y)
   (clear-eol view x y)
-  (fill-rect (view-x view)
+  (render-fill-rect (view-x view)
              (+ (view-y view) y 1)
              (view-width view)
              (- (view-height view) y 1)
@@ -564,7 +564,7 @@
   (when (and (< 0 (view-x view))
              (lem::window-use-modeline-p (view-window view)))
     (let ((attribute (lem:ensure-attribute 'lem:modeline-inactive)))
-      (fill-rect (1- (view-x view))
+      (render-fill-rect (1- (view-x view))
                  (view-y view)
                  1
                  (1+ (view-height view))

@@ -514,15 +514,11 @@
 
 (defmethod lem-if:update-foreground ((implementation sdl2) color)
   (with-debug ("lem-if:update-foreground" color)
-    (setf (display-background-color *display*) color)
-    ;; TODO: redraw
-    ))
+    (setf (display-foreground-color *display*) (lem:parse-color color))))
 
 (defmethod lem-if:update-background ((implementation sdl2) color)
   (with-debug ("lem-if:update-background" color)
-    (setf (display-foreground-color *display*) color)
-    ;; TODO: redraw
-    ))
+    (setf (display-background-color *display*) (lem:parse-color color))))
 
 (defmethod lem-if:display-width ((implementation sdl2))
   (with-debug ("lem-if:display-width")

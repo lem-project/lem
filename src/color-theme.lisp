@@ -76,9 +76,9 @@
 
 (define-color-theme "emacs-light" ()
   (:display-background-mode :light)
-  ;; (:foreground "#000000")
-  ;; (:background "#FFFFFF")
-  (:inactive-window-background "light gray")
+  (:foreground "#000000")
+  (:background "#FFFFFF")
+  (:inactive-window-background nil)
   (region :foreground nil :background "#eedc82")
   (modeline :background "#404040" :foreground "white")
   (modeline-inactive :background "#303030" :foreground "gray")
@@ -92,8 +92,8 @@
 
 (define-color-theme "emacs-dark" ("emacs-light")
   (:display-background-mode :dark)
-  ;; (:foreground "#FFFFFF")
-  ;; (:background "#000000")
+  (:foreground "#FFFFFF")
+  (:background "#000000")
   (:inactive-window-background nil)
   (region :foreground nil :background "blue")
   (modeline :background "CornflowerBlue" :foreground "white")

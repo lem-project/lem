@@ -191,7 +191,7 @@
       (set-render-color *display* color)
       (sdl2:render-fill-rect (display-renderer *display*) rect))))
 
-(defun fill-rect-by-pixels (x y width height &key color)
+(defun render-fill-rect-by-pixels (x y width height &key color)
   (sdl2:with-rects ((rect x y width height))
     (set-render-color *display* color)
     (sdl2:render-fill-rect (display-renderer *display*) rect)))
@@ -570,7 +570,7 @@
                  (1+ (view-height view))
                  :color (attribute-background-color attribute))
 
-      (fill-rect-by-pixels (+ (* (1- (view-x view)) (char-width))
+      (render-fill-rect-by-pixels (+ (* (1- (view-x view)) (char-width))
                               (floor (char-width) 2)
                               -1)
                            (* (view-y view) (char-height))

@@ -225,6 +225,21 @@
     (set-render-color *display* (display-foreground-color *display*))
     (sdl2:render-draw-rect (display-renderer *display*) border-rect)))
 
+(defun render-margin-line (x y height)
+  (let ((attribute (lem:ensure-attribute 'lem:modeline-inactive)))
+    (render-fill-rect (1- x)
+                      y
+                      1
+                      (1+ height)
+                      :color (attribute-background-color attribute))
+    (render-fill-rect-by-pixels (+ (* (1- x) (char-width))
+                                   (floor (char-width) 2)
+                                   -1)
+                                (* y (char-height))
+                                2
+                                (* (+ y height) (char-height))
+                                :color (attribute-foreground-color attribute))))
+
 (defmethod update-texture ((display display))
   (bt:with-lock-held ((display-mutex display))
     (sdl2:destroy-texture (display-texture display))
@@ -319,6 +334,23 @@
                     (+ (view-x view) x)
                     (+ (view-y view) (view-height view) y)
                     :attribute attribute))
+
+(defmethod draw-window-border ((window lem:floating-window))
+  (when (and (lem:floating-window-border window)
+             (< 0 (lem:floating-window-border window)))
+    (render-border (lem:window-x window)
+                   (lem:window-y window)
+                   (lem:window-width window)
+                   (lem:window-height window))))
+
+(defmethod draw-window-border ((window lem:window))
+  (when (< 0 (lem:window-x window))
+    (render-margin-line (lem:window-x window)
+                        (lem:window-y window)
+                        (lem:window-height window))))
+
+(defmethod render-border-using-view ((view view))
+  (draw-window-border (view-window view)))
 
 (defmethod clear-eol ((view view) x y)
   (render-fill-rect (+ (view-x view) x)
@@ -545,41 +577,10 @@
     (with-renderer ()
       (clear-eob view x y))))
 
-(defun border-exists-p (window)
-  (and (lem:floating-window-p window)
-       (lem:floating-window-border window)
-       (< 0 (lem:floating-window-border window))))
-
-(defun draw-border (view)
-  (when (border-exists-p (view-window view))
-    (render-border (view-x view)
-                   (view-y view)
-                   (view-width view)
-                   (view-height view))))
-
-(defun draw-leftside-border (view)
-  (when (and (< 0 (view-x view))
-             (lem::window-use-modeline-p (view-window view)))
-    (let ((attribute (lem:ensure-attribute 'lem:modeline-inactive)))
-      (render-fill-rect (1- (view-x view))
-                        (view-y view)
-                        1
-                        (1+ (view-height view))
-                        :color (attribute-background-color attribute))
-
-      (render-fill-rect-by-pixels (+ (* (1- (view-x view)) (char-width))
-                                     (floor (char-width) 2)
-                                     -1)
-                                  (* (view-y view) (char-height))
-                                  2
-                                  (* (+ (view-y view) (view-height view)) (char-height))
-                                  :color (attribute-foreground-color attribute)))))
-
 (defmethod lem-if:redraw-view-after ((implementation sdl2) view)
   (with-debug ("lem-if:redraw-view-after" view)
     (with-renderer ()
-      (draw-border view)
-      (draw-leftside-border view))))
+      (render-border-using-view view))))
 
 (defmethod lem-if::will-update-display ((implementation sdl2))
   (with-debug ("will-update-display")

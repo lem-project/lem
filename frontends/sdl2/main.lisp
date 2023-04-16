@@ -136,31 +136,28 @@
                          :dest-rect dest-rect
                          :flip (list :none))))
 
+(defun render-character (character x y &key color bold)
+  (cffi:with-foreign-string (c-string (string character))
+    (let* ((x (* x (char-width)))
+           (y (* y (char-height)))
+           (latin-p (<= (char-code character) 128))
+           (surface (sdl2-ttf:render-utf8-blended (display-font *display* :latin latin-p :bold bold)
+                                                  c-string
+                                                  (lem:color-red color)
+                                                  (lem:color-green color)
+                                                  (lem:color-blue color)
+                                                  0))
+           (text-width (sdl2:surface-width surface))
+           (text-height (sdl2:surface-height surface))
+           (texture (sdl2:create-texture-from-surface (display-renderer *display*) surface)))
+      (render-texture (display-renderer *display*) texture x y text-width text-height)
+      (sdl2:destroy-texture texture)
+      (if latin-p 1 2))))
+
 (defun render-text (text x y &key color bold)
-  (let ((x (* x (char-width)))
-        (y (* y (char-height))))
-    (loop :for c :across text
-          :for i :from 0
-          :for latin-p := (<= (char-code c) 128)
-          :do (cffi:with-foreign-string (c-string (string c))
-                (let* ((red (lem:color-red color))
-                       (green (lem:color-green color))
-                       (blue (lem:color-blue color))
-                       (surface (sdl2-ttf:render-utf8-blended (display-font *display* :latin latin-p :bold bold)
-                                                              c-string
-                                                              red
-                                                              green
-                                                              blue
-                                                              0))
-                       (text-width (sdl2:surface-width surface))
-                       (text-height (sdl2:surface-height surface))
-                       (texture (sdl2:create-texture-from-surface (display-renderer *display*)
-                                                                  surface)))
-                  (render-texture (display-renderer *display*) texture x y text-width text-height)
-                  (sdl2:destroy-texture texture)))
-              (incf x (if latin-p
-                          (char-width)
-                          (* (char-width) 2))))))
+  (loop :for c :across text
+        :do (let ((offset (render-character c x y :color color :bold bold)))
+              (incf x offset))))
 
 (defun render-fill-text (text x y &key attribute)
   (let ((width (lem:string-width text))

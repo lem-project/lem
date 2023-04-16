@@ -79,6 +79,10 @@
    (background-color :initform (lem:make-color 0 0 0)
                      :accessor display-background-color)))
 
+(defmethod display-background-color ((display display))
+  (or (lem:parse-color lem-if:*background-color-of-drawing-window*)
+      (slot-value display 'background-color)))
+
 (defun char-width () (display-char-width *display*))
 (defun char-height () (display-char-height *display*))
 

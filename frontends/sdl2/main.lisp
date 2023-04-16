@@ -295,10 +295,10 @@
 
 (defmethod render-clear ((view view))
   (render-fill-rect (view-x view)
-             (view-y view)
-             (view-width view)
-             (view-height view)
-             :color (display-background-color *display*)))
+                    (view-y view)
+                    (view-width view)
+                    (view-height view)
+                    :color (display-background-color *display*)))
 
 (defmethod resize ((view view) width height)
   (setf (view-width view) width
@@ -322,18 +322,18 @@
 
 (defmethod clear-eol ((view view) x y)
   (render-fill-rect (+ (view-x view) x)
-             (+ (view-y view) y)
-             (- (view-width view) x)
-             1
-             :color (display-background-color *display*)))
+                    (+ (view-y view) y)
+                    (- (view-width view) x)
+                    1
+                    :color (display-background-color *display*)))
 
 (defmethod clear-eob ((view view) x y)
   (clear-eol view x y)
   (render-fill-rect (view-x view)
-             (+ (view-y view) y 1)
-             (view-width view)
-             (- (view-height view) y 1)
-             :color (display-background-color *display*)))
+                    (+ (view-y view) y 1)
+                    (view-width view)
+                    (- (view-height view) y 1)
+                    :color (display-background-color *display*)))
 
 (defvar *modifier* (make-modifier))
 
@@ -562,18 +562,18 @@
              (lem::window-use-modeline-p (view-window view)))
     (let ((attribute (lem:ensure-attribute 'lem:modeline-inactive)))
       (render-fill-rect (1- (view-x view))
-                 (view-y view)
-                 1
-                 (1+ (view-height view))
-                 :color (attribute-background-color attribute))
+                        (view-y view)
+                        1
+                        (1+ (view-height view))
+                        :color (attribute-background-color attribute))
 
       (render-fill-rect-by-pixels (+ (* (1- (view-x view)) (char-width))
-                              (floor (char-width) 2)
-                              -1)
-                           (* (view-y view) (char-height))
-                           2
-                           (* (+ (view-y view) (view-height view)) (char-height))
-                           :color (attribute-foreground-color attribute)))))
+                                     (floor (char-width) 2)
+                                     -1)
+                                  (* (view-y view) (char-height))
+                                  2
+                                  (* (+ (view-y view) (view-height view)) (char-height))
+                                  :color (attribute-foreground-color attribute)))))
 
 (defmethod lem-if:redraw-view-after ((implementation sdl2) view)
   (with-debug ("lem-if:redraw-view-after" view)

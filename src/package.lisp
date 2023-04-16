@@ -155,6 +155,7 @@
    :*window-show-buffer-functions*
    :window-parent
    :window-view-point
+   :window
    :windowp
    :window-id
    :window-x

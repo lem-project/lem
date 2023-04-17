@@ -27,7 +27,7 @@ jobs:
         # workaround for sbcl and log4cl combination problems
         mkdir ~/common-lisp
         cd ~/common-lisp
-        git clone git@github.com/sharplispers/log4cl.git
+        git clone https://github.com/sharplispers/log4cl.git
 
         ros config set dynamic-space-size 2048
 

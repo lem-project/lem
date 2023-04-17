@@ -93,7 +93,7 @@
 (define-color-theme "emacs-dark" ("emacs-light")
   (:display-background-mode :dark)
   (:foreground "#FFFFFF")
-  (:background "#000000")
+  (:background "#101010")
   (:inactive-window-background nil)
   (region :foreground nil :background "blue")
   (modeline :background "CornflowerBlue" :foreground "white")

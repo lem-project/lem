@@ -28,6 +28,7 @@ jobs:
         mkdir ~/common-lisp
         cd ~/common-lisp
         git clone https://github.com/sharplispers/log4cl.git
+        cd -
 
         ros config set dynamic-space-size 2048
 

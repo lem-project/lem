@@ -23,6 +23,10 @@ jobs:
     - name: Run test
       run: |
         set -ex
+ 
+        # workaround for sbcl and log4cl combination problems
+        cd ~/common-lisp
+        git clone git@github.com/sharplispers/log4cl.git
 
         ros config set dynamic-space-size 2048
 
@@ -30,9 +34,6 @@ jobs:
         ros install cxxxr/sblint fukamachi/rove
 
         export PATH=$HOME/.roswell/bin:$PATH
-        
-        # workaround for sbcl and log4cl combination problems
-        git clone git@github.com/sharplispers/log4cl.git ~/common-lisp/log4cl
 
         sblint src/base/lem-base.asd
         sblint lem.asd

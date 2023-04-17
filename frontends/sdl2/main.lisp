@@ -163,11 +163,15 @@
         :do (let ((offset (render-character c x y :color color :bold bold)))
               (incf x offset))))
 
-(defun render-fill-text (text x y &key attribute)
+(defun render-fill-text (text x y &key attribute limit-width)
   (let ((width (lem:string-width text))
         (underline (and attribute (lem:attribute-underline-p attribute)))
         (bold (and attribute (lem:attribute-bold-p attribute)))
         (reverse (and attribute (lem:attribute-reverse-p attribute))))
+    (when (and limit-width (< limit-width width))
+      (let ((index (lem:wide-index text limit-width)))
+        (setf text (subseq text 0 index)
+              width limit-width)))
     (let ((background-color (if reverse
                                 (attribute-foreground-color attribute)
                                 (attribute-background-color attribute)))
@@ -337,7 +341,8 @@
   (render-fill-text string
                     (+ (view-x view) x)
                     (+ (view-y view) (view-height view) y)
-                    :attribute attribute))
+                    :attribute attribute
+                    :limit-width (- (view-width view) x)))
 
 (defmethod draw-window-border ((window lem:floating-window))
   (when (and (lem:floating-window-border window)

@@ -201,37 +201,49 @@
     (set-render-color *display* color)
     (sdl2:render-fill-rect (display-renderer *display*) rect)))
 
-(defun render-border (x y w h)
-  (sdl2:with-rects ((up-rect (- (* x (char-width)) (floor (char-width) 2))
-                             (- (* y (char-height)) (floor (char-height) 2))
-                             (* (+ w 1) (char-width))
-                             (floor (char-height) 2))
-                    (left-rect (- (* x (char-width)) (floor (char-width) 2))
-                               (- (* y (char-height)) (floor (char-height) 2))
-                               (floor (char-width) 2)
-                               (* (+ h 1) (char-height)))
-                    (right-rect (* (+ x w) (char-width))
-                                (+ (* (1- y) (char-height)) (floor (char-height) 2))
-                                (floor (char-width) 2)
-                                (* (+ h 1) (char-height)))
-                    (down-rect (- (* x (char-width)) (floor (char-width) 2))
-                               (* (+ y h) (char-height))
+(defun render-border (x y w h &key without-topline)
+  (let* ((x1 (- (* x (char-width)) (floor (char-width) 2)))
+         (y1 (- (* y (char-height)) (floor (char-height) 2)))
+         (x2 (1- (+ x1 (* (+ w 1) (char-width)))))
+         (y2 (+ y1 (* (+ h 1) (char-height)))))
+    (sdl2:with-rects ((up-rect x1
+                               y1
                                (* (+ w 1) (char-width))
                                (floor (char-height) 2))
+                      (left-rect x1
+                                 y1
+                                 (floor (char-width) 2)
+                                 (* (+ h 1) (char-height)))
+                      (right-rect (* (+ x w) (char-width))
+                                  y1
+                                  (floor (char-width) 2)
+                                  (* (+ h 1) (char-height)))
+                      (down-rect x1
+                                 (* (+ y h) (char-height))
+                                 (* (+ w 1) (char-width))
+                                 (floor (char-height) 2)))
 
-                    (border-rect (- (* x (char-width)) (floor (char-width) 2))
-                                 (- (* y (char-height)) (floor (char-height) 2))
-                                 (* (+ 1 w) (char-width))
-                                 (* (+ 1 h) (char-height))))
+      (set-render-color *display* (display-background-color *display*))
+      (sdl2:render-fill-rect (display-renderer *display*) up-rect)
+      (sdl2:render-fill-rect (display-renderer *display*) down-rect)
+      (sdl2:render-fill-rect (display-renderer *display*) left-rect)
+      (sdl2:render-fill-rect (display-renderer *display*) right-rect)
 
-    (set-render-color *display* (display-background-color *display*))
-    (sdl2:render-fill-rect (display-renderer *display*) up-rect)
-    (sdl2:render-fill-rect (display-renderer *display*) down-rect)
-    (sdl2:render-fill-rect (display-renderer *display*) left-rect)
-    (sdl2:render-fill-rect (display-renderer *display*) right-rect)
-
-    (set-render-color *display* (display-foreground-color *display*))
-    (sdl2:render-draw-rect (display-renderer *display*) border-rect)))
+      (set-render-color *display* (display-foreground-color *display*))
+      (if without-topline
+          (sdl2:with-points ((upleft x1 y1)
+                             (downleft x1 y2)
+                             (downright x2 y2)
+                             (upright x2 y1))
+            (let ((points (sdl2:points* upleft downleft downright upright)))
+              (sdl2:render-draw-lines (display-renderer *display*)
+                                      points
+                                      4)))
+          (sdl2:with-rects ((border-rect x1
+                                         y1
+                                         (* (+ 1 w) (char-width))
+                                         (* (+ 1 h) (char-height))))
+            (sdl2:render-draw-rect (display-renderer *display*) border-rect))))))
 
 (defun render-margin-line (x y height)
   (let ((attribute (lem:ensure-attribute 'lem:modeline-inactive)))
@@ -350,7 +362,8 @@
     (render-border (lem:window-x window)
                    (lem:window-y window)
                    (lem:window-width window)
-                   (lem:window-height window))))
+                   (lem:window-height window)
+                   :without-topline (eq :drop-curtain (lem:floating-window-border-shape window)))))
 
 (defmethod draw-window-border ((window lem:window))
   (when (< 0 (lem:window-x window))

@@ -129,6 +129,15 @@
            (lem:parse-color (lem:attribute-background attribute)))
       (display-background-color *display*)))
 
+(defun render-fill-rect (x y width height &key color)
+  (let ((x (* x (char-width)))
+        (y (* y (char-height)))
+        (width (* width (char-width)))
+        (height (* height (char-height))))
+    (sdl2:with-rects ((rect x y width height))
+      (set-render-color *display* color)
+      (sdl2:render-fill-rect (current-renderer) rect))))
+
 (defun render-line (x1 y1 x2 y2 &key color)
   (set-render-color  *display* color)
   (sdl2:render-draw-line (current-renderer) x1 y1 x2 y2))
@@ -187,15 +196,6 @@
                      (* (+ x width) (char-width))
                      (- (* (1+ y) (char-height)) 1)
                      :color foreground-color)))))
-
-(defun render-fill-rect (x y width height &key color)
-  (let ((x (* x (char-width)))
-        (y (* y (char-height)))
-        (width (* width (char-width)))
-        (height (* height (char-height))))
-    (sdl2:with-rects ((rect x y width height))
-      (set-render-color *display* color)
-      (sdl2:render-fill-rect (current-renderer) rect))))
 
 (defun render-fill-rect-by-pixels (x y width height &key color)
   (sdl2:with-rects ((rect x y width height))

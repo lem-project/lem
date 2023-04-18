@@ -299,7 +299,7 @@
 (defclass view ()
   ((window
     :initarg :window
-    :accessor view-window)
+    :reader view-window)
    (x
     :initarg :x
     :accessor view-x)
@@ -314,7 +314,7 @@
     :accessor view-height)
    (use-modeline
     :initarg :use-modeline
-    :accessor view-use-modeline)))
+    :reader view-use-modeline)))
 
 (defun create-view (window x y width height use-modeline)
   (make-instance 'view

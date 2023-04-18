@@ -85,6 +85,7 @@
 
 (defun char-width () (display-char-width *display*))
 (defun char-height () (display-char-height *display*))
+(defun current-renderer () (display-renderer *display*))
 
 (defun call-with-renderer (function)
   (bt:with-lock-held ((display-mutex *display*))
@@ -130,7 +131,7 @@
 
 (defun render-line (x1 y1 x2 y2 &key color)
   (set-render-color  *display* color)
-  (sdl2:render-draw-line (display-renderer *display*) x1 y1 x2 y2))
+  (sdl2:render-draw-line (current-renderer) x1 y1 x2 y2))
 
 (defun render-texture (renderer texture x y width height)
   (sdl2:with-rects ((dest-rect x y width height))
@@ -153,8 +154,8 @@
                                                   0))
            (text-width (sdl2:surface-width surface))
            (text-height (sdl2:surface-height surface))
-           (texture (sdl2:create-texture-from-surface (display-renderer *display*) surface)))
-      (render-texture (display-renderer *display*) texture x y text-width text-height)
+           (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
+      (render-texture (current-renderer) texture x y text-width text-height)
       (sdl2:destroy-texture texture)
       (if latin-p 1 2))))
 
@@ -194,12 +195,12 @@
         (height (* height (char-height))))
     (sdl2:with-rects ((rect x y width height))
       (set-render-color *display* color)
-      (sdl2:render-fill-rect (display-renderer *display*) rect))))
+      (sdl2:render-fill-rect (current-renderer) rect))))
 
 (defun render-fill-rect-by-pixels (x y width height &key color)
   (sdl2:with-rects ((rect x y width height))
     (set-render-color *display* color)
-    (sdl2:render-fill-rect (display-renderer *display*) rect)))
+    (sdl2:render-fill-rect (current-renderer) rect)))
 
 (defun render-border (x y w h &key without-topline)
   (let* ((x1 (- (* x (char-width)) (floor (char-width) 2)))
@@ -224,10 +225,10 @@
                                  (floor (char-height) 2)))
 
       (set-render-color *display* (display-background-color *display*))
-      (sdl2:render-fill-rect (display-renderer *display*) up-rect)
-      (sdl2:render-fill-rect (display-renderer *display*) down-rect)
-      (sdl2:render-fill-rect (display-renderer *display*) left-rect)
-      (sdl2:render-fill-rect (display-renderer *display*) right-rect)
+      (sdl2:render-fill-rect (current-renderer) up-rect)
+      (sdl2:render-fill-rect (current-renderer) down-rect)
+      (sdl2:render-fill-rect (current-renderer) left-rect)
+      (sdl2:render-fill-rect (current-renderer) right-rect)
 
       (set-render-color *display* (display-foreground-color *display*))
       (if without-topline
@@ -236,14 +237,14 @@
                              (downright x2 y2)
                              (upright x2 y1))
             (let ((points (sdl2:points* upleft downleft downright upright)))
-              (sdl2:render-draw-lines (display-renderer *display*)
+              (sdl2:render-draw-lines (current-renderer)
                                       points
                                       4)))
           (sdl2:with-rects ((border-rect x1
                                          y1
                                          (* (+ 1 w) (char-width))
                                          (* (+ 1 h) (char-height))))
-            (sdl2:render-draw-rect (display-renderer *display*) border-rect))))))
+            (sdl2:render-draw-rect (current-renderer) border-rect))))))
 
 (defun render-margin-line (x y height)
   (let ((attribute (lem:ensure-attribute 'lem:modeline-inactive)))
@@ -269,9 +270,9 @@
                           (display-height display)))))
 
 (defun notify-resize ()
-  (sdl2:set-render-target (display-renderer *display*) (display-texture *display*))
+  (sdl2:set-render-target (current-renderer) (display-texture *display*))
   (set-render-color *display* (display-background-color *display*))
-  (sdl2:render-clear (display-renderer *display*))
+  (sdl2:render-clear (current-renderer))
   (lem:send-event :resize))
 
 (defun change-font (font-config)
@@ -603,13 +604,13 @@
 (defmethod lem-if::will-update-display ((implementation sdl2))
   (with-debug ("will-update-display")
     (with-renderer ()
-      (sdl2:set-render-target (display-renderer *display*) (display-texture *display*)))))
+      (sdl2:set-render-target (current-renderer) (display-texture *display*)))))
 
 (defmethod lem-if:update-display ((implementation sdl2))
   (with-debug ("lem-if:update-display")
     (with-renderer ()
-      (sdl2:set-render-target (display-renderer *display*) nil)
-      (sdl2:render-copy (display-renderer *display*) (display-texture *display*))
+      (sdl2:set-render-target (current-renderer) nil)
+      (sdl2:render-copy (current-renderer) (display-texture *display*))
       (update-display *display*))))
 
 (defmethod lem-if:scroll ((implementation sdl2) view n)

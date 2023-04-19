@@ -7,4 +7,5 @@
   :serial t
   :components ((:file "key")
                (:file "font")
+               (:file "icon")
                (:file "main")))

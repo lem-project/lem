@@ -1,7 +1,8 @@
 (defpackage :lem-sdl2
   (:use :cl
         :lem-sdl2/key
-        :lem-sdl2/font)
+        :lem-sdl2/font
+        :lem-sdl2/icon)
   (:export :change-font))
 (in-package :lem-sdl2)
 
@@ -500,12 +501,6 @@
        (update-texture *display*)
        (notify-resize)))
     (:idle ())))
-
-(defun init-application-icon (window)
-  (let ((image (sdl2-image:load-image
-                (asdf:system-relative-pathname :lem-sdl2 "resources/icon.png"))))
-    (sdl2-ffi.functions:sdl-set-window-icon window image)
-    (sdl2:free-surface image)))
 
 (defun create-display (function)
   (sdl2:with-init (:video)

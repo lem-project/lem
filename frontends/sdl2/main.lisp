@@ -501,40 +501,51 @@
        (notify-resize)))
     (:idle ())))
 
+(defun init-application-icon (window)
+  (let ((image (sdl2-image:load-image
+                (asdf:system-relative-pathname :lem-sdl2 "resources/icon.png"))))
+    (sdl2-ffi.functions:sdl-set-window-icon window image)
+    (sdl2:free-surface image)))
+
 (defun create-display (function)
   (sdl2:with-init (:video)
     (sdl2-ttf:init)
-    (let ((font-config (make-font-config)))
-      (multiple-value-bind (latin-font
-                            latin-bold-font
-                            unicode-font
-                            unicode-bold-font)
-          (open-font font-config)
-        (destructuring-bind (char-width char-height) (get-character-size latin-font)
-          (let ((window-width (* +display-width+ char-width))
-                (window-height (* +display-height+ char-height)))
-            (sdl2:with-window (window :title "Lem"
-                                      :w window-width
-                                      :h window-height
-                                      :flags '(:shown :resizable))
-              (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
-                (let ((texture (create-texture renderer
-                                               window-width
-                                               window-height)))
-                  (with-bindings ((*display* (make-instance 'display
-                                                            :font-config font-config
-                                                            :latin-font latin-font
-                                                            :latin-bold-font latin-bold-font
-                                                            :unicode-font unicode-font
-                                                            :unicode-bold-font unicode-bold-font
-                                                            :renderer renderer
-                                                            :window window
-                                                            :texture texture
-                                                            :char-width char-width
-                                                            :char-height char-height)))
-                    (sdl2:start-text-input)
-                    (funcall function)
-                    (event-loop)))))))))))
+    (sdl2-image:init '(:png))
+    (unwind-protect
+         (let ((font-config (make-font-config)))
+           (multiple-value-bind (latin-font
+                                 latin-bold-font
+                                 unicode-font
+                                 unicode-bold-font)
+               (open-font font-config)
+             (destructuring-bind (char-width char-height) (get-character-size latin-font)
+               (let ((window-width (* +display-width+ char-width))
+                     (window-height (* +display-height+ char-height)))
+                 (sdl2:with-window (window :title "Lem"
+                                           :w window-width
+                                           :h window-height
+                                           :flags '(:shown :resizable))
+                   (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
+                     (let ((texture (create-texture renderer
+                                                    window-width
+                                                    window-height)))
+                       (with-bindings ((*display* (make-instance 'display
+                                                                 :font-config font-config
+                                                                 :latin-font latin-font
+                                                                 :latin-bold-font latin-bold-font
+                                                                 :unicode-font unicode-font
+                                                                 :unicode-bold-font unicode-bold-font
+                                                                 :renderer renderer
+                                                                 :window window
+                                                                 :texture texture
+                                                                 :char-width char-width
+                                                                 :char-height char-height)))
+                         (init-application-icon window)
+                         (sdl2:start-text-input)
+                         (funcall function)
+                         (event-loop)))))))))
+      (sdl2-ttf:quit)
+      (sdl2-image:quit))))
 
 (defmethod lem-if:invoke ((implementation sdl2) function)
   (create-display (lambda ()

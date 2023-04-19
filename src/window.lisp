@@ -1227,10 +1227,11 @@ window width is changed, we must recalc the window view point."
                (lem-if:will-update-display (implementation))
                (redraw-header-windows force)
                (redraw-window-list
-                (or (frame-require-redisplay-windows (current-frame))
-                    (and (redraw-after-modifying-floating-window (implementation))
-                         ;; floating-windowが変更されたら、その下のウィンドウは再描画する必要がある
-                         (frame-modified-floating-windows (current-frame)))
+                (if (redraw-after-modifying-floating-window (implementation))
+                    (or (frame-require-redisplay-windows (current-frame))
+                        ;; floating-windowが変更されたら、その下のウィンドウは再描画する必要がある
+                        (frame-modified-floating-windows (current-frame))
+                        force)
                     force))
                (redraw-floating-windows)
                (lem-if:update-display (implementation))))

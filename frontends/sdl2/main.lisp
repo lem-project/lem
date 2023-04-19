@@ -48,8 +48,8 @@
   ()
   (:default-initargs
    :name :sdl2
-   :native-scroll-support nil
-   :redraw-after-modifying-floating-window t))
+   :native-scroll-support nil ; TODO: t
+   :redraw-after-modifying-floating-window nil))
 
 (defvar *display*)
 

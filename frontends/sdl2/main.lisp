@@ -129,7 +129,7 @@
            (lem:parse-color (lem:attribute-background attribute)))
       (display-background-color *display*)))
 
-(defun render-fill-rect (x y width height &key color)
+(defun render-fill-rect-to-current-texture (x y width height &key color)
   (let ((x (* x (char-width)))
         (y (* y (char-height)))
         (width (* width (char-width)))
@@ -138,64 +138,67 @@
       (set-render-color *display* color)
       (sdl2:render-fill-rect (current-renderer) rect))))
 
-(defun render-line (x1 y1 x2 y2 &key color)
-  (set-render-color  *display* color)
-  (sdl2:render-draw-line (current-renderer) x1 y1 x2 y2))
+(defun render-fill-rect (texture x y width height
+                         &key (color (alexandria:required-argument :color)))
+  (sdl2:set-render-target (current-renderer) texture)
+  (render-fill-rect-to-current-texture x y width height :color color))
 
-(defun render-texture (renderer texture x y width height)
-  (sdl2:with-rects ((dest-rect x y width height))
-    (sdl2:render-copy-ex renderer
-                         texture
-                         :source-rect nil
-                         :dest-rect dest-rect
-                         :flip (list :none))))
+(progn
+  (defun render-line (x1 y1 x2 y2 &key color)
+    (set-render-color  *display* color)
+    (sdl2:render-draw-line (current-renderer) x1 y1 x2 y2))
 
-(defun render-character (character x y &key color bold)
-  (cffi:with-foreign-string (c-string (string character))
-    (let* ((x (* x (char-width)))
-           (y (* y (char-height)))
-           (latin-p (<= (char-code character) 128))
-           (surface (sdl2-ttf:render-utf8-blended (display-font *display* :latin latin-p :bold bold)
-                                                  c-string
-                                                  (lem:color-red color)
-                                                  (lem:color-green color)
-                                                  (lem:color-blue color)
-                                                  0))
-           (text-width (sdl2:surface-width surface))
-           (text-height (sdl2:surface-height surface))
-           (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
-      (render-texture (current-renderer) texture x y text-width text-height)
-      (sdl2:destroy-texture texture)
-      (if latin-p 1 2))))
+  (defun render-texture (renderer texture x y width height)
+    (sdl2:with-rects ((dest-rect x y width height))
+      (sdl2:render-copy-ex renderer
+                           texture
+                           :source-rect nil
+                           :dest-rect dest-rect
+                           :flip (list :none))))
 
-(defun render-text (text x y &key color bold)
-  (loop :for c :across text
-        :do (let ((offset (render-character c x y :color color :bold bold)))
-              (incf x offset))))
+  (defun render-character (character x y &key color bold)
+    (cffi:with-foreign-string (c-string (string character))
+      (let* ((x (* x (char-width)))
+             (y (* y (char-height)))
+             (latin-p (<= (char-code character) 128))
+             (surface (sdl2-ttf:render-utf8-blended (display-font *display* :latin latin-p :bold bold)
+                                                    c-string
+                                                    (lem:color-red color)
+                                                    (lem:color-green color)
+                                                    (lem:color-blue color)
+                                                    0))
+             (text-width (sdl2:surface-width surface))
+             (text-height (sdl2:surface-height surface))
+             (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
+        (render-texture (current-renderer) texture x y text-width text-height)
+        (sdl2:destroy-texture texture)
+        (if latin-p 1 2))))
 
-(defun render-fill-text (text x y &key attribute limit-width)
-  (let ((width (lem:string-width text))
-        (underline (and attribute (lem:attribute-underline-p attribute)))
-        (bold (and attribute (lem:attribute-bold-p attribute)))
-        (reverse (and attribute (lem:attribute-reverse-p attribute))))
-    (when (and limit-width (< limit-width width))
-      (let ((index (lem:wide-index text limit-width)))
-        (setf text (subseq text 0 index)
-              width limit-width)))
-    (let ((background-color (if reverse
-                                (attribute-foreground-color attribute)
-                                (attribute-background-color attribute)))
-          (foreground-color (if reverse
-                                (attribute-background-color attribute)
-                                (attribute-foreground-color attribute))))
-      (render-fill-rect x y width 1 :color background-color)
-      (render-text text x y :color foreground-color :bold bold)
-      (when underline
-        (render-line (* x (char-width))
-                     (- (* (1+ y) (char-height)) 1)
-                     (* (+ x width) (char-width))
-                     (- (* (1+ y) (char-height)) 1)
-                     :color foreground-color)))))
+  (defun render-text (text x y &key color bold)
+    (loop :for c :across text
+          :do (let ((offset (render-character c x y :color color :bold bold)))
+                (incf x offset))))
+
+  (defun render-fill-text (texture text x y &key attribute)
+    (sdl2:set-render-target (current-renderer) texture)
+    (let ((width (lem:string-width text))
+          (underline (and attribute (lem:attribute-underline-p attribute)))
+          (bold (and attribute (lem:attribute-bold-p attribute)))
+          (reverse (and attribute (lem:attribute-reverse-p attribute))))
+      (let ((background-color (if reverse
+                                  (attribute-foreground-color attribute)
+                                  (attribute-background-color attribute)))
+            (foreground-color (if reverse
+                                  (attribute-background-color attribute)
+                                  (attribute-foreground-color attribute))))
+        (render-fill-rect-to-current-texture x y width 1 :color background-color)
+        (render-text text x y :color foreground-color :bold bold)
+        (when underline
+          (render-line (* x (char-width))
+                       (- (* (1+ y) (char-height)) 1)
+                       (* (+ x width) (char-width))
+                       (- (* (1+ y) (char-height)) 1)
+                       :color foreground-color))))))
 
 (defun render-fill-rect-by-pixels (x y width height &key color)
   (sdl2:with-rects ((rect x y width height))
@@ -248,7 +251,7 @@
 
 (defun render-margin-line (x y height)
   (let ((attribute (lem:ensure-attribute 'lem:modeline-inactive)))
-    (render-fill-rect (1- x)
+    (render-fill-rect-to-current-texture (1- x)
                       y
                       1
                       height
@@ -297,6 +300,11 @@
                 (display-unicode-bold-font display) unicode-bold-font))))
     (notify-resize)))
 
+(defun create-view-texture (width height)
+  (create-texture (current-renderer)
+                  (* width (char-width))
+                  (* height (char-height))))
+
 (defclass view ()
   ((window
     :initarg :window
@@ -315,79 +323,91 @@
     :accessor view-height)
    (use-modeline
     :initarg :use-modeline
-    :reader view-use-modeline)))
+    :reader view-use-modeline)
+   (texture
+    :initarg :texture
+    :accessor view-texture)))
 
 (defun create-view (window x y width height use-modeline)
+  (when use-modeline (incf height))
   (make-instance 'view
                  :window window
                  :x x
                  :y y
                  :width width
                  :height height
-                 :use-modeline use-modeline))
+                 :use-modeline use-modeline
+                 :texture (create-view-texture width height)))
 
 (defmethod delete-view ((view view))
-  nil)
+  (sdl2:destroy-texture (view-texture view)))
 
 (defmethod render-clear ((view view))
-  (render-fill-rect (view-x view)
-                    (view-y view)
-                    (view-width view)
-                    (view-height view)
-                    :color (display-background-color *display*)))
+  (sdl2:set-render-target (current-renderer) (view-texture view))
+  (set-render-color *display* (display-background-color *display*))
+  (sdl2:render-clear (current-renderer)))
 
 (defmethod resize ((view view) width height)
+  (when (view-use-modeline view) (incf height))
   (setf (view-width view) width
-        (view-height view) height))
+        (view-height view) height)
+  (sdl2:destroy-texture (view-texture view))
+  (setf (view-texture view)
+        (create-view-texture width height)))
 
 (defmethod move-position ((view view) x y)
   (setf (view-x view) x
         (view-y view) y))
 
 (defmethod render-text-using-view ((view view) x y string attribute)
-  (render-fill-text string
-                    (+ (view-x view) x)
-                    (+ (view-y view) y)
+  (render-fill-text (view-texture view)
+                    string
+                    x
+                    y
                     :attribute attribute))
 
 (defmethod render-text-to-modeline-using-view ((view view) x y string attribute)
-  (render-fill-text string
-                    (+ (view-x view) x)
-                    (+ (view-y view) (view-height view) y)
-                    :attribute attribute
-                    :limit-width (- (view-width view) x)))
+  (render-fill-text (view-texture view)
+                    string
+                    x
+                    (+ (view-height view) y -1)
+                    :attribute attribute))
 
-(defmethod draw-window-border ((window lem:floating-window))
+(defmethod draw-window-border (view (window lem:floating-window))
   (when (and (lem:floating-window-border window)
              (< 0 (lem:floating-window-border window)))
+    (sdl2:set-render-target (current-renderer) (display-texture *display*))
     (render-border (lem:window-x window)
                    (lem:window-y window)
                    (lem:window-width window)
                    (lem:window-height window)
                    :without-topline (eq :drop-curtain (lem:floating-window-border-shape window)))))
 
-(defmethod draw-window-border ((window lem:window))
+(defmethod draw-window-border (view (window lem:window))
   (when (< 0 (lem:window-x window))
+    (sdl2:set-render-target (current-renderer) (display-texture *display*))
     (render-margin-line (lem:window-x window)
                         (lem:window-y window)
                         (lem:window-height window))))
 
 (defmethod render-border-using-view ((view view))
-  (draw-window-border (view-window view)))
+  (draw-window-border view (view-window view)))
 
 (defmethod clear-eol ((view view) x y)
-  (render-fill-rect (+ (view-x view) x)
-                    (+ (view-y view) y)
+  (render-fill-rect (view-texture view)
+                    x
+                    y
                     (- (view-width view) x)
                     1
                     :color (display-background-color *display*)))
 
 (defmethod clear-eob ((view view) x y)
   (clear-eol view x y)
-  (render-fill-rect (view-x view)
-                    (+ (view-y view) y 1)
+  (render-fill-rect (view-texture view)
+                    0
+                    (+ y 1)
                     (view-width view)
-                    (- (view-height view) y 1)
+                    (- (view-height view) y 2)
                     :color (display-background-color *display*)))
 
 (defvar *modifier* (make-modifier))
@@ -599,6 +619,19 @@
 (defmethod lem-if:redraw-view-after ((implementation sdl2) view)
   (with-debug ("lem-if:redraw-view-after" view)
     (with-renderer ()
+      (sdl2:set-render-target (current-renderer) (display-texture *display*))
+      (sdl2:with-rects ((dest-rect (* (view-x view) (char-width))
+                                   (* (view-y view) (char-height))
+                                   (* (view-width view) (char-width))
+                                   (* (view-height view) (char-height)))
+                        (src-rect 0
+                                  0
+                                  (* (view-width view) (char-width))
+                                  (* (view-height view) (char-height))))
+        (sdl2:render-copy (current-renderer)
+                          (view-texture view)
+                          :dest-rect dest-rect
+                          :source-rect src-rect))
       (render-border-using-view view))))
 
 (defmethod lem-if::will-update-display ((implementation sdl2))

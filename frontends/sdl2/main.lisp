@@ -1,3 +1,4 @@
+
 (defpackage :lem-sdl2
   (:use :cl
         :lem-sdl2/key
@@ -144,62 +145,64 @@
   (sdl2:set-render-target (current-renderer) texture)
   (render-fill-rect-to-current-texture x y width height :color color))
 
-(progn
-  (defun render-line (x1 y1 x2 y2 &key color)
-    (set-render-color  *display* color)
-    (sdl2:render-draw-line (current-renderer) x1 y1 x2 y2))
+(defun render-line (x1 y1 x2 y2 &key color)
+  (set-render-color *display* color)
+  (sdl2:render-draw-line (current-renderer) x1 y1 x2 y2))
 
-  (defun render-texture (renderer texture x y width height)
-    (sdl2:with-rects ((dest-rect x y width height))
-      (sdl2:render-copy-ex renderer
-                           texture
-                           :source-rect nil
-                           :dest-rect dest-rect
-                           :flip (list :none))))
+(defun render-texture (renderer texture x y width height)
+  (sdl2:with-rects ((dest-rect x y width height))
+    (sdl2:render-copy-ex renderer
+                         texture
+                         :source-rect nil
+                         :dest-rect dest-rect
+                         :flip (list :none))))
 
-  (defun render-character (character x y &key color bold)
-    (cffi:with-foreign-string (c-string (string character))
-      (let* ((x (* x (char-width)))
-             (y (* y (char-height)))
-             (latin-p (<= (char-code character) 128))
-             (surface (sdl2-ttf:render-utf8-blended (display-font *display* :latin latin-p :bold bold)
-                                                    c-string
-                                                    (lem:color-red color)
-                                                    (lem:color-green color)
-                                                    (lem:color-blue color)
-                                                    0))
-             (text-width (sdl2:surface-width surface))
-             (text-height (sdl2:surface-height surface))
-             (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
-        (render-texture (current-renderer) texture x y text-width text-height)
-        (sdl2:destroy-texture texture)
-        (if latin-p 1 2))))
+(defun render-character (character x y &key color bold)
+  (cffi:with-foreign-string (c-string (string character))
+    (let* ((x (* x (char-width)))
+           (y (* y (char-height)))
+           (latin-p (<= (char-code character) 128))
+           (surface (sdl2-ttf:render-utf8-blended (display-font *display* :latin latin-p :bold bold)
+                                                  c-string
+                                                  (lem:color-red color)
+                                                  (lem:color-green color)
+                                                  (lem:color-blue color)
+                                                  0))
+           (text-width (sdl2:surface-width surface))
+           (text-height (sdl2:surface-height surface))
+           (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
+      (render-texture (current-renderer) texture x y text-width text-height)
+      (sdl2:destroy-texture texture)
+      (if latin-p 1 2))))
 
-  (defun render-text (text x y &key color bold)
-    (loop :for c :across text
-          :do (let ((offset (render-character c x y :color color :bold bold)))
-                (incf x offset))))
+(defun render-text (text x y &key color bold)
+  (loop :for c :across text
+        :do (let ((offset (render-character c x y :color color :bold bold)))
+              (incf x offset))))
 
-  (defun render-fill-text (texture text x y &key attribute)
-    (sdl2:set-render-target (current-renderer) texture)
-    (let ((width (lem:string-width text))
-          (underline (and attribute (lem:attribute-underline-p attribute)))
-          (bold (and attribute (lem:attribute-bold-p attribute)))
-          (reverse (and attribute (lem:attribute-reverse-p attribute))))
-      (let ((background-color (if reverse
-                                  (attribute-foreground-color attribute)
-                                  (attribute-background-color attribute)))
-            (foreground-color (if reverse
-                                  (attribute-background-color attribute)
-                                  (attribute-foreground-color attribute))))
-        (render-fill-rect-to-current-texture x y width 1 :color background-color)
-        (render-text text x y :color foreground-color :bold bold)
-        (when underline
-          (render-line (* x (char-width))
-                       (- (* (1+ y) (char-height)) 1)
-                       (* (+ x width) (char-width))
-                       (- (* (1+ y) (char-height)) 1)
-                       :color foreground-color))))))
+(defun render-underline (x y width &key color)
+  (render-line (* x (char-width))
+               (- (* (1+ y) (char-height)) 1)
+               (* (+ x width) (char-width))
+               (- (* (1+ y) (char-height)) 1)
+               :color color))
+
+(defun render-fill-text (texture text x y &key attribute)
+  (sdl2:set-render-target (current-renderer) texture)
+  (let ((width (lem:string-width text))
+        (underline (and attribute (lem:attribute-underline-p attribute)))
+        (bold (and attribute (lem:attribute-bold-p attribute)))
+        (reverse (and attribute (lem:attribute-reverse-p attribute))))
+    (let ((background-color (if reverse
+                                (attribute-foreground-color attribute)
+                                (attribute-background-color attribute)))
+          (foreground-color (if reverse
+                                (attribute-background-color attribute)
+                                (attribute-foreground-color attribute))))
+      (render-fill-rect-to-current-texture x y width 1 :color background-color)
+      (render-text text x y :color foreground-color :bold bold)
+      (when underline
+        (render-underline x y width :color foreground-color)))))
 
 (defun render-fill-rect-by-pixels (x y width height &key color)
   (sdl2:with-rects ((rect x y width height))

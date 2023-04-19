@@ -340,7 +340,9 @@
                  :texture (create-view-texture width height)))
 
 (defmethod delete-view ((view view))
-  (sdl2:destroy-texture (view-texture view)))
+  (when (view-texture view)
+    (sdl2:destroy-texture (view-texture view))
+    (setf (view-texture view) nil)))
 
 (defmethod render-clear ((view view))
   (sdl2:set-render-target (current-renderer) (view-texture view))

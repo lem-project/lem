@@ -35,12 +35,13 @@
      :index num-contents)))
 
 (defun save-file (history)
-  (ensure-directories-exist (history-pathname history))
-  (with-open-file (stream (history-pathname history)
-                          :direction :output
-                          :if-exists :supersede
-                          :if-does-not-exist :create)
-    (print (coerce (history-data history) 'list) stream)))
+  (when (history-pathname history)
+    (ensure-directories-exist (history-pathname history))
+    (with-open-file (stream (history-pathname history)
+                            :direction :output
+                            :if-exists :supersede
+                            :if-does-not-exist :create)
+      (print (coerce (history-data history) 'list) stream))))
 
 (defun last-history (history)
   (when (< 0 (length (history-data history)))

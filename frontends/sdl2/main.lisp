@@ -434,7 +434,7 @@
               (unless converted
                 (lem:send-event
                  (make-key-with-modifier *modifier*
-                                         (or sym (string c))))))))
+                                         sym))))))
 
 (defun on-mouse-button-down (button x y)
   (sdl2:show-cursor)

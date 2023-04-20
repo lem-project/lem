@@ -1,4 +1,3 @@
-
 (defpackage :lem-sdl2
   (:use :cl
         :lem-sdl2/key
@@ -500,6 +499,9 @@
     (:mousewheel (:x x :y y :which which :direction direction)
      (on-mouse-wheel x y which direction))
     (:windowevent (:event event)
+     (when (or (equal event sdl2-ffi:+sdl-windowevent-shown+)
+               (equal event sdl2-ffi:+sdl-windowevent-exposed+))
+       (lem:send-event (lambda () (lem:redraw-display))))
      (when (equal event sdl2-ffi:+sdl-windowevent-resized+)
        (update-texture *display*)
        (notify-resize)))

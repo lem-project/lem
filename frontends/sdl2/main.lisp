@@ -429,12 +429,9 @@
 (defun on-text-input (text)
   (sdl2:hide-cursor)
   (loop :for c :across text
-        :do (multiple-value-bind (sym converted)
-                (convert-to-sym c)
-              (unless converted
-                (lem:send-event
-                 (make-key-with-modifier *modifier*
-                                         sym))))))
+        :do (let ((sym (string c)))
+              (lem:send-event
+               (make-key-with-modifier *modifier* sym)))))
 
 (defun on-mouse-button-down (button x y)
   (sdl2:show-cursor)

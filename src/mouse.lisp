@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(defvar *scroll-speed* 3)
+
 (define-editor-variable mouse-button-down-functions '())
 (define-editor-variable mouse-button-up-functions '())
 
@@ -64,7 +66,7 @@
   (let ((window (focus-window-position (current-frame) x y)))
     (when window
       (with-current-window window
-        (scroll-up wheel-y)))))
+        (scroll-up (* wheel-y *scroll-speed*))))))
 
 
 (defun select-expression-at-current-point ()

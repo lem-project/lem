@@ -487,7 +487,7 @@
      t)
     (:textinput (:text text)
      (on-text-input text))
-    (:textediting (:text text :start start :length length)
+    (:textediting (:text text)
      (setf (display-textediting-text *display*) text)
      (lem:send-event #'lem:redraw-display))
     (:keydown (:keysym keysym)

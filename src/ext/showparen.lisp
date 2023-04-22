@@ -70,4 +70,3 @@
   (toggle-show-paren))
 
 (add-hook (variable-value 'mouse-button-down-functions :global) 'update-show-paren)
-(add-hook (variable-value 'mouse-button-up-functions :global) 'update-show-paren)

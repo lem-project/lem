@@ -445,9 +445,7 @@
       (let ((x (floor x (char-width)))
             (y (floor y (char-height))))
         (lem:send-event (lambda ()
-                          (if (= 1 clicks)
-                              (lem::handle-mouse-button-down x y button)
-                              (lem::handle-mouse-click-repeatedly x y button clicks))
+                          (lem::handle-mouse-button-down x y button clicks)
                           (lem:redraw-display)))))))
 
 (defun on-mouse-button-up (button x y)

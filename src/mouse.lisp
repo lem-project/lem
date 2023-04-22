@@ -25,6 +25,23 @@
          (buffer-mark-cancel (current-buffer))
          (run-hooks (variable-value 'mouse-button-down-functions)))))))
 
+(defun handle-mouse-click-repeatedly (x y button clicks)
+  (check-type button mouse-button)
+  (case button
+    (:button-1
+     (cond ((= clicks 2)
+            (multiple-value-bind (window x y)
+                (focus-window-position (current-frame) x y)
+              (when window
+                (move-to-x-y-position window x y)
+                (select-expression-at-current-point))))
+           ((= clicks 3)
+            (multiple-value-bind (window x y)
+                (focus-window-position (current-frame) x y)
+              (when window
+                (move-to-x-y-position window x y)
+                (select-form-at-current-point))))))))
+
 (defun handle-mouse-button-up (x y button)
   (declare (ignore button))
   (let ((window (focus-window-position (current-frame) x y)))
@@ -48,3 +65,35 @@
     (when window
       (with-current-window window
         (scroll-up wheel-y)))))
+
+
+(defun select-expression-at-current-point ()
+  (cond ((syntax-open-paren-char-p (character-at (current-point)))
+         (with-point ((start (current-point))
+                      (end (current-point)))
+           (form-offset end 1)
+           (set-current-mark start)
+           (move-point (current-point) end)))
+        ((syntax-closed-paren-char-p (character-at (current-point) -1))
+         (with-point ((start (current-point))
+                      (end (current-point)))
+           (character-offset start 1)
+           (form-offset start -1)
+           (set-current-mark start)
+           (move-point (current-point) end)))
+        (t
+         (multiple-value-bind (start end)
+             (symbol-region-at-point (current-point))
+           (when start
+             (set-current-mark start)
+             (move-point (current-point) end))))))
+
+(defun select-form-at-current-point ()
+  (with-point ((start (current-point))
+               (end (current-point)))
+    (when (or (maybe-beginning-of-string start)
+              (scan-lists start -1 1 t))
+      (move-point end start)
+      (form-offset end 1)
+      (set-current-mark start)
+      (move-point (current-point) end))))

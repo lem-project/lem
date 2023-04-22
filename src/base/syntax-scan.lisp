@@ -422,12 +422,18 @@
   (with-point-syntax point
     (skip-chars-backward point #'syntax-symbol-char-p)))
 
-(defun symbol-string-at-point (point)
+(defun symbol-region-at-point (point)
   (with-point-syntax point
     (with-point ((point point))
       (skip-chars-backward point #'syntax-symbol-char-p)
       (unless (syntax-symbol-char-p (character-at point))
-        (return-from symbol-string-at-point nil))
+        (return-from symbol-region-at-point nil))
       (with-point ((start point))
         (skip-chars-forward point #'syntax-symbol-char-p)
-        (points-to-string start point)))))
+        (values start point)))))
+
+(defun symbol-string-at-point (point)
+  (multiple-value-bind (start end)
+      (symbol-region-at-point point)
+    (when start
+      (points-to-string start end))))

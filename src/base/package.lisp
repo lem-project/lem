@@ -235,6 +235,7 @@
    :skip-whitespace-backward
    :skip-symbol-forward
    :skip-symbol-backward
+   :symbol-region-at-point
    :symbol-string-at-point
    :make-pps-state
    :pps-state-type

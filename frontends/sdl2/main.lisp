@@ -433,7 +433,7 @@
               (lem:send-event
                (make-key-with-modifier *modifier* sym)))))
 
-(defun on-mouse-button-down (button x y)
+(defun on-mouse-button-down (button x y clicks)
   (sdl2:show-cursor)
   (let ((button
           (cond ((eql button sdl2-ffi:+sdl-button-left+) :button-1)
@@ -443,7 +443,9 @@
       (let ((x (floor x (char-width)))
             (y (floor y (char-height))))
         (lem:send-event (lambda ()
-                          (lem::handle-mouse-button-down x y button)
+                          (if (= 1 clicks)
+                              (lem::handle-mouse-button-down x y button)
+                              (lem::handle-mouse-click-repeatedly x y button clicks))
                           (lem:redraw-display)))))))
 
 (defun on-mouse-button-up (button x y)
@@ -487,8 +489,8 @@
      (on-key-down keysym))
     (:keyup (:keysym keysym)
      (on-key-up keysym))
-    (:mousebuttondown (:button button :x x :y y)
-     (on-mouse-button-down button x y))
+    (:mousebuttondown (:button button :x x :y y :clicks clicks)
+     (on-mouse-button-down button x y clicks))
     (:mousebuttonup (:button button :x x :y y)
      (on-mouse-button-up button x y))
     (:mousemotion (:x x :y y :state state)

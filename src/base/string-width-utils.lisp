@@ -46,7 +46,8 @@
 
 (defun wide-char-p (char)
   (declare (character char))
-  (eastasian-code-p (char-code char)))
+  (or (char= char #\▼)
+      (eastasian-code-p (char-code char))))
 
 (defun char-width (char width &key (tab-size +default-tab-size+))
   (declare (character char) (fixnum width))

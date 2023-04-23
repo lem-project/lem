@@ -57,14 +57,9 @@
           :reader display-mutex)
    (font-config :initarg :font-config
                 :accessor display-font-config)
-   (latin-font :initarg :latin-font
-               :accessor display-latin-font)
-   (latin-bold-font :initarg :latin-bold-font
-                    :accessor display-latin-bold-font)
-   (unicode-font :initarg :unicode-font
-                 :accessor display-unicode-font)
-   (unicode-bold-font :initarg :unicode-bold-font
-                      :accessor display-unicode-bold-font)
+   (font :initarg :font
+         :type font
+         :accessor display-font)
    (renderer :initarg :renderer
              :reader display-renderer)
    (texture :initarg :texture
@@ -82,6 +77,21 @@
    (textediting-text :initform ""
                      :accessor display-textediting-text)))
 
+(defmethod display-latin-font ((display display))
+  (font-latin-normal-font (display-font display)))
+
+(defmethod display-latin-bold-font ((display display))
+  (font-latin-bold-font (display-font display)))
+
+(defmethod display-cjk-normal-font ((display display))
+  (font-cjk-normal-font (display-font display)))
+
+(defmethod display-cjk-bold-font ((display display))
+  (font-cjk-bold-font (display-font display)))
+
+(defmethod display-emoji-font ((display display))
+  (font-emoji-font (display-font display)))
+
 (defmethod display-background-color ((display display))
   (or (lem:parse-color lem-if:*background-color-of-drawing-window*)
       (slot-value display 'background-color)))
@@ -97,14 +107,17 @@
 (defmacro with-renderer (() &body body)
   `(call-with-renderer (lambda () ,@body)))
 
-(defmethod display-font ((display display) &key latin bold)
-  (if bold
-      (if latin
-          (display-latin-bold-font display)
-          (display-unicode-bold-font display))
-      (if latin
-          (display-latin-font display)
-          (display-unicode-font display))))
+(defmethod get-display-font ((display display) &key type bold)
+  (check-type type (member :latin :cjk :emoji))
+  (if (eq type :emoji)
+      (display-emoji-font display)
+      (if bold
+          (if (eq type :latin)
+              (display-latin-bold-font display)
+              (display-cjk-bold-font display))
+          (if (eq type :latin)
+              (display-latin-font display)
+              (display-cjk-normal-font display)))))
 
 (defmethod update-display ((display display))
   (sdl2:render-present (display-renderer display)))
@@ -158,23 +171,42 @@
                          :dest-rect dest-rect
                          :flip (list :none))))
 
+(defun cjk-char-code-p (display code)
+  (and (typep code '(UNSIGNED-BYTE 16))
+       (sdl2-ffi.functions:ttf-glyph-is-provided (display-cjk-normal-font display) code)))
+
 (defun render-character (character x y &key color bold)
-  (cffi:with-foreign-string (c-string (string character))
-    (let* ((x (* x (char-width)))
-           (y (* y (char-height)))
-           (latin-p (<= (char-code character) 128))
-           (surface (sdl2-ttf:render-utf8-blended (display-font *display* :latin latin-p :bold bold)
-                                                  c-string
-                                                  (lem:color-red color)
-                                                  (lem:color-green color)
-                                                  (lem:color-blue color)
-                                                  0))
-           (text-width (sdl2:surface-width surface))
-           (text-height (sdl2:surface-height surface))
-           (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
-      (render-texture (current-renderer) texture x y text-width text-height)
-      (sdl2:destroy-texture texture)
-      (if latin-p 1 2))))
+  (handler-case
+      (let* ((code (char-code character))
+             (type (cond ((<= code 128)
+                          :latin)
+                         ((cjk-char-code-p *display* code)
+                          :cjk)
+                         (t
+                          :emoji))))
+        (cffi:with-foreign-string (c-string (string character))
+          (let* ((x (* x (char-width)))
+                 (y (* y (char-height)))
+                 (surface (sdl2-ttf:render-utf8-blended
+                           (get-display-font *display*
+                                             :type type
+                                             :bold bold)
+                           c-string
+                           (lem:color-red color)
+                           (lem:color-green color)
+                           (lem:color-blue color)
+                           0))
+                 (text-width (if (eq type :latin)
+                                 (char-width)
+                                 (* 2 (char-width))))
+                 (text-height (char-height))
+                 (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
+            (render-texture (current-renderer) texture x y text-width text-height)
+            (sdl2:destroy-texture texture)
+            (if (eq type :latin) 1 2))))
+    (sdl2-ttf::sdl-ttf-error ()
+      (log:error "invalid character" character)
+      1)))
 
 (defun render-text (text x y &key color bold)
   (loop :for c :across text
@@ -286,23 +318,12 @@
 (defun change-font (font-config)
   (let ((display *display*))
     (let ((font-config (merge-font-config font-config (display-font-config display))))
-      (sdl2-ttf:close-font (display-latin-font display))
-      (sdl2-ttf:close-font (display-latin-bold-font display))
-      (sdl2-ttf:close-font (display-unicode-font display))
-      (sdl2-ttf:close-font (display-unicode-bold-font display))
-      (multiple-value-bind (latin-font
-                            latin-bold-font
-                            unicode-font
-                            unicode-bold-font)
-          (open-font font-config)
-        (destructuring-bind (char-width char-height) (get-character-size latin-font)
-          (setf (display-char-width display) char-width
-                (display-char-height display) char-height)
-          (setf (display-font-config display) font-config)
-          (setf (display-latin-font display) latin-font
-                (display-latin-bold-font display) latin-bold-font
-                (display-unicode-font display) unicode-font
-                (display-unicode-bold-font display) unicode-bold-font))))
+      (close-font (display-font display))
+      (let ((font (open-font font-config)))
+        (setf (display-char-width display) (font-char-width font)
+              (display-char-height display) (font-char-height font))
+        (setf (display-font-config display) font-config)
+        (setf (display-font display) font)))
     (notify-resize)))
 
 (defun create-view-texture (width height)
@@ -514,38 +535,32 @@
     (sdl2-ttf:init)
     (sdl2-image:init '(:png))
     (unwind-protect
-         (let ((font-config (make-font-config)))
-           (multiple-value-bind (latin-font
-                                 latin-bold-font
-                                 unicode-font
-                                 unicode-bold-font)
-               (open-font font-config)
-             (destructuring-bind (char-width char-height) (get-character-size latin-font)
-               (let ((window-width (* +display-width+ char-width))
-                     (window-height (* +display-height+ char-height)))
-                 (sdl2:with-window (window :title "Lem"
-                                           :w window-width
-                                           :h window-height
-                                           :flags '(:shown :resizable))
-                   (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
-                     (let ((texture (create-texture renderer
-                                                    window-width
-                                                    window-height)))
-                       (with-bindings ((*display* (make-instance 'display
-                                                                 :font-config font-config
-                                                                 :latin-font latin-font
-                                                                 :latin-bold-font latin-bold-font
-                                                                 :unicode-font unicode-font
-                                                                 :unicode-bold-font unicode-bold-font
-                                                                 :renderer renderer
-                                                                 :window window
-                                                                 :texture texture
-                                                                 :char-width char-width
-                                                                 :char-height char-height)))
-                         (init-application-icon window)
-                         (sdl2:start-text-input)
-                         (funcall function)
-                         (event-loop)))))))))
+         (let* ((font-config (make-font-config))
+                (font (open-font font-config))
+                (char-width (font-char-width font))
+                (char-height (font-char-height font)))
+             (let ((window-width (* +display-width+ char-width))
+                   (window-height (* +display-height+ char-height)))
+               (sdl2:with-window (window :title "Lem"
+                                         :w window-width
+                                         :h window-height
+                                         :flags '(:shown :resizable))
+                 (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
+                   (let ((texture (create-texture renderer
+                                                  window-width
+                                                  window-height)))
+                     (with-bindings ((*display* (make-instance 'display
+                                                               :font-config font-config
+                                                               :font font
+                                                               :renderer renderer
+                                                               :window window
+                                                               :texture texture
+                                                               :char-width (lem-sdl2/font::font-char-width font)
+                                                               :char-height (lem-sdl2/font::font-char-height font))))
+                       (init-application-icon window)
+                       (sdl2:start-text-input)
+                       (funcall function)
+                       (event-loop)))))))
       (sdl2-ttf:quit)
       (sdl2-image:quit))))
 
@@ -667,7 +682,7 @@
       (sdl2-ffi.functions:sdl-set-text-input-rect rect)
       (when (plusp (length text))
         (let* ((color (display-foreground-color *display*))
-               (surface (sdl2-ttf:render-utf8-blended (display-unicode-font *display*)
+               (surface (sdl2-ttf:render-utf8-blended (display-cjk-normal-font *display*)
                                                       text
                                                       (lem:color-red color)
                                                       (lem:color-green color)

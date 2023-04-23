@@ -443,8 +443,9 @@
 (defun on-key-down (keysym)
   (sdl2:hide-cursor)
   (update-modifier *modifier* keysym)
-  (alexandria:when-let (key (keysym-to-key keysym))
-    (lem:send-event key)))
+  (when (equal "" (display-textediting-text *display*))
+    (alexandria:when-let (key (keysym-to-key keysym))
+      (lem:send-event key))))
 
 (defun on-key-up (keysym)
   (update-modifier *modifier* keysym))

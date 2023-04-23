@@ -50,7 +50,6 @@
                   t)))))
 
 (defun make-key* (&key ctrl meta shift sym)
-  (log:info ctrl meta shift sym)
   (when (and ctrl (equal sym "i"))
     (setf ctrl nil
           sym "Tab"))

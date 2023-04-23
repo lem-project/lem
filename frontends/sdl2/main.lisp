@@ -451,10 +451,11 @@
 
 (defun on-text-input (text)
   (sdl2:hide-cursor)
-  (loop :for c :across text
-        :do (let ((sym (string c)))
-              (lem:send-event
-               (make-key-with-modifier *modifier* sym)))))
+  (unless (lem-sdl2/key::modifier-pressed-p *modifier*)
+    (loop :for c :across text
+          :do (let ((sym (string c)))
+                (lem:send-event
+                 (make-key-with-modifier *modifier* sym))))))
 
 (defun on-mouse-button-down (button x y clicks)
   (sdl2:show-cursor)

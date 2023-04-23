@@ -47,14 +47,22 @@
         (values (keyinfo-sym keyinfo) (keyinfo-text-input-p keyinfo))
         (when (<= code #x110000)
           (values (string (code-char code))
-                  nil)))))
+                  t)))))
 
 (defun make-key* (&key ctrl meta shift sym)
-  (if (and ctrl (equal sym "i"))
-      (lem:make-key :ctrl nil
-                    :meta meta
-                    :shift shift
-                    :sym "Tab")
+  (log:info ctrl meta shift sym)
+  (when (and ctrl (equal sym "i"))
+    (setf ctrl nil
+          sym "Tab"))
+  (or (and (= 1 (length sym))
+           shift
+           (multiple-value-bind (char shift-p)
+               (lem-sdl2/layout:shift-char (char sym 0))
+             (and shift-p
+                  (lem:make-key :ctrl ctrl
+                                :meta meta
+                                :shift nil
+                                :sym (string char)))))
       (lem:make-key :ctrl ctrl
                     :meta meta
                     :shift shift
@@ -83,22 +91,18 @@
          (ctrl (= 64 (logand 64 mod))))
     (or ctrl)))
 
-(defun text-input-keysym-p (keysym)
-  (cond ((contain-control-p keysym)
-         nil)
-        ((< 256 (sdl2:sym-value keysym))
-         nil)
-        (t
-         (let ((keyinfo (assoc (sdl2:sym-value keysym) *code-name-table*)))
-           (or (null keyinfo)
-               (keyinfo-text-input-p keyinfo))))))
+(defun modifier-pressed-p (modifier)
+  (or (modifier-ctrl modifier)
+      (modifier-meta modifier)))
 
 (defun keysym-to-key (keysym)
-  (unless (text-input-keysym-p keysym)
-    (let* ((code (sdl2:sym-value keysym))
-           (modifier (get-modifier keysym)))
-      (multiple-value-bind (sym text-input-p) (convert-to-sym code)
-        (when (and sym (or (not text-input-p) (modifier-ctrl modifier)))
+  (let ((code (sdl2:sym-value keysym))
+        (modifier (get-modifier keysym)))
+    (multiple-value-bind (sym text-input-p) (convert-to-sym code)
+      (when sym
+        (when (or (not text-input-p)
+                  (modifier-pressed-p modifier)
+                  (< 256 code))
           (make-key* :shift (modifier-shift modifier)
                      :ctrl (modifier-ctrl modifier)
                      :meta (modifier-meta modifier)

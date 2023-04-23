@@ -41,16 +41,13 @@
     (,sdl2-ffi:+sdlk-f11+ "F11" nil)
     (,sdl2-ffi:+sdlk-f12+ "F12" nil)))
 
-(defun convert-to-sym (code-or-char)
-  (let ((code (etypecase code-or-char
-                (integer code-or-char)
-                (character (char-code code-or-char)))))
-    (let ((keyinfo (assoc code *code-name-table*)))
-      (if keyinfo
-          (values (keyinfo-sym keyinfo) (keyinfo-text-input-p keyinfo))
-          (when (<= code #x110000)
-            (values (string (code-char code))
-                    nil))))))
+(defun convert-to-sym (code)
+  (let ((keyinfo (assoc code *code-name-table*)))
+    (if keyinfo
+        (values (keyinfo-sym keyinfo) (keyinfo-text-input-p keyinfo))
+        (when (<= code #x110000)
+          (values (string (code-char code))
+                  nil)))))
 
 (defun make-key* (&key ctrl meta shift sym)
   (if (and ctrl (equal sym "i"))

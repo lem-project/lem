@@ -533,14 +533,16 @@
                    (let ((texture (create-texture renderer
                                                   window-width
                                                   window-height)))
-                     (with-bindings ((*display* (make-instance 'display
-                                                               :font-config font-config
-                                                               :font font
-                                                               :renderer renderer
-                                                               :window window
-                                                               :texture texture
-                                                               :char-width (lem-sdl2/font::font-char-width font)
-                                                               :char-height (lem-sdl2/font::font-char-height font))))
+                     (with-bindings ((*display*
+                                      (make-instance
+                                       'display
+                                       :font-config font-config
+                                       :font font
+                                       :renderer renderer
+                                       :window window
+                                       :texture texture
+                                       :char-width (font-char-width font)
+                                       :char-height (font-char-height font))))
                        (init-application-icon window)
                        (sdl2:start-text-input)
                        (funcall function)

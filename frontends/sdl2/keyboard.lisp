@@ -48,6 +48,23 @@
           (values (string (code-char code))
                   t)))))
 
+(defun make-key (&key ctrl meta shift sym)
+  (cond ((and ctrl (equal sym "i"))
+         (lem:make-key :ctrl nil
+                       :meta meta
+                       :shift shift
+                       :sym "Tab"))
+        ((and ctrl (equal sym "m"))
+         (lem:make-key :ctrl nil
+                       :meta meta
+                       :shift shift
+                       :sym "Return"))
+        (t
+         (lem:make-key :ctrl ctrl
+                       :meta meta
+                       :shift shift
+                       :sym sym))))
+
 (defstruct modifier
   shift
   ctrl
@@ -93,10 +110,10 @@
                    (or (not text-input-p)
                        (modifier-ctrl modifier)
                        (< 256 code)))
-          (let ((key (lem:make-key :shift (modifier-shift modifier)
-                                   :ctrl (modifier-ctrl modifier)
-                                   :meta (modifier-meta modifier)
-                                   :sym sym)))
+          (let ((key (make-key :shift (modifier-shift modifier)
+                               :ctrl (modifier-ctrl modifier)
+                               :meta (modifier-meta modifier)
+                               :sym sym)))
             ;; (log:info key)
             (lem:send-event key)))))))
 
@@ -141,23 +158,23 @@
            (multiple-value-bind (char shift-p)
                (shift-char (char sym 0))
              (and shift-p
-                  (lem:make-key :ctrl ctrl
-                                :meta meta
-                                :shift nil
-                                :sym (string char)))))
-      (lem:make-key :ctrl ctrl
-                    :meta meta
-                    :shift shift
-                    :sym sym)))
+                  (make-key :ctrl ctrl
+                            :meta meta
+                            :shift nil
+                            :sym (string char)))))
+      (make-key :ctrl ctrl
+                :meta meta
+                :shift shift
+                :sym sym)))
 
 (defmethod handle-text-input ((platform lem-sdl2/platform:mac) text)
   (unless (or (modifier-meta *modifier*)
               (modifier-ctrl *modifier*))
     (loop :for c :across text
-          :do (let ((key (lem:make-key :ctrl (modifier-ctrl *modifier*)
-                                       :meta (modifier-meta *modifier*)
-                                       :shift nil
-                                       :sym (string c))))
+          :do (let ((key (make-key :ctrl (modifier-ctrl *modifier*)
+                                   :meta (modifier-meta *modifier*)
+                                   :shift nil
+                                   :sym (string c))))
                 (lem:send-event key)))))
 
 (defmethod handle-key-down ((platform lem-sdl2/platform:mac) keysym)

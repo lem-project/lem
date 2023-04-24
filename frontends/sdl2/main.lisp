@@ -1,8 +1,8 @@
 (defpackage :lem-sdl2
   (:use :cl
-        :lem-sdl2/key
         :lem-sdl2/font
-        :lem-sdl2/icon)
+        :lem-sdl2/icon
+        :lem-sdl2/platform)
   (:export :change-font))
 (in-package :lem-sdl2)
 
@@ -73,9 +73,7 @@
    (foreground-color :initform (lem:make-color #xff #xff #xff)
                      :accessor display-foreground-color)
    (background-color :initform (lem:make-color 0 0 0)
-                     :accessor display-background-color)
-   (textediting-text :initform ""
-                     :accessor display-textediting-text)))
+                     :accessor display-background-color)))
 
 (defmethod display-latin-font ((display display))
   (font-latin-normal-font (display-font display)))
@@ -438,26 +436,6 @@
                     (- (view-height view) y 2)
                     :color (display-background-color *display*)))
 
-(defvar *modifier* (make-modifier))
-
-(defun on-key-down (keysym)
-  (sdl2:hide-cursor)
-  (update-modifier *modifier* keysym)
-  (when (equal "" (display-textediting-text *display*))
-    (alexandria:when-let (key (keysym-to-key keysym))
-      (lem:send-event key))))
-
-(defun on-key-up (keysym)
-  (update-modifier *modifier* keysym))
-
-(defun on-text-input (text)
-  (sdl2:hide-cursor)
-  (unless (lem-sdl2/key::modifier-pressed-p *modifier*)
-    (loop :for c :across text
-          :do (let ((sym (string c)))
-                (lem:send-event
-                 (make-key-with-modifier *modifier* sym))))))
-
 (defun on-mouse-button-down (button x y clicks)
   (sdl2:show-cursor)
   (let ((button
@@ -507,14 +485,16 @@
     (:quit ()
      t)
     (:textinput (:text text)
-     (on-text-input text))
+     (sdl2:hide-cursor)
+     (lem-sdl2/keyboard:handle-text-input (get-platform) text))
     (:textediting (:text text)
-     (setf (display-textediting-text *display*) text)
+     (lem-sdl2/keyboard::handle-textediting (get-platform) text)
      (lem:send-event #'lem:redraw-display))
     (:keydown (:keysym keysym)
-     (on-key-down keysym))
+     (sdl2:hide-cursor)
+     (lem-sdl2/keyboard:handle-key-down (get-platform) keysym))
     (:keyup (:keysym keysym)
-     (on-key-up keysym))
+     (lem-sdl2/keyboard:handle-key-up (get-platform) keysym))
     (:mousebuttondown (:button button :x x :y y :clicks clicks)
      (on-mouse-button-down button x y clicks))
     (:mousebuttonup (:button button :x x :y y)
@@ -675,7 +655,7 @@
   (let* ((view (lem:window-view (lem:current-window)))
          (cursor-x (lem:last-print-cursor-x (lem:current-window)))
          (cursor-y (lem:last-print-cursor-y (lem:current-window)))
-         (text (display-textediting-text *display*))
+         (text lem-sdl2/keyboard::*textediting-text*)
          (x (+ (* (view-x view) (char-width))
                (* cursor-x (char-width))))
          (y (+ (* (view-y view) (char-height))

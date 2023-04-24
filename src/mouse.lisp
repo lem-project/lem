@@ -61,16 +61,15 @@
     (setf (window-last-mouse-button-down-point window) nil)))
 
 (defmethod handle-mouse-event ((mouse-event mouse-motion))
-  (let ((x (mouse-event-x mouse-event))
+  (let ((window (mouse-event-window mouse-event))
+        (x (mouse-event-x mouse-event))
         (y (mouse-event-y mouse-event))
         (button (mouse-event-button mouse-event)))
     (case button
       (:button-1
-       (multiple-value-bind (window x y)
-           (focus-window-position (current-frame) x y)
-         (when (and window (window-last-mouse-button-down-point window))
-           (move-to-x-y-position window x y)
-           (set-current-mark (window-last-mouse-button-down-point window))))))))
+       (when (and window (window-last-mouse-button-down-point window))
+         (move-to-x-y-position window x y)
+         (set-current-mark (window-last-mouse-button-down-point window)))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-wheel))
   (with-current-window (mouse-event-window mouse-event)

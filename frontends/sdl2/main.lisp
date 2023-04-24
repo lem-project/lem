@@ -549,17 +549,20 @@
       (sdl2-image:quit))))
 
 (defmethod lem-if:invoke ((implementation sdl2) function)
-  (create-display (lambda ()
-                    (let ((editor-thread
-                            (funcall function
-                                     ;; initialize
-                                     (lambda ())
-                                     ;; finalize
-                                     (lambda (report)
-                                       (declare (ignore report))
-                                       (sdl2:push-quit-event)))))
-                      (declare (ignore editor-thread))
-                      nil))))
+  (let ((thread (bt:make-thread
+                 (lambda ()
+                   (create-display (lambda ()
+                                     (let ((editor-thread
+                                             (funcall function
+                                                      ;; initialize
+                                                      (lambda ())
+                                                      ;; finalize
+                                                      (lambda (report)
+                                                        (declare (ignore report))
+                                                        (sdl2:push-quit-event)))))
+                                       (declare (ignore editor-thread))
+                                       nil)))))))
+    (bt:join-thread thread)))
 
 (defmethod lem-if:get-background-color ((implementation sdl2))
   (with-debug ("lem-if:get-background-color")

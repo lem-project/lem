@@ -110,6 +110,7 @@
 (define-key *global-keymap* "C-M-d" 'down-list)
 (define-key *global-keymap* "C-M-u" 'backward-up-list)
 (define-key *global-keymap* "C-M-@" 'mark-sexp)
+(define-key *global-keymap* "C-M-Space" 'mark-sexp)
 (define-key *global-keymap* "C-M-k" 'kill-sexp)
 (define-key *global-keymap* "C-M-t" 'transpose-sexps)
 (define-key *global-keymap* "C-M-y" 'kill-around-form)

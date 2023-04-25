@@ -1,6 +1,7 @@
 (defpackage :lem-sdl2/keyboard
   (:use :cl)
-  (:export :handle-textediting
+  (:export :make-key-event
+           :handle-textediting
            :handle-text-input
            :handle-key-down
            :handle-key-up))
@@ -70,6 +71,13 @@
   ctrl
   meta)
 
+(defstruct (key-event (:constructor %make-key-event))
+  code
+  modifier)
+
+(defun make-key-event (code modifier)
+  (%make-key-event :code code :modifier modifier))
+
 (defun get-modifier (keysym)
   (let* ((mod (sdl2:mod-value keysym))
          (shift (= 1 (logand 1 mod)))
@@ -77,11 +85,10 @@
          (meta (= 256 (logand 256 mod))))
     (make-modifier :shift shift :ctrl ctrl :meta meta)))
 
-(defun update-modifier (modifier keysym)
-  (let ((modifier2 (get-modifier keysym)))
-    (setf (modifier-shift modifier) (modifier-shift modifier2))
-    (setf (modifier-ctrl modifier) (modifier-ctrl modifier2))
-    (setf (modifier-meta modifier) (modifier-meta modifier2))))
+(defun update-modifier (modifier new-modifier)
+  (setf (modifier-shift modifier) (modifier-shift new-modifier))
+  (setf (modifier-ctrl modifier) (modifier-ctrl new-modifier))
+  (setf (modifier-meta modifier) (modifier-meta new-modifier)))
 
 (defvar *modifier* (make-modifier))
 (defvar *textediting-text* "")
@@ -100,25 +107,24 @@
               ;; (log:info key)
               (lem:send-event key))))
 
-(defmethod handle-key-down ((platform lem-sdl2/platform:linux) keysym)
-  (update-modifier *modifier* keysym)
-  (when (equal *textediting-text* "")
-    (let ((code (sdl2:sym-value keysym))
-          (modifier (get-modifier keysym)))
-      (multiple-value-bind (sym text-input-p) (convert-to-sym code)
-        (when (and sym
-                   (or (not text-input-p)
-                       (modifier-ctrl modifier)
-                       (< 256 code)))
-          (let ((key (make-key :shift (modifier-shift modifier)
-                               :ctrl (modifier-ctrl modifier)
-                               :meta (modifier-meta modifier)
-                               :sym sym)))
-            ;; (log:info key)
-            (lem:send-event key)))))))
+(defmethod handle-key-down ((platform lem-sdl2/platform:linux) key-event)
+  (let ((modifier (key-event-modifier key-event))
+        (code (key-event-code key-event)))
+    (update-modifier *modifier* modifier)
+    (multiple-value-bind (sym text-input-p) (convert-to-sym code)
+      (when (and sym
+                 (or (not text-input-p)
+                     (modifier-ctrl modifier)
+                     (< 256 code)))
+        (let ((key (make-key :shift (modifier-shift modifier)
+                             :ctrl (modifier-ctrl modifier)
+                             :meta (modifier-meta modifier)
+                             :sym sym)))
+          ;; (log:info key)
+          (lem:send-event key))))))
 
-(defmethod handle-key-up ((platform lem-sdl2/platform:linux) keysym)
-  (update-modifier *modifier* keysym))
+(defmethod handle-key-up ((platform lem-sdl2/platform:linux) key-event)
+  (update-modifier *modifier* (key-event-modifier key-event)))
 
 ;;
 (defparameter *us-shift-layout*
@@ -177,11 +183,11 @@
                                    :sym (string c))))
                 (lem:send-event key)))))
 
-(defmethod handle-key-down ((platform lem-sdl2/platform:mac) keysym)
-  (update-modifier *modifier* keysym)
-  (when (equal *textediting-text* "")
-    (let ((code (sdl2:sym-value keysym))
-          (modifier (get-modifier keysym)))
+(defmethod handle-key-down ((platform lem-sdl2/platform:mac) key-event)
+  (let ((code (key-event-code key-event))
+        (modifier (key-event-modifier key-event)))
+    (update-modifier *modifier* modifier)
+    (when (equal *textediting-text* "")
       (multiple-value-bind (sym text-input-p) (convert-to-sym code)
         (when (and sym
                    (or (not text-input-p)
@@ -194,5 +200,5 @@
                                                   :sym sym)))
             (lem:send-event key)))))))
 
-(defmethod handle-key-up ((platform lem-sdl2/platform:mac) keysym)
-  (update-modifier *modifier* keysym))
+(defmethod handle-key-up ((platform lem-sdl2/platform:mac) key-event)
+  (update-modifier *modifier* (key-event-modifier key-event)))

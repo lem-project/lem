@@ -1,5 +1,6 @@
 (defpackage :lem-sdl2
   (:use :cl
+        :lem-sdl2/keyboard
         :lem-sdl2/font
         :lem-sdl2/icon
         :lem-sdl2/platform)
@@ -73,7 +74,9 @@
    (foreground-color :initform (lem:make-color #xff #xff #xff)
                      :accessor display-foreground-color)
    (background-color :initform (lem:make-color 0 0 0)
-                     :accessor display-background-color)))
+                     :accessor display-background-color)
+   (focus :initform t
+          :accessor display-focus-p)))
 
 (defmethod display-latin-font ((display display))
   (font-latin-normal-font (display-font display)))
@@ -482,37 +485,181 @@
                         (when (= 0 (lem::event-queue-length))
                           (lem:redraw-display)))))))
 
+(defun on-textediting (text)
+  (handle-textediting (get-platform) text)
+  (lem:send-event #'lem:redraw-display))
+
+(defun on-textinput (text)
+  (sdl2:hide-cursor)
+  (handle-text-input (get-platform) text))
+
+(defun on-keydown (key-event)
+  (sdl2:hide-cursor)
+  (handle-key-down (get-platform) key-event))
+
+(defun on-keyup (key-event)
+  (handle-key-up (get-platform) key-event))
+
+(defun on-windowevent (event)
+  (cond ((or (equal event
+                    sdl2-ffi:+sdl-windowevent-shown+)
+             (equal event
+                    sdl2-ffi:+sdl-windowevent-exposed+))
+         (lem:send-event #'lem:redraw-display))
+        ((equal event sdl2-ffi:+sdl-windowevent-resized+)
+         (update-texture *display*)
+         (notify-resize))
+        ((equal event sdl2-ffi:+sdl-windowevent-focus-gained+)
+         (setf (display-focus-p *display*) t))
+        ((equal event sdl2-ffi:+sdl-windowevent-focus-lost+)
+         (setf (display-focus-p *display*) nil))))
+
+(defun convert-event (event)
+  (let ((event-type (sdl2:get-event-type event)))
+    (case event-type
+      (:quit
+       (list event-type))
+      (:textinput
+       (let ((text (plus-c:c-ref event sdl2-ffi:sdl-event :text :text string)))
+         (list event-type text)))
+      (:textediting
+       (let ((text (plus-c:c-ref event sdl2-ffi:sdl-event :edit :text string)))
+         (list event-type text)))
+      (:keydown
+       (when (display-focus-p *display*)
+         (let* ((keysym (plus-c:c-ref event sdl2-ffi:sdl-event :key :keysym))
+                (code (sdl2:sym-value keysym))
+                (modifier (lem-sdl2/keyboard::get-modifier keysym)))
+           (list event-type (make-key-event code modifier)))))
+      (:keyup
+       (let* ((keysym (plus-c:c-ref event sdl2-ffi:sdl-event :key :keysym))
+              (code (sdl2:sym-value keysym))
+              (modifier (lem-sdl2/keyboard::get-modifier keysym)))
+         (list event-type (make-key-event code modifier))))
+      (:mousebuttondown
+       (let ((button
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :button :button))
+             (x
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :button :x))
+             (y
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :button :y))
+             (clicks
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :button :clicks)))
+         (list event-type
+               button
+               x
+               y
+               clicks)))
+      (:mousebuttonup
+       (let ((button
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :button :button))
+             (x
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :button :x))
+             (y
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :button :y)))
+         (list event-type button x y)))
+      (:mousemotion
+       (let ((x
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :motion :x))
+             (y
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :motion :y))
+             (state
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :motion :state)))
+         (list event-type x y state)))
+      (:mousewheel
+       (let ((x
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :wheel :x))
+             (y
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :wheel :y))
+             (which
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :wheel :which))
+             (direction
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :wheel :direction)))
+         (list event-type x y which direction)))
+      (:windowevent
+       (let ((event
+               (plus-c:c-ref event
+                             sdl2-ffi:sdl-event
+                             :window :event)))
+         (list event-type event))))))
+
+
+(defun next-events (event)
+  (sdl2:next-event event :wait)
+  (let ((events '()))
+    (alexandria:when-let (event (convert-event event))
+      (push event events))
+    (loop :for rc := (sdl2:next-event event :poll)
+          :while (= rc 1)
+          :do (alexandria:when-let (event (convert-event event))
+                (push event events)))
+    (nreverse events)))
+
 (defun event-loop ()
-  (sdl2:with-event-loop (:method :wait)
-    (:quit ()
-     t)
-    (:textinput (:text text)
-     (sdl2:hide-cursor)
-     (lem-sdl2/keyboard:handle-text-input (get-platform) text))
-    (:textediting (:text text)
-     (lem-sdl2/keyboard::handle-textediting (get-platform) text)
-     (lem:send-event #'lem:redraw-display))
-    (:keydown (:keysym keysym)
-     (sdl2:hide-cursor)
-     (lem-sdl2/keyboard:handle-key-down (get-platform) keysym))
-    (:keyup (:keysym keysym)
-     (lem-sdl2/keyboard:handle-key-up (get-platform) keysym))
-    (:mousebuttondown (:button button :x x :y y :clicks clicks)
-     (on-mouse-button-down button x y clicks))
-    (:mousebuttonup (:button button :x x :y y)
-     (on-mouse-button-up button x y))
-    (:mousemotion (:x x :y y :state state)
-     (on-mouse-motion x y state))
-    (:mousewheel (:x x :y y :which which :direction direction)
-     (on-mouse-wheel x y which direction))
-    (:windowevent (:event event)
-     (when (or (equal event sdl2-ffi:+sdl-windowevent-shown+)
-               (equal event sdl2-ffi:+sdl-windowevent-exposed+))
-       (lem:send-event (lambda () (lem:redraw-display))))
-     (when (equal event sdl2-ffi:+sdl-windowevent-resized+)
-       (update-texture *display*)
-       (notify-resize)))
-    (:idle ())))
+  (sdl2:in-main-thread ()
+    (sdl2:with-sdl-event (event)
+      (loop
+        (let ((events (next-events event)))
+          (loop :for (type . args) :in events
+                :do (case type
+                      (:quit
+                       (return-from event-loop))
+                      (:textinput
+                       (destructuring-bind (text) args
+                         (on-textinput text)))
+                      (:textediting
+                       (destructuring-bind (text) args
+                         (on-textediting text)))
+                      (:keydown
+                       (destructuring-bind (key-event) args
+                         (on-keydown key-event)))
+                      (:keyup
+                       (destructuring-bind (key-event) args
+                         (on-keyup key-event)))
+                      (:mousebuttondown
+                       (destructuring-bind (button x y clicks) args
+                         (on-mouse-button-down button x y
+                                               clicks)))
+                      (:mousebuttonup
+                       (destructuring-bind (button x y) args
+                         (on-mouse-button-up button x y)))
+                      (:mousemotion
+                       (destructuring-bind (x y state) args
+                         (on-mouse-motion x y state)))
+                      (:mousewheel
+                       (destructuring-bind (x y which direction) args
+                         (on-mouse-wheel x y which direction)))
+                      (:windowevent
+                       (destructuring-bind (event) args
+                         (on-windowevent event))))))))))
 
 (defun create-display (function)
   (sdl2:with-init (:video)

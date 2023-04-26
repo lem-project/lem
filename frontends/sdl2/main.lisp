@@ -75,7 +75,7 @@
                      :accessor display-foreground-color)
    (background-color :initform (lem:make-color 0 0 0)
                      :accessor display-background-color)
-   (focus :initform t
+   (focus :initform nil
           :accessor display-focus-p)))
 
 (defmethod display-latin-font ((display display))

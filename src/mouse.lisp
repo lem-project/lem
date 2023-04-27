@@ -31,6 +31,7 @@
    (wheel-y :initarg :wheel-y :reader mouse-wheel-y)))
 
 (defun move-to-x-y-position (window x y)
+  (switch-to-window window)
   (setf (current-window) window)
   (move-point (current-point) (window-view-point window))
   (move-to-next-virtual-line (current-point) y)

@@ -97,11 +97,12 @@
     (when (minusp n)
       (setf n (- (length window-list) (abs n))))
     (update-last-focused-window)
-    (run-hooks (window-leave-hook (current-window)))
-    (dotimes (_ n t)
-      (setf (current-window)
-            (get-next-window (current-window)
-                             window-list)))))
+    (let ((window (current-window)))
+      (dotimes (_ n t)
+        (setf window
+              (get-next-window (current-window)
+                               window-list)))
+      (switch-to-window window))))
 
 (define-command switch-to-last-focused-window () ()
   (let ((window (or (and (not (null *last-focused-window*))

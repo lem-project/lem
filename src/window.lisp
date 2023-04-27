@@ -175,6 +175,11 @@
                   (%window-point new-window)))
     (setf (frame-current-window frame) new-window)))
 
+(defun switch-to-window (new-window)
+  (unless (eq (current-window) new-window)
+    (run-hooks (window-leave-hook (current-window)) (current-window)))
+  (setf (current-window) new-window))
+
 (defun window-list (&optional (frame (current-frame)))
   (window-tree-flatten (frame-window-tree frame)))
 

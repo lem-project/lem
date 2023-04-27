@@ -438,7 +438,7 @@
                     0
                     (+ y 1)
                     (view-width view)
-                    (- (view-height view) y 2)
+                    (- (view-height view) y (if (view-use-modeline view) 2 1))
                     :color (display-background-color *display*)))
 
 (defun on-mouse-button-down (button x y clicks)

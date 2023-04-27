@@ -53,7 +53,7 @@
               (run-hooks (variable-value 'mouse-button-down-functions)))
              ((= clicks 2)
               (select-expression-at-current-point))
-             ((= clicks 3)
+             ((<= 3 clicks)
               (select-form-at-current-point)))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))

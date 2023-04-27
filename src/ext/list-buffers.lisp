@@ -41,10 +41,11 @@
                                      (declare (ignore component))
                                      (kill-buffer buffer))
                   :use-check t
-                  :context-menu (make-instance 'lem/context-menu:context-menu
-                                               :items (list (make-instance 'lem/context-menu:item
-                                                                           :label "Kill selected buffers"
-                                                                           :callback #'kill-buffers)
-                                                            (make-instance 'lem/context-menu:item
-                                                                           :label "Save selected buffers"
-                                                                           :callback #'save-buffers))))))
+                  :context-menu (make-instance
+                                 'lem/context-menu:context-menu
+                                 :items (list (make-instance 'lem/context-menu:item
+                                                             :label "Kill selected buffers"
+                                                             :callback #'kill-buffers)
+                                              (make-instance 'lem/context-menu:item
+                                                             :label "Save selected buffers"
+                                                             :callback #'save-buffers))))))

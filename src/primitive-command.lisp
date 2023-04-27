@@ -503,7 +503,6 @@
 
 (define-command show-context-menu () ()
   (let ((context-menu (buffer-context-menu (current-buffer))))
-    (log:info context-menu)
     (when context-menu
       (lem-if:display-context-menu (implementation) context-menu))))
 

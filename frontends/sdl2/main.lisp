@@ -670,30 +670,30 @@
                 (font (open-font font-config))
                 (char-width (font-char-width font))
                 (char-height (font-char-height font)))
-             (let ((window-width (* +display-width+ char-width))
-                   (window-height (* +display-height+ char-height)))
-               (sdl2:with-window (window :title "Lem"
-                                         :w window-width
-                                         :h window-height
-                                         :flags '(:shown :resizable))
-                 (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
-                   (let ((texture (create-texture renderer
-                                                  window-width
-                                                  window-height)))
-                     (with-bindings ((*display*
-                                      (make-instance
-                                       'display
-                                       :font-config font-config
-                                       :font font
-                                       :renderer renderer
-                                       :window window
-                                       :texture texture
-                                       :char-width (font-char-width font)
-                                       :char-height (font-char-height font))))
-                       (init-application-icon window)
-                       (sdl2:start-text-input)
-                       (funcall function)
-                       (event-loop)))))))
+           (let ((window-width (* +display-width+ char-width))
+                 (window-height (* +display-height+ char-height)))
+             (sdl2:with-window (window :title "Lem"
+                                       :w window-width
+                                       :h window-height
+                                       :flags '(:shown :resizable))
+               (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
+                 (let ((texture (create-texture renderer
+                                                window-width
+                                                window-height)))
+                   (setf *display*
+                         (make-instance
+                          'display
+                          :font-config font-config
+                          :font font
+                          :renderer renderer
+                          :window window
+                          :texture texture
+                          :char-width (font-char-width font)
+                          :char-height (font-char-height font)))
+                   (init-application-icon window)
+                   (sdl2:start-text-input)
+                   (funcall function)
+                   (event-loop))))))
       (sdl2-ttf:quit)
       (sdl2-image:quit))))
 

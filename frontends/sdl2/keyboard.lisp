@@ -99,13 +99,13 @@
 ;; linux
 (defmethod handle-text-input ((platform lem-sdl2/platform:linux) text)
   (loop :for c :across text
-        :do (let* ((sym (string c))
-                   (key (lem:make-key :ctrl (modifier-ctrl *modifier*)
-                                      :meta (modifier-meta *modifier*)
-                                      :shift nil
-                                      :sym sym)))
-              ;; (log:info key)
-              (lem:send-event key))))
+        :do (multiple-value-bind (sym text-input-p) (convert-to-sym (char-code c))
+              (let ((key (lem:make-key :ctrl (modifier-ctrl *modifier*)
+                                       :meta (modifier-meta *modifier*)
+                                       :shift nil
+                                       :sym sym)))
+                (when text-input-p
+                  (lem:send-event key))))))
 
 (defmethod handle-key-down ((platform lem-sdl2/platform:linux) key-event)
   (let ((modifier (key-event-modifier key-event))
@@ -120,7 +120,6 @@
                              :ctrl (modifier-ctrl modifier)
                              :meta (modifier-meta modifier)
                              :sym sym)))
-          ;; (log:info key)
           (lem:send-event key))))))
 
 (defmethod handle-key-up ((platform lem-sdl2/platform:linux) key-event)

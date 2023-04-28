@@ -86,8 +86,15 @@
   (dolist (item items)
     (multiple-value-bind (name attribute alignment)
         (if (consp item)
-            (values (first item) (or (second item) default-attribute) (or (third item) :left))
-            (values item default-attribute :left))
+            (values (first item)
+                    (if (second item)
+                        (merge-attribute (ensure-attribute (second item) nil)
+                                         (ensure-attribute default-attribute nil))
+                        default-attribute)
+                    (or (third item) :left))
+            (values item
+                    default-attribute
+                    :left))
       (let (attribute-1 alignment-1)
         (setf (values name attribute-1 alignment-1)
               (convert-modeline-element name window))

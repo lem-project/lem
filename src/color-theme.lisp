@@ -1,5 +1,7 @@
 (in-package :lem)
 
+(defvar *hot-reload-color-theme* nil)
+
 (defstruct color-theme
   specs
   parent)
@@ -25,7 +27,9 @@
                                      `(list ',(car spec)
                                             ,@(cdr spec)))
                                    specs))
-            :parent ,parent))))
+            :parent ,parent))
+     (when *hot-reload-color-theme*
+       (load-theme ,name))))
 
 (defun inherit-load-theme (theme spec-table)
   (when (color-theme-parent theme)

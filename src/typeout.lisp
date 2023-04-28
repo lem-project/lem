@@ -90,7 +90,7 @@
 
 (defun make-border-line (length)
   (with-output-to-string (out)
-    (loop :repeat length :do (write-string "_" out))))
+    (loop :repeat length :do (write-string " " out))))
 
 (defun typeout-window-modeline (typeout-window)
   (values (let* ((posline (string-trim " " (modeline-posline typeout-window)))
@@ -108,7 +108,7 @@
                                     line
                                     (make-border-line (- (display-width) (length text))))))
             line)
-          (make-attribute)
+          (make-attribute :foreground "" :background "" :underline-p t)
           nil))
 
 (defun delete-typeout-window-hook ()

@@ -4,7 +4,7 @@
                                           modeline-name
                                           modeline-mode-names
                                           modeline-position
-                                          (modeline-posline nil :right))
+                                          modeline-posline)
   "")
 
 (defvar *modeline-status-list* nil)
@@ -52,22 +52,24 @@
     (princ ")")))
 
 (defun modeline-posline (window)
-  (cond
-    ((<= (buffer-nlines (window-buffer window))
-         (window-height window))
-     "All  ")
-    ((first-line-p (window-view-point window))
-     "Top  ")
-    ((null (line-offset (copy-point (window-view-point window)
-                                    :temporary)
-                        (window-height window)))
-     "Bot  ")
-    (t
-     (format nil "~2d%  "
-             (floor
-              (* 100
-                 (float (/ (line-number-at-point (window-view-point window))
-                           (buffer-nlines (window-buffer window))))))))))
+  (values (cond
+            ((<= (buffer-nlines (window-buffer window))
+                 (window-height window))
+             "All  ")
+            ((first-line-p (window-view-point window))
+             "Top  ")
+            ((null (line-offset (copy-point (window-view-point window)
+                                            :temporary)
+                                (window-height window)))
+             "Bot  ")
+            (t
+             (format nil "~2d%  "
+                     (floor
+                      (* 100
+                         (float (/ (line-number-at-point (window-view-point window))
+                                   (buffer-nlines (window-buffer window)))))))))
+          nil
+          :right))
 
 (defgeneric convert-modeline-element (element window))
 

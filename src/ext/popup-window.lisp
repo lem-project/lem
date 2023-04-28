@@ -182,7 +182,7 @@
               border-size)))
     ;; workaround: cases that extend beyond the screen
     (when (< (display-height) (+ y height))
-      (setf height (- (display-height) y -1)))
+      (setf height (- (display-height) y 1)))
     (list x
           y
           (max width (window-width source-window))

@@ -8,6 +8,21 @@
                                           (modeline-major-mode nil :right))
   "")
 
+(define-attribute modeline-name-attribute
+  (t :foreground "orange"))
+
+(define-attribute modeline-major-mode-attribute
+  (t :foreground "#85b8ff"))
+
+(define-attribute modeline-minor-modes-attribute
+  (t :foreground "white"))
+
+(define-attribute modeline-position-attribute
+  (t :foreground "#FAFAFA" :background "#202020"))
+
+(define-attribute modeline-posline-attribute
+  (t :background "#A0A0A0" :foreground "black"))
+
 (defvar *modeline-status-list* nil)
 
 (defun modeline-add-status-list (x &optional (buffer nil bufferp))
@@ -39,13 +54,13 @@
 
 (defun modeline-name (window)
   (values (buffer-name (window-buffer window))
-          (make-attribute :foreground "orange")))
+          'modeline-name-attribute))
 
 (defun modeline-major-mode (window)
   (values (concatenate 'string
                        (mode-name (buffer-major-mode (window-buffer window)))
                        " ")
-          (make-attribute :foreground "#85b8ff")))
+          'modeline-major-mode-attribute))
 
 (defun modeline-minor-modes (window)
   (values (with-output-to-string (out)
@@ -53,23 +68,14 @@
               (when (mode-name mode)
                 (princ (mode-name mode) out)
                 (princ " " out))))
-          (make-attribute :foreground "white")))
-
-(defun modeline-mode-names (window)
-  (values (with-output-to-string (*standard-output*)
-            (princ (mode-name (buffer-major-mode (window-buffer window))))
-            (dolist (mode (buffer-minor-modes (window-buffer window)))
-              (when (mode-name mode)
-                (princ " ")
-                (princ (mode-name mode)))))
-          (make-attribute :foreground "#5591fa")))
+          'modeline-minor-modes-attribute))
 
 (defun modeline-position (window)
   (values (format nil
                   " ~D:~D "
                   (line-number-at-point (window-point window))
                   (point-column (window-point window)))
-          (make-attribute :foreground "#FAFAFA" :background "#202020")))
+          'modeline-position-attribute))
 
 (defun modeline-posline (window)
   (values (cond
@@ -88,8 +94,7 @@
                       (* 100
                          (float (/ (line-number-at-point (window-view-point window))
                                    (buffer-nlines (window-buffer window)))))))))
-          (make-attribute :background "#A0A0A0"
-                          :foreground "black")))
+          'modeline-posline-attribute))
 
 (defgeneric convert-modeline-element (element window))
 

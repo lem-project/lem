@@ -2,9 +2,10 @@
 
 (define-editor-variable modeline-format '(modeline-write-info
                                           modeline-name
-                                          modeline-mode-names
-                                          modeline-position
-                                          modeline-posline)
+                                          (modeline-posline nil :right)
+                                          (modeline-position nil :right)
+                                          (modeline-minor-modes nil :right)
+                                          (modeline-major-mode nil :right))
   "")
 
 (defvar *modeline-status-list* nil)
@@ -28,48 +29,67 @@
       (setf *modeline-status-list* '())))
 
 (defun modeline-write-info (window)
-  (buffer-attributes (window-buffer window)))
+  (let ((buffer (window-buffer window)))
+    (cond ((buffer-read-only-p buffer)
+           " 🔒 ")
+          ((buffer-modified-p buffer)
+           " * ")
+          (t
+           "   "))))
 
 (defun modeline-name (window)
-  (buffer-name (window-buffer window)))
+  (values (buffer-name (window-buffer window))
+          (make-attribute :foreground "orange")))
+
+(defun modeline-major-mode (window)
+  (values (concatenate 'string
+                       (mode-name (buffer-major-mode (window-buffer window)))
+                       " ")
+          (make-attribute :foreground "#85b8ff")))
+
+(defun modeline-minor-modes (window)
+  (values (with-output-to-string (out)
+            (dolist (mode (buffer-minor-modes (window-buffer window)))
+              (when (mode-name mode)
+                (princ (mode-name mode) out)
+                (princ " " out))))
+          (make-attribute :foreground "white")))
 
 (defun modeline-mode-names (window)
-  (with-output-to-string (*standard-output*)
-    (princ " (")
-    (princ (mode-name (buffer-major-mode (window-buffer window))))
-    (dolist (mode (buffer-minor-modes (window-buffer window)))
-      (when (mode-name mode)
-        (princ " ")
-        (princ (mode-name mode))))
-    (princ ") ")))
+  (values (with-output-to-string (*standard-output*)
+            (princ (mode-name (buffer-major-mode (window-buffer window))))
+            (dolist (mode (buffer-minor-modes (window-buffer window)))
+              (when (mode-name mode)
+                (princ " ")
+                (princ (mode-name mode)))))
+          (make-attribute :foreground "#5591fa")))
 
 (defun modeline-position (window)
-  (with-output-to-string (*standard-output*)
-    (princ "(")
-    (princ (line-number-at-point (window-point window)))
-    (princ ", ")
-    (princ (point-column (window-point window)))
-    (princ ")")))
+  (values (format nil
+                  " ~D:~D "
+                  (line-number-at-point (window-point window))
+                  (point-column (window-point window)))
+          (make-attribute :foreground "#FAFAFA" :background "#202020")))
 
 (defun modeline-posline (window)
   (values (cond
             ((<= (buffer-nlines (window-buffer window))
                  (window-height window))
-             "All  ")
+             "  All  ")
             ((first-line-p (window-view-point window))
-             "Top  ")
+             "  Top  ")
             ((null (line-offset (copy-point (window-view-point window)
                                             :temporary)
                                 (window-height window)))
-             "Bot  ")
+             "  Bot  ")
             (t
-             (format nil "~2d%  "
+             (format nil "  ~2d%  "
                      (floor
                       (* 100
                          (float (/ (line-number-at-point (window-view-point window))
                                    (buffer-nlines (window-buffer window)))))))))
-          nil
-          :right))
+          (make-attribute :background "#A0A0A0"
+                          :foreground "black")))
 
 (defgeneric convert-modeline-element (element window))
 
@@ -100,7 +120,10 @@
       (let (attribute-1 alignment-1)
         (setf (values name attribute-1 alignment-1)
               (convert-modeline-element name window))
-        (when attribute-1 (setf attribute attribute-1))
+        (when attribute-1
+          (setf attribute
+                (merge-attribute (ensure-attribute attribute nil)
+                                 (ensure-attribute attribute-1 nil))))
         (when alignment-1 (setf alignment alignment-1)))
       (funcall print-fn
                (princ-to-string name)

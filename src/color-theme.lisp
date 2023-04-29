@@ -122,6 +122,6 @@
 
 
 (defun initialize-color-theme ()
-  (load-theme (config :color-theme "emacs-dark")))
+  (load-theme (config :color-theme "decaf")))
 
 (add-hook *before-init-hook* 'initialize-color-theme)

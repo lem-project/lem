@@ -163,8 +163,9 @@
     (funcall (multi-column-list-delete-callback component) component item)))
 
 (defmethod map-columns ((component multi-column-list) item)
-  (when (multi-column-list-column-function component)
-    (funcall (multi-column-list-column-function component) component item)))
+  (if (multi-column-list-column-function component)
+      (funcall (multi-column-list-column-function component) component item)
+      (list (princ-to-string item))))
 
 (defmethod multi-column-list-columns :around ((multi-column-list multi-column-list))
   (append (if (multi-column-list-use-check-p multi-column-list)

@@ -12,17 +12,32 @@
 (define-attribute modeline-name-attribute
   (t :foreground "orange"))
 
+(define-attribute inactive-modeline-name-attribute
+  (t :foreground "#996300"))
+
 (define-attribute modeline-major-mode-attribute
   (t :foreground "#85b8ff"))
 
+(define-attribute inactive-modeline-major-mode-attribute
+  (t :foreground "#325587"))
+
 (define-attribute modeline-minor-modes-attribute
-  (t :foreground "white"))
+  (t :foreground "#FFFFFF"))
+
+(define-attribute inactive-modeline-minor-modes-attribute
+  (t :foreground "#808080"))
 
 (define-attribute modeline-position-attribute
   (t :foreground "#FAFAFA" :background "#202020"))
 
+(define-attribute inactive-modeline-position-attribute
+  (t :foreground "#888888" :background "#202020"))
+
 (define-attribute modeline-posline-attribute
-  (t :background "#A0A0A0" :foreground "black"))
+  (t :foreground "black" :background "#A0A0A0"))
+
+(define-attribute inactive-modeline-posline-attribute
+  (t :foreground "black" :background "#505050"))
 
 (defvar *modeline-status-list* nil)
 
@@ -55,13 +70,17 @@
 
 (defun modeline-name (window)
   (values (buffer-name (window-buffer window))
-          'modeline-name-attribute))
+          (if (eq (current-window) window)
+              'modeline-name-attribute
+              'inactive-modeline-name-attribute)))
 
 (defun modeline-major-mode (window)
   (values (concatenate 'string
                        (mode-name (buffer-major-mode (window-buffer window)))
                        " ")
-          'modeline-major-mode-attribute))
+          (if (eq (current-window) window)
+              'modeline-major-mode-attribute
+              'inactive-modeline-major-mode-attribute)))
 
 (defun modeline-minor-modes (window)
   (values (with-output-to-string (out)
@@ -69,14 +88,18 @@
               (when (mode-name mode)
                 (princ (mode-name mode) out)
                 (princ " " out))))
-          'modeline-minor-modes-attribute))
+          (if (eq (current-window) window)
+              'modeline-minor-modes-attribute
+              'inactive-modeline-minor-modes-attribute)))
 
 (defun modeline-position (window)
   (values (format nil
                   " ~D:~D "
                   (line-number-at-point (window-point window))
                   (point-column (window-point window)))
-          'modeline-position-attribute))
+          (if (eq window (current-window))
+              'modeline-position-attribute
+              'inactive-modeline-position-attribute)))
 
 (defun modeline-posline (window)
   (values (cond
@@ -95,7 +118,9 @@
                       (* 100
                          (float (/ (line-number-at-point (window-view-point window))
                                    (buffer-nlines (window-buffer window)))))))))
-          'modeline-posline-attribute))
+          (if (eq window (current-window))
+              'modeline-posline-attribute
+              'inactive-modeline-posline-attribute)))
 
 (defgeneric convert-modeline-element (element window))
 

@@ -74,6 +74,9 @@
                 (+ (length string)
                    (- (- (* (screen-width screen) n) (1- n))
                       width)
+                   (if (screen-left-width screen)
+                       (- (screen-left-width screen))
+                       0)
                    -1))))
 
       (when (and end-charpos (<= (length string) end-charpos))

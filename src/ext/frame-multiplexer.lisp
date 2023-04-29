@@ -16,7 +16,7 @@
   (t :foreground "black" :background "dark gray" :bold-p t))
 
 (define-attribute frame-multiplexer-background-attribute
-  (t :foreground "white" :background "#303030"))
+  (t :foreground "white" :background "#262626"))
 
 (define-editor-variable frame-multiplexer nil ""
   (lambda (value)

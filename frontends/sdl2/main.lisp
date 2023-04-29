@@ -102,7 +102,7 @@
 (defun current-renderer () (display-renderer *display*))
 
 (defun call-with-renderer (function)
-  (bt:with-lock-held ((display-mutex *display*))
+  (bt:with-recursive-lock-held ((display-mutex *display*))
     (funcall function)))
 
 (defmacro with-renderer (() &body body)

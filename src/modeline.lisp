@@ -1,6 +1,7 @@
 (in-package :lem)
 
-(define-editor-variable modeline-format '(modeline-write-info
+(define-editor-variable modeline-format '("  "
+                                          modeline-write-info
                                           modeline-name
                                           (modeline-posline nil :right)
                                           (modeline-position nil :right)

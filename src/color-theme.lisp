@@ -100,20 +100,23 @@
          (point (buffer-point buffer))
          (dark-themes '())
          (light-themes '()))
-    (dolist (name (all-color-themes))
-      (let ((theme (find-color-theme name)))
-        (if (eq :dark (second (assoc :display-background-mode (color-theme-specs theme))))
-            (push (cons name theme) dark-themes)
-            (push (cons name theme) light-themes))))
-    (loop :for (name . theme) :in (append dark-themes light-themes)
-          :do (insert-string
-               point name
-               :attribute (make-attribute
-                           :foreground (second (assoc :foreground (color-theme-specs theme)))
-                           :background (second (assoc :background (color-theme-specs theme))))
-               'theme name)
-              (insert-character point #\newline))
+    (with-buffer-read-only buffer nil
+      (erase-buffer buffer)
+      (dolist (name (all-color-themes))
+        (let ((theme (find-color-theme name)))
+          (if (eq :dark (second (assoc :display-background-mode (color-theme-specs theme))))
+              (push (cons name theme) dark-themes)
+              (push (cons name theme) light-themes))))
+      (loop :for (name . theme) :in (append dark-themes light-themes)
+            :do (insert-string
+                 point name
+                 :attribute (make-attribute
+                             :foreground (second (assoc :foreground (color-theme-specs theme)))
+                             :background (second (assoc :background (color-theme-specs theme))))
+                 'theme name)
+                (insert-character point #\newline)))
     (buffer-start point)
+    (setf (buffer-read-only-p buffer) t)
     (switch-to-buffer buffer)
     (change-buffer-mode buffer 'color-theme-selector-mode)))
 

@@ -100,8 +100,7 @@
     (let ((window (current-window)))
       (dotimes (_ n t)
         (setf window
-              (get-next-window (current-window)
-                               window-list)))
+              (get-next-window window window-list)))
       (switch-to-window window))))
 
 (define-command switch-to-last-focused-window () ()

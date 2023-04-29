@@ -83,6 +83,12 @@
     (setf (current-theme) name)
     (setf (config :color-theme) (current-theme))))
 
+(defun background-color ()
+  (second (assoc :background (color-theme-specs (find-color-theme *current-theme*)))))
+
+(defun foreground-color ()
+  (second (assoc :foreground (color-theme-specs (find-color-theme *current-theme*)))))
+
 (define-major-mode color-theme-selector-mode ()
     (:name "Themes"
      :keymap *color-theme-selector-keymap*))

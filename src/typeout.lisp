@@ -108,7 +108,7 @@
                                     line
                                     (make-border-line (- (display-width) (length text))))))
             line)
-          (make-attribute :foreground "" :background "" :underline-p t)
+          (make-attribute :foreground (foreground-color) :background (background-color) :underline-p t)
           nil))
 
 (defun delete-typeout-window-hook ()

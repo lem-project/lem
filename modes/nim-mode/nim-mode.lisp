@@ -97,7 +97,7 @@
      (make-tm-match (tokens :word-boundary  nimtypes )
                         :name 'syntax-type-attribute)
      ;; operators: https://nim-lang.org/docs/manual.html
-     (make-tm-match (tokens nil 
+     (make-tm-match (tokens nil
                       '( "=" "+" "-" "*" "/"
                          "<" ">@" "$" "~" "&"
                          "%" "|!" "?" "^" "." ":"))

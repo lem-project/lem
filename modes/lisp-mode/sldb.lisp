@@ -29,7 +29,7 @@
   (t :foreground "green"))
 
 (define-major-mode sldb-mode lisp-ui-mode
-    (:name "sldb"
+    (:name "SLDB"
      :keymap *sldb-keymap*))
 
 (define-key *sldb-keymap* "n" 'sldb-down)

@@ -1,7 +1,7 @@
 (in-package :lem-lisp-mode)
 
 (define-major-mode lisp-ui-mode nil
-    (:name "lisp-ui"
+    (:name "lisp-ui" ;TODO
      :keymap *lisp-ui-keymap*)
   (setf (buffer-read-only-p (current-buffer)) t))
 

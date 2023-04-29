@@ -67,7 +67,7 @@
     table))
 
 (define-major-mode python-mode language-mode
-    (:name "python"
+    (:name "Python"
      :keymap *python-mode-keymap*
      :syntax-table *python-syntax-table*
      :mode-hook *python-mode-hook*)

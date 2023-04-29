@@ -51,7 +51,7 @@
       (+ column tab-width))))
 
 (define-major-mode asm-mode language-mode
-  (:name "asm"
+  (:name "Asm"
    :keymap *asm-mode-keymap*
    :syntax-table *asm-syntax-table*
    :mode-hook *asm-mode-hook*)

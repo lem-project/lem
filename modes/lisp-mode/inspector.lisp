@@ -14,7 +14,7 @@
 (defvar *inspector-mark-stack* '())
 
 (define-major-mode lisp-inspector-mode lisp-ui-mode
-    (:name "lisp-inspector"
+    (:name "Inspector"
      :keymap *lisp-inspector-keymap*)
   (setf (buffer-read-only-p (current-buffer)) t))
 

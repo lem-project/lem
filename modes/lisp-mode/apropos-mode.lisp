@@ -1,7 +1,7 @@
 (in-package :lem-lisp-mode)
 
 (define-major-mode lisp-apropos-mode lisp-mode
-    (:name "lisp-apropos"
+    (:name "Apropos"
      :keymap *lisp-apropos-mode-keymap*
      :syntax-table lem-lisp-syntax:*syntax-table*)
   (setf (variable-value 'enable-syntax-highlight) nil))

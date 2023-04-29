@@ -23,7 +23,7 @@
   (t :underline-p t))
 
 (define-major-mode directory-mode ()
-    (:name "directory"
+    (:name "Directory"
      :keymap *directory-mode-keymap*))
 
 (define-key *directory-mode-keymap* "q" 'quit-active-window)

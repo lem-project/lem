@@ -50,7 +50,7 @@
 (define-editor-variable listener-execute-function)
 
 (define-minor-mode listener-mode
-    (:name "listener"
+    (:name "Listener"
      :keymap *listener-mode-keymap*))
 
 (define-key *listener-mode-keymap* "Return" 'listener-return)

@@ -53,7 +53,7 @@
 (define-editor-variable isearch-prev-last nil)
 
 (define-minor-mode isearch-mode
-    (:name "isearch"
+    (:name "Search"
      :keymap *isearch-keymap*
      :disable-hook 'disable-hook))
 

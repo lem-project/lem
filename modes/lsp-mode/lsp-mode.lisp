@@ -236,7 +236,7 @@
 (define-key *lsp-mode-keymap* "C-c h" 'lsp-hover)
 
 (define-minor-mode lsp-mode
-    (:name "lsp"
+    (:name "LSP"
      :keymap *lsp-mode-keymap*
      :enable-hook 'enable-hook)
   (setf (variable-value 'language-mode:completion-spec)

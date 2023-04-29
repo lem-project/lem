@@ -9,9 +9,9 @@
 
 #| link: https://www.w3.org/TR/CSS22/propidx.html |#
 
-(defvar *html5-element-strings* 
+(defvar *html5-element-strings*
   '("html" "head" "body"
-    "title" "meta" "link" "base" "style" 
+    "title" "meta" "link" "base" "style"
     "address" "blockquote" "div" "footer" "h1" "h2" "h3" "h4" "h5" "h6"
     "header" "hr" "main" "p" "pre" "span"
     "article" "aside" "nav" "section"
@@ -152,7 +152,7 @@
 
 (defvar *css22-parcentage* `(:sequence (:regex ,*css22-number*) (:regex "%")))
 
-(defvar *css22-length* 
+(defvar *css22-length*
   (let ((length '((:regex "-?\\d+(.\\d+)?") (:alternation "em" "ex" "pt" "px" "in" "cm" "mm" "pc"))))
     `(:sequence
       :word-boundary
@@ -160,36 +160,36 @@
       :word-boundary)))
 
 (defvar *css22-border-style*
-  (tokens-from-strings 
+  (tokens-from-strings
    (list "none" "hiddne" "dotted" "dasehed" "solid" "double" "groove" "ridge" "inset" "outset")))
 
 (defvar *css22-border-width* (tokens-from-strings (list "thin" "medium" "thick")))
 
-(defvar *css22-angle* 
+(defvar *css22-angle*
   (let ((angle '((:regex "-?\\d+(.\\d+)?") (:alternation "deg" "rad" "grad"))))
     `(:sequence
       :word-boundary
       ,@angle
       :word-boundary)))
 
-(defvar *css22-time* 
+(defvar *css22-time*
   (let ((time '((:regex "-?\\d+(.\\d+)?") (:alternation "s" "ms"))))
     `(:sequence
       :word-boundary
       ,@time
       :word-boundary)))
 
-(defvar *css22-frequency* 
+(defvar *css22-frequency*
   (let ((time '((:regex "-?\\d+(.\\d+)?") (:alternation "Hz" "kHz"))))
     `(:sequence
       :word-boundary
       ,@time
       :word-boundary)))
 
-(defvar *css22-absolute-size* 
+(defvar *css22-absolute-size*
   (tokens-from-strings (list "xx-small" "x-small" "small" "medium" "large" "x-large" "xx-large")))
 
-(defvar *css22-relative-size* 
+(defvar *css22-relative-size*
   (tokens-from-strings (list "larger" "smaller")))
 
 (defvar *css22-generic-families*
@@ -198,7 +198,7 @@
 (defvar *css22-generic-voices*
   (tokens-from-strings (list "male" "famale" "child")))
 
-(defvar *css22-at-keywords* 
+(defvar *css22-at-keywords*
   '(:sequence
     (:alternation :word-boundary (:positive-lookbehind :whitespace-char-class) :start-anchor)
     (:regex "@[^\\s]+")
@@ -251,7 +251,7 @@
    (tm-constant *css22-generic-families*)
    (tm-constant *css22-generic-voices*)
 
-   
+
    (tm-builtin *html5-elements*)
    (tm-variable *scss-variable*)
 
@@ -278,7 +278,7 @@
     table))
 
 (define-major-mode css-mode language-mode
-    (:name "css"
+    (:name "CSS"
      :keymap *css-mode-keymap*
      :syntax-table *css-syntax-table*
      :mode-hook *css-mode-hook*)

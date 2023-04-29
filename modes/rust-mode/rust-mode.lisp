@@ -98,10 +98,10 @@
                     (make-tm-match (tokens :word-boundary
                                            '("NULL" "true" "false" "TRUE" "FALSE"))
                                    :name 'syntax-constant-attribute)
-                    (make-tm-match (tokens nil '("+" "++" "+=" "-" "--" "-=" "*" "*=" "/" "/=" "%" "%=" 
-                                                 "<" "<=" ">" ">=" "!=" "==" 
+                    (make-tm-match (tokens nil '("+" "++" "+=" "-" "--" "-=" "*" "*=" "/" "/=" "%" "%="
+                                                 "<" "<=" ">" ">=" "!=" "=="
                                                  "!" "&&" "||"
-                                                 "<<" "<<=" ">>" ">>=" "~" "&" "&=" "|" "|=" "^" "^=" 
+                                                 "<<" "<<=" ">>" ">>=" "~" "&" "&=" "|" "|=" "^" "^="
                                                  "=" "->" "." "," "?" ":" "sizeof"))
                                    :name 'syntax-keyword-attribute)
                     (make-tm-match "\\b((0(x|X)[0-9a-fA-F_]*?)|(0(b|B)[01]([01_]*)?)|(([0-9]([0-9_]*)?\\.?[0-9_]*)|(\\.[0-9]([0-9_]*)?))((e|E)(\\+|-)?[0-9]([0-9']*[0-9])?)?)(u8|i8|u16|i16|u32|i32|u64|i64|u128|f32|f64)?\\b"
@@ -131,7 +131,7 @@
     table))
 
 (define-major-mode rust-mode language-mode
-    (:name "rust"
+    (:name "Rust"
      :keymap *rust-mode-keymap*
      :syntax-table *rust-syntax-table*
      :mode-hook *rust-mode-hook*)
@@ -323,7 +323,7 @@
 (defun rust-after-save-hook (buffer)
   (declare (ignore buffer))
   (when (variable-value 'rust-format-on-save :buffer)
-    
+
     ))
 
 (define-file-type ("rs") rust-mode)

@@ -28,7 +28,7 @@
     table))
 
 (define-major-mode go-mode language-mode
-    (:name "go"
+    (:name "Go"
      :keymap *go-mode-keymap*
      :syntax-table *go-syntax-table*
      :mode-hook *go-mode-hook*)

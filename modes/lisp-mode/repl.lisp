@@ -1,7 +1,7 @@
 (in-package :lem-lisp-mode)
 
 (define-major-mode lisp-repl-mode lisp-mode
-    (:name "lisp-repl"
+    (:name "REPL"
      :keymap *lisp-repl-mode-keymap*
      :syntax-table lem-lisp-syntax:*syntax-table*)
   (cond

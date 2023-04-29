@@ -28,7 +28,7 @@
     table))
 
 (define-major-mode sql-mode language-mode
-    (:name "sql"
+    (:name "SQL"
      :keymap *sql-mode-keymap*
      :syntax-table *syntax-table*
      :mode-hook *sql-mode-hoook*)

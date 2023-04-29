@@ -40,7 +40,7 @@
     table))
 
 (define-major-mode yaml-mode language-mode
-    (:name "yaml"
+    (:name "Yaml"
      :keymap *yaml-mode-keymap*
      :syntax-table *yaml-syntax-table*
      :mode-hook *yaml-mode-hook*)

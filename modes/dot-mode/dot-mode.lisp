@@ -32,7 +32,7 @@
                                    :name 'syntax-type-attribute)
                     (make-tm-match (tokens nil *dot-operators*)
                                    :name 'syntax-keyword-attribute))))
-    
+
     (make-tmlanguage :patterns patterns)))
 
 (defvar *dot-syntax-table*
@@ -46,7 +46,7 @@
     table))
 
 (define-major-mode dot-mode language-mode
-    (:name "dot"
+    (:name "Dot"
      :keymap *dot-mode-keymap*
      :syntax-table *dot-syntax-table*
      :mode-hook *dot-mode-hook*)

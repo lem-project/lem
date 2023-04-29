@@ -1,7 +1,7 @@
 (in-package :lem-base)
 
 (lem:define-major-mode fundamental-mode nil
-    (:name "fundamental"))
+    (:name "Fundamental"))
 
 (in-package :lem)
 

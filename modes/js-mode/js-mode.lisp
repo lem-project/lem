@@ -6,9 +6,9 @@
            :js-mode))
 (in-package :lem-js-mode)
 
-#| 
-link : 
-  https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide/Grammar_and_types 
+#|
+link :
+  https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide/Grammar_and_types
   https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Lexical_grammar
 
 |#
@@ -20,16 +20,16 @@ link :
 (defvar *js-undefined-literals* "(undefined)")
 
 (defvar *js-key-words* '("break" "case" "catch" "class" "const" "continue" "debugger" "default"
-                         "delete" "do" "else" "export" "extends" "finally" "for" 
-                         "function"  "if" "import" "in" "instanceof" 
+                         "delete" "do" "else" "export" "extends" "finally" "for"
+                         "function"  "if" "import" "in" "instanceof"
                          "let" "new" "return" "super"
                          "switch" "this" "throw" "try" "typeof" "var" "void" "while"
                          "with" "yield")) ;; TODO function* yeild*
-(defvar *js-future-key-words* '("enum" "implements" "static" "public" 
+(defvar *js-future-key-words* '("enum" "implements" "static" "public"
                                 "package" "interface" "protected" "private" "await"))
 
-(defvar *js-white-space* (list (code-char #x9) (code-char #xb) (code-char #xc) 
-                               (code-char #x20) (code-char #xa0))) ;;TODO 
+(defvar *js-white-space* (list (code-char #x9) (code-char #xb) (code-char #xc)
+                               (code-char #x20) (code-char #xa0))) ;;TODO
 (defvar *js-line-terminators* (list (code-char #x0a) (code-char #x0d)
                                     (code-char #x2028) (code-char #x2029)))
 
@@ -38,7 +38,7 @@ link :
 (defvar *js-array-paren* "([|])")
 
 (defvar *js-arithmetic-operators* '("+" "-" "*" "/" "%" "**" "++" "--"))
-(defvar *js-assignment-operators* '("=" "+=" "-=" "*=" "/=" "%=" "**=" "<<=" ">>=" ">>>=" 
+(defvar *js-assignment-operators* '("=" "+=" "-=" "*=" "/=" "%=" "**=" "<<=" ">>=" ">>>="
                                     "&=" "\\^=" "\\|="))
 (defvar *js-bitwise-operators* '("&" "|" "^" "~" "<<" ">>" ">>>"))
 (defvar *js-comma-operators* '(","))
@@ -48,12 +48,12 @@ link :
 
 (defvar *js-spaces* (append *js-white-space* *js-line-terminators*))
 
-(defvar *js-builtin-operators* (append *js-arithmetic-operators* 
-                               *js-assignment-operators* 
-                               *js-bitwise-operators* 
-                               *js-comma-operators* 
-                               *js-comparison-operators* 
-                               *js-logical-operators* 
+(defvar *js-builtin-operators* (append *js-arithmetic-operators*
+                               *js-assignment-operators*
+                               *js-bitwise-operators*
+                               *js-comma-operators*
+                               *js-comparison-operators*
+                               *js-logical-operators*
                                *js-other-symbols*))
 
 (defun tokens (boundary strings)
@@ -104,7 +104,7 @@ link :
     table))
 
 (define-major-mode js-mode language-mode
-    (:name "js"
+    (:name "JavaScript"
      :keymap *js-mode-keymap*
      :syntax-table *js-syntax-table*
      :mode-hook *js-mode-hook*)

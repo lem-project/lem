@@ -23,7 +23,7 @@
     table))
 
 (define-major-mode c-mode language-mode
-    (:name "c"
+    (:name "C"
      :keymap *c-mode-keymap*
      :syntax-table *c-syntax-table*
      :mode-hook *c-mode-hook*)

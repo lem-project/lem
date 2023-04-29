@@ -21,7 +21,7 @@
 (defvar *last-compilation-result* nil)
 
 (define-major-mode lisp-mode language-mode
-    (:name "lisp"
+    (:name "Lisp"
      :description "Contains necessary functions to handle lisp code."
      :keymap *lisp-mode-keymap*
      :syntax-table lem-lisp-syntax:*syntax-table*

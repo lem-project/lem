@@ -43,7 +43,7 @@
     table))
 
 (define-major-mode scala-mode language-mode
-    (:name "scala"
+    (:name "Scala"
      :keymap *scala-mode-keymap*
      :syntax-table *syntax-table*
      :mode-hook *scala-mode-hook*)

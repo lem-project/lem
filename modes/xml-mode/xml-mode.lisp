@@ -34,7 +34,7 @@
     table))
 
 (define-major-mode xml-mode language-mode
-    (:name "xml"
+    (:name "XML"
      :keymap *xml-mode-keymap*
      :syntax-table *xml-syntax-table*
      :mode-hook *xml-mode-hook*)

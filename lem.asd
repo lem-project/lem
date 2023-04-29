@@ -74,6 +74,7 @@
                (:file "display")
 
                (:file "color-theme")
+
                (:file "site-init")
 
                (:module "ext"
@@ -107,7 +108,8 @@
                              (:file "auto-save")
                              (:file "tabbar")
                              (:file "frame-multiplexer")
-                             (:file "deepl")))))
+                             (:file "deepl")
+                             (:file "themes")))))
 
 (defsystem "lem/extensions"
   :depends-on ("lem-lsp-mode"

@@ -200,6 +200,11 @@
        (setf *in-the-editor* nil)))
    :name "editor"))
 
+(defun find-editor-thread ()
+  (find "editor" (sb-thread:list-all-threads)
+        :test #'equal
+        :key #'sb-thread:thread-name))
+
 (defun lem (&rest args)
 
   ;; for sbcl, set the default file encoding to utf-8

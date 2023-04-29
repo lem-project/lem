@@ -96,6 +96,11 @@
 (defmethod handle-textediting (platform text)
   (setf *textediting-text* text))
 
+(defun send-key-event (key)
+  (if (lem:match-key key :ctrl t :sym "]")
+      (lem:send-abort-event (lem::find-editor-thread) nil)
+      (lem:send-event key)))
+
 ;; linux
 (defmethod handle-text-input ((platform lem-sdl2/platform:linux) text)
   (loop :for c :across text
@@ -105,7 +110,7 @@
                                        :shift nil
                                        :sym sym)))
                 (when text-input-p
-                  (lem:send-event key))))))
+                  (send-key-event key))))))
 
 (defmethod handle-key-down ((platform lem-sdl2/platform:linux) key-event)
   (let ((modifier (key-event-modifier key-event))
@@ -120,7 +125,7 @@
                              :ctrl (modifier-ctrl modifier)
                              :meta (modifier-meta modifier)
                              :sym sym)))
-          (lem:send-event key))))))
+          (send-key-event key))))))
 
 (defmethod handle-key-up ((platform lem-sdl2/platform:linux) key-event)
   (update-modifier *modifier* (key-event-modifier key-event)))
@@ -180,7 +185,7 @@
                                    :meta (modifier-meta *modifier*)
                                    :shift nil
                                    :sym (string c))))
-                (lem:send-event key)))))
+                (send-key-event key)))))
 
 (defmethod handle-key-down ((platform lem-sdl2/platform:mac) key-event)
   (let ((code (key-event-code key-event))
@@ -197,7 +202,7 @@
                                                   :ctrl (modifier-ctrl modifier)
                                                   :meta (modifier-meta modifier)
                                                   :sym sym)))
-            (lem:send-event key)))))))
+            (send-key-event key)))))))
 
 (defmethod handle-key-up ((platform lem-sdl2/platform:mac) key-event)
   (update-modifier *modifier* (key-event-modifier key-event)))

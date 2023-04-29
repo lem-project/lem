@@ -1,5 +1,13 @@
 (in-package :lem)
 
+(defvar *current-theme*)
+
+(defun current-theme ()
+  *current-theme*)
+
+(defun (setf current-theme) (theme)
+  (setf *current-theme* theme))
+
 (defvar *hot-reload-color-theme* nil)
 
 (defstruct color-theme
@@ -71,7 +79,11 @@
       (editor-error "undefined color theme: ~A" name))
     (apply-theme theme)
     (message nil)
-    (redraw-display t)))
+    (redraw-display t)
+    (setf (current-theme) name)))
+
+(define-command save-current-theme () ()
+  (setf (config :color-theme) (current-theme)))
 
 (defun initialize-color-theme ()
   (load-theme (config :color-theme "emacs-dark")))

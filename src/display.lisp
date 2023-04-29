@@ -2,6 +2,19 @@
 
 (defvar *inactive-window-background-color* nil)
 
+(defun call-with-display-error (function)
+  (handler-bind ((error (lambda (e)
+                          (log:error "~A"
+                                     (with-output-to-string (out)
+                                       (format out "~A~%" e)
+                                       (uiop:print-backtrace :stream out :condition e)))
+                          (message "~A" e)
+                          (return-from call-with-display-error))))
+    (funcall function)))
+
+(defmacro with-display-error (() &body body)
+  `(call-with-display-error (lambda () ,@body)))
+
 (defun overlay-attributes (under-attributes over-start over-end over-attribute)
   ;; under-attributes := ((start-charpos end-charpos attribute) ...)
   (let* ((over-attribute (ensure-attribute over-attribute))
@@ -366,67 +379,68 @@
   point-y)
 
 (defun screen-display-lines (screen redraw-flag buffer view-charpos cursor-y)
-  (let* ((*printing-tab-size* (variable-value 'tab-width :default buffer))
-         (line-wrap (variable-value 'line-wrap :default buffer))
-         (disp-line-function
-           (if line-wrap
-               #'screen-display-line-wrapping
-               #'screen-display-line))
-         (wrap-lines (screen-wrap-lines screen))
-         (screen-width (- (screen-width screen)
-                          (screen-left-width screen))))
-    (setf (screen-wrap-lines screen) nil)
-    (loop :for y :from 0
-          :for i :from 0
-          :for str/attributes :across (screen-lines screen)
-          :for left-str/attr :across (screen-left-lines screen)
-          :while (< y (screen-height screen))
-          :do (cond
-                ((and (null left-str/attr)
-                      (not redraw-flag)
-                      (not (null str/attributes))
-                      #1=(aref (screen-old-lines screen) i)
-                      (equal str/attributes #1#)
-                      #+(or)(/= cursor-y i))
-                 (let ((n (count i wrap-lines)))
-                   (incf y n)
-                   (dotimes (_ n)
-                     (push i (screen-wrap-lines screen)))))
-                (str/attributes
-                 (setf (aref (screen-old-lines screen) i) str/attributes)
-                 (when (zerop (length (car str/attributes)))
-                   (lem-if:clear-eol (implementation) (screen-view screen) 0 y))
-                 (let (y2)
-                   (when left-str/attr
-                     (screen-print-string screen
-                                          0
-                                          y
-                                          (car left-str/attr)
-                                          (cdr left-str/attr)))
-                   (setq y2
-                         (funcall disp-line-function
-                                  screen
-                                  screen-width
-                                  view-charpos
-                                  cursor-y
-                                  y
-                                  str/attributes))
-                   (cond
-                     (line-wrap
-                      (let ((offset (- y2 y)))
-                        (cond ((< 0 offset)
-                               (setf redraw-flag t)
-                               (dotimes (_ offset)
-                                 (push i (screen-wrap-lines screen))))
-                              ((and (= offset 0) (find i wrap-lines))
-                               (setf redraw-flag t))))
-                      (setf y y2))
-                     (t
-                      (setf (aref (screen-lines screen) i) nil)))))
-                (t
-                 (fill (screen-old-lines screen) nil :start i)
-                 (lem-if:clear-eob (implementation) (screen-view screen) 0 y)
-                 (return))))))
+  (with-display-error ()
+    (let* ((*printing-tab-size* (variable-value 'tab-width :default buffer))
+           (line-wrap (variable-value 'line-wrap :default buffer))
+           (disp-line-function
+             (if line-wrap
+                 #'screen-display-line-wrapping
+                 #'screen-display-line))
+           (wrap-lines (screen-wrap-lines screen))
+           (screen-width (- (screen-width screen)
+                            (screen-left-width screen))))
+      (setf (screen-wrap-lines screen) nil)
+      (loop :for y :from 0
+            :for i :from 0
+            :for str/attributes :across (screen-lines screen)
+            :for left-str/attr :across (screen-left-lines screen)
+            :while (< y (screen-height screen))
+            :do (cond
+                  ((and (null left-str/attr)
+                        (not redraw-flag)
+                        (not (null str/attributes))
+                        #1=(aref (screen-old-lines screen) i)
+                        (equal str/attributes #1#)
+                        #+(or)(/= cursor-y i))
+                   (let ((n (count i wrap-lines)))
+                     (incf y n)
+                     (dotimes (_ n)
+                       (push i (screen-wrap-lines screen)))))
+                  (str/attributes
+                   (setf (aref (screen-old-lines screen) i) str/attributes)
+                   (when (zerop (length (car str/attributes)))
+                     (lem-if:clear-eol (implementation) (screen-view screen) 0 y))
+                   (let (y2)
+                     (when left-str/attr
+                       (screen-print-string screen
+                                            0
+                                            y
+                                            (car left-str/attr)
+                                            (cdr left-str/attr)))
+                     (setq y2
+                           (funcall disp-line-function
+                                    screen
+                                    screen-width
+                                    view-charpos
+                                    cursor-y
+                                    y
+                                    str/attributes))
+                     (cond
+                       (line-wrap
+                        (let ((offset (- y2 y)))
+                          (cond ((< 0 offset)
+                                 (setf redraw-flag t)
+                                 (dotimes (_ offset)
+                                   (push i (screen-wrap-lines screen))))
+                                ((and (= offset 0) (find i wrap-lines))
+                                 (setf redraw-flag t))))
+                        (setf y y2))
+                       (t
+                        (setf (aref (screen-lines screen) i) nil)))))
+                  (t
+                   (fill (screen-old-lines screen) nil :start i)
+                   (lem-if:clear-eob (implementation) (screen-view screen) 0 y)
+                   (return)))))))
 
 (defun screen-redraw-modeline (window force)
   (let* ((screen (window-screen window))
@@ -470,58 +484,59 @@
                (setf (screen-horizontal-scroll-start screen) point-column)))))))
 
 (defun redraw-display-window (window force)
-  (let ((lem-if:*background-color-of-drawing-window*
-          (cond ((typep window 'floating-window)
-                 (floating-window-background-color window))
-                ((eq window (current-window))
-                 nil)
-                ((eq window (window-parent (current-window)))
-                 nil)
-                ((and *inactive-window-background-color*
-                      (eq 'window (type-of window)))
-                 *inactive-window-background-color*)
-                (t nil)))
-        (focus-window-p (eq window (current-window)))
-        (buffer (window-buffer window))
-        (screen (window-screen window)))
-    (let ((scroll-n (when focus-window-p
-                      (window-see window))))
-      (when (or (not (native-scroll-support (implementation)))
-                (not (equal (screen-last-buffer-name screen) (buffer-name buffer)))
-                (not (eql (screen-last-buffer-modified-tick screen)
-                          (buffer-modified-tick buffer)))
-                (and scroll-n (>= scroll-n (screen-height screen))))
-        (setf scroll-n nil))
-      (when scroll-n
-        (lem-if:scroll (implementation) (screen-view screen) scroll-n))
-      (multiple-value-bind (*redraw-start-y* *redraw-end-y*)
-          (when scroll-n
-            (if (plusp scroll-n)
-                (values (- (screen-height screen) scroll-n) (screen-height screen))
-                (values 0 (- scroll-n))))
-        (run-show-buffer-hooks window)
-        (draw-window-to-screen window)
-        (adjust-horizontal-scroll window)
-        (let ((*truncate-character*
-                (variable-value 'truncate-character :default buffer)))
-          (screen-display-lines screen
-                                (or force
-                                    (screen-modified-p screen)
-                                    (not (eql (screen-left-width screen)
-                                              (screen-old-left-width screen))))
-                                buffer
-                                (point-charpos (window-view-point window))
-                                (if focus-window-p
-                                    (count-lines (window-view-point window)
-                                                 (window-point window))
-                                    -1)))
-        (setf (screen-old-left-width screen)
-              (screen-left-width screen))
-        (setf (screen-last-buffer-name screen)
-              (buffer-name buffer))
-        (setf (screen-last-buffer-modified-tick screen)
-              (buffer-modified-tick buffer))
-        (when (window-use-modeline-p window)
-          (screen-redraw-modeline window (or (screen-modified-p screen) force)))
-        (lem-if:redraw-view-after (implementation) (screen-view screen))
-        (setf (screen-modified-p screen) nil)))))
+  (with-display-error ()
+    (let ((lem-if:*background-color-of-drawing-window*
+            (cond ((typep window 'floating-window)
+                   (floating-window-background-color window))
+                  ((eq window (current-window))
+                   nil)
+                  ((eq window (window-parent (current-window)))
+                   nil)
+                  ((and *inactive-window-background-color*
+                        (eq 'window (type-of window)))
+                   *inactive-window-background-color*)
+                  (t nil)))
+          (focus-window-p (eq window (current-window)))
+          (buffer (window-buffer window))
+          (screen (window-screen window)))
+      (let ((scroll-n (when focus-window-p
+                        (window-see window))))
+        (when (or (not (native-scroll-support (implementation)))
+                  (not (equal (screen-last-buffer-name screen) (buffer-name buffer)))
+                  (not (eql (screen-last-buffer-modified-tick screen)
+                            (buffer-modified-tick buffer)))
+                  (and scroll-n (>= scroll-n (screen-height screen))))
+          (setf scroll-n nil))
+        (when scroll-n
+          (lem-if:scroll (implementation) (screen-view screen) scroll-n))
+        (multiple-value-bind (*redraw-start-y* *redraw-end-y*)
+            (when scroll-n
+              (if (plusp scroll-n)
+                  (values (- (screen-height screen) scroll-n) (screen-height screen))
+                  (values 0 (- scroll-n))))
+          (run-show-buffer-hooks window)
+          (draw-window-to-screen window)
+          (adjust-horizontal-scroll window)
+          (let ((*truncate-character*
+                  (variable-value 'truncate-character :default buffer)))
+            (screen-display-lines screen
+                                  (or force
+                                      (screen-modified-p screen)
+                                      (not (eql (screen-left-width screen)
+                                                (screen-old-left-width screen))))
+                                  buffer
+                                  (point-charpos (window-view-point window))
+                                  (if focus-window-p
+                                      (count-lines (window-view-point window)
+                                                   (window-point window))
+                                      -1)))
+          (setf (screen-old-left-width screen)
+                (screen-left-width screen))
+          (setf (screen-last-buffer-name screen)
+                (buffer-name buffer))
+          (setf (screen-last-buffer-modified-tick screen)
+                (buffer-modified-tick buffer))
+          (when (window-use-modeline-p window)
+            (screen-redraw-modeline window (or (screen-modified-p screen) force)))
+          (lem-if:redraw-view-after (implementation) (screen-view screen))
+          (setf (screen-modified-p screen) nil))))))

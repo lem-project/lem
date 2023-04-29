@@ -211,10 +211,33 @@
       (log:error "invalid character" character)
       1)))
 
+(defun render-string (string x y &key color bold)
+  (cffi:with-foreign-string (c-string string)
+    (let* ((x (* x (char-width)))
+           (y (* y (char-height)))
+           (surface (sdl2-ttf:render-utf8-blended (get-display-font *display* :type :latin :bold bold)
+                                                  c-string
+                                                  (lem:color-red color)
+                                                  (lem:color-green color)
+                                                  (lem:color-blue color)
+                                                  0))
+           (width (sdl2:surface-width surface))
+           (height (sdl2:surface-height surface))
+           (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
+      (render-texture (current-renderer) texture x y width height)
+      (sdl2:destroy-texture texture)
+      (length string))))
+
+(defun ascii-string-p (string)
+  (every (lambda (c) (< (char-code c) 128)) string))
+
 (defun render-text (text x y &key color bold)
-  (loop :for c :across text
-        :do (let ((offset (render-character c x y :color color :bold bold)))
-              (incf x offset))))
+  (unless (= (length text) 0)
+    (if (ascii-string-p text)
+        (render-string text x y :color color :bold bold)
+        (loop :for c :across text
+              :do (let ((offset (render-character c x y :color color :bold bold)))
+                    (incf x offset))))))
 
 (defun render-underline (x y width &key color)
   (render-line (* x (char-width))

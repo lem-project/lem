@@ -80,11 +80,44 @@
     (apply-theme theme)
     (message nil)
     (redraw-display t)
-    (setf (current-theme) name)))
+    (setf (current-theme) name)
+    (setf (config :color-theme) (current-theme))))
 
-(define-command save-current-theme () ()
-  (setf (config :color-theme) (current-theme)))
+(define-major-mode color-theme-selector-mode ()
+    (:name "Themes"
+     :keymap *color-theme-selector-keymap*))
 
+(define-key *color-theme-selector-keymap* "Return" 'color-theme-selector-select)
+
+(define-command color-theme-selector-select () ()
+  (with-point ((point (current-point)))
+    (line-start point)
+    (let ((theme (text-property-at point 'theme)))
+      (load-theme theme))))
+
+(define-command list-color-themes () ()
+  (let* ((buffer (make-buffer "*Color Themes*"))
+         (point (buffer-point buffer))
+         (dark-themes '())
+         (light-themes '()))
+    (dolist (name (all-color-themes))
+      (let ((theme (find-color-theme name)))
+        (if (eq :dark (second (assoc :display-background-mode (color-theme-specs theme))))
+            (push (cons name theme) dark-themes)
+            (push (cons name theme) light-themes))))
+    (loop :for (name . theme) :in (append dark-themes light-themes)
+          :do (insert-string
+               point name
+               :attribute (make-attribute
+                           :foreground (second (assoc :foreground (color-theme-specs theme)))
+                           :background (second (assoc :background (color-theme-specs theme))))
+               'theme name)
+              (insert-character point #\newline))
+    (buffer-start point)
+    (switch-to-buffer buffer)
+    (change-buffer-mode buffer 'color-theme-selector-mode)))
+
+
 (defun initialize-color-theme ()
   (load-theme (config :color-theme "emacs-dark")))
 

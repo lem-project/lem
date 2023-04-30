@@ -97,6 +97,9 @@
 (defgeneric lem-if:decrease-font-size (implementation)
   (:method (implementation)))
 
+(defgeneric lem-if:resize-display-before (implementation)
+  (:method (implementation)))
+
 (defvar *display-background-mode* nil)
 
 (defun implementation ()

@@ -1190,6 +1190,7 @@ window width is changed, we must recalc the window view point."
                   (+ (max-window-height (current-frame)) (topleft-window-y (current-frame)))))
 
 (defun change-display-size-hook ()
+  (lem-if:resize-display-before (implementation))
   (adjust-all-window-size)
   (clear-screens-of-window-list)
   (redraw-display))

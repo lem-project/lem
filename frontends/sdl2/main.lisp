@@ -114,6 +114,11 @@
 (defmacro with-renderer (() &body body)
   `(call-with-renderer (lambda () ,@body)))
 
+(defmethod clear ((display display))
+  (sdl2:set-render-target (display-renderer display) (display-texture display))
+  (set-render-color display (display-background-color display))
+  (sdl2:render-fill-rect (display-renderer display) nil))
+
 (defmethod get-display-font ((display display) &key type bold)
   (check-type type (member :latin :cjk :emoji))
   (if (eq type :emoji)
@@ -904,5 +909,10 @@
       (let ((font-config (display-font-config *display*)))
         (change-font (change-size font-config
                                   (1- (font-config-size font-config))))))))
+
+(defmethod lem-if:resize-display-before ((implementation sdl2))
+  (with-debug ("resize-display-before")
+    (with-renderer ()
+      (clear *display*))))
 
 (pushnew :lem-sdl2 *features*)

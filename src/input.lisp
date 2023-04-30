@@ -79,7 +79,7 @@
               (kseq (list event)))
          (loop
            (cond ((prefix-command-p cmd)
-                  (let ((event (read-event)))
+                  (let ((event (read-key)))
                     (setf kseq (nconc kseq (list event)))
                     (setf cmd (lookup-keybind kseq))))
                  (t

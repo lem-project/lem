@@ -1069,9 +1069,9 @@
 (defun sit-for* (second)
   (loop :with end-time := (+ (get-internal-real-time)
                              (* second internal-time-units-per-second))
-        :for e := (read-event (float
-                               (/ (- end-time (get-internal-real-time))
-                                  internal-time-units-per-second)))
+        :for e := (lem::receive-event (float
+                                       (/ (- end-time (get-internal-real-time))
+                                          internal-time-units-per-second)))
         :while (key-p e)))
 
 (define-command scheme-slime-restart () ()

@@ -30,6 +30,9 @@
   ((wheel-x :initarg :wheel-x :reader mouse-wheel-x)
    (wheel-y :initarg :wheel-y :reader mouse-wheel-y)))
 
+(defun mouse-event-p (value)
+  (typep value 'mouse-event))
+
 (defun move-to-x-y-position (window x y)
   (switch-to-window window)
   (setf (current-window) window)

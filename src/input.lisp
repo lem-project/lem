@@ -26,35 +26,42 @@
 (defun key-recording-p ()
   *key-recording-p*)
 
-(defun read-event (&optional timeout)
-  (receive-event timeout))
+(defun read-event-internal (&key (accept-key t) (accept-mouse t))
+  (flet ((accept-event-p (event)
+           (or (and accept-key (key-p event))
+               (and accept-mouse (mouse-event-p event)))))
+    (loop :for ms := (get-next-timer-timing-ms)
+          :do (cond ((null ms)
+                     (loop
+                       (let ((event (receive-event nil)))
+                         (when (accept-event-p event)
+                           (return-from read-event-internal event)))))
+                    ((minusp ms)
+                     (handler-bind ((timer-error
+                                      (lambda (err)
+                                        (show-message (princ-to-string err)))))
+                       (update-idle-timers))
+                     (redraw-display))
+                    (t
+                     (let ((event (receive-event (float (/ ms 1000)))))
+                       (when (accept-event-p event)
+                         (return event))))))))
 
-(defun read-key-1 ()
-  (loop :for ms := (get-next-timer-timing-ms)
-        :do (cond ((null ms)
-                   (loop
-                     (let ((e (read-event nil)))
-                       (when (key-p e)
-                         (return-from read-key-1 e)))))
-                  ((minusp ms)
-                   (handler-bind ((timer-error
-                                    (lambda (e)
-                                      (show-message (princ-to-string e)))))
-                     (update-idle-timers))
-                   (redraw-display))
-                  (t
-                   (let ((e (read-event (float (/ ms 1000)))))
-                     (when (key-p e)
-                       (return e)))))))
+(defun read-event-with-recording-and-run-hooks (&key accept-key accept-mouse)
+  (let ((event (if (null *unread-keys*)
+                   (read-event-internal :accept-key accept-key :accept-mouse accept-mouse)
+                   (pop *unread-keys*))))
+    (when (key-p event)
+      (if *key-recording-p*
+          (push event *record-keys*)
+          (run-hooks *input-hook* event)))
+    event))
+
+(defun read-event ()
+  (read-event-with-recording-and-run-hooks :accept-key t :accept-mouse t))
 
 (defun read-key ()
-  (let ((key (if (null *unread-keys*)
-                 (read-key-1)
-                 (pop *unread-keys*))))
-    (if *key-recording-p*
-        (push key *record-keys*)
-        (run-hooks *input-hook* key))
-    key))
+  (read-event-with-recording-and-run-hooks :accept-key t :accept-mouse nil))
 
 (defun unread-key (key)
   (when *key-recording-p*
@@ -62,12 +69,12 @@
   (push key *unread-keys*))
 
 (defun read-command ()
-  (let* ((key (read-key))
+  (let* ((key (read-event))
          (cmd (lookup-keybind key))
          (kseq (list key)))
     (loop
       (cond ((prefix-command-p cmd)
-             (let ((key (read-key)))
+             (let ((key (read-event)))
                (setf kseq (nconc kseq (list key)))
                (setf cmd (lookup-keybind kseq))))
             (t
@@ -90,7 +97,7 @@
 
 (defun sit-for (seconds &optional (update-window-p t))
   (when update-window-p (redraw-display))
-  (let ((e (read-event seconds)))
+  (let ((e (receive-event seconds)))
     (cond ((null e) t)
           ((abort-key-p e) (error 'editor-abort))
           ((key-p e) (unread-key e))

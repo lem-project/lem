@@ -82,6 +82,27 @@
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
   (setf (window-last-mouse-button-down-point (mouse-event-window mouse-event)) nil))
 
+(defun find-overlay-that-can-hover (point)
+  (dolist (overlay (point-overlays point))
+    (alexandria:when-let (callback (overlay-get overlay :hover-callback))
+      (return (values overlay callback)))))
+
+(defvar *last-hover-overlay* nil)
+
+(defun handle-mouse-hover (point)
+  (multiple-value-bind (overlay callback)
+      (find-overlay-that-can-hover point)
+    (when (and overlay
+               (not (eq overlay *last-hover-overlay*)))
+      (setf *last-hover-overlay* overlay)
+      (funcall callback)
+      (return-from handle-mouse-hover))
+    (unless overlay
+      (when *last-hover-overlay*
+        (alexandria:when-let (callback (overlay-get *last-hover-overlay* :unhover-callback))
+          (funcall callback))
+        (setf *last-hover-overlay* nil)))))
+
 (defmethod handle-mouse-event ((mouse-event mouse-motion))
   (let ((x (mouse-event-x mouse-event))
         (y (mouse-event-y mouse-event))
@@ -92,7 +113,9 @@
        (when window
          (let ((point (get-x-y-position-point window x y)))
            (alexandria:when-let (callback (text-property-at point :hover-callback))
-             (funcall callback window point)))))
+             (funcall callback window point)
+             (return-from handle-mouse-event))
+           (handle-mouse-hover point))))
       (:button-1
        (when (and window (window-last-mouse-button-down-point window))
          (move-current-point-to-x-y-position window x y)
@@ -201,3 +224,19 @@
      '<mouse-motion>)
     (mouse-wheel
      '<mouse-wheel>)))
+
+
+(defun set-hover-message (overlay message &key style)
+  (overlay-put overlay
+               :hover-callback
+               (lambda ()
+                 (let ((hover-window (display-popup-message message
+                                                            :timeout nil
+                                                            :style style)))
+                   (overlay-put overlay 'hover-window hover-window))))
+  (overlay-put overlay
+               :unhover-callback
+               (lambda ()
+                 (let ((hover-window (overlay-get overlay 'hover-window)))
+                   (when hover-window
+                     (delete-popup-message hover-window))))))

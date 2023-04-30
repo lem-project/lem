@@ -23,11 +23,12 @@
     (destructuring-bind (width height)
         (lem/popup-window::compute-buffer-size buffer)
       (delete-popup-message destination-window)
-      (let ((window (lem/popup-window::make-popup-window :source-window (or source-window (current-window))
-                                                         :buffer buffer
-                                                         :width width
-                                                         :height height
-                                                         :style style)))
+      (let ((window (lem/popup-window::make-popup-window
+                     :source-window (or source-window (current-window))
+                     :buffer buffer
+                     :width width
+                     :height height
+                     :style style)))
         (buffer-start (window-view-point window))
         (window-see window)
         (when timeout

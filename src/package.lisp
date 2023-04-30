@@ -556,7 +556,8 @@
    :increase-font-size
    :decrease-font-size
    :resize-display-before
-   :get-font-list))
+   :get-font-list
+   :get-mouse-position))
 
 (defpackage :lem-user
   (:use :cl :lem))

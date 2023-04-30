@@ -103,6 +103,10 @@
 (defgeneric lem-if:get-font-list (implementation)
   (:method (implementation) '()))
 
+(defgeneric lem-if:get-mouse-position (implementation)
+  (:method (implementation)
+    (values 0 0)))
+
 (defvar *display-background-mode* nil)
 
 (defun implementation ()

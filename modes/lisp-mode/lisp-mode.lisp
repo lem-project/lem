@@ -523,13 +523,16 @@
     (let ((overlay (make-overlay point
                                  (or (form-offset (copy-point point :temporary) 1)
                                      (buffer-end-point buffer))
-                                 'compiler-note-attribute)))
-      (overlay-put overlay 'message
-                   (with-output-to-string (out)
+                                 'compiler-note-attribute))
+          (message (with-output-to-string (out)
                      (write-string message out)
                      (when source-context
                        (terpri out)
-                       (write-string source-context out))))
+                       (write-string source-context out)))))
+      (lem::set-hover-message overlay
+                              message
+                              :style '(:gravity :mouse-cursor :offset-y 1))
+      (overlay-put overlay 'message message)
       overlay)))
 
 (defvar *note-overlays* nil)
@@ -570,14 +573,16 @@
       (return))))
 
 (defun move-to-next-compilation-notes (point)
-  (alexandria:when-let ((overlay (loop :for overlay :in (buffer-compilation-notes-overlays (point-buffer point))
+  (alexandria:when-let ((overlay (loop :for overlay :in (buffer-compilation-notes-overlays
+                                                         (point-buffer point))
                                        :when (point< point (overlay-start overlay))
                                        :return overlay)))
     (move-point point (overlay-start overlay))))
 
 (defun move-to-previous-compilation-notes (point)
   (alexandria:when-let ((overlay (loop :for last-overlay := nil :then overlay
-                                       :for overlay :in (buffer-compilation-notes-overlays (point-buffer point))
+                                       :for overlay :in (buffer-compilation-notes-overlays
+                                                         (point-buffer point))
                                        :when (point<= point (overlay-start overlay))
                                        :return last-overlay
                                        :finally (return last-overlay))))

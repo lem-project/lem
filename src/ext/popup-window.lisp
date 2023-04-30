@@ -24,6 +24,7 @@
 (defclass gravity-topright (gravity) ())
 (defclass gravity-cursor (gravity) ())
 (defclass gravity-follow-cursor (gravity-cursor) ())
+(defclass gravity-mouse-cursor (gravity) ())
 (defclass gravity-vertically-adjacent-window (gravity) ())
 (defclass gravity-horizontally-adjacent-window (gravity) ())
 
@@ -56,6 +57,7 @@
         (:topright (make-instance 'gravity-topright))
         (:cursor (make-instance 'gravity-cursor))
         (:follow-cursor (make-instance 'gravity-follow-cursor))
+        (:mouse-cursor (make-instance 'gravity-mouse-cursor))
         (:vertically-adjacent-window (make-instance 'gravity-vertically-adjacent-window))
         (:horizontally-adjacent-window (make-instance 'gravity-horizontally-adjacent-window)))))
 
@@ -127,6 +129,12 @@
       (setf x 0)
       (setf w (min width disp-w)))
     (list x y w h)))
+
+(defmethod compute-popup-window-rectangle ((gravity gravity-mouse-cursor) &key width height
+                                                                   &allow-other-keys)
+  (multiple-value-bind (x y)
+      (lem-if:get-mouse-position (lem:implementation))
+    (list x y width height)))
 
 (defmethod compute-popup-window-rectangle ((gravity gravity-top) &key source-window width height
                                                                  &allow-other-keys)

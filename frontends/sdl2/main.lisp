@@ -914,4 +914,11 @@
 (defmethod lem-if:get-font-list ((implementation sdl2))
   (get-font-list (get-platform)))
 
+(defmethod lem-if:get-mouse-position ((implementation sdl2))
+  (multiple-value-bind (x y bitmask)
+      (sdl2:mouse-state)
+    (declare (ignore bitmask))
+    (values (floor x (display-char-width *display*))
+            (floor y (display-char-height *display*)))))
+
 (pushnew :lem-sdl2 *features*)

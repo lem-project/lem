@@ -20,7 +20,8 @@
   (:dark :foreground "green"))
 
 (define-attribute current-line-attribute
-  (t :underline t))
+  (:dark :underline "white")
+  (:light :underline "black"))
 
 (define-major-mode directory-mode ()
     (:name "Directory"

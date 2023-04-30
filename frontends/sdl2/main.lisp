@@ -285,7 +285,13 @@
       (render-fill-rect-to-current-texture x y width 1 :color background-color)
       (render-text text x y :color foreground-color :bold bold)
       (when underline
-        (render-underline x y width :color foreground-color)))))
+        (render-underline x
+                          y
+                          width
+                          :color (if (eq underline t)
+                                     foreground-color
+                                     (or (lem:parse-color underline)
+                                         foreground-color)))))))
 
 (defun render-fill-rect-by-pixels (x y width height &key color)
   (sdl2:with-rects ((rect x y width height))

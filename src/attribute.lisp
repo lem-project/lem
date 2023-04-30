@@ -180,7 +180,7 @@
 (define-attribute truncate-attribute)
 
 (define-attribute compiler-note-attribute
-  (t :foreground "red" :underline t))
+  (t :underline "red"))
 
 (define-attribute syntax-warning-attribute
   (t :foreground "red"))

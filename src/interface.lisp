@@ -100,6 +100,9 @@
 (defgeneric lem-if:resize-display-before (implementation)
   (:method (implementation)))
 
+(defgeneric lem-if:get-font-list (implementation)
+  (:method (implementation) '()))
+
 (defvar *display-background-mode* nil)
 
 (defun implementation ()

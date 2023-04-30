@@ -914,4 +914,7 @@
     (with-renderer ()
       (clear *display*))))
 
+(defmethod lem-if:get-font-list ((implementation sdl2))
+  (get-font-list (get-platform)))
+
 (pushnew :lem-sdl2 *features*)

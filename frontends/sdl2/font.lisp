@@ -13,7 +13,8 @@
            :merge-font-config
            :change-size
            :open-font
-           :close-font))
+           :close-font
+           :get-font-list))
 (in-package :lem-sdl2/font)
 
 (defstruct (font-config (:constructor %make-font-config))
@@ -122,3 +123,14 @@
   (sdl2-ttf:close-font (font-cjk-bold-font font))
   (sdl2-ttf:close-font (font-emoji-font font))
   (values))
+
+(defgeneric get-font-list (platform))
+
+(defmethod get-font-list (platform)
+  '())
+
+(defmethod get-font-list ((platform lem-sdl2/platform:linux))
+  (loop :for line :in (split-sequence:split-sequence #\newline
+                                                     (uiop:run-program "fc-list" :output :string)
+                                                     :remove-empty-subseqs t)
+        :collect (first (split-sequence:split-sequence #\: line :count 1))))

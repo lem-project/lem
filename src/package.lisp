@@ -555,7 +555,8 @@
    :clipboard-copy
    :increase-font-size
    :decrease-font-size
-   :resize-display-before))
+   :resize-display-before
+   :get-font-list))
 
 (defpackage :lem-user
   (:use :cl :lem))

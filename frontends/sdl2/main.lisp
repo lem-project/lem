@@ -499,7 +499,9 @@
   (let ((button
           (cond ((eql button sdl2-ffi:+sdl-button-left+) :button-1)
                 ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
-                ((eql button sdl2-ffi:+sdl-button-middle+) :button-2))))
+                ((eql button sdl2-ffi:+sdl-button-middle+) :button-2)))
+        (x (floor x (char-width)))
+        (y (floor y (char-height))))
     (lem:send-event (lambda ()
                       (lem::receive-mouse-button-up x y button)))))
 

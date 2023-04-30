@@ -26,9 +26,7 @@
    (x :initarg :x
       :reader mouse-event-x)
    (y :initarg :y
-      :reader mouse-event-y)
-   (target :initarg :target
-           :reader mouse-event-target)))
+      :reader mouse-event-y)))
 
 (defclass mouse-button-down (mouse-event)
   ((clicks :initarg :clicks
@@ -46,11 +44,6 @@
 
 (defun mouse-event-p (value)
   (typep value 'mouse-event))
-
-(defun mouse-event-window (mouse-event)
-  (let ((target (mouse-event-target mouse-event)))
-    (check-type target (or null window))
-    target))
 
 (defun get-x-y-position-point (window x y)
   (with-point ((point (buffer-point (window-buffer window))))
@@ -73,41 +66,58 @@
 
 (defvar *last-dragged-separator* nil)
 
-(defmethod handle-button-1 ((mouse-event mouse-button-down) (window window))
-  (let ((x (mouse-event-x mouse-event))
-        (y (mouse-event-y mouse-event))
-        (clicks (mouse-button-down-clicks mouse-event)))
-    (cond ((= clicks 1)
-           (let* ((point (get-x-y-position-point window x y))
-                  (callback (text-property-at point :click-callback)))
-             (cond (callback
-                    (funcall callback window point))
-                   (t
-                    (move-current-point-to-x-y-position window x y)
-                    (setf (window-last-mouse-button-down-point window)
-                          (copy-point (current-point) :temporary))
-                    (buffer-mark-cancel (current-buffer))
-                    (run-hooks (variable-value 'mouse-button-down-functions))))))
-          ((= clicks 2)
-           (move-current-point-to-x-y-position window x y)
-           (select-expression-at-current-point))
-          ((<= 3 clicks)
-           (move-current-point-to-x-y-position window x y)
-           (select-form-at-current-point)))))
+(defmethod handle-button-1 ((window window) x y clicks)
+  (cond ((= clicks 1)
+         (let* ((point (get-x-y-position-point window x y))
+                (callback (text-property-at point :click-callback)))
+           (cond (callback
+                  (funcall callback window point))
+                 (t
+                  (move-current-point-to-x-y-position window x y)
+                  (setf (window-last-mouse-button-down-point window)
+                        (copy-point (current-point) :temporary))
+                  (buffer-mark-cancel (current-buffer))
+                  (run-hooks (variable-value 'mouse-button-down-functions))))))
+        ((= clicks 2)
+         (move-current-point-to-x-y-position window x y)
+         (select-expression-at-current-point))
+        ((<= 3 clicks)
+         (move-current-point-to-x-y-position window x y)
+         (select-form-at-current-point))))
 
-(defmethod handle-button-1 ((mouse-event mouse-button-down) (separator window-separator))
+(defmethod handle-button-1 ((separator window-separator) x y clicks)
   (setf *last-dragged-separator* separator))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-down))
-  (case (mouse-event-button mouse-event)
-    (:button-1
-     (handle-button-1 mouse-event (mouse-event-target mouse-event)))))
+  (multiple-value-bind (window x y)
+      (focus-window-position (current-frame)
+                             (mouse-event-x mouse-event)
+                             (mouse-event-y mouse-event))
+    (when window
+      (handle-button-1 window x y (mouse-button-down-clicks mouse-event))
+      (return-from handle-mouse-event)))
+  (multiple-value-bind (left-window right-window)
+      (focus-separator-position (current-frame)
+                                (mouse-event-x mouse-event)
+                                (mouse-event-y mouse-event))
+    (when (and left-window right-window)
+      (handle-button-1 (make-instance 'window-separator
+                                      :start-x (mouse-event-x mouse-event)
+                                      :start-y (mouse-event-y mouse-event)
+                                      :left-window left-window
+                                      :right-window right-window)
+                       (mouse-event-x mouse-event)
+                       (mouse-event-y mouse-event)
+                       (mouse-button-down-clicks mouse-event)))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
-  (cond ((mouse-event-window mouse-event)
-         (setf (window-last-mouse-button-down-point (mouse-event-window mouse-event)) nil))
-        (t
-         (setf *last-dragged-separator* nil))))
+  (let ((window (focus-window-position (current-frame)
+                                       (mouse-event-x mouse-event)
+                                       (mouse-event-y mouse-event))))
+    (cond (window
+           (setf (window-last-mouse-button-down-point window) nil))
+          (t
+           (setf *last-dragged-separator* nil)))))
 
 (defun find-overlay-that-can-hover (point)
   (dolist (overlay (point-overlays point))
@@ -130,108 +140,41 @@
           (funcall callback))
         (setf *last-hover-overlay* nil)))))
 
-(defmethod handle-mouse-motion ((mouse-event mouse-motion) target)
-  (when *last-dragged-separator*
-    (let ((x (mouse-event-x mouse-event))
-          (button (mouse-event-button mouse-event)))
-      (when (eq button :button-1)
-        (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
-          (grow-window-width (window-separator-left-window *last-dragged-separator*)
-                             diff-x)
-          (setf (window-separator-start-x *last-dragged-separator*) x))))))
-
-(defmethod handle-mouse-motion ((mouse-event mouse-motion) (window window))
-  (let ((x (mouse-event-x mouse-event))
-        (y (mouse-event-y mouse-event))
-        (button (mouse-event-button mouse-event)))
-    (case button
-      ((nil)
-       (let ((point (get-x-y-position-point window x y)))
-         (alexandria:when-let (callback (text-property-at point :hover-callback))
-           (funcall callback window point)
-           (return-from handle-mouse-motion))
-         (handle-mouse-hover point)))
-      (:button-1
-       (when (window-last-mouse-button-down-point window)
-         (move-current-point-to-x-y-position window x y)
-         (set-current-mark (window-last-mouse-button-down-point window)))))))
-
 (defmethod handle-mouse-event ((mouse-event mouse-motion))
-  (handle-mouse-motion mouse-event (mouse-event-target mouse-event)))
+  (cond (*last-dragged-separator*
+         (let ((x (mouse-event-x mouse-event))
+               (button (mouse-event-button mouse-event)))
+           (when (eq button :button-1)
+             (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
+               (grow-window-width (window-separator-left-window *last-dragged-separator*)
+                                  diff-x)
+               (setf (window-separator-start-x *last-dragged-separator*) x)))))
+        (t
+         (multiple-value-bind (window x y)
+             (focus-window-position (current-frame)
+                                    (mouse-event-x mouse-event)
+                                    (mouse-event-y mouse-event))
+           (when window
+             (case (mouse-event-button mouse-event)
+               ((nil)
+                (let ((point (get-x-y-position-point window x y)))
+                  (alexandria:when-let (callback (text-property-at point :hover-callback))
+                    (funcall callback window point)
+                    (return-from handle-mouse-event))
+                  (handle-mouse-hover point)))
+               (:button-1
+                (when (window-last-mouse-button-down-point window)
+                  (move-current-point-to-x-y-position window x y)
+                  (set-current-mark (window-last-mouse-button-down-point window))))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-wheel))
-  (with-current-window (mouse-event-window mouse-event)
-    (scroll-up (* (mouse-wheel-y mouse-event)
-                  *scroll-speed*))))
-
-(defun receive-mouse-button-down (x y button clicks)
-  (check-type button mouse-button)
-  (multiple-value-bind (window x y)
-      (focus-window-position (current-frame) x y)
+  (let ((window (focus-window-position (current-frame)
+                                       (mouse-event-x mouse-event)
+                                       (mouse-event-y mouse-event))))
     (when window
-      (send-event (make-instance 'mouse-button-down
-                                 :button button
-                                 :x x
-                                 :y y
-                                 :target window
-                                 :clicks clicks))
-      (return-from receive-mouse-button-down)))
-  (multiple-value-bind (left-window right-window)
-      (focus-separator-position (current-frame) x y)
-    (when (and left-window right-window)
-      (send-event (make-instance 'mouse-button-down
-                                 :button button
-                                 :x x
-                                 :y y
-                                 :target (make-instance 'window-separator
-                                                        :start-x x
-                                                        :start-y y
-                                                        :left-window left-window
-                                                        :right-window right-window)
-                                 :clicks clicks)))))
-
-(defun receive-mouse-button-up (x y button)
-  (let ((window (focus-window-position (current-frame) x y)))
-    (send-event (if window
-                    (make-instance 'mouse-button-up
-                                   :button button
-                                   :x x
-                                   :y y
-                                   :target window)
-                    (make-instance 'mouse-button-up
-                                   :button button
-                                   :x x
-                                   :y y
-                                   :target nil)))))
-
-(defun receive-mouse-motion (x y button)
-  (check-type button (or null mouse-button))
-  (when *last-dragged-separator*
-    (send-event (make-instance 'mouse-motion
-                               :button button
-                               :x x
-                               :y y
-                               :target nil))
-    (return-from receive-mouse-motion))
-  (multiple-value-bind (window relative-x relative-y)
-      (focus-window-position (current-frame) x y)
-    (when window
-      (send-event (make-instance 'mouse-motion
-                                 :button button
-                                 :x relative-x
-                                 :y relative-y
-                                 :target window)))))
-
-(defun receive-mouse-wheel (x y wheel-x wheel-y)
-  (multiple-value-bind (window x y)
-      (focus-window-position (current-frame) x y)
-    (when window
-      (send-event (make-instance 'mouse-wheel
-                                 :x x
-                                 :y y
-                                 :target window
-                                 :wheel-x wheel-x
-                                 :wheel-y wheel-y)))))
+      (with-current-window window
+        (scroll-up (* (mouse-wheel-y mouse-event)
+                      *scroll-speed*))))))
 
 
 (defun select-expression-at-current-point ()
@@ -266,28 +209,19 @@
       (move-point (current-point) end))))
 
 
-(define-command <mouse-button-down> () ()
-  (handle-mouse-event (last-mouse-event)))
-
-(define-command <mouse-button-up> () ()
-  (handle-mouse-event (last-mouse-event)))
-
-(define-command <mouse-motion> () ()
-  (handle-mouse-event (last-mouse-event)))
-
-(define-command <mouse-wheel> () ()
+(define-command <mouse-event> () ()
   (handle-mouse-event (last-mouse-event)))
 
 (defun find-mouse-command (event)
   (etypecase event
     (mouse-button-down
-     '<mouse-button-down>)
+     '<mouse-event>)
     (mouse-button-up
-     '<mouse-button-up>)
+     '<mouse-event>)
     (mouse-motion
-     '<mouse-motion>)
+     '<mouse-event>)
     (mouse-wheel
-     '<mouse-wheel>)))
+     '<mouse-event>)))
 
 
 (defun set-hover-message (overlay message &key style)
@@ -304,3 +238,32 @@
                  (let ((hover-window (overlay-get overlay 'hover-window)))
                    (when hover-window
                      (delete-popup-message hover-window))))))
+
+
+(defun receive-mouse-button-down (x y button clicks)
+  (check-type button mouse-button)
+  (send-event (make-instance 'mouse-button-down
+                             :button button
+                             :x x
+                             :y y
+                             :clicks clicks)))
+
+(defun receive-mouse-button-up (x y button)
+  (send-event (make-instance 'mouse-button-up
+                             :button button
+                             :x x
+                             :y y)))
+
+(defun receive-mouse-motion (x y button)
+  (check-type button (or null mouse-button))
+  (send-event (make-instance 'mouse-motion
+                             :button button
+                             :x x
+                             :y y)))
+
+(defun receive-mouse-wheel (x y wheel-x wheel-y)
+  (send-event (make-instance 'mouse-wheel
+                             :x x
+                             :y y
+                             :wheel-x wheel-x
+                             :wheel-y wheel-y)))

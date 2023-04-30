@@ -8,6 +8,7 @@
            :font-emoji-font
            :font-char-width
            :font-char-height
+           :save-font-size
            :make-font-config
            :font-config-size
            :merge-font-config
@@ -34,7 +35,10 @@
   char-width
   char-height)
 
-(defun make-font-config (&key size
+(defun save-font-size (font-config)
+  (setf (lem:config :sdl2-font-size) (font-config-size font-config)))
+
+(defun make-font-config (&key (size (lem:config :sdl2-font-size 20))
                               latin-normal-file
                               latin-bold-file
                               cjk-normal-file

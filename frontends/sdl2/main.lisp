@@ -373,6 +373,7 @@
             (display-char-height *display*) (font-char-height font))
       (setf (display-font-config *display*) font-config)
       (setf (display-font *display*) font))
+    (save-font-size font-config)
     (lem:send-event :resize)))
 
 (defun create-view-texture (width height)

@@ -14,7 +14,9 @@
    (x :initarg :x
       :reader mouse-event-x)
    (y :initarg :y
-      :reader mouse-event-y)))
+      :reader mouse-event-y)
+   (window :initarg :window
+           :reader mouse-event-window)))
 
 (defclass mouse-button-down (mouse-event)
   ((clicks :initarg :clicks
@@ -40,12 +42,13 @@
   (move-to-next-virtual-line (current-point) y)
   (move-to-virtual-line-column (current-point) x))
 
-(defmethod handle-mouse-event ((mouse-event mouse-button-down) window)
+(defmethod handle-mouse-event ((mouse-event mouse-button-down))
   (case (mouse-event-button mouse-event)
     (:button-1
      (let ((x (mouse-event-x mouse-event))
            (y (mouse-event-y mouse-event))
-           (clicks (mouse-button-down-clicks mouse-event)))
+           (clicks (mouse-button-down-clicks mouse-event))
+           (window (mouse-event-window mouse-event)))
        (move-to-x-y-position window x y)
        (cond ((= clicks 1)
               (setf (window-last-mouse-button-down-point window)
@@ -57,21 +60,22 @@
              ((<= 3 clicks)
               (select-form-at-current-point)))))))
 
-(defmethod handle-mouse-event ((mouse-event mouse-button-up) window)
-  (setf (window-last-mouse-button-down-point window) nil))
+(defmethod handle-mouse-event ((mouse-event mouse-button-up))
+  (setf (window-last-mouse-button-down-point (mouse-event-window mouse-event)) nil))
 
-(defmethod handle-mouse-event ((mouse-event mouse-motion) window)
+(defmethod handle-mouse-event ((mouse-event mouse-motion))
   (let ((x (mouse-event-x mouse-event))
         (y (mouse-event-y mouse-event))
-        (button (mouse-event-button mouse-event)))
+        (button (mouse-event-button mouse-event))
+        (window (mouse-event-window mouse-event)))
     (case button
       (:button-1
        (when (and window (window-last-mouse-button-down-point window))
          (move-to-x-y-position window x y)
          (set-current-mark (window-last-mouse-button-down-point window)))))))
 
-(defmethod handle-mouse-event ((mouse-event mouse-wheel) window)
-  (with-current-window window
+(defmethod handle-mouse-event ((mouse-event mouse-wheel))
+  (with-current-window (mouse-event-window mouse-event)
     (scroll-up (* (mouse-wheel-y mouse-event)
                   *scroll-speed*))))
 
@@ -84,8 +88,8 @@
                                          :button button
                                          :x x
                                          :y y
-                                         :clicks clicks)
-                          window))))
+                                         :window window
+                                         :clicks clicks)))))
 
 (defun handle-mouse-button-up (x y button)
   (let ((window (focus-window-position (current-frame) x y)))
@@ -93,8 +97,8 @@
       (handle-mouse-event (make-instance 'mouse-button-up
                                          :button button
                                          :x x
-                                         :y y)
-                          window))))
+                                         :y y
+                                         :window window)))))
 
 (defun handle-mouse-motion (x y button)
   (check-type button (or null mouse-button))
@@ -104,8 +108,8 @@
       (handle-mouse-event (make-instance 'mouse-motion
                                          :button button
                                          :x x
-                                         :y y)
-                          window))))
+                                         :y y
+                                         :window window)))))
 
 (defun handle-mouse-wheel (x y wheel-x wheel-y)
   (multiple-value-bind (window x y)
@@ -114,9 +118,9 @@
       (handle-mouse-event (make-instance 'mouse-wheel
                                          :x x
                                          :y y
+                                         :window window
                                          :wheel-x wheel-x
-                                         :wheel-y wheel-y)
-                          window))))
+                                         :wheel-y wheel-y)))))
 
 
 (defun select-expression-at-current-point ()

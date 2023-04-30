@@ -178,8 +178,8 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
 
 
 (defun within-window-p (window x y)
-  (and (<= (window-x window) x (+ (window-x window) (window-width window)))
-       (<= (window-y window) y (+ (window-y window) (window-height window)))))
+  (and (<= (window-x window) x (+ (window-x window) (window-width window) -1))
+       (<= (window-y window) y (+ (window-y window) (window-height window) -1))))
 
 (defun focus-window-position (frame x y)
   (dolist (window (append (frame-floating-windows frame)
@@ -188,3 +188,9 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
       (return (values window
                       (- x (window-x window))
                       (- y (window-y window)))))))
+
+(defun focus-separator-position (frame x y)
+  (dolist (window (window-list frame))
+    (when (and (= x (1- (window-x window)))
+               (<= (window-y window) y (+ (window-y window) (window-height window) -1)))
+      (return (values (left-window window) window)))))

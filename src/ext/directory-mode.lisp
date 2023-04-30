@@ -12,7 +12,7 @@
   (t))
 
 (define-attribute directory-attribute
-  (:light :foreground "blue" :bold-p t)
+  (:light :foreground "blue" :bold t)
   (:dark :foreground "sky blue"))
 
 (define-attribute link-attribute
@@ -20,7 +20,7 @@
   (:dark :foreground "green"))
 
 (define-attribute current-line-attribute
-  (t :underline-p t))
+  (t :underline t))
 
 (define-major-mode directory-mode ()
     (:name "Directory"

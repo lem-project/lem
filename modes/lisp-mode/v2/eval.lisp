@@ -138,7 +138,7 @@
                                             end
                                             (message-type-to-attribute type)))
                             (background-overlay
-                              (make-overlay start end (make-attribute :underline-p t))))
+                              (make-overlay start end (make-attribute :underline t))))
                         (overlay-put popup-overlay 'relation-overlay background-overlay)
                         (overlay-put popup-overlay :display-line-end t)
                         (overlay-put popup-overlay :display-line-end-offset 1)

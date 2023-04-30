@@ -25,8 +25,8 @@
   (:dark :foreground "white"
 	 :background "#333333"))
 (define-attribute fbar-dir
-  (:light :foreground "blue" :bold-p t )
-  (:dark :foreground "sky blue" :bold-p t
+  (:light :foreground "blue" :bold t )
+  (:dark :foreground "sky blue" :bold t
 	 :background "#333333"))
 
 
@@ -82,7 +82,7 @@
 		;; if closed, open it
 		(let ((newtab (+ 2 tab)))
 		  (character-offset (line-end (current-point)) 1)
-		  (loop for f in (uiop:subdirectories path) 
+		  (loop for f in (uiop:subdirectories path)
 		     for pt = (current-point) do
 		       (fbar-insert-entry pt f t newtab))
 		  (loop for f in (uiop:directory-files path) do
@@ -90,7 +90,7 @@
 		;; if open, close it
 		(let ((ourtab (fb-tab prop)))
 		  (next-line 1) (line-start (current-point))
-		  (loop 
+		  (loop
 		     for tab = (fb-tab (text-property-at (current-point) 'type))
 		     while (> tab ourtab) do
 		       (kill-line) (kill-line))
@@ -106,7 +106,7 @@
 (let ((old-window nil)
       (old-buffer nil)
       (old-point nil))
-  
+
   (define-command fbar-on () ()
     (unless *fbar-window*
       (fbar)
@@ -120,7 +120,7 @@
                                   :width (1+ *fbar-width*)
                                   :height (1- (display-height))
                                   :use-modeline-p nil))
-      
+
       (setf (current-window) *fbar-window*)
       (setf (current-buffer) *fbar-buffer*)
       (redraw-display)))
@@ -154,4 +154,3 @@
     (setf *fbar-buffer* buffer)
     (setf (buffer-read-only-p *fbar-buffer*) t)
     ))
-

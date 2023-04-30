@@ -50,9 +50,9 @@
     (yason:with-object ()
       (yason:encode-object-element "foreground" (ensure-rgb (attribute-foreground attribute)))
       (yason:encode-object-element "background" (ensure-rgb (attribute-background attribute)))
-      (yason:encode-object-element "reverse" (bool (attribute-reverse-p attribute)))
-      (yason:encode-object-element "bold" (bool (attribute-bold-p attribute)))
-      (yason:encode-object-element "underline" (bool (attribute-underline-p attribute))))))
+      (yason:encode-object-element "reverse" (bool (attribute-reverse attribute)))
+      (yason:encode-object-element "bold" (bool (attribute-bold attribute)))
+      (yason:encode-object-element "underline" (bool (attribute-underline attribute))))))
 
 (defmethod yason:encode ((view view) &optional (stream *standard-output*))
   (yason:with-output (stream)

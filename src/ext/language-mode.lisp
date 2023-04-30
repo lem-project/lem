@@ -219,11 +219,11 @@
               (unless (line-offset p 1) (return)))))))))
 
 (define-attribute xref-headline-attribute
-  (t :bold-p t))
+  (t :bold t))
 
 (define-attribute xref-content-attribute
-  (:dark :foreground "cyan" :bold-p t)
-  (:light :foreground "blue" :bold-p t))
+  (:dark :foreground "cyan" :bold t)
+  (:light :foreground "blue" :bold t))
 
 (defun xref-insert-headline (headline point level)
   (insert-string point

@@ -354,14 +354,14 @@
 (defun compute-attribute-value (attribute cursorp)
   (let* ((foreground (attribute-foreground attribute))
          (background (attribute-background attribute))
-         (bits (logior (if (or cursorp (lem::attribute-reverse-p attribute))
+         (bits (logior (if (or cursorp (lem::attribute-reverse attribute))
                            (lem.term:get-color-pair background foreground)
                            (lem.term:get-color-pair foreground background))
                        0
-                       (if (lem::attribute-bold-p attribute)
+                       (if (lem::attribute-bold attribute)
                            charms/ll:PDC_A_BOLD
                            0)
-                       (if (lem::attribute-underline-p attribute)
+                       (if (lem::attribute-underline attribute)
                            charms/ll:PDC_A_UNDERLINE
                            0))))
     bits))

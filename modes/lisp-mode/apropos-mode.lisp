@@ -11,7 +11,7 @@
 (define-key *lisp-mode-keymap* "C-c C-d p" 'lisp-apropos-package)
 
 (define-attribute apropos-headline-attribute
-  (t :bold-p t))
+  (t :bold t))
 
 (define-key *lisp-apropos-mode-keymap* "q" 'quit-active-window)
 (define-key *lisp-apropos-mode-keymap* "Return" 'lem/language-mode::find-definitions)

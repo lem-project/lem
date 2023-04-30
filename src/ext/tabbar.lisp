@@ -15,7 +15,7 @@
   (t :foreground "white" :background "gray"))
 
 (define-attribute tabbar-background-attribute
-  (t :underline-p t))
+  (t :underline t))
 
 (defclass tabbar-window (header-window)
   ((buffer
@@ -86,14 +86,14 @@
   (setf (tabbar-prev-buffer-list *tabbar*) '())
   (setf (tabbar-prev-current-buffer *tabbar*) nil)
   (setf (tabbar-prev-display-width *tabbar*) 0))
-  
+
 (defun tabbar-off ()
   (when (and (variable-value 'tabbar :global)
              *tabbar*)
     (tabbar-clear-cache)
     (delete-window *tabbar*)
     (setf *tabbar* nil)))
-  
+
 (defun tabbar-on ()
   (unless (variable-value 'tabbar :global)
     (tabbar-init)))

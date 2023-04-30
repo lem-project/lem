@@ -36,7 +36,7 @@
 (defvar *modeline-element*)
 
 (define-attribute state-attribute
-  (t :reverse-p t))
+  (t :reverse t))
 
 (defstruct (vi-modeline-element (:conc-name element-))
   name)

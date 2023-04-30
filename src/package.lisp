@@ -64,14 +64,14 @@
    :set-attribute
    :set-attribute-foreground
    :set-attribute-background
-   :set-attribute-reverse-p
-   :set-attribute-bold-p
-   :set-attribute-underline-p
+   :set-attribute-reverse
+   :set-attribute-bold
+   :set-attribute-underline
    :attribute-foreground
    :attribute-background
-   :attribute-reverse-p
-   :attribute-bold-p
-   :attribute-underline-p
+   :attribute-reverse
+   :attribute-bold
+   :attribute-underline
    :define-attribute
    :cursor
    :region

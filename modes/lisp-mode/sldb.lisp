@@ -3,13 +3,13 @@
 (define-attribute topline-attribute)
 
 (define-attribute condition-attribute
-  (t :foreground "red" :bold-p t))
+  (t :foreground "red" :bold t))
 
 (define-attribute section-attribute
   (t :background "gray" :foreground "black"))
 
 (define-attribute restart-number-attribute
-  (t :bold-p t))
+  (t :bold t))
 
 (define-attribute restart-type-attribute
   (t :foreground "purple"))

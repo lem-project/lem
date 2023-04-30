@@ -191,7 +191,7 @@
                              (1+ (loop :for width :in (print-spec-column-width-list print-spec)
                                        :sum (1+ width)))
                              t)
-             (put-text-property start point :attribute (make-attribute :underline-p t))))
+             (put-text-property start point :attribute (make-attribute :underline t))))
           (columns
            (with-point ((start point))
              (loop :for width :in (print-spec-column-width-list print-spec)
@@ -201,7 +201,7 @@
                          (insert-string point column-header)
                          (move-to-column point (+ column width) t)))
              (insert-string point " ")
-             (put-text-property start point :attribute (make-attribute :underline-p t)))))))
+             (put-text-property start point :attribute (make-attribute :underline t)))))))
 
 (defmethod lem/popup-menu:apply-print-spec ((print-spec print-spec) point item)
   (check-type item multi-column-list-item)

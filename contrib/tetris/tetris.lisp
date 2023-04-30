@@ -18,11 +18,11 @@
 (defconstant +num-blocks+ 7)
 
 (defparameter *wall-attribute*
-  (make-attribute :foreground "gray" :reverse-p t))
+  (make-attribute :foreground "gray" :reverse t))
 
 (defparameter *block-attributes*
   (map 'vector (lambda (color-name)
-                 (make-attribute :foreground color-name :reverse-p t))
+                 (make-attribute :foreground color-name :reverse t))
        '("black" "cyan" "yellow" "green" "red" "blue" "white" "magenta")))
 
 (defvar *tetrimino-table*

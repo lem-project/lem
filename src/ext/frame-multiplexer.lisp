@@ -10,10 +10,10 @@
 (defvar *virtual-frame-map* (make-hash-table))
 
 (define-attribute frame-multiplexer-active-frame-name-attribute
-  (t :foreground "white" :background "CornflowerBlue" :bold-p t))
+  (t :foreground "white" :background "CornflowerBlue" :bold t))
 
 (define-attribute frame-multiplexer-frame-name-attribute
-  (t :foreground "black" :background "dark gray" :bold-p t))
+  (t :foreground "black" :background "dark gray" :bold t))
 
 (define-attribute frame-multiplexer-background-attribute
   (t :foreground "white" :background "#262626"))

@@ -9,15 +9,15 @@
    (background
     :initarg :background
     :reader attribute-background)
-   (reverse-p
-    :initarg :reverse-p
-    :reader attribute-reverse-p)
-   (bold-p
-    :initarg :bold-p
-    :reader attribute-bold-p)
-   (underline-p
-    :initarg :underline-p
-    :reader attribute-underline-p)
+   (reverse
+    :initarg :reverse
+    :reader attribute-reverse)
+   (bold
+    :initarg :bold
+    :reader attribute-bold)
+   (underline
+    :initarg :underline
+    :reader attribute-underline)
    (cache
     :initform nil
     :accessor attribute-cache)))
@@ -27,20 +27,20 @@
     (format stream "(~A ~A)~:[~; reverse~]~:[~; bold~]~:[~; underline~]"
             (or (attribute-foreground attribute) "")
             (or (attribute-background attribute) "")
-            (attribute-reverse-p attribute)
-            (attribute-bold-p attribute)
-            (attribute-underline-p attribute))))
+            (attribute-reverse attribute)
+            (attribute-bold attribute)
+            (attribute-underline attribute))))
 
 (defun attribute-p (x)
   (typep x 'attribute))
 
-(defun make-attribute (&key foreground background reverse-p bold-p underline-p)
+(defun make-attribute (&key foreground background reverse bold underline)
   (make-instance 'attribute
                  :foreground foreground
                  :background background
-                 :reverse-p reverse-p
-                 :bold-p bold-p
-                 :underline-p underline-p))
+                 :reverse reverse
+                 :bold bold
+                 :underline underline))
 
 (defun ensure-attribute (x &optional (errorp t))
   (cond ((symbolp x)
@@ -58,37 +58,37 @@
                                   (attribute-foreground under))
                   :background (or (attribute-background over)
                                   (attribute-background under))
-                  :bold-p (or (attribute-bold-p over)
-                              (attribute-bold-p under))
-                  :reverse-p (or (attribute-reverse-p over)
-                                 (attribute-reverse-p under))
-                  :underline-p (or (attribute-underline-p over)
-                                   (attribute-underline-p under))))
+                  :bold (or (attribute-bold over)
+                              (attribute-bold under))
+                  :reverse (or (attribute-reverse over)
+                                 (attribute-reverse under))
+                  :underline (or (attribute-underline over)
+                                   (attribute-underline under))))
 
 (defun attribute-equal (attribute1 attribute2)
   (and (equal (attribute-foreground attribute1)
               (attribute-foreground attribute2))
        (equal (attribute-background attribute1)
               (attribute-background attribute2))
-       (equal (attribute-reverse-p attribute1)
-              (attribute-reverse-p attribute2))
-       (equal (attribute-bold-p attribute1)
-              (attribute-bold-p attribute2))
-       (equal (attribute-underline-p attribute1)
-              (attribute-underline-p attribute2))))
+       (equal (attribute-reverse attribute1)
+              (attribute-reverse attribute2))
+       (equal (attribute-bold attribute1)
+              (attribute-bold attribute2))
+       (equal (attribute-underline attribute1)
+              (attribute-underline attribute2))))
 
 (defun set-attribute (attribute &key (foreground nil foregroundp)
                                      (background nil backgroundp)
-                                     reverse-p bold-p underline-p)
+                                     reverse bold underline)
   (let ((attribute (ensure-attribute attribute t)))
     (setf (attribute-cache attribute) nil)
     (when foregroundp
       (setf (slot-value attribute 'foreground) foreground))
     (when backgroundp
       (setf (slot-value attribute 'background) background))
-    (setf (slot-value attribute 'reverse-p) reverse-p)
-    (setf (slot-value attribute 'bold-p) bold-p)
-    (setf (slot-value attribute 'underline-p) underline-p)))
+    (setf (slot-value attribute 'reverse) reverse)
+    (setf (slot-value attribute 'bold) bold)
+    (setf (slot-value attribute 'underline) underline)))
 
 (macrolet ((def (setter slot-name)
              `(defun ,setter (attribute value)
@@ -97,9 +97,9 @@
                   (setf (slot-value attribute ',slot-name) value)))))
   (def set-attribute-foreground foreground)
   (def set-attribute-background background)
-  (def set-attribute-reverse-p reverse-p)
-  (def set-attribute-bold-p bold-p)
-  (def set-attribute-underline-p underline-p))
+  (def set-attribute-reverse reverse)
+  (def set-attribute-bold bold)
+  (def set-attribute-underline underline))
 
 (defun clear-all-attribute-cache ()
   (dolist (attribute *attributes*)
@@ -172,15 +172,15 @@
   (:dark :foreground nil :background "blue"))
 
 (define-attribute modeline
-  (t :bold-p t :background "#404040" :foreground "white"))
+  (t :bold t :background "#404040" :foreground "white"))
 
 (define-attribute modeline-inactive
-  (t :bold-p t :background "#212121" :foreground "#707070"))
+  (t :bold t :background "#212121" :foreground "#707070"))
 
 (define-attribute truncate-attribute)
 
 (define-attribute compiler-note-attribute
-  (t :foreground "red" :underline-p t))
+  (t :foreground "red" :underline t))
 
 (define-attribute syntax-warning-attribute
   (t :foreground "red"))

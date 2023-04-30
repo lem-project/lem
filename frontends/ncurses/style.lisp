@@ -15,8 +15,8 @@
 (in-package :lem-ncurses/style)
 
 (define-attribute space-border-color
-  (:light :foreground "gray" :reverse-p t)
-  (:dark :foreground "#666666" :reverse-p t))
+  (:light :foreground "gray" :reverse t)
+  (:dark :foreground "#666666" :reverse t))
 
 (define-attribute ruled-border-color
   )

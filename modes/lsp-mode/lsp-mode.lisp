@@ -645,16 +645,16 @@
 ;; - versionSupport
 
 (define-attribute diagnostic-error-attribute
-  (t :foreground "red" :underline-p t))
+  (t :foreground "red" :underline t))
 
 (define-attribute diagnostic-warning-attribute
-  (t :foreground "orange" :underline-p t))
+  (t :foreground "orange" :underline t))
 
 (define-attribute diagnostic-information-attribute
-  (t :foreground "gray" :underline-p t))
+  (t :foreground "gray" :underline t))
 
 (define-attribute diagnostic-hint-attribute
-  (t :foreground "yellow" :underline-p t))
+  (t :foreground "yellow" :underline t))
 
 (defun diagnostic-severity-attribute (diagnostic-severity)
   (switch (diagnostic-severity :test #'=)
@@ -831,7 +831,7 @@
                          (line-end point)
                          (put-text-property start
                                             point
-                                            :attribute (make-attribute :bold-p t)))))
+                                            :attribute (make-attribute :bold t)))))
            (process-code-block (point)
              (buffer-start point)
              (loop :while (search-forward-regexp point "^```")
@@ -1024,7 +1024,7 @@
 ;;; signatureHelp
 
 (define-attribute signature-help-active-parameter-attribute
-  (t :background "blue" :underline-p t))
+  (t :background "blue" :underline t))
 
 (defun provide-signature-help-p (workspace)
   (handler-case (lsp:server-capabilities-signature-help-provider

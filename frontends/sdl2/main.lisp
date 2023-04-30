@@ -273,9 +273,9 @@
 (defun render-fill-text (texture text x y &key attribute)
   (sdl2:set-render-target (current-renderer) texture)
   (let ((width (lem:string-width text))
-        (underline (and attribute (lem:attribute-underline-p attribute)))
-        (bold (and attribute (lem:attribute-bold-p attribute)))
-        (reverse (and attribute (lem:attribute-reverse-p attribute))))
+        (underline (and attribute (lem:attribute-underline attribute)))
+        (bold (and attribute (lem:attribute-bold attribute)))
+        (reverse (and attribute (lem:attribute-reverse attribute))))
     (let ((background-color (if reverse
                                 (attribute-foreground-color attribute)
                                 (attribute-background-color attribute)))

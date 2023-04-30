@@ -146,6 +146,10 @@
               (return (format nil "~D~C" (1+ (floor size val)) sign)))
         :finally (return (princ-to-string size))))
 
+(defun insert-icon (point pathname)
+  (when (uiop:directory-pathname-p pathname)
+    (insert-string point "📁")))
+
 (defun insert-pathname (point pathname directory &optional content)
   (let ((name (or content (namestring (enough-namestring pathname directory)))))
     (insert-string point "  " 'pathname pathname 'name name)
@@ -162,6 +166,7 @@
                              year month day hour minute second
                              (if week (aref #("Mon" "Tue" "Wed" "Thr" "Fri" "Sat" "Sun") week)
                                  "   "))))
+    (insert-icon point name)
     (insert-string point
                    name
                    :attribute (get-file-attribute pathname))

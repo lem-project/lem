@@ -83,11 +83,12 @@
                                      (font-config-emoji-file old))))
 
 (defun change-size (font-config size)
-  (setf (font-config-size font-config) size)
-  font-config)
+  (let ((font-config (copy-font-config font-config)))
+    (setf (font-config-size font-config) size)
+    font-config))
 
 (defun get-character-size (font)
-  (let* ((surface (sdl2-ttf:render-text-solid font "A" 0 0 0 0))
+  (let* ((surface (sdl2-ttf:render-text-solid font " " 0 0 0 0))
          (width (sdl2:surface-width surface))
          (height (sdl2:surface-height surface)))
     (list width height)))

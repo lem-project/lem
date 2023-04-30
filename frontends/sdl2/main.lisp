@@ -254,10 +254,9 @@
                                                   (lem:color-green color)
                                                   (lem:color-blue color)
                                                   0))
-           (width (sdl2:surface-width surface))
            (height (sdl2:surface-height surface))
            (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
-      (render-texture (current-renderer) texture x y width height)
+      (render-texture (current-renderer) texture x y (* (display-char-width *display*) (length string)) height)
       (sdl2:destroy-texture texture)
       (length string))))
 

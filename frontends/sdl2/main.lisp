@@ -38,12 +38,6 @@
                        width
                        height))
 
-(defun get-character-size (font)
-  (let* ((surface (sdl2-ttf:render-text-solid font "A" 0 0 0 0))
-         (width (sdl2:surface-width surface))
-         (height (sdl2:surface-height surface)))
-    (list width height)))
-
 (defclass sdl2 (lem:implementation)
   ()
   (:default-initargs

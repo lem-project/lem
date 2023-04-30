@@ -69,17 +69,22 @@
   (push key *unread-keys*))
 
 (defun read-command ()
-  (let* ((key (read-event))
-         (cmd (lookup-keybind key))
-         (kseq (list key)))
-    (loop
-      (cond ((prefix-command-p cmd)
-             (let ((key (read-event)))
-               (setf kseq (nconc kseq (list key)))
-               (setf cmd (lookup-keybind kseq))))
-            (t
-             (set-last-read-key-sequence kseq)
-             (return cmd))))))
+  (let ((event (read-event)))
+    (etypecase event
+      (mouse-event
+       (set-last-mouse-event event)
+       (find-mouse-command event))
+      (key
+       (let* ((cmd (lookup-keybind event))
+              (kseq (list event)))
+         (loop
+           (cond ((prefix-command-p cmd)
+                  (let ((event (read-event)))
+                    (setf kseq (nconc kseq (list event)))
+                    (setf cmd (lookup-keybind kseq))))
+                 (t
+                  (set-last-read-key-sequence kseq)
+                  (return cmd)))))))))
 
 (defun read-key-sequence ()
   (read-command)

@@ -42,6 +42,11 @@
   (move-to-next-virtual-line (current-point) y)
   (move-to-virtual-line-column (current-point) x))
 
+(defvar *last-mouse-event*)
+(defun last-mouse-event () *last-mouse-event*)
+(defun set-last-mouse-event (mouse-event)
+  (setf *last-mouse-event* mouse-event))
+
 (defmethod handle-mouse-event ((mouse-event mouse-button-down))
   (case (mouse-event-button mouse-event)
     (:button-1
@@ -84,43 +89,43 @@
   (multiple-value-bind (window x y)
       (focus-window-position (current-frame) x y)
     (when window
-      (handle-mouse-event (make-instance 'mouse-button-down
-                                         :button button
-                                         :x x
-                                         :y y
-                                         :window window
-                                         :clicks clicks)))))
+      (send-event (make-instance 'mouse-button-down
+                                 :button button
+                                 :x x
+                                 :y y
+                                 :window window
+                                 :clicks clicks)))))
 
 (defun handle-mouse-button-up (x y button)
   (let ((window (focus-window-position (current-frame) x y)))
     (when window
-      (handle-mouse-event (make-instance 'mouse-button-up
-                                         :button button
-                                         :x x
-                                         :y y
-                                         :window window)))))
+      (send-event (make-instance 'mouse-button-up
+                                 :button button
+                                 :x x
+                                 :y y
+                                 :window window)))))
 
 (defun handle-mouse-motion (x y button)
   (check-type button (or null mouse-button))
   (multiple-value-bind (window x y)
       (focus-window-position (current-frame) x y)
     (when window
-      (handle-mouse-event (make-instance 'mouse-motion
-                                         :button button
-                                         :x x
-                                         :y y
-                                         :window window)))))
+      (send-event (make-instance 'mouse-motion
+                                 :button button
+                                 :x x
+                                 :y y
+                                 :window window)))))
 
 (defun handle-mouse-wheel (x y wheel-x wheel-y)
   (multiple-value-bind (window x y)
       (focus-window-position (current-frame) x y)
     (when window
-      (handle-mouse-event (make-instance 'mouse-wheel
-                                         :x x
-                                         :y y
-                                         :window window
-                                         :wheel-x wheel-x
-                                         :wheel-y wheel-y)))))
+      (send-event (make-instance 'mouse-wheel
+                                 :x x
+                                 :y y
+                                 :window window
+                                 :wheel-x wheel-x
+                                 :wheel-y wheel-y)))))
 
 
 (defun select-expression-at-current-point ()
@@ -153,3 +158,27 @@
       (form-offset end 1)
       (set-current-mark start)
       (move-point (current-point) end))))
+
+
+(define-command <mouse-button-down> () ()
+  (handle-mouse-event (last-mouse-event)))
+
+(define-command <mouse-button-up> () ()
+  (handle-mouse-event (last-mouse-event)))
+
+(define-command <mouse-motion> () ()
+  (handle-mouse-event (last-mouse-event)))
+
+(define-command <mouse-wheel> () ()
+  (handle-mouse-event (last-mouse-event)))
+
+(defun find-mouse-command (event)
+  (etypecase event
+    (mouse-button-down
+     '<mouse-button-down>)
+    (mouse-button-up
+     '<mouse-button-up>)
+    (mouse-motion
+     '<mouse-motion>)
+    (mouse-wheel
+     '<mouse-wheel>)))

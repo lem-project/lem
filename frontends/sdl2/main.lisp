@@ -494,8 +494,7 @@
       (let ((x (floor x (char-width)))
             (y (floor y (char-height))))
         (lem:send-event (lambda ()
-                          (lem::handle-mouse-button-down x y button clicks)
-                          (lem:redraw-display)))))))
+                          (lem::handle-mouse-button-down x y button clicks)))))))
 
 (defun on-mouse-button-up (button x y)
   (sdl2:show-cursor)
@@ -504,8 +503,7 @@
                 ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
                 ((eql button sdl2-ffi:+sdl-button-middle+) :button-2))))
     (lem:send-event (lambda ()
-                      (lem::handle-mouse-button-up x y button)
-                      (lem:redraw-display)))))
+                      (lem::handle-mouse-button-up x y button)))))
 
 (defun on-mouse-motion (x y state)
   (sdl2:show-cursor)
@@ -513,9 +511,7 @@
     (let ((x (floor x (char-width)))
           (y (floor y (char-height))))
       (lem:send-event (lambda ()
-                        (lem::handle-mouse-motion x y :button-1)
-                        (when (= 0 (lem::event-queue-length))
-                          (lem:redraw-display)))))))
+                        (lem::handle-mouse-motion x y :button-1))))))
 
 (defun on-mouse-wheel (wheel-x wheel-y which direction)
   (declare (ignore which direction))

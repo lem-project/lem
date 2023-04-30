@@ -194,12 +194,11 @@
            (when (eq button :button-1)
              (let ((diff-y (- (window-separator-start-y *last-dragged-separator*) y)))
                (unless (zerop diff-y)
-                 (when (if (plusp diff-y)
+                 (when (if (minusp diff-y)
                            (shrink-window-height (window-separator-up-window *last-dragged-separator*)
                                                  (- diff-y))
-                           ;; BUGS
-                           (shrink-window-height (window-separator-up-window *last-dragged-separator*)
-                                                 diff-y))
+                           (grow-window-height (window-separator-up-window *last-dragged-separator*)
+                                               diff-y))
                    (setf (window-separator-start-y *last-dragged-separator*) y)))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-wheel))

@@ -4,11 +4,19 @@
   ((start-x :initarg :start-x
             :accessor window-separator-start-x)
    (start-y :initarg :start-y
-            :accessor window-separator-start-y)
-   (left-window :initarg :left-window
+            :accessor window-separator-start-y)))
+
+(defclass window-vertical-separator (window-separator)
+  ((left-window :initarg :left-window
                 :reader window-separator-left-window)
    (right-window :initarg :right-window
                  :reader window-separator-right-window)))
+
+(defclass window-horizontal-separator (window-separator)
+  ((up-window :initarg :up-window
+              :reader window-separator-up-window)
+   (down-window :initarg :down-window
+                :reader window-separator-down-window)))
 
 ;;;;;;;;;;;;;;;;;;
 
@@ -89,26 +97,36 @@
   (setf *last-dragged-separator* separator))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-down))
-  (multiple-value-bind (window x y)
-      (focus-window-position (current-frame)
-                             (mouse-event-x mouse-event)
-                             (mouse-event-y mouse-event))
-    (when window
-      (handle-button-1 window x y (mouse-button-down-clicks mouse-event))
-      (return-from handle-mouse-event)))
-  (multiple-value-bind (left-window right-window)
+  (multiple-value-bind (kind first-window second-window)
       (focus-separator-position (current-frame)
                                 (mouse-event-x mouse-event)
                                 (mouse-event-y mouse-event))
-    (when (and left-window right-window)
-      (handle-button-1 (make-instance 'window-separator
-                                      :start-x (mouse-event-x mouse-event)
-                                      :start-y (mouse-event-y mouse-event)
-                                      :left-window left-window
-                                      :right-window right-window)
-                       (mouse-event-x mouse-event)
-                       (mouse-event-y mouse-event)
-                       (mouse-button-down-clicks mouse-event)))))
+    (case kind
+      (:vertical
+       (handle-button-1 (make-instance 'window-vertical-separator
+                                       :start-x (mouse-event-x mouse-event)
+                                       :start-y (mouse-event-y mouse-event)
+                                       :left-window first-window
+                                       :right-window second-window)
+                        (mouse-event-x mouse-event)
+                        (mouse-event-y mouse-event)
+                        (mouse-button-down-clicks mouse-event)))
+      (:horizontal
+       (handle-button-1 (make-instance 'window-horizontal-separator
+                                       :start-x (mouse-event-x mouse-event)
+                                       :start-y (mouse-event-y mouse-event)
+                                       :up-window first-window
+                                       :down-window second-window)
+                        (mouse-event-x mouse-event)
+                        (mouse-event-y mouse-event)
+                        (mouse-button-down-clicks mouse-event)))
+      (otherwise
+       (multiple-value-bind (window x y)
+           (focus-window-position (current-frame)
+                                  (mouse-event-x mouse-event)
+                                  (mouse-event-y mouse-event))
+         (when window
+           (handle-button-1 window x y (mouse-button-down-clicks mouse-event))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
   (let ((window (focus-window-position (current-frame)
@@ -141,15 +159,7 @@
         (setf *last-hover-overlay* nil)))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-motion))
-  (cond (*last-dragged-separator*
-         (let ((x (mouse-event-x mouse-event))
-               (button (mouse-event-button mouse-event)))
-           (when (eq button :button-1)
-             (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
-               (grow-window-width (window-separator-left-window *last-dragged-separator*)
-                                  diff-x)
-               (setf (window-separator-start-x *last-dragged-separator*) x)))))
-        (t
+  (cond ((null *last-dragged-separator*)
          (multiple-value-bind (window x y)
              (focus-window-position (current-frame)
                                     (mouse-event-x mouse-event)
@@ -165,7 +175,23 @@
                (:button-1
                 (when (window-last-mouse-button-down-point window)
                   (move-current-point-to-x-y-position window x y)
-                  (set-current-mark (window-last-mouse-button-down-point window))))))))))
+                  (set-current-mark (window-last-mouse-button-down-point window))))))))
+        ((typep *last-dragged-separator* 'window-vertical-separator)
+         (let ((x (mouse-event-x mouse-event))
+               (button (mouse-event-button mouse-event)))
+           (when (eq button :button-1)
+             (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
+               (grow-window-width (window-separator-left-window *last-dragged-separator*)
+                                  diff-x)
+               (setf (window-separator-start-x *last-dragged-separator*) x)))))
+        ((typep *last-dragged-separator* 'window-horizontal-separator)
+         (let ((y (mouse-event-y mouse-event))
+               (button (mouse-event-button mouse-event)))
+           (when (eq button :button-1)
+             (let ((diff-y (- (window-separator-start-y *last-dragged-separator*) y)))
+               (grow-window-height (window-separator-up-window *last-dragged-separator*)
+                                   diff-y)
+               (setf (window-separator-start-y *last-dragged-separator*) y)))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-wheel))
   (let ((window (focus-window-position (current-frame)

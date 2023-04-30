@@ -31,6 +31,9 @@
            point text
            'button (make-button :plist plist :callback callback)
            'action callback
+           :click-callback (lambda (window point)
+                             (declare (ignore window point))
+                             (funcall callback))
            :attribute (getf plist :attribute)
            (if button-tag
                `(,button-tag t)

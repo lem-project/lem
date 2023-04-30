@@ -505,11 +505,13 @@
 
 (defun on-mouse-motion (x y state)
   (sdl2:show-cursor)
-  (when (= sdl2-ffi:+sdl-button-lmask+ (logand state sdl2-ffi:+sdl-button-lmask+))
+  (let ((button (if (= sdl2-ffi:+sdl-button-lmask+ (logand state sdl2-ffi:+sdl-button-lmask+))
+                    :button-1
+                    nil)))
     (let ((x (floor x (char-width)))
           (y (floor y (char-height))))
       (lem:send-event (lambda ()
-                        (lem::handle-mouse-motion x y :button-1))))))
+                        (lem::handle-mouse-motion x y button))))))
 
 (defun on-mouse-wheel (wheel-x wheel-y which direction)
   (declare (ignore which direction))

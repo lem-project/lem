@@ -35,7 +35,14 @@
 (defun mouse-event-p (value)
   (typep value 'mouse-event))
 
-(defun move-to-x-y-position (window x y)
+(defun get-x-y-position-point (window x y)
+  (with-point ((point (buffer-point (window-buffer window))))
+    (move-point point (window-view-point window))
+    (move-to-next-virtual-line point y window)
+    (move-to-virtual-line-column point x window)
+    point))
+
+(defun move-current-point-to-x-y-position (window x y)
   (switch-to-window window)
   (setf (current-window) window)
   (move-point (current-point) (window-view-point window))
@@ -54,15 +61,22 @@
            (y (mouse-event-y mouse-event))
            (clicks (mouse-button-down-clicks mouse-event))
            (window (mouse-event-window mouse-event)))
-       (move-to-x-y-position window x y)
        (cond ((= clicks 1)
-              (setf (window-last-mouse-button-down-point window)
-                    (copy-point (current-point) :temporary))
-              (buffer-mark-cancel (current-buffer))
-              (run-hooks (variable-value 'mouse-button-down-functions)))
+              (let* ((point (get-x-y-position-point window x y))
+                     (callback (text-property-at point :click-callback)))
+                (cond (callback
+                       (funcall callback window point))
+                      (t
+                       (move-current-point-to-x-y-position window x y)
+                       (setf (window-last-mouse-button-down-point window)
+                             (copy-point (current-point) :temporary))
+                       (buffer-mark-cancel (current-buffer))
+                       (run-hooks (variable-value 'mouse-button-down-functions))))))
              ((= clicks 2)
+              (move-current-point-to-x-y-position window x y)
               (select-expression-at-current-point))
              ((<= 3 clicks)
+              (move-current-point-to-x-y-position window x y)
               (select-form-at-current-point)))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
@@ -74,9 +88,14 @@
         (button (mouse-event-button mouse-event))
         (window (mouse-event-window mouse-event)))
     (case button
+      ((nil)
+       (when window
+         (let ((point (get-x-y-position-point window x y)))
+           (alexandria:when-let (callback (text-property-at point :hover-callback))
+             (funcall callback window point)))))
       (:button-1
        (when (and window (window-last-mouse-button-down-point window))
-         (move-to-x-y-position window x y)
+         (move-current-point-to-x-y-position window x y)
          (set-current-mark (window-last-mouse-button-down-point window)))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-wheel))

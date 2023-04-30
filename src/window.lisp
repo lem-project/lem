@@ -658,7 +658,15 @@ window width is changed, we must recalc the window view point."
   (set-window-x x window)
   (set-window-y y window))
 
+(defun valid-window-height-p (height)
+  (plusp height))
+
+(defun valid-window-width-p (width)
+  (< 2 width))
+
 (defun window-set-size (window width height)
+  (assert (valid-window-width-p width))
+  (assert (valid-window-height-p height))
   (notify-frame-redisplay-required (current-frame))
   (when (floating-window-p window)
     (notify-floating-window-modified (current-frame)))
@@ -769,7 +777,7 @@ window width is changed, we must recalc the window view point."
   (let ((shrink-window-list
           (funcall collect-windows-fn window-list)))
     (dolist (window shrink-window-list)
-      (when (not (funcall check-fn window))
+      (unless (funcall check-fn window)
         (return-from %shrink-windows nil)))
     (cond ((/= 0 diff-width)
            (dolist (window shrink-window-list)
@@ -789,65 +797,83 @@ window width is changed, we must recalc the window view point."
   (%shrink-windows window-list
                    #'collect-top-windows
                    (lambda (window)
-                     (< 2 (window-height window)))
+                     (and (<= 0 (+ (window-y window) n))
+                          (valid-window-height-p (- (window-height window) n))))
                    n 0 n 0))
 
 (defun shrink-bottom-windows (window-list n)
   (%shrink-windows window-list
                    #'collect-bottom-windows
                    (lambda (window)
-                     (< 2 (window-height window)))
+                     (valid-window-height-p (- (window-height window) n)))
                    n 0 0 0))
 
 (defun shrink-left-windows (window-list n)
   (%shrink-windows window-list
                    #'collect-left-windows
                    (lambda (window)
-                     (< 2 (window-width window)))
+                     (and (<= 0 (+ (window-x window) n))
+                          (valid-window-width-p (- (window-width window) n))))
                    0 n 0 n))
 
 (defun shrink-right-windows (window-list n)
   (%shrink-windows window-list
                    #'collect-right-windows
                    (lambda (window)
-                     (< 2 (window-width window)))
+                     (valid-window-width-p (- (window-width window) n)))
                    0 n 0 0))
 
 (defun %grow-windows (window-list
                       collect-windows-fn
+                      check-fn
                       diff-height
                       diff-width
                       shift-height
                       shift-width)
-  (dolist (window (funcall collect-windows-fn window-list))
-    (cond ((/= 0 shift-width)
-           (window-move window shift-width 0))
-          ((/= 0 shift-height)
-           (window-move window 0 shift-height)))
-    (cond ((/= 0 diff-width)
-           (window-resize window diff-width 0))
-          ((/= 0 diff-height)
-           (window-resize window 0 diff-height))))
+  (let ((grow-window-list
+          (funcall collect-windows-fn window-list)))
+    (dolist (window grow-window-list)
+      (unless (funcall check-fn window)
+        (return-from %grow-windows nil)))
+    (dolist (window grow-window-list)
+      (cond ((/= 0 shift-width)
+             (window-move window shift-width 0))
+            ((/= 0 shift-height)
+             (window-move window 0 shift-height)))
+      (cond ((/= 0 diff-width)
+             (window-resize window diff-width 0))
+            ((/= 0 diff-height)
+             (window-resize window 0 diff-height)))))
   t)
 
 (defun grow-top-windows (window-list n)
   (%grow-windows window-list
                  #'collect-top-windows
+                 (lambda (window)
+                   (and (<= 0 (- (window-y window) n))
+                        (valid-window-height-p (+ (window-height window) n))))
                  n 0 (- n) 0))
 
 (defun grow-bottom-windows (window-list n)
   (%grow-windows window-list
                  #'collect-bottom-windows
+                 (lambda (window)
+                   (valid-window-height-p (+ (window-height window) n)))
                  n 0 0 0))
 
 (defun grow-left-windows (window-list n)
   (%grow-windows window-list
                  #'collect-left-windows
+                 (lambda (window)
+                   (and (<= 0 (- (window-x window) n))
+                        (valid-window-width-p (+ (window-width window) n))))
                  0 n 0 (- n)))
 
 (defun grow-right-windows (window-list n)
   (%grow-windows window-list
                  #'collect-right-windows
+                 (lambda (window)
+                   (valid-window-width-p (+ (window-width window) n)))
                  0 n 0 0))
 
 (defun grow-window-internal (grow-window-list shrink-window-list n)

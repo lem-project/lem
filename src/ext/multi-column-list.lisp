@@ -205,13 +205,28 @@
 
 (defmethod lem/popup-menu:apply-print-spec ((print-spec print-spec) point item)
   (check-type item multi-column-list-item)
-  (loop :for value :in (map-columns (print-spec-multi-column-list print-spec) item)
-        :for width :in (print-spec-column-width-list print-spec)
-        :do (insert-string point " ")
-            (let ((column (point-column point)))
-              (insert-string point value)
-              (move-to-column point (+ column width) t)))
-  (insert-string point " "))
+  (with-point ((start point))
+    (loop :for value :in (map-columns (print-spec-multi-column-list print-spec) item)
+          :for width :in (print-spec-column-width-list print-spec)
+          :do (insert-string point " ")
+              (let ((column (point-column point)))
+                (insert-string point value)
+                (move-to-column point (+ column width) t)))
+    (insert-string point " ")
+    (put-text-property start
+                       point
+                       :click-callback (lambda (window point)
+                                         (click-menu-item
+                                          (print-spec-multi-column-list print-spec)
+                                          window
+                                          point)))
+    (put-text-property start
+                       point
+                       :hover-callback (lambda (window point)
+                                         (hover-menu-item
+                                          (print-spec-multi-column-list print-spec)
+                                          window
+                                          point)))))
 
 (defun compute-column-width-list (multi-column-list)
   (let ((width-matrix
@@ -285,6 +300,14 @@
                        :print-spec (multi-column-list-print-spec component)
                        :max-display-items 100
                        :keep-focus t)))
+
+(defun hover-menu-item (multi-column-list window point)
+  (move-point (buffer-point (window-buffer window)) point)
+  (update multi-column-list))
+
+(defun click-menu-item (multi-column-list window point)
+  (move-point (buffer-point (window-buffer window)) point)
+  (popup-menu-select (multi-column-list-popup-menu multi-column-list)))
 
 (defun check-current-item (multi-column-list)
   (when (multi-column-list-use-check-p multi-column-list)

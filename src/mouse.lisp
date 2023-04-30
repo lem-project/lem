@@ -144,18 +144,18 @@
 
 (defvar *last-hover-overlay* nil)
 
-(defun handle-mouse-hover (point)
+(defun handle-mouse-hover (window point)
   (multiple-value-bind (overlay callback)
       (find-overlay-that-can-hover point)
     (when (and overlay
                (not (eq overlay *last-hover-overlay*)))
       (setf *last-hover-overlay* overlay)
-      (funcall callback)
+      (funcall callback window point)
       (return-from handle-mouse-hover))
     (unless overlay
       (when *last-hover-overlay*
         (alexandria:when-let (callback (overlay-get *last-hover-overlay* :unhover-callback))
-          (funcall callback))
+          (funcall callback windwo point))
         (setf *last-hover-overlay* nil)))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-motion))
@@ -171,7 +171,7 @@
                   (alexandria:when-let (callback (text-property-at point :hover-callback))
                     (funcall callback window point)
                     (return-from handle-mouse-event))
-                  (handle-mouse-hover point)))
+                  (handle-mouse-hover window point)))
                (:button-1
                 (when (window-last-mouse-button-down-point window)
                   (move-current-point-to-x-y-position window x y)
@@ -261,14 +261,16 @@
 (defun set-hover-message (overlay message &key style)
   (overlay-put overlay
                :hover-callback
-               (lambda ()
+               (lambda (window point)
+                 (declare (ignore window point))
                  (let ((hover-window (display-popup-message message
                                                             :timeout nil
                                                             :style style)))
                    (overlay-put overlay 'hover-window hover-window))))
   (overlay-put overlay
                :unhover-callback
-               (lambda ()
+               (lambda (window point)
+                 (declare (ignore window point))
                  (let ((hover-window (overlay-get overlay 'hover-window)))
                    (when hover-window
                      (delete-popup-message hover-window))))))

@@ -1,6 +1,6 @@
 (defpackage :lem-sdl2/keyboard
   (:use :cl)
-  (:export :make-key-event
+  (:export :keysym-to-key-event
            :handle-textediting
            :handle-text-input
            :handle-key-down
@@ -77,6 +77,11 @@
 
 (defun make-key-event (code modifier)
   (%make-key-event :code code :modifier modifier))
+
+(defun keysym-to-key-event (keysym)
+  (let ((code (sdl2:sym-value keysym))
+        (modifier (lem-sdl2/keyboard::get-modifier keysym)))
+    (make-key-event code modifier)))
 
 (defun get-modifier (keysym)
   (let* ((mod (sdl2:mod-value keysym))

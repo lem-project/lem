@@ -129,7 +129,8 @@
            (cond ((eq :button-1 (mouse-event-button mouse-event))
                   (handle-button-1 window x y (mouse-button-down-clicks mouse-event)))
                  ((eq :button-3 (mouse-event-button mouse-event))
-                  (show-context-menu)))))))))
+                  (show-context-menu-over-mouse-cursor (mouse-event-x mouse-event)
+                                                       (mouse-event-y mouse-event))))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
   (setf *last-dragged-separator* nil)
@@ -279,6 +280,11 @@
                  (let ((hover-window (overlay-get overlay 'hover-window)))
                    (when hover-window
                      (delete-popup-message hover-window))))))
+
+(defun show-context-menu-over-mouse-cursor (x y)
+  (let ((context-menu (buffer-context-menu (current-buffer))))
+    (when context-menu
+      (lem-if:display-context-menu (implementation) context-menu '(:gravity :mouse-cursor)))))
 
 
 (defun receive-mouse-button-down (x y button clicks)

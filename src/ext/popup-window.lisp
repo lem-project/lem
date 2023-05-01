@@ -131,7 +131,7 @@
     (list x y w h)))
 
 (defmethod compute-popup-window-rectangle ((gravity gravity-mouse-cursor) &key width height
-                                                                   &allow-other-keys)
+                                                                          &allow-other-keys)
   (multiple-value-bind (x y)
       (lem-if:get-mouse-position (lem:implementation))
     (list x y width height)))

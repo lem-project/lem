@@ -146,19 +146,24 @@
 
 (defvar *last-hover-overlay* nil)
 
-(defun handle-mouse-hover (window point)
+(defun handle-mouse-hover-overlay (window point)
   (multiple-value-bind (overlay callback)
       (find-overlay-that-can-hover point)
     (when (and overlay
                (not (eq overlay *last-hover-overlay*)))
       (setf *last-hover-overlay* overlay)
       (funcall callback window point)
-      (return-from handle-mouse-hover))
+      (return-from handle-mouse-hover-overlay))
     (unless overlay
       (when *last-hover-overlay*
         (alexandria:when-let (callback (overlay-get *last-hover-overlay* :unhover-callback))
           (funcall callback window point))
         (setf *last-hover-overlay* nil)))))
+
+(defun handle-mouse-hover-buffer (window point)
+  (alexandria:when-let (callback (text-property-at point :hover-callback))
+    (funcall callback window point)
+    t))
 
 (defmethod handle-mouse-event ((mouse-event mouse-motion))
   (cond ((null *last-dragged-separator*)
@@ -170,10 +175,8 @@
              (case (mouse-event-button mouse-event)
                ((nil)
                 (let ((point (get-x-y-position-point window x y)))
-                  (alexandria:when-let (callback (text-property-at point :hover-callback))
-                    (funcall callback window point)
-                    (return-from handle-mouse-event))
-                  (handle-mouse-hover window point)))
+                  (or (handle-mouse-hover-buffer window point)
+                      (handle-mouse-hover-overlay window point))))
                (:button-1
                 (when (window-last-mouse-button-down-point window)
                   (move-current-point-to-x-y-position window x y)

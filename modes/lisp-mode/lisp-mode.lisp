@@ -32,6 +32,7 @@
   (setf (variable-value 'indent-tabs-mode) nil)
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'calc-indent)
+  (setf (variable-value 'indent-when-yank) t)
   (setf (variable-value 'line-comment) ";")
   (setf (variable-value 'insertion-line-comment) ";; ")
   (setf (variable-value 'language-mode-tag) 'lisp-mode)

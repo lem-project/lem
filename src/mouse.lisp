@@ -304,9 +304,7 @@
         (multiple-value-bind (start end)
             (get-select-expression-points point)
           (when (and start end)
-            (with-point ((insert-start (current-point)))
-              (insert-string (current-point) (points-to-string start end))
-              (indent-points insert-start (current-point)))))))))
+            (insert-string-and-indent (current-point) (points-to-string start end))))))))
 
 
 (defun receive-mouse-button-down (x y button clicks)

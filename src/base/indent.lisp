@@ -2,6 +2,7 @@
 
 (define-editor-variable indent-tabs-mode nil)
 (define-editor-variable calc-indent-function 'calc-indent-default)
+(define-editor-variable indent-when-yank nil)
 
 (defun back-to-indentation (point)
   (skip-whitespace-forward (line-start point) t)
@@ -63,3 +64,9 @@
 (defun indent-buffer (buffer)
   (indent-points (buffer-start-point buffer)
                  (buffer-end-point buffer)))
+
+(defun insert-string-and-indent (point string)
+  (with-point ((start point))
+    (prog1 (insert-string point string)
+      (when (variable-value 'indent-when-yank :buffer (point-buffer point))
+        (indent-points start point)))))

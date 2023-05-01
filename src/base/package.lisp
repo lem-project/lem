@@ -309,6 +309,8 @@
    :back-to-indentation
    :indent-tabs-mode
    :calc-indent-function
+   :indent-when-yank
    :indent-line
    :indent-points
-   :indent-buffer))
+   :indent-buffer
+   :insert-string-and-indent))

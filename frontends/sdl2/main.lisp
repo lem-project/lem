@@ -472,8 +472,16 @@
                     (- (view-height view) y (if (view-use-modeline view) 2 1))
                     :color (display-background-color *display*)))
 
+(defvar *cursor-shown* t)
+(defun show-cursor ()
+  (setf *cursor-shown* t)
+  (sdl2:show-cursor))
+(defun hide-cursor ()
+  (setf *cursor-shown* nil)
+  (sdl2:hide-cursor))
+
 (defun on-mouse-button-down (button x y clicks)
-  (sdl2:show-cursor)
+  (show-cursor)
   (let ((button
           (cond ((eql button sdl2-ffi:+sdl-button-left+) :button-1)
                 ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
@@ -485,7 +493,7 @@
                           (lem::receive-mouse-button-down x y button clicks)))))))
 
 (defun on-mouse-button-up (button x y)
-  (sdl2:show-cursor)
+  (show-cursor)
   (let ((button
           (cond ((eql button sdl2-ffi:+sdl-button-left+) :button-1)
                 ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
@@ -496,7 +504,7 @@
                       (lem::receive-mouse-button-up x y button)))))
 
 (defun on-mouse-motion (x y state)
-  (sdl2:show-cursor)
+  (show-cursor)
   (let ((button (if (= sdl2-ffi:+sdl-button-lmask+ (logand state sdl2-ffi:+sdl-button-lmask+))
                     :button-1
                     nil)))
@@ -507,7 +515,7 @@
 
 (defun on-mouse-wheel (wheel-x wheel-y which direction)
   (declare (ignore which direction))
-  (sdl2:show-cursor)
+  (show-cursor)
   (multiple-value-bind (x y) (sdl2:mouse-state)
     (let ((x (floor x (char-width)))
           (y (floor y (char-height))))
@@ -521,11 +529,11 @@
   (lem:send-event #'lem:redraw-display))
 
 (defun on-textinput (text)
-  (sdl2:hide-cursor)
+  (hide-cursor)
   (handle-text-input (get-platform) text))
 
 (defun on-keydown (key-event)
-  (sdl2:hide-cursor)
+  (hide-cursor)
   (handle-key-down (get-platform) key-event))
 
 (defun on-keyup (key-event)
@@ -783,10 +791,12 @@
   (get-font-list (get-platform)))
 
 (defmethod lem-if:get-mouse-position ((implementation sdl2))
-  (multiple-value-bind (x y bitmask)
-      (sdl2:mouse-state)
-    (declare (ignore bitmask))
-    (values (floor (1+ x) (display-char-width *display*))
-            (floor y (display-char-height *display*)))))
+  (if (not *cursor-shown*)
+      (values 0 0)
+      (multiple-value-bind (x y bitmask)
+          (sdl2:mouse-state)
+        (declare (ignore bitmask))
+        (values (floor x (display-char-width *display*))
+                (floor y (display-char-height *display*))))))
 
 (pushnew :lem-sdl2 *features*)

@@ -504,7 +504,7 @@
 (define-command show-context-menu () ()
   (let ((context-menu (buffer-context-menu (current-buffer))))
     (when context-menu
-      (lem-if:display-context-menu (implementation) context-menu))))
+      (lem-if:display-context-menu (implementation) context-menu '(:gravity :cursor)))))
 
 (define-command font-size-increase () ()
   (lem-if:increase-font-size (implementation)))

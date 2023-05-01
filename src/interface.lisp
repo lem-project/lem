@@ -84,8 +84,8 @@
                                                                                source-window
                                                                                style))
 (defgeneric lem-if:delete-popup-message (implementation popup-message))
-(defgeneric lem-if:display-context-menu (implementation context-menu)
-  (:method (implementation context-menu)))
+(defgeneric lem-if:display-context-menu (implementation context-menu style)
+  (:method (implementation context-menu style)))
 
 (defgeneric lem-if:clipboard-paste (implementation)
   (:method (implementation)))

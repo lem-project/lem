@@ -39,9 +39,9 @@
   (display (make-instance 'context-menu :items items)
            :style '(:gravity :cursor)))
 
-(defmethod lem-if:display-context-menu (implementation context-menu)
+(defmethod lem-if:display-context-menu (implementation context-menu style)
   (display context-menu
-           :style '(:gravity :cursor)))
+           :style style))
 
 (define-command test-context-menu () ()
   (display-context-menu (list (make-item :label "foo"

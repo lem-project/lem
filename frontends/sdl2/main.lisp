@@ -786,7 +786,7 @@
   (multiple-value-bind (x y bitmask)
       (sdl2:mouse-state)
     (declare (ignore bitmask))
-    (values (floor x (display-char-width *display*))
+    (values (floor (1+ x) (display-char-width *display*))
             (floor y (display-char-height *display*)))))
 
 (pushnew :lem-sdl2 *features*)

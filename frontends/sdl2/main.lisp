@@ -295,44 +295,34 @@
          (y1 (- (* y (char-height)) (floor (char-height) 2)))
          (x2 (1- (+ x1 (* (+ w 1) (char-width)))))
          (y2 (+ y1 (* (+ h 1) (char-height)))))
-    (sdl2:with-rects ((up-rect x1
-                               y1
-                               (* (+ w 1) (char-width))
-                               (floor (char-height) 2))
-                      (left-rect x1
-                                 y1
-                                 (floor (char-width) 2)
-                                 (* (+ h 1) (char-height)))
-                      (right-rect (* (+ x w) (char-width))
-                                  y1
-                                  (floor (char-width) 2)
-                                  (* (+ h 1) (char-height)))
-                      (down-rect x1
-                                 (* (+ y h) (char-height))
-                                 (* (+ w 1) (char-width))
-                                 (floor (char-height) 2)))
-
+    (sdl2:with-rects ((rect x1 y1 (- x2 x1) (- y2 y1)))
       (set-render-color *display* (display-background-color *display*))
-      (sdl2:render-fill-rect (current-renderer) up-rect)
-      (sdl2:render-fill-rect (current-renderer) down-rect)
-      (sdl2:render-fill-rect (current-renderer) left-rect)
-      (sdl2:render-fill-rect (current-renderer) right-rect)
+      (sdl2:render-fill-rect (current-renderer) rect))
 
-      (set-render-color *display* (display-foreground-color *display*))
+    (sdl2:with-points ((upleft x1 y1)
+                       (downleft x1 y2)
+                       (downright x2 y2)
+                       (upright x2 y1))
       (if without-topline
-          (sdl2:with-points ((upleft x1 y1)
-                             (downleft x1 y2)
-                             (downright x2 y2)
-                             (upright x2 y1))
-            (let ((points (sdl2:points* upleft downleft downright upright)))
-              (sdl2:render-draw-lines (current-renderer)
-                                      points
-                                      4)))
-          (sdl2:with-rects ((border-rect x1
-                                         y1
-                                         (* (+ 1 w) (char-width))
-                                         (* (+ 1 h) (char-height))))
-            (sdl2:render-draw-rect (current-renderer) border-rect))))))
+          (progn
+            (set-render-color *display* (display-foreground-color *display*))
+            (sdl2:render-draw-lines (current-renderer) (sdl2:points* downleft upleft) 2)
+            (set-render-color *display* (display-foreground-color *display*))
+            (sdl2:render-draw-lines (current-renderer) (sdl2:points* upleft upright) 2))
+          (progn
+            (set-render-color *display* (display-foreground-color *display*))
+            (sdl2:render-draw-lines (current-renderer) (sdl2:points* downleft upleft upright) 3)))
+      (set-render-color *display* (display-foreground-color *display*))
+      (sdl2:render-draw-lines (current-renderer) (sdl2:points* upright downright downleft) 3)
+
+      ;; shadow
+      #+(or)
+      (sdl2:with-points ((downleft x1 (+ y2 2))
+                         (downright (1+ x2) (+ y2 2))
+                         (upright (+ x2 2) y1))
+        (set-render-color *display* (lem:parse-color "black"))
+        (sdl2:render-draw-lines (current-renderer) (sdl2:points* upright downright downleft) 3)))
+    ))
 
 (defun render-margin-line (x y height)
   (let ((attribute (lem:ensure-attribute 'lem:modeline-inactive)))
@@ -696,6 +686,11 @@
     (with-renderer ()
       (clear-eob view x y))))
 
+(defmethod lem-if:redraw-view-before ((implementation sdl2) view)
+  (with-debug ("lem-if:redraw-view-before" view)
+    (with-renderer ()
+      (render-border-using-view view))))
+
 (defmethod lem-if:redraw-view-after ((implementation sdl2) view)
   (with-debug ("lem-if:redraw-view-after" view)
     (with-renderer ()
@@ -711,8 +706,7 @@
         (sdl2:render-copy (current-renderer)
                           (view-texture view)
                           :dest-rect dest-rect
-                          :source-rect src-rect))
-      (render-border-using-view view))))
+                          :source-rect src-rect)))))
 
 (defmethod lem-if::will-update-display ((implementation sdl2))
   (with-debug ("will-update-display")

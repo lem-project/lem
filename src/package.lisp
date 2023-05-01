@@ -533,6 +533,7 @@
    :print-modeline
    :clear-eol
    :clear-eob
+   :redraw-view-before
    :redraw-view-after
    :will-update-display
    :update-display

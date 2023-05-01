@@ -502,6 +502,7 @@
           (focus-window-p (eq window (current-window)))
           (buffer (window-buffer window))
           (screen (window-screen window)))
+      (lem-if:redraw-view-before (implementation) (screen-view screen))
       (let ((scroll-n (when focus-window-p
                         (window-see window))))
         (when (or (not (native-scroll-support (implementation)))

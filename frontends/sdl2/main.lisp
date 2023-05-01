@@ -732,6 +732,8 @@
                                                       0))
                (texture (sdl2:create-texture-from-surface (display-renderer *display*) surface)))
           (sdl2:with-rects ((rect x y (sdl2:surface-width surface) (sdl2:surface-height surface)))
+            (set-render-color *display* (display-background-color *display*))
+            (sdl2:render-fill-rect (display-renderer *display*) rect)
             (sdl2:render-copy (display-renderer *display*) texture :dest-rect rect))
           (sdl2:destroy-texture texture))))))
 

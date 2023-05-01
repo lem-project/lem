@@ -223,9 +223,9 @@
     (put-text-property start
                        point
                        :hover-callback (lambda (window point)
+                                         (declare (ignore window))
                                          (hover-menu-item
                                           (print-spec-multi-column-list print-spec)
-                                          window
                                           point)))))
 
 (defun compute-column-width-list (multi-column-list)
@@ -301,9 +301,10 @@
                        :max-display-items 100
                        :keep-focus t)))
 
-(defun hover-menu-item (multi-column-list window point)
-  (move-point (buffer-point (window-buffer window)) point)
-  (update multi-column-list))
+(defun hover-menu-item (multi-column-list point)
+  (lem/popup-menu::move-focus (multi-column-list-popup-menu multi-column-list)
+                              (lambda (focus-point)
+                                (move-point focus-point point))))
 
 (defun click-menu-item (multi-column-list window point)
   (move-point (buffer-point (window-buffer window)) point)

@@ -39,11 +39,6 @@
         (when-let ((point (funcall (variable-value 'forward-matching-paren) current-point)))
           (push (copy-point current-point :temporary) highlight-points)
           (push (copy-point point :temporary) highlight-points)))
-    (dolist (point highlight-points)
-      (push (make-overlay point
-                          (character-offset (copy-point point :temporary) 1)
-                          'showparen-attribute)
-            *brackets-overlays*))
     highlight-points))
 
 (defun mouse-hover-highlight ()

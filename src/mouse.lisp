@@ -126,11 +126,16 @@
                                   (mouse-event-x mouse-event)
                                   (mouse-event-y mouse-event))
          (when window
-           (cond ((eq :button-1 (mouse-event-button mouse-event))
-                  (handle-button-1 window x y (mouse-button-down-clicks mouse-event)))
-                 ((eq :button-3 (mouse-event-button mouse-event))
-                  (show-context-menu-over-mouse-cursor (mouse-event-x mouse-event)
-                                                       (mouse-event-y mouse-event))))))))))
+           (case (mouse-event-button mouse-event)
+             (:button-1
+              (handle-button-1 window x y (mouse-button-down-clicks mouse-event)))
+             (:button-2
+              (paste-expression-on-mouse-cursor-to-current-point window
+                                                                 (mouse-event-x mouse-event)
+                                                                 (mouse-event-y mouse-event)))
+             (:button-3
+              (show-context-menu-over-mouse-cursor (mouse-event-x mouse-event)
+                                                   (mouse-event-y mouse-event))))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
   (setf *last-dragged-separator* nil)
@@ -217,26 +222,30 @@
                       *scroll-speed*))))))
 
 
-(defun select-expression-at-current-point ()
-  (cond ((syntax-open-paren-char-p (character-at (current-point)))
-         (with-point ((start (current-point))
-                      (end (current-point)))
+(defun get-select-expression-points (point)
+  (cond ((syntax-open-paren-char-p (character-at point))
+         (with-point ((start point)
+                      (end point))
            (form-offset end 1)
-           (set-current-mark start)
-           (move-point (current-point) end)))
-        ((syntax-closed-paren-char-p (character-at (current-point) -1))
-         (with-point ((start (current-point))
-                      (end (current-point)))
+           (values start end)))
+        ((syntax-closed-paren-char-p (character-at point -1))
+         (with-point ((start point)
+                      (end point))
            (character-offset start 1)
            (form-offset start -1)
-           (set-current-mark start)
-           (move-point (current-point) end)))
+           (values start end)))
         (t
          (multiple-value-bind (start end)
-             (symbol-region-at-point (current-point))
+             (symbol-region-at-point point)
            (when start
-             (set-current-mark start)
-             (move-point (current-point) end))))))
+             (values start end))))))
+
+(defun select-expression-at-current-point ()
+  (multiple-value-bind (start end)
+      (get-select-expression-points (current-point))
+    (when start
+      (set-current-mark start)
+      (move-point (current-point) end))))
 
 (defun select-form-at-current-point ()
   (with-point ((start (current-point))
@@ -285,6 +294,19 @@
   (let ((context-menu (buffer-context-menu (current-buffer))))
     (when context-menu
       (lem-if:display-context-menu (implementation) context-menu '(:gravity :mouse-cursor)))))
+
+(defun paste-expression-on-mouse-cursor-to-current-point (window x y)
+  (multiple-value-bind (target-window x y)
+      (focus-window-position (current-frame) x y)
+    (when (and (eq target-window window)
+               (eq (current-buffer) (window-buffer window)))
+      (let ((point (get-x-y-position-point window x y)))
+        (multiple-value-bind (start end)
+            (get-select-expression-points point)
+          (when (and start end)
+            (with-point ((insert-start (current-point)))
+              (insert-string (current-point) (points-to-string start end))
+              (indent-points insert-start (current-point)))))))))
 
 
 (defun receive-mouse-button-down (x y button clicks)

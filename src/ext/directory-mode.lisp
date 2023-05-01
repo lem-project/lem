@@ -174,7 +174,7 @@
                      :file pathname)
       (when (symbolic-link-p pathname)
         (insert-string point (format nil " -> ~A" (probe-file pathname))))
-      (insert-character point #\newline)
+      (back-to-indentation start)
       (put-text-property
        start
        point
@@ -188,7 +188,8 @@
        :click-callback
        (lambda (window dest-point)
          (declare (ignore window dest-point))
-         (directory-mode-find-file))))))
+         (directory-mode-find-file)))
+      (insert-character point #\newline))))
 
 (defun update (buffer)
   (with-buffer-read-only buffer nil

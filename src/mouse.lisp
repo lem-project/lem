@@ -126,16 +126,18 @@
                                   (mouse-event-x mouse-event)
                                   (mouse-event-y mouse-event))
          (when window
-           (handle-button-1 window x y (mouse-button-down-clicks mouse-event))))))))
+           (cond ((eq :button-1 (mouse-event-button mouse-event))
+                  (handle-button-1 window x y (mouse-button-down-clicks mouse-event)))
+                 ((eq :button-3 (mouse-event-button mouse-event))
+                  (show-context-menu)))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
+  (setf *last-dragged-separator* nil)
   (let ((window (focus-window-position (current-frame)
                                        (mouse-event-x mouse-event)
                                        (mouse-event-y mouse-event))))
     (cond (window
-           (setf (window-last-mouse-button-down-point window) nil))
-          (t
-           (setf *last-dragged-separator* nil)))))
+           (setf (window-last-mouse-button-down-point window) nil)))))
 
 (defun find-overlay-that-can-hover (point)
   (dolist (overlay (point-overlays point))
@@ -155,7 +157,7 @@
     (unless overlay
       (when *last-hover-overlay*
         (alexandria:when-let (callback (overlay-get *last-hover-overlay* :unhover-callback))
-          (funcall callback windwo point))
+          (funcall callback window point))
         (setf *last-hover-overlay* nil)))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-motion))
@@ -183,10 +185,10 @@
              (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
                (unless (zerop diff-x)
                  (when (if (plusp diff-x)
-                           (grow-window-width (window-separator-left-window *last-dragged-separator*)
+                           (shrink-window-width (window-separator-right-window *last-dragged-separator*)
                                               diff-x)
-                           (shrink-window-width (window-separator-left-window *last-dragged-separator*)
-                                                (- diff-x)))
+                           (grow-window-width (window-separator-right-window *last-dragged-separator*)
+                                              (- diff-x)))
                    (setf (window-separator-start-x *last-dragged-separator*) x)))))))
         ((typep *last-dragged-separator* 'window-horizontal-separator)
          (let ((y (mouse-event-y mouse-event))

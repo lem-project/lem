@@ -72,11 +72,7 @@
    (focus :initform nil
           :accessor display-focus-p)
    (redraw-at-least-once :initform nil
-                         :accessor display-redraw-at-least-once-p)
-   (required-redisplay :initform nil
-                       :accessor display-required-redisplay-p)
-   (required-redisplay-mutex :initform (bt:make-lock "display-required-redisplay-mutex")
-                             :accessor display-required-redisplay-mutex)))
+                         :accessor display-redraw-at-least-once-p)))
 
 (defmethod display-latin-font ((display display))
   (font-latin-normal-font (display-font display)))
@@ -143,14 +139,8 @@
                           (display-height display)))))
 
 (defun notify-required-redisplay ()
-  (bt:with-lock-held ((display-required-redisplay-mutex *display*))
-    (setf (display-required-redisplay-p *display*) t)))
-
-(defun apply-resize ()
-  (when (and (display-required-redisplay-p *display*)
-             (display-redraw-at-least-once-p *display*))
-    (setf (display-required-redisplay-p *display*) nil)
-    (with-renderer ()
+  (with-renderer ()
+    (when (display-redraw-at-least-once-p *display*)
       (sdl2:set-render-target (current-renderer) (display-texture *display*))
       (set-render-color *display* (display-background-color *display*))
       (sdl2:render-clear (current-renderer))
@@ -542,18 +532,18 @@
   (handle-key-up (get-platform) key-event))
 
 (defun on-windowevent (event)
-  (cond ((or (equal event
-                    sdl2-ffi:+sdl-windowevent-shown+)
-             (equal event
-                    sdl2-ffi:+sdl-windowevent-exposed+))
-         (notify-required-redisplay))
-        ((equal event sdl2-ffi:+sdl-windowevent-resized+)
-         (update-texture *display*)
-         (notify-required-redisplay))
-        ((equal event sdl2-ffi:+sdl-windowevent-focus-gained+)
-         (setf (display-focus-p *display*) t))
-        ((equal event sdl2-ffi:+sdl-windowevent-focus-lost+)
-         (setf (display-focus-p *display*) nil))))
+  (alexandria:switch (event)
+    (sdl2-ffi:+sdl-windowevent-shown+
+     (notify-required-redisplay))
+    (sdl2-ffi:+sdl-windowevent-exposed+
+     (notify-required-redisplay))
+    (sdl2-ffi:+sdl-windowevent-resized+
+     (update-texture *display*)
+     (notify-required-redisplay))
+    (sdl2-ffi:+sdl-windowevent-focus-gained+
+     (setf (display-focus-p *display*) t))
+    (sdl2-ffi:+sdl-windowevent-focus-lost+
+     (setf (display-focus-p *display*) nil))))
 
 (defun convert-event (event)
   (let ((event-type (sdl2:get-event-type event)))
@@ -653,17 +643,8 @@
          (list event-type event))))))
 
 (defun next-events (event)
-  (bt:with-lock-held ((display-required-redisplay-mutex *display*))
-    (apply-resize)
-    (sdl2:next-event event :wait)
-    (let ((events '()))
-      (alexandria:when-let (event (convert-event event))
-        (push event events))
-      (loop :for rc := (sdl2:next-event event :poll)
-            :while (= rc 1)
-            :do (alexandria:when-let (event (convert-event event))
-                  (push event events)))
-      (nreverse events))))
+  (sdl2:next-event event :wait)
+  (list (convert-event event)))
 
 (defun event-loop ()
   (sdl2:in-main-thread ()

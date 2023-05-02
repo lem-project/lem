@@ -475,7 +475,8 @@
   (let ((button
           (cond ((eql button sdl2-ffi:+sdl-button-left+) :button-1)
                 ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
-                ((eql button sdl2-ffi:+sdl-button-middle+) :button-2))))
+                ((eql button sdl2-ffi:+sdl-button-middle+) :button-2)
+                ((eql button 4) :button-4))))
     (when button
       (let ((x (floor x (char-width)))
             (y (floor y (char-height))))
@@ -487,7 +488,8 @@
   (let ((button
           (cond ((eql button sdl2-ffi:+sdl-button-left+) :button-1)
                 ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
-                ((eql button sdl2-ffi:+sdl-button-middle+) :button-2)))
+                ((eql button sdl2-ffi:+sdl-button-middle+) :button-2)
+                ((eql button 4) :button-4)))
         (x (floor x (char-width)))
         (y (floor y (char-height))))
     (lem:send-event (lambda ()

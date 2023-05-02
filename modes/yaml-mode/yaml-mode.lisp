@@ -34,6 +34,7 @@
 
 (defvar *yaml-syntax-table*
   (let ((table (make-syntax-table
+                :symbol-chars '(#\-)
                 :string-quote-chars '(#\" #\')))
         (tmlanguage (make-tmlanguage-yaml)))
     (set-syntax-parser table tmlanguage)

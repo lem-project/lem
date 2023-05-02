@@ -25,7 +25,7 @@
 (define-editor-variable mouse-button-down-functions '())
 
 (deftype mouse-button ()
-  '(member :button-1 :button-2 :button-3))
+  '(member :button-1 :button-2 :button-3 :button-4))
 
 (defclass mouse-event ()
   ((button :initarg :button
@@ -135,7 +135,9 @@
                                                                  (mouse-event-y mouse-event)))
              (:button-3
               (show-context-menu-over-mouse-cursor (mouse-event-x mouse-event)
-                                                   (mouse-event-y mouse-event))))))))))
+                                                   (mouse-event-y mouse-event)))
+             (:button-4
+              (undo 1)))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
   (setf *last-dragged-separator* nil)
@@ -291,6 +293,7 @@
                      (delete-popup-message hover-window))))))
 
 (defun show-context-menu-over-mouse-cursor (x y)
+  (declare (ignore x y))
   (let ((context-menu (buffer-context-menu (current-buffer))))
     (when context-menu
       (lem-if:display-context-menu (implementation) context-menu '(:gravity :mouse-cursor)))))

@@ -67,7 +67,8 @@
                                             :directory (if *last-directory*
                                                            (princ-to-string *last-directory*)
                                                            (buffer-directory)))))
-  (let ((result (parse-grep-result (run-grep query directory))))
+  (let* ((directory (uiop:ensure-directory-pathname directory))
+         (result (parse-grep-result (run-grep query directory))))
     (if (null result)
         (editor-error "No match")
         (lem/peek-source:with-collecting-sources (collector :read-only nil)

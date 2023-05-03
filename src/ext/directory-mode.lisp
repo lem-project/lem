@@ -147,8 +147,17 @@
         :finally (return (princ-to-string size))))
 
 (defun insert-icon (point pathname)
-  (when (uiop:directory-pathname-p pathname)
-    (insert-string point "📁")))
+  (cond ((uiop:directory-pathname-p pathname)
+         (insert-string point (icon-string "folder")))
+        ((let ((string (icon-string-by-ext (pathname-type pathname))))
+           (when string
+             (insert-string point string)
+             t)))
+        (t
+         (let ((string (icon-string-by-ext "txt")))
+           (when string
+             (insert-string point string)
+             t)))))
 
 (defun insert-pathname (point pathname directory &optional content)
   (with-point ((start point))
@@ -167,7 +176,8 @@
                                year month day hour minute second
                                (if week (aref #("Mon" "Tue" "Wed" "Thr" "Fri" "Sat" "Sun") week)
                                    "   "))))
-      (insert-icon point name)
+      (unless (string= name "..")
+        (insert-icon point name))
       (insert-string point
                      name
                      :attribute (get-file-attribute pathname)

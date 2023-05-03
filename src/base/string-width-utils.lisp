@@ -46,8 +46,12 @@
 
 (defun wide-char-p (char)
   (declare (character char))
-  (or (char= char #\▼)
-      (eastasian-code-p (char-code char))))
+  (cond ((char= char #\▼) 2)
+        ((icon-code-p (char-code char)) 2)
+        ((eastasian-code-p (char-code char)) 2)
+        ((char<= #.(code-char 0) char #.(code-char 26))
+         2)
+        (t 1)))
 
 (defun char-width (char width &key (tab-size +default-tab-size+))
   (declare (character char) (fixnum width))
@@ -57,10 +61,8 @@
          (loop :for char :across (control-char char)
                :do (setf width (char-width char width :tab-size tab-size)))
          width)
-        ((or (wide-char-p char) (char<= #.(code-char 0) char #.(code-char 26)))
-         (+ width 2))
         (t
-         (+ width 1))))
+         (+ width (wide-char-p char)))))
 
 (defun string-width (string &key (start 0) end (tab-size +default-tab-size+))
   (loop :with width := 0

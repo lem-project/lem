@@ -9,6 +9,7 @@
   :serial t
   :components ((:file "package")
                (:file "utils")
+               (:file "icon")
                (:file "eastasian")
                (:file "string-width-utils")
                (:file "file-utils")

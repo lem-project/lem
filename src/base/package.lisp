@@ -12,7 +12,14 @@
    :find-tree
    :do-sequence
    :if-push)
-  ;; string-width-utils
+  ;; icon.lisp
+  (:export :register-icon
+           :register-icon-ext
+           :icon-code-p
+           :icon-string
+           :icon-string-by-ext
+           :icon-value)
+  ;; string-width-utils.lisp
   (:export :+default-tab-size+
            :control-char
            :wide-char-p

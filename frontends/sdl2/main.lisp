@@ -109,17 +109,40 @@
   (set-render-color display (display-background-color display))
   (sdl2:render-fill-rect (display-renderer display) nil))
 
-(defmethod get-display-font ((display display) &key type bold)
-  (check-type type (member :latin :cjk :emoji))
-  (if (eq type :emoji)
-      (display-emoji-font display)
-      (if bold
-          (if (eq type :latin)
-              (display-latin-bold-font display)
-              (display-cjk-bold-font display))
-          (if (eq type :latin)
-              (display-latin-font display)
-              (display-cjk-normal-font display)))))
+(defvar *font-cache* (make-hash-table :test 'eql))
+
+(defun clear-font-cache ()
+  (clrhash *font-cache*))
+
+(defun icon-font-name (character)
+  (lem:icon-value (char-code character) :font))
+
+(defun icon-font (character)
+  (or (gethash character *font-cache*)
+      (let ((font-name (icon-font-name character)))
+        (when font-name
+          (let ((pathname (asdf:system-relative-pathname
+                           :lem-sdl2
+                           (merge-pathnames font-name "resources/fonts/"))))
+            (setf (gethash character *font-cache*)
+                  (sdl2-ttf:open-font pathname
+                                      (font-config-size (display-font-config *display*)))))))))
+
+(defmethod get-display-font ((display display) &key type bold character)
+  (check-type type (member :latin :cjk :emoji :icon))
+  (cond ((eq type :icon)
+         (or (icon-font character)
+             (display-emoji-font display)))
+        ((eq type :emoji)
+         (display-emoji-font display))
+        (bold
+         (if (eq type :latin)
+             (display-latin-bold-font display)
+             (display-cjk-bold-font display)))
+        (t
+         (if (eq type :latin)
+             (display-latin-font display)
+             (display-cjk-normal-font display)))))
 
 (defmethod update-display ((display display))
   (sdl2:render-present (display-renderer display)))
@@ -193,37 +216,81 @@
   (and (typep code '(UNSIGNED-BYTE 16))
        (sdl2-ffi.functions:ttf-glyph-is-provided (display-cjk-normal-font display) code)))
 
+(defun emoji-char-code-p (display code)
+  (and (typep code '(UNSIGNED-BYTE 16))
+       (sdl2-ffi.functions:ttf-glyph-is-provided (display-emoji-font display) code)))
+
+(defun icon-char-code-p (code)
+  (icon-font-name (code-char code)))
+
+(defun fix-size-p (type character)
+  (declare (ignore character))
+  (eq type :emoji))
+
+(defun render-icon (character x y &key color)
+  (cffi:with-foreign-string (c-string (string character))
+    (let* ((x (* x (char-width)))
+           (y (* y (char-height)))
+           (surface (sdl2-ttf:render-utf8-blended
+                     (get-display-font *display*
+                                       :type :icon
+                                       :character character)
+                     c-string
+                     (lem:color-red color)
+                     (lem:color-green color)
+                     (lem:color-blue color)
+                     0))
+           (text-width (sdl2:surface-width surface))
+           (text-height (sdl2:surface-height surface))
+           (texture (sdl2:create-texture-from-surface (current-renderer) surface))
+           (offset-x (lem:icon-value (char-code character) :offset-x)))
+      (render-texture (current-renderer)
+                      texture
+                      (if offset-x
+                          (floor (+ x (* text-width offset-x)))
+                          x)
+                      y
+                      text-width
+                      text-height)
+      (sdl2:destroy-texture texture)
+      2)))
+
 (defun render-character (character x y &key color bold)
   (handler-case
       (let* ((code (char-code character))
              (type (cond ((<= code 128)
                           :latin)
+                         ((icon-char-code-p code)
+                          :icon)
                          ((cjk-char-code-p *display* code)
                           :cjk)
                          (t
                           :emoji))))
-        (cffi:with-foreign-string (c-string (string character))
-          (let* ((x (* x (char-width)))
-                 (y (* y (char-height)))
-                 (surface (sdl2-ttf:render-utf8-blended
-                           (get-display-font *display*
-                                             :type type
-                                             :bold bold)
-                           c-string
-                           (lem:color-red color)
-                           (lem:color-green color)
-                           (lem:color-blue color)
-                           0))
-                 (text-width (if (eq type :emoji)
-                                 (* 2 (char-width))
-                                 (sdl2:surface-width surface)))
-                 (text-height (if (eq type :emoji)
-                                  (char-height)
-                                  (sdl2:surface-height surface)))
-                 (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
-            (render-texture (current-renderer) texture x y text-width text-height)
-            (sdl2:destroy-texture texture)
-            (if (eq type :latin) 1 2))))
+        (if (eq type :icon)
+            (render-icon character x y :color color)
+            (cffi:with-foreign-string (c-string (string character))
+              (let* ((x (* x (char-width)))
+                     (y (* y (char-height)))
+                     (surface (sdl2-ttf:render-utf8-blended
+                               (get-display-font *display*
+                                                 :type type
+                                                 :bold bold
+                                                 :character character)
+                               c-string
+                               (lem:color-red color)
+                               (lem:color-green color)
+                               (lem:color-blue color)
+                               0))
+                     (text-width (if (fix-size-p type character)
+                                     (* 2 (char-width))
+                                     (sdl2:surface-width surface)))
+                     (text-height (if (fix-size-p type character)
+                                      (char-height)
+                                      (sdl2:surface-height surface)))
+                     (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
+                (render-texture (current-renderer) texture x y text-width text-height)
+                (sdl2:destroy-texture texture)
+                (if (eq type :latin) 1 2)))))
     (sdl2-ttf::sdl-ttf-error ()
       (log:error "invalid character" character)
       1)))
@@ -240,7 +307,13 @@
                                                   0))
            (height (sdl2:surface-height surface))
            (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
-      (render-texture (current-renderer) texture x y (* (display-char-width *display*) (length string)) height)
+      (render-texture (current-renderer)
+                      texture
+                      x
+                      y
+                      (* (display-char-width *display*)
+                         (length string))
+                      height)
       (sdl2:destroy-texture texture)
       (length string))))
 
@@ -348,6 +421,7 @@
       (setf (display-font-config *display*) font-config)
       (setf (display-font *display*) font))
     (save-font-size font-config)
+    (clear-font-cache)
     (lem:send-event :resize)))
 
 (defun create-view-texture (width height)
@@ -566,6 +640,12 @@
      (on-mouse-wheel x y which direction))
     (:windowevent (:event event)
      (on-windowevent event))))
+
+(defun init-application-icon (window)
+  (let ((image (sdl2-image:load-image
+                (asdf:system-relative-pathname :lem-sdl2 "resources/icon.png"))))
+    (sdl2-ffi.functions:sdl-set-window-icon window image)
+    (sdl2:free-surface image)))
 
 (defun create-display (function)
   (sdl2:with-init (:video)

@@ -68,6 +68,7 @@
 (define-key *lisp-mode-keymap* "C-c C-b" 'lisp-connection-list)
 (define-key *lisp-mode-keymap* "C-c g" 'lisp-interrupt)
 (define-key *lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
+(define-key *lisp-mode-keymap* ")" 'lisp-insert-closed-paren)
 
 (defmethod convert-modeline-element ((element (eql 'lisp-mode)) window)
   (format nil "  ~A~A" (buffer-package (window-buffer window) "CL-USER")
@@ -702,6 +703,17 @@
     ((prompt-for-symbol-name "System: " (buffer-package (current-buffer))))
   (check-connection)
   (eval-with-transcript `(,(uiop:find-symbol* :quickload :quicklisp) ,(string system-name))))
+
+(define-command lisp-insert-closed-paren (n) ("p")
+  (if (or (syntax-escape-char-p (character-at (current-point) -1))
+          (in-string-or-comment-p (current-point)))
+      (insert-character (current-point) #\))
+      (loop :repeat n
+            :do (with-point ((limit (current-point))
+                             (point (current-point)))
+                  (lisp-beginning-of-defun limit 1)
+                  (if (scan-lists point -1 1 t limit)
+                      (insert-character (current-point) #\)))))))
 
 (defun make-completions-form-string (string package-name &key (fuzzy t))
   (format nil "(~A ~S ~S)"

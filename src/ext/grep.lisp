@@ -7,11 +7,20 @@
 (in-package :lem/grep)
 
 (defun run-grep (string directory)
-  (with-output-to-string (output)
-    (uiop:run-program string
-                      :directory directory
-                      :output output
-                      :error-output output)))
+  (multiple-value-bind (output error-output status-code)
+      (uiop:run-program string
+                        :directory directory
+                        :output :string
+                        :error-output :string
+                        :ignore-error-status t)
+    (cond ((eql status-code 0)
+           output)
+          ((eql status-code 1)
+           "")
+          (t
+           (editor-error "~A"
+                         (string-right-trim '(#\newline #\space)
+                                            error-output))))))
 
 (defun parse-grep-result (text)
   (let* ((text (string-right-trim '(#\newline) text))

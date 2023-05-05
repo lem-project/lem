@@ -697,7 +697,9 @@
                                                         (sdl2:push-quit-event)))))
                                        (declare (ignore editor-thread))
                                        nil)))))))
-    (bt:join-thread thread)))
+    (bt:join-thread thread)
+    #+darwin
+    (cffi:foreign-funcall "_exit")))
 
 (defmethod lem-if:get-background-color ((implementation sdl2))
   (with-debug ("lem-if:get-background-color")

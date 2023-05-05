@@ -114,7 +114,7 @@ See https://github.com/lem-project/lem/wiki/Lisp-Mode
 ## How to hack on lem itself
 See https://github.com/lem-project/lem/wiki/How-to-hack-on-lem-itself
 
-If you have a questions, join [this Gitter chat](https://gitter.im/lem-developers/community).
+If you have a questions, join [the Discord](https://discord.gg/NHzqbw4zVR).
 
 ## Contributors
 

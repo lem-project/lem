@@ -336,9 +336,21 @@
         :do (ok (equal (control-char char) control-char))))
 
 (deftest wide-char-p
-  (ok (loop :for code :from 0 :below 256
-            :for char := (code-char code)
-            :always (not (wide-char-p char))))
+  (let ((alphabet-or-numbers
+          (loop :for code :from 0 :below 128
+                :for char := (code-char code)
+                :when (alphanumericp char)
+                :collect char)))
+    (ok (loop :for char :in alphabet-or-numbers
+              :always (not (wide-char-p char)))))
+  (let ((control-chars
+          (loop :for code :from 0 :to 127
+                :for char := (code-char code)
+                :unless (or (graphic-char-p char)
+                            (member char '(#\newline)))
+                :collect char)))
+    (ok (loop :for char :in control-chars
+              :always (wide-char-p char))))
   (ok (loop :for (start end) :in +eastasian-full-pairs+
             :always (loop :for code :from start :to end
                           :always (wide-char-p (code-char code)))))

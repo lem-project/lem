@@ -49,7 +49,7 @@
   (or (char= char #\▼)
       (icon-code-p (char-code char))
       (eastasian-code-p (char-code char))
-      (char<= #.(code-char 0) char #.(code-char 26))))
+      (control-char char)))
 
 (defun char-width (char width &key (tab-size +default-tab-size+))
   (declare (character char) (fixnum width))

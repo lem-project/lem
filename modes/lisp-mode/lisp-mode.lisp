@@ -709,10 +709,8 @@
         :do (if (or (syntax-escape-char-p (character-at (current-point) -1))
                     (in-string-or-comment-p (current-point)))
                 (insert-character (current-point) #\))
-                (with-point ((limit (current-point))
-                             (point (current-point)))
-                  (lisp-beginning-of-defun limit 1)
-                  (if (scan-lists point -1 1 t limit)
+                (with-point ((point (current-point)))
+                  (if (scan-lists point -1 1 t)
                       (insert-character (current-point) #\))
                       (editor-error "No matching ')' (can be inserted with \"C-q )\")"))))))
 

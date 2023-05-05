@@ -95,4 +95,5 @@
             (peek-killring-item killring 0)
           (declare (ignore options))
           ;; TODO: consider options
-          (write-line string out))))))
+          (when string
+            (write-line string out)))))))

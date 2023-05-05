@@ -146,10 +146,12 @@
     (insert-string point " ")))
 
 (defun completion-end ()
-  (completion-mode nil)
-  (alexandria:when-let (popup-menu (context-popup-menu *completion-context*))
-    (popup-menu-quit popup-menu))
-  (setf (context-popup-menu *completion-context*) nil))
+  (when *completion-context*
+    (completion-mode nil)
+    (alexandria:when-let (popup-menu (context-popup-menu *completion-context*))
+      (popup-menu-quit popup-menu))
+    (setf (context-popup-menu *completion-context*) nil)
+    (setf *completion-context* nil)))
 
 (defun call-focus-action ()
   (alexandria:when-let* ((menu (context-popup-menu *completion-context*))

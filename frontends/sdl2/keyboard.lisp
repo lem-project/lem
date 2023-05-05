@@ -191,7 +191,7 @@
     (#\. . #\>)
     (#\/ . #\?)))
 
-(defparameter *shift-layout* *jis-shift-layout*)
+(defparameter *shift-layout* *us-shift-layout*)
 
 (defun set-keyboard-layout (type)
   (check-type type (member :jis :us))

@@ -121,4 +121,6 @@
 
 (define-condition clear-cursor-when-aborted (editor-abort-handler) ())
 (defmethod handle-signal ((condition clear-cursor-when-aborted))
-  (clear-cursors (current-buffer)))
+  (let ((string (merge-cursor-killrings (current-buffer))))
+    (clear-cursors (current-buffer))
+    (copy-to-clipboard-with-killring string)))

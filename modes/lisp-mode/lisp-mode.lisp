@@ -705,15 +705,16 @@
   (eval-with-transcript `(,(uiop:find-symbol* :quickload :quicklisp) ,(string system-name))))
 
 (define-command lisp-insert-closed-paren (n) ("p")
-  (if (or (syntax-escape-char-p (character-at (current-point) -1))
-          (in-string-or-comment-p (current-point)))
-      (insert-character (current-point) #\))
-      (loop :repeat n
-            :do (with-point ((limit (current-point))
+  (loop :repeat n
+        :do (if (or (syntax-escape-char-p (character-at (current-point) -1))
+                    (in-string-or-comment-p (current-point)))
+                (insert-character (current-point) #\))
+                (with-point ((limit (current-point))
                              (point (current-point)))
                   (lisp-beginning-of-defun limit 1)
                   (if (scan-lists point -1 1 t limit)
-                      (insert-character (current-point) #\)))))))
+                      (insert-character (current-point) #\))
+                      (editor-error "No matching ')' (can be inserted with \"C-q )\")"))))))
 
 (defun make-completions-form-string (string package-name &key (fuzzy t))
   (format nil "(~A ~S ~S)"

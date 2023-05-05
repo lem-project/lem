@@ -1,6 +1,7 @@
 (defpackage :lem-sdl2/keyboard
   (:use :cl)
-  (:export :keysym-to-key-event
+  (:export :set-keyboard-layout
+           :keysym-to-key-event
            :handle-textediting
            :handle-text-input
            :handle-key-down
@@ -188,13 +189,22 @@
     (#\] . #\})
     (#\, . #\<)
     (#\. . #\>)
-    (#\/ . #\?)
-    ))
+    (#\/ . #\?)))
+
+(defparameter *shift-layout* *jis-shift-layout*)
+
+(defun set-keyboard-layout (type)
+  (check-type type (member :jis :us))
+  (ecase type
+    (:us
+     (setf *shift-layout* *us-shift-layout*))
+    (:jis
+     (setf *shift-layout* *jis-shift-layout*))))
 
 (defun shift-char (char)
   (if (alpha-char-p char)
       (values (char-upcase char) t)
-      (let ((elt (assoc char *us-shift-layout*)))
+      (let ((elt (assoc char *shift-layout*)))
         (if elt
             (values (cdr elt) t)
             (values char nil)))))

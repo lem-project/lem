@@ -4,7 +4,8 @@
         :lem-sdl2/font
         :lem-sdl2/icon
         :lem-sdl2/platform)
-  (:export :change-font))
+  (:export :change-font
+           :set-keyboard-layout))
 (in-package :lem-sdl2)
 
 (defconstant +display-width+ 100)

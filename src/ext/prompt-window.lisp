@@ -311,6 +311,7 @@
                       (with-current-syntax syntax-table
                         (funcall body-function))
                       (funcall body-function))))
+            (lem/completion-mode:completion-end)
             (delete-prompt prompt-window)
             (run-hooks *prompt-deactivate-hook*))
         (execute-condition (e)

@@ -109,12 +109,12 @@
       (lem:send-abort-event (lem::find-editor-thread) nil)
       (lem:send-event key)))
 
-;; linux
+;; linux or windows
 (defun modifier-is-accept-text-input-p (modifier)
   (or (not (modifier-ctrl modifier))
       (modifier-shift modifier)))
 
-(defmethod handle-text-input ((platform lem-sdl2/platform:linux) text)
+(defmethod handle-text-input ((platform lem-sdl2/platform:platform) text)
   (when (modifier-is-accept-text-input-p *modifier*)
     (loop :for c :across text
           :do (multiple-value-bind (sym text-input-p) (convert-to-sym (char-code c))
@@ -125,7 +125,7 @@
                   (when text-input-p
                     (send-key-event key)))))))
 
-(defmethod handle-key-down ((platform lem-sdl2/platform:linux) key-event)
+(defmethod handle-key-down ((platform lem-sdl2/platform:platform) key-event)
   (let ((modifier (key-event-modifier key-event))
         (code (key-event-code key-event)))
     (update-modifier *modifier* modifier)
@@ -140,7 +140,7 @@
                              :sym sym)))
           (send-key-event key))))))
 
-(defmethod handle-key-up ((platform lem-sdl2/platform:linux) key-event)
+(defmethod handle-key-up ((platform lem-sdl2/platform:platform) key-event)
   (update-modifier *modifier* (key-event-modifier key-event)))
 
 ;;

@@ -50,6 +50,8 @@
                   t)))))
 
 (defun make-key (&key ctrl meta shift sym)
+  (when (equal sym (string #\yen_sign))
+    (setf sym "\\"))
   (cond ((and ctrl (equal sym "i"))
          (lem:make-key :ctrl nil
                        :meta meta

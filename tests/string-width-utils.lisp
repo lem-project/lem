@@ -379,8 +379,11 @@
     (dotimes (code 127)
       (let ((char (code-char code)))
         (unless (or (graphic-char-p char)
+                    (char= char #\newline)
                     (char= char #\tab))
-          (ok (eql 2 (char-width (code-char code) 0))))))))
+          (ok (eql 2 (char-width (code-char code) 0)))))))
+  (testing "newline"
+    (ok (eql 0 (char-width #\newline 0)))))
 
 (deftest string-width
   (ok (eql 1 (string-width "a")))

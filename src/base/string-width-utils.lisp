@@ -55,6 +55,8 @@
   (declare (character char) (fixnum width))
   (cond ((char= char #\tab)
          (+ (* (floor width tab-size) tab-size) tab-size))
+        ((char= char #\newline)
+         0)
         ((control-char char)
          (loop :for char :across (control-char char)
                :do (setf width (char-width char width :tab-size tab-size)))

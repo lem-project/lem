@@ -704,7 +704,7 @@
   (check-connection)
   (eval-with-transcript `(,(uiop:find-symbol* :quickload :quicklisp) ,(string system-name))))
 
-(define-command lisp-insert-closed-paren (n) ("p")
+(define-command (lisp-insert-closed-paren (:advice-classes editable-advice)) (n) ("p")
   (loop :repeat n
         :do (if (or (syntax-escape-char-p (character-at (current-point) -1))
                     (in-string-or-comment-p (current-point)))

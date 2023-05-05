@@ -90,6 +90,9 @@
 (defmethod display-emoji-font ((display display))
   (font-emoji-font (display-font display)))
 
+(defmethod display-braille-font ((display display))
+  (font-braille-font (display-font display)))
+
 (defmethod display-background-color ((display display))
   (or (lem:parse-color lem-if:*background-color-of-drawing-window*)
       (slot-value display 'background-color)))
@@ -130,12 +133,14 @@
                                       (font-config-size (display-font-config *display*)))))))))
 
 (defmethod get-display-font ((display display) &key type bold character)
-  (check-type type (member :latin :cjk :emoji :icon))
+  (check-type type (member :latin :cjk :braille :emoji :icon))
   (cond ((eq type :icon)
          (or (icon-font character)
              (display-emoji-font display)))
         ((eq type :emoji)
          (display-emoji-font display))
+        ((eq type :braille)
+         (display-braille-font display))
         (bold
          (if (eq type :latin)
              (display-latin-bold-font display)
@@ -215,18 +220,25 @@
 
 (defun cjk-char-code-p (display code)
   (and (typep code '(UNSIGNED-BYTE 16))
-       (sdl2-ffi.functions:ttf-glyph-is-provided (display-cjk-normal-font display) code)))
+       (not (eql 0
+                 (sdl2-ffi.functions:ttf-glyph-is-provided (display-cjk-normal-font display)
+                                                           code)))))
+
+(defun latin-char-code-p (display code)
+  (and (typep code '(UNSIGNED-BYTE 16))
+       (not (eql 0
+                 (sdl2-ffi.functions:ttf-glyph-is-provided (display-latin-font display)
+                                                           code)))))
 
 (defun emoji-char-code-p (display code)
   (and (typep code '(UNSIGNED-BYTE 16))
-       (sdl2-ffi.functions:ttf-glyph-is-provided (display-emoji-font display) code)))
+       (not (eql 0 (sdl2-ffi.functions:ttf-glyph-is-provided (display-emoji-font display) code)))))
+
+(defun braille-char-code-p (code)
+  (<= #x2800 code #x28ff))
 
 (defun icon-char-code-p (code)
   (icon-font-name (code-char code)))
-
-(defun fix-size-p (type character)
-  (declare (ignore character))
-  (eq type :emoji))
 
 (defun render-icon (character x y &key color)
   (cffi:with-foreign-string (c-string (string character))
@@ -263,8 +275,14 @@
                           :latin)
                          ((icon-char-code-p code)
                           :icon)
+                         ((braille-char-code-p code)
+                          :braille)
                          ((cjk-char-code-p *display* code)
                           :cjk)
+                         ((latin-char-code-p *display* code)
+                          :latin)
+                         ((emoji-char-code-p *display* code)
+                          :emoji)
                          (t
                           :emoji))))
         (if (eq type :icon)
@@ -282,16 +300,22 @@
                                (lem:color-green color)
                                (lem:color-blue color)
                                0))
-                     (text-width (if (fix-size-p type character)
-                                     (* 2 (char-width))
-                                     (sdl2:surface-width surface)))
-                     (text-height (if (fix-size-p type character)
-                                      (char-height)
-                                      (sdl2:surface-height surface)))
+                     (text-width (cond ((eq type :emoji)
+                                        (* 2 (char-width)))
+                                       ((eq type :braille)
+                                         (char-width))
+                                       (t
+                                        (sdl2:surface-width surface))))
+                     (text-height (cond ((eq type :emoji)
+                                         (char-height))
+                                        ((eq type :braille)
+                                         (char-height))
+                                        (t
+                                         (sdl2:surface-height surface))))
                      (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
                 (render-texture (current-renderer) texture x y text-width text-height)
                 (sdl2:destroy-texture texture)
-                (if (eq type :latin) 1 2)))))
+                (if (member type '(:latin :braille)) 1 2)))))
     (sdl2-ttf::sdl-ttf-error ()
       (log:error "invalid character" character)
       1)))

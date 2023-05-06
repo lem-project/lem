@@ -800,22 +800,20 @@
     (with-renderer ()
       (render-border-using-view view))))
 
+(defun render-view-texture-to-display (view)
+  (sdl2:with-rects ((dest-rect (* (view-x view) (char-width))
+                               (* (view-y view) (char-height))
+                               (* (view-width view) (char-width))
+                               (* (view-height view) (char-height))))
+    (sdl2:render-copy (current-renderer)
+                      (view-texture view)
+                      :dest-rect dest-rect)))
+
 (defmethod lem-if:redraw-view-after ((implementation sdl2) view)
   (with-debug ("lem-if:redraw-view-after" view)
     (with-renderer ()
       (sdl2:set-render-target (current-renderer) (display-texture *display*))
-      (sdl2:with-rects ((dest-rect (* (view-x view) (char-width))
-                                   (* (view-y view) (char-height))
-                                   (* (view-width view) (char-width))
-                                   (* (view-height view) (char-height)))
-                        (src-rect 0
-                                  0
-                                  (* (view-width view) (char-width))
-                                  (* (view-height view) (char-height))))
-        (sdl2:render-copy (current-renderer)
-                          (view-texture view)
-                          :dest-rect dest-rect
-                          :source-rect src-rect)))))
+      (render-view-texture-to-display view))))
 
 (defmethod lem-if::will-update-display ((implementation sdl2))
   (with-debug ("will-update-display")

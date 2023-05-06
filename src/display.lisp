@@ -487,7 +487,9 @@
               ((< point-column (screen-horizontal-scroll-start screen))
                (setf (screen-horizontal-scroll-start screen) point-column)))))))
 
-(defun redraw-display-window (window force)
+(defgeneric redraw-buffer (buffer window force))
+
+(defmethod redraw-buffer ((buffer text-buffer) window force)
   (with-display-error ()
     (let ((lem-if:*background-color-of-drawing-window*
             (cond ((typep window 'floating-window)
@@ -501,7 +503,6 @@
                    *inactive-window-background-color*)
                   (t nil)))
           (focus-window-p (eq window (current-window)))
-          (buffer (window-buffer window))
           (screen (window-screen window)))
       (lem-if:redraw-view-before (implementation) (screen-view screen))
       (let ((scroll-n (when focus-window-p
@@ -545,3 +546,6 @@
             (screen-redraw-modeline window (or (screen-modified-p screen) force)))
           (lem-if:redraw-view-after (implementation) (screen-view screen))
           (setf (screen-modified-p screen) nil))))))
+
+(defun redraw-display-window (window force)
+  (redraw-buffer (window-buffer window) window force))

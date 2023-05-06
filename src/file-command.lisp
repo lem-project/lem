@@ -44,10 +44,18 @@
 
 (defmethod execute-find-file (mode pathname)
   (directory-for-file-or-lose pathname)
-  (multiple-value-bind (buffer new-file-p)
-      (find-file-buffer pathname)
-    (switch-to-buffer buffer t nil)
-    (values buffer new-file-p)))
+  (handler-case
+      (multiple-value-bind (buffer new-file-p)
+          (find-file-buffer pathname)
+        (switch-to-buffer buffer t nil)
+        (values buffer new-file-p))
+    (encoding-read-error ()
+      #+linux
+      (uiop:run-program (list "xdg-open" (namestring pathname)))
+      #+mac
+      (uiop:run-program (list "open" (namestring pathname)))
+      #+windows
+      (uiop:run-program (list "explorer" (namestring pathname))))))
 
 (define-command read-file (filename) ("FRead File: ")
   (when (pathnamep filename)

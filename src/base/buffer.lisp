@@ -12,14 +12,9 @@
     :type boolean)
    (variables
     :initform (make-hash-table :test 'equal)
-    :accessor buffer-variables))
-  (:documentation
-   "`buffer`はバッファ名、ファイル名、テキスト、テキストを指す位置等が入った、
-文書を管理するオブジェクトです。
-複数の`buffer`はリストで管理されています。"))
-
-(defclass text-buffer (buffer)
-  ((%filename
+    :accessor buffer-variables)
+   ;; only used in text buffer
+   (%filename
     :initform nil
     :accessor buffer-%filename)
    (%directory
@@ -44,6 +39,7 @@
     :accessor buffer-syntax-table
     :type syntax-table)
    (major-mode
+    :initform 'fundamental-mode
     :initarg :major-mode
     :accessor buffer-major-mode)
    (minor-modes
@@ -87,6 +83,9 @@
    (last-write-date
     :initform nil
     :accessor buffer-last-write-date)))
+
+(defclass text-buffer (buffer)
+  ())
 
 (defmethod buffer-mark ((buffer buffer))
   (mark-point (buffer-mark-object buffer)))
@@ -158,7 +157,6 @@
                                :read-only-p read-only-p
                                :%enable-undo-p enable-undo-p
                                :temporary temporary
-                               :major-mode 'fundamental-mode
                                :syntax-table syntax-table)))
     (let* ((temp-point (make-point buffer 1 (make-empty-line) 0 :kind :temporary))
            (start-point (make-buffer-start-point temp-point))

@@ -12,7 +12,9 @@
            :draw-point
            :draw-points
            :draw-string
-           :draw-image))
+           :load-image
+           :draw-image
+           :delete-drawable))
 (in-package :lem-sdl2)
 
 (pushnew :lem-sdl2 *features*)
@@ -1051,6 +1053,33 @@
           (sdl2:render-copy (current-renderer) texture :dest-rect dest-rect))
         (sdl2:destroy-texture texture)))))
 
-(defun draw-image (&rest args)
-  (declare (ignore args))
-  (error "unimplemented"))
+(defclass image ()
+  ((texture :initarg :texture
+            :reader image-texture
+            :writer set-image-texture)
+   (width :initarg :width
+          :reader image-width)
+   (height :initarg :height
+           :reader image-height)))
+
+(defun load-image (pathname)
+  (let ((image (sdl2-image:load-image pathname)))
+    (make-instance 'image
+                   :width (sdl2:surface-width image)
+                   :height (sdl2:surface-height image)
+                   :texture (sdl2:create-texture-from-surface (current-renderer)
+                                                              image))))
+
+(defun delete-image (image)
+  (sdl2:destroy-texture (image-texture image))
+  (set-image-texture nil image))
+
+(defun draw-image (target image x y)
+  (with-drawable (target)
+    (sdl2:with-rects ((dest-rect x
+                                 y
+                                 (image-width image)
+                                 (image-height image)))
+      (sdl2:render-copy (current-renderer)
+                        (image-texture image)
+                        :dest-rect dest-rect))))

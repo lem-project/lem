@@ -170,19 +170,16 @@
       (unless (uiop:pathname-equal current-dir (user-homedir-pathname))
         (maybe-load (merge-pathnames ".lemrc" current-dir))))))
 
-(let ((once nil))
-  (defun init (args)
-    (unless once
-      (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
-                     *original-home*)
-        (init-quicklisp (merge-pathnames "quicklisp/" (lem-home))))
-      (setf once t)
-      (uiop:symbol-call :lem :load-site-init)
-      (run-hooks *before-init-hook*)
-      (unless (command-line-arguments-no-init-file args)
-        (load-init-file))
-      (run-hooks *after-init-hook*))
-    (apply-args args)))
+(defun init (args)
+  (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
+                 *original-home*)
+    (init-quicklisp (merge-pathnames "quicklisp/" (lem-home))))
+  (uiop:symbol-call :lem :load-site-init)
+  (run-hooks *before-init-hook*)
+  (unless (command-line-arguments-no-init-file args)
+    (load-init-file))
+  (run-hooks *after-init-hook*)
+  (apply-args args))
 
 (defun run-editor-thread (initialize args finalize)
   (bt:make-thread

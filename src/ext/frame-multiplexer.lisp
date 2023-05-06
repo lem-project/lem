@@ -307,7 +307,11 @@
 (defun enable-frame-multiplexer ()
   (setf (variable-value 'frame-multiplexer :global) t))
 
+(defun disable-frame-multiplexer ()
+  (setf (variable-value 'frame-multiplexer :global) nil))
+
 (add-hook *after-init-hook* 'enable-frame-multiplexer)
+(add-hook *exit-editor-hook* 'disable-frame-multiplexer)
 
 (define-command frame-multiplexer-test () ()
   (labels ((vf ()

@@ -71,8 +71,7 @@
                   (process-file buffer))))))
 
 (defun teardown ()
-  (teardown-frames)
-  )
+  (teardown-frames))
 
 (defstruct command-line-arguments
   args

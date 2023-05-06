@@ -1037,7 +1037,7 @@
                                num-points))))
 
 (defun draw-string (target string x y
-                    &key (font (display-font *display*))
+                    &key (font (font-latin-normal-font (display-font *display*)))
                          color)
   (let* ((surface (sdl2-ttf:render-utf8-blended font
                                                 string

@@ -445,7 +445,7 @@
                    (lem-if:clear-eob (implementation) (screen-view screen) 0 y)
                    (return)))))))
 
-(defun screen-redraw-modeline (window force)
+(defun redraw-modeline (window force)
   (when (window-use-modeline-p window)
     (let* ((screen (window-screen window))
            (view (screen-view screen))
@@ -543,7 +543,7 @@
           (setf (screen-last-buffer-modified-tick screen)
                 (buffer-modified-tick buffer))
           (when (window-use-modeline-p window)
-            (screen-redraw-modeline window (or (screen-modified-p screen) force)))
+            (redraw-modeline window (or (screen-modified-p screen) force)))
           (lem-if:redraw-view-after (implementation) (screen-view screen))
           (setf (screen-modified-p screen) nil))))))
 

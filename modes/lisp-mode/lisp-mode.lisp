@@ -69,6 +69,7 @@
 (define-key *lisp-mode-keymap* "C-c g" 'lisp-interrupt)
 (define-key *lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
 (define-key *lisp-mode-keymap* ")" 'lisp-insert-closed-paren)
+(define-key *lisp-mode-keymap* "Return" 'lisp-insert-newline-and-indent)
 
 (defmethod convert-modeline-element ((element (eql 'lisp-mode)) window)
   (format nil "  ~A~A" (buffer-package (window-buffer window) "CL-USER")
@@ -713,6 +714,10 @@
                   (if (scan-lists point -1 1 t)
                       (insert-character (current-point) #\))
                       (editor-error "No matching ')' (can be inserted with \"C-q )\")"))))))
+
+(define-command (lisp-insert-newline-and-indent (:advice-classes editable-advice)) (n) ("p")
+  (insert-character (current-point) #\newline n)
+  (indent-line (current-point)))
 
 (defun make-completions-form-string (string package-name &key (fuzzy t))
   (format nil "(~A ~S ~S)"

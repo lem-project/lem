@@ -1084,3 +1084,24 @@
       (sdl2:render-copy (current-renderer)
                         (image-texture image)
                         :dest-rect dest-rect))))
+
+;;;
+(defclass sdl2-find-file-executor (lem::find-file-executor) ())
+
+(defmethod lem:execute-find-file ((executor sdl2-find-file-executor) mode pathname)
+  (cond ((member (pathname-type pathname)
+                 '("png" "jpg" "jpeg" "bmp")
+                 :test #'equal)
+         (open-image-buffer pathname))
+        (t
+         (call-next-method))))
+
+(setf lem::*find-file-executor* (make-instance 'sdl2-find-file-executor))
+
+;;;
+(defun open-image-buffer (pathname)
+  (let ((image (load-image pathname))
+        (buffer (lem:make-buffer (file-namestring pathname))))
+    (draw-image buffer image 0 0)
+    (setf (lem:buffer-read-only-p buffer) t)
+    (lem:switch-to-buffer buffer)))

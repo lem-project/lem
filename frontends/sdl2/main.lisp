@@ -13,6 +13,7 @@
            :draw-points
            :draw-string
            :load-image
+           :delete-image
            :draw-image
            :delete-drawable))
 (in-package :lem-sdl2)

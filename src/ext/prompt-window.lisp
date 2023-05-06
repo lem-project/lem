@@ -49,7 +49,7 @@
   ((start-charpos
     :accessor prompt-window-start-charpos)))
 
-(defclass prompt-buffer (buffer)
+(defclass prompt-buffer (text-buffer)
   ((prompt-string
     :initarg :prompt-string
     :reader prompt-buffer-prompt-string)

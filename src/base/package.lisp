@@ -78,6 +78,7 @@
    :current-buffer
    :make-buffer
    :buffer
+   :text-buffer
    :bufferp
    :buffer-start-point
    :buffer-end-point

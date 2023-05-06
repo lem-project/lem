@@ -3,6 +3,7 @@
   (:export :timer-manager
            :send-timer-notification
            :with-timer-manager
+           :running-timer
            :timer-error
            :timer
            :timer-name
@@ -17,6 +18,9 @@
   #+sbcl
   (:lock t))
 (in-package :lem/common/timer)
+
+(defvar *running-timer*)
+(defun running-timer () *running-timer*)
 
 (defvar *timer-manager*)
 
@@ -91,13 +95,14 @@
                                     (ensure-function handle-function))))
 
 (defun call-timer-function (timer)
-  (handler-case
-      (if (timer-handle-function timer)
-          (handler-bind ((error (timer-handle-function timer)))
+  (let ((*running-timer* timer))
+    (handler-case
+        (if (timer-handle-function timer)
+            (handler-bind ((error (timer-handle-function timer)))
+              (funcall (timer-function timer)))
             (funcall (timer-function timer)))
-          (funcall (timer-function timer)))
-    (error (condition)
-      (error 'timer-error :timer timer :condition condition))))
+      (error (condition)
+        (error 'timer-error :timer timer :condition condition)))))
 
 
 ;;; timer

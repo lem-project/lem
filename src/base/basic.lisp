@@ -187,7 +187,7 @@
 
 (defun next-single-property-change (point prop &optional limit-point)
   "`point`からテキストプロパティ`prop`の値が異なる位置まで後の方向に移動し、
-移動後の`point`を返します。  
+移動後の`point`を返します。
 バッファの最後まで走査が止まらないか、`limit-point`を越えると走査を中断しNILを返します。"
   (let ((first-value (text-property-at point prop)))
     (with-point ((curr point))
@@ -201,7 +201,7 @@
 
 (defun previous-single-property-change (point prop &optional limit-point)
   "`point`からテキストプロパティ`prop`の値が異なる位置まで前の方向に移動し、
-移動後の`point`を返します。  
+移動後の`point`を返します。
 バッファの最初の位置まで走査が止まらないか、`limit-point`を越えると走査を中断しNILを返します。"
   (let ((first-value (text-property-at point prop -1)))
     (with-point ((curr point))
@@ -219,7 +219,7 @@
   t)
 
 (defun insert-string (point string &rest plist)
-  "`point`に文字列`string`を挿入します。  
+  "`point`に文字列`string`を挿入します。
 `plist`を指定すると`string`を挿入した範囲にテキストプロパティを設定します。"
   (if (null plist)
       (insert-string/point point string)
@@ -227,12 +227,16 @@
         (insert-string/point point string)
         (let ((end-point (character-offset (copy-point start-point :temporary)
                                            (length string))))
+          (unless end-point
+            ;; fallback
+            (log:error "end-point is nil")
+            (setf end-point (line-end (copy-point start-point :temporary))))
           (loop :for (k v) :on plist :by #'cddr
                 :do (put-text-property start-point end-point k v)))))
   t)
 
 (defun delete-character (point &optional (n 1))
-  "`point`から`n`個文字を削除し、削除した文字列を返します。 
+  "`point`から`n`個文字を削除し、削除した文字列を返します。
 `n`個の文字を削除する前にバッファの末尾に達した場合はNILを返します。"
   (when (minusp n)
     (unless (character-offset point n)
@@ -464,15 +468,15 @@
               (return count))))
 
 (defun skip-chars-forward (point test)
-  "`point`からその位置の文字を`test`で評価して非NILの間、後の方向に移動します。  
-`test`が文字のリストならその位置の文字が`test`のリスト内に含まれるか  
+  "`point`からその位置の文字を`test`で評価して非NILの間、後の方向に移動します。
+`test`が文字のリストならその位置の文字が`test`のリスト内に含まれるか
 `test`が関数ならその位置の文字を引数として一つ取り、返り値が非NILであるか
 "
   (skip-chars-internal point test t))
 
 (defun skip-chars-backward (point test)
-  "`point`からその位置の前の文字を`test`で評価して非NILの間、前の方向に移動します。  
-`test`が文字のリストならその位置の前の文字が`test`のリスト内に含まれるか  
+  "`point`からその位置の前の文字を`test`で評価して非NILの間、前の方向に移動します。
+`test`が文字のリストならその位置の前の文字が`test`のリスト内に含まれるか
 `test`が関数ならその位置の前の文字を引数として一つ取り、返り値が非NILであるか
 "
   (skip-chars-internal point test nil))

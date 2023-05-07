@@ -84,7 +84,7 @@
   (let* ((point (get-x-y-position-point window x y))
          (callback (text-property-at point :click-callback)))
     (cond ((or callback (= clicks 1))
-           (cond ((and callback (eq window (current-window)))
+           (cond (callback
                   (funcall callback window point))
                  (t
                   (move-current-point-to-x-y-position window x y)
@@ -185,7 +185,7 @@
              (focus-window-position (current-frame)
                                     (mouse-event-x mouse-event)
                                     (mouse-event-y mouse-event))
-           (when (and window (eq window (current-window)))
+           (when window
              (case (mouse-event-button mouse-event)
                ((nil)
                 (let ((point (get-x-y-position-point window x y)))

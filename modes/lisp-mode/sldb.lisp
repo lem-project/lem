@@ -399,7 +399,7 @@
 (define-command sldb-pprint-eval-in-frame (frame string package)
     ((:splice (eval-form-for-frame "Eval in frame (~A)> ")))
   (lisp-eval-async `(swank:pprint-eval-string-in-frame ,string ,frame ,package)
-                   *write-string-function*))
+                   #'write-string-to-repl))
 
 (define-command sldb-inspect-in-frame (string)
     ((prompt-for-sexp "Inspect in frame (evaluated): "))

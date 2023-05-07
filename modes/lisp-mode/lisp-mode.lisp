@@ -12,7 +12,6 @@
 
 (defparameter *default-port* 4005)
 (defparameter *localhost* "127.0.0.1")
-(defparameter *write-string-function* 'write-string-to-repl)
 
 (defvar *connection-list* '())
 (defvar *connection* nil)
@@ -942,7 +941,7 @@
   (alexandria:destructuring-case message
     ((:write-string string &optional target thread)
      (declare (ignore target))
-     (funcall *write-string-function* string)
+     (write-string-to-repl string)
      (when thread
        (send-message *connection* `(:write-done ,thread))))
     ((:read-string thread tag)

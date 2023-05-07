@@ -1075,15 +1075,27 @@
   (sdl2:destroy-texture (image-texture image))
   (set-image-texture nil image))
 
-(defun draw-image (target image x y)
+(defun draw-image (target image
+                   &key (x 0)
+                        (y 0)
+                        (width (image-width image))
+                        (height (image-height image))
+                        clip-rect)
   (with-drawable (target)
     (sdl2:with-rects ((dest-rect x
                                  y
-                                 (image-width image)
-                                 (image-height image)))
-      (sdl2:render-copy (current-renderer)
-                        (image-texture image)
-                        :dest-rect dest-rect))))
+                                 width height))
+      (let ((source-rect
+              (when clip-rect
+                (destructuring-bind (x y w h) clip-rect
+                  (sdl2:make-rect x y w h)))))
+        (unwind-protect
+             (sdl2:render-copy (current-renderer)
+                               (image-texture image)
+                               :source-rect source-rect
+                               :dest-rect dest-rect)
+          (when source-rect
+            (sdl2:free-rect source-rect)))))))
 
 ;;;
 (defclass sdl2-find-file-executor (lem::find-file-executor) ())

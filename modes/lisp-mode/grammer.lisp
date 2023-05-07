@@ -69,7 +69,7 @@
      (:greedy-repetition 1 nil :whitespace-char-class)
      :whitespace-char-class :end-anchor #\( #\))))
 
-(defun make-tmlanguage-lisp (&key (enable-feature-support t))
+(defun make-tmlanguage-lisp ()
   (let ((patterns
           (apply #'make-tm-patterns
                  (remove-if #'null
@@ -201,11 +201,10 @@
                                 "&" symbol
                                 symbol-boundary-end)
                               :name 'syntax-constant-attribute)
-                             (when enable-feature-support
-                               (make-tm-match
-                                "#[+-]"
-                                :name 'syntax-comment-attribute
-                                :move-action (lambda (cur-point)
-                                               (ignore-errors
-                                                 (skip-feature cur-point))))))))))
+                             (make-tm-match
+                              "#[+-]"
+                              :name 'syntax-comment-attribute
+                              :move-action (lambda (cur-point)
+                                             (ignore-errors
+                                               (skip-feature cur-point)))))))))
     (make-tmlanguage :patterns patterns)))

@@ -12,7 +12,6 @@
 
 (defparameter *default-port* 4005)
 (defparameter *localhost* "127.0.0.1")
-(defparameter *enable-feature-highlight* t)
 (defparameter *write-string-function* 'write-string-to-repl)
 
 (defvar *connection-list* '())
@@ -43,7 +42,7 @@
   (setf (variable-value 'idle-function) 'lisp-idle-function)
   (setf (variable-value 'root-uri-patterns) '(".asd"))
   (set-syntax-parser lem-lisp-syntax:*syntax-table*
-                     (make-tmlanguage-lisp :enable-feature-support *enable-feature-highlight*))
+                     (make-tmlanguage-lisp))
   (unless (connected-p) (self-connect)))
 
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)

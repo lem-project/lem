@@ -482,13 +482,6 @@
                          (when arglist
                            (display-message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))))))
 
-(defun check-parens ()
-  (with-point ((point (current-point)))
-    (buffer-start point)
-    (loop :while (form-offset point 1))
-    (skip-space-and-comment-forward point)
-    (end-buffer-p point)))
-
 (defun compilation-finished (result)
   (setf *last-compilation-result* result)
   (destructuring-bind (notes successp duration loadp fastfile)

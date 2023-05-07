@@ -182,9 +182,6 @@
     (t
      (listener-eval string))))
 
-(defparameter *record-history-of-repl* nil)
-(defvar *repl-history* '())
-
 (defun listener-eval (string)
   (ensure-repl-buffer-exist)
   (request-listener-eval
@@ -192,14 +189,7 @@
    string
    (lambda (value)
      (declare (ignore value))
-     (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist))
-     (when *record-history-of-repl*
-       (start-timer (make-idle-timer
-                     (lambda ()
-                       (when (position-if (complement #'syntax-space-char-p) string)
-                         (push (cons string (lisp-eval-from-string "CL:/" "CL"))
-                               *repl-history*))))
-                    0)))
+     (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))
    (repl-buffer-width)))
 
 (defun repl-read-string (thread tag)

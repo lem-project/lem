@@ -96,18 +96,6 @@
         (pushnew s symbols)))
     symbols))
 
-#|
-(define-command lisp-add-missing-import-from (symbol-name)
-    ((list (prompt-for-symbol-name "Symbol: " (symbol-string-at-point (current-point)))))
-  (multiple-value-bind (symbol external-p symbol-name package)
-      (swank::parse-symbol symbol-name)
-    (let ((point (current-point)))
-      (multiple-value-bind (point exists)
-          (go-to-defpackage-spec-form point ":import-from")
-        (when point
-          )))))
-|#
-
 
 (defun find-utopian-route (point)
   (when (in-string-p point)

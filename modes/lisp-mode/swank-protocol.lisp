@@ -1,4 +1,4 @@
-(defpackage lem-lisp-mode/swank-protocol
+(defpackage :lem-lisp-mode/swank-protocol
   (:use :cl :lem-lisp-mode/errors)
   (:import-from :trivial-types
                 :association-list

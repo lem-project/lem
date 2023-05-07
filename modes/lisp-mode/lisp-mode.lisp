@@ -88,14 +88,15 @@
 (defun connected-p ()
   (not (null *connection*)))
 
-(defun add-connection (connection)
-  (push connection (connection-list))
+(defun add-and-change-connection (connection)
+  (add-connection connection)
   (change-current-connection connection))
 
-(defun remove-connection (connection)
-  (setf (connection-list) (delete connection (connection-list)))
-  (setf *connection* (car (connection-list)))
-  *connection*)
+(defun remove-and-change-connection (connection)
+  (remove-connection connection)
+  (when (eq connection *connection*)
+    (setf *connection* (first (connection-list))))
+  (values))
 
 (defclass connection-item (lem/multi-column-list:multi-column-list-item)
   ((connection :initarg :connection
@@ -909,7 +910,7 @@
                             (new-connection hostname port))
             (error (c)
               (editor-error "~A" c)))))
-    (add-connection connection)
+    (add-and-change-connection connection)
     (start-thread)
     connection))
 
@@ -930,7 +931,7 @@
     (handler-case (loop :while (message-waiting-p *connection*)
                         :do (dispatch-message (read-message *connection*)))
       (disconnected ()
-        (remove-connection *connection*)))))
+        (remove-and-change-connection *connection*)))))
 
 (defun dispatch-message (message)
   (log-message (prin1-to-string message))
@@ -1250,7 +1251,7 @@
              (kill-buffer buffer))
            (lem-process:delete-process (connection-process connection))
            t)
-    (remove-connection connection)))
+    (remove-and-change-connection connection)))
 
 (define-command slime-quit () ()
   (when (self-connection-p *connection*)
@@ -1353,10 +1354,10 @@
 (progn
   (defun slime-quit-all-for-win32 ()
     "quit slime and remove connection to exit lem normally on windows (incomplete)"
-    (let ((conn-list (copy-list (connection-list))))
+    (let ((conn-list (connection-list)))
       (slime-quit-all)
       (loop :while *connection*
-            :do (remove-connection *connection*))
+            :do (remove-and-change-connection *connection*))
       #+sbcl
       (progn
         (sleep 0.5)

@@ -896,8 +896,7 @@
 
 (defvar *unknown-keywords* nil)
 (defun pull-events ()
-  (when (and (boundp '*connection*)
-             (not (null *connection*)))
+  (when (connected-p)
     (handler-case (loop :while (message-waiting-p *connection*)
                         :do (dispatch-message (read-message *connection*)))
       (disconnected ()

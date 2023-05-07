@@ -13,7 +13,6 @@
 (defparameter *default-port* 4005)
 (defparameter *localhost* "127.0.0.1")
 
-(defvar *connection-list* '())
 (defvar *connection* nil)
 (defvar *event-hooks* '())
 
@@ -90,12 +89,12 @@
   (not (null *connection*)))
 
 (defun add-connection (connection)
-  (push connection *connection-list*)
+  (push connection (connection-list))
   (change-current-connection connection))
 
 (defun remove-connection (connection)
-  (setf *connection-list* (delete connection *connection-list*))
-  (setf *connection* (car *connection-list*))
+  (setf (connection-list) (delete connection (connection-list)))
+  (setf *connection* (car (connection-list)))
   *connection*)
 
 (defclass connection-item (lem/multi-column-list:multi-column-list-item)
@@ -125,7 +124,7 @@
    (make-instance 'connection-menu
                   :items (mapcar (lambda (c)
                                    (make-instance 'connection-item :connection c))
-                                 *connection-list*))))
+                                 (connection-list)))))
 
 (defvar *self-connected-port* nil)
 
@@ -157,7 +156,7 @@
        :self))
 
 (defun self-connection ()
-  (find-if #'self-connection-p *connection-list*))
+  (find-if #'self-connection-p (connection-list)))
 
 (defun check-connection ()
   (unless (connected-p)
@@ -1264,7 +1263,7 @@
 
 (defun slime-quit-all ()
   (flet ((find-connection ()
-           (dolist (c *connection-list*)
+           (dolist (c (connection-list))
              (when (connection-process c)
                (return c)))))
     (loop
@@ -1354,7 +1353,7 @@
 (progn
   (defun slime-quit-all-for-win32 ()
     "quit slime and remove connection to exit lem normally on windows (incomplete)"
-    (let ((conn-list (copy-list *connection-list*)))
+    (let ((conn-list (copy-list (connection-list))))
       (slime-quit-all)
       (loop :while *connection*
             :do (remove-connection *connection*))

@@ -12,6 +12,7 @@
   :serial t
   :components ((:file "errors")
                (:file "swank-protocol")
+               (:file "connections")
                (:file "package")
                (:file "lisp-ui-mode")
                (:file "grammer")

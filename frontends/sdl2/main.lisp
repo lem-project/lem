@@ -6,7 +6,8 @@
         :lem-sdl2/platform)
   (:export :change-font
            :set-keyboard-layout
-           :render)
+           :render
+           :current-renderer)
   (:export :draw-line
            :draw-rectangle
            :draw-point
@@ -733,7 +734,7 @@
                                                       (lambda ())
                                                       ;; finalize
                                                       (lambda (report)
-                                                        (declare (ignore report))
+                                                        (log:info "~A" report)
                                                         (sdl2:push-quit-event)))))
                                        (declare (ignore editor-thread))
                                        nil)))))))
@@ -830,9 +831,15 @@
 (defmethod lem-if:redraw-view-after ((implementation sdl2) view)
   (with-debug ("lem-if:redraw-view-after" view)
     (with-renderer ()
-      (render (view-texture view)
-              (view-window view)
-              (lem:window-buffer (view-window view)))
+      (sdl2:with-rects ((view-rect 0
+                                   0
+                                   (* (view-width view) (char-width))
+                                   (* (1- (view-height view)) (char-height))))
+        (sdl2:render-set-viewport (current-renderer) view-rect)
+        (render (view-texture view)
+                (view-window view)
+                (lem:window-buffer (view-window view)))
+        (sdl2:render-set-viewport (current-renderer) nil))
       (render-view-texture-to-display view))))
 
 (defmethod lem-if::will-update-display ((implementation sdl2))
@@ -1082,9 +1089,7 @@
                         (height (image-height image))
                         clip-rect)
   (with-drawable (target)
-    (sdl2:with-rects ((dest-rect x
-                                 y
-                                 width height))
+    (sdl2:with-rects ((dest-rect x y width height))
       (let ((source-rect
               (when clip-rect
                 (destructuring-bind (x y w h) clip-rect
@@ -1114,6 +1119,6 @@
 (defun open-image-buffer (pathname)
   (let ((image (load-image pathname))
         (buffer (lem:make-buffer (file-namestring pathname))))
-    (draw-image buffer image 0 0)
+    (draw-image buffer image :x 0 :y 0)
     (setf (lem:buffer-read-only-p buffer) t)
     (lem:switch-to-buffer buffer)))

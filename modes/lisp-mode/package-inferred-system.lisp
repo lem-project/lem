@@ -1,4 +1,4 @@
-(defpackage :lem-lisp-mode.package-inferred-system
+(defpackage :lem-lisp-mode/package-inferred-system
   (:use :cl :lem :lem-lisp-mode)
   (:import-from :trivial-types
                 :property-list-p)
@@ -7,7 +7,7 @@
                 :if-let
                 :when-let
                 :lastcar))
-(in-package :lem-lisp-mode.package-inferred-system)
+(in-package :lem-lisp-mode/package-inferred-system)
 
 (defstruct project-root
   asd-file

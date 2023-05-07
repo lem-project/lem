@@ -1,10 +1,11 @@
-(defpackage :lem-lisp-mode.paren-coloring
+(defpackage :lem-lisp-mode/paren-coloring
+  (:nicknames :lem-lisp-mode/paren-coloring) ; for backward compatibility
   (:use :cl :lem)
   (:export :paren-coloring
            :*paren-attribute*
            :*rainbow*
            :toggle-paren-coloring))
-(in-package :lem-lisp-mode.paren-coloring)
+(in-package :lem-lisp-mode/paren-coloring)
 
 (define-editor-variable paren-coloring nil ""
   (lambda (value)

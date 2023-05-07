@@ -5,8 +5,8 @@
         :lem/language-mode
         :lem/button
         :lem/loading-spinner
-        :lem-lisp-mode.errors
-        :lem-lisp-mode.swank-protocol)
+        :lem-lisp-mode/errors
+        :lem-lisp-mode/swank-protocol)
   (:export
    ;; reexport swank-protocol.lisp
    :connection-value)

@@ -1,6 +1,6 @@
-(defpackage :lem-lisp-mode.misc-commands
+(defpackage :lem-lisp-mode/misc-commands
   (:use :cl :lem :lem-lisp-mode))
-(in-package :lem-lisp-mode.misc-commands)
+(in-package :lem-lisp-mode/misc-commands)
 
 (defparameter *defpackage-names*
   '("defpackage"

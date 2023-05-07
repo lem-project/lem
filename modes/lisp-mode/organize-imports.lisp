@@ -1,6 +1,6 @@
-(defpackage :lem-lisp-mode.organize-imports
+(defpackage :lem-lisp-mode/organize-imports
   (:use :cl :lem))
-(in-package :lem-lisp-mode.organize-imports)
+(in-package :lem-lisp-mode/organize-imports)
 
 ;;; remove unused symbols in import-from clauses
 

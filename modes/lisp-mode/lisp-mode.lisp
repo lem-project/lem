@@ -1366,7 +1366,7 @@
       (progn
         (sleep 0.5)
         (dolist (c conn-list)
-          (let* ((s  (lem-lisp-mode.swank-protocol::connection-socket c))
+          (let* ((s  (lem-lisp-mode/swank-protocol::connection-socket c))
                  (fd (sb-bsd-sockets::socket-file-descriptor (usocket:socket s))))
             (ignore-errors
               ;;(usocket:socket-shutdown s :IO)

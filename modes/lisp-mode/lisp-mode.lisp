@@ -17,7 +17,6 @@
 (defvar *connection-list* '())
 (defvar *connection* nil)
 (defvar *event-hooks* '())
-(defvar *last-compilation-result* nil)
 
 (define-major-mode lisp-mode language-mode
     (:name "Lisp"
@@ -482,7 +481,6 @@
                            (display-message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))))))
 
 (defun compilation-finished (result)
-  (setf *last-compilation-result* result)
   (destructuring-bind (notes successp duration loadp fastfile)
       (rest result)
     (show-compile-result notes duration

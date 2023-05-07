@@ -1237,9 +1237,9 @@
              (when (connection-process c)
                (return c)))))
     (loop
-      (let ((*connection* (find-connection)))
-        (unless *connection* (return))
-        (delete-lisp-connection *connection*)))))
+      (let ((connection (find-connection)))
+        (unless connection (return))
+        (delete-lisp-connection connection)))))
 
 (defun sit-for* (second)
   (loop :with end-time := (+ (get-internal-real-time)

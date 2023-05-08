@@ -71,6 +71,7 @@
 (define-key *prompt-mode-keymap* "Tab" 'prompt-completion)
 (define-key *prompt-mode-keymap* "M-p" 'prompt-previous-history)
 (define-key *prompt-mode-keymap* "M-n" 'prompt-next-history)
+(define-key *prompt-mode-keymap* 'delete-active-window 'prompt-quit)
 
 (defun current-prompt-window ()
   (frame-floating-prompt-window (current-frame)))
@@ -112,6 +113,9 @@
                (prompt-window-history (current-prompt-window)))
     (when exists-p
       (replace-prompt-input string))))
+
+(define-command prompt-quit () ()
+  (error 'editor-abort :message nil))
 
 (define-command prompt-execute () ()
   (let ((input (get-input-string)))

@@ -15,6 +15,12 @@
 
 (defvar *connection* nil)
 
+(defun current-connection ()
+  *connection*)
+
+(defun (setf current-connection) (connection)
+  (setf *connection* connection))
+
 (define-major-mode lisp-mode language-mode
     (:name "Lisp"
      :description "Contains necessary functions to handle lisp code."
@@ -67,24 +73,24 @@
 
 (defmethod convert-modeline-element ((element (eql 'lisp-mode)) window)
   (format nil "  ~A~A" (buffer-package (window-buffer window) "CL-USER")
-          (if *connection*
+          (if (current-connection)
               (format nil " ~A:~A"
-                      (connection-implementation-name *connection*)
-                      (or (self-connection-p *connection*)
-                          (connection-pid *connection*)))
+                      (connection-implementation-name (current-connection))
+                      (or (self-connection-p (current-connection))
+                          (connection-pid (current-connection))))
               "")))
 
 (defun change-current-connection (connection)
-  (when *connection*
-    (abort-all *connection* "change connection")
+  (when (current-connection)
+    (abort-all (current-connection) "change connection")
     (notify-change-connection-to-wait-message-thread))
-  (setf *connection* connection))
+  (setf (current-connection) connection))
 
 (defmethod switch-connection ((connection connection))
   (change-current-connection connection))
 
 (defun connected-p ()
-  (not (null *connection*)))
+  (not (null (current-connection))))
 
 (defun add-and-change-connection (connection)
   (add-connection connection)
@@ -92,8 +98,8 @@
 
 (defun remove-and-change-connection (connection)
   (remove-connection connection)
-  (when (eq connection *connection*)
-    (setf *connection* (first (connection-list))))
+  (when (eq connection (current-connection))
+    (setf (current-connection) (first (connection-list))))
   (values))
 
 (defvar *self-connected-port* nil)
@@ -149,7 +155,7 @@
 (defun current-package ()
   (or *current-package*
       (buffer-package (current-buffer))
-      (connection-package *connection*)))
+      (connection-package (current-connection))))
 
 (defun current-swank-thread ()
   (or (buffer-value (current-buffer) 'thread)
@@ -157,7 +163,7 @@
 
 (defmethod get-features ()
   (when (connected-p)
-    (connection-features *connection*)))
+    (connection-features (current-connection))))
 
 (defun indentation-update (info)
   (loop :for (name indent packages) :in info
@@ -170,7 +176,7 @@
                       continuation
                       (thread (current-swank-thread))
                       (package (current-package)))
-  (emacs-rex *connection*
+  (emacs-rex (current-connection)
              form
              :continuation continuation
              :thread thread
@@ -181,7 +187,7 @@
         (thread-id (current-swank-thread)))
     (catch tag
       (funcall emacs-rex-fun
-               *connection*
+               (current-connection)
                rex-arg
                :continuation (lambda (result)
                                (alexandria:destructuring-ecase result
@@ -194,7 +200,7 @@
                :thread thread-id)
       (handler-case (loop (sit-for 10 nil))
         (editor-abort ()
-          (send-message-string *connection* (format nil "(:emacs-interrupt ~D)" thread-id))
+          (send-message-string (current-connection) (format nil "(:emacs-interrupt ~D)" thread-id))
           (keyboard-quit))))))
 
 (defun lisp-eval-from-string (string &optional (package (current-package)))
@@ -247,8 +253,8 @@
     (insert-string (current-point) (second value))))
 
 (defun new-package (name prompt-string)
-  (setf (connection-package *connection*) name)
-  (setf (connection-prompt-string *connection*) prompt-string)
+  (setf (connection-package (current-connection)) name)
+  (setf (connection-prompt-string (current-connection)) prompt-string)
   t)
 
 (defun read-package-name ()
@@ -319,7 +325,7 @@
 
 (define-command lisp-interrupt () ()
   (send-message-string
-   *connection*
+   (current-connection)
    (format nil "(:emacs-interrupt ~A)" (current-swank-thread))))
 
 (defun prompt-for-sexp (string &optional initial)
@@ -783,7 +789,7 @@
   (check-connection)
   (let ((string (symbol-string-at-point point)))
     (when string
-      (emacs-rex-string *connection*
+      (emacs-rex-string (current-connection)
                         (make-completions-form-string string
                                                       (current-package)
                                                       :fuzzy t)
@@ -848,7 +854,7 @@
                               (unless (connected-p)
                                 (setf *wait-message-thread* nil)
                                 (return-from exit))
-                              (when (message-waiting-p *connection* :timeout 1)
+                              (when (message-waiting-p (current-connection) :timeout 1)
                                 (let ((barrior t))
                                   (send-event (lambda ()
                                                 (unwind-protect (progn (pull-events)
@@ -895,10 +901,10 @@
 
 (defun pull-events ()
   (when (connected-p)
-    (handler-case (loop :while (message-waiting-p *connection*)
-                        :do (dispatch-message (read-message *connection*)))
+    (handler-case (loop :while (message-waiting-p (current-connection))
+                        :do (dispatch-message (read-message (current-connection))))
       (disconnected ()
-        (remove-and-change-connection *connection*)))))
+        (remove-and-change-connection (current-connection))))))
 
 (defvar *event-hooks* '())
 
@@ -1153,10 +1159,10 @@
     (remove-and-change-connection connection)))
 
 (define-command slime-quit () ()
-  (when (self-connection-p *connection*)
+  (when (self-connection-p (current-connection))
     (editor-error "The current connection is myself"))
-  (when *connection*
-    (delete-lisp-connection *connection*)))
+  (when (current-connection)
+    (delete-lisp-connection (current-connection))))
 
 (defun slime-quit* ()
   (ignore-errors (slime-quit)))
@@ -1180,9 +1186,9 @@
         :while (key-p e)))
 
 (define-command slime-restart () ()
-  (when *connection*
-    (alexandria:when-let ((last-command (connection-command *connection*))
-                          (directory (connection-process-directory *connection*)))
+  (when (current-connection)
+    (alexandria:when-let ((last-command (connection-command (current-connection)))
+                          (directory (connection-process-directory (current-connection))))
       (when (slime-quit)
         (sit-for* 3)
         (run-slime last-command :directory directory)))))
@@ -1255,8 +1261,8 @@
     "quit slime and remove connection to exit lem normally on windows (incomplete)"
     (let ((conn-list (connection-list)))
       (slime-quit-all)
-      (loop :while *connection*
-            :do (remove-and-change-connection *connection*))
+      (loop :while (current-connection)
+            :do (remove-and-change-connection (current-connection)))
       #+sbcl
       (progn
         (sleep 0.5)

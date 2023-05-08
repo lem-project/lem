@@ -10,7 +10,8 @@
                "lem-process"
                "lem-socket-utils")
   :serial t
-  :components ((:file "errors")
+  :components ((:file "test-api")
+               (:file "errors")
                (:file "swank-protocol")
                (:file "connections")
                (:file "message-dispatcher")

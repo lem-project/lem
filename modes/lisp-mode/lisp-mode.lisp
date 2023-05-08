@@ -110,11 +110,8 @@
 (defun self-connected-port ()
   *self-connected-port*)
 
-;; DO NOT USE THIS VARIABLE, this is for unit-test
-(defvar *disable-self-connect* nil)
-
 (defun self-connect ()
-  (unless *disable-self-connect*
+  (unless lem-lisp-mode/test-api:*disable-self-connect*
     (let ((port (lem-socket-utils:random-available-port)))
       (log:debug "Starting internal SWANK and connecting to it" swank:*communication-style*)
       (let ((swank::*swank-debug-p* nil))

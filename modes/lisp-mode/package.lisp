@@ -154,8 +154,7 @@
    :self-connection
    :*find-definitions*
    :switch-connection
-   :connection
-   :*disable-self-connect*))
+   :connection))
 
 (uiop:define-package :lem-lisp-mode
   (:use :cl)

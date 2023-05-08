@@ -1,4 +1,4 @@
-(in-package :lem-lisp-mode)
+(in-package :lem-lisp-mode/internal)
 
 (define-attribute topline-attribute)
 

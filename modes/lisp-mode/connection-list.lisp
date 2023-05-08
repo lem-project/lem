@@ -1,4 +1,4 @@
-(in-package :lem-lisp-mode)
+(in-package :lem-lisp-mode/internal)
 
 (define-key *lisp-mode-keymap* "C-c C-b" 'lisp-connection-list)
 

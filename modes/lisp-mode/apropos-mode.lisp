@@ -1,4 +1,4 @@
-(in-package :lem-lisp-mode)
+(in-package :lem-lisp-mode/internal)
 
 (define-major-mode lisp-apropos-mode lisp-mode
     (:name "Apropos"

@@ -1,4 +1,4 @@
-(in-package :lem-lisp-mode)
+(in-package :lem-lisp-mode/internal)
 
 (define-message (:write-string string &optional target thread)
   (declare (ignore target))

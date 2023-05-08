@@ -134,7 +134,7 @@
                              (line-start point)
                              (position-at-point point)))))))))))
 
-(pushnew 'find-utopian-route lem-lisp-mode::*find-definitions*)
+(pushnew 'find-utopian-route lem-lisp-mode:*find-definitions*)
 
 
 (define-command lisp-defstruct-to-defclass () ()

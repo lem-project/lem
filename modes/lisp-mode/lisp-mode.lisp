@@ -1,4 +1,4 @@
-(in-package :lem-lisp-mode)
+(in-package :lem-lisp-mode/internal)
 
 (define-editor-variable load-file-functions '())
 (define-editor-variable before-compile-functions '())

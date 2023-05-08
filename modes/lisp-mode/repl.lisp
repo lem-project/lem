@@ -1,4 +1,4 @@
-(in-package :lem-lisp-mode)
+(in-package :lem-lisp-mode/internal)
 
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"

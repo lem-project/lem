@@ -1,4 +1,4 @@
-(defpackage :lem-lisp-mode
+(defpackage :lem-lisp-mode/internal
   (:use :cl
         :lem
         :lem/completion-mode
@@ -149,4 +149,14 @@
    :*lisp-apropos-mode-keymap*
    :lisp-apropos
    :lisp-apropos-all
-   :lisp-apropos-package))
+   :lisp-apropos-package
+   ;;
+   :self-connection
+   :*find-definitions*
+   :switch-connection
+   :connection
+   :*disable-self-connect*))
+
+(uiop:define-package :lem-lisp-mode
+  (:use :cl)
+  (:use-reexport :lem-lisp-mode/internal))

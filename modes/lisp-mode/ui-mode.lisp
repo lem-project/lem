@@ -1,4 +1,14 @@
-(in-package :lem-lisp-mode)
+(defpackage :lem-lisp-mode/ui-mode
+  (:use :cl
+        :lem)
+  (:import-from :lem/button
+                :button-at
+                :button-action
+                :forward-button)
+  (:export :lisp-ui-mode
+           :lisp-ui-default-action
+           :lisp-ui-forward-button))
+(in-package :lem-lisp-mode/ui-mode)
 
 (define-major-mode lisp-ui-mode nil
     (:name "lisp-ui" ;TODO

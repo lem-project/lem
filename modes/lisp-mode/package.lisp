@@ -8,7 +8,8 @@
         :lem-lisp-mode/errors
         :lem-lisp-mode/swank-protocol
         :lem-lisp-mode/connections
-        :lem-lisp-mode/message-dispatcher)
+        :lem-lisp-mode/message-dispatcher
+        :lem-lisp-mode/ui-mode)
   (:export
    ;; reexport swank-protocol.lisp
    :connection-value)

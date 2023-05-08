@@ -19,6 +19,7 @@
                (:file "message")
                (:file "file-conversion")
                (:file "lisp-mode")
+               (:file "message-definitions")
                (:file "connection-list")
                (:file "repl")
                (:file "sldb")

@@ -454,15 +454,14 @@
                      (frame-number-at-point (current-point))
                      (frame-var-number-at-point (current-point))))
 
-(pushnew (lambda (event)
-           (alexandria:destructuring-case event
-             ((:debug-activate thread level &optional select)
-              (sldb-activate thread level select)
-              t)
-             ((:debug thread level condition restarts frames conts)
-              (sldb-setup thread level condition restarts frames conts)
-              t)
-             ((:debug-return thread level stepping)
-              (sldb-exit thread level stepping)
-              t)))
-         *event-hooks*)
+(define-message (:debug-activate thread level &optional select)
+  (sldb-activate thread level select)
+  t)
+
+(define-message (:debug thread level condition restarts frames conts)
+  (sldb-setup thread level condition restarts frames conts)
+  t)
+
+(define-message (:debug-return thread level stepping)
+  (sldb-exit thread level stepping)
+  t)

@@ -1,6 +1,9 @@
 (defpackage :lem-lisp-mode/paren-coloring
   (:nicknames :lem-lisp-mode/paren-coloring) ; for backward compatibility
-  (:use :cl :lem)
+  (:use :cl
+        :lem)
+  (:import-from :lem-lisp-mode/internal
+                :lisp-mode)
   (:export :paren-coloring
            :*paren-attribute*
            :*rainbow*
@@ -40,7 +43,7 @@
 (defvar *rainbow* t)
 
 (defun paren-coloring (start end)
-  (when (eq 'lem-lisp-mode:lisp-mode
+  (when (eq 'lisp-mode
             (buffer-major-mode (point-buffer start)))
     (with-point ((p start)
                  (start start)

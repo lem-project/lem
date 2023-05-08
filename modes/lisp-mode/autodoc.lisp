@@ -1,5 +1,5 @@
 (defpackage :lem-lisp-mode/autodoc
-  (:use :cl :lem :lem-lisp-mode))
+  (:use :cl :lem :lem-lisp-mode/internal))
 (in-package :lem-lisp-mode/autodoc)
 
 (define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-autodoc)

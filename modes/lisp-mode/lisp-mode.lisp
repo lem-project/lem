@@ -120,12 +120,12 @@
       (update-buffer-package)
       (setf *self-connected-port* port))))
 
-(defun self-connection-p (c)
-  (and (typep c 'connection)
+(defun self-connection-p (connection)
+  (and (typep connection 'connection)
        (integerp (self-connected-port))
-       (member (connection-hostname c) '("127.0.0.1" "localhost") :test 'equal)
-       (ignore-errors (equal (connection-pid c) (swank/backend:getpid)))
-       (= (connection-port c) (self-connected-port))
+       (member (connection-hostname connection) '("127.0.0.1" "localhost") :test 'equal)
+       (ignore-errors (equal (connection-pid connection) (swank/backend:getpid)))
+       (= (connection-port connection) (self-connected-port))
        :self))
 
 (defun self-connection ()

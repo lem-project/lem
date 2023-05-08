@@ -1,5 +1,5 @@
 (defpackage :lem-lisp-mode/misc-commands
-  (:use :cl :lem :lem-lisp-mode))
+  (:use :cl :lem :lem-lisp-mode/internal))
 (in-package :lem-lisp-mode/misc-commands)
 
 (defparameter *defpackage-names*
@@ -134,7 +134,7 @@
                              (line-start point)
                              (position-at-point point)))))))))))
 
-(pushnew 'find-utopian-route lem-lisp-mode:*find-definitions*)
+(pushnew 'find-utopian-route lem-lisp-mode/internal:*find-definitions*)
 
 
 (define-command lisp-defstruct-to-defclass () ()

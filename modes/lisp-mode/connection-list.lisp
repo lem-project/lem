@@ -1,4 +1,10 @@
-(in-package :lem-lisp-mode/internal)
+(defpackage :lem-lisp-mode/connection-list
+  (:use :cl
+        :lem
+        :lem-lisp-mode/swank-protocol
+        :lem-lisp-mode/internal)
+  (:export :lisp-connection-list))
+(in-package :lem-lisp-mode/connection-list)
 
 (define-key *lisp-mode-keymap* "C-c C-b" 'lisp-connection-list)
 
@@ -11,7 +17,7 @@
 
 (defmethod lem/multi-column-list:map-columns ((component connection-menu) (item connection-item))
   (let ((connection (connection-item-connection item)))
-    (list (if (eq connection *connection*) "*" "")
+    (list (if (eq connection (current-connection)) "*" "")
           (connection-hostname connection)
           (connection-port connection)
           (or (self-connection-p connection) (connection-pid connection))
@@ -29,4 +35,4 @@
    (make-instance 'connection-menu
                   :items (mapcar (lambda (c)
                                    (make-instance 'connection-item :connection c))
-                                 (connection-list)))))
+                                 (lem-lisp-mode/connections:connection-list)))))

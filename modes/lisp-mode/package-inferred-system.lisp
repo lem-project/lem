@@ -1,5 +1,5 @@
 (defpackage :lem-lisp-mode/package-inferred-system
-  (:use :cl :lem :lem-lisp-mode)
+  (:use :cl :lem :lem-lisp-mode/internal)
   (:import-from :trivial-types
                 :property-list-p)
   (:import-from :alexandria

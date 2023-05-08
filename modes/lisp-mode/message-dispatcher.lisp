@@ -1,4 +1,8 @@
-f(in-package :lem-lisp-mode)
+(defpackage :lem-lisp-mode/message-dispatcher
+  (:use :cl)
+  (:export :get-message-dispatcher
+           :define-message))
+(in-package :lem-lisp-mode/message-dispatcher)
 
 (defvar *message-dispatcher* (make-hash-table :test 'eq))
 

@@ -1,11 +1,17 @@
-(in-package :lem-lisp-mode)
+(defpackage :lem-lisp-mode/grammer
+  (:use :cl :lem)
+  (:export :get-features
+           :make-tmlanguage-lisp))
+(in-package :lem-lisp-mode/grammer)
+
+(defgeneric get-features () (:method () nil))
 
 (defun featurep (form)
   (cond ((atom form)
          (find (find-symbol (let ((*print-case* :upcase))
                               (princ-to-string form))
                             :keyword)
-               (features)))
+               (get-features)))
         ((string-equal 'and (car form))
          (every #'featurep (cdr form)))
         ((string-equal 'or (car form))

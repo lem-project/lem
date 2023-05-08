@@ -9,7 +9,8 @@
         :lem-lisp-mode/swank-protocol
         :lem-lisp-mode/connections
         :lem-lisp-mode/message-dispatcher
-        :lem-lisp-mode/ui-mode)
+        :lem-lisp-mode/ui-mode
+        :lem-lisp-mode/grammer)
   (:export
    ;; reexport swank-protocol.lisp
    :connection-value)

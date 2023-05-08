@@ -155,7 +155,7 @@
   (or (buffer-value (current-buffer) 'thread)
       t))
 
-(defun features ()
+(defmethod get-features ()
   (when (connected-p)
     (connection-features *connection*)))
 

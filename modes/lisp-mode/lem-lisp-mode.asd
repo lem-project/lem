@@ -18,6 +18,7 @@
                (:file "grammer")
                (:file "message")
                (:file "file-conversion")
+               (:file "message-dispatcher")
                (:file "lisp-mode")
                (:file "message-definitions")
                (:file "connection-list")

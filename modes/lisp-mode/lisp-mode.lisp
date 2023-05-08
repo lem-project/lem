@@ -894,7 +894,6 @@
     (when start-repl (start-lisp-repl))
     (connected-slime-message connection)))
 
-(defvar *unknown-keywords* nil)
 (defun pull-events ()
   (when (connected-p)
     (handler-case (loop :while (message-waiting-p *connection*)
@@ -977,8 +976,7 @@
     ;; ((:test-delay seconds)
     ;;  )
     ((t &rest args)
-     (declare (ignore args))
-     (pushnew (car message) *unknown-keywords*))))
+     (declare (ignore args)))))
 
 (defun read-from-minibuffer (thread tag prompt initial-value)
   (let ((input (prompt-for-sexp prompt initial-value)))

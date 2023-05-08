@@ -1107,7 +1107,7 @@
 
 (defmethod lem:execute-find-file ((executor sdl2-find-file-executor) mode pathname)
   (cond ((member (pathname-type pathname)
-                 '("png" "jpg" "jpeg" "bmp")
+                 '("png" "jpg" "jpeg" "bmp" "gif")
                  :test #'equal)
          (open-image-buffer pathname))
         (t

@@ -1,6 +1,7 @@
 (defpackage :lem/common/killring
   (:use :cl :lem/common/ring)
   (:export :make-killring
+           :make-nop-killring
            :copy-killring
            :push-killring-item
            :peek-killring-item
@@ -20,6 +21,11 @@
 (defun append-item (item1 item2)
   (make-item :string (concatenate 'string (item-string item1) (item-string item2))
              :options (append (item-options item1) (item-options item2))))
+
+(defgeneric push-killring-item (killring string &key))
+(defgeneric peek-killring-item (killring n))
+(defgeneric rotate-killring (killring))
+(defgeneric rotate-killring-undo (killring))
 
 (defclass killring ()
   ((ring :initarg :ring :reader killring-ring)
@@ -77,3 +83,20 @@
                                ,appending
                                ,before-inserting
                                ,options))
+
+(defclass nop-killring () ())
+
+(defmethod push-killring-item ((killring nop-killring) string &key &allow-other-keys)
+  killring)
+
+(defmethod peek-killring-item ((killring nop-killring) n)
+  nil)
+
+(defmethod rotate-killring ((killring nop-killring))
+  nil)
+
+(defmethod rotate-killring-undo ((killring nop-killring))
+  nil)
+
+(defun make-nop-killring ()
+  (make-instance 'nop-killring))

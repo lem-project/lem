@@ -46,6 +46,7 @@
   ;; macros.lisp
   (:export
    :with-current-window
+   :with-disable-killring
    :with-pop-up-typeout-window)
   ;; color.lisp
   (:export

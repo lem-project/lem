@@ -15,6 +15,6 @@
     (copy-to-clipboard (peek-killring-item (current-killring) 0))))
 
 (defun yank-from-clipboard-or-killring ()
-  (multiple-value-bind (str options) (lem::peek-killring-item (lem::current-killring) 0)
+  (multiple-value-bind (str options) (peek-killring-item (current-killring) 0)
     (or (and (enable-clipboard-p) (get-clipboard-data))
       (values str options))))

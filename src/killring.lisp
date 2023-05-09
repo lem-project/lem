@@ -21,4 +21,4 @@
 (defun yank-from-clipboard-or-killring ()
   (multiple-value-bind (str options) (peek-killring-item (current-killring) 0)
     (or (and (enable-clipboard-p) (get-clipboard-data))
-      (values str options))))
+        (values str options))))

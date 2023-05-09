@@ -6,6 +6,7 @@
            :font-cjk-normal-font
            :font-cjk-bold-font
            :font-emoji-font
+           :font-braille-font
            :font-char-width
            :font-char-height
            :save-font-size
@@ -24,7 +25,8 @@
   latin-bold-file
   cjk-normal-file
   cjk-bold-file
-  emoji-file)
+  emoji-file
+  braille-file)
 
 (defstruct font
   latin-normal-font
@@ -32,6 +34,7 @@
   cjk-normal-font
   cjk-bold-font
   emoji-font
+  braille-font
   char-width
   char-height)
 
@@ -43,7 +46,8 @@
                               latin-bold-file
                               cjk-normal-file
                               cjk-bold-file
-                              emoji-file)
+                              emoji-file
+                              brail-file)
   (%make-font-config
    :size (lem:config :font-size (or size 20))
    :latin-normal-file (or latin-normal-file
@@ -71,7 +75,11 @@
                    (lem:config :emoji-font
                                (asdf:system-relative-pathname
                                 :lem-sdl2
-                                "resources/fonts/NotoColorEmoji.ttf")))))
+                                "resources/fonts/NotoColorEmoji.ttf")))
+   :braille-file (or brail-file
+                     (asdf:system-relative-pathname
+                      :lem-sdl2
+                      "resources/fonts/FreeMono.ttf"))))
 
 (defun merge-font-config (new old)
   (%make-font-config :size (or (font-config-size new)
@@ -85,7 +93,9 @@
                      :cjk-bold-file (or (font-config-cjk-bold-file new)
                                         (font-config-cjk-bold-file old))
                      :emoji-file (or (font-config-emoji-file new)
-                                     (font-config-emoji-file old))))
+                                     (font-config-emoji-file old))
+                     :braille-file (or (font-config-braille-file new)
+                                       (font-config-braille-file old))))
 
 (defun change-size (font-config size)
   (let ((font-config (copy-font-config font-config)))
@@ -109,7 +119,9 @@
          (cjk-bold-font (sdl2-ttf:open-font (font-config-cjk-bold-file font-config)
                                             (font-config-size font-config)))
          (emoji-font (sdl2-ttf:open-font (font-config-emoji-file font-config)
-                                         (font-config-size font-config))))
+                                         (font-config-size font-config)))
+         (braille-font (sdl2-ttf:open-font (font-config-braille-file font-config)
+                                           (font-config-size font-config))))
     (destructuring-bind (char-width char-height)
         (get-character-size latin-normal-font)
       (make-font :latin-normal-font latin-normal-font
@@ -117,6 +129,7 @@
                  :cjk-normal-font cjk-normal-font
                  :cjk-bold-font cjk-bold-font
                  :emoji-font emoji-font
+                 :braille-font braille-font
                  :char-width char-width
                  :char-height char-height))))
 
@@ -126,6 +139,7 @@
   (sdl2-ttf:close-font (font-cjk-normal-font font))
   (sdl2-ttf:close-font (font-cjk-bold-font font))
   (sdl2-ttf:close-font (font-emoji-font font))
+  (sdl2-ttf:close-font (font-braille-font font))
   (values))
 
 (defgeneric get-font-list (platform))

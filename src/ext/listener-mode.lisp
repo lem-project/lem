@@ -29,7 +29,7 @@
 
 (define-attribute listener-prompt-attribute
   (:light :foreground "blue" :bold t)
-  (:dark :foreground "cyan" :bold t))
+  (:dark :foreground "#22A0FF" :bold t))
 
 (define-editor-variable listener-prompt-attribute 'listener-prompt-attribute)
 

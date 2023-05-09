@@ -3,4 +3,4 @@
 	url = https://github.com/microsoft/language-server-protocol.git
 [submodule "third-party/lem-base16-themes"]
 	path = third-party/lem-base16-themes
-	url = git@github.com:lem-project/lem-base16-themes.git
+	url = https://github.com/lem-project/lem-base16-themes.git

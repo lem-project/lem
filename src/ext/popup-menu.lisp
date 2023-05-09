@@ -117,16 +117,17 @@
                            items
                            print-spec
                            focus-attribute)
-      (let ((window (lem/popup-window::make-popup-window :source-window (current-window)
-                                                         :buffer buffer
-                                                         :width menu-width
-                                                         :height (min max-display-items height)
-                                                         :style (lem/popup-window::merge-style
-                                                                 style
-                                                                 :background-color (or (lem/popup-window::style-background-color style)
-                                                                                       (attribute-background
-                                                                                        non-focus-attribute))
-                                                                 :cursor-invisible t))))
+      (let ((window (lem/popup-window::make-popup-window
+                     :source-window (current-window)
+                     :buffer buffer
+                     :width menu-width
+                     :height (min max-display-items height)
+                     :style (lem/popup-window::merge-style
+                             style
+                             :background-color (or (lem/popup-window::style-background-color style)
+                                                   (attribute-background
+                                                    non-focus-attribute))
+                             :cursor-invisible t))))
         (make-instance 'popup-menu
                        :buffer buffer
                        :window window

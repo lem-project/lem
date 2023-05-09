@@ -47,6 +47,12 @@
 (defmethod cursor-region-end ((cursor cursor))
   (point-max cursor (mark-point (cursor-mark cursor))))
 
+(defmethod cursor-killring ((cursor cursor))
+  (current-killring))
+
+(defmethod cursor-killring ((cursor fake-cursor))
+  (fake-cursor-killring cursor))
+
 (defun buffer-fake-cursors (buffer)
   (buffer-value buffer 'fake-cursors))
 
@@ -80,3 +86,14 @@
   (sort (copy-list (cons (buffer-point buffer)
                          (buffer-fake-cursors buffer)))
         #'point<))
+
+(defun merge-cursor-killrings (buffer)
+  (with-output-to-string (out)
+    (dolist (cursor (buffer-cursors buffer))
+      (let ((killring (cursor-killring cursor)))
+        (multiple-value-bind (string options)
+            (peek-killring-item killring 0)
+          (declare (ignore options))
+          ;; TODO: consider options
+          (when string
+            (write-line string out)))))))

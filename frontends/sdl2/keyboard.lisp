@@ -1,6 +1,7 @@
 (defpackage :lem-sdl2/keyboard
   (:use :cl)
-  (:export :keysym-to-key-event
+  (:export :set-keyboard-layout
+           :keysym-to-key-event
            :handle-textediting
            :handle-text-input
            :handle-key-down
@@ -50,6 +51,8 @@
                   t)))))
 
 (defun make-key (&key ctrl meta shift sym)
+  (when (equal sym (string #\yen_sign))
+    (setf sym "\\"))
   (cond ((and ctrl (equal sym "i"))
          (lem:make-key :ctrl nil
                        :meta meta
@@ -164,10 +167,44 @@
     (#\. . #\>)
     (#\/ . #\?)))
 
+(defparameter *jis-shift-layout*
+  '((#\1 . #\!)
+    (#\2 . #\")
+    (#\3 . #\#)
+    (#\4 . #\$)
+    (#\5 . #\%)
+    (#\6 . #\&)
+    (#\7 . #\')
+    (#\8 . #\()
+    (#\9 . #\))
+    (#\0 . #\0)
+    (#\- . #\=)
+    (#\^ . #\_)
+    (#\\ . #\|)
+    (#\@ . #\`)
+    (#\[ . #\{)
+    (#\] . #\})
+    (#\; . #\+)
+    (#\: . #\*)
+    (#\] . #\})
+    (#\, . #\<)
+    (#\. . #\>)
+    (#\/ . #\?)))
+
+(defparameter *shift-layout* *us-shift-layout*)
+
+(defun set-keyboard-layout (type)
+  (check-type type (member :jis :us))
+  (ecase type
+    (:us
+     (setf *shift-layout* *us-shift-layout*))
+    (:jis
+     (setf *shift-layout* *jis-shift-layout*))))
+
 (defun shift-char (char)
   (if (alpha-char-p char)
       (values (char-upcase char) t)
-      (let ((elt (assoc char *us-shift-layout*)))
+      (let ((elt (assoc char *shift-layout*)))
         (if elt
             (values (cdr elt) t)
             (values char nil)))))
@@ -187,7 +224,7 @@
                 :shift shift
                 :sym sym)))
 
-(defmethod handle-text-input ((platform lem-sdl2/platform:mac) text)
+(defun handle-text-input-internal (text)
   (unless (or (modifier-meta *modifier*)
               (modifier-ctrl *modifier*))
     (loop :for c :across text
@@ -197,7 +234,7 @@
                                    :sym (string c))))
                 (send-key-event key)))))
 
-(defmethod handle-key-down ((platform lem-sdl2/platform:mac) key-event)
+(defun handle-key-down-internal (key-event)
   (let ((code (key-event-code key-event))
         (modifier (key-event-modifier key-event)))
     (update-modifier *modifier* modifier)
@@ -214,5 +251,25 @@
                                                   :sym sym)))
             (send-key-event key)))))))
 
-(defmethod handle-key-up ((platform lem-sdl2/platform:mac) key-event)
+(defun handle-key-up-internal (key-event)
   (update-modifier *modifier* (key-event-modifier key-event)))
+
+(defmethod handle-text-input ((platform lem-sdl2/platform:mac) text)
+  (handle-text-input-internal text))
+
+(defmethod handle-key-down ((platform lem-sdl2/platform:mac) key-event)
+  (handle-key-down-internal key-event))
+
+(defmethod handle-key-up ((platform lem-sdl2/platform:mac) key-event)
+  (handle-key-up-internal key-event))
+
+;; windows
+(defmethod handle-text-input ((platform lem-sdl2/platform:windows) text)
+  (handle-text-input-internal text))
+
+(defmethod handle-key-down ((platform lem-sdl2/platform:windows) key-event)
+  (handle-key-down-internal key-event))
+
+(defmethod handle-key-up ((platform lem-sdl2/platform:windows) key-event)
+  (handle-key-up-internal key-event))
+

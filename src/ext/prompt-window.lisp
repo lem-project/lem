@@ -3,7 +3,8 @@
   (:import-from :alexandria
                 :when-let)
   #+sbcl
-  (:lock t))
+  (:lock t)
+  (:export :prompt-attribute))
 (in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)

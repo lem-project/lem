@@ -15,6 +15,10 @@
    :remove-command
    :find-command
    :exist-command-p)
+  ;; killring.lisp
+  (:export
+    :copy-to-clipboard-with-killring
+    :yank-from-clipboard-or-killring)
   ;; quicklisp-utils.lisp
   (:export
    :maybe-quickload)

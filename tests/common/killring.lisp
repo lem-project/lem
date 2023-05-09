@@ -1,7 +1,8 @@
 (defpackage :lem-tests/killring
   (:use :cl
         :rove
-        :lem/common/killring))
+        :lem/common/killring
+        :lem))
 (in-package :lem-tests/killring)
 
 (deftest simple-test
@@ -56,7 +57,7 @@
     (ok (equal "b" (peek-killring-item killring 0)))
     (ok (equal "a" (peek-killring-item killring 1)))))
 
-(deftest option
+(deftest internal-option
   (let ((killring (make-killring 10)))
     (push-killring-item killring "foo" :options :test)
     (ok (equal '("foo" (:test))
@@ -71,6 +72,26 @@
       (push-killring-item killring "baz" :options :test3))
     (ok (equal '("bazfoobar" (:test3 :test :test2))
                (multiple-value-list (peek-killring-item killring 0))))))
+
+(deftest external-option
+  (let ((killring (make-killring 2)))
+    (with-killring-context (:appending t :before-inserting t)
+      (push-killring-item killring "baz" :options :test))
+
+    ;; clipboard disabled
+    (let ((lem::*enable-clipboard-p* nil)
+          (lem::*killring* killring))
+      (ok (equal '("baz" (:test))
+                 (multiple-value-list (yank-from-clipboard-or-killring)))))
+    
+    ;; clipboard enabled
+    (let ((lem::*enable-clipboard-p* t)
+          (lem::*killring* killring)
+          (expected-result "In LEM we trust."))
+      (lem::invoke-frontend (lambda ()))
+      (copy-to-clipboard-with-killring expected-result)
+      (ok (equal expected-result
+                 (yank-from-clipboard-or-killring))))))
 
 (deftest peek-killring-item-when-empty
   (let ((killring (make-killring 10)))

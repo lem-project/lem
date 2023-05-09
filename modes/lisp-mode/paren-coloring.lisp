@@ -1,10 +1,14 @@
-(defpackage :lem-lisp-mode.paren-coloring
-  (:use :cl :lem)
+(defpackage :lem-lisp-mode/paren-coloring
+  (:nicknames :lem-lisp-mode/paren-coloring) ; for backward compatibility
+  (:use :cl
+        :lem)
+  (:import-from :lem-lisp-mode/internal
+                :lisp-mode)
   (:export :paren-coloring
            :*paren-attribute*
            :*rainbow*
            :toggle-paren-coloring))
-(in-package :lem-lisp-mode.paren-coloring)
+(in-package :lem-lisp-mode/paren-coloring)
 
 (define-editor-variable paren-coloring nil ""
   (lambda (value)
@@ -39,7 +43,7 @@
 (defvar *rainbow* t)
 
 (defun paren-coloring (start end)
-  (when (eq 'lem-lisp-mode:lisp-mode
+  (when (eq 'lisp-mode
             (buffer-major-mode (point-buffer start)))
     (with-point ((p start)
                  (start start)

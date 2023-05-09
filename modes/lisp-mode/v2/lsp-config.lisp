@@ -36,7 +36,7 @@
 
 (defmethod lem-lsp-mode::initialized-workspace ((mode lem-lisp-mode:lisp-mode) workspace)
   (if (self-connection-p workspace)
-      (let ((connection (lem-lisp-mode::self-connection)))
+      (let ((connection (lem-lisp-mode:self-connection)))
         (setf (connection-workspace connection) workspace))
       (let* ((swank-port (gethash "swankPort" (lem-lsp-mode::workspace-server-info workspace)))
              (connection (lem-lisp-mode:connect-to-swank "127.0.0.1" swank-port)))
@@ -63,7 +63,7 @@
         (start-micros-server micros-port)
         (make-instance 'lem-lsp-mode/client:tcp-client :port lsp-port))))
 
-(defmethod lem-lisp-mode::switch-connection :after ((connection lem-lisp-mode::connection))
+(defmethod lem-lisp-mode:switch-connection :after ((connection lem-lisp-mode:connection))
   (let ((workspace (connection-workspace connection)))
     (lem-lsp-mode::change-workspace workspace)))
 

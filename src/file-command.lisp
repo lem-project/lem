@@ -15,7 +15,10 @@
       (error 'editor-abort))
     directory))
 
-(defgeneric execute-find-file (mode pathname))
+(defgeneric execute-find-file (executor mode pathname))
+(defclass find-file-executor () ())
+
+(defvar *find-file-executor* (make-instance 'find-file-executor))
 
 (define-command find-file (arg) ("p")
   (let ((*default-external-format* *default-external-format*))
@@ -39,15 +42,26 @@
 		  ((pathnamep arg)
 		   (namestring arg)))))
       (dolist (pathname (expand-files* filename))
-	(execute-find-file (get-file-mode pathname)
+        (execute-find-file *find-file-executor*
+                           (get-file-mode pathname)
 			   pathname)))))
 
-(defmethod execute-find-file (mode pathname)
-  (directory-for-file-or-lose pathname)
-  (multiple-value-bind (buffer new-file-p)
-      (find-file-buffer pathname)
-    (switch-to-buffer buffer t nil)
-    (values buffer new-file-p)))
+(defmethod execute-find-file :before (executor mode pathname)
+  (directory-for-file-or-lose pathname))
+
+(defmethod execute-find-file (executor mode pathname)
+  (handler-case
+      (multiple-value-bind (buffer new-file-p)
+          (find-file-buffer pathname)
+        (switch-to-buffer buffer t nil)
+        (values buffer new-file-p))
+    (encoding-read-error ()
+      #+linux
+      (uiop:run-program (list "xdg-open" (namestring pathname)))
+      #+mac
+      (uiop:run-program (list "open" (namestring pathname)))
+      #+windows
+      (uiop:run-program (list "explorer" (namestring pathname))))))
 
 (define-command read-file (filename) ("FRead File: ")
   (when (pathnamep filename)

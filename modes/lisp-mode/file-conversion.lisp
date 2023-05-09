@@ -1,4 +1,4 @@
-(in-package :lem-lisp-mode)
+(in-package :lem-lisp-mode/internal)
 
 (defvar *file-conversion-map* '()
   "This variable is a alist for converting remote file names to local file names.

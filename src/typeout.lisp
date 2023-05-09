@@ -9,6 +9,7 @@
 (define-key *typeout-mode-keymap* "q" 'dismiss-typeout-window)
 (define-key *typeout-mode-keymap* "Space" 'next-page-or-dismiss-typeout-window)
 (define-key *typeout-mode-keymap* "Backspace" 'previous-page)
+(define-key *typeout-mode-keymap* 'delete-active-window 'dismiss-typeout-window)
 
 (defvar *enable-piece-of-paper* t)
 

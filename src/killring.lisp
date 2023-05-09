@@ -9,6 +9,10 @@
   `(let ((*killring* ,killring))
      ,@body))
 
+(defmacro with-disable-killring (() &body body)
+  `(let ((*killring* (make-nop-killring)))
+     ,@body))
+
 (defun copy-to-clipboard-with-killring (string)
   (push-killring-item (current-killring) string)
   (when (enable-clipboard-p)

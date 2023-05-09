@@ -1,5 +1,5 @@
-(defpackage lem-lisp-mode.swank-protocol
-  (:use :cl :lem-lisp-mode.errors)
+(defpackage :lem-lisp-mode/swank-protocol
+  (:use :cl :lem-lisp-mode/errors)
   (:import-from :trivial-types
                 :association-list
                 :proper-list)
@@ -38,7 +38,7 @@
            :connection-swank-version
            :connection-value)
   (:documentation "Low-level implementation of a client for the Swank protocol."))
-(in-package :lem-lisp-mode.swank-protocol)
+(in-package :lem-lisp-mode/swank-protocol)
 
 (defmacro with-swank-syntax (() &body body)
   `(with-standard-io-syntax
@@ -171,7 +171,7 @@ Parses length information to determine how many characters to read."
 (defun read-return-message (connection &key (timeout 5))
   "Read only ':return' message. Other messages such as ':indentation-update' are dropped."
   (log:debug "Waiting for response")
-  
+
   (loop :for waiting := (message-waiting-p connection :timeout timeout)
         :with info
         :do (unless waiting
@@ -185,7 +185,7 @@ Parses length information to determine how many characters to read."
 
 (defun setup (connection)
   (log:debug "Setup connection")
-  
+
   (emacs-rex connection `(swank:connection-info))
   ;; Read the connection information message
   (let* ((info (read-return-message connection))
@@ -224,17 +224,17 @@ Parses length information to determine how many characters to read."
      swank-arglists
      swank-repl))
   (read-return-message connection)
-  
+
   ;; Start it up
   (log:debug "Initializing presentations")
   (emacs-rex-string connection "(swank:init-presentations)")
   (read-return-message connection)
-  
+
   (log:debug "Creating the REPL")
   (emacs-rex-string connection "(swank-repl:create-repl nil :coding-system \"utf-8-unix\")")
   ;; Wait for startup
   (read-return-message connection)
-  
+
   (log:debug "Reading rest messages")
   ;; Read all the other messages, dumping them
   (read-all-messages connection)

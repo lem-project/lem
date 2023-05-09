@@ -197,7 +197,8 @@
        point
        :click-callback
        (lambda (window dest-point)
-         (declare (ignore window dest-point))
+         (declare (ignore dest-point))
+         (setf (current-window) window)
          (directory-mode-find-file)))
       (insert-character point #\newline))))
 

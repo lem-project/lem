@@ -1,11 +1,17 @@
-(in-package :lem-lisp-mode)
+(defpackage :lem-lisp-mode/grammer
+  (:use :cl :lem)
+  (:export :get-features
+           :make-tmlanguage-lisp))
+(in-package :lem-lisp-mode/grammer)
+
+(defgeneric get-features () (:method () nil))
 
 (defun featurep (form)
   (cond ((atom form)
          (find (find-symbol (let ((*print-case* :upcase))
                               (princ-to-string form))
                             :keyword)
-               (features)))
+               (get-features)))
         ((string-equal 'and (car form))
          (every #'featurep (cdr form)))
         ((string-equal 'or (car form))
@@ -69,7 +75,7 @@
      (:greedy-repetition 1 nil :whitespace-char-class)
      :whitespace-char-class :end-anchor #\( #\))))
 
-(defun make-tmlanguage-lisp (&key (enable-feature-support t))
+(defun make-tmlanguage-lisp ()
   (let ((patterns
           (apply #'make-tm-patterns
                  (remove-if #'null
@@ -201,11 +207,10 @@
                                 "&" symbol
                                 symbol-boundary-end)
                               :name 'syntax-constant-attribute)
-                             (when enable-feature-support
-                               (make-tm-match
-                                "#[+-]"
-                                :name 'syntax-comment-attribute
-                                :move-action (lambda (cur-point)
-                                               (ignore-errors
-                                                 (skip-feature cur-point))))))))))
+                             (make-tm-match
+                              "#[+-]"
+                              :name 'syntax-comment-attribute
+                              :move-action (lambda (cur-point)
+                                             (ignore-errors
+                                               (skip-feature cur-point)))))))))
     (make-tmlanguage :patterns patterns)))

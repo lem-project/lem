@@ -10,14 +10,18 @@
                "lem-process"
                "lem-socket-utils")
   :serial t
-  :components ((:file "errors")
+  :components ((:file "test-api")
+               (:file "errors")
                (:file "swank-protocol")
-               (:file "package")
-               (:file "lisp-ui-mode")
+               (:file "connections")
+               (:file "message-dispatcher")
+               (:file "ui-mode")
                (:file "grammer")
+               (:file "internal-package")
                (:file "message")
                (:file "file-conversion")
                (:file "lisp-mode")
+               (:file "message-definitions")
                (:file "repl")
                (:file "sldb")
                (:file "inspector")
@@ -26,7 +30,9 @@
                (:file "paren-coloring")
                (:file "misc-commands")
                (:file "package-inferred-system")
-               (:file "organize-imports")))
+               (:file "organize-imports")
+               (:file "connection-list")
+               (:file "package")))
 
 (defsystem "lem-lisp-mode/v2"
   :depends-on ("lem-lisp-mode")

@@ -445,33 +445,34 @@
                    (lem-if:clear-eob (implementation) (screen-view screen) 0 y)
                    (return)))))))
 
-(defun screen-redraw-modeline (window force)
-  (let* ((screen (window-screen window))
-         (view (screen-view screen))
-         (default-attribute (if (eq window (current-window))
-                                'modeline
-                                'modeline-inactive))
-         (elements '())
-         (left-x 0)
-         (right-x (window-width window)))
-    (modeline-apply window
-                    (lambda (string attribute alignment)
-                      (case alignment
-                        ((:right)
-                         (decf right-x (length string))
-                         (push (list right-x string attribute) elements))
-                        (otherwise
-                         (push (list left-x string attribute) elements)
-                         (incf left-x (length string)))))
-                    default-attribute)
-    (setf elements (nreverse elements))
-    (when (or force (not (equal elements (screen-modeline-elements screen))))
-      (setf (screen-modeline-elements screen) elements)
-      (lem-if:print-modeline (implementation) view 0 0
-                             (make-string (window-width window) :initial-element #\space)
-                             default-attribute)
-      (loop :for (x string attribute) :in elements
-            :do (lem-if:print-modeline (implementation) view x 0 string attribute)))))
+(defun redraw-modeline (window force)
+  (when (window-use-modeline-p window)
+    (let* ((screen (window-screen window))
+           (view (screen-view screen))
+           (default-attribute (if (eq window (current-window))
+                                  'modeline
+                                  'modeline-inactive))
+           (elements '())
+           (left-x 0)
+           (right-x (window-width window)))
+      (modeline-apply window
+                      (lambda (string attribute alignment)
+                        (case alignment
+                          ((:right)
+                           (decf right-x (length string))
+                           (push (list right-x string attribute) elements))
+                          (otherwise
+                           (push (list left-x string attribute) elements)
+                           (incf left-x (length string)))))
+                      default-attribute)
+      (setf elements (nreverse elements))
+      (when (or force (not (equal elements (screen-modeline-elements screen))))
+        (setf (screen-modeline-elements screen) elements)
+        (lem-if:print-modeline (implementation) view 0 0
+                               (make-string (window-width window) :initial-element #\space)
+                               default-attribute)
+        (loop :for (x string attribute) :in elements
+              :do (lem-if:print-modeline (implementation) view x 0 string attribute))))))
 
 (defun adjust-horizontal-scroll (window)
   (let ((screen (window-screen window))
@@ -486,7 +487,9 @@
               ((< point-column (screen-horizontal-scroll-start screen))
                (setf (screen-horizontal-scroll-start screen) point-column)))))))
 
-(defun redraw-display-window (window force)
+(defgeneric redraw-buffer (buffer window force))
+
+(defmethod redraw-buffer ((buffer text-buffer) window force)
   (with-display-error ()
     (let ((lem-if:*background-color-of-drawing-window*
             (cond ((typep window 'floating-window)
@@ -500,7 +503,6 @@
                    *inactive-window-background-color*)
                   (t nil)))
           (focus-window-p (eq window (current-window)))
-          (buffer (window-buffer window))
           (screen (window-screen window)))
       (lem-if:redraw-view-before (implementation) (screen-view screen))
       (let ((scroll-n (when focus-window-p
@@ -541,6 +543,9 @@
           (setf (screen-last-buffer-modified-tick screen)
                 (buffer-modified-tick buffer))
           (when (window-use-modeline-p window)
-            (screen-redraw-modeline window (or (screen-modified-p screen) force)))
+            (redraw-modeline window (or (screen-modified-p screen) force)))
           (lem-if:redraw-view-after (implementation) (screen-view screen))
           (setf (screen-modified-p screen) nil))))))
+
+(defun redraw-display-window (window force)
+  (redraw-buffer (window-buffer window) window force))

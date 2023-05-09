@@ -1,4 +1,4 @@
-(in-package :lem-lisp-mode)
+(in-package :lem-lisp-mode/internal)
 
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"
@@ -8,7 +8,6 @@
     ((eq (repl-buffer) (current-buffer))
      (repl-reset-input)
      (lem/listener-mode:start-listener-mode (merge-pathnames "history/lisp-repl" (lem-home)))
-     (setf *write-string-function* 'write-string-to-repl)
      (setf (variable-value 'completion-spec) 'repl-completion))
     (t
      (editor-error "No connection for repl. Did you mean 'start-lisp-repl' command?"))))
@@ -126,23 +125,6 @@
                          (width (- (window-width window) 2)))
     width))
 
-(defun repl-highlight-notes (notes)
-  (let ((buffer (repl-buffer)))
-    (when buffer
-      (dolist (note notes)
-        (trivia:match note
-          ((and (trivia:property :location location)
-                (trivia:property :message _))
-           (let* ((xref-loc (source-location-to-xref-location location))
-                  (offset (xref-location-position xref-loc)))
-             (with-point ((start (buffer-point buffer)))
-               (move-point start (lem/listener-mode:input-start-point buffer))
-               (form-offset start -1)
-               (character-offset start (if (plusp offset) (1- offset) offset))
-               (with-point ((end start))
-                 (form-offset end 1)
-                 (put-text-property start end :attribute 'compiler-note-attribute))))))))))
-
 (defun repl-completion (point)
   (with-point ((p point))
     (cond ((maybe-beginning-of-string p)
@@ -156,34 +138,10 @@
           (t
            (completion-symbol p)))))
 
-(defvar *repl-compiler-check* nil)
-
-(defvar *repl-temporary-file*
-  (merge-pathnames "slime-repl.tmp" (uiop:temporary-directory)))
-
 (defun repl-eval (point string)
   (declare (ignore point))
   (check-connection)
-  (cond
-    (*repl-compiler-check*
-     (with-open-file (stream *repl-temporary-file*
-                             :direction :output
-                             :if-exists :supersede
-                             :if-does-not-exist :create)
-       (write-string string stream))
-     (let ((result
-             (let ((*write-string-function* (constantly nil)))
-               (lisp-eval `(swank:compile-file-for-emacs *repl-temporary-file* nil)))))
-       (destructuring-bind (notes successp duration loadp fastfile)
-           (cdr result)
-         (declare (ignore successp duration loadp fastfile))
-         (repl-highlight-notes notes)
-         (listener-eval string))))
-    (t
-     (listener-eval string))))
-
-(defparameter *record-history-of-repl* nil)
-(defvar *repl-history* '())
+  (listener-eval string))
 
 (defun listener-eval (string)
   (ensure-repl-buffer-exist)
@@ -192,14 +150,7 @@
    string
    (lambda (value)
      (declare (ignore value))
-     (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist))
-     (when *record-history-of-repl*
-       (start-timer (make-idle-timer
-                     (lambda ()
-                       (when (position-if (complement #'syntax-space-char-p) string)
-                         (push (cons string (lisp-eval-from-string "CL:/" "CL"))
-                               *repl-history*))))
-                    0)))
+     (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))
    (repl-buffer-width)))
 
 (defun repl-read-string (thread tag)

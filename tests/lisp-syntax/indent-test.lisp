@@ -11,7 +11,7 @@
 
 (defmacro define-indent-test (name before &optional (after before))
   `(deftest ,name
-     (let ((lem-lisp-mode::*disable-self-connect* t))
+     (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
        (run-indent-test ,(string name) ,before ,after))))
 
 (defun run-indent-test (name before-text after-text)
@@ -73,11 +73,11 @@
     (indent-test-for-file pathname)))
 
 (deftest indent-test-under-lem-base
-  (let ((lem-lisp-mode::*disable-self-connect* t))
+  (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
     (indent-test-for-system :lem-base)))
 
 (deftest indent-test-for-sample-case
-  (let ((lem-lisp-mode::*disable-self-connect* t))
+  (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
     (indent-test-for-file
      (sample-file "indent-sample.lisp"))))
 

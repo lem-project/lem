@@ -7,7 +7,7 @@
 (in-package :lem-tests/syntax-test)
 
 (deftest form-offset
-  (let ((lem-lisp-mode::*disable-self-connect* t))
+  (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
     (testing "skip comment"
       (let* ((buffer (lem-base:find-file-buffer (sample-file "syntax-sample.lisp")
                                                 :temporary t
@@ -34,7 +34,7 @@
 "))
 
 (deftest scan-lists
-  (let ((lem-lisp-mode::*disable-self-connect* t))
+  (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
     (testing "limit-point"
       (let* ((buffer (lem-base:make-buffer nil
                                            :temporary t

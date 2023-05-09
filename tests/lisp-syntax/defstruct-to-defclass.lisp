@@ -67,7 +67,7 @@
     buffer))
 
 (deftest parse-name-and-options
-  (let ((lem-lisp-mode::*disable-self-connect* t))
+  (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
     (testing "(name)"
       (let ((values (multiple-value-list (parse-name-and-options '(foo)))))
         (ok (= 2 (length values)))
@@ -112,7 +112,7 @@
     (read-from-string string)))
 
 (deftest analyze-defstruct
-  (let ((lem-lisp-mode::*disable-self-connect* t))
+  (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
     (testing "simple"
              (let* ((buffer (make-test-buffer))
                     (point (lem-base:buffer-point buffer)))
@@ -278,7 +278,7 @@
                  (equal "xxx-" (options-conc-name (struct-options info))))))))
 
 (deftest defstruct-to-defclass
-  (let ((lem-lisp-mode::*disable-self-connect* t))
+  (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
     (flet ((%test (n)
              (testing (format nil "case-~D" n)
                (let* ((buffer (make-test-buffer))

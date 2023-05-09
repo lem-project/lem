@@ -68,7 +68,8 @@
   (when-let* ((buffer (process-buffer process))
               (point (buffer-point buffer)))
     (buffer-end point)
-    (lem-lisp-mode::insert-escape-sequence-string point string)
+    ;; TODO: lisp-modeに依存するのはおかしいので汎用的なパッケージを用意する
+    (lem-lisp-mode/internal::insert-escape-sequence-string point string)
     ;; (insert-string point string)
     (lem/listener-mode:refresh-prompt buffer nil)))
 
@@ -82,4 +83,3 @@
 (define-command run-shell () ()
   (setf (current-window)
         (display-buffer (run-shell-internal))))
-

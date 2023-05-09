@@ -6,6 +6,14 @@
   ((name
     :initarg :name
     :accessor buffer-%name)
+   (temporary
+    :initarg :temporary
+    :reader buffer-temporary-p
+    :type boolean)
+   (variables
+    :initform (make-hash-table :test 'equal)
+    :accessor buffer-variables)
+   ;; only used in text buffer
    (%filename
     :initform nil
     :accessor buffer-%filename)
@@ -21,10 +29,6 @@
     :initarg :%enable-undo-p
     :accessor buffer-%enable-undo-p
     :type boolean)
-   (temporary
-    :initarg :temporary
-    :reader buffer-temporary-p
-    :type boolean)
    (read-only-p
     :initarg :read-only-p
     :accessor buffer-read-only-p
@@ -35,6 +39,7 @@
     :accessor buffer-syntax-table
     :type syntax-table)
    (major-mode
+    :initform 'fundamental-mode
     :initarg :major-mode
     :accessor buffer-major-mode)
    (minor-modes
@@ -77,14 +82,10 @@
     :accessor buffer-encoding)
    (last-write-date
     :initform nil
-    :accessor buffer-last-write-date)
-   (variables
-    :initform (make-hash-table :test 'equal)
-    :accessor buffer-variables))
-  (:documentation
-   "`buffer`はバッファ名、ファイル名、テキスト、テキストを指す位置等が入った、
-文書を管理するオブジェクトです。  
-複数の`buffer`はリストで管理されています。"))
+    :accessor buffer-last-write-date)))
+
+(defclass text-buffer (buffer)
+  ())
 
 (defmethod buffer-mark ((buffer buffer))
   (mark-point (buffer-mark-object buffer)))
@@ -141,22 +142,21 @@
 (defun make-buffer (name &key temporary read-only-p (enable-undo-p t)
                               (syntax-table (fundamental-syntax-table)))
   "バッファ名が`name`のバッファがバッファリストに含まれていれば
-そのバッファを返し、無ければ作成します。  
-`read-only-p`は読み込み専用にするか。  
-`enable-undo-p`はアンドゥを有効にするか。  
-`syntax-table`はそのバッファの構文テーブルを指定します。  
-`temporary`が非NILならバッファリストに含まないバッファを作成します。  
+そのバッファを返し、無ければ作成します。
+`read-only-p`は読み込み専用にするか。
+`enable-undo-p`はアンドゥを有効にするか。
+`syntax-table`はそのバッファの構文テーブルを指定します。
+`temporary`が非NILならバッファリストに含まないバッファを作成します。
 引数で指定できるオプションは`temporary`がNILで既にバッファが存在する場合は無視します。
 "
   (unless temporary
     (uiop:if-let ((buffer (get-buffer name)))
       (return-from make-buffer buffer)))
-  (let ((buffer (make-instance 'buffer
+  (let ((buffer (make-instance 'text-buffer
                                :name name
                                :read-only-p read-only-p
                                :%enable-undo-p enable-undo-p
                                :temporary temporary
-                               :major-mode 'fundamental-mode
                                :syntax-table syntax-table)))
     (let* ((temp-point (make-point buffer 1 (make-empty-line) 0 :kind :temporary))
            (start-point (make-buffer-start-point temp-point))
@@ -341,8 +341,8 @@
     (vector-push-extend :separator (buffer-edit-history buffer))))
 
 (defun buffer-value (buffer name &optional default)
-  "`buffer`のバッファ変数`name`に束縛されている値を返します。  
-`buffer`の型は`buffer`または`point`です。  
+  "`buffer`のバッファ変数`name`に束縛されている値を返します。
+`buffer`の型は`buffer`または`point`です。
 変数が設定されていない場合は`default`を返します。"
   (setf buffer (ensure-buffer buffer))
   (multiple-value-bind (value foundp)
@@ -350,7 +350,7 @@
     (if foundp value default)))
 
 (defun (setf buffer-value) (value buffer name &optional default)
-  "`buffer`のバッファ変数`name`に`value`を束縛します。  
+  "`buffer`のバッファ変数`name`に`value`を束縛します。
 `buffer`の型は`buffer`または`point`です。"
   (declare (ignore default))
   (setf buffer (ensure-buffer buffer))

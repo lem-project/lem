@@ -1,6 +1,6 @@
-(defpackage :lem-lisp-mode.misc-commands
-  (:use :cl :lem :lem-lisp-mode))
-(in-package :lem-lisp-mode.misc-commands)
+(defpackage :lem-lisp-mode/misc-commands
+  (:use :cl :lem :lem-lisp-mode/internal))
+(in-package :lem-lisp-mode/misc-commands)
 
 (defparameter *defpackage-names*
   '("defpackage"
@@ -96,18 +96,6 @@
         (pushnew s symbols)))
     symbols))
 
-#|
-(define-command lisp-add-missing-import-from (symbol-name)
-    ((list (prompt-for-symbol-name "Symbol: " (symbol-string-at-point (current-point)))))
-  (multiple-value-bind (symbol external-p symbol-name package)
-      (swank::parse-symbol symbol-name)
-    (let ((point (current-point)))
-      (multiple-value-bind (point exists)
-          (go-to-defpackage-spec-form point ":import-from")
-        (when point
-          )))))
-|#
-
 
 (defun find-utopian-route (point)
   (when (in-string-p point)
@@ -146,7 +134,7 @@
                              (line-start point)
                              (position-at-point point)))))))))))
 
-(pushnew 'find-utopian-route lem-lisp-mode::*find-definitions*)
+(pushnew 'find-utopian-route lem-lisp-mode/internal:*find-definitions*)
 
 
 (define-command lisp-defstruct-to-defclass () ()

@@ -1,4 +1,4 @@
-(in-package :lem-lisp-mode)
+(in-package :lem-lisp-mode/internal)
 
 (define-attribute inspector-label-attribute
   (:light :foreground "LightSteelBlue"))
@@ -247,14 +247,11 @@
 (define-command lisp-inspector-copy-down-to-repl () ()
   (copy-down-to-repl 'swank:inspector-nth-part (inspector-get-part)))
 
-(pushnew (lambda (event)
-           (alexandria:destructuring-case event
-             ((:inspect what thread tag)
-              (let ((hook (when (and thread tag)
-                            (alexandria:curry (lambda (sexp)
-                                                (send-message-string
-                                                 *connection*
-                                                 sexp))
-                                              `(:emacs-return ,thread ,tag nil)))))
-                (open-inspector what nil hook)))))
-         *event-hooks*)
+(define-message (:inspect what thread tag)
+  (let ((hook (when (and thread tag)
+                (alexandria:curry (lambda (sexp)
+                                    (send-message-string
+                                     *connection*
+                                     sexp))
+                                  `(:emacs-return ,thread ,tag nil)))))
+    (open-inspector what nil hook)))

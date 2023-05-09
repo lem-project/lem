@@ -187,7 +187,8 @@
                       forward-line-fn
                       move-to-column-fn)
   (if (continue-flag :next-line)
-      (assert (not (null (cursor-saved-column (current-point)))))
+      (unless (not (null (cursor-saved-column (current-point))))
+        (log:error "asseriton error: (not (null (cursor-saved-column (current-point))))"))
       (setf (cursor-saved-column (current-point))
             (funcall point-column-fn (current-point))))
   (unless (prog1 (funcall forward-line-fn (current-point) n)

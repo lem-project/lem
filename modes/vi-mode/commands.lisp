@@ -544,13 +544,15 @@
   (redo n)
   (fall-within-line (current-point)))
 
-(defun vi-forward-matching-paren (window point)
+(defun vi-forward-matching-paren (window point &optional (offset *cursor-offset*))
+  (declare (ignore window offset))
   (with-point ((point point))
     (when (syntax-open-paren-char-p (character-at point))
       (when (scan-lists point 1 0 t)
         (character-offset point *cursor-offset*)))))
 
 (defun vi-backward-matching-paren (window point &optional (offset -1))
+  (declare (ignore window offset))
   (when (syntax-closed-paren-char-p (character-at point))
     (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t)))
 

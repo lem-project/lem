@@ -1,5 +1,5 @@
-(defpackage :lem-lisp-mode.package-inferred-system
-  (:use :cl :lem :lem-lisp-mode)
+(defpackage :lem-lisp-mode/package-inferred-system
+  (:use :cl :lem :lem-lisp-mode/internal)
   (:import-from :trivial-types
                 :property-list-p)
   (:import-from :alexandria
@@ -7,7 +7,7 @@
                 :if-let
                 :when-let
                 :lastcar))
-(in-package :lem-lisp-mode.package-inferred-system)
+(in-package :lem-lisp-mode/package-inferred-system)
 
 (defstruct project-root
   asd-file
@@ -139,7 +139,7 @@
             (prin1 form stream)
             (terpri stream)))))))
 
-(defmethod execute-find-file ((mode (eql 'lisp-mode)) pathname)
+(defmethod execute-find-file (executor (mode (eql 'lisp-mode)) pathname)
   (let ((buffer (call-next-method)))
     (when (empty-buffer-p buffer)
       (when-let (package-name (infer-package-name (buffer-filename buffer)))

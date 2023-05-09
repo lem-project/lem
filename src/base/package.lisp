@@ -78,6 +78,7 @@
    :current-buffer
    :make-buffer
    :buffer
+   :text-buffer
    :bufferp
    :buffer-start-point
    :buffer-end-point
@@ -305,6 +306,7 @@
    :*external-format-function*
    :*find-directory-function*
    :*default-external-format*
+   :encoding-read-error
    :insert-file-contents
    :find-file-buffer
    :write-to-file

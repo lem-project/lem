@@ -933,35 +933,6 @@ window width is changed, we must recalc the window view point."
                              (grow-window-horizontally-internal right-windows left-windows n))
                            :hsplit))
 
-(defun adjust-windows (frame-x frame-y frame-width frame-height)
-  (let ((window-list (window-list)))
-    (let ((old-frame-x (window-x (first (collect-left-windows window-list))))
-          (old-frame-y (window-y (first (collect-top-windows window-list)))))
-      (dolist (window window-list)
-        (window-set-pos window
-                        (+ (window-x window) (- frame-x old-frame-x))
-                        (+ (window-y window) (- frame-y old-frame-y))))
-      (let ((delete-windows '()))
-        (dolist (window window-list)
-          (cond ((<= frame-height (+ 2 (window-y window)))
-                 (push window delete-windows))
-                ((<= frame-width (+ 1 (window-x window)))
-                 (push window delete-windows))))
-        (dolist (window delete-windows)
-          (when (one-window-p) (return))
-          (delete-window window)))))
-  (let ((window-list (window-list)))
-    (dolist (window (collect-right-windows window-list))
-      (window-resize window
-                     (- frame-width
-                        (+ (window-x window) (window-width window)))
-                     0))
-    (dolist (window (collect-bottom-windows window-list))
-      (window-resize window
-                     0
-                     (- frame-height
-                        (+ (window-y window) (window-height window)))))))
-
 ;;; buffers
 (defun get-buffer-windows (buffer &key (frame (current-frame))
                                        (include-floating-windows nil))
@@ -1210,10 +1181,7 @@ window width is changed, we must recalc the window view point."
 (defun adjust-all-window-size ()
   (dolist (window (frame-header-windows (current-frame)))
     (window-set-size window (display-width) 1))
-  (adjust-windows (topleft-window-x (current-frame))
-                  (topleft-window-y (current-frame))
-                  (+ (max-window-width (current-frame)) (topleft-window-x (current-frame)))
-                  (+ (max-window-height (current-frame)) (topleft-window-y (current-frame)))))
+  (balance-windows))
 
 (defun change-display-size-hook ()
   (lem-if:resize-display-before (implementation))

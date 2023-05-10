@@ -1,0 +1,8 @@
+[Desktop Entry]
+Name=Lem
+Exec={EXEC_PLACEHOLDER}
+Comment=Common Lisp editor/IDE with high expansibility
+Terminal=false
+Icon={ICON_PLACEHOLDER}
+Type=Application
+Category=Development;

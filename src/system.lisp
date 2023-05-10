@@ -1,5 +1,11 @@
 (in-package :lem)
 
+(defparameter *deployed* nil)
+
+(defun lem-relative-pathname (pathname)
+  (when *deployed*
+    (merge-pathnames pathname (uiop:pathname-directory-pathname (first sb-ext:*posix-argv*)))))
+
 (defun get-pid ()
   #+sbcl
   (sb-posix:getpid)

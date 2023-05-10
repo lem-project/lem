@@ -29,7 +29,8 @@
   ;; system.lisp
   (:export
    :get-pid
-   :exist-program-p)
+   :exist-program-p
+   :lem-relative-pathname)
   ;; key.lisp
   (:export
    :make-key

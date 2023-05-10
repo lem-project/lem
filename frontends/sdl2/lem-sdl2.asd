@@ -5,7 +5,8 @@
                "lem"
                "lem/extensions")
   :serial t
-  :components ((:file "platform")
+  :components ((:file "resource")
+               (:file "platform")
                (:file "keyboard")
                (:file "font")
                (:file "icon")

@@ -3,7 +3,8 @@
         :lem-sdl2/keyboard
         :lem-sdl2/font
         :lem-sdl2/icon
-        :lem-sdl2/platform)
+        :lem-sdl2/platform
+        :lem-sdl2/resource)
   (:export :change-font
            :set-keyboard-layout
            :render
@@ -138,9 +139,7 @@
   (or (gethash character *font-cache*)
       (let ((font-name (icon-font-name character)))
         (when font-name
-          (let ((pathname (asdf:system-relative-pathname
-                           :lem-sdl2
-                           (merge-pathnames font-name "resources/fonts/"))))
+          (let ((pathname (get-resource-pathname (merge-pathnames font-name "resources/fonts/"))))
             (setf (gethash character *font-cache*)
                   (sdl2-ttf:open-font pathname
                                       (font-config-size (display-font-config *display*)))))))))
@@ -683,8 +682,7 @@
      (on-windowevent event))))
 
 (defun init-application-icon (window)
-  (let ((image (sdl2-image:load-image
-                (asdf:system-relative-pathname :lem-sdl2 "resources/icon.png"))))
+  (let ((image (sdl2-image:load-image (get-resource-pathname "resources/icon.png"))))
     (sdl2-ffi.functions:sdl-set-window-icon window image)
     (sdl2:free-surface image)))
 

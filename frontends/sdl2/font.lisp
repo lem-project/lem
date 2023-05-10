@@ -1,5 +1,7 @@
 (defpackage :lem-sdl2/font
   (:use :cl)
+  (:import-from :lem-sdl2/resource
+                :get-resource-pathname)
   (:export :font
            :font-latin-normal-font
            :font-latin-bold-font
@@ -51,35 +53,27 @@
   (%make-font-config
    :size (lem:config :font-size (or size 20))
    :latin-normal-file (or latin-normal-file
-                          (lem:config :normal-font
-                                      (asdf:system-relative-pathname
-                                       :lem-sdl2
-                                       "resources/fonts/NotoSansMono-Regular.ttf")))
+                          (lem:config
+                           :sdl2-normal-font
+                           (get-resource-pathname "resources/fonts/NotoSansMono-Regular.ttf")))
    :latin-bold-file (or latin-bold-file
-                        (lem:config :bold-font
-                                    (asdf:system-relative-pathname
-                                     :lem-sdl2
-                                     "resources/fonts/NotoSansMono-Bold.ttf")))
-   ;; TODO: lem:config
+                        (lem:config
+                         :sdl2-bold-font
+                         (get-resource-pathname "resources/fonts/NotoSansMono-Bold.ttf")))
    :cjk-normal-file (or cjk-normal-file
-                        (lem:config :cjk-normal-font
-                                    (asdf:system-relative-pathname
-                                     :lem-sdl2
-                                     "resources/fonts/NotoSansCJK-Regular.ttc")))
+                        (lem:config
+                         :sdl2-cjk-normal-font
+                         (get-resource-pathname "resources/fonts/NotoSansCJK-Regular.ttc")))
    :cjk-bold-file (or cjk-bold-file
-                      (lem:config :cjk-bold-font
-                                  (asdf:system-relative-pathname
-                                   :lem-sdl2
-                                   "resources/fonts/NotoSansCJK-Bold.ttc")))
+                      (lem:config
+                       :sdl2-cjk-bold-font
+                       (get-resource-pathname "resources/fonts/NotoSansCJK-Bold.ttc")))
    :emoji-file (or emoji-file
-                   (lem:config :emoji-font
-                               (asdf:system-relative-pathname
-                                :lem-sdl2
-                                "resources/fonts/NotoColorEmoji.ttf")))
+                   (lem:config
+                    :sdl2-emoji-font
+                    (get-resource-pathname "resources/fonts/NotoColorEmoji.ttf")))
    :braille-file (or brail-file
-                     (asdf:system-relative-pathname
-                      :lem-sdl2
-                      "resources/fonts/FreeMono.ttf"))))
+                     (get-resource-pathname "resources/fonts/FreeMono.ttf"))))
 
 (defun merge-font-config (new old)
   (%make-font-config :size (or (font-config-size new)

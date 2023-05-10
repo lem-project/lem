@@ -19,6 +19,8 @@
    :*lisp-ui-keymap*
    :lisp-ui-default-action
    :lisp-ui-forward-button
+   ;; file-conversion.lisp
+   :*file-conversion-map*
    ;; lisp-mode.lisp
    :lisp-mode
    :load-file-functions

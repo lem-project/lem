@@ -23,6 +23,7 @@
                              (:file "defstruct-to-defclass")))
                (:module "lisp-mode"
                 :components ((:file "package-inferred-system")))
+               (:file "killring")
                (:file "string-width-utils")
                (:file "syntax-test")
                (:file "buffer-list-test")

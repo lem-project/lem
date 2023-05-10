@@ -23,7 +23,6 @@
   (setup-foreign-library-directories)
   (apply #'lem:lem args))
 
-#+(and sbcl sb-core-compression)
 (apply #'sb-ext:save-lisp-and-die
        "build/linux/lem"
        :toplevel 'launch

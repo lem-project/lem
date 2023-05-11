@@ -32,6 +32,7 @@
            :directory-files
            :list-directory
            :file-size
+           :copy-file-or-directory
            :virtual-probe-file
            :with-open-virtual-file)
   ;; errors.lisp

@@ -89,6 +89,22 @@
   #-win32
   (ignore-errors (with-open-file (in pathname) (file-length in))))
 
+(defun copy-file-or-directory (from to)
+  (let ((base-dir from))
+    (labels ((rec (from to)
+               (cond ((uiop:directory-pathname-p from)
+                      (dolist (from-file (uiop:directory-files from))
+                        (rec from-file (merge-pathnames (enough-namestring from-file base-dir) to)))
+                      (dolist (from-dir (uiop:subdirectories from))
+                        (rec from-dir
+                             (merge-pathnames (uiop:pathname-parent-directory-pathname
+                                               (enough-namestring from-dir base-dir))
+                                              to))))
+                     (t
+                      (ensure-directories-exist to)
+                      (uiop:copy-file from to)))))
+      (rec from to))))
+
 (defparameter *virtual-file-open* nil)
 
 (defun open-virtual-file (filename &key external-format direction element-type)

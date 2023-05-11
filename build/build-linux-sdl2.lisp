@@ -21,6 +21,9 @@
   (setup-foreign-library-directories)
   (apply #'lem:lem args))
 
+(lem:copy-file-or-directory (asdf:system-relative-pathname :lem-sdl2 "resources/")
+                            "linux/resources/")
+
 (apply #'sb-ext:save-lisp-and-die
        "linux/lem"
        :toplevel 'launch

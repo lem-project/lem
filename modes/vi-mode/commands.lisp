@@ -655,7 +655,7 @@
   (vi-quit nil))
 
 (define-command vi-end-insert () ()
-  (change-state 'command)
+  (change-state 'normal)
   (vi-backward-char 1))
 
 (define-command vi-insert () ()
@@ -702,7 +702,7 @@
     (jump-next)))
 
 (define-command vi-normal () ()
-  (change-state 'command))
+  (change-state 'normal))
 
 (define-command vi-keyboard-quit () ()
   (when (eq (current-state) 'modeline)

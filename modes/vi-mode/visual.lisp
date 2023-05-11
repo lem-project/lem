@@ -88,7 +88,7 @@
 
 (define-command vi-visual-end () ()
   (clear-visual-overlays)
-  (change-state 'command))
+  (change-state 'normal))
 
 (define-command vi-visual-char () ()
   (if (visual-char-p)

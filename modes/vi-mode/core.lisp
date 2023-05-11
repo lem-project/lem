@@ -1,4 +1,4 @@
-(defpackage :lem-vi-mode.core
+(defpackage :lem-vi-mode/core
   (:use :cl
         :lem
         :lem/universal-argument)
@@ -14,7 +14,7 @@
            :*inactive-keymap*
            :command
            :insert))
-(in-package :lem-vi-mode.core)
+(in-package :lem-vi-mode/core)
 
 (defvar *default-cursor-color* nil)
 

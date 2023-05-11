@@ -1,8 +1,8 @@
-(defpackage :lem-tests/killring
+(defpackage :lem-tests/common/killring
   (:use :cl
         :rove
         :lem/common/killring))
-(in-package :lem-tests/killring)
+(in-package :lem-tests/common/killring)
 
 (deftest simple-test
   (let ((killring (make-killring 10)))
@@ -56,7 +56,7 @@
     (ok (equal "b" (peek-killring-item killring 0)))
     (ok (equal "a" (peek-killring-item killring 1)))))
 
-(deftest option
+(deftest internal-option
   (let ((killring (make-killring 10)))
     (push-killring-item killring "foo" :options :test)
     (ok (equal '("foo" (:test))

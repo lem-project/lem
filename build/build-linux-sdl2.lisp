@@ -1,5 +1,3 @@
-;; usage: sbcl --load build.lisp
-
 (ql:quickload :lem-sdl2)
 
 (setq lem::*deployed* t)
@@ -24,7 +22,7 @@
   (apply #'lem:lem args))
 
 (apply #'sb-ext:save-lisp-and-die
-       "build/linux/lem"
+       "linux/lem"
        :toplevel 'launch
        :executable t
        #+sb-core-compression

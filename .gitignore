@@ -28,3 +28,5 @@ lem-ncurses.desktop
 GIT_IGNORE.*
 
 lem
+lem-ncurses
+

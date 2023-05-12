@@ -1,10 +1,10 @@
-(defpackage :lem-vi-mode.ex
+(defpackage :lem-vi-mode/ex
   (:use :cl
         :lem
-        :lem-vi-mode.core
-        :lem-vi-mode.ex-parser)
+        :lem-vi-mode/core
+        :lem-vi-mode/ex-parser)
   (:export :vi-ex))
-(in-package :lem-vi-mode.ex)
+(in-package :lem-vi-mode/ex)
 
 (defvar *ex-keymap* (make-keymap :name '*ex-keymap*))
 
@@ -44,5 +44,5 @@
         :history-symbol 'vi-ex)))))
 
 (defun execute-ex (string)
-  (let ((lem-vi-mode.ex-core:*point* (current-point)))
+  (let ((lem-vi-mode/ex-core:*point* (current-point)))
     (eval (parse-ex string))))

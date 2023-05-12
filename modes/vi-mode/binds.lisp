@@ -1,13 +1,13 @@
-(defpackage :lem-vi-mode.binds
+(defpackage :lem-vi-mode/binds
   (:use :cl
         :lem
         :lem/universal-argument
         :lem/abbrev
-        :lem-vi-mode.core
-        :lem-vi-mode.commands
-        :lem-vi-mode.ex
-        :lem-vi-mode.visual))
-(in-package :lem-vi-mode.binds)
+        :lem-vi-mode/core
+        :lem-vi-mode/commands
+        :lem-vi-mode/ex
+        :lem-vi-mode/visual))
+(in-package :lem-vi-mode/binds)
 
 (define-key *command-keymap* "0" 'vi-move-to-beginning-of-line/universal-argument-0)
 (define-key *command-keymap* "1" 'universal-argument-1)

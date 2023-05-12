@@ -1,10 +1,10 @@
-(defpackage #:lem-vi-mode.jump-motions
+(defpackage #:lem-vi-mode/jump-motions
   (:use #:cl
         #:lem)
   (:export #:with-jump-motion
            #:jump-back
            #:jump-next))
-(in-package #:lem-vi-mode.jump-motions)
+(in-package #:lem-vi-mode/jump-motions)
 
 (defvar *prev-jump-points* '())
 (defvar *current-point* nil)

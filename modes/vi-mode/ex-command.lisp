@@ -1,8 +1,8 @@
-(defpackage :lem-vi-mode.ex-command
-  (:use :cl :lem-vi-mode.ex-core)
-  (:import-from #:lem-vi-mode.jump-motions
+(defpackage :lem-vi-mode/ex-command
+  (:use :cl :lem-vi-mode/ex-core)
+  (:import-from #:lem-vi-mode/jump-motions
                 #:with-jump-motion))
-(in-package :lem-vi-mode.ex-command)
+(in-package :lem-vi-mode/ex-command)
 
 (defun ex-write (range filename touch)
   (case (length range)
@@ -17,7 +17,7 @@
 
 (defun ex-write-quit (range filename force touch)
   (ex-write range filename touch)
-  (lem-vi-mode.commands:vi-quit force))
+  (lem-vi-mode/commands:vi-quit force))
 
 (define-ex-command "^e$" (range filename)
   (declare (ignore range))
@@ -39,7 +39,7 @@
 
 (define-ex-command "^q$" (range argument)
   (declare (ignore range argument))
-  (lem-vi-mode.commands:vi-quit t))
+  (lem-vi-mode/commands:vi-quit t))
 
 (define-ex-command "^qa$" (range argument)
   (declare (ignore range argument))
@@ -47,7 +47,7 @@
 
 (define-ex-command "^q!$" (range argument)
   (declare (ignore range argument))
-  (lem-vi-mode.commands:vi-quit nil))
+  (lem-vi-mode/commands:vi-quit nil))
 
 (define-ex-command "^qa!$" (range argument)
   (declare (ignore range argument))
@@ -92,7 +92,7 @@
          (setf start (first range)
                end (second range))))
       (destructuring-bind (before after flag)
-          (lem-vi-mode.ex-parser:parse-subst-argument argument)
+          (lem-vi-mode/ex-parser:parse-subst-argument argument)
         (if (not (lem:with-point ((s start)
                                   (e end))
                    (lem:search-forward-regexp s before e)))
@@ -131,7 +131,7 @@
   (declare (ignore range))
   (lem:pipe-command
    (format nil "~A ~A"
-          (subseq lem-vi-mode.ex-core:*command* 1)
+          (subseq lem-vi-mode/ex-core:*command* 1)
           command)))
 
 (define-ex-command "^(buffers|ls|files)$" (range argument)

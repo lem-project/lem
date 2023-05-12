@@ -1,12 +1,12 @@
-(defpackage :lem-vi-mode.commands
+(defpackage :lem-vi-mode/commands
   (:use :cl
         :lem
         :lem/universal-argument
         :lem/show-paren
-        :lem-vi-mode.core
-        :lem-vi-mode.word
-        :lem-vi-mode.visual
-        :lem-vi-mode.jump-motions)
+        :lem-vi-mode/core
+        :lem-vi-mode/word
+        :lem-vi-mode/visual
+        :lem-vi-mode/jump-motions)
   (:export :vi-move-to-beginning-of-line/universal-argument-0
            :vi-forward-char
            :vi-backward-char
@@ -72,7 +72,7 @@
            :vi-jump-next
            :vi-normal
            :vi-keyboard-quit))
-(in-package :lem-vi-mode.commands)
+(in-package :lem-vi-mode/commands)
 
 (defvar *cursor-offset* -1)
 (defvar *vi-clear-recursive* nil)

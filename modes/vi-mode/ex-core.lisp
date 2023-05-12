@@ -1,4 +1,4 @@
-(defpackage :lem-vi-mode.ex-core
+(defpackage :lem-vi-mode/ex-core
   (:use :cl)
   (:export :*point*
            :syntax-error
@@ -15,7 +15,7 @@
            :call-ex-command
            :define-ex-command
            :*command*))
-(in-package :lem-vi-mode.ex-core)
+(in-package :lem-vi-mode/ex-core)
 
 (defvar *point*)
 (defvar *command-table* '())

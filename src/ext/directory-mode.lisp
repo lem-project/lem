@@ -244,7 +244,9 @@
 
 (defun delete-file* (file)
   #+windows
-  (uiop:delete-directory-tree file)
+  (if (uiop:directory-pathname-p file)
+      (sb-ext:delete-directory file :recursive t)
+      (delete-file file))
   #-windows
   (run-command `("rm" "-fr" ,file)))
 
@@ -388,10 +390,11 @@
   (query-replace-marked-files 'lem/isearch:query-replace-symbol))
 
 (define-command directory-mode-delete-files () ()
-  (when (prompt-for-y-or-n-p "Really delete files")
-    (dolist (file (selected-files (current-point)))
-      (delete-file* file))
-    (update-all)))
+  (let ((files (selected-files (current-point))))
+    (when (prompt-for-y-or-n-p (format nil "Really delete files~%~{- ~A~%~}" files))
+      (dolist (file files)
+        (delete-file* file))
+      (update-all))))
 
 (defun get-dest-directory ()
   (dolist (window (window-list) (buffer-directory))

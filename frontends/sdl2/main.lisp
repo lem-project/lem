@@ -910,16 +910,6 @@
   (with-debug ("lem-if:scroll" view n)
     ))
 
-(defmethod lem-if:clipboard-paste ((implementation sdl2))
-  (with-debug ("clipboard-paste")
-    (with-renderer ()
-      (sdl2-ffi.functions:sdl-get-clipboard-text))))
-
-(defmethod lem-if:clipboard-copy ((implementation sdl2) text)
-  (with-debug ("clipboard-copy")
-    (with-renderer ()
-      (sdl2-ffi.functions:sdl-set-clipboard-text text))))
-
 (defmethod lem-if:increase-font-size ((implementation sdl2))
   (with-debug ("increase-font-size")
     (with-renderer ()
@@ -1146,3 +1136,30 @@
     (draw-image buffer image :x 0 :y 0)
     (setf (lem:buffer-read-only-p buffer) t)
     (lem:switch-to-buffer buffer)))
+
+;;;
+(setq lem::*enable-clipboard-p* t)
+
+#-windows
+(defmethod lem-if:clipboard-paste ((implementation sdl2))
+  (with-debug ("clipboard-paste")
+    (with-renderer ()
+      (sdl2-ffi.functions:sdl-get-clipboard-text))))
+
+
+#+windows
+(defmethod lem-if:clipboard-paste ((implementation sdl2))
+  (with-debug ("clipboard-paste")
+    (with-renderer ()
+      (with-output-to-string (out)
+        (let ((text (sdl2-ffi.functions:sdl-get-clipboard-text)))
+          (loop :for string :in (split-sequence:split-sequence #\newline text)
+                :do (if (and (< 0 (length string))
+                             (char= #\return (char string (1- (length string)))))
+                        (write-line (subseq string 0 (1- (length string))) out)
+                        (write-string string out))))))))
+
+(defmethod lem-if:clipboard-copy ((implementation sdl2) text)
+  (with-debug ("clipboard-copy")
+    (with-renderer ()
+      (sdl2-ffi.functions:sdl-set-clipboard-text text))))

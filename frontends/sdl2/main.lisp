@@ -684,7 +684,10 @@
 
 (defun event-loop ()
   (sdl2:with-event-loop (:method :wait)
-    (:quit () t)
+    (:quit ()
+     #+windows
+     (cffi:foreign-funcall "_exit")
+     t)
     (:textinput (:text text)
      (on-textinput text))
     (:textediting (:text text)

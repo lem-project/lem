@@ -280,8 +280,26 @@
       (sdl2:destroy-texture texture)
       2)))
 
+(defun render-folder-icon (x y)
+  (let* ((image (sdl2-image:load-image (get-resource-pathname "resources/open-folder.png")))
+         (texture (sdl2:create-texture-from-surface (current-renderer)
+                                                    image)))
+    (sdl2:with-rects ((dest-rect (* x (char-width))
+                                 (* y (char-height))
+                                 (* 2 (char-width))
+                                 (floor (* (char-height) 0.9))))
+      (sdl2:render-copy (current-renderer)
+                        texture
+                        :dest-rect dest-rect))
+    (sdl2:free-surface image)
+    (sdl2:destroy-texture texture)))
+
 (defun guess-font-type (display code)
-  (cond ((<= code 128)
+  (cond #+windows
+        ((eql code #x1f4c1)
+         ;; sdl2_ttf.dllでなぜか絵文字を表示できないので代わりにフォルダの画像を使う
+         :folder)
+        ((<= code 128)
          :latin)
         ((icon-char-code-p code)
          :icon)
@@ -300,37 +318,42 @@
   (handler-case
       (let* ((code (char-code character))
              (type (guess-font-type *display* code)))
-        (if (eq type :icon)
-            (render-icon character x y :color color)
-            (cffi:with-foreign-string (c-string (string character))
-              (let* ((x (* x (char-width)))
-                     (y (* y (char-height)))
-                     (surface (sdl2-ttf:render-utf8-blended
-                               (get-display-font *display*
-                                                 :type type
-                                                 :bold bold
-                                                 :character character)
-                               c-string
-                               (lem:color-red color)
-                               (lem:color-green color)
-                               (lem:color-blue color)
-                               0))
-                     (text-width (cond ((eq type :emoji)
-                                        (* 2 (char-width)))
+        (case type
+          (:folder
+           (render-folder-icon x y)
+           2)
+          (:icon
+           (render-icon character x y :color color))
+          (otherwise
+           (cffi:with-foreign-string (c-string (string character))
+             (let* ((x (* x (char-width)))
+                    (y (* y (char-height)))
+                    (surface (sdl2-ttf:render-utf8-blended
+                              (get-display-font *display*
+                                                :type type
+                                                :bold bold
+                                                :character character)
+                              c-string
+                              (lem:color-red color)
+                              (lem:color-green color)
+                              (lem:color-blue color)
+                              0))
+                    (text-width (cond ((eq type :emoji)
+                                       (* 2 (char-width)))
+                                      ((eq type :braille)
+                                       (char-width))
+                                      (t
+                                       (sdl2:surface-width surface))))
+                    (text-height (cond ((eq type :emoji)
+                                        (char-height))
                                        ((eq type :braille)
-                                         (char-width))
+                                        (char-height))
                                        (t
-                                        (sdl2:surface-width surface))))
-                     (text-height (cond ((eq type :emoji)
-                                         (char-height))
-                                        ((eq type :braille)
-                                         (char-height))
-                                        (t
-                                         (sdl2:surface-height surface))))
-                     (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
-                (render-texture (current-renderer) texture x y text-width text-height)
-                (sdl2:destroy-texture texture)
-                (if (member type '(:latin :braille)) 1 2)))))
+                                        (sdl2:surface-height surface))))
+                    (texture (sdl2:create-texture-from-surface (current-renderer) surface)))
+               (render-texture (current-renderer) texture x y text-width text-height)
+               (sdl2:destroy-texture texture)
+               (if (member type '(:latin :braille)) 1 2))))))
     (sdl2-ttf::sdl-ttf-error ()
       (log:error "invalid character" character)
       1)))

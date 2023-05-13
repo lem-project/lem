@@ -200,10 +200,11 @@
     (line-offset (current-point) 1)
     (line-start (current-point)))
   (%vi-forward-word-begin n)
-  (if (or *vi-delete-recursive*
-          *vi-yank-recursive*)
-      (skip-chars-forward (current-point) '(#\Space #\Tab))
-      (skip-chars-forward (current-point) '(#\Space #\Tab #\Newline))))
+  (unless *vi-change-recursive*
+    (if (or *vi-delete-recursive*
+            *vi-yank-recursive*)
+        (skip-chars-forward (current-point) '(#\Space #\Tab))
+        (skip-chars-forward (current-point) '(#\Space #\Tab #\Newline)))))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
   (when (< 0 n)

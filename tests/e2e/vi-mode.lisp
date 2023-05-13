@@ -21,7 +21,7 @@
                           (equal "[COMMAND]" (lem-vi-mode/core::element-name element))))
                    lem::*modeline-status-list*)))
     (test "(change-state 'normal)"
-      (ok (eq lem-vi-mode.core::*current-state* 'lem-vi-mode::command))
+      (ok (eq lem-vi-mode/core::*current-state* 'lem-vi-mode::command))
 
       (ok (eq (mode-keymap (get 'lem-vi-mode:vi-mode 'lem::global-mode))
               (lem-vi-mode/core::vi-state-keymap (lem-vi-mode/core::ensure-state 'lem-vi-mode::command))))

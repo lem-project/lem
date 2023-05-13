@@ -13,6 +13,7 @@
   (cffi:load-foreign-library (lem:lem-relative-pathname "lib/libdecor-0.so.0"))
   (cffi:load-foreign-library (lem:lem-relative-pathname "lib/libLerc.so.4"))
   (cffi:load-foreign-library (lem:lem-relative-pathname "lib/libtiff.so.6"))
+  (cffi:load-foreign-library (lem:lem-relative-pathname "lib/libsamplerate.so.0"))
   (cffi:load-foreign-library (lem:lem-relative-pathname "lib/libSDL2-2.0.so.0"))
   (cffi:load-foreign-library (lem:lem-relative-pathname "lib/libSDL2_image-2.0.so.0"))
   (cffi:load-foreign-library (lem:lem-relative-pathname "lib/libSDL2_ttf-2.0.so.0")))

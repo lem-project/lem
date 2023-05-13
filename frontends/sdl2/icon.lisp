@@ -3185,7 +3185,8 @@
     ("msg"          all-the-icons-faicon "envelope"              :face all-the-icons-blue)
     ("texi"         all-the-icons-fileicon "tex"              :face all-the-icons-lred)
     ("tex"          all-the-icons-fileicon "tex"              :face all-the-icons-lred)
-    ("md"           all-the-icons-octicon "markdown"          :v-adjust 0.0 :face all-the-icons-lblue)
+    ("md"           all-the-icons-octicon "markdown"          :v-adjust 0.0 :face all-the-icons-lblue
+     :offset-x 0.0)
     ("bib"          all-the-icons-fileicon "bib"              :face all-the-icons-maroon)
     ("org"          all-the-icons-fileicon "org"              :face all-the-icons-lgreen)
     ("pps"          all-the-icons-fileicon "powerpoint"       :face all-the-icons-orange)
@@ -3251,5 +3252,8 @@
             (when (and code (< 256 code))
               (lem:register-icon name code
                                  :font font
-                                 :offset-x (getf properties :offset-x))
+                                 :offset-x (or (getf properties :offset-x)
+                                               (if (and (getf properties :v-adjust)
+                                                        (= 0.0 (getf properties :v-adjust)))
+                                                   0.3)))
               (lem-base::register-icon-ext ext name))))

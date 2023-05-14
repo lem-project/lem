@@ -215,14 +215,7 @@ Parses length information to determine how many characters to read."
   ;; Require some Swank modules
   (request-swank-require
    connection
-   '(swank-trace-dialog
-     swank-package-fu
-     swank-presentations
-     swank-fuzzy
-     swank-fancy-inspector
-     swank-c-p-c
-     swank-arglists
-     swank-repl))
+   (lem-lisp-mode/swank-modules:swank-modules))
   (read-return-message connection)
 
   ;; Start it up

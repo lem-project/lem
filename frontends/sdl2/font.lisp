@@ -21,6 +21,8 @@
            :get-font-list))
 (in-package :lem-sdl2/font)
 
+(defparameter *default-font-size* 14)
+
 (defstruct (font-config (:constructor %make-font-config))
   size
   latin-normal-file
@@ -43,7 +45,7 @@
 (defun save-font-size (font-config)
   (setf (lem:config :sdl2-font-size) (font-config-size font-config)))
 
-(defun make-font-config (&key (size (lem:config :sdl2-font-size 20))
+(defun make-font-config (&key (size (lem:config :sdl2-font-size *default-font-size*))
                               latin-normal-file
                               latin-bold-file
                               cjk-normal-file
@@ -51,7 +53,7 @@
                               emoji-file
                               brail-file)
   (%make-font-config
-   :size (lem:config :font-size (or size 20))
+   :size (lem:config :font-size (or size *default-font-size*))
    :latin-normal-file (or latin-normal-file
                           (lem:config
                            :sdl2-normal-font

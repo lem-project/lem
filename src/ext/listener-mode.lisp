@@ -214,7 +214,7 @@
 
 (defvar *listener-buffer*)
 (defvar *listener-window*)
-(defvar *history-popup-window*)
+(defvar *history-window* nil)
 (defvar *history-matched-index*)
 (defvar *history-matched-string*)
 
@@ -233,8 +233,6 @@
                 (put-text-property start end :attribute attribute)))
     (buffer-start point)
     buffer))
-
-(defvar *history-window* nil)
 
 (defun redisplay-popup (buffer)
   (when *history-window*

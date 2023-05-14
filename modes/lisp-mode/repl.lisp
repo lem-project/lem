@@ -143,13 +143,17 @@
   (check-connection)
   (listener-eval string))
 
+(defvar *repl-evaluating* nil)
+
 (defun listener-eval (string)
   (ensure-repl-buffer-exist)
+  (setf *repl-evaluating* t)
   (request-listener-eval
    *connection*
    string
    (lambda (value)
      (declare (ignore value))
+     (setf *repl-evaluating* nil)
      (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))
    (repl-buffer-width)))
 
@@ -214,18 +218,27 @@
         (declare (ignore result))
         (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))))))
 
+(defun repl-buffer-write-point (buffer)
+  (or (buffer-value buffer 'repl-write-point)
+      (setf (buffer-value buffer 'repl-write-point)
+            (let ((point (copy-point (buffer-point buffer) :left-inserting)))
+              (buffer-start point)))))
+
 (defun write-string-to-repl (string)
-  (let ((buffer (ensure-repl-buffer-exist)))
-    (with-point ((start (buffer-end-point buffer) :left-inserting))
-      (when (text-property-at start :field -1)
-        (insert-character start #\newline))
-      (insert-escape-sequence-string (buffer-end-point buffer) string))
-    (lem/listener-mode:change-input-start-point (buffer-end-point buffer))
-    (buffer-end (buffer-point buffer))
-    (alexandria:when-let ((window (get-repl-window)))
-      (with-current-window window
-        (buffer-end (buffer-point buffer))
-        (window-see window)))))
+  (let* ((buffer (ensure-repl-buffer-exist))
+         (point (repl-buffer-write-point buffer)))
+    (cond (*repl-evaluating*
+           (buffer-end point))
+          (t
+           (when (point<= (lem/listener-mode:input-start-point buffer) point)
+             (move-point point (lem/listener-mode:input-start-point buffer))
+             (previous-single-property-change point :field))))
+    (with-buffer-read-only buffer nil
+      (let ((*inhibit-read-only* t))
+        (insert-escape-sequence-string point string)
+        (when (text-property-at point :field)
+          (insert-character point #\newline)
+          (character-offset point -1))))))
 
 (defvar *escape-sequence-argument-specs*
   '(("0" :bold nil :reverse nil :underline nil)

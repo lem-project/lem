@@ -21,7 +21,7 @@
            :get-font-list))
 (in-package :lem-sdl2/font)
 
-(defparameter *default-font-size* 14)
+(defparameter *default-font-size* 15)
 
 (defstruct (font-config (:constructor %make-font-config))
   size

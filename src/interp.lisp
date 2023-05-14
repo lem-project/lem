@@ -23,7 +23,6 @@
              (make-buffer "*EDITOR ERROR*")
              (lambda (stream)
                (format stream "~A" o))
-             :focus t
              :erase t)))
 
 (defmacro with-error-handler (() &body body)

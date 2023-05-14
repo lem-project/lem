@@ -32,7 +32,7 @@
 (define-command describe-bindings () ()
   (let ((buffer (current-buffer))
         (firstp t))
-    (with-pop-up-typeout-window (s (make-buffer "*bindings*") :focus t :erase t)
+    (with-pop-up-typeout-window (s (make-buffer "*bindings*") :erase t)
       (describe-bindings-internal s
                                   (mode-name (buffer-major-mode buffer))
                                   (setf firstp (mode-keymap (buffer-major-mode buffer)))
@@ -52,7 +52,7 @@
 
 (define-command list-modes () ()
   "Outputs all available major and minor modes."
-  (with-pop-up-typeout-window (s (make-buffer "*all-modes*") :focus t :erase t)
+  (with-pop-up-typeout-window (s (make-buffer "*all-modes*") :erase t)
     (let ((major-modes (major-modes))
           (minor-modes (minor-modes)))
       (labels ((is-technical-mode (mode)
@@ -76,7 +76,7 @@
   (let* ((buffer (current-buffer))
          (major-mode (buffer-major-mode buffer))
          (minor-modes (buffer-minor-modes buffer)))
-    (with-pop-up-typeout-window (s (make-buffer "*modes*") :focus t :erase t)
+    (with-pop-up-typeout-window (s (make-buffer "*modes*") :erase t)
       (format s "Major mode is: ~A~@[ – ~A~]~%"
               (mode-name major-mode)
               (mode-description major-mode))
@@ -104,7 +104,7 @@
         (message "invalid command"))))
 
 (define-command apropos-command (str) ("sApropos: ")
-  (with-pop-up-typeout-window (out (make-buffer "*Apropos*") :focus t :erase t)
+  (with-pop-up-typeout-window (out (make-buffer "*Apropos*") :erase t)
     (dolist (name (all-command-names))
       (when (search str name)
         (describe (command-name (find-command name)) out)))))

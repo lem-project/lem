@@ -11,37 +11,11 @@
 (define-key *typeout-mode-keymap* "Backspace" 'previous-page)
 (define-key *typeout-mode-keymap* 'delete-active-window 'dismiss-typeout-window)
 
-(defvar *enable-piece-of-paper* t)
-
 (defvar *typeout-window* nil)
 (defvar *typeout-before-window* nil)
 (defvar *typeout-window-rewinding-values* nil)
 
-(defun pop-up-typeout-window* (buffer function &key focus erase (read-only t))
-  (declare (ignore focus))
-  (let ((window (display-buffer buffer)))
-    (with-buffer-read-only buffer nil
-      (when erase
-        (erase-buffer buffer))
-      (with-open-stream (out (make-buffer-output-stream (buffer-end-point buffer)))
-        (when function
-          (save-excursion
-            (funcall function out)))
-        (format out "~%--- Press Space to continue ---~%")))
-    (setf (buffer-read-only-p buffer) read-only)
-    (setf *typeout-before-window* (current-window))
-    (setf *typeout-window* window)
-    (setf (current-window) window)
-    (typeout-mode t)
-    (values)))
-
-(defun pop-up-typeout-window (buffer function &key focus erase (read-only t))
-  (unless *enable-piece-of-paper*
-    (return-from pop-up-typeout-window
-      (pop-up-typeout-window* buffer function
-                              :focus focus
-                              :erase erase
-                              :read-only read-only)))
+(defun pop-up-typeout-window (buffer function &key erase (read-only t))
   (when (and *typeout-window*
              (not (eq buffer (window-buffer *typeout-window*))))
     (dismiss-typeout-window)
@@ -121,11 +95,6 @@
   (dismiss-typeout-window))
 
 (define-command dismiss-typeout-window () ()
-  (if *enable-piece-of-paper*
-      (dismiss-typeout-window-1)
-      (dismiss-typeout-window-2)))
-
-(defun dismiss-typeout-window-1 ()
   (unless (deleted-window-p *typeout-window*)
     (setf (current-window) *typeout-window*)
     (typeout-mode nil)
@@ -140,12 +109,6 @@
           (setf (buffer-value buffer 'typeout-buffer-p) typeout-buffer-p)
           (setf (not-switchable-buffer-p buffer) not-switchable-buffer-p))))
     (delete-window *typeout-window*)))
-
-(defun dismiss-typeout-window-2 ()
-  (when (and (eq (current-buffer) (window-buffer (current-window)))
-             (find 'typeout-mode (buffer-minor-modes (current-buffer))))
-    (typeout-mode nil)
-    (quit-active-window)))
 
 (define-command next-page-or-dismiss-typeout-window () ()
   (unless (deleted-window-p *typeout-window*)

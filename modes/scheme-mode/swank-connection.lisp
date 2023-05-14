@@ -991,7 +991,6 @@
            (send-event (lambda ()
                          (let ((buffer (make-buffer "*Run Scheme Output*")))
                            (with-pop-up-typeout-window (stream buffer
-                                                               :focus t
                                                                :erase t
                                                                :read-only t)
                              (format stream "command: ~A~%" command)

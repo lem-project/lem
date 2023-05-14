@@ -25,6 +25,8 @@
 (lem:copy-file-or-directory (asdf:system-relative-pathname :lem-sdl2 "resources/")
                             "linux/resources/")
 
+(lem-lisp-mode/swank-modules:require-swank-modules)
+
 (apply #'sb-ext:save-lisp-and-die
        "linux/lem"
        :toplevel 'launch

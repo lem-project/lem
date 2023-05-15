@@ -303,10 +303,11 @@
      (cond ((null items)
             (completion-end))
            (t
-            (popup-menu-update (context-popup-menu *completion-context*)
-                               items
-                               :print-spec (make-print-spec items))
-            (call-focus-action))))))
+            (when *completion-context*
+              (popup-menu-update (context-popup-menu *completion-context*)
+                                 items
+                                 :print-spec (make-print-spec items))
+              (call-focus-action)))))))
 
 (defun run-completion (completion-spec &key style)
   (let* ((spec (ensure-completion-spec completion-spec))

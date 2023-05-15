@@ -22,7 +22,7 @@
 (define-major-mode directory-mode ()
     (:name "Directory"
      :keymap *directory-mode-keymap*)
-  (setf (variable-value 'lem::highlight-line :buffer (current-buffer)) nil))
+  (setf (variable-value 'highlight-line :buffer (current-buffer)) nil))
 
 (define-key *directory-mode-keymap* "q" 'quit-active-window)
 (define-key *directory-mode-keymap* "g" 'directory-mode-update-buffer)

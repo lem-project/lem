@@ -498,6 +498,9 @@
    :mark-sexp
    :kill-sexp
    :transpose-sexps)
+  ;; display.lisp
+  (:export
+   :highlight-line)
   ;; interface.lisp
   (:export
    :with-implementation

@@ -765,8 +765,7 @@
                                                       (lambda ())
                                                       ;; finalize
                                                       (lambda (report)
-                                                        (lem::do-log report)
-                                                        (do-log "~A" report)
+                                                        (do-log report)
                                                         (sdl2:push-quit-event)))))
                                        (declare (ignore editor-thread))
                                        nil)))))))

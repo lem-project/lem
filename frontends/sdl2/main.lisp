@@ -33,6 +33,13 @@
                     bt:*default-special-bindings*)))
        ,@body)))
 
+(defun do-log (value)
+  (with-open-file (out "~/lem.log"
+                       :direction :output
+                       :if-exists :append
+                       :if-does-not-exist :create)
+    (uiop:println value out)))
+
 (defun call-with-debug (log-function body-function)
   (funcall log-function)
   (handler-bind ((error (lambda (e)
@@ -758,7 +765,8 @@
                                                       (lambda ())
                                                       ;; finalize
                                                       (lambda (report)
-                                                        (log:info "~A" report)
+                                                        (lem::do-log report)
+                                                        (do-log "~A" report)
                                                         (sdl2:push-quit-event)))))
                                        (declare (ignore editor-thread))
                                        nil)))))))

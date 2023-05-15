@@ -59,7 +59,9 @@
    :color-red
    :color-green
    :color-blue
-   :parse-color)
+   :parse-color
+   :rgb-to-hsv
+   :hsv-to-rgb)
   ;; attribute.lisp
   (:export
    :make-attribute

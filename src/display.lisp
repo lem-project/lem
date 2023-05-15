@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(define-editor-variable highlight-line t)
+(define-editor-variable highlight-line nil)
 
 (defvar *inactive-window-background-color* nil)
 
@@ -124,7 +124,8 @@
         (format nil "#~X~X~X" r g b)))))
 
 (defun make-temporary-highlight-line-overlay ()
-  (when (variable-value 'highlight-line :default (current-buffer))
+  (when (and (variable-value 'highlight-line :default (current-buffer))
+             (current-theme))
     (let ((ov (make-temporary-overlay (current-point)
                                       (current-point)
                                       (make-attribute :background (highlight-line-color)))))

@@ -21,6 +21,7 @@
 (in-package :lem-sdl2)
 
 (pushnew :lem-sdl2 *features*)
+(setf (lem:variable-value 'lem:highlight-line :global) t)
 
 (defconstant +display-width+ 100)
 (defconstant +display-height+ 40)

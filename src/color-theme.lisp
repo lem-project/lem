@@ -1,6 +1,6 @@
 (in-package :lem)
 
-(defvar *current-theme*)
+(defvar *current-theme* nil)
 
 (defun current-theme ()
   *current-theme*)

@@ -99,7 +99,7 @@
 (defun remove-and-change-connection (connection)
   (remove-connection connection)
   (when (eq connection (current-connection))
-    (setf (current-connection) (first (connection-list))))
+    (change-current-connection (first (connection-list))))
   (values))
 
 (defvar *self-connected-port* nil)
@@ -1153,7 +1153,8 @@
              (kill-buffer buffer))
            (lem-process:delete-process (connection-process connection))
            t)
-    (remove-and-change-connection connection)))
+    (remove-and-change-connection connection)
+    (usocket:socket-close (lem-lisp-mode/swank-protocol::connection-socket connection))))
 
 (define-command slime-quit () ()
   (when (self-connection-p (current-connection))

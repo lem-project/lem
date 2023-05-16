@@ -141,10 +141,10 @@
   (let* ((buffer (window-buffer window))
          (overlays (overlays buffer)))
     (when (eq (current-window) window)
-      (if-push (make-temporary-highlight-line-overlay) overlays)
       (dolist (cursor (buffer-cursors buffer))
         (if-push (make-temporary-region-overlay-from-cursor cursor)
-                 overlays)))
+                 overlays))
+      (if-push (make-temporary-highlight-line-overlay) overlays))
     overlays))
 
 (defun draw-window-overlays-to-screen (window)

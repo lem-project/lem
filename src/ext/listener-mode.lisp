@@ -237,14 +237,22 @@
 (defun redisplay-popup (buffer)
   (when *history-window*
     (delete-window *history-window*))
-  (setf *history-window*
-        (make-floating-window :buffer buffer
-                              :x (window-x *listener-window*)
-                              :y (+ (window-y (current-window))
-                                    (window-cursor-y (current-window))
-                                    1)
-                              :width (window-width *listener-window*)
-                              :height 1)))
+  (let* ((x (window-x *listener-window*))
+         (y (+ (window-y *listener-window*)
+               (window-cursor-y *listener-window*)
+               1))
+         (w (window-width *listener-window*))
+         (h (alexandria:clamp (buffer-nlines buffer)
+                              1
+                              (max 1 (- (window-height *listener-window*)
+                                        (window-cursor-y *listener-window*)
+                                        2)))))
+    (setf *history-window*
+          (make-floating-window :buffer buffer
+                                :x x
+                                :y y
+                                :width w
+                                :height h))))
 
 (defun isearch-continue (next-or-previous-matching)
   (let ((buffer *listener-buffer*))

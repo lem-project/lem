@@ -31,11 +31,11 @@
 
 (define-vi-state visual (:keymap *visual-keymap*))
 
-(defmethod state-enable-hook ((state visual) &rest args)
+(defmethod state-enabled-hook ((state visual) &rest args)
    (setf *set-visual-function* (caar args))
    (setf *start-point* (copy-point (current-point))))
 
-(defmethod state-disable-hook ((state visual))
+(defmethod state-disabled-hook ((state visual))
    (delete-point *start-point*)
    (clear-visual-overlays))
 

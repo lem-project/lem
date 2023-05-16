@@ -14,8 +14,8 @@
            :*insert-keymap*
            :*inactive-keymap*
            :post-command-hook
-           :state-enable-hook
-           :state-disable-hook
+           :state-enabled-hook
+           :state-disabled-hook
            :normal
            :insert))
 (in-package :lem-vi-mode/core)
@@ -95,13 +95,13 @@
 
 (defmethod post-command-hook ((state vi-state)))
 
-(defgeneric state-enable-hook (state &rest args))
+(defgeneric state-enabled-hook (state &rest args))
 
-(defmethod state-enable-hook ((state vi-state) &rest args))
+(defmethod state-enabled-hook ((state vi-state) &rest args))
 
-(defgeneric state-disable-hook (state))
+(defgeneric state-disabled-hook (state))
 
-(defmethod state-disable-hook ((state vi-state)))
+(defmethod state-disabled-hook ((state vi-state)))
 
 (defun current-state ()
   *current-state*)
@@ -116,12 +116,12 @@
 
 (defun change-state (name &rest args)
   (and *current-state*
-       (state-disable-hook (ensure-state *current-state*))) 
+       (state-disabled-hook (ensure-state *current-state*))) 
   (let ((state (ensure-state name)))
     (setf *current-state* name)
     (change-global-mode-keymap 'vi-mode (state-keymap state))
     (change-element-name (format nil "[~A]" name))
-    (state-enable-hook state args)
+    (state-enabled-hook state args)
     (unless *default-cursor-color*
       (setf *default-cursor-color*
             (attribute-background (ensure-attribute 'cursor nil))))
@@ -147,7 +147,7 @@
 
 (define-vi-state insert (:keymap *insert-keymap* :cursor-color "IndianRed"))
 
-(defmethod state-enable-hook ((state insert) &rest args)
+(defmethod state-enabled-hook ((state insert) &rest args)
   (message " -- INSERT --"))
 
 (define-vi-state modeline (:keymap *inactive-keymap*))

@@ -71,7 +71,7 @@
   :reader cursor-type)
   (keymap
   :initarg :keymap
-  :reader kmap)
+  :reader state-keymap)
   (cursor-color
   :initarg :cursor-color
   :accessor cursor-color)))
@@ -119,7 +119,7 @@
        (state-disable-hook (ensure-state *current-state*))) 
   (let ((state (ensure-state name)))
     (setf *current-state* name)
-    (change-global-mode-keymap 'vi-mode (kmap state))
+    (change-global-mode-keymap 'vi-mode (state-keymap state))
     (change-element-name (format nil "[~A]" name))
     (state-enable-hook state args)
     (unless *default-cursor-color*

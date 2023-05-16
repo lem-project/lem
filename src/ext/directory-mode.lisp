@@ -340,8 +340,11 @@
 
 (define-command directory-mode-find-file-other-window () ()
   (process-current-line-pathname (lambda (pathname)
-                                   (setf (current-window)
-                                         (pop-to-buffer (find-file-buffer pathname))))))
+                                   (let ((buffer (execute-find-file lem::*find-file-executor*
+                                                                    (lem::get-file-mode pathname)
+                                                                    pathname)))
+                                     (setf (current-window)
+                                           (pop-to-buffer buffer))))))
 
 (define-command directory-mode-next-line (p) ("p")
   (line-offset (current-point) p))

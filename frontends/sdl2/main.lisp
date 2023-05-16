@@ -1143,7 +1143,7 @@
         (buffer (lem:make-buffer (file-namestring pathname))))
     (draw-image buffer image :x 0 :y 0)
     (setf (lem:buffer-read-only-p buffer) t)
-    (lem:switch-to-buffer buffer)))
+    buffer))
 
 ;;;
 (setq lem::*enable-clipboard-p* t)

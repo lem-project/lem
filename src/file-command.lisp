@@ -41,10 +41,13 @@
 		    :existing nil))
 		  ((pathnamep arg)
 		   (namestring arg)))))
-      (dolist (pathname (expand-files* filename))
-        (execute-find-file *find-file-executor*
-                           (get-file-mode pathname)
-			   pathname)))))
+      (let (buffer)
+        (dolist (pathname (expand-files* filename))
+          (setf buffer (execute-find-file *find-file-executor*
+                                          (get-file-mode pathname)
+                                          pathname)))
+        (when buffer
+          (switch-to-buffer buffer t nil))))))
 
 (defmethod execute-find-file :before (executor mode pathname)
   (directory-for-file-or-lose pathname))
@@ -53,7 +56,6 @@
   (handler-case
       (multiple-value-bind (buffer new-file-p)
           (find-file-buffer pathname)
-        (switch-to-buffer buffer t nil)
         (values buffer new-file-p))
     (encoding-read-error ()
       #+linux

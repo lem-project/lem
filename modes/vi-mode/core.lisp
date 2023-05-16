@@ -6,6 +6,7 @@
            :*disable-hook*
            :vi-mode
            :define-vi-state
+           :define-vi-operator
            :current-state
            :change-state
            :with-state
@@ -139,9 +140,6 @@
 
 (defmacro define-vi-action (&whole form name-and-options params (&rest arg-descriptors) &body body)
   `(%define-vi-action vi-action ,name-and-options ,params ,arg-descriptors ,@body))
-
-(defmethod execute :before (mode (command vi-action) argument)
-  (message "Hello World"))
 
 (defclass vi-operator (vi-action) ())
 

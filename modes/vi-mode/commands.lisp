@@ -307,7 +307,7 @@
 
 (defvar *vi-indent-recursive* nil)
 (let ((tag (gensym)))
-  (define-command vi-indent (&optional (n 1)) ("p")
+  (define-vi-operator vi-indent (&optional (n 1)) ("p")
     (cond (*vi-indent-recursive*
            (indent-line (current-point))
            (throw tag t))
@@ -328,11 +328,11 @@
                        (rotatef start end))
                      (indent-points start end))))))))))
 
-(define-command vi-substitute (&optional (n 1)) ("p")
+(define-vi-operator vi-substitute (&optional (n 1)) ("p")
   (vi-delete-next-char n)
   (change-state 'insert))
 
-(define-command vi-delete-next-char (&optional (n 1)) ("p")
+(define-vi-operator vi-delete-next-char (&optional (n 1)) ("p")
   (cond
     ((visual-p)
      (vi-delete))
@@ -341,12 +341,12 @@
        (delete-next-char n)
        (fall-within-line (current-point))))))
 
-(define-command vi-delete-previous-char (&optional (n 1)) ("p")
+(define-vi-operator vi-delete-previous-char (&optional (n 1)) ("p")
   (unless (bolp (current-point))
     (delete-previous-char n)))
 
 (let ((tag (gensym)))
-  (define-command vi-delete (&optional (n 1)) ("p")
+  (define-vi-operator vi-delete (&optional (n 1)) ("p")
     (cond (*vi-delete-recursive*
            ;; TODO: universal argument
            (with-point ((start (line-start (current-point)))
@@ -404,7 +404,7 @@
                (unless *vi-change-recursive*
                  (fall-within-line (current-point)))))))))
 
-(define-command vi-delete-line () ()
+(define-vi-operator vi-delete-line () ()
   (cond ((visual-block-p)
          (apply-visual-range (lambda (start end)
                                (kill-region start (line-end end)))))
@@ -418,12 +418,12 @@
          (unless *vi-change-recursive*
            (fall-within-line (current-point))))))
 
-(define-command vi-change () ()
+(define-vi-operator vi-change () ()
   (let ((*vi-change-recursive* t))
     (vi-delete))
   (vi-insert))
 
-(define-command vi-change-line () ()
+(define-vi-operator vi-change-line () ()
   (let ((*vi-change-recursive* t))
     (vi-delete-line))
   (vi-insert))
@@ -446,7 +446,7 @@
          (insert-character p #\space)))))
 
 (let ((tag (gensym)))
-  (define-command vi-yank (&optional (n 1)) ("p")
+  (define-vi-operator vi-yank (&optional (n 1)) ("p")
     (cond (*vi-yank-recursive*
            ;; TODO: universal argument
            (with-point ((start (current-point))
@@ -534,7 +534,7 @@
          (line-start (current-point)))
        (yank)))))
 
-(define-command vi-replace-char (c)
+(define-vi-operator vi-replace-char (c)
     ((key-to-char (read-key)))
   (cond
     ((visual-p)

@@ -68,7 +68,7 @@
                   (apply #'set-attribute name args))))
              spec-table)))
 
-(define-command load-theme (name)
+(define-command load-theme (name &optional (save-theme t))
     ((prompt-for-string "Color theme: "
                         :completion-function (lambda (string)
                                                (completion string (all-color-themes)))
@@ -81,13 +81,16 @@
     (message nil)
     (redraw-display t)
     (setf (current-theme) name)
-    (setf (config :color-theme) (current-theme))))
+    (when save-theme
+      (setf (config :color-theme) (current-theme)))))
 
 (defun background-color ()
-  (second (assoc :background (color-theme-specs (find-color-theme *current-theme*)))))
+  (when *current-theme*
+    (second (assoc :background (color-theme-specs (find-color-theme *current-theme*))))))
 
 (defun foreground-color ()
-  (second (assoc :foreground (color-theme-specs (find-color-theme *current-theme*)))))
+  (when *current-theme*
+    (second (assoc :foreground (color-theme-specs (find-color-theme *current-theme*))))))
 
 (define-major-mode color-theme-selector-mode ()
     (:name "Themes"
@@ -128,6 +131,6 @@
 
 
 (defun initialize-color-theme ()
-  (load-theme (config :color-theme "decaf")))
+  (load-theme (config :color-theme "decaf") nil))
 
-(add-hook *after-init-hook* 'initialize-color-theme)
+(add-hook *before-init-hook* 'initialize-color-theme)

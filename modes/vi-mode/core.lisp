@@ -60,21 +60,18 @@
 
 
 (defclass vi-state ()
-  ((tag
-  :initarg :tag
-  :reader tag)
-  (message
+  ((message
   :initarg :message
-  :reader msg)
+  :reader state-message)
   (cursor-type 
   :initarg :cursor-type
-  :reader cursor-type)
+  :reader state-cursor-type)
   (keymap
   :initarg :keymap
   :reader state-keymap)
   (cursor-color
   :initarg :cursor-color
-  :accessor cursor-color)))
+  :accessor state-cursor-color)))
 
 (defvar *current-state* nil)
 
@@ -85,7 +82,6 @@
        (defclass ,name (vi-state) ()))
       (setf (get ',name 'state)
            (make-instance ',name
-                          :tag ,tag
                           :message ,message
                           :cursor-type ,cursor-type
                           :keymap ,keymap
@@ -111,7 +107,7 @@
         (if (symbolp state)
             (get state 'state)
             state))
-  (assert (or (subtypep (type-of state) 'vi-state) (typep 'vi-state (type-of state))))
+  (assert (typep state 'vi-state))
   state)
 
 (defun change-state (name &rest args)
@@ -125,7 +121,7 @@
     (unless *default-cursor-color*
       (setf *default-cursor-color*
             (attribute-background (ensure-attribute 'cursor nil))))
-    (set-attribute 'cursor :background (or (cursor-color state) *default-cursor-color*))))
+    (set-attribute 'cursor :background (or (state-cursor-color state) *default-cursor-color*))))
 
 (defmacro with-state (state &body body)
   (alexandria:with-gensyms (old-state)

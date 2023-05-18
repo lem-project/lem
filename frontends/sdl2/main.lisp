@@ -1100,6 +1100,7 @@
     (make-instance 'image
                    :width (sdl2:surface-width image)
                    :height (sdl2:surface-height image)
+                   ;; TODO: memory leak
                    :texture (sdl2:create-texture-from-surface (current-renderer)
                                                               image))))
 

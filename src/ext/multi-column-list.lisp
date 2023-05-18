@@ -287,14 +287,29 @@
       (setf (current-window) (window-parent popup-window)))
     (popup-menu-quit popup-menu)))
 
+(defun filtered-items (multi-column-list)
+  (let ((filtered-elements
+          (funcall (multi-column-list-filter-function multi-column-list)
+                   (multi-column-list-search-string multi-column-list))))
+    (let ((items (loop :for element :in filtered-elements
+                       :collect (let ((item (find element
+                                                  (multi-column-list-items multi-column-list)
+                                                  :key #'default-multi-column-list-item-value)))
+                                  (or item (wrap element))))))
+      (dolist (filtered-item items)
+        (let ((item (find (default-multi-column-list-item-value filtered-item)
+                          (multi-column-list-items multi-column-list)
+                          :key #'default-multi-column-list-item-value)))
+          (when item
+            (setf (multi-column-list-item-checked-p filtered-item)
+                  (multi-column-list-item-checked-p item)))))
+      items)))
+
 (defmethod update ((component multi-column-list))
   (let ((items (multi-column-list-items component)))
     (when (and (multi-column-list-filter-function component)
                (< 0 (length (multi-column-list-search-string component))))
-      (setf items
-            (mapcar #'wrap
-                    (funcall (multi-column-list-filter-function component)
-                             (multi-column-list-search-string component)))))
+      (setf items (filtered-items component)))
     (popup-menu-update (multi-column-list-popup-menu component)
                        items
                        :print-spec (multi-column-list-print-spec component)

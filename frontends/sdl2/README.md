@@ -20,7 +20,7 @@ $ brew install sdl2_ttf
 ```shell
 mkdir ~/common-lisp
 cd ~/common-lisp
-git clone git@github.com:lem-project/cl-sdl2.git
+git clone --branch apple-silicon-patch git@github.com:lem-project/cl-sdl2.git
 git clone git@github.com:lem-project/cl-sdl2-ttf.git
 git clone git@github.com:lem-project/cl-sdl2-image.git
 ```

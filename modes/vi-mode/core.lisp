@@ -78,8 +78,7 @@
 ;;; vi-state methods
 (defmacro define-vi-state (name (&key tag message cursor-type keymap cursor-color) &body spec)
     `(progn
-      (cl-package-locks:without-package-locks
-       (defclass ,name (vi-state) ()))
+      (defclass ,name (vi-state) ())
       (setf (get ',name 'state)
            (make-instance ',name
                           :message ,message
@@ -144,11 +143,11 @@
 (define-vi-state insert (:keymap *insert-keymap* :cursor-color "IndianRed"))
 
 (defmethod state-enabled-hook ((state insert) &rest args)
-  (message " -- INSERT --"))
+  (message "-- INSERT --"))
 
-(define-vi-state modeline (:keymap *inactive-keymap*))
+(define-vi-state vi-modeline (:keymap *inactive-keymap*))
 
-(defun prompt-activate-hook () (change-state 'modeline))
+(defun prompt-activate-hook () (change-state 'vi-modeline))
 (defun prompt-deactivate-hook () (change-state 'normal))
 
 (defun vi-post-command-hook ()

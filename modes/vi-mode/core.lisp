@@ -77,14 +77,14 @@
 
 ;;; vi-state methods
 (defmacro define-vi-state (name (&key tag message cursor-type keymap cursor-color) &body spec)
-    `(progn
-      (defclass ,name (vi-state) ())
-      (setf (get ',name 'state)
-           (make-instance ',name
-                          :message ,message
-                          :cursor-type ,cursor-type
-                          :keymap ,keymap
-                          :cursor-color ,cursor-color))))
+  `(progn
+     (defclass ,name (vi-state) ())
+       (setf (get ',name 'state)
+             (make-instance ',name
+                            :message ,message
+                            :cursor-type ,cursor-type
+                            :keymap ,keymap
+                            :cursor-color ,cursor-color))))
 
 (defgeneric post-command-hook (state))
 

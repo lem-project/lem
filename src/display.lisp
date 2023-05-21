@@ -112,25 +112,27 @@
             :while (line-offset point 1)))))
 
 (defun highlight-line-color ()
-  (let ((color (parse-color (background-color))))
-    (multiple-value-bind (h s v)
-        (rgb-to-hsv (color-red color)
-                    (color-green color)
-                    (color-blue color))
-      (multiple-value-bind (r g b)
-          (hsv-to-rgb h
-                      s
-                      (max 0 (- v 2)))
-        (format nil "#~X~X~X" r g b)))))
+  (when (background-color)
+    (let ((color (parse-color (background-color))))
+      (multiple-value-bind (h s v)
+          (rgb-to-hsv (color-red color)
+                      (color-green color)
+                      (color-blue color))
+        (multiple-value-bind (r g b)
+            (hsv-to-rgb h
+                        s
+                        (max 0 (- v 2)))
+          (format nil "#~X~X~X" r g b))))))
 
 (defun make-temporary-highlight-line-overlay ()
   (when (and (variable-value 'highlight-line :default (current-buffer))
              (current-theme))
-    (let ((ov (make-temporary-overlay (current-point)
-                                      (current-point)
-                                      (make-attribute :background (highlight-line-color)))))
-      (overlay-put ov :display-line t)
-      ov)))
+    (alexandria:when-let ((color (highlight-line-color)))
+      (let ((ov (make-temporary-overlay (current-point)
+                                        (current-point)
+                                        (make-attribute :background color))))
+        (overlay-put ov :display-line t)
+        ov))))
 
 (defun make-temporary-region-overlay-from-cursor (cursor)
   (let ((mark (cursor-mark cursor)))

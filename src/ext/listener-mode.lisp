@@ -56,7 +56,6 @@
 (define-key *listener-mode-keymap* "Return" 'listener-return)
 (define-key *listener-mode-keymap* "M-p" 'listener-previous-input)
 (define-key *listener-mode-keymap* "M-n" 'listener-next-input)
-(define-key *listener-mode-keymap* "C-r" 'listener-isearch-history)
 (define-key *listener-mode-keymap* "M-r" 'listener-isearch-history)
 (define-key *listener-mode-keymap* "C-c M-o" 'listener-clear-buffer)
 (define-key *listener-mode-keymap* "C-c C-u" 'listener-clear-input)

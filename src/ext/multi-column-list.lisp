@@ -253,6 +253,9 @@
   (lem/popup-menu::popup-menu-window
    (multi-column-list-popup-menu multi-column-list)))
 
+(defun max-display-items ()
+  (- (display-height) 4))
+
 (defmethod display ((component multi-column-list) &key (style '(:gravity :center)))
   (let ((print-spec (make-instance
                      'print-spec
@@ -265,7 +268,7 @@
                                  :action-callback (lambda (item)
                                                     (select-item component item))
                                  :style style
-                                 :max-display-items (- (display-height) 4)))
+                                 :max-display-items (max-display-items)))
            (window (lem/popup-menu::popup-menu-window popup-menu)))
       (add-hook (window-leave-hook window)
                 (lambda (old-window)
@@ -313,7 +316,7 @@
     (popup-menu-update (multi-column-list-popup-menu component)
                        items
                        :print-spec (multi-column-list-print-spec component)
-                       :max-display-items 100
+                       :max-display-items (max-display-items)
                        :keep-focus t)))
 
 (defun hover-menu-item (multi-column-list point)

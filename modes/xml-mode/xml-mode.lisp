@@ -121,3 +121,5 @@
                tab-width))))))
 
 (define-file-type ("xml") xml-mode)
+(define-file-associations xml-mode
+  ((:file-namestring "Info.plist")))

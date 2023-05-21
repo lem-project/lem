@@ -328,17 +328,21 @@
   (move-point (buffer-point (window-buffer window)) point)
   (popup-menu-select (multi-column-list-popup-menu multi-column-list)))
 
+(defun current-focus-item (multi-column-list)
+  (lem/popup-menu:get-focus-item
+   (multi-column-list-popup-menu multi-column-list)))
+
 (defun check-current-item (multi-column-list)
   (when (multi-column-list-use-check-p multi-column-list)
-    (let ((item (lem/popup-menu:get-focus-item
-                 (multi-column-list-popup-menu multi-column-list))))
+    (let ((item (current-focus-item multi-column-list)))
       (setf (multi-column-list-item-checked-p item)
             (not (multi-column-list-item-checked-p item))))
     (update multi-column-list)))
 
 (defun checked-items (multi-column-list)
-  (remove-if-not #'multi-column-list-item-checked-p
-                 (multi-column-list-items multi-column-list)))
+  (or (remove-if-not #'multi-column-list-item-checked-p
+                     (multi-column-list-items multi-column-list))
+      (list (current-focus-item multi-column-list))))
 
 (defun collect-checked-items (multi-column-list)
   (mapcar #'unwrap (checked-items multi-column-list)))

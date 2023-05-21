@@ -133,4 +133,4 @@
 (defun initialize-color-theme ()
   (load-theme (config :color-theme "decaf") nil))
 
-(add-hook *before-init-hook* 'initialize-color-theme)
+(add-hook *after-init-hook* 'initialize-color-theme)

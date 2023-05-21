@@ -265,7 +265,7 @@
                                  :action-callback (lambda (item)
                                                     (select-item component item))
                                  :style style
-                                 :max-display-items 100))
+                                 :max-display-items (- (display-height) 4)))
            (window (lem/popup-menu::popup-menu-window popup-menu)))
       (add-hook (window-leave-hook window)
                 (lambda (old-window)

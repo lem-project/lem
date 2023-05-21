@@ -221,13 +221,14 @@
                    (setf (window-separator-start-y *last-dragged-separator*) y)))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-wheel))
-  (let ((window (focus-window-position (current-frame)
-                                       (mouse-event-x mouse-event)
-                                       (mouse-event-y mouse-event))))
-    (when window
-      (with-current-window window
-        (scroll-up (* (mouse-wheel-y mouse-event)
-                      *scroll-speed*))))))
+  (unless (zerop (mouse-wheel-y mouse-event))
+    (let ((window (focus-window-position (current-frame)
+                                         (mouse-event-x mouse-event)
+                                         (mouse-event-y mouse-event))))
+      (when window
+        (with-current-window window
+          (scroll-up (* (mouse-wheel-y mouse-event)
+                        *scroll-speed*)))))))
 
 
 (defun get-select-expression-points (point)

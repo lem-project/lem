@@ -1,4 +1,4 @@
-AC_INIT([lem],[1.10.0])
+AC_INIT([lem],[2.0.0])
 AM_INIT_AUTOMAKE([foreign])
 AC_CONFIG_FILES([Makefile contrib/Makefile scripts/gen-contrib/Makefile])
 

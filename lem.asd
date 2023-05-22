@@ -1,5 +1,5 @@
 (defsystem "lem"
-  :version "1.10.0"
+  :version "2.0.0"
   :depends-on ("alexandria"
                "trivial-gray-streams"
                "trivial-types"

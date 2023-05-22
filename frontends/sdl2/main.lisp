@@ -17,7 +17,8 @@
            :load-image
            :delete-image
            :draw-image
-           :delete-drawable))
+           :delete-drawable
+           :clear-drawables))
 (in-package :lem-sdl2)
 
 (pushnew :lem-sdl2 *features*)

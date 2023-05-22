@@ -86,11 +86,17 @@
         (modifier (lem-sdl2/keyboard::get-modifier keysym)))
     (make-key-event code modifier)))
 
+(defun mod-p (mod value)
+  (= value (logand value mod)))
+
 (defun get-modifier (keysym)
   (let* ((mod (sdl2:mod-value keysym))
-         (shift (= 1 (logand 1 mod)))
-         (ctrl (= 64 (logand 64 mod)))
-         (meta (= 256 (logand 256 mod))))
+         (shift (or (mod-p mod sdl2-ffi:+kmod-lshift+)
+                    (mod-p mod sdl2-ffi:+kmod-rshift+)))
+         (ctrl (or (mod-p mod sdl2-ffi:+kmod-lctrl+)
+                   (mod-p mod sdl2-ffi:+kmod-rctrl+)))
+         (meta (or (mod-p mod sdl2-ffi:+kmod-lalt+)
+                   (mod-p mod sdl2-ffi:+kmod-ralt+))))
     (make-modifier :shift shift :ctrl ctrl :meta meta)))
 
 (defun update-modifier (modifier new-modifier)

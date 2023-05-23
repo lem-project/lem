@@ -21,7 +21,14 @@
 (define-major-mode image-viewer-mode ()
     (:name "Image Viewer"
      :keymap *image-viewer-keymap*)
+  (modeline-add-status-list 'image-information (current-buffer))
   (setf (lem:buffer-read-only-p (current-buffer)) t))
+
+(defun image-information (window)
+  (let ((image (buffer-image (window-buffer window))))
+    (format nil "  ~Dx~D"
+            (lem-sdl2::image-width image)
+            (lem-sdl2::image-height image))))
 
 (define-key *image-viewer-keymap* "C-+" 'image-zoom-in)
 (define-key *image-viewer-keymap* "C--" 'image-zoom-out)

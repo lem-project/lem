@@ -10,4 +10,5 @@
                (:file "keyboard")
                (:file "font")
                (:file "icon")
-               (:file "main")))
+               (:file "main")
+               (:file "image-buffer")))

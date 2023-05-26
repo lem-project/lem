@@ -407,7 +407,6 @@
    :just-one-space
    :delete-indentation
    :transpose-characters
-   :back-to-indentation-command
    :undo
    :redo
    :mark-set

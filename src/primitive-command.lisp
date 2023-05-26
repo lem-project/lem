@@ -236,14 +236,16 @@
   (buffer-end (current-point)))
 
 (define-command (move-to-beginning-of-line (:advice-classes movable-advice)) () ()
-  (let ((bol (backward-line-wrap (copy-point (current-point) :temporary)
-                                 (current-window)
-                                 t)))
-    (or (text-property-at (current-point) :field -1)
-        (previous-single-property-change (current-point)
-                                         :field
-                                         bol)
-        (move-point (current-point) bol))))
+  (if (start-line-p (current-point))
+      (back-to-indentation (current-point))
+      (let ((bol (backward-line-wrap (copy-point (current-point) :temporary)
+                                     (current-window)
+                                     t)))
+        (or (text-property-at (current-point) :field -1)
+            (previous-single-property-change (current-point)
+                                             :field
+                                             bol)
+            (move-point (current-point) bol)))))
 
 (define-command (move-to-beginning-of-logical-line (:advice-classes movable-advice)) () ()
   (line-start (current-point)))
@@ -369,9 +371,6 @@
              (delete-character point 1)
              (delete-character point -1)
              (insert-string point (format nil "~C~C" c1 c2)))))))
-
-(define-command (back-to-indentation-command (:advice-classes movable-advice)) () ()
-  (back-to-indentation (current-point)))
 
 (define-command undo (n) ("p")
   ;; TODO: multiple cursors

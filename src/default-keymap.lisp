@@ -42,7 +42,6 @@
 (define-key *global-keymap* "M-Space" 'just-one-space)
 (define-key *global-keymap* "M-^" 'delete-indentation)
 (define-key *global-keymap* "C-t" 'transpose-characters)
-(define-key *global-keymap* "M-m" 'back-to-indentation-command)
 (define-key *global-keymap* "C-\\" 'undo)
 (define-key *global-keymap* "C-_" 'redo)
 (define-key *global-keymap* "C-/" 'redo)

@@ -249,7 +249,7 @@
     (loop :for c :across text
           :do (let ((key (make-key :ctrl (modifier-ctrl *modifier*)
                                    :meta (modifier-meta *modifier*)
-                                   :super (modifier-super *modifier*)
+                                   ;; :super (modifier-super *modifier*)
                                    :shift nil
                                    :sym (convert-to-sym (char-code c)))))
                 (send-key-event key)))))
@@ -268,7 +268,7 @@
           (let ((key (make-key-with-shift-careful :shift (modifier-shift modifier)
                                                   :ctrl (modifier-ctrl modifier)
                                                   :meta (modifier-meta modifier)
-                                                  :super (modifier-super modifier)
+                                                  ;; :super (modifier-super modifier)
                                                   :sym sym)))
             (send-key-event key)))))))
 
@@ -293,4 +293,3 @@
 
 (defmethod handle-key-up ((platform lem-sdl2/platform:windows) key-event)
   (handle-key-up-internal key-event))
-

@@ -73,7 +73,6 @@ $ git clone https://github.com/lem-project/lem.git
 
 You can start "lem" using the following command.
 ```
-# ncurses version
 $ sbcl
 * (ql:quickload :lem-ncurses)
 * (lem:lem)

@@ -18,7 +18,7 @@ You can skip over writing tidy settings or installing many plugins as you do on 
 
 ## Platform
 - Linux
-- MacOS 10.13+ 
+- MacOS
 - [Windows](https://github.com/lem-project/lem/wiki/Windows-Platform)
 
 ## Play with Lem in the Docker
@@ -29,7 +29,7 @@ You can try Lem by running it in a docker container:
 docker run --rm -ti -v `pwd`:/app 40ants/lem:latest
 ```
 
-## Installation
+## Installation with roswell
 
 Please install roswell at first.
 
@@ -45,13 +45,13 @@ $ ros follow-dependency=t install lem-project/lem
 export PATH=$PATH:~/.roswell/bin
 ```
 
-## Updating
+### Updating
 
 ```
 $ ros update lem
 ```
 
-## Usage
+### Usage
 
 ```
 $ lem <filename.lisp>
@@ -60,6 +60,29 @@ $ lem <filename.lisp>
 You can watch the screencast on Youtube.
 
 [Screencast](https://youtu.be/YkSJ3p7Z9H0)
+
+## Installation with sbcl
+
+Please clone lem to a location where the path to asdf is accessible.
+
+```
+$ mkdir $HOME/common-lisp
+$ cd $HOME/common-lisp
+$ git clone https://github.com/lem-project/lem.git
+```
+
+You can start "lem" using the following command.
+```
+# ncurses version
+$ sbcl
+* (ql:quickload :lem-ncurses)
+* (lem:lem)
+```
+
+You can create the executable file of lem using the following command.
+```
+$ sbcl --eval '(ql:quickload :lem-ncurses)' --load build.lisp
+```
 
 ## Configuration
 
@@ -73,6 +96,12 @@ https://github.com/fukamachi/.lem
 ## Extensions and modes
 
 * [Pareto](https://github.com/40ants/lem-pareto) - A mode, complement to the Paredit. Makes Lisp code editing even more efficient!
+
+## SDL2 version
+GUI version using SDL2 is also available
+
+![Install](./frontends/sdl2/README.md)
+![SDL2](screenshots/sdl2.png)
 
 ## Electron version (Experiment)
 Electron version is in the experimental stage.

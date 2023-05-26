@@ -68,7 +68,7 @@ Please clone lem to a location where the path to asdf is accessible.
 ```
 $ mkdir $HOME/common-lisp
 $ cd $HOME/common-lisp
-$ git clone https://github.com/lem-project/lem.git
+$ git clone --recursive https://github.com/lem-project/lem.git
 ```
 
 You can start "lem" using the following command.

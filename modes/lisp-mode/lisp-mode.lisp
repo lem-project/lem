@@ -68,7 +68,6 @@
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c g" 'lisp-interrupt)
 (define-key *lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
-(define-key *lisp-mode-keymap* ")" 'lisp-insert-closed-paren)
 (define-key *lisp-mode-keymap* "Return" 'lisp-insert-newline-and-indent)
 
 (defmethod convert-modeline-element ((element (eql 'lisp-mode)) window)
@@ -665,16 +664,6 @@
     ((prompt-for-symbol-name "System: " (buffer-package (current-buffer))))
   (check-connection)
   (eval-with-transcript `(,(uiop:find-symbol* :quickload :quicklisp) ,(string system-name))))
-
-(define-command (lisp-insert-closed-paren (:advice-classes editable-advice)) (n) ("p")
-  (loop :repeat n
-        :do (if (or (syntax-escape-char-p (character-at (current-point) -1))
-                    (in-string-or-comment-p (current-point)))
-                (insert-character (current-point) #\))
-                (with-point ((point (current-point)))
-                  (if (scan-lists point -1 1 t)
-                      (insert-character (current-point) #\))
-                      (editor-error "No matching ')' (can be inserted with \"C-q )\")"))))))
 
 (define-command (lisp-insert-newline-and-indent (:advice-classes editable-advice)) (n) ("p")
   (insert-character (current-point) #\newline n)

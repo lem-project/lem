@@ -33,6 +33,7 @@
                (:file "package-inferred-system")
                (:file "organize-imports")
                (:file "connection-list")
+               (:file "self-insert-hook")
                (:file "package")))
 
 (defsystem "lem-lisp-mode/v2"

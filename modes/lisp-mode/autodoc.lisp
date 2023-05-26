@@ -1,5 +1,6 @@
 (defpackage :lem-lisp-mode/autodoc
-  (:use :cl :lem :lem-lisp-mode/internal))
+  (:use :cl :lem :lem-lisp-mode/internal)
+  (:export :lisp-autodoc))
 (in-package :lem-lisp-mode/autodoc)
 
 (define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-autodoc)
@@ -45,7 +46,3 @@
 
 (define-command lisp-autodoc () ()
   (autodoc #'message-buffer))
-
-(defmethod execute :after ((mode lisp-mode) (command self-insert) argument)
-  (when (eql #\space (lem::get-self-insert-char))
-    (lisp-autodoc)))

@@ -420,6 +420,7 @@
    :show-context-menu)
   ;; self-insert-command.lisp
   (:export
+   :get-self-insert-char
    :self-insert-before-hook
    :self-insert-after-hook
    :self-insert)

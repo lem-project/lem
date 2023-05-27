@@ -45,7 +45,7 @@
                 (color-green color)
                 (color-blue color)))))
 
-(defmethod yason:encode ((attribute lem::attribute) &optional (stream *standard-output*))
+(defmethod yason:encode ((attribute attribute) &optional (stream *standard-output*))
   (yason:with-output (stream)
     (yason:with-object ()
       (yason:encode-object-element "foreground" (ensure-rgb (attribute-foreground attribute)))
@@ -159,7 +159,7 @@
     ((implementation jsonrpc) window x y width height use-modeline)
   (with-error-handler ()
     (let ((view (make-view :x x :y y :width width :height height :use-modeline use-modeline
-                           :kind (cond ((lem::floating-window-p window)
+                           :kind (cond ((lem:floating-window-p window)
                                         "popup")
                                        (t
                                         nil)))))

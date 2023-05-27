@@ -1,4 +1,5 @@
 (defpackage :lem
+  (:nicknames :lem-internal)
   (:use :cl
         :lem-base
         :lem/common/killring
@@ -17,8 +18,9 @@
    :exist-command-p)
   ;; killring.lisp
   (:export
-    :copy-to-clipboard-with-killring
-    :yank-from-clipboard-or-killring)
+   :current-killring
+   :copy-to-clipboard-with-killring
+   :yank-from-clipboard-or-killring)
   ;; quicklisp-utils.lisp
   (:export
    :maybe-quickload)
@@ -80,6 +82,7 @@
    :attribute-reverse
    :attribute-bold
    :attribute-underline
+   :get-attribute-cache
    :define-attribute
    :cursor
    :region
@@ -100,13 +103,22 @@
    :non-focus-completion-attribute)
   ;; clipboard.lisp
   (:export
+   :wsl-p
+   :enable-clipboard
+   :disable-clipboard
    :enable-clipboard-p
    :copy-to-clipboard
    :get-clipboard-data)
   ;; file.lisp
   (:export
+   :get-file-mode
    :define-file-type
-   :define-file-associations)
+   :define-file-associations
+   :define-program-name-with-mode)
+  ;; screen.lisp
+  (:export
+   :screen-clear
+   :screen-view)
   ;; frame.lisp
   (:export
    :update-prompt-window
@@ -126,10 +138,18 @@
    :unmap-frame
    :setup-frame
    :teardown-frame
-   :teardown-frames)
+   :teardown-frames
+   :get-frame-of-window
+   :focus-window-position)
   ;; mouse.lisp
   (:export
-   :mouse-button-down-functions)
+   :mouse-button-down-functions
+   :receive-mouse-button-down
+   :receive-mouse-button-up
+   :receive-mouse-motion
+   :receive-mouse-wheel
+   :set-hover-message
+   :get-point-from-window-with-coordinates)
   ;; echo.lisp
   (:export
    :show-message
@@ -143,6 +163,7 @@
    :*prompt-deactivate-hook*
    :*prompt-buffer-completion-function*
    :*prompt-file-completion-function*
+   :caller-of-prompt-window
    :prompt-active-p
    :active-prompt-window
    :get-prompt-input-string
@@ -171,7 +192,10 @@
    :window-width
    :window-height
    :window-buffer
+   :window-screen
    :window-view
+   :window-point
+   :window-cursor-invisible-p
    :last-print-cursor-x
    :last-print-cursor-y
    :window-parameter
@@ -199,6 +223,7 @@
    :delete-window
    :get-buffer-windows
    :other-buffer
+   :not-switchable-buffer-p
    :switch-to-buffer
    :pop-to-buffer
    :quit-window
@@ -212,6 +237,8 @@
    :floating-window-border-shape
    :floating-window-p
    :header-window
+   :update-on-display-resized
+   :covered-with-floating-window-p
    :redraw-display)
   ;; popup.lisp
   (:export
@@ -240,6 +267,7 @@
    :convert-modeline-element)
   ;; command.lisp
   (:export
+   :executing-command-command
    :handle-signal
    :before-executing-command
    :after-executing-command
@@ -258,13 +286,17 @@
    :mode-keymap
    :mode-syntax-table
    :mode-hook
+   :mode-hook-variable
    :mode-active-p
+   :find-mode
    :toggle-minor-mode
    :define-major-mode
    :define-minor-mode
    :change-buffer-mode
    :define-global-mode
-   :change-global-mode-keymap)
+   :change-global-mode-keymap
+   :enable-minor-mode
+   :disable-minor-mode)
   ;; keymap.lisp
   (:export
    :*keymaps*
@@ -275,7 +307,9 @@
    :keyseq-to-string
    :find-keybind
    :insertion-key-p
-   :lookup-keybind)
+   :lookup-keybind
+   :abort-key-p
+   :with-special-keymap)
   ;; reexport common/timer
   (:export
    :timer
@@ -287,15 +321,20 @@
    :stop-timer)
   ;; event-queue.lisp
   (:export
+   :receive-event
    :send-event
-   :send-abort-event)
+   :send-abort-event
+   :event-queue-length)
   ;; interp.lisp
   (:export
    :*exit-editor-hook*
    :interactive-p
    :continue-flag
    :pop-up-backtrace
-   :call-background-job)
+   :call-background-job
+   :command-loop-counter
+   :command-loop
+   :do-command-loop)
   ;; input.lisp
   (:export
    :*input-hook*
@@ -344,6 +383,12 @@
    :completion-file
    :completion-strings
    :completion-buffer)
+  ;; cursors.lisp
+  (:export
+   :cursor-region-beginning
+   :cursor-region-end
+   :buffer-cursors
+   :make-fake-cursor)
   ;; typeout.lisp
   (:export
    :*typeout-mode-keymap*
@@ -354,6 +399,8 @@
    :*before-init-hook*
    :*after-init-hook*
    :*splash-function*
+   :setup-first-frame
+   :find-editor-thread
    :lem
    :main)
   ;; primitive-command.lisp
@@ -426,6 +473,8 @@
    :self-insert)
   ;; file-command.lisp
   (:export
+   :*find-file-executor*
+   :find-file-executor
    :execute-find-file
    :find-file
    :read-file
@@ -437,6 +486,7 @@
    :write-region-file
    :insert-file
    :save-some-buffers
+   :sync-buffer-with-file-content
    :revert-buffer
    :revert-buffer-function
    :change-directory)
@@ -502,6 +552,9 @@
    :mark-sexp
    :kill-sexp
    :transpose-sexps)
+  ;; multiple-cursors-command.lisp
+  (:export
+   :do-each-cursors)
   ;; display.lisp
   (:export
    :highlight-line)

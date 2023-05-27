@@ -9,7 +9,7 @@
     (alexandria:nconcf *result* (list value))))
 
 (defun execute-testing-command (n command-name &optional argument)
-  (lem::do-command-loop ()
+  (lem:do-command-loop ()
     (lem:call-command command-name argument)
     (unless (plusp (decf n)) (return))))
 

@@ -340,8 +340,8 @@
 
 (define-command directory-mode-find-file-other-window () ()
   (process-current-line-pathname (lambda (pathname)
-                                   (let ((buffer (execute-find-file lem::*find-file-executor*
-                                                                    (lem::get-file-mode pathname)
+                                   (let ((buffer (execute-find-file *find-file-executor*
+                                                                    (get-file-mode pathname)
                                                                     pathname)))
                                      (setf (current-window)
                                            (pop-to-buffer buffer))))))

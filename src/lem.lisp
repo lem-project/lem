@@ -4,9 +4,6 @@
 (defvar *after-init-hook* '())
 (defvar *splash-function* nil)
 
-;; for mouse control
-(defparameter *terminal-io-saved* *terminal-io*)
-
 (defvar *in-the-editor* nil)
 
 (defvar *syntax-scan-window-recursive-p* nil)

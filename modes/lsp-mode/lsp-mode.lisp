@@ -271,7 +271,7 @@
 (defun lsp-revert-buffer (buffer)
   (remove-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)
   (unwind-protect (progn
-                    (lem::revert-buffer-internal buffer)
+                    (sync-buffer-with-file-content buffer)
                     (reopen-buffer buffer))
     (add-hook (variable-value 'before-change-functions :buffer buffer) 'handle-change-buffer)))
 
@@ -807,7 +807,7 @@
                (put-foreground buffer)
                buffer))
            (get-syntax-table-from-mode (mode-name)
-             (when-let* ((mode (lem::find-mode mode-name))
+             (when-let* ((mode (find-mode mode-name))
                          (syntax-table (mode-syntax-table mode)))
                syntax-table))
 
@@ -1370,7 +1370,7 @@
   (when-let ((workspace (get-workspace-from-point point)))
     (when (provide-document-highlight-p workspace)
       (unless (cursor-in-document-highlight-p)
-        (let ((counter (lem::command-loop-counter)))
+        (let ((counter (command-loop-counter)))
           (async-request
            (workspace-client workspace)
            (make-instance 'lsp:text-document/document-highlight)
@@ -1379,7 +1379,7 @@
                   (make-text-document-position-arguments point))
            :then (lambda (value)
                    (unless (lsp-null-p value)
-                     (when (= counter (lem::command-loop-counter))
+                     (when (= counter (command-loop-counter))
                        (display-document-highlights (point-buffer point)
                                                     value)
                        (redraw-display))))))))))
@@ -1862,8 +1862,8 @@
 
 (defmacro define-language-spec ((spec-name major-mode) &body initargs)
   `(progn
-     ,(when (lem::mode-hook-variable major-mode)
-        `(add-hook ,(lem::mode-hook-variable major-mode) 'enable-lsp-mode))
+     ,(when (mode-hook-variable major-mode)
+        `(add-hook ,(mode-hook-variable major-mode) 'enable-lsp-mode))
      (eval-when (:compile-toplevel :load-toplevel :execute)
        (defclass ,spec-name (lem-lsp-mode/spec::spec) ()
          (:default-initargs ,@initargs

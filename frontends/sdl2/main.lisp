@@ -203,7 +203,7 @@
       (sdl2:set-render-target (current-renderer) (display-texture *display*))
       (set-render-color *display* (display-background-color *display*))
       (sdl2:render-clear (current-renderer))
-      (lem::update-on-display-resized))))
+      (lem:update-on-display-resized))))
 
 (defun attribute-foreground-color (attribute)
   (or (and attribute
@@ -629,7 +629,7 @@
       (let ((x (floor x (char-width)))
             (y (floor y (char-height))))
         (lem:send-event (lambda ()
-                          (lem::receive-mouse-button-down x y button clicks)))))))
+                          (lem:receive-mouse-button-down x y button clicks)))))))
 
 (defun on-mouse-button-up (button x y)
   (show-cursor)
@@ -641,7 +641,7 @@
         (x (floor x (char-width)))
         (y (floor y (char-height))))
     (lem:send-event (lambda ()
-                      (lem::receive-mouse-button-up x y button)))))
+                      (lem:receive-mouse-button-up x y button)))))
 
 (defun on-mouse-motion (x y state)
   (show-cursor)
@@ -651,7 +651,7 @@
     (let ((x (floor x (char-width)))
           (y (floor y (char-height))))
       (lem:send-event (lambda ()
-                        (lem::receive-mouse-motion x y button))))))
+                        (lem:receive-mouse-motion x y button))))))
 
 (defun on-mouse-wheel (wheel-x wheel-y which direction)
   (declare (ignore which direction))
@@ -660,8 +660,8 @@
     (let ((x (floor x (char-width)))
           (y (floor y (char-height))))
       (lem:send-event (lambda ()
-                        (lem::receive-mouse-wheel x y wheel-x wheel-y)
-                        (when (= 0 (lem::event-queue-length))
+                        (lem:receive-mouse-wheel x y wheel-x wheel-y)
+                        (when (= 0 (lem:event-queue-length))
                           (lem:redraw-display)))))))
 
 (defun on-textediting (text)
@@ -1133,7 +1133,7 @@
             (sdl2:free-rect source-rect)))))))
 
 ;;;
-(setq lem::*enable-clipboard-p* t)
+(lem:enable-clipboard)
 
 #-windows
 (defmethod lem-if:clipboard-paste ((implementation sdl2))

@@ -31,7 +31,7 @@
     (when (not (eql (current-buffer) (overlay-buffer *overlay*)))
       (let ((cb (current-buffer)))
         (setf (current-buffer) (overlay-buffer *overlay*))
-        (lem::disable-minor-mode '%selection-mode)
+        (lem:disable-minor-mode '%selection-mode)
         (setf (current-buffer) cb)))
     (delete-overlay *overlay*)
     (setf *overlay* nil))
@@ -41,7 +41,7 @@
                     (current-buffer)))
     (when *point*
       (delete-point *point*))
-    (lem::enable-minor-mode '%selection-mode)
+    (lem:enable-minor-mode '%selection-mode)
     (setf *point* (copy-point (buffer-point (current-buffer)))))
   (prog1
       (funcall f n)
@@ -55,7 +55,7 @@
   (when *point*
     (save-excursion
       (switch-to-buffer (point-buffer *point*))
-      (lem::disable-minor-mode '%selection-mode))
+      (lem:disable-minor-mode '%selection-mode))
     (delete-point *point*)
     (setf *point* nil)))
 

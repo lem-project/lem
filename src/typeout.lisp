@@ -33,7 +33,7 @@
            (min (floor (display-height) 1.1) (1+ (buffer-nlines buffer))))
          (window
            (cond (*typeout-window*
-                  (lem::window-set-size *typeout-window* (display-width) window-height)
+                  (lem-internal::window-set-size *typeout-window* (display-width) window-height)
                   *typeout-window*)
                  (t
                   (let ((typeout-buffer-p (buffer-value buffer 'typeout-buffer-p))

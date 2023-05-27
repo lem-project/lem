@@ -224,7 +224,7 @@
   (setf (windows-term-setting-reserved-last-lines wt) v)
   (setf (now-resizing)
         (max (windows-term-setting-resize-delay wt) 1))
-  (lem::update-on-display-resized)
+  (lem:update-on-display-resized)
   v)
 (defmethod (setf write-last-line) (v (wt windows-term-setting))
   (setf (windows-term-setting-write-last-line wt) v)
@@ -354,14 +354,14 @@
 (defun compute-attribute-value (attribute cursorp)
   (let* ((foreground (attribute-foreground attribute))
          (background (attribute-background attribute))
-         (bits (logior (if (or cursorp (lem::attribute-reverse attribute))
+         (bits (logior (if (or cursorp (lem:attribute-reverse attribute))
                            (lem.term:get-color-pair background foreground)
                            (lem.term:get-color-pair foreground background))
                        0
-                       (if (lem::attribute-bold attribute)
+                       (if (lem:attribute-bold attribute)
                            charms/ll:PDC_A_BOLD
                            0)
-                       (if (lem::attribute-underline attribute)
+                       (if (lem:attribute-underline attribute)
                            charms/ll:PDC_A_UNDERLINE
                            0))))
     bits))
@@ -480,7 +480,7 @@
                         (let ((button (lem/button:button-at point)))
                           (when button
                             (lem/button:button-action button)
-                            (lem::update-on-display-resized)))))
+                            (lem:update-on-display-resized)))))
                     t)
                    (t nil))))
              (lem:frame-header-windows (lem:current-frame)))
@@ -1069,7 +1069,7 @@
     ;; set cursor position
     (let ((cursor-x (last-print-cursor-x (current-window)))
           (cursor-y (last-print-cursor-y (current-window))))
-      (if (lem::covered-with-floating-window-p (current-window) cursor-x cursor-y)
+      (if (lem:covered-with-floating-window-p (current-window) cursor-x cursor-y)
           (charms/ll:curs-set 0)
           (progn
             (charms/ll:curs-set 1)

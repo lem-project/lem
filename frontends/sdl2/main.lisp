@@ -203,7 +203,7 @@
       (sdl2:set-render-target (current-renderer) (display-texture *display*))
       (set-render-color *display* (display-background-color *display*))
       (sdl2:render-clear (current-renderer))
-      (lem::change-display-size-hook))))
+      (lem::update-on-display-resized))))
 
 (defun attribute-foreground-color (attribute)
   (or (and attribute

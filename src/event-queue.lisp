@@ -63,7 +63,7 @@
              (return nil))
             ((eql e :resize)
              (when (>= 1 (event-queue-length))
-               (change-display-size-hook)))
+               (update-on-display-resized)))
             ((consp e)
              (eval e)
              (return t))

@@ -1183,7 +1183,7 @@ window width is changed, we must recalc the window view point."
     (window-set-size window (display-width) 1))
   (balance-windows))
 
-(defun change-display-size-hook ()
+(defun update-on-display-resized ()
   (lem-if:resize-display-before (implementation))
   (adjust-all-window-size)
   (clear-screens-of-window-list)

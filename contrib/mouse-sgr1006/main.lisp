@@ -81,7 +81,7 @@
                     (let ((button (lem/button:button-at point)))
                       (when button
                         (lem/button:button-action button)
-                        (lem::change-display-size-hook)))))
+                        (lem::update-on-display-resized)))))
                 t)
                (t nil))))
          (lem:frame-header-windows (lem:current-frame)))

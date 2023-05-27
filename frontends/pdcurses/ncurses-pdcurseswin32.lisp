@@ -224,7 +224,7 @@
   (setf (windows-term-setting-reserved-last-lines wt) v)
   (setf (now-resizing)
         (max (windows-term-setting-resize-delay wt) 1))
-  (lem::change-display-size-hook)
+  (lem::update-on-display-resized)
   v)
 (defmethod (setf write-last-line) (v (wt windows-term-setting))
   (setf (windows-term-setting-write-last-line wt) v)
@@ -480,7 +480,7 @@
                         (let ((button (lem/button:button-at point)))
                           (when button
                             (lem/button:button-action button)
-                            (lem::change-display-size-hook)))))
+                            (lem::update-on-display-resized)))))
                     t)
                    (t nil))))
              (lem:frame-header-windows (lem:current-frame)))

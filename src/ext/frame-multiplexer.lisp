@@ -204,7 +204,7 @@
                                     (let ((frame frame))
                                       (lambda ()
                                         (switch-current-frame window frame)
-                                        (lem::change-display-size-hook))))
+                                        (lem::update-on-display-resized))))
                 (when (tab-focus-p tab)
                   ;; set buffer-point to that focused tab position
                   (let ((end-pos (point-charpos p)))

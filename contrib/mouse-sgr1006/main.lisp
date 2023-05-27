@@ -20,7 +20,7 @@
           (lem:window-y     window)
           (lem:window-width window)
           (- (lem:window-height window)
-             (if (lem::window-use-modeline-p window) 1 0))))
+             (if (lem:window-use-modeline-p window) 1 0))))
 
 (defun move-to-cursor (window x y)
   (lem:move-point (lem:current-point) (lem::window-view-point window))

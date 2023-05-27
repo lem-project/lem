@@ -177,6 +177,7 @@
    :window-parameter
    :window-delete-hook
    :window-leave-hook
+   :window-use-modeline-p
    :window-redraw
    :current-window
    :window-list

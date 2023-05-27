@@ -372,7 +372,7 @@
           (lem:window-y     window)
           (lem:window-width window)
           (- (lem:window-height window)
-             (if (lem::window-use-modeline-p window) 1 0))))
+             (if (lem:window-use-modeline-p window) 1 0))))
 ;; for mintty and ConEmu
 ;; get mouse disp-x for pointing wide characters properly
 (defun mouse-get-disp-x (view x y)

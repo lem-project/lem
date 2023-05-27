@@ -435,7 +435,7 @@
      (mouse-get-disp-x view x y))
     (t x)))
 (defun mouse-move-to-cursor (window x y)
-  (lem:move-point (lem:current-point) (lem::window-view-point window))
+  (lem:move-point (lem:current-point) (lem:window-view-point window))
   (lem:move-to-next-virtual-line (lem:current-point) y)
   (lem:move-to-virtual-line-column (lem:current-point) x))
 (defun mouse-event-proc (bstate x1 y1)

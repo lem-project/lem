@@ -23,7 +23,7 @@
              (if (lem:window-use-modeline-p window) 1 0))))
 
 (defun move-to-cursor (window x y)
-  (lem:move-point (lem:current-point) (lem::window-view-point window))
+  (lem:move-point (lem:current-point) (lem:window-view-point window))
   (lem:move-to-next-virtual-line (lem:current-point) y)
   (lem:move-to-virtual-line-column (lem:current-point) x))
 

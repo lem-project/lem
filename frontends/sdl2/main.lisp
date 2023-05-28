@@ -668,9 +668,12 @@
   (handle-textediting (get-platform) text)
   (lem:send-event #'lem:redraw-display))
 
-(defun on-textinput (text)
+(defun on-textinput (value)
   (hide-cursor)
-  (handle-text-input (get-platform) text))
+  (let ((text (etypecase value
+                (integer (string (code-char value)))
+                (string value))))
+    (handle-text-input (get-platform) text)))
 
 (defun on-keydown (key-event)
   (hide-cursor)

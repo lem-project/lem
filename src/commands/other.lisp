@@ -20,8 +20,7 @@
 (define-command nop-command () ())
 
 (define-command undefined-key () ()
-  (editor-error "Key not found: ~A"
-                (keyseq-to-string (last-read-key-sequence))))
+  (error 'undefined-key-error))
 
 (define-command keyboard-quit () ()
   (error 'editor-abort))

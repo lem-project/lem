@@ -17,7 +17,7 @@
    :exist-command-p)
   ;; version.lisp
   (:export
-   :get-lem-version-string)
+   :get-version-string)
   ;; killring.lisp
   (:export
    :current-killring
@@ -34,6 +34,7 @@
   ;; errors.lisp
   (:export
    :editor-abort
+   :undefined-key-error
    :exit-editor
    :move-cursor-error
    :end-of-buffer

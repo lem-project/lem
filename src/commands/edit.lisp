@@ -33,7 +33,6 @@
            :delete-trailing-whitespace))
 (in-package :lem-core/commands/edit)
 
-;; TODO: resolve dependencies
 (setf (keymap-undef-hook *global-keymap*) 'self-insert)
 
 (define-key *global-keymap* "C-q" 'quoted-insert)
@@ -66,8 +65,7 @@
 
 (defmethod execute :before (mode (command self-insert-advice) argument)
   (unless (get-self-insert-char)
-    ;; TODO: resolve dependencies
-    (uiop:symbol-call :lem :undefined-key)))
+    (error 'undefined-key-error)))
 
 (define-command (self-insert (:advice-classes self-insert-advice editable-advice))
     (&optional (n 1) (char (get-self-insert-char)))

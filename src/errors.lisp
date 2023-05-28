@@ -16,6 +16,14 @@
   ((report :initarg :report
            :reader exit-editor-report)))
 
+(define-condition undefined-key-error (editor-error)
+  ()
+  (:report (lambda (c s)
+             (declare (ignore c))
+             (format s
+                     "key not found: ~A"
+                     (keyseq-to-string (last-read-key-sequence))))))
+
 (define-condition move-cursor-error (editor-error)
   ((point :initarg :point
           :reader move-cursor-error-point)))

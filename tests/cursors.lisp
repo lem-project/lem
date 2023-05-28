@@ -17,23 +17,23 @@
 
 (deftest simple-fake-cursor-test
   (with-testing-buffer (buffer (lem:make-buffer "cursor test"))
-    (let* ((lem-internal::*killring* (make-testing-killring))
-           (cursor (lem-internal::make-fake-cursor (lem:current-point))))
+    (let* ((lem-core::*killring* (make-testing-killring))
+           (cursor (lem-core::make-fake-cursor (lem:current-point))))
       (testing "Test the fake-cursor created"
         (testing "buffer-fake-cursors"
-          (ok (alexandria:length= 1 (lem-internal::buffer-fake-cursors buffer)))
-          (ok (eq cursor (first (lem-internal::buffer-fake-cursors buffer)))))
+          (ok (alexandria:length= 1 (lem-core::buffer-fake-cursors buffer)))
+          (ok (eq cursor (first (lem-core::buffer-fake-cursors buffer)))))
         (testing "killring"
-          (let ((killring (lem-internal::fake-cursor-killring cursor)))
-            (ok (not (eq (lem-internal::current-killring) killring)))
+          (let ((killring (lem-core::fake-cursor-killring cursor)))
+            (ok (not (eq (lem-core::current-killring) killring)))
             (ok (equal "aaa" (peek-killring-item killring 2)))
             (ok (equal "bbb" (peek-killring-item killring 1)))
             (ok (equal "ccc" (peek-killring-item killring 0)))))
         (testing "point-kind"
           (ok (eq :left-inserting (lem:point-kind cursor)))))
       (testing "Delete cursor"
-        (lem-internal::delete-fake-cursor cursor)
-        (ok (null (lem-internal::buffer-fake-cursors buffer)))))))
+        (lem-core::delete-fake-cursor cursor)
+        (ok (null (lem-core::buffer-fake-cursors buffer)))))))
 
 (defun make-testing-fake-cursors (point n)
   (lem:with-point ((p point))
@@ -43,7 +43,7 @@
 
 (deftest test-to-execute-a-series-of-commands
   (lem-fake-interface:with-fake-interface ()
-    (let ((lem-internal::*killring* (lem/common/killring:make-killring 10)))
+    (let ((lem-core::*killring* (lem/common/killring:make-killring 10)))
       (with-testing-buffer (buffer (make-text-buffer (lines "abcdefg" "hijklmn" "opqrstu")))
         (make-testing-fake-cursors (lem:buffer-point buffer) 2)
         (testing "execute self-insert command"
@@ -57,36 +57,36 @@
                        (lem:buffer-text buffer))))
         (testing "multiple cursor killring"
           (lem:execute (lem:buffer-major-mode buffer)
-                       (make-instance 'lem-internal::delete-next-char)
+                       (make-instance 'lem-core::delete-next-char)
                        4)
           (ok (equal '("abcd"
                        "opqr"
                        "hijk")
                      (mapcar (lambda (killring)
                                (peek-killring-item killring 0))
-                             (cons lem-internal::*killring*
+                             (cons lem-core::*killring*
                                    (mapcar (lambda (cursor)
-                                             (lem-internal::fake-cursor-killring cursor))
-                                           (lem-internal::buffer-fake-cursors buffer)))))))))))
+                                             (lem-core::fake-cursor-killring cursor))
+                                           (lem-core::buffer-fake-cursors buffer)))))))))))
 
 (defun linum-and-column (point)
   (list (lem:line-number-at-point point)
         (lem:point-column point)))
 
 (defun all-positions (buffer)
-  (mapcar #'linum-and-column (lem-internal::buffer-cursors buffer)))
+  (mapcar #'linum-and-column (lem-core::buffer-cursors buffer)))
 
 (defun positions-set-equal (positions1 positions2)
   (alexandria:set-equal positions1 positions2 :test #'equal))
 
 (deftest next-line/previous-line
   (lem-fake-interface:with-fake-interface ()
-    (lem-internal::save-continue-flags
+    (lem-core::save-continue-flags
       (with-testing-buffer (buffer (make-text-buffer (lines "abcdefghijklmn"
                                                             "opqrstuvwxyz"
                                                             "0123456789"
                                                             "------------------")))
-        (lem-internal::set-window-buffer buffer (lem:current-window))
+        (lem-core::set-window-buffer buffer (lem:current-window))
         (make-testing-fake-cursors (lem:buffer-point buffer) 2)
         (lem:execute (lem:buffer-major-mode buffer)
                      (make-instance 'lem:move-to-end-of-line)

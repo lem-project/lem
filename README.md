@@ -9,6 +9,10 @@ After installing lem, you can start developing in Common Lisp at once.
 
 You can skip over writing tidy settings or installing many plugins as you do on Emacs.
 
+# If the installation fails
+Please refer to the following issue
+https://github.com/lem-project/lem/issues/628
+
 ## Screenshot
 ![Terminal](screenshots/terminal.png)　　
 

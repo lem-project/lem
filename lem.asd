@@ -50,6 +50,7 @@
                (:file "event-queue")
                (:file "interp")
                (:file "mouse")
+               (:file "context-menu")
                (:file "input")
                (:file "overlay")
                (:file "streams")
@@ -57,25 +58,29 @@
                (:file "completion")
                (:file "typeout")
                (:file "cursors")
-               (:file "lem")
-
-               (:file "primitive-command")
-               (:file "self-insert-command")
-               (:file "file-command")
-               (:file "window-command")
-               (:file "help-command")
-               (:file "word-command")
-               (:file "sexp-command")
-               (:file "multiple-cursors-command")
-
-               (:file "default-keymap")
-
+               (:file "command-advices")
                (:file "interface")
                (:file "display")
+               (:file "site-init")
+               (:file "lem")
 
                (:file "color-theme")
 
-               (:file "site-init")
+               (:module "commands"
+                :serial t
+                :components ((:file "multiple-cursors")
+                             (:file "move")
+                             (:file "edit" :depends-on ("move"))
+                             (:file "mark")
+                             (:file "word" :depends-on ("edit"))
+                             (:file "s-expression" :depends-on ("edit"))
+                             (:file "file" :depends-on ("edit"))
+                             (:file "window" :depends-on ("move"))
+                             (:file "buffer")
+                             (:file "process")
+                             (:file "help")
+                             (:file "font")
+                             (:file "other")))
 
                (:file "external-packages")
 

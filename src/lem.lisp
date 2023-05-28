@@ -1,5 +1,6 @@
 (in-package :lem-core)
 
+(defvar *set-location-hook* '())
 (defvar *before-init-hook* '())
 (defvar *after-init-hook* '())
 (defvar *splash-function* nil)
@@ -108,7 +109,8 @@
                                 ((equal arg "--kill")
                                  `(uiop:quit))
                                 ((member arg '("-v" "--version") :test #'equal)
-                                 (format t "~a~%" (lem-version))
+                                 ;TODO: resolve lem-version dependencies
+                                 (format t "~a~%" (uiop:symbol-call :lem :lem-version))
                                  (uiop:quit)
                                  nil)
                                 ((or (stringp arg) (pathnamep arg))

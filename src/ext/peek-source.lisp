@@ -54,10 +54,10 @@
 (defmethod lem-core::%delete-window :before ((window source-window))
   (finalize-peek-source))
 
-(defmethod lem-core::compute-window-list ((current-window peek-window))
+(defmethod compute-window-list ((current-window peek-window))
   (list *peek-window* *source-window*))
 
-(defmethod lem-core::compute-window-list ((current-window source-window))
+(defmethod compute-window-list ((current-window source-window))
   (list *source-window* *peek-window*))
 
 (defvar *is-finalzing* nil)

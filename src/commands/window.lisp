@@ -1,10 +1,63 @@
-(in-package :lem-core)
+(defpackage :lem-core/commands/window
+  (:use :cl
+        :lem-core
+        :lem-core/commands/move)
+  (:export :select-buffer
+           :kill-buffer
+           :previous-buffer
+           :next-buffer
+           :recenter
+           :split-active-window-vertically
+           :split-active-window-horizontally
+           :other-window
+           :window-move-up
+           :window-move-down
+           :window-move-right
+           :window-move-left
+           :delete-other-windows
+           :delete-active-window
+           :quit-active-window
+           :grow-window
+           :shrink-window
+           :grow-window-horizontally
+           :shrink-window-horizontally
+           :scroll-down
+           :scroll-up
+           :find-file-other-window
+           :read-file-other-window
+           :select-buffer-other-window
+           :switch-to-last-focused-window
+           :compare-windows))
+(in-package :lem-core/commands/window)
+
+(define-key *global-keymap* "C-x b" 'select-buffer)
+(define-key *global-keymap* "C-x k" 'kill-buffer)
+(define-key *global-keymap* "C-x Left" 'previous-buffer)
+(define-key *global-keymap* "C-x Right" 'next-buffer)
+(define-key *global-keymap* "C-l" 'recenter)
+(define-key *global-keymap* "C-x 2" 'split-active-window-vertically)
+(define-key *global-keymap* "C-x 3" 'split-active-window-horizontally)
+(define-key *global-keymap* "C-x o" 'other-window)
+(define-key *global-keymap* "M-o" 'other-window)
+(define-key *global-keymap* "C-x 1" 'delete-other-windows)
+(define-key *global-keymap* "C-x 0" 'delete-active-window)
+(define-key *global-keymap* "C-x ^" 'grow-window)
+(define-key *global-keymap* "C-x C-z" 'shrink-window)
+(define-key *global-keymap* "C-x }" 'grow-window-horizontally)
+(define-key *global-keymap* "C-x {" 'shrink-window-horizontally)
+(define-key *global-keymap* "C-Down" 'scroll-down)
+(define-key *global-keymap* "M-Down" 'scroll-down)
+(define-key *global-keymap* "C-Up" 'scroll-up)
+(define-key *global-keymap* "M-Up" 'scroll-up)
+(define-key *global-keymap* "C-x 4 f" 'find-file-other-window)
+(define-key *global-keymap* "C-x 4 r" 'read-file-other-window)
+(define-key *global-keymap* "C-x 4 b" 'select-buffer-other-window)
 
 (defvar *balance-after-split-window* t)
 
 (defun maybe-balance-windows ()
   (when *balance-after-split-window*
-    (balance-windows)))
+    (lem-core::balance-windows)))
 
 (eval-when (:compile-toplevel :load-toplevel)
   (defmacro define-other-window-command (command prompt)
@@ -40,7 +93,7 @@
 (defmethod delete-buffer-using-manager :before
     ((manager lem-base::buffer-list-manager)
      buffer)
-  (dolist (frame (all-frames))
+  (dolist (frame (lem-core::all-frames))
     (strip-buffer-from-frame-windows buffer frame)))
 
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
@@ -66,7 +119,7 @@
                     nil))
 
 (define-command recenter (p) ("P")
-  (clear-screens-of-window-list)
+  (lem-core::clear-screens-of-window-list)
   (unless p (window-recenter (current-window)))
   (redraw-display)
   t)
@@ -86,11 +139,6 @@
 (defun update-last-focused-window ()
   (setf *last-focused-window* (current-window)))
 
-(defmethod compute-window-list (current-window)
-  (append (alexandria:ensure-list
-           (active-prompt-window))
-          (window-list)))
-
 (define-command other-window (&optional (n 1)) ("p")
   (let ((window-list
           (compute-window-list (current-window))))
@@ -101,7 +149,7 @@
       (dotimes (_ n t)
         (setf window
               (get-next-window window window-list)))
-      (switch-to-window window))))
+      (lem-core::switch-to-window window))))
 
 (define-command switch-to-last-focused-window () ()
   (let ((window (or (and (not (null *last-focused-window*))
@@ -131,12 +179,12 @@
   (dolist (win (window-list))
     (unless (eq win (current-window))
       (delete-window win)))
-  (window-set-pos (current-window)
-                  (topleft-window-x (current-frame))
-                  (topleft-window-y (current-frame)))
-  (window-set-size (current-window)
-                   (max-window-width (current-frame))
-                   (max-window-height (current-frame)))
+  (lem-core::window-set-pos (current-window)
+                            (lem-core::topleft-window-x (current-frame))
+                            (lem-core::topleft-window-y (current-frame)))
+  (lem-core::window-set-size (current-window)
+                             (lem-core::max-window-width (current-frame))
+                             (lem-core::max-window-height (current-frame)))
   t)
 
 (define-command delete-active-window () ()
@@ -152,34 +200,28 @@
     (return-from grow-window (shrink-window (- n))))
   (when (one-window-p)
     (editor-error "Only one window"))
-  (grow-window-height (current-window) n))
+  (lem-core::grow-window-height (current-window) n))
 
 (define-command shrink-window (n) ("p")
   (when (< n 0)
     (return-from shrink-window (grow-window (- n))))
   (when (one-window-p)
     (editor-error "Only one window"))
-  (shrink-window-height (current-window) n))
+  (lem-core::shrink-window-height (current-window) n))
 
 (define-command grow-window-horizontally (n) ("p")
   (when (< n 0)
     (return-from grow-window-horizontally (shrink-window-horizontally (- n))))
   (when (one-window-p)
     (editor-error "Only one window"))
-  (grow-window-width (current-window) n))
+  (lem-core::grow-window-width (current-window) n))
 
 (define-command shrink-window-horizontally (n) ("p")
   (when (< n 0)
     (return-from shrink-window-horizontally (grow-window-horizontally (- n))))
   (when (one-window-p)
     (editor-error "Only one window"))
-  (shrink-window-width (current-window) n))
-
-(defun display-buffer (buffer &optional force-split-p)
-  (multiple-value-bind (window split-p)
-      (pop-to-buffer buffer force-split-p)
-    (declare (ignore split-p))
-    window))
+  (lem-core::shrink-window-width (current-window) n))
 
 (define-command scroll-down (n) ("p")
   (cond
@@ -188,9 +230,9 @@
     (t
      (unless (window-scroll (current-window) n)
        (buffer-end (window-view-point (current-window)))
-       (backward-line-wrap (window-view-point (current-window))
-                           (current-window) t))
-     (next-line (- (window-offset-view (current-window)))))))
+       (lem-core::backward-line-wrap (window-view-point (current-window))
+                                     (current-window) t))
+     (next-line (- (lem-core::window-offset-view (current-window)))))))
 
 (define-command scroll-up (n) ("p")
   (cond
@@ -199,13 +241,13 @@
     (t
      (unless (window-scroll (current-window) (- n))
        (buffer-start (window-view-point (current-window))))
-     (previous-line (window-offset-view (current-window))))))
+     (previous-line (lem-core::window-offset-view (current-window))))))
 
-(define-other-window-command find-file "FFind File Other Window: ")
+;; (define-other-window-command find-file "FFind File Other Window: ")
 
-(define-other-window-command read-file "FREAD File Other Window: ")
+;; (define-other-window-command read-file "FREAD File Other Window: ")
 
-(define-other-window-command select-buffer "BUse Buffer Other Window: ")
+;; (define-other-window-command select-buffer "BUse Buffer Other Window: ")
 
 (define-command compare-windows (ignore-whitespace) ("p")
   (setf ignore-whitespace (/= ignore-whitespace 1))

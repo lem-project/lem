@@ -1,4 +1,29 @@
-(in-package :lem-core)
+(defpackage :lem-core/commands/s-expression
+  (:use :cl 
+        :lem-core
+        :lem-core/commands/edit)
+  (:export :forward-sexp
+           :backward-sexp
+           :forward-list
+           :backward-list
+           :down-list
+           :backward-up-list
+           :mark-sexp
+           :kill-sexp
+           :transpose-sexps))
+(in-package :lem-core/commands/s-expression)
+
+(define-key *global-keymap* "C-M-f" 'forward-sexp)
+(define-key *global-keymap* "C-M-b" 'backward-sexp)
+(define-key *global-keymap* "C-M-n" 'forward-list)
+(define-key *global-keymap* "C-M-p" 'backward-list)
+(define-key *global-keymap* "C-M-d" 'down-list)
+(define-key *global-keymap* "C-M-u" 'backward-up-list)
+(define-key *global-keymap* "C-M-@" 'mark-sexp)
+(define-key *global-keymap* "C-M-Space" 'mark-sexp)
+(define-key *global-keymap* "C-M-k" 'kill-sexp)
+(define-key *global-keymap* "C-M-t" 'transpose-sexps)
+(define-key *global-keymap* "C-M-y" 'kill-around-form)
 
 (define-command (forward-sexp (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (with-point ((prev (current-point)))
@@ -29,11 +54,11 @@
 (define-command mark-sexp () ()
   (cond
     ((continue-flag :mark-sexp)
-     (form-offset (mark-point (cursor-mark (current-point))) 1))
+     (form-offset (mark-point (lem-core::cursor-mark (current-point))) 1))
     (t
      (save-excursion
        (form-offset (current-point) 1)
-       (set-cursor-mark (current-point) (current-point))))))
+       (lem-core::set-cursor-mark (current-point) (current-point))))))
 
 (define-command (kill-sexp (:advice-classes editable-advice)) (&optional (n 1)) ("p")
   (dotimes (_ n t)
@@ -79,3 +104,8 @@
         (save-excursion (insert-string start remaining-text)))
       (form-offset end 1)
       (indent-points start end))))
+
+(defmethod execute :around (mode
+                            (command mark-sexp)
+                            argument)
+  (lem-core::process-each-cursors #'call-next-method))

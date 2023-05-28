@@ -119,7 +119,7 @@
 
 (defun send-key-event (key)
   (if (lem:match-key key :ctrl t :sym "]")
-      (lem:send-abort-event (lem::find-editor-thread) nil)
+      (lem:send-abort-event (lem:find-editor-thread) nil)
       (lem:send-event key)))
 
 ;; linux

@@ -81,7 +81,7 @@
                     (let ((button (lem/button:button-at point)))
                       (when button
                         (lem/button:button-action button)
-                        (lem::update-on-display-resized)))))
+                        (lem:update-on-display-resized)))))
                 t)
                (t nil))))
          (lem:frame-header-windows (lem:current-frame)))
@@ -159,18 +159,18 @@
 (defvar *disable-hook* '())
 
 (defun enable-hook ()
-  (format lem::*terminal-io-saved* "~A[?1000h~A[?1002h~A[?1006h~%" #\esc #\esc #\esc)
+  (format lem-ncurses:*terminal-io-saved* "~A[?1000h~A[?1002h~A[?1006h~%" #\esc #\esc #\esc)
   (ignore-errors
    (dolist (window (lem:window-list))
-     (lem::screen-clear (lem::window-screen window)))
+     (lem:screen-clear (lem:window-screen window)))
    (lem:redraw-display))
-  (run-hooks *enable-hook*))
+  (lem:run-hooks *enable-hook*))
 
 (defun disable-hook ()
-  (format lem::*terminal-io-saved* "~A[?1006l~A[?1002l~A[?1000l~%" #\esc #\esc #\esc)
+  (format lem-ncurses:*terminal-io-saved* "~A[?1006l~A[?1002l~A[?1000l~%" #\esc #\esc #\esc)
   (ignore-errors
    (dolist (window (lem:window-list))
-     (lem::screen-clear (lem::window-screen window)))
+     (lem:screen-clear (lem:window-screen window)))
    (lem:redraw-display))
   (run-hooks *disable-hook*))
 

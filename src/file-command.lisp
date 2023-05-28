@@ -155,13 +155,13 @@
 
 (defun (setf revert-buffer-function) (function buffer)
   (setf (buffer-value buffer 'revert-buffer-function)
-	function))
+        function))
 
-(defun revert-buffer-internal (buffer)
+(defun sync-buffer-with-file-content (buffer)
   (with-buffer-read-only buffer nil
     (let* ((point (buffer-point buffer))
-	   (line-number (line-number-at-point point))
-	   (column (point-column point)))
+           (line-number (line-number-at-point point))
+           (column (point-column point)))
       (erase-buffer buffer)
       (insert-file-contents point (buffer-filename buffer))
       (buffer-unmark buffer)
@@ -172,15 +172,15 @@
 
 (define-command revert-buffer (does-not-ask-p) ("P")
   (let ((ask (not does-not-ask-p))
-	(buffer (current-buffer)))
+        (buffer (current-buffer)))
     (alexandria:if-let (fn (revert-buffer-function buffer))
       (funcall fn buffer)
       (when (and (or (buffer-modified-p buffer)
-		     (changed-disk-p buffer))
-		 (if ask
-		     (prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))
-		     t))
-	(revert-buffer-internal buffer)))))
+                     (changed-disk-p buffer))
+                 (if ask
+                     (prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))
+                     t))
+        (sync-buffer-with-file-content buffer)))))
 
 (define-condition ask-revert-buffer (before-executing-command)
   ((last-time :initform nil

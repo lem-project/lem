@@ -53,7 +53,7 @@
 (defun mouse-event-p (value)
   (typep value 'mouse-event))
 
-(defun get-x-y-position-point (window x y)
+(defun get-point-from-window-with-coordinates (window x y)
   (with-point ((point (buffer-point (window-buffer window))))
     (move-point point (window-view-point window))
     (move-to-next-virtual-line point y window)
@@ -75,13 +75,13 @@
 (defvar *last-dragged-separator* nil)
 
 (defmethod handle-button-1 ((window header-window) x y clicks)
-  (let* ((point (get-x-y-position-point window x y))
+  (let* ((point (get-point-from-window-with-coordinates window x y))
          (callback (text-property-at point :click-callback)))
     (when callback
       (funcall callback window point))))
 
 (defmethod handle-button-1 ((window window) x y clicks)
-  (let* ((point (get-x-y-position-point window x y))
+  (let* ((point (get-point-from-window-with-coordinates window x y))
          (callback (text-property-at point :click-callback)))
     (cond ((or callback (= clicks 1))
            (cond (callback
@@ -188,7 +188,7 @@
            (when window
              (case (mouse-event-button mouse-event)
                ((nil)
-                (let ((point (get-x-y-position-point window x y)))
+                (let ((point (get-point-from-window-with-coordinates window x y)))
                   (or (handle-mouse-hover-buffer window point)
                       (handle-mouse-hover-overlay window point))))
                (:button-1
@@ -309,7 +309,7 @@
   (multiple-value-bind (target-window x y)
       (focus-window-position (current-frame) x y)
     (when (eq target-window window)
-      (let ((point (get-x-y-position-point window x y)))
+      (let ((point (get-point-from-window-with-coordinates window x y)))
         (multiple-value-bind (start end)
             (get-select-expression-points point)
           (when (and start end)

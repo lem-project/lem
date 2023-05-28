@@ -15,7 +15,7 @@
 (test test
   (ql:quickload :lem-fake-interface :silent t)
   (lem)
-  (let ((event-queue (lem::make-event-queue)))
+  (let ((event-queue (lem-internal::make-event-queue)))
     (send-event (lambda ()
                   (block outer
                     (handler-bind ((error (lambda (c)
@@ -35,8 +35,8 @@
                       (lem-frame-multiplexer::frame-multiplexer-next)
                       (send-event (make-datum :id 2 :result (uiop:symbol-call :lem-fake-interface :display))
                                   event-queue)))))
-    (let* ((datum1 (lem::dequeue-event 1 event-queue))
-           (datum2 (lem::dequeue-event 1 event-queue)))
+    (let* ((datum1 (lem-internal::dequeue-event 1 event-queue))
+           (datum2 (lem-internal::dequeue-event 1 event-queue)))
       (ok (string= (datum-result datum1) "abc "))
       (ok (string= (datum-result datum2) "abc ")))
     (send-event (lambda ()

@@ -129,9 +129,9 @@
                             (command indent-region)
                             argument)
   (check-marked)
-  (lem::do-each-cursors ()
-    (indent-points (lem::cursor-region-beginning (current-point))
-                   (lem::cursor-region-end (current-point)))))
+  (do-each-cursors ()
+    (indent-points (cursor-region-beginning (current-point))
+                   (cursor-region-end (current-point)))))
 
 (defun space*-p (point)
   (with-point ((point point))
@@ -151,8 +151,8 @@
 (defun set-region-point (start end)
   (cond
     ((buffer-mark-p (current-buffer))
-     (move-point start (lem::cursor-region-beginning (current-point)))
-     (move-point end (lem::cursor-region-end (current-point))))
+     (move-point start (cursor-region-beginning (current-point)))
+     (move-point end (cursor-region-end (current-point))))
     (t
      (line-start start)
      (line-end end))))

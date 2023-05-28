@@ -17,6 +17,12 @@
     #+darwin (sbcl-2.0.0-or-later-p)
     #-darwin (not (wsl-p))))
 
+(defun enable-clipboard ()
+  (setf *enable-clipboard-p* t))
+
+(defun disable-clipboard ()
+  (setf *enable-clipboard-p* nil))
+
 (defun enable-clipboard-p ()
   *enable-clipboard-p*)
 

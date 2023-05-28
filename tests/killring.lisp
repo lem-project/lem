@@ -12,14 +12,14 @@
         (push-killring-item killring "baz" :options :test))
 
       ;; clipboard disabled
-      (let ((lem::*enable-clipboard-p* nil)
-            (lem::*killring* killring))
+      (let ((lem-internal::*enable-clipboard-p* nil)
+            (lem-internal::*killring* killring))
         (ok (equal '("baz" (:test))
                    (multiple-value-list (yank-from-clipboard-or-killring)))))
     
       ;; clipboard enabled
-      (let ((lem::*enable-clipboard-p* t)
-            (lem::*killring* killring)
+      (let ((lem-internal::*enable-clipboard-p* t)
+            (lem-internal::*killring* killring)
             (expected-result "In LEM we trust."))
         (copy-to-clipboard-with-killring expected-result)
         (ok (equal expected-result

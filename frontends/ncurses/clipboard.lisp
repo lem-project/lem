@@ -100,7 +100,7 @@
   (or #+darwin
       'mac
       #+unix
-      (if (lem::wsl-p) 'wsl 'unix)
+      (if (lem:wsl-p) 'wsl 'unix)
       'windows))
 
 (defvar *os*)

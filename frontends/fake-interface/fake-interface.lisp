@@ -32,7 +32,7 @@
   lines)
 
 (defun get-displayed-text (&optional (window (current-window)))
-  (let ((lines (view-lines (lem::screen-view (lem::window-screen window)))))
+  (let ((lines (view-lines (screen-view (window-screen window)))))
     (with-output-to-string (out)
       (loop :for line :across lines
             :for line-string := (string-right-trim (string (code-char 0)) line)
@@ -104,5 +104,5 @@
 
 (defmacro with-fake-interface (() &body body)
   `(with-implementation (make-instance 'fake-interface)
-     (lem::setup-first-frame)
+     (setup-first-frame)
      ,@body))

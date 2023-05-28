@@ -76,7 +76,7 @@
 (define-command image-zoom-reset () ()
   (reset-buffer-scale (current-buffer)))
 
-(defclass sdl2-find-file-executor (lem::find-file-executor) ())
+(defclass sdl2-find-file-executor (lem:find-file-executor) ())
 
 (defmethod lem:execute-find-file ((executor sdl2-find-file-executor) mode pathname)
   (cond ((member (pathname-type pathname)
@@ -96,4 +96,4 @@
     (change-buffer-mode buffer 'image-viewer-mode)
     buffer))
 
-(setf lem::*find-file-executor* (make-instance 'sdl2-find-file-executor))
+(setf lem:*find-file-executor* (make-instance 'sdl2-find-file-executor))

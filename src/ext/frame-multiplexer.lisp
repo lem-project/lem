@@ -103,8 +103,8 @@
 (defun switch-current-frame (virtual-frame frame)
 
   ;; save buffer-point to window-point
-  (move-point (lem::%window-point (current-window))
-              (lem::window-buffer-point (current-window)))
+  (move-point (lem-internal::%window-point (current-window))
+              (lem-internal::window-buffer-point (current-window)))
 
   (setf (virtual-frame-current virtual-frame) frame)
   (notify-frame-redisplay-required frame)
@@ -114,8 +114,8 @@
   (setf (current-buffer) (window-buffer (current-window)))
 
   ;; restore buffer-point from window-point
-  (move-point (lem::window-buffer-point (current-window))
-              (lem::%window-point (current-window)))
+  (move-point (lem-internal::window-buffer-point (current-window))
+              (lem-internal::%window-point (current-window)))
   )
 
 (defun find-unused-frame-id (virtual-frame)
@@ -204,7 +204,7 @@
                                     (let ((frame frame))
                                       (lambda ()
                                         (switch-current-frame window frame)
-                                        (lem::update-on-display-resized))))
+                                        (lem:update-on-display-resized))))
                 (when (tab-focus-p tab)
                   ;; set buffer-point to that focused tab position
                   (let ((end-pos (point-charpos p)))

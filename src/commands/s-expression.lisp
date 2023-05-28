@@ -54,11 +54,11 @@
 (define-command mark-sexp () ()
   (cond
     ((continue-flag :mark-sexp)
-     (form-offset (mark-point (lem-core::cursor-mark (current-point))) 1))
+     (form-offset (mark-point (cursor-mark (current-point))) 1))
     (t
      (save-excursion
        (form-offset (current-point) 1)
-       (lem-core::set-cursor-mark (current-point) (current-point))))))
+       (set-cursor-mark (current-point) (current-point))))))
 
 (define-command (kill-sexp (:advice-classes editable-advice)) (&optional (n 1)) ("p")
   (dotimes (_ n t)
@@ -108,4 +108,4 @@
 (defmethod execute :around (mode
                             (command mark-sexp)
                             argument)
-  (lem-core::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))

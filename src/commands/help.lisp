@@ -23,17 +23,17 @@
     (terpri s))
   (let ((column-width 16))
     (loop :while keymap
-          :do (format s "~A (~(~A~))~%" name (lem-core::keymap-name keymap))
+          :do (format s "~A (~(~A~))~%" name (keymap-name keymap))
               (format s "~va~a~%" column-width "key" "binding")
               (format s "~va~a~%" column-width "---" "-------")
-              (lem-core::traverse-keymap keymap
-                                         (lambda (kseq command)
-                                           (unless (equal "UNDEFINED-KEY" (symbol-name command))
-                                             (format s "~va~(~a~)~%"
-                                                     column-width
-                                                     (keyseq-to-string kseq)
-                                                     (symbol-name command)))))
-              (setf keymap (lem-core::keymap-parent keymap))
+              (traverse-keymap keymap
+                               (lambda (kseq command)
+                                 (unless (equal "UNDEFINED-KEY" (symbol-name command))
+                                   (format s "~va~(~a~)~%"
+                                           column-width
+                                           (keyseq-to-string kseq)
+                                           (symbol-name command)))))
+              (setf keymap (keymap-parent keymap))
               (terpri s))))
 
 (define-command describe-bindings () ()
@@ -98,7 +98,7 @@
   (with-pop-up-typeout-window (out (make-buffer "*Apropos*") :erase t)
     (dolist (name (all-command-names))
       (when (search str name)
-        (describe (lem-core::command-name (find-command name)) out)))))
+        (describe (command-name (find-command name)) out)))))
 
 (defun get-git-hash (&optional (system :lem))
   (let* ((component (asdf:find-system system))

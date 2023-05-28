@@ -107,6 +107,7 @@
   ;; clipboard.lisp
   (:export
    :wsl-p
+   :with-enable-clipboard
    :enable-clipboard
    :disable-clipboard
    :enable-clipboard-p
@@ -137,6 +138,7 @@
    :notify-frame-redisplay-required
    :map-frame
    :get-frame
+   :all-frames
    :current-frame
    :unmap-frame
    :setup-frame
@@ -180,7 +182,11 @@
    :prompt-for-buffer
    :prompt-for-file
    :prompt-for-directory
-   :prompt-for-encodings)
+   :prompt-for-encodings
+   :prompt-for-library)
+  ;; window-tree.lisp
+  (:export
+   :balance-windows)
   ;; window.lisp
   (:export
    :line-wrap
@@ -219,6 +225,8 @@
    :window-scroll
    :window-cursor-x
    :window-cursor-y
+   :backward-line-wrap
+   :forward-line-wrap
    :move-to-next-virtual-line
    :move-to-previous-virtual-line
    :point-virtual-line-column
@@ -248,7 +256,20 @@
    :header-window
    :update-on-display-resized
    :covered-with-floating-window-p
-   :redraw-display)
+   :redraw-display
+   :clear-screens-of-window-list
+   :switch-to-window
+   :window-set-pos
+   :window-set-size
+   :topleft-window-x
+   :topleft-window-y
+   :max-window-width
+   :max-window-height
+   :grow-window-height
+   :shrink-window-height
+   :grow-window-width
+   :shrink-window-width
+   :window-offset-view)
   ;; popup.lisp
   (:export
    :*default-popup-message-timeout*
@@ -276,6 +297,7 @@
    :convert-modeline-element)
   ;; command.lisp
   (:export
+   :command-name
    :executing-command-command
    :handle-signal
    :before-executing-command
@@ -313,6 +335,9 @@
   (:export
    :*keymaps*
    :keymap
+   :keymap-name
+   :keymap-parent
+   :keymap-undef-hook
    :make-keymap
    :*global-keymap*
    :define-key
@@ -322,7 +347,8 @@
    :lookup-keybind
    :*abort-key*
    :abort-key-p
-   :with-special-keymap)
+   :with-special-keymap
+   :traverse-keymap)
   ;; reexport common/timer
   (:export
    :timer
@@ -400,8 +426,16 @@
    :completion-buffer)
   ;; cursors.lisp
   (:export
+   :cursor-saved-column
+   :cursor-yank-start
+   :cursor-yank-end
+   :change-yank-start
+   :change-yank-end
+   :cursor-mark
+   :set-cursor-mark
    :cursor-region-beginning
    :cursor-region-end
+   :buffer-fake-cursors
    :buffer-cursors
    :make-fake-cursor
    :delete-fake-cursor
@@ -427,6 +461,7 @@
    :movable-advice
    :editable-advice
    :jump-cursor-advice
+   :process-each-cursors
    :do-each-cursors)
   ;; display.lisp
   (:export

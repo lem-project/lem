@@ -46,12 +46,12 @@
                       forward-line-fn
                       move-to-column-fn)
   (if (continue-flag :next-line)
-      (unless (not (null (lem-core::cursor-saved-column (current-point))))
+      (unless (not (null (cursor-saved-column (current-point))))
         (log:error "asseriton error: (not (null (cursor-saved-column (current-point))))"))
-      (setf (lem-core::cursor-saved-column (current-point))
+      (setf (cursor-saved-column (current-point))
             (funcall point-column-fn (current-point))))
   (unless (prog1 (funcall forward-line-fn (current-point) n)
-            (funcall move-to-column-fn (current-point) (lem-core::cursor-saved-column (current-point))))
+            (funcall move-to-column-fn (current-point) (cursor-saved-column (current-point))))
     (cond ((plusp n)
            (move-to-end-of-buffer)
            (error 'end-of-buffer :point (current-point)))
@@ -95,9 +95,9 @@
   (buffer-end (current-point)))
 
 (define-command (move-to-beginning-of-line (:advice-classes movable-advice)) () ()
-  (let ((bol (lem-core::backward-line-wrap (copy-point (current-point) :temporary)
-                                           (current-window)
-                                           t)))
+  (let ((bol (backward-line-wrap (copy-point (current-point) :temporary)
+                                 (current-window)
+                                 t)))
     (cond ((text-property-at (current-point) :field -1))
           ((previous-single-property-change (current-point)
                                             :field
@@ -113,7 +113,7 @@
   (line-start (current-point)))
 
 (define-command (move-to-end-of-line (:advice-classes movable-advice)) () ()
-  (or (and (lem-core::forward-line-wrap (current-point) (current-window))
+  (or (and (forward-line-wrap (current-point) (current-window))
            (character-offset (current-point) -1))
       (line-end (current-point))))
 

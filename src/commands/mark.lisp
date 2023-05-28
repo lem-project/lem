@@ -12,15 +12,15 @@
 
 (define-command mark-set () ()
   (run-hooks *set-location-hook* (current-point))
-  (lem-core::set-cursor-mark (current-point) (current-point))
+  (set-cursor-mark (current-point) (current-point))
   (message "Mark set"))
 
 (define-command exchange-point-mark () ()
   (check-marked)
-  (alexandria:when-let ((mark (mark-point (lem-core::cursor-mark (current-point)))))
+  (alexandria:when-let ((mark (mark-point (cursor-mark (current-point)))))
     (with-point ((current (current-point)))
       (move-point (current-point) mark)
-      (lem-core::set-cursor-mark (current-point) current))))
+      (set-cursor-mark (current-point) current))))
 
 (define-command (mark-set-whole-buffer (:advice-classes jump-cursor-advice)) () ()
   (buffer-end (current-point))
@@ -31,9 +31,9 @@
 (defmethod execute :around (mode
                             (command mark-set)
                             argument)
-  (lem-core::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))
 
 (defmethod execute :around (mode
                             (command exchange-point-mark)
                             argument)
-  (lem-core::process-each-cursors #'call-next-method))
+  (process-each-cursors #'call-next-method))

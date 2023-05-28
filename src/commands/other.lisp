@@ -61,7 +61,7 @@
       (lem-if:display-context-menu (implementation) context-menu '(:gravity :cursor)))))
 
 (define-command load-library (name)
-    ((lem-core::prompt-for-library "load library: " :history-symbol 'load-library))
+    ((prompt-for-library "load library: " :history-symbol 'load-library))
   (message "Loading ~A." name)
   (cond ((ignore-errors (maybe-quickload (format nil "lem-~A" name) :silent t))
          (message "Loaded ~A." name))

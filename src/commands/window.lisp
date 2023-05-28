@@ -57,7 +57,7 @@
 
 (defun maybe-balance-windows ()
   (when *balance-after-split-window*
-    (lem-core::balance-windows)))
+    (balance-windows)))
 
 (eval-when (:compile-toplevel :load-toplevel)
   (defmacro define-other-window-command (command prompt)
@@ -93,7 +93,7 @@
 (defmethod delete-buffer-using-manager :before
     ((manager lem-base::buffer-list-manager)
      buffer)
-  (dolist (frame (lem-core::all-frames))
+  (dolist (frame (all-frames))
     (strip-buffer-from-frame-windows buffer frame)))
 
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
@@ -119,7 +119,7 @@
                     nil))
 
 (define-command recenter (p) ("P")
-  (lem-core::clear-screens-of-window-list)
+  (clear-screens-of-window-list)
   (unless p (window-recenter (current-window)))
   (redraw-display)
   t)
@@ -149,7 +149,7 @@
       (dotimes (_ n t)
         (setf window
               (get-next-window window window-list)))
-      (lem-core::switch-to-window window))))
+      (switch-to-window window))))
 
 (define-command switch-to-last-focused-window () ()
   (let ((window (or (and (not (null *last-focused-window*))
@@ -179,12 +179,12 @@
   (dolist (win (window-list))
     (unless (eq win (current-window))
       (delete-window win)))
-  (lem-core::window-set-pos (current-window)
-                            (lem-core::topleft-window-x (current-frame))
-                            (lem-core::topleft-window-y (current-frame)))
-  (lem-core::window-set-size (current-window)
-                             (lem-core::max-window-width (current-frame))
-                             (lem-core::max-window-height (current-frame)))
+  (window-set-pos (current-window)
+                  (topleft-window-x (current-frame))
+                  (topleft-window-y (current-frame)))
+  (window-set-size (current-window)
+                   (max-window-width (current-frame))
+                   (max-window-height (current-frame)))
   t)
 
 (define-command delete-active-window () ()
@@ -200,28 +200,28 @@
     (return-from grow-window (shrink-window (- n))))
   (when (one-window-p)
     (editor-error "Only one window"))
-  (lem-core::grow-window-height (current-window) n))
+  (grow-window-height (current-window) n))
 
 (define-command shrink-window (n) ("p")
   (when (< n 0)
     (return-from shrink-window (grow-window (- n))))
   (when (one-window-p)
     (editor-error "Only one window"))
-  (lem-core::shrink-window-height (current-window) n))
+  (shrink-window-height (current-window) n))
 
 (define-command grow-window-horizontally (n) ("p")
   (when (< n 0)
     (return-from grow-window-horizontally (shrink-window-horizontally (- n))))
   (when (one-window-p)
     (editor-error "Only one window"))
-  (lem-core::grow-window-width (current-window) n))
+  (grow-window-width (current-window) n))
 
 (define-command shrink-window-horizontally (n) ("p")
   (when (< n 0)
     (return-from shrink-window-horizontally (grow-window-horizontally (- n))))
   (when (one-window-p)
     (editor-error "Only one window"))
-  (lem-core::shrink-window-width (current-window) n))
+  (shrink-window-width (current-window) n))
 
 (define-command scroll-down (n) ("p")
   (cond
@@ -230,9 +230,9 @@
     (t
      (unless (window-scroll (current-window) n)
        (buffer-end (window-view-point (current-window)))
-       (lem-core::backward-line-wrap (window-view-point (current-window))
+       (backward-line-wrap (window-view-point (current-window))
                                      (current-window) t))
-     (next-line (- (lem-core::window-offset-view (current-window)))))))
+     (next-line (- (window-offset-view (current-window)))))))
 
 (define-command scroll-up (n) ("p")
   (cond
@@ -241,7 +241,7 @@
     (t
      (unless (window-scroll (current-window) (- n))
        (buffer-start (window-view-point (current-window))))
-     (previous-line (lem-core::window-offset-view (current-window))))))
+     (previous-line (window-offset-view (current-window))))))
 
 ;; (define-other-window-command find-file "FFind File Other Window: ")
 

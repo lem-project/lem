@@ -34,7 +34,7 @@
 (in-package :lem-core/commands/edit)
 
 ;; TODO: resolve dependencies
-(setf (lem-core::keymap-undef-hook *global-keymap*) 'self-insert)
+(setf (keymap-undef-hook *global-keymap*) 'self-insert)
 
 (define-key *global-keymap* "C-q" 'quoted-insert)
 (define-key *global-keymap* "Return" 'newline)
@@ -124,7 +124,7 @@
       (error e))))
 
 (define-command (delete-previous-char (:advice-classes editable-advice)) (&optional n) ("P")
-  (cond ((mark-active-p (lem-core::cursor-mark (current-point)))
+  (cond ((mark-active-p (cursor-mark (current-point)))
          (delete-cursor-region (current-point)))
         (t
          (delete-previous-char-1 n))))
@@ -134,7 +134,7 @@
     (let ((start (cursor-region-beginning point))
           (end (cursor-region-end point)))
       (copy-to-clipboard-with-killring (points-to-string start end)))
-    (mark-cancel (lem-core::cursor-mark point))))
+    (mark-cancel (cursor-mark point))))
 
 (define-command copy-region (start end) ("r")
   (with-killring-context (:appending (continue-flag :kill))
@@ -150,7 +150,7 @@
          (killed-string (delete-character start (count-characters start end))))
     (with-killring-context (:appending (continue-flag :kill))
       (copy-to-clipboard-with-killring killed-string))
-    (mark-cancel (lem-core::cursor-mark point))))
+    (mark-cancel (cursor-mark point))))
 
 (define-command kill-region (start end) ("r")
   (when (point< end start)
@@ -186,10 +186,10 @@
   (let ((string (if (null arg)
                     (yank-from-clipboard-or-killring)
                     (peek-killring-item (current-killring) (1- arg)))))
-    (lem-core::change-yank-start (current-point)
+    (change-yank-start (current-point)
                                  (copy-point (current-point) :right-inserting))
     (insert-string-and-indent (current-point) string)
-    (lem-core::change-yank-end (current-point)
+    (change-yank-end (current-point)
                                (copy-point (current-point) :left-inserting))
     (continue-flag :yank)))
 
@@ -197,8 +197,8 @@
   (yank-1 arg))
 
 (define-command (yank-pop (:advice-classes editable-advice)) (&optional n) ("p")
-  (let ((start (lem-core::cursor-yank-start (current-point)))
-        (end (lem-core::cursor-yank-end (current-point)))
+  (let ((start (cursor-yank-start (current-point)))
+        (end (cursor-yank-end (current-point)))
         (prev-yank-p (continue-flag :yank)))
     (cond ((and start end prev-yank-p)
            (delete-between-points start end)
@@ -209,8 +209,8 @@
            nil))))
 
 (define-command (yank-pop-next (:advice-classes editable-advice)) (&optional n) ("p")
-  (let ((start (lem-core::cursor-yank-start (current-point)))
-        (end (lem-core::cursor-yank-end (current-point)))
+  (let ((start (cursor-yank-start (current-point)))
+        (end (cursor-yank-end (current-point)))
         (prev-yank-p (continue-flag :yank)))
     (cond ((and start end prev-yank-p)
            (delete-between-points start end)
@@ -365,7 +365,7 @@
 (defmethod execute :around (mode
                             (command delete-previous-char)
                             argument)
-  (cond ((mark-active-p (lem-core::cursor-mark (current-point)))
+  (cond ((mark-active-p (cursor-mark (current-point)))
          (do-each-cursors ()
            (delete-cursor-region (current-point))))
         (t
@@ -389,6 +389,6 @@
 (defmethod execute :around (mode
                             (command yank)
                             argument)
-  (let ((lem-core::*enable-clipboard-p* (and (enable-clipboard-p)
-                                             (null (lem-core::buffer-fake-cursors (current-buffer))))))
-    (lem-core::process-each-cursors #'call-next-method)))
+  (with-enable-clipboard (and (enable-clipboard-p)
+                              (null (buffer-fake-cursors (current-buffer))))
+    (process-each-cursors #'call-next-method)))

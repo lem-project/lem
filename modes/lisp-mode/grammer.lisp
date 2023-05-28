@@ -147,7 +147,7 @@
                               `(:sequence
                                 "("
                                 ,(wrap-symbol-names
-                                  "deftype" "defpackage" "defstruct")
+                                  "deftype" "defpackage" "defstruct" "uiop:define-package")
                                 (:greedy-repetition 0 1 (:register symbol)))
                               :captures (vector nil
                                                 (make-tm-name 'syntax-keyword-attribute)

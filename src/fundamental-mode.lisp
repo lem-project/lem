@@ -1,6 +1,6 @@
 (in-package :lem-base)
 
-(lem:define-major-mode fundamental-mode nil
+(lem-core:define-major-mode fundamental-mode nil
     (:name "Fundamental"))
 
 (in-package :lem-core)

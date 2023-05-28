@@ -363,7 +363,7 @@
         (start-x (screen-left-width screen))
         (truncate-str/attributes
           (cons (string *truncate-character*)
-                (list (list 0 1 'lem:truncate-attribute)))))
+                (list (list 0 1 'truncate-attribute)))))
     (loop :for i := (wide-index (car str/attributes)
                                 (1- screen-width)
                                 :start start)

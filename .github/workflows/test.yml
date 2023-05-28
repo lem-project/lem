@@ -44,7 +44,7 @@ jobs:
         sblint lib/micros/micros.asd
 
         grep -r --include="*.lisp" 'lem::'
-        if [ $? -ne 0 ]; then
+        if [ $? -eq 0 ]; then
           echo 'using `lem::` internal symbols'
           echo 'https://google.github.io/styleguide/lispguide.xml?showone=Packages#Packages'
           exit 1

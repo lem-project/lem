@@ -109,8 +109,7 @@
                                 ((equal arg "--kill")
                                  `(uiop:quit))
                                 ((member arg '("-v" "--version") :test #'equal)
-                                 ;TODO: resolve lem-version dependencies
-                                 (format t "~a~%" (uiop:symbol-call :lem :lem-version))
+                                 (format t "~A~%" (get-version-string))
                                  (uiop:quit)
                                  nil)
                                 ((or (stringp arg) (pathnamep arg))

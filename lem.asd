@@ -22,7 +22,7 @@
                              (:file "history")
                              (:file "timer")
                              (:file "command")))
-               (:file "package")
+               (:file "internal-packages")
                (:file "quicklisp-utils")
                (:file "config")
                (:file "errors")
@@ -76,6 +76,8 @@
                (:file "color-theme")
 
                (:file "site-init")
+
+               (:file "external-packages")
 
                (:module "ext"
                 :serial t

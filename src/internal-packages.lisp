@@ -575,10 +575,12 @@
    :load-theme))
 (sb-ext:lock-package :lem-core)
 
-(uiop:define-package :lem
-  (:use :cl)
-  (:use-reexport :lem-core))
-(sb-ext:lock-package :lem)
+(defpackage :lem-restart
+  (:use)
+  (:export :message
+           :call-function)
+  #+sbcl
+  (:lock t))
 
 (defpackage :lem-interface
   (:nicknames :lem-if)
@@ -626,13 +628,3 @@
    :resize-display-before
    :get-font-list
    :get-mouse-position))
-
-(defpackage :lem-user
-  (:use :cl :lem))
-
-(defpackage :lem-restart
-  (:use)
-  (:export :message
-           :call-function)
-  #+sbcl
-  (:lock t))

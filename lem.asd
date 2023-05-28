@@ -24,6 +24,7 @@
                              (:file "command")))
                (:file "internal-packages")
                (:file "quicklisp-utils")
+               (:file "version")
                (:file "config")
                (:file "errors")
                (:file "system")

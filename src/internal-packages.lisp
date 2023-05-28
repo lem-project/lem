@@ -15,6 +15,9 @@
    :remove-command
    :find-command
    :exist-command-p)
+  ;; version.lisp
+  (:export
+   :get-lem-version-string)
   ;; killring.lisp
   (:export
    :current-killring

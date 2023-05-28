@@ -243,11 +243,9 @@
        (buffer-start (window-view-point (current-window))))
      (previous-line (window-offset-view (current-window))))))
 
-;; (define-other-window-command find-file "FFind File Other Window: ")
-
-;; (define-other-window-command read-file "FREAD File Other Window: ")
-
-;; (define-other-window-command select-buffer "BUse Buffer Other Window: ")
+(define-other-window-command lem-core/commands/file:find-file "FFind File Other Window: ")
+(define-other-window-command lem-core/commands/file:read-file "FREAD File Other Window: ")
+(define-other-window-command lem-core/commands/window:select-buffer "BUse Buffer Other Window: ")
 
 (define-command compare-windows (ignore-whitespace) ("p")
   (setf ignore-whitespace (/= ignore-whitespace 1))

@@ -143,8 +143,7 @@
               (show-context-menu-over-mouse-cursor (mouse-event-x mouse-event)
                                                    (mouse-event-y mouse-event)))
              (:button-4
-              ;; TODO: resolve dependencies
-              (uiop:symbol-call :lem :undo 1)))))))))
+              (buffer-undo (current-point))))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
   (setf *last-dragged-separator* nil)

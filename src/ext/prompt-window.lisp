@@ -206,11 +206,11 @@
                                   :source-window (prompt-window-caller-of-prompt-window window))
       (unless (and (= x (window-x window))
                    (= y (window-y window)))
-        (lem-internal::window-set-pos window x y))
+        (lem-core::window-set-pos window x y))
       (let ((width (max width child-width)))
         (unless (and (= width (window-width window))
                      (= height (window-height window)))
-          (lem-internal::window-set-size window width height))))))
+          (lem-core::window-set-size window width height))))))
 
 (defun initialize-prompt-buffer (buffer)
   (let ((*inhibit-read-only* t)
@@ -322,7 +322,7 @@
         (execute-condition (e)
           (execute-input e))))))
 
-(defmethod lem-internal::%prompt-for-character (prompt-string &key (gravity :center))
+(defmethod lem-core::%prompt-for-character (prompt-string &key (gravity :center))
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string ""
                   :parameters (make-instance 'prompt-parameters
@@ -345,7 +345,7 @@
                      (invoke-restart 'lem-restart:message))))
     (command-loop)))
 
-(defmethod lem-internal::%prompt-for-line (prompt-string
+(defmethod lem-core::%prompt-for-line (prompt-string
                                            &key initial-value
                                                 completion-function
                                                 test-function

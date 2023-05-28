@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (define-editor-variable self-insert-before-hook '())
 (define-editor-variable self-insert-after-hook '())

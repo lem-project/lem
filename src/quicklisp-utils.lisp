@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defun maybe-quickload (systems &rest keys &key error-on-failure-p &allow-other-keys)
   (cond

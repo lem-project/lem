@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (declaim (inline make-queue enqueue dequeue empty-queue-p))
 

@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defvar *balance-after-split-window* t)
 

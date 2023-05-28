@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defun word-type (char)
   (when (characterp char)

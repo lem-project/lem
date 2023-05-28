@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defun expand-files* (filename)
   (directory-files (expand-file-name filename (buffer-directory))))

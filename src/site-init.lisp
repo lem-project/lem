@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defvar *site-init-name* "lem-site-init")
 (defvar *site-init-comment ";; don't edit !!!")

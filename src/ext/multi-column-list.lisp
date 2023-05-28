@@ -276,7 +276,7 @@
                   (multi-column-list/quit)))
       (setf (multi-column-list-popup-menu component) popup-menu)
       (setf (current-window) window)
-      (setf (lem-internal::buffer-context-menu (window-buffer (current-window)))
+      (setf (lem-core::buffer-context-menu (window-buffer (current-window)))
             (multi-column-list-context-menu component))
       (setf (multi-column-list-of-window (current-window)) component)
       (multi-column-list-mode t)

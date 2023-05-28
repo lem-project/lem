@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (define-key *global-keymap* "C-x C-c" 'exit-lem)
 (define-key *global-keymap* "C-g" 'keyboard-quit)

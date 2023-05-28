@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (define-command describe-key () ()
   (show-message "describe-key: ")

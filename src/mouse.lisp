@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defclass window-separator ()
   ((start-x :initarg :start-x

@@ -1,10 +1,9 @@
-(defpackage :lem
-  (:nicknames :lem-internal)
+(uiop:define-package :lem-core
   (:use :cl
-        :lem-base
         :lem/common/killring
         :lem/common/timer
         :lem/common/command)
+  (:use-reexport :lem-base)
   ;; reexport common/killring
   (:export
    :with-killring-context)
@@ -573,11 +572,13 @@
   (:export
    :color-theme-names
    :define-color-theme
-   :load-theme)
-  (:export . #.(loop :for sym :being :the :external-symbols :of (find-package :lem-base)
-                     :collect (make-symbol (string sym))))
-  #+sbcl
-  (:lock t))
+   :load-theme))
+(sb-ext:lock-package :lem-core)
+
+(uiop:define-package :lem
+  (:use :cl)
+  (:use-reexport :lem-core))
+(sb-ext:lock-package :lem)
 
 (defpackage :lem-interface
   (:nicknames :lem-if)

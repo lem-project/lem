@@ -68,8 +68,8 @@
                                       :width (popup-window-base-width popup-window)
                                       :height (popup-window-base-height popup-window)
                                       :border-size (floating-window-border popup-window))
-    (lem-internal::window-set-size popup-window width height)
-    (lem-internal::window-set-pos popup-window
+    (lem-core::window-set-size popup-window width height)
+    (lem-core::window-set-pos popup-window
                                   (+ x (floating-window-border popup-window))
                                   (+ y (floating-window-border popup-window)))))
 
@@ -301,8 +301,8 @@
                                         :width width
                                         :height height
                                         :border-size border-size)
-      (lem-internal::window-set-size destination-window w h)
-      (lem-internal::window-set-pos destination-window
+      (lem-core::window-set-size destination-window w h)
+      (lem-core::window-set-pos destination-window
                                     (+ x border-size)
                                     (+ y border-size))
       destination-window)))

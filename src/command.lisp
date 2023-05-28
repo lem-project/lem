@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (define-condition executing-command (signal-handler)
   ((command :initarg :command

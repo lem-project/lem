@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defvar *file-associations-modes* '())
 (defvar *file-type-relationals* '())

@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defvar *before-init-hook* '())
 (defvar *after-init-hook* '())
@@ -170,7 +170,7 @@
   (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
                  *original-home*)
     (init-quicklisp (merge-pathnames "quicklisp/" (lem-home))))
-  (uiop:symbol-call :lem :load-site-init)
+  (uiop:symbol-call :lem-core :load-site-init)
   (run-hooks *before-init-hook*)
   (unless (command-line-arguments-no-init-file args)
     (load-init-file))

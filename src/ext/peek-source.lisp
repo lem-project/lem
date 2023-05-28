@@ -48,16 +48,16 @@
 (defclass peek-window (floating-window) ())
 (defclass source-window (floating-window) ())
 
-(defmethod lem-internal::%delete-window :before ((window peek-window))
+(defmethod lem-core::%delete-window :before ((window peek-window))
   (finalize-peek-source))
 
-(defmethod lem-internal::%delete-window :before ((window source-window))
+(defmethod lem-core::%delete-window :before ((window source-window))
   (finalize-peek-source))
 
-(defmethod lem-internal::compute-window-list ((current-window peek-window))
+(defmethod lem-core::compute-window-list ((current-window peek-window))
   (list *peek-window* *source-window*))
 
-(defmethod lem-internal::compute-window-list ((current-window source-window))
+(defmethod lem-core::compute-window-list ((current-window source-window))
   (list *source-window* *peek-window*))
 
 (defvar *is-finalzing* nil)

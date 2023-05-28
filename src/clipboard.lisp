@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defun wsl-p ()
   (zerop (nth-value 2 (uiop:run-program '("which" "clip.exe") :ignore-error-status t))))

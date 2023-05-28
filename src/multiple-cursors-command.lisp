@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defun process-each-cursors (function)
   (let ((buffer (current-buffer)))

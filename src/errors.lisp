@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defparameter *default-editor-abort-message* "Abort")
 

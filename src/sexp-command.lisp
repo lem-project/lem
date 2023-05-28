@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (define-command (forward-sexp (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   (with-point ((prev (current-point)))

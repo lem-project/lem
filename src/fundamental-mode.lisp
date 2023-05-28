@@ -3,7 +3,7 @@
 (lem:define-major-mode fundamental-mode nil
     (:name "Fundamental"))
 
-(in-package :lem)
+(in-package :lem-core)
 
 (defvar *global-keymap* (make-keymap :name '*global-keymap*
                                      :undef-hook 'self-insert))

@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defparameter *named-key-syms*
   '("Backspace" "Delete" "Down" "End" "Escape" "F0" "F1" "F10" "F11" "F12" "F2" "F3" "F4" "F5" "F6" "F7" "F8" "F9"

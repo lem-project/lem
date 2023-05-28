@@ -151,7 +151,7 @@
             ;; prompt-window内でcompletion-windowを出している場合,
             ;; completion-windowの位置を決める前にprompt-windowの調整を先にしておかないとずれるため,
             ;; ここで更新する
-            (lem-internal::update-floating-prompt-window (current-frame)))
+            (lem-core::update-floating-prompt-window (current-frame)))
           (lem/popup-window::update-popup-window :source-window source-window
                                                  :width menu-width
                                                  :height (min max-display-items height)

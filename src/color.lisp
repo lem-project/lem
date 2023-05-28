@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defparameter *rgb.txt* "! $Xorg: rgb.txt,v 1.3 2000/08/17 19:54:00 cpqbld Exp $
 255 250 250  snow

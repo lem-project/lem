@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defmacro with-current-window (window &body body)
   (let ((gprev-window (gensym "PREV-WINDOW"))

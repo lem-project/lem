@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defun lem-home ()
   (or (uiop:getenv "LEM_HOME")

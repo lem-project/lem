@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (define-condition editor-abort-handler (signal-handler) ())
 

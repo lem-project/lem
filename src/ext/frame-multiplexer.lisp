@@ -103,8 +103,8 @@
 (defun switch-current-frame (virtual-frame frame)
 
   ;; save buffer-point to window-point
-  (move-point (lem-internal::%window-point (current-window))
-              (lem-internal::window-buffer-point (current-window)))
+  (move-point (lem-core::%window-point (current-window))
+              (lem-core::window-buffer-point (current-window)))
 
   (setf (virtual-frame-current virtual-frame) frame)
   (notify-frame-redisplay-required frame)
@@ -114,8 +114,8 @@
   (setf (current-buffer) (window-buffer (current-window)))
 
   ;; restore buffer-point from window-point
-  (move-point (lem-internal::window-buffer-point (current-window))
-              (lem-internal::%window-point (current-window)))
+  (move-point (lem-core::window-buffer-point (current-window))
+              (lem-core::%window-point (current-window)))
   )
 
 (defun find-unused-frame-id (virtual-frame)

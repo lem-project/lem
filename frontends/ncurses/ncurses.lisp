@@ -32,7 +32,7 @@
    :native-scroll-support nil
    :redraw-after-modifying-floating-window t))
 
-(define-condition exit-editor (editor-condition)
+(define-condition exit (editor-condition)
   ((value
     :initarg :value
     :reader exit-editor-value
@@ -240,7 +240,7 @@
           (sb-sys:interactive-interrupt (c)
             (declare (ignore c))
             (send-abort-event editor-thread t))))
-    (exit-editor (c) (return-from input-loop c))))
+    (exit (c) (return-from input-loop c))))
 
 (defmethod lem-if:invoke ((implementation ncurses) function)
   (let ((result nil)
@@ -256,10 +256,10 @@
                               (lambda (report)
                                 (bt:interrupt-thread
                                  input-thread
-                                 (lambda () (error 'exit-editor :value report)))))))
+                                 (lambda () (error 'exit :value report)))))))
                (setf result (input-loop editor-thread)))))
       (lem.term:term-finalize))
-    (when (and (typep result 'exit-editor)
+    (when (and (typep result 'exit)
                (exit-editor-value result))
       (format t "~&~A~%" (exit-editor-value result)))))
 

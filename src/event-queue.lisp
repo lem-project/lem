@@ -68,7 +68,6 @@
              (eval e)
              (return t))
             ((or (functionp e) (symbolp e))
-             (funcall e)
-             (return t))
+             (funcall e))
             (t
              (return e))))))

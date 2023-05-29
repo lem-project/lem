@@ -223,25 +223,30 @@
     (editor-error "Only one window"))
   (shrink-window-width (current-window) n))
 
-(define-command scroll-down (n) ("p")
+(defmethod lem-core:scroll (window n)
+  (if (plusp n)
+      (scroll-down n window)
+      (scroll-up (- n) window)))
+
+(define-command scroll-down (n &optional (window (current-window))) ("p")
   (cond
     ((minusp n)
      (scroll-up (- n)))
     (t
-     (unless (window-scroll (current-window) n)
-       (buffer-end (window-view-point (current-window)))
-       (backward-line-wrap (window-view-point (current-window))
-                                     (current-window) t))
-     (next-line (- (window-offset-view (current-window)))))))
+     (unless (window-scroll window n)
+       (buffer-end (window-view-point window))
+       (backward-line-wrap (window-view-point window)
+                           window t))
+     (next-line (- (window-offset-view window))))))
 
-(define-command scroll-up (n) ("p")
+(define-command scroll-up (n &optional (window (current-window))) ("p")
   (cond
     ((minusp n)
      (scroll-down (- n)))
     (t
-     (unless (window-scroll (current-window) (- n))
-       (buffer-start (window-view-point (current-window))))
-     (previous-line (window-offset-view (current-window))))))
+     (unless (window-scroll window (- n))
+       (buffer-start (window-view-point window)))
+     (previous-line (window-offset-view window)))))
 
 (define-other-window-command lem-core/commands/file:find-file "FFind File Other Window: ")
 (define-other-window-command lem-core/commands/file:read-file "FREAD File Other Window: ")

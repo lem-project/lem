@@ -17,6 +17,8 @@
   (:method (window)
     nil))
 
+(defgeneric scroll (window n))
+
 (defclass window ()
   ((x
     :initarg :x

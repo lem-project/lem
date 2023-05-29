@@ -122,14 +122,14 @@
 
 (define-command (next-page (:advice-classes movable-advice)) (&optional n) ("P")
   (if n
-      (uiop:symbol-call :lem :scroll-down n) ; TODO: resolve scroll-up dependencies
+      (scroll (current-window) n)
       (progn
         (next-line (1- (window-height (current-window))))
         (window-recenter (current-window)))))
 
 (define-command (previous-page (:advice-classes movable-advice)) (&optional n) ("P")
   (if n
-      (uiop:symbol-call :lem :scroll-up n) ; TODO: resolve scroll-up dependencies
+      (scroll (current-window) (- n))
       (progn
         (previous-line (1- (window-height (current-window))))
         (window-recenter (current-window)))))

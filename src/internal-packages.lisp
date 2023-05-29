@@ -200,6 +200,7 @@
    :*window-size-change-functions*
    :*window-show-buffer-functions*
    :window-parent
+   :scroll
    :window-view-point
    :window
    :windowp

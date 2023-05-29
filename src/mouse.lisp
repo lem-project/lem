@@ -226,11 +226,9 @@
                                          (mouse-event-x mouse-event)
                                          (mouse-event-y mouse-event))))
       (when window
-        (with-current-window window
-          ;; TODO: resolve scroll-up dependencies
-          (uiop:symbol-call :lem :scroll-up
-                            (* (mouse-wheel-y mouse-event)
-                               *scroll-speed*)))))))
+        (scroll window
+                (- (* (mouse-wheel-y mouse-event)
+                      *scroll-speed*)))))))
 
 
 (defun get-select-expression-points (point)

@@ -164,9 +164,11 @@
     (when (symbolp cmd)
       cmd)))
 
+(defvar *abort-key*)
+
 (defun abort-key-p (key)
   (and (key-p key)
-       (eq 'keyboard-quit (lookup-keybind key))))
+       (eq *abort-key* (lookup-keybind key))))
 
 (defmacro with-special-keymap ((keymap) &body body)
   `(let ((*special-keymap* (or ,keymap *special-keymap*)))

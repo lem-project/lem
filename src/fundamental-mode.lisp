@@ -5,8 +5,7 @@
 
 (in-package :lem-core)
 
-(defvar *global-keymap* (make-keymap :name '*global-keymap*
-                                     :undef-hook 'self-insert))
+(defvar *global-keymap* (make-keymap :name '*global-keymap*))
 
 (define-global-mode emacs-mode ()
   (:name "emacs"

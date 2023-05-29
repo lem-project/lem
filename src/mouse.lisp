@@ -143,7 +143,7 @@
               (show-context-menu-over-mouse-cursor (mouse-event-x mouse-event)
                                                    (mouse-event-y mouse-event)))
              (:button-4
-              (undo 1)))))))))
+              (buffer-undo (current-point))))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
   (setf *last-dragged-separator* nil)
@@ -226,9 +226,9 @@
                                          (mouse-event-x mouse-event)
                                          (mouse-event-y mouse-event))))
       (when window
-        (with-current-window window
-          (scroll-up (* (mouse-wheel-y mouse-event)
-                        *scroll-speed*)))))))
+        (scroll window
+                (- (* (mouse-wheel-y mouse-event)
+                      *scroll-speed*)))))))
 
 
 (defun get-select-expression-points (point)

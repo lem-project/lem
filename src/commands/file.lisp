@@ -1,17 +1,45 @@
-(in-package :lem-core)
+(defpackage :lem-core/commands/file
+  (:use :cl :lem-core)
+  (:export :*find-file-executor*
+           :find-file-executor
+           :execute-find-file
+           :find-file
+           :read-file
+           :add-newline-at-eof-on-writing-file
+           :save-buffer
+           :save-current-buffer
+           :change-file-name
+           :write-file
+           :write-region-file
+           :insert-file
+           :save-some-buffers
+           :sync-buffer-with-file-content
+           :revert-buffer
+           :revert-buffer-function
+           :change-directory))
+(in-package :lem-core/commands/file)
+
+(define-key *global-keymap* "C-x C-f" 'find-file)
+(define-key *global-keymap* "C-x C-r" 'read-file)
+(define-key *global-keymap* "C-x C-s" 'save-current-buffer)
+(define-key *global-keymap* "C-x C-w" 'write-file)
+(define-key *global-keymap* "C-x Tab" 'insert-file)
+(define-key *global-keymap* "C-x s" 'save-some-buffers)
+(define-key *global-keymap* "M-~" 'unmark-buffer)
+(define-key *global-keymap* "C-x C-q" 'toggle-read-only)
 
 (defun expand-files* (filename)
   (directory-files (expand-file-name filename (buffer-directory))))
 
 (defun maybe-create-directory (directory)
   (when (prompt-for-y-or-n-p
-	 (format nil "Directory does not exist: ~A. Create" directory))
+         (format nil "Directory does not exist: ~A. Create" directory))
     (ensure-directories-exist directory)))
 
 (defun directory-for-file-or-lose (filename)
   (let ((directory (directory-namestring filename)))
     (unless (or (uiop:directory-exists-p directory)
-		(maybe-create-directory directory))
+                (maybe-create-directory directory))
       (error 'editor-abort))
     directory))
 
@@ -23,24 +51,24 @@
 (define-command find-file (arg) ("p")
   (let ((*default-external-format* *default-external-format*))
     (let ((filename
-	    (cond ((and (numberp arg) (= 1 arg))
-		   (prompt-for-file
-		    "Find File: "
-		    :directory (buffer-directory)
-		    :default nil
-		    :existing nil))
-		  ((numberp arg)
-		   (setf *default-external-format*
-			 (prompt-for-encodings
-			  "Encodings: "
-			  :history-symbol 'mh-read-file-encodings))
-		   (prompt-for-file
-		    "Find File: "
-		    :directory (buffer-directory)
-		    :default nil
-		    :existing nil))
-		  ((pathnamep arg)
-		   (namestring arg)))))
+            (cond ((and (numberp arg) (= 1 arg))
+                   (prompt-for-file
+                    "Find File: "
+                    :directory (buffer-directory)
+                    :default nil
+                    :existing nil))
+                  ((numberp arg)
+                   (setf *default-external-format*
+                         (prompt-for-encodings
+                          "Encodings: "
+                          :history-symbol 'mh-read-file-encodings))
+                   (prompt-for-file
+                    "Find File: "
+                    :directory (buffer-directory)
+                    :default nil
+                    :existing nil))
+                  ((pathnamep arg)
+                   (namestring arg)))))
       (let (buffer)
         (dolist (pathname (expand-files* filename))
           (setf buffer (execute-find-file *find-file-executor*
@@ -80,19 +108,19 @@
   (when (variable-value 'Add-Newline-at-EOF-on-Writing-File :default buffer)
     (unless (start-line-p (buffer-end-point buffer))
       (with-point ((p (buffer-point buffer) :left-inserting))
-	(save-excursion
-	  (insert-character p #\newline))))))
+        (save-excursion
+          (insert-character p #\newline))))))
 
 (define-editor-variable delete-trailing-whitespace-on-writing-file nil)
 
 (defun clear-trailing-whitespace-on-write (&optional buffer)
   (when (variable-value 'delete-trailing-whitespace-on-writing-file :default buffer)
-    (delete-trailing-whitespace buffer)))
+    (lem-core/commands/edit:delete-trailing-whitespace buffer)))
 
 (defun save-buffer (buffer &optional force-p)
   (cond
     ((and (or force-p (buffer-modified-p buffer))
-	  (buffer-filename buffer))
+          (buffer-filename buffer))
      (add-newline-at-eof buffer)
      (clear-trailing-whitespace-on-write buffer)
      (write-to-file buffer (buffer-filename buffer))
@@ -109,20 +137,20 @@
 
 (define-command write-file (filename) ("FWrite File: ")
   (let* ((old (buffer-name))
-	 (new (file-namestring filename))
-	 (expand-file-name (expand-file-name filename)))
+         (new (file-namestring filename))
+         (expand-file-name (expand-file-name filename)))
     (unless (and (find expand-file-name (mapcar #'buffer-filename
-						(buffer-list))
-		       :test #'equal)
-		 (not (prompt-for-y-or-n-p (format nil
-						   "~a is opend, overwrite it?"
-						   expand-file-name))))
+                                                (buffer-list))
+                       :test #'equal)
+                 (not (prompt-for-y-or-n-p (format nil
+                                                   "~a is opend, overwrite it?"
+                                                   expand-file-name))))
       (directory-for-file-or-lose filename)
       (unless (string= old new)
-	(buffer-rename (current-buffer)
-		       (if (get-buffer new)
-			   (unique-buffer-name new)
-			   new)))
+        (buffer-rename (current-buffer)
+                       (if (get-buffer new)
+                           (unique-buffer-name new)
+                           new)))
       (setf (buffer-filename) expand-file-name)
       (add-newline-at-eof (current-buffer))
       (save-current-buffer t))))
@@ -136,18 +164,18 @@
 
 (define-command insert-file (filename) ("fInsert file: ")
   (insert-file-contents (current-point)
-			(expand-file-name filename))
+                        (expand-file-name filename))
   t)
 
 (define-command save-some-buffers (&optional save-silently-p) ("P")
   (let ((prev-buffer (current-buffer)))
     (dolist (buffer (buffer-list))
       (when (and (buffer-modified-p buffer)
-		 (buffer-filename buffer))
-	(switch-to-buffer buffer nil)
-	(when (or save-silently-p
-		  (prompt-for-y-or-n-p (format nil "Save file ~A" (buffer-filename buffer))))
-	  (save-current-buffer))))
+                 (buffer-filename buffer))
+        (switch-to-buffer buffer nil)
+        (when (or save-silently-p
+                  (prompt-for-y-or-n-p (format nil "Save file ~A" (buffer-filename buffer))))
+          (save-current-buffer))))
     (switch-to-buffer prev-buffer nil)))
 
 (defun revert-buffer-function (buffer)
@@ -184,23 +212,24 @@
 
 (define-condition ask-revert-buffer (before-executing-command)
   ((last-time :initform nil
-	      :allocation :class
-	      :accessor ask-revert-buffer-last-time)))
+              :allocation :class
+              :accessor ask-revert-buffer-last-time)))
+
 (defmethod handle-signal ((condition ask-revert-buffer))
   (when (or (null (ask-revert-buffer-last-time condition))
-	    (< (* 2 (/ internal-time-units-per-second 10))
-	       (- (get-internal-real-time) (ask-revert-buffer-last-time condition))))
+            (< (* 2 (/ internal-time-units-per-second 10))
+               (- (get-internal-real-time) (ask-revert-buffer-last-time condition))))
     (setf (ask-revert-buffer-last-time condition) (get-internal-real-time))
     (when (changed-disk-p (current-buffer))
       (revert-buffer t)
       #+(or)
       (cond ((eql (buffer-value (current-buffer) 'no-revert-buffer)
-		  (file-write-date (buffer-filename))))
-	    ((prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))
-	     (revert-buffer t))
-	    (t
-	     (setf (buffer-value (current-buffer) 'no-revert-buffer)
-		   (file-write-date (buffer-filename))))))))
+                  (file-write-date (buffer-filename))))
+            ((prompt-for-y-or-n-p (format nil "Revert buffer from file ~A" (buffer-filename)))
+             (revert-buffer t))
+            (t
+             (setf (buffer-value (current-buffer) 'no-revert-buffer)
+                   (file-write-date (buffer-filename))))))))
 
 (define-command change-directory (directory)
     ((prompt-for-directory "change directory: " :directory (buffer-directory)))

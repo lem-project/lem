@@ -35,7 +35,7 @@
     (exit-editor)))
 
 (define-command quick-exit () ()
-  (uiop:symbol-call :lem :save-some-buffers t) ; TODO: resolve save-some-buffers dependencies
+  (lem-core/commands/file:save-some-buffers t)
   (exit-editor))
 
 (define-command execute-command (arg) ("P")

@@ -46,7 +46,6 @@
         alternation)))
 
 
-
 (defun make-tmlanguage-elixir ()
   (let* ((patterns (make-tm-patterns
                     (make-tm-match ":\\w+" 

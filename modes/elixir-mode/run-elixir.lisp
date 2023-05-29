@@ -53,7 +53,7 @@
     (buffer-end p)
     (setf string (ppcre:regex-replace-all "\\r\\n" string (string #\newline)))
     (insert-string p string)
-    (when (ppcre:scan "^(iex|\.\.\.)\(.+\)" (line-string p))
+    (when (ppcre:scan "^(iex|...)(.+)" (line-string p))
       (lem/listener-mode:refresh-prompt buffer nil))
     (unless already-exists
       (setf (current-window) (display-buffer buffer)))

@@ -57,7 +57,7 @@
   (loop
     (let ((e (dequeue-event timeout)))
       (cond ((null e)
-             (return e))
+             (return nil))
             ((eql e :timeout)
              (assert timeout)
              (return nil))

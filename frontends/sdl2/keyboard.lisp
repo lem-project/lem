@@ -128,7 +128,6 @@
       (modifier-shift modifier)))
 
 (defmethod handle-text-input ((platform lem-sdl2/platform:linux) text)
-  (log:info *modifier*)
   (when (modifier-is-accept-text-input-p *modifier*)
     (loop :for c :across text
           :do (multiple-value-bind (sym text-input-p) (convert-to-sym (char-code c))

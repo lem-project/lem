@@ -21,7 +21,7 @@
   (:report (lambda (c s)
              (declare (ignore c))
              (format s
-                     "key not found: ~A"
+                     "Key not found: ~A"
                      (keyseq-to-string (last-read-key-sequence))))))
 
 (define-condition move-cursor-error (editor-error)

@@ -1,7 +1,10 @@
 (defpackage :lem-elixir-mode
   (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
   (:export :*elixir-mode-hook*
-           :elixir-mode))
+           :elixir-mode
+           :*elixir-syntax-table*
+           :*elixir-mode-keymap*))
+
 (in-package :lem-elixir-mode)
 
 (defvar *elixir-keywords*
@@ -79,7 +82,7 @@
     table))
 
 (define-major-mode elixir-mode language-mode
-    (:name "elixir"
+    (:name "Elixir"
      :keymap *elixir-mode-keymap*
      :syntax-table *elixir-syntax-table*
      :mode-hook *elixir-mode-hook*)

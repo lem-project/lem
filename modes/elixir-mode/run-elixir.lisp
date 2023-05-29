@@ -12,11 +12,11 @@
 (define-major-mode run-elixir-mode lem-elixir-mode:elixir-mode
     (:name "elixir"
      :keymap *run-elixir-mode-keymap*
-     :syntax-table lem-elixir-mode::*elixir-syntax-table*)
+     :syntax-table *elixir-syntax-table*)
   (reset-listener-variables (current-buffer))
   (lem/listener-mode:start-listener-mode))
 
-(define-key lem-elixir-mode::*elixir-mode-keymap* "C-c C-r" 'elixir-eval-region)
+(define-key *elixir-mode-keymap* "C-c C-r" 'elixir-eval-region)
 
 (defun reset-listener-variables (buffer)
   (setf (variable-value 'lem/listener-mode:listener-set-prompt-function :buffer buffer)

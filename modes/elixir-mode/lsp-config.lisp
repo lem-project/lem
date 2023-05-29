@@ -5,10 +5,12 @@
 
 (in-package :lem-elixir-mode/lsp-config)
 
+(defvar *server-path* "language_server.sh")
+
 (define-language-spec (elixir-spec lem-elixir-mode:elixir-mode)
   :language-id "elixir"
   :root-uri-patterns '("mix.exs")
-  :command '("sh" "language_server.sh")
+  :command `("sh" ,*server-path*)
   :install-command ""
   :readme-url "https://github.com/elixir-lsp/elixir-ls"
   :connection-mode :stdio)

@@ -114,7 +114,7 @@
                                  nil)
                                 ((or (stringp arg) (pathnamep arg))
                                  (incf file-count)
-                                 `(find-file ,(merge-pathnames arg (uiop:getcwd))))
+                                 `(uiop:symbol-call :lem :find-file ,(merge-pathnames arg (uiop:getcwd))))
                                 (t
                                  arg))
                     :collect it)

@@ -17,6 +17,8 @@
   (:method (window)
     nil))
 
+(defgeneric scroll (window n))
+
 (defclass window ()
   ((x
     :initarg :x
@@ -182,6 +184,11 @@
 
 (defun window-list (&optional (frame (current-frame)))
   (window-tree-flatten (frame-window-tree frame)))
+
+(defmethod compute-window-list (current-window)
+  (append (alexandria:ensure-list
+           (active-prompt-window))
+          (window-list)))
 
 (defun one-window-p ()
   (window-tree-leaf-p (window-tree)))
@@ -1027,20 +1034,26 @@ window width is changed, we must recalc the window view point."
             (setf (window-parameter (current-window) 'parent-window) parent-window)
             (values (current-window) split-p))))))
 
+(defun display-buffer (buffer &optional force-split-p)
+  (multiple-value-bind (window split-p)
+      (pop-to-buffer buffer force-split-p)
+    (declare (ignore split-p))
+    window))
+
 (defun quit-window (window &key kill-buffer)
   (let ((parent-window (window-parameter window 'parent-window)))
     (cond
       ((and (not (one-window-p))
             (window-parameter window 'split-p))
        (if kill-buffer
-           (kill-buffer (window-buffer window))
+           (delete-buffer (window-buffer window))
            (bury-buffer (window-buffer window)))
        (delete-window window)
        (unless (deleted-window-p parent-window)
          (setf (current-window) parent-window)))
       (t
        (if kill-buffer
-           (kill-buffer (window-buffer window))
+           (delete-buffer (window-buffer window))
            (switch-to-buffer (bury-buffer (window-buffer window)) nil))
        (unless (deleted-window-p parent-window)
          (setf (current-window) parent-window))))))

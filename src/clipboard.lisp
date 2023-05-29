@@ -17,6 +17,10 @@
     #+darwin (sbcl-2.0.0-or-later-p)
     #-darwin (not (wsl-p))))
 
+(defmacro with-enable-clipboard (value &body body)
+  `(let ((*enable-clipboard-p* ,value))
+     ,@body))
+
 (defun enable-clipboard ()
   (setf *enable-clipboard-p* t))
 

@@ -1,52 +1,83 @@
-(in-package :lem-core)
+(defpackage :lem-core/commands/edit
+  (:use :cl
+        :lem/common/killring
+        :lem-core
+        :lem-core/commands/move)
+  (:export :get-self-insert-char
+           :self-insert-before-hook
+           :self-insert-after-hook
+           :self-insert
+           :quoted-insert
+           :newline
+           :open-line
+           :delete-next-char
+           :delete-previous-char
+           :copy-region
+           :copy-region-to-clipboard
+           :kill-region
+           :kill-region-to-clipboard
+           :kill-line
+           :yank
+           :yank-pop
+           :yank-pop-next
+           :yank-to-clipboard
+           :paste-from-clipboard
+           :entab-line
+           :detab-line
+           :delete-blank-lines
+           :just-one-space
+           :delete-indentation
+           :transpose-characters
+           :undo
+           :redo
+           :delete-trailing-whitespace))
+(in-package :lem-core/commands/edit)
 
-(defvar *set-location-hook* '())
+(setf (keymap-undef-hook *global-keymap*) 'self-insert)
 
-(defclass movable-advice () ())
-(defclass jump-cursor-advice () ())
-(defclass editable-advice () ())
+(define-key *global-keymap* "C-q" 'quoted-insert)
+(define-key *global-keymap* "Return" 'newline)
+(define-key *global-keymap* "C-o" 'open-line)
+(define-key *global-keymap* "C-d" 'delete-next-char)
+(define-key *global-keymap* "Delete" 'delete-next-char)
+(define-key *global-keymap* "C-h" 'delete-previous-char)
+(define-key *global-keymap* "Backspace" 'delete-previous-char)
+(define-key *global-keymap* "M-w" 'copy-region)
+(define-key *global-keymap* "C-w" 'kill-region)
+(define-key *global-keymap* "C-k" 'kill-line)
+(define-key *global-keymap* "C-y" 'yank)
+(define-key *global-keymap* "M-y" 'yank-pop)
+(define-key *global-keymap* "C-x C-o" 'delete-blank-lines)
+(define-key *global-keymap* "M-Space" 'just-one-space)
+(define-key *global-keymap* "M-^" 'delete-indentation)
+(define-key *global-keymap* "C-t" 'transpose-characters)
+(define-key *global-keymap* "C-\\" 'undo)
+(define-key *global-keymap* "C-_" 'redo)
+(define-key *global-keymap* "C-/" 'redo)
 
-(define-command undefined-key () ()
-  (editor-error "Key not found: ~A"
-                (keyseq-to-string (last-read-key-sequence))))
+(define-editor-variable self-insert-before-hook '())
+(define-editor-variable self-insert-after-hook '())
 
-(define-command exit-lem (&optional (ask t)) ()
-  (when (or (null ask)
-            (not (any-modified-buffer-p))
-            (prompt-for-y-or-n-p "Modified buffers exist. Leave anyway"))
-    (exit-editor)))
+(defun get-self-insert-char ()
+  (insertion-key-p (last-read-key-sequence)))
 
-(define-command quick-exit () ()
-  (save-some-buffers t)
-  (exit-editor))
+(defclass self-insert-advice () ())
 
-(define-command keyboard-quit () ()
-  (error 'editor-abort))
+(defmethod execute :before (mode (command self-insert-advice) argument)
+  (unless (get-self-insert-char)
+    (error 'undefined-key-error)))
 
-(define-command escape () ()
-  (error 'editor-abort :message nil))
+(define-command (self-insert (:advice-classes self-insert-advice editable-advice))
+    (&optional (n 1) (char (get-self-insert-char)))
+    ("p" (get-self-insert-char))
+  (run-hooks (variable-value 'self-insert-before-hook) char)
+  (self-insert-aux char n)
+  (run-hooks (variable-value 'self-insert-after-hook) char))
 
-(define-command nop-command () ())
-
-(define-command unmark-buffer () ()
-  (buffer-unmark (current-buffer)))
-
-(defvar *read-only-function* nil)
-
-(define-command toggle-read-only () ()
-  (setf (buffer-read-only-p (current-buffer))
-        (not (buffer-read-only-p (current-buffer))))
-  (when *read-only-function*
-    (funcall *read-only-function*
-             (buffer-read-only-p (current-buffer)))))
-
-(define-command rename-buffer (name) ("sRename buffer: ")
-  (buffer-rename (current-buffer) name))
-
-(define-command quoted-insert (&optional (n 1)) ("p")
-  (let* ((key (read-key))
-         (char (or (key-to-char key) (code-char 0))))
-    (self-insert-aux char n)))
+(defun self-insert-aux (char n &optional sticky)
+  (insert-character (current-point) char n)
+  (when sticky
+    (character-offset (current-point) (- n))))
 
 (define-command (newline (:advice-classes editable-advice)) (&optional (n 1)) ("p")
   (self-insert-aux #\newline n))
@@ -54,6 +85,20 @@
 (define-command (open-line (:advice-classes editable-advice)) (n) ("p")
   (self-insert-aux #\newline n t))
 
+(define-command quoted-insert (&optional (n 1)) ("p")
+  (let* ((key (read-key))
+         (char (or (key-to-char key) (code-char 0))))
+    (self-insert-aux char n)))
+
+(defmethod execute :around (mode
+                            (command quoted-insert)
+                            argument)
+  (let* ((key (read-key))
+         (char (or (key-to-char key) (code-char 0))))
+    (do-each-cursors ()
+      (self-insert-aux char (or argument 1)))))
+
+
 (define-command (delete-next-char (:advice-classes editable-advice)) (&optional n) ("P")
   (unless (end-buffer-p (current-point))
     (let ((repeat-command (continue-flag :kill))
@@ -140,10 +185,10 @@
                     (yank-from-clipboard-or-killring)
                     (peek-killring-item (current-killring) (1- arg)))))
     (change-yank-start (current-point)
-                       (copy-point (current-point) :right-inserting))
+                                 (copy-point (current-point) :right-inserting))
     (insert-string-and-indent (current-point) string)
     (change-yank-end (current-point)
-                     (copy-point (current-point) :left-inserting))
+                               (copy-point (current-point) :left-inserting))
     (continue-flag :yank)))
 
 (define-command yank (&optional arg) ("P")
@@ -182,99 +227,6 @@
 (define-command (paste-from-clipboard (:advice-classes editable-advice)) () ()
   (insert-string (current-point) (get-clipboard-data)))
 
-(defun next-line-aux (n
-                      point-column-fn
-                      forward-line-fn
-                      move-to-column-fn)
-  (if (continue-flag :next-line)
-      (unless (not (null (cursor-saved-column (current-point))))
-        (log:error "asseriton error: (not (null (cursor-saved-column (current-point))))"))
-      (setf (cursor-saved-column (current-point))
-            (funcall point-column-fn (current-point))))
-  (unless (prog1 (funcall forward-line-fn (current-point) n)
-            (funcall move-to-column-fn (current-point) (cursor-saved-column (current-point))))
-    (cond ((plusp n)
-           (move-to-end-of-buffer)
-           (error 'end-of-buffer :point (current-point)))
-          ((minusp n)
-           (move-to-beginning-of-buffer)
-           (error 'beginning-of-buffer :point (current-point))))))
-
-(define-command (next-line (:advice-classes movable-advice)) (&optional n) ("p")
-  (next-line-aux n
-                 #'point-virtual-line-column
-                 #'move-to-next-virtual-line
-                 #'move-to-virtual-line-column))
-
-(define-command (next-logical-line (:advice-classes movable-advice)) (&optional n) ("p")
-  (next-line-aux n
-                 #'point-column
-                 #'line-offset
-                 #'move-to-column))
-
-(define-command (previous-line (:advice-classes movable-advice)) (&optional (n 1)) ("p")
-  (next-line (- n)))
-
-(define-command (previous-logical-line (:advice-classes movable-advice)) (&optional (n 1)) ("p")
-  (next-logical-line (- n)))
-
-(define-command (forward-char (:advice-classes movable-advice))
-    (&optional (n 1)) ("p")
-  (or (character-offset (current-point) n)
-      (error 'end-of-buffer :point (current-point))))
-
-(define-command (backward-char (:advice-classes movable-advice)) (&optional (n 1)) ("p")
-  (or (character-offset (current-point) (- n))
-      (error 'beginning-of-buffer :point (current-point))))
-
-(define-command (move-to-beginning-of-buffer (:advice-classes jump-cursor-advice)) () ()
-  (run-hooks *set-location-hook* (current-point))
-  (buffer-start (current-point)))
-
-(define-command (move-to-end-of-buffer (:advice-classes jump-cursor-advice)) () ()
-  (run-hooks *set-location-hook* (current-point))
-  (buffer-end (current-point)))
-
-(define-command (move-to-beginning-of-line (:advice-classes movable-advice)) () ()
-  (let ((bol (backward-line-wrap (copy-point (current-point) :temporary)
-                                 (current-window)
-                                 t)))
-    (cond ((text-property-at (current-point) :field -1))
-          ((previous-single-property-change (current-point)
-                                            :field
-                                            bol))
-          ((start-line-p bol)
-           (back-to-indentation bol)
-           (if (point= bol (current-point))
-               (line-start (current-point))
-               (move-point (current-point) bol)))
-          (t (move-point (current-point) bol)))))
-
-(define-command (move-to-beginning-of-logical-line (:advice-classes movable-advice)) () ()
-  (line-start (current-point)))
-
-(define-command (move-to-end-of-line (:advice-classes movable-advice)) () ()
-  (or (and (forward-line-wrap (current-point) (current-window))
-           (character-offset (current-point) -1))
-      (line-end (current-point))))
-
-(define-command (move-to-end-of-logical-line (:advice-classes movable-advice)) () ()
-  (line-end (current-point)))
-
-(define-command (next-page (:advice-classes movable-advice)) (&optional n) ("P")
-  (if n
-      (scroll-down n)
-      (progn
-        (next-line (1- (window-height (current-window))))
-        (window-recenter (current-window)))))
-
-(define-command (previous-page (:advice-classes movable-advice)) (&optional n) ("P")
-  (if n
-      (scroll-up n)
-      (progn
-        (previous-line (1- (window-height (current-window))))
-        (window-recenter (current-window)))))
-
 (defun tab-line-aux (n make-space-str)
   (let ((p (current-point)))
     (dotimes (_ n t)
@@ -299,18 +251,6 @@
                 (lambda (n)
                   (make-string (* n (variable-value 'tab-width))
                                :initial-element #\space))))
-
-(define-command (next-page-char (:advice-classes movable-advice)) (&optional (n 1)) ("p")
-  (let ((point (current-point)))
-    (dotimes (_ (abs n))
-      (loop
-        (unless (line-offset point (if (plusp n) 1 -1))
-          (return-from next-page-char))
-        (when (eql #\page (character-at point 0))
-          (return))))))
-
-(define-command (previous-page-char (:advice-classes movable-advice)) (&optional (n 1)) ("p")
-  (next-page-char (- n)))
 
 (define-command (delete-blank-lines (:advice-classes editable-advice)) () ()
   (let ((point (current-point)))
@@ -405,77 +345,6 @@
 (define-command (decrement (:advice-classes editable-advice)) () ()
   (*crement-aux #'1-))
 
-(define-command mark-set () ()
-  (run-hooks *set-location-hook* (current-point))
-  (set-cursor-mark (current-point) (current-point))
-  (message "Mark set"))
-
-(define-command exchange-point-mark () ()
-  (check-marked)
-  (alexandria:when-let ((mark (mark-point (cursor-mark (current-point)))))
-    (with-point ((current (current-point)))
-      (move-point (current-point) mark)
-      (set-cursor-mark (current-point) current))))
-
-(define-command (mark-set-whole-buffer (:advice-classes jump-cursor-advice)) () ()
-  (buffer-end (current-point))
-  (set-current-mark (current-point))
-  (buffer-start (current-point))
-  (message "Mark set whole buffer"))
-
-(define-command (goto-line (:advice-classes jump-cursor-advice)) (n) ("nLine to GOTO: ")
-  (cond ((< n 1)
-         (setf n 1))
-        ((< #1=(buffer-nlines (current-buffer)) n)
-         (setf n #1#)))
-  (run-hooks *set-location-hook* (current-point))
-  (line-offset (buffer-start (current-point)) (1- n)))
-
-(define-command filter-buffer (cmd) ("sFilter buffer: ")
-  (let ((buffer (current-buffer))
-        (line-number (line-number-at-point (current-point)))
-        (charpos (point-charpos (current-point))))
-    (multiple-value-bind (start end)
-        (cond ((buffer-mark-p buffer)
-               (values (region-beginning buffer)
-                       (region-end buffer)))
-              (t
-               (values (buffer-start-point buffer)
-                       (buffer-end-point buffer))))
-      (let ((string (points-to-string start end))
-            output-value
-            error-output-value
-            status)
-        (let ((output-string
-                (with-output-to-string (output)
-                  (with-input-from-string (input string)
-                    (multiple-value-setq
-                        (output-value error-output-value status)
-                      (uiop:run-program cmd
-                                        :directory (buffer-directory buffer)
-                                        :input input
-                                        :output output
-                                        :error-output output
-                                        :ignore-error-status t))))))
-          (when (zerop status)
-            (delete-between-points start end)
-            (insert-string start output-string)
-            (move-to-line (current-point) line-number)
-            (line-offset (current-point) 0 charpos)))))))
-
-(define-command pipe-command (str) ("sPipe command: ")
-  (let ((directory (buffer-directory)))
-    (let ((output-string
-            (with-output-to-string (out)
-              (uiop:run-program str
-                                :directory directory
-                                :output out
-                                :error-output out
-                                :ignore-error-status t))))
-      (unless (string= output-string "")
-        (with-pop-up-typeout-window (out (make-buffer "*Command*") :erase t :read-only nil)
-          (write-string output-string out))))))
-
 (define-command delete-trailing-whitespace (&optional (buffer (current-buffer))) ()
   (save-excursion
     (setf (current-buffer) buffer)
@@ -491,26 +360,33 @@
     (move-to-end-of-buffer)
     (delete-blank-lines)))
 
-(define-command load-library (name)
-    ((prompt-for-library "load library: " :history-symbol 'load-library))
-  (message "Loading ~A." name)
-  (cond ((ignore-errors (maybe-quickload (format nil "lem-~A" name) :silent t))
-         (message "Loaded ~A." name))
-        (t (message "Can't find Library ~A." name))))
+(defmethod execute :around (mode
+                            (command delete-previous-char)
+                            argument)
+  (cond ((mark-active-p (cursor-mark (current-point)))
+         (do-each-cursors ()
+           (delete-cursor-region (current-point))))
+        (t
+         (do-each-cursors ()
+           (delete-previous-char-1 argument)))))
 
-(defun buffer-context-menu (buffer)
-  (buffer-value buffer 'context-menu))
+(defmethod execute :around (mode
+                            (command copy-region)
+                            argument)
+  (check-marked)
+  (do-each-cursors ()
+    (copy-cursor-region (current-point))))
 
-(defun (setf buffer-context-menu) (context-menu buffer)
-  (setf (buffer-value buffer 'context-menu) context-menu))
+(defmethod execute :around (mode
+                            (command kill-region)
+                            argument)
+  (check-marked)
+  (do-each-cursors ()
+    (kill-cursor-region (current-point))))
 
-(define-command show-context-menu () ()
-  (let ((context-menu (buffer-context-menu (current-buffer))))
-    (when context-menu
-      (lem-if:display-context-menu (implementation) context-menu '(:gravity :cursor)))))
-
-(define-command font-size-increase () ()
-  (lem-if:increase-font-size (implementation)))
-
-(define-command font-size-decrease () ()
-  (lem-if:decrease-font-size (implementation)))
+(defmethod execute :around (mode
+                            (command yank)
+                            argument)
+  (with-enable-clipboard (and (enable-clipboard-p)
+                              (null (buffer-fake-cursors (current-buffer))))
+    (process-each-cursors #'call-next-method)))

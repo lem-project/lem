@@ -15,6 +15,9 @@
    :remove-command
    :find-command
    :exist-command-p)
+  ;; version.lisp
+  (:export
+   :get-version-string)
   ;; killring.lisp
   (:export
    :current-killring
@@ -30,7 +33,12 @@
    :config)
   ;; errors.lisp
   (:export
-   :editor-abort)
+   :editor-abort
+   :undefined-key-error
+   :exit-editor
+   :move-cursor-error
+   :end-of-buffer
+   :beginning-of-buffer)
   ;; system.lisp
   (:export
    :get-pid
@@ -103,6 +111,7 @@
   ;; clipboard.lisp
   (:export
    :wsl-p
+   :with-enable-clipboard
    :enable-clipboard
    :disable-clipboard
    :enable-clipboard-p
@@ -133,6 +142,7 @@
    :notify-frame-redisplay-required
    :map-frame
    :get-frame
+   :all-frames
    :current-frame
    :unmap-frame
    :setup-frame
@@ -149,6 +159,9 @@
    :receive-mouse-wheel
    :set-hover-message
    :get-point-from-window-with-coordinates)
+  ;; context-menu.lisp
+  (:export
+   :buffer-context-menu)
   ;; echo.lisp
   (:export
    :show-message
@@ -172,7 +185,12 @@
    :prompt-for-integer
    :prompt-for-buffer
    :prompt-for-file
-   :prompt-for-directory)
+   :prompt-for-directory
+   :prompt-for-encodings
+   :prompt-for-library)
+  ;; window-tree.lisp
+  (:export
+   :balance-windows)
   ;; window.lisp
   (:export
    :line-wrap
@@ -182,6 +200,7 @@
    :*window-size-change-functions*
    :*window-show-buffer-functions*
    :window-parent
+   :scroll
    :window-view-point
    :window
    :windowp
@@ -204,12 +223,15 @@
    :window-redraw
    :current-window
    :window-list
+   :compute-window-list
    :one-window-p
    :deleted-window-p
    :window-recenter
    :window-scroll
    :window-cursor-x
    :window-cursor-y
+   :backward-line-wrap
+   :forward-line-wrap
    :move-to-next-virtual-line
    :move-to-previous-virtual-line
    :point-virtual-line-column
@@ -225,6 +247,7 @@
    :not-switchable-buffer-p
    :switch-to-buffer
    :pop-to-buffer
+   :display-buffer
    :quit-window
    :left-window
    :right-window
@@ -238,7 +261,20 @@
    :header-window
    :update-on-display-resized
    :covered-with-floating-window-p
-   :redraw-display)
+   :redraw-display
+   :clear-screens-of-window-list
+   :switch-to-window
+   :window-set-pos
+   :window-set-size
+   :topleft-window-x
+   :topleft-window-y
+   :max-window-width
+   :max-window-height
+   :grow-window-height
+   :shrink-window-height
+   :grow-window-width
+   :shrink-window-width
+   :window-offset-view)
   ;; popup.lisp
   (:export
    :*default-popup-message-timeout*
@@ -266,13 +302,15 @@
    :convert-modeline-element)
   ;; command.lisp
   (:export
+   :command-name
    :executing-command-command
    :handle-signal
    :before-executing-command
    :after-executing-command
    :this-command
    :execute
-   :call-command)
+   :call-command
+   :all-command-names)
   ;; defcommand.lisp
   (:export
    :define-command)
@@ -287,6 +325,8 @@
    :mode-hook
    :mode-hook-variable
    :mode-active-p
+   :major-modes
+   :minor-modes
    :find-mode
    :toggle-minor-mode
    :define-major-mode
@@ -300,6 +340,9 @@
   (:export
    :*keymaps*
    :keymap
+   :keymap-name
+   :keymap-parent
+   :keymap-undef-hook
    :make-keymap
    :*global-keymap*
    :define-key
@@ -307,8 +350,10 @@
    :find-keybind
    :insertion-key-p
    :lookup-keybind
+   :*abort-key*
    :abort-key-p
-   :with-special-keymap)
+   :with-special-keymap
+   :traverse-keymap)
   ;; reexport common/timer
   (:export
    :timer
@@ -326,7 +371,9 @@
    :event-queue-length)
   ;; interp.lisp
   (:export
+   :editor-abort-handler
    :*exit-editor-hook*
+   :exit-editor
    :interactive-p
    :continue-flag
    :pop-up-backtrace
@@ -384,10 +431,21 @@
    :completion-buffer)
   ;; cursors.lisp
   (:export
+   :cursor-saved-column
+   :cursor-yank-start
+   :cursor-yank-end
+   :change-yank-start
+   :change-yank-end
+   :cursor-mark
+   :set-cursor-mark
    :cursor-region-beginning
    :cursor-region-end
+   :buffer-fake-cursors
    :buffer-cursors
-   :make-fake-cursor)
+   :make-fake-cursor
+   :delete-fake-cursor
+   :merge-cursor-killrings
+   :clear-cursors)
   ;; typeout.lisp
   (:export
    :*typeout-mode-keymap*
@@ -395,6 +453,7 @@
    :pop-up-typeout-window)
   ;; lem.lisp
   (:export
+   :*set-location-hook*
    :*before-init-hook*
    :*after-init-hook*
    :*splash-function*
@@ -402,157 +461,12 @@
    :find-editor-thread
    :lem
    :main)
-  ;; primitive-command.lisp
+  ;; command-advices.lisp
   (:export
    :movable-advice
    :editable-advice
-   :*set-location-hook*
-   :undefined-key
-   :exit-lem
-   :quick-exit
-   :keyboard-quit
-   :escape
-   :nop-command
-   :unmark-buffer
-   :*read-only-function*
-   :toggle-read-only
-   :rename-buffer
-   :quoted-insert
-   :newline
-   :open-line
-   :delete-next-char
-   :delete-previous-char
-   :copy-region
-   :copy-region-to-clipboard
-   :kill-region
-   :kill-region-to-clipboard
-   :kill-line
-   :yank
-   :yank-pop
-   :yank-pop-next
-   :yank-to-clipboard
-   :paste-from-clipboard
-   :next-line
-   :next-logical-line
-   :previous-line
-   :previous-logical-line
-   :forward-char
-   :backward-char
-   :move-to-beginning-of-buffer
-   :move-to-end-of-buffer
-   :move-to-beginning-of-line
-   :move-to-beginning-of-logical-line
-   :move-to-end-of-line
-   :move-to-end-of-logical-line
-   :next-page
-   :previous-page
-   :entab-line
-   :detab-line
-   :next-page-char
-   :previous-page-char
-   :delete-blank-lines
-   :just-one-space
-   :delete-indentation
-   :transpose-characters
-   :undo
-   :redo
-   :mark-set
-   :exchange-point-mark
-   :goto-line
-   :filter-buffer
-   :pipe-command
-   :delete-trailing-whitespace
-   :load-library
-   :show-context-menu)
-  ;; self-insert-command.lisp
-  (:export
-   :get-self-insert-char
-   :self-insert-before-hook
-   :self-insert-after-hook
-   :self-insert)
-  ;; file-command.lisp
-  (:export
-   :*find-file-executor*
-   :find-file-executor
-   :execute-find-file
-   :find-file
-   :read-file
-   :add-newline-at-eof-on-writing-file
-   :save-buffer
-   :save-current-buffer
-   :changefile-name
-   :write-file
-   :write-region-file
-   :insert-file
-   :save-some-buffers
-   :sync-buffer-with-file-content
-   :revert-buffer
-   :revert-buffer-function
-   :change-directory)
-  ;; window-command.lisp
-  (:export
-   :select-buffer
-   :kill-buffer
-   :previous-buffer
-   :next-buffer
-   :recenter
-   :split-active-window-vertically
-   :split-active-window-horizontally
-   :other-window
-   :window-move-up
-   :window-move-down
-   :window-move-right
-   :window-move-left
-   :delete-other-windows
-   :delete-active-window
-   :quit-active-window
-   :grow-window
-   :shrink-window
-   :grow-window-horizontally
-   :shrink-window-horizontally
-   :display-buffer
-   :scroll-down
-   :scroll-up
-   :find-file-other-window
-   :read-file-other-window
-   :select-buffer-other-window
-   :switch-to-last-focused-window
-   :compare-windows)
-  ;; help-command.lisp
-  (:export
-   :describe-key
-   :describe-bindings
-   :execute-command
-   :apropos-command
-   :lem-version)
-  ;; word-command.lisp
-  (:export
-   :forward-word
-   :previous-word
-   :delete-word
-   :backward-delete-word
-   :downcase-region
-   :uppercase-region
-   :capitalize-word
-   :lowercase-word
-   :uppercase-word
-   :forward-paragraph
-   :backward-paragraph
-   :kill-paragraph
-   :count-words)
-  ;; sexp-command.lisp
-  (:export
-   :forward-sexp
-   :backward-sexp
-   :forward-list
-   :backward-list
-   :down-list
-   :backward-up-list
-   :mark-sexp
-   :kill-sexp
-   :transpose-sexps)
-  ;; multiple-cursors-command.lisp
-  (:export
+   :jump-cursor-advice
+   :process-each-cursors
    :do-each-cursors)
   ;; display.lisp
   (:export

@@ -1,4 +1,40 @@
-(in-package :lem-core)
+(defpackage :lem-core/commands/word
+  (:use :cl
+        :lem-core
+        :lem-core/commands/edit)
+  (:export :forward-word
+           :previous-word
+           :delete-word
+           :backward-delete-word
+           :downcase-region
+           :uppercase-region
+           :capitalize-word
+           :lowercase-word
+           :uppercase-word
+           :forward-paragraph
+           :backward-paragraph
+           :kill-paragraph
+           :count-words))
+(in-package :lem-core/commands/word)
+
+(define-key *global-keymap* "M-f" 'forward-word)
+(define-key *global-keymap* "C-Right" 'forward-word)
+(define-key *global-keymap* "M-b" 'previous-word)
+(define-key *global-keymap* "C-Left" 'previous-word)
+(define-key *global-keymap* "M-d" 'delete-word)
+(define-key *global-keymap* "C-Delete" 'delete-word)
+(define-key *global-keymap* "C-M-h" 'backward-delete-word)
+(define-key *global-keymap* "M-Backspace" 'backward-delete-word)
+(define-key *global-keymap* "C-Backspace" 'backward-delete-word)
+(define-key *global-keymap* "C-x C-l" 'downcase-region)
+(define-key *global-keymap* "C-x C-u" 'uppercase-region)
+(define-key *global-keymap* "M-c" 'capitalize-word)
+(define-key *global-keymap* "M-l" 'lowercase-word)
+(define-key *global-keymap* "M-u" 'uppercase-word)
+(define-key *global-keymap* "M-}" 'forward-paragraph)
+(define-key *global-keymap* "M-{" 'backward-paragraph)
+(define-key *global-keymap* "M-k" 'kill-paragraph)
+(define-key *global-keymap* "M-=" 'count-words)
 
 (defun word-type (char)
   (when (characterp char)
@@ -170,3 +206,17 @@
                                   "Region"
                                   "Buffer")
                               linum wnum chnum))))))
+
+(defmethod execute :around (mode
+                            (command downcase-region)
+                            argument)
+  (check-marked)
+  (do-each-cursors ()
+    (downcase-cursor-region (current-point))))
+
+(defmethod execute :around (mode
+                            (command uppercase-region)
+                            argument)
+  (check-marked)
+  (do-each-cursors ()
+    (uppercase-cursor-region (current-point))))

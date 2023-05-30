@@ -164,6 +164,14 @@
     (when (symbolp cmd)
       cmd)))
 
+(defun collect-command-keybindings (command keymap)
+  (let ((bindings '()))
+    (traverse-keymap keymap
+                     (lambda (kseq cmd)
+                       (when (eq cmd command)
+                         (push kseq bindings))))
+    (nreverse bindings)))
+
 (defvar *abort-key*)
 
 (defun abort-key-p (key)

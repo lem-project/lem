@@ -25,8 +25,6 @@
 (define-key *global-keymap* "C-x C-w" 'write-file)
 (define-key *global-keymap* "C-x Tab" 'insert-file)
 (define-key *global-keymap* "C-x s" 'save-some-buffers)
-(define-key *global-keymap* "M-~" 'unmark-buffer)
-(define-key *global-keymap* "C-x C-q" 'toggle-read-only)
 
 (defun expand-files* (filename)
   (directory-files (expand-file-name filename (buffer-directory))))

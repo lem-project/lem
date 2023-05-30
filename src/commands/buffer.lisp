@@ -8,6 +8,9 @@
 
 (defvar *read-only-function* nil)
 
+(define-key *global-keymap* "C-x C-q" 'toggle-read-only)
+(define-key *global-keymap* "M-~" 'unmark-buffer)
+
 (define-command toggle-read-only () ()
   (setf (buffer-read-only-p (current-buffer))
         (not (buffer-read-only-p (current-buffer))))

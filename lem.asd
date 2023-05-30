@@ -151,7 +151,8 @@
                "lem-makefile-mode"
                "lem-shell-mode"
                "lem-sql-mode"
-               "lem-base16-themes"))
+               "lem-base16-themes"
+               "lem-elixir-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

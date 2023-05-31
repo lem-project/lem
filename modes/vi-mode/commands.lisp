@@ -69,7 +69,7 @@
            :vi-append
            :vi-append-line
            :vi-open-below
-           :vi-open-adove
+           :vi-open-above
            :vi-jump-back
            :vi-jump-next
            :vi-normal
@@ -714,7 +714,7 @@
     (move-to-column p column t)
     (change-state 'insert)))
 
-(define-command vi-open-adove () ()
+(define-command vi-open-above () ()
   (line-start (current-point))
   (open-line 1)
   (change-state 'insert))

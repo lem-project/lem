@@ -87,7 +87,8 @@
 
                (:module "ext"
                 :serial t
-                :components ((:file "popup-window")
+                :components ((:file "document")
+                             (:file "popup-window")
                              (:file "popup-message")
                              (:file "popup-menu")
                              (:file "multi-column-list")

@@ -5,7 +5,7 @@ exec ros -Q -L ccl-bin -- $0 "$@"
 |#
 (progn
   (ql:quickload :lem-ncurses :silent t)
-  (uiop:symbol-call :lem :load-site-init))
+  (uiop:symbol-call :lem-core :load-site-init))
 
 (defpackage :ros.script.lem-ncurses-ccl.3724915314
   (:use :cl))

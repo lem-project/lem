@@ -36,20 +36,27 @@
 (defun binding-to-string (binding)
   (format nil "~{~A~^ ~}" binding))
 
-(defun category-name (package-name)
-  (string-capitalize (car (last (uiop:split-string package-name :separator "/")))))
+(defun key-bindings (command)
+  (format nil "~{~A~^, ~}"
+          (loop :for binding :in (command-bindings command)
+                :collect (binding-to-string binding))))
+
+(defun description (command)
+  (documentation command 'function))
 
 (defun generate (package)
   (loop :for command :in (collect-commands-in-package package)
         :collect (list (princ-to-string command)
-                       (format nil "~{~A~^, ~}"
-                               (loop :for binding :in (command-bindings command)
-                                     :collect (binding-to-string binding))))))
+                       (key-bindings command)
+                       (description command))))
+
+(defun category-name (package-name)
+  (string-capitalize (car (last (uiop:split-string package-name :separator "/")))))
 
 (defun generate-all ()
   (loop :for package :in (collect-packages)
         :collect (cons (category-name (package-name package))
-                       (cons (list "Command" "Key bindings")
+                       (cons (list "Command" "Key bindings" "Description")
                              (generate package)))))
 
 (defun table-width (table)

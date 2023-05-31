@@ -1,6 +1,7 @@
 (defpackage :lem-core/commands/other
   (:use :cl :lem-core)
-  (:export :undefined-key
+  (:export :nop-command
+           :undefined-key
            :keyboard-quit
            :escape
            :exit-lem

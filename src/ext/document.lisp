@@ -1,6 +1,6 @@
-(defpackage :lem-core/commands/document
+(defpackage :lem/document
   (:use :cl :lem))
-(in-package :lem-core/commands/document)
+(in-package :lem/document)
 
 (defun extract-defpackage-name (form)
   (assert (and (consp form)

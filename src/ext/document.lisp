@@ -7,7 +7,7 @@
                (member (first form) '(defpackage uiop:define-package))))
   (second form))
 
-(defun collect-packages ()
+(defun collect-global-command-packages ()
   (loop :for component :in (asdf:component-children (asdf:find-component :lem "commands"))
         :collect (find-package
                   (extract-defpackage-name
@@ -44,21 +44,22 @@
 (defun description (command)
   (documentation command 'function))
 
-(defun generate (package)
-  (loop :for command :in (collect-commands-in-package package)
-        :collect (list (princ-to-string command)
-                       (key-bindings command)
-                       (description command))))
-
 (defun category-name (package-name)
   (string-capitalize (car (last (uiop:split-string package-name :separator "/")))))
 
-(defun generate-all ()
-  (loop :for package :in (collect-packages)
-        :collect (cons (category-name (package-name package))
-                       (cons (list "Command" "Key bindings" "Description")
-                             (generate package)))))
+(defun construct-package-documentation (package)
+  (cons (category-name (package-name package))
+        (cons (list "Command" "Key bindings" "Documentation")
+              (loop :for command :in (collect-commands-in-package package)
+                    :collect (list (princ-to-string command)
+                                   (key-bindings command)
+                                   (description command))))))
 
+(defun construct-global-command-documentation ()
+  (mapcar #'construct-package-documentation
+          (collect-global-command-packages)))
+
+;;; markdown document generator
 (defun table-width (table)
   (length (first table)))
 
@@ -96,7 +97,7 @@
   (let* ((buffer (make-buffer "*Help*"))
          (point (buffer-point buffer)))
     (erase-buffer buffer)
-    (loop :for (category . table) :in (generate-all)
+    (loop :for (category . table) :in (construct-global-command-documentation)
           :do (insert-string point (format nil "## ~A~%" category))
               (print-table point table)
               (insert-character point #\newline))))

@@ -228,7 +228,8 @@
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
   (let ((p (current-point)))
     (when (and (< 0 n)
-	       (not (bolp p)))
+	       (not (and (= (line-number-at-point p) 1)
+			 (bolp p))))
       (cond
 	((vi-word-char-p (character-at p -1))
 	 (loop

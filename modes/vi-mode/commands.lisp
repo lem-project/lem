@@ -226,23 +226,24 @@
         (skip-chars-forward (current-point) '(#\Space #\Tab #\Newline)))))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
-  (when (< 0 n)
-    (let ((p (current-point)))
+  (let ((p (current-point)))
+    (when (and (< 0 n)
+	       (not (bolp p)))
       (cond
-        ((vi-word-char-p (character-at p -1))
-         (loop
-           while (and (not (bolp p)) (vi-word-char-p (character-at p -1)))
-           do (vi-backward-char)))
-        ((or (bolp p)
-             (vi-space-char-p (character-at p -1)))
-         (skip-chars-backward p '(#\Space #\Tab #\Newline #\Return))
-         (vi-backward-word-begin n))
-        (t
-         (loop until (or (bolp p)
-                         (vi-word-char-p (character-at p -1))
-                         (vi-space-char-p (character-at p -1)))
-               do (vi-backward-char)))))
-    (vi-backward-word-begin (1- n))))
+	((vi-word-char-p (character-at p -1))
+	 (loop
+	   while (and (not (bolp p)) (vi-word-char-p (character-at p -1)))
+	   do (vi-backward-char)))
+	((or (bolp p)
+	     (vi-space-char-p (character-at p -1)))
+	 (skip-chars-backward p '(#\Space #\Tab #\Newline #\Return))
+	 (vi-backward-word-begin n))
+	(t
+	 (loop until (or (bolp p)
+			 (vi-word-char-p (character-at p -1))
+			 (vi-space-char-p (character-at p -1)))
+	       do (vi-backward-char))))
+      (vi-backward-word-begin (1- n)))))
 
 (define-command vi-forward-word-begin-broad (&optional (n 1)) ("p")
   (forward-word-begin (current-point) n t))

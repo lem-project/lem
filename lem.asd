@@ -69,8 +69,7 @@
 
                (:module "commands"
                 :serial t
-                :components ((:file "multiple-cursors")
-                             (:file "move")
+                :components ((:file "move")
                              (:file "edit" :depends-on ("move"))
                              (:file "mark")
                              (:file "word" :depends-on ("edit"))
@@ -78,6 +77,7 @@
                              (:file "file" :depends-on ("edit"))
                              (:file "buffer")
                              (:file "window" :depends-on ("move"))
+                             (:file "multiple-cursors")
                              (:file "process")
                              (:file "help")
                              (:file "font")

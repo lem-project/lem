@@ -2,21 +2,14 @@
   (:use :cl :lem))
 (in-package :lem-core/commands/document)
 
+(defun extract-defpackage-name (form)
+  (assert (and (consp form)
+               (member (first form) '(defpackage uiop:define-package))))
+  (second form))
+
 (defun collect-packages ()
-  (mapcar #'find-package
-          (list :lem-core/commands/move
-                :lem-core/commands/edit
-                :lem-core/commands/mark
-                :lem-core/commands/word
-                :lem-core/commands/s-expression
-                :lem-core/commands/file
-                :lem-core/commands/buffer
-                :lem-core/commands/window
-                :lem-core/commands/multiple-cursors
-                :lem-core/commands/process
-                :lem-core/commands/help
-                :lem-core/commands/font
-                :lem-core/commands/other)))
+  (loop :for component :in (asdf:component-children (asdf:find-component :lem "commands"))
+        :collect (find-package (extract-defpackage-name (uiop:read-file-form (asdf:component-pathname component))))))
 
 (defun collect-commands-in-package (package)
   (let ((commands '()))

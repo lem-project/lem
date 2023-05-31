@@ -9,21 +9,26 @@
 
 (defun collect-packages ()
   (loop :for component :in (asdf:component-children (asdf:find-component :lem "commands"))
-        :collect (find-package (extract-defpackage-name (uiop:read-file-form (asdf:component-pathname component))))))
+        :collect (find-package
+                  (extract-defpackage-name
+                   (uiop:read-file-form
+                    (asdf:component-pathname component))))))
+
+(defun sort-by-file-location (command-and-source-location-pairs)
+  (sort command-and-source-location-pairs
+        #'<
+        :key (lambda (elt)
+               (sb-c:definition-source-location-toplevel-form-number (cdr elt)))))
 
 (defun collect-commands-in-package (package)
-  (let ((commands '()))
+  (let ((command-and-source-location-pairs '()))
     (do-external-symbols (sym package)
       (let ((command (get-command sym)))
         (when command
           (push (cons (command-name command)
                       (lem-core::command-source-location command))
-                commands))))
-    (mapcar #'first
-            (sort commands
-                  #'<
-                  :key (lambda (elt)
-                         (sb-c:definition-source-location-toplevel-form-number (cdr elt)))))))
+                command-and-source-location-pairs))))
+    (mapcar #'first (sort-by-file-location command-and-source-location-pairs))))
 
 (defun command-bindings (command)
   (collect-command-keybindings command *global-keymap*))

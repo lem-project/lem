@@ -338,3 +338,18 @@
   (if (self-connection-p *connection*)
       (message "Can't say sayonara because it's self connection.")
       (interactive-eval "(swank:quit-lisp)")))
+
+(define-repl-shortcut change-package (n)
+  (declare (ignore n))
+  (let* ((packages (mapcar (lambda (p)
+			     (string-downcase (package-name p)))
+			   (list-all-packages)))
+	 (package
+	   (prompt-for-string
+	    "Package: "
+	    :completion-function (lambda (str)
+				   (sort (completion str packages)
+					 #'string-lessp))
+	    :test-function (lambda (package)
+			     (find package packages :test #'string-equal)))))
+    (lisp-set-package package)))

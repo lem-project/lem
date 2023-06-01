@@ -13,6 +13,7 @@
    :make-command-table
    :add-command
    :remove-command
+   :get-command
    :find-command
    :exist-command-p)
   ;; version.lisp
@@ -353,7 +354,8 @@
    :*abort-key*
    :abort-key-p
    :with-special-keymap
-   :traverse-keymap)
+   :traverse-keymap
+   :collect-command-keybindings)
   ;; reexport common/timer
   (:export
    :timer

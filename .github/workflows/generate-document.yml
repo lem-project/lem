@@ -36,9 +36,12 @@ jobs:
         export PATH=$HOME/.roswell/bin:$PATH
 
         cd $(ros -e '(princ (ql:where-is-system :lem))')
-        ros -s lem -s lem/extensions -e '(lem/document:generate-markdown-file "docs/default-bindings.md")'
 
-        if [ -z "$(git diff docs/default-bindings.md)" ]; then
+        document_file=docs/default-keybindings.md
+
+        ros -s lem -s lem/extensions -e "(lem/document:generate-markdown-file ${document_file})"
+
+        if [ -z "$(git diff ${document_file})" ]; then
           exit 0
         fi
 
@@ -47,8 +50,8 @@ jobs:
 
         branch_name="update-docs-$(date '+%Y%m%d-%H%M%S')"
         git checkout -b $branch_name
-        git add docs/default-bindings.md
-        git commit -m 'update docs/default-bindings.md'
+        git add ${document_file}
+        git commit -m "update ${document_file}"
         git push origin $branch_name
 
-        gh pr create -B main -t "update docs/default-bindings.md $(date '+%Y%m%d-%H%M%S')" -b ''
+        gh pr create -B main -t "update ${document_file} $(date '+%Y%m%d-%H%M%S')" -b ''

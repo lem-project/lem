@@ -1,23 +1,23 @@
 ## Move
-| Command                           | Key bindings  | Documentation |
-|-----------------------------------|---------------|---------------|
-| NEXT-LINE                         | C-n, Down     |               |
-| NEXT-LOGICAL-LINE                 |               |               |
-| PREVIOUS-LINE                     | C-p, Up       |               |
-| PREVIOUS-LOGICAL-LINE             |               |               |
-| FORWARD-CHAR                      | C-f, Right    |               |
-| BACKWARD-CHAR                     | C-b, Left     |               |
-| MOVE-TO-BEGINNING-OF-BUFFER       | M-<           |               |
-| MOVE-TO-END-OF-BUFFER             | M->           |               |
-| MOVE-TO-BEGINNING-OF-LINE         | C-a, Home     |               |
-| MOVE-TO-BEGINNING-OF-LOGICAL-LINE |               |               |
-| MOVE-TO-END-OF-LINE               | C-e, End      |               |
-| MOVE-TO-END-OF-LOGICAL-LINE       |               |               |
-| NEXT-PAGE                         | C-v, PageDown |               |
-| PREVIOUS-PAGE                     | M-v, PageUp   |               |
-| NEXT-PAGE-CHAR                    | C-x ]         |               |
-| PREVIOUS-PAGE-CHAR                | C-x [         |               |
-| GOTO-LINE                         | M-g           |               |
+| Command                           | Key bindings  | Documentation                                         |
+|-----------------------------------|---------------|-------------------------------------------------------|
+| NEXT-LINE                         | C-n, Down     | Move the cursor to next line.                         |
+| NEXT-LOGICAL-LINE                 |               | Move the cursor to the next logical line.             |
+| PREVIOUS-LINE                     | C-p, Up       | Move the cursor to the previous line.                 |
+| PREVIOUS-LOGICAL-LINE             |               | Move the cursor to the previous logical line.         |
+| FORWARD-CHAR                      | C-f, Right    | Move the cursor to the next character.                |
+| BACKWARD-CHAR                     | C-b, Left     | Move the cursor to the previous character.            |
+| MOVE-TO-BEGINNING-OF-BUFFER       | M-<           | Move the cursor to the beginning of the buffer.       |
+| MOVE-TO-END-OF-BUFFER             | M->           | Move the cursor to the end of the buffer.             |
+| MOVE-TO-BEGINNING-OF-LINE         | C-a, Home     | Move the cursor to the beginning of the line.         |
+| MOVE-TO-BEGINNING-OF-LOGICAL-LINE |               | Move the cursor to the beginning of the logical line. |
+| MOVE-TO-END-OF-LINE               | C-e, End      | Move the cursor to the end of the line.               |
+| MOVE-TO-END-OF-LOGICAL-LINE       |               | Move the cursor to the end of the logical line.       |
+| NEXT-PAGE                         | C-v, PageDown | Move the cursor to the next page by one page.         |
+| PREVIOUS-PAGE                     | M-v, PageUp   | Move the cursor to the previous page by one page.     |
+| NEXT-PAGE-CHAR                    | C-x ]         | Move the cursor to the next page character (^L).      |
+| PREVIOUS-PAGE-CHAR                | C-x [         | Move the cursor to the previous page character (^L).  |
+| GOTO-LINE                         | M-g           | Move the cursor to the specified line number.         |
 
 ## Edit
 | Command                    | Key bindings   | Documentation |

@@ -70,6 +70,7 @@
 (define-command (self-insert (:advice-classes self-insert-advice editable-advice))
     (&optional (n 1) (char (get-self-insert-char)))
     ("p" (get-self-insert-char))
+  "Insert the input character."
   (run-hooks (variable-value 'self-insert-before-hook) char)
   (self-insert-aux char n)
   (run-hooks (variable-value 'self-insert-after-hook) char))
@@ -80,12 +81,15 @@
     (character-offset (current-point) (- n))))
 
 (define-command (newline (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+  "Insert a new line."
   (self-insert-aux #\newline n))
 
 (define-command (open-line (:advice-classes editable-advice)) (n) ("p")
+  "Insert a new line without moving the cursor position."
   (self-insert-aux #\newline n t))
 
 (define-command quoted-insert (&optional (n 1)) ("p")
+  "Insert the next entered key (including control characters)."
   (let* ((key (read-key))
          (char (or (key-to-char key) (code-char 0))))
     (self-insert-aux char n)))
@@ -100,6 +104,7 @@
 
 
 (define-command (delete-next-char (:advice-classes editable-advice)) (&optional n) ("P")
+  "Delete the next character."
   (unless (end-buffer-p (current-point))
     (let ((repeat-command (continue-flag :kill))
           (killp (not (null n)))
@@ -122,6 +127,7 @@
       (error e))))
 
 (define-command (delete-previous-char (:advice-classes editable-advice)) (&optional n) ("P")
+  "Delete the previous character."
   (cond ((mark-active-p (cursor-mark (current-point)))
          (delete-cursor-region (current-point)))
         (t
@@ -135,11 +141,13 @@
     (mark-cancel (cursor-mark point))))
 
 (define-command copy-region (start end) ("r")
+  "Copy the selected text."
   (with-killring-context (:appending (continue-flag :kill))
     (copy-to-clipboard-with-killring (points-to-string start end)))
   (buffer-mark-cancel (current-buffer)))
 
 (define-command copy-region-to-clipboard (start end) ("r")
+  "Copy the selected text to the clipboard."
   (copy-to-clipboard (points-to-string start end)))
 
 (defun kill-cursor-region (point)
@@ -151,6 +159,7 @@
     (mark-cancel (cursor-mark point))))
 
 (define-command kill-region (start end) ("r")
+  "Kill the selected text."
   (when (point< end start)
     (rotatef start end))
   (let ((repeat-command (continue-flag :kill)))
@@ -159,10 +168,12 @@
         (copy-to-clipboard-with-killring killed-string)))))
 
 (define-command kill-region-to-clipboard (start end) ("r")
+  "Kill the selected text and copy to the clipboard."
   (copy-region-to-clipboard start end)
   (delete-character start (count-characters start end)))
 
 (define-command (kill-line (:advice-classes editable-advice)) (&optional arg) ("P")
+  "Kill from the current cursor position to the end of the line."
   (save-excursion
     (with-point ((start (current-point) :right-inserting))
       (cond
@@ -192,9 +203,11 @@
     (continue-flag :yank)))
 
 (define-command yank (&optional arg) ("P")
+  "Paste the copied text."
   (yank-1 arg))
 
 (define-command (yank-pop (:advice-classes editable-advice)) (&optional n) ("p")
+  "Replaces the immediately pasted text with the next text in the killring."
   (let ((start (cursor-yank-start (current-point)))
         (end (cursor-yank-end (current-point)))
         (prev-yank-p (continue-flag :yank)))
@@ -207,6 +220,7 @@
            nil))))
 
 (define-command (yank-pop-next (:advice-classes editable-advice)) (&optional n) ("p")
+  "Replaces the immediately preceding yank-pop text with the text before the kill ring."
   (let ((start (cursor-yank-start (current-point)))
         (end (cursor-yank-end (current-point)))
         (prev-yank-p (continue-flag :yank)))
@@ -219,12 +233,14 @@
            nil))))
 
 (define-command yank-to-clipboard (&optional arg) ("p")
+  "Copy the text of the killring to the clipboard"
   (let ((string
           (peek-killring-item (current-killring)
                               (if (null arg) 0 (1- arg)))))
     (copy-to-clipboard string)))
 
 (define-command (paste-from-clipboard (:advice-classes editable-advice)) () ()
+  "Inserts text from the clipboard"
   (insert-string (current-point) (get-clipboard-data)))
 
 (defun tab-line-aux (n make-space-str)

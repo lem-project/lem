@@ -36,7 +36,7 @@ jobs:
         export PATH=$HOME/.roswell/bin:$PATH
 
         cd $(ros -e '(princ (ql:where-is-system :lem))')
-        lem -q --eval '(lem/document:generate-markdown-file "docs/default-bindings.md")' --eval '(sb-ext:quit)'
+        ros -s lem -s lem/extensions -e '(lem/document:generate-markdown-file "docs/default-bindings.md")'
 
         if [ -z "$(git diff docs/default-bindings.md)" ]; then
           exit 0

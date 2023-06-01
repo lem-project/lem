@@ -233,14 +233,14 @@
            nil))))
 
 (define-command yank-to-clipboard (&optional arg) ("p")
-  "Copy the text of the killring to the clipboard"
+  "Copy the text of the killring to the clipboard."
   (let ((string
           (peek-killring-item (current-killring)
                               (if (null arg) 0 (1- arg)))))
     (copy-to-clipboard string)))
 
 (define-command (paste-from-clipboard (:advice-classes editable-advice)) () ()
-  "Inserts text from the clipboard"
+  "Inserts text from the clipboard."
   (insert-string (current-point) (get-clipboard-data)))
 
 (defun tab-line-aux (n make-space-str)
@@ -258,17 +258,20 @@
           (return))))))
 
 (define-command (entab-line (:advice-classes editable-advice)) (n) ("p")
+  "Replaces the indent of the current line from space to tab."
   (tab-line-aux n
                 #'(lambda (n)
                     (make-string n :initial-element #\tab))))
 
 (define-command (detab-line (:advice-classes editable-advice)) (n) ("p")
+  "Replaces the indent of the current line from tab to space."
   (tab-line-aux n
                 (lambda (n)
                   (make-string (* n (variable-value 'tab-width))
                                :initial-element #\space))))
 
 (define-command (delete-blank-lines (:advice-classes editable-advice)) () ()
+  "Delete blank lines before and after the cursor."
   (let ((point (current-point)))
     (loop
       (unless (blank-line-p point)
@@ -292,11 +295,13 @@
     (delete-character (current-point) (- n))))
 
 (define-command (just-one-space (:advice-classes editable-advice)) () ()
+  "Combines consecutive whitespace before and after the cursor into one."
   (skip-whitespace-backward (current-point) t)
   (delete-while-whitespaces t)
   (insert-character (current-point) #\space 1))
 
 (define-command (delete-indentation (:advice-classes editable-advice)) () ()
+  "Merge the current line with the previous line."
   (with-point ((p (current-point)))
     (line-start p)
     (unless (start-buffer-p p)
@@ -316,6 +321,7 @@
         (insert-character p #\space)))))
 
 (define-command (transpose-characters (:advice-classes editable-advice)) () ()
+  "Swaps the characters before and after the cursor."
   (let ((point (current-point)))
     (cond ((start-line-p point))
           ((end-line-p point)
@@ -332,12 +338,14 @@
              (insert-string point (format nil "~C~C" c1 c2)))))))
 
 (define-command undo (n) ("p")
+  "Undo."
   ;; TODO: multiple cursors
   (dotimes (_ n t)
     (unless (buffer-undo (current-point))
       (editor-error "Undo Error"))))
 
 (define-command redo (n) ("p")
+  "Redo."
   ;; TODO: multiple cursors
   (dotimes (_ n t)
     (unless (buffer-redo (current-point))
@@ -356,12 +364,15 @@
           (insert-string point (princ-to-string (funcall fn n))))))))
 
 (define-command (increment (:advice-classes editable-advice)) () ()
+  "Increments the number before the cursor."
   (*crement-aux #'1+))
 
 (define-command (decrement (:advice-classes editable-advice)) () ()
+  "Decrements the number before the cursor".
   (*crement-aux #'1-))
 
 (define-command delete-trailing-whitespace (&optional (buffer (current-buffer))) ()
+  "Removes all end-of-line and end-of-buffer whitespace from the current buffer."
   (save-excursion
     (setf (current-buffer) buffer)
     (let ((p (current-point)))

@@ -39,7 +39,7 @@ jobs:
 
         document_file=docs/default-keybindings.md
 
-        ros -s lem -s lem/extensions -e "(lem/document:generate-markdown-file ${document_file})"
+        ros -s lem -s lem/extensions -e "(lem/document:generate-markdown-file \"${document_file}\")"
 
         if [ -z "$(git diff ${document_file})" ]; then
           exit 0

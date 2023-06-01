@@ -1,5 +1,6 @@
 (defpackage :lem/document
-  (:use :cl :lem))
+  (:use :cl :lem)
+  (:export :generate-markdown-file))
 (in-package :lem/document)
 
 (defun extract-defpackage-name (form)
@@ -93,11 +94,14 @@
                 (insert-string point "-|")
                 (insert-character point #\newline)))))
 
-(defun generate-all-documents ()
-  (let* ((buffer (make-buffer "*Help*"))
+(defun generate-markdown-file (filename)
+  (let* ((buffer (make-buffer nil :temporary t))
          (point (buffer-point buffer)))
     (erase-buffer buffer)
     (loop :for (category . table) :in (construct-global-command-documentation)
           :do (insert-string point (format nil "## ~A~%" category))
               (print-table point table)
-              (insert-character point #\newline))))
+              (insert-character point #\newline))
+    (alexandria:write-string-into-file (buffer-text buffer)
+                                       filename
+                                       :if-exists :supersede)))

@@ -2,7 +2,7 @@ name: Generate document
 
 on:
   push:
-    branches: [ '*' ]
+    branches: [ 'main' ]
   workflow_dispatch:
     branches: [ '*' ]
 

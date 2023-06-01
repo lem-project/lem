@@ -1,155 +1,175 @@
-##
-| Command                     | Keybind               |
-|-----------------------------|-----------------------|
-| exit-lem                    | C-x C-c               |
-| keyboard-quit               | C-g                   |
-| escape                      | Escape                |
+## Move
+| Command                           | Key bindings  | Documentation |
+|-----------------------------------|---------------|---------------|
+| NEXT-LINE                         | C-n, Down     |               |
+| NEXT-LOGICAL-LINE                 |               |               |
+| PREVIOUS-LINE                     | C-p, Up       |               |
+| PREVIOUS-LOGICAL-LINE             |               |               |
+| FORWARD-CHAR                      | C-f, Right    |               |
+| BACKWARD-CHAR                     | C-b, Left     |               |
+| MOVE-TO-BEGINNING-OF-BUFFER       | M-<           |               |
+| MOVE-TO-END-OF-BUFFER             | M->           |               |
+| MOVE-TO-BEGINNING-OF-LINE         | C-a, Home     |               |
+| MOVE-TO-BEGINNING-OF-LOGICAL-LINE |               |               |
+| MOVE-TO-END-OF-LINE               | C-e, End      |               |
+| MOVE-TO-END-OF-LOGICAL-LINE       |               |               |
+| NEXT-PAGE                         | C-v, PageDown |               |
+| PREVIOUS-PAGE                     | M-v, PageUp   |               |
+| NEXT-PAGE-CHAR                    | C-x ]         |               |
+| PREVIOUS-PAGE-CHAR                | C-x [         |               |
+| GOTO-LINE                         | M-g           |               |
 
-##
-| Command                     | Keybind               |
-|-----------------------------|-----------------------|
-| forward-char                | C-f, Right            |
-| backward-char               | C-b, Left             |
-| next-line                   | C-n, Down             |
-| previous-line               | C-p, Up               |
-| move-to-beginning-of-line   | C-a, Home             |
-| move-to-end-of-line         | C-e, End              |
-| move-to-beginning-of-buffer | M-<                   |
-| move-to-end-of-buffer       | M->                   |
-| next-page                   | C-v, PageDown         |
-| previous-page               | M-v, PageUp           |
-| goto-line                   | M-g                   |
-| next-page-char              | C-x ]                 |
-| previous-page-char          | C-x [                 |
+## Edit
+| Command                    | Key bindings   | Documentation |
+|----------------------------|----------------|---------------|
+| SELF-INSERT                |                |               |
+| NEWLINE                    | Return         |               |
+| OPEN-LINE                  | C-o            |               |
+| QUOTED-INSERT              | C-q            |               |
+| DELETE-NEXT-CHAR           | C-d, Delete    |               |
+| DELETE-PREVIOUS-CHAR       | C-h, Backspace |               |
+| COPY-REGION                | M-w            |               |
+| COPY-REGION-TO-CLIPBOARD   |                |               |
+| KILL-REGION                | C-w            |               |
+| KILL-REGION-TO-CLIPBOARD   |                |               |
+| KILL-LINE                  | C-k            |               |
+| YANK                       | C-y            |               |
+| YANK-POP                   | M-y            |               |
+| YANK-POP-NEXT              |                |               |
+| YANK-TO-CLIPBOARD          |                |               |
+| PASTE-FROM-CLIPBOARD       |                |               |
+| ENTAB-LINE                 |                |               |
+| DETAB-LINE                 |                |               |
+| DELETE-BLANK-LINES         | C-x C-o        |               |
+| JUST-ONE-SPACE             | M-Space        |               |
+| DELETE-INDENTATION         | M-^            |               |
+| TRANSPOSE-CHARACTERS       | C-t            |               |
+| UNDO                       | C-\            |               |
+| REDO                       | C-_, C-/       |               |
+| DELETE-TRAILING-WHITESPACE |                |               |
 
-##
-| Command              | Keybind        |
-|----------------------|----------------|
-| delete-next-char     | C-d, Delete    |
-| delete-previous-char | C-h, Backspace |
-| newline              | C-m, Return    |
-| open-line            | C-o            |
-| quoted-insert        | C-q            |
+## Mark
+| Command               | Key bindings | Documentation |
+|-----------------------|--------------|---------------|
+| MARK-SET              | C-@, C-Space |               |
+| EXCHANGE-POINT-MARK   | C-x C-x      |               |
+| MARK-SET-WHOLE-BUFFER | C-x h        |               |
 
-##
-| Command               | Keybind      |
-|-----------------------|--------------|
-| mark-set              | C-Space, C-@ |
-| copy-region           | M-w          |
-| kill-region           | C-w          |
-| kill-line             | C-k          |
-| yank                  | C-y          |
-| yank-pop              | M-y          |
-| exchange-point-mark   | C-x C-x      |
-| mark-set-whole-buffer | C-x h        |
+## Word
+| Command              | Key bindings                    | Documentation |
+|----------------------|---------------------------------|---------------|
+| FORWARD-WORD         | M-f, C-Right                    |               |
+| PREVIOUS-WORD        | M-b, C-Left                     |               |
+| DELETE-WORD          | M-d, C-Delete                   |               |
+| BACKWARD-DELETE-WORD | M-C-h, M-Backspace, C-Backspace |               |
+| DOWNCASE-REGION      | C-x C-l                         |               |
+| UPPERCASE-REGION     | C-x C-u                         |               |
+| CAPITALIZE-WORD      | M-c                             |               |
+| LOWERCASE-WORD       | M-l                             |               |
+| UPPERCASE-WORD       | M-u                             |               |
+| FORWARD-PARAGRAPH    | M-}                             |               |
+| BACKWARD-PARAGRAPH   | M-{                             |               |
+| KILL-PARAGRAPH       | M-k                             |               |
+| COUNT-WORDS          | M-=                             |               |
 
-##
-| Command               | Keybind      |
-|-----------------------|--------------|
-| undo                  | C-\          |
-| redo                  | C-/, C-_     |
-| just-one-space        | M-Space      |
-| delete-indentation    | M-^          |
-| transpose-characters  | C-t          |
-| delete-blank-lines    | C-x C-o      |
+## S-Expression
+| Command          | Key bindings     | Documentation |
+|------------------|------------------|---------------|
+| FORWARD-SEXP     | M-C-f            |               |
+| BACKWARD-SEXP    | M-C-b            |               |
+| FORWARD-LIST     | M-C-n            |               |
+| BACKWARD-LIST    | M-C-p            |               |
+| DOWN-LIST        | M-C-d            |               |
+| BACKWARD-UP-LIST | M-C-u            |               |
+| MARK-SEXP        | M-C-@, M-C-Space |               |
+| KILL-SEXP        | M-C-k            |               |
+| TRANSPOSE-SEXPS  | M-C-t            |               |
 
-##
-| Command               | Keybind      |
-|-----------------------|--------------|
-| filter-buffer         | C-x #        |
-| pipe-command          | C-x @        |
+## File
+| Command             | Key bindings | Documentation |
+|---------------------|--------------|---------------|
+| FIND-FILE           | C-x C-f      |               |
+| READ-FILE           | C-x C-r      |               |
+| SAVE-CURRENT-BUFFER | C-x C-s      |               |
+| WRITE-FILE          | C-x C-w      |               |
+| WRITE-REGION-FILE   |              |               |
+| INSERT-FILE         | C-x Tab      |               |
+| SAVE-SOME-BUFFERS   | C-x s        |               |
+| REVERT-BUFFER       |              |               |
+| CHANGE-DIRECTORY    |              |               |
 
-##
-| Command                     | Keybind               |
-|-----------------------------|-----------------------|
-| unmark-buffer               | M-~                   |
-| toggle-read-only            | C-x C-q               |
+## Buffer
+| Command          | Key bindings | Documentation |
+|------------------|--------------|---------------|
+| TOGGLE-READ-ONLY | C-x C-q      |               |
+| RENAME-BUFFER    |              |               |
+| UNMARK-BUFFER    | M-~          |               |
 
-## Word commands
-| Command              | Keybind                         |
-|----------------------|---------------------------------|
-| forward-word         | M-f, M-Right                    |
-| backward-word        | M-b, M-Left                     |
-| delete-word          | M-d, C-Delete                   |
-| backward-delete-word | C-M-h, M-Backspace, C-Backspace |
-| downcase-region      | C-x C-l                         |
-| uppercase-region     | C-x C-u                         |
-| capitalize-word      | M-c                             |
-| lowercase-word       | M-l                             |
-| uppercase-word       | M-u                             |
-| forward-paragraph    | M-}                             |
-| backward-paragraph   | M-{                             |
-| kill-paragraph       | M-k                             |
-| count-words          | M-=                             |
+## Window
+| Command                          | Key bindings   | Documentation |
+|----------------------------------|----------------|---------------|
+| SELECT-BUFFER                    | C-x b          |               |
+| KILL-BUFFER                      | C-x k          |               |
+| PREVIOUS-BUFFER                  | C-x Left       |               |
+| NEXT-BUFFER                      | C-x Right      |               |
+| RECENTER                         | C-l            |               |
+| SPLIT-ACTIVE-WINDOW-VERTICALLY   | C-x 2          |               |
+| SPLIT-ACTIVE-WINDOW-HORIZONTALLY | C-x 3          |               |
+| OTHER-WINDOW                     | C-x o, M-o     |               |
+| SWITCH-TO-LAST-FOCUSED-WINDOW    |                |               |
+| WINDOW-MOVE-DOWN                 |                |               |
+| WINDOW-MOVE-UP                   |                |               |
+| WINDOW-MOVE-RIGHT                |                |               |
+| WINDOW-MOVE-LEFT                 |                |               |
+| DELETE-OTHER-WINDOWS             | C-x 1          |               |
+| DELETE-ACTIVE-WINDOW             | C-x 0          |               |
+| QUIT-ACTIVE-WINDOW               |                |               |
+| GROW-WINDOW                      | C-x ^          |               |
+| SHRINK-WINDOW                    | C-x C-z        |               |
+| GROW-WINDOW-HORIZONTALLY         | C-x }          |               |
+| SHRINK-WINDOW-HORIZONTALLY       | C-x {          |               |
+| SCROLL-DOWN                      | C-Down, M-Down |               |
+| SCROLL-UP                        | C-Up, M-Up     |               |
+| FIND-FILE-OTHER-WINDOW           | C-x 4 f        |               |
+| READ-FILE-OTHER-WINDOW           | C-x 4 r        |               |
+| SELECT-BUFFER-OTHER-WINDOW       | C-x 4 b        |               |
+| COMPARE-WINDOWS                  |                |               |
 
-## S-Expression command
-| Command          | Keybind          |
-|----------------- |------------      |
-| forward-sexp     | C-M-f            |
-| backward-sexp    | C-M-b            |
-| forward-list     | C-M-n            |
-| backward-list    | C-M-p            |
-| down-list        | C-M-d            |
-| up-list          | C-M-u            |
-| mark-sexp        | C-M-Space, C-M-@ |
-| kill-sexp        | C-M-k            |
-| transpose-sexps  | C-M-t            |
-| kill-around-form | C-M-y            |
+## Multiple-Cursors
+| Command                  | Key bindings | Documentation |
+|--------------------------|--------------|---------------|
+| ADD-CURSORS-TO-NEXT-LINE | M-C          |               |
 
-## File Commands
-| Command             | Keybind |
-|---------------------|---------|
-| find-file           | C-x C-f |
-| read-file           | C-x C-r |
-| save-current-buffer | C-x C-s |
-| write-file          | C-x C-w |
-| insert-file         | C-x Tab |
-| save-some-buffers   | C-x s   |
+## Process
+| Command       | Key bindings | Documentation |
+|---------------|--------------|---------------|
+| FILTER-BUFFER | C-x #        |               |
+| PIPE-COMMAND  | C-x @        |               |
 
-## Window commands
-| Command                            | Keybind |
-|------------------------------------|-------|
-| select-buffer                      | C-x b |
-| kill-buffer                        | C-x k |
-| previous-buffer                    | C-x Left |
-| next-buffer                        | C-x Right |
-| recenter                           | C-l |
-| split-active-window-vertically     | C-x 2 |
-| split-active-window-horizontally   | C-x 3 |
-| other-window                       | C-x o |
-| other-window                       | M-o |
-| delete-other-windows               | C-x 1 |
-| delete-active-window               | C-x 0 |
-| grow-window                        | C-x ^ |
-| shrink-window                      | C-x C-z |
-| grow-window-horizontally           | C-x } |
-| shrink-window-horizontally         | C-x { |
-| scroll-down                        | C-Down |
-| scroll-down                        | M-Down |
-| scroll-up                          | C-Up |
-| scroll-up                          | M-Up |
-| find-file-other-window             | C-x 4 f |
-| read-file-other-window             | C-x 4 r |
-| select-buffer-other-window         | C-x 4 b |
+## Help
+| Command           | Key bindings | Documentation |
+|-------------------|--------------|---------------|
+| DESCRIBE-KEY      | C-x ?        |               |
+| DESCRIBE-BINDINGS |              |               |
+| APROPOS-COMMAND   |              |               |
+| LEM-VERSION       |              |               |
 
-## Help Commands
-| Command         | Keybind |
-|-----------------|---------|
-| describe-key    | C-x ?   |
-| execute-command | M-x     |
+## Font
+| Command            | Key bindings | Documentation |
+|--------------------|--------------|---------------|
+| FONT-SIZE-INCREASE | C-+          |               |
+| FONT-SIZE-DECREASE | C--          |               |
 
-## Multiple Cursor commands
-| Command                  | Keybind |
-|--------------------------|---------|
-| add-cursors-to-next-line | M-C     |
+## Other
+| Command           | Key bindings | Documentation |
+|-------------------|--------------|---------------|
+| NOP-COMMAND       | NopKey       |               |
+| UNDEFINED-KEY     |              |               |
+| KEYBOARD-QUIT     | C-g          |               |
+| ESCAPE            | Escape       |               |
+| EXIT-LEM          | C-x C-c      |               |
+| QUICK-EXIT        |              |               |
+| EXECUTE-COMMAND   | M-x          |               |
+| SHOW-CONTEXT-MENU | Shift-F10    |               |
+| LOAD-LIBRARY      |              |               |
 
-##
-| Command            | Keybind   |
-|--------------------|-----------|
-| show-context-menu  | Shift-F10 |
-
-##
-| Command            | Keybind   |
-|--------------------|-----------|
-| font-size-increase | C-+       |
-| font-size-decrease | C--       |

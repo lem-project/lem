@@ -319,6 +319,18 @@
     (start-lisp-repl)
     (buffer-end (buffer-point repl-buffer))))
 
+(define-command lisp-current-directory () ()
+  (message "Current directory: ~a" 
+           (lisp-eval `(swank:default-directory))))
+
+(define-command lisp-set-directory (&key directory) ()
+  (unless directory
+    (setf directory
+          (prompt-for-directory "New directory: " :directory (buffer-directory))))
+  (lisp-eval 
+   `(swank:set-default-directory 
+     (swank-backend:filename-to-pathname ,directory))))
+
 (define-command lisp-interrupt () ()
   (send-message-string
    (current-connection)

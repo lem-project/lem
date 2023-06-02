@@ -353,3 +353,9 @@
 	    :test-function (lambda (package)
 			     (find package packages :test #'string-equal)))))
     (lisp-set-package package)))
+
+(define-repl-shortcut cd (n)
+  (declare (ignore n))
+  (let* ((directory
+           (prompt-for-directory "New directory: " :directory (buffer-directory))))
+    (lisp-set-directory :directory directory)))

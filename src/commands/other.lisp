@@ -45,9 +45,11 @@
                     (format nil "~D M-x " arg)
                     "M-x ")
                 :completion-function (lambda (str)
-                                       (if (find #\- str)
-                                           (completion-hypheen str (all-command-names))
-                                           (completion str (all-command-names))))
+                                       (sort 
+                                        (if (find #\- str)
+                                            (completion-hypheen str (all-command-names))
+                                            (completion str (all-command-names)))
+                                        #'string-lessp))
                 :test-function 'exist-command-p
                 :history-symbol 'mh-execute-command))
          (command (find-command name)))

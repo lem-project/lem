@@ -37,7 +37,9 @@
 (define-command lisp-inspect (string)
     ((or (symbol-string-at-point (current-point))
          (prompt-for-sexp "Inspect value (evaluated): ")))
-  (lisp-eval-async `(swank:init-inspector ,string) 'open-inspector))
+  (lisp-eval-async `(swank:init-inspector 
+                     (format nil "(quote ~a)" ,string)) 
+                   'open-inspector))
 
 (defun inspector-buffer ()
   (or (get-buffer "*lisp-inspector*")

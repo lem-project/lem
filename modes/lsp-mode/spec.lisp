@@ -56,7 +56,7 @@
   (setf (get major-mode 'spec) spec))
 
 (defmethod (setf spec-command) ((command list)
-				(spec lem-lsp-mode/spec::spec))
+				(spec spec))
   (setf (slot-value spec 'command) command))
 
 (defun get-spec-command (spec &rest args)

@@ -78,6 +78,7 @@
       (make-buffer name)))
 
   (define-command select-buffer (name) ("BUse Buffer: ")
+    "Switches to the selected buffer."
     (let ((buffer (or (get-buffer name)
                       (maybe-create-buffer name)
                       (error 'editor-abort))))
@@ -97,6 +98,7 @@
     (strip-buffer-from-frame-windows buffer frame)))
 
 (define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
+  "Delete buffer."
   (let ((buffer (get-buffer buffer-or-name)))
     (unless buffer
       (editor-error "buffer does not exist: ~A" buffer-or-name))
@@ -105,6 +107,7 @@
   t)
 
 (define-command previous-buffer () ()
+  "Switches to the previous buffer."
   (switch-to-buffer
    (if (eq (current-buffer) (car (buffer-list)))
        (alexandria:lastcar (buffer-list))
@@ -114,22 +117,26 @@
    nil))
 
 (define-command next-buffer () ()
+  "Switches to the next buffer."
   (switch-to-buffer (or (cadr (member (current-buffer) (buffer-list)))
                         (car (buffer-list)))
                     nil))
 
 (define-command recenter (p) ("P")
+  "Scroll so that the cursor is in the middle."
   (clear-screens-of-window-list)
   (unless p (window-recenter (current-window)))
   (redraw-display)
   t)
 
 (define-command split-active-window-vertically (&optional n) ("P")
+  "Split the current window vertically."
   (split-window-vertically (current-window) :height n)
   (unless n
     (maybe-balance-windows)))
 
 (define-command split-active-window-horizontally (&optional n) ("P")
+  "Split the current window horizontally."
   (split-window-horizontally (current-window) :width n)
   (unless n
     (maybe-balance-windows)))
@@ -140,6 +147,7 @@
   (setf *last-focused-window* (current-window)))
 
 (define-command other-window (&optional (n 1)) ("p")
+  "Go to the next window."
   (let ((window-list
           (compute-window-list (current-window))))
     (when (minusp n)
@@ -152,6 +160,7 @@
       (switch-to-window window))))
 
 (define-command switch-to-last-focused-window () ()
+  "Go to the window that was last in focus."
   (let ((window (or (and (not (null *last-focused-window*))
                          (not (deleted-window-p *last-focused-window*))
                          *last-focused-window*)
@@ -160,22 +169,27 @@
     (setf (current-window) window)))
 
 (define-command window-move-down () ()
+  "Go to the window on the down."
   (alexandria:when-let ((window (down-window (current-window))))
     (setf (current-window) window)))
 
 (define-command window-move-up () ()
+  "Go to the window on the up."
   (alexandria:when-let ((window (up-window (current-window))))
     (setf (current-window) window)))
 
 (define-command window-move-right () ()
+  "Go to the window on the right."
   (alexandria:when-let ((window (right-window (current-window))))
     (setf (current-window) window)))
 
 (define-command window-move-left () ()
+  "Go to the window on the left."
   (alexandria:when-let ((window (left-window (current-window))))
     (setf (current-window) window)))
 
 (define-command delete-other-windows () ()
+  "Delete all other windows."
   (dolist (win (window-list))
     (unless (eq win (current-window))
       (delete-window win)))
@@ -188,10 +202,12 @@
   t)
 
 (define-command delete-active-window () ()
+  "Delete the active window."
   (delete-window (current-window))
   (maybe-balance-windows))
 
 (define-command quit-active-window (&optional kill-buffer) ("P")
+  "Quit the active window. This is a command for a popped-up window."
   (quit-window (current-window)
                :kill-buffer kill-buffer))
 
@@ -229,6 +245,7 @@
       (scroll-up (- n) window)))
 
 (define-command scroll-down (n &optional (window (current-window))) ("p")
+  "Scroll down."
   (cond
     ((minusp n)
      (scroll-up (- n)))
@@ -240,6 +257,7 @@
      (next-line (- (window-offset-view window))))))
 
 (define-command scroll-up (n &optional (window (current-window))) ("p")
+  "Scroll up."
   (cond
     ((minusp n)
      (scroll-down (- n)))

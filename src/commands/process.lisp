@@ -8,6 +8,7 @@
 (define-key *global-keymap* "C-x @" 'pipe-command)
 
 (define-command filter-buffer (cmd) ("sFilter buffer: ")
+  "Replaces the contents of the buffer with the result of executing the command entered."
   (let ((buffer (current-buffer))
         (line-number (line-number-at-point (current-point)))
         (charpos (point-charpos (current-point))))
@@ -40,6 +41,7 @@
             (line-offset (current-point) 0 charpos)))))))
 
 (define-command pipe-command (str) ("sPipe command: ")
+  "Run a command and displays the output."
   (let ((directory (buffer-directory)))
     (let ((output-string
             (with-output-to-string (out)

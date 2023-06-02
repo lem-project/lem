@@ -55,6 +55,10 @@
   (check-type spec spec)
   (setf (get major-mode 'spec) spec))
 
+(defmethod (setf spec-command) ((command list)
+				(spec lem-lsp-mode/spec::spec))
+  (setf (slot-value spec 'command) command))
+
 (defun get-spec-command (spec &rest args)
   (let ((command (spec-command spec)))
     (if (functionp command)

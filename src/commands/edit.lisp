@@ -368,7 +368,7 @@
   (*crement-aux #'1+))
 
 (define-command (decrement (:advice-classes editable-advice)) () ()
-  "Decrements the number before the cursor".
+  "Decrements the number before the cursor."
   (*crement-aux #'1-))
 
 (define-command delete-trailing-whitespace (&optional (buffer (current-buffer))) ()

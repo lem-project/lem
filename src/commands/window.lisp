@@ -245,6 +245,7 @@
       (scroll-up (- n) window)))
 
 (define-command scroll-down (n &optional (window (current-window))) ("p")
+  "Scroll down."
   (cond
     ((minusp n)
      (scroll-up (- n)))
@@ -256,6 +257,7 @@
      (next-line (- (window-offset-view window))))))
 
 (define-command scroll-up (n &optional (window (current-window))) ("p")
+  "Scroll up."
   (cond
     ((minusp n)
      (scroll-down (- n)))

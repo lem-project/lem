@@ -6,6 +6,7 @@
 (define-key *global-keymap* "M-C" 'add-cursors-to-next-line)
 
 (define-command add-cursors-to-next-line () ()
+  "Duplicates the cursor under the currently existing cursors."
   (let ((cursors (buffer-cursors (current-buffer))))
     (loop :for (cursor next-cursor) :on cursors
           :do (with-point ((p cursor))

@@ -80,12 +80,15 @@
           :finally (return point))))
 
 (define-command (forward-word (:advice-classes movable-advice)) (n) ("p")
+  "Move to cursor to next word."
   (word-offset (current-point) n))
 
 (define-command (previous-word (:advice-classes movable-advice)) (n) ("p")
+  "Move to cursor to previous word"
   (word-offset (current-point) (- n)))
 
 (define-command (delete-word (:advice-classes editable-advice)) (n) ("p")
+  "Delete the next word."
   (with-point ((point (current-point) :right-inserting))
     (let ((start (current-point))
           (end (or (word-offset point n)
@@ -99,6 +102,7 @@
              (kill-region end start))))))
 
 (define-command (backward-delete-word (:advice-classes editable-advice)) (n) ("p")
+  "Delete the previous word."
   (with-killring-context (:before-inserting t)
     (delete-word (- n))))
 
@@ -129,9 +133,11 @@
                    #'identity))
 
 (define-command downcase-region (start end) ("r")
+  "Replaces the selected region with a downcase."
   (case-region-aux start end #'char-downcase #'identity))
 
 (define-command uppercase-region (start end) ("r")
+  "Replaces the selected region with a uppercase."
   (case-region-aux start end #'char-upcase #'identity))
 
 (defun case-word-aux (point n replace-char-p first-case rest-case)
@@ -152,15 +158,19 @@
         (move-point point end)))))
 
 (define-command (capitalize-word (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+  "Replace the following word with capital-case."
   (case-word-aux (current-point) n #'alphanumericp #'char-upcase #'char-downcase))
 
 (define-command (lowercase-word (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+  "Replace the following word with lowercase."
   (case-word-aux (current-point) n #'alphanumericp #'char-downcase #'char-downcase))
 
 (define-command (uppercase-word (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+  "Replace the following word with uppercase."
   (case-word-aux (current-point) n #'alphanumericp #'char-upcase #'char-upcase))
 
 (define-command (forward-paragraph (:advice-classes movable-advice)) (&optional (n 1)) ("p")
+  "Move cursor to forward paragraph."
   (let ((point (current-point))
         (dir (if (plusp n) 1 -1)))
     (dotimes (_ (abs n))
@@ -173,9 +183,11 @@
                   (return-from forward-paragraph))))))
 
 (define-command (backward-paragraph (:advice-classes movable-advice)) (&optional (n 1)) ("p")
+  "Move cursor to backward paragraph."
   (forward-paragraph (- n)))
 
 (define-command (kill-paragraph (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+  "Kill the forward paragraph."
   (dotimes (_ n t)
     (with-point ((start (current-point) :right-inserting))
       (forward-paragraph)
@@ -191,6 +203,7 @@
       wnum)))
 
 (define-command count-words () ()
+  "Count the number of lines/words/characters in the buffer."
   (let ((buffer (current-buffer)))
     (multiple-value-bind (start end)
         (if (buffer-mark-p buffer)

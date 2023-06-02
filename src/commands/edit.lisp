@@ -141,7 +141,7 @@
     (mark-cancel (cursor-mark point))))
 
 (define-command copy-region (start end) ("r")
-  "Copy the selected text."
+  "Copy the text of region."
   (with-killring-context (:appending (continue-flag :kill))
     (copy-to-clipboard-with-killring (points-to-string start end)))
   (buffer-mark-cancel (current-buffer)))
@@ -159,7 +159,7 @@
     (mark-cancel (cursor-mark point))))
 
 (define-command kill-region (start end) ("r")
-  "Kill the selected text."
+  "Kill the text of region."
   (when (point< end start)
     (rotatef start end))
   (let ((repeat-command (continue-flag :kill)))
@@ -168,7 +168,7 @@
         (copy-to-clipboard-with-killring killed-string)))))
 
 (define-command kill-region-to-clipboard (start end) ("r")
-  "Kill the selected text and copy to the clipboard."
+  "Kill the text of region and copy to the clipboard."
   (copy-region-to-clipboard start end)
   (delete-character start (count-characters start end)))
 

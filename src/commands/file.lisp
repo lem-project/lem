@@ -47,6 +47,7 @@
 (defvar *find-file-executor* (make-instance 'find-file-executor))
 
 (define-command find-file (arg) ("p")
+  "Open the file."
   (let ((*default-external-format* *default-external-format*))
     (let ((filename
             (cond ((and (numberp arg) (= 1 arg))
@@ -92,6 +93,7 @@
       (uiop:run-program (list "explorer" (namestring pathname))))))
 
 (define-command read-file (filename) ("FRead File: ")
+  "Open the file as a read-only."
   (when (pathnamep filename)
     (setf filename (namestring filename)))
   (dolist (pathname (expand-files* filename))
@@ -129,11 +131,13 @@
     (t nil)))
 
 (define-command save-current-buffer (&optional force-p) ("P")
+  "Saves the current buffer text to a file"
   (let ((buffer (current-buffer)))
     (alexandria:when-let (filename (save-buffer buffer force-p))
       (message "Wrote ~A" filename))))
 
 (define-command write-file (filename) ("FWrite File: ")
+  "Saves the text in the current buffer to the specified file"
   (let* ((old (buffer-name))
          (new (file-namestring filename))
          (expand-file-name (expand-file-name filename)))
@@ -155,17 +159,20 @@
 
 (define-command write-region-file (start end filename)
     ("r" "FWrite Region To File: ")
+  "Saves the region of text to the specified file"
   (setf filename (expand-file-name filename))
   (add-newline-at-eof (point-buffer start))
   (write-region-to-file start end filename)
   (message "Wrote ~A" filename))
 
 (define-command insert-file (filename) ("fInsert file: ")
+  "Inserts the contents of the file into the current buffer."
   (insert-file-contents (current-point)
                         (expand-file-name filename))
   t)
 
 (define-command save-some-buffers (&optional save-silently-p) ("P")
+  "Save some files in the open buffer."
   (let ((prev-buffer (current-buffer)))
     (dolist (buffer (buffer-list))
       (when (and (buffer-modified-p buffer)
@@ -197,6 +204,7 @@
       t)))
 
 (define-command revert-buffer (does-not-ask-p) ("P")
+  "Restores the buffer. Normally this command will cause the contents of the file to be reflected in the buffer."
   (let ((ask (not does-not-ask-p))
         (buffer (current-buffer)))
     (alexandria:if-let (fn (revert-buffer-function buffer))
@@ -231,6 +239,7 @@
 
 (define-command change-directory (directory)
     ((prompt-for-directory "change directory: " :directory (buffer-directory)))
+  "Change directories associated with the buffer."
   (let ((directory (expand-file-name directory (buffer-directory))))
     (setf (buffer-directory) directory)
     (uiop:chdir directory)

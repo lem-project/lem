@@ -26,6 +26,7 @@
 (define-key *global-keymap* "C-M-y" 'kill-around-form)
 
 (define-command (forward-sexp (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+  "Move the cursor to the forward expression."
   (with-point ((prev (current-point)))
     (let ((point (form-offset (current-point) n)))
       (or point
@@ -36,22 +37,28 @@
                 (scan-error)))))))
 
 (define-command (backward-sexp (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+  "Move the cursor to the backward expression."
   (forward-sexp (- n) no-errors))
 
 (define-command (forward-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+  "Move the cursor to the forward list."
   (scan-lists (current-point) n 0 no-errors))
 
 (define-command (backward-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+  "Move the cursor to the backward list."
   (scan-lists (current-point) (- n) 0 no-errors))
 
 (define-command (down-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+  "Move the cursor to the inner expression."
   (scan-lists (current-point) n -1 no-errors))
 
 (define-command (backward-up-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+  "Move the cursor to the outer expression."
   (or (maybe-beginning-of-string (current-point))
       (scan-lists (current-point) (- n) 1 no-errors)))
 
 (define-command mark-sexp () ()
+  "Select the forward expression as a region."
   (cond
     ((continue-flag :mark-sexp)
      (form-offset (mark-point (cursor-mark (current-point))) 1))
@@ -61,6 +68,7 @@
        (set-cursor-mark (current-point) (current-point))))))
 
 (define-command (kill-sexp (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+  "Kill the forward expression as a region."
   (dotimes (_ n t)
     (let ((end (form-offset (copy-point (current-point) :temporary) 1)))
       (if end
@@ -69,6 +77,7 @@
           (scan-error)))))
 
 (define-command (transpose-sexps (:advice-classes editable-advice)) () ()
+  "Swaps the expression before and after the cursor."
   (with-point ((point1 (current-point) :left-inserting)
                (point2 (current-point) :left-inserting))
     (when (and (form-offset point1 -1)
@@ -91,6 +100,7 @@
         (insert-string point2 form-string1)))))
 
 (define-command (kill-around-form (:advice-classes editable-advice)) () ()
+  "Kill the outer expression."
   (with-point ((end (current-point) :right-inserting))
     (let ((start (current-point)))
       (unless (form-offset end 1)

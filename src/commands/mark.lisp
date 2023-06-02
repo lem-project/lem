@@ -11,11 +11,13 @@
 (define-key *global-keymap* "C-x h" 'mark-set-whole-buffer)
 
 (define-command mark-set () ()
+  "Sets a mark at the current cursor position."
   (run-hooks *set-location-hook* (current-point))
   (set-cursor-mark (current-point) (current-point))
   (message "Mark set"))
 
 (define-command exchange-point-mark () ()
+  "Exchange the current cursor position with the marked position."
   (check-marked)
   (alexandria:when-let ((mark (mark-point (cursor-mark (current-point)))))
     (with-point ((current (current-point)))
@@ -23,6 +25,7 @@
       (set-cursor-mark (current-point) current))))
 
 (define-command (mark-set-whole-buffer (:advice-classes jump-cursor-advice)) () ()
+  "Select the whole buffer as a region."
   (buffer-end (current-point))
   (set-current-mark (current-point))
   (buffer-start (current-point))

@@ -12,6 +12,7 @@
 (define-key *global-keymap* "M-~" 'unmark-buffer)
 
 (define-command toggle-read-only () ()
+  "Toggle the buffer read-only."
   (setf (buffer-read-only-p (current-buffer))
         (not (buffer-read-only-p (current-buffer))))
   (when *read-only-function*
@@ -19,7 +20,9 @@
              (buffer-read-only-p (current-buffer)))))
 
 (define-command rename-buffer (name) ("sRename buffer: ")
+  "Rename the buffer."
   (buffer-rename (current-buffer) name))
 
 (define-command unmark-buffer () ()
+  "Remove the mark where the buffer was changed."
   (buffer-unmark (current-buffer)))

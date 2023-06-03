@@ -1,7 +1,11 @@
 (defpackage :lem-documentation-mode
   (:use :cl
         :lem
-        :lem-documentation-mode/internal))
+        :lem-documentation-mode/internal)
+  (:export :documentation-mode
+           :*documentation-mode-keymap*
+           :documentation-select
+           :generate-markdown-file))
 (in-package :lem-documentation-mode)
 
 (define-major-mode documentation-mode ()
@@ -15,6 +19,7 @@
 (define-command documentation-select () ()
   (select-command (current-point)))
 
+;; TODO: Override describe-bindings when implementation to display all key bindings is complete.
 (define-command documentation-describe-bindings () ()
   (let ((buffer (generate-buffer "*Documentation describe-bindings*")))
     (change-buffer-mode buffer 'documentation-mode)

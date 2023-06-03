@@ -15,7 +15,7 @@
 (defvar *typeout-before-window* nil)
 (defvar *typeout-window-rewinding-values* nil)
 
-(defun pop-up-typeout-window (buffer function &key erase (read-only t))
+(defun pop-up-typeout-window (buffer &key function erase (read-only t))
   (when (and *typeout-window*
              (not (eq buffer (window-buffer *typeout-window*))))
     (dismiss-typeout-window)

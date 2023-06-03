@@ -169,3 +169,45 @@
     (alexandria:write-string-into-file (buffer-text buffer)
                                        filename
                                        :if-exists :supersede)))
+
+
+(defclass buffer-generator () ())
+
+(defmethod generate ((generator buffer-generator) (element chunk) point)
+  (dolist (item (chunk-items element))
+    (generate generator item point)
+    (insert-character point #\newline)))
+
+(defmethod generate ((generator buffer-generator) (element table) point)
+  (insert-string point (table-title element) :attribute (make-attribute :bold t :reverse t))
+  (insert-character point #\newline)
+  (let ((width-list (compute-table-column-width-list element)))
+    (loop :for item :in (table-items element)
+          :for header := t :then nil
+          :do (loop :for content :in (table-row-values item)
+                    :for width :in width-list
+                    :for first := t :then nil
+                    :do (if first
+                            (insert-string point "  ")
+                            (insert-string point "   "))
+                        (let ((column (point-column point)))
+                          (when content
+                            (insert-string point (content content)))
+                          (move-to-column point (+ column width) t)))
+              (insert-string point "  ")
+              (when header
+                (with-point ((start point)
+                             (end point))
+                  (back-to-indentation start)
+                  (line-end end)
+                  (put-text-property start end :attribute (make-attribute :underline t :bold t))))
+              (insert-character point #\newline))))
+
+(defun generate-keybindings-buffer ()
+  (let* ((buffer (make-buffer "*Key Bindings*"))
+         (point (buffer-point buffer)))
+    (erase-buffer buffer)
+    (generate (make-instance 'buffer-generator)
+              (construct-global-command-documentation)
+              point)
+    (buffer-start point)))

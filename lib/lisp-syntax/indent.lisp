@@ -524,6 +524,6 @@
     (let ((state (syntax-ppss point)))
       (cond
         ((pps-state-string-p state) nil)
-        ((zerop (pps-state-paren-depth state))
-         0)
+        ((zerop (pps-state-paren-depth state)) 0)
+        ((eql #\Page (character-at point)) nil) ; workaround
         (t (calc-indent-1 point))))))

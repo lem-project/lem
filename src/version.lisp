@@ -12,6 +12,9 @@
 
 (defvar *git-revision* (get-git-hash))
 
+(defun lem-git-revision ()
+  *git-revision*)
+
 (defun get-version-string ()
   (format nil "lem ~A~@[-~A~] (~A-~A)"
           (asdf:component-version (asdf:find-system :lem))

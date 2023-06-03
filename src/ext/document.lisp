@@ -3,26 +3,27 @@
   (:export :generate-markdown-file))
 (in-package :lem/document)
 
+(defstruct location
+  file
+  position
+  line-number)
+
 (defclass chunk ()
   ((items
     :initarg :items
-    :initform nil
     :accessor chunk-items)))
 
 (defclass table ()
   ((title
     :initarg :title
-    :initform nil
     :accessor table-title)
    (items
     :initarg :items
-    :initform nil
     :accessor table-items)))
 
 (defclass <table-row> ()
   ((values
     :initarg :values
-    :initform nil
     :accessor table-row-values)))
 
 (defclass table-header (<table-row>)
@@ -34,12 +35,25 @@
 (defclass link ()
   ((alt
     :initarg :alt
-    :initform nil
     :accessor link-alt)
    (url
     :initarg :url
-    :initform nil
-    :accessor link-url)))
+    :accessor link-url)
+   (location
+    :initarg :location
+    :accessor link-location)))
+
+(defun command-definition-location (command)
+  (let* ((file (sb-c:definition-source-location-namestring (lem-core::command-source-location command)))
+         (n (sb-c:definition-source-location-toplevel-form-number (lem-core::command-source-location command)))
+         (buffer (find-file-buffer file :temporary t :syntax-table lem-lisp-syntax:*syntax-table*))
+         (point (buffer-point buffer)))
+    (buffer-start point)
+    (form-offset point n)
+    (scan-lists point 1 -1)
+    (make-location :file file
+                   :position (position-at-point point)
+                   :line-number (line-number-at-point point))))
 
 (defun extract-defpackage-name (form)
   (assert (and (consp form)
@@ -86,9 +100,16 @@
   (string-capitalize (car (last (uiop:split-string package-name :separator "/")))))
 
 (defun command-name-with-link (command)
-  (make-instance 'link
-                 :alt (string-downcase (command-name command))
-                 :url "TODO"))
+  (let ((location (command-definition-location command)))
+    (make-instance
+     'link
+     :alt (string-downcase (command-name command))
+     :location location
+     :url (format nil
+                  "https://github.com/lem-project/lem/blob/~A/~A#L~D"
+                  (lem-core::lem-git-revision)
+                  (enough-namestring (location-file location) (asdf:system-source-directory :lem))
+                  (location-line-number location)))))
 
 (defun construct-package-documentation (package)
   (make-instance
@@ -112,29 +133,31 @@
     (generate generator item point)
     (insert-character point #\newline)))
 
-(defgeneric content (element)
-  (:method ((element link))
+(defgeneric content (generator element)
+  (:method ((generator markdown-generator) (element link))
+    (format nil "[~A](~A)" (link-alt element) (link-url element)))
+  (:method (generator (element link))
     (link-alt element))
-  (:method ((element string))
+  (:method (generator (element string))
     element))
 
-(defun item-length (item)
+(defun item-length (generator item)
   (etypecase item
-    (link (length (link-alt item)))
+    (link (length (content generator item)))
     (string (length item))
     (null 0)))
 
 (defun table-width (item)
   (length (table-row-values (first item))))
 
-(defun compute-table-column-width-list (table)
+(defun compute-table-column-width-list (generator table)
   (loop :for column-index :from 0 :below (table-width (table-items table))
         :collect (loop :for item :in (table-items table)
-                       :maximize (item-length (elt (table-row-values item) column-index)))))
+                       :maximize (item-length generator (elt (table-row-values item) column-index)))))
 
 (defmethod generate ((generator markdown-generator) (element table) point)
   (insert-string point (format nil "## ~A~%" (table-title element)))
-  (let ((width-list (compute-table-column-width-list element)))
+  (let ((width-list (compute-table-column-width-list generator element)))
     (loop :for item :in (table-items element)
           :for header := t :then nil
           :do (loop :for content :in (table-row-values item)
@@ -145,7 +168,7 @@
                             (insert-string point " | "))
                         (let ((column (point-column point)))
                           (when content
-                            (insert-string point (content content)))
+                            (insert-string point (content generator content)))
                           (move-to-column point (+ column width) t)))
               (insert-string point " |")
               (insert-character point #\newline)
@@ -171,10 +194,6 @@
                                        :if-exists :supersede)))
 
 
-(define-major-mode documentation-mode ()
-    (:name "Documentation"
-     :keymap *documentation-mode-keymap*))
-
 (defclass buffer-generator () ())
 
 (defmethod generate ((generator buffer-generator) (element chunk) point)
@@ -182,10 +201,16 @@
     (generate generator item point)
     (insert-character point #\newline)))
 
+(defmethod insert-content ((generator buffer-generator) point content)
+  (insert-string point (content generator content)))
+
+(defmethod insert-content ((generator buffer-generator) point (content link))
+  (insert-string point (link-alt content) :link (link-location content)))
+
 (defmethod generate ((generator buffer-generator) (element table) point)
   (insert-string point (table-title element) :attribute (make-attribute :bold t :reverse t))
   (insert-character point #\newline)
-  (let ((width-list (compute-table-column-width-list element)))
+  (let ((width-list (compute-table-column-width-list generator element)))
     (loop :for item :in (table-items element)
           :for header := t :then nil
           :do (loop :for content :in (table-row-values item)
@@ -196,7 +221,7 @@
                             (insert-string point "   "))
                         (let ((column (point-column point)))
                           (when content
-                            (insert-string point (content content)))
+                            (insert-content generator point content))
                           (move-to-column point (+ column width) t)))
               (insert-string point "  ")
               (when header
@@ -206,6 +231,22 @@
                   (line-end end)
                   (put-text-property start end :attribute (make-attribute :underline t :bold t))))
               (insert-character point #\newline))))
+
+(define-major-mode documentation-mode ()
+    (:name "Documentation"
+     :keymap *documentation-mode-keymap*))
+
+(define-key *documentation-mode-keymap* "Return" 'documentation-select)
+
+(defun go-to-location (location)
+  (let ((buffer (find-file-buffer (location-file location))))
+    (switch-to-buffer buffer)
+    (move-to-position (current-point) (location-position location))))
+
+(define-command documentation-select () ()
+  (let ((location (text-property-at (current-point) :link)))
+    (when location
+      (go-to-location location))))
 
 (defun generate-keybindings-buffer ()
   (let* ((buffer (make-buffer "*Key Bindings*"))

@@ -18,6 +18,7 @@
    :exist-command-p)
   ;; version.lisp
   (:export
+   :lem-git-revision
    :get-version-string)
   ;; killring.lisp
   (:export

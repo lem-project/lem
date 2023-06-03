@@ -54,7 +54,7 @@
   (let ((location (link-location link)))
     (format nil
             "https://github.com/lem-project/lem/blob/~A/~A#L~D"
-            (lem-core::lem-git-revision)
+            (lem-git-revision)
             (enough-namestring (location-file location) (asdf:system-source-directory :lem))
             (location-line-number location))))
 

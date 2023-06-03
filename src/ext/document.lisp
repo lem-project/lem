@@ -3,6 +3,44 @@
   (:export :generate-markdown-file))
 (in-package :lem/document)
 
+(defclass chunk ()
+  ((items
+    :initarg :items
+    :initform nil
+    :accessor chunk-items)))
+
+(defclass table ()
+  ((title
+    :initarg :title
+    :initform nil
+    :accessor table-title)
+   (items
+    :initarg :items
+    :initform nil
+    :accessor table-items)))
+
+(defclass <table-row> ()
+  ((values
+    :initarg :values
+    :initform nil
+    :accessor table-row-values)))
+
+(defclass table-header (<table-row>)
+  ())
+
+(defclass table-item (<table-row>)
+  ())
+
+(defclass link ()
+  ((alt
+    :initarg :alt
+    :initform nil
+    :accessor link-alt)
+   (url
+    :initarg :url
+    :initform nil
+    :accessor link-url)))
+
 (defun extract-defpackage-name (form)
   (assert (and (consp form)
                (member (first form) '(defpackage uiop:define-package))))
@@ -15,24 +53,23 @@
                    (uiop:read-file-form
                     (asdf:component-pathname component))))))
 
-(defun sort-by-file-location (command-and-source-location-pairs)
-  (sort command-and-source-location-pairs
+(defun sort-by-file-location (commands)
+  (sort commands
         #'<
-        :key (lambda (elt)
-               (sb-c:definition-source-location-toplevel-form-number (cdr elt)))))
+        :key (lambda (command)
+               (sb-c:definition-source-location-toplevel-form-number
+                   (lem-core::command-source-location command)))))
 
 (defun collect-commands-in-package (package)
-  (let ((command-and-source-location-pairs '()))
+  (let ((commands '()))
     (do-external-symbols (sym package)
       (let ((command (get-command sym)))
         (when command
-          (push (cons (command-name command)
-                      (lem-core::command-source-location command))
-                command-and-source-location-pairs))))
-    (mapcar #'first (sort-by-file-location command-and-source-location-pairs))))
+          (push command commands))))
+    (sort-by-file-location commands)))
 
 (defun command-bindings (command)
-  (collect-command-keybindings command *global-keymap*))
+  (collect-command-keybindings (command-name command) *global-keymap*))
 
 (defun binding-to-string (binding)
   (format nil "~{~A~^ ~}" binding))
@@ -43,44 +80,72 @@
                 :collect (binding-to-string binding))))
 
 (defun description (command)
-  (documentation command 'function))
+  (documentation (command-name command) 'function))
 
 (defun category-name (package-name)
   (string-capitalize (car (last (uiop:split-string package-name :separator "/")))))
 
+(defun command-name-with-link (command)
+  (make-instance 'link
+                 :alt (string-downcase (command-name command))
+                 :url "TODO"))
+
 (defun construct-package-documentation (package)
-  (cons (category-name (package-name package))
-        (cons (list "Command" "Key bindings" "Documentation")
-              (loop :for command :in (collect-commands-in-package package)
-                    :collect (list (princ-to-string command)
-                                   (key-bindings command)
-                                   (description command))))))
+  (make-instance
+   'table
+   :title (category-name (package-name package))
+   :items (cons (make-instance 'table-header :values (list "Command" "Key bindings" "Documentation"))
+                (loop :for command :in (collect-commands-in-package package)
+                      :collect (make-instance 'table-item
+                                              :values (list (command-name-with-link command)
+                                                            (key-bindings command)
+                                                            (description command)))))))
 
 (defun construct-global-command-documentation ()
-  (mapcar #'construct-package-documentation
-          (collect-global-command-packages)))
+  (make-instance 'chunk :items (mapcar #'construct-package-documentation
+                                       (collect-global-command-packages))))
 
-;;; markdown document generator
-(defun table-width (table)
-  (length (first table)))
+(defclass markdown-generator () ())
+
+(defmethod generate ((generator markdown-generator) (element chunk) point)
+  (dolist (item (chunk-items element))
+    (generate generator item point)
+    (insert-character point #\newline)))
+
+(defgeneric content (element)
+  (:method ((element link))
+    (link-alt element))
+  (:method ((element string))
+    element))
+
+(defun item-length (item)
+  (etypecase item
+    (link (length (link-alt item)))
+    (string (length item))
+    (null 0)))
+
+(defun table-width (item)
+  (length (table-row-values (first item))))
 
 (defun compute-table-column-width-list (table)
-  (loop :for column-index :from 0 :below (table-width table)
-        :collect (loop :for row :in table
-                       :maximize (length (elt row column-index)))))
+  (loop :for column-index :from 0 :below (table-width (table-items table))
+        :collect (loop :for item :in (table-items table)
+                       :maximize (item-length (elt (table-row-values item) column-index)))))
 
-(defun print-table (point table)
-  (let ((width-list (compute-table-column-width-list table)))
-    (loop :for row :in table
+(defmethod generate ((generator markdown-generator) (element table) point)
+  (insert-string point (format nil "## ~A~%" (table-title element)))
+  (let ((width-list (compute-table-column-width-list element)))
+    (loop :for item :in (table-items element)
           :for header := t :then nil
-          :do (loop :for content :in row
+          :do (loop :for content :in (table-row-values item)
                     :for width :in width-list
                     :for first := t :then nil
                     :do (if first
                             (insert-string point "| ")
                             (insert-string point " | "))
                         (let ((column (point-column point)))
-                          (insert-string point content)
+                          (when content
+                            (insert-string point (content content)))
                           (move-to-column point (+ column width) t)))
               (insert-string point " |")
               (insert-character point #\newline)
@@ -98,10 +163,9 @@
   (let* ((buffer (make-buffer nil :temporary t))
          (point (buffer-point buffer)))
     (erase-buffer buffer)
-    (loop :for (category . table) :in (construct-global-command-documentation)
-          :do (insert-string point (format nil "## ~A~%" category))
-              (print-table point table)
-              (insert-character point #\newline))
+    (generate (make-instance 'markdown-generator)
+              (construct-global-command-documentation)
+              point)
     (alexandria:write-string-into-file (buffer-text buffer)
                                        filename
                                        :if-exists :supersede)))

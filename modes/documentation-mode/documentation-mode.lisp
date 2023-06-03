@@ -13,7 +13,7 @@
 (define-key *documentation-mode-keymap* "Return" 'documentation-select)
 
 (define-command documentation-select () ()
-  (select-link (current-point)))
+  (select-command (current-point)))
 
 (define-command documentation-describe-bindings () ()
   (let ((buffer (generate-buffer "*Documentation describe-bindings*")))

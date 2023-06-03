@@ -2,7 +2,7 @@
   (:use :cl :lem)
   (:export :generate-markdown-file
            :generate-buffer
-           :select-link))
+           :select-command))
 (in-package :lem-documentation-mode/internal)
 
 (defstruct location
@@ -38,12 +38,25 @@
   ((alt
     :initarg :alt
     :accessor link-alt)
-   (url
-    :initarg :url
-    :accessor link-url)
+   (command
+    :initarg :command
+    :accessor link-command)
    (location
-    :initarg :location
     :accessor link-location)))
+
+(defmethod link-location ((link link))
+  (if (slot-boundp link 'location)
+      (slot-value link 'location)
+      (setf (link-location link)
+            (command-definition-location (link-command link)))))
+
+(defmethod link-url ((link link))
+  (let ((location (link-location link)))
+    (format nil
+            "https://github.com/lem-project/lem/blob/~A/~A#L~D"
+            (lem-core::lem-git-revision)
+            (enough-namestring (location-file location) (asdf:system-source-directory :lem))
+            (location-line-number location))))
 
 (defun command-definition-location (command)
   (let* ((file (sb-c:definition-source-location-namestring (lem-core::command-source-location command)))
@@ -102,16 +115,10 @@
   (string-capitalize (car (last (uiop:split-string package-name :separator "/")))))
 
 (defun command-name-with-link (command)
-  (let ((location (command-definition-location command)))
-    (make-instance
-     'link
-     :alt (string-downcase (command-name command))
-     :location location
-     :url (format nil
-                  "https://github.com/lem-project/lem/blob/~A/~A#L~D"
-                  (lem-core::lem-git-revision)
-                  (enough-namestring (location-file location) (asdf:system-source-directory :lem))
-                  (location-line-number location)))))
+  (make-instance
+   'link
+   :alt (string-downcase (command-name command))
+   :command command))
 
 (defun construct-package-documentation (package)
   (make-instance
@@ -202,7 +209,7 @@
   (insert-string point (content generator content)))
 
 (defmethod insert-content ((generator buffer-generator) point (content link))
-  (insert-string point (link-alt content) :link (link-location content)))
+  (insert-string point (link-alt content) :command (link-command content)))
 
 (defmethod generate ((generator buffer-generator) (element chunk) point)
   (let* ((width-lists (loop :for item :in (chunk-items element)
@@ -256,7 +263,7 @@
     (switch-to-buffer buffer)
     (move-to-position (current-point) (location-position location))))
 
-(defun select-link (point)
-  (let ((location (text-property-at point :link)))
-    (when location
-      (go-to-location location))))
+(defun select-command (point)
+  (let ((command (text-property-at point :command)))
+    (when command
+      (go-to-location (command-definition-location command)))))

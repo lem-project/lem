@@ -243,13 +243,14 @@
                   :for width :in width-list
                   :for first := t :then nil
                   :do (if first
-                          (insert-string point "  ")
+                          (if header
+                              (insert-string point "  ")
+                              (insert-string point "   "))
                           (insert-string point "   "))
                       (let ((column (point-column point)))
                         (when content
                           (insert-content generator point content))
                         (move-to-column point (+ column width) t)))
-            (insert-string point "  ")
             (when header
               (with-point ((start point)
                            (end point))

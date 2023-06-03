@@ -23,4 +23,4 @@
 (define-command documentation-describe-bindings () ()
   (let ((buffer (generate-buffer "*Documentation describe-bindings*")))
     (change-buffer-mode buffer 'documentation-mode)
-    (pop-up-typeout-window buffer)))
+    (switch-to-buffer buffer)))

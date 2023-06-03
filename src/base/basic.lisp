@@ -1,36 +1,36 @@
 (in-package :lem-base)
 
 (defun same-line-p (point1 point2)
-  "`point1`と`point2`が同じ位置ならT、それ以外ならNILを返します。"
+  "Return t if POINT1 and POINT are on the same line."
   (assert (eq (point-buffer point1)
               (point-buffer point2)))
   (eq (point-line point1) (point-line point2)))
 
 (defun first-line-p (point)
-  "`point`が最初の行ならT、それ以外ならNILを返します。"
+  "Return t if the POINT is the first line in the buffer."
   (same-line-p point
                (buffer-start-point (point-buffer point))))
 
 (defun last-line-p (point)
-  "`point`が最後の行ならT、それ以外ならNILを返します。"
+  "Return t if the POINT is the last line in the buffer."
   (same-line-p point
                (buffer-end-point (point-buffer point))))
 
 (defun start-line-p (point)
-  "`point`が行頭ならT、それ以外ならNILを返します。"
+  "Return t if POINT is at the beginning of a line."
   (zerop (point-charpos point)))
 
 (defun end-line-p (point)
-  "`point`が行末ならT、それ以外ならNILを返します。"
+  "Return t if POINT is at the end of a line."
   (= (point-charpos point)
      (line-length (point-line point))))
 
 (defun start-buffer-p (point)
-  "`point`がバッファの最初の位置ならT、それ以外ならNILを返します。"
+  "Return t if POINT is at the beginning of the buffer."
   (point<= point (buffer-start-point (point-buffer point))))
 
 (defun end-buffer-p (point)
-  "`point`がバッファの最後の位置ならT、それ以外ならNILを返します。"
+  "Return t if POINT is at the end of the buffer."
   (point<= (buffer-end-point (point-buffer point)) point))
 
 (defun %move-to-position (point linum line charpos)
@@ -42,7 +42,7 @@
   point)
 
 (defun move-point (point new-point)
-  "`point`を`new-point`の位置に移動します。"
+  "Move POINT to the NEW-POINT."
   (assert (eq (point-buffer point)
               (point-buffer new-point)))
   (%move-to-position point
@@ -51,22 +51,22 @@
                      (point-charpos new-point)))
 
 (defun line-start (point)
-  "`point`を行頭に移動します。"
+  "Move POINT to the beginning of the line."
   (setf (point-charpos point) 0)
   point)
 
 (defun line-end (point)
-  "`point`を行末に移動します。"
+  "Move POINT to the end of the line."
   (setf (point-charpos point)
         (line-length (point-line point)))
   point)
 
 (defun buffer-start (point)
-  "`point`をバッファの最初の位置に移動します。"
+  "Move POINT to the beginning of the buffer."
   (move-point point (buffer-start-point (point-buffer point))))
 
 (defun buffer-end (point)
-  "`point`をバッファの最後の位置に移動します。"
+  "Move POINT to the end of the buffer."
   (move-point point (buffer-end-point (point-buffer point))))
 
 (defun line-offset (point n &optional (charpos 0))
@@ -143,7 +143,7 @@
                                   (point-charpos point)))))
 
 (defun line-string (point)
-  "`point`の行の文字列を返します。"
+  "Return the string at POINT."
   (line-str (point-line point)))
 
 (defun text-property-at (point prop &optional (offset 0))
@@ -158,7 +158,9 @@
                                              (point-charpos point)))))
 
 (defun put-text-property (start-point end-point prop value)
-  "`start-point`から`end-point`の間のテキストプロパティ`prop`を`value`にします。"
+  "Set one property of the text from START-POINT to END-POINT.
+
+The third and fourth arguments PROP and VALUE specify the property to add."
   (assert (eq (point-buffer start-point)
               (point-buffer end-point)))
   (%map-region start-point end-point
@@ -173,7 +175,9 @@
                                     (null end)))))
 
 (defun remove-text-property (start-point end-point prop)
-  "`start-point`から`end-point`までのテキストプロパティ`prop`を削除します。"
+  "Remove one property from text from START-POINT to END-POINT.
+
+The thrid argument PROP is a property to remove."
   (assert (eq (point-buffer start-point)
               (point-buffer end-point)))
   (%map-region start-point end-point
@@ -247,19 +251,19 @@
       string)))
 
 (defun erase-buffer (&optional (buffer (current-buffer)))
-  "`buffer`のテキストをすべて削除します。"
+  "Delete the entire contents of the current buffer."
   (buffer-start (buffer-point buffer))
   (delete-char/point (buffer-point buffer)
                      (count-characters (buffer-start-point buffer)
                                        (buffer-end-point buffer))))
 
 (defun region-beginning (&optional (buffer (current-buffer)))
-  "`buffer`内のリージョンの始まりの位置の`point`を返します。"
+  "Return the integer value of point or mark, whichever is smaller."
   (point-min (buffer-point buffer)
              (buffer-mark buffer)))
 
 (defun region-end (&optional (buffer (current-buffer)))
-  "`buffer`内のリージョンの終わりの位置の`point`を返します。"
+  "Return the integer value of point or mark, whichever is larger."
   (point-max (buffer-point buffer)
              (buffer-mark buffer)))
 
@@ -301,7 +305,7 @@
                     (write-char #\newline out))))))
 
 (defun count-characters (start-point end-point)
-  "`start-point`から`end-point`までの文字列の長さを返します。"
+  "Count characters between START-POINT and END-POINT."
   (let ((count 0))
     (map-region start-point
                 end-point
@@ -312,7 +316,7 @@
     count))
 
 (defun delete-between-points (start-point end-point)
-  "`start-point`から`end-point`までの範囲を削除し、削除した文字列を返します。"
+  "Delete contents between START-POINT and END-POINT."
   (assert (eq (point-buffer start-point)
               (point-buffer end-point)))
   (unless (point< start-point end-point)
@@ -321,7 +325,7 @@
                      (count-characters start-point end-point)))
 
 (defun count-lines (start-point end-point)
-  "`start-point`から`end-point`までの行数を返します。"
+  "Return number of lines between START-POINT and END-POINT."
   (assert (eq (point-buffer start-point)
               (point-buffer end-point)))
   (abs (- (point-linum start-point)
@@ -341,20 +345,23 @@
                 (return)))))
 
 (defun line-number-at-point (point)
-  "`point`の行番号を返します。"
+  "Return the line number at POINT in the current buffer."
   (point-linum point))
 
 (defun point-column (point)
-  "`point`の行頭からの列幅を返します。"
+  "Return the horizontal position of POINT.  Beginning of lines is column 0."
   (string-width (line-string point)
                 :start 0
                 :end (point-charpos point)
                 :tab-size (variable-value 'tab-width :default point)))
 
 (defun move-to-column (point column &optional force)
-  "`point`を行頭から列幅`column`まで移動し、移動後の`point`を返します。
-`force`が非NILの場合は、行の長さが`column`より少なければ空白を挿入して移動し、
-`force`がNILの場合は、行末まで移動し、移動後の`point`を返します。"
+  "Move POINT to COLUMN in the current line.
+
+Optional second argument FORCE non-nil means if COLUMN is in the middle of a
+tab character, either change it to spaces, or insert enough spaces before it
+reach COLUMN (otherwise).  In addition, if FORCE is t, and the lines is too
+short to reach COLUMN, add spaces/tabs to get there."
   (line-end point)
   (let ((cur-column (point-column point)))
     (cond ((< column cur-column)

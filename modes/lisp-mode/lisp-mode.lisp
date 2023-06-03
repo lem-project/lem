@@ -411,6 +411,7 @@
           (self-interactive-eval string)))))
 
 (define-command lisp-eval-defun () ()
+  "Evaluate top-level form around point and instrument."
   (check-connection)
   (with-point ((point (current-point)))
     (lem-lisp-syntax:top-of-defun point)
@@ -424,16 +425,22 @@
             (interactive-eval string))))))
 
 (define-command lisp-eval-region (start end) ("r")
+  "Execute the region as Lisp code."
   (check-connection)
   (eval-with-transcript
    `(swank:interactive-eval-region
      ,(points-to-string start end))))
+
+(define-command lisp-eval-buffer () ()
+  "Execute the accessible portion of current buffer as Lisp code."
+  (lisp-eval-region (buffer-start-point (current-buffer)) (buffer-end-point (current-buffer))))
 
 (define-command lisp-load-file (filename)
     ((prompt-for-file "Load File: "
                       :directory (or (buffer-filename) (buffer-directory))
                       :default nil
                       :existing t))
+  "Load the Lisp file named FILENAME."
   (check-connection)
   (when (uiop:file-exists-p filename)
     (let ((filename (convert-local-to-remote-file filename)))

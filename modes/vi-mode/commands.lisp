@@ -82,23 +82,28 @@
 (defvar *vi-yank-recursive* nil)
 
 (defun bolp (point)
+  "Return t if POINT is at the beginning of a line."
   (zerop (point-charpos point)))
 
 (defun eolp (point)
+  "Return t if POINT is at the end of line."
   (let ((len (length (line-string point))))
     (or (zerop len)
         (>= (point-charpos point)
             (1- len)))))
 
 (defun goto-bol (point)
+  "Goto beginning of a line."
   (line-start point))
 
 (defun goto-eol (point)
+  "Goto end of a line."
   (line-end point)
   (unless (bolp point)
     (character-offset point *cursor-offset*)))
 
 (defun empty-line (point)
+  "Return t if the POINT at line is empty."
   (zerop (length (line-string point))))
 
 (defun read-universal-argument ()

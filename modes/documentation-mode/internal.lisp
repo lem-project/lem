@@ -2,8 +2,11 @@
   (:use :cl :lem)
   (:export :generate-markdown-file
            :generate-buffer
-           :select-command))
+           :select-command-at-point))
 (in-package :lem-documentation-mode/internal)
+
+(define-attribute link-attribute
+  (t :foreground "skyblue" :underline t))
 
 (defstruct location
   file
@@ -209,7 +212,16 @@
   (insert-string point (content generator content)))
 
 (defmethod insert-content ((generator buffer-generator) point (content link))
-  (insert-string point (link-alt content) :command (link-command content)))
+  (with-point ((start point))
+    (insert-string point
+                   (link-alt content)
+                   :attribute 'link-attribute
+                   :command (link-command content))
+    (lem-core::set-clickable start
+                             point
+                             (lambda (window point)
+                               (declare (ignore window point))
+                               (select-command (link-command content))))))
 
 (defmethod generate ((generator buffer-generator) (element chunk) point)
   (let* ((width-lists (loop :for item :in (chunk-items element)
@@ -258,12 +270,12 @@
     buffer))
 
 ;;;
-(defun go-to-location (location)
-  (let ((buffer (find-file-buffer (location-file location))))
+(defun select-command (command)
+  (let* ((location (command-definition-location command))
+         (buffer (find-file-buffer (location-file location))))
     (switch-to-buffer buffer)
     (move-to-position (current-point) (location-position location))))
 
-(defun select-command (point)
-  (let ((command (text-property-at point :command)))
-    (when command
-      (go-to-location (command-definition-location command)))))
+(defun select-command-at-point (point)
+  (alexandria:when-let ((command (text-property-at point :command)))
+    (select-command command)))

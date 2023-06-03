@@ -17,7 +17,7 @@
 (define-key *documentation-mode-keymap* "Return" 'documentation-select)
 
 (define-command documentation-select () ()
-  (select-command (current-point)))
+  (select-command-at-point (current-point)))
 
 ;; TODO: Override describe-bindings when implementation to display all key bindings is complete.
 (define-command documentation-describe-bindings () ()

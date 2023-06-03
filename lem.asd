@@ -87,8 +87,7 @@
 
                (:module "ext"
                 :serial t
-                :components ((:file "document")
-                             (:file "popup-window")
+                :components ((:file "popup-window")
                              (:file "popup-message")
                              (:file "popup-menu")
                              (:file "multi-column-list")
@@ -153,7 +152,8 @@
                "lem-shell-mode"
                "lem-sql-mode"
                "lem-base16-themes"
-               "lem-elixir-mode"))
+               "lem-elixir-mode"
+               "lem-documentation-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

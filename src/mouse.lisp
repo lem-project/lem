@@ -179,6 +179,11 @@
     (funcall callback window point)
     t))
 
+(defun handle-mouse-unhover-buffer (window point)
+  (alexandria:when-let (callback (buffer-value (point-buffer point) :unhover-callback))
+    (funcall callback window point)
+    t))
+
 (defmethod handle-mouse-event ((mouse-event mouse-motion))
   (cond ((null *last-dragged-separator*)
          (multiple-value-bind (window x y)
@@ -190,7 +195,8 @@
                ((nil)
                 (let ((point (get-point-from-window-with-coordinates window x y)))
                   (or (handle-mouse-hover-buffer window point)
-                      (handle-mouse-hover-overlay window point))))
+                      (handle-mouse-hover-overlay window point)
+                      (handle-mouse-unhover-buffer window point))))
                (:button-1
                 (when (window-last-mouse-button-down-point window)
                   (move-current-point-to-x-y-position window x y)
@@ -280,6 +286,44 @@
      '<mouse-event>)
     (mouse-wheel
      '<mouse-event>)))
+
+
+(defun clear-buffer-hover-overlay (buffer)
+  (let ((overlay (buffer-value buffer 'hover-overlay)))
+    (when overlay
+      (setf (buffer-value buffer 'hover-overlay) nil)
+      (delete-overlay overlay)
+      (setf (buffer-value buffer :unhover-callback) nil))))
+
+(defun update-hover-overlay (point)
+  (let ((buffer (point-buffer point)))
+    (with-point ((start point)
+                 (end point))
+      (when (text-property-at start :hover-callback -1)
+        (previous-single-property-change start :hover-callback))
+      (next-single-property-change end :hover-callback)
+      (let ((overlay (buffer-value buffer 'hover-overlay)))
+        (cond (overlay
+               (move-point (overlay-start overlay) start)
+               (move-point (overlay-end overlay) end))
+              (t
+               (let ((overlay (make-overlay start end 'region)))
+                 (setf (buffer-value buffer :unhover-callback)
+                       (lambda (window point)
+                         (declare (ignore window point))
+                         (clear-buffer-hover-overlay buffer)))
+                 (setf (buffer-value buffer 'hover-overlay)
+                       overlay))))))))
+
+(defun set-clickable (start end callback)
+  (put-text-property start end
+                     :hover-callback (lambda (window dest-point)
+                                       (declare (ignore window))
+                                       (update-hover-overlay dest-point)))
+  (put-text-property start end
+                     :click-callback (lambda (&rest args)
+                                       (clear-buffer-hover-overlay (point-buffer start))
+                                       (apply callback args))))
 
 
 (defun set-hover-message (overlay message &key style)

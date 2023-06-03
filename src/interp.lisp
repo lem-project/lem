@@ -21,8 +21,8 @@
               :count 100))))
     (funcall 'pop-up-typeout-window
              (make-buffer "*EDITOR ERROR*")
-             (lambda (stream)
-               (format stream "~A" o))
+             :function (lambda (stream)
+                         (format stream "~A" o))
              :erase t)))
 
 (defmacro with-error-handler (() &body body)

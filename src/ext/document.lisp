@@ -234,7 +234,9 @@
 
 (define-major-mode documentation-mode ()
     (:name "Documentation"
-     :keymap *documentation-mode-keymap*))
+     :keymap *documentation-mode-keymap*)
+  (setf (variable-value 'line-wrap :buffer (current-buffer)) nil)
+  (setf (buffer-read-only-p (current-buffer)) t))
 
 (define-key *documentation-mode-keymap* "Return" 'documentation-select)
 
@@ -251,9 +253,10 @@
 (defun generate-keybindings-buffer ()
   (let* ((buffer (make-buffer "*Key Bindings*"))
          (point (buffer-point buffer)))
-    (erase-buffer buffer)
-    (generate (make-instance 'buffer-generator)
-              (construct-global-command-documentation)
-              point)
-    (buffer-start point)
+    (with-buffer-read-only buffer nil
+      (erase-buffer buffer)
+      (generate (make-instance 'buffer-generator)
+                (construct-global-command-documentation)
+                point)
+      (buffer-start point))
     (change-buffer-mode buffer 'documentation-mode)))

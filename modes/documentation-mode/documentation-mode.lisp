@@ -18,4 +18,4 @@
 (define-command documentation-describe-bindings () ()
   (let ((buffer (generate-buffer "*Help*")))
     (change-buffer-mode buffer 'documentation-mode)
-    (switch-to-buffer buffer)))
+    (pop-up-typeout-window buffer #'identity)))

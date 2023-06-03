@@ -128,11 +128,6 @@
 
 (defclass markdown-generator () ())
 
-(defmethod generate ((generator markdown-generator) (element chunk) point)
-  (dolist (item (chunk-items element))
-    (generate generator item point)
-    (insert-character point #\newline)))
-
 (defgeneric content (generator element)
   (:method ((generator markdown-generator) (element link))
     (format nil "[~A](~A)" (link-alt element) (link-url element)))
@@ -154,6 +149,11 @@
   (loop :for column-index :from 0 :below (table-width (table-items table))
         :collect (loop :for item :in (table-items table)
                        :maximize (item-length generator (elt (table-row-values item) column-index)))))
+
+(defmethod generate ((generator markdown-generator) (element chunk) point)
+  (dolist (item (chunk-items element))
+    (generate generator item point)
+    (insert-character point #\newline)))
 
 (defmethod generate ((generator markdown-generator) (element table) point)
   (insert-string point (format nil "## ~A~%" (table-title element)))
@@ -196,41 +196,46 @@
 
 (defclass buffer-generator () ())
 
-(defmethod generate ((generator buffer-generator) (element chunk) point)
-  (dolist (item (chunk-items element))
-    (generate generator item point)
-    (insert-character point #\newline)))
-
 (defmethod insert-content ((generator buffer-generator) point content)
   (insert-string point (content generator content)))
 
 (defmethod insert-content ((generator buffer-generator) point (content link))
   (insert-string point (link-alt content) :link (link-location content)))
 
-(defmethod generate ((generator buffer-generator) (element table) point)
+(defmethod generate ((generator buffer-generator) (element chunk) point)
+  (let* ((width-lists (loop :for item :in (chunk-items element)
+                            :do (assert (typep item 'table))
+                            :collect (compute-table-column-width-list generator item)))
+         (width-list (loop :for i :from 0 :below (length (first width-lists))
+                           :collect (loop :for width-list :in width-lists
+                                          :maximize (elt width-list i)))))
+    (dolist (item (chunk-items element))
+      (generate-table generator item point width-list)
+      (insert-character point #\newline))))
+
+(defmethod generate-table ((generator buffer-generator) element point width-list)
   (insert-string point (table-title element) :attribute (make-attribute :bold t :reverse t))
   (insert-character point #\newline)
-  (let ((width-list (compute-table-column-width-list generator element)))
-    (loop :for item :in (table-items element)
-          :for header := t :then nil
-          :do (loop :for content :in (table-row-values item)
-                    :for width :in width-list
-                    :for first := t :then nil
-                    :do (if first
-                            (insert-string point "  ")
-                            (insert-string point "   "))
-                        (let ((column (point-column point)))
-                          (when content
-                            (insert-content generator point content))
-                          (move-to-column point (+ column width) t)))
-              (insert-string point "  ")
-              (when header
-                (with-point ((start point)
-                             (end point))
-                  (back-to-indentation start)
-                  (line-end end)
-                  (put-text-property start end :attribute (make-attribute :underline t :bold t))))
-              (insert-character point #\newline))))
+  (loop :for item :in (table-items element)
+        :for header := t :then nil
+        :do (loop :for content :in (table-row-values item)
+                  :for width :in width-list
+                  :for first := t :then nil
+                  :do (if first
+                          (insert-string point "  ")
+                          (insert-string point "   "))
+                      (let ((column (point-column point)))
+                        (when content
+                          (insert-content generator point content))
+                        (move-to-column point (+ column width) t)))
+            (insert-string point "  ")
+            (when header
+              (with-point ((start point)
+                           (end point))
+                (back-to-indentation start)
+                (line-end end)
+                (put-text-property start end :attribute (make-attribute :underline t :bold t))))
+            (insert-character point #\newline)))
 
 (define-major-mode documentation-mode ()
     (:name "Documentation"

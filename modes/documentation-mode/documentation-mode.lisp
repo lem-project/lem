@@ -1,7 +1,7 @@
-(defpackage :lem/document
+(defpackage :lem-documentation-mode
   (:use :cl :lem)
   (:export :generate-markdown-file))
-(in-package :lem/document)
+(in-package :lem-documentation-mode)
 
 (defstruct location
   file

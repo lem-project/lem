@@ -171,6 +171,10 @@
                                        :if-exists :supersede)))
 
 
+(define-major-mode documentation-mode ()
+    (:name "Documentation"
+     :keymap *documentation-mode-keymap*))
+
 (defclass buffer-generator () ())
 
 (defmethod generate ((generator buffer-generator) (element chunk) point)
@@ -210,4 +214,5 @@
     (generate (make-instance 'buffer-generator)
               (construct-global-command-documentation)
               point)
-    (buffer-start point)))
+    (buffer-start point)
+    (change-buffer-mode buffer 'documentation-mode)))

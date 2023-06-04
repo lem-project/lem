@@ -1,5 +1,8 @@
 (defpackage :lem-documentation-mode/internal
   (:use :cl :lem)
+  (:import-from :lem-documentation-mode/utils
+                :collect-global-command-packages
+                :collect-commands-in-package)
   (:export :generate-markdown-file
            :generate-buffer
            :select-command-at-point))
@@ -72,33 +75,6 @@
     (make-location :file file
                    :position (position-at-point point)
                    :line-number (line-number-at-point point))))
-
-(defun extract-defpackage-name (form)
-  (assert (and (consp form)
-               (member (first form) '(defpackage uiop:define-package))))
-  (second form))
-
-(defun collect-global-command-packages ()
-  (loop :for component :in (asdf:component-children (asdf:find-component :lem "commands"))
-        :collect (find-package
-                  (extract-defpackage-name
-                   (uiop:read-file-form
-                    (asdf:component-pathname component))))))
-
-(defun sort-by-file-location (commands)
-  (sort commands
-        #'<
-        :key (lambda (command)
-               (sb-c:definition-source-location-toplevel-form-number
-                   (lem-core::command-source-location command)))))
-
-(defun collect-commands-in-package (package)
-  (let ((commands '()))
-    (do-external-symbols (sym package)
-      (let ((command (get-command sym)))
-        (when command
-          (push command commands))))
-    (sort-by-file-location commands)))
 
 (defun command-bindings (command)
   (collect-command-keybindings (command-name command) *global-keymap*))

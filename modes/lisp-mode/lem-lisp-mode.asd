@@ -18,6 +18,7 @@
                (:file "message-dispatcher")
                (:file "ui-mode")
                (:file "grammer")
+               (:file "implementation")
                (:file "internal-package")
                (:file "message")
                (:file "file-conversion")

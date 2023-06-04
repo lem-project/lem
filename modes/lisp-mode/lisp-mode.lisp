@@ -1004,77 +1004,16 @@
      (buffer-end point))))
 
 
-(defparameter *impl-name* nil)
-(defvar *slime-command-impls* '(roswell-impls-candidates
-                                qlot-impls-candidates))
-(defun get-lisp-command (&key impl (prefix ""))
-  (format nil "~Aros ~{~A~^ ~}" prefix
-          `(,@(if impl `("-L" ,impl))
-            "-s" "swank" "run")))
-
-(let (cache)
-  (defun roswell-impls-candidates (&optional impl)
-    (if impl
-        (cond ((string= "" impl)
-               (get-lisp-command :impl nil))
-              ((find impl (or (first cache) (roswell-impls-candidates)) :test #'equal)
-               (get-lisp-command :impl impl)))
-        (progn
-          (unless (and cache
-                       (< (get-universal-time) (+ 3600 (cdr cache))))
-            (setf cache
-                  (cons (nreverse
-                         (uiop:split-string (string-right-trim
-                                             (format nil "~%")
-                                             (with-output-to-string (out)
-                                               (uiop:run-program '("ros" "list" "installed")
-                                                                 :output out)))
-                                            :separator '(#\Newline)))
-                        (get-universal-time))))
-          (first cache)))))
-
-(defun qlot-impls-candidates (&optional impl)
-  (if impl
-      (ignore-errors
-       (when (string= "qlot/" impl :end2 5)
-         (get-lisp-command :prefix "qlot exec "
-                           :impl (let ((impl (subseq impl 5)))
-                                   (unless (zerop (length impl))
-                                     impl)))))
-      (when (ignore-errors
-             (string-right-trim
-              '(#\newline)
-              (uiop:run-program '("ros" "roswell-internal-use" "which" "qlot")
-                                :output :string)))
-        (mapcar (lambda (x) (format nil "qlot/~A" x))
-                (roswell-impls-candidates)))))
-
-(defun get-slime-command-list ()
-  (cons ""
-        (loop :for f :in *slime-command-impls*
-              :append (funcall f))))
-
-(defun completion-impls (string &optional (command-list (get-slime-command-list)))
-  (completion-strings string command-list))
-
-(defun prompt-for-implementation (&key (existing t))
-  (let* ((default-impl (config :slime-lisp-implementation ""))
-         (command-list (get-slime-command-list))
-         (impl (prompt-for-string
-                (format nil "lisp implementation (~A): " default-impl)
-                :completion-function 'completion-impls
-                :test-function (and existing
-                                    (lambda (name)
-                                      (member name command-list :test #'string=)))
-                :history-symbol 'mh-read-impl))
-         (impl (if (string= impl "")
-                   default-impl
-                   impl))
-         (command (loop :for f :in *slime-command-impls*
-                        :for command := (funcall f impl)
-                        :when command
-                        :do (return command))))
-    (setf (config :slime-lisp-implementation) impl)
+(defun prompt-for-lisp-command ()
+  (let* ((commands (lem-lisp-mode/implementation:get-usable-commands))
+         (default-command (lem-lisp-mode/implementation:default-command))
+         (command (prompt-for-string (format nil "lisp command (~A): " default-command)
+                                     :completion-function (lambda (str) (completion str commands))
+                                     :history-symbol 'read-lisp-command))
+         (command (if (string= command "")
+                      default-command
+                      command)))
+    (setf (config :slime-lisp-command) command)
     command))
 
 (defun lisp-process-buffer-name (port)
@@ -1101,11 +1040,12 @@
 (defun send-swank-create-server (process port)
   (lem-process:process-send-input
    process
+   "(ql:quickload :swank)")
+  (lem-process:process-send-input
+   process
    (format nil "(swank:create-server :port ~D :dont-close t)~%" port)))
 
 (defun run-slime (command &key (directory (buffer-directory)))
-  (unless command
-    (setf command (get-lisp-command :impl *impl-name*)))
   (let* ((port (lem-socket-utils:random-available-port))
          (process (run-lisp :command command :directory directory :port port)))
     (send-swank-create-server process port)
@@ -1150,8 +1090,10 @@
                    (stop-loading-spinner spinner)))
           (setf timer (start-timer (make-timer #'interval) 500 t)))))))
 
-(define-command slime (&optional ask-implementation) ("P")
-  (let ((command (if ask-implementation (prompt-for-implementation))))
+(define-command slime (&optional ask-command) ("P")
+  (let ((command (if ask-command
+                     (prompt-for-lisp-command)
+                     (lem-lisp-mode/implementation:default-command))))
     (run-slime command)))
 
 (defun delete-lisp-connection (connection)

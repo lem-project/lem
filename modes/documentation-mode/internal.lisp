@@ -135,8 +135,9 @@
                                                             (description command)))))))
 
 (defun construct-global-command-documentation ()
-  (make-instance 'chunk :items (mapcar #'construct-package-documentation
-                                       (collect-global-command-packages))))
+  (make-instance 'chunk
+                 :items (mapcar #'construct-package-documentation
+                                (collect-global-command-packages))))
 
 (defclass markdown-generator () ())
 

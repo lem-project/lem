@@ -592,6 +592,10 @@ window width is changed, we must recalc the window view point."
     (editor-error "Can not split this window")))
 
 (defun split-window-vertically (window &key height)
+  "Split WINDOW into two windows, one above the other.
+
+If the key argument HEIGHT is omitted or nil, both windows get the same
+height, or close to it."
   (check-before-splitting-window window)
   (let* ((use-modeline-p t)
          (min (+ 1 (if use-modeline-p 1 0)))
@@ -618,6 +622,10 @@ window width is changed, we must recalc the window view point."
                                     (window-view new-window))))
 
 (defun split-window-horizontally (window &key width)
+  "Split WINDOW into two side-by-side windows.
+
+If key argument WIDTH is omitted or nil, both windows get the same width, or
+close to it."
   (check-before-splitting-window window)
   (let* ((fringe-size 0)
          (min (+ 2 fringe-size))
@@ -647,17 +655,23 @@ window width is changed, we must recalc the window view point."
                                       (window-view new-window))))
 
 (defun split-window-sensibly (window)
+  "Split WINDOW in a way suitable to display."
   (if (< *window-sufficient-width* (window-width window))
       (split-window-horizontally window)
       (split-window-vertically window)))
 
 (defun get-next-window (window &optional (window-list (window-list)))
+  "Return window after WINDOW in the cyclic ordering of windows.
+
+You can pass in the optional argument WINDOW-LIST to replace the default
+`window-list`."
   (let ((result (member window window-list)))
     (if (cdr result)
         (cadr result)
         (car window-list))))
 
 (defun window-set-pos (window x y)
+  "Make point value in WINDOW be at position X and Y in WINDOW’s buffer."
   (notify-frame-redisplay-required (current-frame))
   (when (floating-window-p window)
     (notify-floating-window-modified (current-frame)))
@@ -672,6 +686,7 @@ window width is changed, we must recalc the window view point."
   (< 2 width))
 
 (defun window-set-size (window width height)
+  "Resize WINDOW to the same WIDTH and HEIGHT."
   (assert (valid-window-width-p width))
   (assert (valid-window-height-p height))
   (notify-frame-redisplay-required (current-frame))
@@ -690,6 +705,7 @@ window width is changed, we must recalc the window view point."
                   (+ (window-y window) dy)))
 
 (defun window-resize (window dw dh)
+  "Resize WINDOW with delta width (DW) and delta height (DH)."
   (window-set-size window
                    (+ (window-width window) dw)
                    (+ (window-height window) dh))

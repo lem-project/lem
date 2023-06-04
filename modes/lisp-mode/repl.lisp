@@ -33,6 +33,13 @@
                                (or (car (read-string-thread-stack))
                                    :repl-thread))))
 
+(defmethod execute ((mode lisp-repl-mode) (command lem/listener-mode:listener-return) argument)
+  (cond ((repl-paren-correspond-p (current-point))
+         (call-next-method))
+        (t
+         (insert-character (current-point) #\newline)
+         (indent-line (current-point)))))
+
 (defvar *lisp-repl-shortcuts* '())
 
 (defun prompt-for-shortcuts ()
@@ -87,9 +94,10 @@
   (unless (eq (repl-buffer) (point-buffer point))
     (return-from repl-paren-correspond-p))
   (with-point ((start (lem/listener-mode:input-start-point (repl-buffer))))
-    (let ((state (parse-partial-sexp start point)))
-      (and (not (pps-state-string-or-comment-p state))
-           (>= 0 (pps-state-paren-depth state))))))
+    (when (point<= start point)
+      (let ((state (parse-partial-sexp start point)))
+        (and (not (pps-state-string-or-comment-p state))
+             (>= 0 (pps-state-paren-depth state)))))))
 
 (defun repl-reset-input ()
   (let ((buffer (repl-buffer)))

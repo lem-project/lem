@@ -86,7 +86,10 @@
 
 (define-command (open-line (:advice-classes editable-advice)) (n) ("p")
   "Insert a new line without moving the cursor position."
-  (self-insert-aux #\newline n t))
+  (with-point ((saved-point (current-point)))
+    (insert-character (current-point) #\newline n)
+    (indent-line (current-point))
+    (move-point (current-point) saved-point)))
 
 (define-command quoted-insert (&optional (n 1)) ("p")
   "Insert the next entered key (including control characters)."

@@ -42,7 +42,7 @@ The first argument is a format control string, and the rest are data to be
 formatted under control of the string."
   (log-message string args)
   (apply #'message-without-log string args)
-  t)
+  (values))
 
 (defun message-buffer (buffer)
   (show-message buffer))

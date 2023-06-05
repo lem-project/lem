@@ -14,6 +14,7 @@
                              (:file "killring")
                              (:file "history")
                              (:file "timer")))
+	       #+sbcl
                (:module "language-server"
                 :components ((:file "utils")
                              (:file "micros-tests")

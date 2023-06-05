@@ -14,7 +14,8 @@
   (let* ((timer (make-timer #'testing-timer))
          (value (timer-name timer)))
     (ok (string= "TESTING-TIMER" value)))
-  (let* ((timer (make-timer (sb-int:named-lambda hello ())))
+  #-abcl
+  (let* ((timer (make-timer (alexandria:named-lambda hello ())))
          (value (timer-name timer)))
     (ok (string= "HELLO" value)))
   (let* ((timer (make-timer 'testing-timer :name "foo"))
@@ -38,6 +39,7 @@
            (lem/common/timer::*idle-timer-list* '()))
        ,@body)))
 
+#+sbcl
 (deftest simple-timer-test
   (with-testing-timer-manager ()
     (let ((mailbox (sb-concurrency:make-mailbox)))
@@ -61,6 +63,7 @@
       (ok (not (nth-value 1 (sb-concurrency:receive-message mailbox :timeout 0.01))))
       (ok (timer-expired-p timer)))))
 
+#+sbcl
 (deftest compute-the-time-for-the-next-idle-timer-to-be-called
   (with-testing-timer-manager ()
     (ok (null (get-next-timer-timing-ms))))

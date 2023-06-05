@@ -85,8 +85,17 @@
   (etypecase function
     #+sbcl
     (function (sb-impl::%fun-name function))
-    #-sbcl
-    (function (symbol-name function))
+    #+abcl
+    (function
+     ;;NOTE: This is because sometimes when it's an named function, alexandria
+     ;; put (labels NAME BODY) BUT when not, its (NAME BODY)
+     (let ((fname (sys::any-function-name function)))
+       (format nil "~a"
+	       (cond ((and (listp fname)
+			   (listp (car fname)))
+		      (second (car fname)))
+		     ((listp fname) (car fname))
+		     (t fname)))))
     (symbol (symbol-name function))))
 
 (defun make-timer-instance (timer-class function name handle-function)

@@ -155,9 +155,13 @@
 (defmethod stop-timer ((timer timer))
   (stop-timer-thread timer))
 
+(defun recieve-message (queue &key timeout)
+  (or (bt-sem:wait-on-semaphore
+       (bt-sem:make-semaphore) :timeout timeout)
+      (queues:qpop queue)))
+
 (defun start-timer-thread (timer ms repeat-p)
   (let ((stop-mailbox (queues:make-queue :simple-cqueue))
-        (sem (bt-sem:make-semaphore))
         (timer-manager *timer-manager*)
         (seconds (float (/ ms 1000))))
     (setf (timer-stop-mailbox timer)
@@ -166,9 +170,8 @@
           (bt:make-thread
            (lambda ()
              (loop
-               (let ((recv-stop-msg
-                       (and (bt-sem:wait-on-semaphore sem :timeout seconds)
-                            (nth-value 1 (queues:qpop stop-mailbox)))))
+               (let ((recv-stop-msg (recieve-message stop-mailbox
+						     :timeout seconds)))
                  (when recv-stop-msg
                    (expire-timer timer)
                    (return)))

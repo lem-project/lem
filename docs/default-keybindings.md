@@ -25,28 +25,28 @@
 | [self-insert](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L70)                 |                | Insert the input character.                                                          |
 | [newline](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L83)                     | Return         | Insert a new line.                                                                   |
 | [open-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L87)                   | C-o            | Insert a new line without moving the cursor position.                                |
-| [quoted-insert](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L94)               | C-q            | Insert the next entered key (including control characters).                          |
-| [delete-next-char](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L109)           | C-d, Delete    | Delete the next character.                                                           |
-| [delete-previous-char](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L132)       | C-h, Backspace | Delete the previous character.                                                       |
-| [copy-region](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L146)                | M-w            | Copy the text of region.                                                             |
-| [copy-region-to-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L152)   |                | Copy the selected text to the clipboard.                                             |
-| [kill-region](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L164)                | C-w            | Kill the text of region.                                                             |
-| [kill-region-to-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L173)   |                | Kill the text of region and copy to the clipboard.                                   |
-| [kill-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L178)                  | C-k            | Kill from the current cursor position to the end of the line.                        |
-| [yank](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L208)                       | C-y            | Paste the copied text.                                                               |
-| [yank-pop](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L212)                   | M-y            | Replaces the immediately pasted text with the next text in the killring.             |
-| [yank-pop-next](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L225)              |                | Replaces the immediately preceding yank-pop text with the text before the kill ring. |
-| [yank-to-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L238)          |                | Copy the text of the killring to the clipboard.                                      |
-| [paste-from-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L245)       |                | Inserts text from the clipboard.                                                     |
-| [entab-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L263)                 |                | Replaces the indent of the current line from space to tab.                           |
-| [detab-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L269)                 |                | Replaces the indent of the current line from tab to space.                           |
-| [delete-blank-lines](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L276)         | C-x C-o        | Delete blank lines before and after the cursor.                                      |
-| [just-one-space](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L300)             | M-Space        | Combines consecutive whitespace before and after the cursor into one.                |
-| [delete-indentation](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L306)         | M-^            | Merge the current line with the previous line.                                       |
-| [transpose-characters](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L326)       | C-t            | Swaps the characters before and after the cursor.                                    |
-| [undo](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L343)                       | C-\            | Undo.                                                                                |
-| [redo](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L350)                       | C-_, C-/       | Redo.                                                                                |
-| [delete-trailing-whitespace](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L377) |                | Removes all end-of-line and end-of-buffer whitespace from the current buffer.        |
+| [quoted-insert](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L91)               | C-q            | Insert the next entered key (including control characters).                          |
+| [delete-next-char](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L106)           | C-d, Delete    | Delete the next character.                                                           |
+| [delete-previous-char](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L129)       | C-h, Backspace | Delete the previous character.                                                       |
+| [copy-region](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L143)                | M-w            | Copy the text of region.                                                             |
+| [copy-region-to-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L149)   |                | Copy the selected text to the clipboard.                                             |
+| [kill-region](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L161)                | C-w            | Kill the text of region.                                                             |
+| [kill-region-to-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L170)   |                | Kill the text of region and copy to the clipboard.                                   |
+| [kill-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L175)                  | C-k            | Kill from the current cursor position to the end of the line.                        |
+| [yank](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L205)                       | C-y            | Paste the copied text.                                                               |
+| [yank-pop](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L209)                   | M-y            | Replaces the immediately pasted text with the next text in the killring.             |
+| [yank-pop-next](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L222)              |                | Replaces the immediately preceding yank-pop text with the text before the kill ring. |
+| [yank-to-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L235)          |                | Copy the text of the killring to the clipboard.                                      |
+| [paste-from-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L242)       |                | Inserts text from the clipboard.                                                     |
+| [entab-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L260)                 |                | Replaces the indent of the current line from space to tab.                           |
+| [detab-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L266)                 |                | Replaces the indent of the current line from tab to space.                           |
+| [delete-blank-lines](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L273)         | C-x C-o        | Delete blank lines before and after the cursor.                                      |
+| [just-one-space](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L297)             | M-Space        | Combines consecutive whitespace before and after the cursor into one.                |
+| [delete-indentation](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L303)         | M-^            | Merge the current line with the previous line.                                       |
+| [transpose-characters](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L323)       | C-t            | Swaps the characters before and after the cursor.                                    |
+| [undo](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L340)                       | C-\            | Undo.                                                                                |
+| [redo](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L347)                       | C-_, C-/       | Redo.                                                                                |
+| [delete-trailing-whitespace](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L374) |                | Removes all end-of-line and end-of-buffer whitespace from the current buffer.        |
 
 ## Mark
 | Command                                                                                          | Key bindings | Documentation                                                  |

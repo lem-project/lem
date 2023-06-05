@@ -10,7 +10,9 @@
          (with-output-to-string (stream)
            (uiop:run-program "git rev-parse --short HEAD"
                              :output stream))
-	 "")))))
+	 #-sbcl
+	 ""
+	 )))))
 
 (defvar *git-revision* (get-git-hash))
 

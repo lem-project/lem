@@ -5,7 +5,7 @@
 (defun lem-relative-pathname (pathname)
   (when *deployed*
     (truename (merge-pathnames pathname
-                               (uiop:pathname-directory-pathname (first sb-ext:*posix-argv*))))))
+                               (uiop:pathname-directory-pathname "/home")))))
 
 (defun get-pid ()
   #+sbcl

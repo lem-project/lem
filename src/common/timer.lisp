@@ -83,7 +83,10 @@
 
 (defun guess-function-name (function)
   (etypecase function
+    #+sbcl
     (function (sb-impl::%fun-name function))
+    #-sbcl
+    (function (symbol-name function))
     (symbol (symbol-name function))))
 
 (defun make-timer-instance (timer-class function name handle-function)
@@ -109,33 +112,34 @@
 (defclass timer (<timer>)
   ((mutex
     :accessor timer-mutex
-    :type sb-thread:mutex)
+    :type bt:lock)
    (stop-mailbox
     :accessor timer-stop-mailbox
-    :type sb-concurrency:mailbox)
+    :type queues:simple-cqueue)
    (thread
     :accessor timer-thread
-    :type sb-thread:thread)))
+    :type bt:thread)))
 
 (defmethod timer-expired-p ((timer timer))
-  (sb-thread:with-mutex ((timer-mutex timer))
+  (bt:with-lock-held ((timer-mutex timer))
     (call-next-method)))
 
 (defmethod expire-timer ((timer timer))
-  (sb-thread:with-mutex ((timer-mutex timer))
+  (bt:with-lock-held ((timer-mutex timer))
     (set-timer-expired-p t timer)))
 
 (defmethod inspire-timer ((timer timer))
-  (sb-thread:with-mutex ((timer-mutex timer))
+  (bt:with-lock-held ((timer-mutex timer))
     (set-timer-expired-p nil timer)))
 
 (defun make-timer (function &key name handle-function)
   (make-timer-instance 'timer function name handle-function))
 
 (defmethod start-timer ((timer timer) ms &optional repeat-p)
-  (setf (timer-ms timer) ms)
-  (setf (timer-repeat-p timer) repeat-p)
-  (setf (timer-mutex timer) (sb-thread:make-mutex :name "timer internal mutex"))
+  (setf (timer-ms timer) ms
+        (timer-repeat-p timer) repeat-p
+        (timer-mutex timer) 
+        (bt:make-lock "timer internal mutex"))
   (start-timer-thread timer ms repeat-p)
   timer)
 
@@ -143,7 +147,8 @@
   (stop-timer-thread timer))
 
 (defun start-timer-thread (timer ms repeat-p)
-  (let ((stop-mailbox (sb-concurrency:make-mailbox))
+  (let ((stop-mailbox (queues:make-queue :simple-cqueue))
+        (sem (bt-sem:make-semaphore))
         (timer-manager *timer-manager*)
         (seconds (float (/ ms 1000))))
     (setf (timer-stop-mailbox timer)
@@ -153,9 +158,8 @@
            (lambda ()
              (loop
                (let ((recv-stop-msg
-                       (nth-value 1
-                                  (sb-concurrency:receive-message stop-mailbox
-                                                                  :timeout seconds))))
+                       (and (bt-sem:wait-on-semaphore sem :timeout seconds)
+                            (nth-value 1 (queues:qpop stop-mailbox)))))
                  (when recv-stop-msg
                    (expire-timer timer)
                    (return)))
@@ -166,7 +170,7 @@
            :name (format nil "Timer ~A" (timer-name timer))))))
 
 (defun stop-timer-thread (timer)
-  (sb-concurrency:send-message (timer-stop-mailbox timer) t))
+  (queues:qpush (timer-stop-mailbox timer) t))
 
 
 ;;; idle-timer

@@ -194,10 +194,16 @@
        (setf *in-the-editor* nil)))
    :name "editor"))
 
+#+sbcl
 (defun find-editor-thread ()
   (find "editor" (sb-thread:list-all-threads)
         :test #'equal
         :key #'sb-thread:thread-name))
+#-sbcl
+(defun find-editor-thread ()
+  (find "editor" (bt:all-threads)
+        :test #'equal
+        :key #'bt:thread-name))
 
 (defun lem (&rest args)
 

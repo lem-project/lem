@@ -1,3 +1,4 @@
+#+sbcl
 (defsystem "micros"
   :depends-on ()
   :version "0.0.0"
@@ -39,3 +40,10 @@
                              ;; (:file "sprof")
                              ))
                (:file "lsp-api")))
+
+#-sbcl
+(defsystem "micros"
+  :depends-on ()
+  :version "0.0.0"
+  :serial t
+  :components ((:file "packages")))

@@ -6,9 +6,11 @@
       (uiop:with-current-directory (path)
         (string-trim
          (list #\Newline #\Space)
+	 #+sbcl
          (with-output-to-string (stream)
            (uiop:run-program "git rev-parse --short HEAD"
-                             :output stream)))))))
+                             :output stream))
+	 "")))))
 
 (defvar *git-revision* (get-git-hash))
 

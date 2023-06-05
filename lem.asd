@@ -13,7 +13,8 @@
                "dexador"
                "lem-base"
                "lem-encodings"
-               "sb-concurrency")
+               "queues.simple-cqueue"
+               "bt-semaphore")
   :pathname "src"
   :serial t
   :components ((:module "common"
@@ -120,10 +121,15 @@
                              (:file "themes")))))
 
 (defsystem "lem/extensions"
-  :depends-on ("lem-lsp-mode"
+  :depends-on (
+	       #+sbcl
+	       "lem-lsp-mode"
                "lem-vi-mode"
-               "lem-lisp-mode"
+	       #+sbcl
+	       "lem-lisp-mode"
+	       #+sbcl
                "lem-go-mode"
+
                "lem-c-mode"
                "lem-xml-mode"
                "lem-html-mode"
@@ -152,7 +158,9 @@
                "lem-shell-mode"
                "lem-sql-mode"
                "lem-base16-themes"
+	       #+sbcl
                "lem-elixir-mode"
+	       #+sbcl
                "lem-documentation-mode"))
 
 (defsystem "lem/executable"

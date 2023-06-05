@@ -14,6 +14,7 @@
   (:use-reexport :lem-core/commands/help)
   (:use-reexport :lem-core/commands/font)
   (:use-reexport :lem-core/commands/other))
+#+sbcl
 (sb-ext:lock-package :lem)
 
 (defpackage :lem-user

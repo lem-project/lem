@@ -296,6 +296,14 @@
     (when (form-offset end 1)
       (indent-points (current-point) end))))
 
+(defmethod execute ((mode lisp-mode) (command open-line) argument)
+  (if (not (null argument))
+      (call-next-method)
+      (with-point ((saved-point (current-point)))
+        (insert-character (current-point) #\newline)
+        (indent-line (current-point))
+        (move-point (current-point) saved-point))))
+
 (define-command lisp-set-package (package-name) ((read-package-name))
   (check-connection)
   (cond ((string= package-name ""))

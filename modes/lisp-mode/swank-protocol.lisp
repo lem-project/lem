@@ -25,7 +25,6 @@
            :finish-evaluated
            :abort-all
            :request-connection-info
-           :request-swank-require
            :request-listener-eval
            :read-message
            :read-all-messages)
@@ -212,11 +211,6 @@ Parses length information to determine how many characters to read."
           (connection-prompt-string connection)
           (getf (getf data :package) :prompt)
           ))
-  ;; Require some Swank modules
-  ;; (request-swank-require
-  ;;  connection
-  ;;  (lem-lisp-mode/swank-modules:swank-modules))
-  ;; (read-return-message connection)
 
   ;; Start it up
   (log:debug "Initializing presentations")
@@ -333,22 +327,6 @@ to check if input is available."
   (loop :for (id . fn) :in (connection-continuations connection)
         :do (funcall fn `(:abort ,condition)))
   (setf (connection-continuations connection) nil))
-
-(defun request-swank-require (connection requirements)
-  (declare (ignore connection))
-  "Request that the Swank server load contrib modules.
-`requirements` must be a list of symbols, e.g. '(swank-repl swank-media)."
-  (log:debug "Requesting swank requirements" requirements)
-  #+(or)
-  (emacs-rex connection
-             `(let ((*load-verbose* nil)
-                    (*compile-verbose* nil)
-                    (*load-print* nil)
-                    (*compile-print* nil))
-                (handler-bind ((warning #'muffle-warning))
-                  (micros:swank-require ',(loop for item in requirements collecting
-                                                  (intern (symbol-name item)
-                                                          (find-package :micros/io-package))))))))
 
 (defun request-listener-eval (connection string &optional continuation window-width)
   "Request that Swank evaluate a string of code in the REPL."

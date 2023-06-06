@@ -27,7 +27,7 @@
             (insert-string start matched-string :attribute 'region)))))))
 
 (defun autodoc (function)
-  (let ((context (lem-lisp-syntax:parse-for-swank-autodoc (current-point))))
+  (let ((context (lem-lisp-syntax:parse-for-autodoc (current-point))))
     (lisp-eval-async
      `(,(autodoc-symbol) ',context)
      (lambda (doc)

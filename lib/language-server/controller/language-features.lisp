@@ -175,7 +175,7 @@
                      'vector))))))))
 
 (defun autodoc (point)
-  (let* ((raw-form (lem-lisp-syntax:parse-for-swank-autodoc point))
+  (let* ((raw-form (lem-lisp-syntax:parse-for-autodoc point))
          (result (remote-eval-sync *server*
                                    `(micros::autodoc-function ',raw-form)
                                    (scan-current-package point))))

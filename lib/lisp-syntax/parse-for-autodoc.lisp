@@ -1,16 +1,16 @@
-(defpackage :lem-lisp-syntax.parse-for-swank-autodoc
+(defpackage :lem-lisp-syntax.parse-for-autodoc
   (:use :cl :lem-base)
-  (:export :parse-for-swank-autodoc)
+  (:export :parse-for-autodoc)
   #+sbcl
   (:lock t))
-(in-package :lem-lisp-syntax.parse-for-swank-autodoc)
+(in-package :lem-lisp-syntax.parse-for-autodoc)
 
 (defvar *cursor-marker* 'micros::%cursor-marker%)
 
 (defun parsing-safe-p (point)
   (not (in-string-or-comment-p point)))
 
-(defun parse-for-swank-autodoc (point &optional (*cursor-marker* *cursor-marker*))
+(defun parse-for-autodoc (point &optional (*cursor-marker* *cursor-marker*))
   (and (parsing-safe-p point)
        (parse-form-upto-toplevel point 10)))
 

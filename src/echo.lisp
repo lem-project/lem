@@ -45,4 +45,5 @@ formatted under control of the string."
   (values))
 
 (defun message-buffer (buffer)
+  "Message BUFFER object."
   (show-message buffer))

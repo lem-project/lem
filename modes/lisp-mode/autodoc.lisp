@@ -9,7 +9,7 @@
 (let ((autodoc-symbol nil))
   (defun autodoc-symbol ()
     (or autodoc-symbol
-        (setf autodoc-symbol (intern "AUTODOC" :swank)))))
+        (setf autodoc-symbol (intern "AUTODOC" :micros)))))
 
 (defun highlighting-marker (point)
   (let ((marker-start "===> ")
@@ -27,14 +27,14 @@
             (insert-string start matched-string :attribute 'region)))))))
 
 (defun autodoc (function)
-  (let ((context (lem-lisp-syntax:parse-for-swank-autodoc (current-point))))
+  (let ((context (lem-lisp-syntax:parse-for-autodoc (current-point))))
     (lisp-eval-async
      `(,(autodoc-symbol) ',context)
      (lambda (doc)
        (trivia:match doc
          ((list doc _)
           (unless (eq doc :not-available)
-            (let* ((buffer (make-buffer "*swank:autodoc-fontity*"
+            (let* ((buffer (make-buffer "*micros:autodoc-fontity*"
                                         :temporary t :enable-undo-p nil)))
               (with-point ((point (buffer-point buffer) :right-inserting))
                 (erase-buffer buffer)

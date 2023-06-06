@@ -52,7 +52,7 @@
 (defun indentation-update ()
   (do-all-symbols (symbol)
     (let ((key (string-downcase symbol)))
-      (alexandria:when-let ((indent (swank::symbol-indentation symbol)))
+      (alexandria:when-let ((indent (micros::symbol-indentation symbol)))
         (update-system-indentation key
                                    indent
                                    (list (package-name (symbol-package symbol))))))))

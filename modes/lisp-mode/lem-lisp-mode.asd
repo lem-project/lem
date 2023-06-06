@@ -2,7 +2,7 @@
   :depends-on ("alexandria"
                "trivial-types"
                "usocket"
-               "swank"
+               "micros"
                "trivia"
                "uiop"
                "lem-lisp-syntax"
@@ -12,7 +12,6 @@
   :serial t
   :components ((:file "test-api")
                (:file "errors")
-               (:file "swank-modules")
                (:file "swank-protocol")
                (:file "connections")
                (:file "message-dispatcher")

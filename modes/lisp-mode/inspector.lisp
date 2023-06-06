@@ -37,8 +37,8 @@
 (define-command lisp-inspect (string)
     ((or (symbol-string-at-point (current-point))
          (prompt-for-sexp "Inspect value (evaluated): ")))
-  (lisp-eval-async `(swank:init-inspector 
-                     (format nil "(quote ~a)" ,string)) 
+  (lisp-eval-async `(micros:init-inspector
+                     (format nil "(quote ~a)" ,string))
                    'open-inspector))
 
 (defun inspector-buffer ()
@@ -118,16 +118,16 @@
   (lambda ()
     (ecase type
       ((:part)
-       (lisp-eval-async `(swank:inspect-nth-part ,value)
+       (lisp-eval-async `(micros:inspect-nth-part ,value)
                         'inspector-new-opener))
       ((:range)
        (inspector-fetch-more value))
       ((:action)
-       (lisp-eval-async `(swank::inspector-call-nth-action ,value)
+       (lisp-eval-async `(micros::inspector-call-nth-action ,value)
                         'inspector-opener)))))
 
 (define-command lisp-inspector-pop () ()
-  (lisp-eval-async `(swank:inspector-pop)
+  (lisp-eval-async `(micros:inspector-pop)
                    (lambda (result)
                      (cond (result
                             (open-inspector result (pop *inspector-mark-stack*)))
@@ -135,7 +135,7 @@
                             (display-message "No previous object"))))))
 
 (define-command lisp-inspector-next () ()
-  (let ((result (lisp-eval `(swank:inspector-next))))
+  (let ((result (lisp-eval `(micros:inspector-next))))
     (cond (result
            (push (inspector-position (current-point)) *inspector-mark-stack*)
            (open-inspector result))
@@ -143,7 +143,7 @@
            (display-message "No next object")))))
 
 (define-command lisp-inspector-quit () ()
-  (lisp-eval-async `(swank:quit-inspector))
+  (lisp-eval-async `(micros:quit-inspector))
   (quit-active-window t))
 
 ;; slime-find-inspectable-object
@@ -151,7 +151,7 @@
 ;; slime-inspector-previous-inspectable-object
 
 (define-command lisp-inspector-describe () ()
-  (lisp-eval-describe `(swank:describe-inspectee)))
+  (lisp-eval-describe `(micros:describe-inspectee)))
 
 (defun inspector-get-part ()
   (let* ((button (button-at (current-point)))
@@ -161,28 +161,28 @@
 
 (define-command lisp-inspector-pprint (part)
     ((inspector-get-part))
-  (lisp-eval-describe `(swank:pprint-inspector-part ,part)))
+  (lisp-eval-describe `(micros:pprint-inspector-part ,part)))
 
 (define-command lisp-inspector-eval (string)
     ((prompt-for-sexp "Inspector eval: "))
-  (eval-with-transcript `(swank:inspector-eval ,string)))
+  (eval-with-transcript `(micros:inspector-eval ,string)))
 
 (define-command lisp-inspector-history () ()
-  (lisp-eval-describe `(swank:inspector-history)))
+  (lisp-eval-describe `(micros:inspector-history)))
 
 (define-command lisp-inspector-show-source (part)
     ((inspector-get-part))
-  (lisp-eval-async `(swank:find-source-location-for-emacs '(:inspector ,part))
+  (lisp-eval-async `(micros:find-source-location-for-emacs '(:inspector ,part))
                    #'show-source-location))
 
 (define-command lisp-inspector-reinspect () ()
-  (lisp-eval-async '(swank:inspector-reinspect)
+  (lisp-eval-async '(micros:inspector-reinspect)
                    (let ((pos (inspector-position (current-point))))
                      (lambda (parts)
                        (open-inspector parts pos)))))
 
 (define-command lisp-inspector-toggle-verbose () ()
-  (lisp-eval-async `(swank:inspector-toggle-verbose)
+  (lisp-eval-async `(micros:inspector-toggle-verbose)
                    (let ((pos (inspector-position (current-point))))
                      (lambda (parts)
                        (open-inspector parts pos)))))
@@ -218,7 +218,7 @@
   (destructuring-bind (from to)
       (inspector-next-range chunk limit prev)
     (if (and from to)
-        (lisp-eval-async `(swank:inspector-range ,from ,to)
+        (lisp-eval-async `(micros:inspector-range ,from ,to)
                          (alexandria:rcurry (lambda (chunk2 chunk1 limit prev cont)
                                               (inspector-fetch
                                                (inspector-join-chunks chunk1 chunk2)
@@ -247,7 +247,7 @@
             (t (error "Invalid chunks"))))))
 
 (define-command lisp-inspector-copy-down-to-repl () ()
-  (copy-down-to-repl 'swank:inspector-nth-part (inspector-get-part)))
+  (copy-down-to-repl 'micros:inspector-nth-part (inspector-get-part)))
 
 (define-message (:inspect what thread tag)
   (let ((hook (when (and thread tag)

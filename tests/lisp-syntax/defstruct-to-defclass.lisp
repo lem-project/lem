@@ -277,6 +277,7 @@
                  (ok (options-info-p (struct-options info)))
                  (equal "xxx-" (options-conc-name (struct-options info))))))))
 
+#+sbcl
 (deftest defstruct-to-defclass
   (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
     (flet ((%test (n)

@@ -12,7 +12,6 @@
   :serial t
   :components ((:file "test-api")
                (:file "errors")
-               (:file "swank-modules")
                (:file "swank-protocol")
                (:file "connections")
                (:file "message-dispatcher")

@@ -1,5 +1,5 @@
 (defsystem "lem-lisp-syntax"
-  :depends-on ("lem-base" "cl-ppcre" "swank" "trivia")
+  :depends-on ("lem-base" "cl-ppcre" "micros" "trivia")
   :serial t
   :components ((:file "indent")
                (:file "syntax-table")

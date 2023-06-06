@@ -13,8 +13,7 @@
                "dexador"
                "lem-base"
                "lem-encodings"
-               "queues.simple-cqueue"
-               "bt-semaphore")
+	       "lem-mailbox")
   :pathname "src"
   :serial t
   :components ((:module "common"

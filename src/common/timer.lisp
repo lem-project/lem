@@ -1,20 +1,21 @@
 (defpackage :lem/common/timer
   (:use :cl :alexandria)
-  (:export :timer-manager
-           :send-timer-notification
-           :with-timer-manager
-           :running-timer
-           :timer-error
-           :timer
-           :timer-name
-           :timer-expired-p
-           :make-timer
-           :make-idle-timer
-           :start-timer
-           :stop-timer
-           :with-idle-timers
-           :update-idle-timers
-           :get-next-timer-timing-ms)
+  (:export
+   :timer-manager
+   :send-timer-notification
+   :with-timer-manager
+   :running-timer
+   :timer-error
+   :timer
+   :timer-name
+   :timer-expired-p
+   :make-timer
+   :make-idle-timer
+   :start-timer
+   :stop-timer
+   :with-idle-timers
+   :update-idle-timers
+   :get-next-timer-timing-ms)
   #+sbcl
   (:lock t))
 (in-package :lem/common/timer)
@@ -124,7 +125,7 @@
     :type bt:lock)
    (stop-mailbox
     :accessor timer-stop-mailbox
-    :type queues:simple-cqueue)
+    :type lem-mailbox::mailbox)
    (thread
     :accessor timer-thread
     :type bt:thread)))
@@ -155,13 +156,8 @@
 (defmethod stop-timer ((timer timer))
   (stop-timer-thread timer))
 
-(defun recieve-message (queue &key timeout)
-  (or (bt-sem:wait-on-semaphore
-       (bt-sem:make-semaphore) :timeout timeout)
-      (queues:qpop queue)))
-
 (defun start-timer-thread (timer ms repeat-p)
-  (let ((stop-mailbox (queues:make-queue :simple-cqueue))
+  (let ((stop-mailbox (lem-mailbox::make-mailbox))
         (timer-manager *timer-manager*)
         (seconds (float (/ ms 1000))))
     (setf (timer-stop-mailbox timer)
@@ -170,8 +166,10 @@
           (bt:make-thread
            (lambda ()
              (loop
-               (let ((recv-stop-msg (recieve-message stop-mailbox
-						     :timeout seconds)))
+               (let ((recv-stop-msg
+                       (nth-value 1
+                                  (lem-mailbox::receive-message stop-mailbox
+								:timeout seconds))))
                  (when recv-stop-msg
                    (expire-timer timer)
                    (return)))
@@ -182,7 +180,7 @@
            :name (format nil "Timer ~A" (timer-name timer))))))
 
 (defun stop-timer-thread (timer)
-  (queues:qpush (timer-stop-mailbox timer) t))
+  (lem-mailbox::send-message (timer-stop-mailbox timer) t))
 
 
 ;;; idle-timer

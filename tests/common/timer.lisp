@@ -4,8 +4,7 @@
         :lem/common/timer))
 (in-package :lem-tests/timer)
 
-(defun testing-timer ()
-  )
+(defun testing-timer ())
 
 (deftest timer-name-tests
   (let* ((timer (make-timer 'testing-timer))
@@ -46,27 +45,27 @@
 
 (deftest simple-timer-test
   (with-testing-timer-manager ()
-    (let ((mailbox (queues:make-queue :simple-cqueue)))
+    (let ((mailbox (lem-mailbox::make-mailbox)))
       (start-timer
-       (make-timer (lambda () (queues:qpush mailbox t)))
+       (make-timer (lambda () (lem-mailbox::send-message mailbox t)))
        2
        nil)
-      (ok (lem/common/timer::recieve-message mailbox :timeout 0.01))
-      (let ((timeout (not (lem/common/timer::recieve-message mailbox :timeout 0.01))))
+      (ok (lem-mailbox::receive-message mailbox :timeout 0.01))
+      (let ((timeout (not (lem-mailbox::receive-message mailbox :timeout 0.01))))
 	(ok timeout)))
 
-    (let* ((mailbox (queues:make-queue :simple-cqueue))
-	   (timer (make-timer (lambda () (queues:qpush mailbox t)))))
-      (start-timer timer 100 t)
+    (let* ((mailbox (lem-mailbox::make-mailbox))
+	   (timer (make-timer (lambda ()
+				(lem-mailbox::send-message mailbox t)))))
+      (start-timer timer 2 t)
       (loop :repeat 2
             :do (multiple-value-bind (value received)
-                    (lem/common/timer::recieve-message mailbox :timeout 0.01)
+                    (lem-mailbox::receive-message mailbox :timeout 0.01)
 		  (print value)
                   (unless received (return))
                   (assert (eq value t))))
       (stop-timer timer)
-      (sleep 0.2)
-      (ok (not (lem/common/timer::recieve-message mailbox :timeout 0.01)))
+      (ok (not (lem-mailbox::receive-message mailbox :timeout 0.01)))
       (ok (timer-expired-p timer)))))
 
 (deftest compute-the-time-for-the-next-idle-timer-to-be-called

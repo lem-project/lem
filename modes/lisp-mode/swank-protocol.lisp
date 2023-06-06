@@ -41,7 +41,7 @@
 
 (defmacro with-swank-syntax (() &body body)
   `(with-standard-io-syntax
-     (let ((*package* (find-package :swank-io-package))
+     (let ((*package* (find-package :micros/io-package))
            (*print-case* :downcase)
            (*print-readably* nil))
        ,@body)))

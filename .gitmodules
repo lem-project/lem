@@ -4,3 +4,6 @@
 [submodule "third-party/lem-base16-themes"]
 	path = submodules/lem-base16-themes
 	url = https://github.com/lem-project/lem-base16-themes.git
+[submodule "submodules/micros"]
+	path = submodules/micros
+	url = https://github.com/lem-project/micros

@@ -19,4 +19,4 @@
 
 (defun require-swank-modules (&optional (modules (swank-modules)))
   (dolist (module modules)
-    (require module (swank::module-filename module))))
+    (require module (micros::module-filename module))))

@@ -214,14 +214,14 @@
         (start-lisp-repl))))
 
 (defun copy-down-to-repl (slimefun &rest args)
-  (unless (find-package :swank-repl)
-    (make-package :swank-repl))
+  (unless (find-package :micros/contrib/repl)
+    (make-package :micros/contrib/repl))
   (lisp-eval-async
-   `(,(read-from-string "swank-repl::listener-save-value") ',slimefun ,@args)
+   `(,(read-from-string "micros/contrib/repl::listener-save-value") ',slimefun ,@args)
    (lambda (result)
      (declare (ignore result))
      (lisp-eval-async
-      `(,(read-from-string "swank-repl::listener-get-value"))
+      `(,(read-from-string "micros/contrib/repl::listener-get-value"))
       (lambda (result)
         (declare (ignore result))
         (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))))))
@@ -345,7 +345,7 @@
   (declare (ignorable n))
   (if (self-connection-p *connection*)
       (message "Can't say sayonara because it's self connection.")
-      (interactive-eval "(swank:quit-lisp)")))
+      (interactive-eval "(micros:quit-lisp)")))
 
 (define-repl-shortcut change-package (n)
   (declare (ignore n))

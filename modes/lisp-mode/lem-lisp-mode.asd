@@ -2,7 +2,7 @@
   :depends-on ("alexandria"
                "trivial-types"
                "usocket"
-               "swank"
+               "micros"
                "trivia"
                "uiop"
                "lem-lisp-syntax"

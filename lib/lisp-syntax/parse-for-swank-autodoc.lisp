@@ -5,7 +5,7 @@
   (:lock t))
 (in-package :lem-lisp-syntax.parse-for-swank-autodoc)
 
-(defvar *cursor-marker* 'swank::%cursor-marker%)
+(defvar *cursor-marker* 'micros::%cursor-marker%)
 
 (defun parsing-safe-p (point)
   (not (in-string-or-comment-p point)))

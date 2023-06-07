@@ -831,15 +831,16 @@
                         :package (current-package)))))
 
 (defun describe-symbol (symbol-name)
-  (when (string= "" symbol-name)
-    (editor-error "No symbol given"))
-  (let ((markdown (lisp-eval
-                   `(micros/lsp-api:hover-symbol ,symbol-name))))
-    (if (and markdown (not (alexandria:emptyp markdown)))
-        (show-message (lem/markdown-buffer:markdown-buffer markdown)
-                      :style '(:gravity :cursor))
-        (show-message "No documentation"
-                      :style '(:gravity :cursor)))))
+  (when symbol-name
+    (when (string= "" symbol-name)
+      (editor-error "No symbol given"))
+    (let ((markdown (lisp-eval
+                     `(micros/lsp-api:hover-symbol ,symbol-name))))
+      (if (and markdown (not (alexandria:emptyp markdown)))
+          (show-message (lem/markdown-buffer:markdown-buffer markdown)
+                        :style '(:gravity :cursor))
+          (show-message "No documentation"
+                        :style '(:gravity :cursor))))))
 
 (defun lisp-describe-symbol-at-point (window)
   (let* ((buffer (window-buffer window))

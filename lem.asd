@@ -140,7 +140,7 @@
 	       "lem-rust-mode"
 	       "lem-paredit-mode"
 	       "lem-nim-mode"
-	       #-(not clasp)			
+	       #-clasp
 	       "lem-scheme-mode"
 
 	       "lem-patch-mode"

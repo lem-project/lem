@@ -90,6 +90,7 @@
                 :components ((:file "popup-window")
                              (:file "popup-message")
                              (:file "popup-menu")
+                             (:file "markdown-buffer")
                              (:file "multi-column-list")
                              (:file "context-menu")
                              (:file "list-buffers")

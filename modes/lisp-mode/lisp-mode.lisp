@@ -831,9 +831,10 @@
                                   (or (symbol-string-at-point (current-point)) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
-    (show-message (lem/markdown-buffer:markdown-buffer
-                   (lisp-eval
-                    `(micros/lsp-api:hover-symbol symbol-name))))))
+    (let ((markdown (lisp-eval
+                     `(micros/lsp-api:hover-symbol ,symbol-name))))
+      (when markdown
+        (show-message (lem/markdown-buffer:markdown-buffer markdown))))))
 
 (defvar *wait-message-thread* nil)
 

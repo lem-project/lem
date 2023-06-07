@@ -824,23 +824,16 @@
                         :thread (current-swank-thread)
                         :package (current-package)))))
 
-(defun show-description (string)
-  (let ((buffer (make-buffer "*lisp-description*")))
-    (change-buffer-mode buffer 'lisp-mode)
-    (with-pop-up-typeout-window (stream buffer :erase t)
-      (princ string stream))))
-
-(defun lisp-eval-describe (form)
-  (lisp-eval-async form #'show-description))
-
 (define-command lisp-describe-symbol () ()
   (check-connection)
   (let ((symbol-name
           (prompt-for-symbol-name "Describe symbol: "
-                            (or (symbol-string-at-point (current-point)) ""))))
+                                  (or (symbol-string-at-point (current-point)) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
-    (lisp-eval-describe `(micros:describe-symbol ,symbol-name))))
+    (show-message (lem/markdown-buffer:markdown-buffer
+                   (lisp-eval
+                    `(micros/lsp-api:hover-symbol symbol-name))))))
 
 (defvar *wait-message-thread* nil)
 

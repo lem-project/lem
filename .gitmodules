@@ -7,3 +7,6 @@
 [submodule "submodules/micros"]
 	path = submodules/micros
 	url = https://github.com/lem-project/micros
+[submodule "submodules/mailbox"]
+	path = submodules/mailbox
+	url = https://github.com/lem-project/lem-mailbox.git

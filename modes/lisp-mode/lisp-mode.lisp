@@ -49,9 +49,7 @@
 
   (setf (buffer-context-menu (current-buffer))
         (make-instance 'lem/context-menu:context-menu
-                       :items (list (lem/context-menu::make-item
-                                     :label "Describe symbol"
-                                     :callback 'lisp-describe-symbol-at-point)))))
+                       :compute-items-function 'compute-context-menu-items)))
 
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)
 (define-key *lisp-mode-keymap* "C-c M-p" 'lisp-set-package)
@@ -84,6 +82,13 @@
                       (or (self-connection-p (current-connection))
                           (connection-pid (current-connection))))
               "")))
+
+(defun compute-context-menu-items ()
+  (when (and (get-point-on-context-menu-open)
+             (symbol-string-at-point (get-point-on-context-menu-open)))
+    (list (lem/context-menu::make-item
+           :label "Describe symbol"
+           :callback 'lisp-describe-symbol-at-point))))
 
 (defun change-current-connection (connection)
   (when (current-connection)

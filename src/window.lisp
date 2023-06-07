@@ -492,8 +492,9 @@ next line because it is at the end of width."
     (loop
       :while (< w column)
       :do (setf w (char-width (character-at point) w))
-          (when (end-line-p point) (return))
-          (character-offset point 1))))
+          (when (end-line-p point) (return nil))
+          (character-offset point 1)
+      :finally (return t))))
 
 (defun window-scroll-down (window)
   (move-to-next-virtual-line (window-view-point window) 1 window))

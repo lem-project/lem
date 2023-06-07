@@ -72,7 +72,8 @@
          (read-command-and-call ()
            (let ((cmd (with-idle-timers ()
                         (read-command))))
-             (message nil)
+             (unless (eq cmd '<mouse-motion-event>)
+               (message nil))
              (call-command cmd nil)))
 
          (editor-abort-handler (c)

@@ -276,6 +276,9 @@
 (define-command <mouse-event> () ()
   (handle-mouse-event (last-mouse-event)))
 
+(define-command <mouse-motion-event> () ()
+  (handle-mouse-event (last-mouse-event)))
+
 (defun find-mouse-command (event)
   (etypecase event
     (mouse-button-down
@@ -283,7 +286,7 @@
     (mouse-button-up
      '<mouse-event>)
     (mouse-motion
-     '<mouse-event>)
+     '<mouse-motion-event>)
     (mouse-wheel
      '<mouse-event>)))
 

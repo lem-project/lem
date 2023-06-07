@@ -25,7 +25,6 @@
            :finish-evaluated
            :abort-all
            :request-connection-info
-           :request-swank-require
            :request-listener-eval
            :read-message
            :read-all-messages)
@@ -42,7 +41,7 @@
 
 (defmacro with-swank-syntax (() &body body)
   `(with-standard-io-syntax
-     (let ((*package* (find-package :swank-io-package))
+     (let ((*package* (find-package :micros/io-package))
            (*print-case* :downcase)
            (*print-readably* nil))
        ,@body)))
@@ -186,7 +185,7 @@ Parses length information to determine how many characters to read."
 (defun setup (connection)
   (log:debug "Setup connection")
 
-  (emacs-rex connection `(swank:connection-info))
+  (emacs-rex connection `(micros:connection-info))
   ;; Read the connection information message
   (let* ((info (read-return-message connection))
          (data (getf (getf info :return) :ok))
@@ -212,19 +211,14 @@ Parses length information to determine how many characters to read."
           (connection-prompt-string connection)
           (getf (getf data :package) :prompt)
           ))
-  ;; Require some Swank modules
-  (request-swank-require
-   connection
-   (lem-lisp-mode/swank-modules:swank-modules))
-  (read-return-message connection)
 
   ;; Start it up
   (log:debug "Initializing presentations")
-  (emacs-rex-string connection "(swank:init-presentations)")
+  (emacs-rex-string connection "(micros:init-presentations)")
   (read-return-message connection)
 
   (log:debug "Creating the REPL")
-  (emacs-rex-string connection "(swank-repl:create-repl nil :coding-system \"utf-8-unix\")")
+  (emacs-rex-string connection "(micros/contrib/repl:create-repl nil :coding-system \"utf-8-unix\")")
   ;; Wait for startup
   (read-return-message connection)
 
@@ -334,26 +328,12 @@ to check if input is available."
         :do (funcall fn `(:abort ,condition)))
   (setf (connection-continuations connection) nil))
 
-(defun request-swank-require (connection requirements)
-  "Request that the Swank server load contrib modules.
-`requirements` must be a list of symbols, e.g. '(swank-repl swank-media)."
-  (log:debug "Requesting swank requirements" requirements)
-  (emacs-rex connection
-             `(let ((*load-verbose* nil)
-                    (*compile-verbose* nil)
-                    (*load-print* nil)
-                    (*compile-print* nil))
-                (handler-bind ((warning #'muffle-warning))
-                  (swank:swank-require ',(loop for item in requirements collecting
-                                                  (intern (symbol-name item)
-                                                          (find-package :swank-io-package))))))))
-
 (defun request-listener-eval (connection string &optional continuation window-width)
   "Request that Swank evaluate a string of code in the REPL."
   (emacs-rex-string connection
                     (if window-width
-                        (format nil "(swank-repl:listener-eval ~S :window-width ~A)" string window-width)
-                        (format nil "(swank-repl:listener-eval ~S)" string))
+                        (format nil "(micros/contrib/repl:listener-eval ~S :window-width ~A)" string window-width)
+                        (format nil "(micros/contrib/repl:listener-eval ~S)" string))
                     :continuation continuation
                     :thread ":repl-thread"))
 

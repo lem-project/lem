@@ -65,6 +65,19 @@
     ((ppcre:scan "^~/.*" (namestring base-dir)) (probe-file% pathspec))
     (t (probe-file pathspec))))
 
+(defun sort-files (pathnames &key (key #'namestring) (test #'string<))
+  "Sort a list of pathnames."
+  (sort (copy-list pathnames)
+        test :key key))
+
+(defun sort-files-with-method (files &key (sort-method :pathname))
+  "Sort files with a sort method, one of :pathname and :mtime."
+  (cond
+    ((eql sort-method :mtime)
+     (sort-files files :test #'> :key #'file-mtime))
+    (t
+     (sort-files files))))
+
 (defun directory-files (pathspec)
   (if (uiop:directory-pathname-p pathspec)
       (list (pathname pathspec))
@@ -72,14 +85,15 @@
                   (directory pathspec))
           (list pathspec))))
 
-(defun list-directory (directory &key directory-only)
+(defun list-directory (directory &key directory-only (sort-method :pathname))
   (delete nil
           (mapcar (lambda (x) (and (virtual-probe-file x directory) x))
-                  (append (sort (copy-list (uiop:subdirectories directory))
-                                #'string< :key #'namestring)
+                  (append (sort-files-with-method
+                           (copy-list (uiop:subdirectories directory))
+                           :sort-method sort-method)
                           (unless directory-only
-                            (sort (copy-list (uiop:directory-files directory))
-                                  #'string< :key #'namestring))))))
+                            (sort-files-with-method (uiop:directory-files directory)
+                                                    :sort-method sort-method))))))
 
 (defun file-size (pathname)
   #+lispworks
@@ -88,6 +102,13 @@
   (return-from file-size nil)
   #-win32
   (ignore-errors (with-open-file (in pathname) (file-length in))))
+
+(defun file-mtime (pathname)
+  "Return the file's last data modification time."
+  #+sbcl
+  (sb-posix:stat-mtime (sb-posix:stat pathname))
+  #-sbcl
+  (error "file-utils: file-mtime is not implemented for your implementation."))
 
 (defun copy-file-or-directory (from to)
   (let ((base-dir from))

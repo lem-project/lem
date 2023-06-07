@@ -112,9 +112,9 @@
 (defun self-connect ()
   (unless lem-lisp-mode/test-api:*disable-self-connect*
     (let ((port (lem-socket-utils:random-available-port)))
-      (log:debug "Starting internal SWANK and connecting to it" swank:*communication-style*)
-      (let ((swank::*swank-debug-p* nil))
-        (swank:create-server :port port :style :spawn))
+      (log:debug "Starting internal SWANK and connecting to it" micros:*communication-style*)
+      (let ((micros::*swank-debug-p* nil))
+        (micros:create-server :port port :style :spawn))
       (connect-to-swank *localhost* port)
       (update-buffer-package)
       (setf *self-connected-port* port))))
@@ -123,7 +123,7 @@
   (and (typep connection 'connection)
        (integerp (self-connected-port))
        (member (connection-hostname connection) '("127.0.0.1" "localhost") :test 'equal)
-       (ignore-errors (equal (connection-pid connection) (swank/backend:getpid)))
+       (ignore-errors (equal (connection-pid connection) (micros/backend:getpid)))
        (= (connection-port connection) (self-connected-port))
        :self))
 
@@ -234,16 +234,16 @@
             :package package))
 
 (defun re-eval-defvar (string)
-  (eval-with-transcript `(swank:re-evaluate-defvar ,string)))
+  (eval-with-transcript `(micros:re-evaluate-defvar ,string)))
 
 (defun interactive-eval (string &key (package (current-package)))
-  (eval-with-transcript `(swank:interactive-eval ,string) :package package))
+  (eval-with-transcript `(micros:interactive-eval ,string) :package package))
 
 (defun eval-print (string &optional print-right-margin)
   (let ((value (lisp-eval (if print-right-margin
                               `(let ((*print-right-margin* ,print-right-margin))
-                                 (swank:eval-and-grab-output ,string))
-                              `(swank:eval-and-grab-output ,string)))))
+                                 (micros:eval-and-grab-output ,string))
+                              `(micros:eval-and-grab-output ,string)))))
     (insert-string (current-point) (first value))
     (insert-character (current-point) #\newline)
     (insert-string (current-point) (second value))))
@@ -257,7 +257,7 @@
   (check-connection)
   (let ((package-names (mapcar #'string-downcase
                                (lisp-eval
-                                '(swank:list-all-package-names t)))))
+                                '(micros:list-all-package-names t)))))
     (string-upcase (prompt-for-string
                     "Package: "
                     :completion-function (lambda (string)
@@ -296,12 +296,20 @@
     (when (form-offset end 1)
       (indent-points (current-point) end))))
 
+(defmethod execute ((mode lisp-mode) (command open-line) argument)
+  (if (not (null argument))
+      (call-next-method)
+      (with-point ((saved-point (current-point)))
+        (insert-character (current-point) #\newline)
+        (indent-line (current-point))
+        (move-point (current-point) saved-point))))
+
 (define-command lisp-set-package (package-name) ((read-package-name))
   (check-connection)
   (cond ((string= package-name ""))
         ((eq (current-buffer) (repl-buffer))
          (destructuring-bind (name prompt-string)
-             (lisp-eval `(swank:set-package ,package-name))
+             (lisp-eval `(micros:set-package ,package-name))
            (new-package name prompt-string)
            (lem/listener-mode:refresh-prompt (repl-buffer))))
         (t
@@ -314,22 +322,22 @@
     (save-excursion
       (setf (current-buffer) repl-buffer)
       (destructuring-bind (name prompt-string)
-          (lisp-eval `(swank:set-package ,package))
+          (lisp-eval `(micros:set-package ,package))
         (new-package name prompt-string)))
     (start-lisp-repl)
     (buffer-end (buffer-point repl-buffer))))
 
 (define-command lisp-current-directory () ()
   (message "Current directory: ~a" 
-           (lisp-eval `(swank:default-directory))))
+           (lisp-eval `(micros:default-directory))))
 
 (define-command lisp-set-directory (&key directory) ()
   (unless directory
     (setf directory
           (prompt-for-directory "New directory: " :directory (buffer-directory))))
   (lisp-eval 
-   `(swank:set-default-directory 
-     (swank-backend:filename-to-pathname ,directory))))
+   `(micros:set-default-directory 
+     (micros/backend:filename-to-pathname ,directory))))
 
 (define-command lisp-interrupt () ()
   (send-message-string
@@ -428,7 +436,7 @@
   "Execute the region as Lisp code."
   (check-connection)
   (eval-with-transcript
-   `(swank:interactive-eval-region
+   `(micros:interactive-eval-region
      ,(points-to-string start end))))
 
 (define-command lisp-eval-buffer () ()
@@ -450,7 +458,7 @@
         `(if (and (cl:find-package :roswell)
                   (cl:find-symbol (cl:string :load) :roswell))
              (uiop:symbol-call :roswell :load ,filename)
-             (swank:load-file ,filename)))
+             (micros:load-file ,filename)))
        :package "CL-USER"))))
 
 (defun get-operator-name ()
@@ -464,7 +472,7 @@
   (let ((name (get-operator-name))
         (package (current-package)))
     (when name
-      (lisp-eval-async `(swank:operator-arglist ,name ,package)
+      (lisp-eval-async `(micros:operator-arglist ,name ,package)
                        (lambda (arglist)
                          (when arglist
                            (display-message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))))))
@@ -478,7 +486,7 @@
                              (and fastfile successp)))
     (highlight-notes notes)
     (cond ((and loadp fastfile successp)
-           (lisp-eval-async `(swank:load-file ,(convert-local-to-remote-file fastfile))
+           (lisp-eval-async `(micros:load-file ,(convert-local-to-remote-file fastfile))
                             (lambda (result)
                               (declare (ignore result))
                               (uiop:delete-file-if-exists
@@ -613,7 +621,7 @@
     (save-current-buffer))
   (let ((file (buffer-filename (current-buffer))))
     (run-hooks (variable-value 'load-file-functions) file)
-    (lisp-eval-async `(swank:compile-file-for-emacs ,(convert-local-to-remote-file file) t)
+    (lisp-eval-async `(micros:compile-file-for-emacs ,(convert-local-to-remote-file file) t)
                      #'compilation-finished)))
 
 (define-command lisp-compile-region (start end) ("r")
@@ -624,7 +632,7 @@
                      ,(line-number-at-point (current-point))
                      ,(point-charpos (current-point))))))
     (run-hooks (variable-value 'before-compile-functions) start end)
-    (lisp-eval-async `(swank:compile-string-for-emacs ,string
+    (lisp-eval-async `(micros:compile-string-for-emacs ,string
                                                       ,(buffer-name (current-buffer))
                                                       ',position
                                                       ,(buffer-filename (current-buffer))
@@ -673,11 +681,11 @@
 
 (define-command lisp-macroexpand () ()
   (check-connection)
-  (macroexpand-internal 'swank:swank-macroexpand-1))
+  (macroexpand-internal 'micros:swank-macroexpand-1))
 
 (define-command lisp-macroexpand-all () ()
   (check-connection)
-  (macroexpand-internal 'swank:swank-macroexpand-all))
+  (macroexpand-internal 'micros:swank-macroexpand-all))
 
 (define-command lisp-quickload (system-name)
     ((prompt-for-symbol-name "System: " (buffer-package (current-buffer))))
@@ -691,8 +699,8 @@
 (defun make-completions-form-string (string package-name &key (fuzzy t))
   (format nil "(~A ~S ~S)"
           (if fuzzy
-              "swank:fuzzy-completions"
-              "swank:completions")
+              "micros:fuzzy-completions"
+              "micros:completions")
           string
           package-name))
 
@@ -751,7 +759,7 @@
                   (prompt-for-symbol-name "Edit Definition of: "))))
     (alexandria:when-let (result (find-local-definition point name))
       (return-from find-definitions-default result))
-    (let ((definitions (lisp-eval `(swank:find-definitions-for-emacs ,name))))
+    (let ((definitions (lisp-eval `(micros:find-definitions-for-emacs ,name))))
       (definitions-to-locations definitions))))
 
 (defparameter *find-definitions* '(find-definitions-default))
@@ -764,7 +772,7 @@
   (check-connection)
   (let* ((name (or (symbol-string-at-point point)
                    (prompt-for-symbol-name "Edit uses of: ")))
-         (data (lisp-eval `(swank:xrefs '(:calls :macroexpands :binds
+         (data (lisp-eval `(micros:xrefs '(:calls :macroexpands :binds
                                           :references :sets :specializes)
                                         ,name))))
     (display-xref-references
@@ -832,7 +840,7 @@
                             (or (symbol-string-at-point (current-point)) ""))))
     (when (string= "" symbol-name)
       (editor-error "No symbol given"))
-    (lisp-eval-describe `(swank:describe-symbol ,symbol-name))))
+    (lisp-eval-describe `(micros:describe-symbol ,symbol-name))))
 
 (defvar *wait-message-thread* nil)
 
@@ -1040,10 +1048,10 @@
 (defun send-swank-create-server (process port)
   (lem-process:process-send-input
    process
-   "(ql:quickload :swank)")
+   "(ql:quickload :micros)")
   (lem-process:process-send-input
    process
-   (format nil "(swank:create-server :port ~D :dont-close t)~%" port)))
+   (format nil "(micros:create-server :port ~D :dont-close t)~%" port)))
 
 (defun run-slime (command &key (directory (buffer-directory)))
   (let* ((port (lem-socket-utils:random-available-port))

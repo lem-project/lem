@@ -35,7 +35,7 @@
 
 (defun lisp-apropos-internal (string only-external-p package case-sensitive-p)
   (show-apropos (lisp-eval
-                 `(swank:apropos-list-for-emacs ,string
+                 `(micros:apropos-list-for-emacs ,string
                                                 ,only-external-p
                                                 ,case-sensitive-p
                                                 ,package))

@@ -1,8 +1,19 @@
 (defpackage :lem/directory-mode
   (:use :cl :lem)
   #+sbcl
-  (:lock t))
+  (:lock t)
+  (:export
+   :*default-sort-method*))
 (in-package :lem/directory-mode)
+
+(deftype sort-method ()
+  '(member :pathname :mtime))
+
+(declaim (type (sort-method) *default-sort-method*))
+(defvar *default-sort-method* :pathname
+  "Default method to sort files when opening a directory.
+
+  A keyword, one of :pathname (sort by file name) and :mtime (last modification time).")
 
 (define-attribute header-attribute
   (:light :foreground "dark green")
@@ -42,6 +53,7 @@
 (define-key *directory-mode-keymap* "D" 'directory-mode-delete-files)
 (define-key *directory-mode-keymap* "C" 'directory-mode-copy-files)
 (define-key *directory-mode-keymap* "R" 'directory-mode-rename-files)
+(define-key *directory-mode-keymap* "s" 'directory-mode-sort-files)
 (define-key *directory-mode-keymap* "+" 'make-directory)
 
 (defun run-command (command)
@@ -203,7 +215,8 @@
          (directory-mode-find-file)))
       (insert-character point #\newline))))
 
-(defun update (buffer)
+(defun update (buffer &key (sort-method *default-sort-method*))
+  "Update this directory buffer content."
   (with-buffer-read-only buffer nil
     (let* ((directory (buffer-directory buffer))
            (p (buffer-point buffer))
@@ -213,7 +226,7 @@
       (insert-string p (format nil "~A~2%" directory))
       (alexandria:when-let (pathname (probe-file (merge-pathnames "../" directory)))
         (insert-pathname p pathname directory ".."))
-      (dolist (pathname (list-directory directory))
+      (dolist (pathname (list-directory directory :sort-method sort-method))
         (insert-pathname p pathname directory))
       (move-to-line p line-number))))
 
@@ -416,6 +429,21 @@
   (let ((dst-file (prompt-for-file "Destination Filename: " :directory (get-dest-directory))))
     (rename-files (selected-files (current-point)) dst-file))
   (update-all))
+
+(define-command directory-mode-sort-files () ()
+  "Sort files: by name, then by last modification time.
+
+  Each new directory buffer first uses the default sort method (`lem/directory-mode:*default-sort-method*')"
+  (cond
+    ((eql (buffer-value (current-buffer) :sort-method) :mtime)
+     (message "Sorting by file name")
+     (setf (buffer-value (current-buffer) :sort-method) :pathname)
+     (update (current-buffer) :sort-method :pathname))
+    (t
+     ;; At first call, the buffer's sort-method is not set.
+     (message "Sorting by last modification time")
+     (setf (buffer-value (current-buffer) :sort-method) :mtime)
+     (update (current-buffer) :sort-method :mtime))))
 
 (define-command make-directory (filename) ("FMake directory: ")
   (setf filename (uiop:ensure-directory-pathname filename))

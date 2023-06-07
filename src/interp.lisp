@@ -72,7 +72,8 @@
          (read-command-and-call ()
            (let ((cmd (with-idle-timers ()
                         (read-command))))
-             (unless (eq cmd '<mouse-motion-event>)
+             (unless (or (eq cmd '<mouse-motion-event>)
+                         (eq cmd '<mouse-event>))
                (message nil))
              (call-command cmd nil)))
 

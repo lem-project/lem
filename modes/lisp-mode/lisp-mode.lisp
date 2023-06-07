@@ -45,7 +45,13 @@
   (setf (variable-value 'root-uri-patterns) '(".asd"))
   (set-syntax-parser lem-lisp-syntax:*syntax-table*
                      (make-tmlanguage-lisp))
-  (unless (connected-p) (self-connect)))
+  (unless (connected-p) (self-connect))
+
+  (setf (buffer-context-menu (current-buffer))
+        (make-instance 'lem/context-menu:context-menu
+                       :items (list (lem/context-menu::make-item
+                                     :label "Describe symbol"
+                                     :callback 'lisp-describe-symbol-at-point)))))
 
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)
 (define-key *lisp-mode-keymap* "C-c M-p" 'lisp-set-package)
@@ -824,17 +830,32 @@
                         :thread (current-swank-thread)
                         :package (current-package)))))
 
+(defun describe-symbol (symbol-name)
+  (when (string= "" symbol-name)
+    (editor-error "No symbol given"))
+  (let ((markdown (lisp-eval
+                   `(micros/lsp-api:hover-symbol ,symbol-name))))
+    (if (and markdown (not (alexandria:emptyp markdown)))
+        (show-message (lem/markdown-buffer:markdown-buffer markdown)
+                      :style '(:gravity :cursor))
+        (show-message "No documentation"
+                      :style '(:gravity :cursor)))))
+
+(defun lisp-describe-symbol-at-point (window)
+  (let* ((buffer (window-buffer window))
+         (point (buffer-point buffer))
+         (dest-point (get-point-on-context-menu-open)))
+    (when (eq (point-buffer point)
+              (point-buffer dest-point))
+      (move-point point dest-point)
+      (describe-symbol (symbol-string-at-point point)))))
+
 (define-command lisp-describe-symbol () ()
   (check-connection)
   (let ((symbol-name
           (prompt-for-symbol-name "Describe symbol: "
                                   (or (symbol-string-at-point (current-point)) ""))))
-    (when (string= "" symbol-name)
-      (editor-error "No symbol given"))
-    (let ((markdown (lisp-eval
-                     `(micros/lsp-api:hover-symbol ,symbol-name))))
-      (when markdown
-        (show-message (lem/markdown-buffer:markdown-buffer markdown))))))
+    (describe-symbol symbol-name)))
 
 (defvar *wait-message-thread* nil)
 

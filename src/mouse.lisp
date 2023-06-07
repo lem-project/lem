@@ -346,11 +346,19 @@
                    (when hover-window
                      (delete-popup-message hover-window))))))
 
+(defvar *last-point-on-context-menu-open*)
+(defun get-point-on-context-menu-open ()
+  *last-point-on-context-menu-open*)
+
 (defun show-context-menu-over-mouse-cursor (x y)
-  (declare (ignore x y))
   (let ((context-menu (buffer-context-menu (current-buffer))))
     (when context-menu
-      (lem-if:display-context-menu (implementation) context-menu '(:gravity :mouse-cursor)))))
+      (multiple-value-bind (target-window x y)
+          (focus-window-position (current-frame) x y)
+        (setf *last-point-on-context-menu-open*
+              (get-point-from-window-with-coordinates target-window x y))
+        (setf (current-window) target-window)
+        (lem-if:display-context-menu (implementation) context-menu '(:gravity :mouse-cursor))))))
 
 (defun paste-expression-on-mouse-cursor-to-current-point (window x y)
   (multiple-value-bind (target-window x y)

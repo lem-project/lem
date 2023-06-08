@@ -4,6 +4,7 @@
            :find-file-executor
            :execute-find-file
            :find-file
+           :find-file-recursively
            :read-file
            :add-newline-at-eof-on-writing-file
            :save-buffer
@@ -25,6 +26,16 @@
 (define-key *global-keymap* "C-x C-w" 'write-file)
 (define-key *global-keymap* "C-x Tab" 'insert-file)
 (define-key *global-keymap* "C-x s" 'save-some-buffers)
+
+;; Programs to find files recursively:
+;; We want symbols and not strings, for CLOS dispatch.
+(defvar *find-programs* (list :fdfind :fd :find :lisp)
+  "List of program candidates to be used to find files recursively.
+  Must be symbols of program names, for example \":find\" for the unix \"find\" program.")
+
+(defvar *find-program*)                 ;; unbound: search and set at first use.
+#+(or)
+(setf lem-core/commands/file::*find-program* :lisp)
 
 (defun expand-files* (filename)
   (directory-files (expand-file-name filename (buffer-directory))))
@@ -91,6 +102,102 @@
       (uiop:run-program (list "open" (namestring pathname)))
       #+windows
       (uiop:run-program (list "explorer" (namestring pathname))))))
+
+(defun which (program)
+  "Simple, slow and unix-only function to know if this program exists on the system.
+  Returns either the full path (string) or NIL."
+  ;; note: the program path is eventually not used.
+  #+unix
+  (str:trim
+   (first
+    (str:lines (uiop:run-program (list "which" program)
+                                 :output :string
+                                 :ignore-error-status t))))
+  #-unix
+  (progn
+    (warn "which is not defined for your implementation.")
+    (string program)))
+#+(or)
+(assert (equal (which "find")
+               "/usr/bin/find"))
+
+(defun find-program ()
+  "Return the first program of *find-programs* that exists on this system.
+  Cache the result on *find-program*.
+  On non-Unix platforms, fallback to the :lisp method."
+  #-unix
+  (progn
+    (print "lem-core/commands/file: WHICH is not defined for your OS. We fallback *find-program* to the :lisp method.")
+    :lisp)
+  #+unix
+  (if (boundp '*find-program*)
+      *find-program*
+      (loop for key in *find-programs*
+            for name = (str:downcase (string key))
+            if (eql :lisp key)
+              do (setf *find-program* :lisp)
+            else do
+              (when (which name)
+                (setf *find-program* key)
+                (return key)))))
+
+(defgeneric get-files-recursively (program)
+  (:documentation "Find files recursively on the current working
+  directory with the program set in `*find-program*'.
+  Use uiop:with-current-directory in the caller.")
+  (:method (finder)
+    (error "No file finder was found for ~a.~&Use any of *find-programs*: ~S" finder *find-programs*)))
+
+(defmethod get-files-recursively ((finder (eql :fdfind)))
+  ;; fdfind excludes .git, node_modules and such by default.
+  (str:lines
+   (uiop:run-program (list "fdfind") :output :string)))
+
+(defmethod get-files-recursively ((finder (eql :fd)))
+  (str:lines
+   (uiop:run-program (list "fd") :output :string)))
+
+(defmethod get-files-recursively ((finder (eql :find)))
+  (str:lines
+   (uiop:run-program (list "find" ".") :output :string)))
+
+(defmethod get-files-recursively ((finder (eql :lisp)))
+  ;; XXX: this method returns full paths, instead of paths starting at the current directory.
+  (let ((results))
+    (uiop:collect-sub*directories
+     "./"
+     (constantly t)
+     (constantly t)
+     (lambda (subdir)
+       (setf results
+             (nconc results
+                    ;; For the file select, we want strings, not pathnames.
+                    (loop for path in (append (uiop:subdirectories subdir)
+                                              (uiop:directory-files subdir))
+                          collect (namestring path))))))
+    results))
+
+(defun prompt-for-files-recursively ()
+  (let ((candidates (get-files-recursively (find-program))))
+    (prompt-for-string
+     "File: "
+     :completion-function (lambda (x) (completion-strings x candidates))
+     :test-function (lambda (name) (member name candidates :test #'string=)))))
+
+(define-command find-file-recursively (arg) ("p")
+  ;; what is arg for?
+  (declare (ignorable arg))
+  (let ((cwd (buffer-directory (current-buffer))))
+    (uiop:with-current-directory (cwd)
+      (let ((filename (prompt-for-files-recursively))
+            buffer)
+        (when filename
+          (setf buffer (execute-find-file *find-file-executor*
+                                          (get-file-mode filename)
+                                          filename))
+          (when buffer
+            (switch-to-buffer buffer t nil)))))))
+
 
 (define-command read-file (filename) ("FRead File: ")
   "Open the file as a read-only."

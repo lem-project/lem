@@ -161,15 +161,15 @@
 | [font-size-decrease](https://github.com/lem-project/lem/blob/main/src/commands/font.lisp#L14) | C--          | Make the font smaller (this currently only works with SDL2 frontend) |
 
 ## Other
-| Command                                                                                       | Key bindings | Documentation                                                |
-|-----------------------------------------------------------------------------------------------|--------------|--------------------------------------------------------------|
-| [nop-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L21)       | NopKey       |                                                              |
-| [undefined-key](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L24)     |              | Signal undefined key error.                                  |
-| [keyboard-quit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L28)     | C-g          | Signal a `quit` condition.                                   |
-| [escape](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L32)            | Escape       | Signal a `quit` condition silently.                          |
-| [exit-lem](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L36)          | C-x C-c      | Ask for modified buffers before exiting lem.                 |
-| [quick-exit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L43)        |              | Exit the lem job and kill it.                                |
-| [execute-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L48)   | M-x          | Read a command name, then read the ARG and call the command. |
-| [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L67) | Shift-F10    |                                                              |
-| [load-library](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L72)      |              | Load the Lisp library named NAME.                            |
+| Command                                                                                       | Key bindings   | Documentation                                                |
+|-----------------------------------------------------------------------------------------------|----------------|--------------------------------------------------------------|
+| [nop-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L22)       | NopKey         |                                                              |
+| [undefined-key](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L25)     |                | Signal undefined key error.                                  |
+| [keyboard-quit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L29)     | C-g            | Signal a `quit` condition.                                   |
+| [escape](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L33)            | Escape         | Signal a `quit` condition silently.                          |
+| [exit-lem](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L37)          | C-x C-c        | Ask for modified buffers before exiting lem.                 |
+| [quick-exit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L44)        |                | Exit the lem job and kill it.                                |
+| [execute-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L49)   | M-x            | Read a command name, then read the ARG and call the command. |
+| [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L68) | Shift-F10, M-h |                                                              |
+| [load-library](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L74)      |                | Load the Lisp library named NAME.                            |
 

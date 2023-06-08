@@ -34,7 +34,7 @@
                                    :repl-thread))))
 
 (defmethod execute ((mode lisp-repl-mode) (command lem/listener-mode:listener-return) argument)
-  (cond ((repl-paren-correspond-p (current-point))
+  (cond ((repl-paren-correspond-p (buffer-end-point (current-buffer)))
          (call-next-method))
         (t
          (insert-character (current-point) #\newline)

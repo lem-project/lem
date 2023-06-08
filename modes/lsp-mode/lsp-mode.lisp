@@ -242,7 +242,7 @@
   (setf (variable-value 'language-mode:completion-spec)
         (lem/completion-mode:make-completion-spec 'text-document/completion :async t))
   (setf (variable-value 'language-mode:find-definitions-function)
-        #'find-definitions)
+        #'lsp-find-definitions)
   (setf (variable-value 'language-mode:find-references-function)
         #'find-references)
   (setf (buffer-value (current-buffer) 'revert-buffer-function)
@@ -1131,7 +1131,7 @@
                (funcall then (convert-definition-response response))
                (redraw-display))))))
 
-(defun find-definitions (point)
+(defun lsp-find-definitions (point)
   (check-connection)
   (text-document/definition point #'language-mode:display-xref-locations))
 

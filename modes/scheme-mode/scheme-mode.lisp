@@ -14,7 +14,7 @@
   (setf (variable-value 'line-comment) ";")
   (setf (variable-value 'insertion-line-comment) ";; ")
   (setf (variable-value 'language-mode-tag) 'scheme-mode)
-  (setf (variable-value 'find-definitions-function) 'find-definitions)
+  (setf (variable-value 'find-definitions-function) 'scheme-find-definitions)
   (setf (variable-value 'find-references-function) 'find-references)
   (setf (variable-value 'completion-spec) 'completion-symbol)
   (setf (variable-value 'idle-function) 'scheme-idle-function)

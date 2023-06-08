@@ -650,7 +650,7 @@
 
 (defparameter *find-definitions* '(find-definitions-default))
 
-(defun find-definitions (point)
+(defun scheme-find-definitions (point)
   (check-connection)
   (display-xref-locations (some (alexandria:rcurry #'funcall point) *find-definitions*)))
 

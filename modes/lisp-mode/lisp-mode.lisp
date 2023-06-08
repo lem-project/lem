@@ -37,8 +37,8 @@
   (setf (variable-value 'line-comment) ";")
   (setf (variable-value 'insertion-line-comment) ";; ")
   (setf (variable-value 'language-mode-tag) 'lisp-mode)
-  (setf (variable-value 'find-definitions-function) 'find-definitions)
-  (setf (variable-value 'find-references-function) 'find-references)
+  (setf (variable-value 'find-definitions-function) 'lisp-find-definitions)
+  (setf (variable-value 'find-references-function) 'lisp-find-references)
   (setf (variable-value 'completion-spec)
         (make-completion-spec 'completion-symbol-async :async t))
   (setf (variable-value 'idle-function) 'lisp-idle-function)
@@ -99,7 +99,7 @@
              :label "Find references"
              :callback (lambda (&rest args)
                          (declare (ignore args))
-                         (find-references point)))
+                         (lisp-find-references point)))
             (lem/context-menu:make-item
              :label "Export symbol"
              :callback (lambda (&rest args)
@@ -754,11 +754,11 @@
 
 (defparameter *find-definitions* '(find-definitions-default))
 
-(defun find-definitions (point)
+(defun lisp-find-definitions (point)
   (check-connection)
   (display-xref-locations (some (alexandria:rcurry #'funcall point) *find-definitions*)))
 
-(defun find-references (point)
+(defun lisp-find-references (point)
   (check-connection)
   (let* ((name (or (symbol-string-at-point point)
                    (prompt-for-symbol-name "Edit uses of: ")))

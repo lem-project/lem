@@ -9,6 +9,7 @@
    :line-comment
    :insertion-line-comment
    :find-definitions-function
+   :find-definitions
    :find-references-function
    :language-mode-tag
    :buffer-language-mode

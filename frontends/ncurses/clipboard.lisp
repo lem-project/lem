@@ -28,12 +28,6 @@
 
 (defclass os () ())
 
-(defmethod copy-aux (os text)
-  (trivial-clipboard:text text))
-
-(defmethod paste-aux (os)
-  (trivial-clipboard:text))
-
 ;;;
 (defclass mac (os) ())
 

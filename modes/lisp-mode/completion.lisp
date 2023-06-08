@@ -9,7 +9,7 @@
 
 (defun make-completions-form-string (string package-name)
   (format nil
-          "(cl:first (micros:fuzzy-completions ~S ~S))"
+          "(micros/lsp-api:completions ~S ~S)"
           string
           package-name))
 
@@ -18,13 +18,26 @@
                          "COMMON-LISP-USER"))
 
 (defun make-completion-item* (completion &optional start end)
-  (lem/completion-mode:make-completion-item
-   :label (first completion)
-   :chunks (loop :for (offset substring) :in (third completion)
-                 :collect (cons offset (+ offset (length substring))))
-   :detail (fourth completion)
-   :start start
-   :end end))
+  (let ((label (micros/lsp-api::completed-item-label completion))
+        (chunks (micros/lsp-api::completed-item-chunks completion))
+        (detail (micros/lsp-api::completed-item-classification completion))
+        (documentation (micros/lsp-api::completed-item-documentation completion)))
+    (lem/completion-mode:make-completion-item
+     :label label
+     :chunks (loop :for (offset substring) :in chunks
+                   :collect (cons offset (+ offset (length substring))))
+     :detail detail
+     :start start
+     :end end
+     :focus-action (lambda (context)
+                     (unless (alexandria:emptyp documentation)
+                       (lem:show-message (lem/markdown-buffer:markdown-buffer documentation)
+                                         :style '(:gravity :vertically-adjacent-window
+                                                  :offset-y -1
+                                                  :offset-x 1)
+                                         :source-window (lem/popup-menu::popup-menu-window
+                                                         (lem/completion-mode::context-popup-menu
+                                                          context))))))))
 
 (defun make-completion-items (completions &rest args)
   (mapcar (lambda (completion)

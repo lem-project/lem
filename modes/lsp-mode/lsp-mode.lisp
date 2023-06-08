@@ -901,7 +901,8 @@
                                             :offset-y -1
                                             :offset-x 1)
                                    :source-window (lem/popup-menu::popup-menu-window
-                                                   (lem/completion-mode::context-popup-menu context)))))))))
+                                                   (lem/completion-mode::context-popup-menu
+                                                    context)))))))))
     (sort-items
      (map 'list
           #'make-completion-item

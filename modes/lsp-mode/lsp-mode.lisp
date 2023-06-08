@@ -244,7 +244,7 @@
   (setf (variable-value 'language-mode:find-definitions-function)
         #'lsp-find-definitions)
   (setf (variable-value 'language-mode:find-references-function)
-        #'find-references)
+        #'lsp-find-references)
   (setf (buffer-value (current-buffer) 'revert-buffer-function)
         #'lsp-revert-buffer))
 
@@ -1227,7 +1227,7 @@
                (funcall then (convert-references-response response))
                (redraw-display))))))
 
-(defun find-references (point)
+(defun lsp-find-references (point)
   (check-connection)
   (text-document/references point
                             #'language-mode:display-xref-references))

@@ -11,6 +11,7 @@
    :find-definitions-function
    :find-definitions
    :find-references-function
+   :find-references
    :language-mode-tag
    :buffer-language-mode
    :completion-spec

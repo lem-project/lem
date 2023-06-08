@@ -53,12 +53,13 @@
 (defun mouse-event-p (value)
   (typep value 'mouse-event))
 
-(defun get-point-from-window-with-coordinates (window x y)
+(defun get-point-from-window-with-coordinates (window x y &optional (allow-overflow-column t))
   (with-point ((point (buffer-point (window-buffer window))))
     (move-point point (window-view-point window))
     (move-to-next-virtual-line point y window)
-    (move-to-virtual-line-column point x window)
-    point))
+    (let ((moved (move-to-virtual-line-column point x window)))
+      (when (or moved allow-overflow-column)
+        point))))
 
 (defun move-current-point-to-x-y-position (window x y)
   (switch-to-window window)
@@ -276,6 +277,9 @@
 (define-command <mouse-event> () ()
   (handle-mouse-event (last-mouse-event)))
 
+(define-command <mouse-motion-event> () ()
+  (handle-mouse-event (last-mouse-event)))
+
 (defun find-mouse-command (event)
   (etypecase event
     (mouse-button-down
@@ -283,7 +287,7 @@
     (mouse-button-up
      '<mouse-event>)
     (mouse-motion
-     '<mouse-event>)
+     '<mouse-motion-event>)
     (mouse-wheel
      '<mouse-event>)))
 
@@ -343,11 +347,19 @@
                    (when hover-window
                      (delete-popup-message hover-window))))))
 
+(defvar *last-point-on-context-menu-open*)
+(defun get-point-on-context-menu-open ()
+  *last-point-on-context-menu-open*)
+
 (defun show-context-menu-over-mouse-cursor (x y)
-  (declare (ignore x y))
   (let ((context-menu (buffer-context-menu (current-buffer))))
     (when context-menu
-      (lem-if:display-context-menu (implementation) context-menu '(:gravity :mouse-cursor)))))
+      (multiple-value-bind (target-window x y)
+          (focus-window-position (current-frame) x y)
+        (setf *last-point-on-context-menu-open*
+              (get-point-from-window-with-coordinates target-window x y nil))
+        (setf (current-window) target-window)
+        (lem-if:display-context-menu (implementation) context-menu '(:gravity :mouse-cursor))))))
 
 (defun paste-expression-on-mouse-cursor-to-current-point (window x y)
   (multiple-value-bind (target-window x y)

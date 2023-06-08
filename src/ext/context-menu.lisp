@@ -4,6 +4,7 @@
         :lem/multi-column-list)
   (:export :context-menu
            :item
+           :make-item
            :display-context-menu)
   #+sbcl
   (:lock t))
@@ -24,8 +25,20 @@
                  :description description
                  :callback callback))
 
-(defclass context-menu (multi-column-list) ()
+(defgeneric activate (context-menu)
+  (:documentation "This generic-function is called just before the context menu is displayed.
+It is intended for use in dynamically computing menu items."))
+
+(defclass context-menu (multi-column-list)
+  ((compute-items-function :initarg :compute-items-function
+                           :initform nil
+                           :reader context-menu-compute-items-function))
   (:default-initargs :columns '()))
+
+(defmethod activate ((context-menu context-menu))
+  (when (context-menu-compute-items-function context-menu)
+    (setf (lem/multi-column-list::multi-column-list-items context-menu)
+          (funcall (context-menu-compute-items-function context-menu)))))
 
 (defmethod select-item ((component context-menu) item)
   (let ((window (window-parent (lem/multi-column-list::multi-column-list-window component))))
@@ -40,8 +53,10 @@
            :style '(:gravity :cursor)))
 
 (defmethod lem-if:display-context-menu (implementation context-menu style)
-  (display context-menu
-           :style style))
+  (activate context-menu)
+  (when (lem/multi-column-list::multi-column-list-items context-menu)
+    (display context-menu
+             :style style)))
 
 (define-command test-context-menu () ()
   (display-context-menu (list (make-item :label "foo"

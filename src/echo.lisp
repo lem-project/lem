@@ -17,8 +17,8 @@ formatted under control of the string."
           (buffer (make-buffer "*Messages*")))
       (with-open-stream (stream (make-buffer-output-stream
                                  (buffer-end-point buffer)))
-                        (fresh-line stream)
-                        (princ msg stream)))))
+        (fresh-line stream)
+        (princ msg stream)))))
 
 (defun message-without-log (string &rest args)
   "Print a message.
@@ -29,8 +29,8 @@ The first argument is a format control string, and the rest are data to be
 formatted under control of the string."
   (if (null string)
       (clear-message)
-    (show-message (apply #'format nil string args)
-                  :timeout *message-timeout*)))
+      (show-message (apply #'format nil string args)
+                    :timeout *message-timeout*)))
 
 (defun message (string &rest args)
   "Print a message.

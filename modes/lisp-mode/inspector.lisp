@@ -150,6 +150,9 @@
 ;; slime-inspector-next-inspectable-object
 ;; slime-inspector-previous-inspectable-object
 
+(defun lisp-eval-describe (form)
+  (lisp-eval-async form (lambda (string) (show-message string))))
+
 (define-command lisp-inspector-describe () ()
   (lisp-eval-describe `(micros:describe-inspectee)))
 

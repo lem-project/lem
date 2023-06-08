@@ -45,7 +45,11 @@
   (setf (variable-value 'root-uri-patterns) '(".asd"))
   (set-syntax-parser lem-lisp-syntax:*syntax-table*
                      (make-tmlanguage-lisp))
-  (unless (connected-p) (self-connect)))
+  (unless (connected-p) (self-connect))
+
+  (setf (buffer-context-menu (current-buffer))
+        (make-instance 'lem/context-menu:context-menu
+                       :compute-items-function 'compute-context-menu-items)))
 
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)
 (define-key *lisp-mode-keymap* "C-c M-p" 'lisp-set-package)
@@ -78,6 +82,13 @@
                       (or (self-connection-p (current-connection))
                           (connection-pid (current-connection))))
               "")))
+
+(defun compute-context-menu-items ()
+  (when (and (get-point-on-context-menu-open)
+             (symbol-string-at-point (get-point-on-context-menu-open)))
+    (list (lem/context-menu:make-item
+           :label "Describe symbol"
+           :callback 'lisp-describe-symbol-at-point))))
 
 (defun change-current-connection (connection)
   (when (current-connection)
@@ -824,23 +835,31 @@
                         :thread (current-swank-thread)
                         :package (current-package)))))
 
-(defun show-description (string)
-  (let ((buffer (make-buffer "*lisp-description*")))
-    (change-buffer-mode buffer 'lisp-mode)
-    (with-pop-up-typeout-window (stream buffer :erase t)
-      (princ string stream))))
+(defun describe-symbol (symbol-name)
+  (when symbol-name
+    (when (string= "" symbol-name)
+      (editor-error "No symbol given"))
+    (let ((markdown (lisp-eval
+                     `(micros/lsp-api:hover-symbol ,symbol-name))))
+      (if (and markdown (not (alexandria:emptyp markdown)))
+          (lem/hover:show-hover (lem/markdown-buffer:markdown-buffer markdown))
+          (message "No documentation")))))
 
-(defun lisp-eval-describe (form)
-  (lisp-eval-async form #'show-description))
+(defun lisp-describe-symbol-at-point (window)
+  (let* ((buffer (window-buffer window))
+         (point (buffer-point buffer))
+         (dest-point (get-point-on-context-menu-open)))
+    (when (eq (point-buffer point)
+              (point-buffer dest-point))
+      (move-point point dest-point)
+      (describe-symbol (symbol-string-at-point point)))))
 
 (define-command lisp-describe-symbol () ()
   (check-connection)
   (let ((symbol-name
           (prompt-for-symbol-name "Describe symbol: "
-                            (or (symbol-string-at-point (current-point)) ""))))
-    (when (string= "" symbol-name)
-      (editor-error "No symbol given"))
-    (lisp-eval-describe `(micros:describe-symbol ,symbol-name))))
+                                  (or (symbol-string-at-point (current-point)) ""))))
+    (describe-symbol symbol-name)))
 
 (defvar *wait-message-thread* nil)
 

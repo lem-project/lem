@@ -772,18 +772,16 @@
                         (lem-lisp-mode/completion:make-completions-form-string string (current-package))
                         :continuation (lambda (result)
                                         (alexandria:destructuring-ecase result
-                                          ((:ok value)
-                                           (destructuring-bind (completions timeout) value
-                                             (declare (ignore timeout))
-                                             (with-point ((start (current-point))
-                                                          (end (current-point)))
-                                               (skip-symbol-backward start)
-                                               (skip-symbol-forward end)
-                                               (funcall then
-                                                        (lem-lisp-mode/completion:make-completion-items
-                                                         completions
-                                                         start
-                                                         end)))))
+                                          ((:ok completions)
+                                           (with-point ((start (current-point))
+                                                        (end (current-point)))
+                                             (skip-symbol-backward start)
+                                             (skip-symbol-forward end)
+                                             (funcall then
+                                                      (lem-lisp-mode/completion:make-completion-items
+                                                       completions
+                                                       start
+                                                       end))))
                                           ((:abort condition)
                                            (editor-error "abort ~A" condition))))
                         :thread (current-swank-thread)

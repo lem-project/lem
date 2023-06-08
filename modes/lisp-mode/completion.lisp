@@ -9,14 +9,13 @@
 
 (defun make-completions-form-string (string package-name)
   (format nil
-          "(micros:fuzzy-completions ~S ~S)"
+          "(cl:first (micros:fuzzy-completions ~S ~S))"
           string
           package-name))
 
 (defun eval-completions (string package)
-  (first
-   (lisp-eval-from-string (make-completions-form-string string package)
-                          "COMMON-LISP-USER")))
+  (lisp-eval-from-string (make-completions-form-string string package)
+                         "COMMON-LISP-USER"))
 
 (defun make-completion-item* (completion &optional start end)
   (lem/completion-mode:make-completion-item

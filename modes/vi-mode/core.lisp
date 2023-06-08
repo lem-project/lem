@@ -71,20 +71,23 @@
   :reader state-keymap)
   (cursor-color
   :initarg :cursor-color
-  :accessor state-cursor-color)))
+  :accessor state-cursor-color))
+  (:default-initargs
+        :cursor-color "IndianRed"
+        :keymap *global-keymap*))
 
 (defvar *current-state* nil)
 
 ;;; vi-state methods
-(defmacro define-vi-state (name (&key tag message cursor-type keymap cursor-color) &body spec)
-  `(progn
-     (defclass ,name (vi-state) ())
+(defmacro define-vi-state (name direct-super-classes direct-slot-specs &rest options)
+  (let ((cleaned-super-classes (if (null direct-super-classes) '(vi-state) direct-super-classes)))
+    `(progn
+       (assert (find 'vi-state ',cleaned-super-classes :test #'(lambda (expected-class class) (closer-mop:subclassp class expected-class))) (',cleaned-super-classes) "At least one of the direct super-classes should be vi-state!")
+       (defclass ,name ,cleaned-super-classes
+         ,direct-slot-specs
+         ,@options)
        (setf (get ',name 'state)
-             (make-instance ',name
-                            :message ,message
-                            :cursor-type ,cursor-type
-                            :keymap ,keymap
-                            :cursor-color ,cursor-color))))
+             (make-instance ',name)))))
 
 (defgeneric post-command-hook (state))
 
@@ -134,18 +137,24 @@
                                       :parent *global-keymap*))
 (defvar *inactive-keymap* (make-keymap :parent *global-keymap*))
 
-(define-vi-state normal (:keymap *command-keymap*))
+(define-vi-state normal () ()
+  (:default-initargs
+   :keymap *command-keymap*))
 
 
 ;; insert state
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap* :parent *global-keymap*))
 
-(define-vi-state insert (:keymap *insert-keymap* :cursor-color "IndianRed"))
+(define-vi-state insert () () 
+  (:default-initargs
+   :keymap *insert-keymap*))
 
 (defmethod state-enabled-hook ((state insert) &rest args)
   (message "-- INSERT --"))
 
-(define-vi-state vi-modeline (:keymap *inactive-keymap*))
+(define-vi-state vi-modeline () () 
+  (:default-initargs
+   :keymap *inactive-keymap*))
 
 (defun prompt-activate-hook () (change-state 'vi-modeline))
 (defun prompt-deactivate-hook () (change-state 'normal))

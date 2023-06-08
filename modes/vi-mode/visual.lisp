@@ -29,7 +29,9 @@
 (define-key *visual-keymap* "U" 'vi-visual-upcase)
 (define-key *visual-keymap* "u" 'vi-visual-downcase)
 
-(define-vi-state visual (:keymap *visual-keymap*))
+(define-vi-state visual () () 
+  (:default-initargs
+   :keymap *visual-keymap*))
 
 (defmethod state-enabled-hook ((state visual) &rest args)
    (setf *set-visual-function* (caar args))

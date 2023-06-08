@@ -11,6 +11,7 @@
                "lem-socket-utils")
   :serial t
   :components ((:file "test-api")
+               (:file "exporter")
                (:file "errors")
                (:file "swank-protocol")
                (:file "connections")

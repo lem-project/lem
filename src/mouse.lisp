@@ -351,13 +351,16 @@
 (defun get-point-on-context-menu-open ()
   *last-point-on-context-menu-open*)
 
+(defun update-point-on-context-menu-open (point)
+  (setf *last-point-on-context-menu-open* (copy-point point :temporary)))
+
 (defun show-context-menu-over-mouse-cursor (x y)
   (let ((context-menu (buffer-context-menu (current-buffer))))
     (when context-menu
       (multiple-value-bind (target-window x y)
           (focus-window-position (current-frame) x y)
-        (setf *last-point-on-context-menu-open*
-              (get-point-from-window-with-coordinates target-window x y nil))
+        (update-point-on-context-menu-open
+         (get-point-from-window-with-coordinates target-window x y nil))
         (setf (current-window) target-window)
         (lem-if:display-context-menu (implementation) context-menu '(:gravity :mouse-cursor))))))
 

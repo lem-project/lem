@@ -4,6 +4,7 @@
         :lem/multi-column-list)
   (:export :context-menu
            :item
+           :make-item
            :display-context-menu)
   #+sbcl
   (:lock t))

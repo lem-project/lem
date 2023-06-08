@@ -86,7 +86,7 @@
 (defun compute-context-menu-items ()
   (when (and (get-point-on-context-menu-open)
              (symbol-string-at-point (get-point-on-context-menu-open)))
-    (list (lem/context-menu::make-item
+    (list (lem/context-menu:make-item
            :label "Describe symbol"
            :callback 'lisp-describe-symbol-at-point))))
 

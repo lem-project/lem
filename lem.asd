@@ -108,6 +108,7 @@
                              (:file "peek-source")
                              (:file "grep")
                              (:file "go-back")
+                             (:file "hover")
                              (:file "language-mode")
                              (:file "language-mode-tools")
                              (:file "gtags")

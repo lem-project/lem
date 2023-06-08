@@ -842,10 +842,8 @@
     (let ((markdown (lisp-eval
                      `(micros/lsp-api:hover-symbol ,symbol-name))))
       (if (and markdown (not (alexandria:emptyp markdown)))
-          (show-message (lem/markdown-buffer:markdown-buffer markdown)
-                        :style '(:gravity :cursor))
-          (show-message "No documentation"
-                        :style '(:gravity :cursor))))))
+          (lem/hover:show-hover (lem/markdown-buffer:markdown-buffer markdown))
+          (message "No documentation")))))
 
 (defun lisp-describe-symbol-at-point (window)
   (let* ((buffer (window-buffer window))

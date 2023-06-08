@@ -84,11 +84,28 @@
               "")))
 
 (defun compute-context-menu-items ()
-  (when (and (get-point-on-context-menu-open)
-             (symbol-string-at-point (get-point-on-context-menu-open)))
-    (list (lem/context-menu:make-item
-           :label "Describe symbol"
-           :callback 'lisp-describe-symbol-at-point))))
+  (let ((point (get-point-on-context-menu-open)))
+    (when (and point
+               (symbol-string-at-point point))
+      (list (lem/context-menu:make-item
+             :label "Describe symbol"
+             :callback 'lisp-describe-symbol-at-point)
+            (lem/context-menu:make-item
+             :label "Find definition"
+             :callback (lambda (&rest args)
+                         (declare (ignore args))
+                         (find-definitions point)))
+            (lem/context-menu:make-item
+             :label "Find references"
+             :callback (lambda (&rest args)
+                         (declare (ignore args))
+                         (find-references point)))
+            (lem/context-menu:make-item
+             :label "Export symbol"
+             :callback (lambda (&rest args)
+                         (declare (ignore args))
+                         (lem-lisp-mode/exporter:lisp-add-export
+                          (symbol-string-at-point point))))))))
 
 (defun change-current-connection (connection)
   (when (current-connection)

@@ -19,6 +19,7 @@
                (:file "grammer")
                (:file "implementation")
                (:file "internal-package")
+               (:file "completion")
                (:file "message")
                (:file "file-conversion")
                (:file "lisp-mode")

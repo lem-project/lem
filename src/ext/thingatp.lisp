@@ -6,28 +6,31 @@
    :pathp
    :path))
 
-;; URL
-(defun urlp (thing)
-  (and
-   (stringp thing)
-   (numberp
-    (ppcre:scan 
-     "(https:\/\/www\.|http:\/\/www\.|https:\/\/|http:\/\/)[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})(\.[a-zA-Z0-9]{2,})?" thing))))
+(in-package :lem/thingatp)
 
-(deftype url ()
-  `(satisfies urlp))
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  ;; URL
+  (defun urlp (thing)
+    (and
+     (stringp thing)
+     (numberp
+      (ppcre:scan 
+       "(https://www\.|http://www\.|https://|http://)[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})(\.[a-zA-Z0-9]{2,})?" thing))))
 
-;; PATH
-(defun pathp (thing)
-  (and (ppcre:scan "^(.*)\/([^\/]*)$" thing)
-       (or (uiop:directory-exists-p thing) 
-           (uiop:file-exists-p thing))))
+  (deftype url ()
+    `(satisfies urlp))
 
-(deftype path ()
-  `(satisfies pathp))
+  ;; PATH
+  (defun pathp (thing)
+    (and (ppcre:scan "^(.*)\/([^\/]*)$" thing)
+	 (or (uiop:directory-exists-p thing) 
+	     (uiop:file-exists-p thing))))
 
-(lem:define-command open-at-point () ()
-  (let ((thing (lem:symbol-string-at-point (lem:current-point))))
+  (deftype path ()
+    `(satisfies pathp)))
+
+(define-command open-at-point () ()
+  (let ((thing (symbol-string-at-point (lem:current-point))))
     (typecase thing
       #+unix
       (url (uiop:run-program 

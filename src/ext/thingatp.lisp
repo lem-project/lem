@@ -5,7 +5,6 @@
    :url
    :pathp
    :path))
-
 (in-package :lem/thingatp)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
@@ -15,7 +14,7 @@
      (stringp thing)
      (numberp
       (ppcre:scan 
-       "(https://www\.|http://www\.|https://|http://)[a-zA-Z0-9]{2,}(\.[a-zA-Z0-9]{2,})(\.[a-zA-Z0-9]{2,})?" thing))))
+       "(https://www\\.|http://www\\.|https://|http://)[a-zA-Z0-9]{2,}(\\.[a-zA-Z0-9]{2,})(\\.[a-zA-Z0-9]{2,})?" thing))))
 
   (deftype url ()
     `(satisfies urlp))

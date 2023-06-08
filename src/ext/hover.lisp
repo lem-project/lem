@@ -16,7 +16,9 @@
 (defmethod handle-signal ((condition clear-hover-window))
   (when (and (not (eq (current-window) *hover-window*))
              (or (typep (clear-hover-window-command condition) 'movable-advice)
-                 (typep (clear-hover-window-command condition) 'editable-advice)))
+                 (typep (clear-hover-window-command condition) 'editable-advice)
+                 (typep (clear-hover-window-command condition) 'keyboard-quit)
+                 (typep (clear-hover-window-command condition) 'escape)))
     (clear-hover-window)))
 
 (defun show-hover (buffer-or-string)

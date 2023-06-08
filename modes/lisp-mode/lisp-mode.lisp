@@ -703,47 +703,13 @@
   (check-connection)
   (eval-with-transcript `(,(uiop:find-symbol* :quickload :quicklisp) ,(string system-name))))
 
-(defun make-completions-form-string (string package-name &key (fuzzy t))
-  (format nil "(~A ~S ~S)"
-          (if fuzzy
-              "micros:fuzzy-completions"
-              "micros:completions")
-          string
-          package-name))
-
-(defvar *completion-symbol-with-fuzzy* t)
-
-(defun eval-completions (string package &key (fuzzy *completion-symbol-with-fuzzy*))
-  (let ((completions
-          (first
-           (lisp-eval-from-string (make-completions-form-string string package :fuzzy fuzzy)
-                                  "COMMON-LISP-USER"))))
-    (if fuzzy
-        completions
-        ;; fuzzy-completionsと形式を合わせる
-        (mapcar (lambda (item)
-                  (list item nil nil nil))
-                completions))))
-
-(defun make-completion-item* (completion &optional start end)
-  (make-completion-item
-   :label (first completion)
-   :chunks (loop :for (offset substring) :in (third completion)
-                 :collect (cons offset (+ offset (length substring))))
-   :detail (fourth completion)
-   :start start
-   :end end))
-
-(defun symbol-completion (string &optional (package (current-package)))
-  (let ((completions (eval-completions string package)))
-    (mapcar #'make-completion-item* completions)))
-
 (defun prompt-for-symbol-name (prompt &optional (initial ""))
   (let ((package (current-package)))
     (prompt-for-string prompt
                        :initial-value initial
                        :completion-function (lambda (string)
-                                              (symbol-completion string package))
+                                              (lem-lisp-mode/completion:symbol-completion
+                                               string package))
                        :history-symbol 'mh-read-symbol)))
 
 (defun definition-to-location (definition)
@@ -789,11 +755,6 @@
        :collect (make-xref-references :type type
                                       :locations defs)))))
 
-(defun make-completion-items (completions &optional start end)
-  (mapcar (lambda (completion)
-            (make-completion-item* completion start end))
-          completions))
-
 (defun completion-symbol (point)
   (check-connection)
   (with-point ((start point)
@@ -801,31 +762,26 @@
     (skip-chars-backward start #'syntax-symbol-char-p)
     (skip-chars-forward end #'syntax-symbol-char-p)
     (when (point< start end)
-      (let* ((completions (eval-completions (points-to-string start end)
-                                            (current-package))))
-        (make-completion-items completions start end)))))
+      (lem-lisp-mode/completion:region-completion start end (current-package)))))
 
 (defun completion-symbol-async (point then)
   (check-connection)
   (let ((string (symbol-string-at-point point)))
     (when string
       (emacs-rex-string (current-connection)
-                        (make-completions-form-string string
-                                                      (current-package)
-                                                      :fuzzy t)
+                        (lem-lisp-mode/completion:make-completions-form-string string (current-package))
                         :continuation (lambda (result)
                                         (alexandria:destructuring-ecase result
-                                          ((:ok value)
-                                           (destructuring-bind (completions timeout) value
-                                             (declare (ignore timeout))
-                                             (with-point ((start (current-point))
-                                                          (end (current-point)))
-                                               (skip-symbol-backward start)
-                                               (skip-symbol-forward end)
-                                               (funcall then
-                                                        (make-completion-items completions
-                                                                               start
-                                                                               end)))))
+                                          ((:ok completions)
+                                           (with-point ((start (current-point))
+                                                        (end (current-point)))
+                                             (skip-symbol-backward start)
+                                             (skip-symbol-forward end)
+                                             (funcall then
+                                                      (lem-lisp-mode/completion:make-completion-items
+                                                       completions
+                                                       start
+                                                       end))))
                                           ((:abort condition)
                                            (editor-error "abort ~A" condition))))
                         :thread (current-swank-thread)

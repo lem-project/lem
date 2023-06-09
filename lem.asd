@@ -103,6 +103,7 @@
                              (:file "universal-argument")
                              (:file "kbdmacro")
                              (:file "isearch")
+                             (:file "thingatp")
                              (:file "showparen")
                              (:file "line-numbers")
                              (:file "peek-source")

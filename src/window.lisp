@@ -1218,7 +1218,13 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                               :x 0
                               :y 1
                               :width width
-                              :height (display-height))))
+                              :height (display-height)))
+  (balance-windows))
+
+(defun delete-leftside-window ()
+  (delete-window (frame-leftside-window (current-frame)))
+  (setf (frame-leftside-window (current-frame)) nil)
+  (balance-windows))
 
 ;;;
 (defun adjust-all-window-size ()

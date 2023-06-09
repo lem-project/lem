@@ -35,6 +35,12 @@
 
 (defvar *find-program*)                 ;; unbound: search and set at first use.
 
+(defvar *find-program-timeout* 5
+  "Timeout (in seconds) for listing files recursively.")
+
+(define-condition fallback-to-find-file (simple-condition)
+  ())
+
 (defun expand-files* (filename)
   (directory-files (expand-file-name filename (buffer-directory))))
 
@@ -142,6 +148,7 @@
    (uiop:run-program (list "find" ".") :output :string)))
 
 (defmethod get-files-recursively ((finder (eql :lisp)))
+  "Find all files recursively, without external tools."
   ;; XXX: this method returns full paths, instead of paths starting at the current directory.
   (let ((results))
     (uiop:collect-sub*directories
@@ -157,17 +164,47 @@
                           collect (namestring path))))))
     results))
 
+(defun get-files-recursively-with-timeout (find-program &key (timeout *find-program-timeout*))
+  "Find files recursively, with timeout.
+  If finding files times out, such as in a HOME directory, stop the operation.
+
+  Return a list of files or signal a FALLBACK-TO-FIND-FILE simple condition."
+  (let ((thread (bt:make-thread
+                 (lambda ()
+                   (get-files-recursively find-program))
+                 :name "Lem get-files-recursively")))
+    (handler-case
+        (bt:with-timeout (timeout)
+          (bt:join-thread thread))
+      (bt:timeout ()
+        (bt:destroy-thread thread)
+        (signal 'fallback-to-find-file)))))
+
 (defun prompt-for-files-recursively ()
-  (let ((candidates (get-files-recursively (find-program))))
-    (prompt-for-string
-     "File: "
-     :completion-function (lambda (x) (completion-strings x candidates))
-     :test-function (lambda (name) (member name candidates :test #'string=)))))
+  "Prompt for a file, listing all files under the buffer's directory recursively.
+
+  If listing all files times out, abort the process and fallback to the simple find-file."
+  (handler-bind ((fallback-to-find-file
+                   ;; Fallback to simple find-file.
+                   (lambda (c)
+                     (declare (ignore c))
+                     (message "Time out! Finding files recursively under ~A was aborted." (buffer-directory))
+                     (prompt-for-file
+                      "Find File: "
+                      :directory (buffer-directory)
+                      :default nil
+                      :existing nil))))
+    (let ((candidates (get-files-recursively-with-timeout (find-program))))
+      (prompt-for-string
+       "File: "
+       :completion-function (lambda (x) (completion-strings x candidates))
+       :test-function (lambda (name) (member name candidates :test #'string=))))))
 
 (define-command find-file-recursively (arg) ("p")
-  ;; what is arg for?
+  "Open a file, from the list of all files present under the buffer's direcotry, recursively."
+  ;; ARG is currently not used, use it when needed.
   (declare (ignorable arg))
-  (let ((cwd (buffer-directory (current-buffer))))
+  (let ((cwd (buffer-directory)))
     (uiop:with-current-directory (cwd)
       (let ((filename (prompt-for-files-recursively))
             buffer)

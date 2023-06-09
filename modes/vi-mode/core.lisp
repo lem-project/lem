@@ -82,7 +82,7 @@
 (defmacro define-vi-state (name direct-super-classes direct-slot-specs &rest options)
   (let ((cleaned-super-classes (if (null direct-super-classes) '(vi-state) direct-super-classes)))
     `(progn
-       (assert (find 'vi-state ',cleaned-super-classes :test #'(lambda (expected-class class) (closer-mop:subclassp class expected-class))) (',cleaned-super-classes) "At least one of the direct-super-classes should be vi-state or subclass of vi-state!")
+       (assert (find 'vi-state ',cleaned-super-classes :test #'(lambda (expected-class class) (closer-mop:subclassp class expected-class))) (',cleaned-super-classes) "At least one of the direct-super-classes should be vi-state or a subclass of vi-state!")
        (defclass ,name ,cleaned-super-classes
          ,direct-slot-specs
          ,@options)

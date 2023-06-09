@@ -241,8 +241,8 @@
            (when (eq button :button-1)
              (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
                (unless (zerop diff-x)
-                 (resize-leftside-window-relative diff-x)
-                 (setf (window-separator-start-x *last-dragged-separator*) x))))))))
+                 (when (resize-leftside-window-relative diff-x)
+                   (setf (window-separator-start-x *last-dragged-separator*) x)))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-wheel))
   (unless (zerop (mouse-wheel-y mouse-event))

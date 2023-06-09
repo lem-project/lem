@@ -1232,9 +1232,14 @@ You can pass in the optional argument WINDOW-LIST to replace the default
     (balance-windows)))
 
 (defun resize-leftside-window-relative (offset)
-  (let ((window (frame-leftside-window (current-frame))))
-    (window-resize window offset 0)
-    (balance-windows)))
+  (let* ((window (frame-leftside-window (current-frame)))
+         (new-width (+ (window-width window) offset)))
+    (when (< 2 new-width)
+      (window-set-size window
+                       new-width
+                       (window-height window))
+      (balance-windows)
+      t)))
 
 ;;;
 (defun adjust-all-window-size ()

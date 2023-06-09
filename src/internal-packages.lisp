@@ -261,6 +261,8 @@
    :floating-window-border
    :floating-window-border-shape
    :floating-window-p
+   :make-leftside-window
+   :delete-leftside-window
    :header-window
    :update-on-display-resized
    :covered-with-floating-window-p

@@ -1,4 +1,7 @@
-(in-package :lem-lisp-mode/internal)
+(defpackage :lem-lisp-mode/hyperspec
+  (:use :cl :lem))
+
+(in-package :lem-lisp-mode/hyperspec)
 
 (defparameter *hyperspec-root* "http://www.lispworks.com/reference/HyperSpec/"
   "The root of the Common Lisp HyperSpec URL. 

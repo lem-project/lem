@@ -128,6 +128,7 @@
 (defun clear-screens-of-window-list ()
   (flet ((clear-screen (window)
            (screen-clear (window-screen window))))
+    (mapc #'clear-screen (uiop:ensure-list (frame-leftside-window (current-frame))))
     (mapc #'clear-screen (window-list))
     (mapc #'clear-screen (frame-floating-windows (current-frame)))))
 
@@ -227,6 +228,7 @@
 (defun teardown-windows (frame)
   (mapc #'%free-window (window-list frame))
   (mapc #'%free-window (frame-floating-windows frame))
+  (mapc #'%free-window (uiop:ensure-list (frame-leftside-window frame)))
   (values))
 
 (defun window-recenter (window)
@@ -962,7 +964,9 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                                        (include-floating-windows nil))
   (loop :for window :in (append (window-list frame)
                                 (when include-floating-windows
-                                  (frame-floating-windows frame)))
+                                  (frame-floating-windows frame))
+                                (when include-floating-windows
+                                  (uiop:ensure-list (frame-leftside-window frame))))
         :when (eq buffer (window-buffer window))
         :collect window))
 

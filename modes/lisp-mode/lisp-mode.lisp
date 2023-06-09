@@ -94,7 +94,7 @@
              :label "Find definition"
              :callback (lambda (&rest args)
                          (declare (ignore args))
-                         (find-definitions point)))
+                         (lisp-find-definitions point)))
             (lem/context-menu:make-item
              :label "Find references"
              :callback (lambda (&rest args)

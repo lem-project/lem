@@ -1211,6 +1211,15 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (remove-header-window (current-frame) window)
   (notify-header-window-modified (current-frame)))
 
+;;; leftside-window
+(defun make-leftside-window (buffer &key (width 30))
+  (setf (frame-leftside-window (current-frame))
+        (make-floating-window :buffer buffer
+                              :x 0
+                              :y 1
+                              :width width
+                              :height (display-height))))
+
 ;;;
 (defun adjust-all-window-size ()
   (dolist (window (frame-header-windows (current-frame)))

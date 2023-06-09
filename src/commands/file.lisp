@@ -147,12 +147,16 @@
   (str:lines
    (uiop:run-program (list "find" ".") :output :string)))
 
+(defun %shorten-path (cwd path)
+  (str:replace-all cwd "" path))
+
 (defmethod get-files-recursively ((finder (eql :lisp)))
   "Find all files recursively, without external tools."
   ;; XXX: this method returns full paths, instead of paths starting at the current directory.
-  (let ((results))
+  (let ((results)
+        (cwd-string (namestring (uiop:getcwd))))
     (uiop:collect-sub*directories
-     "./"
+     (uiop:getcwd)
      (constantly t)
      (constantly t)
      (lambda (subdir)
@@ -161,7 +165,11 @@
                     ;; For the file select, we want strings, not pathnames.
                     (loop for path in (append (uiop:subdirectories subdir)
                                               (uiop:directory-files subdir))
-                          collect (namestring path))))))
+                          for path-string = (namestring path)
+                          ;; Return file names relative to the current directory,
+                          ;; not absolute paths.
+                          ;; Ex: hello.lisp instead of /home/user/lem/hello.lisp
+                          collect (%shorten-path cwd-string path-string))))))
     results))
 
 (defun get-files-recursively-with-timeout (find-program &key (timeout *find-program-timeout*))

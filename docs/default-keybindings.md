@@ -89,14 +89,14 @@
 | Command                                                                                         | Key bindings | Documentation                                                                                                 |
 |-------------------------------------------------------------------------------------------------|--------------|---------------------------------------------------------------------------------------------------------------|
 | [find-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L49)            | C-x C-f      | Open the file.                                                                                                |
-| [read-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L95)            | C-x C-r      | Open the file as a read-only.                                                                                 |
-| [save-current-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L133) | C-x C-s      | Saves the current buffer text to a file                                                                       |
-| [write-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L139)          | C-x C-w      | Saves the text in the current buffer to the specified file                                                    |
-| [write-region-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L160)   |              | Saves the region of text to the specified file                                                                |
-| [insert-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L168)         | C-x Tab      | Inserts the contents of the file into the current buffer.                                                     |
-| [save-some-buffers](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L174)   | C-x s        | Save some files in the open buffer.                                                                           |
-| [revert-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L206)       |              | Restores the buffer. Normally this command will cause the contents of the file to be reflected in the buffer. |
-| [change-directory](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L240)    |              | Change directories associated with the buffer.                                                                |
+| [read-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L90)            | C-x C-r      | Open the file as a read-only.                                                                                 |
+| [save-current-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L128) | C-x C-s      | Saves the current buffer text to a file                                                                       |
+| [write-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L134)          | C-x C-w      | Saves the text in the current buffer to the specified file                                                    |
+| [write-region-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L155)   |              | Saves the region of text to the specified file                                                                |
+| [insert-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L163)         | C-x Tab      | Inserts the contents of the file into the current buffer.                                                     |
+| [save-some-buffers](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L169)   | C-x s        | Save some files in the open buffer.                                                                           |
+| [revert-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L201)       |              | Restores the buffer. Normally this command will cause the contents of the file to be reflected in the buffer. |
+| [change-directory](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L235)    |              | Change directories associated with the buffer.                                                                |
 
 ## Buffer
 | Command                                                                                       | Key bindings | Documentation                                 |

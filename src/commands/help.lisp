@@ -3,12 +3,14 @@
   (:export :describe-key
            :describe-bindings
            :apropos-command
-           :lem-version))
+           :lem-version
+           :list-modes))
 (in-package :lem-core/commands/help)
 
 (define-key *global-keymap* "C-x ?" 'describe-key)
 
 (define-command describe-key () ()
+  "Tell what is the command associated to a keybinding."
   (show-message "describe-key: ")
   (redraw-display)
   (let* ((kseq (read-key-sequence))
@@ -37,6 +39,7 @@
               (terpri s))))
 
 (define-command describe-bindings () ()
+  "Describe the bindings of the buffer's current major mode."
   (let ((buffer (current-buffer))
         (firstp t))
     (with-pop-up-typeout-window (s (make-buffer "*bindings*") :erase t)
@@ -58,7 +61,7 @@
                                   firstp))))
 
 (define-command list-modes () ()
-  "Outputs all available major and minor modes."
+  "Output all available major and minor modes."
   (with-pop-up-typeout-window (s (make-buffer "*all-modes*") :erase t)
     (let ((major-modes (major-modes))
           (minor-modes (minor-modes)))
@@ -95,11 +98,13 @@
                   (mode-description mode)))))))
 
 (define-command apropos-command (str) ("sApropos: ")
+  "Find all symbols in the running Lisp image whose names match a given string."
   (with-pop-up-typeout-window (out (make-buffer "*Apropos*") :erase t)
     (dolist (name (all-command-names))
       (when (search str name)
         (describe (command-name (find-command name)) out)))))
 
 (define-command lem-version () ()
+  "Display Lem's version."
   (let ((version (get-version-string)))
     (show-message (princ-to-string version))))

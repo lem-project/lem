@@ -1213,13 +1213,14 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 
 ;;; leftside-window
 (defun make-leftside-window (buffer &key (width 30))
-  (setf (frame-leftside-window (current-frame))
-        (make-floating-window :buffer buffer
-                              :x 0
-                              :y 1
-                              :width width
-                              :height (display-height)))
-  (balance-windows))
+  (unless (frame-leftside-window (current-frame))
+    (setf (frame-leftside-window (current-frame))
+          (make-floating-window :buffer buffer
+                                :x 0
+                                :y 1
+                                :width width
+                                :height (display-height)))
+    (balance-windows)))
 
 (defun delete-leftside-window ()
   (delete-window (frame-leftside-window (current-frame)))

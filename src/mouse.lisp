@@ -4,19 +4,18 @@
   ((start-x :initarg :start-x
             :accessor window-separator-start-x)
    (start-y :initarg :start-y
-            :accessor window-separator-start-y)))
+            :accessor window-separator-start-y)
+   (grabbed-window :initarg :grabbed-window
+                   :reader window-separator-grabbed-window)))
 
 (defclass window-vertical-separator (window-separator)
-  ((left-window :initarg :left-window
-                :reader window-separator-left-window)
-   (right-window :initarg :right-window
-                 :reader window-separator-right-window)))
+  ())
 
 (defclass window-horizontal-separator (window-separator)
-  ((up-window :initarg :up-window
-              :reader window-separator-up-window)
-   (down-window :initarg :down-window
-                :reader window-separator-down-window)))
+  ())
+
+(defclass leftside-window-separator (window-separator)
+  ())
 
 ;;;;;;;;;;;;;;;;;;
 
@@ -113,8 +112,7 @@
        (handle-button-1 (make-instance 'window-vertical-separator
                                        :start-x (mouse-event-x mouse-event)
                                        :start-y (mouse-event-y mouse-event)
-                                       :left-window first-window
-                                       :right-window second-window)
+                                       :grabbed-window second-window)
                         (mouse-event-x mouse-event)
                         (mouse-event-y mouse-event)
                         (mouse-button-down-clicks mouse-event)))
@@ -122,8 +120,15 @@
        (handle-button-1 (make-instance 'window-horizontal-separator
                                        :start-x (mouse-event-x mouse-event)
                                        :start-y (mouse-event-y mouse-event)
-                                       :up-window first-window
-                                       :down-window second-window)
+                                       :grabbed-window first-window)
+                        (mouse-event-x mouse-event)
+                        (mouse-event-y mouse-event)
+                        (mouse-button-down-clicks mouse-event)))
+      (:leftside
+       (handle-button-1 (make-instance 'leftside-window-separator
+                                       :start-x (mouse-event-x mouse-event)
+                                       :start-y (mouse-event-y mouse-event)
+                                       :grabbed-window first-window)
                         (mouse-event-x mouse-event)
                         (mouse-event-y mouse-event)
                         (mouse-button-down-clicks mouse-event)))
@@ -209,10 +214,12 @@
              (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
                (unless (zerop diff-x)
                  (when (if (plusp diff-x)
-                           (shrink-window-width (window-separator-right-window *last-dragged-separator*)
-                                              diff-x)
-                           (grow-window-width (window-separator-right-window *last-dragged-separator*)
-                                              (- diff-x)))
+                           (shrink-window-width
+                            (window-separator-grabbed-window *last-dragged-separator*)
+                            diff-x)
+                           (grow-window-width
+                            (window-separator-grabbed-window *last-dragged-separator*)
+                            (- diff-x)))
                    (setf (window-separator-start-x *last-dragged-separator*) x)))))))
         ((typep *last-dragged-separator* 'window-horizontal-separator)
          (let ((y (mouse-event-y mouse-event))
@@ -221,11 +228,21 @@
              (let ((diff-y (- (window-separator-start-y *last-dragged-separator*) y)))
                (unless (zerop diff-y)
                  (when (if (minusp diff-y)
-                           (shrink-window-height (window-separator-up-window *last-dragged-separator*)
-                                                 (- diff-y))
-                           (grow-window-height (window-separator-up-window *last-dragged-separator*)
-                                               diff-y))
-                   (setf (window-separator-start-y *last-dragged-separator*) y)))))))))
+                           (shrink-window-height
+                            (window-separator-grabbed-window *last-dragged-separator*)
+                            (- diff-y))
+                           (grow-window-height
+                            (window-separator-grabbed-window *last-dragged-separator*)
+                            diff-y))
+                   (setf (window-separator-start-y *last-dragged-separator*) y)))))))
+        ((typep *last-dragged-separator* 'leftside-window-separator)
+         (let ((x (mouse-event-x mouse-event))
+               (button (mouse-event-button mouse-event)))
+           (when (eq button :button-1)
+             (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
+               (unless (zerop diff-x)
+                 (when (resize-leftside-window-relative diff-x)
+                   (setf (window-separator-start-x *last-dragged-separator*) x)))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-wheel))
   (unless (zerop (mouse-wheel-y mouse-event))

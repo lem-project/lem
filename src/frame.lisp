@@ -64,7 +64,10 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
     :accessor frame-floating-prompt-window)
    (message-window
     :initform nil
-    :accessor frame-message-window)))
+    :accessor frame-message-window)
+   (leftside-window
+    :initform nil
+    :accessor frame-leftside-window)))
 
 (defmethod notify-floating-window-modified ((frame frame))
   (set-frame-modified-floating-windows t frame))
@@ -132,7 +135,8 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
 (defun window-in-frame-p (window frame)
   (when (or (find window (window-list frame))
             (find window (frame-floating-windows frame))
-            (find window (frame-header-windows frame)))
+            (find window (frame-header-windows frame))
+            (eq window (frame-leftside-window frame)))
     t))
 
 (defun get-frame-of-window (window)
@@ -166,8 +170,9 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
   (length (frame-header-windows frame)))
 
 (defun topleft-window-x (frame)
-  (declare (ignore frame))
-  0)
+  (if (null (frame-leftside-window frame))
+      0
+      (1+ (window-width (frame-leftside-window frame)))))
 
 (defun max-window-width (frame)
   (- (display-width) (topleft-window-x frame)))
@@ -192,6 +197,9 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
                       (- y (window-y window)))))))
 
 (defun focus-separator-position (frame x y)
+  (when (and (frame-leftside-window frame)
+             (= x (window-width (frame-leftside-window frame))))
+    (return-from focus-separator-position (values :leftside (frame-leftside-window frame))))
   (dolist (window (window-list frame))
     (when (and (= x (1- (window-x window)))
                (<= (window-y window) y (+ (window-y window) (window-height window) -1)))

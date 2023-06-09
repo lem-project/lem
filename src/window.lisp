@@ -128,6 +128,7 @@
 (defun clear-screens-of-window-list ()
   (flet ((clear-screen (window)
            (screen-clear (window-screen window))))
+    (mapc #'clear-screen (uiop:ensure-list (frame-leftside-window (current-frame))))
     (mapc #'clear-screen (window-list))
     (mapc #'clear-screen (frame-floating-windows (current-frame)))))
 
@@ -227,6 +228,7 @@
 (defun teardown-windows (frame)
   (mapc #'%free-window (window-list frame))
   (mapc #'%free-window (frame-floating-windows frame))
+  (mapc #'%free-window (uiop:ensure-list (frame-leftside-window frame)))
   (values))
 
 (defun window-recenter (window)
@@ -962,7 +964,9 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                                        (include-floating-windows nil))
   (loop :for window :in (append (window-list frame)
                                 (when include-floating-windows
-                                  (frame-floating-windows frame)))
+                                  (frame-floating-windows frame))
+                                (when include-floating-windows
+                                  (uiop:ensure-list (frame-leftside-window frame))))
         :when (eq buffer (window-buffer window))
         :collect window))
 
@@ -1206,6 +1210,36 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 (defmethod %delete-window ((window header-window))
   (remove-header-window (current-frame) window)
   (notify-header-window-modified (current-frame)))
+
+;;; leftside-window
+(defun make-leftside-window (buffer &key (width 30))
+  (setf (frame-leftside-window (current-frame))
+        (make-floating-window :buffer buffer
+                              :x 0
+                              :y 1
+                              :width width
+                              :height (display-height)))
+  (balance-windows))
+
+(defun delete-leftside-window ()
+  (delete-window (frame-leftside-window (current-frame)))
+  (setf (frame-leftside-window (current-frame)) nil)
+  (balance-windows))
+
+(defun resize-leftside-window (width)
+  (let ((window (frame-leftside-window (current-frame))))
+    (window-set-size window width (window-height window))
+    (balance-windows)))
+
+(defun resize-leftside-window-relative (offset)
+  (let* ((window (frame-leftside-window (current-frame)))
+         (new-width (+ (window-width window) offset)))
+    (when (< 2 new-width)
+      (window-set-size window
+                       new-width
+                       (window-height window))
+      (balance-windows)
+      t)))
 
 ;;;
 (defun adjust-all-window-size ()

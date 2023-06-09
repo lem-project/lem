@@ -34,8 +34,6 @@
   Must be symbols of program names, for example \":find\" for the unix \"find\" program.")
 
 (defvar *find-program*)                 ;; unbound: search and set at first use.
-#+(or)
-(setf lem-core/commands/file::*find-program* :lisp)
 
 (defun expand-files* (filename)
   (directory-files (expand-file-name filename (buffer-directory))))
@@ -103,24 +101,6 @@
       #+windows
       (uiop:run-program (list "explorer" (namestring pathname))))))
 
-(defun which (program)
-  "Simple, slow and unix-only function to know if this program exists on the system.
-  Returns either the full path (string) or NIL."
-  ;; note: the program path is eventually not used.
-  #+unix
-  (str:trim
-   (first
-    (str:lines (uiop:run-program (list "which" program)
-                                 :output :string
-                                 :ignore-error-status t))))
-  #-unix
-  (progn
-    (warn "which is not defined for your implementation.")
-    (string program)))
-#+(or)
-(assert (equal (which "find")
-               "/usr/bin/find"))
-
 (defun find-program ()
   "Return the first program of *find-programs* that exists on this system.
   Cache the result on *find-program*.
@@ -137,7 +117,7 @@
             if (eql :lisp key)
               do (setf *find-program* :lisp)
             else do
-              (when (which name)
+              (when (exist-program-p name)
                 (setf *find-program* key)
                 (return key)))))
 

@@ -62,6 +62,7 @@
 (define-key *sldb-keymap* "C" 'sldb-inspect-condition)
 (define-key *sldb-keymap* "C-c C-c" 'sldb-recompile-in-frame-source)
 (define-key *sldb-keymap* "M-Return" 'sldb-copy-down-to-repl)
+(define-key *sldb-keymap* "C-Return" 'sldb-copy-down-to-repl)
 
 (defun get-sldb-buffer (thread)
   (dolist (buffer (buffer-list))

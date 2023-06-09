@@ -45,7 +45,8 @@
   (:export
    :get-pid
    :exist-program-p
-   :lem-relative-pathname)
+   :lem-relative-pathname
+   :open-external-file)
   ;; key.lisp
   (:export
    :make-key

@@ -1004,22 +1004,20 @@ It can also be a path to load it locally:
     (loop for (key path) in *symbols-list*
 	  do  (setf (gethash key *symbols*) path))))
 
-#+unix
 (define-command hyperspec-at-point () ()
   (let* ((symbol (symbol-string-at-point (lem:current-point)))
-	 (url (hlookup symbol)))
+         (url (hlookup symbol)))
     (when (typep url 'lem/thingatp:url)
-      (uiop:run-program (format nil "open ~a" url)))))
+      (open-external-file url))))
 
-#+unix
 (define-command hyperspec-lookup () ()
   (let* ((symbol-list (mapcar #'car *symbols-list*))
-	 (symbol (prompt-for-string
-		  "Symbol: "
-		  :completion-function (lambda (str)
-					 (sort (completion str symbol-list)
-					       #'string-lessp))
-		  :test-function (lambda (package)
-				   (find package symbol-list :test #'string-equal))))
-	 (url (hlookup symbol)))
-    (uiop:run-program (format nil "open ~a" url))))
+         (symbol (prompt-for-string
+                  "Symbol: "
+                  :completion-function (lambda (str)
+                                         (sort (completion str symbol-list)
+                                               #'string-lessp))
+                  :test-function (lambda (package)
+                                   (find package symbol-list :test #'string-equal))))
+         (url (hlookup symbol)))
+    (open-external-file url)))

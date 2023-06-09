@@ -31,9 +31,7 @@
 (define-command open-at-point () ()
   (let ((thing (symbol-string-at-point (lem:current-point))))
     (typecase thing
-      #+unix
-      (url (uiop:run-program 
-	    (format nil "open ~a" thing)))
+      (url (open-external-file thing))
       (path
        (lem:find-file (pathname thing)))
       (t

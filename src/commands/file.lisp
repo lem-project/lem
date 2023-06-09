@@ -85,12 +85,7 @@
           (find-file-buffer pathname)
         (values buffer new-file-p))
     (encoding-read-error ()
-      #+linux
-      (uiop:run-program (list "xdg-open" (namestring pathname)))
-      #+mac
-      (uiop:run-program (list "open" (namestring pathname)))
-      #+windows
-      (uiop:run-program (list "explorer" (namestring pathname))))))
+      (open-external-file pathname))))
 
 (define-command read-file (filename) ("FRead File: ")
   "Open the file as a read-only."

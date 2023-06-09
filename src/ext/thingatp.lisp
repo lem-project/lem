@@ -37,4 +37,4 @@
       (path
        (lem:find-file (pathname thing)))
       (t
-       (find-definitions)))))
+       (lem/language-mode:find-definitions)))))

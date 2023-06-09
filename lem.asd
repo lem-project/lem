@@ -111,6 +111,7 @@
                              (:file "hover")
                              (:file "language-mode")
                              (:file "language-mode-tools")
+                             (:file "thingatp")
                              (:file "gtags")
                              (:file "directory-mode")
                              (:file "abbrev")

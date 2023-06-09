@@ -27,6 +27,7 @@
                (:file "message-definitions")
                (:file "repl")
                (:file "sldb")
+	       (:file "hyperspec")
                (:file "inspector")
                (:file "apropos-mode")
                (:file "autodoc")

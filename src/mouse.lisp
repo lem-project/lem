@@ -14,6 +14,9 @@
 (defclass window-horizontal-separator (window-separator)
   ())
 
+(defclass leftside-window-separator (window-separator)
+  ())
+
 ;;;;;;;;;;;;;;;;;;
 
 (defparameter *scroll-speed* 3)
@@ -115,6 +118,14 @@
                         (mouse-button-down-clicks mouse-event)))
       (:horizontal
        (handle-button-1 (make-instance 'window-horizontal-separator
+                                       :start-x (mouse-event-x mouse-event)
+                                       :start-y (mouse-event-y mouse-event)
+                                       :grabbed-window first-window)
+                        (mouse-event-x mouse-event)
+                        (mouse-event-y mouse-event)
+                        (mouse-button-down-clicks mouse-event)))
+      (:leftside
+       (handle-button-1 (make-instance 'leftside-window-separator
                                        :start-x (mouse-event-x mouse-event)
                                        :start-y (mouse-event-y mouse-event)
                                        :grabbed-window first-window)
@@ -223,7 +234,15 @@
                            (grow-window-height
                             (window-separator-grabbed-window *last-dragged-separator*)
                             diff-y))
-                   (setf (window-separator-start-y *last-dragged-separator*) y)))))))))
+                   (setf (window-separator-start-y *last-dragged-separator*) y)))))))
+        ((typep *last-dragged-separator* 'leftside-window-separator)
+         (let ((x (mouse-event-x mouse-event))
+               (button (mouse-event-button mouse-event)))
+           (when (eq button :button-1)
+             (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
+               (unless (zerop diff-x)
+                 (resize-leftside-window-relative diff-x)
+                 (setf (window-separator-start-x *last-dragged-separator*) x))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-wheel))
   (unless (zerop (mouse-wheel-y mouse-event))

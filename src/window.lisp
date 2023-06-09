@@ -1226,6 +1226,16 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (setf (frame-leftside-window (current-frame)) nil)
   (balance-windows))
 
+(defun resize-leftside-window (width)
+  (let ((window (frame-leftside-window (current-frame))))
+    (window-set-size window width (window-height window))
+    (balance-windows)))
+
+(defun resize-leftside-window-relative (offset)
+  (let ((window (frame-leftside-window (current-frame))))
+    (window-resize window offset 0)
+    (balance-windows)))
+
 ;;;
 (defun adjust-all-window-size ()
   (dolist (window (frame-header-windows (current-frame)))

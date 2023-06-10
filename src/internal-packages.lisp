@@ -45,7 +45,8 @@
   (:export
    :get-pid
    :exist-program-p
-   :lem-relative-pathname)
+   :lem-relative-pathname
+   :open-external-file)
   ;; key.lisp
   (:export
    :make-key
@@ -160,7 +161,8 @@
    :receive-mouse-motion
    :receive-mouse-wheel
    :set-hover-message
-   :get-point-from-window-with-coordinates)
+   :get-point-from-window-with-coordinates
+   :get-point-on-context-menu-open)
   ;; context-menu.lisp
   (:export
    :buffer-context-menu)
@@ -260,6 +262,9 @@
    :floating-window-border
    :floating-window-border-shape
    :floating-window-p
+   :side-window
+   :make-leftside-window
+   :delete-leftside-window
    :header-window
    :update-on-display-resized
    :covered-with-floating-window-p

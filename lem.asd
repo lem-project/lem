@@ -10,6 +10,7 @@
                "yason"
                "log4cl"
                "split-sequence"
+               "str"
                "dexador"
                "lem-base"
                "lem-encodings"
@@ -90,6 +91,7 @@
                 :components ((:file "popup-window")
                              (:file "popup-message")
                              (:file "popup-menu")
+                             (:file "markdown-buffer")
                              (:file "multi-column-list")
                              (:file "context-menu")
                              (:file "list-buffers")
@@ -107,8 +109,10 @@
                              (:file "peek-source")
                              (:file "grep")
                              (:file "go-back")
+                             (:file "hover")
                              (:file "language-mode")
                              (:file "language-mode-tools")
+                             (:file "thingatp")
                              (:file "gtags")
                              (:file "directory-mode")
                              (:file "abbrev")
@@ -116,6 +120,7 @@
                              (:file "auto-save")
                              (:file "tabbar")
                              (:file "frame-multiplexer")
+                             (:file "filer")
                              (:file "deepl")
                              (:file "themes")))))
 

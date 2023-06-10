@@ -33,6 +33,7 @@
 (define-key *lisp-inspector-keymap* ">" 'lisp-inspector-fetch-all)
 (define-key *lisp-inspector-keymap* "q" 'lisp-inspector-quit)
 (define-key *lisp-inspector-keymap* "M-Return" 'lisp-inspector-copy-down-to-repl)
+(define-key *lisp-inspector-keymap* "C-Return" 'lisp-inspector-copy-down-to-repl)
 
 (define-command lisp-inspect (string)
     ((or (symbol-string-at-point (current-point))
@@ -149,6 +150,9 @@
 ;; slime-find-inspectable-object
 ;; slime-inspector-next-inspectable-object
 ;; slime-inspector-previous-inspectable-object
+
+(defun lisp-eval-describe (form)
+  (lisp-eval-async form (lambda (string) (show-message string))))
 
 (define-command lisp-inspector-describe () ()
   (lisp-eval-describe `(micros:describe-inspectee)))

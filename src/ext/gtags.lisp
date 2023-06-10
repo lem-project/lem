@@ -1,8 +1,8 @@
 (defpackage :lem/gtags
   (:use :cl :lem :lem/language-mode)
-  (:export :find-definitions
-           :find-references
-           :gtags-definition-list)
+  (:export :gtags-definition-list
+           :gtags-find-definitions
+           :gtags-find-references)
   #+sbcl
   (:lock t))
 (in-package :lem/gtags)
@@ -75,12 +75,12 @@
   (or (symbol-string-at-point point)
       (prompt-for-string prompt :history-symbol 'read-name)))
 
-(defun find-definitions (point)
+(defun gtags-find-definitions (point)
   (let* ((name (read-name point "gtags -x "))
          (text (global (buffer-directory) "-x" name)))
     (display-xref-locations (result-to-xref-locations text 'content))))
 
-(defun find-references (point)
+(defun gtags-find-references (point)
   (let* ((name (read-name point "gtags -rx "))
          (text (global (buffer-directory (point-buffer point)) "-rx" name))
          (locations (result-to-xref-locations text 'reference-content)))

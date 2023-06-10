@@ -17,6 +17,7 @@
 (define-key *global-keymap* "C-x C-c" 'exit-lem)
 (define-key *global-keymap* "M-x" 'execute-command)
 (define-key *global-keymap* "Shift-F10" 'show-context-menu)
+(define-key *global-keymap* "M-h" 'show-context-menu)
 
 (define-command nop-command () ()
   "No operation; it does nothing and return nil.")
@@ -67,6 +68,7 @@
 (define-command show-context-menu () ()
   (let ((context-menu (buffer-context-menu (current-buffer))))
     (when context-menu
+      (lem-core::update-point-on-context-menu-open (current-point))
       (lem-if:display-context-menu (implementation) context-menu '(:gravity :cursor)))))
 
 (define-command load-library (name)

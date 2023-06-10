@@ -242,9 +242,9 @@
   (setf (variable-value 'language-mode:completion-spec)
         (lem/completion-mode:make-completion-spec 'text-document/completion :async t))
   (setf (variable-value 'language-mode:find-definitions-function)
-        #'find-definitions)
+        #'lsp-find-definitions)
   (setf (variable-value 'language-mode:find-references-function)
-        #'find-references)
+        #'lsp-find-references)
   (setf (buffer-value (current-buffer) 'revert-buffer-function)
         #'lsp-revert-buffer))
 
@@ -789,87 +789,6 @@
 ;; - hoverのrangeを使って範囲に背景色をつける
 ;; - serverでサポートしているかのチェックをする
 
-(defun trim-final-newlines (point)
-  (with-point ((start point :left-inserting)
-               (end point :left-inserting))
-    (buffer-end start)
-    (buffer-end end)
-    (skip-whitespace-backward start)
-    (delete-between-points start end)))
-
-(defun markdown-buffer (markdown-text)
-  (labels ((make-markdown-buffer (markdown-text)
-             (let* ((buffer (make-temporary-unwrap-buffer))
-                    (point (buffer-point buffer)))
-               (setf (variable-value 'enable-syntax-highlight :buffer buffer) t)
-               (erase-buffer buffer)
-               (insert-string point markdown-text)
-               (put-foreground buffer)
-               buffer))
-           (get-syntax-table-from-mode (mode-name)
-             (when-let* ((mode (find-mode mode-name))
-                         (syntax-table (mode-syntax-table mode)))
-               syntax-table))
-
-           (put-foreground (buffer)
-             (put-text-property (buffer-start-point buffer)
-                                (buffer-end-point buffer)
-                                :attribute (make-attribute :foreground "#F0F0F0")))
-
-           (delete-line (point)
-             (with-point ((start point)
-                          (end point))
-               (line-start start)
-               (line-end end)
-               (delete-between-points start end)))
-           (process-header (point)
-             (buffer-start point)
-             (loop :while (search-forward-regexp point "^#+\\s*")
-                   :do (with-point ((start point))
-                         (line-start start)
-                         (delete-between-points start point)
-                         (line-end point)
-                         (put-text-property start
-                                            point
-                                            :attribute (make-attribute :bold t)))))
-           (process-code-block (point)
-             (buffer-start point)
-             (loop :while (search-forward-regexp point "^```")
-                   :do (with-point ((start point :right-inserting)
-                                    (end point :right-inserting))
-                         (let* ((mode-name (looking-at start "[\\w-]+"))
-                                (syntax-table (get-syntax-table-from-mode mode-name)))
-                           (line-start start)
-                           (unless (search-forward-regexp end "^```") (return))
-                           (delete-line start)
-                           (delete-line end)
-                           (syntax-scan-region start end :syntax-table syntax-table)
-                           (apply-region-lines start
-                                               end
-                                               (lambda (point)
-                                                 (line-start point)
-                                                 (insert-string point " ")
-                                                 (line-end point)
-                                                 (insert-string point " ")))))))
-           (process-horizontal-line (point)
-             (buffer-start point)
-             (let ((width (lem/popup-window::compute-buffer-width (point-buffer point))))
-               (loop :while (search-forward-regexp point "^-+$")
-                     :do (with-point ((start point :right-inserting)
-                                      (end point :left-inserting))
-                           (line-start start)
-                           (line-end end)
-                           (delete-between-points start end)
-                           (insert-string start (make-string width :initial-element #\_))
-                           (insert-character end #\newline))))))
-    (let* ((buffer (make-markdown-buffer markdown-text))
-           (point (buffer-point buffer)))
-      (process-header point)
-      (process-code-block point)
-      (process-horizontal-line point)
-      (trim-final-newlines point)
-      buffer)))
-
 (defun contents-to-string (contents)
   (flet ((marked-string-to-string (marked-string)
            (if (stringp marked-string)
@@ -895,7 +814,7 @@
 (defun contents-to-markdown-buffer (contents)
   (let ((string (contents-to-string contents)))
     (unless (emptyp (string-trim '(#\space #\newline) string))
-      (markdown-buffer string))))
+      (lem/markdown-buffer:markdown-buffer string))))
 
 (defun provide-hover-p (workspace)
   (handler-case (lsp:server-capabilities-hover-provider
@@ -982,7 +901,8 @@
                                             :offset-y -1
                                             :offset-x 1)
                                    :source-window (lem/popup-menu::popup-menu-window
-                                                   (lem/completion-mode::context-popup-menu context)))))))))
+                                                   (lem/completion-mode::context-popup-menu
+                                                    context)))))))))
     (sort-items
      (map 'list
           #'make-completion-item
@@ -1211,7 +1131,7 @@
                (funcall then (convert-definition-response response))
                (redraw-display))))))
 
-(defun find-definitions (point)
+(defun lsp-find-definitions (point)
   (check-connection)
   (text-document/definition point #'language-mode:display-xref-locations))
 
@@ -1307,7 +1227,7 @@
                (funcall then (convert-references-response response))
                (redraw-display))))))
 
-(defun find-references (point)
+(defun lsp-find-references (point)
   (check-connection)
   (text-document/references point
                             #'language-mode:display-xref-references))

@@ -86,17 +86,18 @@
 | [transpose-sexps](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L79)  | M-C-t            | Swaps the expression before and after the cursor. |
 
 ## File
-| Command                                                                                         | Key bindings | Documentation                                                                                                 |
-|-------------------------------------------------------------------------------------------------|--------------|---------------------------------------------------------------------------------------------------------------|
-| [find-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L49)            | C-x C-f      | Open the file.                                                                                                |
-| [read-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L95)            | C-x C-r      | Open the file as a read-only.                                                                                 |
-| [save-current-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L133) | C-x C-s      | Saves the current buffer text to a file                                                                       |
-| [write-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L139)          | C-x C-w      | Saves the text in the current buffer to the specified file                                                    |
-| [write-region-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L160)   |              | Saves the region of text to the specified file                                                                |
-| [insert-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L168)         | C-x Tab      | Inserts the contents of the file into the current buffer.                                                     |
-| [save-some-buffers](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L174)   | C-x s        | Save some files in the open buffer.                                                                           |
-| [revert-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L206)       |              | Restores the buffer. Normally this command will cause the contents of the file to be reflected in the buffer. |
-| [change-directory](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L240)    |              | Change directories associated with the buffer.                                                                |
+| Command                                                                                           | Key bindings | Documentation                                                                                                 |
+|---------------------------------------------------------------------------------------------------|--------------|---------------------------------------------------------------------------------------------------------------|
+| [find-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L64)              | C-x C-f      | Open the file.                                                                                                |
+| [find-file-recursively](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L206) |              | Open a file, from the list of all files present under the buffer's direcotry, recursively.                    |
+| [read-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L222)             | C-x C-r      | Open the file as a read-only.                                                                                 |
+| [save-current-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L260)   | C-x C-s      | Saves the current buffer text to a file                                                                       |
+| [write-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L266)            | C-x C-w      | Saves the text in the current buffer to the specified file                                                    |
+| [write-region-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L287)     |              | Saves the region of text to the specified file                                                                |
+| [insert-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L295)           | C-x Tab      | Inserts the contents of the file into the current buffer.                                                     |
+| [save-some-buffers](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L301)     | C-x s        | Save some files in the open buffer.                                                                           |
+| [revert-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L333)         |              | Restores the buffer. Normally this command will cause the contents of the file to be reflected in the buffer. |
+| [change-directory](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L367)      |              | Change directories associated with the buffer.                                                                |
 
 ## Buffer
 | Command                                                                                       | Key bindings | Documentation                                 |
@@ -106,34 +107,34 @@
 | [unmark-buffer](https://github.com/lem-project/lem/blob/main/src/commands/buffer.lisp#L26)    | M-~          | Remove the mark where the buffer was changed. |
 
 ## Window
-| Command                                                                                                        | Key bindings   | Documentation                                                     |
-|----------------------------------------------------------------------------------------------------------------|----------------|-------------------------------------------------------------------|
-| [select-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L62)                     | C-x b          | Switches to the selected buffer.                                  |
-| [kill-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L100)                      | C-x k          | Delete buffer.                                                    |
-| [previous-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L109)                  | C-x Left       | Switches to the previous buffer.                                  |
-| [next-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L119)                      | C-x Right      | Switches to the next buffer.                                      |
-| [recenter](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L125)                         | C-l            | Scroll so that the cursor is in the middle.                       |
-| [split-active-window-vertically](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L132)   | C-x 2          | Split the current window vertically.                              |
-| [split-active-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L138) | C-x 3          | Split the current window horizontally.                            |
-| [other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L149)                     | C-x o, M-o     | Go to the next window.                                            |
-| [switch-to-last-focused-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L162)    |                | Go to the window that was last in focus.                          |
-| [window-move-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L171)                 |                | Go to the window on the down.                                     |
-| [window-move-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L176)                   |                | Go to the window on the up.                                       |
-| [window-move-right](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L181)                |                | Go to the window on the right.                                    |
-| [window-move-left](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L186)                 |                | Go to the window on the left.                                     |
-| [delete-other-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L191)             | C-x 1          | Delete all other windows.                                         |
-| [delete-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L204)             | C-x 0          | Delete the active window.                                         |
-| [quit-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L209)               |                | Quit the active window. This is a command for a popped-up window. |
-| [grow-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L214)                      | C-x ^          |                                                                   |
-| [shrink-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L221)                    | C-x C-z        |                                                                   |
-| [grow-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L228)         | C-x }          |                                                                   |
-| [shrink-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L235)       | C-x {          |                                                                   |
-| [scroll-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L247)                      | C-Down, M-Down | Scroll down.                                                      |
-| [scroll-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L259)                        | C-Up, M-Up     | Scroll up.                                                        |
-| [find-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L269)           | C-x 4 f        |                                                                   |
-| [read-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L270)           | C-x 4 r        |                                                                   |
-| [select-buffer-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L271)       | C-x 4 b        |                                                                   |
-| [compare-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L273)                  |                |                                                                   |
+| Command                                                                                                        | Key bindings   | Documentation                                                         |
+|----------------------------------------------------------------------------------------------------------------|----------------|-----------------------------------------------------------------------|
+| [select-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L62)                     | C-x b          | Switches to the selected buffer.                                      |
+| [kill-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L101)                      | C-x k          | Delete buffer.                                                        |
+| [previous-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L110)                  | C-x Left       | Switches to the previous buffer.                                      |
+| [next-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L120)                      | C-x Right      | Switches to the next buffer.                                          |
+| [recenter](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L126)                         | C-l            | Scroll so that the cursor is in the middle.                           |
+| [split-active-window-vertically](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L133)   | C-x 2          | Split the current window vertically.                                  |
+| [split-active-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L139) | C-x 3          | Split the current window horizontally.                                |
+| [other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L150)                     | C-x o, M-o     | Go to the next window.                                                |
+| [switch-to-last-focused-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L163)    |                | Go to the window that was last in focus.                              |
+| [window-move-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L172)                 |                | Go to the window on the down.                                         |
+| [window-move-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L177)                   |                | Go to the window on the up.                                           |
+| [window-move-right](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L182)                |                | Go to the window on the right.                                        |
+| [window-move-left](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L187)                 |                | Go to the window on the left.                                         |
+| [delete-other-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L192)             | C-x 1          | Delete all other windows.                                             |
+| [delete-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L205)             | C-x 0          | Delete the active window.                                             |
+| [quit-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L210)               |                | Quit the active window. This is a command for a popped-up window.     |
+| [grow-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L215)                      | C-x ^          | Grow the window's height.                                             |
+| [shrink-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L223)                    | C-x C-z        | Shrink the window's height.                                           |
+| [grow-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L231)         | C-x }          | Grow the window's width.                                              |
+| [shrink-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L239)       | C-x {          | Shrink the window's width.                                            |
+| [scroll-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L252)                      | C-Down, M-Down | Scroll down.                                                          |
+| [scroll-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L265)                        | C-Up, M-Up     | Scroll up.                                                            |
+| [find-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L276)           | C-x 4 f        | Open a file in another window. Split the screen vertically if needed. |
+| [read-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L277)           | C-x 4 r        | Read a file in another window.                                        |
+| [select-buffer-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L278)       | C-x 4 b        | Select a buffer in another window.                                    |
+| [compare-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L280)                  |                |                                                                       |
 
 ## Multiple-Cursors
 | Command                                                                                                        | Key bindings | Documentation                                               |
@@ -147,12 +148,13 @@
 | [pipe-command](https://github.com/lem-project/lem/blob/main/src/commands/process.lisp#L43)  | C-x @        | Run a command and displays the output.                                                |
 
 ## Help
-| Command                                                                                      | Key bindings | Documentation |
-|----------------------------------------------------------------------------------------------|--------------|---------------|
-| [describe-key](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L11)      | C-x ?        |               |
-| [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L39) |              |               |
-| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L97)   |              |               |
-| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L103)      |              |               |
+| Command                                                                                      | Key bindings | Documentation                                                                |
+|----------------------------------------------------------------------------------------------|--------------|------------------------------------------------------------------------------|
+| [describe-key](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L12)      | C-x ?        | Tell what is the command associated to a keybinding.                         |
+| [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L41) |              | Describe the bindings of the buffer's current major mode.                    |
+| [list-modes](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L63)        |              | Output all available major and minor modes.                                  |
+| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L100)  |              | Find all symbols in the running Lisp image whose names match a given string. |
+| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L107)      |              | Display Lem's version.                                                       |
 
 ## Font
 | Command                                                                                       | Key bindings | Documentation                                                        |
@@ -161,15 +163,15 @@
 | [font-size-decrease](https://github.com/lem-project/lem/blob/main/src/commands/font.lisp#L14) | C--          | Make the font smaller (this currently only works with SDL2 frontend) |
 
 ## Other
-| Command                                                                                       | Key bindings | Documentation                                                |
-|-----------------------------------------------------------------------------------------------|--------------|--------------------------------------------------------------|
-| [nop-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L21)       | NopKey       |                                                              |
-| [undefined-key](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L24)     |              | Signal undefined key error.                                  |
-| [keyboard-quit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L28)     | C-g          | Signal a `quit` condition.                                   |
-| [escape](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L32)            | Escape       | Signal a `quit` condition silently.                          |
-| [exit-lem](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L36)          | C-x C-c      | Ask for modified buffers before exiting lem.                 |
-| [quick-exit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L43)        |              | Exit the lem job and kill it.                                |
-| [execute-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L48)   | M-x          | Read a command name, then read the ARG and call the command. |
-| [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L67) | Shift-F10    |                                                              |
-| [load-library](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L72)      |              | Load the Lisp library named NAME.                            |
+| Command                                                                                       | Key bindings   | Documentation                                                |
+|-----------------------------------------------------------------------------------------------|----------------|--------------------------------------------------------------|
+| [nop-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L22)       | NopKey         |                                                              |
+| [undefined-key](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L25)     |                | Signal undefined key error.                                  |
+| [keyboard-quit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L29)     | C-g            | Signal a `quit` condition.                                   |
+| [escape](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L33)            | Escape         | Signal a `quit` condition silently.                          |
+| [exit-lem](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L37)          | C-x C-c        | Ask for modified buffers before exiting lem.                 |
+| [quick-exit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L44)        |                | Exit the lem job and kill it.                                |
+| [execute-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L49)   | M-x            | Read a command name, then read the ARG and call the command. |
+| [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L68) | Shift-F10, M-h |                                                              |
+| [load-library](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L74)      |                | Load the Lisp library named NAME.                            |
 

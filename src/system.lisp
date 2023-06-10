@@ -23,3 +23,11 @@
                      (uiop:run-program (list "which" program)
                                        :ignore-error-status t))))
     (= status 0)))
+
+(defun open-external-file (pathname)
+  #+linux
+  (uiop:run-program (list "xdg-open" (namestring pathname)))
+  #+darwin
+  (uiop:run-program (list "open" (namestring pathname)))
+  #+windows
+  (uiop:run-program (list "explorer" (namestring pathname))))

@@ -60,11 +60,12 @@
     (balance-windows)))
 
 (eval-when (:compile-toplevel :load-toplevel)
-  (defmacro define-other-window-command (command prompt)
+  (defmacro define-other-window-command (command prompt documentation)
     (if (exist-command-p (string-downcase command))
         `(define-command ,(intern (format nil "~a-OTHER-WINDOW"
                                           (string-upcase command)))
              (arg) (,prompt)
+           ,documentation
            (when (one-window-p)
              (split-window-sensibly (current-window))
              (maybe-balance-windows))
@@ -212,6 +213,7 @@
                :kill-buffer kill-buffer))
 
 (define-command grow-window (n) ("p")
+  "Grow the window's height."
   (when (< n 0)
     (return-from grow-window (shrink-window (- n))))
   (when (one-window-p)
@@ -219,6 +221,7 @@
   (grow-window-height (current-window) n))
 
 (define-command shrink-window (n) ("p")
+  "Shrink the window's height."
   (when (< n 0)
     (return-from shrink-window (grow-window (- n))))
   (when (one-window-p)
@@ -226,6 +229,7 @@
   (shrink-window-height (current-window) n))
 
 (define-command grow-window-horizontally (n) ("p")
+  "Grow the window's width."
   (when (< n 0)
     (return-from grow-window-horizontally (shrink-window-horizontally (- n))))
   (when (one-window-p)
@@ -233,6 +237,7 @@
   (grow-window-width (current-window) n))
 
 (define-command shrink-window-horizontally (n) ("p")
+  "Shrink the window's width."
   (when (< n 0)
     (return-from shrink-window-horizontally (grow-window-horizontally (- n))))
   (when (one-window-p)
@@ -254,7 +259,8 @@
        (buffer-end (window-view-point window))
        (backward-line-wrap (window-view-point window)
                            window t))
-     (next-line (- (window-offset-view window))))))
+     (with-current-window window
+       (next-line (- (window-offset-view window)))))))
 
 (define-command scroll-up (n &optional (window (current-window))) ("p")
   "Scroll up."
@@ -264,11 +270,12 @@
     (t
      (unless (window-scroll window (- n))
        (buffer-start (window-view-point window)))
-     (previous-line (window-offset-view window)))))
+     (with-current-window window
+       (previous-line (window-offset-view window))))))
 
-(define-other-window-command lem-core/commands/file:find-file "FFind File Other Window: ")
-(define-other-window-command lem-core/commands/file:read-file "FREAD File Other Window: ")
-(define-other-window-command lem-core/commands/window:select-buffer "BUse Buffer Other Window: ")
+(define-other-window-command lem-core/commands/file:find-file "FFind File Other Window: " "Open a file in another window. Split the screen vertically if needed.")
+(define-other-window-command lem-core/commands/file:read-file "FREAD File Other Window: " "Read a file in another window.")
+(define-other-window-command lem-core/commands/window:select-buffer "BUse Buffer Other Window: " "Select a buffer in another window.")
 
 (define-command compare-windows (ignore-whitespace) ("p")
   (setf ignore-whitespace (/= ignore-whitespace 1))

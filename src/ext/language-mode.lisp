@@ -9,7 +9,9 @@
    :line-comment
    :insertion-line-comment
    :find-definitions-function
+   :find-definitions
    :find-references-function
+   :find-references
    :language-mode-tag
    :buffer-language-mode
    :completion-spec
@@ -111,16 +113,17 @@
       (indent-line (current-point))
       (self-insert n)))
 
+(defun trim-eol (point)
+  (with-point ((start point)
+               (end point))
+    (skip-whitespace-backward (line-end start) t)
+    (line-end end)
+    (delete-between-points start end)))
+
 (define-command (newline-and-indent (:advice-classes editable-advice)) (n) ("p")
-  (with-point ((p (current-point)))
-    (newline n)
-    (indent)
-    (let ((old-charpos (point-charpos p)))
-      (line-end p)
-      (let ((offset (skip-whitespace-backward p t)))
-        (when (plusp offset)
-          (delete-character p offset)))
-      (line-offset p 0 old-charpos))))
+  (trim-eol (current-point))
+  (insert-character (current-point) #\newline n)
+  (indent-line (current-point)))
 
 (define-command indent-region (start end) ("r")
   (indent-points start end))

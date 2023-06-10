@@ -1,7 +1,6 @@
 (defsystem "lem-ncurses"
   :depends-on ("cffi"
                "cl-charms"
-               "trivial-clipboard"
                "cl-setlocale"
                "lem"
                "lem/extensions")

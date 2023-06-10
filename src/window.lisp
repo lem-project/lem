@@ -128,6 +128,7 @@
 (defun clear-screens-of-window-list ()
   (flet ((clear-screen (window)
            (screen-clear (window-screen window))))
+    (mapc #'clear-screen (uiop:ensure-list (frame-leftside-window (current-frame))))
     (mapc #'clear-screen (window-list))
     (mapc #'clear-screen (frame-floating-windows (current-frame)))))
 
@@ -188,6 +189,8 @@
 (defmethod compute-window-list (current-window)
   (append (alexandria:ensure-list
            (active-prompt-window))
+          (alexandria:ensure-list
+           (frame-leftside-window (current-frame)))
           (window-list)))
 
 (defun one-window-p ()
@@ -227,6 +230,7 @@
 (defun teardown-windows (frame)
   (mapc #'%free-window (window-list frame))
   (mapc #'%free-window (frame-floating-windows frame))
+  (mapc #'%free-window (uiop:ensure-list (frame-leftside-window frame)))
   (values))
 
 (defun window-recenter (window)
@@ -492,8 +496,9 @@ next line because it is at the end of width."
     (loop
       :while (< w column)
       :do (setf w (char-width (character-at point) w))
-          (when (end-line-p point) (return))
-          (character-offset point 1))))
+          (when (end-line-p point) (return nil))
+          (character-offset point 1)
+      :finally (return t))))
 
 (defun window-scroll-down (window)
   (move-to-next-virtual-line (window-view-point window) 1 window))
@@ -961,7 +966,9 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                                        (include-floating-windows nil))
   (loop :for window :in (append (window-list frame)
                                 (when include-floating-windows
-                                  (frame-floating-windows frame)))
+                                  (frame-floating-windows frame))
+                                (when include-floating-windows
+                                  (uiop:ensure-list (frame-leftside-window frame))))
         :when (eq buffer (window-buffer window))
         :collect window))
 
@@ -1205,6 +1212,46 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 (defmethod %delete-window ((window header-window))
   (remove-header-window (current-frame) window)
   (notify-header-window-modified (current-frame)))
+
+;;; leftside-window
+(defclass side-window (floating-window) ())
+
+(defun make-leftside-window (buffer &key (width 30))
+  (cond ((frame-leftside-window (current-frame))
+         (with-current-window (frame-leftside-window (current-frame))
+           (switch-to-buffer buffer)))
+        (t
+         (setf (frame-leftside-window (current-frame))
+               (make-instance 'side-window
+                              :buffer buffer
+                              :x 0
+                              :y 1
+                              :width width
+                              :height (display-height)
+                              :use-modeline-p nil
+                              :background-color nil
+                              :border 0))
+         (balance-windows))))
+
+(defun delete-leftside-window ()
+  (delete-window (frame-leftside-window (current-frame)))
+  (setf (frame-leftside-window (current-frame)) nil)
+  (balance-windows))
+
+(defun resize-leftside-window (width)
+  (let ((window (frame-leftside-window (current-frame))))
+    (window-set-size window width (window-height window))
+    (balance-windows)))
+
+(defun resize-leftside-window-relative (offset)
+  (let* ((window (frame-leftside-window (current-frame)))
+         (new-width (+ (window-width window) offset)))
+    (when (< 2 new-width)
+      (window-set-size window
+                       new-width
+                       (window-height window))
+      (balance-windows)
+      t)))
 
 ;;;
 (defun adjust-all-window-size ()

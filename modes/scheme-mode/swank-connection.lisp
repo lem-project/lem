@@ -650,11 +650,11 @@
 
 (defparameter *find-definitions* '(find-definitions-default))
 
-(defun find-definitions (point)
+(defun scheme-find-definitions (point)
   (check-connection)
   (display-xref-locations (some (alexandria:rcurry #'funcall point) *find-definitions*)))
 
-(defun find-references (point)
+(defun scheme-find-references (point)
   (check-connection)
   (let* ((name (or (symbol-string-at-point point)
                    (prompt-for-symbol-name "Edit uses of: ")))

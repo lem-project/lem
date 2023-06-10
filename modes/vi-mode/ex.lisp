@@ -8,7 +8,9 @@
 
 (defvar *ex-keymap* (make-keymap :name '*ex-keymap*))
 
-(define-vi-state ex (:keymap *ex-keymap*))
+(define-vi-state ex () () 
+  (:default-initargs
+   :keymap *ex-keymap*))
 
 (define-command vi-ex () ()
   (let ((directory (lem:buffer-directory)))

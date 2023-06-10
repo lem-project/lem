@@ -1,5 +1,5 @@
 (defsystem "lem"
-  :version "1.10.0"
+  :version "2.0.0"
   :depends-on ("alexandria"
                "trivial-gray-streams"
                "trivial-types"
@@ -10,6 +10,7 @@
                "yason"
                "log4cl"
                "split-sequence"
+               "str"
                "dexador"
                "lem-base"
                "lem-encodings"
@@ -22,8 +23,9 @@
                              (:file "history")
                              (:file "timer")
                              (:file "command")))
-               (:file "package")
+               (:file "internal-packages")
                (:file "quicklisp-utils")
+               (:file "version")
                (:file "config")
                (:file "errors")
                (:file "system")
@@ -50,6 +52,7 @@
                (:file "event-queue")
                (:file "interp")
                (:file "mouse")
+               (:file "context-menu")
                (:file "input")
                (:file "overlay")
                (:file "streams")
@@ -57,31 +60,38 @@
                (:file "completion")
                (:file "typeout")
                (:file "cursors")
-               (:file "lem")
-
-               (:file "primitive-command")
-               (:file "self-insert-command")
-               (:file "file-command")
-               (:file "window-command")
-               (:file "help-command")
-               (:file "word-command")
-               (:file "sexp-command")
-               (:file "multiple-cursors-command")
-
-               (:file "default-keymap")
-
+               (:file "command-advices")
                (:file "interface")
                (:file "display")
+               (:file "site-init")
+               (:file "lem")
 
                (:file "color-theme")
 
-               (:file "site-init")
+               (:module "commands"
+                :serial t
+                :components ((:file "move")
+                             (:file "edit" :depends-on ("move"))
+                             (:file "mark")
+                             (:file "word" :depends-on ("edit"))
+                             (:file "s-expression" :depends-on ("edit"))
+                             (:file "file" :depends-on ("edit"))
+                             (:file "buffer")
+                             (:file "window" :depends-on ("move"))
+                             (:file "multiple-cursors")
+                             (:file "process")
+                             (:file "help")
+                             (:file "font")
+                             (:file "other" :depends-on ("file"))))
+
+               (:file "external-packages")
 
                (:module "ext"
                 :serial t
                 :components ((:file "popup-window")
                              (:file "popup-message")
                              (:file "popup-menu")
+                             (:file "markdown-buffer")
                              (:file "multi-column-list")
                              (:file "context-menu")
                              (:file "list-buffers")
@@ -99,8 +109,10 @@
                              (:file "peek-source")
                              (:file "grep")
                              (:file "go-back")
+                             (:file "hover")
                              (:file "language-mode")
                              (:file "language-mode-tools")
+                             (:file "thingatp")
                              (:file "gtags")
                              (:file "directory-mode")
                              (:file "abbrev")
@@ -108,6 +120,7 @@
                              (:file "auto-save")
                              (:file "tabbar")
                              (:file "frame-multiplexer")
+                             (:file "filer")
                              (:file "deepl")
                              (:file "themes")))))
 
@@ -143,7 +156,9 @@
                "lem-makefile-mode"
                "lem-shell-mode"
                "lem-sql-mode"
-               "lem-base16-themes"))
+               "lem-base16-themes"
+               "lem-elixir-mode"
+               "lem-documentation-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

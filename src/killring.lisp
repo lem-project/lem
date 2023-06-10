@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defvar *killring* (make-killring 10))
 

@@ -33,6 +33,13 @@
                                (or (car (read-string-thread-stack))
                                    :repl-thread))))
 
+(defmethod execute ((mode lisp-repl-mode) (command lem/listener-mode:listener-return) argument)
+  (cond ((repl-paren-correspond-p (buffer-end-point (current-buffer)))
+         (call-next-method))
+        (t
+         (insert-character (current-point) #\newline)
+         (indent-line (current-point)))))
+
 (defvar *lisp-repl-shortcuts* '())
 
 (defun prompt-for-shortcuts ()
@@ -87,9 +94,10 @@
   (unless (eq (repl-buffer) (point-buffer point))
     (return-from repl-paren-correspond-p))
   (with-point ((start (lem/listener-mode:input-start-point (repl-buffer))))
-    (let ((state (parse-partial-sexp start point)))
-      (and (not (pps-state-string-or-comment-p state))
-           (>= 0 (pps-state-paren-depth state))))))
+    (when (point<= start point)
+      (let ((state (parse-partial-sexp start point)))
+        (and (not (pps-state-string-or-comment-p state))
+             (>= 0 (pps-state-paren-depth state)))))))
 
 (defun repl-reset-input ()
   (let ((buffer (repl-buffer)))
@@ -206,14 +214,14 @@
         (start-lisp-repl))))
 
 (defun copy-down-to-repl (slimefun &rest args)
-  (unless (find-package :swank-repl)
-    (make-package :swank-repl))
+  (unless (find-package :micros/contrib/repl)
+    (make-package :micros/contrib/repl))
   (lisp-eval-async
-   `(,(read-from-string "swank-repl::listener-save-value") ',slimefun ,@args)
+   `(,(read-from-string "micros/contrib/repl::listener-save-value") ',slimefun ,@args)
    (lambda (result)
      (declare (ignore result))
      (lisp-eval-async
-      `(,(read-from-string "swank-repl::listener-get-value"))
+      `(,(read-from-string "micros/contrib/repl::listener-get-value"))
       (lambda (result)
         (declare (ignore result))
         (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))))))
@@ -337,4 +345,25 @@
   (declare (ignorable n))
   (if (self-connection-p *connection*)
       (message "Can't say sayonara because it's self connection.")
-      (interactive-eval "(swank:quit-lisp)")))
+      (interactive-eval "(micros:quit-lisp)")))
+
+(define-repl-shortcut change-package (n)
+  (declare (ignore n))
+  (let* ((packages (mapcar (lambda (p)
+			     (string-downcase (package-name p)))
+			   (list-all-packages)))
+	 (package
+	   (prompt-for-string
+	    "Package: "
+	    :completion-function (lambda (str)
+				   (sort (completion str packages)
+					 #'string-lessp))
+	    :test-function (lambda (package)
+			     (find package packages :test #'string-equal)))))
+    (lisp-set-package package)))
+
+(define-repl-shortcut cd (n)
+  (declare (ignore n))
+  (let* ((directory
+           (prompt-for-directory "New directory: " :directory (buffer-directory))))
+    (lisp-set-directory :directory directory)))

@@ -50,29 +50,33 @@
           (values (string (code-char code))
                   t)))))
 
-(defun make-key (&key ctrl meta shift sym)
+(defun make-key (&key ctrl meta shift super sym)
   (when (equal sym (string #\yen_sign))
     (setf sym "\\"))
   (cond ((and ctrl (equal sym "i"))
          (lem:make-key :ctrl nil
                        :meta meta
+                       :super super
                        :shift shift
                        :sym "Tab"))
         ((and ctrl (equal sym "m"))
          (lem:make-key :ctrl nil
                        :meta meta
+                       :super super
                        :shift shift
                        :sym "Return"))
         (t
          (lem:make-key :ctrl ctrl
                        :meta meta
+                       :super super
                        :shift shift
                        :sym sym))))
 
 (defstruct modifier
   shift
   ctrl
-  meta)
+  meta
+  super)
 
 (defstruct (key-event (:constructor %make-key-event))
   code
@@ -83,20 +87,29 @@
 
 (defun keysym-to-key-event (keysym)
   (let ((code (sdl2:sym-value keysym))
-        (modifier (lem-sdl2/keyboard::get-modifier keysym)))
+        (modifier (get-modifier keysym)))
     (make-key-event code modifier)))
+
+(defun mod-p (mod value)
+  (= value (logand value mod)))
 
 (defun get-modifier (keysym)
   (let* ((mod (sdl2:mod-value keysym))
-         (shift (= 1 (logand 1 mod)))
-         (ctrl (= 64 (logand 64 mod)))
-         (meta (= 256 (logand 256 mod))))
-    (make-modifier :shift shift :ctrl ctrl :meta meta)))
+         (shift (or (mod-p mod sdl2-ffi:+kmod-lshift+)
+                    (mod-p mod sdl2-ffi:+kmod-rshift+)))
+         (ctrl (or (mod-p mod sdl2-ffi:+kmod-lctrl+)
+                   (mod-p mod sdl2-ffi:+kmod-rctrl+)))
+         (meta (or (mod-p mod sdl2-ffi:+kmod-lalt+)
+                   (mod-p mod sdl2-ffi:+kmod-ralt+)))
+         (super (or (mod-p mod sdl2-ffi:+kmod-lgui+)
+                    (mod-p mod sdl2-ffi:+kmod-rgui+))))
+    (make-modifier :shift shift :ctrl ctrl :meta meta :super super)))
 
 (defun update-modifier (modifier new-modifier)
   (setf (modifier-shift modifier) (modifier-shift new-modifier))
   (setf (modifier-ctrl modifier) (modifier-ctrl new-modifier))
-  (setf (modifier-meta modifier) (modifier-meta new-modifier)))
+  (setf (modifier-meta modifier) (modifier-meta new-modifier))
+  (setf (modifier-super modifier) (modifier-super new-modifier)))
 
 (defvar *modifier* (make-modifier))
 (defvar *textediting-text* "")
@@ -106,7 +119,7 @@
 
 (defun send-key-event (key)
   (if (lem:match-key key :ctrl t :sym "]")
-      (lem:send-abort-event (lem::find-editor-thread) nil)
+      (lem:send-abort-event (lem:find-editor-thread) nil)
       (lem:send-event key)))
 
 ;; linux
@@ -120,6 +133,7 @@
           :do (multiple-value-bind (sym text-input-p) (convert-to-sym (char-code c))
                 (let ((key (lem:make-key :ctrl (modifier-ctrl *modifier*)
                                          :meta (modifier-meta *modifier*)
+                                         :super (modifier-super *modifier*)
                                          :shift nil
                                          :sym sym)))
                   (when text-input-p
@@ -137,6 +151,7 @@
         (let ((key (make-key :shift (modifier-shift modifier)
                              :ctrl (modifier-ctrl modifier)
                              :meta (modifier-meta modifier)
+                             :super (modifier-super modifier)
                              :sym sym)))
           (send-key-event key))))))
 
@@ -209,7 +224,7 @@
             (values (cdr elt) t)
             (values char nil)))))
 
-(defun make-key-with-shift-careful (&key shift ctrl meta sym)
+(defun make-key-with-shift-careful (&key shift ctrl meta super sym)
   (or (and (= 1 (length sym))
            shift
            (multiple-value-bind (char shift-p)
@@ -217,19 +232,23 @@
              (and shift-p
                   (make-key :ctrl ctrl
                             :meta meta
+                            :super super
                             :shift nil
                             :sym (string char)))))
       (make-key :ctrl ctrl
                 :meta meta
+                :super super
                 :shift shift
                 :sym sym)))
 
 (defun handle-text-input-internal (text)
-  (unless (or (modifier-meta *modifier*)
+  (unless (or (modifier-super *modifier*)
+              (modifier-meta *modifier*)
               (modifier-ctrl *modifier*))
     (loop :for c :across text
           :do (let ((key (make-key :ctrl (modifier-ctrl *modifier*)
                                    :meta (modifier-meta *modifier*)
+                                   ;; :super (modifier-super *modifier*)
                                    :shift nil
                                    :sym (convert-to-sym (char-code c)))))
                 (send-key-event key)))))
@@ -248,6 +267,7 @@
           (let ((key (make-key-with-shift-careful :shift (modifier-shift modifier)
                                                   :ctrl (modifier-ctrl modifier)
                                                   :meta (modifier-meta modifier)
+                                                  ;; :super (modifier-super modifier)
                                                   :sym sym)))
             (send-key-event key)))))))
 
@@ -272,4 +292,3 @@
 
 (defmethod handle-key-up ((platform lem-sdl2/platform:windows) key-event)
   (handle-key-up-internal key-event))
-

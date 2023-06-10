@@ -2,7 +2,7 @@
   :depends-on ("alexandria"
                "trivial-types"
                "usocket"
-               "swank"
+               "micros"
                "trivia"
                "uiop"
                "lem-lisp-syntax"
@@ -11,20 +11,23 @@
                "lem-socket-utils")
   :serial t
   :components ((:file "test-api")
+               (:file "exporter")
                (:file "errors")
-               (:file "swank-modules")
                (:file "swank-protocol")
                (:file "connections")
                (:file "message-dispatcher")
                (:file "ui-mode")
                (:file "grammer")
+               (:file "implementation")
                (:file "internal-package")
+               (:file "completion")
                (:file "message")
                (:file "file-conversion")
                (:file "lisp-mode")
                (:file "message-definitions")
                (:file "repl")
                (:file "sldb")
+	       (:file "hyperspec")
                (:file "inspector")
                (:file "apropos-mode")
                (:file "autodoc")
@@ -33,6 +36,7 @@
                (:file "package-inferred-system")
                (:file "organize-imports")
                (:file "connection-list")
+               (:file "self-insert-hook")
                (:file "package")))
 
 (defsystem "lem-lisp-mode/v2"

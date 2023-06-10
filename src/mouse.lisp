@@ -1,22 +1,21 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defclass window-separator ()
   ((start-x :initarg :start-x
             :accessor window-separator-start-x)
    (start-y :initarg :start-y
-            :accessor window-separator-start-y)))
+            :accessor window-separator-start-y)
+   (grabbed-window :initarg :grabbed-window
+                   :reader window-separator-grabbed-window)))
 
 (defclass window-vertical-separator (window-separator)
-  ((left-window :initarg :left-window
-                :reader window-separator-left-window)
-   (right-window :initarg :right-window
-                 :reader window-separator-right-window)))
+  ())
 
 (defclass window-horizontal-separator (window-separator)
-  ((up-window :initarg :up-window
-              :reader window-separator-up-window)
-   (down-window :initarg :down-window
-                :reader window-separator-down-window)))
+  ())
+
+(defclass leftside-window-separator (window-separator)
+  ())
 
 ;;;;;;;;;;;;;;;;;;
 
@@ -53,12 +52,13 @@
 (defun mouse-event-p (value)
   (typep value 'mouse-event))
 
-(defun get-x-y-position-point (window x y)
+(defun get-point-from-window-with-coordinates (window x y &optional (allow-overflow-column t))
   (with-point ((point (buffer-point (window-buffer window))))
     (move-point point (window-view-point window))
     (move-to-next-virtual-line point y window)
-    (move-to-virtual-line-column point x window)
-    point))
+    (let ((moved (move-to-virtual-line-column point x window)))
+      (when (or moved allow-overflow-column)
+        point))))
 
 (defun move-current-point-to-x-y-position (window x y)
   (switch-to-window window)
@@ -75,13 +75,13 @@
 (defvar *last-dragged-separator* nil)
 
 (defmethod handle-button-1 ((window header-window) x y clicks)
-  (let* ((point (get-x-y-position-point window x y))
+  (let* ((point (get-point-from-window-with-coordinates window x y))
          (callback (text-property-at point :click-callback)))
     (when callback
       (funcall callback window point))))
 
 (defmethod handle-button-1 ((window window) x y clicks)
-  (let* ((point (get-x-y-position-point window x y))
+  (let* ((point (get-point-from-window-with-coordinates window x y))
          (callback (text-property-at point :click-callback)))
     (cond ((or callback (= clicks 1))
            (cond (callback
@@ -112,8 +112,7 @@
        (handle-button-1 (make-instance 'window-vertical-separator
                                        :start-x (mouse-event-x mouse-event)
                                        :start-y (mouse-event-y mouse-event)
-                                       :left-window first-window
-                                       :right-window second-window)
+                                       :grabbed-window second-window)
                         (mouse-event-x mouse-event)
                         (mouse-event-y mouse-event)
                         (mouse-button-down-clicks mouse-event)))
@@ -121,8 +120,15 @@
        (handle-button-1 (make-instance 'window-horizontal-separator
                                        :start-x (mouse-event-x mouse-event)
                                        :start-y (mouse-event-y mouse-event)
-                                       :up-window first-window
-                                       :down-window second-window)
+                                       :grabbed-window first-window)
+                        (mouse-event-x mouse-event)
+                        (mouse-event-y mouse-event)
+                        (mouse-button-down-clicks mouse-event)))
+      (:leftside
+       (handle-button-1 (make-instance 'leftside-window-separator
+                                       :start-x (mouse-event-x mouse-event)
+                                       :start-y (mouse-event-y mouse-event)
+                                       :grabbed-window first-window)
                         (mouse-event-x mouse-event)
                         (mouse-event-y mouse-event)
                         (mouse-button-down-clicks mouse-event)))
@@ -143,7 +149,7 @@
               (show-context-menu-over-mouse-cursor (mouse-event-x mouse-event)
                                                    (mouse-event-y mouse-event)))
              (:button-4
-              (undo 1)))))))))
+              (buffer-undo (current-point))))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
   (setf *last-dragged-separator* nil)
@@ -179,6 +185,11 @@
     (funcall callback window point)
     t))
 
+(defun handle-mouse-unhover-buffer (window point)
+  (alexandria:when-let (callback (buffer-value (point-buffer point) :unhover-callback))
+    (funcall callback window point)
+    t))
+
 (defmethod handle-mouse-event ((mouse-event mouse-motion))
   (cond ((null *last-dragged-separator*)
          (multiple-value-bind (window x y)
@@ -188,9 +199,10 @@
            (when window
              (case (mouse-event-button mouse-event)
                ((nil)
-                (let ((point (get-x-y-position-point window x y)))
+                (let ((point (get-point-from-window-with-coordinates window x y)))
                   (or (handle-mouse-hover-buffer window point)
-                      (handle-mouse-hover-overlay window point))))
+                      (handle-mouse-hover-overlay window point)
+                      (handle-mouse-unhover-buffer window point))))
                (:button-1
                 (when (window-last-mouse-button-down-point window)
                   (move-current-point-to-x-y-position window x y)
@@ -202,10 +214,12 @@
              (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
                (unless (zerop diff-x)
                  (when (if (plusp diff-x)
-                           (shrink-window-width (window-separator-right-window *last-dragged-separator*)
-                                              diff-x)
-                           (grow-window-width (window-separator-right-window *last-dragged-separator*)
-                                              (- diff-x)))
+                           (shrink-window-width
+                            (window-separator-grabbed-window *last-dragged-separator*)
+                            diff-x)
+                           (grow-window-width
+                            (window-separator-grabbed-window *last-dragged-separator*)
+                            (- diff-x)))
                    (setf (window-separator-start-x *last-dragged-separator*) x)))))))
         ((typep *last-dragged-separator* 'window-horizontal-separator)
          (let ((y (mouse-event-y mouse-event))
@@ -214,11 +228,21 @@
              (let ((diff-y (- (window-separator-start-y *last-dragged-separator*) y)))
                (unless (zerop diff-y)
                  (when (if (minusp diff-y)
-                           (shrink-window-height (window-separator-up-window *last-dragged-separator*)
-                                                 (- diff-y))
-                           (grow-window-height (window-separator-up-window *last-dragged-separator*)
-                                               diff-y))
-                   (setf (window-separator-start-y *last-dragged-separator*) y)))))))))
+                           (shrink-window-height
+                            (window-separator-grabbed-window *last-dragged-separator*)
+                            (- diff-y))
+                           (grow-window-height
+                            (window-separator-grabbed-window *last-dragged-separator*)
+                            diff-y))
+                   (setf (window-separator-start-y *last-dragged-separator*) y)))))))
+        ((typep *last-dragged-separator* 'leftside-window-separator)
+         (let ((x (mouse-event-x mouse-event))
+               (button (mouse-event-button mouse-event)))
+           (when (eq button :button-1)
+             (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
+               (unless (zerop diff-x)
+                 (when (resize-leftside-window-relative diff-x)
+                   (setf (window-separator-start-x *last-dragged-separator*) x)))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-wheel))
   (unless (zerop (mouse-wheel-y mouse-event))
@@ -226,9 +250,9 @@
                                          (mouse-event-x mouse-event)
                                          (mouse-event-y mouse-event))))
       (when window
-        (with-current-window window
-          (scroll-up (* (mouse-wheel-y mouse-event)
-                        *scroll-speed*)))))))
+        (scroll window
+                (- (* (mouse-wheel-y mouse-event)
+                      *scroll-speed*)))))))
 
 
 (defun get-select-expression-points (point)
@@ -270,6 +294,9 @@
 (define-command <mouse-event> () ()
   (handle-mouse-event (last-mouse-event)))
 
+(define-command <mouse-motion-event> () ()
+  (handle-mouse-event (last-mouse-event)))
+
 (defun find-mouse-command (event)
   (etypecase event
     (mouse-button-down
@@ -277,9 +304,47 @@
     (mouse-button-up
      '<mouse-event>)
     (mouse-motion
-     '<mouse-event>)
+     '<mouse-motion-event>)
     (mouse-wheel
      '<mouse-event>)))
+
+
+(defun clear-buffer-hover-overlay (buffer)
+  (let ((overlay (buffer-value buffer 'hover-overlay)))
+    (when overlay
+      (setf (buffer-value buffer 'hover-overlay) nil)
+      (delete-overlay overlay)
+      (setf (buffer-value buffer :unhover-callback) nil))))
+
+(defun update-hover-overlay (point)
+  (let ((buffer (point-buffer point)))
+    (with-point ((start point)
+                 (end point))
+      (when (text-property-at start :hover-callback -1)
+        (previous-single-property-change start :hover-callback))
+      (next-single-property-change end :hover-callback)
+      (let ((overlay (buffer-value buffer 'hover-overlay)))
+        (cond (overlay
+               (move-point (overlay-start overlay) start)
+               (move-point (overlay-end overlay) end))
+              (t
+               (let ((overlay (make-overlay start end 'region)))
+                 (setf (buffer-value buffer :unhover-callback)
+                       (lambda (window point)
+                         (declare (ignore window point))
+                         (clear-buffer-hover-overlay buffer)))
+                 (setf (buffer-value buffer 'hover-overlay)
+                       overlay))))))))
+
+(defun set-clickable (start end callback)
+  (put-text-property start end
+                     :hover-callback (lambda (window dest-point)
+                                       (declare (ignore window))
+                                       (update-hover-overlay dest-point)))
+  (put-text-property start end
+                     :click-callback (lambda (&rest args)
+                                       (clear-buffer-hover-overlay (point-buffer start))
+                                       (apply callback args))))
 
 
 (defun set-hover-message (overlay message &key style)
@@ -299,17 +364,28 @@
                    (when hover-window
                      (delete-popup-message hover-window))))))
 
+(defvar *last-point-on-context-menu-open*)
+(defun get-point-on-context-menu-open ()
+  *last-point-on-context-menu-open*)
+
+(defun update-point-on-context-menu-open (point)
+  (setf *last-point-on-context-menu-open* (copy-point point :temporary)))
+
 (defun show-context-menu-over-mouse-cursor (x y)
-  (declare (ignore x y))
   (let ((context-menu (buffer-context-menu (current-buffer))))
     (when context-menu
-      (lem-if:display-context-menu (implementation) context-menu '(:gravity :mouse-cursor)))))
+      (multiple-value-bind (target-window x y)
+          (focus-window-position (current-frame) x y)
+        (update-point-on-context-menu-open
+         (get-point-from-window-with-coordinates target-window x y nil))
+        (setf (current-window) target-window)
+        (lem-if:display-context-menu (implementation) context-menu '(:gravity :mouse-cursor))))))
 
 (defun paste-expression-on-mouse-cursor-to-current-point (window x y)
   (multiple-value-bind (target-window x y)
       (focus-window-position (current-frame) x y)
     (when (eq target-window window)
-      (let ((point (get-x-y-position-point window x y)))
+      (let ((point (get-point-from-window-with-coordinates window x y)))
         (multiple-value-bind (start end)
             (get-select-expression-points point)
           (when (and start end)

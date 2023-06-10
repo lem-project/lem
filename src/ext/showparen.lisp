@@ -45,9 +45,9 @@
   (multiple-value-bind (x y)
       (lem-if:get-mouse-position (implementation))
     (multiple-value-bind (window relative-x relative-y)
-        (lem::focus-window-position (current-frame) x y)
+        (focus-window-position (current-frame) x y)
       (when window
-        (let ((point (lem::get-x-y-position-point window relative-x relative-y)))
+        (let ((point (get-point-from-window-with-coordinates window relative-x relative-y)))
           (show-paren-at-point window point 0))))))
 
 (defun update-show-paren ()

@@ -1,11 +1,9 @@
-(in-package :lem)
+(in-package :lem-core)
 
+(defvar *set-location-hook* '())
 (defvar *before-init-hook* '())
 (defvar *after-init-hook* '())
 (defvar *splash-function* nil)
-
-;; for mouse control
-(defparameter *terminal-io-saved* *terminal-io*)
 
 (defvar *in-the-editor* nil)
 
@@ -111,12 +109,12 @@
                                 ((equal arg "--kill")
                                  `(uiop:quit))
                                 ((member arg '("-v" "--version") :test #'equal)
-                                 (format t "~a~%" (lem-version))
+                                 (format t "~A~%" (get-version-string))
                                  (uiop:quit)
                                  nil)
                                 ((or (stringp arg) (pathnamep arg))
                                  (incf file-count)
-                                 `(find-file ,(merge-pathnames arg (uiop:getcwd))))
+                                 `(uiop:symbol-call :lem :find-file ,(merge-pathnames arg (uiop:getcwd))))
                                 (t
                                  arg))
                     :collect it)
@@ -173,7 +171,7 @@
   (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
                  *original-home*)
     (init-quicklisp (merge-pathnames "quicklisp/" (lem-home))))
-  (uiop:symbol-call :lem :load-site-init)
+  (uiop:symbol-call :lem-core :load-site-init)
   (run-hooks *before-init-hook*)
   (unless (command-line-arguments-no-init-file args)
     (load-init-file))

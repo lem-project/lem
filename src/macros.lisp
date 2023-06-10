@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defmacro with-current-window (window &body body)
   (let ((gprev-window (gensym "PREV-WINDOW"))
@@ -12,7 +12,7 @@
 
 (defmacro with-pop-up-typeout-window ((stream-var buffer &key erase (read-only t)) &body body)
   `(pop-up-typeout-window ,buffer
-                          (lambda (,stream-var) ,@body)
+                          :function (lambda (,stream-var) ,@body)
                           :erase ,erase
                           :read-only ,read-only))
 

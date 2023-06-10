@@ -373,7 +373,7 @@
     (isearch-update-display)))
 
 (define-command isearch-yank () ()
-  (let ((str (lem::yank-from-clipboard-or-killring)))
+  (let ((str (yank-from-clipboard-or-killring)))
     (when str
       (setq *isearch-string* str)
       (isearch-update-display))))
@@ -445,10 +445,10 @@
      (isearch-update-buffer))))
 
 (define-command isearch-add-cursor-to-next-match () ()
-  (dolist (point (lem::buffer-cursors (current-buffer)))
+  (dolist (point (buffer-cursors (current-buffer)))
     (with-point ((point point))
       (when (search-next-matched point 1)
-        (lem::make-fake-cursor point)))))
+        (make-fake-cursor point)))))
 
 
 (defvar *replace-before-string* nil)

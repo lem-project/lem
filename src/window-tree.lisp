@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defun window-tree ()
   (frame-window-tree (current-frame)))

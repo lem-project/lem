@@ -61,7 +61,7 @@
 (define-major-mode prompt-mode nil
     (:name "prompt"
      :keymap *prompt-mode-keymap*)
-  (setf (lem::not-switchable-buffer-p (current-buffer)) t)
+  (setf (not-switchable-buffer-p (current-buffer)) t)
   (setf (variable-value 'line-wrap :buffer (current-buffer)) nil))
 
 (define-attribute prompt-attribute
@@ -85,7 +85,7 @@
 (defmethod window-parent ((prompt floating-prompt))
   (prompt-window-caller-of-prompt-window prompt))
 
-(defmethod lem::caller-of-prompt-window ((prompt floating-prompt))
+(defmethod caller-of-prompt-window ((prompt floating-prompt))
   (prompt-window-caller-of-prompt-window prompt))
 
 (defun current-prompt-start-point ()
@@ -206,11 +206,11 @@
                                   :source-window (prompt-window-caller-of-prompt-window window))
       (unless (and (= x (window-x window))
                    (= y (window-y window)))
-        (lem::window-set-pos window x y))
+        (lem-core::window-set-pos window x y))
       (let ((width (max width child-width)))
         (unless (and (= width (window-width window))
                      (= height (window-height window)))
-          (lem::window-set-size window width height))))))
+          (lem-core::window-set-size window width height))))))
 
 (defun initialize-prompt-buffer (buffer)
   (let ((*inhibit-read-only* t)
@@ -254,7 +254,7 @@
   (buffer-end (buffer-point (window-buffer prompt-window))))
 
 (defun delete-prompt (prompt-window)
-  (let ((frame (lem::get-frame-of-window prompt-window)))
+  (let ((frame (get-frame-of-window prompt-window)))
     (when (eq prompt-window (frame-current-window frame))
       (let ((window (prompt-window-caller-of-prompt-window prompt-window)))
         (setf (frame-current-window frame)
@@ -308,10 +308,10 @@
               (handler-bind ((edit-callback-signal
                                (lambda (c)
                                  (when edit-callback
-                                   (when (typep (lem::executing-command-command c)
+                                   (when (typep (executing-command-command c)
                                                 'lem:editable-advice)
                                      (funcall edit-callback (get-input-string)))))))
-                (lem::with-special-keymap (special-keymap)
+                (with-special-keymap (special-keymap)
                   (if syntax-table
                       (with-current-syntax syntax-table
                         (funcall body-function))
@@ -322,7 +322,7 @@
         (execute-condition (e)
           (execute-input e))))))
 
-(defmethod lem::%prompt-for-character (prompt-string &key (gravity :center))
+(defmethod lem-core::%prompt-for-character (prompt-string &key (gravity :center))
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string ""
                   :parameters (make-instance 'prompt-parameters
@@ -331,7 +331,7 @@
                   :body-function (lambda ()
                                    (redraw-display)
                                    (let ((key (read-key)))
-                                     (if (lem::abort-key-p key)
+                                     (if (abort-key-p key)
                                          (error 'editor-abort)
                                          (key-to-char key))))))
 
@@ -343,18 +343,18 @@
                    (lambda (c)
                      (declare (ignore c))
                      (invoke-restart 'lem-restart:message))))
-    (lem::command-loop)))
+    (command-loop)))
 
-(defmethod lem::%prompt-for-line (prompt-string
-                                  &key initial-value
-                                       completion-function
-                                       test-function
-                                       history-symbol
-                                       (syntax-table (current-syntax))
-                                       gravity
-                                       edit-callback
-                                       special-keymap
-                                       (use-border t))
+(defmethod lem-core::%prompt-for-line (prompt-string
+                                           &key initial-value
+                                                completion-function
+                                                test-function
+                                                history-symbol
+                                                (syntax-table (current-syntax))
+                                                gravity
+                                                edit-callback
+                                                special-keymap
+                                                (use-border t))
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string initial-value
                   :parameters (make-instance 'prompt-parameters

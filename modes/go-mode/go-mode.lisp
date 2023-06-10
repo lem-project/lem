@@ -40,7 +40,7 @@
   (setf (variable-value 'end-of-defun-function) 'go-end-of-defun)
   (setf (variable-value 'line-comment) "//")
   (setf (variable-value 'insertion-line-comment) "// ")
-  (setf (variable-value 'find-definitions-function) 'find-definitions)
+  (setf (variable-value 'find-definitions-function) 'go-find-definitions)
   (setf (variable-value 'completion-spec) 'go-completion)
   (setf (variable-value 'idle-function) 'go-idle-function)
   (add-hook (variable-value 'after-save-hook :buffer (current-buffer)) 'goflymake))
@@ -209,7 +209,7 @@
                                      (parse-integer line-number)
                                      (1- (parse-integer charpos)))))))
 
-(defun find-definitions (point)
+(defun go-find-definitions (point)
   (unless (buffer-filename (point-buffer point))
     (editor-error "Cannot use godef on a buffer without a file name"))
   (let ((file (call-godef point)))

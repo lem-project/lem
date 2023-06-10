@@ -3,11 +3,16 @@
         :lem
         :lem-ncurses/style
         :lem-ncurses/key)
-  (:export ;; ncurses.lisp
-           :escape-delay
-           ;; ncurses-pdcurseswin32.lisp
-           :input-polling-interval))
+  (:export
+   ;; ncurses.lisp
+   :*terminal-io-saved*
+   :escape-delay
+   ;; ncurses-pdcurseswin32.lisp
+   :input-polling-interval))
 (in-package :lem-ncurses)
+
+;; for mouse control
+(defparameter *terminal-io-saved* *terminal-io*)
 
 ;; escape key delay setting
 (define-editor-variable escape-delay 100)
@@ -27,7 +32,7 @@
    :native-scroll-support nil
    :redraw-after-modifying-floating-window t))
 
-(define-condition exit-editor (editor-condition)
+(define-condition exit (editor-condition)
   ((value
     :initarg :value
     :reader exit-editor-value
@@ -50,11 +55,11 @@
   height)
 
 (defun underline-color (attribute)
-  (cond ((eq t (lem::attribute-underline attribute))
+  (cond ((eq t (attribute-underline attribute))
          nil)
-        ((and (lem::attribute-underline attribute)
-              (lem:parse-color (lem::attribute-underline attribute)))
-         (lem::attribute-underline attribute))
+        ((and (attribute-underline attribute)
+              (parse-color (attribute-underline attribute)))
+         (attribute-underline attribute))
         (t
          nil)))
 
@@ -63,14 +68,14 @@
          (foreground (or underline-color (attribute-foreground attribute)))
          (background (or (attribute-background attribute)
                          lem-if:*background-color-of-drawing-window*))
-         (bits (logior (if (or cursorp (lem::attribute-reverse attribute))
+         (bits (logior (if (or cursorp (attribute-reverse attribute))
                            (lem.term:get-color-pair background foreground)
                            (lem.term:get-color-pair foreground background))
                        0
-                       (if (lem::attribute-bold attribute)
+                       (if (attribute-bold attribute)
                            charms/ll:a_bold
                            0)
-                       (if (lem::attribute-underline attribute)
+                       (if (attribute-underline attribute)
                            charms/ll:a_underline
                            0))))
     bits))
@@ -82,12 +87,12 @@
       (setf attribute (make-attribute :background lem-if:*background-color-of-drawing-window*)))
     (if (null attribute)
         0
-        (cond ((lem::get-attribute-cache
+        (cond ((get-attribute-cache
                 attribute
                 :background lem-if:*background-color-of-drawing-window*))
               (t
                (let ((bits (compute-attribute-value attribute cursorp)))
-                 (setf (lem::get-attribute-cache
+                 (setf (get-attribute-cache
                         attribute
                         :background lem-if:*background-color-of-drawing-window*)
                        bits)
@@ -235,7 +240,7 @@
           (sb-sys:interactive-interrupt (c)
             (declare (ignore c))
             (send-abort-event editor-thread t))))
-    (exit-editor (c) (return-from input-loop c))))
+    (exit (c) (return-from input-loop c))))
 
 (defmethod lem-if:invoke ((implementation ncurses) function)
   (let ((result nil)
@@ -251,10 +256,10 @@
                               (lambda (report)
                                 (bt:interrupt-thread
                                  input-thread
-                                 (lambda () (error 'exit-editor :value report)))))))
+                                 (lambda () (error 'exit :value report)))))))
                (setf result (input-loop editor-thread)))))
       (lem.term:term-finalize))
-    (when (and (typep result 'exit-editor)
+    (when (and (typep result 'exit)
                (exit-editor-value result))
       (format t "~&~A~%" (exit-editor-value result)))))
 
@@ -445,9 +450,9 @@
   (let ((scrwin (ncurses-view-scrwin (window-view (current-window)))))
     (let ((cursor-x (last-print-cursor-x (current-window)))
           (cursor-y (last-print-cursor-y (current-window))))
-      (cond ((lem::covered-with-floating-window-p (current-window) cursor-x cursor-y)
+      (cond ((covered-with-floating-window-p (current-window) cursor-x cursor-y)
              (charms/ll:curs-set 0))
-            ((lem::window-cursor-invisible-p (current-window))
+            ((window-cursor-invisible-p (current-window))
              (charms/ll:curs-set 0))
             (t
              (charms/ll:curs-set 1)

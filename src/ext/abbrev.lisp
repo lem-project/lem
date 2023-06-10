@@ -45,10 +45,12 @@
       (nreverse (remove-duplicates words :test #'equal)))))
 
 (defun filter-word (current-word words)
-  (remove-if-not (lambda (word)
-                   (and (string/= word current-word)
-                        (alexandria:starts-with-subseq current-word word)))
-                 words))
+  (loop :with output = nil
+        :for word :in words
+        :when (and (string/= word current-word)
+                   (alexandria:starts-with-subseq current-word word))
+        :do (pushnew word output :test #'string=)
+        :finally (return output)))
 
 (defun scan-all-buffer-words (word &optional point)
   (unless (string= word "")

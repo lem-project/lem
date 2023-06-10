@@ -256,7 +256,7 @@
 (defun max-display-items ()
   (- (display-height) 4))
 
-(defmethod display ((component multi-column-list) &key (style '(:gravity :center)))
+(defmethod display ((component multi-column-list) &key (style '(:gravity :center)) (index 0))
   (let ((print-spec (make-instance
                      'print-spec
                      :multi-column-list component
@@ -276,11 +276,12 @@
                   (multi-column-list/quit)))
       (setf (multi-column-list-popup-menu component) popup-menu)
       (setf (current-window) window)
-      (setf (lem::buffer-context-menu (window-buffer (current-window)))
+      (setf (lem-core::buffer-context-menu (window-buffer (current-window)))
             (multi-column-list-context-menu component))
       (setf (multi-column-list-of-window (current-window)) component)
       (multi-column-list-mode t)
       (popup-menu-first popup-menu)
+      (loop :repeat index :do (popup-menu-down popup-menu))
       component)))
 
 (defmethod quit ((component multi-column-list))

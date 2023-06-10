@@ -37,15 +37,19 @@
   (setf (variable-value 'line-comment) ";")
   (setf (variable-value 'insertion-line-comment) ";; ")
   (setf (variable-value 'language-mode-tag) 'lisp-mode)
-  (setf (variable-value 'find-definitions-function) 'find-definitions)
-  (setf (variable-value 'find-references-function) 'find-references)
+  (setf (variable-value 'find-definitions-function) 'lisp-find-definitions)
+  (setf (variable-value 'find-references-function) 'lisp-find-references)
   (setf (variable-value 'completion-spec)
         (make-completion-spec 'completion-symbol-async :async t))
   (setf (variable-value 'idle-function) 'lisp-idle-function)
   (setf (variable-value 'root-uri-patterns) '(".asd"))
   (set-syntax-parser lem-lisp-syntax:*syntax-table*
                      (make-tmlanguage-lisp))
-  (unless (connected-p) (self-connect)))
+  (unless (connected-p) (self-connect))
+
+  (setf (buffer-context-menu (current-buffer))
+        (make-instance 'lem/context-menu:context-menu
+                       :compute-items-function 'compute-context-menu-items)))
 
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)
 (define-key *lisp-mode-keymap* "C-c M-p" 'lisp-set-package)
@@ -68,8 +72,7 @@
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c g" 'lisp-interrupt)
 (define-key *lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
-(define-key *lisp-mode-keymap* ")" 'lisp-insert-closed-paren)
-(define-key *lisp-mode-keymap* "Return" 'lisp-insert-newline-and-indent)
+(define-key *lisp-mode-keymap* "Return" 'newline-and-indent)
 
 (defmethod convert-modeline-element ((element (eql 'lisp-mode)) window)
   (format nil "  ~A~A" (buffer-package (window-buffer window) "CL-USER")
@@ -79,6 +82,36 @@
                       (or (self-connection-p (current-connection))
                           (connection-pid (current-connection))))
               "")))
+
+(defun compute-context-menu-items ()
+  (let ((point (get-point-on-context-menu-open)))
+    (when (and point
+               (symbol-string-at-point point))
+      (list (lem/context-menu:make-item
+             :label "Describe symbol"
+             :callback 'lisp-describe-symbol-at-point)
+            (lem/context-menu:make-item
+             :label "Find definition"
+             :callback (lambda (&rest args)
+                         (declare (ignore args))
+                         (lisp-find-definitions point)))
+            (lem/context-menu:make-item
+             :label "Find references"
+             :callback (lambda (&rest args)
+                         (declare (ignore args))
+                         (lisp-find-references point)))
+            (lem/context-menu:make-item
+             :label "Lookup symbol in Hyperspec"
+             :callback (lambda (&rest args)
+                         (declare (ignore args))
+                         ;; TODO: resolve forward references
+                         (uiop:symbol-call :lem-lisp-mode/hyperspec :hyperspec-at-point point)))
+            (lem/context-menu:make-item
+             :label "Export symbol"
+             :callback (lambda (&rest args)
+                         (declare (ignore args))
+                         (lem-lisp-mode/exporter:lisp-add-export
+                          (symbol-string-at-point point))))))))
 
 (defun change-current-connection (connection)
   (when (current-connection)
@@ -113,9 +146,9 @@
 (defun self-connect ()
   (unless lem-lisp-mode/test-api:*disable-self-connect*
     (let ((port (lem-socket-utils:random-available-port)))
-      (log:debug "Starting internal SWANK and connecting to it" swank:*communication-style*)
-      (let ((swank::*swank-debug-p* nil))
-        (swank:create-server :port port :style :spawn))
+      (log:debug "Starting internal SWANK and connecting to it" micros:*communication-style*)
+      (let ((micros::*swank-debug-p* nil))
+        (micros:create-server :port port :style :spawn))
       (connect-to-swank *localhost* port)
       (update-buffer-package)
       (setf *self-connected-port* port))))
@@ -124,7 +157,7 @@
   (and (typep connection 'connection)
        (integerp (self-connected-port))
        (member (connection-hostname connection) '("127.0.0.1" "localhost") :test 'equal)
-       (ignore-errors (equal (connection-pid connection) (swank/backend:getpid)))
+       (ignore-errors (equal (connection-pid connection) (micros/backend:getpid)))
        (= (connection-port connection) (self-connected-port))
        :self))
 
@@ -235,16 +268,16 @@
             :package package))
 
 (defun re-eval-defvar (string)
-  (eval-with-transcript `(swank:re-evaluate-defvar ,string)))
+  (eval-with-transcript `(micros:re-evaluate-defvar ,string)))
 
 (defun interactive-eval (string &key (package (current-package)))
-  (eval-with-transcript `(swank:interactive-eval ,string) :package package))
+  (eval-with-transcript `(micros:interactive-eval ,string) :package package))
 
 (defun eval-print (string &optional print-right-margin)
   (let ((value (lisp-eval (if print-right-margin
                               `(let ((*print-right-margin* ,print-right-margin))
-                                 (swank:eval-and-grab-output ,string))
-                              `(swank:eval-and-grab-output ,string)))))
+                                 (micros:eval-and-grab-output ,string))
+                              `(micros:eval-and-grab-output ,string)))))
     (insert-string (current-point) (first value))
     (insert-character (current-point) #\newline)
     (insert-string (current-point) (second value))))
@@ -258,7 +291,7 @@
   (check-connection)
   (let ((package-names (mapcar #'string-downcase
                                (lisp-eval
-                                '(swank:list-all-package-names t)))))
+                                '(micros:list-all-package-names t)))))
     (string-upcase (prompt-for-string
                     "Package: "
                     :completion-function (lambda (string)
@@ -297,12 +330,20 @@
     (when (form-offset end 1)
       (indent-points (current-point) end))))
 
+(defmethod execute ((mode lisp-mode) (command open-line) argument)
+  (if (not (null argument))
+      (call-next-method)
+      (with-point ((saved-point (current-point)))
+        (insert-character (current-point) #\newline)
+        (indent-line (current-point))
+        (move-point (current-point) saved-point))))
+
 (define-command lisp-set-package (package-name) ((read-package-name))
   (check-connection)
   (cond ((string= package-name ""))
         ((eq (current-buffer) (repl-buffer))
          (destructuring-bind (name prompt-string)
-             (lisp-eval `(swank:set-package ,package-name))
+             (lisp-eval `(micros:set-package ,package-name))
            (new-package name prompt-string)
            (lem/listener-mode:refresh-prompt (repl-buffer))))
         (t
@@ -315,10 +356,22 @@
     (save-excursion
       (setf (current-buffer) repl-buffer)
       (destructuring-bind (name prompt-string)
-          (lisp-eval `(swank:set-package ,package))
+          (lisp-eval `(micros:set-package ,package))
         (new-package name prompt-string)))
     (start-lisp-repl)
     (buffer-end (buffer-point repl-buffer))))
+
+(define-command lisp-current-directory () ()
+  (message "Current directory: ~a" 
+           (lisp-eval `(micros:default-directory))))
+
+(define-command lisp-set-directory (&key directory) ()
+  (unless directory
+    (setf directory
+          (prompt-for-directory "New directory: " :directory (buffer-directory))))
+  (lisp-eval 
+   `(micros:set-default-directory 
+     (micros/backend:filename-to-pathname ,directory))))
 
 (define-command lisp-interrupt () ()
   (send-message-string
@@ -400,6 +453,7 @@
           (self-interactive-eval string)))))
 
 (define-command lisp-eval-defun () ()
+  "Evaluate top-level form around point and instrument."
   (check-connection)
   (with-point ((point (current-point)))
     (lem-lisp-syntax:top-of-defun point)
@@ -413,16 +467,22 @@
             (interactive-eval string))))))
 
 (define-command lisp-eval-region (start end) ("r")
+  "Execute the region as Lisp code."
   (check-connection)
   (eval-with-transcript
-   `(swank:interactive-eval-region
+   `(micros:interactive-eval-region
      ,(points-to-string start end))))
+
+(define-command lisp-eval-buffer () ()
+  "Execute the accessible portion of current buffer as Lisp code."
+  (lisp-eval-region (buffer-start-point (current-buffer)) (buffer-end-point (current-buffer))))
 
 (define-command lisp-load-file (filename)
     ((prompt-for-file "Load File: "
                       :directory (or (buffer-filename) (buffer-directory))
                       :default nil
                       :existing t))
+  "Load the Lisp file named FILENAME."
   (check-connection)
   (when (uiop:file-exists-p filename)
     (let ((filename (convert-local-to-remote-file filename)))
@@ -432,7 +492,7 @@
         `(if (and (cl:find-package :roswell)
                   (cl:find-symbol (cl:string :load) :roswell))
              (uiop:symbol-call :roswell :load ,filename)
-             (swank:load-file ,filename)))
+             (micros:load-file ,filename)))
        :package "CL-USER"))))
 
 (defun get-operator-name ()
@@ -446,7 +506,7 @@
   (let ((name (get-operator-name))
         (package (current-package)))
     (when name
-      (lisp-eval-async `(swank:operator-arglist ,name ,package)
+      (lisp-eval-async `(micros:operator-arglist ,name ,package)
                        (lambda (arglist)
                          (when arglist
                            (display-message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))))))
@@ -460,7 +520,7 @@
                              (and fastfile successp)))
     (highlight-notes notes)
     (cond ((and loadp fastfile successp)
-           (lisp-eval-async `(swank:load-file ,(convert-local-to-remote-file fastfile))
+           (lisp-eval-async `(micros:load-file ,(convert-local-to-remote-file fastfile))
                             (lambda (result)
                               (declare (ignore result))
                               (uiop:delete-file-if-exists
@@ -493,9 +553,9 @@
                      (when source-context
                        (terpri out)
                        (write-string source-context out)))))
-      (lem::set-hover-message overlay
-                              message
-                              :style '(:gravity :mouse-cursor :offset-y 1))
+      (set-hover-message overlay
+                         message
+                         :style '(:gravity :mouse-cursor :offset-y 1))
       (overlay-put overlay 'message message)
       overlay)))
 
@@ -595,7 +655,7 @@
     (save-current-buffer))
   (let ((file (buffer-filename (current-buffer))))
     (run-hooks (variable-value 'load-file-functions) file)
-    (lisp-eval-async `(swank:compile-file-for-emacs ,(convert-local-to-remote-file file) t)
+    (lisp-eval-async `(micros:compile-file-for-emacs ,(convert-local-to-remote-file file) t)
                      #'compilation-finished)))
 
 (define-command lisp-compile-region (start end) ("r")
@@ -606,7 +666,7 @@
                      ,(line-number-at-point (current-point))
                      ,(point-charpos (current-point))))))
     (run-hooks (variable-value 'before-compile-functions) start end)
-    (lisp-eval-async `(swank:compile-string-for-emacs ,string
+    (lisp-eval-async `(micros:compile-string-for-emacs ,string
                                                       ,(buffer-name (current-buffer))
                                                       ',position
                                                       ,(buffer-filename (current-buffer))
@@ -655,72 +715,24 @@
 
 (define-command lisp-macroexpand () ()
   (check-connection)
-  (macroexpand-internal 'swank:swank-macroexpand-1))
+  (macroexpand-internal 'micros:swank-macroexpand-1))
 
 (define-command lisp-macroexpand-all () ()
   (check-connection)
-  (macroexpand-internal 'swank:swank-macroexpand-all))
+  (macroexpand-internal 'micros:swank-macroexpand-all))
 
 (define-command lisp-quickload (system-name)
     ((prompt-for-symbol-name "System: " (buffer-package (current-buffer))))
   (check-connection)
   (eval-with-transcript `(,(uiop:find-symbol* :quickload :quicklisp) ,(string system-name))))
 
-(define-command (lisp-insert-closed-paren (:advice-classes editable-advice)) (n) ("p")
-  (loop :repeat n
-        :do (if (or (syntax-escape-char-p (character-at (current-point) -1))
-                    (in-string-or-comment-p (current-point)))
-                (insert-character (current-point) #\))
-                (with-point ((point (current-point)))
-                  (if (scan-lists point -1 1 t)
-                      (insert-character (current-point) #\))
-                      (editor-error "No matching ')' (can be inserted with \"C-q )\")"))))))
-
-(define-command (lisp-insert-newline-and-indent (:advice-classes editable-advice)) (n) ("p")
-  (insert-character (current-point) #\newline n)
-  (indent-line (current-point)))
-
-(defun make-completions-form-string (string package-name &key (fuzzy t))
-  (format nil "(~A ~S ~S)"
-          (if fuzzy
-              "swank:fuzzy-completions"
-              "swank:completions")
-          string
-          package-name))
-
-(defvar *completion-symbol-with-fuzzy* t)
-
-(defun eval-completions (string package &key (fuzzy *completion-symbol-with-fuzzy*))
-  (let ((completions
-          (first
-           (lisp-eval-from-string (make-completions-form-string string package :fuzzy fuzzy)
-                                  "COMMON-LISP-USER"))))
-    (if fuzzy
-        completions
-        ;; fuzzy-completionsと形式を合わせる
-        (mapcar (lambda (item)
-                  (list item nil nil nil))
-                completions))))
-
-(defun make-completion-item* (completion &optional start end)
-  (make-completion-item
-   :label (first completion)
-   :chunks (loop :for (offset substring) :in (third completion)
-                 :collect (cons offset (+ offset (length substring))))
-   :detail (fourth completion)
-   :start start
-   :end end))
-
-(defun symbol-completion (string &optional (package (current-package)))
-  (let ((completions (eval-completions string package)))
-    (mapcar #'make-completion-item* completions)))
-
 (defun prompt-for-symbol-name (prompt &optional (initial ""))
   (let ((package (current-package)))
     (prompt-for-string prompt
                        :initial-value initial
                        :completion-function (lambda (string)
-                                              (symbol-completion string package))
+                                              (lem-lisp-mode/completion:symbol-completion
+                                               string package))
                        :history-symbol 'mh-read-symbol)))
 
 (defun definition-to-location (definition)
@@ -743,20 +755,20 @@
                   (prompt-for-symbol-name "Edit Definition of: "))))
     (alexandria:when-let (result (find-local-definition point name))
       (return-from find-definitions-default result))
-    (let ((definitions (lisp-eval `(swank:find-definitions-for-emacs ,name))))
+    (let ((definitions (lisp-eval `(micros:find-definitions-for-emacs ,name))))
       (definitions-to-locations definitions))))
 
 (defparameter *find-definitions* '(find-definitions-default))
 
-(defun find-definitions (point)
+(defun lisp-find-definitions (point)
   (check-connection)
   (display-xref-locations (some (alexandria:rcurry #'funcall point) *find-definitions*)))
 
-(defun find-references (point)
+(defun lisp-find-references (point)
   (check-connection)
   (let* ((name (or (symbol-string-at-point point)
                    (prompt-for-symbol-name "Edit uses of: ")))
-         (data (lisp-eval `(swank:xrefs '(:calls :macroexpands :binds
+         (data (lisp-eval `(micros:xrefs '(:calls :macroexpands :binds
                                           :references :sets :specializes)
                                         ,name))))
     (display-xref-references
@@ -766,11 +778,6 @@
        :collect (make-xref-references :type type
                                       :locations defs)))))
 
-(defun make-completion-items (completions &optional start end)
-  (mapcar (lambda (completion)
-            (make-completion-item* completion start end))
-          completions))
-
 (defun completion-symbol (point)
   (check-connection)
   (with-point ((start point)
@@ -778,53 +785,56 @@
     (skip-chars-backward start #'syntax-symbol-char-p)
     (skip-chars-forward end #'syntax-symbol-char-p)
     (when (point< start end)
-      (let* ((completions (eval-completions (points-to-string start end)
-                                            (current-package))))
-        (make-completion-items completions start end)))))
+      (lem-lisp-mode/completion:region-completion start end (current-package)))))
 
 (defun completion-symbol-async (point then)
   (check-connection)
   (let ((string (symbol-string-at-point point)))
     (when string
       (emacs-rex-string (current-connection)
-                        (make-completions-form-string string
-                                                      (current-package)
-                                                      :fuzzy t)
+                        (lem-lisp-mode/completion:make-completions-form-string string (current-package))
                         :continuation (lambda (result)
                                         (alexandria:destructuring-ecase result
-                                          ((:ok value)
-                                           (destructuring-bind (completions timeout) value
-                                             (declare (ignore timeout))
-                                             (with-point ((start (current-point))
-                                                          (end (current-point)))
-                                               (skip-symbol-backward start)
-                                               (skip-symbol-forward end)
-                                               (funcall then
-                                                        (make-completion-items completions
-                                                                               start
-                                                                               end)))))
+                                          ((:ok completions)
+                                           (with-point ((start (current-point))
+                                                        (end (current-point)))
+                                             (skip-symbol-backward start)
+                                             (skip-symbol-forward end)
+                                             (funcall then
+                                                      (lem-lisp-mode/completion:make-completion-items
+                                                       completions
+                                                       start
+                                                       end))))
                                           ((:abort condition)
                                            (editor-error "abort ~A" condition))))
                         :thread (current-swank-thread)
                         :package (current-package)))))
 
-(defun show-description (string)
-  (let ((buffer (make-buffer "*lisp-description*")))
-    (change-buffer-mode buffer 'lisp-mode)
-    (with-pop-up-typeout-window (stream buffer :erase t)
-      (princ string stream))))
+(defun describe-symbol (symbol-name)
+  (when symbol-name
+    (when (string= "" symbol-name)
+      (editor-error "No symbol given"))
+    (let ((markdown (lisp-eval
+                     `(micros/lsp-api:hover-symbol ,symbol-name))))
+      (if (and markdown (not (alexandria:emptyp markdown)))
+          (lem/hover:show-hover (lem/markdown-buffer:markdown-buffer markdown))
+          (message "No documentation")))))
 
-(defun lisp-eval-describe (form)
-  (lisp-eval-async form #'show-description))
+(defun lisp-describe-symbol-at-point (window)
+  (let* ((buffer (window-buffer window))
+         (point (buffer-point buffer))
+         (dest-point (get-point-on-context-menu-open)))
+    (when (eq (point-buffer point)
+              (point-buffer dest-point))
+      (move-point point dest-point)
+      (describe-symbol (symbol-string-at-point point)))))
 
 (define-command lisp-describe-symbol () ()
   (check-connection)
   (let ((symbol-name
           (prompt-for-symbol-name "Describe symbol: "
-                            (or (symbol-string-at-point (current-point)) ""))))
-    (when (string= "" symbol-name)
-      (editor-error "No symbol given"))
-    (lisp-eval-describe `(swank:describe-symbol ,symbol-name))))
+                                  (or (symbol-string-at-point (current-point)) ""))))
+    (describe-symbol symbol-name)))
 
 (defvar *wait-message-thread* nil)
 
@@ -996,77 +1006,16 @@
      (buffer-end point))))
 
 
-(defparameter *impl-name* nil)
-(defvar *slime-command-impls* '(roswell-impls-candidates
-                                qlot-impls-candidates))
-(defun get-lisp-command (&key impl (prefix ""))
-  (format nil "~Aros ~{~A~^ ~}" prefix
-          `(,@(if impl `("-L" ,impl))
-            "-s" "swank" "run")))
-
-(let (cache)
-  (defun roswell-impls-candidates (&optional impl)
-    (if impl
-        (cond ((string= "" impl)
-               (get-lisp-command :impl nil))
-              ((find impl (or (first cache) (roswell-impls-candidates)) :test #'equal)
-               (get-lisp-command :impl impl)))
-        (progn
-          (unless (and cache
-                       (< (get-universal-time) (+ 3600 (cdr cache))))
-            (setf cache
-                  (cons (nreverse
-                         (uiop:split-string (string-right-trim
-                                             (format nil "~%")
-                                             (with-output-to-string (out)
-                                               (uiop:run-program '("ros" "list" "installed")
-                                                                 :output out)))
-                                            :separator '(#\Newline)))
-                        (get-universal-time))))
-          (first cache)))))
-
-(defun qlot-impls-candidates (&optional impl)
-  (if impl
-      (ignore-errors
-       (when (string= "qlot/" impl :end2 5)
-         (get-lisp-command :prefix "qlot exec "
-                           :impl (let ((impl (subseq impl 5)))
-                                   (unless (zerop (length impl))
-                                     impl)))))
-      (when (ignore-errors
-             (string-right-trim
-              '(#\newline)
-              (uiop:run-program '("ros" "roswell-internal-use" "which" "qlot")
-                                :output :string)))
-        (mapcar (lambda (x) (format nil "qlot/~A" x))
-                (roswell-impls-candidates)))))
-
-(defun get-slime-command-list ()
-  (cons ""
-        (loop :for f :in *slime-command-impls*
-              :append (funcall f))))
-
-(defun completion-impls (string &optional (command-list (get-slime-command-list)))
-  (completion-strings string command-list))
-
-(defun prompt-for-implementation (&key (existing t))
-  (let* ((default-impl (config :slime-lisp-implementation ""))
-         (command-list (get-slime-command-list))
-         (impl (prompt-for-string
-                (format nil "lisp implementation (~A): " default-impl)
-                :completion-function 'completion-impls
-                :test-function (and existing
-                                    (lambda (name)
-                                      (member name command-list :test #'string=)))
-                :history-symbol 'mh-read-impl))
-         (impl (if (string= impl "")
-                   default-impl
-                   impl))
-         (command (loop :for f :in *slime-command-impls*
-                        :for command := (funcall f impl)
-                        :when command
-                        :do (return command))))
-    (setf (config :slime-lisp-implementation) impl)
+(defun prompt-for-lisp-command ()
+  (let* ((commands (lem-lisp-mode/implementation:get-usable-commands))
+         (default-command (lem-lisp-mode/implementation:default-command))
+         (command (prompt-for-string (format nil "lisp command (~A): " default-command)
+                                     :completion-function (lambda (str) (completion str commands))
+                                     :history-symbol 'read-lisp-command))
+         (command (if (string= command "")
+                      default-command
+                      command)))
+    (setf (config :slime-lisp-command) command)
     command))
 
 (defun lisp-process-buffer-name (port)
@@ -1093,11 +1042,12 @@
 (defun send-swank-create-server (process port)
   (lem-process:process-send-input
    process
-   (format nil "(swank:create-server :port ~D :dont-close t)~%" port)))
+   "(ql:quickload :micros)")
+  (lem-process:process-send-input
+   process
+   (format nil "(micros:create-server :port ~D :dont-close t)~%" port)))
 
 (defun run-slime (command &key (directory (buffer-directory)))
-  (unless command
-    (setf command (get-lisp-command :impl *impl-name*)))
   (let* ((port (lem-socket-utils:random-available-port))
          (process (run-lisp :command command :directory directory :port port)))
     (send-swank-create-server process port)
@@ -1135,16 +1085,17 @@
                    (add-hook *exit-editor-hook* 'slime-quit-all))
                  (failure (c)
                    (finalize)
-                   (pop-up-typeout-window (make-lisp-process-buffer port)
-                                          nil)
+                   (pop-up-typeout-window (make-lisp-process-buffer port))
                    (error c))
                  (finalize ()
                    (stop-timer timer)
                    (stop-loading-spinner spinner)))
           (setf timer (start-timer (make-timer #'interval) 500 t)))))))
 
-(define-command slime (&optional ask-implementation) ("P")
-  (let ((command (if ask-implementation (prompt-for-implementation))))
+(define-command slime (&optional ask-command) ("P")
+  (let ((command (if ask-command
+                     (prompt-for-lisp-command)
+                     (lem-lisp-mode/implementation:default-command))))
     (run-slime command)))
 
 (defun delete-lisp-connection (connection)
@@ -1178,9 +1129,9 @@
 (defun sit-for* (second)
   (loop :with end-time := (+ (get-internal-real-time)
                              (* second internal-time-units-per-second))
-        :for e := (lem::receive-event (float
-                                       (/ (- end-time (get-internal-real-time))
-                                          internal-time-units-per-second)))
+        :for e := (receive-event (float
+                                  (/ (- end-time (get-internal-real-time))
+                                     internal-time-units-per-second)))
         :while (key-p e)))
 
 (define-command slime-restart () ()

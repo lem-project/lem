@@ -19,14 +19,14 @@
       (ok (find-if (lambda (element)
                      (and (lem-vi-mode/core::vi-modeline-element-p element)
                           (equal "[COMMAND]" (lem-vi-mode/core::element-name element))))
-                   lem::*modeline-status-list*)))
+                   lem-core::*modeline-status-list*)))
     (test "(change-state 'normal)"
       (ok (eq lem-vi-mode/core::*current-state* 'lem-vi-mode::command))
 
-      (ok (eq (mode-keymap (get 'lem-vi-mode:vi-mode 'lem::global-mode))
+      (ok (eq (mode-keymap (get 'lem-vi-mode:vi-mode 'lem-core::global-mode))
               (lem-vi-mode/core::vi-state-keymap (lem-vi-mode/core::ensure-state 'lem-vi-mode::command))))
       (ok (equal "[COMMAND]" (lem-vi-mode/core::element-name lem-vi-mode/core::*modeline-element*)))
-      (ok (string= (if (eq :dark (lem::display-background-mode))
+      (ok (string= (if (eq :dark (lem-core::display-background-mode))
                        "white"
                        "dark")
                    (attribute-background (ensure-attribute 'cursor nil)))))))

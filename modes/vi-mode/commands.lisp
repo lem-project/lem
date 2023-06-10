@@ -69,7 +69,7 @@
            :vi-append
            :vi-append-line
            :vi-open-below
-           :vi-open-adove
+           :vi-open-above
            :vi-jump-back
            :vi-jump-next
            :vi-normal
@@ -82,23 +82,28 @@
 (defvar *vi-yank-recursive* nil)
 
 (defun bolp (point)
+  "Return t if POINT is at the beginning of a line."
   (zerop (point-charpos point)))
 
 (defun eolp (point)
+  "Return t if POINT is at the end of line."
   (let ((len (length (line-string point))))
     (or (zerop len)
         (>= (point-charpos point)
             (1- len)))))
 
 (defun goto-bol (point)
+  "Goto beginning of a line."
   (line-start point))
 
 (defun goto-eol (point)
+  "Goto end of a line."
   (line-end point)
   (unless (bolp point)
     (character-offset point *cursor-offset*)))
 
 (defun empty-line (point)
+  "Return t if the POINT at line is empty."
   (zerop (length (line-string point))))
 
 (defun read-universal-argument ()
@@ -226,23 +231,25 @@
         (skip-chars-forward (current-point) '(#\Space #\Tab #\Newline)))))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
-  (when (< 0 n)
-    (let ((p (current-point)))
+  (let ((p (current-point)))
+    (when (and (< 0 n)
+	       (not (and (= (line-number-at-point p) 1)
+			 (bolp p))))
       (cond
-        ((vi-word-char-p (character-at p -1))
-         (loop
-           while (and (not (bolp p)) (vi-word-char-p (character-at p -1)))
-           do (vi-backward-char)))
-        ((or (bolp p)
-             (vi-space-char-p (character-at p -1)))
-         (skip-chars-backward p '(#\Space #\Tab #\Newline #\Return))
-         (vi-backward-word-begin n))
-        (t
-         (loop until (or (bolp p)
-                         (vi-word-char-p (character-at p -1))
-                         (vi-space-char-p (character-at p -1)))
-               do (vi-backward-char)))))
-    (vi-backward-word-begin (1- n))))
+	((vi-word-char-p (character-at p -1))
+	 (loop
+	   while (and (not (bolp p)) (vi-word-char-p (character-at p -1)))
+	   do (vi-backward-char)))
+	((or (bolp p)
+	     (vi-space-char-p (character-at p -1)))
+	 (skip-chars-backward p '(#\Space #\Tab #\Newline #\Return))
+	 (vi-backward-word-begin n))
+	(t
+	 (loop until (or (bolp p)
+			 (vi-word-char-p (character-at p -1))
+			 (vi-space-char-p (character-at p -1)))
+	       do (vi-backward-char))))
+      (vi-backward-word-begin (1- n)))))
 
 (define-command vi-forward-word-begin-broad (&optional (n 1)) ("p")
   (forward-word-begin (current-point) n t))
@@ -376,7 +383,7 @@
                                      (delete-between-points start end))))
              (with-killring-context (:options (when (visual-line-p) :vi-line)
                                      :appending (continue-flag :kill))
-               (lem::copy-to-clipboard-with-killring (get-output-stream-string out))))
+               (copy-to-clipboard-with-killring (get-output-stream-string out))))
            (vi-visual-end))
           (t
            (let ((uarg (or (read-universal-argument) n))
@@ -470,7 +477,7 @@
                                      (write-string (points-to-string start end) out))))
              (with-killring-context (:options (when (visual-line-p) :vi-line)
                                      :appending (continue-flag :kill))
-               (lem::copy-to-clipboard-with-killring (get-output-stream-string out))))
+               (copy-to-clipboard-with-killring (get-output-stream-string out))))
            (vi-visual-end))
           (t
            (let ((uarg (or (read-universal-argument) n))
@@ -498,7 +505,7 @@
                (move-point (current-point) start)))))))
 
 (defun vi-yank-from-clipboard-or-killring ()
-  (multiple-value-bind (str options) (peek-killring-item (lem::current-killring) 0)
+  (multiple-value-bind (str options) (peek-killring-item (current-killring) 0)
     (if str
         (values str options) 
         (and (enable-clipboard-p) (get-clipboard-data)))))
@@ -714,7 +721,7 @@
     (move-to-column p column t)
     (change-state 'insert)))
 
-(define-command vi-open-adove () ()
+(define-command vi-open-above () ()
   (line-start (current-point))
   (open-line 1)
   (change-state 'insert))

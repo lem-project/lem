@@ -82,4 +82,4 @@
       (+ column (- tab-width (rem column tab-width))))))
 
 (define-file-type ("sh" "bashrc" "profile") posix-shell-mode)
-(lem::define-program-name-with-mode ("sh" "bash") posix-shell-mode)
+(define-program-name-with-mode ("sh" "bash") posix-shell-mode)

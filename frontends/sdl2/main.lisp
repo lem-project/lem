@@ -17,7 +17,8 @@
            :load-image
            :delete-image
            :draw-image
-           :delete-drawable))
+           :delete-drawable
+           :clear-drawables))
 (in-package :lem-sdl2)
 
 (pushnew :lem-sdl2 *features*)
@@ -202,7 +203,7 @@
       (sdl2:set-render-target (current-renderer) (display-texture *display*))
       (set-render-color *display* (display-background-color *display*))
       (sdl2:render-clear (current-renderer))
-      (lem::change-display-size-hook))))
+      (lem:update-on-display-resized))))
 
 (defun attribute-foreground-color (attribute)
   (or (and attribute
@@ -628,7 +629,7 @@
       (let ((x (floor x (char-width)))
             (y (floor y (char-height))))
         (lem:send-event (lambda ()
-                          (lem::receive-mouse-button-down x y button clicks)))))))
+                          (lem:receive-mouse-button-down x y button clicks)))))))
 
 (defun on-mouse-button-up (button x y)
   (show-cursor)
@@ -640,7 +641,7 @@
         (x (floor x (char-width)))
         (y (floor y (char-height))))
     (lem:send-event (lambda ()
-                      (lem::receive-mouse-button-up x y button)))))
+                      (lem:receive-mouse-button-up x y button)))))
 
 (defun on-mouse-motion (x y state)
   (show-cursor)
@@ -650,7 +651,7 @@
     (let ((x (floor x (char-width)))
           (y (floor y (char-height))))
       (lem:send-event (lambda ()
-                        (lem::receive-mouse-motion x y button))))))
+                        (lem:receive-mouse-motion x y button))))))
 
 (defun on-mouse-wheel (wheel-x wheel-y which direction)
   (declare (ignore which direction))
@@ -659,17 +660,20 @@
     (let ((x (floor x (char-width)))
           (y (floor y (char-height))))
       (lem:send-event (lambda ()
-                        (lem::receive-mouse-wheel x y wheel-x wheel-y)
-                        (when (= 0 (lem::event-queue-length))
+                        (lem:receive-mouse-wheel x y wheel-x wheel-y)
+                        (when (= 0 (lem:event-queue-length))
                           (lem:redraw-display)))))))
 
 (defun on-textediting (text)
   (handle-textediting (get-platform) text)
   (lem:send-event #'lem:redraw-display))
 
-(defun on-textinput (text)
+(defun on-textinput (value)
   (hide-cursor)
-  (handle-text-input (get-platform) text))
+  (let ((text (etypecase value
+                (integer (string (code-char value)))
+                (string value))))
+    (handle-text-input (get-platform) text)))
 
 (defun on-keydown (key-event)
   (hide-cursor)
@@ -1129,28 +1133,7 @@
             (sdl2:free-rect source-rect)))))))
 
 ;;;
-(defclass sdl2-find-file-executor (lem::find-file-executor) ())
-
-(defmethod lem:execute-find-file ((executor sdl2-find-file-executor) mode pathname)
-  (cond ((member (pathname-type pathname)
-                 '("png" "jpg" "jpeg" "bmp" "gif")
-                 :test #'equal)
-         (open-image-buffer pathname))
-        (t
-         (call-next-method))))
-
-(setf lem::*find-file-executor* (make-instance 'sdl2-find-file-executor))
-
-;;;
-(defun open-image-buffer (pathname)
-  (let ((image (load-image pathname))
-        (buffer (lem:make-buffer (file-namestring pathname))))
-    (draw-image buffer image :x 0 :y 0)
-    (setf (lem:buffer-read-only-p buffer) t)
-    buffer))
-
-;;;
-(setq lem::*enable-clipboard-p* t)
+(lem:enable-clipboard)
 
 #-windows
 (defmethod lem-if:clipboard-paste ((implementation sdl2))

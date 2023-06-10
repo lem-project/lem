@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (define-editor-variable modeline-format '("  "
                                           modeline-write-info

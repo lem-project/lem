@@ -1,5 +1,6 @@
 (defpackage :lem-lisp-mode/autodoc
-  (:use :cl :lem :lem-lisp-mode/internal))
+  (:use :cl :lem :lem-lisp-mode/internal)
+  (:export :lisp-autodoc))
 (in-package :lem-lisp-mode/autodoc)
 
 (define-key *lisp-mode-keymap* "C-c C-d C-a" 'lisp-autodoc)
@@ -8,7 +9,7 @@
 (let ((autodoc-symbol nil))
   (defun autodoc-symbol ()
     (or autodoc-symbol
-        (setf autodoc-symbol (intern "AUTODOC" :swank)))))
+        (setf autodoc-symbol (intern "AUTODOC" :micros)))))
 
 (defun highlighting-marker (point)
   (let ((marker-start "===> ")
@@ -26,14 +27,14 @@
             (insert-string start matched-string :attribute 'region)))))))
 
 (defun autodoc (function)
-  (let ((context (lem-lisp-syntax:parse-for-swank-autodoc (current-point))))
+  (let ((context (lem-lisp-syntax:parse-for-autodoc (current-point))))
     (lisp-eval-async
      `(,(autodoc-symbol) ',context)
      (lambda (doc)
        (trivia:match doc
          ((list doc _)
           (unless (eq doc :not-available)
-            (let* ((buffer (make-buffer "*swank:autodoc-fontity*"
+            (let* ((buffer (make-buffer "*micros:autodoc-fontity*"
                                         :temporary t :enable-undo-p nil)))
               (with-point ((point (buffer-point buffer) :right-inserting))
                 (erase-buffer buffer)
@@ -45,7 +46,3 @@
 
 (define-command lisp-autodoc () ()
   (autodoc #'message-buffer))
-
-(defmethod execute :after ((mode lisp-mode) (command self-insert) argument)
-  (when (eql #\space (lem::get-self-insert-char))
-    (lisp-autodoc)))

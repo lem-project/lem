@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defparameter *rgb.txt* "! $Xorg: rgb.txt,v 1.3 2000/08/17 19:54:00 cpqbld Exp $
 255 250 250  snow
@@ -776,6 +776,7 @@
 (defstruct (color (:constructor make-color (red green blue))) red green blue)
 
 (defun light-color-p (color)
+  "Return t if COLOR is light."
   (< 50
      (/ (max (color-red color)
              (color-green color)
@@ -783,6 +784,7 @@
         2.55)))
 
 (defun parse-color (string)
+  "Convert COLOR string to a list of normalized RGB components."
   (alexandria:if-let (rgb (get-rgb-from-color-name string))
     (destructuring-bind (r g b) rgb
       (make-color r g b))
@@ -802,6 +804,7 @@
                         (* 17 (parse-integer b :radix 16))))))))
 
 (defun rgb-to-hsv (r g b)
+  "Convert RGB color components to HSV."
   (let ((max (max r g b))
         (min (min r g b)))
     (let ((h (cond ((= min max) 0)
@@ -819,6 +822,7 @@
                 (round (float v)))))))
 
 (defun hsv-to-rgb (h s v)
+  "Convert HSV color components to RGB."
   (flet ((rgb (r g b)
            (values (round r)
                    (round g)

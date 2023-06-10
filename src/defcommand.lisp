@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (eval-when (:compile-toplevel :load-toplevel)
   (defun parse-arg-descriptors (arg-descriptors universal-argument)

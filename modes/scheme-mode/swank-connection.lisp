@@ -650,11 +650,11 @@
 
 (defparameter *find-definitions* '(find-definitions-default))
 
-(defun find-definitions (point)
+(defun scheme-find-definitions (point)
   (check-connection)
   (display-xref-locations (some (alexandria:rcurry #'funcall point) *find-definitions*)))
 
-(defun find-references (point)
+(defun scheme-find-references (point)
   (check-connection)
   (let* ((name (or (symbol-string-at-point point)
                    (prompt-for-symbol-name "Edit uses of: ")))
@@ -1068,9 +1068,9 @@
 (defun sit-for* (second)
   (loop :with end-time := (+ (get-internal-real-time)
                              (* second internal-time-units-per-second))
-        :for e := (lem::receive-event (float
-                                       (/ (- end-time (get-internal-real-time))
-                                          internal-time-units-per-second)))
+        :for e := (receive-event (float
+                                  (/ (- end-time (get-internal-real-time))
+                                     internal-time-units-per-second)))
         :while (key-p e)))
 
 (define-command scheme-slime-restart () ()

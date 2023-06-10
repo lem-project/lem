@@ -28,7 +28,7 @@
     (mapc #'delete-overlay (buffer-value buffer 'line-number-overlays))
     (when (variable-value 'line-numbers :default buffer)
       (let ((overlays '())
-            (current-line-number (line-number-at-point (lem::window-point (current-window)))))
+            (current-line-number (line-number-at-point (window-point (current-window)))))
         (dolist (window (get-buffer-windows buffer))
           (with-point ((p (window-view-point window)))
             (let ((n (length (prin1-to-string (buffer-nlines buffer)))))

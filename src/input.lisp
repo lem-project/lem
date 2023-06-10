@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defvar *input-hook* '())
 
@@ -36,7 +36,7 @@
                        (let ((event (receive-event nil)))
                          (when (accept-event-p event)
                            (return-from read-event-internal event)))))
-                    ((minusp ms)
+                    ((<= ms 0)
                      (handler-bind ((timer-error
                                       (lambda (err)
                                         (show-message (princ-to-string err)))))

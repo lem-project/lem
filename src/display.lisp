@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (define-editor-variable highlight-line nil)
 
@@ -124,12 +124,12 @@
                         (max 0 (- v 2)))
           (format nil "#~X~X~X" r g b))))))
 
-(defun make-temporary-highlight-line-overlay ()
+(defun make-temporary-highlight-line-overlay (buffer)
   (when (and (variable-value 'highlight-line :default (current-buffer))
              (current-theme))
     (alexandria:when-let ((color (highlight-line-color)))
-      (let ((ov (make-temporary-overlay (current-point)
-                                        (current-point)
+      (let ((ov (make-temporary-overlay (buffer-point buffer)
+                                        (buffer-point buffer)
                                         (make-attribute :background color))))
         (overlay-put ov :display-line t)
         ov))))
@@ -146,7 +146,7 @@
       (dolist (cursor (buffer-cursors buffer))
         (if-push (make-temporary-region-overlay-from-cursor cursor)
                  overlays))
-      (if-push (make-temporary-highlight-line-overlay) overlays))
+      (if-push (make-temporary-highlight-line-overlay buffer) overlays))
     overlays))
 
 (defun draw-window-overlays-to-screen (window)
@@ -363,7 +363,7 @@
         (start-x (screen-left-width screen))
         (truncate-str/attributes
           (cons (string *truncate-character*)
-                (list (list 0 1 'lem:truncate-attribute)))))
+                (list (list 0 1 'truncate-attribute)))))
     (loop :for i := (wide-index (car str/attributes)
                                 (1- screen-width)
                                 :start start)

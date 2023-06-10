@@ -26,7 +26,7 @@
 
 (defvar *syntax-table*
   (make-syntax-table
-   :space-chars '(#\space #\tab #\newline)
+   :space-chars '(#\space #\tab #\newline #\page)
    :symbol-chars '(#\+ #\- #\< #\> #\/ #\* #\& #\= #\. #\? #\_ #\! #\$ #\% #\: #\@ #\[ #\]
                    #\^ #\{ #\} #\~ #\# #\|)
    :paren-pairs '((#\( . #\))

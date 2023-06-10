@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (define-editor-variable line-wrap t)
 
@@ -16,6 +16,8 @@
 (defgeneric window-parent (window)
   (:method (window)
     nil))
+
+(defgeneric scroll (window n))
 
 (defclass window ()
   ((x
@@ -126,6 +128,7 @@
 (defun clear-screens-of-window-list ()
   (flet ((clear-screen (window)
            (screen-clear (window-screen window))))
+    (mapc #'clear-screen (uiop:ensure-list (frame-leftside-window (current-frame))))
     (mapc #'clear-screen (window-list))
     (mapc #'clear-screen (frame-floating-windows (current-frame)))))
 
@@ -183,6 +186,13 @@
 (defun window-list (&optional (frame (current-frame)))
   (window-tree-flatten (frame-window-tree frame)))
 
+(defmethod compute-window-list (current-window)
+  (append (alexandria:ensure-list
+           (active-prompt-window))
+          (alexandria:ensure-list
+           (frame-leftside-window (current-frame)))
+          (window-list)))
+
 (defun one-window-p ()
   (window-tree-leaf-p (window-tree)))
 
@@ -220,6 +230,7 @@
 (defun teardown-windows (frame)
   (mapc #'%free-window (window-list frame))
   (mapc #'%free-window (frame-floating-windows frame))
+  (mapc #'%free-window (uiop:ensure-list (frame-leftside-window frame)))
   (values))
 
 (defun window-recenter (window)
@@ -485,8 +496,9 @@ next line because it is at the end of width."
     (loop
       :while (< w column)
       :do (setf w (char-width (character-at point) w))
-          (when (end-line-p point) (return))
-          (character-offset point 1))))
+          (when (end-line-p point) (return nil))
+          (character-offset point 1)
+      :finally (return t))))
 
 (defun window-scroll-down (window)
   (move-to-next-virtual-line (window-view-point window) 1 window))
@@ -585,6 +597,10 @@ window width is changed, we must recalc the window view point."
     (editor-error "Can not split this window")))
 
 (defun split-window-vertically (window &key height)
+  "Split WINDOW into two windows, one above the other.
+
+If the key argument HEIGHT is omitted or nil, both windows get the same
+height, or close to it."
   (check-before-splitting-window window)
   (let* ((use-modeline-p t)
          (min (+ 1 (if use-modeline-p 1 0)))
@@ -611,6 +627,10 @@ window width is changed, we must recalc the window view point."
                                     (window-view new-window))))
 
 (defun split-window-horizontally (window &key width)
+  "Split WINDOW into two side-by-side windows.
+
+If key argument WIDTH is omitted or nil, both windows get the same width, or
+close to it."
   (check-before-splitting-window window)
   (let* ((fringe-size 0)
          (min (+ 2 fringe-size))
@@ -640,17 +660,23 @@ window width is changed, we must recalc the window view point."
                                       (window-view new-window))))
 
 (defun split-window-sensibly (window)
+  "Split WINDOW in a way suitable to display."
   (if (< *window-sufficient-width* (window-width window))
       (split-window-horizontally window)
       (split-window-vertically window)))
 
 (defun get-next-window (window &optional (window-list (window-list)))
+  "Return window after WINDOW in the cyclic ordering of windows.
+
+You can pass in the optional argument WINDOW-LIST to replace the default
+`window-list`."
   (let ((result (member window window-list)))
     (if (cdr result)
         (cadr result)
         (car window-list))))
 
 (defun window-set-pos (window x y)
+  "Make point value in WINDOW be at position X and Y in WINDOW’s buffer."
   (notify-frame-redisplay-required (current-frame))
   (when (floating-window-p window)
     (notify-floating-window-modified (current-frame)))
@@ -665,6 +691,7 @@ window width is changed, we must recalc the window view point."
   (< 2 width))
 
 (defun window-set-size (window width height)
+  "Resize WINDOW to the same WIDTH and HEIGHT."
   (assert (valid-window-width-p width))
   (assert (valid-window-height-p height))
   (notify-frame-redisplay-required (current-frame))
@@ -683,6 +710,7 @@ window width is changed, we must recalc the window view point."
                   (+ (window-y window) dy)))
 
 (defun window-resize (window dw dh)
+  "Resize WINDOW with delta width (DW) and delta height (DH)."
   (window-set-size window
                    (+ (window-width window) dw)
                    (+ (window-height window) dh))
@@ -938,7 +966,9 @@ window width is changed, we must recalc the window view point."
                                        (include-floating-windows nil))
   (loop :for window :in (append (window-list frame)
                                 (when include-floating-windows
-                                  (frame-floating-windows frame)))
+                                  (frame-floating-windows frame))
+                                (when include-floating-windows
+                                  (uiop:ensure-list (frame-leftside-window frame))))
         :when (eq buffer (window-buffer window))
         :collect window))
 
@@ -1027,20 +1057,26 @@ window width is changed, we must recalc the window view point."
             (setf (window-parameter (current-window) 'parent-window) parent-window)
             (values (current-window) split-p))))))
 
+(defun display-buffer (buffer &optional force-split-p)
+  (multiple-value-bind (window split-p)
+      (pop-to-buffer buffer force-split-p)
+    (declare (ignore split-p))
+    window))
+
 (defun quit-window (window &key kill-buffer)
   (let ((parent-window (window-parameter window 'parent-window)))
     (cond
       ((and (not (one-window-p))
             (window-parameter window 'split-p))
        (if kill-buffer
-           (kill-buffer (window-buffer window))
+           (delete-buffer (window-buffer window))
            (bury-buffer (window-buffer window)))
        (delete-window window)
        (unless (deleted-window-p parent-window)
          (setf (current-window) parent-window)))
       (t
        (if kill-buffer
-           (kill-buffer (window-buffer window))
+           (delete-buffer (window-buffer window))
            (switch-to-buffer (bury-buffer (window-buffer window)) nil))
        (unless (deleted-window-p parent-window)
          (setf (current-window) parent-window))))))
@@ -1177,13 +1213,53 @@ window width is changed, we must recalc the window view point."
   (remove-header-window (current-frame) window)
   (notify-header-window-modified (current-frame)))
 
+;;; leftside-window
+(defclass side-window (floating-window) ())
+
+(defun make-leftside-window (buffer &key (width 30))
+  (cond ((frame-leftside-window (current-frame))
+         (with-current-window (frame-leftside-window (current-frame))
+           (switch-to-buffer buffer)))
+        (t
+         (setf (frame-leftside-window (current-frame))
+               (make-instance 'side-window
+                              :buffer buffer
+                              :x 0
+                              :y 1
+                              :width width
+                              :height (display-height)
+                              :use-modeline-p nil
+                              :background-color nil
+                              :border 0))
+         (balance-windows))))
+
+(defun delete-leftside-window ()
+  (delete-window (frame-leftside-window (current-frame)))
+  (setf (frame-leftside-window (current-frame)) nil)
+  (balance-windows))
+
+(defun resize-leftside-window (width)
+  (let ((window (frame-leftside-window (current-frame))))
+    (window-set-size window width (window-height window))
+    (balance-windows)))
+
+(defun resize-leftside-window-relative (offset)
+  (let* ((window (frame-leftside-window (current-frame)))
+         (new-width (+ (window-width window) offset)))
+    (when (< 2 new-width)
+      (window-set-size window
+                       new-width
+                       (window-height window))
+      (balance-windows)
+      t)))
+
 ;;;
 (defun adjust-all-window-size ()
   (dolist (window (frame-header-windows (current-frame)))
     (window-set-size window (display-width) 1))
   (balance-windows))
 
-(defun change-display-size-hook ()
+(defun update-on-display-resized ()
   (lem-if:resize-display-before (implementation))
   (adjust-all-window-size)
   (clear-screens-of-window-list)

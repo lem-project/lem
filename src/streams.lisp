@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defclass buffer-input-stream (trivial-gray-streams:fundamental-input-stream)
   ((unread-char

@@ -1,5 +1,4 @@
 (defpackage :lem-lisp-mode/paren-coloring
-  (:nicknames :lem-lisp-mode/paren-coloring) ; for backward compatibility
   (:use :cl
         :lem)
   (:import-from :lem-lisp-mode/internal

@@ -52,7 +52,7 @@
 (defun indentation-update ()
   (do-all-symbols (symbol)
     (let ((key (string-downcase symbol)))
-      (alexandria:when-let ((indent (swank::symbol-indentation symbol)))
+      (alexandria:when-let ((indent (micros::symbol-indentation symbol)))
         (update-system-indentation key
                                    indent
                                    (list (package-name (symbol-package symbol))))))))
@@ -523,7 +523,8 @@
   (lem-base::with-point-syntax point
     (let ((state (syntax-ppss point)))
       (cond
+        ;; workaround: Do not treat #\page as whitespace only when indentation
+        ((eql #\Page (character-at point)) nil)
         ((pps-state-string-p state) nil)
-        ((zerop (pps-state-paren-depth state))
-         0)
+        ((zerop (pps-state-paren-depth state)) 0)
         (t (calc-indent-1 point))))))

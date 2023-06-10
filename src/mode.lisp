@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defvar *active-global-minor-modes* '())
 (defvar *current-global-mode* nil)

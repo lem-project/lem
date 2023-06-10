@@ -5,6 +5,7 @@
   (:import-from :cl-package-locks)
   (:export :*enable-hook*
            :*disable-hook*
+           :vi-state
            :vi-mode
            :define-vi-state
            :define-vi-operator
@@ -72,28 +73,35 @@
   :reader state-keymap)
   (cursor-color
   :initarg :cursor-color
-  :accessor state-cursor-color)))
+  :accessor state-cursor-color))
+  (:default-initargs
+        :message nil
+        :cursor-color nil
+        :keymap *global-keymap*))
 
 (defvar *current-state* nil)
 
 ;;; vi-state methods
-(defmacro define-vi-state (name (&key tag message cursor-type keymap cursor-color) &body spec)
-  `(progn
-     (defclass ,name (vi-state) ())
+(defmacro define-vi-state (name direct-super-classes direct-slot-specs &rest options)
+  (let ((cleaned-super-classes (if (null direct-super-classes) '(vi-state) direct-super-classes)))
+    `(progn
+       (assert (find 'vi-state ',cleaned-super-classes :test #'(lambda (expected-class class) (closer-mop:subclassp class expected-class))) (',cleaned-super-classes) "At least one of the direct-super-classes should be vi-state or a subclass of vi-state!")
+       (defclass ,name ,cleaned-super-classes
+         ,direct-slot-specs
+         ,@options)
        (setf (get ',name 'state)
-             (make-instance ',name
-                            :message ,message
-                            :cursor-type ,cursor-type
-                            :keymap ,keymap
-                            :cursor-color ,cursor-color))))
+             (make-instance ',name)))))
 
 (defgeneric post-command-hook (state))
 
 (defmethod post-command-hook ((state vi-state)))
 
-(defgeneric state-enabled-hook (state &rest args))
+(defgeneric state-enabled-hook (state))
 
-(defmethod state-enabled-hook ((state vi-state) &rest args))
+(defmethod state-enabled-hook ((state vi-state))
+  (let ((msg (state-message state)))
+    (unless (null msg)
+      (message msg))))
 
 (defgeneric state-disabled-hook (state))
 
@@ -110,14 +118,14 @@
   (assert (typep state 'vi-state))
   state)
 
-(defun change-state (name &rest args)
+(defun change-state (name)
   (and *current-state*
        (state-disabled-hook (ensure-state *current-state*))) 
   (let ((state (ensure-state name)))
     (setf *current-state* name)
     (change-global-mode-keymap 'vi-mode (state-keymap state))
     (change-element-name (format nil "[~A]" name))
-    (state-enabled-hook state args)
+    (state-enabled-hook state)
     (unless *default-cursor-color*
       (setf *default-cursor-color*
             (attribute-background (ensure-attribute 'cursor nil))))
@@ -135,18 +143,22 @@
                                       :parent *global-keymap*))
 (defvar *inactive-keymap* (make-keymap :parent *global-keymap*))
 
-(define-vi-state normal (:keymap *command-keymap*))
-
+(define-vi-state normal () ()
+  (:default-initargs
+   :keymap *command-keymap*))
 
 ;; insert state
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap* :parent *global-keymap*))
 
-(define-vi-state insert (:keymap *insert-keymap* :cursor-color "IndianRed"))
+(define-vi-state insert () () 
+  (:default-initargs
+   :message "-- INSERT --"
+   :cursor-color "IndianRed"
+   :keymap *insert-keymap*))
 
-(defmethod state-enabled-hook ((state insert) &rest args)
-  (message "-- INSERT --"))
-
-(define-vi-state vi-modeline (:keymap *inactive-keymap*))
+(define-vi-state vi-modeline () () 
+  (:default-initargs
+   :keymap *inactive-keymap*))
 
 ;; vi-commands CLOS
 (defmacro %define-vi-action (&whole form vi-action name-and-options params (&rest arg-descriptors) &body body)

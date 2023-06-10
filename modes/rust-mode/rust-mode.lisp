@@ -142,10 +142,7 @@
         (variable-value 'end-of-defun-function) 'end-of-defun
         (variable-value 'line-comment) "//"
         (variable-value 'insertion-line-comment) "// "
-        (variable-value 'tab-width :buffer) 4
-        ;;(variable-value 'find-definitions-function) 'lem/gtags:find-definitions
-        ;;(variable-value 'find-references-function) 'lem/gtags:find-references
-        )
+        (variable-value 'tab-width :buffer) 4)
   (add-hook (variable-value 'before-save-hook :buffer) 'rust-before-save-hook)
   (add-hook (variable-value 'after-save-hook :buffer) 'rust-after-save-hook)
   (setf (variable-value 'rust-format-on-save :buffer) *rust-format-on-save*))

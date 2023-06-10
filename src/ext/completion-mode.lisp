@@ -98,6 +98,7 @@
 (define-key *completion-mode-keymap* 'next-line 'completion-next-line)
 (define-key *completion-mode-keymap* "M-n"    'completion-next-line)
 (define-key *completion-mode-keymap* "Tab"    'completion-narrowing-down-or-next-line)
+(define-key *completion-mode-keymap* "Shift-Tab"    'completion-previous-line)
 (define-key *completion-mode-keymap* 'previous-line 'completion-previous-line)
 (define-key *completion-mode-keymap* "M-p"    'completion-previous-line)
 (define-key *completion-mode-keymap* 'move-to-end-of-buffer 'completion-end-of-buffer)

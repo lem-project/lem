@@ -7,9 +7,23 @@
       (setf (config :deepl-auth-key)
             (prompt-for-string "Auth key: "))))
 
+(defun ja-char-p (char)
+  (cond ((char<= (code-char 12354) ;#\HIRAGANA_LETTER_A
+                 char
+                 (code-char 12435) ;#\HIRAGANA_LETTER_N
+                 ))
+        ((char<= (code-char 12450) ;#\KATAKANA_LETTER_A
+                 char
+                 (code-char 12531) ;#\KATAKANA_LETTER_N
+                 ))
+        ((or (<= #x4E00
+                 (char-code char)
+                 #x9FFF)
+             (find char "仝々〆〇ヶ")))))
+
 (defun ja-text-p (text)
   (loop :for c :across text
-        :when (member (lem::word-type c) '(:hiragana :katakana :kanji))
+        :when (ja-char-p c)
         :return t))
 
 (defun translate (text &key (source-lang "EN") (target-lang "JA"))

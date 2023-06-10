@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (define-condition editor-abort-handler (signal-handler) ())
 
@@ -21,8 +21,8 @@
               :count 100))))
     (funcall 'pop-up-typeout-window
              (make-buffer "*EDITOR ERROR*")
-             (lambda (stream)
-               (format stream "~A" o))
+             :function (lambda (stream)
+                         (format stream "~A" o))
              :erase t)))
 
 (defmacro with-error-handler (() &body body)
@@ -72,7 +72,9 @@
          (read-command-and-call ()
            (let ((cmd (with-idle-timers ()
                         (read-command))))
-             (message nil)
+             (unless (or (eq cmd '<mouse-motion-event>)
+                         (eq cmd '<mouse-event>))
+               (message nil))
              (call-command cmd nil)))
 
          (editor-abort-handler (c)

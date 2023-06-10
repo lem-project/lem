@@ -1,4 +1,4 @@
-(in-package :lem)
+(in-package :lem-core)
 
 (defclass cursor (point)
   ((saved-column :initform nil

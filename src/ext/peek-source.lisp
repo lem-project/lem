@@ -39,7 +39,7 @@
 (define-minor-mode peek-source-mode
     (:name "Peek"
      :keymap *peek-source-keymap*)
-  (setf (lem::not-switchable-buffer-p (current-buffer)) t))
+  (setf (not-switchable-buffer-p (current-buffer)) t))
 
 (define-key *peek-source-keymap* "Return" 'peek-source-select)
 (define-key *peek-source-keymap* 'next-line 'peek-source-next)
@@ -48,16 +48,16 @@
 (defclass peek-window (floating-window) ())
 (defclass source-window (floating-window) ())
 
-(defmethod lem::%delete-window :before ((window peek-window))
+(defmethod lem-core::%delete-window :before ((window peek-window))
   (finalize-peek-source))
 
-(defmethod lem::%delete-window :before ((window source-window))
+(defmethod lem-core::%delete-window :before ((window source-window))
   (finalize-peek-source))
 
-(defmethod lem::compute-window-list ((current-window peek-window))
+(defmethod compute-window-list ((current-window peek-window))
   (list *peek-window* *source-window*))
 
-(defmethod lem::compute-window-list ((current-window source-window))
+(defmethod compute-window-list ((current-window source-window))
   (list *source-window* *peek-window*))
 
 (defvar *is-finalzing* nil)

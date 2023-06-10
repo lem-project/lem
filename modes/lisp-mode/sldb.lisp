@@ -62,6 +62,7 @@
 (define-key *sldb-keymap* "C" 'sldb-inspect-condition)
 (define-key *sldb-keymap* "C-c C-c" 'sldb-recompile-in-frame-source)
 (define-key *sldb-keymap* "M-Return" 'sldb-copy-down-to-repl)
+(define-key *sldb-keymap* "C-Return" 'sldb-copy-down-to-repl)
 
 (defun get-sldb-buffer (thread)
   (dolist (buffer (buffer-list))
@@ -165,7 +166,7 @@
     (move-point p (buffer-value (current-buffer) 'backtrace-start-point))
     (delete-between-points p (buffer-end-point (current-buffer)))
     (save-excursion
-      (sldb-insert-frames p (lisp-eval '(swank:backtrace 0 nil)) nil))))
+      (sldb-insert-frames p (lisp-eval '(micros:backtrace 0 nil)) nil))))
 
 (defun sldb-toggle-details (&optional on)
   (let* ((point (current-point))
@@ -180,7 +181,7 @@
 (defun sldb-show-frame-details (point frame-button)
   (unless (button-get frame-button 'toggle)
     (destructuring-bind (locals catches)
-        (lisp-eval `(swank:frame-locals-and-catch-tags
+        (lisp-eval `(micros:frame-locals-and-catch-tags
                      ,(frame-number
                        (button-get frame-button 'frame))))
       (setf (button-get frame-button 'toggle) t)
@@ -219,7 +220,7 @@
             (insert-string point tag :attribute 'catch-tag-attribute)))))))
 
 (defun sldb-inspect-var (frame-number var)
-  (lisp-eval-async `(swank:inspect-frame-var ,frame-number ,var)
+  (lisp-eval-async `(micros:inspect-frame-var ,frame-number ,var)
                    'open-inspector))
 
 (defun sldb-hide-frame-details (point frame-button)
@@ -242,7 +243,7 @@
 
 (defun sldb-reinitialize (thread level)
   (lisp-rex
-   '(swank:debugger-info-for-emacs 0 10)
+   '(micros:debugger-info-for-emacs 0 10)
    :continuation (lambda (value)
                    (alexandria:destructuring-ecase value
                      ((:ok result)
@@ -296,7 +297,7 @@
   (sldb-toggle-details t))
 
 (define-command sldb-quit () ()
-  (lisp-rex `(swank:throw-to-toplevel)
+  (lisp-rex `(micros:throw-to-toplevel)
             :continuation (lambda (value)
                             (alexandria:destructuring-ecase
                                 value
@@ -306,14 +307,14 @@
 (define-command sldb-continue () ()
   (when (null (buffer-value (current-buffer) 'restarts))
     (error "continue called outside of debug buffer"))
-  (lisp-rex '(swank:sldb-continue)
+  (lisp-rex '(micros:sldb-continue)
             :continuation (lambda (value)
                             (alexandria:destructuring-case value
                               ((:ok x)
                                (editor-error "sldb-quit returned [~A]" x))))))
 
 (define-command sldb-abort () ()
-  (lisp-eval-async '(swank:sldb-abort)
+  (lisp-eval-async '(micros:sldb-abort)
                    (lambda (v)
                      (display-message "Restart returned: ~A" v))))
 
@@ -336,7 +337,7 @@
 (define-command sldb-restart-frame (frame-number)
     ((frame-number-at-point (current-point)))
   (when frame-number
-    (lisp-rex `(swank:restart-frame ,frame-number)
+    (lisp-rex `(micros:restart-frame ,frame-number)
               :continuation (lambda (v)
                               (alexandria:destructuring-ecase v
                                 ((:ok value) (display-message "~A" value))
@@ -344,7 +345,7 @@
 
 (defun sldb-invoke-restart (n)
   (check-type n integer)
-  (lisp-rex `(swank:invoke-nth-restart-for-emacs
+  (lisp-rex `(micros:invoke-nth-restart-for-emacs
               ,(buffer-value (current-buffer) 'level -1)
               ,n)
             :continuation (lambda (x)
@@ -379,12 +380,12 @@
 
 (define-command sldb-show-frame-source (frame-number)
     ((frame-number-at-point (current-point)))
-  (lisp-eval-async `(swank:frame-source-location ,frame-number)
+  (lisp-eval-async `(micros:frame-source-location ,frame-number)
                    #'show-source-location))
 
 (defun eval-form-for-frame (format-string)
   (let* ((frame (frame-number-at-point (current-point)))
-         (pkg (lisp-eval `(swank:frame-package-name ,frame))))
+         (pkg (lisp-eval `(micros:frame-package-name ,frame))))
     (list frame
           (let ((*current-package* pkg))
             (prompt-for-sexp (format nil format-string pkg)))
@@ -392,42 +393,42 @@
 
 (define-command sldb-eval-in-frame (frame string package)
     ((:splice (eval-form-for-frame "Eval in frame (~A)> ")))
-  (lisp-eval-async `(swank:eval-string-in-frame ,string ,frame ,package)
+  (lisp-eval-async `(micros:eval-string-in-frame ,string ,frame ,package)
                    (lambda (string)
                      (display-message "~A" string))))
 
 (define-command sldb-pprint-eval-in-frame (frame string package)
     ((:splice (eval-form-for-frame "Eval in frame (~A)> ")))
-  (lisp-eval-async `(swank:pprint-eval-string-in-frame ,string ,frame ,package)
+  (lisp-eval-async `(micros:pprint-eval-string-in-frame ,string ,frame ,package)
                    #'write-string-to-repl))
 
 (define-command sldb-inspect-in-frame (string)
     ((prompt-for-sexp "Inspect in frame (evaluated): "))
   (let ((frame-number (frame-number-at-point (current-point))))
-    (lisp-eval-async `(swank:inspect-in-frame ,string ,frame-number)
+    (lisp-eval-async `(micros:inspect-in-frame ,string ,frame-number)
                      'open-inspector)))
 
 (define-command sldb-step () ()
-  (lisp-eval-async `(swank:sldb-step ,(frame-number-at-point (current-point)))))
+  (lisp-eval-async `(micros:sldb-step ,(frame-number-at-point (current-point)))))
 
 (define-command sldb-next () ()
-  (lisp-eval-async `(swank:sldb-step ,(frame-number-at-point (current-point)))))
+  (lisp-eval-async `(micros:sldb-step ,(frame-number-at-point (current-point)))))
 
 (define-command sldb-out () ()
-  (lisp-eval-async `(swank:sldb-out ,(frame-number-at-point (current-point)))))
+  (lisp-eval-async `(micros:sldb-out ,(frame-number-at-point (current-point)))))
 
 (define-command sldb-break-on-return (name)
     ((prompt-for-symbol-name "Function: "))
-  (lisp-eval-async `(swank:sldb-break ,name)
+  (lisp-eval-async `(micros:sldb-break ,name)
                    (lambda (message)
                      (display-message "~A" message))))
 
 (define-command sldb-inspect-condition () ()
-  (lisp-eval-async '(swank:inspect-current-condition)
+  (lisp-eval-async '(micros:inspect-current-condition)
                    'open-inspector))
 
 (define-command sldb-print-condition () ()
-  (lisp-eval-async '(swank:sdlb-print-condition)
+  (lisp-eval-async '(micros:sdlb-print-condition)
                    (lambda (message)
                      (display-message "~A" message))))
 
@@ -440,7 +441,7 @@
     (lisp-compile-defun)))
 
 (define-command sldb-recompile-in-frame-source () ()
-  (lisp-eval-async `(swank:frame-source-location ,(frame-number-at-point (current-point)))
+  (lisp-eval-async `(micros:frame-source-location ,(frame-number-at-point (current-point)))
                    (lambda (source-location)
                      (alexandria:destructuring-case source-location
                        ((:error message)
@@ -450,7 +451,7 @@
                         (recompile-location source-location))))))
 
 (define-command sldb-copy-down-to-repl () ()
-  (copy-down-to-repl 'swank/backend:frame-var-value
+  (copy-down-to-repl 'micros/backend:frame-var-value
                      (frame-number-at-point (current-point))
                      (frame-var-number-at-point (current-point))))
 

@@ -54,6 +54,13 @@ export PATH=$PATH:~/.roswell/bin
 ```
 $ ros update lem
 ```
+note: Perhaps this is not enough.
+If you get an error, try updating the submodule.
+```
+$ cd $(ros -e '(princ (ql:where-is-system :lem))')
+$ git submodule update --init --recursive
+$ ros follow-dependency=t install lem-project/lem
+```
 
 ### Usage
 

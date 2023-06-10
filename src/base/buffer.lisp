@@ -19,7 +19,8 @@
     :accessor buffer-%filename)
    (%directory
     :initform nil
-    :accessor buffer-%directory)
+    :accessor buffer-%directory
+    :documentation "The buffer's directory. See: `buffer-directory'.")
    (%modified-p
     :initform 0
     :reader buffer-modified-tick

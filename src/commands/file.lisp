@@ -4,6 +4,7 @@
            :find-file-executor
            :execute-find-file
            :find-file
+           :find-file-recursively
            :read-file
            :add-newline-at-eof-on-writing-file
            :save-buffer
@@ -25,6 +26,20 @@
 (define-key *global-keymap* "C-x C-w" 'write-file)
 (define-key *global-keymap* "C-x Tab" 'insert-file)
 (define-key *global-keymap* "C-x s" 'save-some-buffers)
+
+;; Programs to find files recursively:
+;; We want symbols and not strings, for CLOS dispatch.
+(defvar *find-programs* (list :fdfind :fd :find :lisp)
+  "List of program candidates to be used to find files recursively.
+  Must be symbols of program names, for example \":find\" for the unix \"find\" program.")
+
+(defvar *find-program*)                 ;; unbound: search and set at first use.
+
+(defvar *find-program-timeout* 5
+  "Timeout (in seconds) for listing files recursively.")
+
+(define-condition fallback-to-find-file (simple-condition)
+  ())
 
 (defun expand-files* (filename)
   (directory-files (expand-file-name filename (buffer-directory))))
@@ -86,6 +101,123 @@
         (values buffer new-file-p))
     (encoding-read-error ()
       (open-external-file pathname))))
+
+(defun find-program ()
+  "Return the first program of *find-programs* that exists on this system.
+  Cache the result on *find-program*.
+  On non-Unix platforms, fallback to the :lisp method."
+  #-unix
+  (progn
+    (print "lem-core/commands/file: WHICH is not defined for your OS. We fallback *find-program* to the :lisp method.")
+    :lisp)
+  #+unix
+  (if (boundp '*find-program*)
+      *find-program*
+      (loop for key in *find-programs*
+            for name = (str:downcase (string key))
+            if (eql :lisp key)
+              do (setf *find-program* :lisp)
+            else do
+              (when (exist-program-p name)
+                (setf *find-program* key)
+                (return key)))))
+
+(defgeneric get-files-recursively (program)
+  (:documentation "Find files recursively on the current working
+  directory with the program set in `*find-program*'.
+  Use uiop:with-current-directory in the caller.")
+  (:method (finder)
+    (error "No file finder was found for ~a.~&Use any of *find-programs*: ~S" finder *find-programs*)))
+
+(defmethod get-files-recursively ((finder (eql :fdfind)))
+  ;; fdfind excludes .git, node_modules and such by default.
+  (str:lines
+   (uiop:run-program (list "fdfind") :output :string)))
+
+(defmethod get-files-recursively ((finder (eql :fd)))
+  (str:lines
+   (uiop:run-program (list "fd") :output :string)))
+
+(defmethod get-files-recursively ((finder (eql :find)))
+  (str:lines
+   (uiop:run-program (list "find" ".") :output :string)))
+
+(defun %shorten-path (cwd path)
+  (str:replace-all cwd "" path))
+
+(defmethod get-files-recursively ((finder (eql :lisp)))
+  "Find all files recursively, without external tools."
+  ;; XXX: this method returns full paths, instead of paths starting at the current directory.
+  (let ((results)
+        (cwd-string (namestring (uiop:getcwd))))
+    (uiop:collect-sub*directories
+     (uiop:getcwd)
+     (constantly t)
+     (constantly t)
+     (lambda (subdir)
+       (setf results
+             (nconc results
+                    ;; For the file select, we want strings, not pathnames.
+                    (loop for path in (append (uiop:subdirectories subdir)
+                                              (uiop:directory-files subdir))
+                          for path-string = (namestring path)
+                          ;; Return file names relative to the current directory,
+                          ;; not absolute paths.
+                          ;; Ex: hello.lisp instead of /home/user/lem/hello.lisp
+                          collect (%shorten-path cwd-string path-string))))))
+    results))
+
+(defun get-files-recursively-with-timeout (find-program &key (timeout *find-program-timeout*))
+  "Find files recursively, with timeout.
+  If finding files times out, such as in a HOME directory, stop the operation.
+
+  Return a list of files or signal a FALLBACK-TO-FIND-FILE simple condition."
+  (let ((thread (bt:make-thread
+                 (lambda ()
+                   (get-files-recursively find-program))
+                 :name "Lem get-files-recursively")))
+    (handler-case
+        (bt:with-timeout (timeout)
+          (bt:join-thread thread))
+      (bt:timeout ()
+        (bt:destroy-thread thread)
+        (signal 'fallback-to-find-file)))))
+
+(defun prompt-for-files-recursively ()
+  "Prompt for a file, listing all files under the buffer's directory recursively.
+
+  If listing all files times out, abort the process and fallback to the simple find-file."
+  (handler-bind ((fallback-to-find-file
+                   ;; Fallback to simple find-file.
+                   (lambda (c)
+                     (declare (ignore c))
+                     (message "Time out! Finding files recursively under ~A was aborted." (buffer-directory))
+                     (prompt-for-file
+                      "Find File: "
+                      :directory (buffer-directory)
+                      :default nil
+                      :existing nil))))
+    (let ((candidates (get-files-recursively-with-timeout (find-program))))
+      (prompt-for-string
+       "File: "
+       :completion-function (lambda (x) (completion-strings x candidates))
+       :test-function (lambda (name) (member name candidates :test #'string=))))))
+
+(define-command find-file-recursively (arg) ("p")
+  "Open a file, from the list of all files present under the buffer's direcotry, recursively."
+  ;; ARG is currently not used, use it when needed.
+  (declare (ignorable arg))
+  (let ((cwd (buffer-directory)))
+    (uiop:with-current-directory (cwd)
+      (let ((filename (prompt-for-files-recursively))
+            buffer)
+        (when filename
+          (setf buffer (execute-find-file *find-file-executor*
+                                          (get-file-mode filename)
+                                          filename))
+          (when buffer
+            (switch-to-buffer buffer t nil)))))))
+
 
 (define-command read-file (filename) ("FRead File: ")
   "Open the file as a read-only."

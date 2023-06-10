@@ -1,9 +1,27 @@
 (in-package :lem)
 
+(defvar *file-associations-modes* '())
 (defvar *file-type-relationals* '())
 (defvar *program-name-relationals* '())
 
+(defun (setf file-mode-associations) (specs mode)
+  (pushnew mode *file-associations-modes*)
+  (setf (get mode 'file-mode-associations) specs))
+
+(defun file-mode-associations (mode)
+  (get mode 'file-mode-associations))
+
+(defmacro define-file-associations (mode specs)
+  `(setf (file-mode-associations ',mode) ',specs))
+
 (defun get-file-mode (pathname)
+  (dolist (mode *file-associations-modes*)
+    (loop :for spec :in (file-mode-associations mode)
+          :do (cond ((and (consp spec)
+                          (eq :file-namestring (first spec))
+                          (equal (second spec)
+                                 (file-namestring pathname)))
+                     (return-from get-file-mode mode)))))
   (loop :with filename := (file-namestring pathname)
         :for (file-type . mode) :in *file-type-relationals*
         :do (when (alexandria:ends-with-subseq (format nil ".~A" file-type)

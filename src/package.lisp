@@ -103,9 +103,10 @@
    :enable-clipboard-p
    :copy-to-clipboard
    :get-clipboard-data)
-  ;; file-ext.lisp
+  ;; file.lisp
   (:export
-   :define-file-type)
+   :define-file-type
+   :define-file-associations)
   ;; frame.lisp
   (:export
    :update-prompt-window

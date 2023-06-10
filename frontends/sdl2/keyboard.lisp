@@ -231,7 +231,7 @@
           :do (let ((key (make-key :ctrl (modifier-ctrl *modifier*)
                                    :meta (modifier-meta *modifier*)
                                    :shift nil
-                                   :sym (string c))))
+                                   :sym (convert-to-sym (char-code c)))))
                 (send-key-event key)))))
 
 (defun handle-key-down-internal (key-event)

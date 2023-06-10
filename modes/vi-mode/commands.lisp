@@ -7,6 +7,8 @@
         :lem-vi-mode/word
         :lem-vi-mode/visual
         :lem-vi-mode/jump-motions)
+  (:import-from :lem/common/killring
+                :peek-killring-item)
   (:export :vi-move-to-beginning-of-line/universal-argument-0
            :vi-forward-char
            :vi-backward-char
@@ -495,9 +497,15 @@
                            (copy-region start end)))))))
                (move-point (current-point) start)))))))
 
+(defun vi-yank-from-clipboard-or-killring ()
+  (multiple-value-bind (str options) (peek-killring-item (lem::current-killring) 0)
+    (if str
+        (values str options) 
+        (and (enable-clipboard-p) (get-clipboard-data)))))
+
 (define-command vi-paste-after () ()
   (multiple-value-bind (string type)
-      (lem::yank-from-clipboard-or-killring)
+      (vi-yank-from-clipboard-or-killring)
     (cond
       ((visual-p)
        (let ((visual-line (visual-line-p)))
@@ -521,7 +529,7 @@
 
 (define-command vi-paste-before () ()
   (multiple-value-bind (string type)
-      (lem::yank-from-clipboard-or-killring)
+      (vi-yank-from-clipboard-or-killring)
     (cond
       ((visual-p)
        (vi-delete)

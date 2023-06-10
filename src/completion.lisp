@@ -75,15 +75,15 @@
 (defun completion-strings (str strings)
   (completion str strings :test #'fuzzy-match-p))
 
-(defun completion-buffer (str)
+(defun completion-buffer (str &optional (buffer-list (buffer-list)))
   (let ((candidates1
-          (completion str (buffer-list)
+          (completion str buffer-list
                       :test (lambda (str buffer)
                               (or (search str (buffer-name buffer))
                                   (and (buffer-filename buffer)
                                        (search str (buffer-filename buffer)))))))
         (candidates2
-          (completion str (buffer-list)
+          (completion str buffer-list
                       :test (lambda (str buffer)
                               (or (fuzzy-match-p str (buffer-name buffer))
                                   (and (buffer-filename buffer)

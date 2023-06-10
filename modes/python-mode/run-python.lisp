@@ -4,7 +4,7 @@
            :run-python))
 (in-package :lem-python-mode.run-python)
 
-(defvar *python-run-command* #-win32 "python"
+(defvar *python-run-command* #-win32 "python3"
                              #+win32 '("python" "-i"))
 
 (defvar *process* nil)

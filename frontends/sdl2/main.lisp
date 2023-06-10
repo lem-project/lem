@@ -35,11 +35,13 @@
        ,@body)))
 
 (defun do-log (value)
-  (with-open-file (out "~/lem.log"
-                       :direction :output
-                       :if-exists :append
-                       :if-does-not-exist :create)
-    (uiop:println value out)))
+  (let ((log-file (merge-pathnames "error.log" (lem:lem-home))))
+    (ensure-directories-exist log-file)
+    (with-open-file (out log-file
+                         :direction :output
+                         :if-exists :append
+                         :if-does-not-exist :create)
+      (uiop:println value out))))
 
 (defun call-with-debug (log-function body-function)
   (funcall log-function)
@@ -766,7 +768,8 @@
                                                       (lambda ())
                                                       ;; finalize
                                                       (lambda (report)
-                                                        (do-log report)
+                                                        (when report
+                                                          (do-log report))
                                                         (sdl2:push-quit-event)))))
                                        (declare (ignore editor-thread))
                                        nil)))))))
@@ -1097,6 +1100,7 @@
     (make-instance 'image
                    :width (sdl2:surface-width image)
                    :height (sdl2:surface-height image)
+                   ;; TODO: memory leak
                    :texture (sdl2:create-texture-from-surface (current-renderer)
                                                               image))))
 

@@ -50,4 +50,6 @@
     (let ((tab-width (variable-value 'tab-width :default point)))
       (+ (point-column point) (- tab-width (rem (point-column point) tab-width))))))
 
-(define-file-type ("Makefile" "makefile") makefile-mode)
+(define-file-associations makefile-mode
+  ((:file-namestring "Makefile")
+   (:file-namestring "makefile")))

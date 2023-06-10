@@ -253,6 +253,9 @@
   (lem/popup-menu::popup-menu-window
    (multi-column-list-popup-menu multi-column-list)))
 
+(defun max-display-items ()
+  (- (display-height) 4))
+
 (defmethod display ((component multi-column-list) &key (style '(:gravity :center)))
   (let ((print-spec (make-instance
                      'print-spec
@@ -265,7 +268,7 @@
                                  :action-callback (lambda (item)
                                                     (select-item component item))
                                  :style style
-                                 :max-display-items 100))
+                                 :max-display-items (max-display-items)))
            (window (lem/popup-menu::popup-menu-window popup-menu)))
       (add-hook (window-leave-hook window)
                 (lambda (old-window)
@@ -287,18 +290,33 @@
       (setf (current-window) (window-parent popup-window)))
     (popup-menu-quit popup-menu)))
 
+(defun filtered-items (multi-column-list)
+  (let ((filtered-elements
+          (funcall (multi-column-list-filter-function multi-column-list)
+                   (multi-column-list-search-string multi-column-list))))
+    (let ((items (loop :for element :in filtered-elements
+                       :collect (let ((item (find element
+                                                  (multi-column-list-items multi-column-list)
+                                                  :key #'default-multi-column-list-item-value)))
+                                  (or item (wrap element))))))
+      (dolist (filtered-item items)
+        (let ((item (find (default-multi-column-list-item-value filtered-item)
+                          (multi-column-list-items multi-column-list)
+                          :key #'default-multi-column-list-item-value)))
+          (when item
+            (setf (multi-column-list-item-checked-p filtered-item)
+                  (multi-column-list-item-checked-p item)))))
+      items)))
+
 (defmethod update ((component multi-column-list))
   (let ((items (multi-column-list-items component)))
     (when (and (multi-column-list-filter-function component)
                (< 0 (length (multi-column-list-search-string component))))
-      (setf items
-            (mapcar #'wrap
-                    (funcall (multi-column-list-filter-function component)
-                             (multi-column-list-search-string component)))))
+      (setf items (filtered-items component)))
     (popup-menu-update (multi-column-list-popup-menu component)
                        items
                        :print-spec (multi-column-list-print-spec component)
-                       :max-display-items 100
+                       :max-display-items (max-display-items)
                        :keep-focus t)))
 
 (defun hover-menu-item (multi-column-list point)
@@ -310,17 +328,21 @@
   (move-point (buffer-point (window-buffer window)) point)
   (popup-menu-select (multi-column-list-popup-menu multi-column-list)))
 
+(defun current-focus-item (multi-column-list)
+  (lem/popup-menu:get-focus-item
+   (multi-column-list-popup-menu multi-column-list)))
+
 (defun check-current-item (multi-column-list)
   (when (multi-column-list-use-check-p multi-column-list)
-    (let ((item (lem/popup-menu:get-focus-item
-                 (multi-column-list-popup-menu multi-column-list))))
+    (let ((item (current-focus-item multi-column-list)))
       (setf (multi-column-list-item-checked-p item)
             (not (multi-column-list-item-checked-p item))))
     (update multi-column-list)))
 
 (defun checked-items (multi-column-list)
-  (remove-if-not #'multi-column-list-item-checked-p
-                 (multi-column-list-items multi-column-list)))
+  (or (remove-if-not #'multi-column-list-item-checked-p
+                     (multi-column-list-items multi-column-list))
+      (list (current-focus-item multi-column-list))))
 
 (defun collect-checked-items (multi-column-list)
   (mapcar #'unwrap (checked-items multi-column-list)))

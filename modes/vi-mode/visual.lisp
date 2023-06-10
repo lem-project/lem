@@ -36,20 +36,20 @@
 (define-vi-state visual-char (visual) ())
 
 (define-vi-state visual-line (visual) ()
-(:default-initargs
+  (:default-initargs
    :message "-- VISUAL LINE --"))
 
 (define-vi-state visual-block (visual) ()
-(:default-initargs
+  (:default-initargs
    :message "-- VISUAL BLOCK --"))
 
 (defmethod state-enabled-hook ((state visual))
-   (message (state-message state))
-   (setf *start-point* (copy-point (current-point))))
+  (message (state-message state))
+  (setf *start-point* (copy-point (current-point))))
 
 (defmethod state-disabled-hook ((state visual))
-   (delete-point *start-point*)
-   (clear-visual-overlays))
+  (delete-point *start-point*)
+  (clear-visual-overlays))
 
 (defun disable ()
   (clear-visual-overlays))

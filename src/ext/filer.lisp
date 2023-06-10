@@ -159,9 +159,14 @@
              (lem-core::frame-leftside-window
               (current-frame)))))))
 
+(defun deactive-filer ()
+  (when (eq (current-window) (lem-core::frame-leftside-window (current-frame)))
+    (other-window))
+  (delete-leftside-window))
+
 (define-command filer () ()
   (if (filer-active-p)
-      (delete-leftside-window)
+      (deactive-filer)
       (make-leftside-window (make-filer-buffer "."))))
 
 (define-command filer-select () ()

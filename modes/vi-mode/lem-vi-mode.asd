@@ -1,5 +1,7 @@
 (defsystem "lem-vi-mode"
-  :depends-on ("esrap" "lem")
+  :depends-on ("esrap"
+               "closer-mop"
+               "lem")
   :serial t
   :components ((:file "core")
                (:file "word")

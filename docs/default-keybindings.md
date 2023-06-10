@@ -147,12 +147,13 @@
 | [pipe-command](https://github.com/lem-project/lem/blob/main/src/commands/process.lisp#L43)  | C-x @        | Run a command and displays the output.                                                |
 
 ## Help
-| Command                                                                                      | Key bindings | Documentation |
-|----------------------------------------------------------------------------------------------|--------------|---------------|
-| [describe-key](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L11)      | C-x ?        |               |
-| [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L39) |              |               |
-| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L97)   |              |               |
-| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L103)      |              |               |
+| Command                                                                                      | Key bindings | Documentation                                                                |
+|----------------------------------------------------------------------------------------------|--------------|------------------------------------------------------------------------------|
+| [describe-key](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L12)      | C-x ?        | Tell what is the command associated to a keybinding.                         |
+| [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L41) |              | Describe the bindings of the buffer's current major mode.                    |
+| [list-modes](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L63)        |              | Output all available major and minor modes.                                  |
+| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L100)  |              | Find all symbols in the running Lisp image whose names match a given string. |
+| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L107)      |              | Display Lem's version.                                                       |
 
 ## Font
 | Command                                                                                       | Key bindings | Documentation                                                        |

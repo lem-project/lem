@@ -133,7 +133,7 @@ If you have a questions, join [the Discord](https://discord.gg/NHzqbw4zVR).
 ## Contributors
 
 This project exists thanks to all the people who contribute. [[Contribute]](CONTRIBUTING.md).
-<a href="graphs/contributors"><img src="https://opencollective.com/lem/contributors.svg?width=890" /></a>
+<a href="https://github.com/lem-project/lem/graphs/contributors"><img src="https://opencollective.com/lem/contributors.svg?width=890" /></a>
 
 ## Backers
 

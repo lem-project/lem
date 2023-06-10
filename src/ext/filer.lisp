@@ -149,6 +149,7 @@
          (buffer (make-buffer "*Filer*" :temporary t)))
     (change-buffer-mode buffer 'filer-mode)
     (render buffer (create-directory-item directory :open t))
+    (setf (not-switchable-buffer-p buffer) t)
     buffer))
 
 (defun filer-active-p ()

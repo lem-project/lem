@@ -1,7 +1,6 @@
 (in-package :lem-core)
 
-(define-condition editor-abort-handler (signal-handler) ())
-
+(defvar *editor-abort-hook* '())
 (defvar *exit-editor-hook* '())
 
 (defun bailout (condition)
@@ -79,7 +78,7 @@
 
          (editor-abort-handler (c)
            (declare (ignore c))
-           (signal-subconditions 'editor-abort-handler)
+           (run-hooks *editor-abort-hook*)
            (buffer-mark-cancel (current-buffer)) ; TODO: define handler
            )
 

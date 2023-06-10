@@ -379,7 +379,7 @@
    :event-queue-length)
   ;; interp.lisp
   (:export
-   :editor-abort-handler
+   :*editor-abort-hook*
    :*exit-editor-hook*
    :exit-editor
    :interactive-p

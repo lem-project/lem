@@ -27,8 +27,10 @@
 (defmethod handle-signal ((condition garbage-collection-cursors))
   (clear-duplicate-cursors (current-buffer)))
 
-(define-condition clear-cursor-when-aborted (editor-abort-handler) ())
-(defmethod handle-signal ((condition clear-cursor-when-aborted))
+(defun clear-cursors-when-aborted ()
   (let ((string (merge-cursor-killrings (current-buffer))))
     (clear-cursors (current-buffer))
     (copy-to-clipboard-with-killring string)))
+
+(add-hook *editor-abort-hook*
+          'clear-cursors-when-aborted)

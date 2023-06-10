@@ -152,6 +152,7 @@
 (define-vi-state insert () () 
   (:default-initargs
    :message "-- INSERT --"
+   :cursor-color "IndianRed"
    :keymap *insert-keymap*))
 
 (define-vi-state vi-modeline () () 

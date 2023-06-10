@@ -3,12 +3,14 @@
   (:export :describe-key
            :describe-bindings
            :apropos-command
-           :lem-version))
+           :lem-version
+           :list-modes))
 (in-package :lem-core/commands/help)
 
 (define-key *global-keymap* "C-x ?" 'describe-key)
 
 (define-command describe-key () ()
+  "Tell what is the command associated to a keybinding."
   (show-message "describe-key: ")
   (redraw-display)
   (let* ((kseq (read-key-sequence))
@@ -37,6 +39,7 @@
               (terpri s))))
 
 (define-command describe-bindings () ()
+  "Describe the bindings of the buffer's current major mode."
   (let ((buffer (current-buffer))
         (firstp t))
     (with-pop-up-typeout-window (s (make-buffer "*bindings*") :erase t)
@@ -58,7 +61,7 @@
                                   firstp))))
 
 (define-command list-modes () ()
-  "Outputs all available major and minor modes."
+  "Output all available major and minor modes."
   (with-pop-up-typeout-window (s (make-buffer "*all-modes*") :erase t)
     (let ((major-modes (major-modes))
           (minor-modes (minor-modes)))
@@ -95,11 +98,35 @@
                   (mode-description mode)))))))
 
 (define-command apropos-command (str) ("sApropos: ")
+  "Find all symbols in the running Lisp image whose names match a given string."
   (with-pop-up-typeout-window (out (make-buffer "*Apropos*") :erase t)
     (dolist (name (all-command-names))
       (when (search str name)
         (describe (command-name (find-command name)) out)))))
 
 (define-command lem-version () ()
+  "Display Lem's version."
   (let ((version (get-version-string)))
     (show-message (princ-to-string version))))
+
+(define-command help () ()
+  "Show some help."
+  (with-pop-up-typeout-window (s (make-buffer "*Help*") :erase t)
+    (format s "Welcome to Lem.~&")
+    (format s "You are running ~a.~&" (get-version-string))
+    (format s "~%")
+    (format s "To open a file in Lem, use C-x C-f. Close it with C-x k.~&")
+    (format s "Switch buffers with C-x b.~&")
+    (format s "Quit Lem with C-x C-c.~&")
+    (format s "You can use Vi keys: activate the mode with Alt-x vi-mode.~&")
+    (format s "~%")
+    (format s "To discover all available keybindings, type Alt-x documentation-describe-bindings.~&")
+    (format s "You can check what command a given keybinding is bound to with Alt-x describe-key.~&")
+    (format s "~%")
+    (format s "Lem works out of the box for Common Lisp development. ~%")
+    (format s "You can compile a function right away with C-c C-c,~%")
+    (format s "and open a REPL with M-x start-lisp-repl.~%")
+    (format s "(the notation M-x means Alt-x.)~%")
+    (format s "~%")
+    (format s "But Lem supports other programming languages thanks to its built-in LSP client.~%")
+    (format s "Please consult our online documentation.~%")))

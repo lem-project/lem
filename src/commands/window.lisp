@@ -259,7 +259,8 @@
        (buffer-end (window-view-point window))
        (backward-line-wrap (window-view-point window)
                            window t))
-     (next-line (- (window-offset-view window))))))
+     (with-current-window window
+       (next-line (- (window-offset-view window)))))))
 
 (define-command scroll-up (n &optional (window (current-window))) ("p")
   "Scroll up."
@@ -269,7 +270,8 @@
     (t
      (unless (window-scroll window (- n))
        (buffer-start (window-view-point window)))
-     (previous-line (window-offset-view window)))))
+     (with-current-window window
+       (previous-line (window-offset-view window))))))
 
 (define-other-window-command lem-core/commands/file:find-file "FFind File Other Window: " "Open a file in another window. Split the screen vertically if needed.")
 (define-other-window-command lem-core/commands/file:read-file "FREAD File Other Window: " "Read a file in another window.")

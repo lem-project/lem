@@ -107,20 +107,17 @@
 (define-command vi-visual-char () ()
   (if (visual-char-p)
       (vi-visual-end)
-      (progn
-        (change-state 'visual-char))))
+      (change-state 'visual-char)))
 
 (define-command vi-visual-line () ()
   (if (visual-line-p)
       (vi-visual-end)
-      (progn
-        (change-state 'visual-line))))
+      (change-state 'visual-line)))
 
 (define-command vi-visual-block () ()
   (if (visual-block-p)
       (vi-visual-end)
-      (progn
-        (change-state 'visual-block))))
+      (change-state 'visual-block)))
 
 (defun visual-p ()
   (eq 'visual (current-state)))

@@ -104,6 +104,7 @@
              :label "Lookup symbol in Hyperspec"
              :callback (lambda (&rest args)
                          (declare (ignore args))
+                         ;; TODO: resolve forward references
                          (uiop:symbol-call :lem-lisp-mode/hyperspec :hyperspec-at-point point)))
             (lem/context-menu:make-item
              :label "Export symbol"

@@ -101,6 +101,11 @@
                          (declare (ignore args))
                          (lisp-find-references point)))
             (lem/context-menu:make-item
+             :label "Lookup symbol in Hyperspec"
+             :callback (lambda (&rest args)
+                         (declare (ignore args))
+                         (uiop:symbol-call :lem-lisp-mode/hyperspec :hyperspec-at-point point)))
+            (lem/context-menu:make-item
              :label "Export symbol"
              :callback (lambda (&rest args)
                          (declare (ignore args))

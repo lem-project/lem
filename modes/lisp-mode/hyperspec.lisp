@@ -1,6 +1,7 @@
 (defpackage :lem-lisp-mode/hyperspec
-  (:use :cl :lem))
-
+  (:use :cl :lem)
+  (:export :hyperspec-at-point
+           :hyperspec-lookup))
 (in-package :lem-lisp-mode/hyperspec)
 
 (defparameter *hyperspec-root* "http://www.lispworks.com/reference/HyperSpec/"
@@ -1004,8 +1005,8 @@ It can also be a path to load it locally:
     (loop for (key path) in *symbols-list*
 	  do  (setf (gethash key *symbols*) path))))
 
-(define-command hyperspec-at-point () ()
-  (let* ((symbol (symbol-string-at-point (lem:current-point)))
+(define-command hyperspec-at-point (point) ((current-point))
+  (let* ((symbol (symbol-string-at-point point))
          (url (hlookup symbol)))
     (when (typep url 'lem/thingatp:url)
       (open-external-file url))))

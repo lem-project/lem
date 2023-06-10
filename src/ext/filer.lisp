@@ -62,19 +62,20 @@
                      :open nil
                      :children '())))
 
-(defmethod open-item ((item file-item))
+(defmethod open-item ((item file-item) buffer)
   (when (typep (current-window) 'lem-core:side-window)
     (other-window))
   (find-file (item-pathname item)))
 
-(defmethod open-item ((item directory-item))
+(defmethod open-item ((item directory-item) buffer)
   (cond ((directory-item-open-p item)
          (setf (directory-item-open-p item) nil)
          (setf (directory-item-children item) '()))
         (t
          (setf (directory-item-open-p item) t)
          (setf (directory-item-children item)
-               (create-directory-children (item-pathname item))))))
+               (create-directory-children (item-pathname item)))))
+  (render buffer (root-item buffer)))
 
 (defun root-item (buffer)
   (buffer-value buffer 'root-item))
@@ -86,8 +87,7 @@
   (let ((buffer (point-buffer point))
         (item (text-property-at point :item)))
     (when item
-      (open-item item)
-      (render buffer (root-item buffer)))))
+      (open-item item buffer))))
 
 (defun insert-item (point item)
   (with-point ((start point))

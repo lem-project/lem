@@ -75,7 +75,7 @@
   :accessor state-cursor-color))
   (:default-initargs
         :message nil
-        :cursor-color "IndianRed"
+        :cursor-color nil
         :keymap *global-keymap*))
 
 (defvar *current-state* nil)

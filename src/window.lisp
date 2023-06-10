@@ -189,6 +189,8 @@
 (defmethod compute-window-list (current-window)
   (append (alexandria:ensure-list
            (active-prompt-window))
+          (alexandria:ensure-list
+           (frame-leftside-window (current-frame)))
           (window-list)))
 
 (defun one-window-p ()

@@ -86,17 +86,18 @@
 | [transpose-sexps](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L79)  | M-C-t            | Swaps the expression before and after the cursor. |
 
 ## File
-| Command                                                                                         | Key bindings | Documentation                                                                                                 |
-|-------------------------------------------------------------------------------------------------|--------------|---------------------------------------------------------------------------------------------------------------|
-| [find-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L49)            | C-x C-f      | Open the file.                                                                                                |
-| [read-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L90)            | C-x C-r      | Open the file as a read-only.                                                                                 |
-| [save-current-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L128) | C-x C-s      | Saves the current buffer text to a file                                                                       |
-| [write-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L134)          | C-x C-w      | Saves the text in the current buffer to the specified file                                                    |
-| [write-region-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L155)   |              | Saves the region of text to the specified file                                                                |
-| [insert-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L163)         | C-x Tab      | Inserts the contents of the file into the current buffer.                                                     |
-| [save-some-buffers](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L169)   | C-x s        | Save some files in the open buffer.                                                                           |
-| [revert-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L201)       |              | Restores the buffer. Normally this command will cause the contents of the file to be reflected in the buffer. |
-| [change-directory](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L235)    |              | Change directories associated with the buffer.                                                                |
+| Command                                                                                           | Key bindings | Documentation                                                                                                 |
+|---------------------------------------------------------------------------------------------------|--------------|---------------------------------------------------------------------------------------------------------------|
+| [find-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L64)              | C-x C-f      | Open the file.                                                                                                |
+| [find-file-recursively](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L206) |              | Open a file, from the list of all files present under the buffer's direcotry, recursively.                    |
+| [read-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L222)             | C-x C-r      | Open the file as a read-only.                                                                                 |
+| [save-current-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L260)   | C-x C-s      | Saves the current buffer text to a file                                                                       |
+| [write-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L266)            | C-x C-w      | Saves the text in the current buffer to the specified file                                                    |
+| [write-region-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L287)     |              | Saves the region of text to the specified file                                                                |
+| [insert-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L295)           | C-x Tab      | Inserts the contents of the file into the current buffer.                                                     |
+| [save-some-buffers](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L301)     | C-x s        | Save some files in the open buffer.                                                                           |
+| [revert-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L333)         |              | Restores the buffer. Normally this command will cause the contents of the file to be reflected in the buffer. |
+| [change-directory](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L367)      |              | Change directories associated with the buffer.                                                                |
 
 ## Buffer
 | Command                                                                                       | Key bindings | Documentation                                 |
@@ -147,12 +148,13 @@
 | [pipe-command](https://github.com/lem-project/lem/blob/main/src/commands/process.lisp#L43)  | C-x @        | Run a command and displays the output.                                                |
 
 ## Help
-| Command                                                                                      | Key bindings | Documentation |
-|----------------------------------------------------------------------------------------------|--------------|---------------|
-| [describe-key](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L11)      | C-x ?        |               |
-| [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L39) |              |               |
-| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L97)   |              |               |
-| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L103)      |              |               |
+| Command                                                                                      | Key bindings | Documentation                                                                |
+|----------------------------------------------------------------------------------------------|--------------|------------------------------------------------------------------------------|
+| [describe-key](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L12)      | C-x ?        | Tell what is the command associated to a keybinding.                         |
+| [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L41) |              | Describe the bindings of the buffer's current major mode.                    |
+| [list-modes](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L63)        |              | Output all available major and minor modes.                                  |
+| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L100)  |              | Find all symbols in the running Lisp image whose names match a given string. |
+| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L107)      |              | Display Lem's version.                                                       |
 
 ## Font
 | Command                                                                                       | Key bindings | Documentation                                                        |

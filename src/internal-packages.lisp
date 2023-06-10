@@ -262,6 +262,7 @@
    :floating-window-border
    :floating-window-border-shape
    :floating-window-p
+   :side-window
    :make-leftside-window
    :delete-leftside-window
    :header-window

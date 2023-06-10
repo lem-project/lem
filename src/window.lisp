@@ -1212,15 +1212,24 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (notify-header-window-modified (current-frame)))
 
 ;;; leftside-window
+(defclass side-window (floating-window) ())
+
 (defun make-leftside-window (buffer &key (width 30))
-  (unless (frame-leftside-window (current-frame))
-    (setf (frame-leftside-window (current-frame))
-          (make-floating-window :buffer buffer
-                                :x 0
-                                :y 1
-                                :width width
-                                :height (display-height)))
-    (balance-windows)))
+  (cond ((frame-leftside-window (current-frame))
+         (with-current-window (frame-leftside-window (current-frame))
+           (switch-to-buffer buffer)))
+        (t
+         (setf (frame-leftside-window (current-frame))
+               (make-instance 'side-window
+                              :buffer buffer
+                              :x 0
+                              :y 1
+                              :width width
+                              :height (display-height)
+                              :use-modeline-p nil
+                              :background-color nil
+                              :border 0))
+         (balance-windows))))
 
 (defun delete-leftside-window ()
   (delete-window (frame-leftside-window (current-frame)))

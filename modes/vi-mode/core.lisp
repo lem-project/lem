@@ -5,6 +5,8 @@
   (:import-from :cl-package-locks)
   (:export :*enable-hook*
            :*disable-hook*
+           :vi-state
+           :state-message
            :vi-mode
            :define-vi-state
            :current-state
@@ -93,9 +95,9 @@
 
 (defmethod post-command-hook ((state vi-state)))
 
-(defgeneric state-enabled-hook (state &rest args))
+(defgeneric state-enabled-hook (state))
 
-(defmethod state-enabled-hook ((state vi-state) &rest args))
+(defmethod state-enabled-hook ((state vi-state)))
 
 (defgeneric state-disabled-hook (state))
 
@@ -112,14 +114,14 @@
   (assert (typep state 'vi-state))
   state)
 
-(defun change-state (name &rest args)
+(defun change-state (name)
   (and *current-state*
        (state-disabled-hook (ensure-state *current-state*))) 
   (let ((state (ensure-state name)))
     (setf *current-state* name)
     (change-global-mode-keymap 'vi-mode (state-keymap state))
     (change-element-name (format nil "[~A]" name))
-    (state-enabled-hook state args)
+    (state-enabled-hook state)
     (unless *default-cursor-color*
       (setf *default-cursor-color*
             (attribute-background (ensure-attribute 'cursor nil))))
@@ -149,7 +151,7 @@
   (:default-initargs
    :keymap *insert-keymap*))
 
-(defmethod state-enabled-hook ((state insert) &rest args)
+(defmethod state-enabled-hook ((state insert))
   (message "-- INSERT --"))
 
 (define-vi-state vi-modeline () () 

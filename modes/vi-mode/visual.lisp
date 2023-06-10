@@ -17,7 +17,6 @@
            :vi-visual-downcase))
 (in-package :lem-vi-mode/visual)
 
-(defvar *set-visual-function* nil)
 (defvar *start-point* nil)
 (defvar *visual-overlays* '())
 
@@ -29,12 +28,23 @@
 (define-key *visual-keymap* "U" 'vi-visual-upcase)
 (define-key *visual-keymap* "u" 'vi-visual-downcase)
 
-(define-vi-state visual () () 
+(define-vi-state visual (vi-state) ()
   (:default-initargs
+   :message "-- VISUAL --"
    :keymap *visual-keymap*))
 
-(defmethod state-enabled-hook ((state visual) &rest args)
-   (setf *set-visual-function* (caar args))
+(define-vi-state visual-char (visual) ())
+
+(define-vi-state visual-line (visual) ()
+(:default-initargs
+   :message "-- VISUAL LINE --"))
+
+(define-vi-state visual-block (visual) ()
+(:default-initargs
+   :message "-- VISUAL BLOCK --"))
+
+(defmethod state-enabled-hook ((state visual))
+   (message (state-message state))
    (setf *start-point* (copy-point (current-point))))
 
 (defmethod state-disabled-hook ((state visual))
@@ -52,9 +62,11 @@
   (clear-visual-overlays)
   (if (not (eq (current-buffer) (point-buffer *start-point*)))
       (vi-visual-end)
-      (funcall *set-visual-function*)))
+      (state-setup state)))
 
-(defun visual-char ()
+(defgeneric state-setup (visual-state))
+
+(defmethod state-setup ((state visual-char))
   (with-point ((start *start-point*)
                (end (current-point)))
     (when (point< end start)
@@ -63,7 +75,7 @@
     (push (make-overlay start end 'region)
           *visual-overlays*)))
 
-(defun visual-line ()
+(defmethod state-setup ((state visual-line))
   (with-point ((start *start-point*)
                (end (current-point)))
     (when (point< end start) (rotatef start end))
@@ -72,7 +84,7 @@
     (push (make-overlay start end 'region)
           *visual-overlays*)))
 
-(defun visual-block ()
+(defmethod state-setup ((state visual-block))
   (with-point ((start *start-point*)
                (end (current-point)))
     (when (point< end start)
@@ -97,37 +109,31 @@
   (if (visual-char-p)
       (vi-visual-end)
       (progn
-        (change-state 'visual 'visual-char)
-        (message "-- VISUAL --"))))
+        (change-state 'visual-char))))
 
 (define-command vi-visual-line () ()
   (if (visual-line-p)
       (vi-visual-end)
       (progn
-        (change-state 'visual 'visual-line)
-        (message "-- VISUAL LINE --"))))
+        (change-state 'visual-line))))
 
 (define-command vi-visual-block () ()
   (if (visual-block-p)
       (vi-visual-end)
       (progn
-        (change-state 'visual 'visual-block)
-        (message "-- VISUAL BLOCK --"))))
+        (change-state 'visual-block))))
 
 (defun visual-p ()
   (eq 'visual (current-state)))
 
 (defun visual-char-p ()
-  (and (visual-p)
-       (eq *set-visual-function* 'visual-char)))
+  (eq 'visual-char (current-state)))
 
 (defun visual-line-p ()
-  (and (visual-p)
-       (eq *set-visual-function* 'visual-line)))
+  (eq 'visual-line (current-state)))
 
 (defun visual-block-p ()
-  (and (visual-p)
-       (eq *set-visual-function* 'visual-block)))
+  (eq 'visual-block (current-state)))
 
 (defun apply-visual-range (function)
   (dolist (ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start))

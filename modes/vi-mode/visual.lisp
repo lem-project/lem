@@ -43,8 +43,7 @@
   (:default-initargs
    :message "-- VISUAL BLOCK --"))
 
-(defmethod state-enabled-hook ((state visual))
-  (message (state-message state))
+(defmethod state-enabled-hook :after ((state visual))
   (setf *start-point* (copy-point (current-point))))
 
 (defmethod state-disabled-hook ((state visual))

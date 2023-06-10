@@ -6,7 +6,6 @@
   (:export :*enable-hook*
            :*disable-hook*
            :vi-state
-           :state-message
            :vi-mode
            :define-vi-state
            :current-state
@@ -75,6 +74,7 @@
   :initarg :cursor-color
   :accessor state-cursor-color))
   (:default-initargs
+        :message nil
         :cursor-color "IndianRed"
         :keymap *global-keymap*))
 
@@ -97,7 +97,10 @@
 
 (defgeneric state-enabled-hook (state))
 
-(defmethod state-enabled-hook ((state vi-state)))
+(defmethod state-enabled-hook ((state vi-state))
+  (let ((msg (state-message state)))
+    (unless (null msg)
+      (message msg))))
 
 (defgeneric state-disabled-hook (state))
 
@@ -143,16 +146,13 @@
   (:default-initargs
    :keymap *command-keymap*))
 
-
 ;; insert state
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap* :parent *global-keymap*))
 
 (define-vi-state insert () () 
   (:default-initargs
+   :message "-- INSERT --"
    :keymap *insert-keymap*))
-
-(defmethod state-enabled-hook ((state insert))
-  (message "-- INSERT --"))
 
 (define-vi-state vi-modeline () () 
   (:default-initargs

@@ -122,14 +122,13 @@
   (do-command-loop (:interactive t)
     (incf *command-loop-counter*)
     (if (toplevel-command-loop-p)
-        (handler-bind ((signal-handler #'handle-signal))
-          (with-error-handler ()
-            (let ((*toplevel-command-loop-p* nil))
-              (handler-bind ((editor-condition
-                               (lambda (c)
-                                 (declare (ignore c))
-                                 (invoke-restart 'lem-restart:message))))
-                (command-loop-body)))))
+        (with-error-handler ()
+          (let ((*toplevel-command-loop-p* nil))
+            (handler-bind ((editor-condition
+                             (lambda (c)
+                               (declare (ignore c))
+                               (invoke-restart 'lem-restart:message))))
+              (command-loop-body))))
         (command-loop-body))
     (fix-current-buffer-if-broken)))
 

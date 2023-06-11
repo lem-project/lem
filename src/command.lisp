@@ -1,10 +1,5 @@
 (in-package :lem-core)
 
-(define-condition executing-command (signal-handler)
-  ((command :initarg :command
-            :initform (alexandria:required-argument :command)
-            :reader executing-command-command)))
-
 (defvar *pre-command-hook* '())
 (defvar *post-command-hook* '())
 

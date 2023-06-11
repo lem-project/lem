@@ -312,8 +312,6 @@
    :*pre-command-hook*
    :*post-command-hook*
    :command-name
-   :executing-command-command
-   :handle-signal
    :this-command
    :execute
    :call-command

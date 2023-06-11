@@ -202,18 +202,23 @@
 (defun calc-indent (point)
   (lem-lisp-syntax:calc-indent point))
 
-(defun call-with-remote-eval (form continuation &key connection thread package)
+(defun call-with-remote-eval (form continuation
+                              &key (connection (current-connection))
+                                   (thread (current-swank-thread))
+                                   (package (current-package)))
   (remote-eval connection
                form
                :continuation continuation
                :thread thread
                :package package))
 
-(defmacro with-remote-eval ((form &key (connection (alexandria:required-argument :connection))
-                                       (thread (alexandria:required-argument :thread))
-                                       (package (alexandria:required-argument :package)))
+(defmacro with-remote-eval ((form &rest args
+                                  &key connection
+                                       thread
+                                       package)
                             continuation)
-  `(call-with-remote-eval ,form ,continuation :connection ,connection :thread ,thread :package ,package))
+  (declare (ignore connection thread package))
+  `(call-with-remote-eval ,form ,continuation ,@args))
 
 (defun lisp-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym))
@@ -244,9 +249,7 @@
 
 (defun lisp-eval-async (form &optional cont (package (current-package)))
   (let ((buffer (current-buffer)))
-    (with-remote-eval (form :connection (current-connection)
-                            :thread (current-swank-thread)
-                            :package package)
+    (with-remote-eval (form :package package)
       (lambda (value)
         (alexandria:destructuring-ecase value
           ((:ok result)
@@ -261,9 +264,7 @@
            (display-message "Evaluation aborted on ~A." condition)))))))
 
 (defun eval-with-transcript (form &key (package (current-package)))
-  (with-remote-eval (form :connection (current-connection)
-                          :thread (current-swank-thread)
-                          :package package)
+  (with-remote-eval (form :package package)
     (lambda (value)
       (alexandria:destructuring-ecase value
         ((:ok x)

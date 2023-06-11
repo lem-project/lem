@@ -18,8 +18,6 @@
     :initarg :input
     :reader execute-input)))
 
-(define-condition edit-callback-signal (after-executing-command) ())
-
 (defclass prompt-parameters ()
   ((completion-function
     :initarg :completion-function
@@ -305,12 +303,12 @@
       (handler-case
           (with-unwind-setf (((frame-floating-prompt-window (current-frame))
                               prompt-window))
-              (handler-bind ((edit-callback-signal
-                               (lambda (c)
-                                 (when edit-callback
-                                   (when (typep (executing-command-command c)
-                                                'lem:editable-advice)
-                                     (funcall edit-callback (get-input-string)))))))
+              (let ((*post-command-hook* *post-command-hook*))
+                (when edit-callback
+                  (add-hook *post-command-hook*
+                            (lambda ()
+                              (when (typep (this-command) 'lem:editable-advice)
+                                (funcall edit-callback (get-input-string))))))
                 (with-special-keymap (special-keymap)
                   (if syntax-table
                       (with-current-syntax syntax-table

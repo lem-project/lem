@@ -1,17 +1,7 @@
 (in-package :lem-core)
 
-(define-condition executing-command (signal-handler)
-  ((command :initarg :command
-            :initform (alexandria:required-argument :command)
-            :reader executing-command-command)))
-
-(define-condition before-executing-command (executing-command) ()
-  (:report (lambda (c s)
-             (format s "before executing the ~S command" (executing-command-command c)))))
-
-(define-condition after-executing-command (executing-command) ()
-  (:report (lambda (c s)
-             (format s "after executing the ~S command" (executing-command-command c)))))
+(defvar *pre-command-hook* '())
+(defvar *post-command-hook* '())
 
 (defvar *this-command*)
 
@@ -24,9 +14,9 @@
   (let ((*this-command* (ensure-command this-command)))
     (unless *this-command*
       (editor-error "~A: command not found" this-command))
-    (signal-subconditions 'before-executing-command :command *this-command*)
+    (run-hooks *pre-command-hook*)
     (prog1 (execute (get-active-modes-class-instance (current-buffer))
                     *this-command*
                     universal-argument)
       (buffer-undo-boundary)
-      (signal-subconditions 'after-executing-command :command *this-command*))))
+      (run-hooks *post-command-hook*))))

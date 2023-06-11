@@ -202,17 +202,18 @@
 (defun calc-indent (point)
   (lem-lisp-syntax:calc-indent point))
 
-(defun call-with-remote-eval (form continuation &key thread package)
-  (remote-eval (current-connection)
+(defun call-with-remote-eval (form continuation &key connection thread package)
+  (remote-eval connection
                form
                :continuation continuation
                :thread thread
                :package package))
 
-(defmacro with-remote-eval ((form &key (thread (current-swank-thread))
-                                       (package (current-package)))
+(defmacro with-remote-eval ((form &key (connection (alexandria:required-argument :connection))
+                                       (thread (alexandria:required-argument :thread))
+                                       (package (alexandria:required-argument :package)))
                             continuation)
-  `(call-with-remote-eval ,form ,continuation :thread ,thread :package ,package))
+  `(call-with-remote-eval ,form ,continuation :connection ,connection :thread ,thread :package ,package))
 
 (defun lisp-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym))
@@ -243,7 +244,9 @@
 
 (defun lisp-eval-async (form &optional cont (package (current-package)))
   (let ((buffer (current-buffer)))
-    (with-remote-eval (form :thread (current-swank-thread) :package package)
+    (with-remote-eval (form :connection (current-connection)
+                            :thread (current-swank-thread)
+                            :package package)
       (lambda (value)
         (alexandria:destructuring-ecase value
           ((:ok result)
@@ -258,7 +261,9 @@
            (display-message "Evaluation aborted on ~A." condition)))))))
 
 (defun eval-with-transcript (form &key (package (current-package)))
-  (with-remote-eval (form :package package)
+  (with-remote-eval (form :connection (current-connection)
+                          :thread (current-swank-thread)
+                          :package package)
     (lambda (value)
       (alexandria:destructuring-ecase value
         ((:ok x)

@@ -20,8 +20,8 @@
            :send-message-string
            :send-message
            :message-waiting-p
-           :emacs-rex-string
-           :emacs-rex
+           :remote-eval-from-string
+           :remote-eval
            :finish-evaluated
            :abort-all
            :request-connection-info
@@ -185,7 +185,7 @@ Parses length information to determine how many characters to read."
 (defun setup (connection)
   (log:debug "Setup connection")
 
-  (emacs-rex connection `(micros:connection-info))
+  (remote-eval connection `(micros:connection-info))
   ;; Read the connection information message
   (let* ((info (read-return-message connection))
          (data (getf (getf info :return) :ok))
@@ -214,11 +214,11 @@ Parses length information to determine how many characters to read."
 
   ;; Start it up
   (log:debug "Initializing presentations")
-  (emacs-rex-string connection "(micros:init-presentations)")
+  (remote-eval-from-string connection "(micros:init-presentations)")
   (read-return-message connection)
 
   (log:debug "Creating the REPL")
-  (emacs-rex-string connection "(micros/contrib/repl:create-repl nil :coding-system \"utf-8-unix\")")
+  (remote-eval-from-string connection "(micros/contrib/repl:create-repl nil :coding-system \"utf-8-unix\")")
   ;; Wait for startup
   (read-return-message connection)
 
@@ -288,8 +288,9 @@ to check if input is available."
 
 ;;; Sending messages
 
-(defun emacs-rex-string (connection string &key continuation thread package)
-  (let ((msg (format nil "(:emacs-rex ~A ~S ~A ~A)"
+(defun remote-eval-from-string (connection string &key continuation thread package)
+  (let ((msg (format nil
+                     "(:emacs-rex ~A ~S ~A ~A)"
                      string
                      (or package
                          (connection-package connection))
@@ -308,8 +309,8 @@ to check if input is available."
             (connection-continuations connection)))
     (send-message-string connection msg)))
 
-(defun emacs-rex (connection form &key continuation thread package)
-  (emacs-rex-string connection
+(defun remote-eval (connection form &key continuation thread package)
+  (remote-eval-from-string connection
                     (with-swank-syntax ()
                       (prin1-to-string form))
                     :continuation continuation
@@ -330,12 +331,12 @@ to check if input is available."
 
 (defun request-listener-eval (connection string &optional continuation window-width)
   "Request that Swank evaluate a string of code in the REPL."
-  (emacs-rex-string connection
-                    (if window-width
-                        (format nil "(micros/contrib/repl:listener-eval ~S :window-width ~A)" string window-width)
-                        (format nil "(micros/contrib/repl:listener-eval ~S)" string))
-                    :continuation continuation
-                    :thread ":repl-thread"))
+  (remote-eval-from-string connection
+                           (if window-width
+                               (format nil "(micros/contrib/repl:listener-eval ~S :window-width ~A)" string window-width)
+                               (format nil "(micros/contrib/repl:listener-eval ~S)" string))
+                           :continuation continuation
+                           :thread ":repl-thread"))
 
 ;;; Reading/parsing messages
 

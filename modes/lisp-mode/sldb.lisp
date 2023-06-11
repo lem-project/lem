@@ -242,15 +242,16 @@
            (sldb-reinitialize thread level)))))
 
 (defun sldb-reinitialize (thread level)
-  (lisp-rex
-   '(micros:debugger-info-for-emacs 0 10)
-   :continuation (lambda (value)
-                   (alexandria:destructuring-ecase value
-                     ((:ok result)
-                      (apply #'sldb-setup thread level result))
-                     ((:abort _)
-                      (declare (ignore _)))))
-   :thread thread))
+  (with-remote-eval ('(micros:debugger-info-for-emacs 0 10)
+                     :connection (current-connection)
+                     :thread thread
+                     :package (current-package))
+    (lambda (value)
+      (alexandria:destructuring-ecase value
+        ((:ok result)
+         (apply #'sldb-setup thread level result))
+        ((:abort _)
+         (declare (ignore _)))))))
 
 (defun sldb-exit (thread level stepping)
   (declare (ignore level))
@@ -297,21 +298,27 @@
   (sldb-toggle-details t))
 
 (define-command sldb-quit () ()
-  (lisp-rex `(micros:throw-to-toplevel)
-            :continuation (lambda (value)
-                            (alexandria:destructuring-ecase
-                                value
-                              ((:ok x) (editor-error "sldb-quit returned [%s]" x))
-                              ((:abort _) (declare (ignore _)))))))
+  (with-remote-eval ('(micros:throw-to-toplevel)
+                     :connection (current-connection)
+                     :thread (current-swank-thread)
+                     :package (current-package))
+    (lambda (value)
+      (alexandria:destructuring-ecase
+          value
+        ((:ok x) (editor-error "sldb-quit returned [%s]" x))
+        ((:abort _) (declare (ignore _)))))))
 
 (define-command sldb-continue () ()
   (when (null (buffer-value (current-buffer) 'restarts))
     (error "continue called outside of debug buffer"))
-  (lisp-rex '(micros:sldb-continue)
-            :continuation (lambda (value)
-                            (alexandria:destructuring-case value
-                              ((:ok x)
-                               (editor-error "sldb-quit returned [~A]" x))))))
+  (with-remote-eval ('(micros:sldb-continue)
+                     :connection (current-connection)
+                     :thread (current-swank-thread)
+                     :package (current-package))
+    (lambda (value)
+      (alexandria:destructuring-case value
+        ((:ok x)
+         (editor-error "sldb-quit returned [~A]" x))))))
 
 (define-command sldb-abort () ()
   (lisp-eval-async '(micros:sldb-abort)
@@ -337,21 +344,27 @@
 (define-command sldb-restart-frame (frame-number)
     ((frame-number-at-point (current-point)))
   (when frame-number
-    (lisp-rex `(micros:restart-frame ,frame-number)
-              :continuation (lambda (v)
-                              (alexandria:destructuring-ecase v
-                                ((:ok value) (display-message "~A" value))
-                                ((:abort _) (declare (ignore _))))))))
+    (with-remote-eval (`(micros:restart-frame ,frame-number)
+                       :connection (current-connection)
+                       :thread (current-swank-thread)
+                       :package (current-package))
+      (lambda (v)
+        (alexandria:destructuring-ecase v
+          ((:ok value) (display-message "~A" value))
+          ((:abort _) (declare (ignore _))))))))
 
 (defun sldb-invoke-restart (n)
   (check-type n integer)
-  (lisp-rex `(micros:invoke-nth-restart-for-emacs
-              ,(buffer-value (current-buffer) 'level -1)
-              ,n)
-            :continuation (lambda (x)
-                            (alexandria:destructuring-ecase x
-                              ((:ok value) (display-message "Restart returned: %s" value))
-                              ((:abort _) (declare (ignore _)))))))
+  (with-remote-eval (`(micros:invoke-nth-restart-for-emacs
+                       ,(buffer-value (current-buffer) 'level -1)
+                       ,n)
+                     :connection (current-connection)
+                     :thread (current-swank-thread)
+                     :package (current-package))
+    (lambda (x)
+      (alexandria:destructuring-ecase x
+        ((:ok value) (display-message "Restart returned: %s" value))
+        ((:abort _) (declare (ignore _)))))))
 
 (define-command sldb-invoke-restart-0 () () (sldb-invoke-restart 0))
 (define-command sldb-invoke-restart-1 () () (sldb-invoke-restart 1))

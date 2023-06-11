@@ -10,3 +10,6 @@
 [submodule "submodules/mailbox"]
 	path = submodules/mailbox
 	url = https://github.com/lem-project/lem-mailbox.git
+[submodule "submodules/quick-patch"]
+	path = submodules/quick-patch
+	url = https://github.com/Sasanidas/quick-patch.git

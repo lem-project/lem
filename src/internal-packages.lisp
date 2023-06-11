@@ -309,11 +309,9 @@
    :convert-modeline-element)
   ;; command.lisp
   (:export
+   :*pre-command-hook*
+   :*post-command-hook*
    :command-name
-   :executing-command-command
-   :handle-signal
-   :before-executing-command
-   :after-executing-command
    :this-command
    :execute
    :call-command
@@ -379,7 +377,7 @@
    :event-queue-length)
   ;; interp.lisp
   (:export
-   :editor-abort-handler
+   :*editor-abort-hook*
    :*exit-editor-hook*
    :exit-editor
    :interactive-p

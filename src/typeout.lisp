@@ -117,8 +117,8 @@
     (unless (line-offset (current-point) (window-height (current-window)))
       (dismiss-typeout-window))))
 
-(define-condition dismiss-typeout-window-if-getout (after-executing-command) ())
-(defmethod handle-signal ((condition dismiss-typeout-window-if-getout))
+(add-hook *post-command-hook* 'dismiss-typeout-window-if-getout)
+(defun dismiss-typeout-window-if-getout ()
   (when (and (not (mode-active-p (window-buffer (current-window)) 'typeout-mode))
              *typeout-window*)
     (dismiss-typeout-window)))

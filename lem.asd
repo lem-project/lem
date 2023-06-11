@@ -29,7 +29,6 @@
                (:file "config")
                (:file "errors")
                (:file "system")
-               (:file "signal-handler")
                (:file "key")
                (:file "macros")
                (:file "color")

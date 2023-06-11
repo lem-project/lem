@@ -19,9 +19,7 @@
         (line-numbers-on)
         (line-numbers-off))))
 
-(define-condition update (after-executing-command) ())
-(defmethod handle-signal ((condition update))
-  (update))
+(add-hook *post-command-hook* 'update)
 
 (defun update (&optional (window (current-window)))
   (let ((buffer (window-buffer window)))

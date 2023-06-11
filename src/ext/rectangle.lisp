@@ -106,8 +106,6 @@
 (defmacro with-editing-savepoint (buffer &body body)
   `(call-with-editing-savepoint ,buffer (lambda () ,@body)))
 
-(define-condition update-rectangle (after-executing-command) ())
-
 (defun handle-update-rectangle (string)
   (replace-rectangle string))
 

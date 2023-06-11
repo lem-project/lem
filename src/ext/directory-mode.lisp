@@ -452,8 +452,6 @@
 
 (setf *find-directory-function* 'directory-buffer)
 
-
-(define-condition update-line (after-executing-command) ())
-(defmethod handle-signal ((condition after-executing-command))
+(defmethod execute :after ((mode directory-mode) command argument)
   (when (mode-active-p (current-buffer) 'directory-mode)
     (update-line (current-point))))

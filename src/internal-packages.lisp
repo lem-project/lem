@@ -309,10 +309,11 @@
    :convert-modeline-element)
   ;; command.lisp
   (:export
+   :*pre-command-hook*
+   :*post-command-hook*
    :command-name
    :executing-command-command
    :handle-signal
-   :before-executing-command
    :after-executing-command
    :this-command
    :execute

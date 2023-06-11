@@ -194,6 +194,7 @@
            (kill-region start end)))))))
 
 (define-command kill-whole-line () ()
+  "Kill the entire line and the remaining whitespace"
    (with-point ((start (current-point))
                 (end (current-point)))
      (line-end end)

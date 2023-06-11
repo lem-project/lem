@@ -202,15 +202,17 @@
 (defun calc-indent (point)
   (lem-lisp-syntax:calc-indent point))
 
-(defun lisp-rex (form &key
-                      continuation
-                      (thread (current-swank-thread))
-                      (package (current-package)))
+(defun call-with-remote-eval (form continuation &key thread package)
   (remote-eval (current-connection)
                form
                :continuation continuation
                :thread thread
                :package package))
+
+(defmacro with-remote-eval ((form &key (thread (current-swank-thread))
+                                       (package (current-package)))
+                            continuation)
+  `(call-with-remote-eval ,form ,continuation :thread ,thread :package ,package))
 
 (defun lisp-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym))
@@ -241,31 +243,28 @@
 
 (defun lisp-eval-async (form &optional cont (package (current-package)))
   (let ((buffer (current-buffer)))
-    (lisp-rex form
-              :continuation (lambda (value)
-                              (alexandria:destructuring-ecase value
-                                ((:ok result)
-                                 (when cont
-                                   (let ((prev (current-buffer)))
-                                     (setf (current-buffer) buffer)
-                                     (funcall cont result)
-                                     (unless (eq (current-buffer)
-                                                 (window-buffer (current-window)))
-                                       (setf (current-buffer) prev)))))
-                                ((:abort condition)
-                                 (display-message "Evaluation aborted on ~A." condition))))
-              :thread (current-swank-thread)
-              :package package)))
+    (with-remote-eval (form :thread (current-swank-thread) :package package)
+      (lambda (value)
+        (alexandria:destructuring-ecase value
+          ((:ok result)
+           (when cont
+             (let ((prev (current-buffer)))
+               (setf (current-buffer) buffer)
+               (funcall cont result)
+               (unless (eq (current-buffer)
+                           (window-buffer (current-window)))
+                 (setf (current-buffer) prev)))))
+          ((:abort condition)
+           (display-message "Evaluation aborted on ~A." condition)))))))
 
 (defun eval-with-transcript (form &key (package (current-package)))
-  (lisp-rex form
-            :continuation (lambda (value)
-                            (alexandria:destructuring-ecase value
-                              ((:ok x)
-                               (display-message "~A" x))
-                              ((:abort condition)
-                               (display-message "Evaluation aborted on ~A." condition))))
-            :package package))
+  (with-remote-eval (form :package package)
+    (lambda (value)
+      (alexandria:destructuring-ecase value
+        ((:ok x)
+         (display-message "~A" x))
+        ((:abort condition)
+         (display-message "Evaluation aborted on ~A." condition))))))
 
 (defun re-eval-defvar (string)
   (eval-with-transcript `(micros:re-evaluate-defvar ,string)))

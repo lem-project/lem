@@ -4,6 +4,7 @@
                "trivial-gray-streams"
                "trivial-types"
                "cl-ppcre"
+	       "micros"
                "inquisitor"
                "babel"
                "bordeaux-threads"

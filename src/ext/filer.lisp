@@ -168,7 +168,8 @@
 (define-command filer () ()
   (if (filer-active-p)
       (deactive-filer)
-      (make-leftside-window (make-filer-buffer "."))))
+      (let ((directory (prompt-for-directory "Directory: " :directory (buffer-directory) :existing t)))
+        (make-leftside-window (make-filer-buffer directory)))))
 
 (define-command filer-select () ()
   (select (back-to-indentation (current-point))))

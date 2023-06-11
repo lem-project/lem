@@ -314,7 +314,6 @@
    :command-name
    :executing-command-command
    :handle-signal
-   :after-executing-command
    :this-command
    :execute
    :call-command

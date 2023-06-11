@@ -206,11 +206,11 @@
                       continuation
                       (thread (current-swank-thread))
                       (package (current-package)))
-  (emacs-rex (current-connection)
-             form
-             :continuation continuation
-             :thread thread
-             :package package))
+  (remote-eval (current-connection)
+               form
+               :continuation continuation
+               :thread thread
+               :package package))
 
 (defun lisp-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym))
@@ -234,10 +234,10 @@
           (keyboard-quit))))))
 
 (defun lisp-eval-from-string (string &optional (package (current-package)))
-  (lisp-eval-internal 'emacs-rex-string string package))
+  (lisp-eval-internal 'remote-eval-from-string string package))
 
 (defun lisp-eval (sexp &optional (package (current-package)))
-  (lisp-eval-internal 'emacs-rex sexp package))
+  (lisp-eval-internal 'remote-eval sexp package))
 
 (defun lisp-eval-async (form &optional cont (package (current-package)))
   (let ((buffer (current-buffer)))
@@ -791,24 +791,25 @@
   (check-connection)
   (let ((string (symbol-string-at-point point)))
     (when string
-      (emacs-rex-string (current-connection)
-                        (lem-lisp-mode/completion:make-completions-form-string string (current-package))
-                        :continuation (lambda (result)
-                                        (alexandria:destructuring-ecase result
-                                          ((:ok completions)
-                                           (with-point ((start (current-point))
-                                                        (end (current-point)))
-                                             (skip-symbol-backward start)
-                                             (skip-symbol-forward end)
-                                             (funcall then
-                                                      (lem-lisp-mode/completion:make-completion-items
-                                                       completions
-                                                       start
-                                                       end))))
-                                          ((:abort condition)
-                                           (editor-error "abort ~A" condition))))
-                        :thread (current-swank-thread)
-                        :package (current-package)))))
+      (remote-eval-from-string
+       (current-connection)
+       (lem-lisp-mode/completion:make-completions-form-string string (current-package))
+       :continuation (lambda (result)
+                       (alexandria:destructuring-ecase result
+                         ((:ok completions)
+                          (with-point ((start (current-point))
+                                       (end (current-point)))
+                            (skip-symbol-backward start)
+                            (skip-symbol-forward end)
+                            (funcall then
+                                     (lem-lisp-mode/completion:make-completion-items
+                                      completions
+                                      start
+                                      end))))
+                         ((:abort condition)
+                          (editor-error "abort ~A" condition))))
+       :thread (current-swank-thread)
+       :package (current-package)))))
 
 (defun describe-symbol (symbol-name)
   (when symbol-name

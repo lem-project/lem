@@ -7,3 +7,6 @@
 [submodule "submodules/micros"]
 	path = submodules/micros
 	url = https://github.com/lem-project/micros
+[submodule "submodules/quick-patch"]
+	path = submodules/quick-patch
+	url = https://github.com/Sasanidas/quick-patch.git

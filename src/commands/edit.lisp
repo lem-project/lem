@@ -17,6 +17,7 @@
            :kill-region
            :kill-region-to-clipboard
            :kill-line
+           :kill-whole-line
            :yank
            :yank-pop
            :yank-pop-next
@@ -45,6 +46,7 @@
 (define-key *global-keymap* "M-w" 'copy-region)
 (define-key *global-keymap* "C-w" 'kill-region)
 (define-key *global-keymap* "C-k" 'kill-line)
+(define-key *global-keymap* "C-Shift-Backspace" 'kill-whole-line)
 (define-key *global-keymap* "C-y" 'yank)
 (define-key *global-keymap* "M-y" 'yank-pop)
 (define-key *global-keymap* "C-x C-o" 'delete-blank-lines)
@@ -190,6 +192,13 @@
              (buffer-end (current-point)))
          (let ((end (current-point)))
            (kill-region start end)))))))
+
+(define-command kill-whole-line () ()
+   (with-point ((start (current-point))
+                (end (current-point)))
+     (line-end end)
+     (kill-region start end))
+   (delete-previous-char))
 
 (defun yank-1 (arg)
   (let ((string (if (null arg)

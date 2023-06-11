@@ -1,3 +1,4 @@
+
 ## Move
 | Command                                                                                                       | Key bindings  | Documentation                                         |
 |---------------------------------------------------------------------------------------------------------------|---------------|-------------------------------------------------------|
@@ -33,6 +34,7 @@
 | [kill-region](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L161)                | C-w            | Kill the text of region.                                                             |
 | [kill-region-to-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L170)   |                | Kill the text of region and copy to the clipboard.                                   |
 | [kill-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L175)                  | C-k            | Kill from the current cursor position to the end of the line.                        |
+| [kill-whole-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L165)            | C-S-Backspace  | Kill the whole line and the remaining whitespace .                        		 |
 | [yank](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L205)                       | C-y            | Paste the copied text.                                                               |
 | [yank-pop](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L209)                   | M-y            | Replaces the immediately pasted text with the next text in the killring.             |
 | [yank-pop-next](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L222)              |                | Replaces the immediately preceding yank-pop text with the text before the kill ring. |
@@ -174,4 +176,3 @@
 | [execute-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L49)   | M-x            | Read a command name, then read the ARG and call the command. |
 | [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L68) | Shift-F10, M-h |                                                              |
 | [load-library](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L74)      |                | Load the Lisp library named NAME.                            |
-

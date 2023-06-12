@@ -2,6 +2,19 @@
 
 (eval-when (:compile-toplevel :load-toplevel)
   (defun parse-arg-descriptors (arg-descriptors universal-argument)
+    "Parse arg descriptors given to define-command.
+
+   Descriptors:
+
+   #\p -> universal argument, defaults to 1. Don't prompt for anything.
+   #\P -> universal argument
+   #\s -> prompt for string
+   #\n -> prompt for integer
+   #\b -> prompt for a buffer, defaults to the current-buffer's name
+   #\B -> prompt for buffer, defaults to the other buffer's name
+   #\f -> prompt for a file, defaults to the buffer directory
+   #\F -> prompt for a file, defaults to the buffer directory, must not be existing
+   #\r -> operate on the region."
     (let* ((pre-forms '())
            (forms
              (mapcar (lambda (arg-descriptor)

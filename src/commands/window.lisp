@@ -276,6 +276,8 @@
 (define-other-window-command lem-core/commands/file:find-file "FFind File Other Window: " "Open a file in another window. Split the screen vertically if needed.")
 (define-other-window-command lem-core/commands/file:read-file "FREAD File Other Window: " "Read a file in another window.")
 (define-other-window-command lem-core/commands/window:select-buffer "BUse Buffer Other Window: " "Select a buffer in another window.")
+(define-other-window-command lem-core/commands/project:project-find-file "pFind File in Project in Other Window: " "Open a file from the current project in another window. Split the screen vertically if needed.")
+(define-other-window-command lem-core/commands/project:project-root-directory "pOpen Project Directory in Other Window: " "Open this project directory in another window. Split the screen vertically if needed.")
 
 (define-command compare-windows (ignore-whitespace) ("p")
   (setf ignore-whitespace (/= ignore-whitespace 1))

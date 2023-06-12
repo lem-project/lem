@@ -4,7 +4,9 @@
            :*root-files*
            :root-p
            :find-root
-           :project-find-file)
+           :project-find-file
+           :project-root-directory
+           :project-root)
   (:documentation "Defines utilities to find a project root directory and the command project-find-file."))
 
 (in-package :lem-core/commands/project)
@@ -125,3 +127,18 @@
                                           filename))
           (when buffer
             (switch-to-buffer buffer t nil)))))))
+
+(define-command project-root () ()
+  "Display this buffer's project directory."
+  (let* ((cwd (buffer-directory))
+         (project-root (find-root cwd))
+         (root (or project-root cwd)))
+    (message "Current project root: ~a" root)))
+
+(define-command project-root-directory (arg) ("p")
+  "Open this project's root directory."
+  (declare (ignorable arg))
+  (let* ((cwd (buffer-directory))
+         (project-root (find-root cwd))
+         (root (or project-root cwd)))
+    (find-file root)))

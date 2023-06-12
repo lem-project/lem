@@ -762,24 +762,31 @@
       (sdl2-ttf:quit)
       (sdl2-image:quit))))
 
+(defun sbcl-on-darwin-p ()
+  (or #+(and sbcl darwin)
+      t
+      nil))
+
 (defmethod lem-if:invoke ((implementation sdl2) function)
-  (let ((thread (bt:make-thread
-                 (lambda ()
-                   (create-display (lambda ()
-                                     (let ((editor-thread
-                                             (funcall function
-                                                      ;; initialize
-                                                      (lambda ())
-                                                      ;; finalize
-                                                      (lambda (report)
-                                                        (when report
-                                                          (do-log report))
-                                                        (sdl2:push-quit-event)))))
-                                       (declare (ignore editor-thread))
-                                       nil)))))))
-    (bt:join-thread thread)
-    #+darwin
-    (cffi:foreign-funcall "_exit")))
+  (flet ((thunk ()
+           (let ((editor-thread
+                   (funcall function
+                            ;; initialize
+                            (lambda ())
+                            ;; finalize
+                            (lambda (report)
+                              (when report
+                                (do-log report))
+                              (sdl2:push-quit-event)))))
+             (declare (ignore editor-thread))
+             nil)))
+    (if (sbcl-on-darwin-p)
+        (sdl2:make-this-thread-main
+         (lambda ()
+           (create-display #'thunk)
+           (cffi:foreign-funcall "_exit")))
+        (let ((thread (bt:make-thread #'thunk)))
+          (bt:join-thread thread)))))
 
 (defmethod lem-if:get-background-color ((implementation sdl2))
   (with-debug ("lem-if:get-background-color")

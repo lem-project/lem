@@ -1008,8 +1008,9 @@ It can also be a path to load it locally:
 (define-command hyperspec-at-point (point) ((current-point))
   (let* ((symbol (symbol-string-at-point point))
          (url (hlookup symbol)))
-    (when (typep url 'lem/thingatp:url)
-      (open-external-file url))))
+    (if (typep url 'lem/thingatp:url)
+        (open-external-file url)
+        (message "This symbol isn't referenced in the HyperSpec."))))
 
 (define-command hyperspec-lookup () ()
   (let* ((symbol-list (mapcar #'car *symbols-list*))

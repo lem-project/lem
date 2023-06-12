@@ -78,6 +78,7 @@
 (defun eval-last-expression (point)
   (with-point ((start point)
                (end point))
+    (skip-whitespace-backward end)
     (form-offset start -1)
     (remove-eval-result-overlay-between start end)
     (let ((spinner (start-eval-spinner start end))

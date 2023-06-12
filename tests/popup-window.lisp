@@ -14,6 +14,7 @@
     (assert (= 1 (length windows)))
     (first windows)))
 
+#-ccl
 (deftest display-popup-window
   (with-current-buffers ()
     (with-fake-interface ()

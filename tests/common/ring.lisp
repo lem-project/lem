@@ -19,7 +19,7 @@
                    (loop :for v :across "abcdefghijklmnopqrstuvwxyz"
                          :do (ring-push ring v)
                              (format out "~A~%" ring)))
-		 #+sbcl
+		 #+(or sbcl ccl)
                  "#<RING data: #(a 0 0 0 0 0 0 0 0 0) front: 0 rear: 1>
 #<RING data: #(a b 0 0 0 0 0 0 0 0) front: 0 rear: 2>
 #<RING data: #(a b c 0 0 0 0 0 0 0) front: 0 rear: 3>

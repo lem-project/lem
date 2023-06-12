@@ -33,3 +33,5 @@ lem-ncurses
 
 *.abcl
 build/*
+
+*.lx64fsl

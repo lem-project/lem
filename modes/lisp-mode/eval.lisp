@@ -48,9 +48,6 @@
         (alexandria:removef (buffer-eval-result-overlays buffer)
                             ov)))))
 
-(defun start-eval-spinner (start end)
-  (lem/loading-spinner:start-loading-spinner :region :start start :end end))
-
 (defun display-spinner-message (spinner &optional message is-error)
   (lem/loading-spinner:with-line-spinner-points (start end spinner)
     (let ((popup-overlay 
@@ -72,8 +69,11 @@
       (add-hook (variable-value 'after-change-functions :buffer buffer)
                 'remove-touch-overlay))))
 
-(defun eval-region (buffer)
-  buffer)
+(defun spinner-eval-request-id (spinner)
+  (lem/loading-spinner:spinner-value spinner 'eval-id))
+
+(defun (setf spinner-eval-request-id) (eval-id spinner)
+  (setf (lem/loading-spinner:spinner-value spinner 'eval-id) eval-id))
 
 (defun eval-last-expression (point)
   (with-point ((start point)
@@ -81,10 +81,12 @@
     (skip-whitespace-backward end)
     (form-offset start -1)
     (remove-eval-result-overlay-between start end)
-    (let ((spinner (start-eval-spinner start end))
-          (string (points-to-string start end)))
+    (let ((spinner (lem/loading-spinner:start-loading-spinner :region :start start :end end))
+          (string (points-to-string start end))
+          (request-id (lem-lisp-mode/swank-protocol::new-request-id (current-connection))))
+      (setf (spinner-eval-request-id spinner) request-id)
       (lem-lisp-mode/internal::with-remote-eval
-          (`(micros:interactive-eval ,string))
+          (`(micros:interactive-eval ,string) :request-id request-id)
         (lambda (value)
           (alexandria:destructuring-ecase value
             ((:ok result)
@@ -96,6 +98,14 @@
 
 (define-command lisp-eval-at-point () ()
   (check-connection)
-  (if (buffer-mark-p (current-buffer))
-      (eval-region (current-buffer))
-      (eval-last-expression (current-point))))
+  (cond ((buffer-mark-p (current-buffer))
+         #+TODO
+         (eval-region (current-buffer)))
+        (t
+         (eval-last-expression (current-point)))))
+
+(define-command lisp-eval-interrupt () ()
+  (dolist (spinner (lem/loading-spinner:get-line-spinners (current-point)))
+    (let ((request-id (spinner-eval-request-id spinner)))
+      (lem-lisp-mode/swank-protocol::send-message (current-connection)
+                                                  `(:interrupt-thread ,request-id)))))

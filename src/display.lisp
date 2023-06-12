@@ -186,6 +186,7 @@
               :for start := (overlay-start overlay)
               :for end := (overlay-end overlay)
               :do (cond
+                    ((overlay-get overlay :display-line-end))
                     ((overlay-get overlay :display-left)
                      (when (and (point<= view-point start)
                                 (point<= end view-end-point))

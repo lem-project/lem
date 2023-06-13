@@ -15,7 +15,6 @@
   (setf (buffer-read-only-p (current-buffer)) t))
 
 (define-key *global-keymap* "C-x d" 'filer)
-(define-key *global-keymap* "C-x D" 'filer-project-root)
 (define-key *filer-mode-keymap* "Return" 'filer-select)
 
 (defclass item ()
@@ -169,14 +168,8 @@
 (define-command filer () ()
   (if (filer-active-p)
       (deactive-filer)
-      (let ((directory (prompt-for-directory "Directory: " :directory (buffer-directory) :existing t)))
+      (let ((directory (lem-core/commands/project:find-root (buffer-directory))))
         (make-leftside-window (make-filer-buffer directory)))))
 
 (define-command filer-select () ()
   (select (back-to-indentation (current-point))))
-
-(define-command filer-project-root () ()
-  (if (filer-active-p)
-      (deactive-filer)
-      (let ((directory (lem-core/commands/project:find-root (buffer-directory))))
-        (make-leftside-window (make-filer-buffer directory)))))

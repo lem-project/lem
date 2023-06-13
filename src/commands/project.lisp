@@ -70,17 +70,12 @@
   "Return a list of subdirectories (pathnames)."
   (uiop:subdirectories pathname))
 
-(defun root-p (pathname)
-  "Return t if this directory contains any of the stop files or directories."
-  (or (found-subdirectory-root-p pathname)
-      (found-file-root-p pathname)))
-
-(defun found-file-root-p (pathname)
+(defun file-root-p (pathname)
   "Return t if this pathname contains any root markers from `*root-files*'."
   (when (intersection *root-files* (list-file-names pathname) :test #'equalp)
     t))
 
-(defun found-subdirectory-root-p (pathname)
+(defun directory-root-p (pathname)
   "Return t if this pathname contains any directory markers from `*root-directories*'."
   ;; Here we work with pathnames, not strings.
   (loop for marker in *root-directories*
@@ -118,10 +113,10 @@
             (directory-namestring (user-homedir-pathname)))
      (if recursing nil pathname))
     ;; Stop if found a directory root.
-    ((found-subdirectory-root-p pathname)
+    ((directory-root-p pathname)
      pathname)
     ;; Stop if found a file root.
-    ((found-file-root-p pathname)
+    ((file-root-p pathname)
      pathname)
     ;; Go up to the parent directory.
     (t
@@ -164,11 +159,7 @@
 
 
 
-(defun %buffer-list ()
-  ;; Defined after this file in the .asd, need to defer the call.
-  (uiop:symbol-call :lem/list-buffers 'buffer-list))
-
-(defun list-project-buffers (&optional (root (find-root (buffer-directory))) (buffers (%buffer-list)))
+(defun list-project-buffers (&optional (root (find-root (buffer-directory))) (buffers (buffer-list)))
   "List all buffers pertaining to this project root."
   (assert buffers)
   (loop for buffer in buffers
@@ -203,7 +194,7 @@
   - unless told otherwise, delete the Lisp REPL.
     see *delete-repl-buffer*."
   (loop for buffer in buffers
-        with all-buffers = (%buffer-list)
+        with all-buffers = (buffer-list)
         with all-count = (length all-buffers)
         for i = all-count then (decf i)
         ;; Deleting the very last buffer makes Lem quit, so we don't do it by default.

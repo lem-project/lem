@@ -102,11 +102,8 @@
   (setf pathname (pathname pathname))
   (cond
     ;; Stop at /
-    ((or (equal (directory-namestring pathname)
-                "/")
-         ;; XXX: windows??
-         (equal (directory-namestring pathname)
-                (string (uiop:directory-separator-for-host))))
+    ((equal (directory-namestring pathname)
+            "/")
      (if recursing nil pathname))
     ;; Stop at HOME.
     ((equal (directory-namestring pathname)

@@ -785,7 +785,8 @@
          (lambda ()
            (create-display #'thunk)
            (cffi:foreign-funcall "_exit")))
-        (let ((thread (bt:make-thread #'thunk)))
+        (let ((thread (bt:make-thread (lambda ()
+                                        (create-display #'thunk)))))
           (bt:join-thread thread)))))
 
 (defmethod lem-if:get-background-color ((implementation sdl2))

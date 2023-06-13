@@ -11,6 +11,7 @@
 (define-key *lisp-mode-keymap* "C-x C-e" 'lisp-eval-at-point)
 (define-key *lisp-mode-keymap* "M-Return" 'lisp-eval-at-point)
 (define-key *lisp-mode-keymap* "C-Return" 'lisp-eval-at-point)
+(define-key *lisp-mode-keymap* "C-c i" 'lisp-eval-interrupt-at-point)
 
 (defun fold-one-line-message (message)
   (let ((pos (position #\newline message)))
@@ -104,7 +105,7 @@
         (t
          (eval-last-expression (current-point)))))
 
-(define-command lisp-eval-interrupt () ()
+(define-command lisp-eval-interrupt-at-point () ()
   (dolist (spinner (lem/loading-spinner:get-line-spinners (current-point)))
     (let ((request-id (spinner-eval-request-id spinner)))
       (lem-lisp-mode/swank-protocol::send-message (current-connection)

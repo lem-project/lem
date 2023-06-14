@@ -89,16 +89,27 @@
 ## File
 | Command                                                                                           | Key bindings | Documentation                                                                                                 |
 |---------------------------------------------------------------------------------------------------|--------------|---------------------------------------------------------------------------------------------------------------|
-| [find-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L64)              | C-x C-f      | Open the file.                                                                                                |
-| [find-file-recursively](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L206) |              | Open a file, from the list of all files present under the buffer's direcotry, recursively.                    |
-| [read-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L222)             | C-x C-r      | Open the file as a read-only.                                                                                 |
-| [save-current-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L260)   | C-x C-s      | Saves the current buffer text to a file                                                                       |
-| [write-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L266)            | C-x C-w      | Saves the text in the current buffer to the specified file                                                    |
-| [write-region-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L287)     |              | Saves the region of text to the specified file                                                                |
-| [insert-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L295)           | C-x Tab      | Inserts the contents of the file into the current buffer.                                                     |
-| [save-some-buffers](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L301)     | C-x s        | Save some files in the open buffer.                                                                           |
-| [revert-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L333)         |              | Restores the buffer. Normally this command will cause the contents of the file to be reflected in the buffer. |
-| [change-directory](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L366)      |              | Change directories associated with the buffer.                                                                |
+| [find-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L65)              | C-x C-f      | Open the file.                                                                                                |
+| [find-file-recursively](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L207) |              | Open a file, from the list of all files present under the buffer's direcotry, recursively.                    |
+| [read-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L223)             | C-x C-r      | Open the file as a read-only.                                                                                 |
+| [save-current-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L261)   | C-x C-s      | Saves the current buffer text to a file                                                                       |
+| [write-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L267)            | C-x C-w      | Saves the text in the current buffer to the specified file                                                    |
+| [write-region-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L288)     |              | Saves the region of text to the specified file                                                                |
+| [insert-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L296)           | C-x Tab      | Inserts the contents of the file into the current buffer.                                                     |
+| [save-some-buffers](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L302)     | C-x s        | Save some files in the open buffer.                                                                           |
+| [revert-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L334)         |              | Restores the buffer. Normally this command will cause the contents of the file to be reflected in the buffer. |
+| [change-directory](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L367)      |              | Change directories associated with the buffer.                                                                |
+
+## Project
+| Command                                                                                               | Key bindings | Documentation                                                                                                                                                                                                            |
+|-------------------------------------------------------------------------------------------------------|--------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| [project-find-file](https://github.com/lem-project/lem/blob/main/src/commands/project.lisp#L125)      |              | Open a file, from the list of all files in this project.                                                                                                                                                                 |
+| [project-root](https://github.com/lem-project/lem/blob/main/src/commands/project.lisp#L142)           |              | Display this buffer's project directory.                                                                                                                                                                                 |
+| [project-root-directory](https://github.com/lem-project/lem/blob/main/src/commands/project.lisp#L149) |              | Open this project's root directory.                                                                                                                                                                                      |
+| [project-delete-buffers](https://github.com/lem-project/lem/blob/main/src/commands/project.lisp#L209) |              | Delete all this project's buffers, except:
+
+  - if *delete-repl-buffer* is non t, we don't delete the REPL buffer.
+  - if *delete-last-buffer* is non nil, we will delete the last buffer. This would cause Lem to exit.                                                                                                                                                                                                                                             |
 
 ## Buffer
 | Command                                                                                       | Key bindings | Documentation                                 |
@@ -135,7 +146,7 @@
 | [find-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L276)           | C-x 4 f        | Open a file in another window. Split the screen vertically if needed. |
 | [read-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L277)           | C-x 4 r        | Read a file in another window.                                        |
 | [select-buffer-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L278)       | C-x 4 b        | Select a buffer in another window.                                    |
-| [compare-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L280)                  |                |                                                                       |
+| [compare-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L282)                  |                |                                                                       |
 
 ## Multiple-Cursors
 | Command                                                                                                        | Key bindings | Documentation                                               |

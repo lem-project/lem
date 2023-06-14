@@ -31,6 +31,7 @@
                (:file "inspector")
                (:file "apropos-mode")
                (:file "autodoc")
+               (:file "eval")
                (:file "paren-coloring")
                (:file "misc-commands")
                (:file "package-inferred-system")

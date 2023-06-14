@@ -205,19 +205,22 @@
 (defun call-with-remote-eval (form continuation
                               &key (connection (current-connection))
                                    (thread (current-swank-thread))
-                                   (package (current-package)))
+                                   (package (current-package))
+                                   request-id)
   (remote-eval connection
                form
                :continuation continuation
                :thread thread
-               :package package))
+               :package package
+               :request-id request-id))
 
 (defmacro with-remote-eval ((form &rest args
                                   &key connection
                                        thread
-                                       package)
+                                       package
+                                       request-id)
                             continuation)
-  (declare (ignore connection thread package))
+  (declare (ignore connection thread package request-id))
   `(call-with-remote-eval ,form ,continuation ,@args))
 
 (defun lisp-eval-internal (emacs-rex-fun rex-arg package)

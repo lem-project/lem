@@ -168,7 +168,7 @@
 (define-command filer () ()
   (if (filer-active-p)
       (deactive-filer)
-      (let ((directory (prompt-for-directory "Directory: " :directory (buffer-directory) :existing t)))
+      (let ((directory (lem-core/commands/project:find-root (buffer-directory))))
         (make-leftside-window (make-filer-buffer directory)))))
 
 (define-command filer-select () ()

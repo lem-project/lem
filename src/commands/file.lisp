@@ -17,7 +17,8 @@
            :sync-buffer-with-file-content
            :revert-buffer
            :revert-buffer-function
-           :change-directory))
+           :change-directory
+           :prompt-for-files-recursively))
 (in-package :lem-core/commands/file)
 
 (define-key *global-keymap* "C-x C-f" 'find-file)

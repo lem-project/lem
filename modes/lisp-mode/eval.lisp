@@ -3,7 +3,7 @@
 (in-package :lem-lisp-mode/eval)
 
 (define-attribute eval-error-attribute
-  (t :foreground "white" :background "dark red"))
+  (t :foreground "red" :bold t))
 
 (define-attribute eval-value-attribute
   (t :foreground "sky blue" :bold t))
@@ -48,6 +48,19 @@
         (alexandria:removef (buffer-eval-result-overlays buffer)
                             ov)))))
 
+;; copied from src/display.lisp, TODO: extract this utils
+(defun compute-evaluated-background-color ()
+  (let ((color (parse-color (lem-core::background-color))))
+    (multiple-value-bind (h s v)
+        (rgb-to-hsv (color-red color)
+                    (color-green color)
+                    (color-blue color))
+      (multiple-value-bind (r g b)
+          (hsv-to-rgb h
+                      s
+                      (+ v 5))
+        (format nil "#~X~X~X" r g b)))))
+
 (defun display-spinner-message (spinner &optional message is-error)
   (lem/loading-spinner:with-line-spinner-points (start end spinner)
     (let ((popup-overlay 
@@ -59,7 +72,7 @@
           (background-overlay
             (make-overlay start
                           end
-                          (make-attribute :underline "white")))
+                          (make-attribute :background (compute-evaluated-background-color))))
          (buffer (point-buffer start)))
       (overlay-put popup-overlay 'relation-overlay background-overlay)
       (overlay-put popup-overlay :display-line-end t)
@@ -75,32 +88,36 @@
 (defun (setf spinner-eval-request-id) (eval-id spinner)
   (setf (lem/loading-spinner:spinner-value spinner 'eval-id) eval-id))
 
+(defun eval-region (start end)
+  (skip-whitespace-backward end)
+  (remove-eval-result-overlay-between start end)
+  (let ((spinner (lem/loading-spinner:start-loading-spinner :region :start start :end end))
+        (string (points-to-string start end))
+        (request-id (lem-lisp-mode/swank-protocol::new-request-id (current-connection))))
+    (setf (spinner-eval-request-id spinner) request-id)
+    (lem-lisp-mode/internal::with-remote-eval
+        (`(micros:interactive-eval ,string) :request-id request-id)
+      (lambda (value)
+        (alexandria:destructuring-ecase value
+          ((:ok result)
+           (lem/loading-spinner:stop-loading-spinner spinner)
+           (display-spinner-message spinner result nil))
+          ((:abort condition)
+           (lem/loading-spinner:stop-loading-spinner spinner)
+           (display-spinner-message spinner condition t)))))))
+
 (defun eval-last-expression (point)
   (with-point ((start point)
                (end point))
-    (skip-whitespace-backward end)
     (form-offset start -1)
-    (remove-eval-result-overlay-between start end)
-    (let ((spinner (lem/loading-spinner:start-loading-spinner :region :start start :end end))
-          (string (points-to-string start end))
-          (request-id (lem-lisp-mode/swank-protocol::new-request-id (current-connection))))
-      (setf (spinner-eval-request-id spinner) request-id)
-      (lem-lisp-mode/internal::with-remote-eval
-          (`(micros:interactive-eval ,string) :request-id request-id)
-        (lambda (value)
-          (alexandria:destructuring-ecase value
-            ((:ok result)
-             (lem/loading-spinner:stop-loading-spinner spinner)
-             (display-spinner-message spinner result nil))
-            ((:abort condition)
-             (lem/loading-spinner:stop-loading-spinner spinner)
-             (display-spinner-message spinner condition t))))))))
+    (eval-region start end)))
 
 (define-command lisp-eval-at-point () ()
   (check-connection)
   (cond ((buffer-mark-p (current-buffer))
-         #+TODO
-         (eval-region (current-buffer)))
+         (with-point ((start (region-beginning))
+                      (end (region-end)))
+           (eval-region start end)))
         (t
          (eval-last-expression (current-point)))))
 

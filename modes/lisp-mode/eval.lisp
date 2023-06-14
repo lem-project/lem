@@ -9,8 +9,7 @@
   (t :foreground "sky blue" :bold t))
 
 (define-key *lisp-mode-keymap* "C-x C-e" 'lisp-eval-at-point)
-(define-key *lisp-mode-keymap* "M-Return" 'lisp-eval-at-point)
-(define-key *lisp-mode-keymap* "C-Return" 'lisp-eval-at-point)
+(define-key *lisp-mode-keymap* "C-c C-e" 'lisp-eval-at-point)
 (define-key *lisp-mode-keymap* "C-c i" 'lisp-eval-interrupt-at-point)
 
 (defun fold-one-line-message (message)

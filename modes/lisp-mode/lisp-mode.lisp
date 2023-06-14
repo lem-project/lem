@@ -53,10 +53,8 @@
 
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)
 (define-key *lisp-mode-keymap* "C-c M-p" 'lisp-set-package)
-(define-key *global-keymap* "M-:" 'self-lisp-eval-string)
+(define-key *global-keymap* "M-:" 'lisp-eval-string)
 (define-key *lisp-mode-keymap* "C-c M-:" 'lisp-eval-string)
-(define-key *global-keymap* "C-x C-e" 'self-lisp-eval-last-expression)
-(define-key *lisp-mode-keymap* "C-c C-e" 'lisp-eval-last-expression)
 (define-key *lisp-mode-keymap* "C-M-x" 'lisp-eval-defun)
 (define-key *lisp-mode-keymap* "C-c C-r" 'lisp-eval-region)
 (define-key *lisp-mode-keymap* "C-c C-n" 'lisp-next-compilation-notes)
@@ -205,19 +203,22 @@
 (defun call-with-remote-eval (form continuation
                               &key (connection (current-connection))
                                    (thread (current-swank-thread))
-                                   (package (current-package)))
+                                   (package (current-package))
+                                   request-id)
   (remote-eval connection
                form
                :continuation continuation
                :thread thread
-               :package package))
+               :package package
+               :request-id request-id))
 
 (defmacro with-remote-eval ((form &rest args
                                   &key connection
                                        thread
-                                       package)
+                                       package
+                                       request-id)
                             continuation)
-  (declare (ignore connection thread package))
+  (declare (ignore connection thread package request-id))
   `(call-with-remote-eval ,form ,continuation ,@args))
 
 (defun lisp-eval-internal (emacs-rex-fun rex-arg package)
@@ -396,17 +397,6 @@
   (check-connection)
   (interactive-eval string))
 
-(define-command lisp-eval-last-expression (p) ("P")
-  (check-connection)
-  (with-point ((start (current-point))
-               (end (current-point)))
-    (form-offset start -1)
-    (run-hooks (variable-value 'before-eval-functions) start end)
-    (let ((string (points-to-string start end)))
-      (if p
-          (eval-print string (- (window-width (current-window)) 2))
-          (interactive-eval string)))))
-
 (defun self-current-package ()
   (or (find (or *current-package*
                 (buffer-package (current-buffer))
@@ -415,47 +405,6 @@
             :test 'equalp
             :key 'package-name)
       *package*))
-
-(defmacro with-eval ((&key (values (gensym) values-p)
-                           (stream (error ":stream missing")))
-                     &body body)
-  (alexandria:with-gensyms (io)
-    `(with-open-stream (,io ,stream)
-       (let* ((*package* (self-current-package))
-              (*terminal-io* ,io)
-              (*standard-output* ,io)
-              (*standard-input* ,io)
-              (*error-output* ,io)
-              (*query-io* ,io)
-              (*debug-io* ,io)
-              (*trace-output* ,io)
-              (*terminal-io* ,io)
-              (,values (multiple-value-list (eval (read-from-string string)))))
-         ,@(if (not values-p) `((declare (ignorable ,values))))
-         ,@body))))
-
-(defun self-interactive-eval (string)
-  (with-eval (:values values :stream (make-editor-io-stream))
-    (display-message "=> ~{~S~^, ~}" values)))
-
-(defun self-eval-print (string &optional print-right-margin)
-  (declare (ignore print-right-margin))
-  (with-eval (:values values :stream (make-buffer-output-stream (current-point)))
-    (insert-string (current-point) (format nil "~{~S~^~%~}" values))))
-
-(define-command self-lisp-eval-string (string)
-    ((prompt-for-sexp "Lisp Eval: "))
-  (self-interactive-eval string))
-
-(define-command self-lisp-eval-last-expression (p) ("P")
-  (with-point ((start (current-point))
-               (end (current-point)))
-    (form-offset start -1)
-    (run-hooks (variable-value 'before-eval-functions) start end)
-    (let ((string (points-to-string start end)))
-      (if p
-          (self-eval-print string (- (window-width (current-window)) 2))
-          (self-interactive-eval string)))))
 
 (define-command lisp-eval-defun () ()
   "Evaluate top-level form around point and instrument."

@@ -76,6 +76,7 @@
                              (:file "word" :depends-on ("edit"))
                              (:file "s-expression" :depends-on ("edit"))
                              (:file "file" :depends-on ("edit"))
+                             (:file "project" :depends-on ("file"))
                              (:file "buffer")
                              (:file "window" :depends-on ("move"))
                              (:file "multiple-cursors")

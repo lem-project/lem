@@ -288,15 +288,23 @@ to check if input is available."
 
 ;;; Sending messages
 
-(defun remote-eval-from-string (connection string &key continuation thread package)
-  (let ((msg (format nil
-                     "(:emacs-rex ~A ~S ~A ~A)"
-                     string
-                     (or package
-                         (connection-package connection))
-                     (or thread t)
-                     (incf (connection-request-count connection)))))
-    (log-message msg)
+(defun new-request-id (connection)
+  (incf (connection-request-count connection)))
+
+(defun remote-eval-from-string (connection
+                                string
+                                &key continuation
+                                     thread
+                                     package
+                                     request-id)
+  (let* ((request-id (or request-id (new-request-id connection)))
+         (msg (format nil
+                      "(:emacs-rex ~A ~S ~A ~A)"
+                      string
+                      (or package
+                          (connection-package connection))
+                      (or thread t)
+                      request-id)))
     (log:debug "Sending string to Swank"
                msg
                continuation
@@ -304,18 +312,18 @@ to check if input is available."
                package)
 
     (when continuation
-      (push (cons (connection-request-count connection)
-                  continuation)
+      (push (cons request-id continuation)
             (connection-continuations connection)))
     (send-message-string connection msg)))
 
-(defun remote-eval (connection form &key continuation thread package)
+(defun remote-eval (connection form &key continuation thread package request-id)
   (remote-eval-from-string connection
-                    (with-swank-syntax ()
-                      (prin1-to-string form))
-                    :continuation continuation
-                    :thread thread
-                    :package package))
+                           (with-swank-syntax ()
+                             (prin1-to-string form))
+                           :continuation continuation
+                           :thread thread
+                           :package package
+                           :request-id request-id))
 
 (defun finish-evaluated (connection value id)
   (let ((elt (assoc id (connection-continuations connection))))

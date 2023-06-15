@@ -121,14 +121,23 @@
         (t
          (eval-last-expression (current-point)))))
 
+(defun eval-print (string &optional print-right-margin)
+  (let ((value (lisp-eval (if print-right-margin
+                              `(let ((*print-right-margin* ,print-right-margin))
+                                 (micros:eval-and-grab-output ,string))
+                              `(micros:eval-and-grab-output ,string)))))
+    (insert-string (current-point) (first value))
+    (insert-character (current-point) #\newline)
+    (insert-string (current-point) (second value))))
+
 (define-command lisp-eval-last-expression-and-insert () ()
   (check-connection)
   (with-point ((start (current-point))
-	       (end (current-point)))
+               (end (current-point)))
     (form-offset start -1)
-    (run-hooks (variable-value 'lem-lisp-mode/internal::before-eval-functions) start end)
+    (run-hooks (variable-value 'before-eval-functions) start end)
     (let ((string (points-to-string start end)))
-      (lem-lisp-mode/internal::eval-print string)
+      (eval-print string)
       (move-point (current-point) end))))
 
 (define-command lisp-eval-interrupt-at-point () ()

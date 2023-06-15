@@ -25,6 +25,7 @@
    :lisp-mode
    :load-file-functions
    :before-compile-functions
+   :before-eval-functions
    :*default-port*
    :*localhost*
    :*lisp-mode-keymap*

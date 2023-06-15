@@ -154,3 +154,6 @@
     (let ((request-id (spinner-eval-request-id spinner)))
       (lem-lisp-mode/swank-protocol::send-message (current-connection)
                                                   `(:interrupt-thread ,request-id)))))
+
+(define-command lisp-eval-clear () ()
+  (clear-eval-results (current-buffer)))

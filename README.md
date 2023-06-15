@@ -19,7 +19,7 @@ client. You can choose between an Emacs and a Vim mode.
 See our [Lem 2.0 realease](https://github.com/lem-project/lem/releases/tag/v2.0.0) to
 download binaries for Windows, MacOS and Linux.
 
-On mac, you need to run `xattr -d com.apple.quarantine /Applications/lem.app`.
+On mac, you need to run `xattr -d com.apple.quarantine /Applications/lem.app`.  
 See https://github.com/lem-project/lem/issues/635
 
 ![SDL2](screenshots/sdl2.png)

@@ -28,6 +28,31 @@
   (mapc #'remove-eval-result-overlay
         (buffer-eval-result-overlays buffer)))
 
+(defun overlay-eval-id (overlay)
+  (overlay-get overlay :id))
+
+(defun remove-eval-result-overlay (overlay)
+  (let ((id (overlay-eval-id overlay)))
+    (lisp-eval-async `(micros/contrib/pretty-eval:remove-evaluated-values ,id))
+    (delete-overlay overlay)
+    (delete-overlay (overlay-get overlay 'relation-overlay))
+    (alexandria:removef (buffer-eval-result-overlays (overlay-buffer overlay))
+                        overlay)))
+
+(defun find-overlays (start end)
+  (let ((buffer (point-buffer start)))
+    (loop :for ov :in (buffer-eval-result-overlays buffer)
+          :unless (or (point<= end (overlay-start ov))
+                      (point<= (overlay-end ov) start))
+          :collect ov)))
+
+(defun find-overlay (point)
+  (first (find-overlays point point)))
+
+(defun remove-eval-result-overlay-between (start end)
+  (dolist (ov (find-overlays start end))
+    (remove-eval-result-overlay ov)))
+
 (defun remove-touch-overlay (start arg)
   (with-point ((end start))
     (character-offset end
@@ -36,22 +61,6 @@
                         (character 0)
                         (integer arg)))
     (remove-eval-result-overlay-between start end)))
-
-(defun remove-eval-result-overlay (overlay)
-  (delete-overlay overlay)
-  (delete-overlay (overlay-get overlay 'relation-overlay))
-  (alexandria:removef (buffer-eval-result-overlays (overlay-buffer overlay))
-                      overlay))
-
-(defun remove-eval-result-overlay-between (start end)
-  (let ((buffer (point-buffer start)))
-    (dolist (ov (buffer-eval-result-overlays buffer))
-      (unless (or (point<= end (overlay-start ov))
-                  (point<= (overlay-end ov) start))
-        (delete-overlay ov)
-        (delete-overlay (overlay-get ov 'relation-overlay))
-        (alexandria:removef (buffer-eval-result-overlays buffer)
-                            ov)))))
 
 ;; copied from src/display.lisp, TODO: extract this utils
 (defun compute-evaluated-background-color ()
@@ -66,7 +75,7 @@
                       (+ v 5))
         (format nil "#~X~X~X" r g b)))))
 
-(defun display-spinner-message (spinner &optional message is-error)
+(defun display-spinner-message (spinner &optional message is-error id)
   (lem/loading-spinner:with-line-spinner-points (start end spinner)
     (let ((popup-overlay
             (make-overlay start 
@@ -87,6 +96,7 @@
       (overlay-put popup-overlay :display-line-end t)
       (overlay-put popup-overlay :display-line-end-offset 1)
       (overlay-put popup-overlay :text (fold-one-line-message message))
+      (overlay-put popup-overlay :id id)
       (push popup-overlay (buffer-eval-result-overlays buffer))
       (add-hook (variable-value 'before-change-functions :buffer buffer)
                 'remove-touch-overlay))))
@@ -105,12 +115,13 @@
         (request-id (lem-lisp-mode/swank-protocol::new-request-id (current-connection))))
     (setf (spinner-eval-request-id spinner) request-id)
     (lem-lisp-mode/internal::with-remote-eval
-        (`(micros:interactive-eval ,string) :request-id request-id)
+        (`(micros/contrib/pretty-eval:pretty-eval ,string) :request-id request-id)
       (lambda (value)
         (alexandria:destructuring-ecase value
           ((:ok result)
-           (lem/loading-spinner:stop-loading-spinner spinner)
-           (display-spinner-message spinner result nil))
+           (destructuring-bind (&key value id) result
+               (lem/loading-spinner:stop-loading-spinner spinner)
+             (display-spinner-message spinner value nil id)))
           ((:abort condition)
            (lem/loading-spinner:stop-loading-spinner spinner)
            (display-spinner-message spinner condition t)))))))
@@ -130,6 +141,21 @@
         (t
          (eval-last-expression (current-point)))))
 
+(define-command lisp-eval-interrupt-at-point () ()
+  (dolist (spinner (lem/loading-spinner:get-line-spinners (current-point)))
+    (let ((request-id (spinner-eval-request-id spinner)))
+      (lem-lisp-mode/swank-protocol::send-message (current-connection)
+                                                  `(:interrupt-thread ,request-id)))))
+
+(define-command lisp-inspect-evaluation-results-at-point () ()
+  (alexandria:when-let* ((overlay (find-overlay (current-point)))
+                         (id (overlay-eval-id overlay)))
+    (lisp-eval-async `(micros/contrib/pretty-eval:inspect-evaluation-value ,id)
+                     'lem-lisp-mode/internal::open-inspector)))
+
+(define-command lisp-eval-clear () ()
+  (clear-eval-results (current-buffer)))
+
 (defun eval-print (string &optional print-right-margin)
   (let ((value (lisp-eval (if print-right-margin
                               `(let ((*print-right-margin* ,print-right-margin))
@@ -148,12 +174,3 @@
     (let ((string (points-to-string start end)))
       (eval-print string)
       (move-point (current-point) end))))
-
-(define-command lisp-eval-interrupt-at-point () ()
-  (dolist (spinner (lem/loading-spinner:get-line-spinners (current-point)))
-    (let ((request-id (spinner-eval-request-id spinner)))
-      (lem-lisp-mode/swank-protocol::send-message (current-connection)
-                                                  `(:interrupt-thread ,request-id)))))
-
-(define-command lisp-eval-clear () ()
-  (clear-eval-results (current-buffer)))

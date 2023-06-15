@@ -39,14 +39,16 @@
                           :buffer buffer)))
     overlay))
 
-(defun make-overlay (start end attribute)
+(defun make-overlay (start end attribute
+                     &key (start-point-kind :right-inserting)
+                          (end-point-kind :left-inserting))
   (when (point< end start) (rotatef start end))
   (let* ((attribute (ensure-attribute attribute t))
          (buffer (point-buffer start))
          (overlay
            (make-instance 'overlay
-                          :start (copy-point start :right-inserting)
-                          :end (copy-point end :left-inserting)
+                          :start (copy-point start start-point-kind)
+                          :end (copy-point end end-point-kind)
                           :attribute attribute
                           :buffer buffer)))
     (push overlay (buffer-value buffer 'overlays))

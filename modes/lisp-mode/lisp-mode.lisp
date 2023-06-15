@@ -279,15 +279,6 @@
 (defun interactive-eval (string &key (package (current-package)))
   (eval-with-transcript `(micros:interactive-eval ,string) :package package))
 
-(defun eval-print (string &optional print-right-margin)
-  (let ((value (lisp-eval (if print-right-margin
-                              `(let ((*print-right-margin* ,print-right-margin))
-                                 (micros:eval-and-grab-output ,string))
-                              `(micros:eval-and-grab-output ,string)))))
-    (insert-string (current-point) (first value))
-    (insert-character (current-point) #\newline)
-    (insert-string (current-point) (second value))))
-
 (defun new-package (name prompt-string)
   (setf (connection-package (current-connection)) name)
   (setf (connection-prompt-string (current-connection)) prompt-string)

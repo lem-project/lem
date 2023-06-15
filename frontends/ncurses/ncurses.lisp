@@ -293,8 +293,16 @@
 (defmethod lem-if:make-view
     ((implementation ncurses) window x y width height use-modeline)
   (flet ((newwin (nlines ncols begin-y begin-x)
-           (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
-             (when use-modeline (charms/ll:keypad win 1))
+           (let ((win
+		   (make-instance 'croatoan:window
+				  :height nlines
+				  :width ncols
+				  :cursor-position
+				  (cons begin-y begin-x))
+		   ;;(charms/ll:newwin nlines ncols begin-y begin-x)
+		   ))
+             (when use-modeline
+	       (croatoan::set-enable-fkeys win 1))
              win)))
     (make-ncurses-view
      :border (when (and (floating-window-p window)
@@ -322,52 +330,65 @@
      :height height)))
 
 (defmethod lem-if:delete-view ((implementation ncurses) view)
-  (charms/ll:delwin (ncurses-view-scrwin view))
+  (croatoan::close (ncurses-view-scrwin view))
   (when (ncurses-view-modeline-scrwin view)
-    (charms/ll:delwin (ncurses-view-modeline-scrwin view))))
+    (croatoan::close (ncurses-view-modeline-scrwin view))))
 
 (defmethod lem-if:clear ((implementation ncurses) view)
-  (charms/ll:clearok (ncurses-view-scrwin view) 1)
+  (croatoan:clear (ncurses-view-scrwin view))
   (when (ncurses-view-modeline-scrwin view)
-    (charms/ll:clearok (ncurses-view-modeline-scrwin view) 1)))
+    (croatoan:clear (ncurses-view-modeline-scrwin view))))
 
 (defmethod lem-if:set-view-size ((implementation ncurses) view width height)
-  (setf (ncurses-view-width view) width)
-  (setf (ncurses-view-height view) height)
-  (charms/ll:wresize (ncurses-view-scrwin view) height width)
+  (setf (ncurses-view-width view) width
+	(ncurses-view-height view) height)
+  (croatoan:resize (ncurses-view-scrwin view) height width)
+
   (alexandria:when-let (border (ncurses-view-border view))
     (destructuring-bind (b-width b-height)
-        (compute-border-window-size width height (border-size border))
+	(compute-border-window-size width height (border-size border))
       (setf (border-width border) b-width
-            (border-height border) b-height)
-      (charms/ll:wresize (border-win border) b-height b-width)))
+	    (border-height border) b-height)
+      (croatoan:resize (border-win border) b-height b-width)))
+
   (when (ncurses-view-modeline-scrwin view)
-    (charms/ll:mvwin (ncurses-view-modeline-scrwin view)
-                     (+ (ncurses-view-y view) height)
-                     (ncurses-view-x view))
-    (charms/ll:wresize (ncurses-view-modeline-scrwin view)
-                       1
-                       width)))
+    (setf (croatoan:position-y (ncurses-view-modeline-scrwin view))
+	  (+ (ncurses-view-y view) height)
+
+	  (croatoan:position-x (ncurses-view-modeline-scrwin view))
+	  (ncurses-view-x view))
+
+    (croatoan:resize (ncurses-view-modeline-scrwin view)
+		     1
+		     width)))
 
 (defmethod lem-if:set-view-pos ((implementation ncurses) view x y)
-  (setf (ncurses-view-x view) x)
-  (setf (ncurses-view-y view) y)
-  (charms/ll:mvwin (ncurses-view-scrwin view) y x)
+  (setf (ncurses-view-x view) x
+	(ncurses-view-y view) y)
+  (croatoan:resize (ncurses-view-scrwin view) y x)
+
   (alexandria:when-let (border (ncurses-view-border view))
     (destructuring-bind (b-x b-y)
-        (compute-border-window-position x y (border-size border))
-      (charms/ll:mvwin (border-win border) b-y b-x)))
+	(compute-border-window-position x y (border-size border))
+      (setf (croatoan:position-y (border-win border))
+	    b-y
+
+	    (croatoan:position-x (border-win border))
+	    b-x)))
+
   (when (ncurses-view-modeline-scrwin view)
-    (charms/ll:mvwin (ncurses-view-modeline-scrwin view)
-                     (+ y (ncurses-view-height view))
-                     x)))
+    (setf (croatoan:position-y (ncurses-view-modeline-scrwin view))
+	  (+ y (ncurses-view-height view))
+
+	  (croatoan:position-x (ncurses-view-modeline-scrwin view))
+	  x)))
 
 (defmethod lem-if:print ((implementation ncurses) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
     (charms/ll:wattron (ncurses-view-scrwin view) attr)
-    ;(charms/ll:scrollok (ncurses-view-scrwin view) 0)
+    ;;(charms/ll:scrollok (ncurses-view-scrwin view) 0)
     (charms/ll:mvwaddstr (ncurses-view-scrwin view) y x string)
-    ;(charms/ll:scrollok (ncurses-view-scrwin view) 1)
+    ;;(charms/ll:scrollok (ncurses-view-scrwin view) 1)
     (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
 
 (defmethod lem-if:print-modeline ((implementation ncurses) view x y string attribute)

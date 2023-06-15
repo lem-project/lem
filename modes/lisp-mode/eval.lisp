@@ -28,9 +28,14 @@
   (mapc #'remove-eval-result-overlay
         (buffer-eval-result-overlays buffer)))
 
-(defun remove-touch-overlay (start end old-len)
-  (declare (ignore old-len))
-  (remove-eval-result-overlay-between start end))
+(defun remove-touch-overlay (start arg)
+  (with-point ((end start))
+    (character-offset end
+                      (etypecase arg
+                        (string (length arg))
+                        (character 0)
+                        (integer arg)))
+    (remove-eval-result-overlay-between start end)))
 
 (defun remove-eval-result-overlay (overlay)
   (delete-overlay overlay)
@@ -41,8 +46,8 @@
 (defun remove-eval-result-overlay-between (start end)
   (let ((buffer (point-buffer start)))
     (dolist (ov (buffer-eval-result-overlays buffer))
-      (unless (or (point< end (overlay-start ov))
-                  (point< (overlay-end ov) start))
+      (unless (or (point<= end (overlay-start ov))
+                  (point<= (overlay-end ov) start))
         (delete-overlay ov)
         (delete-overlay (overlay-get ov 'relation-overlay))
         (alexandria:removef (buffer-eval-result-overlays buffer)
@@ -63,23 +68,27 @@
 
 (defun display-spinner-message (spinner &optional message is-error)
   (lem/loading-spinner:with-line-spinner-points (start end spinner)
-    (let ((popup-overlay 
+    (let ((popup-overlay
             (make-overlay start 
                           end
                           (if is-error
                               'eval-error-attribute
-                              'eval-value-attribute)))
+                              'eval-value-attribute)
+                          :start-point-kind :left-inserting
+                          :end-point-kind :right-inserting))
           (background-overlay
             (make-overlay start
                           end
-                          (make-attribute :background (compute-evaluated-background-color))))
+                          (make-attribute :background (compute-evaluated-background-color))
+                          :start-point-kind :left-inserting
+                          :end-point-kind :right-inserting))
          (buffer (point-buffer start)))
       (overlay-put popup-overlay 'relation-overlay background-overlay)
       (overlay-put popup-overlay :display-line-end t)
       (overlay-put popup-overlay :display-line-end-offset 1)
       (overlay-put popup-overlay :text (fold-one-line-message message))
       (push popup-overlay (buffer-eval-result-overlays buffer))
-      (add-hook (variable-value 'after-change-functions :buffer buffer)
+      (add-hook (variable-value 'before-change-functions :buffer buffer)
                 'remove-touch-overlay))))
 
 (defun spinner-eval-request-id (spinner)

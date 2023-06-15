@@ -104,15 +104,17 @@
 (defvar *padwin* nil)
 (defun getch ()
   (unless *padwin*
-    (setf *padwin* (charms/ll:newpad 1 1))
-    (charms/ll:keypad *padwin* 1)
-    (charms/ll:wtimeout *padwin* -1))
-  (charms/ll:wgetch *padwin*))
+    (setf *padwin*
+	  (make-instance 'croatoan:pad :height 1 :width 1))
+    (croatoan::set-enable-fkeys *padwin* 1)
+    (setf (croatoan:input-blocking *padwin*) t))
+  (croatoan:get-char *padwin*))
+
 (defmacro with-getch-input-timeout ((time) &body body)
   `(progn
-     (charms/ll:wtimeout *padwin* ,time)
+     (setf (croatoan:input-blocking *padwin*) ,time)
      (unwind-protect (progn ,@body)
-       (charms/ll:wtimeout *padwin* -1))))
+       (setf (croatoan:input-blocking *padwin*) t))))
 
 (defun get-key (code)
   (let* ((char (let ((nbytes (utf8-bytes code)))

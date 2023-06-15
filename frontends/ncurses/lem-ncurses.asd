@@ -1,6 +1,7 @@
 (defsystem "lem-ncurses"
   :depends-on ("cffi"
-               "cl-charms"
+	       "croatoan"
+	       "cl-charms"
                "cl-setlocale"
                "lem"
                "lem/extensions")

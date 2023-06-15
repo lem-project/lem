@@ -121,6 +121,16 @@
         (t
          (eval-last-expression (current-point)))))
 
+(define-command lisp-eval-last-expression-and-insert () ()
+  (check-connection)
+  (with-point ((start (current-point))
+	       (end (current-point)))
+    (form-offset start -1)
+    (run-hooks (variable-value 'lem-lisp-mode/internal::before-eval-functions) start end)
+    (let ((string (points-to-string start end)))
+      (lem-lisp-mode/internal::eval-print string)
+      (move-point (current-point) end))))
+
 (define-command lisp-eval-interrupt-at-point () ()
   (dolist (spinner (lem/loading-spinner:get-line-spinners (current-point)))
     (let ((request-id (spinner-eval-request-id spinner)))

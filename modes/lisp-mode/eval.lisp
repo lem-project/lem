@@ -147,11 +147,13 @@
       (lem-lisp-mode/swank-protocol::send-message (current-connection)
                                                   `(:interrupt-thread ,request-id)))))
 
-(define-command lisp-inspect-evaluation-results-at-point () ()
-  (alexandria:when-let* ((overlay (find-overlay (current-point)))
-                         (id (overlay-eval-id overlay)))
-    (lisp-eval-async `(micros/contrib/pretty-eval:inspect-evaluation-value ,id)
-                     'lem-lisp-mode/internal::open-inspector)))
+(defmethod execute :around (mode (command lisp-inspect) argument)
+  (let ((overlay (find-overlay (current-point))))
+    (if overlay
+        (let ((id (overlay-eval-id overlay)))
+          (lisp-eval-async `(micros/contrib/pretty-eval:inspect-evaluation-value ,id)
+                           'lem-lisp-mode/internal::open-inspector))
+        (call-next-method))))
 
 (define-command lisp-eval-clear () ()
   (clear-eval-results (current-buffer)))

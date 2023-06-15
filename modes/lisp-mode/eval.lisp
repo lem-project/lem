@@ -121,7 +121,7 @@
         (t
          (eval-last-expression (current-point)))))
 
-(define-command lisp-eval-print-last-sexp () ()
+(define-command lisp-eval-last-expression-and-insert () ()
   (check-connection)
   (with-point ((start (current-point))
 	       (end (current-point)))

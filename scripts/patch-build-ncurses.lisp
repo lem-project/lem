@@ -1,4 +1,4 @@
-(load "patch.lisp")
+(load "scripts/patch.lisp")
 
 (ql:quickload :lem-ncurses)
 

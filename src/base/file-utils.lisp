@@ -75,6 +75,8 @@
   (cond
     ((eql sort-method :mtime)
      (sort-files files :test #'> :key #'file-mtime))
+    ((eql sort-method :size)
+     (sort-files files :test #'> :key #'file-size))
     (t
      (sort-files files))))
 

@@ -106,7 +106,7 @@
 | [project-find-file](https://github.com/lem-project/lem/blob/main/src/commands/project.lisp#L129)      | C-x p f      | Open a file, from the list of all files in this project.                                                                                                                                                                 |
 | [project-root](https://github.com/lem-project/lem/blob/main/src/commands/project.lisp#L146)           |              | Display this buffer's project directory.                                                                                                                                                                                 |
 | [project-root-directory](https://github.com/lem-project/lem/blob/main/src/commands/project.lisp#L153) | C-x p d      | Open this project's root directory.                                                                                                                                                                                      |
-| [project-delete-buffers](https://github.com/lem-project/lem/blob/main/src/commands/project.lisp#L213) | C-x p K      | Delete all this project's buffers, except:
+| [project-kill-buffers](https://github.com/lem-project/lem/blob/main/src/commands/project.lisp#L213)   | C-x p K      | Delete all this project's buffers, except:
 
   - if *delete-repl-buffer* is non t, we don't delete the REPL buffer.
   - if *delete-last-buffer* is non nil, we will delete the last buffer. This would cause Lem to exit.                                                                                                                                                                                                                                             |

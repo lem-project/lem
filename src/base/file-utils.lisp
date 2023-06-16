@@ -75,6 +75,8 @@
   (cond
     ((eql sort-method :mtime)
      (sort-files files :test #'> :key #'file-mtime))
+    ((eql sort-method :size)
+     (sort-files files :test #'> :key #'file-size))
     (t
      (sort-files files))))
 
@@ -96,6 +98,8 @@
                                                     :sort-method sort-method))))))
 
 (defun file-size (pathname)
+  #+sbcl
+  (sb-posix:stat-size (sb-posix:stat pathname))
   #+lispworks
   (system:file-size pathname)
   #+(and (not lispworks) win32)

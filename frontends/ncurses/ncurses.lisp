@@ -73,10 +73,12 @@
                            (lem.term:get-color-pair foreground background))
                        0
                        (if (attribute-bold attribute)
-                           charms/ll:a_bold
+			   ;; Bold attribute
+			   #x00200000
                            0)
                        (if (attribute-underline attribute)
-                           charms/ll:a_underline
+			   ;; Underline attribute
+			   #x00020000
                            0))))
     bits))
 
@@ -275,10 +277,10 @@
   (lem.term:term-set-background color-name))
 
 (defmethod lem-if:display-width ((implementation ncurses))
-  (max 5 charms/ll:*cols*))
+  (max 5 ncurses:cols))
 
 (defmethod lem-if:display-height ((implementation ncurses))
-  (max 3 charms/ll:*lines*))
+  (max 3 ncurses:lines))
 
 (defun compute-border-window-size (width height border-size)
   (let ((width (+ width (* border-size 2)))
@@ -383,108 +385,142 @@
 	  (croatoan:position-x (ncurses-view-modeline-scrwin view))
 	  x)))
 
+(defun add-attributes (win attributes)
+  "Takes a list of keywords and turns the appropriate attributes on."
+  (dolist (i attributes)
+    (setf (croatoan:attributes win) (adjoin i (croatoan:attributes win)))
+    (ncurses:wattron (croatoan:winptr win) i)))
+
+(defun remove-attributes (win attributes)
+  "Takes a list of keywords and turns the appropriate attributes off."
+  (dolist (i attributes)
+    (setf (croatoan:attributes win) (remove i (croatoan:attributes win)))
+    (ncurses:wattroff (croatoan:winptr win) i)))
+
 (defmethod lem-if:print ((implementation ncurses) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
-    (charms/ll:wattron (ncurses-view-scrwin view) attr)
+    (add-attributes (ncurses-view-scrwin view) (list attr))
     ;;(charms/ll:scrollok (ncurses-view-scrwin view) 0)
-    (charms/ll:mvwaddstr (ncurses-view-scrwin view) y x string)
+
+    (ncurses:mvwaddstr (croatoan:winptr (ncurses-view-scrwin view))
+		       y x string)
     ;;(charms/ll:scrollok (ncurses-view-scrwin view) 1)
-    (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
+    (remove-attributes (ncurses-view-scrwin view) (list attr))))
 
 (defmethod lem-if:print-modeline ((implementation ncurses) view x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
-    (charms/ll:wattron (ncurses-view-modeline-scrwin view) attr)
-    (charms/ll:mvwaddstr (ncurses-view-modeline-scrwin view) y x string)
-    (charms/ll:wattroff (ncurses-view-modeline-scrwin view) attr)))
+    (add-attributes (ncurses-view-modeline-scrwin view)
+		    (list attr))
+
+    (ncurses:mvwaddstr (croatoan:winptr (ncurses-view-modeline-scrwin view))
+		       y x string)
+
+    (remove-attributes (ncurses-view-modeline-scrwin view) (list attr))))
 
 (defmethod lem-if:clear-eol ((implementation ncurses) view x y)
   (cond (lem-if:*background-color-of-drawing-window*
-         (let ((attr (attribute-to-bits (make-attribute :background lem-if:*background-color-of-drawing-window*))))
-           (charms/ll:wattron (ncurses-view-scrwin view) attr)
-           (charms/ll:mvwaddstr (ncurses-view-scrwin view)
-                                y
-                                x
-                                (make-string (- (ncurses-view-width view) x) :initial-element #\space))
-           (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
-        (t
-         (charms/ll:wmove (ncurses-view-scrwin view) y x)
-         (charms/ll:wclrtoeol (ncurses-view-scrwin view)))))
+         (let ((attr (attribute-to-bits
+		      (make-attribute :background lem-if:*background-color-of-drawing-window*))))
+
+	   (add-attributes (ncurses-view-scrwin view) (list attr))
+
+	   (ncurses:mvwaddstr (croatoan:winptr (ncurses-view-scrwin view))
+			      y x (make-string (- (ncurses-view-width view) x) :initial-element #\space))
+
+           (remove-attributes (ncurses-view-scrwin view) (list attr))))
+	(t
+	 (setf (croatoan:cursor-position (ncurses-view-scrwin view))
+	       (list y x))
+	 (croatoan:clear (ncurses-view-scrwin view) :target :end-of-line))))
 
 (defmethod lem-if:clear-eob ((implementation ncurses) view x y)
   (cond (lem-if:*background-color-of-drawing-window*
-         (let ((attr (attribute-to-bits (make-attribute :background lem-if:*background-color-of-drawing-window*))))
-           (charms/ll:wattron (ncurses-view-scrwin view) attr)
-           (charms/ll:mvwaddstr (ncurses-view-scrwin view)
-                                y
-                                x
-                                (make-string (- (ncurses-view-width view) x) :initial-element #\space))
+         (let ((attr (attribute-to-bits (make-attribute :background lem-if:*background-color-of-drawing-window*)))
+	       (ptrwin (croatoan:winptr (ncurses-view-scrwin view))))
+
+	   (add-attributes (ncurses-view-scrwin view) (list attr))
+
+	   (ncurses:mvwaddstr ptrwin
+			      y x (make-string (- (ncurses-view-width view) x) :initial-element #\space))
+
            (loop :for y1 :from y :to (ncurses-view-height view)
-                 :do (charms/ll:mvwaddstr (ncurses-view-scrwin view)
-                                          y1
-                                          0
-                                          (make-string (ncurses-view-width view) :initial-element #\space)))
-           (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
+                 :do (ncurses:mvwaddstr ptrwin
+					y1
+					0
+					(make-string (ncurses-view-width view) :initial-element #\space)))
+	   (remove-attributes (ncurses-view-scrwin view) (list attr))))
         (t
-         (charms/ll:wmove (ncurses-view-scrwin view) y x)
-         (charms/ll:wclrtobot (ncurses-view-scrwin view)))))
+	 (setf (croatoan:cursor-position (ncurses-view-scrwin view))
+	       (list y x))
+	 (croatoan:clear (ncurses-view-scrwin view) :target :bottom))))
 
 (defun draw-border (border)
-  (let ((win (border-win border))
-        (h (1- (border-height border)))
-        (w (1- (border-width border)))
-        (attr (attribute-to-bits (border-attribute))))
-    (charms/ll:wattron win attr)
+  (let* ((win (border-win border))
+	 (h (1- (border-height border)))
+	 (w (1- (border-width border)))
+	 (attr (attribute-to-bits (border-attribute)))
+	 (ptrwin (croatoan:winptr win)))
+    (add-attributes win (list attr))
     (cond ((eq :drop-curtain (border-shape border))
-           (charms/ll:mvwaddstr win 0 0 (border-vertical-and-right))
-           (charms/ll:mvwaddstr win 0 w (border-vertical-and-left)))
+           (ncurses:mvwaddstr ptrwin 0 0 (border-vertical-and-right))
+           (ncurses:mvwaddstr ptrwin 0 w (border-vertical-and-left)))
           (t
-           (charms/ll:mvwaddstr win 0 0 (border-upleft))
-           (charms/ll:mvwaddstr win 0 w (border-upright))))
-    (charms/ll:mvwaddstr win h 0 (border-downleft))
-    (charms/ll:mvwaddstr win h w (border-downright))
+           (ncurses:mvwaddstr ptrwin 0 0 (border-upleft))
+           (ncurses:mvwaddstr ptrwin 0 w (border-upright))))
+
+    (ncurses:mvwaddstr ptrwin h 0 (border-downleft))
+    (ncurses:mvwaddstr ptrwin h w (border-downright))
     (loop :for x :from 1 :below w
-          :do (charms/ll:mvwaddstr win 0 x (border-up))
-              (charms/ll:mvwaddstr win (1- (border-height border)) x (border-down)))
+          :do (ncurses:mvwaddstr ptrwin 0 x (border-up))
+              (ncurses:mvwaddstr ptrwin (1- (border-height border)) x (border-down)))
     (loop :for y :from 1 :below h
-          :do (charms/ll:mvwaddstr win y 0 (border-left))
-              (charms/ll:mvwaddstr win y w (border-right)))
-    (charms/ll:attroff attr)
-    (charms/ll:wnoutrefresh win)))
+          :do (ncurses:mvwaddstr ptrwin y 0 (border-left))
+              (ncurses:mvwaddstr ptrwin y w (border-right)))
+
+    (ncurses:attroff attr)
+    (croatoan:mark-for-refresh win)))
 
 (defmethod lem-if:redraw-view-after ((implementation ncurses) view)
   (alexandria:when-let (border (ncurses-view-border view))
     (draw-border border))
   (let ((attr (attribute-to-bits 'modeline-inactive)))
-    (charms/ll:attron attr)
+    (ncurses:attron attr)
     (when (and (ncurses-view-modeline-scrwin view)
                (< 0 (ncurses-view-x view)))
-      (charms/ll:move (ncurses-view-y view) (1- (ncurses-view-x view)))
+      (setf (croatoan:cursor-position (ncurses-view-scrwin view))
+	    (list (ncurses-view-y view) (1- (ncurses-view-x view))))
+      
       (loop :for y :from 0 :to (ncurses-view-height view)
-            :do (charms/ll:mvaddstr (+ (ncurses-view-y view) y)
-                                    (1- (ncurses-view-x view))
-                                    (border-left))))
-    (charms/ll:attroff attr)
-    (charms/ll:wnoutrefresh charms/ll:*stdscr*))
+            :do (ncurses:mvaddstr (+ (ncurses-view-y view) y)
+				  (1- (ncurses-view-x view))
+				  (border-left))))
+    (remove-attributes (ncurses-view-scrwin view) (list attr))
+    (croatoan:mark-for-refresh (ncurses-view-scrwin view)))
+
   (when (ncurses-view-modeline-scrwin view)
-    (charms/ll:wnoutrefresh (ncurses-view-modeline-scrwin view)))
-  (charms/ll:wnoutrefresh (ncurses-view-scrwin view)))
+    (croatoan:mark-for-refresh (ncurses-view-modeline-scrwin view)))
+  (croatoan:mark-for-refresh (ncurses-view-scrwin view)))
 
 (defmethod lem-if:update-display ((implementation ncurses))
   (let ((scrwin (ncurses-view-scrwin (window-view (current-window)))))
     (let ((cursor-x (last-print-cursor-x (current-window)))
           (cursor-y (last-print-cursor-y (current-window))))
       (cond ((covered-with-floating-window-p (current-window) cursor-x cursor-y)
-             (charms/ll:curs-set 0))
+	     (setf (croatoan:cursor-visible-p scrwin) 0))
+
             ((window-cursor-invisible-p (current-window))
-             (charms/ll:curs-set 0))
+             (setf (croatoan:cursor-visible-p scrwin) 0))
             (t
-             (charms/ll:curs-set 1)
-             (charms/ll:wmove scrwin cursor-y cursor-x))))
-    (charms/ll:wnoutrefresh scrwin)
-    (charms/ll:doupdate)))
+	     (setf (croatoan:cursor-visible-p scrwin) 1)
+	     (setf (croatoan:cursor-position scrwin)
+		   (list cursor-y cursor-x)))))
+
+    (croatoan:mark-for-refresh scrwin)
+    
+    (croatoan:refresh-marked)))
 
 (defmethod lem-if:scroll ((implementation ncurses) view n)
-  (charms/ll:wscrl (ncurses-view-scrwin view) n))
+  (ncurses:wscrl (croatoan:winptr (ncurses-view-scrwin view)) n))
 
 (defmethod lem-if:clipboard-paste ((implementation ncurses))
   (lem-ncurses.clipboard:paste))

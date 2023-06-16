@@ -122,7 +122,7 @@
             (hsv-to-rgb h
                         s
                         (max 0 (- v 2)))
-          (format nil "#~X~X~X" r g b))))))
+          (format nil "#~2,'0X~2,'0X~2,'0X" r g b))))))
 
 (defun make-temporary-highlight-line-overlay (buffer)
   (when (and (variable-value 'highlight-line :default (current-buffer))

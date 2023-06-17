@@ -14,6 +14,10 @@
 
 (in-package :lem-core/commands/project)
 
+(define-key *global-keymap* "C-x p f" 'project-find-file)
+(define-key *global-keymap* "C-x p d" 'project-root-directory)
+(define-key *global-keymap* "C-x p K" 'project-delete-buffers)
+
 (defvar *root-directories*
   (list
    ".git"

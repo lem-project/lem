@@ -7,7 +7,6 @@ roswell/lem-ncurses
 *~
 
 contrib/Makefile.am
-Makefile
 Makefile.in
 compile
 configure

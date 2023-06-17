@@ -52,6 +52,7 @@
 (define-key *global-keymap* "C-x 4 f" 'find-file-other-window)
 (define-key *global-keymap* "C-x 4 r" 'read-file-other-window)
 (define-key *global-keymap* "C-x 4 b" 'select-buffer-other-window)
+(define-key *global-keymap* "C-x 4 p f" 'project-find-file-other-window)
 
 (defvar *balance-after-split-window* t)
 

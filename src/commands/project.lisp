@@ -9,14 +9,14 @@
            :project-find-file
            :project-root-directory
            :project-root
-           :project-delete-buffers)
-  (:documentation "Defines utilities to find a project root directory and related user-facing commands: project-find-file, project-delete-buffers etc."))
+           :project-kill-buffers)
+  (:documentation "Defines utilities to find a project root directory and related user-facing commands: project-find-file, project-kill-buffers etc."))
 
 (in-package :lem-core/commands/project)
 
 (define-key *global-keymap* "C-x p f" 'project-find-file)
 (define-key *global-keymap* "C-x p d" 'project-root-directory)
-(define-key *global-keymap* "C-x p K" 'project-delete-buffers)
+(define-key *global-keymap* "C-x p K" 'project-kill-buffers)
 
 (defvar *root-directories*
   (list
@@ -210,7 +210,7 @@
                    (delete-buffer buffer)
                    (signal 'buffer-deleted-p)))))
 
-(define-command project-delete-buffers () ()
+(define-command project-kill-buffers () ()
   "Delete all this project's buffers, except:
 
   - if *delete-repl-buffer* is non t, we don't delete the REPL buffer.

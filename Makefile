@@ -8,3 +8,7 @@ build-sdl2:
 
 update-submodules:
 	git submodule update --remote
+
+update:
+	git pull
+	git submodule update --init --recursive

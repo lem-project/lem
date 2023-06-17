@@ -4,4 +4,4 @@
 
 
 
-(load "build.lisp")
+(load "scripts/build.lisp")

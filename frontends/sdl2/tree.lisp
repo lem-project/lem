@@ -2,8 +2,21 @@
   (:use :cl :lem))
 (in-package :lem-sdl2/tree)
 
-(defparameter +margin-y+ 50)
-(defparameter +margin-x+ 100)
+(defclass tree-view-buffer (text-buffer)
+  ((drawables :initarg :drawables
+              :accessor tree-view-buffer-drawables)
+   (scroll-y :initform 0
+             :accessor tree-view-buffer-scroll-y)
+   (margin-x :initarg :margin-x
+             :initform 100
+             :accessor tree-view-buffer-margin-x)
+   (margin-y :initarg :margin-y
+             :initform 50
+             :accessor tree-view-buffer-margin-y)))
+
+(defmethod tree-view-display-end ((buffer tree-view-buffer))
+  (+ (tree-view-buffer-scroll-y buffer)
+     (lem-sdl2::display-height lem-sdl2::*display*)))
 
 (defclass node ()
   ((value :initarg :value
@@ -26,23 +39,23 @@
       (when(node-children node)
         (format stream "~%~{~S~^~%~}" (node-children node))))))
 
-(defun compute-position-with-rightward-extending (node current-y depth)
-  (setf (node-x node) depth)
-  (cond ((null (node-children node))
-         (setf (node-y node) current-y)
-         (setf (node-last-y node) current-y)
-         (node-y node))
-        (t
-         (loop :for child :in (node-children node)
-               :for i := current-y :then (1+ child-y)
-               :for child-y := (compute-position-with-rightward-extending child i (1+ depth))
-               :sum (node-y child) :into sum-y
-               :finally (setf (node-y node)
-                              (/ sum-y (length (node-children node)))))
-         (setf (node-last-y node)
-               (node-last-y (car (last (node-children node))))))))
-
-(defvar *drawables* '())
+(defun compute-position-with-rightward-extending (node)
+  (labels ((recursive (node current-y depth)
+             (setf (node-x node) depth)
+             (cond ((null (node-children node))
+                    (setf (node-y node) current-y)
+                    (setf (node-last-y node) current-y)
+                    (node-y node))
+                   (t
+                    (loop :for child :in (node-children node)
+                          :for i := current-y :then (1+ child-y)
+                          :for child-y := (recursive child i (1+ depth))
+                          :sum (node-y child) :into sum-y
+                          :finally (setf (node-y node)
+                                         (/ sum-y (length (node-children node)))))
+                    (setf (node-last-y node)
+                          (node-last-y (car (last (node-children node)))))))))
+    (recursive node 0 0)))
 
 (defclass text-node ()
   ((surface :initarg :surface
@@ -80,52 +93,56 @@
         :maximize (+ (text-node-y object)
                      (text-node-height object))))
 
-(defun draw-node (node font current-x)
-  (let ((y (round (* +margin-y+ (node-y node)))))
-    (let* ((surface (sdl2-ttf:render-utf8-blended font
-                                                  (princ-to-string (node-value node))
-                                                  255
-                                                  255
-                                                  255
-                                                  0))
-           (node-width (sdl2:surface-width surface))
-           (node-height (sdl2:surface-height surface)))
-      (push (make-instance 'text-node
-                           :surface surface
-                           :x current-x
-                           :y y
-                           :width node-width
-                           :height node-height)
-            *drawables*)
-      (dolist (child (node-children node))
-        (multiple-value-bind (child-x child-y child-width child-height)
-            (draw-node child font (+ +margin-x+ (+ current-x node-width)))
-          (declare (ignore child-width))
-          (push (make-instance 'line-edge
-                               :color (lem:make-color 255 255 255)
-                               :x0 (+ current-x (sdl2:surface-width surface))
-                               :y0 (+ y (round (sdl2:surface-height surface) 2))
-                               :x1 child-x
-                               :y1 (+ child-y (round child-height 2)))
-                *drawables*)))
-      (values current-x
-              y
-              (sdl2:surface-width surface)
-              (sdl2:surface-height surface)))))
-
-(defun draw (node font)
-  (let ((*drawables* '()))
-    (draw-node node font 0)
-    *drawables*))
+(defun draw (buffer node)
+  (let ((drawables '())
+        (font (sdl2-ttf:open-font
+               (lem-sdl2/resource:get-resource-pathname
+                "resources/fonts/NotoSansMono-Regular.ttf")
+               20)))
+    (labels ((recursive (node current-x)
+               (let ((y (round (* (tree-view-buffer-margin-y buffer) (node-y node)))))
+                 (let* ((surface (sdl2-ttf:render-utf8-blended font
+                                                               (princ-to-string (node-value node))
+                                                               255
+                                                               255
+                                                               255
+                                                               0))
+                        (node-width (sdl2:surface-width surface))
+                        (node-height (sdl2:surface-height surface)))
+                   (push (make-instance 'text-node
+                                        :surface surface
+                                        :x current-x
+                                        :y y
+                                        :width node-width
+                                        :height node-height)
+                         drawables)
+                   (dolist (child (node-children node))
+                     (multiple-value-bind (child-x child-y child-width child-height)
+                         (recursive child (+ (tree-view-buffer-margin-x buffer)
+                                             (+ current-x node-width)))
+                       (declare (ignore child-width))
+                       (push (make-instance 'line-edge
+                                            :color (lem:make-color 255 255 255)
+                                            :x0 (+ current-x (sdl2:surface-width surface))
+                                            :y0 (+ y (round (sdl2:surface-height surface) 2))
+                                            :x1 child-x
+                                            :y1 (+ child-y (round child-height 2)))
+                             drawables)))
+                   (values current-x
+                           y
+                           (sdl2:surface-width surface)
+                           (sdl2:surface-height surface))))))
+      (recursive node 0)
+      (setf (tree-view-buffer-drawables buffer) drawables)
+      (values))))
 
 (defmethod render ((text-node text-node) buffer)
   (when (<= (tree-view-buffer-scroll-y buffer)
             (text-node-y text-node)
             (+ (text-node-y text-node)
                (text-node-height text-node))
-            (+ (tree-view-buffer-scroll-y buffer)
-               (lem-sdl2::display-height lem-sdl2::*display*)))
-    (let ((texture 
+            (tree-view-display-end buffer))
+    (let ((texture
             (sdl2:create-texture-from-surface
              (lem-sdl2:current-renderer)
              (text-node-surface text-node))))
@@ -138,34 +155,28 @@
       (sdl2:destroy-texture texture))))
 
 (defmethod render ((line-edge line-edge) buffer)
-  (when t #+(or)(<= (tree-view-buffer-scroll-y buffer)
-                    (min (line-edge-y0 line-edge)
-                         (line-edge-y1 line-edge))
-                    (max (line-edge-y0 line-edge)
-                         (line-edge-y1 line-edge))
-                    (+ (tree-view-buffer-scroll-y buffer)
-                       (lem-sdl2::display-height lem-sdl2::*display*)))
-    (lem-sdl2::set-render-color lem-sdl2::*display* (line-edge-color line-edge))
-    (sdl2:render-draw-line (lem-sdl2:current-renderer)
-                           (line-edge-x0 line-edge)
-                           (- (line-edge-y0 line-edge)
-                              (tree-view-buffer-scroll-y buffer))
-                           (line-edge-x1 line-edge)
-                           (- (line-edge-y1 line-edge)
-                              (tree-view-buffer-scroll-y buffer)))))
+  (let ((y0 (min (line-edge-y0 line-edge)
+                 (line-edge-y1 line-edge)))
+        (y1 (max (line-edge-y0 line-edge)
+                 (line-edge-y1 line-edge)))
+        (start (tree-view-buffer-scroll-y buffer))
+        (end (tree-view-display-end buffer)))
+    (unless (or (< y1 start) (< end y0))
+      (lem-sdl2::set-render-color lem-sdl2::*display* (line-edge-color line-edge))
+      (sdl2:render-draw-line (lem-sdl2:current-renderer)
+                             (line-edge-x0 line-edge)
+                             (- (line-edge-y0 line-edge)
+                                start)
+                             (line-edge-x1 line-edge)
+                             (- (line-edge-y1 line-edge)
+                                start)))))
 
 (defun render-all (buffer)
-  (loop :for object :in (tree-view-buffer-drawables buffer)
-        :do (render object buffer)))
+  (loop :for drawable :in (tree-view-buffer-drawables buffer)
+        :do (render drawable buffer)))
 
 (define-major-mode tree-view-mode ()
     (:name "Tree View"))
-
-(defclass tree-view-buffer (text-buffer)
-  ((drawables :initarg :drawables
-              :accessor tree-view-buffer-drawables)
-   (scroll-y :initform 0
-             :accessor tree-view-buffer-scroll-y)))
 
 (defmethod lem-sdl2:render (texture window (buffer tree-view-buffer))
   (sdl2:set-render-target (lem-sdl2:current-renderer) texture)
@@ -175,20 +186,22 @@
   (render-all buffer))
 
 (defmethod execute ((mode tree-view-mode) (command scroll-down) argument)
-  (incf (tree-view-buffer-scroll-y (current-buffer)) (* argument 10)))
+  (incf (tree-view-buffer-scroll-y (current-buffer))
+        (* argument 10)))
 
-(defun draw-tree (buffer-name node)
+(defun make-tree-view-buffer (buffer-name)
   (let ((buffer (make-buffer buffer-name)))
     (change-class buffer 'tree-view-buffer)
-    (compute-position-with-rightward-extending node 0 0)
-    (let* ((font (sdl2-ttf:open-font 
-                  (lem-sdl2/resource:get-resource-pathname
-                   "resources/fonts/NotoSansMono-Regular.ttf")
-                  20))
-           (drawables (draw node font)))
-      (setf (tree-view-buffer-drawables buffer) drawables)
-      (change-buffer-mode buffer 'tree-view-mode))))
+    (change-buffer-mode buffer 'tree-view-mode)
+    buffer))
 
+(defun draw-tree (buffer-name node)
+  (compute-position-with-rightward-extending node)
+  (let ((buffer (make-tree-view-buffer buffer-name)))
+    (draw buffer node))
+  (values))
+
+;;;
 (defun make-class-tree (class)
   (let ((subclasses (c2mop:class-direct-subclasses class)))
     (make-instance 'node

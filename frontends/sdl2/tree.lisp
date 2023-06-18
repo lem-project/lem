@@ -12,11 +12,22 @@
              :accessor tree-view-buffer-margin-x)
    (margin-y :initarg :margin-y
              :initform 50
-             :accessor tree-view-buffer-margin-y)))
+             :accessor tree-view-buffer-margin-y)
+   (width :accessor tree-view-buffer-width)
+   (height :accessor tree-view-buffer-height)))
 
 (defmethod tree-view-display-end ((buffer tree-view-buffer))
   (+ (tree-view-buffer-scroll-y buffer)
      (lem-sdl2::display-height lem-sdl2::*display*)))
+
+(defmethod tree-view-scroll ((buffer tree-view-buffer) n)
+  (incf (tree-view-buffer-scroll-y buffer) n)
+  (cond ((< (tree-view-buffer-height buffer)
+            (tree-view-buffer-scroll-y buffer))
+         (setf (tree-view-buffer-scroll-y buffer)
+               (tree-view-buffer-height buffer)))
+        ((< (tree-view-buffer-scroll-y (current-buffer)) 0)
+         (setf (tree-view-buffer-scroll-y (current-buffer)) 0))))
 
 (defclass node ()
   ((value :initarg :value
@@ -134,6 +145,8 @@
                            (sdl2:surface-height surface))))))
       (recursive node 0)
       (setf (tree-view-buffer-drawables buffer) drawables)
+      (setf (tree-view-buffer-width buffer) (compute-width drawables))
+      (setf (tree-view-buffer-height buffer) (compute-height drawables))
       (values))))
 
 (defmethod render ((text-node text-node) buffer)
@@ -186,8 +199,7 @@
   (render-all buffer))
 
 (defmethod execute ((mode tree-view-mode) (command scroll-down) argument)
-  (incf (tree-view-buffer-scroll-y (current-buffer))
-        (* argument 10)))
+  (tree-view-scroll (current-buffer) (* argument 10)))
 
 (defun make-tree-view-buffer (buffer-name)
   (let ((buffer (make-buffer buffer-name)))

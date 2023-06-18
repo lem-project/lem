@@ -195,7 +195,7 @@
   (sdl2:set-render-target (lem-sdl2:current-renderer) texture)
   (lem-sdl2::set-render-color lem-sdl2::*display*
                               (lem-sdl2::display-background-color lem-sdl2::*display*))
-  (sdl2:render-clear (lem-sdl2:current-renderer))
+  (sdl2:render-fill-rect (lem-sdl2:current-renderer) nil)
   (render-all buffer))
 
 (defmethod execute ((mode tree-view-mode) (command scroll-down) argument)

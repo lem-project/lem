@@ -246,9 +246,7 @@
   (shrink-window-width (current-window) n))
 
 (defmethod lem-core:scroll (window n)
-  (if (plusp n)
-      (scroll-down n window)
-      (scroll-up (- n) window)))
+  (scroll-down n window))
 
 (define-command scroll-down (n &optional (window (current-window))) ("p")
   "Scroll down."

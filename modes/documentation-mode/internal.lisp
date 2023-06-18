@@ -175,16 +175,18 @@
                 (insert-string point "-|")
                 (insert-character point #\newline)))))
 
-(defun generate-markdown-file (filename)
+(defgeneric generate-markdown-file (filename type))
+
+(defmethod generate-markdown-file (filename (type (eql :command)))
   (let* ((buffer (make-buffer nil :temporary t))
-         (point (buffer-point buffer)))
+	 (point (buffer-point buffer)))
     (erase-buffer buffer)
     (generate (make-instance 'markdown-generator)
-              (construct-global-command-documentation)
-              point)
+	      (construct-global-command-documentation)
+	      point)
     (alexandria:write-string-into-file (buffer-text buffer)
-                                       filename
-                                       :if-exists :supersede)))
+				       filename
+				       :if-exists :supersede)))
 
 
 (defclass buffer-generator () ())

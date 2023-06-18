@@ -1,5 +1,5 @@
 (defsystem "lem-documentation-mode"
-  :depends-on ("lem")
+  :depends-on ("lem" "rove")
   :serial t
   :components ((:file "utils")
                (:file "internal")

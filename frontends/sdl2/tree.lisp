@@ -109,7 +109,7 @@
         (font (sdl2-ttf:open-font
                (lem-sdl2/resource:get-resource-pathname
                 "resources/fonts/NotoSansMono-Regular.ttf")
-               20)))
+               (lem-sdl2/font:font-config-size (lem-sdl2::display-font-config lem-sdl2::*display*)))))
     (labels ((recursive (node current-x)
                (let ((y (round (* (tree-view-buffer-margin-y buffer) (node-y node)))))
                  (let* ((surface (sdl2-ttf:render-utf8-blended font

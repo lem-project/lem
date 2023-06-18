@@ -1,9 +1,12 @@
 (defpackage :lem/common/history
   (:use :cl)
   (:export :make-history
+           :history-pathname
+           :history-data
            :save-file
            :last-history
            :add-history
+           :remove-history
            :previous-history
            :next-history
            :previous-matching
@@ -21,6 +24,7 @@
   edit-string)
 
 (defun require-additions-to-history-p (input last-input)
+  "Return t if the current input is valid and different than the previous input."
   (and (not (equal input last-input))
        (not (equal input ""))))
 
@@ -56,6 +60,13 @@
   (setf (history-index history)
         (length (history-data history)))
   input)
+
+(defun remove-history (history input)
+  (let* ((new (remove input (history-data history) :test #'equal))
+         (len (length new))
+         (array (make-array len :fill-pointer len :adjustable t :initial-contents new)))
+    (setf (history-data history) array)
+    (setf (history-index history) len)))
 
 (defun previous-history (history)
   (when (< 0 (history-index history))

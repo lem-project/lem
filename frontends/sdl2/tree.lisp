@@ -24,7 +24,7 @@
   (incf (tree-view-buffer-scroll-y buffer) n)
   (let* ((height (* (1- (window-height (current-window)))
                     (lem-if:get-char-height (implementation))))
-         (last-y (- (tree-view-buffer-height buffer) height)))
+         (last-y (max 0 (- (tree-view-buffer-height buffer) height))))
     (cond ((< last-y
               (tree-view-buffer-scroll-y buffer))
            (setf (tree-view-buffer-scroll-y buffer)

@@ -17,12 +17,15 @@
 (defvar *color-themes* (make-hash-table :test 'equal))
 
 (defun find-color-theme (name)
+ "Takes the name of an existing color theme and returns a color-theme hashtable"
   (gethash name *color-themes*))
 
 (defun all-color-themes ()
   (alexandria:hash-table-keys *color-themes*))
 
 (defmacro define-color-theme (name (&optional (parent nil parentp)) &body specs)
+ "Takes a name, optional parent theme, and color theme spec-table and generates color theme based off of spec-table
+ -- see lem-base16-themes"
   (when parentp
     (check-type parent string))
   `(progn
@@ -40,6 +43,7 @@
        (load-theme ,name))))
 
 (defun inherit-load-theme (theme spec-table)
+ "Takes a color-theme hashtable and a spec-table and maps the spec-table keys & values in a hash table"
   (when (color-theme-parent theme)
     (inherit-load-theme (find-color-theme (color-theme-parent theme))
                         spec-table))
@@ -47,6 +51,8 @@
         :do (setf (gethash name spec-table) args)))
 
 (defun apply-theme (theme)
+ "Takes a color-theme hastable, inherits the theme, and maps the newly generated spec-table
+ to defined attributes, such as :background, :foreground, etc.. in the text editor"
   (setf *inactive-window-background-color* nil)
   (clear-all-attribute-cache)
   (let ((spec-table (make-hash-table)))

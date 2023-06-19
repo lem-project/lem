@@ -1,9 +1,11 @@
 (defpackage :lem/common/history
   (:use :cl)
   (:export :make-history
+           :history-data-list
            :save-file
            :last-history
            :add-history
+           :remove-history
            :previous-history
            :next-history
            :previous-matching
@@ -20,7 +22,12 @@
   index
   edit-string)
 
+(defun history-data-list (history)
+  "Return the history data as a list (and not a vector)."
+  (coerce (history-data history) 'list))
+
 (defun require-additions-to-history-p (input last-input)
+  "Return t if the current input is valid and different than the previous input."
   (and (not (equal input last-input))
        (not (equal input ""))))
 
@@ -48,14 +55,31 @@
     (aref (history-data history)
           (1- (length (history-data history))))))
 
-(defun add-history (history input)
-  (when (require-additions-to-history-p
-         input
-         (last-history history))
-    (vector-push-extend input (history-data history)))
+(defun add-history (history input &key (allow-duplicates t) (test #'equal))
+  "Add this input to the history.
+
+  Don't add the same input as the previous one.
+  If allow-duplicates is non t, don't add duplicates at all."
+  (cond
+    ((not allow-duplicates)
+     (when (not (find input (history-data history) :test test))
+       (vector-push-extend input (history-data history))))
+    ((require-additions-to-history-p input
+                                     (last-history history))
+     (vector-push-extend input (history-data history)))
+    (t
+     nil))
+
   (setf (history-index history)
         (length (history-data history)))
   input)
+
+(defun remove-history (history input)
+  (let* ((new (remove input (history-data history) :test #'equal))
+         (len (length new))
+         (array (make-array len :fill-pointer len :adjustable t :initial-contents new)))
+    (setf (history-data history) array)
+    (setf (history-index history) len)))
 
 (defun previous-history (history)
   (when (< 0 (history-index history))

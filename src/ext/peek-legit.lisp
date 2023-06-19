@@ -44,7 +44,6 @@
 (define-key *peek-legit-keymap* 'next-line 'peek-legit-next)
 (define-key *peek-legit-keymap* 'previous-line 'peek-legit-previous)
 (define-key *peek-legit-keymap* "s" 'peek-legit-stage-file)
-(define-key *peek-legit-keymap* "?" 'lem/legit::legit-help)
 
 (defclass peek-window (floating-window) ())
 (defclass source-window (floating-window) ())
@@ -180,12 +179,27 @@
   `(call-with-appending-source (lambda (,point) ,@body)
                                ,move-function ,stage-function))
 
-(defun call-with-insert (function)
+(defun call-with-appending-staged-files (insert-function move-function stage-function)
   (let ((point (buffer-point (collector-buffer *collector*))))
-    (funcall function point)))
+    (log:info point)
+    (with-point ((start point))
+      (funcall insert-function point)
+      (unless (start-line-p point)
+        (insert-string point (string #\newline) :read-only t))
+      (set-move-function start point move-function)
+      (set-stage-function start point stage-function))
+    (incf (collector-count *collector*))))
 
-(defmacro with-insert ((point) &body body)
-  `(call-with-insert (lambda (,point) ,@body)))
+(defmacro with-appending-staged-files ((point &key move-function stage-function) &body body)
+  `(call-with-appending-source (lambda (,point) ,@body)
+                               ,move-function ,stage-function))
+
+(defun collector-insert (s)
+  (let ((point (buffer-point (collector-buffer *collector*))))
+    (with-point ((start point))
+      (insert-string point (string #\newline) :read-only t)
+      (insert-string point s :read-only t)
+      (insert-string point (string #\newline) :read-only t))))
 
 ;;;
 (define-attribute match-line-attribute

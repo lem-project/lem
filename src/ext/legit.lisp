@@ -5,8 +5,9 @@
   (:export :legit-status :legit))
 (in-package :lem/legit)
 
+(define-key lem/peek-legit::*peek-legit-keymap* "?" 'legit-help)
 
-(defun move (file line-number &key cached)
+(defun move (file &key cached)
   (let ((buffer (lem-base:get-or-create-buffer "*legit-diff*"))
         (diff (porcelain::file-diff file :cached cached)))
     (log:info "inserting diff to " buffer)
@@ -18,9 +19,9 @@
     (setf (buffer-read-only-p buffer) t)
     (move-to-line (buffer-point buffer) 1)))
 
-(defun make-move-function (file line-number &key cached)
+(defun make-move-function (file  &key cached)
   (lambda ()
-    (move file line-number :cached cached)))
+    (move file :cached cached)))
 
 (defun stage (file)
   (log:info "Stage! " file)
@@ -70,13 +71,23 @@
     ;; big try!
     (lem/peek-legit:with-collecting-sources (collector :read-only nil)
       (loop :for file :in unstaged-files
-            :for i := 0 :then (incf i)
             :do (lem/peek-legit:with-appending-source
-                    (point :move-function (make-move-function file i)
+                    (point :move-function (make-move-function file)
                            :stage-function (make-stage-function file))
 
                   (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
                   ))
+
+      (lem/peek-legit::collector-insert "Staged changes:")
+
+      (loop :for file :in staged-files
+            :for i := 0 :then (incf i)
+            :do (lem/peek-legit::with-appending-staged-files
+                    (point :move-function (make-move-function file :cached t)
+                           :stage-function (make-stage-function file))
+
+                  (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
+
       (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
                 'change-grep-buffer))))
 

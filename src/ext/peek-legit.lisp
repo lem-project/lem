@@ -42,7 +42,9 @@
 (define-key *peek-legit-keymap* "Return" 'peek-legit-select)
 (define-key *peek-legit-keymap* "q" 'peek-legit-quit)
 (define-key *peek-legit-keymap* 'next-line 'peek-legit-next)
+(define-key *peek-legit-keymap* "n" 'peek-legit-next)
 (define-key *peek-legit-keymap* 'previous-line 'peek-legit-previous)
+(define-key *peek-legit-keymap* "p" 'peek-legit-previous)
 (define-key *peek-legit-keymap* "s" 'peek-legit-stage-file)
 
 (defclass peek-window (floating-window) ())

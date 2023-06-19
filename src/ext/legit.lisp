@@ -2,39 +2,9 @@
   (:use :cl
    :lem
    :lem/grep)
-  (:export :legit)
-  #+sbcl
-  (:lock t))
+  (:export :legit-status :legit))
 (in-package :lem/legit)
 
-(defun run-grep (string directory)
-  (multiple-value-bind (output error-output status-code)
-      (uiop:run-program string
-                        :directory directory
-                        :output :string
-                        :error-output :string
-                        :ignore-error-status t)
-    (cond ((eql status-code 0)
-           output)
-          ((eql status-code 1)
-           "")
-          (t
-           (editor-error "~A"
-                         (string-right-trim '(#\newline #\space)
-                                            error-output))))))
-
-(defun parse-grep-result (text)
-  (let* ((text (string-right-trim '(#\newline) text))
-         (lines (uiop:split-string text :separator '(#\newline)))
-         (file-line-content-tuples
-           (mapcar (lambda (line)
-                     (destructuring-bind (file line-number content)
-                         (ppcre:split ":" line :limit 3)
-                       (list file
-                             (parse-integer line-number)
-                             content)))
-                   lines)))
-    file-line-content-tuples))
 
 (defun move (file line-number &key cached)
   (let ((buffer (lem-base:get-or-create-buffer "*legit-diff*"))
@@ -53,9 +23,8 @@
     (move file line-number :cached cached)))
 
 (defun stage (file)
-  (let ((buffer (current-buffer)))
-    (log:info "Stage! " file)
-    (uiop:run-program (list "git" "add" file))))
+  (log:info "Stage! " file)
+  (uiop:run-program (list "git" "add" file)))
 
 (defun make-stage-function (file)
   (lambda ()
@@ -93,27 +62,20 @@
 
 (define-command legit-status () ()
   "Show changes and untracked files."
-  (multiple-value-bind (untracked unstaged staged)
+  (multiple-value-bind (untracked unstaged-files staged-files)
       (porcelain::components)
-    (declare (ignorable untracked staged))
+    (declare (ignorable untracked))
     ;; (message "Modified files: ~S" modified)
 
     ;; big try!
     (lem/peek-legit:with-collecting-sources (collector :read-only nil)
-      (loop :for file :in unstaged
-            :for directory := ""
+      (loop :for file :in unstaged-files
             :for i := 0 :then (incf i)
             :do (lem/peek-legit:with-appending-source
                     (point :move-function (make-move-function file i)
                            :stage-function (make-stage-function file))
 
                   (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
-                  ;; (insert-string point ":" :read-only t)
-                  ;; (insert-string point (princ-to-string i)
-                                 ;; :attribute 'lem/peek-legit:position-attribute
-                                 ;; :read-only t)
-                  ;; (insert-string point ":" :read-only t :content-start t)
-                  ;; (insert-string point file)
                   ))
       (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
                 'change-grep-buffer))))

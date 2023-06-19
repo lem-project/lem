@@ -8,9 +8,7 @@
            :collector-buffer
            :get-move-function
            :show-matched-line
-           :highlight-matched-line)
-  #+sbcl
-  (:lock t))
+           :highlight-matched-line) )
 (in-package :lem/peek-legit)
 
 (define-attribute filename-attribute
@@ -153,7 +151,7 @@
 (defun call-with-collecting-sources (function &key read-only)
   (let* ((*collector* (make-instance 'collector :buffer (make-peek-legit-buffer)))
          (point (buffer-point (collector-buffer *collector*))))
-    (insert-string point "Unstaged files:" :read-only t)
+    (insert-string point "Unstaged changes:" :read-only t)
     (insert-string point (string #\newline) :read-only t)
 
     (funcall function *collector*)

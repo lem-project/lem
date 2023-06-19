@@ -40,6 +40,7 @@
   (setf (not-switchable-buffer-p (current-buffer)) t))
 
 (define-key *peek-source-keymap* "Return" 'peek-source-select)
+(define-key *peek-source-keymap* "q" 'peek-source-quit)
 (define-key *peek-source-keymap* 'next-line 'peek-source-next)
 (define-key *peek-source-keymap* 'previous-line 'peek-source-previous)
 (define-key *peek-source-keymap* "Escape" 'peek-source-quit)  ;; also C-x 0 by default.

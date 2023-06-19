@@ -14,7 +14,9 @@
              :initform 50
              :accessor tree-view-buffer-margin-y)
    (width :accessor tree-view-buffer-width)
-   (height :accessor tree-view-buffer-height)))
+   (height :accessor tree-view-buffer-height)
+   (active-node :initform nil
+                :accessor tree-view-buffer-active-node)))
 
 (defmethod tree-view-display-end ((buffer tree-view-buffer))
   (+ (tree-view-buffer-scroll-y buffer)
@@ -33,7 +35,9 @@
            (setf (tree-view-buffer-scroll-y (current-buffer)) 0)))))
 
 (defclass node ()
-  ((value :initarg :value
+  ((name :initarg :name
+         :reader node-name)
+   (value :initarg :value
           :reader node-value)
    (children :initarg :children
              :initform '()
@@ -43,7 +47,9 @@
    (y :initform 0
       :accessor node-y)
    (last-y :initform 0
-           :accessor node-last-y)))
+           :accessor node-last-y)
+   (click-callback :initarg :click-callback
+                   :reader node-click-callback)))
 
 (defmethod print-object ((node node) stream)
   (loop :repeat (* 2 (or *print-level* 0)) :do (write-char #\space stream))
@@ -82,8 +88,8 @@
           :reader text-node-width)
    (height :initarg :height
            :reader text-node-height)
-   (value :initarg :value
-          :reader text-node-value)))
+   (node :initarg :node
+         :reader text-node-node)))
 
 (defclass line-edge ()
   ((x0 :initarg :x0
@@ -118,7 +124,7 @@
     (labels ((recursive (node current-x)
                (let ((y (round (* (tree-view-buffer-margin-y buffer) (node-y node)))))
                  (let* ((surface (sdl2-ttf:render-utf8-blended font
-                                                               (princ-to-string (node-value node))
+                                                               (princ-to-string (node-name node))
                                                                255
                                                                255
                                                                255
@@ -131,7 +137,7 @@
                                         :y y
                                         :width node-width
                                         :height node-height
-                                        :value (node-value node))
+                                        :node node)
                          drawables)
                    (dolist (child (node-children node))
                      (multiple-value-bind (child-x child-y child-width child-height)
@@ -170,7 +176,10 @@
                                       (tree-view-buffer-scroll-y buffer))
                                    (text-node-width text-node)
                                    (text-node-height text-node)))
-        (sdl2:render-copy (lem-sdl2:current-renderer) texture :dest-rect dest-rect))
+        (sdl2:render-copy (lem-sdl2:current-renderer) texture :dest-rect dest-rect)
+        (when (eq text-node (tree-view-buffer-active-node buffer))
+          (sdl2:set-render-draw-color (lem-sdl2:current-renderer) 255 255 255 0)
+          (sdl2:render-draw-rect (lem-sdl2:current-renderer) dest-rect)))
       (sdl2:destroy-texture texture))))
 
 (defmethod render ((line-edge line-edge) buffer)
@@ -228,7 +237,14 @@
       (lem-core::get-relative-mouse-coordinates-pixels mouse-event window)
     (let ((node (get-node-at-coordinates buffer x y)))
       (when node
-        (message "~S ~D ~D" (text-node-value node) x y)))))
+        (funcall (node-click-callback (text-node-node node)) 
+                 (text-node-node node))))))
+
+(defmethod lem-core::handle-mouse-hover ((buffer tree-view-buffer) mouse-event &key window)
+  (multiple-value-bind (x y)
+      (lem-core::get-relative-mouse-coordinates-pixels mouse-event window)
+    (let ((node (get-node-at-coordinates buffer x y)))
+      (setf (tree-view-buffer-active-node buffer) node))))
 
 (defun make-tree-view-buffer (buffer-name)
   (let ((buffer (make-buffer buffer-name)))
@@ -243,8 +259,19 @@
   (values))
 
 ;;;
+(defun $inspect (value)
+  (let ((micros::*buffer-package* *package*)
+        (micros::*buffer-readtable* *readtable*))
+    (micros::with-buffer-syntax ()
+      (micros::with-retry-restart (:msg "Retry SLIME inspection request.")
+        (micros::reset-inspector)
+        (lem-lisp-mode/internal::open-inspector (micros::inspect-object value))))))
+
 (defun make-class-tree (class)
   (let ((subclasses (c2mop:class-direct-subclasses class)))
     (make-instance 'node
-                   :value (class-name class)
+                   :name (class-name class)
+                   :value class
+                   :click-callback (lambda (node)
+                                     ($inspect (node-value node)))
                    :children (mapcar #'make-class-tree subclasses))))

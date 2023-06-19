@@ -211,6 +211,18 @@
     (funcall callback window point)
     t))
 
+(defmethod handle-mouse-hover (buffer mouse-event &key window x y)
+  (case (mouse-event-button mouse-event)
+    ((nil)
+     (let ((point (get-point-from-window-with-coordinates window x y)))
+       (or (handle-mouse-hover-buffer window point)
+           (handle-mouse-hover-overlay window point)
+           (handle-mouse-unhover-buffer window point))))
+    (:button-1
+     (when (window-last-mouse-button-down-point window)
+       (move-current-point-to-x-y-position window x y)
+       (set-current-mark (window-last-mouse-button-down-point window))))))
+
 (defmethod handle-mouse-event ((mouse-event mouse-motion))
   (cond ((null *last-dragged-separator*)
          (multiple-value-bind (window x y)
@@ -218,16 +230,11 @@
                                     (mouse-event-x mouse-event)
                                     (mouse-event-y mouse-event))
            (when window
-             (case (mouse-event-button mouse-event)
-               ((nil)
-                (let ((point (get-point-from-window-with-coordinates window x y)))
-                  (or (handle-mouse-hover-buffer window point)
-                      (handle-mouse-hover-overlay window point)
-                      (handle-mouse-unhover-buffer window point))))
-               (:button-1
-                (when (window-last-mouse-button-down-point window)
-                  (move-current-point-to-x-y-position window x y)
-                  (set-current-mark (window-last-mouse-button-down-point window))))))))
+             (handle-mouse-hover (window-buffer window)
+                                 mouse-event
+                                 :window window
+                                 :x x
+                                 :y y))))
         ((typep *last-dragged-separator* 'window-vertical-separator)
          (let ((x (mouse-event-x mouse-event))
                (button (mouse-event-button mouse-event)))

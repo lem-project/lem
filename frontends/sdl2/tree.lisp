@@ -236,9 +236,11 @@
   (multiple-value-bind (x y)
       (lem-core::get-relative-mouse-coordinates-pixels mouse-event window)
     (let ((node (get-node-at-coordinates buffer x y)))
-      (when node
-        (funcall (node-click-callback (text-node-node node)) 
-                 (text-node-node node))))))
+      (cond ((null node)
+             (call-next-method))
+            ((eql :button-1 (lem-core::mouse-event-button mouse-event))
+             (funcall (node-click-callback (text-node-node node))
+                      (text-node-node node)))))))
 
 (defmethod lem-core::handle-mouse-hover ((buffer tree-view-buffer) mouse-event &key window)
   (multiple-value-bind (x y)
@@ -255,8 +257,8 @@
 (defun draw-tree (buffer-name node)
   (compute-position-with-rightward-extending node)
   (let ((buffer (make-tree-view-buffer buffer-name)))
-    (draw buffer node))
-  (values))
+    (draw buffer node)
+    buffer))
 
 ;;;
 (defun $inspect (value)

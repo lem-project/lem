@@ -26,9 +26,17 @@
                                 modified-unstaged-files
                                 modified-staged-files))))
 
-(defun file-diff (file)
-  (let ((out (uiop:run-program (list "git" "diff"
-                                     "--no-color"
-                                     file)
-                               :output :string)))
+(defparameter *file-diff-args* (list "diff"
+                                   "--no-color")
+  "Must be surrounded by the git binary and the file path.
+
+  For staged files, add --cached.")
+
+(defun file-diff (file &key cached)
+  (let ((out (uiop:run-program
+              (concatenate 'list '("git")
+                           *file-diff-args*
+                           (if cached '("--cached"))
+                           (list file))
+              :output :string)))
     out))

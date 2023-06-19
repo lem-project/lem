@@ -36,9 +36,9 @@
                    lines)))
     file-line-content-tuples))
 
-(defun move (file line-number)
+(defun move (file line-number &key cached)
   (let ((buffer (lem-base:get-or-create-buffer "*legit-diff*"))
-        (diff (porcelain::file-diff file)))
+        (diff (porcelain::file-diff file :cached cached)))
     (log:info "inserting diff to " buffer)
     (setf (buffer-read-only-p buffer) nil)
     (erase-buffer buffer)
@@ -48,10 +48,9 @@
     (setf (buffer-read-only-p buffer) t)
     (move-to-line (buffer-point buffer) 1)))
 
-(defun make-move-function (file line-number)
-  (log:info "moving to " file)
+(defun make-move-function (file line-number &key cached)
   (lambda ()
-    (move file line-number)))
+    (move file line-number :cached cached)))
 
 (defun stage (file)
   (let ((buffer (current-buffer)))

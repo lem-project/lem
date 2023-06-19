@@ -278,7 +278,7 @@
         (lem-lisp-mode/swank-protocol::read-atom in))
     (format nil "~A::~A" (or package-prefix current-package) symbol-name)))
 
-(defun display-class-inheritance-tree (buffer-name class-name)
+(defmethod lem-lisp-mode/class-browser:display-class-inheritance-tree (buffer-name class-name)
   (let ((tree (lem-lisp-mode:lisp-eval-from-string
                (format nil
                        "(micros:compute-class-inheritance-tree '~A)"

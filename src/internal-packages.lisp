@@ -547,4 +547,6 @@
    :decrease-font-size
    :resize-display-before
    :get-font-list
-   :get-mouse-position))
+   :get-mouse-position
+   :get-char-width
+   :get-char-height))

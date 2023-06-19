@@ -972,6 +972,12 @@
         (values (floor x (display-char-width *display*))
                 (floor y (display-char-height *display*))))))
 
+(defmethod lem-if:get-char-width ((implementation sdl2))
+  (char-width))
+
+(defmethod lem-if:get-char-height ((implementation sdl2))
+  (char-height))
+
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (defclass drawable ()

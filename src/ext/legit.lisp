@@ -36,13 +36,13 @@
                    lines)))
     file-line-content-tuples))
 
-(defun move (directory file line-number)
+(defun move (file line-number)
   (let ((buffer (find-file-buffer (merge-pathnames file directory))))
     (move-to-line (buffer-point buffer) line-number)))
 
-(defun make-move-function (directory file line-number)
+(defun make-move-function (file line-number)
   (lambda ()
-    (move directory file line-number)))
+    (move file line-number)))
 
 (defun get-content-string (start)
   (with-point ((start start)
@@ -85,7 +85,7 @@
         (lem/peek-legit:with-collecting-sources (collector :read-only nil)
           (loop :for (file line-number content) :in result
                 :do (lem/peek-legit:with-appending-source
-                        (point :move-function (make-move-function directory file line-number))
+                        (point :move-function (make-move-function file line-number))
                       (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
                       (insert-string point ":" :read-only t)
                       (insert-string point (princ-to-string line-number)
@@ -115,7 +115,7 @@
             :for directory := ""
             :for i := 0 :then (incf i)
             :do (lem/peek-legit:with-appending-source
-                    (point :move-function (make-move-function directory file i))
+                    (point :move-function (make-move-function file i))
 
                   (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
                   ;; (insert-string point ":" :read-only t)

@@ -35,11 +35,13 @@
 (define-key *lisp-inspector-keymap* "M-Return" 'lisp-inspector-copy-down-to-repl)
 (define-key *lisp-inspector-keymap* "C-Return" 'lisp-inspector-copy-down-to-repl)
 
-(define-command lisp-inspect (string)
+(define-command lisp-inspect (string &key (self-evaluation t))
     ((or (symbol-string-at-point (current-point))
          (prompt-for-sexp "Inspect value (evaluated): ")))
-  (lisp-eval-async `(micros:init-inspector
-                     (format nil "(quote ~a)" ,string))
+  (lisp-eval-async (if self-evaluation
+                       `(micros:init-inspector
+                         (format nil "(quote ~a)" ,string))
+                       `(micros:init-inspector ,string))
                    'open-inspector))
 
 (defun inspector-buffer ()

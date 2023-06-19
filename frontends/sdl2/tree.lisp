@@ -220,7 +220,8 @@
             (return drawable)))))))
 
 (define-major-mode tree-view-mode ()
-    (:name "Tree View"))
+    (:name "Tree View")
+  (setf (buffer-read-only-p (current-buffer)) t))
 
 (defmethod lem-sdl2:render (texture window (buffer tree-view-buffer))
   (sdl2:set-render-target (lem-sdl2:current-renderer) texture)

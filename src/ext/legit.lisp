@@ -70,6 +70,9 @@
 
     ;; big try!
     (lem/peek-legit:with-collecting-sources (collector :read-only nil)
+      ;; (lem/peek-legit::collector-insert "Keys: (n)ext, (p)revious lines,  (s)tage file.")
+
+      (lem/peek-legit::collector-insert "Unstaged changes:")
       (loop :for file :in unstaged-files
             :do (lem/peek-legit:with-appending-source
                     (point :move-function (make-move-function file)
@@ -78,6 +81,7 @@
                   (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
                   ))
 
+      (lem/peek-legit::collector-insert "")
       (lem/peek-legit::collector-insert "Staged changes:")
 
       (loop :for file :in staged-files

@@ -7,7 +7,8 @@
 (defmethod display-class-inheritance-tree (buffer-name class-name)
   (editor-error "Unimplemented"))
 
-(define-command lisp-browse-class-as-tree (class-name)
-    ((or (symbol-string-at-point (current-point))
-         (prompt-for-symbol-name "Class name: ")))
-  (display-class-inheritance-tree "*Class Browser*" class-name))
+(define-command lisp-browse-class-as-tree () ()
+  (check-connection)
+  (let ((class-name (or (symbol-string-at-point (current-point))
+                        (prompt-for-symbol-name "Class name: "))))
+    (display-class-inheritance-tree "*Class Browser*" class-name)))

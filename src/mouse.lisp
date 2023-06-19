@@ -33,7 +33,11 @@
    (x :initarg :x
       :reader mouse-event-x)
    (y :initarg :y
-      :reader mouse-event-y)))
+      :reader mouse-event-y)
+   (pixel-x :initarg :pixel-x
+            :reader mouse-event-pixel-x)
+   (pixel-y :initarg :pixel-y
+            :reader mouse-event-pixel-y)))
 
 (defclass mouse-button-down (mouse-event)
   ((clicks :initarg :clicks
@@ -102,6 +106,20 @@
 (defmethod handle-button-1 ((separator window-separator) x y clicks)
   (setf *last-dragged-separator* separator))
 
+(defmethod handle-mouse-button-down (buffer mouse-event &key window x y)
+  (case (mouse-event-button mouse-event)
+    (:button-1
+     (handle-button-1 window x y (mouse-button-down-clicks mouse-event)))
+    (:button-2
+     (paste-expression-on-mouse-cursor-to-current-point window
+                                                        (mouse-event-x mouse-event)
+                                                        (mouse-event-y mouse-event)))
+    (:button-3
+     (show-context-menu-over-mouse-cursor (mouse-event-x mouse-event)
+                                          (mouse-event-y mouse-event)))
+    (:button-4
+     (buffer-undo (current-point)))))
+
 (defmethod handle-mouse-event ((mouse-event mouse-button-down))
   (multiple-value-bind (kind first-window second-window)
       (focus-separator-position (current-frame)
@@ -138,18 +156,11 @@
                                   (mouse-event-x mouse-event)
                                   (mouse-event-y mouse-event))
          (when window
-           (case (mouse-event-button mouse-event)
-             (:button-1
-              (handle-button-1 window x y (mouse-button-down-clicks mouse-event)))
-             (:button-2
-              (paste-expression-on-mouse-cursor-to-current-point window
-                                                                 (mouse-event-x mouse-event)
-                                                                 (mouse-event-y mouse-event)))
-             (:button-3
-              (show-context-menu-over-mouse-cursor (mouse-event-x mouse-event)
-                                                   (mouse-event-y mouse-event)))
-             (:button-4
-              (buffer-undo (current-point))))))))))
+           (handle-mouse-button-down (window-buffer window)
+                                     mouse-event
+                                     :window window
+                                     :x x
+                                     :y y)))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
   (setf *last-dragged-separator* nil)
@@ -392,30 +403,38 @@
             (insert-string-and-indent (current-point) (points-to-string start end))))))))
 
 
-(defun receive-mouse-button-down (x y button clicks)
+(defun receive-mouse-button-down (x y pixel-x pixel-y button clicks)
   (check-type button mouse-button)
   (send-event (make-instance 'mouse-button-down
                              :button button
                              :x x
                              :y y
+                             :pixel-x pixel-x
+                             :pixel-y pixel-y
                              :clicks clicks)))
 
-(defun receive-mouse-button-up (x y button)
+(defun receive-mouse-button-up (x y pixel-x pixel-y button)
   (send-event (make-instance 'mouse-button-up
                              :button button
                              :x x
-                             :y y)))
+                             :y y
+                             :pixel-x pixel-x
+                             :pixel-y pixel-y)))
 
-(defun receive-mouse-motion (x y button)
+(defun receive-mouse-motion (x y pixel-x pixel-y button)
   (check-type button (or null mouse-button))
   (send-event (make-instance 'mouse-motion
                              :button button
                              :x x
-                             :y y)))
+                             :y y
+                             :pixel-x pixel-x
+                             :pixel-y pixel-y)))
 
-(defun receive-mouse-wheel (x y wheel-x wheel-y)
+(defun receive-mouse-wheel (x y pixel-x pixel-y wheel-x wheel-y)
   (send-event (make-instance 'mouse-wheel
                              :x x
                              :y y
+                             :pixel-x pixel-x
+                             :pixel-y pixel-y
                              :wheel-x wheel-x
                              :wheel-y wheel-y)))

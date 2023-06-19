@@ -17,28 +17,25 @@
     :reader point-kind
     :type (member :temporary :left-inserting :right-inserting)))
   (:documentation
-   "`point`はバッファ内のテキストの位置を指すオブジェクトです。  
-`buffer`とその位置の行、行頭からの0始まりのオフセット`charpos`をもっています。  
-`point`には`kind`があり、バッファ内に挿入、削除した後の位置が`kind`の値によって変わります。  
-`kind`が`:temporary`の時は`point`を一時的な読み取りに使います。  
-作成、削除時のオーバーヘッドが低く、明示的に削除する必要もありませんが、
-その位置より前を編集した後はその`point`は正しく使用できません。  
-`kind`が`:left-inserting`または`:right-inserting`の時はそれより前の位置を編集したときに、
-編集した長さだけ位置を調整します。  
-`point`と同じ位置に挿入すると
-`:right-inserting`では元の位置のままで、`:left-inserting`では移動します。  
-`:left-inserting`または`:right-inserting`の場合は、使用後に`delete-point`で明示的に削除するか、
-`with-point`を使う必要があります。
+   "`point` is an object that points to the position of the text in the buffer.
+It has a `buffer` slot, a `line` number, and `charpos` is an offset from the beginning of the line, starting at zero.
+`point` has a `kind` type. The position after inserting and deleting in the buffer depends on the value of `kind`:
+- when `kind` is `temporary`, `point` is used for temporary reads.
+ The overhead on creation and deletion is low, and there is no need to explicitly delete the point.
+ If you edit the buffer before the position, the `point` cannot be used correctly any more.
+- when `kind` is `:left-inserting` or `:right-inserting`, and if you insert content before the point, then the point position is adjusted by the length of your edit.
+ If you insert content at the point position, with `:right-inserting` the original position is unchanged, and with `:left-inserting` the position is moved.
+When using `:left-inserting` or `:right-inserting`, you must explicitly delete the point after use with `delete-point`. For this reason, you should use `with-point`.
 "))
 
 (setf (documentation 'point-buffer 'function)
-      "`point`が指す`buffer`を返します。")
+      "Return the `buffer` pointed to by `point`.")
 
 (setf (documentation 'point-kind 'function)
-      "`point`の種類(`:temporary`、`:left-inserting`または`:right-inserting`)を返します。")
+      "Return the type of `point` (`:temporary`, `:left-inserting` or `:right-inserting`).")
 
 (defun current-point ()
-  "現在の`point`を返します。"
+  "Return the current`point`.")
   (buffer-point (current-buffer)))
 
 (defmethod print-object ((object point) stream)

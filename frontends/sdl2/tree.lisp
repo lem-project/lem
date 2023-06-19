@@ -262,19 +262,16 @@
     buffer))
 
 ;;;
-(defun $inspect (value)
-  (let ((micros::*buffer-package* *package*)
-        (micros::*buffer-readtable* *readtable*))
-    (micros::with-buffer-syntax ()
-      (micros::with-retry-restart (:msg "Retry SLIME inspection request.")
-        (micros::reset-inspector)
-        (lem-lisp-mode/internal::open-inspector (micros::inspect-object value))))))
+(defun make-class-tree (tree)
+  (make-instance 'node
+                 :name (first tree)
+                 :value (first tree)
+                 :click-callback (lambda (node)
+                                   (lem-lisp-mode:lisp-inspect
+                                    (format nil "(cl:find-class '~S)" (node-value node))
+                                    :self-evaluation nil))
+                 :children (mapcar #'make-class-tree (rest tree))))
 
-(defun make-class-tree (class)
-  (let ((subclasses (c2mop:class-direct-subclasses class)))
-    (make-instance 'node
-                   :name (class-name class)
-                   :value class
-                   :click-callback (lambda (node)
-                                     ($inspect (node-value node)))
-                   :children (mapcar #'make-class-tree subclasses))))
+(defun display-class-inheritance-tree (buffer-name class-name)
+  (let ((tree (lem-lisp-mode:lisp-eval `(micros:compute-class-inheritance-tree ',class-name))))
+    (draw-tree buffer-name (make-class-tree tree))))

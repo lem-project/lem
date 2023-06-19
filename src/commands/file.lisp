@@ -205,7 +205,7 @@
        :test-function (lambda (name) (member name candidates :test #'string=))))))
 
 (define-command find-file-recursively (arg) ("p")
-  "Open a file, from the list of all files present under the buffer's direcotry, recursively."
+  "Open a file, from the list of all files present under the buffer's directory, recursively."
   ;; ARG is currently not used, use it when needed.
   (declare (ignorable arg))
   (let ((cwd (buffer-directory)))

@@ -10,13 +10,16 @@
            :project-root-directory
            :project-root
            :project-kill-buffers)
-  (:documentation "Defines utilities to find a project root directory and related user-facing commands: project-find-file, project-kill-buffers etc."))
+  (:documentation "Defines utilities to find a project root directory and related user-facing commands: project-find-file, project-kill-buffers, project-switch etc."))
 
 (in-package :lem-core/commands/project)
 
 (define-key *global-keymap* "C-x p f" 'project-find-file)
 (define-key *global-keymap* "C-x p d" 'project-root-directory)
 (define-key *global-keymap* "C-x p K" 'project-kill-buffers)
+(define-key *global-keymap* "C-x p p" 'project-switch)
+(define-key *global-keymap* "C-x p s" 'project-save)
+(define-key *global-keymap* "C-x p u" 'project-unsave)
 
 (defvar *root-directories*
   (list
@@ -221,3 +224,74 @@
                                        (incf count))))
       (delete-buffers (list-project-buffers)))
     (message "~a buffers deleted." count)))
+
+
+
+(defvar *projects-history*)
+
+(defun history ()
+  "Return or create the projects' history struct.
+  The history file is saved on (lem-home)/history/projects"
+  (unless (boundp '*projects-history*)
+    (let* ((pathname (merge-pathnames "history/projects" (lem-home)))
+           (history (lem/common/history:make-history :pathname pathname)))
+      (setf *projects-history* history)))
+  *projects-history*)
+
+(defun remember-project (input)
+  "Add this project path to the history file.
+  Return t if the project was added, nil if it already existed."
+  (let* ((history (history))
+         ;; Project roots (pathnames) are converted to strings for the
+         ;; string completion prompt.
+         (input (namestring input)))
+    (lem/common/history:add-history history input :allow-duplicates nil)
+    (lem/common/history:save-file history)))
+
+(defun forget-project (input)
+  "Remove this project (string) from the projects' history file.
+  Return the input."
+  (let ((history (history)))
+    (lem/common/history:remove-history history input)
+    (lem/common/history:save-file history)
+    input))
+
+(defun saved-projects ()
+  "Return the saved projects.
+  Return: a list (of strings), not a vector."
+  (lem/common/history:history-data-list (history)))
+
+(define-command project-save () ()
+  "Remember the current project for later sessions."
+  (when (remember-project (find-root (buffer-directory)))
+    (message "Project saved.")))
+
+(define-command project-unsave () ()
+  "Prompt for a project and remove it from the list of saved projects."
+  (let ((choice (prompt-for-project)))
+    (and
+     (forget-project choice)
+     (lem/common/history:save-file (history))
+     (message "Project removed."))))
+
+(defun prompt-for-project ()
+  "Prompt for a project saved in the projects history."
+  (let ((candidates (saved-projects)))
+    (if candidates
+        (prompt-for-string
+         "Project: "
+         :completion-function (lambda (x) (completion-strings x candidates))
+         :test-function (lambda (name) (member name candidates :test #'string=)))
+        (show-message "No projects." :timeout 5))))
+
+(define-command project-switch () ()
+  "Prompt for a saved project and find a file in this project."
+  (let ((project-root (prompt-for-project)))
+    (when project-root
+      (uiop:with-current-directory (project-root)
+        (let ((filename (prompt-for-files-recursively)))
+          (alexandria:when-let (buffer (execute-find-file *find-file-executor*
+                                                          (lem-core/commands/file::get-file-mode filename)
+                                                          filename))
+            (when buffer
+              (switch-to-buffer buffer t nil))))))))

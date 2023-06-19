@@ -150,7 +150,11 @@
     buffer))
 
 (defun call-with-collecting-sources (function &key read-only)
-  (let ((*collector* (make-instance 'collector :buffer (make-peek-legit-buffer))))
+  (let* ((*collector* (make-instance 'collector :buffer (make-peek-legit-buffer)))
+         (point (buffer-point (collector-buffer *collector*))))
+    (insert-string point "Unstaged files:" :read-only t)
+    (insert-string point (string #\newline) :read-only t)
+
     (funcall function *collector*)
     (when read-only
       (setf (buffer-read-only-p (collector-buffer *collector*)) t))

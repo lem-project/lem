@@ -40,10 +40,12 @@
   (let ((buffer (lem-base:get-or-create-buffer "*legit-diff*"))
         (diff (porcelain::file-diff file)))
     (log:info "inserting diff to " buffer)
+    (setf (buffer-read-only-p buffer) nil)
     (erase-buffer buffer)
     (move-to-line (buffer-point buffer) 1)
     (insert-string (buffer-point buffer) diff)
     (change-buffer-mode buffer 'lem-patch-mode:patch-mode)
+    (setf (buffer-read-only-p buffer) t)
     (move-to-line (buffer-point buffer) 1)))
 
 (defun make-move-function (file line-number)

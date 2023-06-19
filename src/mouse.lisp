@@ -56,6 +56,16 @@
 (defun mouse-event-p (value)
   (typep value 'mouse-event))
 
+(defmethod get-relative-mouse-coordinates-pixels ((mouse-event mouse-event) window)
+  (let ((x (mouse-event-pixel-x mouse-event))
+        (y (mouse-event-pixel-y mouse-event)))
+    (values (- x
+               (* (window-x window)
+                  (lem-if:get-char-width (implementation))))
+            (- y
+               (* (window-y window)
+                  (lem-if:get-char-height (implementation)))))))
+
 (defun get-point-from-window-with-coordinates (window x y &optional (allow-overflow-column t))
   (with-point ((point (buffer-point (window-buffer window))))
     (move-point point (window-view-point window))

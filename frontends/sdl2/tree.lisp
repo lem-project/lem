@@ -78,7 +78,9 @@
    (width :initarg :width
           :reader text-node-width)
    (height :initarg :height
-           :reader text-node-height)))
+           :reader text-node-height)
+   (value :initarg :value
+          :reader text-node-value)))
 
 (defclass line-edge ()
   ((x0 :initarg :x0
@@ -125,7 +127,8 @@
                                         :x current-x
                                         :y y
                                         :width node-width
-                                        :height node-height)
+                                        :height node-height
+                                        :value (node-value node))
                          drawables)
                    (dolist (child (node-children node))
                      (multiple-value-bind (child-x child-y child-width child-height)
@@ -188,6 +191,22 @@
   (loop :for drawable :in (tree-view-buffer-drawables buffer)
         :do (render drawable buffer)))
 
+(defun get-node-at-coordinates (buffer x y)
+  (let ((scroll-y (tree-view-buffer-scroll-y buffer)))
+    (dolist (drawable (tree-view-buffer-drawables buffer))
+      (when (typep drawable 'text-node)
+        (let ((node-y (- (text-node-y drawable) scroll-y)))
+          (when (and (typep drawable 'text-node)
+                     (<= (text-node-x drawable)
+                         x
+                         (+ (text-node-x drawable)
+                            (text-node-width drawable)))
+                     (<= node-y
+                         y
+                         (+ node-y
+                            (text-node-height drawable))))
+            (return drawable)))))))
+
 (define-major-mode tree-view-mode ()
     (:name "Tree View"))
 
@@ -200,6 +219,13 @@
 
 (defmethod execute ((mode tree-view-mode) (command scroll-down) argument)
   (tree-view-scroll (current-buffer) (* argument 10)))
+
+(defmethod lem-core::handle-mouse-button-down ((buffer tree-view-buffer) mouse-event &key window)
+  (multiple-value-bind (x y)
+      (lem-core::get-relative-mouse-coordinates-pixels mouse-event window)
+    (let ((node (get-node-at-coordinates buffer x y)))
+      (when node
+        (message "~S ~D ~D" (text-node-value node) x y)))))
 
 (defun make-tree-view-buffer (buffer-name)
   (let ((buffer (make-buffer buffer-name)))

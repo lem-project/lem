@@ -37,10 +37,17 @@
     file-line-content-tuples))
 
 (defun move (file line-number)
-  (let ((buffer (find-file-buffer (merge-pathnames file directory))))
-    (move-to-line (buffer-point buffer) line-number)))
+  (let ((buffer (lem-base:get-or-create-buffer "*legit-diff*"))
+        (diff (porcelain::file-diff file)))
+    (log:info "inserting diff to " buffer)
+    (erase-buffer buffer)
+    (move-to-line (buffer-point buffer) 1)
+    (insert-string (buffer-point buffer) diff)
+    (change-buffer-mode buffer 'lem-patch-mode:patch-mode)
+    (move-to-line (buffer-point buffer) 1)))
 
 (defun make-move-function (file line-number)
+  (log:info "moving to " file)
   (lambda ()
     (move file line-number)))
 
@@ -71,41 +78,13 @@
 (defvar *last-query* "git grep -nH ")
 (defvar *last-directory* nil)
 
-(define-command grep (query &optional (directory (buffer-directory)))
-  "Run an interactive grep."
-    ((prompt-for-string "" :initial-value *last-query* :history-symbol 'grep)
-     (princ-to-string (prompt-for-directory "Directory: "
-                                            :directory (if *last-directory*
-                                                           (princ-to-string *last-directory*)
-                                                           (buffer-directory)))))
-  (let* ((directory (uiop:ensure-directory-pathname directory))
-         (result (parse-grep-result (run-grep query directory))))
-    (if (null result)
-        (editor-error "No match")
-        (lem/peek-legit:with-collecting-sources (collector :read-only nil)
-          (loop :for (file line-number content) :in result
-                :do (lem/peek-legit:with-appending-source
-                        (point :move-function (make-move-function file line-number))
-                      (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
-                      (insert-string point ":" :read-only t)
-                      (insert-string point (princ-to-string line-number)
-                                     :attribute 'lem/peek-legit:position-attribute
-                                     :read-only t)
-                      (insert-string point ":" :read-only t :content-start t)
-                      (insert-string point content)))
-          (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
-                    'change-grep-buffer)))
-    (setf *last-query* query
-          *last-directory* directory)))
-
-
 ;; (load "porcelain.lisp")
 (load "src/ext/porcelain.lisp")
 
 (define-command legit-status () ()
   "Show changes and untracked files."
   (multiple-value-bind (modified untracked)
-      (porcelain-components)
+      (porcelain::components)
     (declare (ignorable untracked))
     ;; (message "Modified files: ~S" modified)
 

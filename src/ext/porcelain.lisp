@@ -9,13 +9,13 @@
                                      :output :string)))
     (str:trim porcelain)))
 
-(defun porcelain()
+(defun components()
   (let ((porcelain (status)))
     (loop for line in (str:lines porcelain)
           if (str:starts-with-p "M" (str:trim line))
-            collect (subseq line 2) into modified-files
+            collect (str:trim (subseq line 2)) into modified-files
           if (str:starts-with-p "??" (str:trim line))
-            collect (subseq line 3) into untracked-files
+            collect (str:trim (subseq line 3)) into untracked-files
           finally (return (values modified-files
                                   untracked-files)))))
 

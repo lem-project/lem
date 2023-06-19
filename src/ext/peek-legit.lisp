@@ -45,6 +45,7 @@
 (define-key *peek-legit-keymap* "q" 'peek-legit-quit)
 (define-key *peek-legit-keymap* 'next-line 'peek-legit-next)
 (define-key *peek-legit-keymap* 'previous-line 'peek-legit-previous)
+(define-key *peek-legit-keymap* "s" 'peek-legit-stage-file)
 
 (defclass peek-window (floating-window) ())
 (defclass source-window (floating-window) ())
@@ -207,8 +208,7 @@
     (let ((line (line-number-at-point point)))
       (peek-legit-quit)
       (switch-to-buffer (point-buffer point))
-      (move-to-line (current-point) line)
-      (highlight-matched-line (current-point)))))
+      (move-to-line (current-point) line))))
 
 (define-command peek-legit-next () ()
   (next-move-point (current-point)))

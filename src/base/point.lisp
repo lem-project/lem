@@ -35,7 +35,7 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
       "Return the type of `point` (`:temporary`, `:left-inserting` or `:right-inserting`).")
 
 (defun current-point ()
-  "Return the current`point`.")
+  "Return the current`point`."
   (buffer-point (current-buffer)))
 
 (defmethod print-object ((object point) stream)

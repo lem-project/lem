@@ -10,14 +10,14 @@
            :project-root-directory
            :project-root
            :project-kill-buffers)
-  (:documentation "Defines utilities to find a project root directory and related user-facing commands: project-find-file, project-kill-buffers, project-switch-project etc."))
+  (:documentation "Defines utilities to find a project root directory and related user-facing commands: project-find-file, project-kill-buffers, project-switch etc."))
 
 (in-package :lem-core/commands/project)
 
 (define-key *global-keymap* "C-x p f" 'project-find-file)
 (define-key *global-keymap* "C-x p d" 'project-root-directory)
 (define-key *global-keymap* "C-x p K" 'project-kill-buffers)
-(define-key *global-keymap* "C-x p p" 'project-switch-project)
+(define-key *global-keymap* "C-x p p" 'project-switch)
 (define-key *global-keymap* "C-x p s" 'project-save)
 (define-key *global-keymap* "C-x p u" 'project-unsave)
 
@@ -295,7 +295,7 @@
           (message "No projects.~&~
                    Use project-save to save a project accross sessions.")))))
 
-(define-command project-switch-project () ()
+(define-command project-switch () ()
   "Prompt for a saved project and find a file in this project."
   (let ((project-root (prompt-for-project)))
     (when project-root

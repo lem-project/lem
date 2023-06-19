@@ -22,12 +22,15 @@
 
 (defmethod tree-view-scroll ((buffer tree-view-buffer) n)
   (incf (tree-view-buffer-scroll-y buffer) n)
-  (cond ((< (tree-view-buffer-height buffer)
-            (tree-view-buffer-scroll-y buffer))
-         (setf (tree-view-buffer-scroll-y buffer)
-               (tree-view-buffer-height buffer)))
-        ((< (tree-view-buffer-scroll-y (current-buffer)) 0)
-         (setf (tree-view-buffer-scroll-y (current-buffer)) 0))))
+  (let* ((height (* (1- (window-height (current-window)))
+                    (lem-if:get-char-height (implementation))))
+         (last-y (- (tree-view-buffer-height buffer) height)))
+    (cond ((< last-y
+              (tree-view-buffer-scroll-y buffer))
+           (setf (tree-view-buffer-scroll-y buffer)
+                 last-y))
+          ((< (tree-view-buffer-scroll-y (current-buffer)) 0)
+           (setf (tree-view-buffer-scroll-y (current-buffer)) 0)))))
 
 (defclass node ()
   ((value :initarg :value
@@ -218,7 +221,7 @@
   (render-all buffer))
 
 (defmethod execute ((mode tree-view-mode) (command scroll-down) argument)
-  (tree-view-scroll (current-buffer) (* argument 10)))
+  (tree-view-scroll (current-buffer) (* argument 30)))
 
 (defmethod lem-core::handle-mouse-button-down ((buffer tree-view-buffer) mouse-event &key window)
   (multiple-value-bind (x y)

@@ -70,12 +70,14 @@
 (defvar *last-query* "git grep -nH ")
 (defvar *last-directory* nil)
 
-(define-command grep (query &optional (directory (buffer-directory)))
-    ((prompt-for-string "" :initial-value *last-query* :history-symbol 'grep)
-     (princ-to-string (prompt-for-directory "Directory: "
-                                            :directory (if *last-directory*
-                                                           (princ-to-string *last-directory*)
-                                                           (buffer-directory)))))
+(define-command grep
+  (query &optional (directory (buffer-directory)))
+  ((prompt-for-string "" :initial-value *last-query* :history-symbol 'grep)
+   (princ-to-string (prompt-for-directory "Directory: "
+                                          :directory (if *last-directory*
+                                                         (princ-to-string *last-directory*)
+                                                         (buffer-directory)))))
+  "Run an interactive grep."
   (let* ((directory (uiop:ensure-directory-pathname directory))
          (result (parse-grep-result (run-grep query directory))))
     (if (null result)

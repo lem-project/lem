@@ -268,7 +268,7 @@
                  :value (first tree)
                  :click-callback (lambda (node)
                                    (lem-lisp-mode:lisp-inspect
-                                    (format nil "(cl:find-class '~S)" (node-value node))
+                                    (format nil "(cl:find-class '~A)" (node-value node))
                                     :self-evaluation nil))
                  :children (mapcar #'make-class-tree (rest tree))))
 

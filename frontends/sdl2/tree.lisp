@@ -272,6 +272,18 @@
                                     :self-evaluation nil))
                  :children (mapcar #'make-class-tree (rest tree))))
 
+(defun sanitize-symbol (symbol-name current-package)
+  (multiple-value-bind (symbol-name package-prefix)
+      (with-input-from-string (in symbol-name)
+        (lem-lisp-mode/swank-protocol::read-atom in))
+    (format nil "~A::~A" (or package-prefix current-package) symbol-name)))
+
 (defun display-class-inheritance-tree (buffer-name class-name)
-  (let ((tree (lem-lisp-mode:lisp-eval `(micros:compute-class-inheritance-tree ',class-name))))
-    (draw-tree buffer-name (make-class-tree tree))))
+  (let ((tree (lem-lisp-mode:lisp-eval-from-string
+               (format nil
+                       "(micros:compute-class-inheritance-tree '~A)"
+                       (sanitize-symbol class-name
+                                        (lem-lisp-mode:current-package))))))
+    (unless tree
+      (editor-error "There is no class named ~:@(~A~)" class-name))
+    (display-buffer (draw-tree buffer-name (make-class-tree tree)))))

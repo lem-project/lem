@@ -242,17 +242,11 @@
   "Add this project path to the history file.
   Return t if the project was added, nil if it already existed."
   (let* ((history (history))
-         (data (lem/common/history:history-data history))
-         ;; project roots (pathnames) are converted to strings for the
+         ;; Project roots (pathnames) are converted to strings for the
          ;; string completion prompt.
          (input (namestring input)))
-    (cond
-      ((not (find input data :test #'equal))
-       (lem/common/history:add-history history input)
-       (lem/common/history:save-file history)
-       input)
-      (:otherwise
-       nil))))
+    (lem/common/history:add-history history input :allow-duplicates nil)
+    (lem/common/history:save-file history)))
 
 (defun forget-project (input)
   "Remove this project (string) from the projects' history file.
@@ -265,15 +259,12 @@
 (defun saved-projects ()
   "Return the saved projects.
   Return: a list (of strings), not a vector."
-  (coerce
-   (lem/common/history:history-data (history))
-   'list))
+  (lem/common/history:history-data-list (history)))
 
 (define-command project-save () ()
   "Remember the current project for later sessions."
-  (if (remember-project (find-root (buffer-directory)))
-      (message "Project saved.")
-      (message "Already saved.")))
+  (when (remember-project (find-root (buffer-directory)))
+    (message "Project saved.")))
 
 (define-command project-unsave () ()
   "Prompt for a project and remove it from the list of saved projects."
@@ -291,9 +282,7 @@
          "Project: "
          :completion-function (lambda (x) (completion-strings x candidates))
          :test-function (lambda (name) (member name candidates :test #'string=)))
-        (let ((lem-core::*message-timeout* 5))
-          (message "No projects.~&~
-                   Use project-save to save a project accross sessions.")))))
+        (show-message "No projects." :timeout 5))))
 
 (define-command project-switch () ()
   "Prompt for a saved project and find a file in this project."

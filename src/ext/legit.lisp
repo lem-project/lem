@@ -118,3 +118,13 @@
                   ))
       (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
                 'change-grep-buffer))))
+
+(define-command legit-help () ()
+  "Show the important keybindings."
+  (with-pop-up-typeout-window (s (make-buffer "*Legit help*") :erase t)
+    (format s "Lem's interface to git.")
+    (format s "~%~%")
+    (format s "Stage a file: press s")
+    (format s "~%~%")
+    (format s "Press q to quit.")
+    ))

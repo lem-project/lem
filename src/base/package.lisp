@@ -129,6 +129,7 @@
    :buffer-list
    :any-modified-buffer-p
    :get-buffer
+   :get-or-create-buffer
    :unique-buffer-name
    :delete-buffer
    :get-next-buffer

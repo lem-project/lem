@@ -78,10 +78,21 @@
     (put-text-property start end 'move-marker t))
   (put-text-property start end 'move-function move-function))
 
+(defun set-stage-function (start end function)
+  (with-point ((end start))
+    (character-offset end 1)
+    (put-text-property start end 'stage-marker t))
+  (put-text-property start end 'stage-function function))
+
 (defun get-move-function (point)
   (with-point ((point point))
     (line-start point)
     (text-property-at point 'move-function)))
+
+(defun get-stage-function (point)
+  (with-point ((point point))
+    (line-start point)
+    (text-property-at point 'stage-function)))
 
 (defun start-move-point (point)
   (buffer-start point)
@@ -152,18 +163,19 @@
                                    ,@body)
                                  :read-only ,read-only))
 
-(defun call-with-appending-source (insert-function move-function)
+(defun call-with-appending-source (insert-function move-function stage-function)
   (let ((point (buffer-point (collector-buffer *collector*))))
     (with-point ((start point))
       (funcall insert-function point)
       (unless (start-line-p point)
         (insert-string point (string #\newline) :read-only t))
-      (set-move-function start point move-function))
+      (set-move-function start point move-function)
+      (set-stage-function start point stage-function))
     (incf (collector-count *collector*))))
 
-(defmacro with-appending-source ((point &key move-function) &body body)
+(defmacro with-appending-source ((point &key move-function stage-function) &body body)
   `(call-with-appending-source (lambda (,point) ,@body)
-                               ,move-function))
+                               ,move-function ,stage-function))
 
 (defun call-with-insert (function)
   (let ((point (buffer-point (collector-buffer *collector*))))
@@ -215,6 +227,12 @@
 
 (define-command peek-legit-previous () ()
   (previous-move-point (current-point)))
+
+(define-command peek-legit-stage-file () ()
+  (log:info "stage now!")
+  (alexandria:when-let* ((stage (get-stage-function (buffer-point (window-buffer *peek-window*))))
+                         (point (funcall stage)))
+    point))
 
 (define-command peek-legit-quit () ()
   (setf (current-window) *parent-window*)

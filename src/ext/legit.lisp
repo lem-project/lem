@@ -53,6 +53,15 @@
   (lambda ()
     (move file line-number)))
 
+(defun stage (file)
+  (let ((buffer (current-buffer)))
+    (log:info "Stage! " file)
+    (uiop:run-program (list "git" "add" file))))
+
+(defun make-stage-function (file)
+  (lambda ()
+    (stage file)))
+
 (defun get-content-string (start)
   (with-point ((start start)
                (end start))
@@ -85,18 +94,19 @@
 
 (define-command legit-status () ()
   "Show changes and untracked files."
-  (multiple-value-bind (modified untracked)
+  (multiple-value-bind (untracked unstaged staged)
       (porcelain::components)
-    (declare (ignorable untracked))
+    (declare (ignorable untracked staged))
     ;; (message "Modified files: ~S" modified)
 
     ;; big try!
     (lem/peek-legit:with-collecting-sources (collector :read-only nil)
-      (loop :for file :in modified
+      (loop :for file :in unstaged
             :for directory := ""
             :for i := 0 :then (incf i)
             :do (lem/peek-legit:with-appending-source
-                    (point :move-function (make-move-function file i))
+                    (point :move-function (make-move-function file i)
+                           :stage-function (make-stage-function file))
 
                   (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
                   ;; (insert-string point ":" :read-only t)

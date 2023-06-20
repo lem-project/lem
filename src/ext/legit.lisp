@@ -2,10 +2,12 @@
   (:use :cl
    :lem
    :lem/grep)
-  (:export :legit-status :legit))
+  (:export :legit-status))
 (in-package :lem/legit)
 
 (define-key lem/peek-legit::*peek-legit-keymap* "?" 'legit-help)
+;; redraw everything:
+(define-key lem/peek-legit::*peek-legit-keymap* "g" 'legit-status)
 
 (defun move (file &key cached)
   (let ((buffer (lem-base:get-or-create-buffer "*legit-diff*"))

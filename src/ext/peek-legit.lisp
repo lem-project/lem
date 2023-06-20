@@ -131,10 +131,17 @@
     (list peek-window source-window)))
 
 (defun display (collector)
+  (when (boundp '*peek-window*)
+    (delete-window *peek-window*))
+  (when (boundp '*source-window*)
+    (delete-window *source-window*))
+
   (destructuring-bind (peek-window source-window)
       (make-two-side-by-side-windows (collector-buffer collector))
 
-    (setf *parent-window* (current-window))
+    (unless (boundp '*parent-window*)
+      (setf *parent-window* (current-window)))
+
     (setf *peek-window* peek-window)
     (setf *source-window* source-window)
 
@@ -244,9 +251,12 @@
   (previous-move-point (current-point)))
 
 (define-command peek-legit-stage-file () ()
-  (log:info "stage now!")
   (alexandria:when-let* ((stage (get-stage-function (buffer-point (window-buffer *peek-window*))))
                          (point (funcall stage)))
+    ;; Update the buffer, an added file should go to the staged section.
+    ;; This calls git again and refreshes everything.
+    ;; xxx: not refreshing
+    (uiop:symbol-call :legit :legit-status)
     point))
 
 (define-command peek-legit-quit () ()

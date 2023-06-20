@@ -10,7 +10,7 @@ test:
 	$(LISP) --load scripts/launch-tests.lisp
 
 generate-doc:
-	$(LISP) --load scripts/generate-documentation-tests.lisp --eval '(progn (lem-documentation-mode/tests::generate-markdown-file "/tmp/test.md" :test) (quit))'
+	$(LISP) --load scripts/generate-documentation-tests.lisp --eval '(progn (lem-documentation-mode/tests::generate-markdown-file "test.md" :test) (quit))'
 
 update-submodules:
 	git submodule update --remote

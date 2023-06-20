@@ -344,28 +344,20 @@
                  :name (first tree)
                  :value (first tree)
                  :click-callback (lambda (node)
+                                   (log:info (node-value node))
                                    (alexandria:when-let (window (find-tree-view-window buffer-name))
                                      (setf (current-window) window)
                                      (lem-lisp-mode:lisp-inspect
-                                      (format nil "(cl:find-class '~A nil)" (node-value node))
+                                      (format nil "(micros:find-class-from-string ~S)" (node-value node))
                                       :self-evaluation nil
                                       :focus t)))
                  :children (mapcar (lambda (node)
                                      (make-class-tree node buffer-name))
                                    (rest tree))))
 
-(defun sanitize-symbol (symbol-name current-package)
-  (multiple-value-bind (symbol-name package-prefix)
-      (with-input-from-string (in symbol-name)
-        (lem-lisp-mode/swank-protocol::read-atom in))
-    (format nil "~A::~A" (or package-prefix current-package) symbol-name)))
-
 (defmethod lem-lisp-mode/class-browser:display-class-inheritance-tree (buffer-name class-name)
   (let ((tree (lem-lisp-mode:lisp-eval-from-string
-               (format nil
-                       "(micros:compute-class-inheritance-tree '~A)"
-                       (sanitize-symbol class-name
-                                        (lem-lisp-mode:current-package))))))
+               (format nil "(micros:compute-class-inheritance-tree ~S)" class-name))))
     (unless tree
       (editor-error "There is no class named ~:@(~A~)" class-name))
     (display-buffer (draw-tree buffer-name (make-class-tree tree buffer-name)))))

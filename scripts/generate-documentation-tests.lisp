@@ -1,3 +1,11 @@
+(load "scripts/patch.lisp")
+
+(ql:quickload :rove)
+
+(ql:quickload :lem-tests)
+
+(ql:quickload :lem-ncurses)
+
 (defpackage :lem-documentation-mode/tests
   (:use :cl :lem :lem-documentation-mode/internal)
   (:export))
@@ -80,7 +88,7 @@
          (point (buffer-point buffer)))
 
     (unless (> (hash-table-count *lem-tests*) 0)
-      (launch-tests :clean t))
+      (launch-tests :clean t :show-output t))
 
     (erase-buffer buffer)
 
@@ -96,8 +104,7 @@
 			    (* (/ (loop :for k :being :the :hash-value :of *lem-tests*
 					:when (rove:test-passed-p k)
 					:sum 1)
-				  (hash-table-count *lem-tests*)
-				  )
+				  (hash-table-count *lem-tests*))
 			       100))))
 
     (insert-character point #\newline)
@@ -112,4 +119,5 @@
 
     (alexandria:write-string-into-file (buffer-text buffer)
                                        filename
+				       :if-does-not-exist :create
                                        :if-exists :append)))

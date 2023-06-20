@@ -220,8 +220,19 @@
             (return drawable)))))))
 
 (define-major-mode tree-view-mode ()
-    (:name "Tree View")
+    (:name "Tree View"
+     :keymap *tree-view-keymap*)
   (setf (buffer-read-only-p (current-buffer)) t))
+
+;; TODO
+(define-key *tree-view-keymap* 'forward-char 'tree-view-scroll-right)
+(define-key *tree-view-keymap* 'backward-char 'tree-view-scroll-left)
+(define-key *tree-view-keymap* 'next-line 'tree-view-scroll-down)
+(define-key *tree-view-keymap* 'previous-line 'tree-view-scroll-up)
+(define-key *tree-view-keymap* 'next-page 'tree-view-scroll-pagedown)
+(define-key *tree-view-keymap* 'previous-page 'tree-view-scroll-pageup)
+(define-key *tree-view-keymap* 'move-to-end-of-line 'tree-view-scroll-bottom)
+(define-key *tree-view-keymap* 'move-to-beginning-of-line 'tree-view-scroll-top)
 
 (defmethod lem-sdl2:render (texture window (buffer tree-view-buffer))
   (sdl2:set-render-target (lem-sdl2:current-renderer) texture)

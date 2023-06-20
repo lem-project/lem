@@ -6,6 +6,7 @@
 (in-package :lem/legit)
 
 (define-key lem/peek-legit::*peek-legit-keymap* "?" 'legit-help)
+(define-key *global-keymap* "C-x g" 'legit-status)
 ;; redraw everything:
 (define-key lem/peek-legit::*peek-legit-keymap* "g" 'legit-status)
 

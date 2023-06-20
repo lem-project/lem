@@ -34,14 +34,19 @@
     (move file :cached cached)))
 
 ;; stage
-(defun stage (file)
-  (log:info "Stage! " file)
-  (uiop:run-program (list "git" "add" file))
-  t)
-
 (defun make-stage-function (file)
   (lambda ()
-    (stage file)))
+    (porcelain::stage file)
+    t))
+
+;; unstage
+(defun make-unstage-function (file &key already-unstaged)
+  (if already-unstaged
+      (lambda ()
+        (message "Already unstaged"))
+      (lambda ()
+        (porcelain::unstage file)
+        t)))
 
 (define-command legit-status () ()
   "Show changes and untracked files."
@@ -63,7 +68,8 @@
       (loop :for file :in unstaged-files
             :do (lem/peek-legit:with-appending-source
                     (point :move-function (make-move-function file)
-                           :stage-function (make-stage-function file))
+                           :stage-function (make-stage-function file)
+                           :unstage-function (make-unstage-function file :already-unstaged t))
 
                   (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
                   ))
@@ -77,7 +83,8 @@
             :for i := 0 :then (incf i)
             :do (lem/peek-legit::with-appending-staged-files
                     (point :move-function (make-move-function file :cached t)
-                           :stage-function (make-stage-function file))
+                           :stage-function (make-stage-function file)
+                           :unstage-function (make-unstage-function file))
 
                   (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
           (lem/peek-legit::collector-insert "<none>"))

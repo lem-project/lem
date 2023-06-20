@@ -45,7 +45,10 @@
 (define-key *peek-legit-keymap* 'previous-line 'peek-legit-previous)
 (define-key *peek-legit-keymap* "p" 'peek-legit-previous)
 (define-key *peek-legit-keymap* "C-p" 'peek-legit-previous)
+
+;; Git commands:
 (define-key *peek-legit-keymap* "s" 'peek-legit-stage-file)
+(define-key *peek-legit-keymap* "u" 'peek-legit-unstage-file)
 (define-key *peek-legit-keymap* "c" 'peek-legit-commit)
 
 (defclass peek-window (floating-window) ())
@@ -85,6 +88,12 @@
     (put-text-property start end 'stage-marker t))
   (put-text-property start end 'stage-function function))
 
+(defun set-unstage-function (start end function)
+  (with-point ((end start))
+    (character-offset end 1)
+    (put-text-property start end 'unstage-marker t))
+  (put-text-property start end 'unstage-function function))
+
 (defun get-move-function (point)
   (with-point ((point point))
     (line-start point)
@@ -94,6 +103,11 @@
   (with-point ((point point))
     (line-start point)
     (text-property-at point 'stage-function)))
+
+(defun get-unstage-function (point)
+  (with-point ((point point))
+    (line-start point)
+    (text-property-at point 'unstage-function)))
 
 (defun start-move-point (point)
   (buffer-start point)
@@ -175,21 +189,32 @@
                                    ,@body)
                                  :read-only ,read-only))
 
-(defun call-with-appending-source (insert-function move-function stage-function)
+(defun call-with-appending-source (insert-function 
+                                   move-function
+                                   stage-function
+                                   unstage-function)
   (let ((point (buffer-point (collector-buffer *collector*))))
     (with-point ((start point))
       (funcall insert-function point)
       (unless (start-line-p point)
         (insert-string point (string #\newline) :read-only t))
       (set-move-function start point move-function)
-      (set-stage-function start point stage-function))
+      (set-stage-function start point stage-function)
+      (set-unstage-function start point unstage-function))
     (incf (collector-count *collector*))))
 
-(defmacro with-appending-source ((point &key move-function stage-function) &body body)
+(defmacro with-appending-source ((point &key move-function 
+                                             stage-function
+                                             unstage-function) &body body)
   `(call-with-appending-source (lambda (,point) ,@body)
-                               ,move-function ,stage-function))
+                               ,move-function
+                               ,stage-function
+                               ,unstage-function))
 
-(defun call-with-appending-staged-files (insert-function move-function stage-function)
+(defun call-with-appending-staged-files (insert-function
+                                         move-function
+                                         stage-function
+                                         unstage-function)
   (let ((point (buffer-point (collector-buffer *collector*))))
     (log:info point)
     (with-point ((start point))
@@ -197,12 +222,15 @@
       (unless (start-line-p point)
         (insert-string point (string #\newline) :read-only t))
       (set-move-function start point move-function)
-      (set-stage-function start point stage-function))
+      (set-stage-function start point stage-function)
+      (set-unstage-function start point unstage-function))
     (incf (collector-count *collector*))))
 
-(defmacro with-appending-staged-files ((point &key move-function stage-function) &body body)
+(defmacro with-appending-staged-files ((point &key move-function 
+                                                   stage-function
+                                                   unstage-function) &body body)
   `(call-with-appending-source (lambda (,point) ,@body)
-                               ,move-function ,stage-function))
+                               ,move-function ,stage-function ,unstage-function))
 
 (defun collector-insert (s &optional (newline t))
   (let ((point (buffer-point (collector-buffer *collector*))))
@@ -257,6 +285,14 @@
 (define-command peek-legit-stage-file () ()
   (alexandria:when-let* ((stage (get-stage-function (buffer-point (window-buffer *peek-window*))))
                          (point (funcall stage)))
+    ;; Update the buffer, to see that a staged file goes to the staged section.
+    ;; This calls git again and refreshes everything.
+    (uiop:symbol-call :lem/legit :legit-status)
+    point))
+
+(define-command peek-legit-unstage-file () ()
+  (alexandria:when-let* ((unstage (get-unstage-function (buffer-point (window-buffer *peek-window*))))
+                         (point (funcall unstage)))
     ;; Update the buffer, to see that a staged file goes to the staged section.
     ;; This calls git again and refreshes everything.
     (uiop:symbol-call :lem/legit :legit-status)

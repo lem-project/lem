@@ -78,3 +78,23 @@
           for small-hash = (subseq line 0 hash-length)
           for message = (subseq line space-position)
           collect (concatenate 'string small-hash message))))
+
+(defun stage (file)
+  (uiop:run-program (list "git" "add" file)))
+
+(defun unstage (file)
+  "Unstage changes to a file."
+  (uiop:run-program (list "git"
+                          "reset"
+                          "HEAD"
+                          "--"
+                          file)
+                    :output :string))
+#|
+Interestingly, this returns the list of unstaged changes:
+"Unstaged changes after reset:
+M	src/ext/legit.lisp
+M	src/ext/peek-legit.lisp
+M	src/ext/porcelain.lisp
+""
+|#

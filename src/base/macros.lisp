@@ -1,18 +1,15 @@
 (in-package :lem-base)
 
 (defmacro save-excursion (&body body)
-  "現在の`point`と`mark`を保存し、`body`の評価後に復元し`body`の結果を返します。  
-`body`でエラーがあっても復元されます。"
+  "Saves the current `point` and `mark`, restores them after evaluation of `body` and returns the result of `body`."
   `(invoke-save-excursion (lambda () ,@body)))
 
 (defmacro with-point (bindings &body body)
-  "このマクロは`body`内で使う各`point`を`bindings`で作り、
-`body`を抜けると各`point`を削除して`body`の値を返します。  
-`body`でエラーがあっても各`point`は削除されます。  
-`bindings`の形式は(`var` `point` &optional `kind`)のリストです。  
-`kind`は省略可能でデフォルトで`:temporary`です。  
-```
-例
+  "This macro creates each `point` to be used in `body` with `bindings`.
+When you exit `body`, it removes each `point` and returns the value of `body`.
+If there is an error in `body`, each `point` is removed.
+The format of `bindings` is a list of (`var` `point` &optional `kind`).
+Example:
 \(with-point ((p3 expr1)
              (p1 expr2 :left-inserting)
              (p2 expr3 :right-inserting))

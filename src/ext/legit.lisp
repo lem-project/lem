@@ -6,6 +6,7 @@
 (in-package :lem/legit)
 
 (define-key lem/peek-legit::*peek-legit-keymap* "?" 'legit-help)
+(define-key lem/peek-legit::*peek-legit-keymap* "C-x ?" 'legit-help)
 (define-key *global-keymap* "C-x g" 'legit-status)
 ;; redraw everything:
 (define-key lem/peek-legit::*peek-legit-keymap* "g" 'legit-status)
@@ -78,7 +79,7 @@
     (declare (ignorable untracked))
     ;; (message "Modified files: ~S" modified)
 
-    ;; big try!
+    ;; big try! It works \o/
     (lem/peek-legit:with-collecting-sources (collector :read-only nil)
       ;; (lem/peek-legit::collector-insert "Keys: (n)ext, (p)revious lines,  (s)tage file.")
 
@@ -86,6 +87,7 @@
        (format nil "Branch: ~a" (porcelain::current-branch)))
       (lem/peek-legit::collector-insert "")
       
+      ;; Unstaged changes.
       (lem/peek-legit::collector-insert "Unstaged changes:")
       (loop :for file :in unstaged-files
             :do (lem/peek-legit:with-appending-source
@@ -98,6 +100,7 @@
       (lem/peek-legit::collector-insert "")
       (lem/peek-legit::collector-insert "Staged changes:")
 
+      ;; Stages files.
       (if staged-files
           (loop :for file :in staged-files
             :for i := 0 :then (incf i)
@@ -108,11 +111,14 @@
                   (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
           (lem/peek-legit::collector-insert "<none>"))
 
+      ;; Latest commits.
       (lem/peek-legit::collector-insert "")
       (lem/peek-legit::collector-insert "Latest commits:")
-      (loop for line in (porcelain::latest-commits)
-            do (lem/peek-legit::collector-insert line))
-      
+      (let ((latest-commits (porcelain::latest-commits)))
+        (if latest-commits
+            (loop for line in latest-commits 
+                  do (lem/peek-legit::collector-insert line))
+            (lem/peek-legit::collector-insert "<none>")))
 
       (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
                 'change-grep-buffer))))
@@ -120,9 +126,14 @@
 (define-command legit-help () ()
   "Show the important keybindings."
   (with-pop-up-typeout-window (s (make-buffer "*Legit help*") :erase t)
-    (format s "Lem's interface to git.")
-    (format s "~%~%")
-    (format s "Stage a file: press s")
-    (format s "~%~%")
-    (format s "Press q to quit.")
+    (format s "Lem's interface to git.~&")
+    (format s "You can view diffs of (un)staged changes, stage files and create a commit.~&")
+    (format s "~%")
+    (format s "Navigate: n and p, C-n and C-p.~&")
+    (format s "Change windows: C-x o or M-o~&~%")
+    (format s "Stage a file: press s~&")
+    (format s "Commit: press c~&")
+    (format s "Quit: Escape, q, C-x 0.~&")
+    (format s "~%")
+    (format s "Show this help: C-x ? or ?")
     ))

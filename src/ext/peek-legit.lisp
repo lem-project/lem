@@ -51,7 +51,6 @@
 (define-key *peek-legit-keymap* "C-p" 'peek-legit-previous)
 (define-key *peek-legit-keymap* "s" 'peek-legit-stage-file)
 (define-key *peek-legit-keymap* "c" 'peek-legit-commit)
-(define-key *peek-legit-keymap* "C-x ?" 'peek-legit-help)
 
 (defclass peek-window (floating-window) ())
 (defclass source-window (floating-window) ())
@@ -278,9 +277,6 @@
                       (delete-window *peek-window*)
                       (delete-window *source-window*)))
    0))
-
-(define-command peek-legit-help () ()
-  (message "Stage with s, redraw with g."))
 
 ;;;
 (defvar *highlight-overlays* '())

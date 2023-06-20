@@ -257,15 +257,15 @@
 (define-command peek-legit-stage-file () ()
   (alexandria:when-let* ((stage (get-stage-function (buffer-point (window-buffer *peek-window*))))
                          (point (funcall stage)))
-    ;; Update the buffer, an added file should go to the staged section.
+    ;; Update the buffer, to see that a staged file goes to the staged section.
     ;; This calls git again and refreshes everything.
-    ;; xxx: not refreshing
-    (uiop:symbol-call :legit :legit-status)
+    (uiop:symbol-call :lem/legit :legit-status)
     point))
 
 (define-command peek-legit-commit () ()
   (let ((message (prompt-for-string "Commit message:")))
     (porcelain::commit message)
+    (uiop:symbol-call :lem/legit :legit-status)
     (message "Commited.")))
 
 (define-command peek-legit-quit () ()

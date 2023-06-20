@@ -36,7 +36,8 @@
 ;; stage
 (defun stage (file)
   (log:info "Stage! " file)
-  (uiop:run-program (list "git" "add" file)))
+  (uiop:run-program (list "git" "add" file))
+  t)
 
 (defun make-stage-function (file)
   (lambda ()

@@ -334,15 +334,25 @@
     buffer))
 
 ;;;
-(defun make-class-tree (tree)
+(defun find-tree-view-window (buffer-name)
+  (alexandria:when-let* ((buffer (get-buffer buffer-name))
+                         (window (first (get-buffer-windows buffer))))
+    window))
+
+(defun make-class-tree (tree buffer-name)
   (make-instance 'node
                  :name (first tree)
                  :value (first tree)
                  :click-callback (lambda (node)
-                                   (lem-lisp-mode:lisp-inspect
-                                    (format nil "(cl:find-class '~A)" (node-value node))
-                                    :self-evaluation nil))
-                 :children (mapcar #'make-class-tree (rest tree))))
+                                   (alexandria:when-let (window (find-tree-view-window buffer-name))
+                                     (setf (current-window) window)
+                                     (lem-lisp-mode:lisp-inspect
+                                      (format nil "(cl:find-class '~A nil)" (node-value node))
+                                      :self-evaluation nil
+                                      :focus t)))
+                 :children (mapcar (lambda (node)
+                                     (make-class-tree node buffer-name))
+                                   (rest tree))))
 
 (defun sanitize-symbol (symbol-name current-package)
   (multiple-value-bind (symbol-name package-prefix)
@@ -358,4 +368,4 @@
                                         (lem-lisp-mode:current-package))))))
     (unless tree
       (editor-error "There is no class named ~:@(~A~)" class-name))
-    (display-buffer (draw-tree buffer-name (make-class-tree tree)))))
+    (display-buffer (draw-tree buffer-name (make-class-tree tree buffer-name)))))

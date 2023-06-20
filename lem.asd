@@ -15,6 +15,8 @@
                "dexador"
                "lem-base"
                "lem-encodings"
+	       #+sbcl
+	       sb-concurrency
 	       "lem-mailbox")
   :pathname "src"
   :serial t

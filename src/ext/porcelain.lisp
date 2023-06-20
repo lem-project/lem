@@ -47,3 +47,17 @@
                           "commit"
                           "-m"
                           message)))
+
+(defun list-branches ()
+  (str:lines
+   (uiop:run-program (list "git"
+                           "branch"
+                           "--list"
+                           "--no-color")
+                     :output :string)))
+
+(defun current-branch ()
+  (let ((branches (list-branches)))
+    (loop for branch in branches
+          if (str:starts-with-p "*" branch)
+            return (subseq branch 2))))

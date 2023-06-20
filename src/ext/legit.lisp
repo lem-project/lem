@@ -82,6 +82,10 @@
     (lem/peek-legit:with-collecting-sources (collector :read-only nil)
       ;; (lem/peek-legit::collector-insert "Keys: (n)ext, (p)revious lines,  (s)tage file.")
 
+      (lem/peek-legit::collector-insert 
+       (format nil "Branch: ~a" (porcelain::current-branch)))
+      (lem/peek-legit::collector-insert "")
+      
       (lem/peek-legit::collector-insert "Unstaged changes:")
       (loop :for file :in unstaged-files
             :do (lem/peek-legit:with-appending-source

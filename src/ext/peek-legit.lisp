@@ -46,6 +46,7 @@
 (define-key *peek-legit-keymap* 'previous-line 'peek-legit-previous)
 (define-key *peek-legit-keymap* "p" 'peek-legit-previous)
 (define-key *peek-legit-keymap* "s" 'peek-legit-stage-file)
+(define-key *peek-legit-keymap* "c" 'peek-legit-commit)
 
 (defclass peek-window (floating-window) ())
 (defclass source-window (floating-window) ())
@@ -258,6 +259,11 @@
     ;; xxx: not refreshing
     (uiop:symbol-call :legit :legit-status)
     point))
+
+(define-command peek-legit-commit () ()
+  (let ((message (prompt-for-string "Commit message:")))
+    (porcelain::commit message)
+    (message "Commited.")))
 
 (define-command peek-legit-quit () ()
   (setf (current-window) *parent-window*)

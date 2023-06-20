@@ -9,6 +9,12 @@
 ;; redraw everything:
 (define-key lem/peek-legit::*peek-legit-keymap* "g" 'legit-status)
 
+;;; Git commands
+;;; that operate on files.
+;;;
+;;; Global commands like commit need not be defined here.
+
+;; diff
 (defun move (file &key cached)
   (let ((buffer (lem-base:get-or-create-buffer "*legit-diff*"))
         (diff (porcelain::file-diff file :cached cached)))
@@ -25,6 +31,7 @@
   (lambda ()
     (move file :cached cached)))
 
+;; stage
 (defun stage (file)
   (log:info "Stage! " file)
   (uiop:run-program (list "git" "add" file)))

@@ -40,3 +40,10 @@
                            (list file))
               :output :string)))
     out))
+
+(defun commit (message)
+  (log:info "commiting: " message)
+  (uiop:run-program (list "git"
+                          "commit"
+                          "-m"
+                          message)))

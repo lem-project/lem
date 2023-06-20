@@ -15,10 +15,6 @@
   (:light :foreground "blue")
   (:dark :foreground "cyan"))
 
-(define-attribute position-attribute
-  (:light :foreground "dark red")
-  (:dark :foreground "red"))
-
 (define-attribute highlight
   (t :background "cyan"))
 
@@ -105,6 +101,8 @@
     (next-move-point point)))
 
 (defun next-move-point (point)
+  "Find the next point (line) with a marker.
+  This is how we distinguish between simple text, and meaningful text."
   (when (text-property-at point 'move-marker)
     (next-single-property-change point 'move-marker))
   (next-single-property-change point 'move-marker))

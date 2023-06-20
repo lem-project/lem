@@ -42,36 +42,6 @@
   (lambda ()
     (stage file)))
 
-(defun get-content-string (start)
-  (with-point ((start start)
-               (end start))
-    (line-start start)
-    (next-single-property-change start :content-start)
-    (character-offset start 1)
-    (line-end end)
-    (points-to-string start end)))
-
-(defun change-grep-buffer (start end old-len)
-  (declare (ignore end old-len))
-  (let ((string (get-content-string start))
-        (move (lem/peek-legit:get-move-function start)))
-    (with-point ((point (funcall move)))
-      (with-point ((start point)
-                   (end point))
-        (line-start start)
-        (line-end end)
-        (buffer-undo-boundary (point-buffer start))
-        (delete-between-points start end)
-        (insert-string start string)
-        (buffer-undo-boundary (point-buffer start)))))
-  (lem/peek-legit:show-matched-line))
-
-(defvar *last-query* "git grep -nH ")
-(defvar *last-directory* nil)
-
-;; (load "porcelain.lisp")
-(load "src/ext/porcelain.lisp")
-
 (define-command legit-status () ()
   "Show changes and untracked files."
   (multiple-value-bind (untracked unstaged-files staged-files)

@@ -55,10 +55,10 @@
 		  "<strong> OK </strong>")))
 
 (defmethod test-assertions ((test rove:test))
-(loop :for item :in (concatenate 'list
-				 (rove:test-passed-assertions test)
-				 (rove:test-failed-assertions test))
-      :collect (test-assertions item)))
+  (loop :for item :in (concatenate 'list
+				   (rove:passed-tests test)
+				   (rove:failed-tests test))
+	:collect (test-assertions item)))
 
 (defun construct-test-documentation (test-name test)
   (make-instance
@@ -67,10 +67,10 @@
    :items (cons (make-instance 'lem-documentation-mode/internal::table-header
 			       :values (list "Test" "Description" "Result"))
 		(alexandria:flatten
-		 (append (loop :for assertion :in (rove:test-passed-assertions test)
+		 (append (loop :for assertion :in (rove:passed-tests test)
 			       :collect (test-assertions assertion))
 
-			 (loop :for assertion  :in (rove:test-failed-assertions test)
+			 (loop :for assertion  :in (rove:failed-tests test)
 			       :collect (test-assertions assertion)))))))
 
 (defun construct-global-test-documentation ()
@@ -102,7 +102,7 @@
 			   "{{< progress title=\"Progress\" value=\"~a\" icon=\"gdoc_info_outline\" >}}"
 			   (truncate
 			    (* (/ (loop :for k :being :the :hash-value :of *lem-tests*
-					:when (rove:test-passed-p k)
+					:when (rove:passedp k)
 					:sum 1)
 				  (hash-table-count *lem-tests*))
 			       100))))

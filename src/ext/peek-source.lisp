@@ -44,6 +44,9 @@
 (define-key *peek-source-keymap* "Return" 'peek-source-select)
 (define-key *peek-source-keymap* 'next-line 'peek-source-next)
 (define-key *peek-source-keymap* 'previous-line 'peek-source-previous)
+(define-key *peek-source-keymap* "Escape" 'peek-source-quit)  ;; also C-x 0 by default.
+(define-key *peek-source-keymap* "C-c C-k" 'peek-source-quit)
+(define-key *peek-source-keymap* "M-q" 'peek-source-quit)
 
 (defclass peek-window (floating-window) ())
 (defclass source-window (floating-window) ())

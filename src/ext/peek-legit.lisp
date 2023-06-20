@@ -152,6 +152,7 @@
 (defun call-with-collecting-sources (function &key read-only)
   (let* ((*collector* (make-instance 'collector :buffer (make-peek-legit-buffer)))
          (point (buffer-point (collector-buffer *collector*))))
+    (declare (ignorable point))
     (funcall function *collector*)
     (when read-only
       (setf (buffer-read-only-p (collector-buffer *collector*)) t))
@@ -195,9 +196,8 @@
 
 (defun collector-insert (s)
   (let ((point (buffer-point (collector-buffer *collector*))))
-    (with-point ((start point))
-      (insert-string point s :read-only t)
-      (insert-string point (string #\newline) :read-only t))))
+    (insert-string point s :read-only t)
+    (insert-string point (string #\newline) :read-only t)))
 
 ;;;
 (define-attribute match-line-attribute

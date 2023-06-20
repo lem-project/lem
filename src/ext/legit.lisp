@@ -98,13 +98,21 @@
       (lem/peek-legit::collector-insert "")
       (lem/peek-legit::collector-insert "Staged changes:")
 
-      (loop :for file :in staged-files
+      (if staged-files
+          (loop :for file :in staged-files
             :for i := 0 :then (incf i)
             :do (lem/peek-legit::with-appending-staged-files
                     (point :move-function (make-move-function file :cached t)
                            :stage-function (make-stage-function file))
 
                   (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
+          (lem/peek-legit::collector-insert "<none>"))
+
+      (lem/peek-legit::collector-insert "")
+      (lem/peek-legit::collector-insert "Latest commits:")
+      (loop for line in (porcelain::latest-commits)
+            do (lem/peek-legit::collector-insert line))
+      
 
       (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
                 'change-grep-buffer))))

@@ -61,3 +61,20 @@
     (loop for branch in branches
           if (str:starts-with-p "*" branch)
             return (subseq branch 2))))
+
+(defun list-latest-commits (&optional (n 10))
+  (str:lines
+   (uiop:run-program (list "git"
+                           "log"
+                           "--pretty=oneline"
+                           "-n"
+                           (princ-to-string n))
+                     :output :string)))
+
+(defun latest-commits (&key (hash-length 8))
+  (let ((lines (list-latest-commits)))
+    (loop for line in lines
+          for space-position = (position #\space line)
+          for small-hash = (subseq line 0 hash-length)
+          for message = (subseq line space-position)
+          collect (concatenate 'string small-hash message))))

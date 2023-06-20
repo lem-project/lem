@@ -207,10 +207,11 @@
   `(call-with-appending-source (lambda (,point) ,@body)
                                ,move-function ,stage-function))
 
-(defun collector-insert (s)
+(defun collector-insert (s &optional (newline t))
   (let ((point (buffer-point (collector-buffer *collector*))))
     (insert-string point s :read-only t)
-    (insert-string point (string #\newline) :read-only t)))
+    (when newline
+      (insert-string point (string #\newline) :read-only t))))
 
 ;;;
 (define-attribute match-line-attribute

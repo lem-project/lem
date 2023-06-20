@@ -84,13 +84,14 @@
 
 (defun guess-function-name (function)
   (etypecase function
-    (function (micros::function-name function))
+    (function (format nil "~a"
+		      (micros::function-name function)))
     (symbol (symbol-name function))))
 
 (defun make-timer-instance (timer-class function name handle-function)
   (make-instance timer-class
                  :name (or name
-                           (guess-function-name function))
+			   (guess-function-name function))
                  :function (ensure-function function)
                  :handle-function (when handle-function
                                     (ensure-function handle-function))))

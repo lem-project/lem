@@ -2,9 +2,13 @@
   (:use :cl :lem))
 (in-package :lem-sdl2/tree)
 
+(defconstant +scroll-unit+ 30)
+
 (defclass tree-view-buffer (text-buffer)
   ((drawables :initarg :drawables
               :accessor tree-view-buffer-drawables)
+   (scroll-x :initform 0
+             :accessor tree-view-buffer-scroll-x)
    (scroll-y :initform 0
              :accessor tree-view-buffer-scroll-y)
    (margin-x :initarg :margin-x
@@ -22,17 +26,25 @@
   (+ (tree-view-buffer-scroll-y buffer)
      (lem-sdl2::display-height lem-sdl2::*display*)))
 
-(defmethod tree-view-scroll ((buffer tree-view-buffer) n)
+(defmethod tree-view-scroll-vertically ((buffer tree-view-buffer) window n)
   (incf (tree-view-buffer-scroll-y buffer) n)
-  (let* ((height (* (1- (window-height (current-window)))
+  (let* ((height (* (1- (window-height window))
                     (lem-if:get-char-height (implementation))))
          (last-y (max 0 (- (tree-view-buffer-height buffer) height))))
     (cond ((< last-y
               (tree-view-buffer-scroll-y buffer))
            (setf (tree-view-buffer-scroll-y buffer)
                  last-y))
-          ((< (tree-view-buffer-scroll-y (current-buffer)) 0)
-           (setf (tree-view-buffer-scroll-y (current-buffer)) 0)))))
+          ((< (tree-view-buffer-scroll-y buffer) 0)
+           (setf (tree-view-buffer-scroll-y buffer) 0)))))
+
+(defmethod tree-view-scroll-horizontally ((buffer tree-view-buffer) window n)
+  (incf (tree-view-buffer-scroll-x buffer) n)
+  (cond ((< (tree-view-buffer-scroll-x buffer) 0)
+         (setf (tree-view-buffer-scroll-x buffer) 0))))
+
+(defmethod tree-view-scroll-horizontally-first ((buffer tree-view-buffer))
+  (setf (tree-view-buffer-scroll-x buffer) 0))
 
 (defclass node ()
   ((name :initarg :name
@@ -171,7 +183,8 @@
             (sdl2:create-texture-from-surface
              (lem-sdl2:current-renderer)
              (text-node-surface text-node))))
-      (sdl2:with-rects ((dest-rect (text-node-x text-node)
+      (sdl2:with-rects ((dest-rect (- (text-node-x text-node)
+                                      (tree-view-buffer-scroll-x buffer))
                                    (- (text-node-y text-node)
                                       (tree-view-buffer-scroll-y buffer))
                                    (text-node-width text-node)
@@ -187,17 +200,20 @@
                  (line-edge-y1 line-edge)))
         (y1 (max (line-edge-y0 line-edge)
                  (line-edge-y1 line-edge)))
-        (start (tree-view-buffer-scroll-y buffer))
+        (start-x (tree-view-buffer-scroll-x buffer))
+        (start-y (tree-view-buffer-scroll-y buffer))
         (end (tree-view-display-end buffer)))
-    (unless (or (< y1 start) (< end y0))
+    (unless (or (< y1 start-y) (< end y0))
       (lem-sdl2::set-render-color lem-sdl2::*display* (line-edge-color line-edge))
       (sdl2:render-draw-line (lem-sdl2:current-renderer)
-                             (line-edge-x0 line-edge)
+                             (- (line-edge-x0 line-edge)
+                                start-x)
                              (- (line-edge-y0 line-edge)
-                                start)
-                             (line-edge-x1 line-edge)
+                                start-y)
+                             (- (line-edge-x1 line-edge)
+                                start-x)
                              (- (line-edge-y1 line-edge)
-                                start)))))
+                                start-y)))))
 
 (defun render-all (buffer)
   (loop :for drawable :in (tree-view-buffer-drawables buffer)
@@ -224,15 +240,58 @@
      :keymap *tree-view-keymap*)
   (setf (buffer-read-only-p (current-buffer)) t))
 
-;; TODO
 (define-key *tree-view-keymap* 'forward-char 'tree-view-scroll-right)
 (define-key *tree-view-keymap* 'backward-char 'tree-view-scroll-left)
+(define-key *tree-view-keymap* 'move-to-beginning-of-line 'tree-view-scroll-horizontally-start)
 (define-key *tree-view-keymap* 'next-line 'tree-view-scroll-down)
 (define-key *tree-view-keymap* 'previous-line 'tree-view-scroll-up)
 (define-key *tree-view-keymap* 'next-page 'tree-view-scroll-pagedown)
 (define-key *tree-view-keymap* 'previous-page 'tree-view-scroll-pageup)
-(define-key *tree-view-keymap* 'move-to-end-of-line 'tree-view-scroll-bottom)
-(define-key *tree-view-keymap* 'move-to-beginning-of-line 'tree-view-scroll-top)
+(define-key *tree-view-keymap* 'move-to-end-of-buffer 'tree-view-scroll-bottom)
+(define-key *tree-view-keymap* 'move-to-beginning-of-buffer 'tree-view-scroll-top)
+
+(define-command tree-view-scroll-right (n) ("p")
+  (tree-view-scroll-horizontally (current-buffer)
+                                 (current-window)
+                                 (* n +scroll-unit+)))
+
+(define-command tree-view-scroll-left (n) ("p")
+  (tree-view-scroll-horizontally (current-buffer)
+                                 (current-window)
+                                 (* (- n) +scroll-unit+)))
+
+(define-command tree-view-scroll-horizontally-start () ()
+  (tree-view-scroll-horizontally-first (current-buffer)))
+
+(define-command tree-view-scroll-down (n) ("p")
+  (tree-view-scroll-vertically (current-buffer)
+                               (current-window)
+                               (* n +scroll-unit+)))
+
+(define-command tree-view-scroll-up (n) ("p")
+  (tree-view-scroll-vertically (current-buffer)
+                               (current-window)
+                               (* (- n) +scroll-unit+)))
+
+(define-command tree-view-scroll-pagedown () ()
+  (tree-view-scroll-vertically (current-buffer)
+                               (current-window)
+                               (floor (lem-sdl2::display-height lem-sdl2::*display*) 1.1)))
+
+(define-command tree-view-scroll-pageup () ()
+  (tree-view-scroll-vertically (current-buffer)
+                               (current-window)
+                               (- (floor (lem-sdl2::display-height lem-sdl2::*display*) 1.1))))
+
+(define-command tree-view-scroll-bottom () ()
+  (tree-view-scroll-vertically (current-buffer)
+                               (current-window)
+                               (tree-view-buffer-height (current-buffer))))
+
+(define-command tree-view-scroll-top () ()
+  (tree-view-scroll-vertically (current-buffer)
+                               (current-window)
+                               (- (tree-view-buffer-height (current-buffer)))))
 
 (defmethod lem-sdl2:render (texture window (buffer tree-view-buffer))
   (sdl2:set-render-target (lem-sdl2:current-renderer) texture)
@@ -242,7 +301,9 @@
   (render-all buffer))
 
 (defmethod execute ((mode tree-view-mode) (command scroll-down) argument)
-  (tree-view-scroll (current-buffer) (* argument 30)))
+  (tree-view-scroll-vertically (current-buffer)
+                               (current-window)
+                               (* argument +scroll-unit+)))
 
 (defmethod lem-core::handle-mouse-button-down ((buffer tree-view-buffer) mouse-event &key window)
   (multiple-value-bind (x y)

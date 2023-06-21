@@ -99,3 +99,16 @@ M	src/ext/peek-legit.lisp
 M	src/ext/porcelain.lisp
 ""
 |#
+
+(defun apply-patch (patch)
+  "Apply a patch file.
+  This is used to stage hunks of files."
+  (uiop:run-program (list "git"
+                          "apply"
+                          "--ignore-space-change"  ;; in context only.
+                          "-C0"  ;; easier to apply patch without context.
+                          "--index"
+                          "--cached"
+                          patch)
+                    :output :string
+                    :error-output t))

@@ -120,7 +120,9 @@
       (change-state 'visual-block)))
 
 (defun visual-p ()
-  (eq 'visual (current-state)))
+  (or (visual-line-p)
+      (visual-block-p)
+      (visual-char-p)))
 
 (defun visual-char-p ()
   (eq 'visual-char (current-state)))

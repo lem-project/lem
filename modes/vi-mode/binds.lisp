@@ -42,6 +42,7 @@
 (define-key *command-keymap* "C-d" 'next-page)
 (define-key *command-keymap* "C-u" 'previous-page)
 (define-key *command-keymap* "^" 'vi-back-to-indentation)
+(define-key *command-keymap* "_" 'vi-back-to-indentation)
 (define-key *command-keymap* "=" 'vi-indent)
 (define-key *command-keymap* "{" 'backward-paragraph)
 (define-key *command-keymap* "}" 'forward-paragraph)

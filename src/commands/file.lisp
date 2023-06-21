@@ -17,7 +17,8 @@
            :sync-buffer-with-file-content
            :revert-buffer
            :revert-buffer-function
-           :change-directory))
+           :change-directory
+           :prompt-for-files-recursively))
 (in-package :lem-core/commands/file)
 
 (define-key *global-keymap* "C-x C-f" 'find-file)
@@ -204,7 +205,7 @@
        :test-function (lambda (name) (member name candidates :test #'string=))))))
 
 (define-command find-file-recursively (arg) ("p")
-  "Open a file, from the list of all files present under the buffer's direcotry, recursively."
+  "Open a file, from the list of all files present under the buffer's directory, recursively."
   ;; ARG is currently not used, use it when needed.
   (declare (ignorable arg))
   (let ((cwd (buffer-directory)))
@@ -343,16 +344,13 @@
                      t))
         (sync-buffer-with-file-content buffer)))))
 
-(define-condition ask-revert-buffer (before-executing-command)
-  ((last-time :initform nil
-              :allocation :class
-              :accessor ask-revert-buffer-last-time)))
+(defvar *last-revert-time* nil)
 
-(defmethod handle-signal ((condition ask-revert-buffer))
-  (when (or (null (ask-revert-buffer-last-time condition))
+(defun ask-revert-buffer ()
+  (when (or (null *last-revert-time*)
             (< (* 2 (/ internal-time-units-per-second 10))
-               (- (get-internal-real-time) (ask-revert-buffer-last-time condition))))
-    (setf (ask-revert-buffer-last-time condition) (get-internal-real-time))
+               (- (get-internal-real-time) *last-revert-time*)))
+    (setf *last-revert-time* (get-internal-real-time))
     (when (changed-disk-p (current-buffer))
       (revert-buffer t)
       #+(or)
@@ -363,6 +361,8 @@
             (t
              (setf (buffer-value (current-buffer) 'no-revert-buffer)
                    (file-write-date (buffer-filename))))))))
+
+(add-hook *pre-command-hook* 'ask-revert-buffer)
 
 (define-command change-directory (directory)
     ((prompt-for-directory "change directory: " :directory (buffer-directory)))

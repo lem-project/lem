@@ -3,7 +3,8 @@
         :lem/common/killring
         :lem-core
         :lem-core/commands/move)
-  (:export :get-self-insert-char
+  (:export :process-input-character
+           :get-self-insert-char
            :self-insert-before-hook
            :self-insert-after-hook
            :self-insert
@@ -17,6 +18,7 @@
            :kill-region
            :kill-region-to-clipboard
            :kill-line
+           :kill-whole-line
            :yank
            :yank-pop
            :yank-pop-next
@@ -45,6 +47,7 @@
 (define-key *global-keymap* "M-w" 'copy-region)
 (define-key *global-keymap* "C-w" 'kill-region)
 (define-key *global-keymap* "C-k" 'kill-line)
+(define-key *global-keymap* "C-Shift-Backspace" 'kill-whole-line)
 (define-key *global-keymap* "C-y" 'yank)
 (define-key *global-keymap* "M-y" 'yank-pop)
 (define-key *global-keymap* "C-x C-o" 'delete-blank-lines)
@@ -63,14 +66,17 @@
 
 (defclass self-insert-advice () ())
 
-(defmethod execute :before (mode (command self-insert-advice) argument)
-  (unless (get-self-insert-char)
-    (error 'undefined-key-error)))
+(defgeneric process-input-character (char n))
 
 (define-command (self-insert (:advice-classes self-insert-advice editable-advice))
     (&optional (n 1) (char (get-self-insert-char)))
     ("p" (get-self-insert-char))
-  "Insert the input character."
+  "Processes the key entered."
+  (process-input-character char n))
+
+(defmethod process-input-character (char n)
+  (unless (get-self-insert-char)
+    (error 'undefined-key-error))
   (run-hooks (variable-value 'self-insert-before-hook) char)
   (self-insert-aux char n)
   (run-hooks (variable-value 'self-insert-after-hook) char))
@@ -190,6 +196,14 @@
              (buffer-end (current-point)))
          (let ((end (current-point)))
            (kill-region start end)))))))
+
+(define-command kill-whole-line () ()
+  "Kill the entire line and the remaining whitespace"
+   (with-point ((start (current-point))
+                (end (current-point)))
+     (line-end end)
+     (kill-region start end))
+   (delete-previous-char))
 
 (defun yank-1 (arg)
   (let ((string (if (null arg)
@@ -373,19 +387,23 @@
 
 (define-command delete-trailing-whitespace (&optional (buffer (current-buffer))) ()
   "Removes all end-of-line and end-of-buffer whitespace from the current buffer."
-  (save-excursion
-    (setf (current-buffer) buffer)
-    (let ((p (current-point)))
-      (buffer-start p)
-      (loop
-        (line-end p)
-        (let ((n (skip-whitespace-backward p t)))
-          (unless (zerop n)
-            (delete-character p n)))
-        (unless (line-offset p 1)
-          (return))))
-    (move-to-end-of-buffer)
-    (delete-blank-lines)))
+  (with-point ((point (buffer-point buffer) :left-inserting))
+    (buffer-start point)
+    (loop
+      (line-end point)
+      (let ((n (skip-chars-backward point
+                                    (lambda (c)
+                                      (member c '(#\space #\tab))))))
+        (unless (zerop n)
+          (delete-character point n)))
+      (unless (line-offset point 1)
+        (return)))
+    (let ((n (skip-whitespace-backward (buffer-end point))))
+      (unless (zerop n)
+        (delete-character point n))
+      (buffer-end point)
+      (unless (start-line-p point)
+        (insert-character point #\newline)))))
 
 (defmethod execute :around (mode
                             (command delete-previous-char)

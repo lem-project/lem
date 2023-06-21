@@ -7,13 +7,13 @@
 (in-package :lem/directory-mode)
 
 (deftype sort-method ()
-  '(member :pathname :mtime))
+  '(member :pathname :mtime :size))
 
 (declaim (type (sort-method) *default-sort-method*))
 (defvar *default-sort-method* :pathname
   "Default method to sort files when opening a directory.
 
-  A keyword, one of :pathname (sort by file name) and :mtime (last modification time).")
+  A keyword, one of :pathname (sort by file name), :mtime (last modification time) and :size.")
 
 (define-attribute header-attribute
   (:light :foreground "dark green")
@@ -36,6 +36,7 @@
   (setf (variable-value 'highlight-line :buffer (current-buffer)) nil))
 
 (define-key *directory-mode-keymap* "q" 'quit-active-window)
+(define-key *directory-mode-keymap* "M-q" 'quit-active-window)
 (define-key *directory-mode-keymap* "g" 'directory-mode-update-buffer)
 (define-key *directory-mode-keymap* "^" 'directory-mode-up-directory)
 (define-key *directory-mode-keymap* "Return" 'directory-mode-find-file)
@@ -431,12 +432,18 @@
   (update-all))
 
 (define-command directory-mode-sort-files () ()
-  "Sort files: by name, then by last modification time.
+  "Sort files: by name, by last modification time, then by size.
 
   Each new directory buffer first uses the default sort method (`lem/directory-mode:*default-sort-method*')"
   (cond
+    ;; mtime -> size
     ((eql (buffer-value (current-buffer) :sort-method) :mtime)
-     (message "Sorting by file name")
+     (message "Sorting by size")
+     (setf (buffer-value (current-buffer) :sort-method) :size)
+     (update (current-buffer) :sort-method :size))
+    ;; size -> pathname
+    ((eql (buffer-value (current-buffer) :sort-method) :size)
+     (message "Sorting by name")
      (setf (buffer-value (current-buffer) :sort-method) :pathname)
      (update (current-buffer) :sort-method :pathname))
     (t
@@ -452,8 +459,6 @@
 
 (setf *find-directory-function* 'directory-buffer)
 
-
-(define-condition update-line (after-executing-command) ())
-(defmethod handle-signal ((condition after-executing-command))
+(defmethod execute :after ((mode directory-mode) command argument)
   (when (mode-active-p (current-buffer) 'directory-mode)
     (update-line (current-point))))

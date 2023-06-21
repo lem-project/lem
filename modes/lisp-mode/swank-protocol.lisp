@@ -20,8 +20,8 @@
            :send-message-string
            :send-message
            :message-waiting-p
-           :emacs-rex-string
-           :emacs-rex
+           :remote-eval-from-string
+           :remote-eval
            :finish-evaluated
            :abort-all
            :request-connection-info
@@ -185,7 +185,7 @@ Parses length information to determine how many characters to read."
 (defun setup (connection)
   (log:debug "Setup connection")
 
-  (emacs-rex connection `(micros:connection-info))
+  (remote-eval connection `(micros:connection-info))
   ;; Read the connection information message
   (let* ((info (read-return-message connection))
          (data (getf (getf info :return) :ok))
@@ -214,11 +214,11 @@ Parses length information to determine how many characters to read."
 
   ;; Start it up
   (log:debug "Initializing presentations")
-  (emacs-rex-string connection "(micros:init-presentations)")
+  (remote-eval-from-string connection "(micros:init-presentations)")
   (read-return-message connection)
 
   (log:debug "Creating the REPL")
-  (emacs-rex-string connection "(micros/contrib/repl:create-repl nil :coding-system \"utf-8-unix\")")
+  (remote-eval-from-string connection "(micros/contrib/repl:create-repl nil :coding-system \"utf-8-unix\")")
   ;; Wait for startup
   (read-return-message connection)
 
@@ -288,14 +288,23 @@ to check if input is available."
 
 ;;; Sending messages
 
-(defun emacs-rex-string (connection string &key continuation thread package)
-  (let ((msg (format nil "(:emacs-rex ~A ~S ~A ~A)"
-                     string
-                     (or package
-                         (connection-package connection))
-                     (or thread t)
-                     (incf (connection-request-count connection)))))
-    (log-message msg)
+(defun new-request-id (connection)
+  (incf (connection-request-count connection)))
+
+(defun remote-eval-from-string (connection
+                                string
+                                &key continuation
+                                     thread
+                                     package
+                                     request-id)
+  (let* ((request-id (or request-id (new-request-id connection)))
+         (msg (format nil
+                      "(:emacs-rex ~A ~S ~A ~A)"
+                      string
+                      (or package
+                          (connection-package connection))
+                      (or thread t)
+                      request-id)))
     (log:debug "Sending string to Swank"
                msg
                continuation
@@ -303,18 +312,18 @@ to check if input is available."
                package)
 
     (when continuation
-      (push (cons (connection-request-count connection)
-                  continuation)
+      (push (cons request-id continuation)
             (connection-continuations connection)))
     (send-message-string connection msg)))
 
-(defun emacs-rex (connection form &key continuation thread package)
-  (emacs-rex-string connection
-                    (with-swank-syntax ()
-                      (prin1-to-string form))
-                    :continuation continuation
-                    :thread thread
-                    :package package))
+(defun remote-eval (connection form &key continuation thread package request-id)
+  (remote-eval-from-string connection
+                           (with-swank-syntax ()
+                             (prin1-to-string form))
+                           :continuation continuation
+                           :thread thread
+                           :package package
+                           :request-id request-id))
 
 (defun finish-evaluated (connection value id)
   (let ((elt (assoc id (connection-continuations connection))))
@@ -330,27 +339,29 @@ to check if input is available."
 
 (defun request-listener-eval (connection string &optional continuation window-width)
   "Request that Swank evaluate a string of code in the REPL."
-  (emacs-rex-string connection
-                    (if window-width
-                        (format nil "(micros/contrib/repl:listener-eval ~S :window-width ~A)" string window-width)
-                        (format nil "(micros/contrib/repl:listener-eval ~S)" string))
-                    :continuation continuation
-                    :thread ":repl-thread"))
+  (remote-eval-from-string connection
+                           (if window-width
+                               (format nil "(micros/contrib/repl:listener-eval ~S :window-width ~A)" string window-width)
+                               (format nil "(micros/contrib/repl:listener-eval ~S)" string))
+                           :continuation continuation
+                           :thread ":repl-thread"))
 
 ;;; Reading/parsing messages
 
 (defun read-atom (in)
   (let ((token
-         (coerce (loop :for c := (peek-char nil in nil)
-                       :until (or (null c) (member c '(#\( #\) #\space #\newline #\tab)))
-                       :collect c
-                       :do (read-char in))
-                 'string)))
-    (handler-case (read-from-string token)
+          (coerce (loop :for c := (peek-char nil in nil)
+                        :until (or (null c) (member c '(#\( #\) #\space #\newline #\tab)))
+                        :collect c
+                        :do (read-char in))
+                  'string)))
+    (handler-case (values (read-from-string token) nil)
       (error ()
-        (let ((name (ppcre:scan-to-strings "::?.*" token)))
-          (intern (string-upcase (string-left-trim ":" name))
-                  :keyword))))))
+        (ppcre:register-groups-bind (prefix name) ("(.*?)::?(.*)" token)
+          (values (intern (string-upcase (string-left-trim ":" name))
+                          :keyword)
+                  (when prefix
+                    (read-from-string prefix))))))))
 
 (defun read-list (in)
   (read-char in)

@@ -626,10 +626,12 @@
                 ((eql button sdl2-ffi:+sdl-button-middle+) :button-2)
                 ((eql button 4) :button-4))))
     (when button
-      (let ((x (floor x (char-width)))
-            (y (floor y (char-height))))
+      (let ((pixel-x x)
+            (pixel-y y)
+            (char-x (floor x (char-width)))
+            (char-y (floor y (char-height))))
         (lem:send-event (lambda ()
-                          (lem:receive-mouse-button-down x y button clicks)))))))
+                          (lem:receive-mouse-button-down char-x char-y pixel-x pixel-y button clicks)))))))
 
 (defun on-mouse-button-up (button x y)
   (show-cursor)
@@ -638,29 +640,35 @@
                 ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
                 ((eql button sdl2-ffi:+sdl-button-middle+) :button-2)
                 ((eql button 4) :button-4)))
-        (x (floor x (char-width)))
-        (y (floor y (char-height))))
+        (pixel-x x)
+        (pixel-y y)
+        (char-x (floor x (char-width)))
+        (char-y (floor y (char-height))))
     (lem:send-event (lambda ()
-                      (lem:receive-mouse-button-up x y button)))))
+                      (lem:receive-mouse-button-up char-x char-y pixel-x pixel-y button)))))
 
 (defun on-mouse-motion (x y state)
   (show-cursor)
   (let ((button (if (= sdl2-ffi:+sdl-button-lmask+ (logand state sdl2-ffi:+sdl-button-lmask+))
                     :button-1
                     nil)))
-    (let ((x (floor x (char-width)))
-          (y (floor y (char-height))))
+    (let ((pixel-x x)
+          (pixel-y y)
+          (char-x (floor x (char-width)))
+          (char-y (floor y (char-height))))
       (lem:send-event (lambda ()
-                        (lem:receive-mouse-motion x y button))))))
+                        (lem:receive-mouse-motion char-x char-y pixel-x pixel-y button))))))
 
 (defun on-mouse-wheel (wheel-x wheel-y which direction)
   (declare (ignore which direction))
   (show-cursor)
   (multiple-value-bind (x y) (sdl2:mouse-state)
-    (let ((x (floor x (char-width)))
-          (y (floor y (char-height))))
+    (let ((pixel-x x)
+          (pixel-y y)
+          (char-x (floor x (char-width)))
+          (char-y (floor y (char-height))))
       (lem:send-event (lambda ()
-                        (lem:receive-mouse-wheel x y wheel-x wheel-y)
+                        (lem:receive-mouse-wheel char-x char-y pixel-x pixel-y wheel-x wheel-y)
                         (when (= 0 (lem:event-queue-length))
                           (lem:redraw-display)))))))
 
@@ -762,24 +770,32 @@
       (sdl2-ttf:quit)
       (sdl2-image:quit))))
 
+(defun sbcl-on-darwin-p ()
+  (or #+(and sbcl darwin)
+      t
+      nil))
+
 (defmethod lem-if:invoke ((implementation sdl2) function)
-  (let ((thread (bt:make-thread
-                 (lambda ()
-                   (create-display (lambda ()
-                                     (let ((editor-thread
-                                             (funcall function
-                                                      ;; initialize
-                                                      (lambda ())
-                                                      ;; finalize
-                                                      (lambda (report)
-                                                        (when report
-                                                          (do-log report))
-                                                        (sdl2:push-quit-event)))))
-                                       (declare (ignore editor-thread))
-                                       nil)))))))
-    (bt:join-thread thread)
-    #+darwin
-    (cffi:foreign-funcall "_exit")))
+  (flet ((thunk ()
+           (let ((editor-thread
+                   (funcall function
+                            ;; initialize
+                            (lambda ())
+                            ;; finalize
+                            (lambda (report)
+                              (when report
+                                (do-log report))
+                              (sdl2:push-quit-event)))))
+             (declare (ignore editor-thread))
+             nil)))
+    (if (sbcl-on-darwin-p)
+        (sdl2:make-this-thread-main
+         (lambda ()
+           (create-display #'thunk)
+           (cffi:foreign-funcall "_exit")))
+        (let ((thread (bt:make-thread (lambda ()
+                                        (create-display #'thunk)))))
+          (bt:join-thread thread)))))
 
 (defmethod lem-if:get-background-color ((implementation sdl2))
   (with-debug ("lem-if:get-background-color")
@@ -955,6 +971,12 @@
         (declare (ignore bitmask))
         (values (floor x (display-char-width *display*))
                 (floor y (display-char-height *display*))))))
+
+(defmethod lem-if:get-char-width ((implementation sdl2))
+  (char-width))
+
+(defmethod lem-if:get-char-height ((implementation sdl2))
+  (char-height))
 
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

@@ -7,7 +7,6 @@ roswell/lem-ncurses
 *~
 
 contrib/Makefile.am
-Makefile
 Makefile.in
 compile
 configure
@@ -30,3 +29,4 @@ GIT_IGNORE.*
 lem
 lem-ncurses
 
+build/*

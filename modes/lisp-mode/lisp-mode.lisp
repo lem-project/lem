@@ -53,10 +53,8 @@
 
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)
 (define-key *lisp-mode-keymap* "C-c M-p" 'lisp-set-package)
-(define-key *global-keymap* "M-:" 'self-lisp-eval-string)
+(define-key *global-keymap* "M-:" 'lisp-eval-string)
 (define-key *lisp-mode-keymap* "C-c M-:" 'lisp-eval-string)
-(define-key *global-keymap* "C-x C-e" 'self-lisp-eval-last-expression)
-(define-key *lisp-mode-keymap* "C-c C-e" 'lisp-eval-last-expression)
 (define-key *lisp-mode-keymap* "C-M-x" 'lisp-eval-defun)
 (define-key *lisp-mode-keymap* "C-c C-r" 'lisp-eval-region)
 (define-key *lisp-mode-keymap* "C-c C-n" 'lisp-next-compilation-notes)
@@ -202,15 +200,26 @@
 (defun calc-indent (point)
   (lem-lisp-syntax:calc-indent point))
 
-(defun lisp-rex (form &key
-                      continuation
-                      (thread (current-swank-thread))
-                      (package (current-package)))
-  (emacs-rex (current-connection)
-             form
-             :continuation continuation
-             :thread thread
-             :package package))
+(defun call-with-remote-eval (form continuation
+                              &key (connection (current-connection))
+                                   (thread (current-swank-thread))
+                                   (package (current-package))
+                                   request-id)
+  (remote-eval connection
+               form
+               :continuation continuation
+               :thread thread
+               :package package
+               :request-id request-id))
+
+(defmacro with-remote-eval ((form &rest args
+                                  &key connection
+                                       thread
+                                       package
+                                       request-id)
+                            continuation)
+  (declare (ignore connection thread package request-id))
+  `(call-with-remote-eval ,form ,continuation ,@args))
 
 (defun lisp-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym))
@@ -234,53 +243,41 @@
           (keyboard-quit))))))
 
 (defun lisp-eval-from-string (string &optional (package (current-package)))
-  (lisp-eval-internal 'emacs-rex-string string package))
+  (lisp-eval-internal 'remote-eval-from-string string package))
 
 (defun lisp-eval (sexp &optional (package (current-package)))
-  (lisp-eval-internal 'emacs-rex sexp package))
+  (lisp-eval-internal 'remote-eval sexp package))
 
 (defun lisp-eval-async (form &optional cont (package (current-package)))
   (let ((buffer (current-buffer)))
-    (lisp-rex form
-              :continuation (lambda (value)
-                              (alexandria:destructuring-ecase value
-                                ((:ok result)
-                                 (when cont
-                                   (let ((prev (current-buffer)))
-                                     (setf (current-buffer) buffer)
-                                     (funcall cont result)
-                                     (unless (eq (current-buffer)
-                                                 (window-buffer (current-window)))
-                                       (setf (current-buffer) prev)))))
-                                ((:abort condition)
-                                 (display-message "Evaluation aborted on ~A." condition))))
-              :thread (current-swank-thread)
-              :package package)))
+    (with-remote-eval (form :package package)
+      (lambda (value)
+        (alexandria:destructuring-ecase value
+          ((:ok result)
+           (when cont
+             (let ((prev (current-buffer)))
+               (setf (current-buffer) buffer)
+               (funcall cont result)
+               (unless (eq (current-buffer)
+                           (window-buffer (current-window)))
+                 (setf (current-buffer) prev)))))
+          ((:abort condition)
+           (display-message "Evaluation aborted on ~A." condition)))))))
 
 (defun eval-with-transcript (form &key (package (current-package)))
-  (lisp-rex form
-            :continuation (lambda (value)
-                            (alexandria:destructuring-ecase value
-                              ((:ok x)
-                               (display-message "~A" x))
-                              ((:abort condition)
-                               (display-message "Evaluation aborted on ~A." condition))))
-            :package package))
+  (with-remote-eval (form :package package)
+    (lambda (value)
+      (alexandria:destructuring-ecase value
+        ((:ok x)
+         (display-message "~A" x))
+        ((:abort condition)
+         (display-message "Evaluation aborted on ~A." condition))))))
 
 (defun re-eval-defvar (string)
   (eval-with-transcript `(micros:re-evaluate-defvar ,string)))
 
 (defun interactive-eval (string &key (package (current-package)))
   (eval-with-transcript `(micros:interactive-eval ,string) :package package))
-
-(defun eval-print (string &optional print-right-margin)
-  (let ((value (lisp-eval (if print-right-margin
-                              `(let ((*print-right-margin* ,print-right-margin))
-                                 (micros:eval-and-grab-output ,string))
-                              `(micros:eval-and-grab-output ,string)))))
-    (insert-string (current-point) (first value))
-    (insert-character (current-point) #\newline)
-    (insert-string (current-point) (second value))))
 
 (defun new-package (name prompt-string)
   (setf (connection-package (current-connection)) name)
@@ -391,17 +388,6 @@
   (check-connection)
   (interactive-eval string))
 
-(define-command lisp-eval-last-expression (p) ("P")
-  (check-connection)
-  (with-point ((start (current-point))
-               (end (current-point)))
-    (form-offset start -1)
-    (run-hooks (variable-value 'before-eval-functions) start end)
-    (let ((string (points-to-string start end)))
-      (if p
-          (eval-print string (- (window-width (current-window)) 2))
-          (interactive-eval string)))))
-
 (defun self-current-package ()
   (or (find (or *current-package*
                 (buffer-package (current-buffer))
@@ -410,47 +396,6 @@
             :test 'equalp
             :key 'package-name)
       *package*))
-
-(defmacro with-eval ((&key (values (gensym) values-p)
-                           (stream (error ":stream missing")))
-                     &body body)
-  (alexandria:with-gensyms (io)
-    `(with-open-stream (,io ,stream)
-       (let* ((*package* (self-current-package))
-              (*terminal-io* ,io)
-              (*standard-output* ,io)
-              (*standard-input* ,io)
-              (*error-output* ,io)
-              (*query-io* ,io)
-              (*debug-io* ,io)
-              (*trace-output* ,io)
-              (*terminal-io* ,io)
-              (,values (multiple-value-list (eval (read-from-string string)))))
-         ,@(if (not values-p) `((declare (ignorable ,values))))
-         ,@body))))
-
-(defun self-interactive-eval (string)
-  (with-eval (:values values :stream (make-editor-io-stream))
-    (display-message "=> ~{~S~^, ~}" values)))
-
-(defun self-eval-print (string &optional print-right-margin)
-  (declare (ignore print-right-margin))
-  (with-eval (:values values :stream (make-buffer-output-stream (current-point)))
-    (insert-string (current-point) (format nil "~{~S~^~%~}" values))))
-
-(define-command self-lisp-eval-string (string)
-    ((prompt-for-sexp "Lisp Eval: "))
-  (self-interactive-eval string))
-
-(define-command self-lisp-eval-last-expression (p) ("P")
-  (with-point ((start (current-point))
-               (end (current-point)))
-    (form-offset start -1)
-    (run-hooks (variable-value 'before-eval-functions) start end)
-    (let ((string (points-to-string start end)))
-      (if p
-          (self-eval-print string (- (window-width (current-window)) 2))
-          (self-interactive-eval string)))))
 
 (define-command lisp-eval-defun () ()
   "Evaluate top-level form around point and instrument."
@@ -791,24 +736,25 @@
   (check-connection)
   (let ((string (symbol-string-at-point point)))
     (when string
-      (emacs-rex-string (current-connection)
-                        (lem-lisp-mode/completion:make-completions-form-string string (current-package))
-                        :continuation (lambda (result)
-                                        (alexandria:destructuring-ecase result
-                                          ((:ok completions)
-                                           (with-point ((start (current-point))
-                                                        (end (current-point)))
-                                             (skip-symbol-backward start)
-                                             (skip-symbol-forward end)
-                                             (funcall then
-                                                      (lem-lisp-mode/completion:make-completion-items
-                                                       completions
-                                                       start
-                                                       end))))
-                                          ((:abort condition)
-                                           (editor-error "abort ~A" condition))))
-                        :thread (current-swank-thread)
-                        :package (current-package)))))
+      (remote-eval-from-string
+       (current-connection)
+       (lem-lisp-mode/completion:make-completions-form-string string (current-package))
+       :continuation (lambda (result)
+                       (alexandria:destructuring-ecase result
+                         ((:ok completions)
+                          (with-point ((start (current-point))
+                                       (end (current-point)))
+                            (skip-symbol-backward start)
+                            (skip-symbol-forward end)
+                            (funcall then
+                                     (lem-lisp-mode/completion:make-completion-items
+                                      completions
+                                      start
+                                      end))))
+                         ((:abort condition)
+                          (editor-error "abort ~A" condition))))
+       :thread (current-swank-thread)
+       :package (current-package)))))
 
 (defun describe-symbol (symbol-name)
   (when symbol-name

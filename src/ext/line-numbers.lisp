@@ -1,7 +1,8 @@
 (defpackage :lem/line-numbers
   (:use :cl :lem)
   (:export :line-numbers-attribute
-           :line-numbers)
+           :line-numbers
+           :toggle-line-numbers)
   #+sbcl
   (:lock t))
 (in-package :lem/line-numbers)
@@ -19,9 +20,7 @@
         (line-numbers-on)
         (line-numbers-off))))
 
-(define-condition update (after-executing-command) ())
-(defmethod handle-signal ((condition update))
-  (update))
+(add-hook *post-command-hook* 'update)
 
 (defun update (&optional (window (current-window)))
   (let ((buffer (window-buffer window)))

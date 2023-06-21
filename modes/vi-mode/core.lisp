@@ -205,12 +205,10 @@
 (defun prompt-deactivate-hook () (change-state 'normal))
 
 (defun vi-post-command-hook ()
- (post-command-hook (ensure-state (current-state))))
-
-(define-condition post-command-hook (after-executing-command) ())
-(defmethod handle-signal ((condition post-command-hook))
   (when (mode-active-p (current-buffer) 'vi-mode)
-    (vi-post-command-hook)))
+    (post-command-hook (ensure-state (current-state)))))
+
+(add-hook *post-command-hook* 'vi-post-command-hook)
 
 (add-hook *enable-hook*
           (lambda ()

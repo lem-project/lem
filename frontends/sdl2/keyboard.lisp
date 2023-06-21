@@ -99,8 +99,7 @@
                     (mod-p mod sdl2-ffi:+kmod-rshift+)))
          (ctrl (or (mod-p mod sdl2-ffi:+kmod-lctrl+)
                    (mod-p mod sdl2-ffi:+kmod-rctrl+)))
-         (meta (or (mod-p mod sdl2-ffi:+kmod-lalt+)
-                   (mod-p mod sdl2-ffi:+kmod-ralt+)))
+         (meta (mod-p mod sdl2-ffi:+kmod-lalt+))
          (super (or (mod-p mod sdl2-ffi:+kmod-lgui+)
                     (mod-p mod sdl2-ffi:+kmod-rgui+))))
     (make-modifier :shift shift :ctrl ctrl :meta meta :super super)))
@@ -124,8 +123,7 @@
 
 ;; linux
 (defun modifier-is-accept-text-input-p (modifier)
-  (or (not (modifier-ctrl modifier))
-      (modifier-shift modifier)))
+  (not (modifier-ctrl modifier)))
 
 (defmethod handle-text-input ((platform lem-sdl2/platform:linux) text)
   (when (modifier-is-accept-text-input-p *modifier*)
@@ -148,11 +146,11 @@
                  (or (not text-input-p)
                      (not (modifier-is-accept-text-input-p *modifier*))
                      (< 256 code)))
-        (let ((key (make-key :shift (modifier-shift modifier)
-                             :ctrl (modifier-ctrl modifier)
-                             :meta (modifier-meta modifier)
-                             :super (modifier-super modifier)
-                             :sym sym)))
+        (let ((key (make-key-with-shift-careful :shift (modifier-shift modifier)
+                                                :ctrl (modifier-ctrl modifier)
+                                                :meta (modifier-meta modifier)
+                                                :super (modifier-super modifier)
+                                                :sym sym)))
           (send-key-event key))))))
 
 (defmethod handle-key-up ((platform lem-sdl2/platform:linux) key-event)

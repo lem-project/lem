@@ -7,6 +7,7 @@
                     (setf (variable-value 'line-wrap :buffer (current-buffer)) nil))))
 
 (define-key *typeout-mode-keymap* "q" 'dismiss-typeout-window)
+(define-key *typeout-mode-keymap* "M-q" 'dismiss-typeout-window)
 (define-key *typeout-mode-keymap* "Space" 'next-page-or-dismiss-typeout-window)
 (define-key *typeout-mode-keymap* "Backspace" 'previous-page)
 (define-key *typeout-mode-keymap* 'delete-active-window 'dismiss-typeout-window)
@@ -117,8 +118,8 @@
     (unless (line-offset (current-point) (window-height (current-window)))
       (dismiss-typeout-window))))
 
-(define-condition dismiss-typeout-window-if-getout (after-executing-command) ())
-(defmethod handle-signal ((condition dismiss-typeout-window-if-getout))
+(add-hook *post-command-hook* 'dismiss-typeout-window-if-getout)
+(defun dismiss-typeout-window-if-getout ()
   (when (and (not (mode-active-p (window-buffer (current-window)) 'typeout-mode))
              *typeout-window*)
     (dismiss-typeout-window)))

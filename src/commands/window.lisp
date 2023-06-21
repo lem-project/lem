@@ -41,6 +41,7 @@
 (define-key *global-keymap* "M-o" 'other-window)
 (define-key *global-keymap* "C-x 1" 'delete-other-windows)
 (define-key *global-keymap* "C-x 0" 'delete-active-window)
+(define-key *global-keymap* "M-q" 'delete-active-window)
 (define-key *global-keymap* "C-x ^" 'grow-window)
 (define-key *global-keymap* "C-x C-z" 'shrink-window)
 (define-key *global-keymap* "C-x }" 'grow-window-horizontally)
@@ -52,6 +53,7 @@
 (define-key *global-keymap* "C-x 4 f" 'find-file-other-window)
 (define-key *global-keymap* "C-x 4 r" 'read-file-other-window)
 (define-key *global-keymap* "C-x 4 b" 'select-buffer-other-window)
+(define-key *global-keymap* "C-x 4 p f" 'project-find-file-other-window)
 
 (defvar *balance-after-split-window* t)
 
@@ -245,9 +247,7 @@
   (shrink-window-width (current-window) n))
 
 (defmethod lem-core:scroll (window n)
-  (if (plusp n)
-      (scroll-down n window)
-      (scroll-up (- n) window)))
+  (scroll-down n window))
 
 (define-command scroll-down (n &optional (window (current-window))) ("p")
   "Scroll down."
@@ -276,6 +276,8 @@
 (define-other-window-command lem-core/commands/file:find-file "FFind File Other Window: " "Open a file in another window. Split the screen vertically if needed.")
 (define-other-window-command lem-core/commands/file:read-file "FREAD File Other Window: " "Read a file in another window.")
 (define-other-window-command lem-core/commands/window:select-buffer "BUse Buffer Other Window: " "Select a buffer in another window.")
+(define-other-window-command lem-core/commands/project:project-find-file "pFind File in Project in Other Window: " "Open a file from the current project in another window. Split the screen vertically if needed.")
+(define-other-window-command lem-core/commands/project:project-root-directory "pOpen Project Directory in Other Window: " "Open this project directory in another window. Split the screen vertically if needed.")
 
 (define-command compare-windows (ignore-whitespace) ("p")
   (setf ignore-whitespace (/= ignore-whitespace 1))

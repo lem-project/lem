@@ -9,17 +9,15 @@
   (delete-popup-message *hover-window*)
   (setf *hover-window* nil))
 
-(define-condition clear-hover-window (before-executing-command)
-  ((command :initarg :command
-            :reader clear-hover-window-command)))
-
-(defmethod handle-signal ((condition clear-hover-window))
+(defun clear-hover-window-if-unnecessary ()
   (when (and (not (eq (current-window) *hover-window*))
-             (or (typep (clear-hover-window-command condition) 'movable-advice)
-                 (typep (clear-hover-window-command condition) 'editable-advice)
-                 (typep (clear-hover-window-command condition) 'keyboard-quit)
-                 (typep (clear-hover-window-command condition) 'escape)))
+             (or (typep (this-command) 'movable-advice)
+                 (typep (this-command) 'editable-advice)
+                 (typep (this-command) 'keyboard-quit)
+                 (typep (this-command) 'escape)))
     (clear-hover-window)))
+
+(add-hook *pre-command-hook* 'clear-hover-window-if-unnecessary)
 
 (defun show-hover (buffer-or-string)
   (when *hover-window*

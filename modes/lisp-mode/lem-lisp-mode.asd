@@ -31,12 +31,14 @@
                (:file "inspector")
                (:file "apropos-mode")
                (:file "autodoc")
+               (:file "eval")
                (:file "paren-coloring")
                (:file "misc-commands")
                (:file "package-inferred-system")
                (:file "organize-imports")
                (:file "connection-list")
                (:file "self-insert-hook")
+               (:file "class-browser")
                (:file "package")))
 
 (defsystem "lem-lisp-mode/v2"

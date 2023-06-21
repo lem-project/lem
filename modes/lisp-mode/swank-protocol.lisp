@@ -350,16 +350,18 @@ to check if input is available."
 
 (defun read-atom (in)
   (let ((token
-         (coerce (loop :for c := (peek-char nil in nil)
-                       :until (or (null c) (member c '(#\( #\) #\space #\newline #\tab)))
-                       :collect c
-                       :do (read-char in))
-                 'string)))
-    (handler-case (read-from-string token)
+          (coerce (loop :for c := (peek-char nil in nil)
+                        :until (or (null c) (member c '(#\( #\) #\space #\newline #\tab)))
+                        :collect c
+                        :do (read-char in))
+                  'string)))
+    (handler-case (values (read-from-string token) nil)
       (error ()
-        (let ((name (ppcre:scan-to-strings "::?.*" token)))
-          (intern (string-upcase (string-left-trim ":" name))
-                  :keyword))))))
+        (ppcre:register-groups-bind (prefix name) ("(.*?)::?(.*)" token)
+          (values (intern (string-upcase (string-left-trim ":" name))
+                          :keyword)
+                  (when prefix
+                    (read-from-string prefix))))))))
 
 (defun read-list (in)
   (read-char in)

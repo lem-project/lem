@@ -123,27 +123,6 @@ https://github.com/fukamachi/.lem
 
 * [Pareto](https://github.com/40ants/lem-pareto) - A mode, complement to the Paredit. Makes Lisp code editing even more efficient!
 
-## SDL2 version
-A GUI version using SDL2 is also available.
-
-![Install](./frontends/sdl2/README.md)
-
-## Electron version (Experiment)
-Electron version is in the experimental stage.
-
-If you try, please follow below steps.
-
-```
-$ node -v  # check if your nodejs is 8.9.3LTS+.
-v8.9.3
-$ npm -v
-5.5.1
-$ npm install -g cxxxr/lem   # install lem-electron
-$ lem-electron               # Electron version will start
-```
-
-![Electron](screenshots/electron.png)　　
-
 ## How to develop lisp
 See https://lem-project.github.io/lem-page/usage/common_lisp/
 

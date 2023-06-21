@@ -54,10 +54,7 @@
   (if (slot-boundp link 'location)
       (slot-value link 'location)
       (setf (link-location link)
-	    #+sbcl
-            (command-definition-location (link-command link))
-	    #-sbcl
-	    nil)))
+            (command-definition-location (link-command link)))))
 
 (defmethod link-url ((link link))
   (let ((location (link-location link)))
@@ -79,6 +76,12 @@
     (make-location :file file
                    :position (position-at-point point)
                    :line-number (line-number-at-point point))))
+
+#-sbcl
+(defun command-definition-location (command)
+  (make-location :file (buffer-filename)
+		 :position 0
+		 :line-number 0))
 
 (defun command-bindings (command)
   (collect-command-keybindings (command-name command) *global-keymap*))

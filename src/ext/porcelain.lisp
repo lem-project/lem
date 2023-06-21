@@ -84,6 +84,7 @@
 
 (defun unstage (file)
   "Unstage changes to a file."
+  ;; test with me: this hunk was added with Lem!
   (uiop:run-program (list "git"
                           "reset"
                           "HEAD"

@@ -22,6 +22,7 @@
   (setf (variable-value 'enable-syntax-highlight) t))
 
 (define-key *legit-diff-mode-keymap* "s" 'legit-stage-hunk)
+(define-key *legit-diff-mode-keymap* "u" 'legit-unstage-hunk)
 (define-key *legit-diff-mode-keymap* "C-n" 'next-line)
 (define-key *legit-diff-mode-keymap* "C-p" 'previous-line)
 
@@ -76,7 +77,8 @@
 ;;; that operate on diff hunks.
 ;;;
 
-(define-command legit-stage-hunk () ()
+
+(defun %call-legit-hunk-function (fn)
   "Stage the diff hunk at point.
   To find a hunk, the point has to be inside one,
   i.e, after a line that starts with \"@@\"."
@@ -106,7 +108,7 @@
                 (let ((point (search-backward-regexp start "^\@\@")))
                   (unless point
                     (message "No hunk at point.")
-                    (return-from legit-stage-hunk))
+                    (return-from %call-legit-hunk-function))
                   point)))
          (setf end (progn
                      (move-point
@@ -144,8 +146,17 @@
            (write-sequence patch f)
            (finish-output f))
 
-         (porcelain::apply-patch ".lem-hunk.patch")
-         (message "Hunk staged."))))))
+         (funcall fn))))))
+
+(define-command legit-stage-hunk () ()
+  (%call-legit-hunk-function (lambda ()
+                               (porcelain::apply-patch ".lem-hunk.patch")
+                               (message "Hunk staged."))))
+
+(define-command legit-unstage-hunk () ()
+  (%call-legit-hunk-function (lambda ()
+                               (porcelain::apply-patch ".lem-hunk.patch" :reverse t)
+                               (message "OK (?)"))))
 
 
 (define-command legit-status () ()

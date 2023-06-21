@@ -100,15 +100,19 @@ M	src/ext/porcelain.lisp
 ""
 |#
 
-(defun apply-patch (patch)
+(defun apply-patch (patch &key reverse)
   "Apply a patch file.
   This is used to stage hunks of files."
-  (uiop:run-program (list "git"
-                          "apply"
-                          "--ignore-space-change"  ;; in context only.
-                          "-C0"  ;; easier to apply patch without context.
-                          "--index"
-                          "--cached"
-                          patch)
-                    :output :string
-                    :error-output t))
+  (let ((base (list "git"
+                    "apply"
+                    "--ignore-space-change" ;; in context only.
+                    "-C0" ;; easier to apply patch without context.
+                    "--index"
+                    "--cached"))
+        (maybe (if reverse
+                   (list "--reverse")
+                   (list)))
+        (args (list patch)))
+    (uiop:run-program (concatenate 'list base maybe args)
+                      :output :string
+                      :error-output t)))

@@ -41,6 +41,7 @@
 (define-key *global-keymap* "M-o" 'other-window)
 (define-key *global-keymap* "C-x 1" 'delete-other-windows)
 (define-key *global-keymap* "C-x 0" 'delete-active-window)
+(define-key *global-keymap* "M-q" 'delete-active-window)
 (define-key *global-keymap* "C-x ^" 'grow-window)
 (define-key *global-keymap* "C-x C-z" 'shrink-window)
 (define-key *global-keymap* "C-x }" 'grow-window-horizontally)

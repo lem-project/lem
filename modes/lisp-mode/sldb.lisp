@@ -37,6 +37,7 @@
 (define-key *sldb-keymap* "M-n" 'sldb-details-down)
 (define-key *sldb-keymap* "M-p" 'sldb-details-up)
 (define-key *sldb-keymap* "q" 'sldb-quit)
+(define-key *sldb-keymap* "M-q" 'sldb-quit)
 (define-key *sldb-keymap* "c" 'sldb-continue)
 (define-key *sldb-keymap* "a" 'sldb-abort)
 (define-key *sldb-keymap* "r" 'sldb-restart-frame)

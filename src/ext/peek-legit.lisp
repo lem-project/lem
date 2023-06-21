@@ -35,10 +35,13 @@
      :keymap *peek-legit-keymap*)
   (setf (not-switchable-buffer-p (current-buffer)) t))
 
+
 (define-key *peek-legit-keymap* "Return" 'peek-legit-select)
 (define-key *peek-legit-keymap* "q" 'peek-legit-quit)
 (define-key *peek-legit-keymap* "Escape" 'peek-legit-quit)
+(define-key *peek-legit-keymap* "M-q" 'peek-legit-quit)
 (define-key *peek-legit-keymap* "C-c C-k" 'peek-legit-quit)
+
 (define-key *peek-legit-keymap* 'next-line 'peek-legit-next)
 (define-key *peek-legit-keymap* "n" 'peek-legit-next)
 (define-key *peek-legit-keymap* "C-n" 'peek-legit-next)

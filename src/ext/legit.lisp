@@ -11,6 +11,20 @@
 ;; redraw everything:
 (define-key lem/peek-legit::*peek-legit-keymap* "g" 'legit-status)
 
+;; Supercharge patch-mode with our keys.
+(define-major-mode legit-diff-mode lem-patch-mode:patch-mode
+    (:name "legit-diff"
+     :syntax-table lem-patch-mode::*patch-syntax-table*
+     :keymap *legit-diff-mode-keymap*)
+  (setf (variable-value 'enable-syntax-highlight) t))
+
+(define-key *legit-diff-mode-keymap* "C-n" 'next-line)
+(define-key *legit-diff-mode-keymap* "C-p" 'previous-line)
+
+(define-key *legit-diff-mode-keymap* "q" 'lem/peek-legit::peek-legit-quit)
+(define-key *legit-diff-mode-keymap* "Escape" 'lem/Peek-legit::peek-legit-quit)
+(define-key *legit-diff-mode-keymap* "M-q" 'lem/peek-legit::peek-legit-quit)
+(define-key *legit-diff-mode-keymap* "c-c C-k" 'lem/peek-legit::peek-legit-quit)
 ;;; Git commands
 ;;; that operate on files.
 ;;;
@@ -25,7 +39,7 @@
     (erase-buffer buffer)
     (move-to-line (buffer-point buffer) 1)
     (insert-string (buffer-point buffer) diff)
-    (change-buffer-mode buffer 'lem-patch-mode:patch-mode)
+    (change-buffer-mode buffer 'legit-diff-mode)
     (setf (buffer-read-only-p buffer) t)
     (move-to-line (buffer-point buffer) 1)))
 

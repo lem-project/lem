@@ -11,6 +11,37 @@
            :highlight-matched-line) )
 (in-package :lem/peek-legit)
 
+
+(define-minor-mode peek-legit-mode
+    (:name "Peek"
+     :keymap *peek-legit-keymap*)
+  (setf (not-switchable-buffer-p (current-buffer)) t))
+
+;; Git commands
+;; Some are defined on legit.lisp for this keymap too.
+(define-key *peek-legit-keymap* "s" 'peek-legit-stage-file)
+(define-key *peek-legit-keymap* "u" 'peek-legit-unstage-file)
+(define-key *peek-legit-keymap* "c" 'peek-legit-commit)
+
+;; quit
+(define-key *peek-legit-keymap* "Return" 'peek-legit-select)
+(define-key *peek-legit-keymap* "q" 'peek-legit-quit)
+(define-key *peek-legit-keymap* "Escape" 'peek-legit-quit)
+(define-key *peek-legit-keymap* "M-q" 'peek-legit-quit)
+(define-key *peek-legit-keymap* "C-c C-k" 'peek-legit-quit)
+
+;; navigation
+(define-key *peek-legit-keymap* 'next-line 'peek-legit-next)
+(define-key *peek-legit-keymap* "n" 'peek-legit-next)
+(define-key *peek-legit-keymap* "C-n" 'peek-legit-next)
+(define-key *peek-legit-keymap* 'previous-line 'peek-legit-previous)
+(define-key *peek-legit-keymap* "p" 'peek-legit-previous)
+(define-key *peek-legit-keymap* "C-p" 'peek-legit-previous)
+
+
+;;;
+;;; The two windows pane.
+;;;
 (define-attribute filename-attribute
   (:light :foreground "blue")
   (:dark :foreground "cyan"))
@@ -29,30 +60,6 @@
 (defvar *peek-window*)
 (defvar *source-window*)
 (defvar *parent-window*)
-
-(define-minor-mode peek-legit-mode
-    (:name "Peek"
-     :keymap *peek-legit-keymap*)
-  (setf (not-switchable-buffer-p (current-buffer)) t))
-
-
-(define-key *peek-legit-keymap* "Return" 'peek-legit-select)
-(define-key *peek-legit-keymap* "q" 'peek-legit-quit)
-(define-key *peek-legit-keymap* "Escape" 'peek-legit-quit)
-(define-key *peek-legit-keymap* "M-q" 'peek-legit-quit)
-(define-key *peek-legit-keymap* "C-c C-k" 'peek-legit-quit)
-
-(define-key *peek-legit-keymap* 'next-line 'peek-legit-next)
-(define-key *peek-legit-keymap* "n" 'peek-legit-next)
-(define-key *peek-legit-keymap* "C-n" 'peek-legit-next)
-(define-key *peek-legit-keymap* 'previous-line 'peek-legit-previous)
-(define-key *peek-legit-keymap* "p" 'peek-legit-previous)
-(define-key *peek-legit-keymap* "C-p" 'peek-legit-previous)
-
-;; Git commands:
-(define-key *peek-legit-keymap* "s" 'peek-legit-stage-file)
-(define-key *peek-legit-keymap* "u" 'peek-legit-unstage-file)
-(define-key *peek-legit-keymap* "c" 'peek-legit-commit)
 
 (defclass peek-window (floating-window) ())
 (defclass source-window (floating-window) ())
@@ -272,6 +279,7 @@
                              :name "highlight-matched-line")
                  300)))
 
+
 (define-command peek-legit-select () ()
   (alexandria:when-let ((point (get-matched-point)))
     (let ((line (line-number-at-point point)))
@@ -302,7 +310,7 @@
     point))
 
 (define-command peek-legit-commit () ()
-  (let ((message (prompt-for-string "Commit message:")))
+  (let ((message (prompt-for-string "Commit message: ")))
     (porcelain::commit message)
     (uiop:symbol-call :lem/legit :legit-status)
     (message "Commited.")))
@@ -315,6 +323,8 @@
                       (delete-window *source-window*)))
    0))
 
+
+
 ;;;
 (defvar *highlight-overlays* '())
 

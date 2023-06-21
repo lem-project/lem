@@ -8,12 +8,6 @@
 (defvar *legit-verbose* nil
   "If non nil, print some logs on standard output (terminal) and create the hunk patch file on disk at (lem home)/lem-hunk-latest.patch.")
 
-(define-key lem/peek-legit::*peek-legit-keymap* "?" 'legit-help)
-(define-key lem/peek-legit::*peek-legit-keymap* "C-x ?" 'legit-help)
-(define-key *global-keymap* "C-x g" 'legit-status)
-;; redraw everything:
-(define-key lem/peek-legit::*peek-legit-keymap* "g" 'legit-status)
-
 ;; Supercharge patch-mode with our keys.
 (define-major-mode legit-diff-mode lem-patch-mode:patch-mode
     (:name "legit-diff"
@@ -21,15 +15,31 @@
      :keymap *legit-diff-mode-keymap*)
   (setf (variable-value 'enable-syntax-highlight) t))
 
+;; git commands.
+;; Some are defined on peek-legit too.
+(define-key *global-keymap* "C-x g" 'legit-status)
 (define-key *legit-diff-mode-keymap* "s" 'legit-stage-hunk)
 (define-key *legit-diff-mode-keymap* "u" 'legit-unstage-hunk)
+(define-key lem/peek-legit::*peek-legit-keymap* "b b" 'legit-branch-checkout)
+
+;; redraw everything:
+(define-key lem/peek-legit::*peek-legit-keymap* "g" 'legit-status)
+
+;; navigation
 (define-key *legit-diff-mode-keymap* "C-n" 'next-line)
 (define-key *legit-diff-mode-keymap* "C-p" 'previous-line)
-
+;; help
+(define-key lem/peek-legit::*peek-legit-keymap* "?" 'legit-help)
+(define-key lem/peek-legit::*peek-legit-keymap* "C-x ?" 'legit-help)
+;; quit
 (define-key *legit-diff-mode-keymap* "q" 'lem/peek-legit::peek-legit-quit)
 (define-key *legit-diff-mode-keymap* "Escape" 'lem/Peek-legit::peek-legit-quit)
 (define-key *legit-diff-mode-keymap* "M-q" 'lem/peek-legit::peek-legit-quit)
 (define-key *legit-diff-mode-keymap* "c-c C-k" 'lem/peek-legit::peek-legit-quit)
+
+(defun pop-up-message (message)
+  (with-pop-up-typeout-window (s (make-buffer "*Legit status*") :erase t)
+    (format s "~a" message)))
 
 (defun last-character (s)
   (subseq s (- (length s) 2) (- (length s) 1)))
@@ -76,7 +86,6 @@
 ;;; Git commands
 ;;; that operate on diff hunks.
 ;;;
-
 
 (defun %call-legit-hunk-function (fn)
   "Stage the diff hunk at point.
@@ -205,23 +214,55 @@
       (lem/peek-legit::collector-insert "Latest commits:")
       (let ((latest-commits (porcelain::latest-commits)))
         (if latest-commits
-            (loop for line in latest-commits 
+            (loop for line in latest-commits
                   do (lem/peek-legit::collector-insert line))
             (lem/peek-legit::collector-insert "<none>")))
 
       (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
                 'change-grep-buffer))))
 
+(defun prompt-for-branch ()
+  ;; only call from a command.
+  (let* ((current-branch (porcelain::current-branch))
+         (candidates (porcelain::branches)))
+    (if candidates
+        (prompt-for-string "Branch: "
+                           :initial-value current-branch
+                           :history-symbol '*legit-branches-history*
+                           :completion-function (lambda (x) (completion-strings x candidates))
+                           :test-function (lambda (name) (member name candidates :test #'string=)))
+        (message "No branches. Not inside a git project?"))))
+
+(define-command legit-branch-checkout () ()
+  "Choose a branch to checkout."
+  (let ((branch (prompt-for-branch))
+        (current-branch (porcelain::current-branch)))
+    (when (equal branch current-branch)
+      (show-message (format nil "Already on ~a" branch) :timeout 3)
+      (return-from legit-branch-checkout))
+    (when branch
+      (multiple-value-bind (output error-output exit-code)
+          (porcelain::checkout branch)
+        (declare (ignorable output))
+        (cond
+          ((zerop exit-code)
+           (show-message (format nil "Checked out ~a" branch) :timeout 3))
+          (t
+           (pop-up-message error-output)))))))
+
 (define-command legit-help () ()
   "Show the important keybindings."
   (with-pop-up-typeout-window (s (make-buffer "*Legit help*") :erase t)
-    (format s "Lem's interface to git.~&")
-    (format s "You can view diffs of (un)staged changes, stage files and create a commit.~&")
+    (format s "Lem's interface to git. M-x legit-status (C-x g)~&")
+    (format s "~%")
+    (format s "Commands:~&")
+    (format s "(s)tage and (u)nstage a file. Inside a diff, (s)tage or (u)nstage a hunk.~&")
+    (format s "(c)ommit~&")
+    (format s "(b)ranches-> checkout another (b)ranch.~&")
+    (format s "(g): refresh~&")
     (format s "~%")
     (format s "Navigate: n and p, C-n and C-p.~&")
-    (format s "Change windows: C-x o or M-o~&~%")
-    (format s "Stage a file: press s~&")
-    (format s "Commit: press c~&")
+    (format s "Change windows: C-x o or M-o~&")
     (format s "Quit: Escape, q, C-x 0.~&")
     (format s "~%")
     (format s "Show this help: C-x ? or ?")

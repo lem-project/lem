@@ -48,16 +48,29 @@
                           "-m"
                           message)))
 
-(defun list-branches ()
+(defvar *branch-sort-by* "-creatordate"
+  "When listing branches, sort by this field name.
+  Prefix with \"-\" to sort in descending order.
+
+  Defaults to \"-creatordate\", to list the latest used branches first.")
+
+(defun git-list-branches (&key (sort-by *branch-sort-by*))
+  "Return: list of branches, raw output.
+  Each element starts with two meaningful characters, such as \"* \" for the current branch."
   (str:lines
    (uiop:run-program (list "git"
                            "branch"
                            "--list"
-                           "--no-color")
+                           "--no-color"
+                           (format nil "--sort=~a" sort-by))
                      :output :string)))
 
+(defun branches (&key (sort-by *branch-sort-by*))
+  (loop for branch in (git-list-branches :sort-by sort-by)
+        collect (subseq branch 2 (length branch))))
+
 (defun current-branch ()
-  (let ((branches (list-branches)))
+  (let ((branches (git-list-branches :sort-by "-creatordate")))
     (loop for branch in branches
           if (str:starts-with-p "*" branch)
             return (subseq branch 2))))
@@ -116,3 +129,11 @@ M	src/ext/porcelain.lisp
     (uiop:run-program (concatenate 'list base maybe args)
                       :output :string
                       :error-output t)))
+
+(defun checkout (branch)
+  (uiop:run-program (list "git"
+                          "checkout"
+                          branch)
+                    :output :string
+                    :error-output :string
+                    :ignore-error-status t))

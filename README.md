@@ -132,7 +132,7 @@ See https://github.com/lem-project/lem/wiki/How-to-hack-on-lem-itself
 If you have a questions, join [the Discord](https://discord.gg/NHzqbw4zVR).
 
 ## How to contribute to lem
-tbd
+See https://lem-project.github.io/lem-page/development/how-to-contribute-to-lem/
 
 ## Contributors
 

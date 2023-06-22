@@ -374,3 +374,18 @@
                                  :gravity :cursor
                                  :use-border nil)))
     (lisp-set-directory :directory directory)))
+
+(defun prompt-for-system (prompt)
+  (let ((systems (lisp-eval '(micros:list-systems))))
+    (prompt-for-string prompt
+                       :gravity :cursor
+                       :use-border nil
+                       :completion-function (lambda (string)
+                                              (completion string systems))
+                       :test-function (lambda (string)
+                                        (find string systems :test #'equal)))))
+
+(define-repl-shortcut quickload (n)
+  (declare (ignore n))
+  (let ((system (prompt-for-system "Quickload System: ")))
+    (listener-eval (prin1-to-string `(ql:quickload ,system)))))

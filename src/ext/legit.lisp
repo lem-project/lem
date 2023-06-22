@@ -23,7 +23,15 @@
 (define-key *legit-diff-mode-keymap* "p" 'legit-goto-previous-hunk)
 (define-key *legit-diff-mode-keymap* "c" 'lem/peek-legit::peek-legit-commit)
 (define-key lem/peek-legit::*peek-legit-keymap* "b b" 'legit-branch-checkout)
+(define-key *legit-diff-mode-keymap* "b b" 'legit-branch-checkout)
 (define-key lem/peek-legit::*peek-legit-keymap* "b c" 'legit-branch-create)
+(define-key *legit-diff-mode-keymap* "b c" 'legit-branch-create)
+;; push
+(define-key *legit-diff-mode-keymap* "P p" 'legit-push)
+(define-key lem/peek-legit::*peek-legit-keymap* "P p" 'legit-push)
+;; pull
+(define-key lem/peek-legit::*peek-legit-keymap* "F p" 'legit-pull)
+(define-key *legit-diff-mode-keymap* "F p" 'legit-pull)
 
 ;; redraw everything:
 (define-key lem/peek-legit::*peek-legit-keymap* "g" 'legit-status)
@@ -318,6 +326,16 @@
                     :message (format nil "Created ~a" new))
       (legit-status))))
 
+(define-command legit-pull () ()
+  "Pull changes, update HEAD."
+  (run-function (lambda ()
+                  (porcelain::pull))))
+
+(define-command legit-push () ()
+  "Push changes to the current remote."
+  (run-function (lambda ()
+                  (porcelain::push))))
+
 (define-command legit-help () ()
   "Show the important keybindings."
   (with-pop-up-typeout-window (s (make-buffer "*Legit help*") :erase t)
@@ -327,11 +345,14 @@
     (format s "(s)tage and (u)nstage a file. Inside a diff, (s)tage or (u)nstage a hunk.~&")
     (format s "(c)ommit~&")
     (format s "(b)ranches-> checkout another (b)ranch.~&")
+    (format s "          -> (c)reate.~&")
+    (format s "(F)etch, pull-> (p) from remote branch~&")
+    (format s "(P)push      -> (p) to remote branch~&")
     (format s "(g): refresh~&")
     (format s "~%")
     (format s "Navigate: n and p, C-n and C-p.~&")
-    (format s "Change windows: C-x o or M-o~&")
+    (format s "Change windows: Tab, C-x o, M-o~&")
     (format s "Quit: Escape, q, C-x 0.~&")
     (format s "~%")
-    (format s "Show this help: C-x ? or ?")
+    (format s "Show this help: C-x ? or ?, M-x legit-help")
     ))

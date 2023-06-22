@@ -1,6 +1,7 @@
 
 (defpackage :porcelain
   (:use :cl)
+  (:shadow :push)
   (:export))
 (in-package :porcelain)
 
@@ -113,11 +114,21 @@ M	src/ext/porcelain.lisp
 ""
 |#
 
+(defvar *git-base-args* (list "git")
+  "git, to be appended command-line options.")
+
+(defun run-git (args)
+  "Run the git command with these options,
+  return standard and error output as strings."
+  (uiop:run-program (concatenate 'list *git-base-args* args)
+                    :output :string
+                    :error-output t
+                    :ignore-error-status t))
+
 (defun apply-patch (patch &key reverse)
   "Apply a patch file.
   This is used to stage hunks of files."
-  (let ((base (list "git"
-                    "apply"
+  (let ((base (list "apply"
                     "--ignore-space-change" ;; in context only.
                     "-C0" ;; easier to apply patch without context.
                     "--index"
@@ -126,25 +137,19 @@ M	src/ext/porcelain.lisp
                    (list "--reverse")
                    (list)))
         (args (list patch)))
-    (uiop:run-program (concatenate 'list base maybe args)
-                      :output :string
-                      :error-output t
-                      :ignore-error-status t)))
+    (run-git (concatenate 'list base maybe args))))
 
 (defun checkout (branch)
-  (uiop:run-program (list "git"
-                          "checkout"
-                          branch)
-                    :output :string
-                    :error-output :string
-                    :ignore-error-status t))
+  (run-git (list "checkout" branch)))
 
 (defun checkout-create (new start)
-  (uiop:run-program (list "git"
-                          "checkout"
-                          "-b"
-                          new
-                          start)
-                    :output :string
-                    :error-output :string
-                    :ignore-error-status t))
+  (run-git (list "checkout" "-b" new start)))
+
+(defun pull ()
+  ;; xxx: recurse submodules, etc.
+  (run-git (list "pull" "HEAD")))
+
+(defun push (&rest args)
+  (when args
+    (error "Our git push command doesn't accept args. Did you mean cl:push ?!!"))
+  (run-git (list "push")))

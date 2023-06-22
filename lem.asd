@@ -168,7 +168,6 @@
 	       "lem-base16-themes"
 	       #+sbcl
 	       "lem-elixir-mode"
-	       #+sbcl
 	       "lem-documentation-mode"))
 
 (defsystem "lem/executable"

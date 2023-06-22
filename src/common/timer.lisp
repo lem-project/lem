@@ -114,7 +114,7 @@
     :type bt:lock)
    (stop-mailbox
     :accessor timer-stop-mailbox
-    :type lem-mailbox::mailbox)
+    :type lem-mailbox:mailbox)
    (thread
     :accessor timer-thread
     :type bt:thread)))
@@ -146,7 +146,7 @@
   (stop-timer-thread timer))
 
 (defun start-timer-thread (timer ms repeat-p)
-  (let ((stop-mailbox (lem-mailbox::make-mailbox))
+  (let ((stop-mailbox (lem-mailbox:make-mailbox))
         (timer-manager *timer-manager*)
         (seconds (float (/ ms 1000))))
     (setf (timer-stop-mailbox timer)
@@ -157,8 +157,8 @@
              (loop
                (let ((recv-stop-msg
                        (nth-value 1
-                                  (lem-mailbox::receive-message stop-mailbox
-								:timeout seconds))))
+                                  (lem-mailbox:receive-message stop-mailbox
+							       :timeout seconds))))
                  (when recv-stop-msg
                    (expire-timer timer)
                    (return)))
@@ -169,7 +169,7 @@
            :name (format nil "Timer ~A" (timer-name timer))))))
 
 (defun stop-timer-thread (timer)
-  (lem-mailbox::send-message (timer-stop-mailbox timer) t))
+  (lem-mailbox:send-message (timer-stop-mailbox timer) t))
 
 
 ;;; idle-timer

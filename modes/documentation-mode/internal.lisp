@@ -79,7 +79,7 @@
 
 #-sbcl
 (defun command-definition-location (command)
-  (make-location :file (buffer-filename)
+  (make-location :file nil
 		 :position 0
 		 :line-number 0))
 

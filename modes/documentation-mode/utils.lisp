@@ -16,12 +16,13 @@
                    (uiop:read-file-form
                     (asdf:component-pathname component))))))
 
+#+sbcl
 (defun sort-by-file-location (commands)
   (sort commands
         #'<
         :key (lambda (command)
                (sb-c:definition-source-location-toplevel-form-number
-                   (lem-core::command-source-location command)))))
+		(lem-core::command-source-location command)))))
 
 (defun collect-commands-in-package (package)
   (let ((commands '()))
@@ -29,4 +30,7 @@
       (let ((command (lem:get-command sym)))
         (when command
           (push command commands))))
-    (sort-by-file-location commands)))
+    #+sbcl
+    (sort-by-file-location commands)
+    #-sbcl
+    commands))

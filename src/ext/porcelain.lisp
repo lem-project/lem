@@ -5,6 +5,9 @@
   (:export))
 (in-package :porcelain)
 
+(defun git-project-p ()
+  (uiop:directory-exists-p ".git"))
+
 (defun porcelain ()
   (uiop:run-program (list "git" "status" "--porcelain=v1")
                     :output :string))

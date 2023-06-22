@@ -150,7 +150,10 @@
                                      :height height
                                      :use-border t))
          (source-window (make-instance 'source-window
-                                       :buffer (make-buffer "*source*" :temporary t :enable-undo-p nil)
+                                       :buffer (make-buffer "*source*"
+                                                            :temporary t
+                                                            :enable-undo-p nil
+                                                            :directory (uiop:getcwd))
                                        :x (+ (window-x peek-window) (window-width peek-window) 2)
                                        :y (+ 1 y-margin)
                                        :width width
@@ -188,11 +191,14 @@
   (let* ((*collector* (make-instance 'collector :buffer (make-peek-legit-buffer)))
          (point (buffer-point (collector-buffer *collector*))))
     (declare (ignorable point))
+    (log:info "collector buffer directory: " (buffer-directory (collector-buffer *collector*)))
+    ;; Set a buffer directory to uiop:getcwd by default? It works for me too.
+    (setf (buffer-directory (collector-buffer *collector*))
+          (uiop:getcwd))
     (funcall function *collector*)
     (when read-only
       (setf (buffer-read-only-p (collector-buffer *collector*)) t))
-    (unless (zerop (collector-count *collector*))
-      (display *collector*))))
+      (display *collector*)))
 
 (defmacro with-collecting-sources ((collector &key (read-only t)) &body body)
   `(call-with-collecting-sources (lambda (,collector)

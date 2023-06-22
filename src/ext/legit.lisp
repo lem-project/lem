@@ -56,6 +56,19 @@
 (defun last-character (s)
   (subseq s (- (length s) 2) (- (length s) 1)))
 
+(defmacro with-current-project (&body body)
+  "Execute body with the current working directory changed to the buffer directory
+  (so, that should be the root directory where the Git project is.
+
+  If no Git directory is found, message the user."
+  `(let ((root (lem-core/commands/project:find-root (buffer-directory))))
+     (uiop:with-current-directory (root)
+       (log:info "with-current-project macro root: " root)
+       (if (porcelain::git-project-p)
+           (progn
+             ,@body)
+           (message "Not inside a Git project?")))))
+
 
 ;;; Git commands
 ;;; that operate on files.
@@ -80,18 +93,20 @@
 
 ;; stage
 (defun make-stage-function (file)
-  (lambda ()
-    (porcelain::stage file)
-    t))
+  (with-current-project ()
+    (lambda ()
+      (porcelain::stage file)
+      t)))
 
 ;; unstage
 (defun make-unstage-function (file &key already-unstaged)
-  (if already-unstaged
-      (lambda ()
-        (message "Already unstaged"))
-      (lambda ()
-        (porcelain::unstage file)
-        t)))
+  (with-current-project ()
+    (if already-unstaged
+        (lambda ()
+          (message "Already unstaged"))
+        (lambda ()
+          (porcelain::unstage file)
+          t))))
 
 
 ;;;
@@ -192,15 +207,23 @@
          (funcall fn))))))
 
 (defun run-function (fn &key (message "OK"))
-  (multiple-value-bind (output error-output exit-code)
-      (funcall fn)
-    (declare (ignorable output))
-    (cond
-      ((zerop exit-code)
-       (message message))
-      (t
-       (when error-output
-         (pop-up-message error-output))))))
+  "Run this lambda function in the context of the Git project root.
+  Typicaly used to run an external process in the context of a diff buffer command.
+
+  Show `message` to the user on success,
+  or show the external command's error output on a popup window.
+
+  Note: on success, standard output is currently not used."
+  (with-current-project ()
+    (multiple-value-bind (output error-output exit-code)
+        (funcall fn)
+      (declare (ignorable output))
+      (cond
+        ((zerop exit-code)
+         (message message))
+        (t
+         (when error-output
+           (pop-up-message error-output)))))))
 
 (define-command legit-stage-hunk () ()
   (%call-legit-hunk-function (lambda ()
@@ -211,7 +234,7 @@
 (define-command legit-unstage-hunk () ()
   (%call-legit-hunk-function (lambda ()
                                (porcelain::apply-patch ".lem-hunk.patch" :reverse t)
-                               (message "OK (?)"))))
+                               (message "Hunk unstaged."))))
 
 (define-command legit-goto-next-hunk () ()
   "Move point to the next hunk line, if any."
@@ -239,56 +262,59 @@
 
 (define-command legit-status () ()
   "Show changes and untracked files."
-  (multiple-value-bind (untracked unstaged-files staged-files)
-      (porcelain::components)
-    (declare (ignorable untracked))
-    ;; (message "Modified files: ~S" modified)
+  (with-current-project ()
+    (multiple-value-bind (untracked unstaged-files staged-files)
+        (porcelain::components)
+      (declare (ignorable untracked))
+      ;; (message "Modified files: ~S" modified)
 
-    ;; big try! It works \o/
-    (lem/peek-legit:with-collecting-sources (collector :read-only nil)
-      ;; (lem/peek-legit::collector-insert "Keys: (n)ext, (p)revious lines,  (s)tage file.")
+      ;; big try! It works \o/
+      (lem/peek-legit:with-collecting-sources (collector :read-only nil)
+        ;; (lem/peek-legit::collector-insert "Keys: (n)ext, (p)revious lines,  (s)tage file.")
 
-      (lem/peek-legit::collector-insert 
-       (format nil "Branch: ~a" (porcelain::current-branch)))
-      (lem/peek-legit::collector-insert "")
-      
-      ;; Unstaged changes.
-      (lem/peek-legit::collector-insert "Unstaged changes:")
-      (loop :for file :in unstaged-files
-            :do (lem/peek-legit:with-appending-source
-                    (point :move-function (make-move-function file)
-                           :stage-function (make-stage-function file)
-                           :unstage-function (make-unstage-function file :already-unstaged t))
+        (lem/peek-legit::collector-insert
+         (format nil "Branch: ~a" (porcelain::current-branch)))
+        (lem/peek-legit::collector-insert "")
 
-                  (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
-                  ))
+        ;; Unstaged changes.
+        (lem/peek-legit::collector-insert "Unstaged changes:")
+        (if unstaged-files
+            (loop :for file :in unstaged-files
+                  :do (lem/peek-legit:with-appending-source
+                          (point :move-function (make-move-function file)
+                                 :stage-function (make-stage-function file)
+                                 :unstage-function (make-unstage-function file :already-unstaged t))
 
-      (lem/peek-legit::collector-insert "")
-      (lem/peek-legit::collector-insert "Staged changes:")
+                        (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
+                        ))
+            (lem/peek-legit::collector-insert "<none>"))
 
-      ;; Stages files.
-      (if staged-files
-          (loop :for file :in staged-files
-            :for i := 0 :then (incf i)
-            :do (lem/peek-legit::with-appending-staged-files
-                    (point :move-function (make-move-function file :cached t)
-                           :stage-function (make-stage-function file)
-                           :unstage-function (make-unstage-function file))
+        (lem/peek-legit::collector-insert "")
+        (lem/peek-legit::collector-insert "Staged changes:")
 
-                  (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
-          (lem/peek-legit::collector-insert "<none>"))
+        ;; Stages files.
+        (if staged-files
+            (loop :for file :in staged-files
+                  :for i := 0 :then (incf i)
+                  :do (lem/peek-legit::with-appending-staged-files
+                          (point :move-function (make-move-function file :cached t)
+                                 :stage-function (make-stage-function file)
+                                 :unstage-function (make-unstage-function file))
 
-      ;; Latest commits.
-      (lem/peek-legit::collector-insert "")
-      (lem/peek-legit::collector-insert "Latest commits:")
-      (let ((latest-commits (porcelain::latest-commits)))
-        (if latest-commits
-            (loop for line in latest-commits
-                  do (lem/peek-legit::collector-insert line))
-            (lem/peek-legit::collector-insert "<none>")))
+                        (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
+            (lem/peek-legit::collector-insert "<none>"))
 
-      (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
-                'change-grep-buffer))))
+        ;; Latest commits.
+        (lem/peek-legit::collector-insert "")
+        (lem/peek-legit::collector-insert "Latest commits:")
+        (let ((latest-commits (porcelain::latest-commits)))
+          (if latest-commits
+              (loop for line in latest-commits
+                    do (lem/peek-legit::collector-insert line))
+              (lem/peek-legit::collector-insert "<none>")))
+
+        (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
+                  'change-grep-buffer)))))
 
 (defun prompt-for-branch (&key prompt initial-value)
   ;; only call from a command.
@@ -304,37 +330,41 @@
 
 (define-command legit-branch-checkout () ()
   "Choose a branch to checkout."
-  (let ((branch (prompt-for-branch))
-        (current-branch (porcelain::current-branch)))
-    (when (equal branch current-branch)
-      (show-message (format nil "Already on ~a" branch) :timeout 3)
-      (return-from legit-branch-checkout))
-    (when branch
-      (run-function (lambda ()
-                      (porcelain::checkout branch))
-                    :message (format nil "Checked out ~a" branch))
-      (legit-status))))
+  (with-current-project ()
+    (let ((branch (prompt-for-branch))
+          (current-branch (porcelain::current-branch)))
+      (when (equal branch current-branch)
+        (show-message (format nil "Already on ~a" branch) :timeout 3)
+        (return-from legit-branch-checkout))
+      (when branch
+        (run-function (lambda ()
+                        (porcelain::checkout branch))
+                      :message (format nil "Checked out ~a" branch))
+        (legit-status)))))
 
 (define-command legit-branch-create () ()
   "Create and checkout a new branch."
-  (let ((new (prompt-for-string "New branch name: "
-                                :history-symbol '*new-branch-name-history*))
-        (base (prompt-for-branch :prompt "Base branch: " :initial-value "")))
-    (when (and new base)
-      (run-function (lambda ()
-                      (porcelain::checkout-create new base))
-                    :message (format nil "Created ~a" new))
-      (legit-status))))
+  (with-current-project ()
+    (let ((new (prompt-for-string "New branch name: "
+                                  :history-symbol '*new-branch-name-history*))
+          (base (prompt-for-branch :prompt "Base branch: " :initial-value "")))
+      (when (and new base)
+        (run-function (lambda ()
+                        (porcelain::checkout-create new base))
+                      :message (format nil "Created ~a" new))
+        (legit-status)))))
 
 (define-command legit-pull () ()
   "Pull changes, update HEAD."
-  (run-function (lambda ()
-                  (porcelain::pull))))
+  (with-current-project ()
+    (run-function (lambda ()
+                    (porcelain::pull)))))
 
 (define-command legit-push () ()
   "Push changes to the current remote."
-  (run-function (lambda ()
-                  (porcelain::push))))
+  (with-current-project ()
+    (run-function (lambda ()
+                    (porcelain::push)))))
 
 (define-command legit-help () ()
   "Show the important keybindings."

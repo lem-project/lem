@@ -103,22 +103,24 @@
         default
         result)))
 
-(defun prompt-for-directory (prompt &key directory (default (buffer-directory)) existing
-                                         (gravity *default-prompt-gravity*))
+(defun prompt-for-directory (prompt &rest args
+                                    &key directory (default (buffer-directory)) existing
+                                    &allow-other-keys)
   (let ((result
-          (prompt-for-string prompt
-                             :initial-value directory
-                             :completion-function
-                             (when *prompt-file-completion-function*
-                               (lambda (str)
-                                 (funcall *prompt-file-completion-function*
-                                          (if (alexandria:emptyp str)
-                                              "./"
-                                              str)
-                                          directory :directory-only t)))
-                             :test-function (and existing #'virtual-probe-file)
-                             :history-symbol 'prompt-for-directory
-                             :gravity gravity)))
+          (apply #'prompt-for-string
+                 prompt
+                 :initial-value directory
+                 :completion-function
+                 (when *prompt-file-completion-function*
+                   (lambda (str)
+                     (funcall *prompt-file-completion-function*
+                              (if (alexandria:emptyp str)
+                                  "./"
+                                  str)
+                              directory :directory-only t)))
+                 :test-function (and existing #'virtual-probe-file)
+                 :history-symbol 'prompt-for-directory
+                 (alexandria:remove-from-plist args :directory default existing))))
     (if (string= result "")
         default
         result)))

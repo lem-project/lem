@@ -19,7 +19,8 @@
 ;; Some are defined on peek-legit too.
 (define-key *global-keymap* "C-x g" 'legit-status)
 (define-key *legit-diff-mode-keymap* "s" 'legit-stage-hunk)
-(define-key *legit-diff-mode-keymap* "u" 'legit-unstage-hunk)
+(define-key *legit-diff-mode-keymap* "n" 'legit-goto-next-hunk)
+(define-key *legit-diff-mode-keymap* "p" 'legit-goto-previous-hunk)
 (define-key lem/peek-legit::*peek-legit-keymap* "b b" 'legit-branch-checkout)
 
 ;; redraw everything:
@@ -91,8 +92,7 @@
 (defun %hunk-start-point (start?)
   "Find the start of the current hunk.
   It is the beginning of the previous \"@@ \" line.
-  Return a point.
-  If no hunk is found before the point, message to the user and exit."
+  Return a point, or nil."
   (line-start start?)
   (if (str:starts-with-p "@@ " (line-string start?))
       start?
@@ -118,8 +118,7 @@
      (line-offset end? -1)
      (line-end end?)
      end?)
-    (move-to-end-of-buffer)))
-  end?)
+    (move-to-end-of-buffer))))
 
 (defun %call-legit-hunk-function (fn)
   "Stage the diff hunk at point.
@@ -198,6 +197,29 @@
   (%call-legit-hunk-function (lambda ()
                                (porcelain::apply-patch ".lem-hunk.patch" :reverse t)
                                (message "OK (?)"))))
+
+(define-command legit-goto-next-hunk () ()
+  "Move point to the next hunk line, if any."
+  (let* ((point (copy-point (current-point)))
+         (end? (copy-point (current-point)))
+         (end (move-to-next-virtual-line
+               (move-point (current-point) (%hunk-end-point point)))))
+    (if (equal end (buffer-end end?))
+        point
+        end)))
+
+(define-command legit-goto-previous-hunk () ()
+  "Move point to the previous hunk line, if any."
+  (let* ((point (copy-point (current-point)))
+         (start? (move-to-previous-virtual-line
+                  (copy-point (current-point))))
+         (start (when start?
+                  (%hunk-start-point start?))))
+    (when start
+      (move-point (current-point) start)
+      (if (equal start (buffer-start start?))
+          point
+          start))))
 
 
 (define-command legit-status () ()

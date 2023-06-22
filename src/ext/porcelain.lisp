@@ -138,3 +138,13 @@ M	src/ext/porcelain.lisp
                     :output :string
                     :error-output :string
                     :ignore-error-status t))
+
+(defun checkout-create (new start)
+  (uiop:run-program (list "git"
+                          "checkout"
+                          "-b"
+                          new
+                          start)
+                    :output :string
+                    :error-output :string
+                    :ignore-error-status t))

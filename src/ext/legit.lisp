@@ -23,6 +23,7 @@
 (define-key *legit-diff-mode-keymap* "p" 'legit-goto-previous-hunk)
 (define-key *legit-diff-mode-keymap* "c" 'lem/peek-legit::peek-legit-commit)
 (define-key lem/peek-legit::*peek-legit-keymap* "b b" 'legit-branch-checkout)
+(define-key lem/peek-legit::*peek-legit-keymap* "b c" 'legit-branch-create)
 
 ;; redraw everything:
 (define-key lem/peek-legit::*peek-legit-keymap* "g" 'legit-status)
@@ -182,17 +183,22 @@
 
          (funcall fn))))))
 
+(defun run-function (fn &key (message "OK"))
+  (multiple-value-bind (output error-output exit-code)
+      (funcall fn)
+    (declare (ignorable output))
+    (cond
+      ((zerop exit-code)
+       (message message))
+      (t
+       (when error-output
+         (pop-up-message error-output))))))
+
 (define-command legit-stage-hunk () ()
   (%call-legit-hunk-function (lambda ()
-                               (multiple-value-bind (output error-output exit-code)
-                                   (porcelain::apply-patch ".lem-hunk.patch")
-                                 (declare (ignorable output))
-                                 (cond
-                                   ((zerop exit-code)
-                                    (message "Hunk staged."))
-                                   (t
-                                    (when error-output
-                                      (pop-up-message error-output))))))))
+                               (run-function (lambda ()
+                                               (porcelain::apply-patch ".lem-hunk.patch"))
+                                             :message "Hunk staged."))))
 
 (define-command legit-unstage-hunk () ()
   (%call-legit-hunk-function (lambda ()
@@ -276,12 +282,12 @@
       (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
                 'change-grep-buffer))))
 
-(defun prompt-for-branch ()
+(defun prompt-for-branch (&key prompt initial-value)
   ;; only call from a command.
-  (let* ((current-branch (porcelain::current-branch))
+  (let* ((current-branch (or initial-value (porcelain::current-branch)))
          (candidates (porcelain::branches)))
     (if candidates
-        (prompt-for-string "Branch: "
+        (prompt-for-string (or prompt "Branch: ")
                            :initial-value current-branch
                            :history-symbol '*legit-branches-history*
                            :completion-function (lambda (x) (completion-strings x candidates))
@@ -296,14 +302,21 @@
       (show-message (format nil "Already on ~a" branch) :timeout 3)
       (return-from legit-branch-checkout))
     (when branch
-      (multiple-value-bind (output error-output exit-code)
-          (porcelain::checkout branch)
-        (declare (ignorable output))
-        (cond
-          ((zerop exit-code)
-           (show-message (format nil "Checked out ~a" branch) :timeout 3))
-          (t
-           (pop-up-message error-output)))))))
+      (run-function (lambda ()
+                      (porcelain::checkout branch))
+                    :message (format nil "Checked out ~a" branch))
+      (legit-status))))
+
+(define-command legit-branch-create () ()
+  "Create and checkout a new branch."
+  (let ((new (prompt-for-string "New branch name: "
+                                :history-symbol '*new-branch-name-history*))
+        (base (prompt-for-branch :prompt "Base branch: " :initial-value "")))
+    (when (and new base)
+      (run-function (lambda ()
+                      (porcelain::checkout-create new base))
+                    :message (format nil "Created ~a" new))
+      (legit-status))))
 
 (define-command legit-help () ()
   "Show the important keybindings."

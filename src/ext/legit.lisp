@@ -87,6 +87,39 @@
 ;;; that operate on diff hunks.
 ;;;
 
+(defun %hunk-start-point (start?)
+  "Find the start of the current hunk.
+  It is the beginning of the previous \"@@ \" line.
+  Return a point.
+  If no hunk is found before the point, message to the user and exit."
+  (line-start start?)
+  (if (str:starts-with-p "@@ " (line-string start?))
+      start?
+      (save-excursion
+       (let ((point (search-backward-regexp start? "^\@\@")))
+         (when point
+           point)))))
+
+(defun %hunk-end-point (end?)
+  "Find the end of the current hunk.
+  It is the last point of the line preceding the following \"@@ \" line,
+  or the end of buffer."
+  (line-start end?)
+  (if (str:starts-with-p "@@ " (line-string end?))
+      ;; start searching from next line.
+      (setf end?
+            (move-to-next-virtual-line end?)))
+  (move-point
+   end?
+   (or
+    (and
+     (search-forward-regexp end? "^\@\@")
+     (line-offset end? -1)
+     (line-end end?)
+     end?)
+    (move-to-end-of-buffer)))
+  end?)
+
 (defun %call-legit-hunk-function (fn)
   "Stage the diff hunk at point.
   To find a hunk, the point has to be inside one,
@@ -114,35 +147,11 @@
                     (start? (copy-point keypresspoint))
                     (end (copy-point keypresspoint))
                     (end? (copy-point keypresspoint)))
-         (setf start
-               (progn
-                 (line-start start?)
-                 (if (str:starts-with-p "@@ " (line-string start?))
-                     start?
-                     (save-excursion
-                      (let ((point (search-backward-regexp start "^\@\@")))
-                        (unless point
-                          (message "No hunk at point.")
-                          (return-from %call-legit-hunk-function))
-                        point)))))
-         (setf end
-               (progn
-                 (line-start end?)
-                 (if (str:starts-with-p "@@ " (line-string end?))
-                     ;; start searching from next line.
-                     (setf end?
-                           (move-to-next-virtual-line end?)))
-                 (progn
-                   (move-point
-                    end?
-                    (or
-                     (and
-                      (search-forward-regexp end? "^\@\@")
-                      (line-offset end? -1)
-                      (line-end end?)
-                      end?)
-                     (move-to-end-of-buffer)))
-                   )))
+         (setf start (%hunk-start-point start?))
+         (unless start
+           (message "No hunk at point.")
+           (return-from %call-legit-hunk-function))
+         (setf end (%hunk-end-point end?))
 
          (log:info start end)
 

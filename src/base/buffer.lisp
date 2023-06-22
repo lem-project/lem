@@ -18,6 +18,7 @@
     :initform nil
     :accessor buffer-%filename)
    (%directory
+    :initarg :%directory
     :initform nil
     :accessor buffer-%directory
     :documentation "The buffer's directory. See: `buffer-directory'.")
@@ -140,7 +141,7 @@
   (:method (point)
     (copy-point point :left-inserting)))
 
-(defun make-buffer (name &key temporary read-only-p (enable-undo-p t)
+(defun make-buffer (name &key temporary read-only-p (enable-undo-p t) directory
                               (syntax-table (fundamental-syntax-table)))
   "バッファ名が`name`のバッファがバッファリストに含まれていれば
 そのバッファを返し、無ければ作成します。
@@ -156,6 +157,7 @@
   (let ((buffer (make-instance 'text-buffer
                                :name name
                                :read-only-p read-only-p
+                               :%directory directory
                                :%enable-undo-p enable-undo-p
                                :temporary temporary
                                :syntax-table syntax-table)))

@@ -21,6 +21,7 @@
 (define-key *legit-diff-mode-keymap* "s" 'legit-stage-hunk)
 (define-key *legit-diff-mode-keymap* "n" 'legit-goto-next-hunk)
 (define-key *legit-diff-mode-keymap* "p" 'legit-goto-previous-hunk)
+(define-key *legit-diff-mode-keymap* "c" 'lem/peek-legit::peek-legit-commit)
 (define-key lem/peek-legit::*peek-legit-keymap* "b b" 'legit-branch-checkout)
 
 ;; redraw everything:

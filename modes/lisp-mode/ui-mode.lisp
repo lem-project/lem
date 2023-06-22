@@ -18,6 +18,7 @@
 (define-key *lisp-ui-keymap* "Return" 'lisp-ui-default-action)
 (define-key *lisp-ui-keymap* "Tab" 'lisp-ui-forward-button)
 (define-key *lisp-ui-keymap* "q" 'quit-active-window)
+(define-key *lisp-ui-keymap* "M-q" 'quit-active-window)
 
 (define-command lisp-ui-default-action () ()
   (let ((button (button-at (current-point))))

@@ -3,7 +3,8 @@
         :lem/common/killring
         :lem-core
         :lem-core/commands/move)
-  (:export :get-self-insert-char
+  (:export :process-input-character
+           :get-self-insert-char
            :self-insert-before-hook
            :self-insert-after-hook
            :self-insert
@@ -65,14 +66,17 @@
 
 (defclass self-insert-advice () ())
 
-(defmethod execute :before (mode (command self-insert-advice) argument)
-  (unless (get-self-insert-char)
-    (error 'undefined-key-error)))
+(defgeneric process-input-character (char n))
 
 (define-command (self-insert (:advice-classes self-insert-advice editable-advice))
     (&optional (n 1) (char (get-self-insert-char)))
     ("p" (get-self-insert-char))
-  "Insert the input character."
+  "Processes the key entered."
+  (process-input-character char n))
+
+(defmethod process-input-character (char n)
+  (unless (get-self-insert-char)
+    (error 'undefined-key-error))
   (run-hooks (variable-value 'self-insert-before-hook) char)
   (self-insert-aux char n)
   (run-hooks (variable-value 'self-insert-after-hook) char))

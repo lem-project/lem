@@ -6,6 +6,12 @@ build-ncurses:
 build-sdl2:
 	$(LISP) --load scripts/patch-build-sdl2.lisp	
 
+test:
+	$(LISP) --load scripts/launch-tests.lisp
+
+generate-doc:
+	$(LISP) --load scripts/generate-documentation-tests.lisp --eval '(progn (lem-documentation-mode/tests::generate-markdown-file "test.md" :test) (quit))'
+
 update-submodules:
 	git submodule update --remote
 

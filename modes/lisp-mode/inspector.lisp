@@ -32,15 +32,18 @@
 (define-key *lisp-inspector-keymap* "." 'lisp-inspector-show-source)
 (define-key *lisp-inspector-keymap* ">" 'lisp-inspector-fetch-all)
 (define-key *lisp-inspector-keymap* "q" 'lisp-inspector-quit)
+(define-key *lisp-inspector-keymap* "M-q" 'lisp-inspector-quit)
 (define-key *lisp-inspector-keymap* "M-Return" 'lisp-inspector-copy-down-to-repl)
 (define-key *lisp-inspector-keymap* "C-Return" 'lisp-inspector-copy-down-to-repl)
 
-(define-command lisp-inspect (string)
+(define-command lisp-inspect (string &key (self-evaluation t) (focus nil))
     ((or (symbol-string-at-point (current-point))
          (prompt-for-sexp "Inspect value (evaluated): ")))
-  (lisp-eval-async `(micros:init-inspector
-                     (format nil "(quote ~a)" ,string))
-                   'open-inspector))
+  (lisp-eval-async (if self-evaluation
+                       `(micros:init-inspector
+                         (format nil "(quote ~a)" ,string))
+                       `(micros:init-inspector ,string))
+                   (lambda (inspected-parts) (open-inspector inspected-parts nil nil focus))))
 
 (defun inspector-buffer ()
   (or (get-buffer "*lisp-inspector*")
@@ -49,28 +52,34 @@
         (change-buffer-mode buffer 'lisp-inspector-mode)
         buffer)))
 
-(defun open-inspector (inspected-parts &optional inspector-position hook)
+(defun open-inspector (inspected-parts &optional inspector-position hook focus)
   (let ((buffer (inspector-buffer)))
-    (with-current-window (display-buffer buffer)
-      (let ((point (current-point)))
-        (when hook
-          (add-hook (variable-value 'kill-buffer-hook :buffer buffer) hook))
-        (let ((*inhibit-read-only* t))
-          (erase-buffer buffer)
-          (destructuring-bind (&key id title content) inspected-parts
-            (insert-button point title
-                           (make-inspect-action :part id)
-                           'part id
-                           :attribute 'inspector-value-attribute)
-            (delete-between-points point (buffer-end-point buffer))
-            (insert-string point
-                           (format nil "~%--------------------~%")
-                           :attribute 'inspector-label-attribute)
-            (save-excursion
-              (inspector-insert-content content))))
-        (when inspector-position
-          (move-to-line point (car inspector-position))
-          (line-offset point 0 (cdr inspector-position)))))))
+    (flet ((body ()
+             (let ((point (current-point)))
+               (when hook
+                 (add-hook (variable-value 'kill-buffer-hook :buffer buffer) hook))
+               (let ((*inhibit-read-only* t))
+                 (erase-buffer buffer)
+                 (destructuring-bind (&key id title content) inspected-parts
+                   (insert-button point title
+                                  (make-inspect-action :part id)
+                                  'part id
+                                  :attribute 'inspector-value-attribute)
+                   (delete-between-points point (buffer-end-point buffer))
+                   (insert-string point
+                                  (format nil "~%--------------------~%")
+                                  :attribute 'inspector-label-attribute)
+                   (save-excursion
+                     (inspector-insert-content content))))
+               (when inspector-position
+                 (move-to-line point (car inspector-position))
+                 (line-offset point 0 (cdr inspector-position))))))
+      (cond (focus
+             (setf (current-window) (display-buffer buffer))
+             (body))
+            (t
+             (with-current-window (display-buffer buffer)
+               (body)))))))
 
 (defun inspector-insert-content (content)
   (inspector-fetch-chunk

@@ -14,6 +14,7 @@
   (t :bold t))
 
 (define-key *lisp-apropos-mode-keymap* "q" 'quit-active-window)
+(define-key *lisp-apropos-mode-keymap* "M-q" 'quit-active-window)
 (define-key *lisp-apropos-mode-keymap* "Return" 'lem/language-mode::find-definitions)
 
 (defun show-apropos (data package)

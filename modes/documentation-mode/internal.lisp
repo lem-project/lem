@@ -80,6 +80,12 @@
                    :position (position-at-point point)
                    :line-number (line-number-at-point point))))
 
+#-sbcl
+(defun command-definition-location (command)
+  (make-location :file nil
+		 :position 0
+		 :line-number 0))
+
 (defun command-bindings (command)
   (collect-command-keybindings (command-name command) *global-keymap*))
 

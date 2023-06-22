@@ -109,6 +109,9 @@
   (:method (implementation)
     (values 0 0)))
 
+(defgeneric lem-if:get-char-width (implementation))
+(defgeneric lem-if:get-char-height (implementation))
+
 (defvar *display-background-mode* nil)
 
 (defun implementation ()

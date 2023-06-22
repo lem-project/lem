@@ -261,6 +261,7 @@
    :floating-window
    :floating-window-border
    :floating-window-border-shape
+   :floating-window-focusable-p
    :floating-window-p
    :side-window
    :make-leftside-window
@@ -548,4 +549,6 @@
    :decrease-font-size
    :resize-display-before
    :get-font-list
-   :get-mouse-position))
+   :get-mouse-position
+   :get-char-width
+   :get-char-height))

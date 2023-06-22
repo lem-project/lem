@@ -191,6 +191,8 @@
            (active-prompt-window))
           (alexandria:ensure-list
            (frame-leftside-window (current-frame)))
+          (remove-if-not #'floating-window-focusable-p
+                         (frame-floating-windows (current-frame)))
           (window-list)))
 
 (defun one-window-p ()
@@ -1150,7 +1152,10 @@ You can pass in the optional argument WINDOW-LIST to replace the default
    (background-color
     :initarg :background-color
     :initform nil
-    :reader floating-window-background-color)))
+    :reader floating-window-background-color)
+   (focusable
+    :initform nil
+    :accessor floating-window-focusable-p)))
 
 (defmethod initialize-instance :before ((floating-window floating-window) &rest initargs)
   (declare (ignore initargs))

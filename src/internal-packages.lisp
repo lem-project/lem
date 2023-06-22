@@ -261,6 +261,7 @@
    :floating-window
    :floating-window-border
    :floating-window-border-shape
+   :floating-window-focusable-p
    :floating-window-p
    :side-window
    :make-leftside-window

@@ -111,25 +111,40 @@
             patch)
        ;; Get hunk at point.
        (with-point ((start (copy-point keypresspoint) ) ;; @@
-                    (end (copy-point keypresspoint)))
+                    (start? (copy-point keypresspoint))
+                    (end (copy-point keypresspoint))
+                    (end? (copy-point keypresspoint)))
          (setf start
-               (save-excursion
-                (let ((point (search-backward-regexp start "^\@\@")))
-                  (unless point
-                    (message "No hunk at point.")
-                    (return-from %call-legit-hunk-function))
-                  point)))
-         (setf end (progn
-                     (move-point
-                      end
-                      (or
-                       (and
-                        (search-forward-regexp end "^\@\@")
-                        (line-offset end -1)
-                        (line-end end)
-                        end)
-                       (move-to-end-of-buffer)))
-                     ))
+               (progn
+                 (line-start start?)
+                 (if (str:starts-with-p "@@ " (line-string start?))
+                     start?
+                     (save-excursion
+                      (let ((point (search-backward-regexp start "^\@\@")))
+                        (unless point
+                          (message "No hunk at point.")
+                          (return-from %call-legit-hunk-function))
+                        point)))))
+         (setf end
+               (progn
+                 (line-start end?)
+                 (if (str:starts-with-p "@@ " (line-string end?))
+                     ;; start searching from next line.
+                     (setf end?
+                           (move-to-next-virtual-line end?)))
+                 (progn
+                   (move-point
+                    end?
+                    (or
+                     (and
+                      (search-forward-regexp end? "^\@\@")
+                      (line-offset end? -1)
+                      (line-end end?)
+                      end?)
+                     (move-to-end-of-buffer)))
+                   )))
+
+         (log:info start end)
 
          (setf hunk (points-to-string start end))
          (setf patch (str:concat header
@@ -159,8 +174,15 @@
 
 (define-command legit-stage-hunk () ()
   (%call-legit-hunk-function (lambda ()
-                               (porcelain::apply-patch ".lem-hunk.patch")
-                               (message "Hunk staged."))))
+                               (multiple-value-bind (output error-output exit-code)
+                                   (porcelain::apply-patch ".lem-hunk.patch")
+                                 (declare (ignorable output))
+                                 (cond
+                                   ((zerop exit-code)
+                                    (message "Hunk staged."))
+                                   (t
+                                    (when error-output
+                                      (pop-up-message error-output))))))))
 
 (define-command legit-unstage-hunk () ()
   (%call-legit-hunk-function (lambda ()

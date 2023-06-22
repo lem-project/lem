@@ -10,10 +10,15 @@
 (define-attribute delete-line-attribute
   (t :foreground :base08))
 
+(define-attribute hunk-line-attribute
+  (:light :foreground "black" :background "lightgrey")
+  (:dark :foreground "grey" :background "black"))
+
 (defun make-tmlanguage-patch ()
   (let* ((patterns (make-tm-patterns
                     (make-tm-match "^\\+.*$" :name 'add-line-attribute)
-                    (make-tm-match "^-.*$" :name 'delete-line-attribute))))
+                    (make-tm-match "^-.*$" :name 'delete-line-attribute)
+                    (make-tm-match "^\\@\\@ .*$" :name 'hunk-line-attribute))))
     (make-tmlanguage :patterns patterns)))
 
 (defvar *patch-syntax-table*

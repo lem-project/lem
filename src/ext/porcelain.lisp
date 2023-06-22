@@ -128,7 +128,8 @@ M	src/ext/porcelain.lisp
         (args (list patch)))
     (uiop:run-program (concatenate 'list base maybe args)
                       :output :string
-                      :error-output t)))
+                      :error-output t
+                      :ignore-error-status t)))
 
 (defun checkout (branch)
   (uiop:run-program (list "git"

@@ -28,6 +28,7 @@
 ;; navigation
 (define-key *legit-diff-mode-keymap* "C-n" 'next-line)
 (define-key *legit-diff-mode-keymap* "C-p" 'previous-line)
+(define-key *legit-diff-mode-keymap* "Tab" 'other-window)
 ;; help
 (define-key lem/peek-legit::*peek-legit-keymap* "?" 'legit-help)
 (define-key lem/peek-legit::*peek-legit-keymap* "C-x ?" 'legit-help)

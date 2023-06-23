@@ -176,7 +176,7 @@
 (defun setup-repl (connection)
   (let ((result
           (remote-eval-sync connection
-                            '(micros/contrib/repl:create-repl nil :coding-system "utf-8-unix")
+                            '(micros/repl:create-repl nil :coding-system "utf-8-unix")
                             :package-name "CL-USER")))
     (destructuring-bind (package-name package-string-for-prompt) result
       (declare (ignore package-string-for-prompt))

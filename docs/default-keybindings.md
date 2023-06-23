@@ -7,8 +7,8 @@
 | [previous-logical-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L80)              |               | Move the cursor to the previous logical line.         |
 | [forward-char](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L84)                       | C-f, Right    | Move the cursor to the next character.                |
 | [backward-char](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L90)                      | C-b, Left     | Move the cursor to the previous character.            |
-| [move-to-beginning-of-buffer](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L95)        | M-<           | Move the cursor to the beginning of the buffer.       |
-| [move-to-end-of-buffer](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L100)             | M->           | Move the cursor to the end of the buffer.             |
+| [move-to-beginning-of-buffer](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L95)        | M-<, C-Home   | Move the cursor to the beginning of the buffer.       |
+| [move-to-end-of-buffer](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L100)             | M->, C-End    | Move the cursor to the end of the buffer.             |
 | [move-to-beginning-of-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L105)         | C-a, Home     | Move the cursor to the beginning of the line.         |
 | [move-to-beginning-of-logical-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L121) |               | Move the cursor to the beginning of the logical line. |
 | [move-to-end-of-line](https://github.com/lem-project/lem/blob/main/src/commands/move.lisp#L125)               | C-e, End      | Move the cursor to the end of the line.               |

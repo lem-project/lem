@@ -21,7 +21,6 @@
 ;; Some are defined on legit.lisp for this keymap too.
 (define-key *peek-legit-keymap* "s" 'peek-legit-stage-file)
 (define-key *peek-legit-keymap* "u" 'peek-legit-unstage-file)
-(define-key *peek-legit-keymap* "c" 'peek-legit-commit)
 
 ;; quit
 (define-key *peek-legit-keymap* "Return" 'peek-legit-select)
@@ -202,7 +201,6 @@
   (let* ((*collector* (make-instance 'collector :buffer (make-peek-legit-buffer)))
          (point (buffer-point (collector-buffer *collector*))))
     (declare (ignorable point))
-    (log:info "collector buffer directory: " (buffer-directory (collector-buffer *collector*)))
     ;; Set a buffer directory to uiop:getcwd by default? It works for me too.
     (setf (buffer-directory (collector-buffer *collector*))
           (uiop:getcwd))
@@ -347,12 +345,6 @@
     ;; This calls git again and refreshes everything.
     (uiop:symbol-call :lem/legit :legit-status)
     point))
-
-(define-command peek-legit-commit () ()
-  (let ((message (prompt-for-string "Commit message: ")))
-    (porcelain::commit message)
-    (uiop:symbol-call :lem/legit :legit-status)
-    (message "Commited.")))
 
 (define-command peek-legit-quit () ()
   (setf (current-window) *parent-window*)

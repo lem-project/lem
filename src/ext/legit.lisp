@@ -57,7 +57,10 @@ Next:
 (define-key *legit-diff-mode-keymap* "s" 'legit-stage-hunk)
 (define-key *legit-diff-mode-keymap* "n" 'legit-goto-next-hunk)
 (define-key *legit-diff-mode-keymap* "p" 'legit-goto-previous-hunk)
-(define-key *legit-diff-mode-keymap* "c" 'lem/peek-legit::peek-legit-commit)
+
+(define-key *legit-diff-mode-keymap* "c" 'legit-commit)
+(define-key lem/peek-legit::*peek-legit-keymap* "c" 'legit-commit)
+
 (define-key lem/peek-legit::*peek-legit-keymap* "b b" 'legit-branch-checkout)
 (define-key *legit-diff-mode-keymap* "b b" 'legit-branch-checkout)
 (define-key lem/peek-legit::*peek-legit-keymap* "b c" 'legit-branch-create)
@@ -124,12 +127,13 @@ Next:
 
 (defun make-move-function (file  &key cached)
   (lambda ()
-    (move file :cached cached)))
+    (with-current-project ()
+      (move file :cached cached))))
 
 ;; stage
 (defun make-stage-function (file)
-  (with-current-project ()
-    (lambda ()
+  (lambda ()
+    (with-current-project ()
       (porcelain::stage file)
       t)))
 
@@ -298,6 +302,13 @@ Next:
       (if (equal start (buffer-start start?))
           point
           start))))
+
+(define-command legit-commit () ()
+  (let ((message (prompt-for-string "Commit message: ")))
+    (with-current-project ()
+      (porcelain::commit message)
+      (legit-status)
+      (message "Commited."))))
 
 
 (define-command legit-status () ()

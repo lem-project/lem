@@ -5,6 +5,25 @@
   (:export))
 (in-package :porcelain)
 
+(defvar *git-base-args* (list "git")
+  "git, to be appended command-line options.")
+
+(defvar *nb-latest-commits* 10
+  "Number of commits to show in the status.")
+
+(defvar *branch-sort-by* "-creatordate"
+  "When listing branches, sort by this field name.
+  Prefix with \"-\" to sort in descending order.
+
+  Defaults to \"-creatordate\", to list the latest used branches first.")
+
+(defvar *file-diff-args* (list "diff"
+                               "--no-color")
+  "Arguments to display the file diffs.
+  Will be surrounded by the git binary and the file path.
+
+  For staged files, --cached is added by the command.")
+
 (defun git-project-p ()
   (uiop:directory-exists-p ".git"))
 
@@ -30,12 +49,6 @@
                                 modified-unstaged-files
                                 modified-staged-files))))
 
-(defparameter *file-diff-args* (list "diff"
-                                   "--no-color")
-  "Must be surrounded by the git binary and the file path.
-
-  For staged files, add --cached.")
-
 (defun file-diff (file &key cached)
   (let ((out (uiop:run-program
               (concatenate 'list '("git")
@@ -51,12 +64,6 @@
                           "commit"
                           "-m"
                           message)))
-
-(defvar *branch-sort-by* "-creatordate"
-  "When listing branches, sort by this field name.
-  Prefix with \"-\" to sort in descending order.
-
-  Defaults to \"-creatordate\", to list the latest used branches first.")
 
 (defun git-list-branches (&key (sort-by *branch-sort-by*))
   "Return: list of branches, raw output.
@@ -79,14 +86,15 @@
           if (str:starts-with-p "*" branch)
             return (subseq branch 2))))
 
-(defun list-latest-commits (&optional (n 10))
-  (str:lines
-   (uiop:run-program (list "git"
-                           "log"
-                           "--pretty=oneline"
-                           "-n"
-                           (princ-to-string n))
-                     :output :string)))
+(defun list-latest-commits (&optional (n *nb-latest-commits*))
+  (when (plusp n)
+    (str:lines
+     (uiop:run-program (list "git"
+                             "log"
+                             "--pretty=oneline"
+                             "-n"
+                             (princ-to-string n))
+                       :output :string))))
 
 (defun latest-commits (&key (hash-length 8))
   (let ((lines (list-latest-commits)))
@@ -116,9 +124,6 @@ M	src/ext/peek-legit.lisp
 M	src/ext/porcelain.lisp
 ""
 |#
-
-(defvar *git-base-args* (list "git")
-  "git, to be appended command-line options.")
 
 (defun run-git (args)
   "Run the git command with these options,

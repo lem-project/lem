@@ -93,6 +93,12 @@
     (put-text-property start end 'move-marker t))
   (put-text-property start end 'move-function move-function))
 
+(defun set-visit-file-function (start end function)
+  (with-point ((end start))
+    (character-offset end 1)
+    (put-text-property start end 'file-marker t))
+  (put-text-property start end 'visit-file-function function))
+
 (defun set-stage-function (start end function)
   (with-point ((end start))
     (character-offset end 1)
@@ -109,6 +115,11 @@
   (with-point ((point point))
     (line-start point)
     (text-property-at point 'move-function)))
+
+(defun get-visit-file-function (point)
+  (with-point ((point point))
+    (line-start point)
+    (text-property-at point 'visit-file-function)))
 
 (defun get-stage-function (point)
   (with-point ((point point))
@@ -206,8 +217,9 @@
                                    ,@body)
                                  :read-only ,read-only))
 
-(defun call-with-appending-source (insert-function 
+(defun call-with-appending-source (insert-function
                                    move-function
+                                   visit-file-function
                                    stage-function
                                    unstage-function)
   (let ((point (buffer-point (collector-buffer *collector*))))
@@ -216,20 +228,24 @@
       (unless (start-line-p point)
         (insert-string point (string #\newline) :read-only t))
       (set-move-function start point move-function)
+      (set-visit-file-function start point visit-file-function)
       (set-stage-function start point stage-function)
       (set-unstage-function start point unstage-function))
     (incf (collector-count *collector*))))
 
-(defmacro with-appending-source ((point &key move-function 
+(defmacro with-appending-source ((point &key move-function
+                                             visit-file-function
                                              stage-function
                                              unstage-function) &body body)
   `(call-with-appending-source (lambda (,point) ,@body)
                                ,move-function
+                               ,visit-file-function
                                ,stage-function
                                ,unstage-function))
 
 (defun call-with-appending-staged-files (insert-function
                                          move-function
+                                         visit-file-function
                                          stage-function
                                          unstage-function)
   (let ((point (buffer-point (collector-buffer *collector*))))
@@ -239,15 +255,17 @@
       (unless (start-line-p point)
         (insert-string point (string #\newline) :read-only t))
       (set-move-function start point move-function)
+      (set-visit-file-function start point visit-file-function)
       (set-stage-function start point stage-function)
       (set-unstage-function start point unstage-function))
     (incf (collector-count *collector*))))
 
-(defmacro with-appending-staged-files ((point &key move-function 
+(defmacro with-appending-staged-files ((point &key move-function
+                                                   visit-file-function
                                                    stage-function
                                                    unstage-function) &body body)
   `(call-with-appending-source (lambda (,point) ,@body)
-                               ,move-function ,stage-function ,unstage-function))
+                               ,move-function ,visit-file-function ,stage-function ,unstage-function))
 
 (defun collector-insert (s &optional (newline t))
   (let ((point (buffer-point (collector-buffer *collector*))))
@@ -263,6 +281,12 @@
   (alexandria:when-let* ((move (get-move-function (buffer-point (window-buffer *peek-window*))))
                          (point (funcall move)))
     point))
+
+(defun get-matched-file ()
+  (alexandria:when-let* ((visit-file-function (get-visit-file-function
+                                               (buffer-point (window-buffer *peek-window*))))
+                         (file (funcall visit-file-function)))
+    file))
 
 (defun show-matched-line ()
   (alexandria:when-let (point (get-matched-point))
@@ -288,11 +312,19 @@
 
 
 (define-command peek-legit-select () ()
-  (alexandria:when-let ((point (get-matched-point)))
-    (let ((line (line-number-at-point point)))
-      (peek-legit-quit)
-      (switch-to-buffer (point-buffer point))
-      (move-to-line (current-point) line))))
+  (alexandria:when-let ((file (get-matched-file))
+                        ;; (point (get-matched-point))
+                        )
+    (peek-legit-quit)
+    (switch-to-buffer (find-file-buffer file))
+    ;; This was used by grep to go to the file and line number.
+    ;; We could use this in the diff buffer, to visit the file,
+    ;; at the same line of the diff.
+    ;; (let ((line (line-number-at-point point)))
+    ;;   (peek-legit-quit)
+    ;;   (switch-to-buffer (point-buffer point))
+    ;;   (move-to-line (current-point) line))
+    ))
 
 (define-command peek-legit-next () ()
   (next-move-point (current-point)))

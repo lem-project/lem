@@ -58,12 +58,11 @@
 
 (defmacro with-current-project (&body body)
   "Execute body with the current working directory changed to the buffer directory
-  (so, that should be the root directory where the Git project is.
+  (so, that should be the root directory where the Git project is).
 
   If no Git directory is found, message the user."
   `(let ((root (lem-core/commands/project:find-root (buffer-directory))))
      (uiop:with-current-directory (root)
-       (log:info "with-current-project macro root: " root)
        (if (porcelain::git-project-p)
            (progn
              ,@body)
@@ -282,6 +281,7 @@
             (loop :for file :in unstaged-files
                   :do (lem/peek-legit:with-appending-source
                           (point :move-function (make-move-function file)
+                                 :visit-file-function (lambda () file)
                                  :stage-function (make-stage-function file)
                                  :unstage-function (make-unstage-function file :already-unstaged t))
 
@@ -298,6 +298,7 @@
                   :for i := 0 :then (incf i)
                   :do (lem/peek-legit::with-appending-staged-files
                           (point :move-function (make-move-function file :cached t)
+                                 :visit-file-function (lambda () file)
                                  :stage-function (make-stage-function file)
                                  :unstage-function (make-unstage-function file))
 

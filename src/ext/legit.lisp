@@ -1,9 +1,45 @@
 (defpackage :lem/legit
   (:use :cl
    :lem
-   :lem/grep)
+        :lem/grep)
   (:export :legit-status))
 (in-package :lem/legit)
+
+#|
+An interactive interface to Git.
+
+Done:
+
+- status window: current branch, latest commits, unstaged changes, staged changes
+- view changes diff
+- stage, unstage files
+- inside the diff, stage, unstage hunks
+- commit (only a one-line message for now)
+- push, pull the remote branch
+- branch checkout, branch create&checkout
+
+Nice to have/todo next:
+
+- view commit at point
+- view log
+- redact a proper commit text, not only one line
+- other VCS support
+
+Next:
+
+- interactive rebase
+- stash
+- untracked files
+- many, many more commands, settings and switches
+- mouse context menus
+
+### See also
+
+- https://github.com/fiddlerwoaroof/cl-git native CL, no wrapper around libgit.
+- https://github.com/russell/cl-git/ wrapper around libgit2.
+- http://shinmera.github.io/legit/ rename that lib and see how useful its caching can be.
+
+|#
 
 (defvar *legit-verbose* nil
   "If non nil, print some logs on standard output (terminal) and create the hunk patch file on disk at (lem home)/lem-hunk-latest.patch.")
@@ -157,6 +193,11 @@
   ;;   - ensure it respects git's format (ends with a space, the first line character is meaningful)
   ;; - apply it to the index
   ;; and that's it.
+  ;;
+  ;; Idea:
+  ;; To get the list of hunk lines, simply check what lines start with "@@ "
+  ;; save the lines index, and move the point to the closest line.
+  ;; We would NOT need to tediously move points to find lines.
 
   (save-excursion
    (with-point ((keypresspoint (copy-point (current-point))))

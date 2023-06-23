@@ -54,7 +54,10 @@
   (if (slot-boundp link 'location)
       (slot-value link 'location)
       (setf (link-location link)
-            (command-definition-location (link-command link)))))
+	    #+sbcl
+            (command-definition-location (link-command link))
+	    #-sbcl
+	    nil)))
 
 (defmethod link-url ((link link))
   (let ((location (link-location link)))

@@ -494,6 +494,7 @@
    :color-theme-names
    :define-color-theme
    :load-theme))
+#+sbcl
 (sb-ext:lock-package :lem-core)
 
 (defpackage :lem-restart

@@ -198,6 +198,10 @@
                      (line-str (line-next line))))
   (line-free (line-next line)))
 
+;;TODO: ABCL complains about n that is not bound
+#+abcl
+(defparameter n nil)
+
 (defgeneric delete-char/point (point n)
   (:method (point n)
     (declare (special n))

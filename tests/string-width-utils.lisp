@@ -335,6 +335,7 @@
   (loop :for (char control-char) :in +control-char-pairs+
         :do (ok (equal (control-char char) control-char))))
 
+#-abcl
 (deftest wide-char-p
   (let ((alphabet-or-numbers
           (loop :for code :from 0 :below 128

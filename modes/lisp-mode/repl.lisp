@@ -1,5 +1,13 @@
 (in-package :lem-lisp-mode/internal)
 
+(define-attribute printed-object-attribute
+  (:dark :foreground "white" :bold t)
+  (:light :foreground "black" :bold t))
+
+(define-attribute repl-result-attribute
+  (:dark :foreground "aquamarine" :bold t)
+  (:light :foreground "black" :bold t))
+
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"
      :keymap *lisp-repl-mode-keymap*
@@ -8,9 +16,43 @@
     ((eq (repl-buffer) (current-buffer))
      (repl-reset-input)
      (lem/listener-mode:start-listener-mode (merge-pathnames "history/lisp-repl" (lem-home)))
-     (setf (variable-value 'completion-spec) 'repl-completion))
+     (setf (variable-value 'completion-spec) 'repl-completion)
+     (setf (buffer-context-menu (current-buffer))
+           (make-instance 'lem/context-menu:context-menu
+                          :compute-items-function 'repl-compute-context-menu-items)))
     (t
      (editor-error "No connection for repl. Did you mean 'start-lisp-repl' command?"))))
+
+(defun context-menu-inspect-printed-object ()
+  (let* ((point (get-point-on-context-menu-open))
+         (id (object-id-at point)))
+    (when id
+      (lem/context-menu:make-item
+       :label "Inspect"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   (lisp-eval-async `(micros:inspect-printed-object ,id)
+                                    #'open-inspector))))))
+
+(defun context-menu-copy-down-printed-object ()
+  (let* ((point (get-point-on-context-menu-open))
+         (id (object-id-at point)))
+    (when id
+      (lem/context-menu:make-item
+       :label "Copy Down"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   (copy-down-to-repl 'micros:get-printed-object-by-id id))))))
+
+(defun repl-compute-context-menu-items ()
+  (remove
+   nil
+   (list (context-menu-describe-symbol)
+         (context-menu-find-definition)
+         (context-menu-find-references)
+         (context-menu-hyperspec)
+         (context-menu-inspect-printed-object)
+         (context-menu-copy-down-printed-object))))
 
 (defun read-string-thread-stack ()
   (buffer-value (repl-buffer) 'read-string-thread-stack))
@@ -34,11 +76,20 @@
                                    :repl-thread))))
 
 (defmethod execute ((mode lisp-repl-mode) (command lem/listener-mode:listener-return) argument)
-  (cond ((repl-paren-correspond-p (buffer-end-point (current-buffer)))
-         (call-next-method))
-        (t
-         (insert-character (current-point) #\newline)
-         (indent-line (current-point)))))
+  (let (button)
+    (cond ((setf button (button-at (current-point)))
+           (button-action button))
+          ((repl-paren-correspond-p (buffer-end-point (current-buffer)))
+           (call-next-method))
+          (t
+           (insert-character (current-point) #\newline)
+           (indent-line (current-point))))))
+
+(defmethod execute :before
+    ((mode lisp-repl-mode)
+     (command lem/listener-mode:listener-clear-buffer)
+     argument)
+  (lisp-eval-async '(micros:clear-printed-objects)))
 
 (defvar *lisp-repl-shortcuts* '())
 
@@ -234,7 +285,7 @@
             (let ((point (copy-point (buffer-point buffer) :left-inserting)))
               (buffer-start point)))))
 
-(defun write-string-to-repl (string)
+(defun call-with-repl-point (function)
   (let* ((buffer (ensure-repl-buffer-exist))
          (point (repl-buffer-write-point buffer)))
     (cond (*repl-evaluating*
@@ -245,10 +296,38 @@
              (previous-single-property-change point :field))))
     (with-buffer-read-only buffer nil
       (let ((*inhibit-read-only* t))
-        (insert-escape-sequence-string point string)
-        (when (text-property-at point :field)
-          (insert-character point #\newline)
-          (character-offset point -1))))))
+        (funcall function point)))))
+
+(defmacro with-repl-point ((point) &body body)
+  `(call-with-repl-point (lambda (,point) ,@body)))
+
+(defun write-string-to-repl (string)
+  (with-repl-point (point)
+    (insert-escape-sequence-string point string)
+    (when (text-property-at point :field)
+      (insert-character point #\newline)
+      (character-offset point -1))))
+
+(defun object-id-at (point)
+  (text-property-at point 'object-id))
+
+(defun write-object-to-repl (string id type)
+  (assert (member type '(:standard-output :repl-result)))
+  (with-repl-point (point)
+    (with-point ((start point))
+      (insert-string point
+                     string
+                     'object-id id
+                     :attribute (if (eq type :repl-result)
+                                    'repl-result-attribute
+                                    'printed-object-attribute))
+      (lem/button:apply-button-between-points
+       start
+       point
+       (lambda (&rest args)
+         (declare (ignore args))
+         (lisp-eval-async `(micros:inspect-printed-object ,id)
+                          #'open-inspector))))))
 
 (defvar *escape-sequence-argument-specs*
   '(("0" :bold nil :reverse nil :underline nil)

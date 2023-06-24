@@ -17,6 +17,8 @@
   (lem/listener-mode:start-listener-mode))
 
 (define-key *elisp-mode-keymap* "C-c C-r" 'elisp-eval-region)
+(define-key *elisp-mode-keymap* "C-c C-c" 'elisp-eval-defun)
+
 
 (defun reset-listener-variables (buffer)
   (setf (variable-value 'lem/listener-mode:listener-set-prompt-function :buffer buffer)
@@ -75,7 +77,21 @@
 (define-command elisp-eval-region (start end) ("r")
   (unless (alive-process-p)
     (editor-error "Emacs Lisp Terminal process doesn't exist."))
-  (lem-process:process-send-input *process* (points-to-string start end)))
+  (lem-process:process-send-input *process* 
+                                  (format nil "~a ~c" (points-to-string start end) #\Newline)))
+
+
+(define-command elisp-eval-defun () ()
+  (unless (alive-process-p)
+    (editor-error "Emacs Lisp Terminal process doesn't exist."))
+  
+  (with-point ((point (current-point)))
+    (lem-lisp-syntax:top-of-defun point)
+    (with-point ((start point)
+                 (end point))
+      (scan-lists end 1 0)
+      (lem-process:process-send-input *process* 
+                                      (format nil "~a ~c" (points-to-string start end) #\Newline)))))
 
 (define-command run-elisp () ()
   (run-elisp-internal))

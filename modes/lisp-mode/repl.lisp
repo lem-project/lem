@@ -250,28 +250,29 @@
       (let ((*inhibit-read-only* t))
         (funcall function point)))))
 
+(defmacro with-repl-point ((point) &body body)
+  `(call-with-repl-point (lambda (,point) ,@body)))
+
 (defun write-string-to-repl (string)
-  (call-with-repl-point
-   (lambda (point)
-     (insert-escape-sequence-string point string)
-     (when (text-property-at point :field)
-       (insert-character point #\newline)
-       (character-offset point -1)))))
+  (with-repl-point (point)
+    (insert-escape-sequence-string point string)
+    (when (text-property-at point :field)
+      (insert-character point #\newline)
+      (character-offset point -1))))
 
 (defun write-object-to-repl (string id)
-  (call-with-repl-point
-   (lambda (point)
-     (with-point ((start point))
-       (insert-string point
-                      string
-                      'object-id id
-                      :attribute 'printed-object-attribute)
-       (lem-core::set-clickable start
-                                point
-                                (lambda (window point)
-                                  (declare (ignore window point))
-                                  (lisp-eval-async `(micros:inspect-printed-object ,id)
-                                                   #'open-inspector)))))))
+  (with-repl-point (point)
+    (with-point ((start point))
+      (insert-string point
+                     string
+                     'object-id id
+                     :attribute 'printed-object-attribute)
+      (lem-core::set-clickable start
+                               point
+                               (lambda (window point)
+                                 (declare (ignore window point))
+                                 (lisp-eval-async `(micros:inspect-printed-object ,id)
+                                                  #'open-inspector))))))
 
 (defvar *escape-sequence-argument-specs*
   '(("0" :bold nil :reverse nil :underline nil)

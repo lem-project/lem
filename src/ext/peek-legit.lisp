@@ -193,7 +193,10 @@
     (show-matched-line)))
 
 (defun make-peek-legit-buffer ()
-  (let ((buffer (make-buffer "*peek-legit*" :temporary t :enable-undo-p t)))
+  (let ((buffer (make-buffer "*peek-legit*"
+                             :temporary t
+                             :enable-undo-p t
+                             :directory (uiop:getcwd))))
     (setf (variable-value 'line-wrap :buffer buffer) nil)
     buffer))
 
@@ -201,9 +204,6 @@
   (let* ((*collector* (make-instance 'collector :buffer (make-peek-legit-buffer)))
          (point (buffer-point (collector-buffer *collector*))))
     (declare (ignorable point))
-    ;; Set a buffer directory to uiop:getcwd by default? It works for me too.
-    (setf (buffer-directory (collector-buffer *collector*))
-          (uiop:getcwd))
     (funcall function *collector*)
     (when read-only
       (setf (buffer-read-only-p (collector-buffer *collector*)) t))
@@ -247,7 +247,6 @@
                                          stage-function
                                          unstage-function)
   (let ((point (buffer-point (collector-buffer *collector*))))
-    (log:info point)
     (with-point ((start point))
       (funcall insert-function point)
       (unless (start-line-p point)

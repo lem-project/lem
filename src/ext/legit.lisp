@@ -117,6 +117,8 @@ Next:
 (defun move (file &key cached)
   (let ((buffer (lem-base:get-or-create-buffer "*legit-diff*"))
         (diff (porcelain::file-diff file :cached cached)))
+    (setf (buffer-directory buffer)
+          (uiop:getcwd))
     (setf (buffer-read-only-p buffer) nil)
     (erase-buffer buffer)
     (move-to-line (buffer-point buffer) 1)
@@ -317,7 +319,6 @@ Next:
     (multiple-value-bind (untracked unstaged-files staged-files)
         (porcelain::components)
       (declare (ignorable untracked))
-      ;; (message "Modified files: ~S" modified)
 
       ;; big try! It works \o/
       (lem/peek-legit:with-collecting-sources (collector :read-only nil)

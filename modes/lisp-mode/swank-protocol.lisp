@@ -214,7 +214,6 @@ Parses length information to determine how many characters to read."
 
   ;; Start it up
   (log:debug "Initializing presentations")
-  (remote-eval-from-string connection "(micros:init-presentations)")
   (read-return-message connection)
 
   (log:debug "Creating the REPL")

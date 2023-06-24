@@ -1,5 +1,8 @@
 (in-package :lem-lisp-mode/internal)
 
+(define-attribute printed-object-attribute
+  (t :foreground "light cyan"))
+
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"
      :keymap *lisp-repl-mode-keymap*
@@ -234,7 +237,7 @@
             (let ((point (copy-point (buffer-point buffer) :left-inserting)))
               (buffer-start point)))))
 
-(defun write-string-to-repl (string)
+(defun call-with-repl-point (function)
   (let* ((buffer (ensure-repl-buffer-exist))
          (point (repl-buffer-write-point buffer)))
     (cond (*repl-evaluating*
@@ -245,10 +248,30 @@
              (previous-single-property-change point :field))))
     (with-buffer-read-only buffer nil
       (let ((*inhibit-read-only* t))
-        (insert-escape-sequence-string point string)
-        (when (text-property-at point :field)
-          (insert-character point #\newline)
-          (character-offset point -1))))))
+        (funcall function point)))))
+
+(defun write-string-to-repl (string)
+  (call-with-repl-point
+   (lambda (point)
+     (insert-escape-sequence-string point string)
+     (when (text-property-at point :field)
+       (insert-character point #\newline)
+       (character-offset point -1)))))
+
+(defun write-object-to-repl (string id)
+  (call-with-repl-point
+   (lambda (point)
+     (with-point ((start point))
+       (insert-string point
+                      string
+                      'object-id id
+                      :attribute 'printed-object-attribute)
+       (lem-core::set-clickable start
+                                point
+                                (lambda (window point)
+                                  (declare (ignore window point))
+                                  (lisp-eval-async `(micros:inspect-printed-object ,id)
+                                                   #'open-inspector)))))))
 
 (defvar *escape-sequence-argument-specs*
   '(("0" :bold nil :reverse nil :underline nil)

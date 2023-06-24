@@ -5,6 +5,7 @@
            :button-end
            :button-get
            :insert-button
+           :apply-button-between-points
            :button-action
            :forward-button
            :backward-button
@@ -38,6 +39,10 @@
            (if button-tag
                `(,button-tag t)
                '()))))
+
+(defun apply-button-between-points (start end callback)
+  (lem-core::set-clickable start end callback)
+  (put-text-property start end 'button (make-button :callback callback)))
 
 (defun button-action (button)
   (funcall (button-callback button)))

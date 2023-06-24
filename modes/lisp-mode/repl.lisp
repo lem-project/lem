@@ -37,11 +37,14 @@
                                    :repl-thread))))
 
 (defmethod execute ((mode lisp-repl-mode) (command lem/listener-mode:listener-return) argument)
-  (cond ((repl-paren-correspond-p (buffer-end-point (current-buffer)))
-         (call-next-method))
-        (t
-         (insert-character (current-point) #\newline)
-         (indent-line (current-point)))))
+  (let (button)
+    (cond ((setf button (button-at (current-point)))
+           (button-action button))
+          ((repl-paren-correspond-p (buffer-end-point (current-buffer)))
+           (call-next-method))
+          (t
+           (insert-character (current-point) #\newline)
+           (indent-line (current-point))))))
 
 (defvar *lisp-repl-shortcuts* '())
 
@@ -267,12 +270,13 @@
                      string
                      'object-id id
                      :attribute 'printed-object-attribute)
-      (lem-core::set-clickable start
-                               point
-                               (lambda (window point)
-                                 (declare (ignore window point))
-                                 (lisp-eval-async `(micros:inspect-printed-object ,id)
-                                                  #'open-inspector))))))
+      (lem/button:apply-button-between-points
+       start
+       point
+       (lambda (&rest args)
+         (declare (ignore args))
+         (lisp-eval-async `(micros:inspect-printed-object ,id)
+                          #'open-inspector))))))
 
 (defvar *escape-sequence-argument-specs*
   '(("0" :bold nil :reverse nil :underline nil)

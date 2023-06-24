@@ -4,6 +4,10 @@
   (:dark :foreground "white" :bold t)
   (:light :foreground "black" :bold t))
 
+(define-attribute repl-result-attribute
+  (:dark :foreground "red" :bold t)
+  (:light :foreground "black" :bold t))
+
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"
      :keymap *lisp-repl-mode-keymap*
@@ -270,13 +274,16 @@
       (insert-character point #\newline)
       (character-offset point -1))))
 
-(defun write-object-to-repl (string id)
+(defun write-object-to-repl (string id type)
+  (assert (member type '(:standard-output :repl-result)))
   (with-repl-point (point)
     (with-point ((start point))
       (insert-string point
                      string
                      'object-id id
-                     :attribute 'printed-object-attribute)
+                     :attribute (if (eq type :repl-result)
+                                    'printed-object-attribute
+                                    'repl-result-attribute))
       (lem/button:apply-button-between-points
        start
        point

@@ -212,10 +212,6 @@ Parses length information to determine how many characters to read."
           (getf (getf data :package) :prompt)
           ))
 
-  ;; Start it up
-  (log:debug "Initializing presentations")
-  (read-return-message connection)
-
   (log:debug "Creating the REPL")
   (remote-eval-from-string connection "(micros/repl:create-repl nil :coding-system \"utf-8-unix\")")
   ;; Wait for startup

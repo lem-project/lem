@@ -18,6 +18,7 @@
 
 (define-key *elisp-mode-keymap* "C-c C-r" 'elisp-eval-region)
 (define-key *elisp-mode-keymap* "C-c C-c" 'elisp-eval-defun)
+(define-key *elisp-mode-keymap* "C-c C-l" 'elisp-load-file)
 
 
 (defun reset-listener-variables (buffer)
@@ -92,6 +93,21 @@
       (scan-lists end 1 0)
       (lem-process:process-send-input *process* 
                                       (format nil "~a ~c" (points-to-string start end) #\Newline)))))
+
+(define-command elisp-load-file (filename)
+    ((prompt-for-file "Load File: "
+                      :directory (or (buffer-filename) (buffer-directory))
+                      :default nil
+                      :existing t))
+  "Load the Lisp file named FILENAME."
+  (unless (alive-process-p)
+    (editor-error "Emacs Lisp Terminal process doesn't exist."))
+  
+  (when (uiop:file-exists-p filename)
+      (lem-process:process-send-input *process* 
+                                      (format nil "(load-file \"~a\")~c" 
+                                              filename #\Newline))))
+
 
 (define-command run-elisp () ()
   (run-elisp-internal))

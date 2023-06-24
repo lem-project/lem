@@ -54,7 +54,10 @@
   (if (slot-boundp link 'location)
       (slot-value link 'location)
       (setf (link-location link)
-            (command-definition-location (link-command link)))))
+	    #+sbcl
+            (command-definition-location (link-command link))
+	    #-sbcl
+	    nil)))
 
 (defmethod link-url ((link link))
   (let ((location (link-location link)))
@@ -64,6 +67,7 @@
             (enough-namestring (location-file location) (asdf:system-source-directory :lem))
             (location-line-number location))))
 
+#+sbcl
 (defun command-definition-location (command)
   (let* ((file (sb-c:definition-source-location-namestring (lem-core::command-source-location command)))
          (n (sb-c:definition-source-location-toplevel-form-number (lem-core::command-source-location command)))
@@ -75,6 +79,12 @@
     (make-location :file file
                    :position (position-at-point point)
                    :line-number (line-number-at-point point))))
+
+#-sbcl
+(defun command-definition-location (command)
+  (make-location :file nil
+		 :position 0
+		 :line-number 0))
 
 (defun command-bindings (command)
   (collect-command-keybindings (command-name command) *global-keymap*))
@@ -171,16 +181,18 @@
                 (insert-string point "-|")
                 (insert-character point #\newline)))))
 
-(defun generate-markdown-file (filename)
+(defgeneric generate-markdown-file (filename type))
+
+(defmethod generate-markdown-file (filename (type (eql :command)))
   (let* ((buffer (make-buffer nil :temporary t))
-         (point (buffer-point buffer)))
+	 (point (buffer-point buffer)))
     (erase-buffer buffer)
     (generate (make-instance 'markdown-generator)
-              (construct-global-command-documentation)
-              point)
+	      (construct-global-command-documentation)
+	      point)
     (alexandria:write-string-into-file (buffer-text buffer)
-                                       filename
-                                       :if-exists :supersede)))
+				       filename
+				       :if-exists :supersede)))
 
 
 (defclass buffer-generator () ())
@@ -249,7 +261,13 @@
 
 ;;;
 (defun select-command (command)
-  (let* ((location (command-definition-location command))
+  #-sbcl
+  (declare (ignore command))
+  (let* ((location
+	   #+sbcl
+	   (command-definition-location command)
+	   #-sbcl
+	   nil)
          (buffer (find-file-buffer (location-file location))))
     (switch-to-buffer buffer)
     (move-to-position (current-point) (location-position location))))

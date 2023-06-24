@@ -29,4 +29,8 @@ GIT_IGNORE.*
 lem
 lem-ncurses
 
+
+*.abcl
 build/*
+
+*.lx64fsl

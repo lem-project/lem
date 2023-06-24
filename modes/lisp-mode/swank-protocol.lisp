@@ -218,7 +218,7 @@ Parses length information to determine how many characters to read."
   (read-return-message connection)
 
   (log:debug "Creating the REPL")
-  (remote-eval-from-string connection "(micros/contrib/repl:create-repl nil :coding-system \"utf-8-unix\")")
+  (remote-eval-from-string connection "(micros/repl:create-repl nil :coding-system \"utf-8-unix\")")
   ;; Wait for startup
   (read-return-message connection)
 
@@ -341,8 +341,8 @@ to check if input is available."
   "Request that Swank evaluate a string of code in the REPL."
   (remote-eval-from-string connection
                            (if window-width
-                               (format nil "(micros/contrib/repl:listener-eval ~S :window-width ~A)" string window-width)
-                               (format nil "(micros/contrib/repl:listener-eval ~S)" string))
+                               (format nil "(micros/repl:listener-eval ~S :window-width ~A)" string window-width)
+                               (format nil "(micros/repl:listener-eval ~S)" string))
                            :continuation continuation
                            :thread ":repl-thread"))
 

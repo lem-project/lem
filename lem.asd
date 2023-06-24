@@ -4,6 +4,7 @@
                "trivial-gray-streams"
                "trivial-types"
                "cl-ppcre"
+	       "micros"
                "inquisitor"
                "babel"
                "bordeaux-threads"
@@ -14,7 +15,9 @@
                "dexador"
                "lem-base"
                "lem-encodings"
-               "sb-concurrency")
+	       #+sbcl
+	       sb-concurrency
+	       "lem-mailbox")
   :pathname "src"
   :serial t
   :components ((:module "common"
@@ -125,40 +128,47 @@
                              (:file "themes")))))
 
 (defsystem "lem/extensions"
-  :depends-on ("lem-lsp-mode"
-               "lem-vi-mode"
-               "lem-lisp-mode"
-               "lem-go-mode"
-               "lem-c-mode"
-               "lem-xml-mode"
-               "lem-html-mode"
-               "lem-python-mode"
-               "lem-posix-shell-mode"
-               "lem-markdown-mode"
-               "lem-js-mode"
-               "lem-json-mode"
-               "lem-css-mode"
-               "lem-rust-mode"
-               "lem-paredit-mode"
-               "lem-nim-mode"
-               "lem-scheme-mode"
-               "lem-patch-mode"
-               "lem-yaml-mode"
-               "lem-review-mode"
-               "lem-asciidoc-mode"
-               "lem-dart-mode"
-               "lem-scala-mode"
-               "lem-dot-mode"
-               "lem-java-mode"
-               "lem-haskell-mode"
-               "lem-ocaml-mode"
-               "lem-asm-mode"
-               "lem-makefile-mode"
-               "lem-shell-mode"
-               "lem-sql-mode"
-               "lem-base16-themes"
-               "lem-elixir-mode"
-               "lem-documentation-mode"))
+  :depends-on (#+sbcl
+	       "lem-lsp-mode"
+	       "lem-vi-mode"
+	       #+sbcl
+	       "lem-lisp-mode"
+	       #+sbcl
+	       "lem-go-mode"
+
+	       "lem-c-mode"
+	       "lem-xml-mode"
+	       "lem-html-mode"
+	       "lem-python-mode"
+	       "lem-posix-shell-mode"
+	       "lem-markdown-mode"
+	       "lem-js-mode"
+	       "lem-json-mode"
+	       "lem-css-mode"
+	       "lem-rust-mode"
+	       "lem-paredit-mode"
+	       "lem-nim-mode"
+	       #-clasp
+	       "lem-scheme-mode"
+
+	       "lem-patch-mode"
+	       "lem-yaml-mode"
+	       "lem-review-mode"
+	       "lem-asciidoc-mode"
+	       "lem-dart-mode"
+	       "lem-scala-mode"
+	       "lem-dot-mode"
+	       "lem-java-mode"
+	       "lem-haskell-mode"
+	       "lem-ocaml-mode"
+	       "lem-asm-mode"
+	       "lem-makefile-mode"
+	       "lem-shell-mode"
+	       "lem-sql-mode"
+	       "lem-base16-themes"
+	       #+sbcl
+	       "lem-elixir-mode"
+	       "lem-documentation-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

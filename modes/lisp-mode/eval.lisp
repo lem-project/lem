@@ -33,7 +33,7 @@
 
 (defun remove-eval-result-overlay (overlay)
   (let ((id (overlay-eval-id overlay)))
-    (lisp-eval-async `(micros/contrib/pretty-eval:remove-evaluated-values ,id))
+    (lisp-eval-async `(micros/pretty-eval:remove-evaluated-values ,id))
     (delete-overlay overlay)
     (delete-overlay (overlay-get overlay 'relation-overlay))
     (alexandria:removef (buffer-eval-result-overlays (overlay-buffer overlay))
@@ -115,7 +115,7 @@
         (request-id (lem-lisp-mode/swank-protocol::new-request-id (current-connection))))
     (setf (spinner-eval-request-id spinner) request-id)
     (lem-lisp-mode/internal::with-remote-eval
-        (`(micros/contrib/pretty-eval:pretty-eval ,string) :request-id request-id)
+        (`(micros/pretty-eval:pretty-eval ,string) :request-id request-id)
       (lambda (value)
         (alexandria:destructuring-ecase value
           ((:ok result)
@@ -151,7 +151,7 @@
   (let ((overlay (find-overlay (current-point))))
     (if overlay
         (let ((id (overlay-eval-id overlay)))
-          (lisp-eval-async `(micros/contrib/pretty-eval:inspect-evaluation-value ,id)
+          (lisp-eval-async `(micros/pretty-eval:inspect-evaluation-value ,id)
                            'lem-lisp-mode/internal::open-inspector))
         (call-next-method))))
 

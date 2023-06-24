@@ -46,10 +46,12 @@
   (let* ((*lisp-repl-shortcuts* *lisp-repl-shortcuts*)
          (names (mapcar #'car *lisp-repl-shortcuts*)))
     (cdr (assoc (prompt-for-string
-                 "Command:"
+                 "Command: "
                  :completion-function (lambda (x) (completion-strings x names))
                  :test-function (lambda (name) (member name names :test #'string=))
-                 :history-symbol 'mh-lisp-repl-shortcuts)
+                 :history-symbol 'mh-lisp-repl-shortcuts
+                 :gravity :cursor
+                 :use-border nil)
                 *lisp-repl-shortcuts* :test #'equal))))
 
 (define-command lisp-repl-shortcut (n) ("p")
@@ -214,14 +216,14 @@
         (start-lisp-repl))))
 
 (defun copy-down-to-repl (slimefun &rest args)
-  (unless (find-package :micros/contrib/repl)
-    (make-package :micros/contrib/repl))
+  (unless (find-package :micros/repl)
+    (make-package :micros/repl))
   (lisp-eval-async
-   `(,(read-from-string "micros/contrib/repl::listener-save-value") ',slimefun ,@args)
+   `(,(read-from-string "micros/repl::listener-save-value") ',slimefun ,@args)
    (lambda (result)
      (declare (ignore result))
      (lisp-eval-async
-      `(,(read-from-string "micros/contrib/repl::listener-get-value"))
+      `(,(read-from-string "micros/repl::listener-get-value"))
       (lambda (result)
         (declare (ignore result))
         (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))))))
@@ -350,20 +352,40 @@
 (define-repl-shortcut change-package (n)
   (declare (ignore n))
   (let* ((packages (mapcar (lambda (p)
-			     (string-downcase (package-name p)))
-			   (list-all-packages)))
-	 (package
-	   (prompt-for-string
-	    "Package: "
-	    :completion-function (lambda (str)
-				   (sort (completion str packages)
-					 #'string-lessp))
-	    :test-function (lambda (package)
-			     (find package packages :test #'string-equal)))))
+                             (string-downcase (package-name p)))
+                           (list-all-packages)))
+         (package
+           (prompt-for-string
+            "Package: "
+            :completion-function (lambda (str)
+                                   (sort (completion str packages)
+                                         #'string-lessp))
+            :test-function (lambda (package)
+                             (find package packages :test #'string-equal))
+            :gravity :cursor
+            :use-border nil)))
     (lisp-set-package package)))
 
 (define-repl-shortcut cd (n)
   (declare (ignore n))
   (let* ((directory
-           (prompt-for-directory "New directory: " :directory (buffer-directory))))
+           (prompt-for-directory "New directory: "
+                                 :directory (buffer-directory)
+                                 :gravity :cursor
+                                 :use-border nil)))
     (lisp-set-directory :directory directory)))
+
+(defun prompt-for-system (prompt)
+  (let ((systems (lisp-eval '(micros:list-systems))))
+    (prompt-for-string prompt
+                       :gravity :cursor
+                       :use-border nil
+                       :completion-function (lambda (string)
+                                              (completion string systems))
+                       :test-function (lambda (string)
+                                        (find string systems :test #'equal)))))
+
+(define-repl-shortcut quickload (n)
+  (declare (ignore n))
+  (let ((system (prompt-for-system "Quickload System: ")))
+    (listener-eval (prin1-to-string `(ql:quickload ,system)))))

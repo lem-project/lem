@@ -5,7 +5,10 @@
 (defun lem-relative-pathname (pathname)
   (when *deployed*
     (truename (merge-pathnames pathname
-                               (uiop:pathname-directory-pathname (first sb-ext:*posix-argv*))))))
+			       #+sbcl
+                               (uiop:pathname-directory-pathname (first sb-ext:*posix-argv*))
+			       #-sbcl
+                               (uiop:pathname-directory-pathname (uiop/os:getcwd))))))
 
 (defun get-pid ()
   #+sbcl

@@ -10,3 +10,11 @@
 (sb-ext:save-lisp-and-die "lem"
                           :toplevel 'lem:main
                           :executable t)
+
+#+ccl
+(ccl:save-application "lem"
+		      :prepend-kernel t
+		      :toplevel-function 'lem:main
+		      :error-handler :listener
+		      :purify t
+		      :application-class 'ccl::application)

@@ -25,4 +25,6 @@
   (setf *hover-window*
         (display-popup-message buffer-or-string
                                :timeout nil
-                               :style '(:gravity :cursor))))
+                               :style '(:gravity :cursor)))
+  (setf (floating-window-focusable-p *hover-window*) t)
+  (values))

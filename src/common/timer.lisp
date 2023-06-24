@@ -1,20 +1,21 @@
 (defpackage :lem/common/timer
   (:use :cl :alexandria)
-  (:export :timer-manager
-           :send-timer-notification
-           :with-timer-manager
-           :running-timer
-           :timer-error
-           :timer
-           :timer-name
-           :timer-expired-p
-           :make-timer
-           :make-idle-timer
-           :start-timer
-           :stop-timer
-           :with-idle-timers
-           :update-idle-timers
-           :get-next-timer-timing-ms)
+  (:export
+   :timer-manager
+   :send-timer-notification
+   :with-timer-manager
+   :running-timer
+   :timer-error
+   :timer
+   :timer-name
+   :timer-expired-p
+   :make-timer
+   :make-idle-timer
+   :start-timer
+   :stop-timer
+   :with-idle-timers
+   :update-idle-timers
+   :get-next-timer-timing-ms)
   #+sbcl
   (:lock t))
 (in-package :lem/common/timer)
@@ -83,13 +84,14 @@
 
 (defun guess-function-name (function)
   (etypecase function
-    (function (sb-impl::%fun-name function))
+    (function (format nil "~a"
+		      (micros::function-name function)))
     (symbol (symbol-name function))))
 
 (defun make-timer-instance (timer-class function name handle-function)
   (make-instance timer-class
                  :name (or name
-                           (guess-function-name function))
+			   (guess-function-name function))
                  :function (ensure-function function)
                  :handle-function (when handle-function
                                     (ensure-function handle-function))))
@@ -109,33 +111,34 @@
 (defclass timer (<timer>)
   ((mutex
     :accessor timer-mutex
-    :type sb-thread:mutex)
+    :type bt:lock)
    (stop-mailbox
     :accessor timer-stop-mailbox
-    :type sb-concurrency:mailbox)
+    :type lem-mailbox:mailbox)
    (thread
     :accessor timer-thread
-    :type sb-thread:thread)))
+    :type bt:thread)))
 
 (defmethod timer-expired-p ((timer timer))
-  (sb-thread:with-mutex ((timer-mutex timer))
+  (bt:with-lock-held ((timer-mutex timer))
     (call-next-method)))
 
 (defmethod expire-timer ((timer timer))
-  (sb-thread:with-mutex ((timer-mutex timer))
+  (bt:with-lock-held ((timer-mutex timer))
     (set-timer-expired-p t timer)))
 
 (defmethod inspire-timer ((timer timer))
-  (sb-thread:with-mutex ((timer-mutex timer))
+  (bt:with-lock-held ((timer-mutex timer))
     (set-timer-expired-p nil timer)))
 
 (defun make-timer (function &key name handle-function)
   (make-timer-instance 'timer function name handle-function))
 
 (defmethod start-timer ((timer timer) ms &optional repeat-p)
-  (setf (timer-ms timer) ms)
-  (setf (timer-repeat-p timer) repeat-p)
-  (setf (timer-mutex timer) (sb-thread:make-mutex :name "timer internal mutex"))
+  (setf (timer-ms timer) ms
+        (timer-repeat-p timer) repeat-p
+        (timer-mutex timer) 
+        (bt:make-lock "timer internal mutex"))
   (start-timer-thread timer ms repeat-p)
   timer)
 
@@ -143,7 +146,7 @@
   (stop-timer-thread timer))
 
 (defun start-timer-thread (timer ms repeat-p)
-  (let ((stop-mailbox (sb-concurrency:make-mailbox))
+  (let ((stop-mailbox (lem-mailbox:make-mailbox))
         (timer-manager *timer-manager*)
         (seconds (float (/ ms 1000))))
     (setf (timer-stop-mailbox timer)
@@ -154,8 +157,8 @@
              (loop
                (let ((recv-stop-msg
                        (nth-value 1
-                                  (sb-concurrency:receive-message stop-mailbox
-                                                                  :timeout seconds))))
+                                  (lem-mailbox:receive-message stop-mailbox
+							       :timeout seconds))))
                  (when recv-stop-msg
                    (expire-timer timer)
                    (return)))
@@ -166,7 +169,7 @@
            :name (format nil "Timer ~A" (timer-name timer))))))
 
 (defun stop-timer-thread (timer)
-  (sb-concurrency:send-message (timer-stop-mailbox timer) t))
+  (lem-mailbox:send-message (timer-stop-mailbox timer) t))
 
 
 ;;; idle-timer

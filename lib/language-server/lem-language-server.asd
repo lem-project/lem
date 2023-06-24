@@ -1,3 +1,4 @@
+#+sbcl
 (require :sb-concurrency)
 
 (defsystem "lem-language-server"

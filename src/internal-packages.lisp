@@ -261,6 +261,7 @@
    :floating-window
    :floating-window-border
    :floating-window-border-shape
+   :floating-window-focusable-p
    :floating-window-p
    :side-window
    :make-leftside-window
@@ -493,6 +494,7 @@
    :color-theme-names
    :define-color-theme
    :load-theme))
+#+sbcl
 (sb-ext:lock-package :lem-core)
 
 (defpackage :lem-restart

@@ -4,17 +4,23 @@
         :lem/common/timer))
 (in-package :lem-tests/timer)
 
-(defun testing-timer ()
-  )
+(defun testing-timer ())
 
+;;TODO: These tests do work indeed with CCL but for some reason when launching the tests
+;; pragmatically, it triggers an error. Fix this.
 (deftest timer-name-tests
   (let* ((timer (make-timer 'testing-timer))
          (value (timer-name timer)))
     (ok (string= "TESTING-TIMER" value)))
-  (let* ((timer (make-timer #'testing-timer))
+  (let* ((timer (make-timer 'testing-timer))
          (value (timer-name timer)))
     (ok (string= "TESTING-TIMER" value)))
-  (let* ((timer (make-timer (sb-int:named-lambda hello ())))
+  (let* ((timer (make-timer
+		 #+sbcl
+		 (sb-int:named-lambda hello ())
+		 #-sbcl
+		 (alexandria:named-lambda hello ())
+		 ))
          (value (timer-name timer)))
     (ok (string= "HELLO" value)))
   (let* ((timer (make-timer 'testing-timer :name "foo"))
@@ -40,25 +46,27 @@
 
 (deftest simple-timer-test
   (with-testing-timer-manager ()
-    (let ((mailbox (sb-concurrency:make-mailbox)))
-      (start-timer (make-timer (lambda ()
-                                 (sb-concurrency:send-message mailbox t)))
-                   2
-                   nil)
-      (ok (sb-concurrency:receive-message mailbox))
-      (let ((timeout (not (nth-value 1 (sb-concurrency:receive-message mailbox :timeout 0.01)))))
-        (ok timeout)))
-    (let* ((mailbox (sb-concurrency:make-mailbox))
-           (timer (make-timer (lambda ()
-                                (sb-concurrency:send-message mailbox t)))))
+    (let ((mailbox (lem-mailbox::make-mailbox)))
+      (start-timer
+       (make-timer (lambda () (lem-mailbox::send-message mailbox t)))
+       2
+       nil)
+      (ok (lem-mailbox::receive-message mailbox :timeout 0.01))
+      (let ((timeout (not (lem-mailbox::receive-message mailbox :timeout 0.01))))
+	(ok timeout)))
+
+    (let* ((mailbox (lem-mailbox::make-mailbox))
+	   (timer (make-timer (lambda ()
+				(lem-mailbox::send-message mailbox t)))))
       (start-timer timer 2 t)
       (loop :repeat 2
             :do (multiple-value-bind (value received)
-                    (sb-concurrency:receive-message mailbox :timeout 0.01)
+                    (lem-mailbox::receive-message mailbox :timeout 0.01)
+		  (print value)
                   (unless received (return))
                   (assert (eq value t))))
       (stop-timer timer)
-      (ok (not (nth-value 1 (sb-concurrency:receive-message mailbox :timeout 0.01))))
+      (ok (not (lem-mailbox::receive-message mailbox :timeout 0.01)))
       (ok (timer-expired-p timer)))))
 
 (deftest compute-the-time-for-the-next-idle-timer-to-be-called

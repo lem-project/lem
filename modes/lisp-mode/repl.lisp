@@ -5,7 +5,7 @@
   (:light :foreground "black" :bold t))
 
 (define-attribute repl-result-attribute
-  (:dark :foreground "red" :bold t)
+  (:dark :foreground "aquamarine" :bold t)
   (:light :foreground "black" :bold t))
 
 (define-major-mode lisp-repl-mode lisp-mode
@@ -282,8 +282,8 @@
                      string
                      'object-id id
                      :attribute (if (eq type :repl-result)
-                                    'printed-object-attribute
-                                    'repl-result-attribute))
+                                    'repl-result-attribute
+                                    'printed-object-attribute))
       (lem/button:apply-button-between-points
        start
        point

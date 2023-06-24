@@ -47,6 +47,12 @@
            (insert-character (current-point) #\newline)
            (indent-line (current-point))))))
 
+(defmethod execute :before
+    ((mode lisp-repl-mode)
+     (command lem/listener-mode:listener-clear-buffer)
+     argument)
+  (lisp-eval-async '(micros:clear-printed-objects)))
+
 (defvar *lisp-repl-shortcuts* '())
 
 (defun prompt-for-shortcuts ()

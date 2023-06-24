@@ -81,35 +81,69 @@
                           (connection-pid (current-connection))))
               "")))
 
-(defun compute-context-menu-items ()
+(defun point-over-symbol-with-menu-opened-p ()
   (let ((point (get-point-on-context-menu-open)))
     (when (and point
                (symbol-string-at-point point))
-      (list (lem/context-menu:make-item
-             :label "Describe symbol"
-             :callback 'lisp-describe-symbol-at-point)
-            (lem/context-menu:make-item
-             :label "Find definition"
-             :callback (lambda (&rest args)
-                         (declare (ignore args))
-                         (lisp-find-definitions point)))
-            (lem/context-menu:make-item
-             :label "Find references"
-             :callback (lambda (&rest args)
-                         (declare (ignore args))
-                         (lisp-find-references point)))
-            (lem/context-menu:make-item
-             :label "Lookup symbol in Hyperspec"
-             :callback (lambda (&rest args)
-                         (declare (ignore args))
-                         ;; TODO: resolve forward references
-                         (uiop:symbol-call :lem-lisp-mode/hyperspec :hyperspec-at-point point)))
-            (lem/context-menu:make-item
-             :label "Export symbol"
-             :callback (lambda (&rest args)
-                         (declare (ignore args))
-                         (lem-lisp-mode/exporter:lisp-add-export
-                          (symbol-string-at-point point))))))))
+      point)))
+
+(defun context-menu-describe-symbol ()
+  (let ((point (point-over-symbol-with-menu-opened-p)))
+    (when point
+      (lem/context-menu:make-item
+       :label "Describe symbol"
+       :callback 'lisp-describe-symbol-at-point))))
+
+(defun context-menu-find-definition ()
+  (let ((point (point-over-symbol-with-menu-opened-p)))
+    (when point
+      (lem/context-menu:make-item
+       :label "Find definition"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   (lisp-find-definitions point))))))
+
+(defun context-menu-find-references ()
+  (let ((point (point-over-symbol-with-menu-opened-p)))
+    (when point
+      (lem/context-menu:make-item
+       :label "Find references"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   (lisp-find-references point))))))
+
+(defun context-menu-hyperspec ()
+  (let ((point (point-over-symbol-with-menu-opened-p)))
+    (when point
+      (lem/context-menu:make-item
+       :label "Lookup symbol in Hyperspec"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   ;; TODO: resolve forward references
+                   (uiop:symbol-call :lem-lisp-mode/hyperspec
+                                     :hyperspec-at-point
+                                     point))))))
+
+(defun context-menu-export-symbol ()
+  (let ((point (point-over-symbol-with-menu-opened-p)))
+    (when (and point
+               (buffer-filename (current-buffer))
+               (not (equal "asd" (pathname-type (buffer-filename (current-buffer))))))
+      (lem/context-menu:make-item
+       :label "Export symbol"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   (lem-lisp-mode/exporter:lisp-add-export
+                    (symbol-string-at-point point)))))))
+
+(defun compute-context-menu-items ()
+  (remove
+   nil
+   (list (context-menu-describe-symbol)
+         (context-menu-find-definition)
+         (context-menu-find-references)
+         (context-menu-hyperspec)
+         (context-menu-export-symbol))))
 
 (defun change-current-connection (connection)
   (when (current-connection)
@@ -359,15 +393,15 @@
     (buffer-end (buffer-point repl-buffer))))
 
 (define-command lisp-current-directory () ()
-  (message "Current directory: ~a" 
+  (message "Current directory: ~a"
            (lisp-eval `(micros:default-directory))))
 
 (define-command lisp-set-directory (&key directory) ()
   (unless directory
     (setf directory
           (prompt-for-directory "New directory: " :directory (buffer-directory))))
-  (lisp-eval 
-   `(micros:set-default-directory 
+  (lisp-eval
+   `(micros:set-default-directory
      (micros/backend:filename-to-pathname ,directory))))
 
 (define-command lisp-interrupt () ()

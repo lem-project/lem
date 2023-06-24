@@ -6,6 +6,9 @@
   (when thread
     (send-message *connection* `(:write-done ,thread))))
 
+(define-message (:write-object string id type)
+  (write-object-to-repl string id type))
+
 (define-message (:read-string thread tag)
   (repl-read-string thread tag))
 

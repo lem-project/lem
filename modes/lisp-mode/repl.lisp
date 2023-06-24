@@ -16,9 +16,43 @@
     ((eq (repl-buffer) (current-buffer))
      (repl-reset-input)
      (lem/listener-mode:start-listener-mode (merge-pathnames "history/lisp-repl" (lem-home)))
-     (setf (variable-value 'completion-spec) 'repl-completion))
+     (setf (variable-value 'completion-spec) 'repl-completion)
+     (setf (buffer-context-menu (current-buffer))
+           (make-instance 'lem/context-menu:context-menu
+                          :compute-items-function 'repl-compute-context-menu-items)))
     (t
      (editor-error "No connection for repl. Did you mean 'start-lisp-repl' command?"))))
+
+(defun context-menu-inspect-printed-object ()
+  (let* ((point (get-point-on-context-menu-open))
+         (id (object-id-at point)))
+    (when id
+      (lem/context-menu:make-item
+       :label "Inspect"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   (lisp-eval-async `(micros:inspect-printed-object ,id)
+                                    #'open-inspector))))))
+
+(defun context-menu-copy-down-printed-object ()
+  (let* ((point (get-point-on-context-menu-open))
+         (id (object-id-at point)))
+    (when id
+      (lem/context-menu:make-item
+       :label "Copy Down"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   (copy-down-to-repl 'micros:get-printed-object-by-id id))))))
+
+(defun repl-compute-context-menu-items ()
+  (remove
+   nil
+   (list (context-menu-describe-symbol)
+         (context-menu-find-definition)
+         (context-menu-find-references)
+         (context-menu-hyperspec)
+         (context-menu-inspect-printed-object)
+         (context-menu-copy-down-printed-object))))
 
 (defun read-string-thread-stack ()
   (buffer-value (repl-buffer) 'read-string-thread-stack))
@@ -273,6 +307,9 @@
     (when (text-property-at point :field)
       (insert-character point #\newline)
       (character-offset point -1))))
+
+(defun object-id-at (point)
+  (text-property-at point 'object-id))
 
 (defun write-object-to-repl (string id type)
   (assert (member type '(:standard-output :repl-result)))

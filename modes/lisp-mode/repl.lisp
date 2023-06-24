@@ -1,7 +1,8 @@
 (in-package :lem-lisp-mode/internal)
 
 (define-attribute printed-object-attribute
-  (t :foreground "light cyan"))
+  (:dark :foreground "white" :bold t)
+  (:light :foreground "black" :bold t))
 
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"

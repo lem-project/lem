@@ -23,6 +23,11 @@
     (t
      (editor-error "No connection for repl. Did you mean 'start-lisp-repl' command?"))))
 
+(define-key *lisp-repl-mode-keymap* "C-c C-c" 'lisp-repl-interrupt)
+(define-key *lisp-repl-mode-keymap* "," 'lisp-repl-shortcut)
+(define-key *lisp-repl-mode-keymap* "M-Return" 'lisp-repl-copy-down)
+(define-key *lisp-repl-mode-keymap* "C-Return" 'lisp-repl-copy-down)
+
 (defun context-menu-inspect-printed-object ()
   (let* ((point (get-point-on-context-menu-open))
          (id (object-id-at point)))
@@ -65,11 +70,6 @@
 
 (defun (setf read-string-tag-stack) (val)
   (setf (buffer-value (repl-buffer) 'read-string-tag-stack) val))
-
-(define-key *lisp-repl-mode-keymap* "C-c C-c" 'lisp-repl-interrupt)
-(define-key *lisp-repl-mode-keymap* "," 'lisp-repl-shortcut)
-(define-key *lisp-repl-mode-keymap* "M-Return" 'lisp-repl-copy-down)
-(define-key *lisp-repl-mode-keymap* "C-Return" 'lisp-repl-copy-down)
 
 (define-command lisp-repl-interrupt () ()
   (send-message-string *connection*

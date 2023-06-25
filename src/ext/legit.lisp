@@ -363,7 +363,7 @@ Next:
         (if staged-files
             (loop :for file :in staged-files
                   :for i := 0 :then (incf i)
-                  :do (lem/peek-legit::with-appending-staged-files
+                  :do (lem/peek-legit::with-appending-source
                           (point :move-function (make-move-function file :cached t)
                                  :visit-file-function (lambda () file)
                                  :stage-function (make-stage-function file)
@@ -388,7 +388,7 @@ Next:
                     else
                       do (setf line commit)
 
-                    do (lem/peek-legit::with-appending-staged-files
+                    do (lem/peek-legit::with-appending-source
                            (point :move-function (make-show-commit-function hash)
                                   :visit-file-function (lambda ())
                                   :stage-function (lambda () )

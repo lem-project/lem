@@ -241,29 +241,6 @@
                                ,stage-function
                                ,unstage-function))
 
-(defun call-with-appending-staged-files (insert-function
-                                         move-function
-                                         visit-file-function
-                                         stage-function
-                                         unstage-function)
-  (let ((point (buffer-point (collector-buffer *collector*))))
-    (with-point ((start point))
-      (funcall insert-function point)
-      (unless (start-line-p point)
-        (insert-string point (string #\newline) :read-only t))
-      (set-move-function start point move-function)
-      (set-visit-file-function start point visit-file-function)
-      (set-stage-function start point stage-function)
-      (set-unstage-function start point unstage-function))
-    (incf (collector-count *collector*))))
-
-(defmacro with-appending-staged-files ((point &key move-function
-                                                   visit-file-function
-                                                   stage-function
-                                                   unstage-function) &body body)
-  `(call-with-appending-source (lambda (,point) ,@body)
-                               ,move-function ,visit-file-function ,stage-function ,unstage-function))
-
 (defun collector-insert (s &optional (newline t))
   (let ((point (buffer-point (collector-buffer *collector*))))
     (insert-string point s :read-only t)

@@ -29,10 +29,35 @@
 
   For staged files, --cached is added by the command.")
 
-(defun git-project-p ()
-  (uiop:directory-exists-p ".git"))
+(defvar *vcs* nil
+  "git, fossil? For current project. Bind this in the caller.
 
-(defun porcelain ()
+  For instance, see the legit::with-current-project macro that lexically binds *vcs* for an operation.")
+
+(defun git-project-p ()
+  (values (uiop:directory-exists-p ".git")
+          :git))
+
+(defun fossil-project-p ()
+  (loop for file in (uiop:directory-files "./")
+        if (equal "fossil" (pathname-type file))
+          return (values file :fossil)))
+
+(defvar *vcs-existence-order*
+  '(
+    git-project-p
+    fossil-project-p
+    ))
+
+(defun vcs-project-p ()
+  ;; This doesn't return the 2 values :(
+  ;; (or (fossil-project-p)
+  ;;     (git-project-p))
+  (loop for fn in *vcs-existence-order*
+        do (multiple-value-bind (root vcs)
+               (funcall fn)
+             (if root
+                 (return (values root vcs))))))
   (uiop:run-program (list "git" "status" "--porcelain=v1")
                     :output :string))
 

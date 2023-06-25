@@ -97,16 +97,19 @@ Next:
   (subseq s (- (length s) 2) (- (length s) 1)))
 
 (defmacro with-current-project (&body body)
-  "Execute body with the current working directory changed to the buffer directory
-  (so, that should be the root directory where the Git project is).
+  "Execute body with the current working directory changed to the project's root,
+  find and set the VCS system for this operation.
 
-  If no Git directory is found, message the user."
+  If no Git directory (or .fossil file) are found, message the user."
   `(let ((root (lem-core/commands/project:find-root (buffer-directory))))
      (uiop:with-current-directory (root)
-       (if (porcelain::git-project-p)
-           (progn
-             ,@body)
-           (message "Not inside a Git project?")))))
+       (multiple-value-bind (root vcs)
+           (porcelain::vcs-project-p)
+         (if root
+             (let ((porcelain::*vcs* vcs))
+               (progn
+                 ,@body))
+             (message "Not inside a version-controlled project?"))))))
 
 
 ;;; Git commands

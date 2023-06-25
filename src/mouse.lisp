@@ -278,9 +278,10 @@
                                          (mouse-event-x mouse-event)
                                          (mouse-event-y mouse-event))))
       (when window
-        (call-command (find-command "scroll-down")
-                      (- (* (mouse-wheel-y mouse-event)
-                            *scroll-speed*)))))))
+        (with-current-window window
+          (call-command (find-command "scroll-down")
+                        (- (* (mouse-wheel-y mouse-event)
+                              *scroll-speed*))))))))
 
 
 (defun get-select-expression-points (point)

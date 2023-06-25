@@ -36,19 +36,20 @@
                         (client *elisp-rpc-client*))
   "Returns a list of all the Emacs Lisp symbols defined."
   (mapcar (lambda (i) (format nil "~a" i)) 
-          (jsonrpc:call client "lem-get-completion" (list prefix)
+          (jsonrpc:call client "lemmington-get-completion" (list prefix)
                         :basic-auth '("lem" . "lem"))))
+
 
 (defun get-symbol-location (symbol 
                             &key
                             (client *elisp-rpc-client*))
   "Returns the symbol location and absolute file position (location position)."
-  (jsonrpc:call client "lem-symbol-location" (list symbol)
+  (jsonrpc:call client "lemmington-symbol-location" (list symbol)
                 :basic-auth '("lem" . "lem")))
 
 (defun get-symbol-documentation (symbol
                                  &key
                                  (client *elisp-rpc-client*))
   "Returns the symbol documentation."
-  (jsonrpc:call client "lem-symbol-documentation" (list symbol)
+  (jsonrpc:call client "lemmington-symbol-documentation" (list symbol)
                 :basic-auth '("lem" . "lem")))

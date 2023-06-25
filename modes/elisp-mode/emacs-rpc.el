@@ -22,7 +22,7 @@
 
 (cl-defun lem-get-completion ()
   "Return a list of all the local-symbols."
-  (cl-coerce (elisp--completion-local-symbols) 'list))
+  (elisp-refs--filter-obarray (lambda (_) t)))
 
 (cl-defun lem-symbol-location (symbol)
   "Return a cons of (file . absolute-position) of SYMBOL."

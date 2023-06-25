@@ -199,8 +199,10 @@ Next:
      end?)
     (move-to-end-of-buffer))))
 
-(defun %call-legit-hunk-function (fn)
-  "Stage the diff hunk at point.
+(defun %current-hunk ()
+  "Get the current diff hunk at point.
+  Return: string.
+
   To find a hunk, the point has to be inside one,
   i.e, after a line that starts with \"@@\"."
   ;; We are inside a diff (patch) buffer.
@@ -234,20 +236,19 @@ Next:
          (setf start (%hunk-start-point start?))
          (unless start
            (message "No hunk at point.")
-           (return-from %call-legit-hunk-function))
+           (return-from %current-hunk))
          (setf end (%hunk-end-point end?))
-
-         (log:info start end)
 
          (setf hunk (points-to-string start end))
          (setf patch (str:concat header
                                  (string #\newline)
                                  hunk))
+
          (when (not (equal " " (last-character patch)))
            ;; important for git patch.
            (setf patch (str:join "" (list patch (string #\newline) " "))))
 
-         ;; Delete current hunk, place cursor on next one.
+         ;; Delete current hunk in diff buffer, place cursor on next one.
          (when (and start end)
            (setf (buffer-read-only-p (current-buffer)) nil)
            (delete-character start (count-characters start end))
@@ -255,23 +256,7 @@ Next:
            (delete-character start 1)
            (setf (buffer-read-only-p (current-buffer)) t))
 
-         (when *legit-verbose*
-           (log:info patch)
-           (with-open-file (f (merge-pathnames "lem-hunk-latest.patch" (lem-home))
-                              :direction :output
-                              :if-exists :supersede
-                              :if-does-not-exist :create)
-             (write-sequence patch f)))
-
-         ;; (uiop:with-temporary-file (:stream f) ;; issues with this.
-         (with-open-file (f ".lem-hunk.patch"
-                            :direction :output
-                            :if-exists :supersede
-                            :if-does-not-exist :create)
-           (write-sequence patch f)
-           (finish-output f))
-
-         (funcall fn))))))
+         patch)))))
 
 (defun run-function (fn &key message)
   "Run this function and show `message` and standard output
@@ -292,17 +277,15 @@ Next:
 
 (define-command legit-stage-hunk () ()
   (with-current-project ()
-    (%call-legit-hunk-function (lambda ()
-                                 (run-function (lambda ()
-                                                 (porcelain::apply-patch ".lem-hunk.patch"))
-                                               :message "Staged hunk")))))
+    (run-function (lambda ()
+                    (porcelain::apply-patch (%current-hunk)))
+                  :message "Staged hunk")))
 
 (define-command legit-unstage-hunk () ()
   (with-current-project ()
-    (%call-legit-hunk-function (lambda ()
-                                 (run-function (lambda ()
-                                                 (porcelain::apply-patch ".lem-hunk.patch" :reverse t))
-                                               :message "Unstaged hunk")))))
+    (run-function (lambda ()
+                    (porcelain::apply-patch (%current-hunk) :reverse t))
+                  :message "Unstaged hunk")))
 
 (define-command legit-goto-next-hunk () ()
   "Move point to the next hunk line, if any."

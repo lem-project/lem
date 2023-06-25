@@ -278,9 +278,29 @@ M	src/ext/porcelain.lisp
 ""
 |#
 
-(defun git-apply-patch (patch &key reverse)
+(defvar *verbose* nil)
+
+(defun git-apply-patch (diff &key reverse)
   "Apply a patch file.
   This is used to stage hunks of files."
+  (when *verbose*
+    (log:info diff)
+    (with-open-file (f (merge-pathnames "lem-hunk-latest.patch" (lem-home))
+                       :direction :output
+                       :if-exists :supersede
+                       :if-does-not-exist :create)
+      (write-sequence diff f)))
+
+  ;; Write diff on file.
+  ;; It should also be possible to give it on stdin ("git apply - ")
+  ;; (uiop:with-temporary-file (:stream f) ;; issues with this.
+  (with-open-file (f ".lem-hunk.patch"
+                     :direction :output
+                     :if-exists :supersede
+                     :if-does-not-exist :create)
+    (write-sequence diff f)
+    (finish-output f))
+
   (let ((base (list "apply"
                     "--ignore-space-change" ;; in context only.
                     "-C0" ;; easier to apply patch without context.
@@ -289,19 +309,21 @@ M	src/ext/porcelain.lisp
         (maybe (if reverse
                    (list "--reverse")
                    (list)))
-        (arglist (list patch)))
+        (arglist (list ".lem-hunk.patch")))
     (run-git (concatenate 'list base maybe arglist))))
 
-(defun fossil-apply-patch (patch &key reverse)
+(defun fossil-apply-patch (diff &key reverse)
   "Needs fossil at least > 2.10. Version 2.22 works."
-  (declare (ignorable patch reverse))
-  ;; mmh… it wants a binary patch, not a diff file.
+  (declare (ignorable diff reverse))
+  ;; mmh… it wants a binary patch.
   (values nil "fossil patch is not supported." 1))
 
-(defun apply-patch (patch &key reverse)
+(defun apply-patch (diff &key reverse)
+  "Apply a patch from this diff.
+  diff: string."
   (case *vcs*
-    (:fossil (fossil-apply-patch patch :reverse reverse))
-    (t (git-apply-patch patch :reverse reverse))))
+    (:fossil (fossil-apply-patch diff :reverse reverse))
+    (t (git-apply-patch diff :reverse reverse))))
 
 (defun checkout (branch)
   (run-git (list "checkout" branch)))

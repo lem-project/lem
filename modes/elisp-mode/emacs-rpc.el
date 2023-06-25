@@ -61,13 +61,11 @@
 (cl-defun lem-elisp-export-functions (&key
 				      (server "lem-elisp-server")
 				      (functions *lem-emacs-export-functions*))
+  "Export FUNCTIONS to SERVER."
   (mapcar (lambda (fname)
 	    (porthole-expose-function server fname))
 	  functions))
 
-t
 ;; (lem-symbol-location "goto-char")
 ;; (lem-symbol-location "pi")
 ;; (lem-symbol-location "asdasd")
-
-

@@ -197,7 +197,7 @@
                 :paren-pairs '((#\( . #\))
                                (#\{ . #\})
                                (#\[ . #\]))
-                :string-quote-chars '(#\" #\')
+                :string-quote-chars '(#\")
                 :line-comment-string ";"))
         (tmlanguage (make-tmlanguage-elisp)))
     (set-syntax-parser table tmlanguage)

@@ -55,6 +55,7 @@ Next:
 ;; Some are defined on peek-legit too.
 (define-key *global-keymap* "C-x g" 'legit-status)
 (define-key *legit-diff-mode-keymap* "s" 'legit-stage-hunk)
+(define-key *legit-diff-mode-keymap* "u" 'legit-unstage-hunk)
 (define-key *legit-diff-mode-keymap* "n" 'legit-goto-next-hunk)
 (define-key *legit-diff-mode-keymap* "p" 'legit-goto-previous-hunk)
 
@@ -252,35 +253,36 @@ Next:
 
          (funcall fn))))))
 
-(defun run-function (fn &key (message "OK"))
-  "Run this lambda function in the context of the Git project root.
-  Typicaly used to run an external process in the context of a diff buffer command.
-
-  Show `message` to the user on success,
+(defun run-function (fn &key message)
+  "Run this function and show `message` and standard output
+  to the user on success as a tooltip message,
   or show the external command's error output on a popup window.
 
-  Note: on success, standard output is currently not used."
-  (with-current-project ()
-    (multiple-value-bind (output error-output exit-code)
-        (funcall fn)
-      (declare (ignorable output))
-      (cond
-        ((zerop exit-code)
-         (message message))
-        (t
-         (when error-output
-           (pop-up-message error-output)))))))
+  Use with-current-project in the caller too.
+  Typicaly used to run an external process in the context of a diff buffer command."
+  (multiple-value-bind (output error-output exit-code)
+      (funcall fn)
+    (declare (ignorable output))
+    (cond
+      ((zerop exit-code)
+       (message (str:join #\newline (remove-if #'null (list message output)))))
+      (t
+       (when error-output
+         (pop-up-message error-output))))))
 
 (define-command legit-stage-hunk () ()
-  (%call-legit-hunk-function (lambda ()
-                               (run-function (lambda ()
-                                               (porcelain::apply-patch ".lem-hunk.patch"))
-                                             :message "Hunk staged."))))
+  (with-current-project ()
+    (%call-legit-hunk-function (lambda ()
+                                 (run-function (lambda ()
+                                                 (porcelain::apply-patch ".lem-hunk.patch"))
+                                               :message "Staged hunk")))))
 
 (define-command legit-unstage-hunk () ()
-  (%call-legit-hunk-function (lambda ()
-                               (porcelain::apply-patch ".lem-hunk.patch" :reverse t)
-                               (message "Hunk unstaged."))))
+  (with-current-project ()
+    (%call-legit-hunk-function (lambda ()
+                                 (run-function (lambda ()
+                                                 (porcelain::apply-patch ".lem-hunk.patch" :reverse t))
+                                               :message "Unstaged hunk")))))
 
 (define-command legit-goto-next-hunk () ()
   "Move point to the next hunk line, if any."
@@ -411,14 +413,12 @@ Next:
 (define-command legit-pull () ()
   "Pull changes, update HEAD."
   (with-current-project ()
-    (run-function (lambda ()
-                    (porcelain::pull)))))
+    (run-function #'porcelain::pull)))
 
 (define-command legit-push () ()
   "Push changes to the current remote."
   (with-current-project ()
-    (run-function (lambda ()
-                    (porcelain::push)))))
+    (run-function #'porcelain::push)))
 
 (define-command legit-help () ()
   "Show the important keybindings."

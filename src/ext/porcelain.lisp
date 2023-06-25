@@ -5,8 +5,13 @@
   (:export))
 (in-package :porcelain)
 
-(defvar *git-base-args* (list "git")
-  "git, to be appended command-line options.")
+(declaim (type (list) *git-base-arglist*))
+(defvar *git-base-arglist* (list "git")
+  "The git program, to be appended command-line options.")
+
+(declaim (type (list) *fossil-base-args*))
+(defvar *fossil-base-args* (list "fossil")
+  "fossil, to be appended command-line options.")
 
 (defvar *nb-latest-commits* 10
   "Number of commits to show in the status.")
@@ -74,7 +79,8 @@
                            "--list"
                            "--no-color"
                            (format nil "--sort=~a" sort-by))
-                     :output :string)))
+                     :output :string
+                     :error-output :string)))
 
 (defun branches (&key (sort-by *branch-sort-by*))
   (loop for branch in (git-list-branches :sort-by sort-by)
@@ -110,12 +116,8 @@
 (defun unstage (file)
   "Unstage changes to a file."
   ;; test with me: this hunk was added with Lem!
-  (uiop:run-program (list "git"
-                          "reset"
-                          "HEAD"
-                          "--"
-                          file)
-                    :output :string))
+  (run-git (list "reset" "HEAD" "--" file)))
+
 #|
 Interestingly, this returns the list of unstaged changes:
 "Unstaged changes after reset:
@@ -125,12 +127,17 @@ M	src/ext/porcelain.lisp
 ""
 |#
 
-(defun run-git (args)
-  "Run the git command with these options,
-  return standard and error output as strings."
-  (uiop:run-program (concatenate 'list *git-base-args* args)
+(defun run-git (arglist)
+  "Run the git command with these options (list).
+  Return standard and error output as strings.
+
+  Don't signal an error if the process doesn't exit successfully
+  (but return the error message, so it can be displayed by the caller).
+  However, if uiop:run-program fails to run the command, the interactive debugger
+  is invoked (and shown correctly in Lem)."
+  (uiop:run-program (concatenate 'list *git-base-arglist* arglist)
                     :output :string
-                    :error-output t
+                    :error-output :string
                     :ignore-error-status t))
 
 (defun apply-patch (patch &key reverse)
@@ -144,8 +151,8 @@ M	src/ext/porcelain.lisp
         (maybe (if reverse
                    (list "--reverse")
                    (list)))
-        (args (list patch)))
-    (run-git (concatenate 'list base maybe args))))
+        (arglist (list patch)))
+    (run-git (concatenate 'list base maybe arglist))))
 
 (defun checkout (branch)
   (run-git (list "checkout" branch)))

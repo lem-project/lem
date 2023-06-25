@@ -1,5 +1,5 @@
 (defpackage :lem-elisp-mode
-  (:use :cl :lem :lem/language-mode :lem/language-mode-tools)
+  (:use :cl :lem :lem/language-mode :lem/language-mode-tools :lem/completion-mode)
   (:export :*elisp-mode-hook*
            :elisp-mode
            :*elisp-syntax-table*
@@ -193,6 +193,24 @@
     (set-syntax-parser table tmlanguage)
     table))
 
+(defun completion-symbol (point)
+  (with-point ((start point) 
+               (end point))
+
+    (skip-chars-backward start #'syntax-symbol-char-p)
+    (skip-chars-forward end #'syntax-symbol-char-p)
+    
+    (when (and  (point< start end)
+                (lem-elisp-mode.rpc:connected-p))
+      (mapcar (lambda (item)
+                (make-completion-item 
+                 :label item
+                 :start start
+                 :end end))
+              (sort (completion (points-to-string start end) 
+                                (lem-elisp-mode.rpc:get-completions))
+		    #'string-lessp)))))
+
 (define-major-mode elisp-mode language-mode
     (:name "Emacs Lisp"
      :keymap *elisp-mode-keymap*
@@ -202,7 +220,7 @@
         (variable-value 'calc-indent-function) 'lem-lisp-mode/internal::calc-indent
         (variable-value 'beginning-of-defun-function) 'lem-lisp-mode/internal:lisp-beginning-of-defun
         (variable-value 'end-of-defun-function) 'lem-lisp-mode/internal:lisp-end-of-defun
-              
+        (variable-value 'completion-spec) 'completion-symbol
           
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 4

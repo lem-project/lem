@@ -96,7 +96,7 @@
     "use-package"))
 
 (defvar *elisp-boolean-literals*
-  '("true" "false" ))
+  '("t" "nil" ))
 
 (defvar *elisp-null-literal*
   '("nil"))

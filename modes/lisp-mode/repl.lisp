@@ -49,6 +49,30 @@
                    (declare (ignore args))
                    (copy-down-to-repl 'micros:get-printed-object-by-id id))))))
 
+(defun context-menu-describe-object ()
+  (let* ((point (get-point-on-context-menu-open))
+         (id (object-id-at point)))
+    (when id
+      (lem/context-menu:make-item
+       :label "Describe"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   (listener-eval (format nil
+                                          "(cl:describe (micros:get-printed-object-by-id ~A))"
+                                          id)))))))
+
+(defun context-menu-pretty-print ()
+  (let* ((point (get-point-on-context-menu-open))
+         (id (object-id-at point)))
+    (when id
+      (lem/context-menu:make-item
+       :label "Pretty Print"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   (listener-eval (format nil
+                                          "(cl:pprint (micros:get-printed-object-by-id ~A))"
+                                          id)))))))
+
 (defun repl-compute-context-menu-items ()
   (remove
    nil
@@ -57,7 +81,9 @@
          (context-menu-find-references)
          (context-menu-hyperspec)
          (context-menu-inspect-printed-object)
-         (context-menu-copy-down-printed-object))))
+         (context-menu-copy-down-printed-object)
+         (context-menu-describe-object)
+         (context-menu-pretty-print))))
 
 (defun read-string-thread-stack ()
   (buffer-value (repl-buffer) 'read-string-thread-stack))

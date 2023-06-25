@@ -17,10 +17,10 @@ Done:
 - commit (only a one-line message for now)
 - push, pull the remote branch
 - branch checkout, branch create&checkout
+- view commit at point
 
 Nice to have/todo next:
 
-- view commit at point
 - view log
 - redact a proper commit text, not only one line
 - other VCS support
@@ -119,9 +119,11 @@ Next:
 ;;; Global commands like commit need not be defined here.
 
 ;; diff
-(defun move (file &key cached)
-  (let ((buffer (lem-base:get-or-create-buffer "*legit-diff*"))
-        (diff (porcelain::file-diff file :cached cached)))
+(defun show-diff (diff)
+  ;; Show a diff in the *legit-diff* buffer.
+  ;; Share usage between showing file diff ("move" function)
+  ;; and showing a commit.
+  (let ((buffer (lem-base:get-or-create-buffer "*legit-diff*")))
     (setf (buffer-directory buffer)
           (uiop:getcwd))
     (setf (buffer-read-only-p buffer) nil)
@@ -135,7 +137,13 @@ Next:
 (defun make-move-function (file  &key cached)
   (lambda ()
     (with-current-project ()
-      (move file :cached cached))))
+      (show-diff (porcelain::file-diff file :cached cached)))))
+
+;; show commit.
+(defun make-show-commit-function (ref)
+  (lambda ()
+    (with-current-project ()
+      (show-diff (porcelain::show-commit-diff ref)))))
 
 ;; stage
 (defun make-stage-function (file)
@@ -369,8 +377,27 @@ Next:
         (lem/peek-legit::collector-insert "Latest commits:")
         (let ((latest-commits (porcelain::latest-commits)))
           (if latest-commits
-              (loop for line in latest-commits
-                    do (lem/peek-legit::collector-insert line))
+              (loop for commit in latest-commits
+                    for line = nil
+                    for hash = nil
+                    for message = nil
+                    if (consp commit)
+                      do (setf line (getf commit :line))
+                         (setf hash (getf commit :hash))
+                         (setf message (getf commit :message))
+                    else
+                      do (setf line commit)
+
+                    do (lem/peek-legit::with-appending-staged-files
+                           (point :move-function (make-show-commit-function hash)
+                                  :visit-file-function (lambda ())
+                                  :stage-function (lambda () )
+                                  :unstage-function (lambda () ))
+                         (when hash
+                           (insert-string point hash :attribute 'lem/peek-legit:filename-attribute :read-only t))
+                         (if message
+                             (insert-string point message)
+                             (insert-string point line))))
               (lem/peek-legit::collector-insert "<none>")))
 
         (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))

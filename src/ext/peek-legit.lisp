@@ -313,7 +313,8 @@
                         ;; (point (get-matched-point))
                         )
     (peek-legit-quit)
-    (switch-to-buffer (find-file-buffer file))
+    (alexandria:when-let ((buffer (find-file-buffer file)))
+      (switch-to-buffer buffer))
     ;; This was used by grep to go to the file and line number.
     ;; We could use this in the diff buffer, to visit the file,
     ;; at the same line of the diff.

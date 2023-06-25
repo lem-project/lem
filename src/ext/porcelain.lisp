@@ -23,8 +23,7 @@
 
   Defaults to \"-creatordate\", to list the latest used branches first.")
 
-(defvar *file-diff-args* (list "diff"
-                               "--no-color")
+(defvar *file-diff-args* (list "diff" "--no-color")
   "Arguments to display the file diffs.
   Will be surrounded by the git binary and the file path.
 
@@ -169,6 +168,15 @@
     (t
      (git-file-diff file :cached cached))))
 
+;; show commits.
+(defun git-show-commit-diff (ref)
+  (run-git (list "show" ref)))
+
+(defun show-commit-diff (ref)
+  (case *vcs*
+    (:fossil nil)
+    (t (git-show-commit-diff ref))))
+
 ;; commit
 (defun git-commit (message)
   (run-git (list "commit" "-m" message)))
@@ -228,13 +236,17 @@
           for space-position = (position #\space line)
           for small-hash = (subseq line 0 hash-length)
           for message = (subseq line space-position)
-          collect (concatenate 'string small-hash message))))
+          collect (list :line (concatenate 'string small-hash message)
+                        :message message
+                        :hash small-hash))))
 
 (defun fossil-latest-commits (&key &allow-other-keys)
   ;; return bare result.
   (str:lines (run-fossil "timeline")))
 
 (defun latest-commits (&key (hash-length 8))
+  "Return a list of strings or plists.
+  The plist has a :hash and a :message, or simply a :line."
   (case *vcs*
     (:fossil
      (fossil-latest-commits))

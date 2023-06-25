@@ -184,6 +184,8 @@
 (defvar *elisp-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab #\newline)
+		:symbol-chars '(#\+ #\- #\< #\> #\/ #\* #\& #\= #\. #\? #\_ #\! #\$ #\% #\: #\@ #\[ #\]
+				#\^ #\{ #\} #\~ #\# #\|)
                 :paren-pairs '((#\( . #\))
                                (#\{ . #\})
                                (#\[ . #\]))
@@ -208,7 +210,7 @@
                  :start start
                  :end end))
               (sort (completion (points-to-string start end) 
-                                (lem-elisp-mode.rpc:get-completions))
+                                (lem-elisp-mode.rpc:get-completions (points-to-string start end)))
 		    #'string-lessp)))))
 
 (define-major-mode elisp-mode language-mode

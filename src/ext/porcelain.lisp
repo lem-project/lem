@@ -3,13 +3,14 @@
   (:use :cl)
   (:shadow :push)
   (:export))
+
 (in-package :porcelain)
 
-(declaim (type (list) *git-base-arglist*))
+(declaim (type (cons) *git-base-arglist*))
 (defvar *git-base-arglist* (list "git")
   "The git program, to be appended command-line options.")
 
-(declaim (type (list) *fossil-base-args*))
+(declaim (type (cons) *fossil-base-args*))
 (defvar *fossil-base-args* (list "fossil")
   "fossil, to be appended command-line options.")
 
@@ -39,9 +40,14 @@
           :git))
 
 (defun fossil-project-p ()
-  (loop for file in (uiop:directory-files "./")
-        if (equal "fossil" (pathname-type file))
-          return (values file :fossil)))
+  (cond
+    ((uiop:file-exists-p ".fslckout")
+     (values ".fslckout" :fossil))
+    (t
+     ;; Maybe do we need "fossil open" here.
+     (loop for file in (uiop:directory-files "./")
+           if (equal "fossil" (pathname-type file))
+             return (values file :fossil)))))
 
 (defvar *vcs-existence-order*
   '(
@@ -58,99 +64,6 @@
                (funcall fn)
              (if root
                  (return (values root vcs))))))
-  (uiop:run-program (list "git" "status" "--porcelain=v1")
-                    :output :string))
-
-(defun components()
-  "Return 3 values:
-  - untracked files
-  - modified and unstaged files
-  - modified and stages files."
-  (loop for line in (str:lines (porcelain))
-        for file = (subseq line 3)
-        unless (str:blankp line)
-        if (equal (elt line 0) #\M)
-          collect file into modified-staged-files
-        if (equal (elt line 1) #\M)
-          collect file into modified-unstaged-files
-        if (str:starts-with-p "??" line)
-          collect file into untracked-files
-        finally (return (values untracked-files
-                                modified-unstaged-files
-                                modified-staged-files))))
-
-(defun file-diff (file &key cached)
-  (let ((out (uiop:run-program
-              (concatenate 'list '("git")
-                           *file-diff-args*
-                           (if cached '("--cached"))
-                           (list file))
-              :output :string)))
-    out))
-
-(defun commit (message)
-  (log:info "commiting: " message)
-  (uiop:run-program (list "git"
-                          "commit"
-                          "-m"
-                          message)))
-
-(defun git-list-branches (&key (sort-by *branch-sort-by*))
-  "Return: list of branches, raw output.
-  Each element starts with two meaningful characters, such as \"* \" for the current branch."
-  (str:lines
-   (uiop:run-program (list "git"
-                           "branch"
-                           "--list"
-                           "--no-color"
-                           (format nil "--sort=~a" sort-by))
-                     :output :string
-                     :error-output :string)))
-
-(defun branches (&key (sort-by *branch-sort-by*))
-  (loop for branch in (git-list-branches :sort-by sort-by)
-        collect (subseq branch 2 (length branch))))
-
-(defun current-branch ()
-  (let ((branches (git-list-branches :sort-by "-creatordate")))
-    (loop for branch in branches
-          if (str:starts-with-p "*" branch)
-            return (subseq branch 2))))
-
-(defun list-latest-commits (&optional (n *nb-latest-commits*))
-  (when (plusp n)
-    (str:lines
-     (uiop:run-program (list "git"
-                             "log"
-                             "--pretty=oneline"
-                             "-n"
-                             (princ-to-string n))
-                       :output :string))))
-
-(defun latest-commits (&key (hash-length 8))
-  (let ((lines (list-latest-commits)))
-    (loop for line in lines
-          for space-position = (position #\space line)
-          for small-hash = (subseq line 0 hash-length)
-          for message = (subseq line space-position)
-          collect (concatenate 'string small-hash message))))
-
-(defun stage (file)
-  (uiop:run-program (list "git" "add" file)))
-
-(defun unstage (file)
-  "Unstage changes to a file."
-  ;; test with me: this hunk was added with Lem!
-  (run-git (list "reset" "HEAD" "--" file)))
-
-#|
-Interestingly, this returns the list of unstaged changes:
-"Unstaged changes after reset:
-M	src/ext/legit.lisp
-M	src/ext/peek-legit.lisp
-M	src/ext/porcelain.lisp
-""
-|#
 
 (defun run-git (arglist)
   "Run the git command with these options (list).
@@ -165,7 +78,195 @@ M	src/ext/porcelain.lisp
                     :error-output :string
                     :ignore-error-status t))
 
-(defun apply-patch (patch &key reverse)
+(defun run-fossil (arglist)
+  "Run the fossil command with these options.
+
+   arglist: a list of CLI options and arguments to append to the base fossil program.
+   See `*fossil-base-args*`."
+  (uiop:run-program (concatenate 'list
+                                 *fossil-base-args*
+                                 (uiop:ensure-list arglist))
+                    :output :string
+                    :error-output :string
+                    :ignore-error-status t))
+
+
+(defun git-porcelain ()
+  (run-git (list "status" "--porcelain=v1")))
+
+(defun fossil-porcelain ()
+  (multiple-value-bind (out error code)
+      (run-fossil "changes")
+    (cond
+      ((not (zerop code))
+       (error (str:join #\newline (list out error))))
+      (t
+       (values out error)))))
+
+;; Dispatching on the right VCS:
+;; *vcs* is bound in the caller (in legit::with-current-project).
+(defun porcelain ()
+  (case *vcs*
+    (:fossil (fossil-porcelain))
+    (t (git-porcelain))))
+
+(defun git-components()
+  "Return 3 values:
+  - untracked files
+  - modified and unstaged files
+  - modified and stages files."
+  (loop for line in (str:lines (porcelain))
+        for file = (subseq line 3)
+        unless (str:blankp line)
+          if (equal (elt line 0) #\M)
+            collect file into modified-staged-files
+        if (equal (elt line 1) #\M)
+          collect file into modified-unstaged-files
+        if (str:starts-with-p "??" line)
+          collect file into untracked-files
+        finally (return (values untracked-files
+                                modified-unstaged-files
+                                modified-staged-files))))
+
+(defun fossil-components ()
+  "Return values:
+  - untracked files (todo)
+  - list of ADDED files
+  - modified files"
+  (loop for line in (str:lines (fossil-porcelain))
+        for parts = (str:words line)
+        for status = (first parts)
+        for file = (second parts)
+        if (equal "ADDED" status)
+          collect file into added-files
+        if (equal "EDITED" status)
+          collect file into edited-files
+        finally (return (values nil
+                                added-files
+                                edited-files))))
+
+(defun components ()
+  (case *vcs*
+    (:fossil (fossil-components))
+    (t (git-components))))
+
+;; diff
+(defun git-file-diff (file &key cached)
+  (run-git
+   (concatenate 'list
+                *file-diff-args*
+                (if cached '("--cached"))
+                (list file))))
+
+(defun fossil-file-diff (file &key cached)
+  (declare (ignorable cached))
+  (run-fossil (list "diff" file)))
+
+(defun file-diff (file &key cached)
+  (case *vcs*
+    (:fossil
+     (fossil-file-diff file))
+    (t
+     (git-file-diff file :cached cached))))
+
+;; commit
+(defun git-commit (message)
+  (run-git (list "commit" "-m" message)))
+
+(defun fossil-commit (message)
+  (run-fossil (list "commit" "-m" message)))
+
+(defun commit (message)
+  (case *vcs*
+    (:fossil (fossil-commit message))
+    (t (git-commit message))))
+
+;; branches
+(defun git-list-branches (&key (sort-by *branch-sort-by*))
+  "Return: list of branches, raw output.
+  Each element starts with two meaningful characters, such as \"* \" for the current branch."
+  (str:lines
+   (run-git (list "branch"
+                  "--list"
+                  "--no-color"
+                  (format nil "--sort=~a" sort-by)))))
+
+(defun branches (&key (sort-by *branch-sort-by*))
+  (loop for branch in (git-list-branches :sort-by sort-by)
+        collect (subseq branch 2 (length branch))))
+
+(defun fossil-branches (&key &allow-other-keys)
+  (error "not implemented"))
+
+(defun git-current-branch ()
+  (let ((branches (git-list-branches :sort-by "-creatordate")))
+    (loop for branch in branches
+          if (str:starts-with-p "*" branch)
+            return (subseq branch 2))))
+
+(defun fossil-current-branch ()
+  ;; strip out "* " from "* trunk"
+  (str:trim
+   (subseq (run-fossil "branch") 2)))
+
+(defun current-branch ()
+  (case *vcs*
+    (:fossil
+     (fossil-current-branch))
+    (t
+     (git-current-branch))))
+
+;; latest commits.
+(defun %git-list-latest-commits (&optional (n *nb-latest-commits*))
+  (when (plusp n)
+    (str:lines
+     (run-git (list "log" "--pretty=oneline" "-n" (princ-to-string n))))))
+
+(defun git-latest-commits (&key (hash-length 8))
+  (let ((lines (%git-list-latest-commits)))
+    (loop for line in lines
+          for space-position = (position #\space line)
+          for small-hash = (subseq line 0 hash-length)
+          for message = (subseq line space-position)
+          collect (concatenate 'string small-hash message))))
+
+(defun fossil-latest-commits (&key &allow-other-keys)
+  ;; return bare result.
+  (str:lines (run-fossil "timeline")))
+
+(defun latest-commits (&key (hash-length 8))
+  (case *vcs*
+    (:fossil
+     (fossil-latest-commits))
+    (t
+     (git-latest-commits :hash-length hash-length))))
+
+;; stage, add files.
+(defun git-stage (file)
+  (run-git (list "add" file)))
+
+(defun fossil-stage (file)
+  (run-fossil (list "add" file)))
+
+(defun stage (file)
+  (case *vcs*
+    (:fossil (fossil-stage file))
+    (t (git-stage file))))
+
+(defun unstage (file)
+  "Unstage changes to a file."
+  ;; test with me: this hunk was added with Lem!
+  (run-git (list "reset" "HEAD" "--" file)))
+#|
+Interestingly, this returns the list of unstaged changes:
+"Unstaged changes after reset:
+M	src/ext/legit.lisp
+M	src/ext/peek-legit.lisp
+M	src/ext/porcelain.lisp
+""
+|#
+
+(defun git-apply-patch (patch &key reverse)
   "Apply a patch file.
   This is used to stage hunks of files."
   (let ((base (list "apply"
@@ -178,6 +279,17 @@ M	src/ext/porcelain.lisp
                    (list)))
         (arglist (list patch)))
     (run-git (concatenate 'list base maybe arglist))))
+
+(defun fossil-apply-patch (patch &key reverse)
+  "Needs fossil at least > 2.10. Version 2.22 works."
+  (declare (ignorable patch reverse))
+  ;; mmh… it wants a binary patch, not a diff file.
+  (values nil "fossil patch is not supported." 1))
+
+(defun apply-patch (patch &key reverse)
+  (case *vcs*
+    (:fossil (fossil-apply-patch patch :reverse reverse))
+    (t (git-apply-patch patch :reverse reverse))))
 
 (defun checkout (branch)
   (run-git (list "checkout" branch)))

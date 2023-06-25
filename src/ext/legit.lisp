@@ -28,6 +28,7 @@ Nice to have/todo next:
 Next:
 
 - interactive rebase
+- stage only selected region (and not whole diff at point)
 - stash
 - untracked files
 - many, many more commands, settings and switches

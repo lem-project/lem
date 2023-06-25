@@ -68,6 +68,8 @@
 
 (define-key *lisp-repl-mode-keymap* "C-c C-c" 'lisp-repl-interrupt)
 (define-key *lisp-repl-mode-keymap* "," 'lisp-repl-shortcut)
+(define-key *lisp-repl-mode-keymap* "M-Return" 'lisp-repl-copy-down)
+(define-key *lisp-repl-mode-keymap* "C-Return" 'lisp-repl-copy-down)
 
 (define-command lisp-repl-interrupt () ()
   (send-message-string *connection*
@@ -278,6 +280,10 @@
       (lambda (result)
         (declare (ignore result))
         (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))))))
+
+(define-command lisp-repl-copy-down () ()
+  (alexandria:when-let ((id (object-id-at (current-point))))
+    (copy-down-to-repl 'micros:get-printed-object-by-id id)))
 
 (defun repl-buffer-write-point (buffer)
   (or (buffer-value buffer 'repl-write-point)

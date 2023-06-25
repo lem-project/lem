@@ -247,6 +247,14 @@ Next:
            ;; important for git patch.
            (setf patch (str:join "" (list patch (string #\newline) " "))))
 
+         ;; Delete current hunk, place cursor on next one.
+         (when (and start end)
+           (setf (buffer-read-only-p (current-buffer)) nil)
+           (delete-character start (count-characters start end))
+           ;; delete a remaining newline character and we are on the next hunk line.
+           (delete-character start 1)
+           (setf (buffer-read-only-p (current-buffer)) t))
+
          (when *legit-verbose*
            (log:info patch)
            (with-open-file (f (merge-pathnames "lem-hunk-latest.patch" (lem-home))

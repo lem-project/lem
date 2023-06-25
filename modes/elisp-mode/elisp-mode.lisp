@@ -101,10 +101,6 @@
 (defvar *elisp-null-literal*
   '("nil"))
 
-(defvar *elisp-operators*
-  '("+" "*" "++" "--" "<>" "||" "&&" "!"
-    "==" "!=" "===" "!==" ">=" "<="))
-
 
 (defun tokens (boundary strings)
   (let ((alternation
@@ -186,9 +182,7 @@
                                    :name 'syntax-constant-attribute)
 
                     (make-tm-match (tokens :word-boundary *elisp-keywords*)
-                                   :name 'syntax-keyword-attribute)
-                    (make-tm-match (tokens nil *elisp-operators*)
-                                   :name 'syntax-builtin-attribute))))
+                                   :name 'syntax-keyword-attribute))))
     (make-tmlanguage :patterns patterns)))
 
 (defvar *elisp-syntax-table*

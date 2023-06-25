@@ -39,14 +39,10 @@
 
 (defvar *elisp-keywords*
   '(
-    ;"cl-defun"
-    ;"cl-defmacro"
     "cl-defstruct"
     "cl-defsubst"
     "cl-loop"
 
-    ;"defun"
-    ;"defmacro"
     "defstruct"
     "defsubst"
 

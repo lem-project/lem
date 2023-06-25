@@ -20,12 +20,13 @@
    :publish-password t))
 
 
-(cl-defun lem-get-completion ()
-  "Return a list of all the local-symbols."
-  (elisp-refs--filter-obarray (lambda (_) t)))
+(cl-defun lem-get-completion (prefix)
+  "Return a list of symbols with PREFIX as prefix."
+  (elisp-refs--filter-obarray (lambda (i)
+				(string-prefix-p prefix (format "%s" i) t))))
 
 (cl-defun lem-symbol-location (symbol)
-  "Return a cons of (file . absolute-position) of SYMBOL."
+  "Return a a list of (file absolute-position) of SYMBOL."
   (let ((symbol-intern (intern-soft symbol))
 	symbol-info)
     (cond
@@ -42,6 +43,7 @@
 	  (cdr symbol-info))))
 
 (cl-defun lem-symbol-documentation (symbol)
+  "Returns SYMBOL documentation"
   (let ((symbol-intern (intern-soft symbol)))
     (cond
      ((functionp symbol-intern)
@@ -56,7 +58,6 @@
   '(lem-get-completion
     lem-symbol-location
     lem-symbol-documentation))
-
 
 (cl-defun lem-elisp-export-functions (&key
 				      (server "lem-elisp-server")

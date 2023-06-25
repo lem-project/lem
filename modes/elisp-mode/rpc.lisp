@@ -31,11 +31,12 @@
                           :url server-url))
 
 ;;TODO Add auth as a parameter
-(defun get-completions (&key 
+(defun get-completions (prefix
+                        &key
                         (client *elisp-rpc-client*))
   "Returns a list of all the Emacs Lisp symbols defined."
   (mapcar (lambda (i) (format nil "~a" i)) 
-          (jsonrpc:call client "lem-get-completion" nil
+          (jsonrpc:call client "lem-get-completion" (list prefix)
                         :basic-auth '("lem" . "lem"))))
 
 (defun get-symbol-location (symbol 

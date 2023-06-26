@@ -431,11 +431,21 @@
             :key 'package-name)
       *package*))
 
+(defun cover-annotation (point)
+  (with-point ((p point))
+    (when (and (line-offset p -1)
+               (ppcre:scan "^\\s*@[\\w-]+\\s*$" (line-string p)))
+      (move-point point p))))
+
+(defun top-of-defun-with-annotation (point)
+  (lem-lisp-syntax:top-of-defun point)
+  (cover-annotation point))
+
 (define-command lisp-eval-defun () ()
   "Evaluate top-level form around point and instrument."
   (check-connection)
   (with-point ((point (current-point)))
-    (lem-lisp-syntax:top-of-defun point)
+    (top-of-defun-with-annotation point)
     (with-point ((start point)
                  (end point))
       (scan-lists end 1 0)
@@ -655,7 +665,7 @@
 (define-command lisp-compile-defun () ()
   (check-connection)
   (with-point ((point (current-point)))
-    (lem-lisp-syntax:top-of-defun point)
+    (top-of-defun-with-annotation point)
     (with-point ((start point)
                  (end point))
       (scan-lists end 1 0)

@@ -1,14 +1,15 @@
-(defpackage :lem-elisp-mode.rpc
+(defpackage :lem-elisp-mode/rpc
   (:use :cl :lem)
-  (:export :*elisp-rpc-url*
-           :*elisp-rpc-auth*
-           :connected-p
-           :connect-to-server
-           :get-completions
-           :get-symbol-location
-           :get-symbol-documentation))
+  (:export
+   :*elisp-rpc-url*
+   :*elisp-rpc-auth*
+   :connected-p
+   :connect-to-server
+   :get-completions
+   :get-symbol-location
+   :get-symbol-documentation))
 
-(in-package :lem-elisp-mode.rpc)
+(in-package :lem-elisp-mode/rpc)
 
 (defvar *elisp-rpc-url* "http://localhost:55486")
 

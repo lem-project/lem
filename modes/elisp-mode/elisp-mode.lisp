@@ -203,14 +203,14 @@
     (skip-chars-forward end #'syntax-symbol-char-p)
     
     (when (and  (point< start end)
-                (lem-elisp-mode.rpc:connected-p))
+                (lem-elisp-mode/rpc:connected-p))
       (mapcar (lambda (item)
                 (make-completion-item 
                  :label item
                  :start start
                  :end end))
               (sort (completion (points-to-string start end) 
-                                (lem-elisp-mode.rpc:get-completions (points-to-string start end)))
+                                (lem-elisp-mode/rpc:get-completions (points-to-string start end)))
 		    #'string-lessp)))))
 
 (define-major-mode elisp-mode language-mode

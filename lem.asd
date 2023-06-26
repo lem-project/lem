@@ -168,7 +168,8 @@
 	       "lem-base16-themes"
 	       #+sbcl
 	       "lem-elixir-mode"
-	       "lem-documentation-mode"))
+	       "lem-documentation-mode"
+	       "lem-elisp-mode"))
 
 (defsystem "lem/executable"
   :build-operation program-op

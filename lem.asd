@@ -172,7 +172,7 @@
 	       "lem-elisp-mode"))
 
 (defsystem "lem/executable"
-	   :build-operation program-op
-	   :build-pathname "lem"
-	   :entry-point "lem:main"
-	   :depends-on ("lem-ncurses"))
+  :build-operation program-op
+  :build-pathname "lem"
+  :entry-point "lem:main"
+  :depends-on ("lem-ncurses"))

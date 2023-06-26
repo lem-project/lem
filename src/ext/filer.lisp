@@ -129,7 +129,7 @@
                0)))
     (funcall function)
     (when (lem-core::frame-leftside-window (current-frame))
-      (scroll (lem-core::frame-leftside-window (current-frame)) n))))
+      (scroll-down n (lem-core::frame-leftside-window (current-frame))))))
 
 (defmacro with-fix-scroll (() &body body)
   `(call-with-fix-scroll (lambda () ,@body)))

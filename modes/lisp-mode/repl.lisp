@@ -23,6 +23,11 @@
     (t
      (editor-error "No connection for repl. Did you mean 'start-lisp-repl' command?"))))
 
+(define-key *lisp-repl-mode-keymap* "C-c C-c" 'lisp-repl-interrupt)
+(define-key *lisp-repl-mode-keymap* "," 'lisp-repl-shortcut)
+(define-key *lisp-repl-mode-keymap* "M-Return" 'lisp-repl-copy-down)
+(define-key *lisp-repl-mode-keymap* "C-Return" 'lisp-repl-copy-down)
+
 (defun context-menu-inspect-printed-object ()
   (let* ((point (get-point-on-context-menu-open))
          (id (object-id-at point)))
@@ -44,6 +49,30 @@
                    (declare (ignore args))
                    (copy-down-to-repl 'micros:get-printed-object-by-id id))))))
 
+(defun context-menu-describe-object ()
+  (let* ((point (get-point-on-context-menu-open))
+         (id (object-id-at point)))
+    (when id
+      (lem/context-menu:make-item
+       :label "Describe"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   (listener-eval (format nil
+                                          "(cl:describe (micros:get-printed-object-by-id ~A))"
+                                          id)))))))
+
+(defun context-menu-pretty-print ()
+  (let* ((point (get-point-on-context-menu-open))
+         (id (object-id-at point)))
+    (when id
+      (lem/context-menu:make-item
+       :label "Pretty Print"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   (listener-eval (format nil
+                                          "(cl:pprint (micros:get-printed-object-by-id ~A))"
+                                          id)))))))
+
 (defun repl-compute-context-menu-items ()
   (remove
    nil
@@ -52,7 +81,9 @@
          (context-menu-find-references)
          (context-menu-hyperspec)
          (context-menu-inspect-printed-object)
-         (context-menu-copy-down-printed-object))))
+         (context-menu-copy-down-printed-object)
+         (context-menu-describe-object)
+         (context-menu-pretty-print))))
 
 (defun read-string-thread-stack ()
   (buffer-value (repl-buffer) 'read-string-thread-stack))
@@ -65,9 +96,6 @@
 
 (defun (setf read-string-tag-stack) (val)
   (setf (buffer-value (repl-buffer) 'read-string-tag-stack) val))
-
-(define-key *lisp-repl-mode-keymap* "C-c C-c" 'lisp-repl-interrupt)
-(define-key *lisp-repl-mode-keymap* "," 'lisp-repl-shortcut)
 
 (define-command lisp-repl-interrupt () ()
   (send-message-string *connection*
@@ -278,6 +306,10 @@
       (lambda (result)
         (declare (ignore result))
         (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))))))
+
+(define-command lisp-repl-copy-down () ()
+  (alexandria:when-let ((id (object-id-at (current-point))))
+    (copy-down-to-repl 'micros:get-printed-object-by-id id)))
 
 (defun repl-buffer-write-point (buffer)
   (or (buffer-value buffer 'repl-write-point)

@@ -1,11 +1,11 @@
 (in-package :lem-lisp-mode/internal)
 
 (define-attribute printed-object-attribute
-  (:dark :foreground "white" :bold t)
+  (:dark :foreground "#c4af7e" :bold t)
   (:light :foreground "black" :bold t))
 
 (define-attribute repl-result-attribute
-  (:dark :foreground "aquamarine" :bold t)
+  (:dark :foreground "#e7e8ea" :bold t)
   (:light :foreground "black" :bold t))
 
 (define-major-mode lisp-repl-mode lisp-mode

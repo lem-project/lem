@@ -85,13 +85,17 @@ Next:
 (define-key lem/peek-legit::*peek-legit-keymap* "?" 'legit-help)
 (define-key lem/peek-legit::*peek-legit-keymap* "C-x ?" 'legit-help)
 ;; quit
-(define-key *legit-diff-mode-keymap* "q" 'lem/peek-legit::peek-legit-quit)
-(define-key *legit-diff-mode-keymap* "Escape" 'lem/Peek-legit::peek-legit-quit)
-(define-key *legit-diff-mode-keymap* "M-q" 'lem/peek-legit::peek-legit-quit)
-(define-key *legit-diff-mode-keymap* "c-c C-k" 'lem/peek-legit::peek-legit-quit)
+(define-key *legit-diff-mode-keymap* "q" 'legit-quit)
+(define-key lem/peek-legit::*peek-legit-keymap* "q" 'legit-quit)
+(define-key *legit-diff-mode-keymap* "M-q" 'legit-quit)
+(define-key lem/peek-legit::*peek-legit-keymap* "M-q" 'peek-legit-quit)
+(define-key *legit-diff-mode-keymap* "Escape" 'legit-quit)
+(define-key lem/peek-legit::*peek-legit-keymap* "Escape" 'peek-legit-quit)
+(define-key *legit-diff-mode-keymap* "C-c C-k" 'legit-quit)
+(define-key lem/peek-legit::*peek-legit-keymap* "C-c C-k" 'legit-quit)
 
 (defun pop-up-message (message)
-  (with-pop-up-typeout-window (s (make-buffer "*Legit status*") :erase t)
+  (with-pop-up-typeout-window (s (make-buffer "*legit status*") :erase t)
     (format s "~a" message)))
 
 (defun last-character (s)
@@ -442,9 +446,16 @@ Next:
   (with-current-project ()
     (run-function #'porcelain::push)))
 
+(define-command legit-quit () ()
+  "Quit"
+  (lem/peek-legit::quit)
+  (ignore-errors
+   (delete-buffer (get-buffer "*legit-diff*"))
+   (delete-buffer (get-buffer "*legit-help*"))))
+
 (define-command legit-help () ()
   "Show the important keybindings."
-  (with-pop-up-typeout-window (s (make-buffer "*Legit help*") :erase t)
+  (with-pop-up-typeout-window (s (make-buffer "*legit-help*") :erase t)
     (format s "Lem's interface to git. M-x legit-status (C-x g)~&")
     (format s "~%")
     (format s "Commands:~&")

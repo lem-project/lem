@@ -24,10 +24,6 @@
 
 ;; quit
 (define-key *peek-legit-keymap* "Return" 'peek-legit-select)
-(define-key *peek-legit-keymap* "q" 'peek-legit-quit)
-(define-key *peek-legit-keymap* "Escape" 'peek-legit-quit)
-(define-key *peek-legit-keymap* "M-q" 'peek-legit-quit)
-(define-key *peek-legit-keymap* "C-c C-k" 'peek-legit-quit)
 
 ;; navigation
 (define-key *peek-legit-keymap* 'next-line 'peek-legit-next)
@@ -286,20 +282,10 @@
 
 
 (define-command peek-legit-select () ()
-  (alexandria:when-let ((file (get-matched-file))
-                        ;; (point (get-matched-point))
-                        )
-    (peek-legit-quit)
+  (alexandria:when-let ((file (get-matched-file)))
+    (quit)
     (alexandria:when-let ((buffer (find-file-buffer file)))
-      (switch-to-buffer buffer))
-    ;; This was used by grep to go to the file and line number.
-    ;; We could use this in the diff buffer, to visit the file,
-    ;; at the same line of the diff.
-    ;; (let ((line (line-number-at-point point)))
-    ;;   (peek-legit-quit)
-    ;;   (switch-to-buffer (point-buffer point))
-    ;;   (move-to-line (current-point) line))
-    ))
+      (switch-to-buffer buffer))))
 
 (define-command peek-legit-next () ()
   (next-move-point (current-point)))
@@ -323,7 +309,8 @@
     (uiop:symbol-call :lem/legit :legit-status)
     point))
 
-(define-command peek-legit-quit () ()
+(defun quit ()
+  "Delete the two side windows."
   (setf (current-window) *parent-window*)
   (start-timer
    (make-idle-timer (lambda ()

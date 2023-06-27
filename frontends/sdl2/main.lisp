@@ -749,7 +749,7 @@
                                        :w window-width
                                        :h window-height
                                        :flags '(:shown :resizable))
-               (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
+               (sdl2:with-renderer (renderer window :index -1 :flags '(:software))
                  (let ((texture (create-texture renderer
                                                 window-width
                                                 window-height)))

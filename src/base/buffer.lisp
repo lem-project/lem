@@ -30,6 +30,10 @@
     :initarg :%enable-undo-p
     :accessor buffer-%enable-undo-p
     :type boolean)
+   (references 
+    :initform (make-hash-table :test 'equal)
+    :reader buffer-references
+    :accessor buffer-references )
    (read-only-p
     :initarg :read-only-p
     :accessor buffer-read-only-p

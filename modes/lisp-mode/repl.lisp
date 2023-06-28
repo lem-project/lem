@@ -505,9 +505,11 @@
 
 (define-command backward-prompt () ()
   (when (equal (current-buffer) (repl-buffer))
-    (search-backward-regexp (line-start (current-point)) "^.+> ")))
-
+    (move-to-previous-virtual-line (current-point))
+    (lem:previous-single-property-change (lem:current-point) :field)))
 
 (define-command forward-prompt () ()
   (when (equal (current-buffer) (repl-buffer))
-    (search-forward-regexp (line-end (current-point)) "^.+> ")))
+    (move-to-next-virtual-line (current-point))
+    (lem:next-single-property-change (lem:current-point) :field)
+    (lem:next-single-property-change (lem:current-point) :field)))

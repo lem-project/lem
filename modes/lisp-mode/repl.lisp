@@ -500,3 +500,12 @@
   (declare (ignore n))
   (let ((system (prompt-for-system "Quickload System: ")))
     (listener-eval (prin1-to-string `(ql:quickload ,system)))))
+
+(define-command backward-prompt () ()
+  (when (equal (current-buffer) (repl-buffer))
+    (search-backward-regexp (line-start (current-point)) "^.+> ")))
+
+
+(define-command forward-prompt () ()
+  (when (equal (current-buffer) (repl-buffer))
+    (search-forward-regexp (line-end (current-point)) "^.+> ")))

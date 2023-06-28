@@ -27,6 +27,8 @@
 (define-key *lisp-repl-mode-keymap* "," 'lisp-repl-shortcut)
 (define-key *lisp-repl-mode-keymap* "M-Return" 'lisp-repl-copy-down)
 (define-key *lisp-repl-mode-keymap* "C-Return" 'lisp-repl-copy-down)
+(define-key *lisp-repl-mode-keymap* "C-c p" 'backward-prompt)
+(define-key *lisp-repl-mode-keymap* "C-c n" 'forward-prompt)
 
 (defun context-menu-inspect-printed-object ()
   (let* ((point (get-point-on-context-menu-open))
@@ -500,3 +502,12 @@
   (declare (ignore n))
   (let ((system (prompt-for-system "Quickload System: ")))
     (listener-eval (prin1-to-string `(ql:quickload ,system)))))
+
+(define-command backward-prompt () ()
+  (when (equal (current-buffer) (repl-buffer))
+    (search-backward-regexp (line-start (current-point)) "^.+> ")))
+
+
+(define-command forward-prompt () ()
+  (when (equal (current-buffer) (repl-buffer))
+    (search-forward-regexp (line-end (current-point)) "^.+> ")))

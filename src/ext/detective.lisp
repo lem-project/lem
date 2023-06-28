@@ -52,18 +52,23 @@
 (defclass search-regex (imenu-search)
   ((function-regex :initform nil
                    :initarg :function-regex
+                   :writer set-function-regex
                    :reader search-function-regex)
    (package-regex :initform nil
                   :initarg :package-regex
+                  :writer set-package-regex
                   :reader search-package-regex)
    (class-regex :initform nil
                 :initarg :class-regex
+                :writer set-class-regex
                 :reader search-class-regex)
    (variable-regex :initform nil
                    :initarg :variable-regex
+                   :writer set-variable-regex
                    :reader search-variable-regex )
    (misc-regex :initform nil
                :initarg :misc-regex
+               :writer set-misc-regex
                :reader search-misc-regex)))
 
 

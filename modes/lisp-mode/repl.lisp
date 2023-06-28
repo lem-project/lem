@@ -513,5 +513,3 @@
     (move-to-next-virtual-line (current-point))
     (lem:next-single-property-change (lem:current-point) :field)
     (lem:next-single-property-change (lem:current-point) :field)))
-
-

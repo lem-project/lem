@@ -38,6 +38,7 @@
                (:file "organize-imports")
                (:file "connection-list")
                (:file "self-insert-hook")
+               (:file "trace")
                (:file "class-browser")
                (:file "package")))
 

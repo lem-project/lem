@@ -27,6 +27,8 @@
 (define-key *lisp-repl-mode-keymap* "," 'lisp-repl-shortcut)
 (define-key *lisp-repl-mode-keymap* "M-Return" 'lisp-repl-copy-down)
 (define-key *lisp-repl-mode-keymap* "C-Return" 'lisp-repl-copy-down)
+(define-key *lisp-repl-mode-keymap* "C-c p" 'backward-prompt)
+(define-key *lisp-repl-mode-keymap* "C-c n" 'forward-prompt)
 
 (defun context-menu-inspect-printed-object ()
   (let* ((point (get-point-on-context-menu-open))

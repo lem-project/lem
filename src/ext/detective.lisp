@@ -78,65 +78,36 @@
 (defun (setf buffer-references) (value buffer)
   (setf (buffer-value buffer 'references) value))
 
+(defgeneric search-references (search-class))
+
 
 (defmethod search-references ((search search-regex))
+  (labels ((find-ref (class regex)
+             (with-point ((p (buffer-start-point (point-buffer (current-point)))))
+               (loop :for position = (search-forward-regexp p regex)
+                     :while position
+                     :collect (make-instance class
+                                             :reference-point (copy-point position))))))
   (with-slots (function-regex
                package-regex
                class-regex
                variable-regex
                misc-regex)
       search
+    (let ((slots (list (cons (cons "functions" function-regex)'function-reference)
+                       (cons (cons "classes" class-regex) 'class-reference)
+                       (cons (cons "packages" package-regex) 'package-reference)
+                       (cons (cons "variables" variable-regex) 'variable-reference)
+                       (cons (cons "misc" misc-regex) 'misc-reference))))
     
     (setf (buffer-references (current-buffer))
           (make-hash-table :test 'equal))
 
-    (when function-regex
-      (setf 
-       (gethash "functions" (buffer-references (current-buffer)))
-       
-       (with-point ((p (buffer-start-point (point-buffer (current-point)))))
-         (loop :for position = (search-forward-regexp p function-regex)
-               :while position
-               :for line = (str:split #\Space (line-string position))
-               :for pname = (second line)
-               :for name = (or (and (str:starts-with-p "(setf" pname)
-                                    (str:concat pname " " (third line)))
-                               pname)
-               :collect (make-instance 'function-reference
-                                       :reference-point (copy-point position) 
-                                       :reference-name name))))) 
-    
-    (when package-regex
-      (setf 
-       (gethash "packages" (buffer-references (current-buffer)))
-      
-       (with-point ((p (buffer-start-point (point-buffer (current-point)))))
-         (loop :for position = (search-forward-regexp p package-regex)
-               :while position
-               :for line = (str:split #\Space (line-string position))
-               :collect (make-instance 'package-reference
-                                       :reference-point (copy-point position)
-                                       :reference-name (second line))))))
+      (loop :for ((id . regex) . class ) :in slots
+            :when regex
+            :do (setf (gethash id (buffer-references (current-buffer)))
+                     (find-ref class regex)))))))
 
-    (when class-regex
-      (setf
-       (gethash "classes" (buffer-references (current-buffer)))
-       
-       (with-point ((p (buffer-start-point (point-buffer (current-point)))))
-         (loop :for position = (search-forward-regexp p class-regex)
-               :while position
-               :for line = (str:split #\Space (line-string position))
-               :collect (make-instance 'package-reference
-                                       :reference-point (copy-point position)
-                                       :reference-name (second line))))))
-    (when variable-regex
-      (setf
-
-       (gethash "variables" (buffer-references (current-buffer)))
-       (with-point ((p (buffer-start-point (point-buffer (current-point)))))
-         (loop :for position = (search-forward-regexp p variable-regex)
-               :while position
-               :for line = (str:split #\Space (line-string position))
-               :collect (make-instance 'package-reference
-                                       :reference-point (copy-point position)
-                                       :reference-name (second line))))))))
+;;(or (and (str:starts-with-p "(setf" pname)
+;;         (str:concat pname " " (third line)))
+;;   pname)

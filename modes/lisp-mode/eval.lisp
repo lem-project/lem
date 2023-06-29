@@ -75,31 +75,34 @@
                       (+ v 5))
         (format nil "#~X~X~X" r g b)))))
 
+(defun display-evaluated-message (start end message &optional is-error id)
+  (let ((popup-overlay
+          (make-overlay start
+                        end
+                        (if is-error
+                            'eval-error-attribute
+                            'eval-value-attribute)
+                        :start-point-kind :left-inserting
+                        :end-point-kind :right-inserting))
+        (background-overlay
+          (make-overlay start
+                        end
+                        (make-attribute :background (compute-evaluated-background-color))
+                        :start-point-kind :left-inserting
+                        :end-point-kind :right-inserting))
+        (buffer (point-buffer start)))
+    (overlay-put popup-overlay 'relation-overlay background-overlay)
+    (overlay-put popup-overlay :display-line-end t)
+    (overlay-put popup-overlay :display-line-end-offset 1)
+    (overlay-put popup-overlay :text (fold-one-line-message message))
+    (overlay-put popup-overlay :id id)
+    (push popup-overlay (buffer-eval-result-overlays buffer))
+    (add-hook (variable-value 'before-change-functions :buffer buffer)
+              'remove-touch-overlay)))
+
 (defun display-spinner-message (spinner &optional message is-error id)
   (lem/loading-spinner:with-line-spinner-points (start end spinner)
-    (let ((popup-overlay
-            (make-overlay start 
-                          end
-                          (if is-error
-                              'eval-error-attribute
-                              'eval-value-attribute)
-                          :start-point-kind :left-inserting
-                          :end-point-kind :right-inserting))
-          (background-overlay
-            (make-overlay start
-                          end
-                          (make-attribute :background (compute-evaluated-background-color))
-                          :start-point-kind :left-inserting
-                          :end-point-kind :right-inserting))
-         (buffer (point-buffer start)))
-      (overlay-put popup-overlay 'relation-overlay background-overlay)
-      (overlay-put popup-overlay :display-line-end t)
-      (overlay-put popup-overlay :display-line-end-offset 1)
-      (overlay-put popup-overlay :text (fold-one-line-message message))
-      (overlay-put popup-overlay :id id)
-      (push popup-overlay (buffer-eval-result-overlays buffer))
-      (add-hook (variable-value 'before-change-functions :buffer buffer)
-                'remove-touch-overlay))))
+    (display-evaluated-message start end message is-error id)))
 
 (defun spinner-eval-request-id (spinner)
   (lem/loading-spinner:spinner-value spinner 'eval-id))

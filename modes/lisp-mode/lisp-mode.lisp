@@ -48,6 +48,10 @@
                        :function-regex
                        (lem/detective::make-capture-regex 
                         :regex "^\\(defun "
+                        :function #'capture-reference)
+                       :class-regex
+                       (lem/detective::make-capture-regex 
+                        :regex "^\\(defclass "
                         :function #'capture-reference)))
   (set-syntax-parser lem-lisp-syntax:*syntax-table*
                      (make-tmlanguage-lisp))
@@ -1206,6 +1210,13 @@
                         (str:concat pname " " (third line)))
                    pname)))
     (make-instance 'lem/detective::function-reference
+                   :reference-name name
+                   :reference-point position)))
+
+(defmethod capture-reference ((position lem:point) (class (eql :class-reference)))
+  (let* ((line (str:split #\Space (line-string position)))
+         (name (second line)))
+    (make-instance 'lem/detective::class-reference
                    :reference-name name
                    :reference-point position)))
 

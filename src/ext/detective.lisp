@@ -139,9 +139,15 @@
      (variable-value 'lem/language-mode:detective-search :buffer)))
    
    ((changed-disk-p (current-buffer))
-    (search-references (variable-value 'lem/language-mode:detective-search :buffer) ))))
+    (search-references (variable-value 'lem/language-mode:detective-search :buffer)))))
 
 (define-command detective-function () ()
   (check-change)
   (let ((reference (navigate-reference "functions")))
     (move-to-reference reference)))
+
+(define-command detective-class () ()
+  (check-change)
+  (let ((reference (navigate-reference "classes")))
+    (move-to-reference reference)))
+

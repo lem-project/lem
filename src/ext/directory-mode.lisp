@@ -316,7 +316,7 @@
   #-windows
   (if *rename-p*
       (run-command `("mv" ,src ,dst))
-      (run-command `("cp" "-r" ,src ,dst))))
+      (run-command `("cp" "-R" ,src ,dst))))
 
 (defun check-copy-files (src-files dst)
   (let ((n (length src-files)))

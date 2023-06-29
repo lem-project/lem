@@ -125,7 +125,8 @@
                              (:file "frame-multiplexer")
                              (:file "filer")
                              (:file "deepl")
-                             (:file "themes")))))
+                             (:file "themes")
+                             (:file "detective")))))
 
 (defsystem "lem/extensions"
   :depends-on (#+sbcl

@@ -86,34 +86,62 @@
 
 (defgeneric search-references (search-class))
 
-
 (defmethod search-references ((search search-regex))
-  (labels ((find-ref (class regex)
+  (labels ((find-ref (regex class)
              (with-point ((p (buffer-start-point (point-buffer (current-point)))))
-               (loop :for position = (search-forward-regexp p regex)
+               (loop :for position = (search-forward-regexp p (capture-regex-regex regex))
                      :while position
-                     :collect (make-instance class
-                                             :reference-point (copy-point position))))))
+                     :collect (funcall (capture-regex-function regex) 
+                                       (copy-point position)
+                                       class)))))
   (with-slots (function-regex
                package-regex
                class-regex
                variable-regex
                misc-regex)
       search
-    (let ((slots (list (cons (cons "functions" function-regex)'function-reference)
-                       (cons (cons "classes" class-regex) 'class-reference)
-                       (cons (cons "packages" package-regex) 'package-reference)
-                       (cons (cons "variables" variable-regex) 'variable-reference)
-                       (cons (cons "misc" misc-regex) 'misc-reference))))
+    (let ((slots 
+            (list (cons (cons "functions" function-regex):function-reference)
+                  (cons (cons "classes" class-regex) :class-reference)
+                  (cons (cons "packages" package-regex) :package-reference)
+                  (cons (cons "variables" variable-regex) :variable-reference)
+                  (cons (cons "misc" misc-regex) :misc-reference))))
     
     (setf (buffer-references (current-buffer))
           (make-hash-table :test 'equal))
 
-      (loop :for ((id . regex) . class ) :in slots
-            :when regex
+      (loop :for ((id . regex) . class) :in slots
+            :when (and regex (capture-regex-function regex))
             :do (setf (gethash id (buffer-references (current-buffer)))
-                     (find-ref class regex)))))))
+                      (find-ref regex class)))))))
 
-;;(or (and (str:starts-with-p "(setf" pname)
-;;         (str:concat pname " " (third line)))
-;;   pname)
+(defgeneric capture-reference (position class))
+
+(defun navigate-reference (type)
+  (alexandria:when-let* ((references (gethash type (buffer-references (current-buffer))))
+                         (name-references (mapcar #'reference-name references))
+                         (item 
+                          (prompt-for-string "Navigate: "
+                                             :completion-function (lambda (x) (completion-strings x name-references))
+           
+                                             :test-function (lambda (name)
+                                                              (member name name-references :test #'string=)))))
+    (find item references :key #'reference-name :test #'string=)))
+
+(defun move-to-reference (reference)
+  (let ((location (reference-point reference)))
+    (move-point (current-point) location)))
+
+(defun check-change ()
+  (cond 
+   ((null (buffer-references (current-buffer)))
+    (search-references 
+     (variable-value 'lem/language-mode:detective-search :buffer)))
+   
+   ((changed-disk-p (current-buffer))
+    (search-references (variable-value 'lem/language-mode:detective-search :buffer) ))))
+
+(define-command detective-function () ()
+  (check-change)
+  (let ((reference (navigate-reference "functions")))
+    (move-to-reference reference)))

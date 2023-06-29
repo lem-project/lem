@@ -719,6 +719,7 @@
   (let ((package (current-package)))
     (prompt-for-string prompt
                        :initial-value initial
+                       :test-function (lambda (str) (< 0 (length str)))
                        :completion-function (lambda (string)
                                               (lem-lisp-mode/completion:symbol-completion
                                                string package))

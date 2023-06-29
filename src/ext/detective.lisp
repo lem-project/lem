@@ -46,27 +46,33 @@
                 :type string
                 :reader misc-custom-type)))
 
+(defstruct capture-regex regex function)
 
-(defclass imenu-search () ())
+(defclass detective-search () ())
 
-(defclass search-regex (imenu-search)
-  ((function-regex :initform nil
+(defclass search-regex (detective-search)
+  ((function-regex :type (or capture-regex null)
+                   :initform nil
                    :initarg :function-regex
                    :writer set-function-regex
                    :reader search-function-regex)
-   (package-regex :initform nil
+   (package-regex :type (or capture-regex null)
+                  :initform nil
                   :initarg :package-regex
                   :writer set-package-regex
                   :reader search-package-regex)
-   (class-regex :initform nil
+   (class-regex :type (or capture-regex null)
+                :initform nil
                 :initarg :class-regex
                 :writer set-class-regex
                 :reader search-class-regex)
-   (variable-regex :initform nil
+   (variable-regex :type (or capture-regex null)
+                   :initform nil
                    :initarg :variable-regex
                    :writer set-variable-regex
                    :reader search-variable-regex )
-   (misc-regex :initform nil
+   (misc-regex :type (or capture-regex null)
+               :initform nil
                :initarg :misc-regex
                :writer set-misc-regex
                :reader search-misc-regex)))

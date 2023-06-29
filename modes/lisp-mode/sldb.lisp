@@ -83,7 +83,7 @@
             :for (n form) := frame
             :until (ppcre:scan (load-time-value
                                 (ppcre:create-scanner
-                                 "^(?:[() ]|lambda)*swank\\b"
+                                 "^(?:[() ]|lambda)*micros\\b"
                                  :case-insensitive-mode t))
                                form)
             :collect frame)

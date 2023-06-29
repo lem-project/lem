@@ -43,6 +43,12 @@
         (make-completion-spec 'completion-symbol-async :async t))
   (setf (variable-value 'idle-function) 'lisp-idle-function)
   (setf (variable-value 'root-uri-patterns) '(".asd"))
+  (setf (variable-value 'detective-search) 
+        (make-instance 'lem/detective::search-regex 
+                       :function-regex
+                       (lem/detective::make-capture-regex 
+                        :regex "^\\(defun "
+                        :function #'capture-reference)))
   (set-syntax-parser lem-lisp-syntax:*syntax-table*
                      (make-tmlanguage-lisp))
   (unless (connected-p) (self-connect))
@@ -1192,6 +1198,16 @@
 
 (add-hook (variable-value 'before-eval-functions :global)
           'highlight-evaluation-region)
+
+(defmethod capture-reference ((position lem:point) (class (eql :function-reference)))
+  (let* ((line (str:split #\Space (line-string position)))
+         (pname (second line))
+         (name (or (and (str:starts-with-p "(setf" pname)
+                        (str:concat pname " " (third line)))
+                   pname)))
+    (make-instance 'lem/detective::function-reference
+                   :reference-name name
+                   :reference-point position)))
 
 ;; workaround for windows
 #+win32

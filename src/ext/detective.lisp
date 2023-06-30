@@ -156,3 +156,13 @@
   (let ((reference (navigate-reference "classes")))
     (move-to-reference reference)))
 
+(define-command detective-package () ()
+  (check-change)
+  (let ((reference (navigate-reference "packages")))
+    (move-to-reference reference)))
+
+(define-command detective-variable () ()
+  (check-change)
+  (let ((reference (navigate-reference "variables")))
+    (move-to-reference reference)))
+

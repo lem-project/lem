@@ -148,3 +148,7 @@
                                                      (uiop:run-program "fc-list" :output :string)
                                                      :remove-empty-subseqs t)
         :collect (first (split-sequence:split-sequence #\: line :count 1))))
+
+(defmethod get-font-list ((platform lem-sdl2/platform:windows))
+  (loop :for file :in (lem:directory-files "C:/Windows/Fonts/*.[otOT][tT][fF]")
+        :collect (uiop:native-namestring file)))

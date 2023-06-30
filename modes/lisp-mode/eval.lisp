@@ -100,6 +100,10 @@
     (add-hook (variable-value 'before-change-functions :buffer buffer)
               'remove-touch-overlay)))
 
+(defun redisplay-evaluated-message (start end value)
+  (remove-eval-result-overlay-between start end)
+  (display-evaluated-message start end value))
+
 (defun display-spinner-message (spinner &optional message is-error id)
   (lem/loading-spinner:with-line-spinner-points (start end spinner)
     (display-evaluated-message start end message is-error id)))

@@ -223,3 +223,11 @@
   (let ((reference (navigate-reference "variables")))
     (move-to-reference reference)))
 
+(define-command detective-all () ()
+  (check-change)
+  (let* ((references
+          (alexandria:flatten
+           (alexandria:hash-table-values (buffer-references (current-buffer)))))
+        (reference (navigate-reference references)))
+     (move-to-reference reference)))
+

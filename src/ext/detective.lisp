@@ -128,9 +128,14 @@
                                                               (member name name-references :test #'string=)))))
     (find item references :key #'reference-name :test #'string=)))
 
-(defun move-to-reference (reference)
+(defgeneric move-to-reference (reference))
+
+(defmethod move-to-reference ((reference reference))
   (let ((location (reference-point reference)))
     (move-point (current-point) location)))
+
+(defmethod move-to-reference (reference)
+  (message "Not reference available in current buffer."))
 
 (defun check-change ()
   (cond 

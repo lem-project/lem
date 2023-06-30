@@ -1,6 +1,55 @@
 (defpackage :lem/detective
   (:use :cl :lem)
-  (:export)
+  (:export
+
+   :reference
+   :reference-name
+   :reference-point
+
+   :function-reference
+   :function-arguments
+
+   :package-reference
+   :package-use
+   :package-export
+
+   :class-reference
+   :class-parents
+   :class-attributes
+
+   :variable-reference
+   :variable-reference-value
+
+   :misc-reference
+   :misc-custom-type
+
+   :capture-regex
+   :make-capture-regex
+
+   :detective-search
+
+   :search-regex
+
+   :search-function-regex
+   :set-function-regex
+   :search-package-regex
+   :set-package-regex
+   :search-class-regex
+   :set-class-regex
+   :search-variable-regex
+   :set-variable-regex
+   :search-misc-regex
+   :set-misc-regex
+
+   :buffer-references
+
+   :search-references
+
+   :capture-references
+
+   :navigate-reference
+
+   :move-to-reference)
   
   #+sbcl
   (:lock t))

@@ -117,16 +117,24 @@
 
 (defgeneric capture-reference (position class))
 
-(defun navigate-reference (type)
-  (alexandria:when-let* ((references (gethash type (buffer-references (current-buffer))))
-                         (name-references (mapcar #'reference-name references))
-                         (item 
+(defun %get-reference (references)
+  (alexandria:when-let* ((name-references (mapcar #'reference-name references))
+                         (item
                           (prompt-for-string "Navigate: "
                                              :completion-function (lambda (x) (completion-strings x name-references))
-           
+
                                              :test-function (lambda (name)
                                                               (member name name-references :test #'string=)))))
     (find item references :key #'reference-name :test #'string=)))
+
+(defgeneric navigate-reference (references))
+
+(defmethod navigate-reference ((type String))
+  (alexandria:when-let ((references (gethash type (buffer-references (current-buffer)))))
+    (%get-reference references)))
+
+(defmethod navigate-reference ((references List))
+  (%get-reference references))
 
 (defgeneric move-to-reference (reference))
 

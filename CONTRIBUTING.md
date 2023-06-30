@@ -39,7 +39,7 @@ You can also reach us at hello@lem.opencollective.com.
 ### Contributors
 
 Thank you to all the people who have already contributed to lem!
-<a href="graphs/contributors"><img src="https://opencollective.com/lem/contributors.svg?width=890" /></a>
+<a href="https://github.com/lem-project/lem/graphs/contributors"><img src="https://contrib.rocks/image?repo=lem-project/lem&max=24" /></a>
 
 
 ### Backers

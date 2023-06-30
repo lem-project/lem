@@ -98,7 +98,10 @@
    (focus :initform nil
           :accessor display-focus-p)
    (redraw-at-least-once :initform nil
-                         :accessor display-redraw-at-least-once-p)))
+                         :accessor display-redraw-at-least-once-p)
+   (scale :initform '(1 1)
+          :initarg :scale
+          :accessor display-scale)))
 
 (defmethod display-latin-font ((display display))
   (font-latin-normal-font (display-font display)))
@@ -177,9 +180,15 @@
   (sdl2:render-present (display-renderer display)))
 
 (defmethod display-width ((display display))
-  (nth-value 0 (sdl2:get-window-size (display-window display))))
+  (nth-value 0 (sdl2:get-renderer-output-size (display-renderer display))))
 
 (defmethod display-height ((display display))
+  (nth-value 1 (sdl2:get-renderer-output-size (display-renderer display))))
+
+(defmethod display-window-width ((display display))
+  (nth-value 0 (sdl2:get-window-size (display-window display))))
+
+(defmethod display-window-height ((display display))
   (nth-value 1 (sdl2:get-window-size (display-window display))))
 
 (defmethod update-texture ((display display))
@@ -203,6 +212,10 @@
       (sdl2:set-render-target (current-renderer) (display-texture *display*))
       (set-render-color *display* (display-background-color *display*))
       (sdl2:render-clear (current-renderer))
+      #+darwin
+      (adapt-high-dpi-display-scale)
+      #+darwin
+      (adapt-high-dpi-font-size)
       (lem:update-on-display-resized))))
 
 (defun attribute-foreground-color (attribute)
@@ -486,7 +499,7 @@
                                 (* height (char-height))
                                 :color (attribute-foreground-color attribute))))
 
-(defun change-font (font-config)
+(defun change-font (font-config &optional (save-font-size-p t))
   (let ((font-config (merge-font-config font-config (display-font-config *display*))))
     (close-font (display-font *display*))
     (let ((font (open-font font-config)))
@@ -494,7 +507,8 @@
             (display-char-height *display*) (font-char-height font))
       (setf (display-font-config *display*) font-config)
       (setf (display-font *display*) font))
-    (save-font-size font-config)
+    (when save-font-size-p
+      (save-font-size font-config (first (display-scale *display*))))
     (clear-font-cache)
     (lem:send-event :resize)))
 
@@ -734,6 +748,26 @@
     (sdl2-ffi.functions:sdl-set-window-icon window image)
     (sdl2:free-surface image)))
 
+(defun adapt-high-dpi-display-scale ()
+  (with-debug ("adpat-high-dpi-display-scale")
+    (with-renderer ()
+      (multiple-value-bind (renderer-width renderer-height)
+          (sdl2:get-renderer-output-size (current-renderer))
+        (let* ((window-width (display-window-width *display*))
+               (window-height (display-window-height *display*))
+               (scale-x (/ renderer-width window-width))
+               (scale-y (/ renderer-height window-height)))
+          (setf (display-scale *display*) (list scale-x scale-y)))))))
+
+(defun adapt-high-dpi-font-size ()
+  (with-debug ("adpat-high-dpi-font-size")
+    (with-renderer ()
+      (let ((font-config (display-font-config *display*))
+            (ratio (round (first (display-scale *display*)))))
+        (change-font (change-size font-config
+                                  (* ratio (lem:config :sdl2-font-size lem-sdl2/font::*default-font-size*)))
+                     nil)))))
+
 (defun create-display (function)
   (sdl2:with-init (:video)
     (sdl2-ttf:init)
@@ -748,11 +782,16 @@
              (sdl2:with-window (window :title "Lem"
                                        :w window-width
                                        :h window-height
-                                       :flags '(:shown :resizable))
-               (sdl2:with-renderer (renderer window :index -1 :flags '(:software))
-                 (let ((texture (create-texture renderer
-                                                window-width
-                                                window-height)))
+                                       :flags '(:shown :resizable #+darwin :allow-highdpi))
+               (sdl2:with-renderer (renderer window :index -1 :flags '(#-darwin :software #+darwin :accelerated))
+                 (let* ((renderer-size (multiple-value-list (sdl2:get-renderer-output-size renderer)))
+                        (renderer-width (first renderer-size))
+                        (renderer-height (second renderer-size))
+                        (scale-x #-darwin 1 #+darwin (/ renderer-width window-width))
+                        (scale-y #-darwin 1 #+darwin (/ renderer-height window-height))
+                        (texture (create-texture renderer
+                                                 (* scale-x window-width)
+                                                 (* scale-y window-height))))
                    (setf *display*
                          (make-instance
                           'display
@@ -762,8 +801,11 @@
                           :window window
                           :texture texture
                           :char-width (font-char-width font)
-                          :char-height (font-char-height font)))
+                          :char-height (font-char-height font)
+                          :scale (list scale-x scale-y)))
                    (init-application-icon window)
+                   #+darwin
+                   (adapt-high-dpi-font-size)
                    (sdl2:start-text-input)
                    (funcall function)
                    (event-loop))))))
@@ -944,16 +986,18 @@
 (defmethod lem-if:increase-font-size ((implementation sdl2))
   (with-debug ("increase-font-size")
     (with-renderer ()
-      (let ((font-config (display-font-config *display*)))
+      (let ((font-config (display-font-config *display*))
+            (ratio (round (first (display-scale *display*)))))
         (change-font (change-size font-config
-                                  (1+ (font-config-size font-config))))))))
+                                  (+ (font-config-size font-config) ratio)))))))
 
 (defmethod lem-if:decrease-font-size ((implementation sdl2))
   (with-debug ("decrease-font-size")
     (with-renderer ()
-      (let ((font-config (display-font-config *display*)))
+      (let ((font-config (display-font-config *display*))
+            (ratio (round (first (display-scale *display*)))))
         (change-font (change-size font-config
-                                  (1- (font-config-size font-config))))))))
+                                  (- (font-config-size font-config) ratio)))))))
 
 (defmethod lem-if:resize-display-before ((implementation sdl2))
   (with-debug ("resize-display-before")

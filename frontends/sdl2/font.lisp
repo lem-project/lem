@@ -42,8 +42,9 @@
   char-width
   char-height)
 
-(defun save-font-size (font-config)
-  (setf (lem:config :sdl2-font-size) (font-config-size font-config)))
+(defun save-font-size (font-config &optional (ratio 1))
+  (setf (lem:config :sdl2-font-size)
+        (round (/ (font-config-size font-config) ratio))))
 
 (defun make-font-config (&key (size (lem:config :sdl2-font-size *default-font-size*))
                               latin-normal-file

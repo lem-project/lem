@@ -30,6 +30,12 @@
 (define-key *lisp-repl-mode-keymap* "C-c p" 'backward-prompt)
 (define-key *lisp-repl-mode-keymap* "C-c n" 'forward-prompt)
 
+(defgeneric open-inspector-by-repl (inspected-parts))
+
+(defun inspect-printed-object (id)
+  (lisp-eval-async `(micros:inspect-printed-object ,id)
+                   #'open-inspector-by-repl))
+
 (defun context-menu-inspect-printed-object ()
   (let* ((point (get-point-on-context-menu-open))
          (id (object-id-at point)))
@@ -38,8 +44,7 @@
        :label "Inspect"
        :callback (lambda (&rest args)
                    (declare (ignore args))
-                   (lisp-eval-async `(micros:inspect-printed-object ,id)
-                                    #'lem-lisp-mode/inspector:open-inspector))))))
+                   (inspect-printed-object id))))))
 
 (defun context-menu-copy-down-printed-object ()
   (let* ((point (get-point-on-context-menu-open))
@@ -360,8 +365,7 @@
        point
        (lambda (&rest args)
          (declare (ignore args))
-         (lisp-eval-async `(micros:inspect-printed-object ,id)
-                          #'lem-lisp-mode/inspector:open-inspector))))))
+         (inspect-printed-object id))))))
 
 (defvar *escape-sequence-argument-specs*
   '(("0" :bold nil :reverse nil :underline nil)

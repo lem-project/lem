@@ -79,6 +79,9 @@
         (change-buffer-mode buffer 'lisp-inspector-mode)
         buffer)))
 
+(defmethod open-inspector-by-repl (inspected-parts)
+  (open-inspector inspected-parts))
+
 (defun open-inspector (inspected-parts &optional inspector-position hook focus)
   (let ((buffer (inspector-buffer)))
     (flet ((body ()

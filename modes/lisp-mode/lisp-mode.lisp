@@ -48,19 +48,19 @@
                        :function-regex
                        (lem/detective:make-capture-regex
                         :regex "^\\(defun "
-                        :function #'capture-reference)
+                        :function #'lem-lisp-mode/detective:capture-reference)
                        :class-regex
                        (lem/detective:make-capture-regex
                         :regex "^\\(defclass "
-                        :function #'capture-reference)
+                        :function #'lem-lisp-mode/detective:capture-reference)
                        :package-regex
                        (lem/detective:make-capture-regex
                         :regex "^\\(in-package "
-                        :function #'capture-reference)
+                        :function #'lem-lisp-mode/detective:capture-reference)
 		       :variable-regex
                        (lem/detective:make-capture-regex
                         :regex "^(?:\\(defvar |\\(defparameter )"
-                        :function #'capture-reference)))
+                        :function #'lem-lisp-mode/detective:capture-reference)))
   (set-syntax-parser lem-lisp-syntax:*syntax-table*
                      (make-tmlanguage-lisp))
   (unless (connected-p) (self-connect))
@@ -1210,38 +1210,6 @@
 
 (add-hook (variable-value 'before-eval-functions :global)
           'highlight-evaluation-region)
-
-(defmethod capture-reference ((position lem:point) (class (eql :function-reference)))
-  (let* ((line (str:split #\Space (line-string position)))
-         (pname (second line))
-         (name (or (and (str:starts-with-p "(setf" pname)
-                        (str:concat pname " " (third line)))
-                   pname)))
-    (make-instance 'lem/detective:function-reference
-                   :reference-name name
-                   :reference-point position)))
-
-(defmethod capture-reference ((position lem:point) (class (eql :class-reference)))
-  (let* ((line (str:split #\Space (line-string position)))
-         (name (second line)))
-    (make-instance 'lem/detective:class-reference
-                   :reference-name name
-                   :reference-point position)))
-
-(defmethod capture-reference ((position lem:point) (class (eql :variable-reference)))
-  (let* ((line (str:split #\Space (line-string position)))
-         (name (second line)))
-    (make-instance 'lem/detective:variable-reference
-                   :reference-name name
-                   :reference-point position
-                   :variable-reference-value (third line))))
-
-(defmethod capture-reference ((position lem:point) (class (eql :package-reference)))
-  (let* ((line (str:split #\Space (line-string position)))
-         (name (second line)))
-    (make-instance 'lem/detective:package-reference
-                   :reference-name name
-                   :reference-point position)))
 
 ;; workaround for windows
 #+win32

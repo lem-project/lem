@@ -22,6 +22,7 @@
                (:file "internal-package")
                (:file "completion")
                (:file "message")
+               (:file "detective")
                (:file "file-conversion")
                (:file "lisp-mode")
                (:file "message-definitions")

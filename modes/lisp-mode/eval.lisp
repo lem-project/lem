@@ -1,5 +1,8 @@
 (defpackage :lem-lisp-mode/eval
-  (:use :cl :lem :lem-lisp-mode/internal))
+  (:use :cl :lem :lem-lisp-mode/internal)
+  (:import-from :lem-lisp-mode/inspector
+                :lisp-inspect
+                :open-inspector))
 (in-package :lem-lisp-mode/eval)
 
 (define-attribute eval-error-attribute
@@ -159,7 +162,7 @@
     (if overlay
         (let ((id (overlay-eval-id overlay)))
           (lisp-eval-async `(micros/pretty-eval:inspect-evaluation-value ,id)
-                           'lem-lisp-mode/internal::open-inspector))
+                           'open-inspector))
         (call-next-method))))
 
 (define-command lisp-eval-clear () ()

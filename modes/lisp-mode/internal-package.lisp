@@ -90,26 +90,6 @@
    :lisp-switch-to-repl-buffer
    :write-string-to-repl
    :copy-down-to-repl
-   ;; inspector.lisp
-   :inspector-label-attribute
-   :inspector-value-attribute
-   :inspector-action-attribute
-   :*inspector-limit*
-   :*lisp-inspector-keymap*
-   :open-inspector
-   :lisp-inspect
-   :lisp-inspector-pop
-   :lisp-inspector-next
-   :lisp-inspector-quit
-   :lisp-inspector-describe
-   :lisp-inspector-pprint
-   :lisp-inspector-eval
-   :lisp-inspector-history
-   :lisp-inspector-show-source
-   :lisp-inspector-reinspect
-   :lisp-inspector-toggle-verbose
-   :inspector-insert-more-button
-   :lisp-inspector-fetch-all
    ;; apropos-mode.lisp
    :apropos-headline-attribute
    :*lisp-apropos-mode-keymap*

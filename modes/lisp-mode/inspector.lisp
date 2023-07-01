@@ -1,4 +1,31 @@
-(in-package :lem-lisp-mode/internal)
+(defpackage :lem-lisp-mode/inspector
+  (:use :cl
+        :lem
+        :lem/button
+        :lem-lisp-mode/internal
+        :lem-lisp-mode/ui-mode)
+  (:import-from :lem-lisp-mode/message-dispatcher
+                :define-message)
+  (:export :inspector-label-attribute
+           :inspector-value-attribute
+           :inspector-action-attribute
+           :*inspector-limit*
+           :*lisp-inspector-keymap*
+           :open-inspector
+           :lisp-inspect
+           :lisp-inspector-pop
+           :lisp-inspector-next
+           :lisp-inspector-quit
+           :lisp-inspector-describe
+           :lisp-inspector-pprint
+           :lisp-inspector-eval
+           :lisp-inspector-history
+           :lisp-inspector-show-source
+           :lisp-inspector-reinspect
+           :lisp-inspector-toggle-verbose
+           :inspector-insert-more-button
+           :lisp-inspector-fetch-all))
+(in-package :lem-lisp-mode/inspector)
 
 (define-attribute inspector-label-attribute
   (:light :foreground "LightSteelBlue"))
@@ -265,8 +292,8 @@
 (define-message (:inspect what thread tag)
   (let ((hook (when (and thread tag)
                 (alexandria:curry (lambda (sexp)
-                                    (send-message-string
-                                     *connection*
+                                    (lem-lisp-mode/swank-protocol:send-message-string
+                                     (current-connection)
                                      sexp))
                                   `(:emacs-return ,thread ,tag nil)))))
     (open-inspector what nil hook)))

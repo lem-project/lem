@@ -208,54 +208,25 @@
           (buffer-modified-tick (current-buffer)))
     (search-references (variable-value 'lem/language-mode:detective-search :buffer)))))
 
+(defun %detective-move (&key (direction :up))
+  (let* ((references (buffer-references (current-buffer)))
+         (lreferences (alexandria:flatten(alexandria:hash-table-values references)))
+         (reference-points (mapcar #'reference-point  lreferences))
+         (closest (point-closest (current-point)
+                                           reference-points
+                                           :direction direction )))
+    (if closest
+        (move-to-reference
+         (find closest lreferences :key #'reference-point :test #'point=))
+        (message "No found reference."))))
+
 (define-command detective-next () ()
   (check-change)
-  (let* ((references (buffer-references (current-buffer)))
-         (lreferences (alexandria:hash-table-values references))
-         closest )
-    (loop :for ref :in (alexandria:flatten lreferences)
-          :for flag = t then nil
-          :with cline = (+ (line-number-at-point (current-point)) 1)
-          :for rline = (line-number-at-point (reference-point ref))
-          :do (progn
-                (when flag (setf closest ref))
-                (let* ((cdiff (- (line-number-at-point (reference-point closest)) cline))
-                       (ldiff (- rline cline)))
-
-                  (when  (or (and (> rline cline)
-                                  (<  ldiff cdiff))
-                             (< cdiff 0))
-                    (setf closest ref)))))
-
-    (if (< (- (+ (line-number-at-point (current-point)) 1)
-              (line-number-at-point (reference-point closest))) 0)
-        (move-to-reference closest)
-        (message "No next reference."))))
-
+  (%detective-move :direction :down))
 
 (define-command detective-previous () ()
   (check-change)
-  (let* ((references (buffer-references (current-buffer)))
-         (lreferences (alexandria:hash-table-values references))
-         closest )
-    (loop :for ref :in (alexandria:flatten lreferences)
-          :for flag = t then nil
-          :with cline = (- (line-number-at-point (current-point)) 1)
-          :for rline = (line-number-at-point (reference-point ref))
-          :do (progn
-                (when flag (setf closest ref))
-                (let* ((cdiff (- (line-number-at-point (reference-point closest)) cline))
-                       (ldiff (- rline cline)))
-
-                  (when  (or (and (< rline cline)
-                                  (>  ldiff cdiff))
-                             (> cdiff 0))
-                    (setf closest ref)))))
-
-    (if (> (- (- (line-number-at-point (current-point)) 1)
-              (line-number-at-point (reference-point closest))) 0)
-        (move-to-reference closest)
-        (message "No previous reference."))))
+  (%detective-move :direction :up))
 
 (define-command detective-function () ()
   (check-change)

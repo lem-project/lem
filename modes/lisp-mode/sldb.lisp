@@ -518,8 +518,7 @@
                  (end point))
       (scan-lists start -1 1)
       (form-offset (move-point end start) 1)
-      ;; TODO: solve forward references
-      (uiop:symbol-call :lem-lisp-mode/eval :redisplay-evaluated-message start end value))))
+      (lem-lisp-mode/eval::redisplay-evaluated-message start end value))))
 
 (define-message (:print-watching-value source-location value)
   (display-break-value-at-source-location source-location value))

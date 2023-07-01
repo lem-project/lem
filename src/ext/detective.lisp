@@ -228,7 +228,7 @@
         (message "No next reference."))))
 
 
-(define-command detective-prev () ()
+(define-command detective-previous () ()
   (check-change)
   (let* ((references (buffer-references (current-buffer)))
          (lreferences (alexandria:hash-table-values references))

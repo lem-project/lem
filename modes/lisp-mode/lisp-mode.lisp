@@ -59,7 +59,7 @@
                         :function #'capture-reference)
 		       :variable-regex
                        (lem/detective:make-capture-regex
-                        :regex "^\\(defvar |\\(defparameter "
+                        :regex "^(?:\\(defvar |\\(defparameter )"
                         :function #'capture-reference)))
   (set-syntax-parser lem-lisp-syntax:*syntax-table*
                      (make-tmlanguage-lisp))

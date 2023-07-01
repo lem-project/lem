@@ -141,7 +141,7 @@
                (loop :for point = (search-forward-regexp p (capture-regex-regex regex))
                      :while point
                      :collect (funcall (capture-regex-function regex) 
-                                       (copy-point point)
+                                       (copy-point point :temporary)
                                        class)))))
     (with-accessors ((function-regex search-function-regex)
                      (package-regex search-package-regex)

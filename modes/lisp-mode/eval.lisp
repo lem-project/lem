@@ -2,7 +2,8 @@
   (:use :cl :lem :lem-lisp-mode/internal)
   (:import-from :lem-lisp-mode/inspector
                 :lisp-inspect
-                :open-inspector))
+                :open-inspector)
+  (:export :redisplay-evaluated-message))
 (in-package :lem-lisp-mode/eval)
 
 (define-attribute eval-error-attribute

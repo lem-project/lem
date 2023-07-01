@@ -200,8 +200,12 @@
    ((null (buffer-references (current-buffer)))
     (search-references 
      (variable-value 'lem/language-mode:detective-search :buffer)))
-   
-   ((changed-disk-p (current-buffer))
+
+   ((not (eql (buffer-value (current-buffer) 'prev-tick)
+              (buffer-modified-tick (current-buffer))))
+
+    (setf (buffer-value (current-buffer) 'prev-tick)
+          (buffer-modified-tick (current-buffer)))
     (search-references (variable-value 'lem/language-mode:detective-search :buffer)))))
 
 (define-command detective-next () ()

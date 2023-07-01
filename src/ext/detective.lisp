@@ -143,11 +143,11 @@
                      :collect (funcall (capture-regex-function regex) 
                                        (copy-point position)
                                        class)))))
-  (with-slots (function-regex
-               package-regex
-               class-regex
-               variable-regex
-               misc-regex)
+    (with-accessors ((function-regex search-function-regex)
+                     (package-regex search-package-regex)
+                     (class-regex search-class-regex)
+                     (variable-regex search-variable-regex)
+                     (misc-regex search-misc-regex))
       search
     (let ((slots 
             (list (cons (cons "functions" function-regex):function-reference)

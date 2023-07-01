@@ -455,14 +455,34 @@
                      (frame-number-at-point (current-point))
                      (frame-var-number-at-point (current-point))))
 
-(define-message (:debug-activate thread level &optional select)
-  (sldb-activate thread level select)
-  t)
+(defun source-location-to-point (source-location)
+  (alexandria:destructuring-case source-location
+    ((t &rest _)
+     (declare (ignore _))
+     (let ((xref-location (source-location-to-xref-location source-location)))
+       (lem/language-mode::location-to-point xref-location :temporary nil)))))
+
+(defun display-break-value-at-source-location (source-location value)
+  (alexandria:when-let (point (source-location-to-point source-location))
+    (with-point ((start point)
+                 (end point))
+      (scan-lists start -1 1)
+      (form-offset (move-point end start) 1)
+      ;; TODO: solve forward references
+      (uiop:symbol-call :lem-lisp-mode/eval :redisplay-evaluated-message start end value))))
+
+(define-message (:print-watching-value source-location value)
+  (display-break-value-at-source-location source-location value))
 
 (define-message (:debug thread level condition restarts frames conts)
-  (sldb-setup thread level condition restarts frames conts)
-  t)
+  (cond ((and (consp condition)
+              ;; see micros:watch macro
+              (equal "!!! micros-break !!!" (first condition)))
+         (with-remote-eval (`(micros:fetch-watching-value-and-continue) :thread thread)
+           (lambda (value)
+             (declare (ignore value)))))
+        (t
+         (sldb-setup thread level condition restarts frames conts))))
 
 (define-message (:debug-return thread level stepping)
-  (sldb-exit thread level stepping)
-  t)
+  (sldb-exit thread level stepping))

@@ -97,9 +97,9 @@
 
 (defstruct capture-regex regex function)
 
-(defclass detective-search () ())
+(defclass <detective-search> () ())
 
-(defclass search-regex (detective-search)
+(defclass search-regex (<detective-search>)
   ((function-regex :type (or capture-regex null)
                    :initform nil
                    :initarg :function-regex

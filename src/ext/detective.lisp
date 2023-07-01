@@ -148,21 +148,21 @@
                      (class-regex search-class-regex)
                      (variable-regex search-variable-regex)
                      (misc-regex search-misc-regex))
-      search
-    (let ((slots 
-            (list (cons (cons "functions" function-regex):function-reference)
-                  (cons (cons "classes" class-regex) :class-reference)
-                  (cons (cons "packages" package-regex) :package-reference)
-                  (cons (cons "variables" variable-regex) :variable-reference)
-                  (cons (cons "misc" misc-regex) :misc-reference))))
+        search
+      (let ((slots
+              (list (cons (cons "functions" function-regex):function-reference)
+                    (cons (cons "classes" class-regex) :class-reference)
+                    (cons (cons "packages" package-regex) :package-reference)
+                    (cons (cons "variables" variable-regex) :variable-reference)
+                    (cons (cons "misc" misc-regex) :misc-reference))))
     
-    (setf (buffer-references (current-buffer))
-          (make-hash-table :test 'equal))
+        (setf (buffer-references (current-buffer))
+              (make-hash-table :test 'equal))
 
-      (loop :for ((id . regex) . class) :in slots
-            :when (and regex (capture-regex-function regex))
-            :do (setf (gethash id (buffer-references (current-buffer)))
-                      (find-ref regex class)))))))
+        (loop :for ((id . regex) . class) :in slots
+              :when (and regex (capture-regex-function regex))
+              :do (setf (gethash id (buffer-references (current-buffer)))
+                        (find-ref regex class)))))))
 
 (defgeneric capture-reference (point class))
 

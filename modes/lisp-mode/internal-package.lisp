@@ -34,8 +34,11 @@
    :self-connected-port
    :self-connect
    :check-connection
+   :*current-package*
    :buffer-package
    :current-package
+   :buffer-thread-id
+   :with-remote-eval
    :lisp-eval-from-string
    :lisp-eval
    :lisp-eval-async
@@ -68,7 +71,8 @@
    :lisp-describe-symbol
    :connect-to-swank
    :slime-connect
-   :*impl-name*
+   :show-source-location
+   :source-location-to-xref-location
    :get-lisp-command
    :run-slime
    :slime
@@ -84,55 +88,15 @@
    :listener-eval
    :start-lisp-repl
    :lisp-switch-to-repl-buffer
-   ;; sldb.lisp
-   :topline-attribute
-   :condition-attribute
-   :section-attribute
-   :restart-number-attribute
-   :restart-type-attribute
-   :restart-attribute
-   :frame-label-attribute
-   :local-name-attribute
-   :local-value-attribute
-   :catch-tag-attribute
-   :*sldb-keymap*
-   :sldb-down
-   :sldb-up
-   :sldb-details-down
-   :sldb-details-up
-   :sldb-quit
-   :sldb-continue
-   :sldb-abort
-   :sldb-restart-frame
-   :sldb-invoke-restart
-   :sldb-invoke-restart-0
-   :sldb-invoke-restart-1
-   :sldb-invoke-restart-2
-   :sldb-invoke-restart-3
-   :sldb-invoke-restart-4
-   :sldb-invoke-restart-5
-   :sldb-invoke-restart-6
-   :sldb-invoke-restart-7
-   :sldb-invoke-restart-8
-   :sldb-invoke-restart-9
-   :sldb-invoke-restart-by-name
-   :sldb-show-frame-source
-   :sldb-eval-in-frame
-   :sldb-pprint-eval-in-frame
-   :sldb-inspect-in-frame
-   :sldb-step
-   :sldb-next
-   :sldb-out
-   :sldb-break-on-return
-   :sldb-inspect-condition
-   :sldb-print-condition
-   :sldb-recompile-in-frame-source
+   :write-string-to-repl
+   :copy-down-to-repl
    ;; inspector.lisp
    :inspector-label-attribute
    :inspector-value-attribute
    :inspector-action-attribute
    :*inspector-limit*
    :*lisp-inspector-keymap*
+   :open-inspector
    :lisp-inspect
    :lisp-inspector-pop
    :lisp-inspector-next
@@ -152,6 +116,8 @@
    :lisp-apropos
    :lisp-apropos-all
    :lisp-apropos-package
+   ;; message.lisp
+   :display-message
    ;;
    :self-connection
    :self-connection-p

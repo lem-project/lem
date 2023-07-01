@@ -1,4 +1,54 @@
-(in-package :lem-lisp-mode/internal)
+(defpackage :lem-lisp-mode/sldb
+  (:use :cl
+        :lem
+        :lem/button
+        :lem-lisp-mode/internal
+        :lem-lisp-mode/ui-mode)
+  (:import-from :lem-lisp-mode/message-dispatcher
+                :define-message)
+  (:export :topline-attribute
+           :condition-attribute
+           :section-attribute
+           :restart-number-attribute
+           :restart-type-attribute
+           :restart-attribute
+           :frame-label-attribute
+           :local-name-attribute
+           :local-value-attribute
+           :catch-tag-attribute
+           :*sldb-keymap*
+           :sldb-down
+           :sldb-up
+           :sldb-details-down
+           :sldb-details-up
+           :sldb-quit
+           :sldb-continue
+           :sldb-abort
+           :sldb-restart-frame
+           :sldb-invoke-restart
+           :sldb-invoke-restart-0
+           :sldb-invoke-restart-1
+           :sldb-invoke-restart-2
+           :sldb-invoke-restart-3
+           :sldb-invoke-restart-4
+           :sldb-invoke-restart-5
+           :sldb-invoke-restart-6
+           :sldb-invoke-restart-7
+           :sldb-invoke-restart-8
+           :sldb-invoke-restart-9
+           :sldb-invoke-restart-by-name
+           :sldb-show-frame-source
+           :sldb-eval-in-frame
+           :sldb-pprint-eval-in-frame
+           :sldb-inspect-in-frame
+           :sldb-step
+           :sldb-next
+           :sldb-out
+           :sldb-break-on-return
+           :sldb-inspect-condition
+           :sldb-print-condition
+           :sldb-recompile-in-frame-source))
+(in-package :lem-lisp-mode/sldb)
 
 (define-attribute topline-attribute)
 
@@ -135,13 +185,13 @@
   (loop :for n :from 0
         :for (title description) :in restarts
         :do
-        (insert-string point " ")
-        (insert-string point (format nil "~D: " n) :attribute 'restart-number-attribute)
-        (insert-button point (format nil "[~A] " title)
-                       (let ((n n)) (lambda () (sldb-invoke-restart n)))
-                       :attribute 'restart-type-attribute)
-        (insert-string point description :attribute 'restart-attribute)
-        (insert-character point #\newline)))
+           (insert-string point " ")
+           (insert-string point (format nil "~D: " n) :attribute 'restart-number-attribute)
+           (insert-button point (format nil "[~A] " title)
+                          (let ((n n)) (lambda () (sldb-invoke-restart n)))
+                          :attribute 'restart-type-attribute)
+           (insert-string point description :attribute 'restart-attribute)
+           (insert-character point #\newline)))
 
 (defun sldb-insert-frames (point frames more)
   (dolist (frame frames)
@@ -434,10 +484,10 @@
 
 (defun recompile-location (source-location)
   (save-excursion
-    (go-to-location source-location
-                    (lambda (buffer)
-                      (setf (current-window)
-                            (pop-to-buffer buffer))))
+    (lem/language-mode:go-to-location source-location
+                                      (lambda (buffer)
+                                        (setf (current-window)
+                                              (pop-to-buffer buffer))))
     (lisp-compile-defun)))
 
 (define-command sldb-recompile-in-frame-source () ()

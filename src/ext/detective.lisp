@@ -138,10 +138,10 @@
 (defmethod search-references ((search search-regex))
   (labels ((find-ref (regex class)
              (with-point ((p (buffer-start-point (point-buffer (current-point)))))
-               (loop :for position = (search-forward-regexp p (capture-regex-regex regex))
-                     :while position
+               (loop :for point = (search-forward-regexp p (capture-regex-regex regex))
+                     :while point
                      :collect (funcall (capture-regex-function regex) 
-                                       (copy-point position)
+                                       (copy-point point)
                                        class)))))
     (with-accessors ((function-regex search-function-regex)
                      (package-regex search-package-regex)
@@ -164,7 +164,7 @@
             :do (setf (gethash id (buffer-references (current-buffer)))
                       (find-ref regex class)))))))
 
-(defgeneric capture-reference (position class))
+(defgeneric capture-reference (point class))
 
 (defun %get-reference (references)
   (alexandria:when-let* ((name-references (mapcar #'reference-name references))

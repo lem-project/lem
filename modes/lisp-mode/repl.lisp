@@ -39,7 +39,7 @@
        :callback (lambda (&rest args)
                    (declare (ignore args))
                    (lisp-eval-async `(micros:inspect-printed-object ,id)
-                                    #'open-inspector))))))
+                                    #'lem-lisp-mode/inspector:open-inspector))))))
 
 (defun context-menu-copy-down-printed-object ()
   (let* ((point (get-point-on-context-menu-open))
@@ -361,7 +361,7 @@
        (lambda (&rest args)
          (declare (ignore args))
          (lisp-eval-async `(micros:inspect-printed-object ,id)
-                          #'open-inspector))))))
+                          #'lem-lisp-mode/inspector:open-inspector))))))
 
 (defvar *escape-sequence-argument-specs*
   '(("0" :bold nil :reverse nil :underline nil)

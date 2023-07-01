@@ -189,7 +189,8 @@
 
 (defmethod move-to-reference ((reference reference))
   (let ((location (reference-point reference)))
-    (move-point (current-point) location)))
+    (move-point (current-point) location)
+    (lem/peek-source:highlight-matched-line location)))
 
 (defmethod move-to-reference (reference)
   (message "Not reference available in current buffer."))

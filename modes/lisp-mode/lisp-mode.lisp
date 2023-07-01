@@ -219,8 +219,14 @@
       (buffer-package (current-buffer))
       (connection-package (current-connection))))
 
+(defun buffer-thread-id (buffer)
+  (buffer-value buffer 'thread))
+
+(defun (setf buffer-thread-id) (value buffer)
+  (setf (buffer-value buffer 'thread) value))
+
 (defun current-swank-thread ()
-  (or (buffer-value (current-buffer) 'thread)
+  (or (buffer-thread-id (current-buffer))
       t))
 
 (defmethod get-features ()

@@ -67,7 +67,7 @@
 
 (defun get-sldb-buffer (thread)
   (dolist (buffer (buffer-list))
-    (when (eql thread (buffer-value buffer 'thread))
+    (when (eql thread (buffer-thread-id buffer))
       (return buffer))))
 
 (defun get-sldb-buffer-create (thread)
@@ -96,7 +96,7 @@
     (change-buffer-mode buffer 'sldb-mode)
     (setf (buffer-read-only-p buffer) nil)
     (setf (variable-value 'line-wrap :buffer buffer) nil)
-    (setf (buffer-value buffer 'thread)
+    (setf (buffer-thread-id buffer)
           thread
           (buffer-value buffer 'level)
           level

@@ -61,7 +61,6 @@
 (define-key *lisp-inspector-keymap* "q" 'lisp-inspector-quit)
 (define-key *lisp-inspector-keymap* "M-q" 'lisp-inspector-quit)
 (define-key *lisp-inspector-keymap* "M-Return" 'lisp-inspector-copy-down-to-repl)
-(define-key *lisp-inspector-keymap* "C-Return" 'lisp-inspector-copy-down-to-repl)
 
 (define-command lisp-inspect (string &key (self-evaluation t) (focus nil))
     ((or (symbol-string-at-point (current-point))

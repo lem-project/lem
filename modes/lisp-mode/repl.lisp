@@ -26,7 +26,6 @@
 (define-key *lisp-repl-mode-keymap* "C-c C-c" 'lisp-repl-interrupt)
 (define-key *lisp-repl-mode-keymap* "," 'lisp-repl-shortcut)
 (define-key *lisp-repl-mode-keymap* "M-Return" 'lisp-repl-copy-down)
-(define-key *lisp-repl-mode-keymap* "C-Return" 'lisp-repl-copy-down)
 (define-key *lisp-repl-mode-keymap* "C-c p" 'backward-prompt)
 (define-key *lisp-repl-mode-keymap* "C-c n" 'forward-prompt)
 

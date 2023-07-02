@@ -136,10 +136,20 @@
                    (lem-lisp-mode/exporter:lisp-add-export
                     (symbol-string-at-point point)))))))
 
+(defun context-menu-clear-eval-results ()
+  (lem/context-menu:make-item
+   :label "Clear eval results"
+   :callback (lambda (&rest args)
+               (declare (ignore args))
+               ;; TODO: resolve forward references
+               (uiop:symbol-call :lem-lisp-mode/eval
+                                 :lisp-eval-clear))))
+
 (defun compute-context-menu-items ()
   (remove
    nil
-   (list (context-menu-describe-symbol)
+   (list (context-menu-clear-eval-results)
+         (context-menu-describe-symbol)
          (context-menu-find-definition)
          (context-menu-find-references)
          (context-menu-hyperspec)

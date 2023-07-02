@@ -161,21 +161,41 @@
       (lem-lisp-mode/swank-protocol::send-message (current-connection)
                                                   `(:interrupt-thread ,request-id)))))
 
+(defun get-evaluation-value-id-at-point (point)
+  (alexandria:when-let* ((overlay (find-overlay point))
+                         (id (overlay-eval-id overlay)))
+    id))
+
 (defmethod execute :around (mode (command lisp-inspect) argument)
-  (let ((overlay (find-overlay (current-point))))
-    (if overlay
-        (let ((id (overlay-eval-id overlay)))
-          (lisp-eval-async `(micros/pretty-eval:inspect-evaluation-value ,id)
-                           'open-inspector))
-        (call-next-method))))
+  (alexandria:if-let ((id (get-evaluation-value-id-at-point (current-point))))
+    (lisp-eval-async `(micros/pretty-eval:inspect-evaluation-value ,id)
+                     'open-inspector)
+    (call-next-method)))
 
 (define-command lisp-eval-copy-down-to-repl () ()
-  (alexandria:when-let* ((overlay (find-overlay (current-point)))
-                         (id (overlay-eval-id overlay)))
+  (let ((id (get-evaluation-value-id-at-point (current-point))))
     (copy-down-to-repl 'micros/pretty-eval:get-evaluation-value id)))
 
 (define-command lisp-eval-clear () ()
   (clear-eval-results (current-buffer)))
+
+(defun compute-context-menu-items ()
+  (cons (lem/context-menu:make-item
+         :label "Clear eval results"
+         :callback (lambda (&rest args)
+                     (declare (ignore args))
+                     (lisp-eval-clear)))
+        (when (get-evaluation-value-id-at-point (current-point))
+          (list (lem/context-menu:make-item
+                 :label "Copy evaluation value to repl"
+                 :callback (lambda (&rest args)
+                             (declare (ignore args))
+                             (lisp-eval-copy-down-to-repl)))
+                (lem/context-menu:make-item
+                 :label "Inspect evaluation value"
+                 :callback (lambda (&rest args)
+                             (declare (ignore args))
+                             (call-command 'lisp-inspect nil)))))))
 
 (defun eval-print (string &optional print-right-margin)
   (let ((value (lisp-eval (if print-right-margin

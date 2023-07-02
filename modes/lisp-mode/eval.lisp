@@ -15,6 +15,7 @@
 (define-key *lisp-mode-keymap* "C-x C-e" 'lisp-eval-at-point)
 (define-key *lisp-mode-keymap* "C-c C-e" 'lisp-eval-at-point)
 (define-key *lisp-mode-keymap* "C-c i" 'lisp-eval-interrupt-at-point)
+(define-key *lisp-mode-keymap* "M-Return" 'lisp-eval-copy-down-to-repl)
 
 (defun fold-one-line-message (message)
   (let ((pos (position #\newline message)))
@@ -43,15 +44,17 @@
     (alexandria:removef (buffer-eval-result-overlays (overlay-buffer overlay))
                         overlay)))
 
-(defun find-overlays (start end)
+(defun find-overlays (start end &key including-after-point)
   (let ((buffer (point-buffer start)))
     (loop :for ov :in (buffer-eval-result-overlays buffer)
           :unless (or (point<= end (overlay-start ov))
-                      (point<= (overlay-end ov) start))
+                      (if including-after-point
+                          (point< (overlay-end ov) start)
+                          (point<= (overlay-end ov) start)))
           :collect ov)))
 
 (defun find-overlay (point)
-  (first (find-overlays point point)))
+  (first (find-overlays point point :including-after-point t)))
 
 (defun remove-eval-result-overlay-between (start end)
   (dolist (ov (find-overlays start end))
@@ -165,6 +168,11 @@
           (lisp-eval-async `(micros/pretty-eval:inspect-evaluation-value ,id)
                            'open-inspector))
         (call-next-method))))
+
+(define-command lisp-eval-copy-down-to-repl () ()
+  (alexandria:when-let* ((overlay (find-overlay (current-point)))
+                         (id (overlay-eval-id overlay)))
+    (copy-down-to-repl 'micros/pretty-eval:get-evaluation-value id)))
 
 (define-command lisp-eval-clear () ()
   (clear-eval-results (current-buffer)))

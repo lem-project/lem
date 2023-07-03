@@ -1,6 +1,7 @@
 (defpackage :lem-elisp-mode/rpc
   (:use :cl :lem)
   (:export
+   :*elisp-rpc-client*
    :*elisp-rpc-url*
    :*elisp-rpc-auth*
    :connected-p

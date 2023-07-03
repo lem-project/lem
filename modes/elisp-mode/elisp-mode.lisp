@@ -213,6 +213,24 @@
                                 (lem-elisp-mode/rpc:get-completions (points-to-string start end)))
 		    #'string-lessp)))))
 
+(define-command elisp-connect () ()
+  (if (lem-elisp-mode/rpc:connected-p)
+    (message "Already connected to ~a"
+             (jsonrpc/transport/http::http-transport-url
+                      (jsonrpc/class:jsonrpc-transport lem-elisp-mode/rpc::*elisp-rpc-client*)))
+    (lem-elisp-mode/rpc:connect-to-server)))
+
+(defun elisp-find-definitions (point)
+  (lem-elisp-mode/rpc:connected-p)
+  (alexandria:when-let* ((location
+                          (lem-elisp-mode/rpc:get-symbol-location (symbol-string-at-point point)))
+                         (buffer (and (listp location)
+                                      (find-file-buffer (car location)))))
+    (lem/language-mode::push-location-stack (current-point))
+    (switch-to-buffer buffer)
+    (move-to-bytes (current-point) (second location))
+    (lem/peek-source:highlight-matched-line (current-point))))
+
 (define-major-mode elisp-mode language-mode
     (:name "Emacs Lisp"
      :keymap *elisp-mode-keymap*
@@ -223,6 +241,7 @@
         (variable-value 'beginning-of-defun-function) 'lem-lisp-mode/internal:lisp-beginning-of-defun
         (variable-value 'end-of-defun-function) 'lem-lisp-mode/internal:lisp-end-of-defun
         (variable-value 'completion-spec) 'completion-symbol
+        (variable-value 'find-definitions-function) 'elisp-find-definitions
           
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 4

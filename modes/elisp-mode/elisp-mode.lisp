@@ -217,7 +217,7 @@
   (if (lem-elisp-mode/rpc:connected-p)
     (message "Already connected to ~a"
              (jsonrpc/transport/http::http-transport-url
-                      (jsonrpc/class:jsonrpc-transport lem-elisp-mode/rpc::*elisp-rpc-client*)))
+                      (jsonrpc/class:jsonrpc-transport lem-elisp-mode/rpc:*elisp-rpc-client*)))
     (lem-elisp-mode/rpc:connect-to-server)))
 
 (defun elisp-find-definitions (point)

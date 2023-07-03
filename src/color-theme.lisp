@@ -91,12 +91,12 @@
       (setf (config :color-theme) (current-theme)))))
 
 (defun background-color ()
-  (when *current-theme*
-    (second (assoc :background (color-theme-specs (find-color-theme *current-theme*))))))
+  (when (current-theme)
+    (second (assoc :background (color-theme-specs (find-color-theme (current-theme)))))))
 
 (defun foreground-color ()
-  (when *current-theme*
-    (second (assoc :foreground (color-theme-specs (find-color-theme *current-theme*))))))
+  (when (current-theme)
+    (second (assoc :foreground (color-theme-specs (find-color-theme (current-theme)))))))
 
 (define-major-mode color-theme-selector-mode ()
     (:name "Themes"

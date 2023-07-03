@@ -308,10 +308,7 @@
    (lambda (result)
      (declare (ignore result))
      (lisp-eval-async
-      `(,(read-from-string "micros/repl::listener-get-value"))
-      (lambda (result)
-        (declare (ignore result))
-        (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))))))
+      `(,(read-from-string "micros/repl::listener-get-value"))))))
 
 (define-command lisp-repl-copy-down () ()
   (alexandria:when-let ((id (object-id-at (current-point))))

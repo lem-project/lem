@@ -271,7 +271,7 @@
 
 (defun sldb-inspect-var (frame-number var)
   (lisp-eval-async `(micros:inspect-frame-var ,frame-number ,var)
-                   'open-inspector))
+                   'lem-lisp-mode/inspector:open-inspector))
 
 (defun sldb-hide-frame-details (point frame-button)
   (when (button-get frame-button 'toggle)
@@ -455,7 +455,7 @@
     ((prompt-for-sexp "Inspect in frame (evaluated): "))
   (let ((frame-number (frame-number-at-point (current-point))))
     (lisp-eval-async `(micros:inspect-in-frame ,string ,frame-number)
-                     'open-inspector)))
+                     'lem-lisp-mode/inspector:open-inspector)))
 
 (define-command sldb-step () ()
   (lisp-eval-async `(micros:sldb-step ,(frame-number-at-point (current-point)))))
@@ -474,7 +474,7 @@
 
 (define-command sldb-inspect-condition () ()
   (lisp-eval-async '(micros:inspect-current-condition)
-                   'open-inspector))
+                   'lem-lisp-mode/inspector:open-inspector))
 
 (define-command sldb-print-condition () ()
   (lisp-eval-async '(micros:sdlb-print-condition)

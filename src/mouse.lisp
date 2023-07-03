@@ -398,16 +398,17 @@
   *last-point-on-context-menu-open*)
 
 (defun update-point-on-context-menu-open (point)
-  (assert point)
-  (setf *last-point-on-context-menu-open* (copy-point point :temporary)))
+  (if point
+      (setf *last-point-on-context-menu-open* (copy-point point :temporary))
+      (setf *last-point-on-context-menu-open* nil)))
 
 (defun show-context-menu-over-mouse-cursor (x y)
   (let ((context-menu (buffer-context-menu (current-buffer))))
     (when context-menu
       (multiple-value-bind (target-window x y)
           (focus-window-position (current-frame) x y)
-        (alexandria:when-let (point (get-point-from-window-with-coordinates target-window x y nil))
-          (update-point-on-context-menu-open point))
+        (update-point-on-context-menu-open
+         (get-point-from-window-with-coordinates target-window x y nil))
         (setf (current-window) target-window)
         (lem-if:display-context-menu (implementation) context-menu '(:gravity :mouse-cursor))))))
 

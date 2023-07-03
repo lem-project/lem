@@ -32,10 +32,10 @@
 
 (define-attribute inspector-value-attribute
   (:light :foreground "dark cyan")
-  (:dark :foreground "cyan"))
+  (:dark :foreground "#c7e6fb" :bold t))
 
 (define-attribute inspector-action-attribute
-  (t :foreground "red"))
+  (:dark :foreground "#fec373" :bold t))
 
 (defvar *inspector-limit* 500)
 (defvar *inspector-mark-stack* '())

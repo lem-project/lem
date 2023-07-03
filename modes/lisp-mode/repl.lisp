@@ -243,14 +243,18 @@
 (defun listener-eval (string)
   (ensure-repl-buffer-exist)
   (setf *repl-evaluating* t)
-  (request-listener-eval
-   *connection*
-   string
-   (lambda (value)
-     (declare (ignore value))
-     (setf *repl-evaluating* nil)
-     (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))
-   (repl-buffer-width)))
+  (let ((spinner (start-loading-spinner :modeline
+                                        :buffer (repl-buffer)
+                                        :loading-message "Evaluating...")))
+    (request-listener-eval
+     *connection*
+     string
+     (lambda (value)
+       (declare (ignore value))
+       (setf *repl-evaluating* nil)
+       (stop-loading-spinner spinner)
+       (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))
+     (repl-buffer-width))))
 
 (defun repl-read-string (thread tag)
   (let ((buffer (ensure-repl-buffer-exist)))

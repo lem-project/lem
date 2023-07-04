@@ -40,7 +40,7 @@
                  :background (or (maybe-base-color background) nil)
                  :reverse reverse
                  :bold bold
-                 :underline underline))
+                 :underline (or (maybe-base-color underline) underline)))
 
 (defun ensure-attribute (x &optional (errorp t))
   (cond ((symbolp x)

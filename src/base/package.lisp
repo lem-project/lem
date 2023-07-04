@@ -153,6 +153,7 @@
    :point<=
    :point>
    :point>=
+   :point-closest
    :point-min
    :point-max)
   ;; basic.lisp

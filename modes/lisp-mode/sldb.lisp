@@ -50,33 +50,35 @@
            :sldb-recompile-in-frame-source))
 (in-package :lem-lisp-mode/sldb)
 
-(define-attribute topline-attribute)
+(define-attribute topline-attribute
+  (t :bold t))
 
 (define-attribute condition-attribute
-  (t :foreground "red" :bold t))
+  (t :foreground :base08 :bold t))
 
 (define-attribute section-attribute
-  (t :background "gray" :foreground "black"))
+  (t :bold t :reverse t))
 
 (define-attribute restart-number-attribute
   (t :bold t))
 
 (define-attribute restart-type-attribute
-  (t :foreground "purple"))
+  (t :foreground :base09 :bold t))
 
-(define-attribute restart-attribute)
+(define-attribute restart-attribute
+  (t :bold t))
 
 (define-attribute frame-label-attribute
-  (t :foreground "gray40"))
+  (t :bold t))
 
 (define-attribute local-name-attribute
-  (t :foreground "dark cyan"))
+  (t :bold t))
 
 (define-attribute local-value-attribute
-  (t :foreground "red"))
+  (t :foreground :base0D :bold t))
 
 (define-attribute catch-tag-attribute
-  (t :foreground "green"))
+  (t :bold t))
 
 (define-major-mode sldb-mode lisp-ui-mode
     (:name "SLDB"
@@ -271,7 +273,7 @@
 
 (defun sldb-inspect-var (frame-number var)
   (lisp-eval-async `(micros:inspect-frame-var ,frame-number ,var)
-                   'open-inspector))
+                   'lem-lisp-mode/inspector:open-inspector))
 
 (defun sldb-hide-frame-details (point frame-button)
   (when (button-get frame-button 'toggle)
@@ -455,7 +457,7 @@
     ((prompt-for-sexp "Inspect in frame (evaluated): "))
   (let ((frame-number (frame-number-at-point (current-point))))
     (lisp-eval-async `(micros:inspect-in-frame ,string ,frame-number)
-                     'open-inspector)))
+                     'lem-lisp-mode/inspector:open-inspector)))
 
 (define-command sldb-step () ()
   (lisp-eval-async `(micros:sldb-step ,(frame-number-at-point (current-point)))))
@@ -474,7 +476,7 @@
 
 (define-command sldb-inspect-condition () ()
   (lisp-eval-async '(micros:inspect-current-condition)
-                   'open-inspector))
+                   'lem-lisp-mode/inspector:open-inspector))
 
 (define-command sldb-print-condition () ()
   (lisp-eval-async '(micros:sdlb-print-condition)

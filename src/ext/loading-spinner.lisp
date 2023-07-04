@@ -12,7 +12,7 @@
 (defconstant +loading-interval+ 80)
 
 (define-attribute spinner-attribute
-  (t :foreground "yellow"))
+  (t :foreground :base0A))
 
 (defclass spinner ()
   ((frames :initform #("⠋" "⠙" "⠹" "⠸" "⠼" "⠴" "⠦" "⠧" "⠇" "⠏")

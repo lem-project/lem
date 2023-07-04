@@ -398,7 +398,9 @@
   *last-point-on-context-menu-open*)
 
 (defun update-point-on-context-menu-open (point)
-  (setf *last-point-on-context-menu-open* (copy-point point :temporary)))
+  (if point
+      (setf *last-point-on-context-menu-open* (copy-point point :temporary))
+      (setf *last-point-on-context-menu-open* nil)))
 
 (defun show-context-menu-over-mouse-cursor (x y)
   (let ((context-menu (buffer-context-menu (current-buffer))))

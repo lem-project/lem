@@ -1,12 +1,10 @@
 (in-package :lem-lisp-mode/internal)
 
 (define-attribute printed-object-attribute
-  (:dark :foreground "#c4af7e" :bold t)
-  (:light :foreground "black" :bold t))
+  (t :foreground :base0A :bold t))
 
 (define-attribute repl-result-attribute
-  (:dark :foreground "#e7e8ea" :bold t)
-  (:light :foreground "black" :bold t))
+  (t :foreground :base06 :bold t))
 
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"
@@ -243,14 +241,18 @@
 (defun listener-eval (string)
   (ensure-repl-buffer-exist)
   (setf *repl-evaluating* t)
-  (request-listener-eval
-   *connection*
-   string
-   (lambda (value)
-     (declare (ignore value))
-     (setf *repl-evaluating* nil)
-     (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))
-   (repl-buffer-width)))
+  (let ((spinner (start-loading-spinner :modeline
+                                        :buffer (repl-buffer)
+                                        :loading-message "Evaluating...")))
+    (request-listener-eval
+     *connection*
+     string
+     (lambda (value)
+       (declare (ignore value))
+       (setf *repl-evaluating* nil)
+       (stop-loading-spinner spinner)
+       (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))
+     (repl-buffer-width))))
 
 (defun repl-read-string (thread tag)
   (let ((buffer (ensure-repl-buffer-exist)))
@@ -308,10 +310,7 @@
    (lambda (result)
      (declare (ignore result))
      (lisp-eval-async
-      `(,(read-from-string "micros/repl::listener-get-value"))
-      (lambda (result)
-        (declare (ignore result))
-        (lem/listener-mode:refresh-prompt (ensure-repl-buffer-exist)))))))
+      `(,(read-from-string "micros/repl::listener-get-value"))))))
 
 (define-command lisp-repl-copy-down () ()
   (alexandria:when-let ((id (object-id-at (current-point))))

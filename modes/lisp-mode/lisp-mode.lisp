@@ -43,6 +43,24 @@
         (make-completion-spec 'completion-symbol-async :async t))
   (setf (variable-value 'idle-function) 'lisp-idle-function)
   (setf (variable-value 'root-uri-patterns) '(".asd"))
+  (setf (variable-value 'detective-search) 
+        (make-instance 'lem/detective:search-regex
+                       :function-regex
+                       (lem/detective:make-capture-regex
+                        :regex "^\\(defun "
+                        :function #'lem-lisp-mode/detective:capture-reference)
+                       :class-regex
+                       (lem/detective:make-capture-regex
+                        :regex "^\\(defclass "
+                        :function #'lem-lisp-mode/detective:capture-reference)
+                       :package-regex
+                       (lem/detective:make-capture-regex
+                        :regex "^\\(in-package "
+                        :function #'lem-lisp-mode/detective:capture-reference)
+		       :variable-regex
+                       (lem/detective:make-capture-regex
+                        :regex "^(?:\\(defvar |\\(defparameter )"
+                        :function #'lem-lisp-mode/detective:capture-reference)))
   (set-syntax-parser lem-lisp-syntax:*syntax-table*
                      (make-tmlanguage-lisp))
   (unless (connected-p) (self-connect))

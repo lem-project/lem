@@ -14,15 +14,13 @@
 (in-package :lem/peek-source)
 
 (define-attribute filename-attribute
-  (:light :foreground "blue")
-  (:dark :foreground "cyan"))
+  (t :foreground :base0D :bold t))
 
 (define-attribute position-attribute
-  (:light :foreground "dark red")
-  (:dark :foreground "red"))
+  (t :foreground :base08 :bold t))
 
 (define-attribute highlight
-  (t :background "cyan"))
+  (t :background :base01))
 
 (defvar *collector*)
 

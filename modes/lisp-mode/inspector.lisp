@@ -27,15 +27,13 @@
            :lisp-inspector-fetch-all))
 (in-package :lem-lisp-mode/inspector)
 
-(define-attribute inspector-label-attribute
-  (:light :foreground "LightSteelBlue"))
+(define-attribute inspector-label-attribute)
 
 (define-attribute inspector-value-attribute
-  (:light :foreground "dark cyan")
-  (:dark :foreground "cyan"))
+  (t :foreground :base0D :bold t))
 
 (define-attribute inspector-action-attribute
-  (t :foreground "red"))
+  (:dark :foreground :base09 :bold t))
 
 (defvar *inspector-limit* 500)
 (defvar *inspector-mark-stack* '())

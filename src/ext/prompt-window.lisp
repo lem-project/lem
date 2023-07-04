@@ -63,8 +63,7 @@
   (setf (variable-value 'line-wrap :buffer (current-buffer)) nil))
 
 (define-attribute prompt-attribute
-  (:light :foreground "gray27" :bold t)
-  (:dark :foreground "snow" :bold t))
+  (t :foreground :base07 :bold t))
 
 (define-key *prompt-mode-keymap* "Return" 'prompt-execute)
 (define-key *prompt-mode-keymap* "Tab" 'prompt-completion)

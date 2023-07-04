@@ -645,16 +645,16 @@
 ;; - versionSupport
 
 (define-attribute diagnostic-error-attribute
-  (t :foreground "red" :underline t))
+  (t :foreground :base08 :underline t))
 
 (define-attribute diagnostic-warning-attribute
-  (t :foreground "orange" :underline t))
+  (t :foreground :base09 :underline t))
 
 (define-attribute diagnostic-information-attribute
-  (t :foreground "gray" :underline t))
+  (t :foreground :base04 :underline t))
 
 (define-attribute diagnostic-hint-attribute
-  (t :foreground "yellow" :underline t))
+  (t :foreground :base0A :underline t))
 
 (defun diagnostic-severity-attribute (diagnostic-severity)
   (switch (diagnostic-severity :test #'=)
@@ -944,7 +944,7 @@
 ;;; signatureHelp
 
 (define-attribute signature-help-active-parameter-attribute
-  (t :background "blue" :underline t))
+  (t :background :base0D :underline t))
 
 (defun provide-signature-help-p (workspace)
   (handler-case (lsp:server-capabilities-signature-help-provider
@@ -1235,7 +1235,7 @@
 ;;; document highlights
 
 (define-attribute document-highlight-text-attribute
-  (t :background "yellow4"))
+  (t :background :base0A))
 
 (defun provide-document-highlight-p (workspace)
   (handler-case (lsp:server-capabilities-document-highlight-provider
@@ -1504,7 +1504,7 @@
      (values "TypeParameter" 'symbol-kind-type-attribute))))
 
 (define-attribute document-symbol-detail-attribute
-  (t :foreground "gray"))
+  (t :foreground :base04))
 
 (defun append-document-symbol-item (buffer document-symbol nest-level)
   (let ((selection-range (lsp:document-symbol-selection-range document-symbol))

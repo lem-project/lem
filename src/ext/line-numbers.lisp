@@ -11,8 +11,7 @@
 (defvar *line-number-format* nil)
 
 (define-attribute line-numbers-attribute
-  (:light :foreground "blue" :background "#e0e0e0")
-  (:dark :foreground "snow" :background "gray20"))
+  (t :foreground :base07 :background :base01))
 
 (define-editor-variable line-numbers nil ""
   (lambda (value)

@@ -44,10 +44,10 @@
 (defvar *isearch-popup-message* nil)
 
 (define-attribute isearch-highlight-attribute
-  (t :foreground "black" :background "gray"))
+  (t :foreground :base00 :background :base05))
 
 (define-attribute isearch-highlight-active-attribute
-  (t :foreground "black" :background "cyan"))
+  (t :foreground :base00 :background :base0D))
 
 (define-editor-variable isearch-next-last nil)
 (define-editor-variable isearch-prev-last nil)

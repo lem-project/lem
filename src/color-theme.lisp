@@ -106,7 +106,8 @@
 
 (defun base-color (name)
   (check-type name base-color)
-  (second (assoc name (color-theme-specs (find-color-theme (current-theme))))))
+  (when (current-theme)
+    (second (assoc name (color-theme-specs (find-color-theme (current-theme)))))))
 
 (defun maybe-base-color (name)
   (if (typep name 'base-color)

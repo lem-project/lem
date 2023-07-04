@@ -27,7 +27,6 @@
            :lisp-inspector-fetch-all))
 (in-package :lem-lisp-mode/inspector)
 
-;; TODO
 (define-attribute inspector-label-attribute)
 
 (define-attribute inspector-value-attribute

@@ -59,6 +59,9 @@
 (define-attribute section-attribute
   (t :bold t :reverse t))
 
+(define-attribute subsection-attribute
+  (t :bold t :underline t))
+
 (define-attribute restart-number-attribute
   (t :bold t))
 
@@ -243,7 +246,7 @@
         (insert-character point #\newline)
         (insert-string point indent1)
         (insert-string point (if locals "Locals:" "[No Locals]")
-                       :attribute 'section-attribute)
+                       :attribute 'subsection-attribute)
         (loop :for i :from 0
               :for var :in locals
               :do (destructuring-bind (&key name id value) var
@@ -265,7 +268,7 @@
         (when catches
           (insert-character point #\newline)
           (insert-string point indent1)
-          (insert-string point "Catch-tags:" :attribute 'section-attribute)
+          (insert-string point "Catch-tags:" :attribute 'subsection-attribute)
           (dolist (tag catches)
             (insert-character point #\newline)
             (insert-string point indent2)

@@ -6,6 +6,7 @@
    :*elisp-rpc-auth*
    :connected-p
    :connect-to-server
+   :client-disconnect
    :get-completions
    :get-symbol-location
    :get-symbol-documentation))
@@ -31,6 +32,10 @@
   (jsonrpc:client-connect client 
                           :mode :http
                           :url server-url))
+
+(defun client-disconnect (&key
+                          (client *elisp-rpc-client*))
+  (jsonrpc:client-disconnect client))
 
 ;;TODO Add auth as a parameter
 (defun get-completions (prefix

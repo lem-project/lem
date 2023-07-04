@@ -10,7 +10,8 @@ An interactive interface to Git.
 
 Done:
 
-- status window: current branch, latest commits, unstaged changes, staged changes
+- status window: current branch, latest commits, unstaged changes, staged changes, untracked files.
+- navigation commands
 - view changes diff
 - stage, unstage files
 - inside the diff, stage, unstage hunks
@@ -18,6 +19,11 @@ Done:
 - push, pull the remote branch
 - branch checkout, branch create&checkout
 - view commit at point
+- basic Fossil support (current branch, add change, commit)
+
+Ongoing:
+
+- interactive rebase (POC working for Unix)
 
 Nice to have/todo next:
 
@@ -27,10 +33,8 @@ Nice to have/todo next:
 
 Next:
 
-- interactive rebase
-- stage only selected region (and not whole diff at point)
-- stash
-- untracked files
+- stage only selected region (more precise than hunks)
+- stashes
 - many, many more commands, settings and switches
 - mouse context menus
 
@@ -325,18 +329,29 @@ Next:
 (define-command legit-status () ()
   "Show changes and untracked files."
   (with-current-project ()
-    (multiple-value-bind (untracked unstaged-files staged-files)
+    (multiple-value-bind (untracked-files unstaged-files staged-files)
         (porcelain::components)
-      (declare (ignorable untracked))
 
       ;; big try! It works \o/
       (lem/peek-legit:with-collecting-sources (collector :read-only nil)
-        ;; (lem/peek-legit::collector-insert "Keys: (n)ext, (p)revious lines,  (s)tage file.")
-
+        ;; Header: current branch.
         (lem/peek-legit::collector-insert
          (format nil "Branch: ~a" (porcelain::current-branch)))
         (lem/peek-legit::collector-insert "")
 
+        ;; Untracked files.
+        (lem/peek-legit::collector-insert "Untracked files:")
+        (if untracked-files
+            (loop :for file :in untracked-files
+                  :do (lem/peek-legit:with-appending-source
+                          (point :move-function (make-move-function file)
+                                 :visit-file-function (lambda () file)
+                                 :stage-function (make-stage-function file)
+                                 :unstage-function (lambda () (message "File is not tracked, can't be unstaged.")))
+                        (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
+            (lem/peek-legit::collector-insert "<none>"))
+
+        (lem/peek-legit::collector-insert "")
         ;; Unstaged changes.
         (lem/peek-legit::collector-insert "Unstaged changes:")
         (if unstaged-files

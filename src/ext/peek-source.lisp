@@ -174,7 +174,7 @@
 
 ;;;
 (define-attribute match-line-attribute
-  (t :background "#444444"))
+  (t :background :base01))
 
 (defun get-matched-point ()
   (alexandria:when-let* ((move (get-move-function (buffer-point (window-buffer *peek-window*))))

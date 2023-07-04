@@ -54,7 +54,7 @@
   (t :bold t))
 
 (define-attribute condition-attribute
-  (t :foreground lem-lisp-mode/colors:+color-4+ :bold t))
+  (t :foreground :base08 :bold t))
 
 (define-attribute section-attribute
   (t :bold t :reverse t))
@@ -63,7 +63,7 @@
   (t :bold t))
 
 (define-attribute restart-type-attribute
-  (t :foreground lem-lisp-mode/colors:+color-3+ :bold t))
+  (t :foreground :base09 :bold t))
 
 (define-attribute restart-attribute
   (t :bold t))
@@ -75,7 +75,7 @@
   (t :bold t))
 
 (define-attribute local-value-attribute
-  (t :foreground lem-lisp-mode/colors:+color-2+ :bold t))
+  (t :foreground :base0D :bold t))
 
 (define-attribute catch-tag-attribute
   (t :bold t))

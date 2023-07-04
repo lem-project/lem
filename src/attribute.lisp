@@ -36,8 +36,8 @@
 
 (defun make-attribute (&key foreground background reverse bold underline)
   (make-instance 'attribute
-                 :foreground foreground
-                 :background background
+                 :foreground (or (maybe-base-color foreground) nil)
+                 :background (or (maybe-base-color background) nil)
                  :reverse reverse
                  :bold bold
                  :underline underline))

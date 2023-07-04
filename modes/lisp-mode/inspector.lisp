@@ -31,10 +31,10 @@
 (define-attribute inspector-label-attribute)
 
 (define-attribute inspector-value-attribute
-  (t :foreground lem-lisp-mode/colors:+color-2+ :bold t))
+  (t :foreground :base0D :bold t))
 
 (define-attribute inspector-action-attribute
-  (:dark :foreground lem-lisp-mode/colors:+color-3+ :bold t))
+  (:dark :foreground :base09 :bold t))
 
 (defvar *inspector-limit* 500)
 (defvar *inspector-mark-stack* '())

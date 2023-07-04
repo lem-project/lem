@@ -7,10 +7,10 @@
 (in-package :lem-lisp-mode/eval)
 
 (define-attribute eval-error-attribute
-  (t :foreground lem-lisp-mode/colors:+color-4+ :bold t))
+  (t :foreground :base08 :bold t))
 
 (define-attribute eval-value-attribute
-  (t :foreground lem-lisp-mode/colors:+color-2+ :bold t))
+  (t :foreground :base0D :bold t))
 
 (define-key *lisp-mode-keymap* "C-x C-e" 'lisp-eval-at-point)
 (define-key *lisp-mode-keymap* "C-c C-e" 'lisp-eval-at-point)

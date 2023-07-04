@@ -189,7 +189,8 @@
     (insert-button point
                    text
                    action
-                   :attribute attribute)))
+                   :attribute attribute
+                   :without-mouse-hover-highlight t)))
 
 (defun write-tabs-to-buffer (window frames tabs)
   (let* ((buffer (virtual-frame-header-buffer window))

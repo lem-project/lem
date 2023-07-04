@@ -26,22 +26,37 @@
 (defun (setf button-get) (value button key)
   (setf (getf (button-plist button) key) value))
 
+(defun with-callback (callback)
+  (lambda (&rest args)
+    (declare (ignore args))
+    (funcall callback)))
+
 (defun insert-button (point text &optional callback &rest plist)
-  (let ((button-tag (getf plist :button-tag)))
-    (apply #'insert-string
-           point text
-           'button (make-button :plist plist :callback callback)
-           'action callback
-           :click-callback (lambda (window point)
-                             (declare (ignore window point))
-                             (funcall callback))
-           :attribute (getf plist :attribute)
-           (if button-tag
-               `(,button-tag t)
-               '()))))
+  (let ((button-tag (getf plist :button-tag))
+        (without-mouse-hover-highlight (getf plist :without-mouse-hover-highlight)))
+    (flet ((f ()
+             (apply #'insert-string
+                    point text
+                    'button (make-button :plist plist :callback callback)
+                    'action callback
+                    :click-callback (with-callback callback)
+                    :attribute (getf plist :attribute)
+                    (if button-tag
+                        `(,button-tag t)
+                        '()))))
+      (if without-mouse-hover-highlight
+          (f)
+          (with-point ((start point :right-inserting)
+                       (end point :left-inserting))
+            (prog1 (f)
+              (lem-core::set-clickable start
+                                       end
+                                       (with-callback callback))))))))
 
 (defun apply-button-between-points (start end callback)
-  (lem-core::set-clickable start end callback)
+  (lem-core::set-clickable start
+                           end
+                           (with-callback callback))
   (put-text-property start end 'button (make-button :callback callback)))
 
 (defun button-action (button)

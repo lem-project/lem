@@ -60,3 +60,10 @@
   "Returns the symbol documentation."
   (jsonrpc:call client "lemmington-symbol-documentation" (list symbol)
                 :basic-auth '("lem" . "lem")))
+
+(defun get-exported-functions (&key
+                               (client *elisp-rpc-client*))
+  "Returns a list of all the exported functions."
+  (jsonrpc:call client "lemmington-exported-functions" nil
+                :basic-auth '("lem" . "lem")))
+

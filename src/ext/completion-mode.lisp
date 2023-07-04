@@ -108,13 +108,11 @@
 (define-key *completion-mode-keymap* 'delete-previous-char 'completion-delete-previous-char)
 (define-key *completion-mode-keymap* 'backward-delete-word 'completion-backward-delete-word)
 
-(define-attribute completion-attribute
-  (t :background "RoyalBlue"))
 (define-attribute detail-attribute
-  (:dark :foreground "gray")
-  (:light :foreground "#777"))
+  (t :foreground :base03))
+
 (define-attribute chunk-attribute
-  (t :foreground "SkyBlue1"))
+  (t :foreground :base0D))
 
 (defclass print-spec ()
   ((label-width

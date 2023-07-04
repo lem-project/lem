@@ -5,11 +5,10 @@
 (in-package :lem-patch-mode)
 
 (define-attribute add-line-attribute
-  (:light :foreground "blue")
-  (:dark :foreground "cyan"))
+  (t :foreground :base0C))
 
 (define-attribute delete-line-attribute
-  (t :foreground "red"))
+  (t :foreground :base08))
 
 (defun make-tmlanguage-patch ()
   (let* ((patterns (make-tm-patterns

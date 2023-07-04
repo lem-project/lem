@@ -15,20 +15,14 @@
 
   A keyword, one of :pathname (sort by file name), :mtime (last modification time) and :size.")
 
-(define-attribute header-attribute
-  (:light :foreground "dark green")
-  (:dark :foreground "green"))
-
 (define-attribute file-attribute
   (t))
 
 (define-attribute directory-attribute
-  (:light :foreground "blue" :bold t)
-  (:dark :foreground "sky blue"))
+  (t :foreground :base0D :bold t))
 
 (define-attribute link-attribute
-  (:light :foreground "cyan")
-  (:dark :foreground "green"))
+  (t :foreground :base0B :bold t))
 
 (define-major-mode directory-mode ()
     (:name "Directory"

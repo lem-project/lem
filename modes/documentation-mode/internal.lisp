@@ -9,7 +9,7 @@
 (in-package :lem-documentation-mode/internal)
 
 (define-attribute link-attribute
-  (t :foreground "skyblue" :underline t))
+  (t :underline :base0D t))
 
 (defstruct location
   file

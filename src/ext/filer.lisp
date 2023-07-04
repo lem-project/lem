@@ -6,7 +6,7 @@
 (defparameter *down-pointing-triangle* (uiop:strcat (string (code-char #x25BE)) " "))
 
 (define-attribute triangle-attribute
-  (t :bold t :foreground "light blue"))
+  (t :bold t :foreground :base0D))
 
 (define-major-mode filer-mode ()
     (:name "Filer"

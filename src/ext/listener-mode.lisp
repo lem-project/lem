@@ -28,8 +28,7 @@
 (in-package :lem/listener-mode)
 
 (define-attribute listener-prompt-attribute
-  (:light :foreground "blue" :bold t)
-  (:dark :foreground "#5687c6" :bold t))
+  (t :foreground :base0D :bold t))
 
 (define-editor-variable listener-prompt-attribute 'listener-prompt-attribute)
 

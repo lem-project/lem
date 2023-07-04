@@ -5,10 +5,10 @@
 (define-editor-variable before-eval-functions '())
 
 (define-attribute compilation-region-highlight
-  (t :background "orange"))
+  (t :background :base09))
 
 (define-attribute evaluation-region-highlight
-  (t :background "green"))
+  (t :background :base0B))
 
 (defparameter *default-port* 4005)
 (defparameter *localhost* "127.0.0.1")

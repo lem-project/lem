@@ -119,6 +119,10 @@
         unless (str:blankp line)
           if (equal (elt line 0) #\M)
             collect file into modified-staged-files
+        if (equal (elt line 0) #\A)
+          ;; Here we don't differentiate between modified and newly added.
+          ;; We could do better.
+          collect file into modified-staged-files
         if (equal (elt line 1) #\M)
           collect file into modified-unstaged-files
         if (str:starts-with-p "??" line)

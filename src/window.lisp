@@ -1059,12 +1059,6 @@ You can pass in the optional argument WINDOW-LIST to replace the default
             (setf (window-parameter (current-window) 'parent-window) parent-window)
             (values (current-window) split-p))))))
 
-(defun display-buffer (buffer &optional force-split-p)
-  (multiple-value-bind (window split-p)
-      (pop-to-buffer buffer force-split-p)
-    (declare (ignore split-p))
-    window))
-
 (defun quit-window (window &key kill-buffer)
   (let ((parent-window (window-parameter window 'parent-window)))
     (cond

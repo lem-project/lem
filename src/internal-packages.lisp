@@ -251,7 +251,6 @@
    :not-switchable-buffer-p
    :switch-to-buffer
    :pop-to-buffer
-   :display-buffer
    :quit-window
    :left-window
    :right-window

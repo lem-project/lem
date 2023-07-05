@@ -26,7 +26,13 @@
    :capture-regex
    :make-capture-regex
 
-   :detective-search
+   :detective-all
+   :detective-class
+   :detective-function
+   :detective-next
+   :detective-package
+   :detective-previous
+   :detective-variable
 
    :search-regex
 
@@ -221,38 +227,44 @@
         (message "No found reference."))))
 
 (define-command detective-next () ()
+  "Move point to the next reference."
   (check-change)
   (%detective-move :direction :down))
 
 (define-command detective-previous () ()
+  "Move point to the previous reference."
   (check-change)
   (%detective-move :direction :up))
 
 (define-command detective-function () ()
+  "Prompt for a function defined in this buffer and move to it."
   (check-change)
   (let ((reference (navigate-reference "functions")))
     (move-to-reference reference)))
 
 (define-command detective-class () ()
+  "Prompt for a class defined in this buffer and move to it."
   (check-change)
   (let ((reference (navigate-reference "classes")))
     (move-to-reference reference)))
 
 (define-command detective-package () ()
+  "Prompt for a package defined or used in this buffer and move to it."
   (check-change)
   (let ((reference (navigate-reference "packages")))
     (move-to-reference reference)))
 
 (define-command detective-variable () ()
+  "Prompt for a variable defined in this buffer and move to it."
   (check-change)
   (let ((reference (navigate-reference "variables")))
     (move-to-reference reference)))
 
 (define-command detective-all () ()
+  "Prompt for a definition defined in this buffer and move the point to it."
   (check-change)
   (let* ((references
           (alexandria:flatten
            (alexandria:hash-table-values (buffer-references (current-buffer)))))
         (reference (navigate-reference references)))
      (move-to-reference reference)))
-

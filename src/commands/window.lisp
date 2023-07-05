@@ -252,6 +252,7 @@
 (define-command scroll-down (n &optional (window (current-window))) ("p")
   "Scroll down."
   (cond
+    ((zerop n))
     ((minusp n)
      (scroll-up (- n)))
     (t
@@ -265,6 +266,7 @@
 (define-command scroll-up (n &optional (window (current-window))) ("p")
   "Scroll up."
   (cond
+    ((zerop n))
     ((minusp n)
      (scroll-down (- n)))
     (t

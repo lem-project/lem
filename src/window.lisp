@@ -990,12 +990,19 @@ You can pass in the optional argument WINDOW-LIST to replace the default
     (setf (window-parameter window 'change-buffer) nil)
     (run-hooks *window-show-buffer-functions* window)))
 
+(defstruct pop-to-buffer-state split parent-window)
+
+(defun window-pop-to-buffer-state (window)
+  (window-parameter window 'pop-to-buffer-state))
+
+(defun (setf window-pop-to-buffer-state) (pop-to-buffer-state window)
+  (setf (window-parameter window 'pop-to-buffer-state) pop-to-buffer-state))
+
 (defun %switch-to-buffer (buffer record move-prev-point)
   (without-interrupts
     (unless (eq (current-buffer) buffer)
       (when record
-        (setf (window-parameter (current-window) 'split-p) nil)
-        (setf (window-parameter (current-window) 'parent-window) nil)
+        (setf (window-pop-to-buffer-state (current-window)) nil)
         (let ((old-buffer (current-buffer)))
           (unbury-buffer old-buffer)
           (lem-base::%buffer-clear-keep-binfo old-buffer)
@@ -1054,15 +1061,19 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                                        (eq buffer (window-buffer window))))
                 (get-next-window dst-window))
           (switch-to-buffer buffer)
-          (setf (window-parameter (current-window) 'split-p) split-p)
-          (setf (window-parameter (current-window) 'parent-window) parent-window)
+          (setf (window-pop-to-buffer-state (current-window))
+                (make-pop-to-buffer-state :split split-p :parent-window parent-window))
           (current-window)))))
 
 (defun quit-window (window &key kill-buffer)
-  (let ((parent-window (window-parameter window 'parent-window)))
+  (let* ((pop-to-buffer-state
+           (window-pop-to-buffer-state window))
+         (parent-window
+           (pop-to-buffer-state-parent-window
+            pop-to-buffer-state)))
     (cond
       ((and (not (one-window-p))
-            (window-parameter window 'split-p))
+            (pop-to-buffer-state-split pop-to-buffer-state))
        (if kill-buffer
            (delete-buffer (window-buffer window))
            (bury-buffer (window-buffer window)))

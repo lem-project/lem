@@ -264,7 +264,8 @@
                                          (frame-number (frame-number
                                                         (button-get frame-button 'frame))))
                                      (lambda ()
-                                       (sldb-inspect-var frame-number var)))
+                                       (with-context ()
+                                         (sldb-inspect-var frame-number var))))
                                    :attribute 'local-name-attribute
                                    'sldb-var i
                                    'frame (button-get frame-button 'frame)
@@ -281,8 +282,11 @@
             (insert-string point tag :attribute 'catch-tag-attribute)))))))
 
 (defun sldb-inspect-var (frame-number var)
-  (lisp-eval-async `(micros:inspect-frame-var ,frame-number ,var)
-                   'lem-lisp-mode/inspector:open-inspector))
+  (let ((window (current-window)))
+    (lisp-eval-async `(micros:inspect-frame-var ,frame-number ,var)
+                     (lambda (inspected-parts)
+                       (with-current-window window
+                         (lem-lisp-mode/inspector:open-inspector inspected-parts))))))
 
 (defun sldb-hide-frame-details (point frame-button)
   (when (button-get frame-button 'toggle)

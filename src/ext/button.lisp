@@ -1,6 +1,7 @@
 (defpackage :lem/button
   (:use :cl :lem)
-  (:export :button
+  (:export :with-context
+           :button
            :button-start
            :button-end
            :button-get
@@ -26,10 +27,28 @@
 (defun (setf button-get) (value button key)
   (setf (getf (button-plist button) key) value))
 
+(defstruct context
+  window
+  point)
+
+(defvar *context* nil)
+
+(defun call-with-context (function)
+  (if *context*
+      (with-current-window (context-window *context*)
+        (save-excursion
+          (setf (current-buffer) (point-buffer (context-point *context*)))
+          (move-point (current-point) (context-point *context*))
+          (funcall function)))
+      (funcall function)))
+
+(defmacro with-context (() &body body)
+  `(call-with-context (lambda () ,@body)))
+
 (defun with-callback (callback)
-  (lambda (&rest args)
-    (declare (ignore args))
-    (funcall callback)))
+  (lambda (window point)
+    (let ((*context* (make-context :window window :point point)))
+      (funcall callback))))
 
 (defun insert-button (point text &optional callback &rest plist)
   (let ((button-tag (getf plist :button-tag))

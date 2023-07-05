@@ -202,7 +202,7 @@
     (sldb-insert-frame point frame))
   (when more
     (insert-button point " --more--"
-                   #'sldb-fetch-all-frames
+                   (lambda () (with-context () (sldb-fetch-all-frames)))
                    :attribute 'section-attribute
                    :button-tag 'sldb-more-frames)))
 
@@ -212,7 +212,13 @@
     (insert-string point " ")
     (insert-string point (format nil "~2d:" number) :attribute 'frame-label-attribute)
     (insert-string point " ")
-    (insert-button point string #'sldb-toggle-details 'frame frame :button-tag 'sldb-frame)
+    (insert-button point
+                   string
+                   (lambda ()
+                     (with-context ()
+                       (sldb-toggle-details)))
+                   'frame frame
+                   :button-tag 'sldb-frame)
     (insert-character point #\newline)))
 
 (defun sldb-fetch-all-frames ()

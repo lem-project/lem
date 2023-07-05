@@ -1039,7 +1039,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 
 (defun pop-to-buffer (buffer &optional force-split-p)
   (if (eq buffer (current-buffer))
-      (return-from pop-to-buffer (values (current-window) nil))
+      (return-from pop-to-buffer (current-window))
       (let ((parent-window (current-window))
             (split-p))
         (let ((dst-window
@@ -1057,7 +1057,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
             (switch-to-buffer buffer)
             (setf (window-parameter (current-window) 'split-p) split-p)
             (setf (window-parameter (current-window) 'parent-window) parent-window)
-            (values (current-window) split-p))))))
+            (current-window))))))
 
 (defun quit-window (window &key kill-buffer)
   (let ((parent-window (window-parameter window 'parent-window)))

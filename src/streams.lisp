@@ -88,7 +88,7 @@
   (when (buffer-output-stream-interactive-update-p stream)
     (let ((buffer (point-buffer (buffer-stream-point stream)))
           (point (buffer-stream-point stream)))
-      (display-buffer buffer)
+      (pop-to-buffer buffer)
       (dolist (window (get-buffer-windows buffer))
         (move-point (buffer-point (window-buffer window)) point))
       (redraw-display)))

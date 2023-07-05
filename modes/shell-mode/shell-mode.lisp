@@ -82,4 +82,4 @@
 
 (define-command run-shell () ()
   (setf (current-window)
-        (display-buffer (run-shell-internal))))
+        (pop-to-buffer (run-shell-internal))))

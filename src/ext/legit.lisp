@@ -84,7 +84,10 @@ Next:
 ;; navigation
 (define-key *legit-diff-mode-keymap* "C-n" 'next-line)
 (define-key *legit-diff-mode-keymap* "C-p" 'previous-line)
+(define-key lem/peek-legit::*peek-legit-keymap* "M-n" 'legit-next-header)
+(define-key lem/peek-legit::*peek-legit-keymap* "M-p" 'legit-previous-header)
 (define-key *legit-diff-mode-keymap* "Tab" 'other-window)
+
 ;; help
 (define-key lem/peek-legit::*peek-legit-keymap* "?" 'legit-help)
 (define-key lem/peek-legit::*peek-legit-keymap* "C-x ?" 'legit-help)
@@ -341,11 +344,12 @@ Next:
       (lem/peek-legit:with-collecting-sources (collector :read-only nil)
         ;; Header: current branch.
         (lem/peek-legit::collector-insert
-         (format nil "Branch: ~a" (porcelain::current-branch)))
+         (format nil "Branch: ~a" (porcelain::current-branch))
+         :header t)
         (lem/peek-legit::collector-insert "")
 
         ;; Untracked files.
-        (lem/peek-legit::collector-insert "Untracked files:")
+        (lem/peek-legit::collector-insert "Untracked files:" :header t)
         (if untracked-files
             (loop :for file :in untracked-files
                   :do (lem/peek-legit:with-appending-source
@@ -358,7 +362,7 @@ Next:
 
         (lem/peek-legit::collector-insert "")
         ;; Unstaged changes.
-        (lem/peek-legit::collector-insert "Unstaged changes:")
+        (lem/peek-legit::collector-insert "Unstaged changes:" :header t)
         (if unstaged-files
             (loop :for file :in unstaged-files
                   :do (lem/peek-legit:with-appending-source
@@ -372,7 +376,7 @@ Next:
             (lem/peek-legit::collector-insert "<none>"))
 
         (lem/peek-legit::collector-insert "")
-        (lem/peek-legit::collector-insert "Staged changes:")
+        (lem/peek-legit::collector-insert "Staged changes:" :header t)
 
         ;; Stages files.
         (if staged-files
@@ -389,7 +393,7 @@ Next:
 
         ;; Latest commits.
         (lem/peek-legit::collector-insert "")
-        (lem/peek-legit::collector-insert "Latest commits:")
+        (lem/peek-legit::collector-insert "Latest commits:" :header t)
         (let ((latest-commits (porcelain::latest-commits)))
           (if latest-commits
               (loop for commit in latest-commits
@@ -465,6 +469,14 @@ Next:
   "Push changes to the current remote."
   (with-current-project ()
     (run-function #'porcelain::push)))
+
+(define-command legit-next-header () ()
+  "Move point to the next header of this VCS window."
+  (lem/peek-legit::peek-legit-next-header))
+
+(define-command legit-previous-header () ()
+  "Move point to the previous header of this VCS window."
+  (lem/peek-legit::peek-legit-previous-header))
 
 (define-command legit-quit () ()
   "Quit"

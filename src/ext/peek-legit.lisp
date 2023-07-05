@@ -143,6 +143,18 @@
     (previous-single-property-change point 'move-marker))
   (previous-single-property-change point 'move-marker))
 
+(defun next-header-point (point)
+  "Find the next point (line) with a header marker."
+  (when (text-property-at point 'header-marker)
+    (next-single-property-change point 'header-marker))
+  (next-single-property-change point 'header-marker))
+
+(defun previous-header-point (point)
+  "Find the previous point (line) with a header marker."
+  (when (text-property-at point 'header-marker)
+    (previous-single-property-change point 'header-marker))
+  (previous-single-property-change point 'header-marker))
+
 (defun make-two-side-by-side-windows (buffer)
   (let* ((x-margin 4)
          (y-margin 2)
@@ -237,11 +249,15 @@
                                ,stage-function
                                ,unstage-function))
 
-(defun collector-insert (s &optional (newline t))
+(defun collector-insert (s &optional (newline t) header)
   (let ((point (buffer-point (collector-buffer *collector*))))
-    (insert-string point s :read-only t)
-    (when newline
-      (insert-string point (string #\newline) :read-only t))))
+    (with-point ((start point))
+      (character-offset start 1)
+      (insert-string point s :read-only t)
+      (when header
+        (put-text-property start point 'header-marker t))
+      (when newline
+        (insert-string point (string #\newline) :read-only t)))))
 
 ;;;
 (define-attribute match-line-attribute
@@ -289,6 +305,12 @@
 
 (define-command peek-legit-next () ()
   (next-move-point (current-point)))
+
+(define-command peek-legit-next-header () ()
+  (next-header-point (current-point)))
+
+(define-command peek-legit-previous-header () ()
+  (previous-header-point (current-point)))
 
 (define-command peek-legit-previous () ()
   (previous-move-point (current-point)))

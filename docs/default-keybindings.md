@@ -142,11 +142,11 @@
 | [grow-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L233)         | C-x }          | Grow the window's width.                                              |
 | [shrink-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L241)       | C-x {          | Shrink the window's width.                                            |
 | [scroll-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L252)                      | C-Down, M-Down | Scroll down.                                                          |
-| [scroll-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L265)                        | C-Up, M-Up     | Scroll up.                                                            |
-| [find-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L276)           | C-x 4 f        | Open a file in another window. Split the screen vertically if needed. |
-| [read-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L277)           | C-x 4 r        | Read a file in another window.                                        |
-| [select-buffer-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L278)       | C-x 4 b        | Select a buffer in another window.                                    |
-| [compare-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L282)                  |                |                                                                       |
+| [scroll-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L266)                        | C-Up, M-Up     | Scroll up.                                                            |
+| [find-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L278)           | C-x 4 f        | Open a file in another window. Split the screen vertically if needed. |
+| [read-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L279)           | C-x 4 r        | Read a file in another window.                                        |
+| [select-buffer-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L280)       | C-x 4 b        | Select a buffer in another window.                                    |
+| [compare-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L284)                  |                |                                                                       |
 
 ## Multiple-Cursors
 | Command                                                                                                        | Key bindings | Documentation                                               |

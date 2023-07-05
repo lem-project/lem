@@ -126,7 +126,8 @@
                              (:file "filer")
                              (:file "deepl")
                              (:file "themes")
-                             (:file "detective")))))
+                             (:file "detective")
+                             (:file "time-stamp")))))
 
 (defsystem "lem/extensions"
   :depends-on (#+sbcl

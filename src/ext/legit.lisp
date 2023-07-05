@@ -147,6 +147,11 @@ Next:
     (with-current-project ()
       (show-diff (porcelain::file-diff file :cached cached)))))
 
+(defun make-visit-file-function (file)
+  ;; note: the lambda inside the loop is not enough, it captures the last loop value.
+  (lambda ()
+    file))
+
 ;; show commit.
 (defun make-show-commit-function (ref)
   (lambda ()
@@ -345,7 +350,7 @@ Next:
             (loop :for file :in untracked-files
                   :do (lem/peek-legit:with-appending-source
                           (point :move-function (make-move-function file)
-                                 :visit-file-function (lambda () file)
+                                 :visit-file-function (make-visit-file-function file)
                                  :stage-function (make-stage-function file)
                                  :unstage-function (lambda () (message "File is not tracked, can't be unstaged.")))
                         (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
@@ -358,7 +363,7 @@ Next:
             (loop :for file :in unstaged-files
                   :do (lem/peek-legit:with-appending-source
                           (point :move-function (make-move-function file)
-                                 :visit-file-function (lambda () file)
+                                 :visit-file-function (make-visit-file-function file)
                                  :stage-function (make-stage-function file)
                                  :unstage-function (make-unstage-function file :already-unstaged t))
 
@@ -375,7 +380,7 @@ Next:
                   :for i := 0 :then (incf i)
                   :do (lem/peek-legit::with-appending-source
                           (point :move-function (make-move-function file :cached t)
-                                 :visit-file-function (lambda () file)
+                                 :visit-file-function (make-visit-file-function file)
                                  :stage-function (make-stage-function file)
                                  :unstage-function (make-unstage-function file))
 

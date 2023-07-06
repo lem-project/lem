@@ -992,6 +992,14 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 
 (defstruct pop-to-buffer-state split parent-window)
 
+(defun get-pop-to-buffer-state-parent-window (pop-to-buffer-state)
+  (and pop-to-buffer-state
+       (pop-to-buffer-state-parent-window pop-to-buffer-state)))
+
+(defun get-pop-to-buffer-state-split-p (pop-to-buffer-state)
+  (and pop-to-buffer-state
+       (pop-to-buffer-state-split pop-to-buffer-state)))
+
 (defun window-pop-to-buffer-state (window)
   (window-parameter window 'pop-to-buffer-state))
 
@@ -1069,11 +1077,11 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (let* ((pop-to-buffer-state
            (window-pop-to-buffer-state window))
          (parent-window
-           (pop-to-buffer-state-parent-window
+           (get-pop-to-buffer-state-parent-window
             pop-to-buffer-state)))
     (cond
       ((and (not (one-window-p))
-            (pop-to-buffer-state-split pop-to-buffer-state))
+            (get-pop-to-buffer-state-split-p pop-to-buffer-state))
        (if kill-buffer
            (delete-buffer (window-buffer window))
            (bury-buffer (window-buffer window)))

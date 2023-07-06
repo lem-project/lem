@@ -58,6 +58,15 @@
                      (when (funcall test win)
                        (return-from window-tree-find-if win)))))
 
+(defun find-node-with-window (tree window)
+  (labels ((recursive (node)
+             (cond ((typep node 'window) nil)
+                   ((find window (window-node-children node))
+                    node)
+                   (t
+                    (some #'recursive (window-node-children node))))))
+    (recursive tree)))
+
 (defun get-parent-window-node-accessors (tree node)
   (cond ((window-tree-leaf-p tree) nil)
         ((eq node (window-node-left tree))

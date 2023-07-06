@@ -952,7 +952,7 @@
     (unbound-slot () nil)))
 
 (defun insert-markdown (point markdown-text)
-  (insert-buffer point (markdown-buffer markdown-text)))
+  (insert-buffer point (lem/markdown-buffer:markdown-buffer markdown-text)))
 
 (defun insert-markup-content (point markup-content)
   (switch ((lsp:markup-content-kind markup-content) :test #'equal)

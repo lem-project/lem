@@ -59,6 +59,9 @@
 (define-attribute section-attribute
   (t :bold t :reverse t))
 
+(define-attribute subsection-attribute
+  (t :bold t :underline t))
+
 (define-attribute restart-number-attribute
   (t :bold t))
 
@@ -142,7 +145,7 @@
 
 (defun sldb-setup (thread level condition restarts frames conts)
   (let ((buffer (get-sldb-buffer-create thread)))
-    (let ((window (display-buffer buffer)))
+    (let ((window (pop-to-buffer buffer :split-action :negative)))
       (setf (current-window) window))
     (change-buffer-mode buffer 'sldb-mode)
     (setf (buffer-read-only-p buffer) nil)
@@ -199,7 +202,7 @@
     (sldb-insert-frame point frame))
   (when more
     (insert-button point " --more--"
-                   #'sldb-fetch-all-frames
+                   (lambda () (with-context () (sldb-fetch-all-frames)))
                    :attribute 'section-attribute
                    :button-tag 'sldb-more-frames)))
 
@@ -209,7 +212,13 @@
     (insert-string point " ")
     (insert-string point (format nil "~2d:" number) :attribute 'frame-label-attribute)
     (insert-string point " ")
-    (insert-button point string #'sldb-toggle-details 'frame frame :button-tag 'sldb-frame)
+    (insert-button point
+                   string
+                   (lambda ()
+                     (with-context ()
+                       (sldb-toggle-details)))
+                   'frame frame
+                   :button-tag 'sldb-frame)
     (insert-character point #\newline)))
 
 (defun sldb-fetch-all-frames ()
@@ -243,7 +252,7 @@
         (insert-character point #\newline)
         (insert-string point indent1)
         (insert-string point (if locals "Locals:" "[No Locals]")
-                       :attribute 'section-attribute)
+                       :attribute 'subsection-attribute)
         (loop :for i :from 0
               :for var :in locals
               :do (destructuring-bind (&key name id value) var
@@ -255,7 +264,8 @@
                                          (frame-number (frame-number
                                                         (button-get frame-button 'frame))))
                                      (lambda ()
-                                       (sldb-inspect-var frame-number var)))
+                                       (with-context ()
+                                         (sldb-inspect-var frame-number var))))
                                    :attribute 'local-name-attribute
                                    'sldb-var i
                                    'frame (button-get frame-button 'frame)
@@ -265,15 +275,18 @@
         (when catches
           (insert-character point #\newline)
           (insert-string point indent1)
-          (insert-string point "Catch-tags:" :attribute 'section-attribute)
+          (insert-string point "Catch-tags:" :attribute 'subsection-attribute)
           (dolist (tag catches)
             (insert-character point #\newline)
             (insert-string point indent2)
             (insert-string point tag :attribute 'catch-tag-attribute)))))))
 
 (defun sldb-inspect-var (frame-number var)
-  (lisp-eval-async `(micros:inspect-frame-var ,frame-number ,var)
-                   'lem-lisp-mode/inspector:open-inspector))
+  (let ((window (current-window)))
+    (lisp-eval-async `(micros:inspect-frame-var ,frame-number ,var)
+                     (lambda (inspected-parts)
+                       (with-current-window window
+                         (lem-lisp-mode/inspector:open-inspector inspected-parts))))))
 
 (defun sldb-hide-frame-details (point frame-button)
   (when (button-get frame-button 'toggle)

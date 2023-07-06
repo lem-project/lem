@@ -60,4 +60,4 @@
            (delete-between-points start end)
            (insert-string start translated-text))
           (t
-           (display-buffer buffer)))))
+           (pop-to-buffer buffer)))))

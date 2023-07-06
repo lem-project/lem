@@ -77,7 +77,8 @@
         buffer)))
 
 (defmethod open-inspector-by-repl (inspected-parts)
-  (open-inspector inspected-parts))
+  (with-current-window (get-repl-window)
+    (open-inspector inspected-parts)))
 
 (defun open-inspector (inspected-parts &optional inspector-position hook focus)
   (let ((buffer (inspector-buffer)))
@@ -102,10 +103,10 @@
                  (move-to-line point (car inspector-position))
                  (line-offset point 0 (cdr inspector-position))))))
       (cond (focus
-             (setf (current-window) (display-buffer buffer))
+             (setf (current-window) (pop-to-buffer buffer :split-action :negative))
              (body))
             (t
-             (with-current-window (display-buffer buffer)
+             (with-current-window (pop-to-buffer buffer :split-action :negative)
                (body)))))))
 
 (defun inspector-insert-content (content)

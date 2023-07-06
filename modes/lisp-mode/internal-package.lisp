@@ -85,6 +85,7 @@
    :lisp-repl-interrupt
    :repl-buffer
    :clear-repl
+   :get-repl-window
    :*repl-compiler-check*
    :listener-eval
    :start-lisp-repl

@@ -125,16 +125,26 @@
 
 (defvar *lisp-repl-shortcuts* '())
 
+(defmacro with-repl-prompt (() &body body)
+  `(let ((lem/prompt-window:*prompt-completion-window-shape* nil))
+     ,@body))
+
+(defun repl-prompt-for-string (prompt &rest args)
+  (with-repl-prompt ()
+    (apply #'prompt-for-string
+           prompt
+           :gravity :cursor
+           :use-border nil
+           args)))
+
 (defun prompt-for-shortcuts ()
   (let* ((*lisp-repl-shortcuts* *lisp-repl-shortcuts*)
          (names (mapcar #'car *lisp-repl-shortcuts*)))
-    (cdr (assoc (prompt-for-string
+    (cdr (assoc (repl-prompt-for-string
                  "Command: "
                  :completion-function (lambda (x) (completion-strings x names))
                  :test-function (lambda (name) (member name names :test #'string=))
-                 :history-symbol 'mh-lisp-repl-shortcuts
-                 :gravity :cursor
-                 :use-border nil)
+                 :history-symbol 'mh-lisp-repl-shortcuts)
                 *lisp-repl-shortcuts* :test #'equal))))
 
 (define-command lisp-repl-shortcut (n) ("p")
@@ -470,35 +480,32 @@
                              (string-downcase (package-name p)))
                            (list-all-packages)))
          (package
-           (prompt-for-string
+           (repl-prompt-for-string
             "Package: "
             :completion-function (lambda (str)
                                    (sort (completion str packages)
                                          #'string-lessp))
             :test-function (lambda (package)
-                             (find package packages :test #'string-equal))
-            :gravity :cursor
-            :use-border nil)))
+                             (find package packages :test #'string-equal)))))
     (lisp-set-package package)))
 
 (define-repl-shortcut cd (n)
   (declare (ignore n))
   (let* ((directory
-           (prompt-for-directory "New directory: "
-                                 :directory (buffer-directory)
-                                 :gravity :cursor
-                                 :use-border nil)))
+           (with-repl-prompt ()
+             (prompt-for-directory "New directory: "
+                                   :directory (buffer-directory)
+                                   :gravity :cursor
+                                   :use-border nil))))
     (lisp-set-directory :directory directory)))
 
 (defun prompt-for-system (prompt)
   (let ((systems (lisp-eval '(micros:list-systems))))
-    (prompt-for-string prompt
-                       :gravity :cursor
-                       :use-border nil
-                       :completion-function (lambda (string)
-                                              (completion string systems))
-                       :test-function (lambda (string)
-                                        (find string systems :test #'equal)))))
+    (repl-prompt-for-string prompt
+                            :completion-function (lambda (string)
+                                                   (completion string systems))
+                            :test-function (lambda (string)
+                                             (find string systems :test #'equal)))))
 
 (define-repl-shortcut quickload (n)
   (declare (ignore n))

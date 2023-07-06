@@ -4,7 +4,9 @@
                "cl-setlocale"
                "lem"
                "lem/extensions"
-               "lem/legit")
+               ;; Include the system when it's ready and tested:
+               ;; "lem/legit"
+               )
   :serial t
   :components (#+win32(:file "cl-charms-pdcurseswin32")
                (:file "term")

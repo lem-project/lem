@@ -145,7 +145,7 @@
 
 (defun sldb-setup (thread level condition restarts frames conts)
   (let ((buffer (get-sldb-buffer-create thread)))
-    (let ((window (pop-to-buffer buffer)))
+    (let ((window (pop-to-buffer buffer :split-action :negative)))
       (setf (current-window) window))
     (change-buffer-mode buffer 'sldb-mode)
     (setf (buffer-read-only-p buffer) nil)

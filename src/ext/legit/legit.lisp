@@ -26,6 +26,10 @@ Done:
 - view commit at point
 - basic Fossil support (current branch, add change, commit)
 
+TODO:
+
+- show renamed files
+
 Ongoing:
 
 - interactive rebase (POC working for Unix)

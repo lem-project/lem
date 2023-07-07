@@ -176,7 +176,7 @@
   :serial t
   :depends-on ("lem")
   :pathname "src"
-  :components ((:module "ext"
+  :components ((:module "ext/legit"
                 :components ((:file "porcelain")
                              (:file "peek-legit")
                              (:file "legit")))))

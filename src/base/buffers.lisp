@@ -32,12 +32,6 @@
                           (buffer-name buffer)))
                (buffer-list))))
 
-(defun get-or-create-buffer (buffer-or-name)
-  (let ((buffer (get-buffer buffer-or-name)))
-    (if buffer
-        buffer
-        (make-buffer buffer-or-name))))
-
 (defun unique-buffer-name (name)
   (check-type name string)
   (if (null (get-buffer name))

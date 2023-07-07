@@ -143,7 +143,7 @@ Next:
   ;; Show a diff in the *legit-diff* buffer.
   ;; Share usage between showing file diff ("move" function)
   ;; and showing a commit.
-  (let ((buffer (lem-base:get-or-create-buffer "*legit-diff*")))
+  (let ((buffer (make-buffer "*legit-diff*")))
     (setf (buffer-directory buffer)
           (uiop:getcwd))
     (setf (buffer-read-only-p buffer) nil)

@@ -54,11 +54,10 @@
 ;;; The two windows pane.
 ;;;
 (define-attribute filename-attribute
-  (:light :foreground "blue")
-  (:dark :foreground "cyan"))
+  (t :foreground :base0D))
 
 (define-attribute highlight
-  (t :background "cyan"))
+  (t :background :base0D))
 
 (defvar *collector*)
 
@@ -276,7 +275,7 @@
 
 ;;;
 (define-attribute match-line-attribute
-  (t :background "#444444"))
+  (t :background :base02))
 
 (defun get-matched-point ()
   (alexandria:when-let* ((move (get-move-function (buffer-point (window-buffer *peek-window*))))

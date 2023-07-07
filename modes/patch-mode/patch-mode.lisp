@@ -11,8 +11,7 @@
   (t :foreground :base08))
 
 (define-attribute hunk-line-attribute
-  (:light :foreground "black" :background "lightgrey")
-  (:dark :foreground "grey" :background "black"))
+  (t :foreground :base06 :background :base01 :bold t))
 
 (defun make-tmlanguage-patch ()
   (let* ((patterns (make-tm-patterns

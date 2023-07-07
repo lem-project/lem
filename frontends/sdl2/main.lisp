@@ -176,6 +176,14 @@
              (display-latin-font display)
              (display-cjk-normal-font display)))))
 
+(defmethod scaled-char-width ((display display) x)
+  (let ((scale-x (round (first (display-scale display)))))
+    (floor (* scale-x x) (char-width))))
+
+(defmethod scaled-char-height ((display display) y)
+  (let ((scale-y (round (second (display-scale display)))))
+    (floor (* scale-y y) (char-height))))
+
 (defmethod update-display ((display display))
   (sdl2:render-present (display-renderer display)))
 

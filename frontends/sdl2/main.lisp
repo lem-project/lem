@@ -176,6 +176,14 @@
              (display-latin-font display)
              (display-cjk-normal-font display)))))
 
+(defmethod scaled-char-width ((display display) x)
+  (let ((scale-x (round (first (display-scale display)))))
+    (floor (* scale-x x) (char-width))))
+
+(defmethod scaled-char-height ((display display) y)
+  (let ((scale-y (round (second (display-scale display)))))
+    (floor (* scale-y y) (char-height))))
+
 (defmethod update-display ((display display))
   (sdl2:render-present (display-renderer display)))
 
@@ -398,8 +406,7 @@
                       texture
                       x
                       y
-                      (* (display-char-width *display*)
-                         (length string))
+                      (* (char-width) (length string))
                       height)
       (sdl2:destroy-texture texture)
       (length string))))
@@ -640,12 +647,12 @@
                 ((eql button sdl2-ffi:+sdl-button-middle+) :button-2)
                 ((eql button 4) :button-4))))
     (when button
-      (let ((pixel-x x)
-            (pixel-y y)
-            (char-x (floor x (char-width)))
-            (char-y (floor y (char-height))))
-        (lem:send-event (lambda ()
-                          (lem:receive-mouse-button-down char-x char-y pixel-x pixel-y button clicks)))))))
+      (let ((char-x (scaled-char-width *display* x))
+            (char-y (scaled-char-height *display* y)))
+        (lem:send-event
+          (lambda ()
+            (lem:receive-mouse-button-down char-x char-y x y button
+                                           clicks)))))))
 
 (defun on-mouse-button-up (button x y)
   (show-cursor)
@@ -654,37 +661,34 @@
                 ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
                 ((eql button sdl2-ffi:+sdl-button-middle+) :button-2)
                 ((eql button 4) :button-4)))
-        (pixel-x x)
-        (pixel-y y)
-        (char-x (floor x (char-width)))
-        (char-y (floor y (char-height))))
-    (lem:send-event (lambda ()
-                      (lem:receive-mouse-button-up char-x char-y pixel-x pixel-y button)))))
+        (char-x (scaled-char-width *display* x))
+        (char-y (scaled-char-height *display* y)))
+    (lem:send-event
+     (lambda ()
+       (lem:receive-mouse-button-up char-x char-y x y button)))))
 
 (defun on-mouse-motion (x y state)
   (show-cursor)
   (let ((button (if (= sdl2-ffi:+sdl-button-lmask+ (logand state sdl2-ffi:+sdl-button-lmask+))
                     :button-1
                     nil)))
-    (let ((pixel-x x)
-          (pixel-y y)
-          (char-x (floor x (char-width)))
-          (char-y (floor y (char-height))))
-      (lem:send-event (lambda ()
-                        (lem:receive-mouse-motion char-x char-y pixel-x pixel-y button))))))
+    (let ((char-x (scaled-char-width *display* x))
+          (char-y (scaled-char-height *display* y)))
+      (lem:send-event
+       (lambda ()
+         (lem:receive-mouse-motion char-x char-y x y button))))))
 
 (defun on-mouse-wheel (wheel-x wheel-y which direction)
   (declare (ignore which direction))
   (show-cursor)
   (multiple-value-bind (x y) (sdl2:mouse-state)
-    (let ((pixel-x x)
-          (pixel-y y)
-          (char-x (floor x (char-width)))
-          (char-y (floor y (char-height))))
-      (lem:send-event (lambda ()
-                        (lem:receive-mouse-wheel char-x char-y pixel-x pixel-y wheel-x wheel-y)
-                        (when (= 0 (lem:event-queue-length))
-                          (lem:redraw-display)))))))
+    (let ((char-x (scaled-char-width *display* x))
+          (char-y (scaled-char-height *display* y)))
+      (lem:send-event
+       (lambda ()
+         (lem:receive-mouse-wheel char-x char-y x y wheel-x wheel-y)
+         (when (= 0 (lem:event-queue-length))
+           (lem:redraw-display)))))))
 
 (defun on-textediting (text)
   (handle-textediting (get-platform) text)
@@ -749,7 +753,7 @@
     (sdl2:free-surface image)))
 
 (defun adapt-high-dpi-display-scale ()
-  (with-debug ("adpat-high-dpi-display-scale")
+  (with-debug ("adapt-high-dpi-display-scale")
     (with-renderer ()
       (multiple-value-bind (renderer-width renderer-height)
           (sdl2:get-renderer-output-size (current-renderer))
@@ -760,7 +764,7 @@
           (setf (display-scale *display*) (list scale-x scale-y)))))))
 
 (defun adapt-high-dpi-font-size ()
-  (with-debug ("adpat-high-dpi-font-size")
+  (with-debug ("adapt-high-dpi-font-size")
     (with-renderer ()
       (let ((font-config (display-font-config *display*))
             (ratio (round (first (display-scale *display*)))))
@@ -1013,8 +1017,8 @@
       (multiple-value-bind (x y bitmask)
           (sdl2:mouse-state)
         (declare (ignore bitmask))
-        (values (floor x (display-char-width *display*))
-                (floor y (display-char-height *display*))))))
+        (values (scaled-char-width *display* x)
+                (scaled-char-height *display* y)))))
 
 (defmethod lem-if:get-char-width ((implementation sdl2))
   (char-width))

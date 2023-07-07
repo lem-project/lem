@@ -406,8 +406,7 @@
                       texture
                       x
                       y
-                      (* (display-char-width *display*)
-                         (length string))
+                      (* (char-width) (length string))
                       height)
       (sdl2:destroy-texture texture)
       (length string))))

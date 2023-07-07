@@ -1,5 +1,3 @@
-(in-package :asdf-user)
-
 (defsystem "lem"
   :version "2.0.0"
   :depends-on ("alexandria"

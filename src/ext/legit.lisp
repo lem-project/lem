@@ -1,8 +1,13 @@
 (defpackage :lem/legit
   (:use :cl
-   :lem
-        :lem/grep)
-  (:export :legit-status))
+   :lem)
+  (:export :legit-status)
+  (:documentation "Display version control data of the current project in an interactive two-panes window.
+
+  This package in particular defines the right window of the legit interface and the user-level commands.
+
+  Gets VCS data by calling lem/porcelain and asking lem/peek-legit to display data on the left window."))
+
 (in-package :lem/legit)
 
 #|
@@ -65,41 +70,41 @@ Next:
 (define-key *legit-diff-mode-keymap* "p" 'legit-goto-previous-hunk)
 
 (define-key *legit-diff-mode-keymap* "c" 'legit-commit)
-(define-key lem/peek-legit::*peek-legit-keymap* "c" 'legit-commit)
+(define-key lem/peek-legit:*peek-legit-keymap* "c" 'legit-commit)
 
-(define-key lem/peek-legit::*peek-legit-keymap* "b b" 'legit-branch-checkout)
+(define-key lem/peek-legit:*peek-legit-keymap* "b b" 'legit-branch-checkout)
 (define-key *legit-diff-mode-keymap* "b b" 'legit-branch-checkout)
-(define-key lem/peek-legit::*peek-legit-keymap* "b c" 'legit-branch-create)
+(define-key lem/peek-legit:*peek-legit-keymap* "b c" 'legit-branch-create)
 (define-key *legit-diff-mode-keymap* "b c" 'legit-branch-create)
 ;; push
 (define-key *legit-diff-mode-keymap* "P p" 'legit-push)
-(define-key lem/peek-legit::*peek-legit-keymap* "P p" 'legit-push)
+(define-key lem/peek-legit:*peek-legit-keymap* "P p" 'legit-push)
 ;; pull
-(define-key lem/peek-legit::*peek-legit-keymap* "F p" 'legit-pull)
+(define-key lem/peek-legit:*peek-legit-keymap* "F p" 'legit-pull)
 (define-key *legit-diff-mode-keymap* "F p" 'legit-pull)
 
 ;; redraw everything:
-(define-key lem/peek-legit::*peek-legit-keymap* "g" 'legit-status)
+(define-key lem/peek-legit:*peek-legit-keymap* "g" 'legit-status)
 
 ;; navigation
 (define-key *legit-diff-mode-keymap* "C-n" 'next-line)
 (define-key *legit-diff-mode-keymap* "C-p" 'previous-line)
-(define-key lem/peek-legit::*peek-legit-keymap* "M-n" 'legit-next-header)
-(define-key lem/peek-legit::*peek-legit-keymap* "M-p" 'legit-previous-header)
+(define-key lem/peek-legit:*peek-legit-keymap* "M-n" 'legit-next-header)
+(define-key lem/peek-legit:*peek-legit-keymap* "M-p" 'legit-previous-header)
 (define-key *legit-diff-mode-keymap* "Tab" 'other-window)
 
 ;; help
-(define-key lem/peek-legit::*peek-legit-keymap* "?" 'legit-help)
-(define-key lem/peek-legit::*peek-legit-keymap* "C-x ?" 'legit-help)
+(define-key lem/peek-legit:*peek-legit-keymap* "?" 'legit-help)
+(define-key lem/peek-legit:*peek-legit-keymap* "C-x ?" 'legit-help)
 ;; quit
 (define-key *legit-diff-mode-keymap* "q" 'legit-quit)
-(define-key lem/peek-legit::*peek-legit-keymap* "q" 'legit-quit)
+(define-key lem/peek-legit:*peek-legit-keymap* "q" 'legit-quit)
 (define-key *legit-diff-mode-keymap* "M-q" 'legit-quit)
-(define-key lem/peek-legit::*peek-legit-keymap* "M-q" 'peek-legit-quit)
+(define-key lem/peek-legit:*peek-legit-keymap* "M-q" 'peek-legit-quit)
 (define-key *legit-diff-mode-keymap* "Escape" 'legit-quit)
-(define-key lem/peek-legit::*peek-legit-keymap* "Escape" 'peek-legit-quit)
+(define-key lem/peek-legit:*peek-legit-keymap* "Escape" 'peek-legit-quit)
 (define-key *legit-diff-mode-keymap* "C-c C-k" 'legit-quit)
-(define-key lem/peek-legit::*peek-legit-keymap* "C-c C-k" 'legit-quit)
+(define-key lem/peek-legit:*peek-legit-keymap* "C-c C-k" 'legit-quit)
 
 (defun pop-up-message (message)
   (with-pop-up-typeout-window (s (make-buffer "*legit status*") :erase t)
@@ -116,9 +121,9 @@ Next:
   `(let ((root (lem-core/commands/project:find-root (buffer-directory))))
      (uiop:with-current-directory (root)
        (multiple-value-bind (root vcs)
-           (porcelain::vcs-project-p)
+           (lem/porcelain:vcs-project-p)
          (if root
-             (let ((porcelain::*vcs* vcs))
+             (let ((lem/porcelain:*vcs* vcs))
                (progn
                  ,@body))
              (message "Not inside a version-controlled project?"))))))
@@ -148,7 +153,7 @@ Next:
 (defun make-move-function (file  &key cached)
   (lambda ()
     (with-current-project ()
-      (show-diff (porcelain::file-diff file :cached cached)))))
+      (show-diff (lem/porcelain:file-diff file :cached cached)))))
 
 (defun make-visit-file-function (file)
   ;; note: the lambda inside the loop is not enough, it captures the last loop value.
@@ -159,13 +164,13 @@ Next:
 (defun make-show-commit-function (ref)
   (lambda ()
     (with-current-project ()
-      (show-diff (porcelain::show-commit-diff ref)))))
+      (show-diff (lem/porcelain:show-commit-diff ref)))))
 
 ;; stage
 (defun make-stage-function (file)
   (lambda ()
     (with-current-project ()
-      (porcelain::stage file)
+      (lem/porcelain:stage file)
       t)))
 
 ;; unstage
@@ -175,7 +180,7 @@ Next:
         (lambda ()
           (message "Already unstaged"))
         (lambda ()
-          (porcelain::unstage file)
+          (lem/porcelain:unstage file)
           t))))
 
 
@@ -294,13 +299,13 @@ Next:
 (define-command legit-stage-hunk () ()
   (with-current-project ()
     (run-function (lambda ()
-                    (porcelain::apply-patch (%current-hunk)))
+                    (lem/porcelain:apply-patch (%current-hunk)))
                   :message "Staged hunk")))
 
 (define-command legit-unstage-hunk () ()
   (with-current-project ()
     (run-function (lambda ()
-                    (porcelain::apply-patch (%current-hunk) :reverse t))
+                    (lem/porcelain:apply-patch (%current-hunk) :reverse t))
                   :message "Unstaged hunk")))
 
 (define-command legit-goto-next-hunk () ()
@@ -329,7 +334,7 @@ Next:
 (define-command legit-commit () ()
   (let ((message (prompt-for-string "Commit message: ")))
     (with-current-project ()
-      (porcelain::commit message)
+      (lem/porcelain:commit message)
       (legit-status)
       (message "Commited."))))
 
@@ -338,18 +343,18 @@ Next:
   "Show changes and untracked files."
   (with-current-project ()
     (multiple-value-bind (untracked-files unstaged-files staged-files)
-        (porcelain::components)
+        (lem/porcelain:components)
 
       ;; big try! It works \o/
       (lem/peek-legit:with-collecting-sources (collector :read-only nil)
         ;; Header: current branch.
-        (lem/peek-legit::collector-insert
-         (format nil "Branch: ~a" (porcelain::current-branch))
+        (lem/peek-legit:collector-insert
+         (format nil "Branch: ~a" (lem/porcelain:current-branch))
          :header t)
-        (lem/peek-legit::collector-insert "")
+        (lem/peek-legit:collector-insert "")
 
         ;; Untracked files.
-        (lem/peek-legit::collector-insert "Untracked files:" :header t)
+        (lem/peek-legit:collector-insert "Untracked files:" :header t)
         (if untracked-files
             (loop :for file :in untracked-files
                   :do (lem/peek-legit:with-appending-source
@@ -358,11 +363,11 @@ Next:
                                  :stage-function (make-stage-function file)
                                  :unstage-function (lambda () (message "File is not tracked, can't be unstaged.")))
                         (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
-            (lem/peek-legit::collector-insert "<none>"))
+            (lem/peek-legit:collector-insert "<none>"))
 
-        (lem/peek-legit::collector-insert "")
+        (lem/peek-legit:collector-insert "")
         ;; Unstaged changes.
-        (lem/peek-legit::collector-insert "Unstaged changes:" :header t)
+        (lem/peek-legit:collector-insert "Unstaged changes:" :header t)
         (if unstaged-files
             (loop :for file :in unstaged-files
                   :do (lem/peek-legit:with-appending-source
@@ -373,28 +378,28 @@ Next:
 
                         (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
                         ))
-            (lem/peek-legit::collector-insert "<none>"))
+            (lem/peek-legit:collector-insert "<none>"))
 
-        (lem/peek-legit::collector-insert "")
-        (lem/peek-legit::collector-insert "Staged changes:" :header t)
+        (lem/peek-legit:collector-insert "")
+        (lem/peek-legit:collector-insert "Staged changes:" :header t)
 
         ;; Stages files.
         (if staged-files
             (loop :for file :in staged-files
                   :for i := 0 :then (incf i)
-                  :do (lem/peek-legit::with-appending-source
+                  :do (lem/peek-legit:with-appending-source
                           (point :move-function (make-move-function file :cached t)
                                  :visit-file-function (make-visit-file-function file)
                                  :stage-function (make-stage-function file)
                                  :unstage-function (make-unstage-function file))
 
                         (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
-            (lem/peek-legit::collector-insert "<none>"))
+            (lem/peek-legit:collector-insert "<none>"))
 
         ;; Latest commits.
-        (lem/peek-legit::collector-insert "")
-        (lem/peek-legit::collector-insert "Latest commits:" :header t)
-        (let ((latest-commits (porcelain::latest-commits)))
+        (lem/peek-legit:collector-insert "")
+        (lem/peek-legit:collector-insert "Latest commits:" :header t)
+        (let ((latest-commits (lem/porcelain:latest-commits)))
           (if latest-commits
               (loop for commit in latest-commits
                     for line = nil
@@ -407,7 +412,7 @@ Next:
                     else
                       do (setf line commit)
 
-                    do (lem/peek-legit::with-appending-source
+                    do (lem/peek-legit:with-appending-source
                            (point :move-function (make-show-commit-function hash)
                                   :visit-file-function (lambda ())
                                   :stage-function (lambda () )
@@ -417,15 +422,15 @@ Next:
                          (if message
                              (insert-string point message)
                              (insert-string point line))))
-              (lem/peek-legit::collector-insert "<none>")))
+              (lem/peek-legit:collector-insert "<none>")))
 
         (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
                   'change-grep-buffer)))))
 
 (defun prompt-for-branch (&key prompt initial-value)
   ;; only call from a command.
-  (let* ((current-branch (or initial-value (porcelain::current-branch)))
-         (candidates (porcelain::branches)))
+  (let* ((current-branch (or initial-value (lem/porcelain:current-branch)))
+         (candidates (lem/porcelain:branches)))
     (if candidates
         (prompt-for-string (or prompt "Branch: ")
                            :initial-value current-branch
@@ -438,13 +443,13 @@ Next:
   "Choose a branch to checkout."
   (with-current-project ()
     (let ((branch (prompt-for-branch))
-          (current-branch (porcelain::current-branch)))
+          (current-branch (lem/porcelain:current-branch)))
       (when (equal branch current-branch)
         (show-message (format nil "Already on ~a" branch) :timeout 3)
         (return-from legit-branch-checkout))
       (when branch
         (run-function (lambda ()
-                        (porcelain::checkout branch))
+                        (lem/porcelain:checkout branch))
                       :message (format nil "Checked out ~a" branch))
         (legit-status)))))
 
@@ -456,31 +461,31 @@ Next:
           (base (prompt-for-branch :prompt "Base branch: " :initial-value "")))
       (when (and new base)
         (run-function (lambda ()
-                        (porcelain::checkout-create new base))
+                        (lem/porcelain:checkout-create new base))
                       :message (format nil "Created ~a" new))
         (legit-status)))))
 
 (define-command legit-pull () ()
   "Pull changes, update HEAD."
   (with-current-project ()
-    (run-function #'porcelain::pull)))
+    (run-function #'lem/porcelain:pull)))
 
 (define-command legit-push () ()
   "Push changes to the current remote."
   (with-current-project ()
-    (run-function #'porcelain::push)))
+    (run-function #'lem/porcelain:push)))
 
 (define-command legit-next-header () ()
   "Move point to the next header of this VCS window."
-  (lem/peek-legit::peek-legit-next-header))
+  (lem/peek-legit:peek-legit-next-header))
 
 (define-command legit-previous-header () ()
   "Move point to the previous header of this VCS window."
-  (lem/peek-legit::peek-legit-previous-header))
+  (lem/peek-legit:peek-legit-previous-header))
 
 (define-command legit-quit () ()
   "Quit"
-  (lem/peek-legit::quit)
+  (lem/peek-legit:quit)
   (ignore-errors
    (delete-buffer (get-buffer "*legit-diff*"))
    (delete-buffer (get-buffer "*legit-help*"))))

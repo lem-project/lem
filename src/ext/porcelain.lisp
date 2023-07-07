@@ -1,10 +1,28 @@
 
-(defpackage :porcelain
+(defpackage :lem/porcelain
   (:use :cl)
   (:shadow :push)
-  (:export))
+  (:export
+   :*vcs*
+   :apply-patch
+   :branches
+   :checkout
+   :checkout-create
+   :commit
+   :components
+   :current-branch
+   :file-diff
+   :latest-commits
+   :pull
+   :push
+   :show-commit-diff
+   :stage
+   :unstage
+   :vcs-project-p
+   )
+  (:documentation "Functions to run Git operations: get the list of changes, of untracked files, commit, push… A simple dispatch mechanism is used to use other VCS systems. In the caller, bind the `*VCS*` variable. See `legit:with-current-project`."))
 
-(in-package :porcelain)
+(in-package :lem/porcelain)
 
 (declaim (type (cons) *git-base-arglist*))
 (defvar *git-base-arglist* (list "git")
@@ -55,6 +73,8 @@
     ))
 
 (defun vcs-project-p ()
+  "If this project under a known version control system?
+  Return two values: the project root (pathname), the VCS (:git or :fossil)."
   ;; This doesn't return the 2 values :(
   ;; (or (fossil-project-p)
   ;;     (git-project-p))

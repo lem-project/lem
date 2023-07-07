@@ -1,14 +1,29 @@
 (defpackage :lem/peek-legit
   (:use :cl :lem)
-  (:export :filename-attribute
-           :position-attribute
-           :with-collecting-sources
-           :with-appending-source
-           :with-insert
+  (:export :*peek-legit-keymap*
            :collector-buffer
+           :collector-insert
+           :filename-attribute
            :get-move-function
+           :highlight-matched-line
+           :position-attribute
            :show-matched-line
-           :highlight-matched-line) )
+           :with-appending-source
+           :with-collecting-sources
+           :with-insert
+           :peek-legit-next-header
+           :peek-legit-next
+           :peek-legit-select
+           :peek-legit-previous-header
+           :peek-legit-previous
+           :peek-legit-stage-file
+           :peek-legit-unstage-file
+           :quit)
+  (:documentation "Defines the left window of the legit interface.
+
+   Writes on the window the VCS components that are sent by the :legit package: untracked files, changes, staged changes, latest commits… They are displayed with custom attributes (read-only colors…) and text properties (on this line, the function to call on Enter is this lambda function…).
+   Cursor mouvements and keybindings send changes to the right window."))
+
 (in-package :lem/peek-legit)
 
 

@@ -3,10 +3,7 @@
                "sdl2-ttf"
                "sdl2-image"
                "lem"
-               "lem/extensions"
-               ;; Include the system when it's ready and tested:
-               ;; "lem/legit"
-               )
+               "lem/extensions")
   :serial t
   :components ((:file "resource")
                (:file "platform")

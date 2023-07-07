@@ -117,20 +117,23 @@ Next:
 (defun last-character (s)
   (subseq s (- (length s) 2) (- (length s) 1)))
 
+(defun call-with-current-project (function)
+  (let ((root (lem-core/commands/project:find-root (buffer-directory))))
+        (uiop:with-current-directory (root)
+          (multiple-value-bind (root vcs)
+              (lem/porcelain:vcs-project-p)
+            (if root
+                (let ((lem/porcelain:*vcs* vcs))
+                  (progn
+                    (funcall function)))
+                (message "Not inside a version-controlled project?"))))))
+
 (defmacro with-current-project (&body body)
   "Execute body with the current working directory changed to the project's root,
   find and set the VCS system for this operation.
 
   If no Git directory (or .fossil file) are found, message the user."
-  `(let ((root (lem-core/commands/project:find-root (buffer-directory))))
-     (uiop:with-current-directory (root)
-       (multiple-value-bind (root vcs)
-           (lem/porcelain:vcs-project-p)
-         (if root
-             (let ((lem/porcelain:*vcs* vcs))
-               (progn
-                 ,@body))
-             (message "Not inside a version-controlled project?"))))))
+  `(call-with-current-project (lambda () ,@body)))
 
 
 ;;; Git commands

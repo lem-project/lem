@@ -749,7 +749,7 @@
     (sdl2:free-surface image)))
 
 (defun adapt-high-dpi-display-scale ()
-  (with-debug ("adpat-high-dpi-display-scale")
+  (with-debug ("adapt-high-dpi-display-scale")
     (with-renderer ()
       (multiple-value-bind (renderer-width renderer-height)
           (sdl2:get-renderer-output-size (current-renderer))
@@ -760,7 +760,7 @@
           (setf (display-scale *display*) (list scale-x scale-y)))))))
 
 (defun adapt-high-dpi-font-size ()
-  (with-debug ("adpat-high-dpi-font-size")
+  (with-debug ("adapt-high-dpi-font-size")
     (with-renderer ()
       (let ((font-config (display-font-config *display*))
             (ratio (round (first (display-scale *display*)))))

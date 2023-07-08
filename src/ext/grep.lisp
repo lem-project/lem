@@ -76,6 +76,7 @@
                                             :directory (if *last-directory*
                                                            (princ-to-string *last-directory*)
                                                            (buffer-directory)))))
+  "Run an interactive grep."
   (let* ((directory (uiop:ensure-directory-pathname directory))
          (result (parse-grep-result (run-grep query directory))))
     (if (null result)

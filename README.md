@@ -12,6 +12,15 @@ You can skip over writing tidy settings or installing many plugins as you do on 
 Lem supports other programming languages thanks to its built-in LSP
 client. You can choose between an Emacs and a Vim mode.
 
+Other Lem features include:
+
+- a **project explorer** tree view
+- project-aware commands
+- interactive **grep** and **git** interfaces
+- **multiple cursors**
+- tetris
+- and more…
+
 # Download
 
 **Lem 2.0 was released!**

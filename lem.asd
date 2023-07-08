@@ -172,6 +172,15 @@
 	       "lem-documentation-mode"
 	       "lem-elisp-mode"))
 
+(defsystem "lem/legit"
+  :serial t
+  :depends-on ("lem")
+  :pathname "src"
+  :components ((:module "ext/legit"
+                :components ((:file "porcelain")
+                             (:file "peek-legit")
+                             (:file "legit")))))
+
 (defsystem "lem/executable"
   :build-operation program-op
   :build-pathname "lem"

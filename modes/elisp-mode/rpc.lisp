@@ -1,10 +1,12 @@
 (defpackage :lem-elisp-mode/rpc
   (:use :cl :lem)
   (:export
+   :*elisp-rpc-client*
    :*elisp-rpc-url*
    :*elisp-rpc-auth*
    :connected-p
    :connect-to-server
+   :client-disconnect
    :get-completions
    :get-symbol-location
    :get-symbol-documentation))
@@ -31,6 +33,10 @@
                           :mode :http
                           :url server-url))
 
+(defun client-disconnect (&key
+                          (client *elisp-rpc-client*))
+  (jsonrpc:client-disconnect client))
+
 ;;TODO Add auth as a parameter
 (defun get-completions (prefix
                         &key
@@ -54,3 +60,10 @@
   "Returns the symbol documentation."
   (jsonrpc:call client "lemmington-symbol-documentation" (list symbol)
                 :basic-auth '("lem" . "lem")))
+
+(defun get-exported-functions (&key
+                               (client *elisp-rpc-client*))
+  "Returns a list of all the exported functions."
+  (jsonrpc:call client "lemmington-exported-functions" nil
+                :basic-auth '("lem" . "lem")))
+

@@ -68,15 +68,16 @@
          (foreground (or underline-color (attribute-foreground attribute)))
          (background (or (attribute-background attribute)
                          lem-if:*background-color-of-drawing-window*))
-         (bits (logior (if (or cursorp (attribute-reverse attribute))
-                           (lem.term:get-color-pair background foreground)
-                           (lem.term:get-color-pair foreground background))
+         (bits (logior (lem.term:get-color-pair foreground background)
                        0
                        (if (attribute-bold attribute)
                            charms/ll:a_bold
                            0)
                        (if (attribute-underline attribute)
                            charms/ll:a_underline
+                           0)
+                       (if (or cursorp (attribute-reverse attribute))
+                           charms/ll:a_reverse
                            0))))
     bits))
 

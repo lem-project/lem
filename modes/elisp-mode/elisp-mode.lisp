@@ -213,11 +213,10 @@
                                 (lem-elisp-mode/rpc:get-completions (points-to-string start end)))
 		    #'string-lessp)))))
 
+;;TODO: Show more information about the connection without loading jsonrpc/http
 (define-command elisp-connect () ()
   (if (lem-elisp-mode/rpc:connected-p)
-    (message "Already connected to ~a"
-             (jsonrpc/transport/http::http-transport-url
-                      (jsonrpc/class:jsonrpc-transport lem-elisp-mode/rpc:*elisp-rpc-client*)))
+    (message "Already connected.")
     (lem-elisp-mode/rpc:connect-to-server)))
 
 (defun elisp-find-definitions (point)

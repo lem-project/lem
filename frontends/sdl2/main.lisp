@@ -865,6 +865,18 @@
     (with-renderer ()
       (floor (display-height *display*) (char-height)))))
 
+(defmethod lem-if:display-title ((implementation sdl2))
+  (with-debug ("lem-if:display-title")
+    (sdl2:get-window-title (display-window *display*))))
+
+(defmethod lem-if:set-display-title ((implementation sdl2) title)
+  (with-debug ("lem-if:set-display-title")
+    (sdl2:in-main-thread ()
+      (with-renderer ()
+        (sdl2:set-window-title (display-window *display*) title)
+        ;; return the title instead of nil
+        title))))
+
 (defmethod lem-if:make-view ((implementation sdl2) window x y width height use-modeline)
   (with-debug ("lem-if:make-view" window x y width height use-modeline)
     (with-renderer ()

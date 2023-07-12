@@ -13,7 +13,8 @@
   (:use-reexport :lem-core/commands/process)
   (:use-reexport :lem-core/commands/help)
   (:use-reexport :lem-core/commands/font)
-  (:use-reexport :lem-core/commands/other))
+  (:use-reexport :lem-core/commands/other)
+  (:use-reexport :lem-core/commands/frame))
 #+sbcl
 (sb-ext:lock-package :lem)
 

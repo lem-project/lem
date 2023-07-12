@@ -85,7 +85,8 @@
                              (:file "process")
                              (:file "help")
                              (:file "font")
-                             (:file "other" :depends-on ("file"))))
+                             (:file "other" :depends-on ("file"))
+                             (:file "frame")))
 
                (:file "external-packages")
 

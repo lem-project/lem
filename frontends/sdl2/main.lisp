@@ -835,10 +835,17 @@
              (declare (ignore editor-thread))
              nil)))
     (if (sbcl-on-darwin-p)
-        (sdl2:make-this-thread-main
-         (lambda ()
-           (create-display #'thunk)
-           (cffi:foreign-funcall "_exit")))
+        (progn
+          ;; called *before* any sdl windows are created
+          (sdl2:set-hint :video-mac-fullscreen-spaces
+                         ;; the sdl2 library expects zero or one NOTE since this
+                         ;; is a preference let's not change the default here
+                         ;; because it's easy enough to change it via a user's
+                         ;; config
+                         (if (lem:config :darwin-use-native-fullscreen) 1 0))
+          (sdl2:make-this-thread-main (lambda ()
+                                        (create-display #'thunk)
+                                        (cffi:foreign-funcall "_exit"))))
         (let ((thread (bt:make-thread (lambda ()
                                         (create-display #'thunk)))))
           (bt:join-thread thread)))))

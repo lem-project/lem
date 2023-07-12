@@ -877,6 +877,18 @@
         ;; return the title instead of nil
         title))))
 
+(defmethod lem-if:display-fullscreen-p ((implementation sdl2))
+  (with-debug ("lem-if:display-fullscreen-p")
+    (not (null (member :fullscreen (sdl2:get-window-flags (display-window *display*)))))))
+
+(defmethod lem-if:set-display-fullscreen-p ((implementation sdl2) fullscreen-p)
+  (with-debug ("lem-if:set-display-fullscreen-p")
+    (sdl2:in-main-thread ()
+      (with-renderer ()
+        ;; always send :desktop over :fullscreen due to weird bugs on macOS
+        (sdl2:set-window-fullscreen (display-window *display*)
+                                    (if fullscreen-p :desktop))))))
+
 (defmethod lem-if:make-view ((implementation sdl2) window x y width height use-modeline)
   (with-debug ("lem-if:make-view" window x y width height use-modeline)
     (with-renderer ()

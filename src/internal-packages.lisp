@@ -488,7 +488,8 @@
    :set-background
    :display-width
    :display-height
-   :display-title)
+   :display-title
+   :display-fullscreen-p)
   ;; color-theme.lisp
   (:export
    :color-theme-names
@@ -517,6 +518,8 @@
    :display-height
    :display-title
    :set-display-title
+   :display-fullscreen-p
+   :set-display-fullscreen-p
    :make-view
    :delete-view
    :clear

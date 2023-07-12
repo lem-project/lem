@@ -487,7 +487,8 @@
    :set-foreground
    :set-background
    :display-width
-   :display-height)
+   :display-height
+   :display-title)
   ;; color-theme.lisp
   (:export
    :color-theme-names
@@ -514,6 +515,8 @@
    :update-background
    :display-width
    :display-height
+   :display-title
+   :set-display-title
    :make-view
    :delete-view
    :clear

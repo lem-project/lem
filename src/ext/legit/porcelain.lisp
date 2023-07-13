@@ -363,3 +363,113 @@ M	src/ext/porcelain.lisp
   (when args
     (error "Our git push command doesn't accept args. Did you mean cl:push ?!!"))
   (run-git (list "push")))
+
+;; interactive rebase
+;; -i --autostash
+;; If rebase from first commit: use --root
+;; otherwise use <commit-hash>^
+;; exple: git rebase --autostash -i 317315966^
+;; This creates a file in .git/rebase-merge/git-rebase-merge-todo
+;; with other temp files: "interactive" (empty) if interactive, "orig-head", "onto",
+;; "head-name".
+;;
+
+;; (defvar *rebase-script*)
+(defparameter *rebase-script*
+  ;; "/home/vince/bacasable/lisp-projects/lem/scripts/dumbrebaseeditor.sh")
+  "/home/vince/.lem/legit/dumbrebaseeditor.sh")
+
+;; Save script at compile time.
+(defparameter *rebase-script-content*
+  (str:from-file
+   (asdf:system-relative-pathname (asdf:find-system "lem")
+                                  "scripts/dumbrebaseeditor.sh"))
+  "Our dumb editor shell script, saved at compile time.
+  We then save it to ~/.lem/legit/rebaseetidor.sh at first use.")
+
+(defun %maybe-lem-home ()
+  "Return Lem's home directory by calling lem:lem-home only if the :lem package exists,
+  otherwise return ~/.lem/.
+  We don't want a hard-coded dependency on Lem, to ease testing."
+  (if (find-package :lem)
+      (uiop:symbol-call :lem :lem-home)
+      (merge-pathnames ".lem/" (user-homedir-pathname))))
+
+(defun rebase-script ()
+  (if (not (boundp '*rebase-script*))
+      (let* ((legit-path (merge-pathnames "legit/" (%maybe-lem-home)))
+             (script-path (uiop:merge-pathnames* "dumbrebaseeditor.sh" legit-path)))
+        (ensure-directories-exist legit-path)
+        ;; TODO: ensure executable file.
+        (unless (uiop:file-exists-p script-path)
+          (str:to-file script-path *rebase-script-content*))
+        (setf *rebase-script* script-path))
+      *rebase-script*))
+
+(defvar *rebase-pid* nil
+  "PID file for the git rebase in process.")
+;; With this approach, only 1 rebase per Lem process.
+;; But we can't have more than one legit window at the same time, so…
+
+(defun rebase-interactively ()
+  "Rebase ALL THE TREE!
+
+  Return three values suitable for legit:run-function: output string, error output string, exit code (integer)."
+  ;; For testing, go to a test project (,cd on Slime), and edit this project's
+  ;; .git/rebase-merge/git-rebase-merge-todo
+  ;; Beware of C-c ~ lol^^
+  (when (uiop:directory-exists-p ".git/rebase-merge/")
+    (error "It seems that there is already a rebase-merge directory,
+and I wonder if you are in the middle of another rebase.
+If that is the case, please try
+   git rebase (--continue | --abort | --skip)
+If that is not the case, please
+   rm -fr \".git/rebase-merge\"
+and run me again.
+I am stopping in case you still have something valuable there."))
+
+  (let ((editor (uiop:getenv "EDITOR")))
+    (setf (uiop:getenv "EDITOR") *rebase-script*)
+    (unwind-protect
+      ;; xxx: get the error output, if any, to get explanations of failure.
+       (let ((process (uiop:launch-program (list
+                                           "git"
+                                           "rebase"
+                                           "--autostash"
+                                           "-i"
+                                           ;; TODO: give the right commits.
+                                           "--root")
+                                          :output :stream
+                                          :error-output :stream)))
+        (if (uiop:process-alive-p process)
+          (let* ((output (read-line (uiop:process-info-output process)))
+                 (pidtxt (str:trim (second (str:split ":" output)))))
+            (setf *rebase-pid* pidtxt)
+            (format t "The git interactive rebase is started on pid ~a. Edit the rebase file and validate." pidtxt)
+            (values (format nil "rebase started")
+                    nil
+                    0))
+          (error "git rebase process didn't start properly. Aborting.")))
+      (setf (uiop:getenv "EDITOR") editor))))
+
+(defun rebase-continue ()
+  (multiple-value-bind (output error-output exit-code)
+      (uiop:run-program (list "kill" "-SIGTERM" *rebase-pid*)
+                        :output :string
+                        :error-output :string
+                        :ignore-error-status t)
+    (declare (ignorable output))
+    (values (format nil "rebase finished.")
+            error-output
+            exit-code)))
+
+(defun rebase-kill ()
+  (cond
+    (*rebase-pid*
+     ;; that's weak.
+     (uiop:run-program (list "kill" "-SIGKILL" *rebase-pid*))
+     (values (format nil "rebase killed")
+             ""
+             1))
+    (t
+     (format t "no rebase in process? PID not found."))))

@@ -180,7 +180,9 @@
   :components ((:module "ext/legit"
                 :components ((:file "porcelain")
                              (:file "peek-legit")
-                             (:file "legit")))))
+                             (:file "legit")))
+               (:module "scripts"
+                :components ((:static-file "dumbrebaseeditor.sh")))))
 
 (defsystem "lem/executable"
   :build-operation program-op

@@ -87,6 +87,10 @@ Next:
 (define-key lem/peek-legit:*peek-legit-keymap* "F p" 'legit-pull)
 (define-key *legit-diff-mode-keymap* "F p" 'legit-pull)
 
+;; rebase
+;;; interactive
+(define-key lem/peek-legit:*peek-legit-keymap* "r i" 'legit-rebase-interactive)
+
 ;; redraw everything:
 (define-key lem/peek-legit:*peek-legit-keymap* "g" 'legit-status)
 
@@ -291,14 +295,21 @@ Next:
   to the user on success as a tooltip message,
   or show the external command's error output on a popup window.
 
+  The function FN returns up to three values:
+
+   - standard output (string)
+   - error output (string)
+   - exit code (integer)
+
   Use with-current-project in the caller too.
   Typicaly used to run an external process in the context of a diff buffer command."
   (multiple-value-bind (output error-output exit-code)
       (funcall fn)
-    (declare (ignorable output))
     (cond
       ((zerop exit-code)
-       (message (str:join #\newline (remove-if #'null (list message output)))))
+       (let ((msg (str:join #\newline (remove-if #'null (list message output)))))
+         (when (str:non-blank-string-p msg)
+           (message msg))))
       (t
        (when error-output
          (pop-up-message error-output))))))
@@ -481,6 +492,18 @@ Next:
   "Push changes to the current remote."
   (with-current-project ()
     (run-function #'lem/porcelain:push)))
+
+(define-command legit-rebase-interactive () ()
+  "Rebase interactively. CAUTION at the moment, rebase from the first commit^^"
+  ;; it's OK, it won't rebase everything alone.
+  (with-current-project ()
+    (run-function #'lem/porcelain::rebase-interactively)
+    (let ((buffer (find-file-buffer ".git/rebase-merge/git-rebase-todo")))
+      (when buffer
+        (lem/peek-legit::quit)
+        (switch-to-buffer buffer)
+        (change-buffer-mode buffer 'legit-rebase-mode)))))
+
 
 (define-command legit-next-header () ()
   "Move point to the next header of this VCS window."

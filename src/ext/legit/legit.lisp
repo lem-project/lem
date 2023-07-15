@@ -435,11 +435,15 @@ Next:
                                   :visit-file-function (lambda ())
                                   :stage-function (lambda () )
                                   :unstage-function (lambda () ))
-                         (when hash
-                           (insert-string point hash :attribute 'lem/peek-legit:filename-attribute :read-only t))
-                         (if message
-                             (insert-string point message)
-                             (insert-string point line))))
+                         (with-point ((start point))
+                           (when hash
+                             (insert-string point hash :attribute 'lem/peek-legit:filename-attribute :read-only t))
+                           (if message
+                               (insert-string point message)
+                               (insert-string point line))
+
+                           ;; Save the hash on this line for later use.
+                           (put-text-property start point :commit-hash hash))))
               (lem/peek-legit:collector-insert "<none>")))
 
         (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
@@ -494,16 +498,26 @@ Next:
     (run-function #'lem/porcelain:push)))
 
 (define-command legit-rebase-interactive () ()
-  "Rebase interactively. CAUTION at the moment, rebase from the first commit^^"
-  ;; it's OK, it won't rebase everything alone.
-  (with-current-project ()
-    (run-function #'lem/porcelain::rebase-interactively)
-    (let ((buffer (find-file-buffer ".git/rebase-merge/git-rebase-todo")))
-      (when buffer
-        (lem/peek-legit::quit)
-        (switch-to-buffer buffer)
-        (change-buffer-mode buffer 'legit-rebase-mode)))))
+  "Rebase interactively, from the commit the point is on.
 
+  Austostash pending changes, to enable the rebase and find the changes back afterwards."
+  (with-current-project ()
+
+    ;; Find the commit hash the point is on: mandatory.
+    (let ((commit-hash (text-property-at (current-point) :commit-hash)))
+
+      (unless commit-hash
+        (message "Not on a commit line?")
+        (return-from legit-rebase-interactive))
+
+      (run-function (lambda ()
+                      (lem/porcelain::rebase-interactively :from commit-hash)))
+
+      (let ((buffer (find-file-buffer ".git/rebase-merge/git-rebase-todo")))
+        (when buffer
+          (lem/peek-legit::quit)
+          (switch-to-buffer buffer)
+          (change-buffer-mode buffer 'legit-rebase-mode))))))
 
 (define-command legit-next-header () ()
   "Move point to the next header of this VCS window."

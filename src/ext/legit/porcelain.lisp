@@ -411,8 +411,25 @@ M	src/ext/porcelain.lisp
 ;; With this approach, only 1 rebase per Lem process.
 ;; But we can't have more than one legit window at the same time, so…
 
-(defun rebase-interactively ()
+(defun root-commit-p (hash)
+  "Find this repository's very first commit on the current branch,
+  return T if this commit hash is the root.
+
+  Required for a git interactive rebase."
+  ;; the git command
+  ;; git rebase --interactive a1b2c3^
+  ;; fails if a1b2c3 is the root commit.
+  ;; We must use --root instead.
+  (let ((root (run-git (list "rev-list"
+                             "--max-parents=0"
+                             "HEAD"))))
+    ;; Handle small hashes:
+    (str:starts-with-p hash root)))
+
+(defun rebase-interactively (&key from)
   "Rebase ALL THE TREE!
+
+  from: commit hash (string) to start the rebase from.
 
   Return three values suitable for legit:run-function: output string, error output string, exit code (integer)."
   ;; For testing, go to a test project (,cd on Slime), and edit this project's
@@ -428,28 +445,40 @@ If that is not the case, please
 and run me again.
 I am stopping in case you still have something valuable there."))
 
+  (log:info "from commit is ~a" from)
+  (unless from
+    (return-from rebase-interactively
+      (values "Git rebase is missing the commit to rebase from. We are too shy to rebase everything from the root commit yet. Aborting"
+              nil
+              1)))
+
   (let ((editor (uiop:getenv "EDITOR")))
     (setf (uiop:getenv "EDITOR") *rebase-script*)
     (unwind-protect
-      ;; xxx: get the error output, if any, to get explanations of failure.
-       (let ((process (uiop:launch-program (list
-                                           "git"
-                                           "rebase"
-                                           "--autostash"
-                                           "-i"
-                                           ;; TODO: give the right commits.
-                                           "--root")
-                                          :output :stream
-                                          :error-output :stream)))
-        (if (uiop:process-alive-p process)
-          (let* ((output (read-line (uiop:process-info-output process)))
-                 (pidtxt (str:trim (second (str:split ":" output)))))
-            (setf *rebase-pid* pidtxt)
-            (format t "The git interactive rebase is started on pid ~a. Edit the rebase file and validate." pidtxt)
-            (values (format nil "rebase started")
-                    nil
-                    0))
-          (error "git rebase process didn't start properly. Aborting.")))
+         ;; xxx: get the error output, if any, to get explanations of failure.
+         (let ((process (uiop:launch-program (list
+                                              "git"
+                                              "rebase"
+                                              "--autostash"
+                                              "-i"
+                                              ;; Give the right commit to rebase from.
+                                              ;; When rebasing from the root commit,
+                                              ;; something special?
+                                              (if (root-commit-p from)
+                                                  "--root"
+                                                  (format nil "~a^" from)))
+                                             :output :stream
+                                             :error-output :stream
+                                             :ignore-error-status t)))
+           (if (uiop:process-alive-p process)
+               (let* ((output (read-line (uiop:process-info-output process)))
+                      (pidtxt (str:trim (second (str:split ":" output)))))
+                 (setf *rebase-pid* pidtxt)
+                 (format t "The git interactive rebase is started on pid ~a. Edit the rebase file and validate." pidtxt)
+                 (values (format nil "rebase started")
+                         nil
+                         0))
+               (error "git rebase process didn't start properly. Aborting.")))
       (setf (uiop:getenv "EDITOR") editor))))
 
 (defun rebase-continue ()

@@ -180,7 +180,8 @@
   :components ((:module "ext/legit"
                 :components ((:file "porcelain")
                              (:file "peek-legit")
-                             (:file "legit")))
+                             (:file "legit")
+                             (:file "legit-rebase")))
                (:module "scripts"
                 :components ((:static-file "dumbrebaseeditor.sh")))))
 

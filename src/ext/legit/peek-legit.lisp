@@ -263,7 +263,7 @@
                                ,stage-function
                                ,unstage-function))
 
-(defun collector-insert (s &optional (newline t) header)
+(defun collector-insert (s &key (newline t) header)
   (let ((point (buffer-point (collector-buffer *collector*))))
     (with-point ((start point))
       (character-offset start 1)

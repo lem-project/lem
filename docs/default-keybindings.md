@@ -187,3 +187,8 @@
 | [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L68) | Shift-F10, M-h |                                                              |
 | [load-library](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L74)      |                | Load the Lisp library named NAME.                            |
 
+## Frame
+| Command                                                                                            | Key bindings | Documentation       |
+|----------------------------------------------------------------------------------------------------|--------------|---------------------|
+| [toggle-frame-fullscreen](https://github.com/lem-project/lem/blob/main/src/commands/frame.lisp#L6) |              | Toggles fullscreen. |
+

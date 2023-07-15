@@ -443,7 +443,8 @@ Next:
                                (insert-string point line))
 
                            ;; Save the hash on this line for later use.
-                           (put-text-property start point :commit-hash hash))))
+                           (when hash
+                             (put-text-property start point :commit-hash hash)))))
               (lem/peek-legit:collector-insert "<none>")))
 
         (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))

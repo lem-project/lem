@@ -24,6 +24,13 @@
    Writes on the window the VCS components that are sent by the :legit package: untracked files, changes, staged changes, latest commits… They are displayed with custom attributes (read-only colors…) and text properties (on this line, the function to call on Enter is this lambda function…).
    Cursor mouvements and keybindings send changes to the right window."))
 
+#|
+Notes:
+
+- if names don't conflict, use a :keyword for text properties, not a 'symbol (:commit-hash vs 'commit-hash). Keywords are easier to manipulate from another source file (no home package).
+
+|#
+
 (in-package :lem/peek-legit)
 
 
@@ -99,75 +106,75 @@
 (defun set-move-function (start end move-function)
   (with-point ((end start))
     (character-offset end 1)
-    (put-text-property start end 'move-marker t))
-  (put-text-property start end 'move-function move-function))
+    (put-text-property start end :move-marker t))
+  (put-text-property start end :move-function move-function))
 
 (defun set-visit-file-function (start end function)
   (with-point ((end start))
     (character-offset end 1)
-    (put-text-property start end 'file-marker t))
-  (put-text-property start end 'visit-file-function function))
+    (put-text-property start end :file-marker t))
+  (put-text-property start end :visit-file-function function))
 
 (defun set-stage-function (start end function)
   (with-point ((end start))
     (character-offset end 1)
-    (put-text-property start end 'stage-marker t))
-  (put-text-property start end 'stage-function function))
+    (put-text-property start end :stage-marker t))
+  (put-text-property start end :stage-function function))
 
 (defun set-unstage-function (start end function)
   (with-point ((end start))
     (character-offset end 1)
-    (put-text-property start end 'unstage-marker t))
-  (put-text-property start end 'unstage-function function))
+    (put-text-property start end :unstage-marker t))
+  (put-text-property start end :unstage-function function))
 
 (defun get-move-function (point)
   (with-point ((point point))
     (line-start point)
-    (text-property-at point 'move-function)))
+    (text-property-at point :move-function)))
 
 (defun get-visit-file-function (point)
   (with-point ((point point))
     (line-start point)
-    (text-property-at point 'visit-file-function)))
+    (text-property-at point :visit-file-function)))
 
 (defun get-stage-function (point)
   (with-point ((point point))
     (line-start point)
-    (text-property-at point 'stage-function)))
+    (text-property-at point :stage-function)))
 
 (defun get-unstage-function (point)
   (with-point ((point point))
     (line-start point)
-    (text-property-at point 'unstage-function)))
+    (text-property-at point :unstage-function)))
 
 (defun start-move-point (point)
   (buffer-start point)
-  (unless (text-property-at point 'move-marker)
+  (unless (text-property-at point :move-marker)
     (next-move-point point)))
 
 (defun next-move-point (point)
   "Find the next point (line) with a marker.
   This is how we distinguish between simple text, and meaningful text."
-  (when (text-property-at point 'move-marker)
-    (next-single-property-change point 'move-marker))
-  (next-single-property-change point 'move-marker))
+  (when (text-property-at point :move-marker)
+    (next-single-property-change point :move-marker))
+  (next-single-property-change point :move-marker))
 
 (defun previous-move-point (point)
-  (when (text-property-at point 'move-marker)
-    (previous-single-property-change point 'move-marker))
-  (previous-single-property-change point 'move-marker))
+  (when (text-property-at point :move-marker)
+    (previous-single-property-change point :move-marker))
+  (previous-single-property-change point :move-marker))
 
 (defun next-header-point (point)
   "Find the next point (line) with a header marker."
-  (when (text-property-at point 'header-marker)
-    (next-single-property-change point 'header-marker))
-  (next-single-property-change point 'header-marker))
+  (when (text-property-at point :header-marker)
+    (next-single-property-change point :header-marker))
+  (next-single-property-change point :header-marker))
 
 (defun previous-header-point (point)
   "Find the previous point (line) with a header marker."
-  (when (text-property-at point 'header-marker)
-    (previous-single-property-change point 'header-marker))
-  (previous-single-property-change point 'header-marker))
+  (when (text-property-at point :header-marker)
+    (previous-single-property-change point :header-marker))
+  (previous-single-property-change point :header-marker))
 
 (defun make-two-side-by-side-windows (buffer)
   (let* ((x-margin 4)
@@ -269,7 +276,7 @@
       (character-offset start 1)
       (insert-string point s :read-only t)
       (when header
-        (put-text-property start point 'header-marker t))
+        (put-text-property start point :header-marker t))
       (when newline
         (insert-string point (string #\newline) :read-only t)))))
 

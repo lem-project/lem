@@ -104,9 +104,9 @@ Next:
 (define-key *legit-diff-mode-keymap* "q" 'legit-quit)
 (define-key lem/peek-legit:*peek-legit-keymap* "q" 'legit-quit)
 (define-key *legit-diff-mode-keymap* "M-q" 'legit-quit)
-(define-key lem/peek-legit:*peek-legit-keymap* "M-q" 'peek-legit-quit)
+(define-key lem/peek-legit:*peek-legit-keymap* "M-q" 'legit-quit)
 (define-key *legit-diff-mode-keymap* "Escape" 'legit-quit)
-(define-key lem/peek-legit:*peek-legit-keymap* "Escape" 'peek-legit-quit)
+(define-key lem/peek-legit:*peek-legit-keymap* "Escape" 'legit-quit)
 (define-key *legit-diff-mode-keymap* "C-c C-k" 'legit-quit)
 (define-key lem/peek-legit:*peek-legit-keymap* "C-c C-k" 'legit-quit)
 

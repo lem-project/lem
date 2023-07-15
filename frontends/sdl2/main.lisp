@@ -835,10 +835,17 @@
              (declare (ignore editor-thread))
              nil)))
     (if (sbcl-on-darwin-p)
-        (sdl2:make-this-thread-main
-         (lambda ()
-           (create-display #'thunk)
-           (cffi:foreign-funcall "_exit")))
+        (progn
+          ;; called *before* any sdl windows are created
+          (sdl2:set-hint :video-mac-fullscreen-spaces
+                         ;; the sdl2 library expects zero or one NOTE since this
+                         ;; is a preference let's not change the default here
+                         ;; because it's easy enough to change it via a user's
+                         ;; config
+                         (if (lem:config :darwin-use-native-fullscreen) 1 0))
+          (sdl2:make-this-thread-main (lambda ()
+                                        (create-display #'thunk)
+                                        (cffi:foreign-funcall "_exit"))))
         (let ((thread (bt:make-thread (lambda ()
                                         (create-display #'thunk)))))
           (bt:join-thread thread)))))
@@ -864,6 +871,30 @@
   (with-debug ("lem-if:display-height")
     (with-renderer ()
       (floor (display-height *display*) (char-height)))))
+
+(defmethod lem-if:display-title ((implementation sdl2))
+  (with-debug ("lem-if:display-title")
+    (sdl2:get-window-title (display-window *display*))))
+
+(defmethod lem-if:set-display-title ((implementation sdl2) title)
+  (with-debug ("lem-if:set-display-title")
+    (sdl2:in-main-thread ()
+      (with-renderer ()
+        (sdl2:set-window-title (display-window *display*) title)
+        ;; return the title instead of nil
+        title))))
+
+(defmethod lem-if:display-fullscreen-p ((implementation sdl2))
+  (with-debug ("lem-if:display-fullscreen-p")
+    (not (null (member :fullscreen (sdl2:get-window-flags (display-window *display*)))))))
+
+(defmethod lem-if:set-display-fullscreen-p ((implementation sdl2) fullscreen-p)
+  (with-debug ("lem-if:set-display-fullscreen-p")
+    (sdl2:in-main-thread ()
+      (with-renderer ()
+        ;; always send :desktop over :fullscreen due to weird bugs on macOS
+        (sdl2:set-window-fullscreen (display-window *display*)
+                                    (if fullscreen-p :desktop))))))
 
 (defmethod lem-if:make-view ((implementation sdl2) window x y width height use-modeline)
   (with-debug ("lem-if:make-view" window x y width height use-modeline)

@@ -144,20 +144,21 @@
 
 (defun skip-space-and-comment-backward (point)
   (with-point-syntax point
-    (skip-chars-backward point #'syntax-space-char-p)
-    (flet ((skip ()
-             (loop
-               (skip-chars-backward point #'syntax-space-char-p)
-               (multiple-value-bind (result success)
-                   (%skip-comment-backward point)
-                 (unless result
-                   (return success))))))
+    (labels ((skip-spaces ()
+               (skip-chars-backward point #'syntax-space-char-p))
+             (skip ()
+               (loop
+                 (skip-spaces)
+                 (multiple-value-bind (result success)
+                     (%skip-comment-backward point)
+                   (unless result
+                     (return success))))))
       (cond ((syntax-string-quote-char-p (character-at point -1))
              nil)
             ((syntax-end-block-comment-p point)
              (skip))
             ((inline-line-comment-p point)
-             nil)
+             (skip-spaces))
             (t
              (skip))))))
 

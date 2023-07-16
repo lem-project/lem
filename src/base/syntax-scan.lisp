@@ -76,11 +76,9 @@
       count)))
 
 (defun inline-line-comment-p (point)
-  (with-point ((start point))
-    (line-start start)
-    (let ((pps-state (parse-partial-sexp start point)))
-      (when (pps-state-comment-p pps-state)
-        (move-point point (pps-state-token-start-point pps-state))))))
+  (let ((pps-state (syntax-ppss point)))
+    (when (pps-state-comment-p pps-state)
+      (move-point point (pps-state-token-start-point pps-state)))))
 
 (defun %skip-comment-forward (point)
   (multiple-value-bind (n pair)

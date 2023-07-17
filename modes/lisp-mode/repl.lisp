@@ -152,12 +152,13 @@
     (if (point>= (lem/listener-mode:input-start-point (current-buffer)) point)
         (let ((fun (prompt-for-shortcuts)))
           (when fun
-            (funcall fun n)))
+            (funcall fun)))
         (let ((c (insertion-key-p (last-read-key-sequence))))
           (insert-character point c n)))))
 
 (defmacro define-repl-shortcut (name lambda-list &body body)
-  (if (symbolp lambda-list)
+  (if (and (not (null lambda-list))
+           (symbolp lambda-list))
       `(progn
          (setf *lisp-repl-shortcuts*
                (remove ,(string-downcase name) *lisp-repl-shortcuts* :key 'first :test 'equal))
@@ -468,14 +469,12 @@
         (string
          (insert-string point token :attribute current-attribute))))))
 
-(define-repl-shortcut sayonara (n)
-  (declare (ignorable n))
+(define-repl-shortcut sayonara ()
   (if (self-connection-p *connection*)
       (message "Can't say sayonara because it's self connection.")
       (interactive-eval "(micros:quit-lisp)")))
 
-(define-repl-shortcut change-package (n)
-  (declare (ignore n))
+(define-repl-shortcut change-package ()
   (let* ((packages (mapcar (lambda (p)
                              (string-downcase (package-name p)))
                            (list-all-packages)))
@@ -489,8 +488,7 @@
                              (find package packages :test #'string-equal)))))
     (lisp-set-package package)))
 
-(define-repl-shortcut cd (n)
-  (declare (ignore n))
+(define-repl-shortcut cd ()
   (let* ((directory
            (with-repl-prompt ()
              (prompt-for-directory "New directory: "
@@ -507,8 +505,7 @@
                             :test-function (lambda (string)
                                              (find string systems :test #'equal)))))
 
-(define-repl-shortcut quickload (n)
-  (declare (ignore n))
+(define-repl-shortcut quickload ()
   (let ((system (prompt-for-system "Quickload System: ")))
     (listener-eval (prin1-to-string `(ql:quickload ,system)))))
 

@@ -345,6 +345,10 @@
       (delete-overlay overlay)
       (setf (buffer-value buffer :unhover-callback) nil))))
 
+(defun clear-buffer-hover-overlay-when-before-change (point arg)
+  (declare (ignore arg))
+  (clear-buffer-hover-overlay (point-buffer point)))
+
 (defun update-hover-overlay (point)
   (let ((buffer (point-buffer point)))
     (with-point ((start point)
@@ -358,6 +362,8 @@
                (move-point (overlay-end overlay) end))
               (t
                (let ((overlay (make-overlay start end 'region)))
+                 (add-hook (variable-value 'before-change-functions :buffer buffer)
+                           'clear-buffer-hover-overlay-when-before-change)
                  (setf (buffer-value buffer :unhover-callback)
                        (lambda (window point)
                          (declare (ignore window point))

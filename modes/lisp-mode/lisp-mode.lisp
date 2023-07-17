@@ -340,6 +340,21 @@
 (defun interactive-eval (string &key (package (current-package)))
   (eval-with-transcript `(micros:interactive-eval ,string) :package package))
 
+(defun %lisp-disassemble (symbol &key (package (current-package)))
+  (car (lisp-eval
+        `(micros:eval-and-grab-output
+          ,(format nil "(disassemble '~a)" symbol))
+        package)))
+
+(define-command lisp-disassemble () ()
+  (check-connection)
+  (let* ((name (or (symbol-string-at-point (current-point))
+                   (prompt-for-symbol-name "Disassemble: ")))
+         (buffer (make-buffer "*lisp-dissasemble*")))
+
+    (with-pop-up-typeout-window (s  buffer :erase t)
+      (format s (%lisp-disassemble name)))))
+
 (defun new-package (name prompt-string)
   (setf (connection-package (current-connection)) name)
   (setf (connection-prompt-string (current-connection)) prompt-string)

@@ -68,13 +68,11 @@
     (setf (buffer-value (point-buffer point) 'line-overlay) nil)
     (delete-overlay ov)))
 
-(defun update-line (point &optional move-cursor-to-file-position)
+(defun update-line (point)
   (with-point ((start point)
                (end point))
-    (back-to-indentation (line-start start))
+    (back-to-indentation start)
     (line-end end)
-    (when move-cursor-to-file-position
-      (move-point point start))
     (let ((ov (buffer-value point 'line-overlay)))
       (cond (ov
              (move-point (overlay-start ov) start)
@@ -177,6 +175,7 @@
 
 (defun insert-pathname (point pathname directory &optional content)
   (with-point ((start point))
+    (back-to-indentation start)
     (let ((name (or content (namestring (enough-namestring pathname directory)))))
       (insert-string point "  " 'pathname pathname 'name name)
       (insert-string point (format nil " ~5@A "
@@ -200,22 +199,11 @@
                      :file pathname)
       (when (symbolic-link-p pathname)
         (insert-string point (format nil " -> ~A" (probe-file pathname))))
-      (back-to-indentation start)
-      (put-text-property
-       start
-       point
-       :hover-callback (lambda (window dest-point)
-                         (let* ((src-point (buffer-point (window-buffer window))))
-                           (move-point src-point dest-point)
-                           (update-line src-point t))))
-      (put-text-property
-       start
-       point
-       :click-callback
-       (lambda (window dest-point)
-         (declare (ignore dest-point))
-         (setf (current-window) window)
-         (directory-mode-find-file)))
+      (lem/button:apply-button-between-points
+       start point
+       (lambda ()
+         (lem/button:with-context ()
+           (directory-mode-find-file))))
       (insert-character point #\newline))))
 
 (defun insert-directories-and-files (point

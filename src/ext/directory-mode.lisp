@@ -16,7 +16,7 @@
   A keyword, one of :pathname (sort by file name), :mtime (last modification time) and :size.")
 
 (define-attribute current-directory-attribute
-  (t :bold t :foreground :base0B))
+  (t :bold t))
 
 (define-attribute file-size-attribute
   (t :bold t))

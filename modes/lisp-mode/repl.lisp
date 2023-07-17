@@ -521,9 +521,3 @@
 (define-repl-shortcut quickload ()
   (let ((system (prompt-for-system "Quickload System: ")))
     (listener-eval (prin1-to-string `(ql:quickload ,system)))))
-
-(define-repl-shortcut ls ()
-  (insert-character (current-point) #\newline)
-  (lem/directory-mode::insert-directories-and-files (current-point)
-                                                    (buffer-directory (current-buffer)))
-  (lem/listener-mode:refresh-prompt (current-buffer)))

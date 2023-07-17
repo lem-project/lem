@@ -62,6 +62,12 @@
     (when (string/= error-string "")
       (editor-error "~A" error-string))))
 
+(defun remove-line-overlay-when-buffer-change (point arg)
+  (declare (ignore arg))
+  (alexandria:when-let (ov (buffer-value (point-buffer point) 'line-overlay))
+    (setf (buffer-value (point-buffer point) 'line-overlay) nil)
+    (delete-overlay ov)))
+
 (defun update-line (point &optional move-cursor-to-file-position)
   (with-point ((start point)
                (end point))
@@ -74,6 +80,8 @@
              (move-point (overlay-start ov) start)
              (move-point (overlay-end ov) end))
             (t
+             (add-hook (variable-value 'before-change-functions :buffer (point-buffer point))
+                       'remove-line-overlay-when-buffer-change)
              (setf ov (make-overlay start end 'region))
              (setf (buffer-value point 'line-overlay) ov))))))
 
@@ -210,6 +218,14 @@
          (directory-mode-find-file)))
       (insert-character point #\newline))))
 
+(defun insert-directories-and-files (point directory &key (sort-method *default-sort-method*)
+                                                          (without-parent-directory t))
+  (unless without-parent-directory
+    (alexandria:when-let (pathname (probe-file (merge-pathnames "../" directory)))
+      (insert-pathname point pathname directory "..")))
+  (dolist (pathname (list-directory directory :sort-method sort-method))
+    (insert-pathname point pathname directory)))
+
 (defun update (buffer &key (sort-method *default-sort-method*))
   "Update this directory buffer content."
   (with-buffer-read-only buffer nil
@@ -219,10 +235,9 @@
       (erase-buffer buffer)
       (buffer-start p)
       (insert-string p (format nil "~A~2%" directory))
-      (alexandria:when-let (pathname (probe-file (merge-pathnames "../" directory)))
-        (insert-pathname p pathname directory ".."))
-      (dolist (pathname (list-directory directory :sort-method sort-method))
-        (insert-pathname p pathname directory))
+      (insert-directories-and-files p directory
+                                    :sort-method sort-method
+                                    :without-parent-directory nil)
       (move-to-line p line-number))))
 
 (defun update-all ()

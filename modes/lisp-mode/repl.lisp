@@ -519,7 +519,8 @@
                                    :directory (buffer-directory)
                                    :gravity :cursor
                                    :use-border nil))))
-    (lisp-set-directory :directory directory)))
+    (setf (buffer-directory (current-buffer))
+          (micros/backend:filename-to-pathname directory))))
 
 (defun prompt-for-system (prompt)
   (let ((systems (lisp-eval '(micros:list-systems))))
@@ -536,10 +537,10 @@
 (define-repl-shortcut ls ()
   (insert-character (current-point) #\newline)
   (lem/directory-mode::insert-directories-and-files (current-point)
-                                                    (lisp-eval `(micros:default-directory)))
+                                                    (buffer-directory (current-buffer)))
   (lem/listener-mode:refresh-prompt (current-buffer)))
 
 (define-repl-shortcut pwd ()
   (insert-string (current-point)
-                 (format nil "~%~A~%" (lisp-eval `(micros:default-directory))))
+                 (format nil "~%~A~%" (buffer-directory (current-buffer))))
   (lem/listener-mode:refresh-prompt (current-buffer)))

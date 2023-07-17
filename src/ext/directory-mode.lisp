@@ -102,15 +102,16 @@
 
 (defun set-mark (p mark)
   (with-buffer-read-only (point-buffer p) nil
-    (with-point ((p p))
-      (let ((pathname (get-line-property p 'pathname)))
-        (when (and pathname (not (uiop:pathname-equal
-                                  pathname
-                                  (uiop:pathname-parent-directory-pathname
-                                   (buffer-directory (point-buffer p))))))
-          (character-offset (line-start p) 1)
-          (delete-character p 1)
-          (insert-character p (if mark #\* #\space)))))))
+    (let ((*inhibit-read-only* t))
+      (with-point ((p p))
+        (let ((pathname (get-line-property p 'pathname)))
+          (when (and pathname (not (uiop:pathname-equal
+                                    pathname
+                                    (uiop:pathname-parent-directory-pathname
+                                     (buffer-directory (point-buffer p))))))
+            (character-offset (line-start p) 1)
+            (delete-character p 1)
+            (insert-character p (if mark #\* #\space))))))))
 
 (defun iter-marks (p function)
   (with-point ((p p))
@@ -204,7 +205,8 @@
        (lambda ()
          (lem/button:with-context ()
            (directory-mode-find-file))))
-      (insert-character point #\newline))))
+      (insert-character point #\newline)
+      (put-text-property start point :read-only t))))
 
 (defun insert-directories-and-files (point
                                      directory
@@ -219,16 +221,17 @@
 (defun update (buffer &key (sort-method *default-sort-method*))
   "Update this directory buffer content."
   (with-buffer-read-only buffer nil
-    (let* ((directory (buffer-directory buffer))
-           (p (buffer-point buffer))
-           (line-number (line-number-at-point p)))
-      (erase-buffer buffer)
-      (buffer-start p)
-      (insert-string p (format nil "~A~2%" directory))
-      (insert-directories-and-files p directory
-                                    :sort-method sort-method
-                                    :without-parent-directory nil)
-      (move-to-line p line-number))))
+    (let ((*inhibit-read-only* t))
+      (let* ((directory (buffer-directory buffer))
+             (p (buffer-point buffer))
+             (line-number (line-number-at-point p)))
+        (erase-buffer buffer)
+        (buffer-start p)
+        (insert-string p (format nil "~A~2%" directory))
+        (insert-directories-and-files p directory
+                                      :sort-method sort-method
+                                      :without-parent-directory nil)
+        (move-to-line p line-number)))))
 
 (defun update-all ()
   (dolist (buffer (buffer-list))

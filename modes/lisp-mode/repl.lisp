@@ -82,7 +82,6 @@
    :label "Copy down pathname to REPL"
    :callback (lambda (&rest args)
                (declare (ignore args))
-               (message "~A" (lem/directory-mode::get-pathname (current-point)))
                (copy-down-to-repl 'pathname
                                   (lem/directory-mode::get-pathname (current-point))))))
 

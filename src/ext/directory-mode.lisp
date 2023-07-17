@@ -15,8 +15,17 @@
 
   A keyword, one of :pathname (sort by file name), :mtime (last modification time) and :size.")
 
+(define-attribute current-directory-attribute
+  (t :bold t :foreground :base0B))
+
+(define-attribute file-size-attribute
+  (t :bold t))
+
+(define-attribute file-date-attribute
+  (t :bold t))
+
 (define-attribute file-attribute
-  (t))
+  (t :bold t))
 
 (define-attribute directory-attribute
   (t :foreground :base0D :bold t))
@@ -178,9 +187,11 @@
   (with-point ((start point))
     (let ((name (or content (namestring (enough-namestring pathname directory)))))
       (insert-string point "  " 'pathname pathname 'name name)
-      (insert-string point (format nil " ~5@A "
-                                   (let ((size (file-size pathname)))
-                                     (if size (human-readable-file-size size) ""))))
+      (insert-string point
+                     (format nil " ~5@A "
+                             (let ((size (file-size pathname)))
+                               (if size (human-readable-file-size size) "")))
+                     :attribute 'file-size-attribute)
       (multiple-value-bind (second minute hour day month year week)
           (let ((date (file-write-date pathname)))
             (if date
@@ -190,7 +201,8 @@
                        (format nil "~4,'0D/~2,'0D/~2,'0D ~2,'0D:~2,'0D:~2,'0D ~A "
                                year month day hour minute second
                                (if week (aref #("Mon" "Tue" "Wed" "Thr" "Fri" "Sat" "Sun") week)
-                                   "   "))))
+                                   "   "))
+                       :attribute 'file-date-attribute))
       (unless (string= name "..")
         (insert-icon point name))
       (insert-string point
@@ -227,7 +239,7 @@
              (line-number (line-number-at-point p)))
         (erase-buffer buffer)
         (buffer-start p)
-        (insert-string p (format nil "~A~2%" directory))
+        (insert-string p (format nil "~A~2%" directory) :attribute 'current-directory-attribute)
         (insert-directories-and-files p directory
                                       :sort-method sort-method
                                       :without-parent-directory nil)

@@ -218,8 +218,10 @@
          (directory-mode-find-file)))
       (insert-character point #\newline))))
 
-(defun insert-directories-and-files (point directory &key (sort-method *default-sort-method*)
-                                                          (without-parent-directory t))
+(defun insert-directories-and-files (point
+                                     directory
+                                     &key (sort-method *default-sort-method*)
+                                          (without-parent-directory t))
   (unless without-parent-directory
     (alexandria:when-let (pathname (probe-file (merge-pathnames "../" directory)))
       (insert-pathname point pathname directory "..")))

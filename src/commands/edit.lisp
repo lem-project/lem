@@ -405,11 +405,12 @@
       (unless (line-offset point 1)
         (return)))
     (let ((n (skip-whitespace-backward (buffer-end point))))
-      (unless (zerop n)
-        (delete-character point n))
-      (buffer-end point)
-      (unless (start-line-p point)
-        (insert-character point #\newline)))))
+      (unless (string= (uiop:strcat #\newline)
+                       (points-to-string (buffer-end-point buffer) point))
+        (delete-character point n)
+        (buffer-end point)
+        (unless (start-line-p point)
+          (insert-character point #\newline))))))
 
 (defmethod execute :around (mode
                             (command delete-previous-char)

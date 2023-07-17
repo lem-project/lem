@@ -180,22 +180,28 @@
 
 (define-command (kill-line (:advice-classes editable-advice)) (&optional arg) ("P")
   "Kill from the current cursor position to the end of the line."
-  (save-excursion
-    (with-point ((start (current-point) :right-inserting))
-      (cond
-        ((null arg)
-         (let ((p (current-point)))
-           (cond ((end-buffer-p p)
-                  (error 'end-of-buffer :point p))
-                 ((end-line-p p)
-                  (character-offset p 1))
-                 (t (line-end p)))
-           (kill-region start p)))
-        (t
-         (or (line-offset (current-point) arg)
-             (buffer-end (current-point)))
-         (let ((end (current-point)))
-           (kill-region start end)))))))
+  (flet ((end-line-p* (p)
+           (with-point ((p p))
+             (skip-whitespace-forward p t)
+             (end-line-p p))))
+    (save-excursion
+      (with-point ((start (current-point) :right-inserting))
+        (cond
+          ((null arg)
+           (let ((p (current-point)))
+             (cond ((end-buffer-p p)
+                    (error 'end-of-buffer :point p))
+                   ((end-line-p* p)
+                    (if (line-offset p 1)
+                        (skip-whitespace-forward p t)
+                        (line-end p)))
+                   (t (line-end p)))
+             (kill-region start p)))
+          (t
+           (or (line-offset (current-point) arg)
+               (buffer-end (current-point)))
+           (let ((end (current-point)))
+             (kill-region start end))))))))
 
 (define-command kill-whole-line () ()
   "Kill the entire line and the remaining whitespace"

@@ -183,7 +183,12 @@
   (flet ((end-line-p* (p)
            (with-point ((p p))
              (skip-whitespace-forward p t)
-             (end-line-p p))))
+             (end-line-p p)))
+         (start-line-p* (p)
+           (when (start-line-p p)
+             (with-point ((p p))
+               (skip-whitespace-forward p t)
+               (end-line-p p)))))
     (save-excursion
       (with-point ((start (current-point) :right-inserting))
         (cond
@@ -191,6 +196,8 @@
            (let ((p (current-point)))
              (cond ((end-buffer-p p)
                     (error 'end-of-buffer :point p))
+                   ((start-line-p* p)
+                    (line-offset p 1))
                    ((end-line-p* p)
                     (if (line-offset p 1)
                         (skip-whitespace-forward p t)

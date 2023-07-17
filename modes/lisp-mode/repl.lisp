@@ -77,17 +77,28 @@
                                           "(cl:pprint (micros:get-printed-object-by-id ~A))"
                                           id)))))))
 
+(defun context-menu-copy-down-pathname-to-repl ()
+  (lem/context-menu:make-item
+   :label "Copy down pathname to REPL"
+   :callback (lambda (&rest args)
+               (declare (ignore args))
+               (message "~A" (lem/directory-mode::get-pathname (current-point)))
+               (copy-down-to-repl 'pathname
+                                  (lem/directory-mode::get-pathname (current-point))))))
+
 (defun repl-compute-context-menu-items ()
-  (remove
-   nil
-   (list (context-menu-describe-symbol)
-         (context-menu-find-definition)
-         (context-menu-find-references)
-         (context-menu-hyperspec)
-         (context-menu-inspect-printed-object)
-         (context-menu-copy-down-printed-object)
-         (context-menu-describe-object)
-         (context-menu-pretty-print))))
+  (if (lem/directory-mode::get-pathname (current-point))
+      (list (context-menu-copy-down-pathname-to-repl))
+      (remove
+       nil
+       (list (context-menu-describe-symbol)
+             (context-menu-find-definition)
+             (context-menu-find-references)
+             (context-menu-hyperspec)
+             (context-menu-inspect-printed-object)
+             (context-menu-copy-down-printed-object)
+             (context-menu-describe-object)
+             (context-menu-pretty-print)))))
 
 (defun read-string-thread-stack ()
   (buffer-value (repl-buffer) 'read-string-thread-stack))

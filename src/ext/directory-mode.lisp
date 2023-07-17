@@ -176,7 +176,6 @@
 
 (defun insert-pathname (point pathname directory &optional content)
   (with-point ((start point))
-    (back-to-indentation start)
     (let ((name (or content (namestring (enough-namestring pathname directory)))))
       (insert-string point "  " 'pathname pathname 'name name)
       (insert-string point (format nil " ~5@A "
@@ -200,6 +199,7 @@
                      :file pathname)
       (when (symbolic-link-p pathname)
         (insert-string point (format nil " -> ~A" (probe-file pathname))))
+      (back-to-indentation start)
       (lem/button:apply-button-between-points
        start point
        (lambda ()

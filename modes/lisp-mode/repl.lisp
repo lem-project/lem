@@ -525,5 +525,10 @@
 (define-repl-shortcut ls ()
   (insert-character (current-point) #\newline)
   (lem/directory-mode::insert-directories-and-files (current-point)
-                                                    (buffer-directory (current-buffer)))
+                                                    (lisp-eval `(micros:default-directory)))
+  (lem/listener-mode:refresh-prompt (current-buffer)))
+
+(define-repl-shortcut pwd ()
+  (insert-string (current-point)
+                 (format nil "~%~A~%" (lisp-eval `(micros:default-directory))))
   (lem/listener-mode:refresh-prompt (current-buffer)))

@@ -123,53 +123,6 @@
      argument)
   (lisp-eval-async '(micros:clear-printed-objects)))
 
-(defvar *lisp-repl-shortcuts* '())
-
-(defmacro with-repl-prompt (() &body body)
-  `(let ((lem/prompt-window:*prompt-completion-window-shape* nil))
-     ,@body))
-
-(defun repl-prompt-for-string (prompt &rest args)
-  (with-repl-prompt ()
-    (apply #'prompt-for-string
-           prompt
-           :gravity :cursor
-           :use-border nil
-           args)))
-
-(defun prompt-for-shortcuts ()
-  (let* ((*lisp-repl-shortcuts* *lisp-repl-shortcuts*)
-         (names (mapcar #'car *lisp-repl-shortcuts*)))
-    (cdr (assoc (repl-prompt-for-string
-                 "Command: "
-                 :completion-function (lambda (x) (completion-strings x names))
-                 :test-function (lambda (name) (member name names :test #'string=))
-                 :history-symbol 'mh-lisp-repl-shortcuts)
-                *lisp-repl-shortcuts* :test #'equal))))
-
-(define-command lisp-repl-shortcut (n) ("p")
-  (with-point ((point (current-point)))
-    (if (point>= (lem/listener-mode:input-start-point (current-buffer)) point)
-        (let ((fun (prompt-for-shortcuts)))
-          (when fun
-            (funcall fun)))
-        (let ((c (insertion-key-p (last-read-key-sequence))))
-          (insert-character point c n)))))
-
-(defmacro define-repl-shortcut (name lambda-list &body body)
-  (if (and (not (null lambda-list))
-           (symbolp lambda-list))
-      `(progn
-         (setf *lisp-repl-shortcuts*
-               (remove ,(string-downcase name) *lisp-repl-shortcuts* :key 'first :test 'equal))
-         (push (cons ,(string-downcase name) ',lambda-list) *lisp-repl-shortcuts*)
-         ',name)
-      `(progn
-         (setf *lisp-repl-shortcuts*
-               (remove ,(string-downcase name) *lisp-repl-shortcuts* :key 'first :test 'equal))
-         (push (cons ,(string-downcase name) ',name) *lisp-repl-shortcuts*)
-         (defun ,name ,lambda-list ,@body))))
-
 (defun repl-buffer ()
   (get-buffer "*lisp-repl*"))
 
@@ -469,6 +422,66 @@
         (string
          (insert-string point token :attribute current-attribute))))))
 
+(define-command backward-prompt () ()
+  (when (equal (current-buffer) (repl-buffer))
+    (move-to-previous-virtual-line (current-point))
+    (lem:previous-single-property-change (lem:current-point) :field)))
+
+(define-command forward-prompt () ()
+  (when (equal (current-buffer) (repl-buffer))
+    (move-to-next-virtual-line (current-point))
+    (lem:next-single-property-change (lem:current-point) :field)
+    (lem:next-single-property-change (lem:current-point) :field)))
+
+
+;;; repl-shortcut
+(defvar *lisp-repl-shortcuts* '())
+
+(defmacro with-repl-prompt (() &body body)
+  `(let ((lem/prompt-window:*prompt-completion-window-shape* nil))
+     ,@body))
+
+(defun repl-prompt-for-string (prompt &rest args)
+  (with-repl-prompt ()
+    (apply #'prompt-for-string
+           prompt
+           :gravity :cursor
+           :use-border nil
+           args)))
+
+(defun prompt-for-shortcuts ()
+  (let* ((*lisp-repl-shortcuts* *lisp-repl-shortcuts*)
+         (names (mapcar #'car *lisp-repl-shortcuts*)))
+    (cdr (assoc (repl-prompt-for-string
+                 "Command: "
+                 :completion-function (lambda (x) (completion-strings x names))
+                 :test-function (lambda (name) (member name names :test #'string=))
+                 :history-symbol 'mh-lisp-repl-shortcuts)
+                *lisp-repl-shortcuts* :test #'equal))))
+
+(define-command lisp-repl-shortcut (n) ("p")
+  (with-point ((point (current-point)))
+    (if (point>= (lem/listener-mode:input-start-point (current-buffer)) point)
+        (let ((fun (prompt-for-shortcuts)))
+          (when fun
+            (funcall fun)))
+        (let ((c (insertion-key-p (last-read-key-sequence))))
+          (insert-character point c n)))))
+
+(defmacro define-repl-shortcut (name lambda-list &body body)
+  (if (and (not (null lambda-list))
+           (symbolp lambda-list))
+      `(progn
+         (setf *lisp-repl-shortcuts*
+               (remove ,(string-downcase name) *lisp-repl-shortcuts* :key 'first :test 'equal))
+         (push (cons ,(string-downcase name) ',lambda-list) *lisp-repl-shortcuts*)
+         ',name)
+      `(progn
+         (setf *lisp-repl-shortcuts*
+               (remove ,(string-downcase name) *lisp-repl-shortcuts* :key 'first :test 'equal))
+         (push (cons ,(string-downcase name) ',name) *lisp-repl-shortcuts*)
+         (defun ,name ,lambda-list ,@body))))
+
 (define-repl-shortcut sayonara ()
   (if (self-connection-p *connection*)
       (message "Can't say sayonara because it's self connection.")
@@ -508,14 +521,3 @@
 (define-repl-shortcut quickload ()
   (let ((system (prompt-for-system "Quickload System: ")))
     (listener-eval (prin1-to-string `(ql:quickload ,system)))))
-
-(define-command backward-prompt () ()
-  (when (equal (current-buffer) (repl-buffer))
-    (move-to-previous-virtual-line (current-point))
-    (lem:previous-single-property-change (lem:current-point) :field)))
-
-(define-command forward-prompt () ()
-  (when (equal (current-buffer) (repl-buffer))
-    (move-to-next-virtual-line (current-point))
-    (lem:next-single-property-change (lem:current-point) :field)
-    (lem:next-single-property-change (lem:current-point) :field)))

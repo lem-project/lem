@@ -19,13 +19,13 @@
   (t :bold t))
 
 (define-attribute file-size-attribute
-  (t :bold t))
+  (t))
 
 (define-attribute file-date-attribute
-  (t :bold t))
+  (t))
 
 (define-attribute file-attribute
-  (t :bold t))
+  (t))
 
 (define-attribute directory-attribute
   (t :foreground :base0D :bold t))

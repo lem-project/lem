@@ -52,3 +52,18 @@
 (defun screen-set-pos (screen x y)
   (screen-modify screen)
   (lem-if:set-view-pos (implementation) (screen-view screen) x y))
+
+(defun update-screen-cache (screen buffer)
+  (setf (screen-old-left-width screen)
+        (screen-left-width screen))
+  (setf (screen-last-buffer-name screen)
+        (buffer-name buffer))
+  (setf (screen-last-buffer-modified-tick screen)
+        (buffer-modified-tick buffer))
+  (setf (screen-modified-p screen)
+        nil))
+
+(defun required-whole-update-screen-p (screen)
+  (or (screen-modified-p screen)
+      (not (eql (screen-left-width screen)
+                (screen-old-left-width screen)))))

@@ -1002,10 +1002,18 @@ You can pass in the optional argument WINDOW-LIST to replace the default
         (car (buffer-list))
         (car buffer-list))))
 
-;;; switch-to-buffer/pop-to-buffer
+(defun change-buffer-p (window)
+  (window-parameter window 'change-buffer))
+
+(defun unchange-buffer (window)
+  (setf (window-parameter window 'change-buffer) nil))
+
+(defun change-buffer (window)
+  (setf (window-parameter window 'change-buffer) t))
+
 (defun run-show-buffer-hooks (window)
-  (when (window-parameter window 'change-buffer)
-    (setf (window-parameter window 'change-buffer) nil)
+  (when (change-buffer-p window)
+    (unchange-buffer window)
     (run-hooks *window-show-buffer-functions* window)))
 
 (deftype split-action ()
@@ -1069,7 +1077,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                                (current-window))
              (set-window-view-point (copy-point (buffer-start-point buffer) :right-inserting)
                                     (current-window)))))
-    (setf (window-parameter (current-window) 'change-buffer) t))
+    (change-buffer (current-window)))
   buffer)
 
 (let ((key '#:not-switchable-buffer-p))
@@ -1336,7 +1344,13 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 
 (defgeneric window-redraw (window force)
   (:method (window force)
-    (redraw-display-window window force)))
+    (redraw-buffer (window-buffer window) window force)))
+
+(defun redraw-current-window (window force)
+  (assert (eq window (current-window)))
+  (window-see window)
+  (run-show-buffer-hooks window)
+  (window-redraw window force))
 
 (defun redraw-display (&optional force)
   (when *in-redraw-display*
@@ -1347,7 +1361,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                (dolist (window (window-list))
                  (unless (eq window (current-window))
                    (window-redraw window force)))
-               (window-redraw (current-window) force))
+               (redraw-current-window (current-window) force))
              (redraw-header-windows (force)
                (dolist (window (frame-header-windows (current-frame)))
                  (window-redraw window force)))

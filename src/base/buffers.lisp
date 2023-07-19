@@ -25,7 +25,7 @@
   (remove-if (lambda (buffer)
                (not (and (buffer-filename buffer)
                          (buffer-modified-p buffer))))
-          (buffer-list)))
+             (buffer-list)))
 
 (defun get-buffer (buffer-or-name)
   "`buffer-or-name`がバッファならそのまま返し、

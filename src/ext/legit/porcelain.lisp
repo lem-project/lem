@@ -400,9 +400,16 @@ M	src/ext/porcelain.lisp
       (let* ((legit-path (merge-pathnames "legit/" (%maybe-lem-home)))
              (script-path (uiop:merge-pathnames* "dumbrebaseeditor.sh" legit-path)))
         (ensure-directories-exist legit-path)
-        ;; TODO: ensure executable file.
         (unless (uiop:file-exists-p script-path)
           (str:to-file script-path *rebase-script-content*))
+        ;; Ensure the file is executable.
+        #+unix
+        (uiop:run-program (list "chmod" "+x" script-path)
+                          :output :string
+                          :error-output :string
+                          :ignore-error-status t)
+        #-unix
+        (error "lem/legit: our rebase script is only for Unix platforms currently. We need to run a shell script and trap a signal.")
         (setf *rebase-script* script-path))
       *rebase-script*))
 
@@ -423,15 +430,18 @@ M	src/ext/porcelain.lisp
   (let ((root (run-git (list "rev-list"
                              "--max-parents=0"
                              "HEAD"))))
-    ;; Handle small hashes:
+    ;; We use small hashes, so don't use equal.
     (str:starts-with-p hash root)))
 
 (defun rebase-interactively (&key from)
-  "Rebase ALL THE TREE!
+  "Start a rebase session.
+
+  Then edit the git rebase file and validate the rebase with rebase-continue
+  or stop it with rebase-kill.
 
   from: commit hash (string) to start the rebase from.
 
-  Return three values suitable for legit:run-function: output string, error output string, exit code (integer)."
+  Return three values suitable for `legit:run-function`: output string, error output string, exit code (integer)."
   ;; For testing, go to a test project (,cd on Slime), and edit this project's
   ;; .git/rebase-merge/git-rebase-merge-todo
   ;; Beware of C-c ~ lol^^
@@ -445,7 +455,6 @@ If that is not the case, please
 and run me again.
 I am stopping in case you still have something valuable there."))
 
-  (log:info "from commit is ~a" from)
   (unless from
     (return-from rebase-interactively
       (values "Git rebase is missing the commit to rebase from. We are too shy to rebase everything from the root commit yet. Aborting"

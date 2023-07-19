@@ -352,8 +352,8 @@
                    (prompt-for-symbol-name "Disassemble: ")))
          (buffer (make-buffer "*lisp-dissasemble*")))
 
-    (with-pop-up-typeout-window (s  buffer :erase t)
-      (format s (%lisp-disassemble name)))))
+    (with-pop-up-typeout-window (s buffer :erase t)
+      (format s "~a" (%lisp-disassemble name)))))
 
 (defun new-package (name prompt-string)
   (setf (connection-package (current-connection)) name)

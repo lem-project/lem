@@ -436,7 +436,7 @@ M	src/ext/porcelain.lisp
   "Start a rebase session.
 
   Then edit the git rebase file and validate the rebase with `rebase-continue`
-  or stop it with `rebase-kill`.
+  or stop it with `rebase-abort`.
 
   from: commit hash (string) to start the rebase from.
 
@@ -500,13 +500,13 @@ I am stopping in case you still have something valuable there."))
             error-output
             exit-code)))
 
-(defun rebase-kill ()
+(defun rebase-abort ()
   (cond
     (*rebase-pid*
-     ;; too weak?
+     ;; too fragile, be more defensive?
      (uiop:run-program (list "kill" "-SIGKILL" *rebase-pid*))
-     (values (format nil "rebase killed")
+     (values (format nil "Rebase stopped.")
              ""
-             1))
+             0))
     (t
-     (format t "No git rebase in process? PID not found."))))
+      (error  "No git rebase in process? PID not found."))))

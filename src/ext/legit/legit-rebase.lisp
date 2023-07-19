@@ -1,5 +1,30 @@
 (in-package :lem/legit)
 
+#|
+Done:
+
+- start a rebase process from the commit at point,
+- open a rebase buffer and press p, f… to pick, fixup… the commit at point.
+- validate it, stop it.
+
+Nice to have:
+
+- in the rebase buffer, show the commit diff on the right window, just like legit-status.
+- create a major mode for git rebase files (we currently rely on yaml mode).
+- prompt for confirmation in rebase-abort-yes-or-no
+
+TODOs:
+
+- when (e)dit or (r)eword are used, we need to handle another operation.
+- show in legit-status when a rebase is in process.
+- add commands to continue or abort the rebase in process.
+
+and
+
+- Windows support for the rebase script (trap a signal) (see porcelain).
+
+|#
+
 ;; xxx: define a major mode for the git rebase file format,
 ;; where we would highlight special words and commits.
 (define-major-mode legit-rebase-mode lem-yaml-mode:yaml-mode
@@ -8,7 +33,7 @@
      :keymap *legit-rebase-mode-keymap*)
   (setf (variable-value 'enable-syntax-highlight) t))
 
-;; Use commits:
+;; Use commits with a keypress:
 (define-key *legit-rebase-mode-keymap* "p" 'rebase-pick)
 (define-key *legit-rebase-mode-keymap* "r" 'rebase-reword)
 (define-key *legit-rebase-mode-keymap* "e" 'rebase-edit)
@@ -21,9 +46,14 @@
 (define-key *legit-rebase-mode-keymap* "t" 'rebase-reset)
 (define-key *legit-rebase-mode-keymap* "m" 'rebase-merge)
 
-;; Validate.
+;; Validate, abort.
 (define-key *legit-rebase-mode-keymap* "C-c C-c" 'rebase-continue)
 (define-key *legit-rebase-mode-keymap* "C-Return" 'rebase-continue)
+(define-key *legit-rebase-mode-keymap* "M-q" 'rebase-abort)
+(define-key *legit-rebase-mode-keymap* "C-c C-k" 'rebase-abort)
+;; xxx: with validation.
+(define-key *legit-rebase-mode-keymap* "Escape" 'rebase-abort-yes-or-no)
+(define-key *legit-rebase-mode-keymap* "q" 'rebase-abort-yes-or-no)
 
 ;; Navigation.
 (define-key *legit-rebase-mode-keymap* "n" 'next-line)
@@ -34,11 +64,17 @@
 (define-key *legit-rebase-mode-keymap* "?" 'rebase-help)
 (define-key *legit-rebase-mode-keymap* "C-x ?" 'rebase-help)
 
-;; xxx: quit and abort, with validation.
-(define-key *legit-rebase-mode-keymap* "q" 'rebase-quit)
-
 (define-command rebase-continue () ()
   (run-function #'lem/porcelain::rebase-continue)
+  (kill-buffer "git-rebase-todo"))
+
+(define-command rebase-abort () ()
+  (run-function #'lem/porcelain::rebase-kill)
+  (kill-buffer "git-rebase-todo"))
+
+(define-command rebase-abort-yes-or-no () ()
+  ;; TODO: prompt for confirmation.
+  (run-function #'lem/porcelain::rebase-kill)
   (kill-buffer "git-rebase-todo"))
 
 (defun %rebase-change-command (command)
@@ -89,10 +125,11 @@
     (format s "Git interactive rebase.~&")
     (format s "~%")
     (format s "Commands:~&")
-    (format s "(p)ick commit, (r)eword...")
+    (format s "(p)ick commit, (f)ixup... WARN: other commands like reword are not implemented.")
     (format s "~%")
     (format s "Validate: C-Return, C-c C-c~&")
-    (format s "Quit: Escape, q, M-q, C-x 0.~&")
+    (format s "Stop and quit: Escape, M-q.~&")
+    (format s "Navigate: C-n and C-p.~&")
     (format s "~%")
     (format s "Show this help: C-x ? or ?, M-x legit-rebase-help")
     ))

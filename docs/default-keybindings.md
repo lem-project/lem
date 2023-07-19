@@ -182,10 +182,10 @@
 | [keyboard-quit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L29)     | C-g            | Signal a `quit` condition.                                   |
 | [escape](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L33)            | Escape         | Signal a `quit` condition silently.                          |
 | [exit-lem](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L37)          | C-x C-c        | Ask for modified buffers before exiting lem.                 |
-| [quick-exit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L44)        |                | Exit the lem job and kill it.                                |
-| [execute-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L49)   | M-x            | Read a command name, then read the ARG and call the command. |
-| [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L68) | Shift-F10, M-h |                                                              |
-| [load-library](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L74)      |                | Load the Lisp library named NAME.                            |
+| [quick-exit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L50)        |                | Exit the lem job and kill it.                                |
+| [execute-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L55)   | M-x            | Read a command name, then read the ARG and call the command. |
+| [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L74) | Shift-F10, M-h |                                                              |
+| [load-library](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L80)      |                | Load the Lisp library named NAME.                            |
 
 ## Frame
 | Command                                                                                            | Key bindings | Documentation       |

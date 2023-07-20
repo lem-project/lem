@@ -87,6 +87,10 @@ Next:
 (define-key lem/peek-legit:*peek-legit-keymap* "F p" 'legit-pull)
 (define-key *legit-diff-mode-keymap* "F p" 'legit-pull)
 
+;; rebase
+;;; interactive
+(define-key lem/peek-legit:*peek-legit-keymap* "r i" 'legit-rebase-interactive)
+
 ;; redraw everything:
 (define-key lem/peek-legit:*peek-legit-keymap* "g" 'legit-status)
 
@@ -291,14 +295,21 @@ Next:
   to the user on success as a tooltip message,
   or show the external command's error output on a popup window.
 
+  The function FN returns up to three values:
+
+   - standard output (string)
+   - error output (string)
+   - exit code (integer)
+
   Use with-current-project in the caller too.
   Typicaly used to run an external process in the context of a diff buffer command."
   (multiple-value-bind (output error-output exit-code)
       (funcall fn)
-    (declare (ignorable output))
     (cond
       ((zerop exit-code)
-       (message (str:join #\newline (remove-if #'null (list message output)))))
+       (let ((msg (str:join #\newline (remove-if #'null (list message output)))))
+         (when (str:non-blank-string-p msg)
+           (message msg))))
       (t
        (when error-output
          (pop-up-message error-output))))))
@@ -424,11 +435,16 @@ Next:
                                   :visit-file-function (lambda ())
                                   :stage-function (lambda () )
                                   :unstage-function (lambda () ))
-                         (when hash
-                           (insert-string point hash :attribute 'lem/peek-legit:filename-attribute :read-only t))
-                         (if message
-                             (insert-string point message)
-                             (insert-string point line))))
+                         (with-point ((start point))
+                           (when hash
+                             (insert-string point hash :attribute 'lem/peek-legit:filename-attribute :read-only t))
+                           (if message
+                               (insert-string point message)
+                               (insert-string point line))
+
+                           ;; Save the hash on this line for later use.
+                           (when hash
+                             (put-text-property start point :commit-hash hash)))))
               (lem/peek-legit:collector-insert "<none>")))
 
         (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
@@ -482,6 +498,28 @@ Next:
   (with-current-project ()
     (run-function #'lem/porcelain:push)))
 
+(define-command legit-rebase-interactive () ()
+  "Rebase interactively, from the commit the point is on.
+
+  Austostash pending changes, to enable the rebase and find the changes back afterwards."
+  (with-current-project ()
+
+    ;; Find the commit hash the point is on: mandatory.
+    (let ((commit-hash (text-property-at (current-point) :commit-hash)))
+
+      (unless commit-hash
+        (message "Not on a commit line?")
+        (return-from legit-rebase-interactive))
+
+      (run-function (lambda ()
+                      (lem/porcelain::rebase-interactively :from commit-hash)))
+
+      (let ((buffer (find-file-buffer ".git/rebase-merge/git-rebase-todo")))
+        (when buffer
+          (lem/peek-legit::quit)
+          (switch-to-buffer buffer)
+          (change-buffer-mode buffer 'legit-rebase-mode))))))
+
 (define-command legit-next-header () ()
   "Move point to the next header of this VCS window."
   (lem/peek-legit:peek-legit-next-header))
@@ -509,9 +547,10 @@ Next:
     (format s "          -> (c)reate.~&")
     (format s "(F)etch, pull-> (p) from remote branch~&")
     (format s "(P)push      -> (p) to remote branch~&")
+    (format s "(r)ebase     -> (i)nteractively from commit at point~&")
     (format s "(g): refresh~&")
     (format s "~%")
-    (format s "Navigate: n and p, C-n and C-p.~&")
+    (format s "Navigate: n and p, C-n and C-p, M-n and M-p.~&")
     (format s "Change windows: Tab, C-x o, M-o~&")
     (format s "Quit: Escape, q, C-x 0.~&")
     (format s "~%")

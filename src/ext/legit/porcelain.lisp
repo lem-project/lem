@@ -363,3 +363,150 @@ M	src/ext/porcelain.lisp
   (when args
     (error "Our git push command doesn't accept args. Did you mean cl:push ?!!"))
   (run-git (list "push")))
+
+;;
+;; Git interactive rebase.
+;;
+;; -i --autostash
+;; If rebase from first commit: use --root
+;; otherwise use <commit-hash>^
+;; exple: git rebase --autostash -i 317315966^
+;; This creates a file in .git/rebase-merge/git-rebase-merge-todo
+;; which we edit with Lem, and we validate the rebase process.
+;;
+
+(defvar *rebase-script-path*)
+
+;; Save our script as a string at compile time.
+(defparameter *rebase-script-content*
+  (str:from-file
+   (asdf:system-relative-pathname (asdf:find-system "lem")
+                                  "scripts/dumbrebaseeditor.sh"))
+  "Our dumb editor shell script, saved as a string at compile time.
+  We then save it to the user's ~/.lem/legit/rebaseetidor.sh at first use.")
+
+(defun %maybe-lem-home ()
+  "Return Lem's home directory by calling lem:lem-home only if the :lem package exists,
+  otherwise return ~/.lem/.
+  We don't want a hard-coded dependency on Lem, to ease testing."
+  (if (find-package :lem)
+      (uiop:symbol-call :lem :lem-home)
+      (merge-pathnames ".lem/" (user-homedir-pathname))))
+
+(defun rebase-script ()
+  (if (boundp '*rebase-script-path*)
+    *rebase-script-path*
+    (let* ((legit-path (merge-pathnames "legit/" (%maybe-lem-home)))
+           (script-path (uiop:merge-pathnames* "dumbrebaseeditor.sh" legit-path)))
+      (ensure-directories-exist legit-path)
+      (unless (uiop:file-exists-p script-path)
+        (str:to-file script-path *rebase-script-content*))
+      ;; Ensure the file is executable.
+      #+unix
+      (uiop:run-program (list "chmod" "+x" script-path)
+                        :output :string
+                        :error-output :string
+                        :ignore-error-status t)
+      #-unix
+      (error "lem/legit: our rebase script is only for Unix platforms currently. We need to run a shell script and trap a signal.")
+      (setf *rebase-script-path* script-path))))
+
+(defvar *rebase-pid* nil
+  "PID file for the git rebase in process.")
+;; With this approach, only 1 rebase per Lem process.
+
+(defun root-commit-p (hash)
+  "Find this repository's very first commit on the current branch,
+  return T if this commit hash is the root.
+
+  hash: (string) can be a short commit hash or an entire one.
+
+  This check is required when doing a git interactive rebase."
+  ;; the git command
+  ;; git rebase --interactive a1b2c3^
+  ;; fails if a1b2c3 is the root commit.
+  ;; We must use --root instead.
+  (let ((root (run-git (list "rev-list"
+                             "--max-parents=0"
+                             "HEAD"))))
+    ;; We use small hashes, so don't use equal.
+    (str:starts-with-p hash root)))
+
+(defun rebase-interactively (&key from)
+  "Start a rebase session.
+
+  Then edit the git rebase file and validate the rebase with `rebase-continue`
+  or stop it with `rebase-abort`.
+
+  from: commit hash (string) to start the rebase from.
+
+  Return three values suitable for `legit:run-function`: output string, error output string, exit code (integer)."
+  ;; For testing, go to a test project (,cd on Slime), and edit this project's
+  ;; .git/rebase-merge/git-rebase-merge-todo
+  ;; Beware of C-c ~ lol^^
+  (when (uiop:directory-exists-p ".git/rebase-merge/")
+    (error "It seems that there is already a rebase-merge directory,
+and I wonder if you are in the middle of another rebase.
+If that is the case, please try
+   git rebase (--continue | --abort | --skip)
+If that is not the case, please
+   rm -fr \".git/rebase-merge\"
+and run me again.
+I am stopping in case you still have something valuable there."))
+
+  (unless from
+    (return-from rebase-interactively
+      (values "Git rebase is missing the commit to rebase from. We are too shy to rebase everything from the root commit yet. Aborting"
+              nil
+              1)))
+
+  (let ((editor (uiop:getenv "EDITOR")))
+    (setf (uiop:getenv "EDITOR") *rebase-script-path*)
+    (unwind-protect
+         ;; xxx: get the error output, if any, to get explanations of failure.
+         (let ((process (uiop:launch-program (list
+                                              "git"
+                                              "rebase"
+                                              "--autostash"
+                                              "-i"
+                                              ;; Give the right commit to rebase from.
+                                              ;; When rebasing from the root commit,
+                                              ;; something special?
+                                              (if (root-commit-p from)
+                                                  "--root"
+                                                  (format nil "~a^" from)))
+                                             :output :stream
+                                             :error-output :stream
+                                             :ignore-error-status t)))
+           (if (uiop:process-alive-p process)
+               (let* ((output (read-line (uiop:process-info-output process)))
+                      (pidtxt (str:trim (second (str:split ":" output)))))
+                 (setf *rebase-pid* pidtxt)
+                 (format t "The git interactive rebase is started on pid ~a. Edit the rebase file and validate." pidtxt)
+                 (values (format nil "rebase started")
+                         nil
+                         0))
+               (error "git rebase process didn't start properly. Aborting.")))
+      (setf (uiop:getenv "EDITOR") editor))))
+
+(defun rebase-continue ()
+  (multiple-value-bind (output error-output exit-code)
+      (uiop:run-program (list "kill" "-SIGTERM" *rebase-pid*)
+                        :output :string
+                        :error-output :string
+                        :ignore-error-status t)
+    (declare (ignorable output))
+    (values (format nil "rebase finished.")
+            error-output
+            exit-code)))
+
+(defun rebase-abort ()
+  (cond
+    (*rebase-pid*
+     ;; too fragile, be more defensive?
+     (uiop:run-program (list "kill" "-SIGKILL" *rebase-pid*))
+     (values (format nil "Rebase stopped.")
+             ""
+             0))
+    (t
+      (error  "No git rebase in process? PID not found."))))

@@ -33,6 +33,8 @@
 (define-key *image-viewer-keymap* "C-+" 'image-zoom-in)
 (define-key *image-viewer-keymap* "C--" 'image-zoom-out)
 (define-key *image-viewer-keymap* "C-0" 'image-zoom-reset)
+(define-key *image-viewer-keymap* "?" 'image-zoom-help)
+(define-key *image-viewer-keymap* "C-h" 'image-zoom-help)
 
 (defmethod render :before (texture window (buffer image-buffer))
   (sdl2:set-render-target (current-renderer) texture)
@@ -75,6 +77,13 @@
 
 (define-command image-zoom-reset () ()
   (reset-buffer-scale (current-buffer)))
+
+(define-command image-zoom-help () ()
+  (with-pop-up-typeout-window (s (make-buffer "*image-zoom-help*") :erase t)
+    (format s "Open an image file in Lem and use these keys to zoom in and out:~&")
+    (format s "Zoom in: C - + (M-x image-zoom-in)~&")
+    (format s "Zoom out: C - - (M-x image-zoom-out)~&")
+    (format s "Zoom reset: C - 0 (M-x image-zoom-reset)~&")))
 
 (defclass sdl2-find-file-executor (lem:find-file-executor) ())
 

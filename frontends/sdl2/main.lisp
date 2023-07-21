@@ -83,7 +83,6 @@
   ()
   (:default-initargs
    :name :sdl2
-   :native-scroll-support nil ; TODO: t
    :redraw-after-modifying-floating-window nil))
 
 (defvar *display*)
@@ -1031,10 +1030,6 @@
       (sdl2:render-copy (current-renderer) (display-texture *display*))
       (set-input-method)
       (update-display *display*))))
-
-(defmethod lem-if:scroll ((implementation sdl2) view n)
-  (with-debug ("lem-if:scroll" view n)
-    ))
 
 (defmethod lem-if:increase-font-size ((implementation sdl2))
   (with-debug ("increase-font-size")

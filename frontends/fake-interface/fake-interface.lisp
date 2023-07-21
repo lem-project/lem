@@ -20,7 +20,6 @@
     :reader fake-interface-display-height))
   (:default-initargs
    :name :fake
-   :native-scroll-support nil
    :redraw-after-modifying-floating-window t))
 
 (defstruct view
@@ -100,7 +99,6 @@
   )
 
 (defmethod lem-if:update-display ((implementation fake-interface)))
-(defmethod lem-if:scroll ((implementation fake-interface) view n))
 
 (defmacro with-fake-interface (() &body body)
   `(with-implementation (make-instance 'fake-interface)

@@ -9,7 +9,6 @@
   ()
   (:default-initargs
    :name :jsonrpc
-   :native-scroll-support t
    :redraw-after-modifying-floating-window nil))
 
 (defvar *mode* :stdio)
@@ -228,11 +227,6 @@
 (defmethod lem-if:redraw-view-after ((implementation jsonrpc) view)
   (with-error-handler ()
     (notify "touch" (params "viewInfo" view))))
-
-(defmethod lem-if:scroll ((implementation jsonrpc) view n)
-  (with-error-handler ()
-    (notify "scroll"
-            (params "viewInfo" view "n" n))))
 
 (defmethod lem-if:update-display ((implementation jsonrpc))
   (with-error-handler ()

@@ -29,7 +29,6 @@
   ()
   (:default-initargs
    :name :ncurses
-   :native-scroll-support nil
    :redraw-after-modifying-floating-window t))
 
 (define-condition exit (editor-condition)
@@ -460,9 +459,6 @@
              (charms/ll:wmove scrwin cursor-y cursor-x))))
     (charms/ll:wnoutrefresh scrwin)
     (charms/ll:doupdate)))
-
-(defmethod lem-if:scroll ((implementation ncurses) view n)
-  (charms/ll:wscrl (ncurses-view-scrwin view) n))
 
 (defmethod lem-if:clipboard-paste ((implementation ncurses))
   (lem-ncurses.clipboard:paste))

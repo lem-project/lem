@@ -482,7 +482,6 @@
   (:export
    :with-implementation
    :implementation
-   :native-scroll-support
    :redraw-after-modifying-floating-window
    :support-floating-window
    :set-foreground
@@ -534,7 +533,6 @@
    :redraw-view-after
    :will-update-display
    :update-display
-   :scroll
    :set-first-view
    :split-window-horizontally
    :split-window-vertically

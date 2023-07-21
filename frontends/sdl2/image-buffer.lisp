@@ -26,9 +26,10 @@
 
 (defun image-information (window)
   (let ((image (buffer-image (window-buffer window))))
-    (format nil "  ~Dx~D"
+    (format nil "  ~Dx~D (x~,2F)"
             (lem-sdl2::image-width image)
-            (lem-sdl2::image-height image))))
+            (lem-sdl2::image-height image)
+            (buffer-scaling (window-buffer window)))))
 
 (define-key *image-viewer-keymap* "C-+" 'image-zoom-in)
 (define-key *image-viewer-keymap* "+" 'image-zoom-in)

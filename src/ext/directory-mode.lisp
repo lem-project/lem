@@ -447,26 +447,37 @@
     (rename-files (selected-files (current-point)) dst-file))
   (update-all))
 
+(defun search-filename-and-recenter (filename)
+  "Search `filename` in this files listing, recenter the window on it"
+  (move-to-beginning-of-buffer)
+  (search-forward (current-point) filename)
+  (window-recenter (current-window))
+  (character-offset (current-point) (* -1 (length filename))))
+
 (define-command directory-mode-sort-files () ()
   "Sort files: by name, by last modification time, then by size.
 
   Each new directory buffer first uses the default sort method (`lem/directory-mode:*default-sort-method*')"
-  (cond
-    ;; mtime -> size
-    ((eql (buffer-value (current-buffer) :sort-method) :mtime)
-     (message "Sorting by size")
-     (setf (buffer-value (current-buffer) :sort-method) :size)
-     (update (current-buffer) :sort-method :size))
-    ;; size -> pathname
-    ((eql (buffer-value (current-buffer) :sort-method) :size)
-     (message "Sorting by name")
-     (setf (buffer-value (current-buffer) :sort-method) :pathname)
-     (update (current-buffer) :sort-method :pathname))
-    (t
-     ;; At first call, the buffer's sort-method is not set.
-     (message "Sorting by last modification time")
-     (setf (buffer-value (current-buffer) :sort-method) :mtime)
-     (update (current-buffer) :sort-method :mtime))))
+  (let ((filename (file-namestring (get-pathname (current-point)))))
+    (cond
+      ;; mtime -> size
+      ((eql (buffer-value (current-buffer) :sort-method) :mtime)
+       (message "Sorting by size")
+       (setf (buffer-value (current-buffer) :sort-method) :size)
+       (update (current-buffer) :sort-method :size))
+      ;; size -> pathname
+      ((eql (buffer-value (current-buffer) :sort-method) :size)
+       (message "Sorting by name")
+       (setf (buffer-value (current-buffer) :sort-method) :pathname)
+       (update (current-buffer) :sort-method :pathname))
+      (t
+       ;; At first call, the buffer's sort-method is not set.
+       (message "Sorting by last modification time")
+       (setf (buffer-value (current-buffer) :sort-method) :mtime)
+       (update (current-buffer) :sort-method :mtime)))
+
+    ;; Follow file name.
+    (search-filename-and-recenter filename)))
 
 (define-command make-directory (filename) ("FMake directory: ")
   (setf filename (uiop:ensure-directory-pathname filename))

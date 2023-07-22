@@ -1,5 +1,10 @@
 (defpackage :lem/frame-multiplexer
   (:use :cl :lem :lem/button)
+  (:export :frame-multiplexer-next
+           :frame-multiplexer-prev
+           :frame-multiplexer-create-with-new-buffer-list
+           :frame-multiplexer-delete
+           :toggle-frame-multiplexer)
   #+sbcl
   (:lock t))
 (in-package :lem/frame-multiplexer)
@@ -314,6 +319,8 @@
 (add-hook *after-init-hook* 'enable-frame-multiplexer)
 (add-hook *exit-editor-hook* 'disable-frame-multiplexer)
 
+;; devel:
+#+(or)
 (define-command frame-multiplexer-test () ()
   (labels ((vf ()
              (maphash (lambda (k v)

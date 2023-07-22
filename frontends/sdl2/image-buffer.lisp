@@ -1,7 +1,6 @@
 (defpackage :lem-sdl2/image-buffer
   (:use :cl
-   :lem
-        :lem-sdl2)
+   :lem :lem-sdl2)
   (:export :image-fit-to-height
            :image-fit-to-screen
            :image-fit-to-width
@@ -163,6 +162,7 @@
     (setf (buffer-image buffer) image)
     (setf (buffer-scaling buffer) 1)
     (draw-image buffer image :x 0 :y 0)
+    (fit-to-screen buffer)
     (change-buffer-mode buffer 'image-viewer-mode)
     buffer))
 

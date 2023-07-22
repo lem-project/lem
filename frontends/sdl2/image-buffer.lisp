@@ -101,7 +101,9 @@
 
 (defun open-image-buffer (pathname)
   (let ((image (load-image pathname))
-        (buffer (lem:make-buffer (file-namestring pathname))))
+        (buffer (lem:make-buffer (file-namestring pathname)
+                                 :directory (expand-file-name
+                                             (namestring (uiop:pathname-directory-pathname pathname))))))
     (change-class buffer 'image-buffer)
     (setf (buffer-image buffer) image)
     (setf (buffer-scaling buffer) 1)

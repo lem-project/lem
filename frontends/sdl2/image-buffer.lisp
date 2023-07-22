@@ -26,13 +26,19 @@
 
 (defun image-information (window)
   (let ((image (buffer-image (window-buffer window))))
-    (format nil "  ~Dx~D"
+    (format nil "  ~Dx~D (x~,2F)"
             (lem-sdl2::image-width image)
-            (lem-sdl2::image-height image))))
+            (lem-sdl2::image-height image)
+            (buffer-scaling (window-buffer window)))))
 
 (define-key *image-viewer-keymap* "C-+" 'image-zoom-in)
+(define-key *image-viewer-keymap* "+" 'image-zoom-in)
 (define-key *image-viewer-keymap* "C--" 'image-zoom-out)
+(define-key *image-viewer-keymap* "-" 'image-zoom-out)
 (define-key *image-viewer-keymap* "C-0" 'image-zoom-reset)
+(define-key *image-viewer-keymap* "0" 'image-zoom-reset)
+(define-key *image-viewer-keymap* "?" 'image-zoom-help)
+(define-key *image-viewer-keymap* "C-h" 'image-zoom-help)
 
 (defmethod render :before (texture window (buffer image-buffer))
   (sdl2:set-render-target (current-renderer) texture)
@@ -76,6 +82,13 @@
 (define-command image-zoom-reset () ()
   (reset-buffer-scale (current-buffer)))
 
+(define-command image-zoom-help () ()
+  (with-pop-up-typeout-window (s (make-buffer "*image-zoom-help*") :erase t)
+    (format s "Open an image file in Lem and use these keys to zoom in and out:~&")
+    (format s "Zoom in: + or C - + (M-x image-zoom-in)~&")
+    (format s "Zoom out: - or C - - (M-x image-zoom-out)~&")
+    (format s "Zoom reset: 0 or C - 0 (M-x image-zoom-reset)~&")))
+
 (defclass sdl2-find-file-executor (lem:find-file-executor) ())
 
 (defmethod lem:execute-find-file ((executor sdl2-find-file-executor) mode pathname)
@@ -88,7 +101,9 @@
 
 (defun open-image-buffer (pathname)
   (let ((image (load-image pathname))
-        (buffer (lem:make-buffer (file-namestring pathname))))
+        (buffer (lem:make-buffer (file-namestring pathname)
+                                 :directory (expand-file-name
+                                             (namestring (uiop:pathname-directory-pathname pathname))))))
     (change-class buffer 'image-buffer)
     (setf (buffer-image buffer) image)
     (setf (buffer-scaling buffer) 1)

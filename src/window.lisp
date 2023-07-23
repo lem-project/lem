@@ -236,14 +236,16 @@
   (values))
 
 (defun window-recenter (window)
-  (line-start
-   (move-point (window-view-point window)
-               (window-buffer-point window)))
-  (let* ((height (window-height-without-modeline window))
-         (n      (- (window-cursor-y window)
-                    (floor height 2))))
-    (window-scroll window n)
-    n))
+  (unless (= (window-cursor-y window)
+             (floor (window-height-without-modeline window) 2))
+    (line-start
+     (move-point (window-view-point window)
+                 (window-buffer-point window)))
+    (let* ((height (window-height-without-modeline window))
+           (n      (- (window-cursor-y window)
+                      (floor height 2))))
+      (window-scroll window n)
+      n)))
 
 (defun %calc-window-cursor-x (point window)
   "Return (values cur-x next). the 'next' is a flag if the cursor goes to

@@ -9,7 +9,7 @@
 (in-package :lem-documentation-mode/internal)
 
 (define-attribute link-attribute
-  (t :underline :base0D t))
+  (t :underline :base0D))
 
 (defstruct location
   file

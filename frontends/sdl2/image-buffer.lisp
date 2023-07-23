@@ -111,21 +111,21 @@
   "If the image is bigger that the display, shrink it."
   (let* ((image (buffer-image buffer))
          (width (lem-sdl2::image-width image))
+         (height (lem-sdl2::image-height image))
          (display-width (* (lem-sdl2::char-width)
                            (window-width (current-window))))
          (display-height (* (lem-sdl2::char-height)
                             (1-
                              (window-height (current-window)))))
-         (height (lem-sdl2::image-height image)))
-    (cond
-      ((and (> width display-width)
-            (> width height))
-       (fit-to-width buffer))
-      ((and (> height display-height)
-            (> height width))
-       (fit-to-height buffer))
-      (t
-       nil))))
+         (ratio-image (/ height width))
+         (ratio-display (/ display-height display-width))
+         (needs-resizing-p (or (> width display-width)
+                               (> height display-height))))
+
+    (when needs-resizing-p
+      (if (>= ratio-image ratio-display)
+          (fit-to-height buffer)
+          (fit-to-width buffer)))))
 
 (define-command image-zoom-in () ()
   (scale-buffer-image (current-buffer) 0.1))

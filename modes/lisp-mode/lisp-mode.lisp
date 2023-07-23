@@ -43,7 +43,7 @@
         (make-completion-spec 'completion-symbol-async :async t))
   (setf (variable-value 'idle-function) 'lisp-idle-function)
   (setf (variable-value 'root-uri-patterns) '(".asd"))
-  (setf (variable-value 'detective-search) 
+  (setf (variable-value 'detective-search)
         (make-instance 'lem/detective:search-regex
                        :function-regex
                        (lem/detective:make-capture-regex
@@ -204,6 +204,12 @@
         (micros:create-server :port port :style :spawn))
       (connect-to-swank *localhost* port)
       (update-buffer-package)
+
+      ;; XXX:
+      ;; Systems added after lem initialization are not visible from within this process and must
+      ;; be re-initialized.
+      (asdf:clear-source-registry)
+
       (setf *self-connected-port* port))))
 
 (defun self-connection-p (connection)

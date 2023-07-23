@@ -50,14 +50,6 @@ https://github.com/lem-project/lem/issues/628
 - MacOS
 - [Windows](https://github.com/lem-project/lem/wiki/Windows-Platform)
 
-## Play with Lem in Docker
-
-You can try Lem by running it in a docker container:
-
-```
-docker run --rm -ti -v `pwd`:/app 40ants/lem:latest
-```
-
 ## Installation with roswell
 
 Please install roswell at first.

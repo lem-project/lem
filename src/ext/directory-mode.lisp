@@ -184,41 +184,43 @@
              t)))))
 
 (defun insert-pathname (point pathname directory &optional content)
-  (with-point ((start point))
-    (let ((name (or content (namestring (enough-namestring pathname directory)))))
-      (insert-string point "  " 'pathname pathname 'name name)
-      (insert-string point
-                     (format nil " ~5@A "
-                             (let ((size (file-size pathname)))
-                               (if size (human-readable-file-size size) "")))
-                     :attribute 'file-size-attribute)
-      (multiple-value-bind (second minute hour day month year week)
-          (let ((date (file-write-date pathname)))
-            (if date
-                (decode-universal-time date)
-                (values 0 0 0 0 0 0 nil)))
+  (let ((file-size (handler-case (file-size pathname)
+                     (error ()
+                       (return-from insert-pathname)))))
+    (with-point ((start point))
+      (let ((name (or content (namestring (enough-namestring pathname directory)))))
+        (insert-string point "  " 'pathname pathname 'name name)
         (insert-string point
-                       (format nil "~4,'0D/~2,'0D/~2,'0D ~2,'0D:~2,'0D:~2,'0D ~A "
-                               year month day hour minute second
-                               (if week (aref #("Mon" "Tue" "Wed" "Thr" "Fri" "Sat" "Sun") week)
-                                   "   "))
-                       :attribute 'file-date-attribute))
-      (unless (string= name "..")
-        (insert-icon point name))
-      (insert-string point
-                     name
-                     :attribute (get-file-attribute pathname)
-                     :file pathname)
-      (when (symbolic-link-p pathname)
-        (insert-string point (format nil " -> ~A" (probe-file pathname))))
-      (back-to-indentation start)
-      (lem/button:apply-button-between-points
-       start point
-       (lambda ()
-         (lem/button:with-context ()
-           (directory-mode-find-file))))
-      (insert-character point #\newline)
-      (put-text-property start point :read-only t))))
+                       (format nil " ~5@A "
+                               (if file-size (human-readable-file-size file-size) ""))
+                       :attribute 'file-size-attribute)
+        (multiple-value-bind (second minute hour day month year week)
+            (let ((date (file-write-date pathname)))
+              (if date
+                  (decode-universal-time date)
+                  (values 0 0 0 0 0 0 nil)))
+          (insert-string point
+                         (format nil "~4,'0D/~2,'0D/~2,'0D ~2,'0D:~2,'0D:~2,'0D ~A "
+                                 year month day hour minute second
+                                 (if week (aref #("Mon" "Tue" "Wed" "Thr" "Fri" "Sat" "Sun") week)
+                                     "   "))
+                         :attribute 'file-date-attribute))
+        (unless (string= name "..")
+          (insert-icon point name))
+        (insert-string point
+                       name
+                       :attribute (get-file-attribute pathname)
+                       :file pathname)
+        (when (symbolic-link-p pathname)
+          (insert-string point (format nil " -> ~A" (probe-file pathname))))
+        (back-to-indentation start)
+        (lem/button:apply-button-between-points
+         start point
+         (lambda ()
+           (lem/button:with-context ()
+             (directory-mode-find-file))))
+        (insert-character point #\newline)
+        (put-text-property start point :read-only t)))))
 
 (defun insert-directories-and-files (point
                                      directory

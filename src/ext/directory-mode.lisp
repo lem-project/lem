@@ -458,7 +458,7 @@
   "Sort files: by name, by last modification time, then by size.
 
   Each new directory buffer first uses the default sort method (`lem/directory-mode:*default-sort-method*')"
-  (let ((filename (file-namestring (get-pathname (current-point)))))
+  (let ((path (get-pathname (current-point))))
     (cond
       ;; mtime -> size
       ((eql (buffer-value (current-buffer) :sort-method) :mtime)
@@ -477,7 +477,8 @@
        (update (current-buffer) :sort-method :mtime)))
 
     ;; Follow file name.
-    (search-filename-and-recenter filename)))
+    (when (and path (str:non-blank-string-p (file-namestring path)))
+      (search-filename-and-recenter (file-namestring path)))))
 
 (define-command make-directory (filename) ("FMake directory: ")
   (setf filename (uiop:ensure-directory-pathname filename))

@@ -23,9 +23,9 @@ Other Lem features include:
 
 # Download
 
-**Lem 2.0 was released!**
+**Lem 2.1 was released!**
 
-See our [Lem 2.0 realease](https://github.com/lem-project/lem/releases/tag/v2.0.0) to
+See our [Lem 2.1 realease](https://github.com/lem-project/lem/releases/tag/v2.1.0) to
 download binaries for Windows, MacOS and Linux.
 
 On mac, you need to run `xattr -d com.apple.quarantine /Applications/lem.app`.  

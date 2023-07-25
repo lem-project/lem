@@ -203,6 +203,7 @@
    :*window-scroll-functions*
    :*window-size-change-functions*
    :*window-show-buffer-functions*
+   :*last-focused-window*
    :window-parent
    :scroll
    :window-view-point

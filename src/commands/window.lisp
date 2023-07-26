@@ -158,9 +158,9 @@
 
 (define-command switch-to-last-focused-window () ()
   "Go to the window that was last in focus."
-  (let ((window (or (and (not (null *last-focused-window*))
-                         (not (deleted-window-p *last-focused-window*))
-                         *last-focused-window*)
+  (let ((window (or (and (not (null (last-focused-window)))
+                         (not (deleted-window-p (last-focused-window)))
+                         (last-focused-window))
                     (get-next-window (current-window)))))
     (switch-to-window window)))
 

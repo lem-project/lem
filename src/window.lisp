@@ -180,6 +180,9 @@
                   (%window-point new-window)))
     (setf (frame-current-window frame) new-window)))
 
+(defun last-focused-window ()
+  *last-focused-window*)
+
 (defun switch-to-window (new-window)
   (unless (eq (current-window) new-window)
     (run-hooks (window-leave-hook (current-window)) (current-window))

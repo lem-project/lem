@@ -977,7 +977,9 @@
 (defmethod lem-if::will-update-display ((implementation sdl2))
   (with-debug ("will-update-display")
     (with-renderer ()
-      (sdl2:set-render-target (current-renderer) (display-texture *display*)))))
+      (sdl2:set-render-target (current-renderer) (display-texture *display*))
+      (set-color (display-background-color *display*))
+      (sdl2:render-clear (current-renderer)))))
 
 (defun set-input-method ()
   (let* ((view (lem:window-view (lem:current-window)))

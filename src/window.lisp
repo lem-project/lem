@@ -12,6 +12,8 @@
 (defparameter *use-new-vertical-move-function* t)
 (defparameter *use-cursor-movement-workaround* t)
 
+(defvar *last-focused-window* nil)
+
 (defgeneric %delete-window (window))
 (defgeneric window-parent (window)
   (:method (window)
@@ -178,9 +180,13 @@
                   (%window-point new-window)))
     (setf (frame-current-window frame) new-window)))
 
+(defun last-focused-window ()
+  *last-focused-window*)
+
 (defun switch-to-window (new-window)
   (unless (eq (current-window) new-window)
-    (run-hooks (window-leave-hook (current-window)) (current-window)))
+    (run-hooks (window-leave-hook (current-window)) (current-window))
+    (setf *last-focused-window* (current-window)))
   (setf (current-window) new-window))
 
 (defun window-list (&optional (frame (current-frame)))

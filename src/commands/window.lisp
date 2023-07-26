@@ -144,18 +144,12 @@
   (unless n
     (maybe-balance-windows)))
 
-(defvar *last-focused-window* nil)
-
-(defun update-last-focused-window ()
-  (setf *last-focused-window* (current-window)))
-
 (define-command other-window (&optional (n 1)) ("p")
   "Go to the next window."
   (let ((window-list
           (compute-window-list (current-window))))
     (when (minusp n)
       (setf n (- (length window-list) (abs n))))
-    (update-last-focused-window)
     (let ((window (current-window)))
       (dotimes (_ n t)
         (setf window
@@ -164,32 +158,31 @@
 
 (define-command switch-to-last-focused-window () ()
   "Go to the window that was last in focus."
-  (let ((window (or (and (not (null *last-focused-window*))
-                         (not (deleted-window-p *last-focused-window*))
-                         *last-focused-window*)
+  (let ((window (or (and (not (null (last-focused-window)))
+                         (not (deleted-window-p (last-focused-window)))
+                         (last-focused-window))
                     (get-next-window (current-window)))))
-    (update-last-focused-window)
-    (setf (current-window) window)))
+    (switch-to-window window)))
 
 (define-command window-move-down () ()
   "Go to the window on the down."
   (alexandria:when-let ((window (down-window (current-window))))
-    (setf (current-window) window)))
+    (switch-to-window window)))
 
 (define-command window-move-up () ()
   "Go to the window on the up."
   (alexandria:when-let ((window (up-window (current-window))))
-    (setf (current-window) window)))
+    (switch-to-window window)))
 
 (define-command window-move-right () ()
   "Go to the window on the right."
   (alexandria:when-let ((window (right-window (current-window))))
-    (setf (current-window) window)))
+    (switch-to-window window)))
 
 (define-command window-move-left () ()
   "Go to the window on the left."
   (alexandria:when-let ((window (left-window (current-window))))
-    (setf (current-window) window)))
+    (switch-to-window window)))
 
 (define-command delete-other-windows () ()
   "Delete all other windows."

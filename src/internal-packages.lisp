@@ -226,6 +226,7 @@
    :window-use-modeline-p
    :window-redraw
    :current-window
+   :last-focused-window
    :window-list
    :compute-window-list
    :one-window-p

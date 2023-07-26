@@ -20,7 +20,10 @@
     :reader attribute-underline)
    (cache
     :initform nil
-    :accessor attribute-cache)))
+    :accessor attribute-cache)
+   (plist
+    :initform nil
+    :accessor attribute-plist)))
 
 (defmethod print-object ((attribute attribute) stream)
   (print-unreadable-object (attribute stream :type t :identity t)
@@ -33,6 +36,12 @@
 
 (defun attribute-p (x)
   (typep x 'attribute))
+
+(defun attribute-value (attribute key)
+  (getf (attribute-plist attribute) key))
+
+(defun (setf attribute-value) (value attribute key)
+  (setf (getf (attribute-plist attribute) key) value))
 
 (defun make-attribute (&key foreground background reverse bold underline)
   (make-instance 'attribute

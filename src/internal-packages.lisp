@@ -79,6 +79,7 @@
    :make-attribute
    :attribute
    :attribute-p
+   :attribute-value
    :ensure-attribute
    :merge-attribute
    :set-attribute

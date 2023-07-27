@@ -896,7 +896,7 @@
      (let ((xref-location (source-location-to-xref-location source-location)))
        (go-to-location xref-location
                        (lambda (buffer)
-                         (setf (current-window)
+                         (switch-to-window
                                (pop-to-buffer buffer))))))))
 
 (defun source-location-to-xref-location (location &optional content no-errors)

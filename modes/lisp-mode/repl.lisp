@@ -232,7 +232,7 @@
   (let ((buffer (ensure-repl-buffer-exist)))
     (push thread (read-string-thread-stack))
     (push tag (read-string-tag-stack))
-    (setf (current-window) (pop-to-buffer buffer))
+    (switch-to-window (pop-to-buffer buffer))
     (buffer-end (current-point))
     (lem/listener-mode:change-input-start-point (current-point))
     (repl-change-read-line-input)))
@@ -263,7 +263,7 @@
   (check-connection)
   (flet ((switch (buffer split-window-p)
            (if split-window-p
-               (setf (current-window) (pop-to-buffer buffer))
+               (switch-to-window (pop-to-buffer buffer))
                (switch-to-buffer buffer))))
     (lem/listener-mode:listener-start
      "*lisp-repl*"
@@ -273,7 +273,7 @@
 (define-command lisp-switch-to-repl-buffer () ()
   (let ((buffer (repl-buffer)))
     (if buffer
-        (setf (current-window) (pop-to-buffer buffer))
+        (switch-to-window (pop-to-buffer buffer))
         (start-lisp-repl))))
 
 (defun copy-down-to-repl (slimefun &rest args)

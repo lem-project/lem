@@ -373,7 +373,7 @@
                                    (let ((buffer (execute-find-file *find-file-executor*
                                                                     (get-file-mode pathname)
                                                                     pathname)))
-                                     (setf (current-window)
+                                     (switch-to-window
                                            (pop-to-buffer buffer))))))
 
 (define-command directory-mode-next-line (p) ("p")

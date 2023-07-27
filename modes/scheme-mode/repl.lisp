@@ -61,14 +61,14 @@
      (lem/listener-mode:listener-start "*scheme-repl*" 'scheme-repl-mode))
     ((:scheme-process)
      (scheme-run-process)
-     (setf (current-window) (pop-to-buffer (scheme-process-buffer))))
+     (switch-to-window (pop-to-buffer (scheme-process-buffer))))
     (t
      (editor-error "Scheme repl is not available."))))
 
 (define-command scheme-switch-to-repl-buffer () ()
   (let ((buffer (repl-buffer)))
     (if buffer
-        (setf (current-window) (pop-to-buffer buffer))
+        (switch-to-window (pop-to-buffer buffer))
         (start-scheme-repl))))
 
 (define-command scheme-eval-or-newline () ()
@@ -368,7 +368,7 @@
   (let ((buffer (repl-buffer)))
     (push thread (read-string-thread-stack))
     (push tag (read-string-tag-stack))
-    (setf (current-window) (pop-to-buffer buffer))
+    (switch-to-window (pop-to-buffer buffer))
     (buffer-end (current-point))
     (lem/listener-mode:change-input-start-point (current-point))
     (repl-change-read-line-input)))

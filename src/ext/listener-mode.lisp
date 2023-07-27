@@ -88,7 +88,7 @@
   (listener-history (current-buffer)))
 
 (defun default-switch-to-buffer (buffer)
-  (setf (current-window) (pop-to-buffer buffer)))
+  (switch-to-window (pop-to-buffer buffer)))
 
 (defun listener-start (buffer-name mode &key (switch-to-buffer-function 'default-switch-to-buffer))
   (let ((buffer (make-buffer buffer-name)))

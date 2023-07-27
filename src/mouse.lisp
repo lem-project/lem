@@ -76,7 +76,6 @@
 
 (defun move-current-point-to-x-y-position (window x y)
   (switch-to-window window)
-  (setf (current-window) window)
   (move-point (current-point) (window-view-point window))
   (move-to-next-virtual-line (current-point) y)
   (move-to-virtual-line-column (current-point) x))

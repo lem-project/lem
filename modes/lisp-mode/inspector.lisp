@@ -103,7 +103,7 @@
                  (move-to-line point (car inspector-position))
                  (line-offset point 0 (cdr inspector-position))))))
       (cond (focus
-             (setf (current-window) (pop-to-buffer buffer :split-action :negative))
+             (switch-to-window (pop-to-buffer buffer :split-action :negative))
              (body))
             (t
              (with-current-window (pop-to-buffer buffer :split-action :negative)

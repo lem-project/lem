@@ -81,5 +81,5 @@
                             :output-callback-type :process-input)))
 
 (define-command run-shell () ()
-  (setf (current-window)
+  (switch-to-window
         (pop-to-buffer (run-shell-internal))))

@@ -57,7 +57,7 @@
               (ppcre:scan "^... " (line-string p)))
       (lem/listener-mode:refresh-prompt buffer nil))
     (unless already-exists
-      (setf (current-window) (pop-to-buffer buffer)))
+      (switch-to-window (pop-to-buffer buffer)))
     (alexandria:when-let (window (first (get-buffer-windows buffer)))
       (with-current-window window
         (buffer-end p)

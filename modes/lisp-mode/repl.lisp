@@ -34,8 +34,8 @@
                    #'open-inspector-by-repl))
 
 (defun context-menu-inspect-printed-object ()
-  (let* ((point (get-point-on-context-menu-open))
-         (id (object-id-at point)))
+  (alexandria:when-let* ((point (get-point-on-context-menu-open))
+                         (id (object-id-at point)))
     (when id
       (lem/context-menu:make-item
        :label "Inspect"
@@ -44,8 +44,8 @@
                    (inspect-printed-object id))))))
 
 (defun context-menu-copy-down-printed-object ()
-  (let* ((point (get-point-on-context-menu-open))
-         (id (object-id-at point)))
+  (alexandria:when-let* ((point (get-point-on-context-menu-open))
+                         (id (object-id-at point)))
     (when id
       (lem/context-menu:make-item
        :label "Copy Down"
@@ -54,8 +54,8 @@
                    (copy-down-to-repl 'micros:get-printed-object-by-id id))))))
 
 (defun context-menu-describe-object ()
-  (let* ((point (get-point-on-context-menu-open))
-         (id (object-id-at point)))
+  (alexandria:when-let* ((point (get-point-on-context-menu-open))
+                         (id (object-id-at point)))
     (when id
       (lem/context-menu:make-item
        :label "Describe"
@@ -66,8 +66,8 @@
                                           id)))))))
 
 (defun context-menu-pretty-print ()
-  (let* ((point (get-point-on-context-menu-open))
-         (id (object-id-at point)))
+  (alexandria:when-let* ((point (get-point-on-context-menu-open))
+                         (id (object-id-at point)))
     (when id
       (lem/context-menu:make-item
        :label "Pretty Print"

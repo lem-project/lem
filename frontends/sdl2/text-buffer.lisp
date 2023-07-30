@@ -58,6 +58,16 @@
 (defun set-cursor-attribute (attribute)
   (setf (lem:attribute-value attribute :cursor) t))
 
+(defun attribute-font (attribute)
+  (let ((attribute (lem:ensure-attribute attribute nil)))
+    (when attribute
+      (lem:attribute-value attribute 'font))))
+
+(defun attribute-image (attribute)
+  (let ((attribute (lem:ensure-attribute attribute nil)))
+    (when attribute
+      (lem:attribute-value attribute 'image))))
+
 (defun overlay-cursor-p (overlay)
   (lem:overlay-get overlay :cursor))
 
@@ -254,6 +264,10 @@
   ((offset :initarg :offset
            :reader line-end-object-offset)))
 
+(defclass image-object (drawing-object)
+  ((surface :initarg :surface :reader image-object-surface)
+   (attribute :initarg :attribute :reader image-object-attribute)))
+
 ;;; draw-object
 (defmethod draw-object ((drawing-object void-object) x bottom-y window)
   nil)
@@ -319,6 +333,15 @@
                           (char-width)))
                     bottom-y))
 
+(defmethod draw-object ((drawing-object image-object) x bottom-y window)
+  (let* ((surface-width (object-width drawing-object))
+         (surface-height (object-height drawing-object))
+         (texture (sdl2:create-texture-from-surface (current-renderer)
+                                                    (image-object-surface drawing-object)))
+         (y (- bottom-y surface-height)))
+    (render-texture (current-renderer) texture x y surface-width surface-height)
+    (sdl2:destroy-texture texture)))
+
 ;;; object-width
 (defmethod object-width ((drawing-object void-object))
   0)
@@ -334,6 +357,9 @@
 
 (defmethod object-width ((drawing-object line-end-object))
   (sdl2:surface-width (text-object-surface drawing-object)))
+
+(defmethod object-width ((drawing-object image-object))
+  (sdl2:surface-width (image-object-surface drawing-object)))
 
 ;;; object-height
 (defmethod object-height ((drawing-object void-object))
@@ -351,6 +377,9 @@
 (defmethod object-height ((drawing-object line-end-object))
   (char-height))
 
+(defmethod object-height ((drawing-object image-object))
+  (sdl2:surface-height (image-object-surface drawing-object)))
+
 (defun max-height-of-objects (objects)
   (loop :for object :in objects
         :maximize (object-height object)))
@@ -360,7 +389,7 @@
 
 (defun get-font (&key attribute type bold)
   (or (alexandria:when-let (attribute (and attribute (lem:ensure-attribute attribute)))
-        (lem:attribute-value attribute 'font))
+        (attribute-font attribute))
       (get-display-font *display* :type type :bold bold)))
 
 (defun split-string-by-character-type (string)
@@ -412,15 +441,20 @@
         (t
          (let ((string (item-string item))
                (attribute (item-attribute item)))
-           (if (alexandria:emptyp string)
-               (list (make-instance 'void-object))
-               (loop :for (type . string) :in (split-string-by-character-type string)
-                     :collect (multiple-value-bind (surface attribute)
-                                  (make-text-surface-with-attribute string attribute :type type)
-                                (make-instance 'text-object
-                                               :surface surface
-                                               :string string
-                                               :attribute attribute))))))))
+           (cond ((alexandria:emptyp string)
+                  (list (make-instance 'void-object)))
+                 ((and attribute (attribute-image attribute))
+                  (list (make-instance 'image-object
+                                       :surface (attribute-image attribute)
+                                       :attribute attribute)))
+                 (t
+                  (loop :for (type . string) :in (split-string-by-character-type string)
+                        :collect (multiple-value-bind (surface attribute)
+                                     (make-text-surface-with-attribute string attribute :type type)
+                                   (make-instance 'text-object
+                                                  :surface surface
+                                                  :string string
+                                                  :attribute attribute)))))))))
 
 (defun clear-to-end-of-line (window x y height)
   (sdl2:with-rects ((rect x y (- (view-width-by-pixel window) x) height))

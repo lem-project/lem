@@ -50,7 +50,7 @@
   (* (char-width) (view-width (lem:window-view window))))
 
 (defun view-height-by-pixel (window)
-  (* (char-height) (view-width (lem:window-view window))))
+  (* (char-height) (view-height (lem:window-view window))))
 
 (defun cursor-attribute-p (attribute)
   (lem:attribute-value attribute :cursor))
@@ -122,6 +122,27 @@
   end-of-line-cursor-attribute
   extend-to-end
   line-end-overlay)
+
+(defun attribute-equal-careful-null-and-symbol (a b)
+  (if (or (null a) (null b))
+      (and (null a) (null b))
+      (lem-core::attribute-equal (lem:ensure-attribute a)
+                                 (lem:ensure-attribute b))))
+
+(defun logical-line-equal (a b)
+  (and (string= (logical-line-string a) (logical-line-string b))
+       (= (length (logical-line-attributes a))
+          (length (logical-line-attributes b)))
+       (every (lambda (elt1 elt2)
+                (and (equal (first elt1) (first elt2))
+                     (equal (second elt1) (second elt2))
+                     (attribute-equal-careful-null-and-symbol (third elt1) (third elt2))))
+              (logical-line-attributes a)
+              (logical-line-attributes b))
+       (attribute-equal-careful-null-and-symbol (logical-line-end-of-line-cursor-attribute a)
+                                                (logical-line-end-of-line-cursor-attribute b))
+       (attribute-equal-careful-null-and-symbol (logical-line-extend-to-end a)
+                                                (logical-line-extend-to-end b))))
 
 (defun create-logical-line (point overlays)
   (let ((end-of-line-cursor-attribute nil)
@@ -448,12 +469,39 @@
         :for object :in objects
         :do (draw-object object x (+ y height) window)))
 
+(defun validate-cache-p (window y height logical-line)
+  (loop :for (cache-y cache-height cache-logical-line) :in (lem:window-parameter window 'cache-redrawing)
+        :when (and (= y cache-y)
+                   (= height cache-height)
+                   (logical-line-equal logical-line cache-logical-line))
+        :return t))
+
+(defun invalidate-cache (window y height)
+  (setf (lem:window-parameter window 'cache-redrawing)
+        (remove-if (lambda (elt)
+                     (destructuring-bind (cache-y cache-height cache-logical-line) elt
+                       (declare (ignore cache-logical-line))
+                       (not (or (<= (+ y height)
+                                    cache-y)
+                                (<= (+ cache-y cache-height)
+                                    y)))))
+                   (lem:window-parameter window 'cache-redrawing))))
+
+(defun update-and-validate-cache-p (window y height logical-line)
+  (cond ((validate-cache-p window y height logical-line) t)
+        (t
+         (invalidate-cache window y height)
+         (push (list y height logical-line)
+               (lem:window-parameter window 'cache-redrawing))
+         nil)))
+
 (defun redraw-logical-line (window y logical-line)
   (loop :for objects :in
            (separate-objects-by-width (create-drawing-objects logical-line)
                                       (view-width-by-pixel window))
         :for height := (max-height-of-objects objects)
-        :do (redraw-physical-line window y height objects)
+        :do (unless (update-and-validate-cache-p window y height logical-line)
+              (redraw-physical-line window y height objects))
             (incf y height)
         :sum height))
 
@@ -476,5 +524,9 @@
 
 (defmethod lem-core::redraw-buffer ((buffer v2-text-buffer) window force)
   (assert (eq buffer (lem:window-buffer window)))
+  (when (or force
+            (lem-core::screen-modified-p (lem:window-screen window)))
+    (setf (lem:window-parameter window 'cache-redrawing) '()))
   (sdl2:set-render-target (current-renderer) (view-texture (lem:window-view window)))
-  (redraw-lines window))
+  (redraw-lines window)
+  (lem-core::update-screen-cache (lem:window-screen window) buffer))

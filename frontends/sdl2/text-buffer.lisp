@@ -355,18 +355,19 @@
   (loop :for object :in objects
         :maximize (object-height object)))
 
+(defun char-type (char)
+  (guess-font-type *display* (char-code char)))
+
 (defun split-string-by-character-type (string)
-  (flet ((char-type (char)
-           (guess-font-type *display* (char-code char))))
-    (loop :with pos := 0 :and items := '()
-          :while (< pos (length string))
-          :for type := (char-type (char string pos))
-          :do (loop :with start := pos
-                    :while (and (< pos (length string))
-                                (eq type (char-type (char string pos))))
-                    :do (incf pos)
-                    :finally (push (cons type (subseq string start pos)) items))
-          :finally (return (nreverse items)))))
+  (loop :with pos := 0 :and items := '()
+        :while (< pos (length string))
+        :for type := (char-type (char string pos))
+        :do (loop :with start := pos
+                  :while (and (< pos (length string))
+                              (eq type (char-type (char string pos))))
+                  :do (incf pos)
+                  :finally (push (cons type (subseq string start pos)) items))
+        :finally (return (nreverse items))))
 
 (defun make-text-surface-with-attribute (string attribute &key (type :latin))
   (cffi:with-foreign-string (c-string string)
@@ -434,14 +435,15 @@
          (foreground (attribute-foreground-with-reverse attribute)))
     (cffi:with-foreign-string (c-string (string character))
       (let ((surface
-              (sdl2-ttf:render-utf8-blended (get-display-font *display*
-                                                              :type :latin
-                                                              :bold bold)
-                                            c-string
-                                            (lem:color-red foreground)
-                                            (lem:color-green foreground)
-                                            (lem:color-blue foreground)
-                                            0)))
+              (sdl2-ttf:render-utf8-blended
+               (get-display-font *display*
+                                 :type (char-type character)
+                                 :bold bold)
+               c-string
+               (lem:color-red foreground)
+               (lem:color-green foreground)
+               (lem:color-blue foreground)
+               0)))
         (make-instance 'text-object
                        :surface surface
                        :string (string character)

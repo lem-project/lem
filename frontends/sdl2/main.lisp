@@ -559,7 +559,25 @@
     :reader view-use-modeline)
    (texture
     :initarg :texture
-    :accessor view-texture)))
+    :accessor view-texture)
+   (last-cursor-x
+    :initform nil
+    :accessor view-last-cursor-x)
+   (last-cursor-y
+    :initform nil
+    :accessor view-last-cursor-y)))
+
+(defmethod last-cursor-x ((view view))
+  (or (view-last-cursor-x view)
+      ;; fallback to v1
+      (* (lem:last-print-cursor-x (view-window view))
+         (char-width))))
+
+(defmethod last-cursor-y ((view view))
+  (or (view-last-cursor-y view)
+      ;; fallback to v1
+      (* (lem:last-print-cursor-y (view-window view))
+         (char-height))))
 
 (defun create-view (window x y width height use-modeline)
   (when use-modeline (incf height))
@@ -998,8 +1016,8 @@
 
 (defun set-input-method ()
   (let* ((view (lem:window-view (lem:current-window)))
-         (cursor-x (* (lem:last-print-cursor-x (lem:current-window)) (char-width)))
-         (cursor-y (* (lem:last-print-cursor-y (lem:current-window)) (char-height)))
+         (cursor-x (last-cursor-x view))
+         (cursor-y (last-cursor-y view))
          (text lem-sdl2/keyboard::*textediting-text*)
          (x (+ (* (view-x view) (char-width))
                cursor-x))

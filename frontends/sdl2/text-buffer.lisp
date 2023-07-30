@@ -116,6 +116,11 @@
       (attribute-foreground-color attribute)
       (attribute-background-color attribute)))
 
+(defun set-cursor-position (window x y)
+  (let ((view (lem:window-view window)))
+    (setf (view-last-cursor-x view) x
+          (view-last-cursor-y view) y)))
+
 (defstruct logical-line
   string
   attributes
@@ -262,6 +267,9 @@
                    (current-renderer)
                    (text-object-surface drawing-object)))
          (y (- bottom-y surface-height)))
+    (when (and attribute (cursor-attribute-p attribute))
+      (setf (view-last-cursor-x (lem:window-view window)) x
+            (view-last-cursor-y (lem:window-view window)) y))
     (sdl2:with-rects ((rect x y surface-width surface-height))
       (set-color background)
       (sdl2:render-fill-rect (current-renderer) rect))
@@ -286,11 +294,14 @@
 
 (defmethod draw-object ((drawing-object eol-cursor-object) x bottom-y window)
   (set-color (eol-cursor-object-color drawing-object))
-  (sdl2:with-rects ((rect x
-                          (- bottom-y (object-height drawing-object))
-                          (char-width)
-                          (object-height drawing-object)))
-    (sdl2:render-fill-rect (current-renderer) rect)))
+  (let ((y (- bottom-y (object-height drawing-object))))
+    (setf (view-last-cursor-x (lem:window-view window)) x
+          (view-last-cursor-y (lem:window-view window)) y)
+    (sdl2:with-rects ((rect x
+                            y
+                            (char-width)
+                            (object-height drawing-object)))
+      (sdl2:render-fill-rect (current-renderer) rect))))
 
 (defmethod draw-object ((drawing-object extend-to-eol-object) x bottom-y window)
   (set-color (extend-to-eol-object-color drawing-object))

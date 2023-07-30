@@ -192,7 +192,8 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
                           (reverse (frame-floating-windows frame))
                           (window-list frame)))
     (when (within-window-p window x y)
-      (let ((overlay-x-offset (screen-left-width (window-screen window))))
+      (let ((overlay-x-offset (or (screen-left-width (window-screen window))
+                                  0)))
         (return (values window
                         (- x (window-x window) overlay-x-offset)
                         (- y (window-y window))))))))

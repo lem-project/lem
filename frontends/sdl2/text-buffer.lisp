@@ -358,6 +358,11 @@
 (defun char-type (char)
   (guess-font-type *display* (char-code char)))
 
+(defun get-font (&key attribute type bold)
+  (or (alexandria:when-let (attribute (and attribute (lem:ensure-attribute attribute)))
+        (lem:attribute-value attribute 'font))
+      (get-display-font *display* :type type :bold bold)))
+
 (defun split-string-by-character-type (string)
   (loop :with pos := 0 :and items := '()
         :while (< pos (length string))
@@ -375,9 +380,9 @@
            (bold (and attribute (lem:attribute-bold attribute)))
            (foreground (attribute-foreground-with-reverse attribute))
            (surface
-             (sdl2-ttf:render-utf8-blended (get-display-font *display*
-                                                             :type type
-                                                             :bold bold)
+             (sdl2-ttf:render-utf8-blended (get-font :attribute attribute
+                                                     :type type
+                                                     :bold bold)
                                            c-string
                                            (lem:color-red foreground)
                                            (lem:color-green foreground)
@@ -436,9 +441,9 @@
     (cffi:with-foreign-string (c-string (string character))
       (let ((surface
               (sdl2-ttf:render-utf8-blended
-               (get-display-font *display*
-                                 :type (char-type character)
-                                 :bold bold)
+               (get-font :attribute attribute
+                         :type (char-type character)
+                         :bold bold)
                c-string
                (lem:color-red foreground)
                (lem:color-green foreground)

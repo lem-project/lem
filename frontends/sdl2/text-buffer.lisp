@@ -550,19 +550,27 @@
   (loop :for object :in objects
         :maximize (object-height object)))
 
+(defvar *invalidate-cache* nil)
+
 (defun redraw-logical-line (window y logical-line)
-  (loop :for objects :in
-           (separate-objects-by-width (create-drawing-objects logical-line)
-                                      (view-width-by-pixel window))
-        :for height := (max-height-of-objects objects)
-        :do (unless (update-and-validate-cache-p window y height logical-line)
-              (redraw-physical-line window y height objects))
-            (incf y height)
-        :sum height))
+  (let ((objects-per-physical-line
+          (separate-objects-by-width (create-drawing-objects logical-line)
+                                     (view-width-by-pixel window))))
+    (when (and (not (alexandria:length= 1 objects-per-physical-line))
+               *invalidate-cache*)
+      (setf (drawing-cache window) '()))
+    (loop :for objects :in objects-per-physical-line
+          :for height := (max-height-of-objects objects)
+          :do (unless (update-and-validate-cache-p window y height logical-line)
+                (setf *invalidate-cache* t)
+                (redraw-physical-line window y height objects))
+              (incf y height)
+          :sum height)))
 
 (defun redraw-lines (window)
   (lem:with-point ((point (lem:window-view-point window)))
-    (let ((overlays (collect-overlays window)))
+    (let ((*invalidate-cache* nil)
+          (overlays (collect-overlays window)))
       (loop :with y := 0 :and height := (view-height-by-pixel window)
             :do (incf y (redraw-logical-line window
                                              y

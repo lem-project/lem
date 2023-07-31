@@ -1,6 +1,6 @@
 (in-package :lem-sdl2)
 
-(defclass v2-text-buffer (lem:text-buffer) ())
+(defclass graphical-text-buffer (lem:text-buffer) ())
 
 (defun view-width-by-pixel (window)
   (* (char-width) (view-width (lem:window-view window))))
@@ -585,7 +585,7 @@
                        (set-render-color *display* (display-background-color *display*))
                        (sdl2:render-fill-rect (current-renderer) rect))))))
 
-(defmethod lem-core::redraw-buffer ((buffer v2-text-buffer) window force)
+(defmethod lem-core::redraw-buffer ((buffer graphical-text-buffer) window force)
   (assert (eq buffer (lem:window-buffer window)))
   (when (or force
             (lem-core::screen-modified-p (lem:window-screen window)))

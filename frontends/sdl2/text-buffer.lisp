@@ -2,6 +2,53 @@
 
 (defclass v2-text-buffer (lem:text-buffer) ())
 
+(defun view-width-by-pixel (window)
+  (* (char-width) (view-width (lem:window-view window))))
+
+(defun view-height-by-pixel (window)
+  (* (char-height) (view-height (lem:window-view window))))
+
+(defun set-cursor-position (window x y)
+  (let ((view (lem:window-view window)))
+    (setf (view-last-cursor-x view) x
+          (view-last-cursor-y view) y)))
+
+(defun char-type (char)
+  (guess-font-type *display* (char-code char)))
+
+(defun get-font (&key attribute type bold)
+  (or (alexandria:when-let (attribute (and attribute (lem:ensure-attribute attribute)))
+        (attribute-font attribute))
+      (get-display-font *display* :type type :bold bold)))
+
+(defun cursor-attribute-p (attribute)
+  (lem:attribute-value attribute :cursor))
+
+(defun set-cursor-attribute (attribute)
+  (setf (lem:attribute-value attribute :cursor) t))
+
+(defun attribute-font (attribute)
+  (let ((attribute (lem:ensure-attribute attribute nil)))
+    (when attribute
+      (lem:attribute-value attribute 'font))))
+
+(defun attribute-image (attribute)
+  (let ((attribute (lem:ensure-attribute attribute nil)))
+    (when attribute
+      (lem:attribute-value attribute 'image))))
+
+(defun attribute-foreground-with-reverse (attribute)
+  (if (and attribute (lem:attribute-reverse attribute))
+      (attribute-background-color attribute)
+      (attribute-foreground-color attribute)))
+
+(defun attribute-background-with-reverse (attribute)
+  (if (and attribute (lem:attribute-reverse attribute))
+      (attribute-foreground-color attribute)
+      (attribute-background-color attribute)))
+
+(defun overlay-cursor-p (overlay)
+  (lem:overlay-get overlay :cursor))
 
 (defstruct string-with-attribute-item
   string
@@ -45,31 +92,6 @@
 
 (defmethod item-attribute ((item extend-to-eol-item))
   nil)
-
-(defun view-width-by-pixel (window)
-  (* (char-width) (view-width (lem:window-view window))))
-
-(defun view-height-by-pixel (window)
-  (* (char-height) (view-height (lem:window-view window))))
-
-(defun cursor-attribute-p (attribute)
-  (lem:attribute-value attribute :cursor))
-
-(defun set-cursor-attribute (attribute)
-  (setf (lem:attribute-value attribute :cursor) t))
-
-(defun attribute-font (attribute)
-  (let ((attribute (lem:ensure-attribute attribute nil)))
-    (when attribute
-      (lem:attribute-value attribute 'font))))
-
-(defun attribute-image (attribute)
-  (let ((attribute (lem:ensure-attribute attribute nil)))
-    (when attribute
-      (lem:attribute-value attribute 'image))))
-
-(defun overlay-cursor-p (overlay)
-  (lem:overlay-get overlay :cursor))
 
 (defun make-cursor-overlay (point)
   (let ((overlay (lem-core::make-temporary-overlay
@@ -115,21 +137,6 @@
          (lem:point-charpos (lem:overlay-end overlay)))
         (t
          nil)))
-
-(defun attribute-foreground-with-reverse (attribute)
-  (if (and attribute (lem:attribute-reverse attribute))
-      (attribute-background-color attribute)
-      (attribute-foreground-color attribute)))
-
-(defun attribute-background-with-reverse (attribute)
-  (if (and attribute (lem:attribute-reverse attribute))
-      (attribute-foreground-color attribute)
-      (attribute-background-color attribute)))
-
-(defun set-cursor-position (window x y)
-  (let ((view (lem:window-view window)))
-    (setf (view-last-cursor-x view) x
-          (view-last-cursor-y view) y)))
 
 (defstruct logical-line
   string
@@ -282,8 +289,7 @@
                    (text-object-surface drawing-object)))
          (y (- bottom-y surface-height)))
     (when (and attribute (cursor-attribute-p attribute))
-      (setf (view-last-cursor-x (lem:window-view window)) x
-            (view-last-cursor-y (lem:window-view window)) y))
+      (set-cursor-position window x y))
     (sdl2:with-rects ((rect x y surface-width surface-height))
       (set-color background)
       (sdl2:render-fill-rect (current-renderer) rect))
@@ -309,8 +315,7 @@
 (defmethod draw-object ((drawing-object eol-cursor-object) x bottom-y window)
   (set-color (eol-cursor-object-color drawing-object))
   (let ((y (- bottom-y (object-height drawing-object))))
-    (setf (view-last-cursor-x (lem:window-view window)) x
-          (view-last-cursor-y (lem:window-view window)) y)
+    (set-cursor-position window x y)
     (sdl2:with-rects ((rect x
                             y
                             (char-width)
@@ -379,18 +384,6 @@
 
 (defmethod object-height ((drawing-object image-object))
   (sdl2:surface-height (image-object-surface drawing-object)))
-
-(defun max-height-of-objects (objects)
-  (loop :for object :in objects
-        :maximize (object-height object)))
-
-(defun char-type (char)
-  (guess-font-type *display* (char-code char)))
-
-(defun get-font (&key attribute type bold)
-  (or (alexandria:when-let (attribute (and attribute (lem:ensure-attribute attribute)))
-        (attribute-font attribute))
-      (get-display-font *display* :type type :bold bold)))
 
 (defun split-string-by-character-type (string)
   (loop :with pos := 0 :and items := '()
@@ -546,6 +539,10 @@
          (push (list y height logical-line)
                (lem:window-parameter window 'cache-redrawing))
          nil)))
+
+(defun max-height-of-objects (objects)
+  (loop :for object :in objects
+        :maximize (object-height object)))
 
 (defun redraw-logical-line (window y logical-line)
   (loop :for objects :in

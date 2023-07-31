@@ -22,6 +22,7 @@
     :initform nil
     :accessor attribute-cache)
    (plist
+    :initarg :plist
     :initform nil
     :accessor attribute-plist)))
 
@@ -43,13 +44,14 @@
 (defun (setf attribute-value) (value attribute key)
   (setf (getf (attribute-plist attribute) key) value))
 
-(defun make-attribute (&key foreground background reverse bold underline)
+(defun make-attribute (&key foreground background reverse bold underline plist)
   (make-instance 'attribute
                  :foreground (or (maybe-base-color foreground) nil)
                  :background (or (maybe-base-color background) nil)
                  :reverse reverse
                  :bold bold
-                 :underline (or (maybe-base-color underline) underline)))
+                 :underline (or (maybe-base-color underline) underline)
+                 :plist plist))
 
 (defun ensure-attribute (x &optional (errorp t))
   (cond ((symbolp x)
@@ -72,7 +74,9 @@
                   :reverse (or (attribute-reverse over)
                                  (attribute-reverse under))
                   :underline (or (attribute-underline over)
-                                   (attribute-underline under))))
+                                 (attribute-underline under))
+                  :plist (append (attribute-plist over)
+                                 (attribute-plist under))))
 
 (defun attribute-equal (attribute1 attribute2)
   (and (equal (attribute-foreground attribute1)

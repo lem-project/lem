@@ -13,6 +13,12 @@
     (setf (view-last-cursor-x view) x
           (view-last-cursor-y view) y)))
 
+(defun drawing-cache (window)
+  (lem:window-parameter window 'redrawing-cache))
+
+(defun (setf drawing-cache) (value window)
+  (setf (lem:window-parameter window 'redrawing-cache) value))
+
 (defun char-type (char)
   (guess-font-type *display* (char-code char)))
 
@@ -515,14 +521,14 @@
         :do (draw-object object x (+ y height) window)))
 
 (defun validate-cache-p (window y height logical-line)
-  (loop :for (cache-y cache-height cache-logical-line) :in (lem:window-parameter window 'cache-redrawing)
+  (loop :for (cache-y cache-height cache-logical-line) :in (drawing-cache window)
         :when (and (= y cache-y)
                    (= height cache-height)
                    (logical-line-equal logical-line cache-logical-line))
         :return t))
 
 (defun invalidate-cache (window y height)
-  (setf (lem:window-parameter window 'cache-redrawing)
+  (setf (drawing-cache window)
         (remove-if (lambda (elt)
                      (destructuring-bind (cache-y cache-height cache-logical-line) elt
                        (declare (ignore cache-logical-line))
@@ -530,14 +536,14 @@
                                     cache-y)
                                 (<= (+ cache-y cache-height)
                                     y)))))
-                   (lem:window-parameter window 'cache-redrawing))))
+                   (drawing-cache window))))
 
 (defun update-and-validate-cache-p (window y height logical-line)
   (cond ((validate-cache-p window y height logical-line) t)
         (t
          (invalidate-cache window y height)
          (push (list y height logical-line)
-               (lem:window-parameter window 'cache-redrawing))
+               (drawing-cache window))
          nil)))
 
 (defun max-height-of-objects (objects)
@@ -575,7 +581,7 @@
   (assert (eq buffer (lem:window-buffer window)))
   (when (or force
             (lem-core::screen-modified-p (lem:window-screen window)))
-    (setf (lem:window-parameter window 'cache-redrawing) '()))
+    (setf (drawing-cache window) '()))
   (sdl2:set-render-target (current-renderer) (view-texture (lem:window-view window)))
   (redraw-lines window)
   (lem-core::update-screen-cache (lem:window-screen window) buffer))

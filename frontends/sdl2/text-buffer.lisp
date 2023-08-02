@@ -43,6 +43,16 @@
     (when attribute
       (lem:attribute-value attribute 'image))))
 
+(defun attribute-width (attribute)
+  (let ((attribute (lem:ensure-attribute attribute nil)))
+    (when attribute
+      (lem:attribute-value attribute :width))))
+
+(defun attribute-height (attribute)
+  (let ((attribute (lem:ensure-attribute attribute nil)))
+    (when attribute
+      (lem:attribute-value attribute :height))))
+
 (defun attribute-foreground-with-reverse (attribute)
   (if (and attribute (lem:attribute-reverse attribute))
       (attribute-background-color attribute)
@@ -279,6 +289,8 @@
 
 (defclass image-object (drawing-object)
   ((surface :initarg :surface :reader image-object-surface)
+   (width :initarg :width :reader image-object-width)
+   (height :initarg :height :reader image-object-height)
    (attribute :initarg :attribute :reader image-object-attribute)))
 
 ;;; draw-object
@@ -370,7 +382,8 @@
   (sdl2:surface-width (text-object-surface drawing-object)))
 
 (defmethod object-width ((drawing-object image-object))
-  (sdl2:surface-width (image-object-surface drawing-object)))
+  (or (image-object-width drawing-object)
+      (sdl2:surface-width (image-object-surface drawing-object))))
 
 ;;; object-height
 (defmethod object-height ((drawing-object void-object))
@@ -389,7 +402,8 @@
   (char-height))
 
 (defmethod object-height ((drawing-object image-object))
-  (sdl2:surface-height (image-object-surface drawing-object)))
+  (or (image-object-height drawing-object)
+      (sdl2:surface-height (image-object-surface drawing-object))))
 
 (defun split-string-by-character-type (string)
   (loop :with pos := 0 :and items := '()
@@ -446,6 +460,8 @@
                  ((and attribute (attribute-image attribute))
                   (list (make-instance 'image-object
                                        :surface (attribute-image attribute)
+                                       :width (attribute-width attribute)
+                                       :height (attribute-height attribute)
                                        :attribute attribute)))
                  (t
                   (loop :for (type . string) :in (split-string-by-character-type string)

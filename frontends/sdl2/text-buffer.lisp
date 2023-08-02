@@ -273,7 +273,8 @@
 (defclass text-object (drawing-object)
   ((surface :initarg :surface :reader text-object-surface)
    (string :initarg :string :reader text-object-string)
-   (attribute :initarg :attribute :reader text-object-attribute)))
+   (attribute :initarg :attribute :reader text-object-attribute)
+   (type :initarg :type :reader text-object-type)))
 
 (defclass eol-cursor-object (drawing-object)
   ((color :initarg :color
@@ -370,7 +371,9 @@
   0)
 
 (defmethod object-width ((drawing-object text-object))
-  (sdl2:surface-width (text-object-surface drawing-object)))
+  (if (eq :emoji (text-object-type drawing-object))
+      (* (char-width) 2 (length (text-object-string drawing-object)))
+      (sdl2:surface-width (text-object-surface drawing-object))))
 
 (defmethod object-width ((drawing-object eol-cursor-object))
   0)
@@ -390,7 +393,9 @@
   (char-height))
 
 (defmethod object-height ((drawing-object text-object))
-  (sdl2:surface-height (text-object-surface drawing-object)))
+  (if (eq :emoji (text-object-type drawing-object))
+      (char-height)
+      (sdl2:surface-height (text-object-surface drawing-object))))
 
 (defmethod object-height ((drawing-object eol-cursor-object))
   (char-height))
@@ -451,7 +456,8 @@
                                            :offset (line-end-item-offset item)
                                            :surface surface
                                            :string string
-                                           :attribute attribute)))))
+                                           :attribute attribute
+                                           :type type)))))
         (t
          (let ((string (item-string item))
                (attribute (item-attribute item)))
@@ -471,7 +477,8 @@
                                    (make-instance 'text-object
                                                   :surface surface
                                                   :string string
-                                                  :attribute attribute)))))))))
+                                                  :attribute attribute
+                                                  :type type)))))))))
 
 (defun clear-to-end-of-line (window x y height)
   (sdl2:with-rects ((rect x y (- (view-width-by-pixel window) x) height))
@@ -488,12 +495,13 @@
 
 (defun make-letter-object (character attribute)
   (let* ((bold (and attribute (lem:attribute-bold attribute)))
-         (foreground (attribute-foreground-with-reverse attribute)))
+         (foreground (attribute-foreground-with-reverse attribute))
+         (type (char-type character)))
     (cffi:with-foreign-string (c-string (string character))
       (let ((surface
               (sdl2-ttf:render-utf8-blended
                (get-font :attribute attribute
-                         :type (char-type character)
+                         :type type
                          :bold bold)
                c-string
                (lem:color-red foreground)
@@ -503,7 +511,8 @@
         (make-instance 'text-object
                        :surface surface
                        :string (string character)
-                       :attribute attribute)))))
+                       :attribute attribute
+                       :type type)))))
 
 
 (defun explode-object (text-object)

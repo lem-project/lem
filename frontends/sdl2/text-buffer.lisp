@@ -430,6 +430,7 @@
          (let ((string (line-end-item-text item))
                (attribute (line-end-item-attribute item)))
            (loop :for (type . string) :in (split-string-by-character-type string)
+                 :unless (alexandria:emptyp string)
                  :collect (multiple-value-bind (surface attribute)
                               (make-text-surface-with-attribute string attribute :type type)
                             (make-instance 'line-end-object
@@ -448,6 +449,7 @@
                                        :attribute attribute)))
                  (t
                   (loop :for (type . string) :in (split-string-by-character-type string)
+                        :unless (alexandria:emptyp string)
                         :collect (multiple-value-bind (surface attribute)
                                      (make-text-surface-with-attribute string attribute :type type)
                                    (make-instance 'text-object

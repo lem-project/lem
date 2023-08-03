@@ -33,21 +33,21 @@
 | [kill-region](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L167)                | C-w               | Kill the text of region.                                                             |
 | [kill-region-to-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L176)   |                   | Kill the text of region and copy to the clipboard.                                   |
 | [kill-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L181)                  | C-k               | Kill from the current cursor position to the end of the line.                        |
-| [kill-whole-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L200)            | C-Shift-Backspace | Kill the entire line and the remaining whitespace                                    |
-| [yank](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L219)                       | C-y               | Paste the copied text.                                                               |
-| [yank-pop](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L223)                   | M-y               | Replaces the immediately pasted text with the next text in the killring.             |
-| [yank-pop-next](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L236)              |                   | Replaces the immediately preceding yank-pop text with the text before the kill ring. |
-| [yank-to-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L249)          |                   | Copy the text of the killring to the clipboard.                                      |
-| [paste-from-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L256)       |                   | Inserts text from the clipboard.                                                     |
-| [entab-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L274)                 |                   | Replaces the indent of the current line from space to tab.                           |
-| [detab-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L280)                 |                   | Replaces the indent of the current line from tab to space.                           |
-| [delete-blank-lines](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L287)         | C-x C-o           | Delete blank lines before and after the cursor.                                      |
-| [just-one-space](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L311)             | M-Space           | Combines consecutive whitespace before and after the cursor into one.                |
-| [delete-indentation](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L317)         | M-^               | Merge the current line with the previous line.                                       |
-| [transpose-characters](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L337)       | C-t               | Swaps the characters before and after the cursor.                                    |
-| [undo](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L354)                       | C-\               | Undo.                                                                                |
-| [redo](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L361)                       | C-_, C-/          | Redo.                                                                                |
-| [delete-trailing-whitespace](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L388) |                   | Removes all end-of-line and end-of-buffer whitespace from the current buffer.        |
+| [kill-whole-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L213)            | C-Shift-Backspace | Kill the entire line and the remaining whitespace                                    |
+| [yank](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L232)                       | C-y               | Paste the copied text.                                                               |
+| [yank-pop](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L236)                   | M-y               | Replaces the immediately pasted text with the next text in the killring.             |
+| [yank-pop-next](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L249)              |                   | Replaces the immediately preceding yank-pop text with the text before the kill ring. |
+| [yank-to-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L262)          |                   | Copy the text of the killring to the clipboard.                                      |
+| [paste-from-clipboard](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L269)       |                   | Inserts text from the clipboard.                                                     |
+| [entab-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L287)                 |                   | Replaces the indent of the current line from space to tab.                           |
+| [detab-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L293)                 |                   | Replaces the indent of the current line from tab to space.                           |
+| [delete-blank-lines](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L300)         | C-x C-o           | Delete blank lines before and after the cursor.                                      |
+| [just-one-space](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L324)             | M-Space           | Combines consecutive whitespace before and after the cursor into one.                |
+| [delete-indentation](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L330)         | M-^               | Merge the current line with the previous line.                                       |
+| [transpose-characters](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L350)       | C-t               | Swaps the characters before and after the cursor.                                    |
+| [undo](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L367)                       | C-\               | Undo.                                                                                |
+| [redo](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L374)                       | C-_, C-/          | Redo.                                                                                |
+| [delete-trailing-whitespace](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L401) |                   | Removes all end-of-line and end-of-buffer whitespace from the current buffer.        |
 
 ## Mark
 | Command                                                                                          | Key bindings | Documentation                                                  |
@@ -128,25 +128,25 @@
 | [recenter](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L128)                         | C-l            | Scroll so that the cursor is in the middle.                           |
 | [split-active-window-vertically](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L135)   | C-x 2          | Split the current window vertically.                                  |
 | [split-active-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L141) | C-x 3          | Split the current window horizontally.                                |
-| [other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L152)                     | C-x o, M-o     | Go to the next window.                                                |
-| [switch-to-last-focused-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L165)    |                | Go to the window that was last in focus.                              |
-| [window-move-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L174)                 |                | Go to the window on the down.                                         |
-| [window-move-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L179)                   |                | Go to the window on the up.                                           |
-| [window-move-right](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L184)                |                | Go to the window on the right.                                        |
-| [window-move-left](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L189)                 |                | Go to the window on the left.                                         |
-| [delete-other-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L194)             | C-x 1          | Delete all other windows.                                             |
-| [delete-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L207)             | C-x 0, M-q     | Delete the active window.                                             |
-| [quit-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L212)               |                | Quit the active window. This is a command for a popped-up window.     |
-| [grow-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L217)                      | C-x ^          | Grow the window's height.                                             |
-| [shrink-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L225)                    | C-x C-z        | Shrink the window's height.                                           |
-| [grow-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L233)         | C-x }          | Grow the window's width.                                              |
-| [shrink-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L241)       | C-x {          | Shrink the window's width.                                            |
-| [scroll-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L252)                      | C-Down, M-Down | Scroll down.                                                          |
-| [scroll-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L265)                        | C-Up, M-Up     | Scroll up.                                                            |
-| [find-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L276)           | C-x 4 f        | Open a file in another window. Split the screen vertically if needed. |
-| [read-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L277)           | C-x 4 r        | Read a file in another window.                                        |
-| [select-buffer-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L278)       | C-x 4 b        | Select a buffer in another window.                                    |
-| [compare-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L282)                  |                |                                                                       |
+| [other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L147)                     | C-x o, M-o     | Go to the next window.                                                |
+| [switch-to-last-focused-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L159)    |                | Go to the window that was last in focus.                              |
+| [window-move-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L167)                 |                | Go to the window on the down.                                         |
+| [window-move-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L172)                   |                | Go to the window on the up.                                           |
+| [window-move-right](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L177)                |                | Go to the window on the right.                                        |
+| [window-move-left](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L182)                 |                | Go to the window on the left.                                         |
+| [delete-other-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L187)             | C-x 1          | Delete all other windows.                                             |
+| [delete-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L200)             | C-x 0, M-q     | Delete the active window.                                             |
+| [quit-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L205)               |                | Quit the active window. This is a command for a popped-up window.     |
+| [grow-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L210)                      | C-x ^          | Grow the window's height.                                             |
+| [shrink-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L218)                    | C-x C-z        | Shrink the window's height.                                           |
+| [grow-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L226)         | C-x }          | Grow the window's width.                                              |
+| [shrink-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L234)       | C-x {          | Shrink the window's width.                                            |
+| [scroll-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L245)                      | C-Down, M-Down | Scroll down.                                                          |
+| [scroll-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L259)                        | C-Up, M-Up     | Scroll up.                                                            |
+| [find-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L271)           | C-x 4 f        | Open a file in another window. Split the screen vertically if needed. |
+| [read-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L272)           | C-x 4 r        | Read a file in another window.                                        |
+| [select-buffer-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L273)       | C-x 4 b        | Select a buffer in another window.                                    |
+| [compare-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L277)                  |                |                                                                       |
 
 ## Multiple-Cursors
 | Command                                                                                                        | Key bindings | Documentation                                               |
@@ -182,8 +182,13 @@
 | [keyboard-quit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L29)     | C-g            | Signal a `quit` condition.                                   |
 | [escape](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L33)            | Escape         | Signal a `quit` condition silently.                          |
 | [exit-lem](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L37)          | C-x C-c        | Ask for modified buffers before exiting lem.                 |
-| [quick-exit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L44)        |                | Exit the lem job and kill it.                                |
-| [execute-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L49)   | M-x            | Read a command name, then read the ARG and call the command. |
-| [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L68) | Shift-F10, M-h |                                                              |
-| [load-library](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L74)      |                | Load the Lisp library named NAME.                            |
+| [quick-exit](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L50)        |                | Exit the lem job and kill it.                                |
+| [execute-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L55)   | M-x            | Read a command name, then read the ARG and call the command. |
+| [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L74) | Shift-F10, M-h |                                                              |
+| [load-library](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L80)      |                | Load the Lisp library named NAME.                            |
+
+## Frame
+| Command                                                                                            | Key bindings | Documentation       |
+|----------------------------------------------------------------------------------------------------|--------------|---------------------|
+| [toggle-frame-fullscreen](https://github.com/lem-project/lem/blob/main/src/commands/frame.lisp#L6) |              | Toggles fullscreen. |
 

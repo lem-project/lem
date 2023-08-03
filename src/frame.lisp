@@ -192,9 +192,11 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
                           (reverse (frame-floating-windows frame))
                           (window-list frame)))
     (when (within-window-p window x y)
-      (return (values window
-                      (- x (window-x window))
-                      (- y (window-y window)))))))
+      (let ((overlay-x-offset (or (screen-left-width (window-screen window))
+                                  0)))
+        (return (values window
+                        (- x (window-x window) overlay-x-offset)
+                        (- y (window-y window))))))))
 
 (defun focus-separator-position (frame x y)
   (when (and (frame-leftside-window frame)

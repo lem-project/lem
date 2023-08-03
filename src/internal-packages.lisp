@@ -79,6 +79,7 @@
    :make-attribute
    :attribute
    :attribute-p
+   :attribute-value
    :ensure-attribute
    :merge-attribute
    :set-attribute
@@ -226,6 +227,7 @@
    :window-use-modeline-p
    :window-redraw
    :current-window
+   :last-focused-window
    :window-list
    :compute-window-list
    :one-window-p
@@ -251,7 +253,6 @@
    :not-switchable-buffer-p
    :switch-to-buffer
    :pop-to-buffer
-   :display-buffer
    :quit-window
    :left-window
    :right-window
@@ -438,6 +439,7 @@
    :completion-buffer)
   ;; cursors.lisp
   (:export
+   :fake-cursor
    :cursor-saved-column
    :cursor-yank-start
    :cursor-yank-end
@@ -482,13 +484,14 @@
   (:export
    :with-implementation
    :implementation
-   :native-scroll-support
    :redraw-after-modifying-floating-window
    :support-floating-window
    :set-foreground
    :set-background
    :display-width
-   :display-height)
+   :display-height
+   :display-title
+   :display-fullscreen-p)
   ;; color-theme.lisp
   (:export
    :color-theme-names
@@ -515,6 +518,10 @@
    :update-background
    :display-width
    :display-height
+   :display-title
+   :set-display-title
+   :display-fullscreen-p
+   :set-display-fullscreen-p
    :make-view
    :delete-view
    :clear
@@ -528,7 +535,6 @@
    :redraw-view-after
    :will-update-display
    :update-display
-   :scroll
    :set-first-view
    :split-window-horizontally
    :split-window-vertically

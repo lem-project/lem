@@ -128,7 +128,9 @@
    :kill-buffer-hook
    :buffer-list
    :any-modified-buffer-p
+   :modified-buffers
    :get-buffer
+   :get-or-create-buffer
    :unique-buffer-name
    :delete-buffer
    :get-next-buffer
@@ -153,6 +155,7 @@
    :point<=
    :point>
    :point>=
+   :point-closest
    :point-min
    :point-max)
   ;; basic.lisp

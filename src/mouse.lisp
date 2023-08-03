@@ -76,7 +76,6 @@
 
 (defun move-current-point-to-x-y-position (window x y)
   (switch-to-window window)
-  (setf (current-window) window)
   (move-point (current-point) (window-view-point window))
   (move-to-next-virtual-line (current-point) y)
   (move-to-virtual-line-column (current-point) x))
@@ -278,9 +277,10 @@
                                          (mouse-event-x mouse-event)
                                          (mouse-event-y mouse-event))))
       (when window
-        (call-command (find-command "scroll-down")
-                      (- (* (mouse-wheel-y mouse-event)
-                            *scroll-speed*)))))))
+        (with-current-window window
+          (call-command (find-command "scroll-down")
+                        (- (* (mouse-wheel-y mouse-event)
+                              *scroll-speed*))))))))
 
 
 (defun get-select-expression-points (point)
@@ -344,6 +344,10 @@
       (delete-overlay overlay)
       (setf (buffer-value buffer :unhover-callback) nil))))
 
+(defun clear-buffer-hover-overlay-when-before-change (point arg)
+  (declare (ignore arg))
+  (clear-buffer-hover-overlay (point-buffer point)))
+
 (defun update-hover-overlay (point)
   (let ((buffer (point-buffer point)))
     (with-point ((start point)
@@ -357,6 +361,8 @@
                (move-point (overlay-end overlay) end))
               (t
                (let ((overlay (make-overlay start end 'region)))
+                 (add-hook (variable-value 'before-change-functions :buffer buffer)
+                           'clear-buffer-hover-overlay-when-before-change)
                  (setf (buffer-value buffer :unhover-callback)
                        (lambda (window point)
                          (declare (ignore window point))
@@ -397,7 +403,9 @@
   *last-point-on-context-menu-open*)
 
 (defun update-point-on-context-menu-open (point)
-  (setf *last-point-on-context-menu-open* (copy-point point :temporary)))
+  (if point
+      (setf *last-point-on-context-menu-open* (copy-point point :temporary))
+      (setf *last-point-on-context-menu-open* nil)))
 
 (defun show-context-menu-over-mouse-cursor (x y)
   (let ((context-menu (buffer-context-menu (current-buffer))))

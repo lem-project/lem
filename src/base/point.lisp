@@ -193,6 +193,41 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
         :always (or (%point< point2 point1)
                     (%point= point2 point1))))
 
+(defun point-closest (point point-list &key (direction :up) (same-line nil))
+  "Return the closest point on the POINT-LIST compare to POINT.
+DIRECTION can be :up or :down depending on the desired point.
+SAME-LINE if T the point in POINT-LIST can be in the same line as POINT."
+  (labels ((up (p closest)
+             (or (and (point>= point p closest)
+                      (or same-line
+                          (not (same-line-p p point))))
+                 (point>= closest point)))
+           (down (p closest)
+             (or (and
+                  (point> p point)
+                  (<=  (- (point-linum p) (point-linum point))
+                       (- (point-linum closest) (point-linum point)))
+                  (or same-line (not (same-line-p p point))))
+
+                 (point<= closest point))))
+    (loop :for p :in point-list
+          :for flag := t :then nil
+          :with closest := nil
+          :do (progn
+                (when flag (setf closest p))
+                (when (and
+                       (not flag)
+                       (or (and (eq direction :up)
+                                (up p closest))
+                           (and (eq direction :down)
+                                (down p closest))))
+                  (setf closest p)))
+          :finally (return (and (or (and (eq direction :up)
+                                         (point> point closest))
+                                    (and (eq direction :down)
+                                         (point< point closest)))
+                                closest)))))
+
 (defun point-min (point &rest more-points)
   (assert (%always-same-buffer point more-points))
   (loop :with min := point

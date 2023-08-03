@@ -360,4 +360,4 @@
                (format nil "(micros:compute-class-inheritance-tree ~S ~S)" class-name (lem-lisp-mode:current-package)))))
     (unless tree
       (editor-error "There is no class named ~:@(~A~)" class-name))
-    (display-buffer (draw-tree buffer-name (make-class-tree tree buffer-name)))))
+    (pop-to-buffer (draw-tree buffer-name (make-class-tree tree buffer-name)))))

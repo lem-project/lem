@@ -15,20 +15,23 @@
 
   A keyword, one of :pathname (sort by file name), :mtime (last modification time) and :size.")
 
-(define-attribute header-attribute
-  (:light :foreground "dark green")
-  (:dark :foreground "green"))
+(define-attribute current-directory-attribute
+  (t :bold t))
+
+(define-attribute file-size-attribute
+  (t))
+
+(define-attribute file-date-attribute
+  (t))
 
 (define-attribute file-attribute
   (t))
 
 (define-attribute directory-attribute
-  (:light :foreground "blue" :bold t)
-  (:dark :foreground "sky blue"))
+  (t :foreground :base0D :bold t))
 
 (define-attribute link-attribute
-  (:light :foreground "cyan")
-  (:dark :foreground "green"))
+  (t :foreground :base0B :bold t))
 
 (define-major-mode directory-mode ()
     (:name "Directory"
@@ -68,18 +71,24 @@
     (when (string/= error-string "")
       (editor-error "~A" error-string))))
 
-(defun update-line (point &optional move-cursor-to-file-position)
+(defun remove-line-overlay-when-buffer-change (point arg)
+  (declare (ignore arg))
+  (alexandria:when-let (ov (buffer-value (point-buffer point) 'line-overlay))
+    (setf (buffer-value (point-buffer point) 'line-overlay) nil)
+    (delete-overlay ov)))
+
+(defun update-line (point)
   (with-point ((start point)
                (end point))
-    (back-to-indentation (line-start start))
+    (back-to-indentation start)
     (line-end end)
-    (when move-cursor-to-file-position
-      (move-point point start))
     (let ((ov (buffer-value point 'line-overlay)))
       (cond (ov
              (move-point (overlay-start ov) start)
              (move-point (overlay-end ov) end))
             (t
+             (add-hook (variable-value 'before-change-functions :buffer (point-buffer point))
+                       'remove-line-overlay-when-buffer-change)
              (setf ov (make-overlay start end 'region))
              (setf (buffer-value point 'line-overlay) ov))))))
 
@@ -102,15 +111,16 @@
 
 (defun set-mark (p mark)
   (with-buffer-read-only (point-buffer p) nil
-    (with-point ((p p))
-      (let ((pathname (get-line-property p 'pathname)))
-        (when (and pathname (not (uiop:pathname-equal
-                                  pathname
-                                  (uiop:pathname-parent-directory-pathname
-                                   (buffer-directory (point-buffer p))))))
-          (character-offset (line-start p) 1)
-          (delete-character p 1)
-          (insert-character p (if mark #\* #\space)))))))
+    (let ((*inhibit-read-only* t))
+      (with-point ((p p))
+        (let ((pathname (get-line-property p 'pathname)))
+          (when (and pathname (not (uiop:pathname-equal
+                                    pathname
+                                    (uiop:pathname-parent-directory-pathname
+                                     (buffer-directory (point-buffer p))))))
+            (character-offset (line-start p) 1)
+            (delete-character p 1)
+            (insert-character p (if mark #\* #\space))))))))
 
 (defun iter-marks (p function)
   (with-point ((p p))
@@ -174,62 +184,68 @@
              t)))))
 
 (defun insert-pathname (point pathname directory &optional content)
-  (with-point ((start point))
-    (let ((name (or content (namestring (enough-namestring pathname directory)))))
-      (insert-string point "  " 'pathname pathname 'name name)
-      (insert-string point (format nil " ~5@A "
-                                   (let ((size (file-size pathname)))
-                                     (if size (human-readable-file-size size) ""))))
-      (multiple-value-bind (second minute hour day month year week)
-          (let ((date (file-write-date pathname)))
-            (if date
-                (decode-universal-time date)
-                (values 0 0 0 0 0 0 nil)))
+  (let ((file-size (handler-case (file-size pathname)
+                     (error ()
+                       (return-from insert-pathname)))))
+    (with-point ((start point))
+      (let ((name (or content (namestring (enough-namestring pathname directory)))))
+        (insert-string point "  " 'pathname pathname 'name name)
         (insert-string point
-                       (format nil "~4,'0D/~2,'0D/~2,'0D ~2,'0D:~2,'0D:~2,'0D ~A "
-                               year month day hour minute second
-                               (if week (aref #("Mon" "Tue" "Wed" "Thr" "Fri" "Sat" "Sun") week)
-                                   "   "))))
-      (unless (string= name "..")
-        (insert-icon point name))
-      (insert-string point
-                     name
-                     :attribute (get-file-attribute pathname)
-                     :file pathname)
-      (when (symbolic-link-p pathname)
-        (insert-string point (format nil " -> ~A" (probe-file pathname))))
-      (back-to-indentation start)
-      (put-text-property
-       start
-       point
-       :hover-callback (lambda (window dest-point)
-                         (let* ((src-point (buffer-point (window-buffer window))))
-                           (move-point src-point dest-point)
-                           (update-line src-point t))))
-      (put-text-property
-       start
-       point
-       :click-callback
-       (lambda (window dest-point)
-         (declare (ignore dest-point))
-         (setf (current-window) window)
-         (directory-mode-find-file)))
-      (insert-character point #\newline))))
+                       (format nil " ~5@A "
+                               (if file-size (human-readable-file-size file-size) ""))
+                       :attribute 'file-size-attribute)
+        (multiple-value-bind (second minute hour day month year week)
+            (let ((date (file-write-date pathname)))
+              (if date
+                  (decode-universal-time date)
+                  (values 0 0 0 0 0 0 nil)))
+          (insert-string point
+                         (format nil "~4,'0D/~2,'0D/~2,'0D ~2,'0D:~2,'0D:~2,'0D ~A "
+                                 year month day hour minute second
+                                 (if week (aref #("Mon" "Tue" "Wed" "Thr" "Fri" "Sat" "Sun") week)
+                                     "   "))
+                         :attribute 'file-date-attribute))
+        (unless (string= name "..")
+          (insert-icon point name))
+        (insert-string point
+                       name
+                       :attribute (get-file-attribute pathname)
+                       :file pathname)
+        (when (symbolic-link-p pathname)
+          (insert-string point (format nil " -> ~A" (probe-file pathname))))
+        (back-to-indentation start)
+        (lem/button:apply-button-between-points
+         start point
+         (lambda ()
+           (lem/button:with-context ()
+             (directory-mode-find-file))))
+        (insert-character point #\newline)
+        (put-text-property start point :read-only t)))))
+
+(defun insert-directories-and-files (point
+                                     directory
+                                     &key (sort-method *default-sort-method*)
+                                          (without-parent-directory t))
+  (unless without-parent-directory
+    (alexandria:when-let (pathname (probe-file (merge-pathnames "../" directory)))
+      (insert-pathname point pathname directory "..")))
+  (dolist (pathname (list-directory directory :sort-method sort-method))
+    (insert-pathname point pathname directory)))
 
 (defun update (buffer &key (sort-method *default-sort-method*))
   "Update this directory buffer content."
   (with-buffer-read-only buffer nil
-    (let* ((directory (buffer-directory buffer))
-           (p (buffer-point buffer))
-           (line-number (line-number-at-point p)))
-      (erase-buffer buffer)
-      (buffer-start p)
-      (insert-string p (format nil "~A~2%" directory))
-      (alexandria:when-let (pathname (probe-file (merge-pathnames "../" directory)))
-        (insert-pathname p pathname directory ".."))
-      (dolist (pathname (list-directory directory :sort-method sort-method))
-        (insert-pathname p pathname directory))
-      (move-to-line p line-number))))
+    (let ((*inhibit-read-only* t))
+      (let* ((directory (buffer-directory buffer))
+             (p (buffer-point buffer))
+             (line-number (line-number-at-point p)))
+        (erase-buffer buffer)
+        (buffer-start p)
+        (insert-string p (format nil "~A~2%" directory) :attribute 'current-directory-attribute)
+        (insert-directories-and-files p directory
+                                      :sort-method sort-method
+                                      :without-parent-directory nil)
+        (move-to-line p line-number)))))
 
 (defun update-all ()
   (dolist (buffer (buffer-list))
@@ -316,7 +332,7 @@
   #-windows
   (if *rename-p*
       (run-command `("mv" ,src ,dst))
-      (run-command `("cp" "-r" ,src ,dst))))
+      (run-command `("cp" "-R" ,src ,dst))))
 
 (defun check-copy-files (src-files dst)
   (let ((n (length src-files)))
@@ -357,7 +373,7 @@
                                    (let ((buffer (execute-find-file *find-file-executor*
                                                                     (get-file-mode pathname)
                                                                     pathname)))
-                                     (setf (current-window)
+                                     (switch-to-window
                                            (pop-to-buffer buffer))))))
 
 (define-command directory-mode-next-line (p) ("p")
@@ -431,26 +447,38 @@
     (rename-files (selected-files (current-point)) dst-file))
   (update-all))
 
+(defun search-filename-and-recenter (filename)
+  "Search `filename` in this files listing, recenter the window on it"
+  (move-to-beginning-of-buffer)
+  (search-forward (current-point) filename)
+  (window-recenter (current-window))
+  (character-offset (current-point) (* -1 (length filename))))
+
 (define-command directory-mode-sort-files () ()
   "Sort files: by name, by last modification time, then by size.
 
   Each new directory buffer first uses the default sort method (`lem/directory-mode:*default-sort-method*')"
-  (cond
-    ;; mtime -> size
-    ((eql (buffer-value (current-buffer) :sort-method) :mtime)
-     (message "Sorting by size")
-     (setf (buffer-value (current-buffer) :sort-method) :size)
-     (update (current-buffer) :sort-method :size))
-    ;; size -> pathname
-    ((eql (buffer-value (current-buffer) :sort-method) :size)
-     (message "Sorting by name")
-     (setf (buffer-value (current-buffer) :sort-method) :pathname)
-     (update (current-buffer) :sort-method :pathname))
-    (t
-     ;; At first call, the buffer's sort-method is not set.
-     (message "Sorting by last modification time")
-     (setf (buffer-value (current-buffer) :sort-method) :mtime)
-     (update (current-buffer) :sort-method :mtime))))
+  (let ((path (get-pathname (current-point))))
+    (cond
+      ;; mtime -> size
+      ((eql (buffer-value (current-buffer) :sort-method) :mtime)
+       (message "Sorting by size")
+       (setf (buffer-value (current-buffer) :sort-method) :size)
+       (update (current-buffer) :sort-method :size))
+      ;; size -> pathname
+      ((eql (buffer-value (current-buffer) :sort-method) :size)
+       (message "Sorting by name")
+       (setf (buffer-value (current-buffer) :sort-method) :pathname)
+       (update (current-buffer) :sort-method :pathname))
+      (t
+       ;; At first call, the buffer's sort-method is not set.
+       (message "Sorting by last modification time")
+       (setf (buffer-value (current-buffer) :sort-method) :mtime)
+       (update (current-buffer) :sort-method :mtime)))
+
+    ;; Follow file name.
+    (when (and path (str:non-blank-string-p (file-namestring path)))
+      (search-filename-and-recenter (file-namestring path)))))
 
 (define-command make-directory (filename) ("FMake directory: ")
   (setf filename (uiop:ensure-directory-pathname filename))

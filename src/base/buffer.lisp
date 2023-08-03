@@ -18,6 +18,7 @@
     :initform nil
     :accessor buffer-%filename)
    (%directory
+    :initarg :%directory
     :initform nil
     :accessor buffer-%directory
     :documentation "The buffer's directory. See: `buffer-directory'.")
@@ -140,15 +141,14 @@
   (:method (point)
     (copy-point point :left-inserting)))
 
-(defun make-buffer (name &key temporary read-only-p (enable-undo-p t)
+(defun make-buffer (name &key temporary read-only-p (enable-undo-p t) directory
                               (syntax-table (fundamental-syntax-table)))
-  "バッファ名が`name`のバッファがバッファリストに含まれていれば
-そのバッファを返し、無ければ作成します。
-`read-only-p`は読み込み専用にするか。
-`enable-undo-p`はアンドゥを有効にするか。
-`syntax-table`はそのバッファの構文テーブルを指定します。
-`temporary`が非NILならバッファリストに含まないバッファを作成します。
-引数で指定できるオプションは`temporary`がNILで既にバッファが存在する場合は無視します。
+  "If the buffer of name `name` exists in Lem's buffer list, return it, otherwise create it.
+`read-only-p` sets this buffer read-only.
+`enable-undo-p` enables undo.
+`syntax-table` specifies the syntax table for the buffer.
+If `temporary` is non-NIL, it creates a buffer and doesn't add it in the buffer list.
+Options that can be specified by arguments are ignored if `temporary` is NIL and the buffer already exists.
 "
   (unless temporary
     (uiop:if-let ((buffer (get-buffer name)))
@@ -156,6 +156,7 @@
   (let ((buffer (make-instance 'text-buffer
                                :name name
                                :read-only-p read-only-p
+                               :%directory directory
                                :%enable-undo-p enable-undo-p
                                :temporary temporary
                                :syntax-table syntax-table)))

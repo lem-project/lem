@@ -1,5 +1,5 @@
 (defsystem "lem"
-  :version "2.0.0"
+  :version "2.1.0"
   :depends-on ("alexandria"
                "trivial-gray-streams"
                "trivial-types"
@@ -85,7 +85,8 @@
                              (:file "process")
                              (:file "help")
                              (:file "font")
-                             (:file "other" :depends-on ("file"))))
+                             (:file "other" :depends-on ("file"))
+                             (:file "frame")))
 
                (:file "external-packages")
 
@@ -125,50 +126,64 @@
                              (:file "frame-multiplexer")
                              (:file "filer")
                              (:file "deepl")
-                             (:file "themes")))))
+                             (:file "themes")
+                             (:file "detective")))))
 
 (defsystem "lem/extensions"
   :depends-on (#+sbcl
-	       "lem-lsp-mode"
-	       "lem-vi-mode"
-	       #+sbcl
-	       "lem-lisp-mode"
-	       #+sbcl
-	       "lem-go-mode"
+               "lem-lsp-mode"
+               "lem-vi-mode"
+               #+sbcl
+               "lem-lisp-mode"
+               #+sbcl
+               "lem-go-mode"
 
-	       "lem-c-mode"
-	       "lem-xml-mode"
-	       "lem-html-mode"
-	       "lem-python-mode"
-	       "lem-posix-shell-mode"
-	       "lem-markdown-mode"
-	       "lem-js-mode"
-	       "lem-json-mode"
-	       "lem-css-mode"
-	       "lem-rust-mode"
-	       "lem-paredit-mode"
-	       "lem-nim-mode"
-	       #-clasp
-	       "lem-scheme-mode"
+               "lem-c-mode"
+               "lem-xml-mode"
+               "lem-html-mode"
+               "lem-python-mode"
+               "lem-posix-shell-mode"
+               "lem-markdown-mode"
+               "lem-js-mode"
+               "lem-json-mode"
+               "lem-css-mode"
+               "lem-rust-mode"
+               "lem-paredit-mode"
+               "lem-nim-mode"
+               #-clasp
+               "lem-scheme-mode"
 
-	       "lem-patch-mode"
-	       "lem-yaml-mode"
-	       "lem-review-mode"
-	       "lem-asciidoc-mode"
-	       "lem-dart-mode"
-	       "lem-scala-mode"
-	       "lem-dot-mode"
-	       "lem-java-mode"
-	       "lem-haskell-mode"
-	       "lem-ocaml-mode"
-	       "lem-asm-mode"
-	       "lem-makefile-mode"
-	       "lem-shell-mode"
-	       "lem-sql-mode"
-	       "lem-base16-themes"
-	       #+sbcl
-	       "lem-elixir-mode"
-	       "lem-documentation-mode"))
+               "lem-patch-mode"
+               "lem-yaml-mode"
+               "lem-review-mode"
+               "lem-asciidoc-mode"
+               "lem-dart-mode"
+               "lem-scala-mode"
+               "lem-dot-mode"
+               "lem-java-mode"
+               "lem-haskell-mode"
+               "lem-ocaml-mode"
+               "lem-asm-mode"
+               "lem-makefile-mode"
+               "lem-shell-mode"
+               "lem-sql-mode"
+               "lem-base16-themes"
+               #+sbcl
+               "lem-elixir-mode"
+               "lem-documentation-mode"
+               "lem-elisp-mode"))
+
+(defsystem "lem/legit"
+  :serial t
+  :depends-on ("lem")
+  :pathname "src"
+  :components ((:module "ext/legit"
+                :components ((:file "porcelain")
+                             (:file "peek-legit")
+                             (:file "legit")
+                             (:file "legit-rebase")))
+               (:module "scripts"
+                :components ((:static-file "dumbrebaseeditor.sh")))))
 
 (defsystem "lem/executable"
   :build-operation program-op

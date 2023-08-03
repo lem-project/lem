@@ -28,8 +28,7 @@
 (in-package :lem/listener-mode)
 
 (define-attribute listener-prompt-attribute
-  (:light :foreground "blue" :bold t)
-  (:dark :foreground "#22A0FF" :bold t))
+  (t :foreground :base0D :bold t))
 
 (define-editor-variable listener-prompt-attribute 'listener-prompt-attribute)
 
@@ -89,7 +88,7 @@
   (listener-history (current-buffer)))
 
 (defun default-switch-to-buffer (buffer)
-  (setf (current-window) (pop-to-buffer buffer)))
+  (switch-to-window (pop-to-buffer buffer)))
 
 (defun listener-start (buffer-name mode &key (switch-to-buffer-function 'default-switch-to-buffer))
   (let ((buffer (make-buffer buffer-name)))

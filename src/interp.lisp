@@ -168,5 +168,5 @@
                            (erase-buffer buffer)
                            (insert-string (buffer-point buffer)
                                           error-text)
-                           (display-buffer buffer)
+                           (pop-to-buffer buffer)
                            (buffer-start (buffer-point buffer)))))))))))

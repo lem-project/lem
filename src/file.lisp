@@ -28,28 +28,28 @@
                                                filename)
               (return mode))))
 
-(defun associcate-file-type (type-list mode)
+(defun associate-file-type (type-list mode)
   (dolist (type type-list)
     (pushnew (cons type mode)
              *file-type-relationals*
              :test #'equal)))
 
 (defmacro define-file-type ((&rest type-list) mode)
-  `(associcate-file-type ',type-list ',mode))
+  `(associate-file-type ',type-list ',mode))
 
 (defun get-program-mode (program-name)
   (alexandria:assoc-value *program-name-relationals*
                           program-name
                           :test #'string=))
 
-(defun associcate-program-name-with-mode (program-names mode)
+(defun associate-program-name-with-mode (program-names mode)
   (dolist (name program-names)
     (pushnew (cons name mode)
              *program-name-relationals*
              :test #'equal)))
 
 (defmacro define-program-name-with-mode ((&rest program-names) mode)
-  `(associcate-program-name-with-mode ',program-names ',mode))
+  `(associate-program-name-with-mode ',program-names ',mode))
 
 ;;;
 (defun parse-shebang (line)

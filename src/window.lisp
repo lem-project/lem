@@ -12,6 +12,8 @@
 (defparameter *use-new-vertical-move-function* t)
 (defparameter *use-cursor-movement-workaround* t)
 
+(defvar *last-focused-window* nil)
+
 (defgeneric %delete-window (window))
 (defgeneric window-parent (window)
   (:method (window)
@@ -178,9 +180,13 @@
                   (%window-point new-window)))
     (setf (frame-current-window frame) new-window)))
 
+(defun last-focused-window ()
+  *last-focused-window*)
+
 (defun switch-to-window (new-window)
   (unless (eq (current-window) new-window)
-    (run-hooks (window-leave-hook (current-window)) (current-window)))
+    (run-hooks (window-leave-hook (current-window)) (current-window))
+    (setf *last-focused-window* (current-window)))
   (setf (current-window) new-window))
 
 (defun window-list (&optional (frame (current-frame)))
@@ -236,14 +242,16 @@
   (values))
 
 (defun window-recenter (window)
-  (line-start
-   (move-point (window-view-point window)
-               (window-buffer-point window)))
-  (let* ((height (window-height-without-modeline window))
-         (n      (- (window-cursor-y window)
-                    (floor height 2))))
-    (window-scroll window n)
-    n))
+  (unless (= (window-cursor-y window)
+             (floor (window-height-without-modeline window) 2))
+    (line-start
+     (move-point (window-view-point window)
+                 (window-buffer-point window)))
+    (let* ((height (window-height-without-modeline window))
+           (n      (- (window-cursor-y window)
+                      (floor height 2))))
+      (window-scroll window n)
+      n)))
 
 (defun %calc-window-cursor-x (point window)
   "Return (values cur-x next). the 'next' is a flag if the cursor goes to
@@ -677,6 +685,16 @@ You can pass in the optional argument WINDOW-LIST to replace the default
         (cadr result)
         (car window-list))))
 
+(defun get-previous-window (window &optional (window-list (window-list)))
+  "Return window before WINDOW in the cyclic ordering of windows.
+
+You can pass in the optional argument WINDOW-LIST to replace the default
+`window-list`."
+  (let ((result (member window (reverse window-list))))
+    (if (cdr result)
+        (cadr result)
+        (car window-list))))
+
 (defun window-set-pos (window x y)
   "Make point value in WINDOW be at position X and Y in WINDOW’s buffer."
   (notify-frame-redisplay-required (current-frame))
@@ -984,18 +1002,60 @@ You can pass in the optional argument WINDOW-LIST to replace the default
         (car (buffer-list))
         (car buffer-list))))
 
-;;; switch-to-buffer/pop-to-buffer
+(defun change-buffer-p (window)
+  (window-parameter window 'change-buffer))
+
+(defun unchange-buffer (window)
+  (setf (window-parameter window 'change-buffer) nil))
+
+(defun change-buffer (window)
+  (setf (window-parameter window 'change-buffer) t))
+
 (defun run-show-buffer-hooks (window)
-  (when (window-parameter window 'change-buffer)
-    (setf (window-parameter window 'change-buffer) nil)
+  (when (change-buffer-p window)
+    (unchange-buffer window)
     (run-hooks *window-show-buffer-functions* window)))
+
+(deftype split-action ()
+  '(or null (member :sensibly :negative)))
+
+(defmethod split-window-using-split-action ((split-action null) window)
+  (split-window-sensibly window))
+
+(defmethod split-window-using-split-action ((split-action (eql :sensibly)) window)
+  (split-window-sensibly window))
+
+(defmethod split-window-using-split-action ((split-action (eql :negative)) window)
+  (let ((node (find-node-with-window (window-tree) window)))
+    (if (null node)
+        (split-window-sensibly window)
+        (ecase (window-node-split-type node)
+          (:hsplit (split-window-vertically window))
+          (:vsplit (split-window-horizontally window))))))
+
+(defstruct pop-to-buffer-state
+  (split-action nil :type split-action)
+  (parent-window nil :type (or null window)))
+
+(defun get-pop-to-buffer-state-parent-window (pop-to-buffer-state)
+  (and pop-to-buffer-state
+       (pop-to-buffer-state-parent-window pop-to-buffer-state)))
+
+(defun get-pop-to-buffer-state-split-p (pop-to-buffer-state)
+  (and pop-to-buffer-state
+       (not (null (pop-to-buffer-state-split-action pop-to-buffer-state)))))
+
+(defun window-pop-to-buffer-state (window)
+  (window-parameter window 'pop-to-buffer-state))
+
+(defun (setf window-pop-to-buffer-state) (pop-to-buffer-state window)
+  (setf (window-parameter window 'pop-to-buffer-state) pop-to-buffer-state))
 
 (defun %switch-to-buffer (buffer record move-prev-point)
   (without-interrupts
     (unless (eq (current-buffer) buffer)
       (when record
-        (setf (window-parameter (current-window) 'split-p) nil)
-        (setf (window-parameter (current-window) 'parent-window) nil)
+        (setf (window-pop-to-buffer-state (current-window)) nil)
         (let ((old-buffer (current-buffer)))
           (unbury-buffer old-buffer)
           (lem-base::%buffer-clear-keep-binfo old-buffer)
@@ -1017,7 +1077,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                                (current-window))
              (set-window-view-point (copy-point (buffer-start-point buffer) :right-inserting)
                                     (current-window)))))
-    (setf (window-parameter (current-window) 'change-buffer) t))
+    (change-buffer (current-window)))
   buffer)
 
 (let ((key '#:not-switchable-buffer-p))
@@ -1037,39 +1097,37 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)
   (%switch-to-buffer buffer record move-prev-point))
 
-(defun pop-to-buffer (buffer &optional force-split-p)
+(defun pop-to-buffer (buffer &key split-action)
+  (check-type split-action split-action)
   (if (eq buffer (current-buffer))
-      (return-from pop-to-buffer (values (current-window) nil))
+      (return-from pop-to-buffer (current-window))
       (let ((parent-window (current-window))
-            (split-p))
-        (let ((dst-window
-                (if (frame-prompt-active-p (current-frame))
-                    (frame-caller-of-prompt-window (current-frame))
-                    (current-window))))
-          (when (or (one-window-p) force-split-p)
-            (setf split-p t)
-            (split-window-sensibly dst-window))
-          (with-current-window
-              (or (window-tree-find-if (window-tree)
-                                       (lambda (window)
-                                         (eq buffer (window-buffer window))))
-                  (get-next-window dst-window))
-            (switch-to-buffer buffer)
-            (setf (window-parameter (current-window) 'split-p) split-p)
-            (setf (window-parameter (current-window) 'parent-window) parent-window)
-            (values (current-window) split-p))))))
-
-(defun display-buffer (buffer &optional force-split-p)
-  (multiple-value-bind (window split-p)
-      (pop-to-buffer buffer force-split-p)
-    (declare (ignore split-p))
-    window))
+            (dst-window
+              (if (frame-prompt-active-p (current-frame))
+                  (frame-caller-of-prompt-window (current-frame))
+                  (current-window))))
+        (when (or (one-window-p) split-action)
+          (split-window-using-split-action split-action dst-window))
+        (with-current-window
+            (or (window-tree-find-if (window-tree)
+                                     (lambda (window)
+                                       (eq buffer (window-buffer window))))
+                (get-next-window dst-window))
+          (switch-to-buffer buffer)
+          (setf (window-pop-to-buffer-state (current-window))
+                (make-pop-to-buffer-state :split-action split-action
+                                          :parent-window parent-window))
+          (current-window)))))
 
 (defun quit-window (window &key kill-buffer)
-  (let ((parent-window (window-parameter window 'parent-window)))
+  (let* ((pop-to-buffer-state
+           (window-pop-to-buffer-state window))
+         (parent-window
+           (get-pop-to-buffer-state-parent-window
+            pop-to-buffer-state)))
     (cond
       ((and (not (one-window-p))
-            (window-parameter window 'split-p))
+            (get-pop-to-buffer-state-split-p pop-to-buffer-state))
        (if kill-buffer
            (delete-buffer (window-buffer window))
            (bury-buffer (window-buffer window)))
@@ -1286,7 +1344,13 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 
 (defgeneric window-redraw (window force)
   (:method (window force)
-    (redraw-display-window window force)))
+    (redraw-buffer (window-buffer window) window force)))
+
+(defun redraw-current-window (window force)
+  (assert (eq window (current-window)))
+  (window-see window)
+  (run-show-buffer-hooks window)
+  (window-redraw window force))
 
 (defun redraw-display (&optional force)
   (when *in-redraw-display*
@@ -1297,7 +1361,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                (dolist (window (window-list))
                  (unless (eq window (current-window))
                    (window-redraw window force)))
-               (window-redraw (current-window) force))
+               (redraw-current-window (current-window) force))
              (redraw-header-windows (force)
                (dolist (window (frame-header-windows (current-frame)))
                  (window-redraw window force)))

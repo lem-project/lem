@@ -4,7 +4,8 @@
                 :when-let)
   #+sbcl
   (:lock t)
-  (:export :prompt-attribute))
+  (:export :prompt-attribute
+           :*prompt-completion-window-shape*))
 (in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)
@@ -63,8 +64,7 @@
   (setf (variable-value 'line-wrap :buffer (current-buffer)) nil))
 
 (define-attribute prompt-attribute
-  (:light :foreground "gray27" :bold t)
-  (:dark :foreground "snow" :bold t))
+  (t :foreground :base07 :bold t))
 
 (define-key *prompt-mode-keymap* "Return" 'prompt-execute)
 (define-key *prompt-mode-keymap* "Tab" 'prompt-completion)
@@ -123,6 +123,8 @@
       (lem/common/history:add-history (prompt-window-history (current-prompt-window)) input)
       (error 'execute-condition :input input))))
 
+(defvar *prompt-completion-window-shape* :drop-curtain)
+
 (define-command prompt-completion () ()
   (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
     (with-point ((start (current-prompt-start-point)))
@@ -142,9 +144,9 @@
                            (lem/completion-mode:completion-item
                             item))
                    :collect :it))))
-       :style '(:gravity :horizontally-adjacent-window
+       :style `(:gravity :horizontally-adjacent-window
                 :offset-y -1
-                :shape :drop-curtain)))))
+                :shape ,*prompt-completion-window-shape*)))))
 
 (define-command prompt-previous-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))

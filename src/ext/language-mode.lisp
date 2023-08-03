@@ -17,6 +17,7 @@
    :completion-spec
    :indent-size
    :root-uri-patterns
+   :detective-search
    :go-to-location
    :indent
    :newline-and-indent
@@ -53,6 +54,7 @@
 (define-editor-variable completion-spec nil)
 (define-editor-variable indent-size 2)
 (define-editor-variable root-uri-patterns '())
+(define-editor-variable detective-search nil)
 
 (defun prompt-for-symbol (prompt history-name)
   (prompt-for-string prompt :history-symbol history-name))
@@ -222,11 +224,10 @@
               (unless (line-offset p 1) (return)))))))))
 
 (define-attribute xref-headline-attribute
-  (t :bold t))
+  (t :foreground :base07 :bold t))
 
 (define-attribute xref-content-attribute
-  (:dark :foreground "cyan" :bold t)
-  (:light :foreground "blue" :bold t))
+  (t :foreground :base0D :bold t))
 
 (defun xref-insert-headline (headline point level)
   (insert-string point

@@ -1,10 +1,12 @@
 (defpackage :lem/button
   (:use :cl :lem)
-  (:export :button
+  (:export :with-context
+           :button
            :button-start
            :button-end
            :button-get
            :insert-button
+           :apply-button-between-points
            :button-action
            :forward-button
            :backward-button
@@ -25,19 +27,56 @@
 (defun (setf button-get) (value button key)
   (setf (getf (button-plist button) key) value))
 
+(defstruct context
+  window
+  point)
+
+(defvar *context* nil)
+
+(defun call-with-context (function)
+  (if *context*
+      (with-current-window (context-window *context*)
+        (save-excursion
+          (setf (current-buffer) (point-buffer (context-point *context*)))
+          (move-point (current-point) (context-point *context*))
+          (funcall function)))
+      (funcall function)))
+
+(defmacro with-context (() &body body)
+  `(call-with-context (lambda () ,@body)))
+
+(defun with-callback (callback)
+  (lambda (window point)
+    (let ((*context* (make-context :window window :point point)))
+      (funcall callback))))
+
 (defun insert-button (point text &optional callback &rest plist)
-  (let ((button-tag (getf plist :button-tag)))
-    (apply #'insert-string
-           point text
-           'button (make-button :plist plist :callback callback)
-           'action callback
-           :click-callback (lambda (window point)
-                             (declare (ignore window point))
-                             (funcall callback))
-           :attribute (getf plist :attribute)
-           (if button-tag
-               `(,button-tag t)
-               '()))))
+  (let ((button-tag (getf plist :button-tag))
+        (without-mouse-hover-highlight (getf plist :without-mouse-hover-highlight)))
+    (flet ((f ()
+             (apply #'insert-string
+                    point text
+                    'button (make-button :plist plist :callback callback)
+                    'action callback
+                    :click-callback (with-callback callback)
+                    :attribute (getf plist :attribute)
+                    (if button-tag
+                        `(,button-tag t)
+                        '()))))
+      (if without-mouse-hover-highlight
+          (f)
+          (with-point ((start point :right-inserting)
+                       (end point :left-inserting))
+            (prog1 (f)
+              (lem-core::set-clickable start
+                                       end
+                                       (with-callback callback))))))))
+
+(defun apply-button-between-points (start end callback)
+  (lem-core::set-clickable start
+                           end
+                           (with-callback callback))
+  (put-text-property start end 'button (make-button :callback callback)))
 
 (defun button-action (button)
   (funcall (button-callback button)))

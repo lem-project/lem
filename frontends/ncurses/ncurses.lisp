@@ -29,7 +29,6 @@
   ()
   (:default-initargs
    :name :ncurses
-   :native-scroll-support nil
    :redraw-after-modifying-floating-window t))
 
 (define-condition exit (editor-condition)
@@ -68,15 +67,16 @@
          (foreground (or underline-color (attribute-foreground attribute)))
          (background (or (attribute-background attribute)
                          lem-if:*background-color-of-drawing-window*))
-         (bits (logior (if (or cursorp (attribute-reverse attribute))
-                           (lem.term:get-color-pair background foreground)
-                           (lem.term:get-color-pair foreground background))
+         (bits (logior (lem.term:get-color-pair foreground background)
                        0
                        (if (attribute-bold attribute)
                            charms/ll:a_bold
                            0)
                        (if (attribute-underline attribute)
                            charms/ll:a_underline
+                           0)
+                       (if (or cursorp (attribute-reverse attribute))
+                           charms/ll:a_reverse
                            0))))
     bits))
 
@@ -459,9 +459,6 @@
              (charms/ll:wmove scrwin cursor-y cursor-x))))
     (charms/ll:wnoutrefresh scrwin)
     (charms/ll:doupdate)))
-
-(defmethod lem-if:scroll ((implementation ncurses) view n)
-  (charms/ll:wscrl (ncurses-view-scrwin view) n))
 
 (defmethod lem-if:clipboard-paste ((implementation ncurses))
   (lem-ncurses.clipboard:paste))

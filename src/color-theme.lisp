@@ -50,6 +50,11 @@
   (loop :for (name . args) :in (color-theme-specs theme)
         :do (setf (gethash name spec-table) args)))
 
+(deftype base-color ()
+  '(member
+    :base00 :base01 :base02 :base03 :base04 :base05 :base06 :base07 :base08 :base09
+    :base0A :base0B :base0C :base0D :base0E :base0F))
+
 (defun apply-theme (theme)
  "Takes a color-theme hastable, inherits the theme, and maps the newly generated spec-table
  to defined attributes, such as :background, :foreground, etc.. in the text editor"
@@ -71,7 +76,8 @@
                  ((:inactive-window-background)
                   (setf *inactive-window-background-color* (first args)))
                  (otherwise
-                  (apply #'set-attribute name args))))
+                  (unless (typep name 'base-color)
+                    (apply #'set-attribute name args)))))
              spec-table)))
 
 (define-command load-theme (name &optional (save-theme t))
@@ -91,12 +97,22 @@
       (setf (config :color-theme) (current-theme)))))
 
 (defun background-color ()
-  (when *current-theme*
-    (second (assoc :background (color-theme-specs (find-color-theme *current-theme*))))))
+  (when (current-theme)
+    (second (assoc :background (color-theme-specs (find-color-theme (current-theme)))))))
 
 (defun foreground-color ()
-  (when *current-theme*
-    (second (assoc :foreground (color-theme-specs (find-color-theme *current-theme*))))))
+  (when (current-theme)
+    (second (assoc :foreground (color-theme-specs (find-color-theme (current-theme)))))))
+
+(defun base-color (name)
+  (check-type name base-color)
+  (when (current-theme)
+    (second (assoc name (color-theme-specs (find-color-theme (current-theme)))))))
+
+(defun maybe-base-color (name)
+  (if (typep name 'base-color)
+      (base-color name)
+      name))
 
 (define-major-mode color-theme-selector-mode ()
     (:name "Themes"

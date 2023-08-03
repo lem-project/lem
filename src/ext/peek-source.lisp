@@ -14,15 +14,13 @@
 (in-package :lem/peek-source)
 
 (define-attribute filename-attribute
-  (:light :foreground "blue")
-  (:dark :foreground "cyan"))
+  (t :foreground :base0D :bold t))
 
 (define-attribute position-attribute
-  (:light :foreground "dark red")
-  (:dark :foreground "red"))
+  (t :foreground :base08 :bold t))
 
 (define-attribute highlight
-  (t :background "cyan"))
+  (t :background :base01))
 
 (defvar *collector*)
 
@@ -42,6 +40,7 @@
   (setf (not-switchable-buffer-p (current-buffer)) t))
 
 (define-key *peek-source-keymap* "Return" 'peek-source-select)
+(define-key *peek-source-keymap* "q" 'peek-source-quit)
 (define-key *peek-source-keymap* 'next-line 'peek-source-next)
 (define-key *peek-source-keymap* 'previous-line 'peek-source-previous)
 (define-key *peek-source-keymap* "Escape" 'peek-source-quit)  ;; also C-x 0 by default.
@@ -176,7 +175,7 @@
 
 ;;;
 (define-attribute match-line-attribute
-  (t :background "#444444"))
+  (t :background :base01))
 
 (defun get-matched-point ()
   (alexandria:when-let* ((move (get-move-function (buffer-point (window-buffer *peek-window*))))

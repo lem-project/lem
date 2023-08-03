@@ -33,4 +33,4 @@
   #+darwin
   (uiop:run-program (list "open" (namestring pathname)))
   #+windows
-  (uiop:run-program (list "explorer" (namestring pathname))))
+  (uiop:run-program (list "explorer" (namestring pathname)) :ignore-error-status t))

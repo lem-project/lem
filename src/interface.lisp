@@ -7,10 +7,6 @@
     :initform (alexandria:required-argument :name)
     :initarg :name
     :reader implementation-name)
-   (native-scroll-support
-    :initform nil
-    :initarg :native-scroll-support
-    :reader native-scroll-support)
    (redraw-after-modifying-floating-window
     :initform nil
     :initarg :redraw-after-modifying-floating-window
@@ -44,6 +40,10 @@
 (defgeneric lem-if:update-background (implementation color-name))
 (defgeneric lem-if:display-width (implementation))
 (defgeneric lem-if:display-height (implementation))
+(defgeneric lem-if:display-title (implementation))
+(defgeneric lem-if:set-display-title (implementation title))
+(defgeneric lem-if:display-fullscreen-p (implementation))
+(defgeneric lem-if:set-display-fullscreen-p (implementation fullscreen-p))
 (defgeneric lem-if:make-view (implementation window x y width height use-modeline))
 (defgeneric lem-if:delete-view (implementation view))
 (defgeneric lem-if:clear (implementation view))
@@ -60,7 +60,6 @@
 (defgeneric lem-if::will-update-display (implementation)
   (:method (implementation)))
 (defgeneric lem-if:update-display (implementation))
-(defgeneric lem-if:scroll (implementation view n))
 
 (defgeneric lem-if:set-first-view (implementation view)
   (:method (implementation view)))
@@ -139,6 +138,12 @@
 
 (defun display-width () (lem-if:display-width (implementation)))
 (defun display-height () (lem-if:display-height (implementation)))
+(defun display-title () (lem-if:display-title (implementation)))
+(defun (setf display-title) (title)
+  (lem-if:set-display-title (implementation) title))
+(defun display-fullscreen-p () (lem-if:display-fullscreen-p (implementation)))
+(defun (setf display-fullscreen-p) (fullscreen-p)
+  (lem-if:set-display-fullscreen-p (implementation) fullscreen-p))
 
 (defun invoke-frontend (function &key (implementation
                                        (get-default-implementation)))

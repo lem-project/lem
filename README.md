@@ -12,11 +12,20 @@ You can skip over writing tidy settings or installing many plugins as you do on 
 Lem supports other programming languages thanks to its built-in LSP
 client. You can choose between an Emacs and a Vim mode.
 
+Other Lem features include:
+
+- a **project explorer** tree view
+- project-aware commands
+- interactive **grep** and **git** interfaces
+- **multiple cursors**
+- tetris
+- and more…
+
 # Download
 
-**Lem 2.0 was released!**
+**Lem 2.1 was released!**
 
-See our [Lem 2.0 realease](https://github.com/lem-project/lem/releases/tag/v2.0.0) to
+See our [Lem 2.1 realease](https://github.com/lem-project/lem/releases/tag/v2.1.0) to
 download binaries for Windows, MacOS and Linux.
 
 On mac, you need to run `xattr -d com.apple.quarantine /Applications/lem.app`.  
@@ -40,14 +49,6 @@ https://github.com/lem-project/lem/issues/628
 - Linux
 - MacOS
 - [Windows](https://github.com/lem-project/lem/wiki/Windows-Platform)
-
-## Play with Lem in Docker
-
-You can try Lem by running it in a docker container:
-
-```
-docker run --rm -ti -v `pwd`:/app 40ants/lem:latest
-```
 
 ## Installation with roswell
 

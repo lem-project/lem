@@ -6,7 +6,7 @@
 (defparameter *down-pointing-triangle* (uiop:strcat (string (code-char #x25BE)) " "))
 
 (define-attribute triangle-attribute
-  (t :bold t :foreground "light blue"))
+  (t :bold t :foreground :base0D))
 
 (define-major-mode filer-mode ()
     (:name "Filer"
@@ -129,7 +129,7 @@
                0)))
     (funcall function)
     (when (lem-core::frame-leftside-window (current-frame))
-      (scroll (lem-core::frame-leftside-window (current-frame)) n))))
+      (scroll-down n (lem-core::frame-leftside-window (current-frame))))))
 
 (defmacro with-fix-scroll (() &body body)
   `(call-with-fix-scroll (lambda () ,@body)))

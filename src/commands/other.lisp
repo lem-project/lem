@@ -36,10 +36,16 @@
 
 (define-command exit-lem (&optional (ask t)) ()
   "Ask for modified buffers before exiting lem."
-  (when (or (null ask)
-            (not (any-modified-buffer-p))
-            (prompt-for-y-or-n-p "Modified buffers exist. Leave anyway"))
-    (exit-editor)))
+  (let ((modified-buffers
+          (mapcar #'buffer-name (modified-buffers))))
+    (and (or
+          (null ask)
+          (not modified-buffers)
+          (prompt-for-y-or-n-p
+           (format nil
+                   "Modified buffers exist:~%~{~a~%~}Leave anyway?"
+                   modified-buffers)))
+         (exit-editor))))
 
 (define-command quick-exit () ()
   "Exit the lem job and kill it."

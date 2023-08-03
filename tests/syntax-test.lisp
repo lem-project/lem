@@ -59,3 +59,24 @@
                      (lem-base:end-buffer-p point)))
             (ok (and (eq point (lem-base:scan-lists point -1 0 t))
                      (lem-base:start-buffer-p point)))))))))
+
+(deftest contains-line-comment-character-in-block-comment-or-string
+  (dolist (text (list (uiop:strcat #\" #\newline ";" #\")
+                      (uiop:strcat "x" "#|" #\newline ";" "|#")))
+  
+    ;; Arrange
+    (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
+      (let* ((buffer (lem-base:make-buffer nil
+                                           :temporary t
+                                           :enable-undo-p nil
+                                           :syntax-table lem-lisp-syntax:*syntax-table*))
+             (point (lem-base:buffer-point buffer)))
+        (lem-base:insert-string point text)
+        (lem-base:buffer-end point)
+      
+        ;; Act
+        (let ((got (lem-base:form-offset point -1)))
+          (ok (eq point got))
+
+          ;; Assertion
+          (ok (lem-base:point= (lem-base:buffer-start-point buffer) point)))))))

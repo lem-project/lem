@@ -231,6 +231,7 @@
 (defun notify-required-redisplay ()
   (with-renderer ()
     (when (display-redraw-at-least-once-p *display*)
+      (setf (display-redraw-at-least-once-p *display*) nil)
       (sdl2:set-render-target (current-renderer) (display-texture *display*))
       (set-render-color *display* (display-background-color *display*))
       (sdl2:render-clear (current-renderer))

@@ -40,7 +40,7 @@ jobs:
         sblint src/base/lem-base.asd
         sblint lem.asd
         sblint lib/lisp-syntax/lem-lisp-syntax.asd
-        sblint modes/lisp-mode/lem-lisp-mode.asd
+        sblint extensions/lisp-mode/lem-lisp-mode.asd
 
         if [ $(grep -r --include="*.lisp" 'lem::' | wc -l) -ne 0 ]; then
           echo 'using `lem::` internal symbols'

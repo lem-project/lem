@@ -376,9 +376,9 @@
                    (xref-insert-content content point 1))
                  (setf prev-file file))))))))
 
-(define-command find-definitions () ()
-  (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer))
-    (funcall fn (current-point))))
+(define-command find-definitions (&optional (point (current-point))) ()
+  (alexandria:when-let (fn (variable-value 'find-definitions-function :buffer point))
+    (funcall fn point)))
 
 (defun xref-references-length=1 (xref-references-list)
   (and (alexandria:length= 1 xref-references-list)

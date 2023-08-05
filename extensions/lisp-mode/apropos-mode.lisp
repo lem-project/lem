@@ -27,7 +27,11 @@
         (loop :for plist :in data
               :do (let ((designator (cadr plist))
                         (plist1 (cddr plist)))
-                    (insert-string point designator
+                    (insert-button point
+                                   designator
+                                   (lambda ()
+                                     (with-context ()
+                                       (find-definitions)))
                                    :attribute 'apropos-headline-attribute)
                     (loop :for (k v) :on plist1 :by #'cddr
                           :do (insert-string point (format nil "~%  ~A: ~A" k v)))

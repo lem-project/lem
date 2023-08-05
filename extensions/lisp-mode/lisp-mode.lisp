@@ -800,13 +800,16 @@
     (list (make-xref-location :filespec (point-buffer point)
                               :position (position-at-point point)))))
 
+(defun find-definitions-by-name (name)
+  (let ((definitions (lisp-eval `(micros:find-definitions-for-emacs ,name))))
+    (definitions-to-locations definitions)))
+
 (defun find-definitions-default (point)
   (let ((name (or (symbol-string-at-point point)
                   (prompt-for-symbol-name "Edit Definition of: "))))
     (alexandria:when-let (result (find-local-definition point name))
       (return-from find-definitions-default result))
-    (let ((definitions (lisp-eval `(micros:find-definitions-for-emacs ,name))))
-      (definitions-to-locations definitions))))
+    (find-definitions-by-name name)))
 
 (defparameter *find-definitions* '(find-definitions-default))
 

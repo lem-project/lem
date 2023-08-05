@@ -9,6 +9,7 @@
 (define-key *lisp-mode-keymap* "C-c C-d a" 'lisp-apropos)
 (define-key *lisp-mode-keymap* "C-c C-d z" 'lisp-apropos-all)
 (define-key *lisp-mode-keymap* "C-c C-d p" 'lisp-apropos-package)
+(define-key *lisp-mode-keymap* "C-c C-d s" 'lisp-search-symbol)
 
 (define-attribute apropos-headline-attribute
   (t :bold t))
@@ -41,9 +42,9 @@
 (defun lisp-apropos-internal (string only-external-p package case-sensitive-p)
   (show-apropos (lisp-eval
                  `(micros:apropos-list-for-emacs ,string
-                                                ,only-external-p
-                                                ,case-sensitive-p
-                                                ,package))
+                                                 ,only-external-p
+                                                 ,case-sensitive-p
+                                                 ,package))
                 (or package
                     (current-package))))
 
@@ -78,3 +79,35 @@
                                (current-package)
                                package)
                            nil)))
+
+(defun plist-keys (plist)
+  (loop :for (k v) :on plist :by #'cddr :collect k))
+
+(defun completion-symbol-for-search-symbol (query)
+  (multiple-value-bind (symbol-name query-package-name is-internal)
+      (micros::tokenize-symbol-thoroughly query)
+    (loop :for plist :in (lisp-eval `(micros:apropos-list-for-emacs
+                                      ,symbol-name
+                                      ,(not is-internal)))
+          :when (destructuring-bind (&key designator package-name &allow-other-keys) plist
+                  (when (or (null query-package-name)
+                            (search query-package-name
+                                    package-name
+                                    :test #'char-equal))
+                    (make-completion-item
+                     :label designator
+                     :detail (format nil "Package: ~A, ~{~A~^, ~}"
+                                     package-name
+                                     (plist-keys
+                                      (alexandria:remove-from-plist plist
+                                                                    :designator
+                                                                    :package-name))))))
+          :collect :it)))
+
+(define-command lisp-search-symbol () ()
+  (let ((name
+          (prompt-for-string "Search symbol: "
+                             :completion-function (lambda (query)
+                                                    (completion-symbol-for-search-symbol
+                                                     query)))))
+    (display-xref-locations (find-definitions-by-name name))))

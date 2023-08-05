@@ -86,7 +86,9 @@
     :reader completion-item-focus-action
     :type (or null function))))
 
-(defun make-completion-item (&rest initargs)
+(defun make-completion-item (&rest initargs
+                             &key label chunks detail start end focus-action)
+  (declare (ignore label chunks detail start end focus-action))
   (apply #'make-instance 'completion-item initargs))
 
 (defvar *completion-mode-keymap* (make-keymap :name '*completion-mode-keymap*

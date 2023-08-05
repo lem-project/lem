@@ -94,6 +94,7 @@
              (context-menu-find-definition)
              (context-menu-find-references)
              (context-menu-hyperspec)
+             (context-menu-browse-class-as-tree)
              (context-menu-inspect-printed-object)
              (context-menu-copy-down-printed-object)
              (context-menu-describe-object)

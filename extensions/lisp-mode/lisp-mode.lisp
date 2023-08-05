@@ -154,6 +154,17 @@
                    (lem-lisp-mode/exporter:lisp-add-export
                     (symbol-string-at-point point)))))))
 
+(defun context-menu-browse-class-as-tree ()
+  (let ((point (point-over-symbol-with-menu-opened-p)))
+    (when point
+      (lem/context-menu:make-item
+       :label "Browse class as tree"
+       :callback (lambda (&rest args)
+                   (declare (ignore args))
+                   ;; TODO: resolve forward references
+                   (uiop:symbol-call :lem-lisp-mode/class-browser
+                                     :lisp-browse-class-as-tree))))))
+
 (defun compute-context-menu-items ()
   (remove
    nil
@@ -164,7 +175,8 @@
           (context-menu-find-definition)
           (context-menu-find-references)
           (context-menu-hyperspec)
-          (context-menu-export-symbol)))))
+          (context-menu-export-symbol)
+          (context-menu-browse-class-as-tree)))))
 
 (defun change-current-connection (connection)
   (when (current-connection)

@@ -74,17 +74,17 @@
 | [count-words](https://github.com/lem-project/lem/blob/main/src/commands/word.lisp#L205)          | M-=                             | Count the number of lines/words/characters in the buffer. |
 
 ## S-Expression
-| Command                                                                                             | Key bindings     | Documentation                                     |
-|-----------------------------------------------------------------------------------------------------|------------------|---------------------------------------------------|
-| [forward-sexp](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L28)     | M-C-f            | Move the cursor to the forward expression.        |
-| [backward-sexp](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L39)    | M-C-b            | Move the cursor to the backward expression.       |
-| [forward-list](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L43)     | M-C-n            | Move the cursor to the forward list.              |
-| [backward-list](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L47)    | M-C-p            | Move the cursor to the backward list.             |
-| [down-list](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L51)        | M-C-d            | Move the cursor to the inner expression.          |
-| [backward-up-list](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L55) | M-C-u            | Move the cursor to the outer expression.          |
-| [mark-sexp](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L60)        | M-C-@, M-C-Space | Select the forward expression as a region.        |
-| [kill-sexp](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L70)        | M-C-k            | Kill the forward expression as a region.          |
-| [transpose-sexps](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L79)  | M-C-t            | Swaps the expression before and after the cursor. |
+| Command                                                                                            | Key bindings     | Documentation                                     |
+|----------------------------------------------------------------------------------------------------|------------------|---------------------------------------------------|
+| [forward-sexp](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L28)    | M-C-f            | Move the cursor to the forward expression.        |
+| [backward-sexp](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L39)   | M-C-b            | Move the cursor to the backward expression.       |
+| [forward-list](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L43)    | M-C-n            | Move the cursor to the forward list.              |
+| [backward-list](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L47)   | M-C-p            | Move the cursor to the backward list.             |
+| [down-list](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L51)       | M-C-d            | Move the cursor to the inner expression.          |
+| [up-list](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L55)         | M-C-u            | Move the cursor to the outer expression.          |
+| [mark-sexp](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L60)       | M-C-@, M-C-Space | Select the forward expression as a region.        |
+| [kill-sexp](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L70)       | M-C-k            | Kill the forward expression as a region.          |
+| [transpose-sexps](https://github.com/lem-project/lem/blob/main/src/commands/s-expression.lisp#L79) | M-C-t            | Swaps the expression before and after the cursor. |
 
 ## File
 | Command                                                                                           | Key bindings | Documentation                                                                                                 |

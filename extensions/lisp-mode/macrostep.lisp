@@ -225,3 +225,7 @@ Do you want to disable this message in the future?"
                                      :offset-x 1
                                      :offset-y 1))
         (lisp-macrostep-disable-help)))))
+
+(defun guard () (error 'read-only-error))
+(defmethod execute ((mode macrostep-mode) (command undo) argument) (guard))
+(defmethod execute ((mode macrostep-mode) (command redo) argument) (guard))

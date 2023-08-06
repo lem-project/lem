@@ -57,14 +57,17 @@
         :return t))
 
 (defun search-next-subform-overlay (point)
-  (loop :for overlay :in (get-sorted-subform-overlays (point-buffer point))
+  (loop :with overlays := (get-sorted-subform-overlays (point-buffer point))
+        :for overlay :in overlays
         :when (point< point (overlay-start overlay))
-        :return overlay))
+        :return overlay
+        :finally (return (first overlays))))
 
 (defun search-previous-subform-overlay (point)
   (loop :for (overlay next-overlay) :on (get-sorted-subform-overlays (point-buffer point))
-        :while next-overlay
-        :when (point<= (overlay-end overlay) point (overlay-start next-overlay))
+        :if (null next-overlay)
+        :return overlay
+        :if (point<= (overlay-end overlay) point (overlay-start next-overlay))
         :return overlay))
 
 (defun remove-overlays-within-points (start end)

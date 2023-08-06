@@ -186,30 +186,31 @@
         ((:error message)
          (show-message (format nil "Error: ~A" message)))))))
 
+(defclass macrostep-advice () ())
+
+(defmethod execute :before (mode (command macrostep-advice) argument)
+  (unless (mode-active-p (current-buffer) 'macrostep-mode)
+    (editor-error "macrostep-mode is not activated.")))
+
+(define-command (lisp-macrostep-quit (:advice-classes macrostep-advice)) () ()
+  (macrostep-mode nil))
+
+(define-command (lisp-macrostep-next (:advice-classes macrostep-advice)) () ()
+  (when-let (overlay (search-next-subform-overlay (current-point)))
+    (move-point (current-point) (overlay-start overlay))))
+
+(define-command (lisp-macrostep-previous (:advice-classes macrostep-advice)) () ()
+  (when-let (overlay (search-previous-subform-overlay (current-point)))
+    (move-point (current-point) (overlay-start overlay))))
+
+(define-command (lisp-macrostep-expand-next (:advice-classes macrostep-advice)) () ()
+  (macrostep-expand (current-point)))
+
+(define-command (lisp-macrostep-undo (:advice-classes macrostep-advice)) () ()
+  (pop-undo (current-buffer))
+  (when (empty-undo-stack-p (current-buffer))
+    (macrostep-mode nil)))
+
 (define-command lisp-macrostep-expand () ()
   (macrostep-expand (current-point))
   (macrostep-mode t))
-
-(define-command lisp-macrostep-quit () ()
-  (when (mode-active-p (current-buffer) 'macrostep-mode)
-    (macrostep-mode nil)))
-
-(define-command lisp-macrostep-next () ()
-  (when (mode-active-p (current-buffer) 'macrostep-mode)
-    (when-let (overlay (search-next-subform-overlay (current-point)))
-      (move-point (current-point) (overlay-start overlay)))))
-
-(define-command lisp-macrostep-previous () ()
-  (when (mode-active-p (current-buffer) 'macrostep-mode)
-    (when-let (overlay (search-previous-subform-overlay (current-point)))
-      (move-point (current-point) (overlay-start overlay)))))
-
-(define-command lisp-macrostep-expand-next () ()
-  (when (mode-active-p (current-buffer) 'macrostep-mode)
-    (macrostep-expand (current-point))))
-
-(define-command lisp-macrostep-undo () ()
-  (when (mode-active-p (current-buffer) 'macrostep-mode)
-    (pop-undo (current-buffer))
-    (when (empty-undo-stack-p (current-buffer))
-      (macrostep-mode nil))))

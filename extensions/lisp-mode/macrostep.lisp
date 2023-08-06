@@ -131,7 +131,8 @@
 (defun get-form-points (point)
   (maybe-beginning-of-string point)
   (unless (syntax-open-paren-char-p (character-at point))
-    (backward-up-list point))
+    (backward-up-list point)
+    (skip-chars-backward point #'syntax-expr-prefix-char-p))
   (values point
           (form-offset (copy-point point :temporary) 1)))
 

@@ -182,9 +182,11 @@
          (let ((subforms (dump-subforms (point-buffer point))))
            (replace-with-macrostep-expand start end expansion-string subform-info)
            (push-undo start end string subforms))
-         (move-point point start))
+         (move-point point start)
+         t)
         ((:error message)
-         (show-message (format nil "Error: ~A" message)))))))
+         (show-message (format nil "Error: ~A" message))
+         nil)))))
 
 (defclass macrostep-advice () ())
 
@@ -212,5 +214,5 @@
     (macrostep-mode nil)))
 
 (define-command lisp-macrostep-expand () ()
-  (macrostep-expand (current-point))
-  (macrostep-mode t))
+  (when (macrostep-expand (current-point))
+    (macrostep-mode t)))

@@ -103,7 +103,7 @@
 (defun pop-undo (buffer)
   (when (buffer-value buffer 'undo)
     (let ((*inhibit-read-only* t))
-      (destructuring-bind (start-pos end-pos string subforms)
+      (destructuring-bind (start-pos end-pos string subforms is-mark)
           (pop (buffer-value buffer 'undo))
         (multiple-value-bind (start end)
             (positions-to-points buffer start-pos end-pos)
@@ -111,14 +111,16 @@
           (loop :for (start-pos . end-pos) :in subforms
                 :do (multiple-value-bind (start end)
                         (positions-to-points buffer start-pos end-pos)
-                      (add-subform-overlay buffer (make-subform-overlay start end)))))))
+                      (add-subform-overlay buffer (make-subform-overlay start end))))
+          (unless is-mark
+            (buffer-unmark buffer)))))
     t))
 
-(defun push-undo (start end string subforms)
+(defun push-undo (start end string subforms is-mark)
   (let ((buffer (point-buffer start))
         (start-pos (position-at-point start))
         (end-pos (position-at-point end)))
-    (push (list start-pos end-pos string subforms)
+    (push (list start-pos end-pos string subforms is-mark)
           (buffer-value buffer 'undo))))
 
 (defun replace-with-macrostep-expand (start end expansion-string subform-info)
@@ -167,9 +169,10 @@
       (destructuring-ecase
           (lisp-eval `(micros/macrostep:macrostep-expand-1 ,string t ',context))
         ((:ok expansion-string subform-info)
-         (let ((subforms (dump-subforms (point-buffer point))))
+         (let ((subforms (dump-subforms (point-buffer point)))
+               (is-mark (buffer-modified-p (point-buffer point))))
            (replace-with-macrostep-expand start end expansion-string subform-info)
-           (push-undo start end string subforms))
+           (push-undo start end string subforms is-mark))
          (move-point point start)
          t)
         ((:error message)

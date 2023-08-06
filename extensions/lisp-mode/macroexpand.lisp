@@ -1,11 +1,11 @@
-(defpackage :lem-lisp-mode/macrostep
+(defpackage :lem-lisp-mode/macroexpand
   (:use :cl
         :alexandria
         :lem
         :lem-lisp-mode/internal)
   #+sbcl
   (:lock t))
-(in-package :lem-lisp-mode/macrostep)
+(in-package :lem-lisp-mode/macroexpand)
 
 (define-attribute expand-attribute
   (t :background :base01))
@@ -25,6 +25,7 @@
 (define-key *macrostep-mode-keymap* "Shift-Tab" 'lisp-macrostep-previous)
 (define-key *macrostep-mode-keymap* "Return" 'lisp-macrostep-expand-next)
 (define-key *macrostep-mode-keymap* "Backspace" 'lisp-macrostep-undo)
+(define-key *lisp-mode-keymap* "C-c M-m" 'lisp-macroexpand-all)
 
 (defun enable-macrostep ()
   (setf (buffer-read-only-p (current-buffer)) t))
@@ -229,3 +230,34 @@ Do you want to disable this message in the future?"
 (defun guard () (error 'read-only-error))
 (defmethod execute ((mode macrostep-mode) (command undo) argument) (guard))
 (defmethod execute ((mode macrostep-mode) (command redo) argument) (guard))
+
+(defun macroexpand-internal (expander)
+  (let* ((self (eq (current-buffer) (get-buffer "*lisp-macroexpand*")))
+         (orig-package-name (buffer-package (current-buffer) "CL-USER"))
+         (p (and self (copy-point (current-point) :temporary))))
+    (lisp-eval-async `(,expander ,(lem-lisp-mode/internal::form-string-at-point))
+                     (lambda (string)
+                       (let ((buffer (make-buffer "*lisp-macroexpand*")))
+                         (with-buffer-read-only buffer nil
+                           (unless self (erase-buffer buffer))
+                           (change-buffer-mode buffer 'lisp-mode)
+                           (setf (buffer-package buffer) orig-package-name)
+                           (when self
+                             (move-point (current-point) p)
+                             (kill-sexp))
+                           (insert-string (buffer-point buffer)
+                                          string)
+                           (indent-points (buffer-start-point buffer)
+                                          (buffer-end-point buffer))
+                           (with-pop-up-typeout-window (s buffer)
+                             (declare (ignore s)))
+                           (when self
+                             (move-point (buffer-point buffer) p))))))))
+
+(define-command lisp-macroexpand () ()
+  (check-connection)
+  (macroexpand-internal 'micros:swank-macroexpand-1))
+
+(define-command lisp-macroexpand-all () ()
+  (check-connection)
+  (macroexpand-internal 'micros:swank-macroexpand-all))

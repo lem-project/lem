@@ -41,7 +41,7 @@
                (:file "self-insert-hook")
                (:file "trace")
                (:file "class-browser")
-               (:file "macrostep")
+               (:file "macroexpand")
                (:file "package")))
 
 (defsystem "lem-lisp-mode/v2"

@@ -172,7 +172,7 @@
 
 (defmethod execute :before (mode (command macrostep-advice) argument)
   (unless (mode-active-p (current-buffer) 'macrostep-mode)
-    (editor-error "macrostep-mode is not activated.")))
+    (editor-error "macrostep is not activated.")))
 
 (define-command (lisp-macrostep-quit (:advice-classes macrostep-advice)) () ()
   (macrostep-mode nil))

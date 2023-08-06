@@ -57,7 +57,7 @@
                        (lem/detective:make-capture-regex
                         :regex "^\\(in-package "
                         :function #'lem-lisp-mode/detective:capture-reference)
-		       :variable-regex
+                       :variable-regex
                        (lem/detective:make-capture-regex
                         :regex "^(?:\\(defvar |\\(defparameter )"
                         :function #'lem-lisp-mode/detective:capture-reference)))
@@ -81,8 +81,6 @@
 (define-key *lisp-mode-keymap* "C-c M-c" 'lisp-remove-notes)
 (define-key *lisp-mode-keymap* "C-c C-k" 'lisp-compile-and-load-file)
 (define-key *lisp-mode-keymap* "C-c C-c" 'lisp-compile-defun)
-(define-key *lisp-mode-keymap* "C-c Return" 'lisp-macroexpand)
-(define-key *lisp-mode-keymap* "C-c M-m" 'lisp-macroexpand-all)
 (define-key *lisp-mode-keymap* "C-c C-d d" 'lisp-describe-symbol)
 (define-key *lisp-mode-keymap* "C-c C-z" 'lisp-switch-to-repl-buffer)
 (define-key *lisp-mode-keymap* "C-c z" 'lisp-switch-to-repl-buffer)
@@ -738,37 +736,6 @@
                  (end point))
       (form-offset end 1)
       (points-to-string start end))))
-
-(defun macroexpand-internal (expander)
-  (let* ((self (eq (current-buffer) (get-buffer "*lisp-macroexpand*")))
-         (orig-package-name (buffer-package (current-buffer) "CL-USER"))
-         (p (and self (copy-point (current-point) :temporary))))
-    (lisp-eval-async `(,expander ,(form-string-at-point))
-                     (lambda (string)
-                       (let ((buffer (make-buffer "*lisp-macroexpand*")))
-                         (with-buffer-read-only buffer nil
-                           (unless self (erase-buffer buffer))
-                           (change-buffer-mode buffer 'lisp-mode)
-                           (setf (buffer-package buffer) orig-package-name)
-                           (when self
-                             (move-point (current-point) p)
-                             (kill-sexp))
-                           (insert-string (buffer-point buffer)
-                                          string)
-                           (indent-points (buffer-start-point buffer)
-                                          (buffer-end-point buffer))
-                           (with-pop-up-typeout-window (s buffer)
-                             (declare (ignore s)))
-                           (when self
-                             (move-point (buffer-point buffer) p))))))))
-
-(define-command lisp-macroexpand () ()
-  (check-connection)
-  (macroexpand-internal 'micros:swank-macroexpand-1))
-
-(define-command lisp-macroexpand-all () ()
-  (check-connection)
-  (macroexpand-internal 'micros:swank-macroexpand-all))
 
 (define-command lisp-quickload (system-name)
     ((prompt-for-symbol-name "System: " (buffer-package (current-buffer))))

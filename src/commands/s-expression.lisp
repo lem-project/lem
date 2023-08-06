@@ -1,5 +1,5 @@
 (defpackage :lem-core/commands/s-expression
-  (:use :cl 
+  (:use :cl
         :lem-core
         :lem-core/commands/edit)
   (:export :forward-sexp
@@ -7,7 +7,7 @@
            :forward-list
            :backward-list
            :down-list
-           :backward-up-list
+           :up-list
            :mark-sexp
            :kill-sexp
            :transpose-sexps))
@@ -18,7 +18,7 @@
 (define-key *global-keymap* "C-M-n" 'forward-list)
 (define-key *global-keymap* "C-M-p" 'backward-list)
 (define-key *global-keymap* "C-M-d" 'down-list)
-(define-key *global-keymap* "C-M-u" 'backward-up-list)
+(define-key *global-keymap* "C-M-u" 'up-list)
 (define-key *global-keymap* "C-M-@" 'mark-sexp)
 (define-key *global-keymap* "C-M-Space" 'mark-sexp)
 (define-key *global-keymap* "C-M-k" 'kill-sexp)
@@ -52,7 +52,7 @@
   "Move the cursor to the inner expression."
   (scan-lists (current-point) n -1 no-errors))
 
-(define-command (backward-up-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+(define-command (up-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
   "Move the cursor to the outer expression."
   (or (maybe-beginning-of-string (current-point))
       (scan-lists (current-point) (- n) 1 no-errors)))
@@ -109,7 +109,7 @@
         (skip-symbol-backward start))
       (let ((remaining-text (points-to-string start end)))
         (delete-between-points start end)
-        (backward-up-list)
+        (up-list)
         (kill-sexp)
         (save-excursion (insert-string start remaining-text)))
       (form-offset end 1)

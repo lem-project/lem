@@ -78,7 +78,7 @@
 (defun inline-line-comment-p (point)
   (flet ((search-line-comment-backward (point)
            (with-point ((point point))
-             (loop 
+             (loop
                (when (syntax-line-comment-p point)
                  (return t))
                (when (start-line-p point)
@@ -414,6 +414,18 @@
                            (return nil)
                            (scan-error))))))
         (move-point point curr)))))
+
+(defun forward-down-list (point &optional no-errors limit-point)
+  (scan-lists point 1 -1 no-errors limit-point))
+
+(defun forward-up-list (point &optional no-errors limit-point)
+  (scan-lists point 1 1 no-errors limit-point))
+
+(defun backward-up-list (point &optional no-errors limit-point)
+  (scan-lists point -1 1 no-errors limit-point))
+
+(defun backward-down-list (point &optional no-errors limit-point)
+  (scan-lists point -1 -1 no-errors limit-point))
 
 (flet ((non-newline-whitespace-p (c)
          (and (char/= c #\newline)

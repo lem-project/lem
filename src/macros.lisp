@@ -50,3 +50,23 @@
             (*trace-output* ,stream)
             (*terminal-io* ,stream))
        ,@body)))
+
+(defmacro define-buffer-accessor (name)
+  (alexandria:with-unique-names (buffer value)
+    `(progn
+       (defun ,name (,buffer)
+         (buffer-value ,buffer ',name))
+       (defun (setf ,name) (,value ,buffer)
+         (setf (buffer-value ,buffer ',name) ,value)))))
+
+(defmacro define-overlay-accessors (name &key clear-function add-function)
+  (alexandria:with-unique-names (buffer overlay)
+    `(progn
+       (define-buffer-accessor ,name)
+       ,(when clear-function
+          `(defun ,clear-function (,buffer)
+             (map () #'delete-overlay (,name ,buffer))
+             (setf (,name ,buffer) '())))
+       ,(when add-function
+          `(defun ,add-function (,buffer ,overlay)
+             (push ,overlay (,name ,buffer)))))))

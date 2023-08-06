@@ -11,7 +11,7 @@
   (t :background :base01))
 
 (define-attribute subform-attribute
-  (t :underline t :bold t))
+  (t :underline :base07 :bold t))
 
 (define-minor-mode macrostep-mode
     (:name "Macrostep"

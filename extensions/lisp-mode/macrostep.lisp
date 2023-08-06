@@ -35,42 +35,31 @@
   (clear-expanded-overlays (current-buffer))
   (loop :while (pop-undo (current-buffer))))
 
-(define-buffer-accessor subform-overlays)
+(defmacro define-overlay-accessors (name &key clear-function add-function)
+  (with-unique-names (buffer overlay)
+    `(progn
+       (define-buffer-accessor ,name)
+       ,(when clear-function
+          `(defun ,clear-function (,buffer)
+             (map () #'delete-overlay (,name ,buffer))
+             (setf (,name ,buffer) '())))
+       ,(when add-function
+          `(defun ,add-function (,buffer ,overlay)
+             (push ,overlay (,name ,buffer)))))))
 
-(defun subform-overlays (buffer)
-  (buffer-value buffer 'subform-overlays))
+(define-overlay-accessors subform-overlays
+  :clear-function clear-macrostep-overlays
+  :add-function add-subform-overlay)
 
-(defun (setf subform-overlays) (value buffer)
-  (setf (buffer-value buffer 'subform-overlays) value))
-
-(defun clear-macrostep-overlays (buffer)
-  (map () #'delete-overlay (subform-overlays buffer))
-  (setf (subform-overlays buffer) '()))
-
-(defun add-subform-overlay (buffer overlay)
-  (push overlay (subform-overlays buffer)))
-
-(defun expanded-overlays (buffer)
-  (buffer-value buffer 'expanded-overlays))
-
-(defun (setf expanded-overlays) (value buffer)
-  (setf (buffer-value buffer 'expanded-overlays) value))
-
-(defun add-expanded-overlay (buffer overlay)
-  (push overlay (expanded-overlays buffer)))
-
-(defun clear-expanded-overlays (buffer)
-  (map () #'delete-overlay (expanded-overlays buffer)))
+(define-overlay-accessors expanded-overlays
+  :clear-function clear-expanded-overlays
+  :add-function add-expanded-overlay)
 
 (defun make-subform-overlay (start end)
-  (let ((overlay (make-overlay start end 'subform-attribute)))
-    (overlay-put overlay :subform t)
-    overlay))
+  (make-overlay start end 'subform-attribute))
 
 (defun get-sorted-subform-overlays (buffer)
-  (sort (remove-if-not (lambda (overlay)
-                         (overlay-get overlay :subform))
-                       (subform-overlays buffer))
+  (sort (copy-list (subform-overlays buffer))
         #'point<
         :key #'overlay-start))
 

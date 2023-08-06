@@ -207,6 +207,21 @@
   (when (empty-undo-stack-p (current-buffer))
     (macrostep-mode nil)))
 
+(defun display-help-p ()
+  (not (config :disable-macrostep-display-help)))
+
+(define-command lisp-macrostep-disable-help () ()
+  (setf (config :disable-macrostep-display-help) t))
+
 (define-command lisp-macrostep-expand () ()
   (when (macrostep-expand (current-point))
-    (macrostep-mode t)))
+    (macrostep-mode t)
+    (when (display-help-p)
+      (when (prompt-for-y-or-n-p
+             ;; TODO: Prepare help and guide them from here.
+             "Press \"q\" to undo.
+Do you want to disable this message in the future?"
+             :gravity (make-instance 'lem/popup-window::gravity-cursor
+                                     :offset-x 1
+                                     :offset-y 1))
+        (lisp-macrostep-disable-help)))))

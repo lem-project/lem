@@ -64,7 +64,6 @@
    :save-excursion
    :with-point
    :with-buffer-read-only
-   :define-buffer-accessor
    :without-interrupts)
   ;; mark.lisp
   (:export

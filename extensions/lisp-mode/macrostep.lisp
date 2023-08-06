@@ -35,18 +35,6 @@
   (clear-expanded-overlays (current-buffer))
   (loop :while (pop-undo (current-buffer))))
 
-(defmacro define-overlay-accessors (name &key clear-function add-function)
-  (with-unique-names (buffer overlay)
-    `(progn
-       (define-buffer-accessor ,name)
-       ,(when clear-function
-          `(defun ,clear-function (,buffer)
-             (map () #'delete-overlay (,name ,buffer))
-             (setf (,name ,buffer) '())))
-       ,(when add-function
-          `(defun ,add-function (,buffer ,overlay)
-             (push ,overlay (,name ,buffer)))))))
-
 (define-overlay-accessors subform-overlays
   :clear-function clear-macrostep-overlays
   :add-function add-subform-overlay)

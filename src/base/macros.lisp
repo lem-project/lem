@@ -41,14 +41,6 @@ Example:
        (unwind-protect (progn ,@body)
          (setf (buffer-read-only-p ,gbuffer) ,gtmp)))))
 
-(defmacro define-buffer-accessor (name)
-  (alexandria:with-unique-names (buffer value)
-    `(progn
-       (defun ,name (,buffer)
-         (buffer-value ,buffer ',name))
-       (defun (setf ,name) (,value ,buffer)
-         (setf (buffer-value ,buffer ',name) ,value)))))
-
 (defvar *interrupts-enabled* t)
 (defvar *interrupted* nil)
 

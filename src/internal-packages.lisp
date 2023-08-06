@@ -64,7 +64,9 @@
   (:export
    :with-current-window
    :with-disable-killring
-   :with-pop-up-typeout-window)
+   :with-pop-up-typeout-window
+   :define-buffer-accessor
+   :define-overlay-accessors)
   ;; color.lisp
   (:export
    :make-color

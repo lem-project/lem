@@ -51,6 +51,11 @@
         #'point<
         :key #'overlay-start))
 
+(defun point-within-subform-p (point)
+  (loop :for overlay :in (get-sorted-subform-overlays (point-buffer point))
+        :when (point<= (overlay-start overlay) point (overlay-end overlay))
+        :return t))
+
 (defun search-next-subform-overlay (point)
   (loop :for overlay :in (get-sorted-subform-overlays (point-buffer point))
         :when (point< point (overlay-start overlay))
@@ -186,6 +191,8 @@
     (move-point (current-point) (overlay-start overlay))))
 
 (define-command (lisp-macrostep-expand-next (:advice-classes macrostep-advice)) () ()
+  (unless (point-within-subform-p (current-point))
+    (lisp-macrostep-next))
   (macrostep-expand (current-point)))
 
 (define-command (lisp-macrostep-undo (:advice-classes macrostep-advice)) () ()

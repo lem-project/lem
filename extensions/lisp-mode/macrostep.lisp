@@ -112,6 +112,7 @@
                 :do (multiple-value-bind (start end)
                         (positions-to-points buffer start-pos end-pos)
                       (add-subform-overlay buffer (make-subform-overlay start end))))
+          (move-point (buffer-point buffer) start)
           (unless is-mark
             (buffer-unmark buffer)))))
     t))

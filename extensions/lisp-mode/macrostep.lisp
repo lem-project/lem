@@ -121,7 +121,7 @@
     (loop :for (name kind offset) :in subform-info
           :do (with-point ((point start))
                 (character-offset point offset)
-                (assert (scan-lists point 1 -1 t))
+                (assert (forward-down-list point t))
                 (with-point ((start point)
                              (end point))
                   (when (form-offset end 1)
@@ -131,7 +131,7 @@
 (defun get-form-points (point)
   (maybe-beginning-of-string point)
   (unless (syntax-open-paren-char-p (character-at point))
-    (scan-lists point -1 1))
+    (backward-up-list point))
   (values point
           (form-offset (copy-point point :temporary) 1)))
 
@@ -146,7 +146,7 @@
 (defun get-context (point)
   (with-point ((start point)
                (end point))
-    (loop :while (scan-lists start -1 1 t))
+    (loop :while (backward-up-list start t))
     (form-offset (move-point end start) 1)
     (list (points-to-string start point)
           (points-to-string point end))))

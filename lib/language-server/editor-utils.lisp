@@ -1,10 +1,10 @@
 (in-package :lem-language-server)
 
 (defun backward-up-list (point)
-  (lem:scan-lists point -1 1 t))
+  (lem:backward-up-list point t))
 
 (defun forward-up-list (point)
-  (lem:scan-lists point 1 1 t))
+  (lem:forward-up-list point t))
 
 (defun forward-down-list (point)
-  (lem:scan-lists point 1 -1 t))
+  (lem:forward-down-list point t))

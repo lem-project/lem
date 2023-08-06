@@ -243,6 +243,10 @@
    :skip-space-and-comment-backward
    :form-offset
    :scan-lists
+   :forward-down-list
+   :forward-up-list
+   :backward-up-list
+   :backward-down-list
    :skip-whitespace-forward
    :skip-whitespace-backward
    :skip-symbol-forward

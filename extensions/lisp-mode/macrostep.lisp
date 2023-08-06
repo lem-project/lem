@@ -35,6 +35,8 @@
   (clear-expanded-overlays (current-buffer))
   (loop :while (pop-undo (current-buffer))))
 
+(define-buffer-accessor subform-overlays)
+
 (defun subform-overlays (buffer)
   (buffer-value buffer 'subform-overlays))
 

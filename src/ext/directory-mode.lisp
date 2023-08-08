@@ -143,10 +143,13 @@
               (lambda (p)
                 (set-mark p (funcall function p)))))
 
+(defun current-file (p)
+  (alexandria:when-let (pathname (get-pathname p))
+    pathname))
+
 (defun selected-files (p)
   (or (marked-files p)
-      (alexandria:when-let (pathname (get-pathname p))
-        (list pathname))))
+      (uiop:ensure-list (current-file p))))
 
 (defun process-current-line-pathname (function)
   (alexandria:when-let (pathname (get-pathname (current-point)))
@@ -330,6 +333,19 @@
   #+windows
   (copy-file src dst)
   #-windows
+  (run-command `("cp" "-R" ,src ,dst)))
+
+(defun rename-file* (src dst)
+  #+windows
+  (let ((*rename-p* t))
+    (copy-file src dst))
+  #-windows
+  (run-command `("mv" ,src ,dst)))
+
+(defun copy-or-rename-file (src dst)
+  #+windows
+  (copy-file src dst)
+  #-windows
   (if *rename-p*
       (run-command `("mv" ,src ,dst))
       (run-command `("cp" "-R" ,src ,dst))))
@@ -346,12 +362,12 @@
 (defun copy-files (src-files dst-file)
   (check-copy-files src-files dst-file)
   (dolist (file src-files)
-    (copy-file* file dst-file)))
+    (copy-or-rename-file file dst-file)))
 
 (defun rename-files (src-files dst-file)
   (let ((*rename-p* t))
     (dolist (file src-files)
-      (copy-file* file dst-file))))
+      (copy-or-rename-file file dst-file))))
 
 (define-command directory-mode-update-buffer () ()
   (update (current-buffer)))

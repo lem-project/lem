@@ -9,7 +9,8 @@
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"
      :keymap *lisp-repl-mode-keymap*
-     :syntax-table lem-lisp-syntax:*syntax-table*)
+     :syntax-table lem-lisp-syntax:*syntax-table*
+     :mode-hook *lisp-repl-mode-hook*)
   (cond
     ((eq (repl-buffer) (current-buffer))
      (repl-reset-input)

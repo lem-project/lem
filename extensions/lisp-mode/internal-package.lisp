@@ -81,6 +81,7 @@
    :slime-self-connect
    ;; repl.lisp
    :*lisp-repl-mode-keymap*
+   :*lisp-repl-mode-hook*
    :open-inspector-by-repl
    :lisp-repl-interrupt
    :repl-buffer

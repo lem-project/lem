@@ -24,6 +24,16 @@
   (lem:find-file (merge-pathnames filename
                                   (lem:buffer-directory))))
 
+(define-ex-command "^(b|buffer)$" (range buffer-name)
+  (declare (ignore range))
+  (lem:select-buffer buffer-name))
+
+(define-ex-command "^bd(?:elete)?$" (range buffer-name)
+  (declare (ignore range))
+  (lem:kill-buffer (if (string= buffer-name "")
+                       (lem:current-buffer)
+                       buffer-name)))
+
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))
 

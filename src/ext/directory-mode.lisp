@@ -57,6 +57,7 @@
 (define-key *directory-mode-keymap* "D" 'directory-mode-delete-files)
 (define-key *directory-mode-keymap* "C" 'directory-mode-copy-files)
 (define-key *directory-mode-keymap* "R" 'directory-mode-rename-files)
+(define-key *directory-mode-keymap* "r" 'directory-mode-rename-file)
 (define-key *directory-mode-keymap* "s" 'directory-mode-sort-files)
 (define-key *directory-mode-keymap* "+" 'make-directory)
 
@@ -143,10 +144,13 @@
               (lambda (p)
                 (set-mark p (funcall function p)))))
 
+(defun current-file (p)
+  (alexandria:when-let (pathname (get-pathname p))
+    pathname))
+
 (defun selected-files (p)
   (or (marked-files p)
-      (alexandria:when-let (pathname (get-pathname p))
-        (list pathname))))
+      (uiop:ensure-list (current-file p))))
 
 (defun process-current-line-pathname (function)
   (alexandria:when-let (pathname (get-pathname (current-point)))
@@ -330,6 +334,19 @@
   #+windows
   (copy-file src dst)
   #-windows
+  (run-command `("cp" "-R" ,src ,dst)))
+
+(defun rename-file* (src dst)
+  #+windows
+  (let ((*rename-p* t))
+    (copy-file src dst))
+  #-windows
+  (run-command `("mv" ,src ,dst)))
+
+(defun copy-or-rename-file (src dst)
+  #+windows
+  (copy-file src dst)
+  #-windows
   (if *rename-p*
       (run-command `("mv" ,src ,dst))
       (run-command `("cp" "-R" ,src ,dst))))
@@ -346,12 +363,12 @@
 (defun copy-files (src-files dst-file)
   (check-copy-files src-files dst-file)
   (dolist (file src-files)
-    (copy-file* file dst-file)))
+    (copy-or-rename-file file dst-file)))
 
 (defun rename-files (src-files dst-file)
   (let ((*rename-p* t))
     (dolist (file src-files)
-      (copy-file* file dst-file))))
+      (copy-or-rename-file file dst-file))))
 
 (define-command directory-mode-update-buffer () ()
   (update (current-buffer)))
@@ -446,6 +463,48 @@
   (let ((dst-file (prompt-for-file "Destination Filename: " :directory (get-dest-directory))))
     (rename-files (selected-files (current-point)) dst-file))
   (update-all))
+
+(defun move-to-file-position (point)
+  (with-point ((limit point))
+    (line-end limit)
+    (next-single-property-change point :file limit)))
+
+(defun replace-file-name (point string)
+  (when (alexandria:emptyp string) (setf string " "))
+  (line-start point)
+  (move-to-file-position point)
+  (character-at point 1)
+  (let ((file (text-property-at point :file))
+        (*inhibit-read-only* t))
+    (with-point ((end point))
+      (line-end end)
+      (delete-between-points point end)
+      (insert-string point string :file file))))
+
+(defun prompt-for-rename-file (point)
+  (let ((file (current-file point)))
+    (save-excursion
+      (move-point (current-point) point)
+      (prompt-for-string
+       ""
+       :initial-value (if file (file-namestring file) "")
+       :test-function (lambda (string)
+                        (not (alexandria:emptyp string)))
+       :gravity :cursor
+       :use-border nil))))
+
+(define-command directory-mode-rename-file () ()
+  (with-point ((point (current-point) :right-inserting))
+    (move-to-file-position point)
+    (alexandria:when-let (source-file (text-property-at point :file))
+      (replace-file-name point "")
+      (unwind-protect
+           (let* ((new-file (merge-pathnames (prompt-for-rename-file point)
+                                             (buffer-directory (current-buffer)))))
+             (when (probe-file new-file)
+               (editor-error "The filename already exists."))
+             (rename-file* source-file new-file))
+        (directory-mode-update-buffer)))))
 
 (defun search-filename-and-recenter (filename)
   "Search `filename` in this files listing, recenter the window on it"

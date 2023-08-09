@@ -44,8 +44,8 @@
                            (lem/completion-mode::completion-file
                             comp-str
                             directory)))))
-            ((ppcre:scan "^b(?:uffer)? " str)
-             (let ((comp-str (ppcre:regex-replace "^b(?:uffer)?\\s+" str "")))
+            ((ppcre:scan "^(?:b(?:uffer)?|bd(?:elete)?) " str)
+             (let ((comp-str (ppcre:regex-replace "^(?:b(?:uffer)?|bd(?:elete)?)\\s+" str "")))
                (mapcar (lambda (buffer)
                          (let ((prefix-len (- (length str) (length comp-str))))
                            (with-point ((s (lem/prompt-window::current-prompt-start-point))

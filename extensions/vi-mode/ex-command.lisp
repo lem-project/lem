@@ -30,7 +30,9 @@
 
 (define-ex-command "^bd(?:elete)?$" (range buffer-name)
   (declare (ignore range))
-  (lem:kill-buffer buffer-name))
+  (lem:kill-buffer (if (string= buffer-name "")
+                       (lem:current-buffer)
+                       buffer-name)))
 
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))

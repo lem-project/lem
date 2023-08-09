@@ -17,6 +17,7 @@
            :local-value-attribute
            :catch-tag-attribute
            :*sldb-keymap*
+           :*lisp-sldb-mode-hook*
            :sldb-down
            :sldb-up
            :sldb-details-down
@@ -85,7 +86,8 @@
 
 (define-major-mode sldb-mode lisp-ui-mode
     (:name "SLDB"
-     :keymap *sldb-keymap*))
+     :keymap *sldb-keymap*
+     :mode-hook *lisp-sldb-mode-hook*))
 
 (define-key *sldb-keymap* "n" 'sldb-down)
 (define-key *sldb-keymap* "p" 'sldb-up)

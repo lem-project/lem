@@ -500,9 +500,7 @@
       (interactive-eval "(micros:quit-lisp)")))
 
 (define-repl-shortcut change-package ()
-  (let* ((packages (mapcar (lambda (p)
-                             (string-downcase (package-name p)))
-                           (list-all-packages)))
+  (let* ((packages (mapcar #'string-downcase (lisp-eval '(micros:list-all-package-names))))
          (package
            (repl-prompt-for-string
             "Package: "

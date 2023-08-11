@@ -21,8 +21,7 @@
 
 (defun config (key &optional default)
   (let ((plist (config-plist)))
-    (if (car plist)
-        (getf (car plist) key default))))
+    (getf (car plist) key default)))
        
 
 (defun (setf config) (value key &optional default)

@@ -16,12 +16,14 @@
 (defun config-plist ()
   (let ((pathname (ensure-config-pathname)))
     (if (uiop:file-exists-p pathname)
-        (uiop:read-file-form pathname)
+        (uiop:read-file-forms pathname)
         '())))
 
 (defun config (key &optional default)
   (let ((plist (config-plist)))
-    (getf plist key default)))
+    (if (car plist)
+        (getf (car plist) key default))))
+       
 
 (defun (setf config) (value key &optional default)
   (declare (ignore default))

@@ -86,22 +86,22 @@
     token))
 
 
-(setf lin (make-instance 'lingva :api-url
-                         "https://translate.plausibility.cloud/_next/data/~a/~a/~a/~a.json")
+;;(setf lin (make-instance 'lingva :api-url
+;;                         "https://translate.plausibility.cloud/_next/data/~a/~a/~a/~a.json")
 
-      (defmethod translate-string ((service lingva) &key from to string)
-		 (let* ((root-url (str:split "/" (service-api-url service)))
-			(token (%get-lingva-token
-				(concatenate 'String
-					     (first root-url)
-					     "//"
-					     (third root-url)))))
-		   (gethash "translation"
-			    (gethash
-			     "pageProps"
-			     (yason:parse
-			      (dex:get
-			       (format nil (service-api-url service)
-				       token
-				       from to
-				       (urlencode string))))))))
+(defmethod translate-string ((service lingva) &key from to string)
+  (let* ((root-url (str:split "/" (service-api-url service)))
+         (token (%get-lingva-token
+                 (concatenate 'String
+                              (first root-url)
+                              "//"
+                              (third root-url)))))
+    (gethash "translation"
+             (gethash
+              "pageProps"
+              (yason:parse
+               (dex:get
+                (format nil (service-api-url service)
+                        token
+                        from to
+                        (urlencode string))))))))

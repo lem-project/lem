@@ -8,6 +8,17 @@
 (defvar *in-the-editor* nil)
 
 (defvar *syntax-scan-window-recursive-p* nil)
+(defvar *help* "Usage: lem [ OPTION-OR-FILENAME ] ...
+Options:
+        -q, --no-init-file      do not load ~/.lem/init.lisp
+        --slime PORT            start slime on PORT
+        --eval EXPR             evaluate lisp expression EXPR
+        --debug                 enable debugger
+        --log-filename FILENAME file name of the log file
+        --kill                  immediately exit
+        -v, --version           print the version number and exit
+        -h, --help              display this help and exit" 
+"Help output for cli")
 
 (defun syntax-scan-window (window)
   (check-type window window)
@@ -84,7 +95,10 @@
     (setf (command-line-arguments-args parsed-args)
           `(,@(loop :while args
                     :for arg := (pop args)
-                    :when (cond ((member arg '("-q" "--no-init-file") :test #'equal)
+                    :when (cond ((member arg '("-h" "--help") :test #'equal)
+				 (format t "~a~%" *help*)
+				 (uiop:quit))
+				((member arg '("-q" "--no-init-file") :test #'equal)
                                  (setf (command-line-arguments-no-init-file parsed-args)
                                        t)
                                  nil)

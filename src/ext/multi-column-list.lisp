@@ -230,10 +230,12 @@
 
 (defun compute-column-width-list (multi-column-list)
   (let ((width-matrix
-          (loop :for row :in (append (alexandria:when-let (columns (multi-column-list-columns multi-column-list))
-                                       (list columns))
-                                     (mapcar (lambda (item) (map-columns multi-column-list item))
-                                             (multi-column-list-items multi-column-list)))
+          (loop :for row :in
+                   (append (alexandria:when-let
+                               (columns (multi-column-list-columns multi-column-list))
+                             (list columns))
+                           (mapcar (lambda (item) (map-columns multi-column-list item))
+                                   (multi-column-list-items multi-column-list)))
                 :collect (loop :for value :in row
                                :collect (string-width value)))))
     (loop :repeat (length (first width-matrix))

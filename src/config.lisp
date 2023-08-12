@@ -16,18 +16,19 @@
 (defun config-plist ()
   (let ((pathname (ensure-config-pathname)))
     (if (uiop:file-exists-p pathname)
-        (uiop:read-file-forms pathname)
+        (ignore-errors (uiop:read-file-form pathname))
         '())))
 
 (defun config (key &optional default)
   (let ((plist (config-plist)))
-    (getf (car plist) key default)))
-       
+    (getf plist key default)))
 
 (defun (setf config) (value key &optional default)
   (declare (ignore default))
   (let ((plist (config-plist)))
-    (setf (getf plist key) value)
+    (if (null plist)
+        (setf plist (list key value))
+        (setf (getf plist key) value))
     (with-open-file (out (ensure-config-pathname)
                          :direction :output
                          :if-exists :supersede

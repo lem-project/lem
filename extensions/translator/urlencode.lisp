@@ -1,36 +1,17 @@
-(defpackage :lem/translator
-  (:use :cl :lem))
+(defpackage :do-urlencode
+  (:nicknames :urlencode)
+  (:use :cl)
+  (:import-from :babel :octets-to-string :string-to-octets)
+  (:import-from :alexandria :if-let :when-let)
+  (:export :urlencode-malformed-string :urlencode-malformed-string-string
+           :urlencode :urldecode))
 
 
-(in-package :lem/translator)
-
-(defclass service ()
-  ((auth-key
-    :initarg :auth-key
-    :reader service-key
-    :type (or string null))
-   (api-url
-    :initarg :api-url
-    :accessor service-api-url
-    :type string)))
-
-(defclass deepl (service) ())
-
-(defclass lingva (service)
-  ((language-list
-    :initarg :language-list
-    :accessor lingva-language-list
-    :type list)))
-
-(defgeneric translate-string (service &key from to string))
-
-(defgeneric translate-region (service &key from to
-                                           region-start region-end
-                                           string replace))
+(cl:in-package :urlencode)
 
 (declaim (ftype (function ((unsigned-byte 8)) character) octet-to-ascii))
 (defun octet-to-ascii (octet)
-  (aref (babel:octets-to-string (make-array '(1)
+  (aref (octets-to-string (make-array '(1)
                                       :element-type '(unsigned-byte 8)
                                       :initial-element octet)
                           :encoding :ASCII) 0))
@@ -57,10 +38,9 @@
                            &key (:queryp boolean))
                           simple-string)
                 urlencode))
-
 (defun urlencode (string &key (queryp nil))
   (loop
-    with octets of-type (simple-array (unsigned-byte 8) (*)) = (babel:string-to-octets string :encoding :UTF-8)
+    with octets of-type (simple-array (unsigned-byte 8) (*)) = (string-to-octets string :encoding :UTF-8)
     with result = (make-string (* 3 (length octets)))
     for o across octets
     with i of-type fixnum = 0
@@ -77,31 +57,3 @@
                     (push-char h)
                     (push-char l)))))
     finally (return (subseq result 0 i))))
-
-(defun %get-lingva-token (root-url)
-  "Update the translation token."
-  (let* ((body (dexador:get root-url))
-         (position (cl-ppcre:scan "buildManifest" body))
-         (token (subseq body (- position 23) (- position 2))))
-    token))
-
-
-;;(setf lin (make-instance 'lingva :api-url
-;;                         "https://translate.plausibility.cloud/_next/data/~a/~a/~a/~a.json")
-
-(defmethod translate-string ((service lingva) &key from to string)
-  (let* ((root-url (str:split "/" (service-api-url service)))
-         (token (%get-lingva-token
-                 (concatenate 'String
-                              (first root-url)
-                              "//"
-                              (third root-url)))))
-    (gethash "translation"
-             (gethash
-              "pageProps"
-              (yason:parse
-               (dex:get
-                (format nil (service-api-url service)
-                        token
-                        from to
-                        (urlencode string))))))))

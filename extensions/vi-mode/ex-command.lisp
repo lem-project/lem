@@ -1,5 +1,7 @@
 (defpackage :lem-vi-mode/ex-command
   (:use :cl :lem-vi-mode/ex-core)
+  (:import-from #:lem-vi-mode/core
+                #:expand-filename-modifiers)
   (:import-from #:lem-vi-mode/jump-motions
                 #:with-jump-motion)
   (:import-from #:lem-vi-mode/options
@@ -25,7 +27,7 @@
 
 (define-ex-command "^e$" (range filename)
   (declare (ignore range))
-  (lem:find-file (merge-pathnames filename (uiop:getcwd))))
+  (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd))))
 
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))
@@ -74,13 +76,13 @@
   (declare (ignore range))
   (lem:split-active-window-vertically)
   (unless (string= filename "")
-    (lem:find-file (merge-pathnames filename (uiop:getcwd)))))
+    (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(vs|vsplit)$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-horizontally)
   (unless (string= filename "")
-    (lem:find-file (merge-pathnames filename (uiop:getcwd)))))
+    (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(s|substitute)$" (range argument)
   (with-jump-motion
@@ -161,5 +163,5 @@
 
 (define-ex-command "^cd$" (range new-directory)
   (declare (ignore range))
-  (let ((new-directory (change-directory new-directory)))
+  (let ((new-directory (change-directory (expand-filename-modifiers new-directory))))
     (lem:message "~A" new-directory)))

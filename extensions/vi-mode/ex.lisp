@@ -13,7 +13,8 @@
    :keymap *ex-keymap*))
 
 (define-command vi-ex () ()
-  (let ((directory (uiop:getcwd)))
+  (let* ((directory (uiop:getcwd))
+         (buffer-filename (lem:buffer-filename)))
     (with-state 'ex
       (execute-ex
        (prompt-for-string
@@ -22,29 +23,34 @@
         (lambda (str)
           (cond
             ((ppcre:scan "^(?:(?:e|vs|sp)[ \\.]|cd )" str)
-             (let ((comp-str (ppcre:regex-replace "^(e|vs|sp|cd)\\s*" str "")))
-               (if (string= comp-str ".")
-                   (list (format nil "~A/" str))
-                   ;; Almost same as prompt-file-complete in lem-core/completion-file.lisp
-                   ;; except item's :start offsets which will be used when selecting a completion item.
-                   (mapcar (lambda (filename)
-                             (let ((label (tail-of-pathname filename))
-                                   (prefix-len (- (length str) (length comp-str))))
-                               (with-point ((s (lem/prompt-window::current-prompt-start-point))
-                                            (e (lem/prompt-window::current-prompt-start-point)))
-                                 (lem/completion-mode:make-completion-item
-                                  :label label
-                                  :start (character-offset
-                                          s
-                                          (+ (length
-                                              (namestring
-                                               (uiop:pathname-directory-pathname (subseq str prefix-len))))
-                                             prefix-len))
-                                  :end (line-end e)))))
-                           (lem/completion-mode::completion-file
-                            comp-str
-                            directory
-                            :directory-only (and (ppcre:scan "^cd " str) t))))))
+             (let* ((comp-str (ppcre:regex-replace "^(e|vs|sp|cd)\\s*" str ""))
+                    (expanded-comp-str (expand-filename-modifiers comp-str (or buffer-filename directory)))
+                    (prefix-len (- (length str) (length comp-str))))
+               (cond
+                 ((string= comp-str ".")
+                  (list (format nil "~A/" str)))
+                 ((equal comp-str expanded-comp-str)
+                  ;; Almost same as prompt-file-complete in lem-core/completion-file.lisp
+                  ;; except item's :start offsets which will be used when selecting a completion item.
+                  (mapcar (lambda (filename)
+                            (let ((label (enough-namestring filename directory)))
+                              (with-point ((s (lem/prompt-window::current-prompt-start-point))
+                                           (e (lem/prompt-window::current-prompt-start-point)))
+                                (lem/completion-mode:make-completion-item
+                                 :label label
+                                 :start (character-offset s prefix-len)
+                                 :end (line-end e)))))
+                          (lem/completion-mode::completion-file
+                           expanded-comp-str
+                           directory
+                           :directory-only (and (ppcre:scan "^cd " str) t))))
+                 (t
+                  (list (with-point ((s (lem/prompt-window::current-prompt-start-point))
+                                     (e (lem/prompt-window::current-prompt-start-point)))
+                          (lem/completion-mode:make-completion-item
+                           :label expanded-comp-str
+                           :start (character-offset s prefix-len)
+                           :end (line-end e))))))))
             ((ppcre:scan "^(?:b(?:uffer)?|bd(?:elete)?) " str)
              (let ((comp-str (ppcre:regex-replace "^(?:b(?:uffer)?|bd(?:elete)?)\\s+" str "")))
                (mapcar (lambda (buffer)

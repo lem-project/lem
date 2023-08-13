@@ -147,3 +147,7 @@
 (define-ex-command "^(buffers|ls|files)$" (range argument)
   (declare (ignore range argument))
   (lem/list-buffers:list-buffers))
+
+(define-ex-command "^noh(?:lsearch)?$" (range argument)
+  (declare (ignore range argument))
+  (lem/isearch:isearch-end))

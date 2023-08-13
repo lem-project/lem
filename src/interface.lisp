@@ -38,6 +38,8 @@
 (defgeneric lem-if:get-background-color (implementation))
 (defgeneric lem-if:update-foreground (implementation color-name))
 (defgeneric lem-if:update-background (implementation color-name))
+(defgeneric lem-if:update-cursor-shape (implementation cursor-type)
+  (:method (implementation cursor-type)))
 (defgeneric lem-if:display-width (implementation))
 (defgeneric lem-if:display-height (implementation))
 (defgeneric lem-if:display-title (implementation))

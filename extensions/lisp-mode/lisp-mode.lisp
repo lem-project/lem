@@ -542,22 +542,6 @@
              (micros:load-file ,filename)))
        :package "CL-USER"))))
 
-(defun get-operator-name ()
-  (with-point ((point (current-point)))
-    (scan-lists point -1 1)
-    (character-offset point 1)
-    (symbol-string-at-point point)))
-
-(define-command lisp-echo-arglist () ()
-  (check-connection)
-  (let ((name (get-operator-name))
-        (package (current-package)))
-    (when name
-      (lisp-eval-async `(micros:operator-arglist ,name ,package)
-                       (lambda (arglist)
-                         (when arglist
-                           (display-message "~A" (ppcre:regex-replace-all "\\s+" arglist " "))))))))
-
 (defun compilation-finished (result)
   (destructuring-bind (notes successp duration loadp fastfile)
       (rest result)

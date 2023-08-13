@@ -13,6 +13,7 @@
      :mode-hook *lisp-repl-mode-hook*)
   (cond
     ((eq (repl-buffer) (current-buffer))
+     (setf (variable-value 'enable-syntax-highlight) t)
      (repl-reset-input)
      (lem/listener-mode:start-listener-mode (merge-pathnames "history/lisp-repl" (lem-home)))
      (setf (variable-value 'completion-spec) 'repl-completion)
@@ -331,9 +332,9 @@
       (insert-string point
                      string
                      'object-id id
-                     :attribute (if (eq type :repl-result)
-                                    'repl-result-attribute
-                                    'printed-object-attribute))
+                     :sticky-attribute (if (eq type :repl-result)
+                                           'repl-result-attribute
+                                           'printed-object-attribute))
       (lem/button:apply-button-between-points
        start
        point
@@ -432,7 +433,7 @@
         (attribute
          (setf current-attribute token))
         (string
-         (insert-string point token :attribute current-attribute))))))
+         (insert-string point token :sticky-attribute current-attribute))))))
 
 (define-command backward-prompt () ()
   (when (equal (current-buffer) (repl-buffer))

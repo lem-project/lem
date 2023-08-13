@@ -3,6 +3,7 @@
         :lem
         :lem/universal-argument)
   (:import-from :cl-package-locks)
+  (:import-from :cl-ppcre)
   (:export :*enable-hook*
            :*disable-hook*
            :vi-state
@@ -18,7 +19,9 @@
            :state-enabled-hook
            :state-disabled-hook
            :normal
-           :insert))
+           :insert
+           :change-directory
+           :expand-filename-modifiers))
 (in-package :lem-vi-mode/core)
 
 (defvar *default-cursor-color* nil)
@@ -66,6 +69,7 @@
   :reader state-message)
   (cursor-type 
   :initarg :cursor-type
+  :initform :box
   :reader state-cursor-type)
   (keymap
   :initarg :keymap
@@ -149,13 +153,14 @@
 ;; insert state
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap* :parent *global-keymap*))
 
-(define-vi-state insert () () 
+(define-vi-state insert () ()
   (:default-initargs
    :message "-- INSERT --"
    :cursor-color "IndianRed"
+   :cursor-type :bar
    :keymap *insert-keymap*))
 
-(define-vi-state vi-modeline () () 
+(define-vi-state vi-modeline () ()
   (:default-initargs
    :keymap *inactive-keymap*))
 
@@ -180,3 +185,57 @@
             (finalize-vi-modeline)
             (remove-hook *prompt-activate-hook* 'prompt-activate-hook)
             (remove-hook *prompt-deactivate-hook* 'prompt-deactivate-hook)))
+
+(defmethod state-enabled-hook :after (state)
+  (lem-if:update-cursor-shape (lem-core:implementation)
+                              (state-cursor-type state)))
+
+(defvar *previous-cwd* nil)
+
+(defun change-directory (new-directory)
+  (check-type new-directory (or string pathname))
+  (let* ((previous-directory (uiop:getcwd))
+         (new-directory (cond
+                          ((equal new-directory "")
+                           (user-homedir-pathname))
+                          ((equal new-directory "-")
+                           (or *previous-cwd* previous-directory))
+                          (t
+                           (truename
+                            (merge-pathnames (uiop:ensure-directory-pathname new-directory) previous-directory))))))
+    (assert (uiop:absolute-pathname-p new-directory))
+    (uiop:chdir new-directory)
+    (unless (uiop:pathname-equal *previous-cwd* previous-directory)
+      (setf *previous-cwd* previous-directory))
+    new-directory))
+
+(defun expand-filename-modifiers (string &optional (base-filename (lem:buffer-filename)))
+  (ppcre:regex-replace-all "%(?::[a-z])*"
+                           string
+                           (lambda (match &rest registers)
+                             (declare (ignore registers))
+                             (let ((result (enough-namestring (or base-filename
+                                                                  (lem:buffer-filename)
+                                                                  (uiop:getcwd))
+                                                              (uiop:getcwd))))
+                               (ppcre:do-matches-as-strings (flag "(?<=:)([a-z])" match result)
+                                 (setf result
+                                       (ecase (aref flag 0)
+                                         (#\p (namestring
+                                               (uiop:ensure-absolute-pathname result (uiop:getcwd))))
+                                         (#\h
+                                          (namestring
+                                           (if (uiop:directory-pathname-p result)
+                                               (uiop:pathname-parent-directory-pathname result)
+                                               (uiop:pathname-directory-pathname result))))
+                                         (#\t
+                                          (let ((result-path (pathname result)))
+                                            (namestring
+                                             (make-pathname :name (pathname-name result-path)
+                                                            :type (pathname-type result-path)))))
+                                         (#\r
+                                          (make-pathname :defaults (pathname result)
+                                                         :type nil))
+                                         (#\e (or (pathname-type (pathname result))
+                                                  "")))))))
+                           :simple-calls t))

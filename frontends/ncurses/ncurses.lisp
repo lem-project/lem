@@ -269,6 +269,18 @@
 (defmethod lem-if:update-foreground ((implementation ncurses) color-name)
   (lem.term:term-set-foreground color-name))
 
+(defmethod lem-if:update-cursor-shape ((implementation ncurses) cursor-type)
+  (uiop:run-program `("printf"
+                      ,(format nil "~C[~D q"
+                               #\Esc
+                               (case cursor-type
+                                 (:box 2)
+                                 (:bar 5)
+                                 (:underline 4)
+                                 (otherwise 2))))
+                    :output :interactive
+                    :ignore-error-status t))
+
 (defmethod lem-if:update-background ((implementation ncurses) color-name)
   (lem.term:term-set-background color-name))
 

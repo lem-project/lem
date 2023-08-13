@@ -229,7 +229,8 @@
 
 (defun line-string/attributes (line)
   (cons (line-str line)
-        (getf (line-plist line) :attribute)))
+        (append (getf (line-plist line) :sticky-attribute)
+                (getf (line-plist line) :attribute))))
 
 (defun line-free (line)
   (when (line-prev line)

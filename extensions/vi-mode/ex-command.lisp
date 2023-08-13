@@ -1,7 +1,13 @@
 (defpackage :lem-vi-mode/ex-command
   (:use :cl :lem-vi-mode/ex-core)
-  (:import-from #:lem-vi-mode/jump-motions
-                #:with-jump-motion))
+  (:import-from :lem-vi-mode/core
+                :expand-filename-modifiers)
+  (:import-from :lem-vi-mode/jump-motions
+                :with-jump-motion)
+  (:import-from :lem-vi-mode/options
+                :execute-set-command)
+  (:import-from :lem-vi-mode/core
+                :change-directory))
 (in-package :lem-vi-mode/ex-command)
 
 (defun ex-write (range filename touch)
@@ -21,18 +27,7 @@
 
 (define-ex-command "^e$" (range filename)
   (declare (ignore range))
-  (lem:find-file (merge-pathnames filename
-                                  (lem:buffer-directory))))
-
-(define-ex-command "^(b|buffer)$" (range buffer-name)
-  (declare (ignore range))
-  (lem:select-buffer buffer-name))
-
-(define-ex-command "^bd(?:elete)?$" (range buffer-name)
-  (declare (ignore range))
-  (lem:kill-buffer (if (string= buffer-name "")
-                       (lem:current-buffer)
-                       buffer-name)))
+  (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd))))
 
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))
@@ -81,15 +76,13 @@
   (declare (ignore range))
   (lem:split-active-window-vertically)
   (unless (string= filename "")
-    (lem:find-file (merge-pathnames filename
-                                    (lem:buffer-directory)))))
+    (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(vs|vsplit)$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-horizontally)
   (unless (string= filename "")
-    (lem:find-file (merge-pathnames filename
-                                    (lem:buffer-directory)))))
+    (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(s|substitute)$" (range argument)
   (with-jump-motion
@@ -147,3 +140,31 @@
 (define-ex-command "^(buffers|ls|files)$" (range argument)
   (declare (ignore range argument))
   (lem/list-buffers:list-buffers))
+
+(define-ex-command "^(b|buffer)$" (range buffer-name)
+  (declare (ignore range))
+  (lem:select-buffer buffer-name))
+
+(define-ex-command "^bd(?:elete)?$" (range buffer-name)
+  (declare (ignore range))
+  (lem:kill-buffer (if (string= buffer-name "")
+                       (lem:current-buffer)
+                       buffer-name)))
+
+(define-ex-command "^set?$" (range option-string)
+  (declare (ignore range))
+  (multiple-value-bind (option-value option-name old-value isset)
+      (execute-set-command option-string)
+    (if (and isset
+             (not (equal option-value old-value)))
+        (lem:show-message (format nil "~A: ~S => ~S" option-name old-value option-value) :timeout 10)
+        (lem:show-message (format nil "~A: ~S" option-name option-value) :timeout 10))))
+
+(define-ex-command "^cd$" (range new-directory)
+  (declare (ignore range))
+  (let ((new-directory (change-directory (expand-filename-modifiers new-directory))))
+    (lem:message "~A" new-directory)))
+
+(define-ex-command "^noh(?:lsearch)?$" (range argument)
+  (declare (ignore range argument))
+  (lem/isearch:isearch-end))

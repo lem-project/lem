@@ -58,7 +58,6 @@
    :lisp-eval-defun
    :lisp-eval-region
    :lisp-load-file
-   :lisp-echo-arglist
    :lisp-remove-notes
    :lisp-compile-and-load-file
    :lisp-compile-region

@@ -518,6 +518,7 @@
    :get-background-color
    :update-foreground
    :update-background
+   :update-cursor-shape
    :display-width
    :display-height
    :display-title

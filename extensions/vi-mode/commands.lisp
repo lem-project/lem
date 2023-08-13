@@ -60,6 +60,7 @@
            :vi-find-char-backward
            :vi-find-char-before
            :vi-find-char-backward-after
+           :vi-find-char-repeat
            :vi-write
            :vi-quit
            :vi-write-quit
@@ -649,31 +650,45 @@
   (vi-next-line n)
   (vi-move-to-beginning-of-line))
 
+(defvar *find-char-args* nil)
+
+(defun %vi-find-char (c direction offset)
+  (check-type direction (member :forward :backward))
+  (check-type offset integer)
+  (setf *find-char-args* (list c direction offset))
+  (with-point ((p (current-point))
+               (limit (current-point)))
+    (character-offset p (* -1 offset))
+    (if (eq direction :forward)
+        (line-end limit)
+        (line-start limit))
+    (when (funcall (if (eq direction :forward)
+                       'search-forward
+                       'search-backward)
+                   p
+                   (string c)
+                   limit)
+      (character-offset p offset)
+      (move-point (current-point) p))))
+
 (define-command vi-find-char () ()
   (alexandria:when-let (c (key-to-char (read-key)))
-    (with-point ((p (current-point))
-                 (limit (current-point)))
-      (character-offset p 1)
-      (line-end limit)
-      (when (search-forward p (string c) limit)
-        (character-offset p -1)
-        (move-point (current-point) p)))))
+    (%vi-find-char c :forward -1)))
 
 (define-command vi-find-char-backward () ()
   (alexandria:when-let (c (key-to-char (read-key)))
-    (with-point ((p (current-point))
-                 (limit (current-point)))
-      (line-start limit)
-      (when (search-backward p (string c) limit)
-        (move-point (current-point) p)))))
+    (%vi-find-char c :backward 0)))
 
 (define-command vi-find-char-before () ()
-  (vi-find-char)
-  (vi-backward-char))
+  (alexandria:when-let (c (key-to-char (read-key)))
+    (%vi-find-char c :forward -2)))
 
 (define-command vi-find-char-backward-after () ()
-  (vi-find-char-backward)
-  (vi-forward-char))
+  (alexandria:when-let (c (key-to-char (read-key)))
+    (%vi-find-char c :backward 1)))
+
+(define-command vi-find-char-repeat () ()
+  (apply #'%vi-find-char *find-char-args*))
 
 (define-command vi-write () ()
   (lem:write-file (lem:buffer-filename (lem:current-buffer))))

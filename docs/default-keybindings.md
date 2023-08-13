@@ -98,7 +98,7 @@
 | [insert-file](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L296)           | C-x Tab      | Inserts the contents of the file into the current buffer.                                                     |
 | [save-some-buffers](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L302)     | C-x s        | Save some files in the open buffer.                                                                           |
 | [revert-buffer](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L334)         |              | Restores the buffer. Normally this command will cause the contents of the file to be reflected in the buffer. |
-| [change-directory](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L367)      |              | Change directories associated with the buffer.                                                                |
+| [change-directory](https://github.com/lem-project/lem/blob/main/src/commands/file.lisp#L367)      |              |                                                                                                               |
 
 ## Project
 | Command                                                                                               | Key bindings | Documentation                                                                                                                                                                                                            |

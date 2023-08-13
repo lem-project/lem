@@ -155,8 +155,10 @@
              (defun (setf ,name) (,new-value)
                (setf (vi-option-value (get-option ,name-str)) ,new-value))))))))
 
-(defun auto-change-directory (buffer)
-  (change-directory (lem:buffer-directory buffer)))
+(defun auto-change-directory (buffer-or-window)
+  (change-directory (etypecase buffer-or-window
+                      (lem:buffer (lem:buffer-directory buffer-or-window))
+                      (lem:window (lem:buffer-directory (lem:window-buffer buffer-or-window))))))
 
 (define-vi-option autochdir (nil :type boolean :aliases ("acd"))
   (:documentation "A flag on whether change the current directory to the buffer directory automatically.
@@ -164,5 +166,13 @@
   Aliases: acd")
   (:set-hook (new-value)
    (if new-value
-       (lem:add-hook lem:*find-file-hook* 'auto-change-directory)
-       (lem:remove-hook lem:*find-file-hook* 'auto-change-directory))))
+       (progn
+         (lem:add-hook lem:*find-file-hook* 'auto-change-directory)
+         (dolist (window (lem:window-list))
+           (lem:add-hook (lem-core::window-switch-to-buffer-hook window) 'auto-change-directory)
+           (lem:add-hook (lem-core:window-leave-hook window) 'auto-change-directory)))
+       (progn
+         (lem:remove-hook lem:*find-file-hook* 'auto-change-directory)
+         (dolist (window (lem:window-list))
+           (lem:remove-hook (lem-core::window-switch-to-buffer-hook window) 'auto-change-directory)
+           (lem:remove-hook (lem-core:window-leave-hook window) 'auto-change-directory))))))

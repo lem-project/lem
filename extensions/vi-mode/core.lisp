@@ -66,6 +66,7 @@
   :reader state-message)
   (cursor-type 
   :initarg :cursor-type
+  :initform :box
   :reader state-cursor-type)
   (keymap
   :initarg :keymap
@@ -149,13 +150,14 @@
 ;; insert state
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap* :parent *global-keymap*))
 
-(define-vi-state insert () () 
+(define-vi-state insert () ()
   (:default-initargs
    :message "-- INSERT --"
    :cursor-color "IndianRed"
+   :cursor-type :bar
    :keymap *insert-keymap*))
 
-(define-vi-state vi-modeline () () 
+(define-vi-state vi-modeline () ()
   (:default-initargs
    :keymap *inactive-keymap*))
 
@@ -180,3 +182,7 @@
             (finalize-vi-modeline)
             (remove-hook *prompt-activate-hook* 'prompt-activate-hook)
             (remove-hook *prompt-deactivate-hook* 'prompt-deactivate-hook)))
+
+(defmethod state-enabled-hook :after (state)
+  (lem-if:update-cursor-shape (lem-core:implementation)
+                              (state-cursor-type state)))

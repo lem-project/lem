@@ -3,7 +3,7 @@
         :lem
         :lem/universal-argument)
   (:import-from :cl-package-locks)
-  (:import-from #:cl-ppcre)
+  (:import-from :cl-ppcre)
   (:export :*enable-hook*
            :*disable-hook*
            :vi-state

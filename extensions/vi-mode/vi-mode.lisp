@@ -3,8 +3,8 @@
         :lem
         :lem-vi-mode/core
         :lem-vi-mode/ex)
-  (:import-from #:lem-vi-mode/options
-                #:autochdir)
+  (:import-from :lem-vi-mode/options
+                :autochdir)
   (:export :vi-mode
            :define-vi-state
            :*command-keymap*
@@ -12,4 +12,4 @@
            :*ex-keymap*
 
            ;; Options
-           #:autochdir))
+           :autochdir))

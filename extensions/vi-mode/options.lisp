@@ -1,34 +1,34 @@
-(defpackage #:lem-vi-mode/options
-  (:use #:cl)
-  (:import-from #:lem-vi-mode/core
-                #:change-directory)
-  (:import-from #:parse-number
-                #:parse-number)
-  (:import-from #:cl-ppcre
-                #:scan-to-strings)
-  (:import-from #:alexandria
-                #:if-let
-                #:when-let
-                #:once-only
-                #:with-gensyms)
-  (:export #:define-vi-option
-           #:get-option
-           #:vi-option
-           #:vi-option-name
-           #:vi-option-value
-           #:vi-option-default
-           #:vi-option-type
-           #:vi-option-aliases
-           #:vi-option-getter
-           #:vi-option-set-hook
-           #:vi-option-documentation
-           #:reset-vi-option-value
-           #:toggle-vi-option-value
-           #:execute-set-command
+(defpackage :lem-vi-mode/options
+  (:use :cl)
+  (:import-from :lem-vi-mode/core
+                :change-directory)
+  (:import-from :parse-number
+                :parse-number)
+  (:import-from :cl-ppcre
+                :scan-to-strings)
+  (:import-from :alexandria
+                :if-let
+                :when-let
+                :once-only
+                :with-gensyms)
+  (:export :define-vi-option
+           :get-option
+           :vi-option
+           :vi-option-name
+           :vi-option-value
+           :vi-option-default
+           :vi-option-type
+           :vi-option-aliases
+           :vi-option-getter
+           :vi-option-set-hook
+           :vi-option-documentation
+           :reset-vi-option-value
+           :toggle-vi-option-value
+           :execute-set-command
 
            ;; Options
-           #:autochdir))
-(in-package #:lem-vi-mode/options)
+           :autochdir))
+(in-package :lem-vi-mode/options)
 
 (defstruct vi-option
   (name nil :type string)

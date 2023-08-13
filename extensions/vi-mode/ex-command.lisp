@@ -155,11 +155,10 @@
   (declare (ignore range))
   (multiple-value-bind (option-value option-name old-value isset)
       (execute-set-command option-string)
-    (let ((lem-core::*message-timeout* 10))
-      (if (and isset
-               (not (equal option-value old-value)))
-          (lem:message "~A: ~S => ~S" option-name old-value option-value)
-          (lem:message "~A: ~S" option-name option-value)))))
+    (if (and isset
+             (not (equal option-value old-value)))
+        (lem:show-message (format nil "~A: ~S => ~S" option-name old-value option-value) :timeout 10)
+        (lem:show-message (format nil "~A: ~S" option-name option-value) :timeout 10))))
 
 (define-ex-command "^cd$" (range new-directory)
   (declare (ignore range))

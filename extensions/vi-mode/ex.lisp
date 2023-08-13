@@ -13,7 +13,7 @@
    :keymap *ex-keymap*))
 
 (define-command vi-ex () ()
-  (let ((directory (lem:buffer-directory)))
+  (let ((directory (uiop:getcwd)))
     (with-state 'ex
       (execute-ex
        (prompt-for-string
@@ -21,8 +21,8 @@
         :completion-function
         (lambda (str)
           (cond
-            ((ppcre:scan "^(e|vs|sp)[ \\.]" str)
-             (let ((comp-str (ppcre:regex-replace "^(e|vs|sp)\\s*" str "")))
+            ((ppcre:scan "^(?:(?:e|vs|sp)[ \\.]|cd )" str)
+             (let ((comp-str (ppcre:regex-replace "^(e|vs|sp|cd)\\s*" str "")))
                (if (string= comp-str ".")
                    (list (format nil "~A/" str))
                    ;; Almost same as prompt-file-complete in lem-core/completion-file.lisp
@@ -43,7 +43,8 @@
                                   :end (line-end e)))))
                            (lem/completion-mode::completion-file
                             comp-str
-                            directory)))))
+                            directory
+                            :directory-only (and (ppcre:scan "^cd " str) t))))))
             ((ppcre:scan "^(?:b(?:uffer)?|bd(?:elete)?) " str)
              (let ((comp-str (ppcre:regex-replace "^(?:b(?:uffer)?|bd(?:elete)?)\\s+" str "")))
                (mapcar (lambda (buffer)

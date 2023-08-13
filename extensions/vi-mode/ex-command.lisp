@@ -156,3 +156,21 @@
                (not (equal option-value old-value)))
           (lem:message "~A: ~S => ~S" option-name old-value option-value)
           (lem:message "~A: ~S" option-name option-value)))))
+
+(defvar *previous-cwd* nil)
+
+(define-ex-command "^cd$" (range new-directory)
+  (declare (ignore range))
+  (let* ((previous-directory (uiop:getcwd))
+         (new-directory (cond
+                          ((string= new-directory "")
+                           (user-homedir-pathname))
+                          ((string= new-directory "-")
+                           (or *previous-cwd* previous-directory))
+                          (t
+                           (truename
+                            (merge-pathnames (uiop:ensure-directory-pathname new-directory) previous-directory))))))
+    (uiop:chdir new-directory)
+    (unless (uiop:pathname-equal *previous-cwd* previous-directory)
+      (setf *previous-cwd* previous-directory))
+    (lem:message "~A" new-directory)))

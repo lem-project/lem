@@ -24,7 +24,10 @@
            #:vi-option-documentation
            #:reset-vi-option-value
            #:toggle-vi-option-value
-           #:execute-set-command))
+           #:execute-set-command
+
+           ;; Options
+           #:autochdir))
 (in-package #:lem-vi-mode/options)
 
 (defstruct vi-option
@@ -39,27 +42,6 @@
 
 (defvar *options* (make-hash-table :test 'equal))
 (defvar *option-aliases* (make-hash-table :test 'equal))
-
-(defmacro define-vi-option (name (default &key (type t) aliases) &rest others)
-  (once-only (name default)
-    (with-gensyms (option alias)
-      `(progn
-         (dolist (,alias ',aliases)
-           (setf (gethash ,alias *option-aliases*) ,name))
-         (check-type ,default ,type)
-         (let ((,option
-                 (make-vi-option :name ,name
-                                 :%value ,default
-                                 :default ,default
-                                 :type ',type
-                                 :aliases ',aliases
-                                 :getter ,(when-let (getter-arg (find :getter others :key #'car))
-                                            `(lambda () ,@(rest getter-arg)))
-                                 :set-hook ,(when-let (set-hook-arg (find :set-hook others :key #'car))
-                                              `(lambda ,@(rest set-hook-arg)))
-                                 :documentation ,(when-let (doc-arg (find :documentation others :key #'car))
-                                                   (second doc-arg)))))
-           (setf (gethash ,name *options*) ,option))))))
 
 (defun canonical-option-name (name)
   (or (gethash name *option-aliases*)
@@ -147,10 +129,36 @@
                       (null suffix)))
          (setf (vi-option-value option) t))))))
 
+(defmacro define-vi-option (name (default &key (type t) aliases) &rest others)
+  (once-only (default)
+    (with-gensyms (option alias new-value)
+      (let ((name-str (string-downcase name)))
+        `(progn
+           (check-type ,default ,type)
+           (dolist (,alias ',aliases)
+             (setf (gethash ,alias *option-aliases*) ,name-str))
+           (let ((,option
+                   (make-vi-option :name ,name-str
+                                   :%value ,default
+                                   :default ,default
+                                   :type ',type
+                                   :aliases ',aliases
+                                   :getter ,(when-let (getter-arg (find :getter others :key #'car))
+                                              `(lambda () ,@(rest getter-arg)))
+                                   :set-hook ,(when-let (set-hook-arg (find :set-hook others :key #'car))
+                                                `(lambda ,@(rest set-hook-arg)))
+                                   :documentation ,(when-let (doc-arg (find :documentation others :key #'car))
+                                                     (second doc-arg)))))
+             (setf (gethash ,name-str *options*) ,option)
+             (defun ,name ()
+               (vi-option-value (get-option ,name-str)))
+             (defun (setf ,name) (,new-value)
+               (setf (vi-option-value (get-option ,name-str)) ,new-value))))))))
+
 (defun auto-change-directory (buffer)
   (change-directory (lem:buffer-directory buffer)))
 
-(define-vi-option "autochdir" (nil :type boolean :aliases ("acd"))
+(define-vi-option autochdir (nil :type boolean :aliases ("acd"))
   (:documentation "A flag on whether change the current directory to the buffer directory automatically.
   Default: nil
   Aliases: acd")

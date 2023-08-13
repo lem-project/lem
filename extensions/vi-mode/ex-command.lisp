@@ -1,7 +1,9 @@
 (defpackage :lem-vi-mode/ex-command
   (:use :cl :lem-vi-mode/ex-core)
   (:import-from #:lem-vi-mode/jump-motions
-                #:with-jump-motion))
+                #:with-jump-motion)
+  (:import-from #:lem-vi-mode/options
+                #:execute-set-command))
 (in-package :lem-vi-mode/ex-command)
 
 (defun ex-write (range filename touch)
@@ -147,3 +149,13 @@
 (define-ex-command "^(buffers|ls|files)$" (range argument)
   (declare (ignore range argument))
   (lem/list-buffers:list-buffers))
+
+(define-ex-command "^set?$" (range option-string)
+  (declare (ignore range))
+  (multiple-value-bind (option-value option-name old-value isset)
+      (execute-set-command option-string)
+    (let ((lem-core::*message-timeout* 10))
+      (if (and isset
+               (not (equal option-value old-value)))
+          (lem:message "~A: ~S => ~S" option-name old-value option-value)
+          (lem:message "~A: ~S" option-name option-value)))))

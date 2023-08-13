@@ -54,7 +54,7 @@
         (gethash name *options*)
       (when (and (null exists)
                  error-if-not-exists)
-        (error "Unknown option: ~A" name))
+        (lem:editor-error "Unknown option: ~A" name))
       option)))
 
 (defun vi-option-value (option)
@@ -67,8 +67,8 @@
 (defun (setf vi-option-value) (new-value option)
   (with-slots (type set-hook) option
     (unless (typep new-value type)
-      (error "Option '~A' accepts only ~S, but given ~S"
-             (vi-option-name option) type new-value))
+      (lem:editor-error "Option '~A' accepts only ~S, but given ~S"
+                        (vi-option-name option) type new-value))
     (let ((old-value (vi-option-value option)))
       (multiple-value-prog1
           (values
@@ -86,7 +86,7 @@
 (defun toggle-option-value (option)
   (with-slots (name type) option
     (unless (eq type 'boolean)
-      (error "Can't toggle non-boolean option: '~A' (type=~S)" name type)))
+      (lem:editor-error "Can't toggle non-boolean option: '~A' (type=~S)" name type)))
   (setf (vi-option-value option)
         (not (vi-option-value option))))
 

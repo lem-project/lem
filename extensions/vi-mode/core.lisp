@@ -18,7 +18,8 @@
            :state-enabled-hook
            :state-disabled-hook
            :normal
-           :insert))
+           :insert
+           :change-directory))
 (in-package :lem-vi-mode/core)
 
 (defvar *default-cursor-color* nil)
@@ -180,3 +181,22 @@
             (finalize-vi-modeline)
             (remove-hook *prompt-activate-hook* 'prompt-activate-hook)
             (remove-hook *prompt-deactivate-hook* 'prompt-deactivate-hook)))
+
+(defvar *previous-cwd* nil)
+
+(defun change-directory (new-directory)
+  (check-type new-directory (or string pathname))
+  (let* ((previous-directory (uiop:getcwd))
+         (new-directory (cond
+                          ((equal new-directory "")
+                           (user-homedir-pathname))
+                          ((equal new-directory "-")
+                           (or *previous-cwd* previous-directory))
+                          (t
+                           (truename
+                            (merge-pathnames (uiop:ensure-directory-pathname new-directory) previous-directory))))))
+    (assert (uiop:absolute-pathname-p new-directory))
+    (uiop:chdir new-directory)
+    (unless (uiop:pathname-equal *previous-cwd* previous-directory)
+      (setf *previous-cwd* previous-directory))
+    new-directory))

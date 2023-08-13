@@ -3,7 +3,9 @@
   (:import-from #:lem-vi-mode/jump-motions
                 #:with-jump-motion)
   (:import-from #:lem-vi-mode/options
-                #:execute-set-command))
+                #:execute-set-command)
+  (:import-from #:lem-vi-mode/core
+                #:change-directory))
 (in-package :lem-vi-mode/ex-command)
 
 (defun ex-write (range filename touch)
@@ -157,20 +159,7 @@
           (lem:message "~A: ~S => ~S" option-name old-value option-value)
           (lem:message "~A: ~S" option-name option-value)))))
 
-(defvar *previous-cwd* nil)
-
 (define-ex-command "^cd$" (range new-directory)
   (declare (ignore range))
-  (let* ((previous-directory (uiop:getcwd))
-         (new-directory (cond
-                          ((string= new-directory "")
-                           (user-homedir-pathname))
-                          ((string= new-directory "-")
-                           (or *previous-cwd* previous-directory))
-                          (t
-                           (truename
-                            (merge-pathnames (uiop:ensure-directory-pathname new-directory) previous-directory))))))
-    (uiop:chdir new-directory)
-    (unless (uiop:pathname-equal *previous-cwd* previous-directory)
-      (setf *previous-cwd* previous-directory))
+  (let ((new-directory (change-directory new-directory)))
     (lem:message "~A" new-directory)))

@@ -1,5 +1,7 @@
 (defpackage #:lem-vi-mode/options
   (:use #:cl)
+  (:import-from #:lem-vi-mode/core
+                #:change-directory)
   (:import-from #:parse-number
                 #:parse-number)
   (:import-from #:cl-ppcre
@@ -145,7 +147,14 @@
                       (null suffix)))
          (setf (vi-option-value option) t))))))
 
+(defun auto-change-directory (buffer)
+  (change-directory (lem:buffer-directory buffer)))
+
 (define-vi-option "autochdir" (nil :type boolean :aliases ("acd"))
   (:documentation "A flag on whether change the current directory to the buffer directory automatically.
   Default: nil
-  Aliases: acd"))
+  Aliases: acd")
+  (:set-hook (new-value)
+   (if new-value
+       (lem:add-hook lem:*find-file-hook* 'auto-change-directory)
+       (lem:remove-hook lem:*find-file-hook* 'auto-change-directory))))

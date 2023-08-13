@@ -13,6 +13,7 @@
      :mode-hook *lisp-repl-mode-hook*)
   (cond
     ((eq (repl-buffer) (current-buffer))
+     (setf (variable-value 'enable-syntax-highlight) t)
      (repl-reset-input)
      (lem/listener-mode:start-listener-mode (merge-pathnames "history/lisp-repl" (lem-home)))
      (setf (variable-value 'completion-spec) 'repl-completion)

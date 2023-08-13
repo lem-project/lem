@@ -23,18 +23,7 @@
 
 (define-ex-command "^e$" (range filename)
   (declare (ignore range))
-  (lem:find-file (merge-pathnames filename
-                                  (lem:buffer-directory))))
-
-(define-ex-command "^(b|buffer)$" (range buffer-name)
-  (declare (ignore range))
-  (lem:select-buffer buffer-name))
-
-(define-ex-command "^bd(?:elete)?$" (range buffer-name)
-  (declare (ignore range))
-  (lem:kill-buffer (if (string= buffer-name "")
-                       (lem:current-buffer)
-                       buffer-name)))
+  (lem:find-file (merge-pathnames filename (uiop:getcwd))))
 
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))
@@ -83,15 +72,13 @@
   (declare (ignore range))
   (lem:split-active-window-vertically)
   (unless (string= filename "")
-    (lem:find-file (merge-pathnames filename
-                                    (lem:buffer-directory)))))
+    (lem:find-file (merge-pathnames filename (uiop:getcwd)))))
 
 (define-ex-command "^(vs|vsplit)$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-horizontally)
   (unless (string= filename "")
-    (lem:find-file (merge-pathnames filename
-                                    (lem:buffer-directory)))))
+    (lem:find-file (merge-pathnames filename (uiop:getcwd)))))
 
 (define-ex-command "^(s|substitute)$" (range argument)
   (with-jump-motion
@@ -149,6 +136,16 @@
 (define-ex-command "^(buffers|ls|files)$" (range argument)
   (declare (ignore range argument))
   (lem/list-buffers:list-buffers))
+
+(define-ex-command "^(b|buffer)$" (range buffer-name)
+  (declare (ignore range))
+  (lem:select-buffer buffer-name))
+
+(define-ex-command "^bd(?:elete)?$" (range buffer-name)
+  (declare (ignore range))
+  (lem:kill-buffer (if (string= buffer-name "")
+                       (lem:current-buffer)
+                       buffer-name)))
 
 (define-ex-command "^set?$" (range option-string)
   (declare (ignore range))

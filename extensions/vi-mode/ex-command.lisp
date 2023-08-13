@@ -165,3 +165,7 @@
   (declare (ignore range))
   (let ((new-directory (change-directory (expand-filename-modifiers new-directory))))
     (lem:message "~A" new-directory)))
+
+(define-ex-command "^noh(?:lsearch)?$" (range argument)
+  (declare (ignore range argument))
+  (lem/isearch:isearch-end))

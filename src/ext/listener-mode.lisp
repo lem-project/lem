@@ -61,7 +61,6 @@
 
 (defun start-listener-mode (&optional history-pathname)
   (listener-mode t)
-  (setf (variable-value 'enable-syntax-highlight) nil)
   (unless (listener-history (current-buffer))
     (setf (listener-history (current-buffer))
           (lem/common/history:make-history :pathname history-pathname))
@@ -113,7 +112,7 @@
       (line-start s)
       (let ((attribute (variable-value 'listener-prompt-attribute :default buffer)))
         (when attribute
-          (put-text-property s point :attribute attribute)))
+          (put-text-property s point :sticky-attribute attribute)))
       (put-text-property s point :read-only t)
       (put-text-property s point :field t))))
 
@@ -231,7 +230,7 @@
               (with-point ((start point)
                            (end point))
                 (character-offset end 1)
-                (put-text-property start end :attribute attribute)))
+                (put-text-property start end :sticky-attribute attribute)))
     (buffer-start point)
     buffer))
 

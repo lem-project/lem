@@ -273,7 +273,7 @@
   (uiop:run-program `("printf"
                       ,(format nil "~C[~D q"
                                #\Esc
-                               (typecase cursor-type
+                               (case cursor-type
                                  (:box 2)
                                  (:bar 5)
                                  (:underline 4)

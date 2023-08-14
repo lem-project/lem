@@ -492,7 +492,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                        ("C-Right" . paredit-slurp)
                        ("C-Left" . paredit-barf)
                        ("M-s" . paredit-splice)
-                       ;("M-Up" . paredit-splice-backward)
+                       ("M-Up" . paredit-splice-backward)
                        ("M-r" . paredit-raise)
                        ("M-(" . paredit-wrap))
       do (define-key *paredit-mode-keymap* k f))

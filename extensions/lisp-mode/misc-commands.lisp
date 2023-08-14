@@ -2,14 +2,6 @@
   (:use :cl :lem :lem-lisp-mode/internal))
 (in-package :lem-lisp-mode/misc-commands)
 
-(defun find-symbol-matchies (symbol-name)
-  (let ((symbols '()))
-    (do-all-symbols (s)
-      (when (and (string-equal s symbol-name) (fboundp s))
-        (pushnew s symbols)))
-    symbols))
-
-
 (defun find-utopian-route (point)
   (when (in-string-p point)
     (with-point ((start point)

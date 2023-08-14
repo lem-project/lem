@@ -229,8 +229,12 @@
 
 (defun line-string/attributes (line)
   (cons (line-str line)
-        (append (getf (line-plist line) :sticky-attribute)
-                (getf (line-plist line) :attribute))))
+        (alexandria:if-let (sticky-attribute (getf (line-plist line) :sticky-attribute))
+          (loop :with attributes := (getf (line-plist line) :attribute)
+                :for (start end value contp) :in sticky-attribute
+                :do (setf attributes (put-elements attributes start end value contp))
+                :finally (return attributes))
+          (getf (line-plist line) :attribute))))
 
 (defun line-free (line)
   (when (line-prev line)

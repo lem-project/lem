@@ -77,6 +77,7 @@
 (define-key *command-keymap* "t" 'vi-find-char-before)
 (define-key *command-keymap* "T" 'vi-find-char-backward-after)
 (define-key *command-keymap* ";" 'vi-find-char-repeat)
+(define-key *command-keymap* "," 'vi-find-char-repeat-backward)
 (define-key *command-keymap* "z z" 'recenter)
 (define-key *command-keymap* "Z Z" 'vi-write-quit)
 (define-key *command-keymap* "C-w s" 'split-active-window-vertically)

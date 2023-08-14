@@ -57,10 +57,18 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
         do (character-offset point 1)))
 
 (define-command paredit-forward (&optional (n 1)) ("p")
-  (forward-sexp n))
+  (handler-case
+      (forward-sexp n)
+    (error ()
+      (unless (end-buffer-p (current-point))
+        (lem:forward-up-list (current-point))))))
 
 (define-command paredit-backward (&optional (n 1)) ("p")
-  (backward-sexp n))
+  (handler-case
+      (backward-sexp n)
+    (error ()
+      (unless (start-buffer-p (current-point))
+        (lem:backward-up-list (current-point))))))
 
 (defun bolp (point)
   (zerop (point-charpos point)))

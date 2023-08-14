@@ -61,6 +61,7 @@
            :vi-find-char-before
            :vi-find-char-backward-after
            :vi-find-char-repeat
+           :vi-find-char-repeat-backward
            :vi-write
            :vi-quit
            :vi-write-quit
@@ -652,10 +653,11 @@
 
 (defvar *find-char-args* nil)
 
-(defun %vi-find-char (c direction offset)
+(defun %vi-find-char (c direction offset &key dont-keep)
   (check-type direction (member :forward :backward))
   (check-type offset integer)
-  (setf *find-char-args* (list c direction offset))
+  (unless dont-keep
+    (setf *find-char-args* (list c direction offset)))
   (with-point ((p (current-point))
                (limit (current-point)))
     (character-offset p (* -1 offset))
@@ -688,7 +690,16 @@
     (%vi-find-char c :backward 1)))
 
 (define-command vi-find-char-repeat () ()
-  (apply #'%vi-find-char *find-char-args*))
+  (when *find-char-args*
+    (apply #'%vi-find-char *find-char-args*)))
+
+(define-command vi-find-char-repeat-backward () ()
+  (when *find-char-args*
+    (destructuring-bind (c direction offset)
+        *find-char-args*
+      (apply #'%vi-find-char (ecase direction
+                               (:forward (list c :backward (1+ offset) :dont-keep t))
+                               (:backward (list c :forward (1- offset) :dont-keep t)))))))
 
 (define-command vi-write () ()
   (lem:write-file (lem:buffer-filename (lem:current-buffer))))

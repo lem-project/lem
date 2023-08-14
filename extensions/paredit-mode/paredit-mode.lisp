@@ -134,7 +134,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
       ((in-string-p p)
        (if (eql (character-at p) #\")
            (forward-char)
-           (insert-string p "\"" #\\)))
+           (insert-string p "\\\"" #\\)))
       (t (unless (or (bolp p)
                      (find (character-at p -1)
                            *non-space-following-chars*)

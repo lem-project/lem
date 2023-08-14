@@ -425,6 +425,12 @@
       (with-point ((saved-point (current-point)))
         (insert-character (current-point) #\newline)
         (indent-line (current-point))
+        (when (blank-line-p (current-point))
+          (with-point ((start (current-point))
+                       (end (current-point)))
+            (line-start start)
+            (line-end end)
+            (delete-between-points start end)))
         (move-point (current-point) saved-point))))
 
 (define-command lisp-set-package (package-name) ((read-package-name))

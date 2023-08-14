@@ -24,10 +24,7 @@
            :vi-option-documentation
            :reset-vi-option-value
            :toggle-vi-option-value
-           :execute-set-command
-
-           ;; Options
-           :autochdir))
+           :execute-set-command))
 (in-package :lem-vi-mode/options)
 
 (defstruct vi-option
@@ -57,27 +54,34 @@
         (lem:editor-error "Unknown option: ~A" name))
       option)))
 
+(defun ensure-option (name-or-option &optional (error-if-not-exists t))
+  (etypecase name-or-option
+    (vi-option name-or-option)
+    (string (get-option name-or-option error-if-not-exists))))
+
 (defun vi-option-value (option)
-  (values
-   (if-let (getter (vi-option-getter option))
-     (funcall getter)
-     (vi-option-%value option))
-   (vi-option-name option)))
+  (let ((option (ensure-option option)))
+    (values
+     (if-let (getter (vi-option-getter option))
+       (funcall getter)
+       (vi-option-%value option))
+     (vi-option-name option))))
 
 (defun (setf vi-option-value) (new-value option)
-  (with-slots (type set-hook) option
-    (unless (typep new-value type)
-      (lem:editor-error "Option '~A' accepts only ~S, but given ~S"
-                        (vi-option-name option) type new-value))
-    (let ((old-value (vi-option-value option)))
-      (multiple-value-prog1
-          (values
-           (setf (vi-option-%value option) new-value)
-           (vi-option-name option)
-           old-value
-           t)
-        (when set-hook
-          (funcall set-hook new-value))))))
+  (let ((option (ensure-option option)))
+    (with-slots (type set-hook) option
+      (unless (typep new-value type)
+        (lem:editor-error "Option '~A' accepts only ~S, but given ~S"
+                          (vi-option-name option) type new-value))
+      (let ((old-value (vi-option-value option)))
+        (multiple-value-prog1
+            (values
+             (setf (vi-option-%value option) new-value)
+             (vi-option-name option)
+             old-value
+             t)
+          (when set-hook
+            (funcall set-hook new-value)))))))
 
 (defun reset-option-value (option)
   (setf (vi-option-value option)
@@ -130,38 +134,34 @@
          (setf (vi-option-value option) t))))))
 
 (defmacro define-vi-option (name (default &key (type t) aliases) &rest others)
+  (check-type name string)
   (once-only (default)
-    (with-gensyms (option alias new-value)
-      (let ((name-str (string-downcase name)))
-        `(progn
-           (check-type ,default ,type)
-           (dolist (,alias ',aliases)
-             (setf (gethash ,alias *option-aliases*) ,name-str))
-           (let ((,option
-                   (make-vi-option :name ,name-str
-                                   :%value ,default
-                                   :default ,default
-                                   :type ',type
-                                   :aliases ',aliases
-                                   :getter ,(when-let (getter-arg (find :getter others :key #'car))
-                                              `(lambda () ,@(rest getter-arg)))
-                                   :set-hook ,(when-let (set-hook-arg (find :set-hook others :key #'car))
-                                                `(lambda ,@(rest set-hook-arg)))
-                                   :documentation ,(when-let (doc-arg (find :documentation others :key #'car))
-                                                     (second doc-arg)))))
-             (setf (gethash ,name-str *options*) ,option)
-             (defun ,name ()
-               (vi-option-value (get-option ,name-str)))
-             (defun (setf ,name) (,new-value)
-               (setf (vi-option-value (get-option ,name-str)) ,new-value))))))))
+    (with-gensyms (option alias)
+      `(progn
+         (check-type ,default ,type)
+         (dolist (,alias ',aliases)
+           (setf (gethash ,alias *option-aliases*) ,name))
+         (let ((,option
+                 (make-vi-option :name ,name
+                                 :%value ,default
+                                 :default ,default
+                                 :type ',type
+                                 :aliases ',aliases
+                                 :getter ,(when-let (getter-arg (find :getter others :key #'car))
+                                            `(lambda () ,@(rest getter-arg)))
+                                 :set-hook ,(when-let (set-hook-arg (find :set-hook others :key #'car))
+                                              `(lambda ,@(rest set-hook-arg)))
+                                 :documentation ,(when-let (doc-arg (find :documentation others :key #'car))
+                                                   (second doc-arg)))))
+           (setf (gethash ,name *options*) ,option))))))
 
 (defun auto-change-directory (buffer-or-window)
   (change-directory (etypecase buffer-or-window
                       (lem:buffer (lem:buffer-directory buffer-or-window))
                       (lem:window (lem:buffer-directory (lem:window-buffer buffer-or-window))))))
 
-(define-vi-option autochdir (nil :type boolean :aliases ("acd"))
-  (:documentation "A flag on whether change the current directory to the buffer directory automatically.
+(define-vi-option "autochdir" (nil :type boolean :aliases ("acd"))
+  (:documentation "Boolean to change the current directory to the buffer's directory automatically.
   Default: nil
   Aliases: acd")
   (:set-hook (new-value)
@@ -176,3 +176,11 @@
          (dolist (window (lem:window-list))
            (lem:remove-hook (lem-core::window-switch-to-buffer-hook window) 'auto-change-directory)
            (lem:remove-hook (lem-core:window-leave-hook window) 'auto-change-directory))))))
+
+(define-vi-option "number" (nil :type boolean :aliases ("nu"))
+  (:documentation "Boolean to show the line number.
+  Default: nil
+  Aliases: nu")
+  (:getter (lem:variable-value 'lem/line-numbers:line-numbers :global))
+  (:set-hook (new-value)
+   (setf (lem:variable-value 'lem/line-numbers:line-numbers :global) new-value)))

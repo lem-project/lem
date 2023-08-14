@@ -21,6 +21,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            :paredit-splice-backward
            :paredit-splice-forward
            :paredit-raise
+           :paredit-wrap-round
+           :paredit-meta-doublequote
            :*paredit-mode-keymap*))
 (in-package :lem-paredit-mode)
 
@@ -482,7 +484,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
           (insert-character (current-point) end-char)
           (move-point (current-point) (character-offset origin 1))))))
 
-(define-command paredit-wrap () ()
+(define-command paredit-wrap-round () ()
   (%paredit-wrap #\( #\)))
 
 (define-command paredit-meta-doublequote () ()
@@ -501,6 +503,6 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                        ("M-s" . paredit-splice)
                        ("M-Up" . paredit-splice-backward)
                        ("M-r" . paredit-raise)
-                       ("M-(" . paredit-wrap)
+                       ("M-(" . paredit-wrap-round)
                        ("M-\"" . paredit-meta-doublequote))
       do (define-key *paredit-mode-keymap* k f))

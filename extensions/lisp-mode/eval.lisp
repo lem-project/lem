@@ -40,7 +40,8 @@
   (let ((id (overlay-eval-id overlay)))
     (lisp-eval-async `(micros/pretty-eval:remove-evaluated-values ,id))
     (delete-overlay overlay)
-    (delete-overlay (overlay-get overlay 'relation-overlay))
+    (when (overlay-get overlay 'relation-overlay)
+      (delete-overlay (overlay-get overlay 'relation-overlay)))
     (alexandria:removef (buffer-eval-result-overlays (overlay-buffer overlay))
                         overlay)))
 
@@ -85,21 +86,31 @@
                       (+ v 5))
         (format nil "#~X~X~X" r g b)))))
 
-(defun display-evaluated-message (start end message &optional is-error id)
+(defun display-evaluated-message
+    (start
+     end
+     message
+     &key is-error
+          id
+          attribute
+          (background-attribute
+           (make-attribute :background (compute-evaluated-background-color))))
   (let ((popup-overlay
           (make-overlay start
                         end
-                        (if is-error
-                            'eval-error-attribute
-                            'eval-value-attribute)
+                        (or attribute
+                            (if is-error
+                                'eval-error-attribute
+                                'eval-value-attribute))
                         :start-point-kind :left-inserting
                         :end-point-kind :right-inserting))
         (background-overlay
-          (make-overlay start
-                        end
-                        (make-attribute :background (compute-evaluated-background-color))
-                        :start-point-kind :left-inserting
-                        :end-point-kind :right-inserting))
+          (when background-attribute
+            (make-overlay start
+                          end
+                          background-attribute
+                          :start-point-kind :left-inserting
+                          :end-point-kind :right-inserting)))
         (buffer (point-buffer start)))
     (overlay-put popup-overlay 'relation-overlay background-overlay)
     (overlay-put popup-overlay :display-line-end t)
@@ -110,13 +121,16 @@
     (add-hook (variable-value 'before-change-functions :buffer buffer)
               'remove-touch-overlay)))
 
-(defun redisplay-evaluated-message (start end value)
+(defun redisplay-evaluated-message (start end value
+                                    &rest args
+                                    &key is-error attribute background-attribute)
+  (declare (ignore is-error attribute background-attribute))
   (remove-eval-result-overlay-between start end)
-  (display-evaluated-message start end value))
+  (apply #'display-evaluated-message start end value args))
 
 (defun display-spinner-message (spinner &optional message is-error id)
   (lem/loading-spinner:with-line-spinner-points (start end spinner)
-    (display-evaluated-message start end message is-error id)))
+    (display-evaluated-message start end message :is-error is-error :id id)))
 
 (defun spinner-eval-request-id (spinner)
   (lem/loading-spinner:spinner-value spinner 'eval-id))
@@ -137,7 +151,7 @@
         (alexandria:destructuring-ecase value
           ((:ok result)
            (destructuring-bind (&key value id) result
-               (lem/loading-spinner:stop-loading-spinner spinner)
+             (lem/loading-spinner:stop-loading-spinner spinner)
              (display-spinner-message spinner value nil id)))
           ((:abort condition)
            (lem/loading-spinner:stop-loading-spinner spinner)

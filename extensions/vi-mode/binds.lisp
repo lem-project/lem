@@ -59,6 +59,8 @@
 (define-key *command-keymap* "p" 'vi-paste-after)
 (define-key *command-keymap* "P" 'vi-paste-before)
 (define-key *command-keymap* "r" 'vi-replace-char)
+(define-key *command-keymap* "g U" 'vi-upcase)
+(define-key *command-keymap* "g u" 'vi-downcase)
 (define-key *command-keymap* "u" 'vi-undo)
 (define-key *command-keymap* "C-r" 'vi-redo)
 (define-key *command-keymap* "C-f" 'next-page)
@@ -119,3 +121,9 @@
 
 (define-key *command-keymap* "C-g" 'vi-keyboard-quit)
 (define-key *inactive-keymap* "Escape" 'vi-keyboard-quit)
+
+(define-key *visual-keymap* "Escape" 'vi-visual-end)
+(define-key *visual-keymap* "A" 'vi-visual-append)
+(define-key *visual-keymap* "I" 'vi-visual-insert)
+(define-key *visual-keymap* "U" 'vi-upcase)
+(define-key *visual-keymap* "u" 'vi-downcase)

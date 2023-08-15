@@ -46,6 +46,8 @@
            :vi-paste-before
            :vi-replace-char
            :vi-kill-last-word
+           :vi-upcase
+           :vi-downcase
            :vi-undo
            :vi-redo
            :vi-move-to-matching-paren
@@ -451,6 +453,14 @@
 (define-vi-operator vi-kill-last-word (start end)
     (:motion vi-backward-word-end)
   (kill-region start end))
+
+(define-vi-operator vi-upcase (start end) ()
+  (uppercase-region start end)
+  (move-point (current-point) start))
+
+(define-vi-operator vi-downcase (start end) ()
+  (downcase-region start end)
+  (move-point (current-point) start))
 
 (define-command vi-undo (&optional (n 1)) ("p")
   (undo n)

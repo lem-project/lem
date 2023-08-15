@@ -101,10 +101,12 @@
           (command-name (alexandria:if-let (elt (assoc :name options))
                           (second elt)
                           (string-downcase name)))
-          (mode-name (second (assoc :mode options))))
+          (mode-name (second (assoc :mode options)))
+          (initargs (rest (assoc :initargs options))))
 
       (check-type command-name string)
       (check-type mode-name (or null symbol))
+      (check-type initargs list)
 
       (alexandria:with-unique-names (command universal-argument)
         `(progn
@@ -123,7 +125,8 @@
              ()
              (:default-initargs
               :source-location #+sbcl (sb-c:source-location) #-sbcl nil
-              :name ',name))
+              :name ',name
+              ,@initargs))
 
            (defmethod execute (mode (,command ,class-name) ,universal-argument)
              (declare (ignorable ,universal-argument))

@@ -201,10 +201,13 @@
 (defmethod move-to-reference (reference)
   (message "Not reference available in current buffer."))
 
-(defun check-change ()
-  (cond 
+(defun check-change (&key (force nil))
+  (cond
+   (force
+    (search-references
+     (variable-value 'lem/language-mode:detective-search :buffer)))
    ((null (buffer-references (current-buffer)))
-    (search-references 
+    (search-references
      (variable-value 'lem/language-mode:detective-search :buffer)))
 
    ((not (eql (buffer-value (current-buffer) 'prev-tick)

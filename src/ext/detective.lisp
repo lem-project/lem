@@ -217,16 +217,37 @@
           (buffer-modified-tick (current-buffer)))
     (search-references (variable-value 'lem/language-mode:detective-search :buffer)))))
 
-(defun %detective-move (&key (direction :up))
+(defun current-reference (&key (point (current-point)))
+  (let ((closest (%closest-reference))
+        (current-expression
+          (lem:with-point ((p point))
+            (funcall
+             (variable-value 'lem/language-mode::beginning-of-defun-function :buffer)
+             p 1) p)))
+
+    (if  (= (line-number-at-point (car closest))
+              (line-number-at-point current-expression))
+         (find (car closest)
+               (cdr closest)
+               :key #'reference-point :test #'point=)
+      (message "Not inside a reference."))))
+
+(defun %closest-reference (&key (direction :up))
   (let* ((references (buffer-references (current-buffer)))
          (lreferences (alexandria:flatten(alexandria:hash-table-values references)))
          (reference-points (mapcar #'reference-point  lreferences))
          (closest (point-closest (current-point)
-                                           reference-points
-                                           :direction direction )))
-    (if closest
+                                 reference-points
+                                 :direction direction)))
+    (cons closest lreferences)))
+
+(defun %detective-move (&key (direction :up))
+  (let ((closest (%closest-reference :direction direction)))
+    (if (car closest)
         (move-to-reference
-         (find closest lreferences :key #'reference-point :test #'point=))
+         (find (car closest)
+               (cdr closest)
+               :key #'reference-point :test #'point=))
         (message "No found reference."))))
 
 (define-command detective-next () ()

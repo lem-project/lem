@@ -47,10 +47,13 @@
 (defun find-overlays (start end &key including-after-point)
   (let ((buffer (point-buffer start)))
     (loop :for ov :in (buffer-eval-result-overlays buffer)
-          :unless (or (point<= end (overlay-start ov))
-                      (if including-after-point
-                          (point< (overlay-end ov) start)
-                          (point<= (overlay-end ov) start)))
+          :unless (if (point= (overlay-start ov)
+                              (overlay-end ov))
+                      (not (point<= start (overlay-start ov) end))
+                      (or (point<= end (overlay-start ov))
+                          (if including-after-point
+                              (point< (overlay-end ov) start)
+                              (point<= (overlay-end ov) start))))
           :collect ov)))
 
 (defun find-overlay (point)

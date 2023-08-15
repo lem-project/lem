@@ -55,6 +55,7 @@
 
 
 (defparameter *run-test-function-name* "rove:run-test")
+(defparameter *run-suite-test-function-name* "rove:run-suite")
 
 (defun %send-test-reference (package test)
   (lem-lisp-mode/internal::lisp-switch-to-repl-buffer)
@@ -65,6 +66,16 @@
            *run-test-function-name*
            (str:replace-all ":" "" (lem/detective:reference-name package))
            (lem/detective:reference-name test)))
+  (lem/listener-mode:listener-return))
+
+(defun %send-test-suite (suite-package)
+  (lem-lisp-mode/internal::lisp-switch-to-repl-buffer)
+  (buffer-end (current-point))
+  (insert-string
+   (current-point)
+   (format nil "(~A ~A)"
+           *run-suite-test-function-name*
+           (lem/detective:reference-name suite-package)))
   (lem/listener-mode:listener-return))
 
 (define-command lisp-test-run-buffer () ()
@@ -95,3 +106,10 @@
                         "deftest"))
         (%send-test-reference package reference)
         (message "Current reference is not a test."))))
+
+(define-command lisp-test-run-suite () ()
+  (lem/detective::check-change)
+  (let* ((buffer-references (lem/detective:buffer-references
+                             (current-buffer)))
+         (package (car (gethash "packages" buffer-references))))
+    (%send-test-suite package)))

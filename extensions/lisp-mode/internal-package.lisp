@@ -92,6 +92,7 @@
    :lisp-switch-to-repl-buffer
    :write-string-to-repl
    :copy-down-to-repl
+   :send-string-to-listener
    ;; apropos-mode.lisp
    :apropos-headline-attribute
    :*lisp-apropos-mode-keymap*

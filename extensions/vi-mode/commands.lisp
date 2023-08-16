@@ -102,10 +102,6 @@
   (unless (bolp point)
     (character-offset point *cursor-offset*)))
 
-(defun empty-line (point)
-  "Return t if the POINT at line is empty."
-  (zerop (length (line-string point))))
-
 ;; Vim word
 ;; See http://vimdoc.sourceforge.net/htmldoc/motion.html#word
 ;; word = a sequence of letters, digits, underscores, or a 

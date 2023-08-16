@@ -60,6 +60,10 @@
                        :variable-regex
                        (lem/detective:make-capture-regex
                         :regex "^(?:\\(defvar |\\(defparameter )"
+                        :function #'lem-lisp-mode/detective:capture-reference)
+                       :misc-regex
+                       (lem/detective:make-capture-regex
+                        :regex "^\\(deftest "
                         :function #'lem-lisp-mode/detective:capture-reference)))
   (set-syntax-parser lem-lisp-syntax:*syntax-table*
                      (make-tmlanguage-lisp))

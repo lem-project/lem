@@ -66,7 +66,7 @@
 (defun run-test (definitions)
   (destructuring-bind (definition &rest rest-definitions)
       (uiop:ensure-list definitions)
-    (let* ((spinner (start-running-spinner definition)))
+    (let ((spinner (start-running-spinner definition)))
       (with-remote-eval (`(micros/test-runner:run-test
                            ,(definition-name definition)
                            ,(definition-package-name definition)))

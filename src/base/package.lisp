@@ -148,7 +148,6 @@
    :delete-point
    :point-buffer
    :point-charpos
-   :point-linum
    :point-kind
    :point=
    :point/=

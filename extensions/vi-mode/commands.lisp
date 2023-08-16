@@ -323,8 +323,8 @@
 
 (define-vi-operator vi-join (start end) (:motion vi-line)
   (let ((count
-          (max 1 (- (point-linum end)
-                    (point-linum start)))))
+          (max 1 (- (line-number-at-point end)
+                    (line-number-at-point start)))))
     (move-point (current-point) start)
     (dotimes (i count)
       (move-to-end-of-line)
@@ -333,8 +333,8 @@
 
 (define-vi-operator vi-join-line (start end) (:motion vi-line)
   (let ((count
-          (max 1 (- (point-linum end)
-                    (point-linum start)))))
+          (max 1 (- (line-number-at-point end)
+                    (line-number-at-point start)))))
     (move-point (current-point) start)
     (dotimes (i count)
       (move-to-end-of-line)

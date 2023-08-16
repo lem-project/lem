@@ -222,7 +222,7 @@
         (current-expression
           (lem:with-point ((p point))
             (funcall
-             (variable-value 'lem/language-mode::beginning-of-defun-function :buffer)
+             (variable-value 'lem/language-mode:beginning-of-defun-function :buffer)
              p 1) p)))
 
     (if  (= (line-number-at-point (car closest))

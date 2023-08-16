@@ -64,7 +64,8 @@
    (current-point)
    (format nil "(~A '~A::~A)"
            *run-test-function-name*
-           (str:replace-all ":" "" (lem/detective:reference-name package))
+           (remove #\#
+                   (remove #\: (lem/detective:reference-name package)))
            (lem/detective:reference-name test)))
   (lem/listener-mode:listener-return))
 

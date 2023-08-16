@@ -10,7 +10,11 @@
                 :vi-visual-end)
   (:import-from :alexandria
                 :with-gensyms)
-  (:export :read-universal-argument
+  (:export :bolp
+           :eolp
+           :goto-eol
+           :fall-within-line
+           :read-universal-argument
            :*cursor-offset*
            :vi-command
            :vi-motion
@@ -19,6 +23,27 @@
            :define-vi-motion
            :define-vi-operator))
 (in-package :lem-vi-mode/commands/utils)
+
+(defun bolp (point)
+  "Return t if POINT is at the beginning of a line."
+  (zerop (point-charpos point)))
+
+(defun eolp (point)
+  "Return t if POINT is at the end of line."
+  (let ((len (length (line-string point))))
+    (or (zerop len)
+        (>= (point-charpos point)
+            (1- len)))))
+
+(defun goto-eol (point)
+  "Goto end of a line."
+  (line-end point)
+  (unless (bolp point)
+    (character-offset point *cursor-offset*)))
+
+(defun fall-within-line (point)
+  (when (eolp point)
+    (goto-eol point)))
 
 (defun read-universal-argument ()
   (loop :for key := (read-key)

@@ -81,27 +81,6 @@
            :vi-keyboard-quit))
 (in-package :lem-vi-mode/commands)
 
-(defun bolp (point)
-  "Return t if POINT is at the beginning of a line."
-  (zerop (point-charpos point)))
-
-(defun eolp (point)
-  "Return t if POINT is at the end of line."
-  (let ((len (length (line-string point))))
-    (or (zerop len)
-        (>= (point-charpos point)
-            (1- len)))))
-
-(defun goto-bol (point)
-  "Goto beginning of a line."
-  (line-start point))
-
-(defun goto-eol (point)
-  "Goto end of a line."
-  (line-end point)
-  (unless (bolp point)
-    (character-offset point *cursor-offset*)))
-
 ;; Vim word
 ;; See http://vimdoc.sourceforge.net/htmldoc/motion.html#word
 ;; word = a sequence of letters, digits, underscores, or a 
@@ -162,10 +141,6 @@
       (if (bolp p)
           (return)
           (character-offset p -1)))))
-
-(defun fall-within-line (point)
-  (when (eolp point)
-    (goto-eol point)))
 
 (define-vi-motion vi-next-line (n)
     (:type :line)

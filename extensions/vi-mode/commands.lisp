@@ -111,17 +111,6 @@
        (or (char= char #\Space)
            (char= char #\Tab))))
 
-(defparameter *multiline-motion-commands*
-  (list 'vi-next-line
-        'vi-previous-line
-        'vi-next-display-line
-        'vi-previous-display-line
-        'vi-move-to-window-top
-        'vi-move-to-window-middle
-        'vi-move-to-window-bottom
-        'vi-goto-first-line
-        'vi-goto-line))
-
 (define-command vi-move-to-beginning-of-line/universal-argument-0 () ()
   (if (mode-active-p (current-buffer) 'universal-argument)
       (universal-argument-0)
@@ -142,21 +131,22 @@
           (return)
           (character-offset p -1)))))
 
-(define-vi-motion vi-next-line (n)
+(define-vi-motion vi-next-line (&optional (n 1))
     (:type :line)
   (next-logical-line n)
   (fall-within-line (current-point)))
 
-(define-command vi-next-display-line (&optional (n 1)) ("p")
+(define-vi-motion vi-next-display-line (&optional (n 1))
+    (:type :line)
   (next-line n)
   (fall-within-line (current-point)))
 
-(define-vi-motion vi-previous-line (n)
+(define-vi-motion vi-previous-line (&optional (n 1))
     (:type :line)
   (previous-logical-line n)
   (fall-within-line (current-point)))
 
-(define-command vi-previous-display-line (n)
+(define-vi-motion vi-previous-display-line (&optional (n 1))
     (:type :line)
   (previous-line n)
   (fall-within-line (current-point)))
@@ -182,7 +172,8 @@
            (character-offset p 1)))))
     (%vi-forward-word-begin (1- n))))
 
-(define-vi-motion vi-forward-word-begin (n) (:type :inclusive)
+(define-vi-motion vi-forward-word-begin (&optional (n 1))
+    (:type :inclusive)
   (when (eolp (current-point))
     (line-offset (current-point) 1)
     (line-start (current-point)))
@@ -216,7 +207,8 @@
 (define-command vi-backward-word-begin-broad (&optional (n 1)) ("p")
   (backward-word-begin (current-point) n t))
 
-(define-vi-motion vi-forward-word-end (n) (:type :inclusive)
+(define-vi-motion vi-forward-word-end (&optional (n 1))
+    (:type :inclusive)
   (character-offset (current-point) 1)
   (skip-chars-forward (current-point) (lambda (char)
                                         (or (char= char #\Newline)
@@ -253,19 +245,22 @@
              (eql (character-at (current-point)) #\Space))
     (vi-backward-char)))
 
-(define-command vi-move-to-window-top () ()
-  (with-jump-motion
-    (move-point (current-point) (window-view-point (current-window)))))
+(define-vi-motion vi-move-to-window-top ()
+    (:type :line
+     :jump t)
+  (move-point (current-point) (window-view-point (current-window))))
 
-(define-command vi-move-to-window-middle () ()
-  (with-jump-motion
-    (vi-move-to-window-top)
-    (next-line (floor (/ (- (window-height (current-window)) 2) 2)))))
+(define-vi-motion vi-move-to-window-middle ()
+    (:type :line
+     :jump t)
+  (vi-move-to-window-top)
+  (next-line (floor (/ (- (window-height (current-window)) 2) 2))))
 
-(define-command vi-move-to-window-bottom () ()
-  (with-jump-motion
-    (vi-move-to-window-top)
-    (next-line (- (window-height (current-window)) 2))))
+(define-vi-motion vi-move-to-window-bottom ()
+    (:type :line
+     :jump t)
+  (vi-move-to-window-top)
+  (next-line (- (window-height (current-window)) 2)))
 
 (define-command vi-back-to-indentation () ()
   (vi-move-to-beginning-of-line)
@@ -296,7 +291,9 @@
       (kill-region start end))
     (when (and (eq type :line)
                (eq 'vi-delete (command-name (this-command))))
-      (delete-next-char)
+      (if (last-line-p (current-point))
+          (delete-previous-char)
+          (delete-next-char))
       (setf (point-charpos (current-point))
             (max 0
                  (min (1- (length (line-string (current-point)))) pos))))
@@ -495,19 +492,21 @@
     (lem/isearch:isearch-finish)
     (lem/isearch:isearch-next)))
 
-(define-command vi-goto-first-line () ()
-  (with-jump-motion
-    (move-to-beginning-of-buffer)
-    (skip-whitespace-forward (current-point) t)))
+(define-vi-motion vi-goto-first-line ()
+    (:type :line
+     :jump t)
+  (move-to-beginning-of-buffer)
+  (skip-whitespace-forward (current-point) t))
 
-(define-command vi-goto-line (&optional arg) ("P")
-  (with-jump-motion
-    (if (null arg)
-          (progn
-            (move-to-end-of-buffer)
-            (line-start (current-point)))
-          (goto-line arg))
-    (skip-whitespace-forward (current-point) t)))
+(define-vi-motion vi-goto-line (n)
+    (:type :line
+     :jump t)
+  (if (null n)
+      (progn
+        (move-to-end-of-buffer)
+        (line-start (current-point)))
+      (goto-line n))
+  (skip-whitespace-forward (current-point) t))
 
 (define-command vi-return (&optional (n 1)) ("p")
   (vi-next-line n)

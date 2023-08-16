@@ -8,8 +8,11 @@
                 :visual-line-p
                 :apply-visual-range
                 :vi-visual-end)
+  (:import-from :lem/common/command
+                :ensure-command)
   (:import-from :alexandria
-                :with-gensyms)
+                :with-gensyms
+                :ensure-list)
   (:export :bolp
            :eolp
            :goto-eol
@@ -61,33 +64,58 @@
   ((type :type keyword
          :initarg :type
          :initform :exclusive
-         :accessor vi-motion-type)))
+         :accessor vi-motion-type)
+   (default-n-arg :type (or null integer)
+                  :initarg :default-n-arg
+                  :initform 1
+                  :accessor vi-motion-default-n-arg)))
 
 (defclass vi-operator (vi-command) ())
 
 (defvar *vi-origin-point*)
 (defvar *cursor-offset* -1)
 
+(defun parse-vi-motion-arg-list (arg-list)
+  (check-type arg-list list)
+  (cond
+    ((null arg-list)
+     (values () ()))
+    ((eq (first arg-list) '&optional)
+     (values
+       arg-list
+       '("p")
+       (second (ensure-list (second arg-list)))))
+    (t (values arg-list '("P") nil))))
+
 (defmacro define-vi-motion (name arg-list (&key type jump) &body body)
   (check-type type (or null (member :inclusive :exclusive :line)))
   (check-type jump boolean)
-  (with-gensyms (n)
+  (multiple-value-bind (arg-list arg-descriptor default-n-arg)
+      (parse-vi-motion-arg-list arg-list)
     `(define-command (,name (:advice-classes vi-motion)
-                            (:initargs ,@(and type
-                                              `(:type ,type))))
-         (&optional (,n 1)) ("p")
+                            (:initargs
+                             :type ,(or type :exclusive)
+                             :default-n-arg ,default-n-arg))
+       ,arg-list ,arg-descriptor
        (with-point ((*vi-origin-point* (current-point)))
          (,(if jump 'with-jump-motion 'progn)
-           ,(if arg-list
-                `(destructuring-bind ,arg-list (list ,n)
-                   ,@body)
-                `(progn ,@body)))))))
+           ,@body)))))
+
+(defun call-vi-motion-command (command n)
+  (let* ((command (ensure-command command))
+         (n (or n
+                (typecase command
+                  (vi-motion
+                    (with-slots (default-n-arg) command
+                      default-n-arg))
+                  (otherwise 1)))))
+    (call-command command n)))
 
 (defvar *vi-operator-arguments* nil)
 
 (defmacro define-vi-operator (name arg-list (&key motion keep-visual restore-point) &body body)
   (with-gensyms (start end n type command command-name)
-    `(define-command (,name (:advice-classes vi-operator)) (&optional (,n 1)) ("p")
+    `(define-command (,name (:advice-classes vi-operator)) (&optional ,n) ("P")
        (with-point ((*vi-origin-point* (current-point)))
          (unwind-protect
              (if *vi-operator-arguments*
@@ -107,13 +135,14 @@
                                    ,end vend)))
                          (if ',motion
                              (progn
-                               (let ((*cursor-offset* 0))
-                                 (call-command ',motion ,n))
                                (let ((,command (get-command ',motion)))
+                                 (let ((*cursor-offset* 0))
+                                   (ignore-errors
+                                     (call-vi-motion-command ,command ,n)))
                                  (when (typep ,command 'vi-motion)
                                    (setf ,type (vi-motion-type ,command))))
                                (move-point ,end (current-point)))
-                             (let* ((,n (or (read-universal-argument) ,n))
+                             (let* ((,n (read-universal-argument))
                                     (,command-name (read-command))
                                     (,command (get-command ,command-name)))
                                (typecase ,command
@@ -121,15 +150,14 @@
                                    ;; Recursive call of the operator like 'dd', 'cc'
                                    (when (eq ,command-name ',name)
                                      (setf ,type :line)
-                                     (line-start ,start)
-                                     (line-offset ,end (1- ,n))
-                                     (line-end ,end)))
+                                     (line-offset ,end (1- (or ,n 1)))))
                                  (otherwise
                                    (let ((*cursor-offset* 0))
                                      (ignore-errors
-                                       (call-command ,command ,n)))
+                                       (call-vi-motion-command ,command ,n)))
                                    (when (and (typep ,command 'vi-motion)
-                                              (point/= ,end (current-point)))
+                                              (or (eq (vi-motion-type ,command) :line)
+                                                  (point/= ,end (current-point))))
                                      (setf ,type (vi-motion-type ,command)))
                                    (move-point ,end (current-point)))))))
                      (when (point< ,end ,start)

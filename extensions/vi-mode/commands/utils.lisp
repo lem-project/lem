@@ -1,4 +1,4 @@
-(defpackage :lem-vi-mode/command-utils
+(defpackage :lem-vi-mode/commands/utils
   (:use :cl
         :lem)
   (:import-from :lem-vi-mode/jump-motions
@@ -18,7 +18,7 @@
            :vi-operator
            :define-vi-motion
            :define-vi-operator))
-(in-package :lem-vi-mode/command-utils)
+(in-package :lem-vi-mode/commands/utils)
 
 (defun read-universal-argument ()
   (loop :for key := (read-key)

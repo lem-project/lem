@@ -11,7 +11,10 @@
                (:file "word")
                (:file "visual")
                (:file "jump-motions")
-               (:file "command-utils")
+               (:module "commands-dir"
+                :pathname "commands"
+                :components
+                ((:file "utils")))
                (:file "commands")
                (:file "options")
                (:file "ex-core")

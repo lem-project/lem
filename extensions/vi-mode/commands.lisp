@@ -7,7 +7,7 @@
         :lem-vi-mode/word
         :lem-vi-mode/visual
         :lem-vi-mode/jump-motions
-        :lem-vi-mode/command-utils)
+        :lem-vi-mode/commands/utils)
   (:import-from :lem/common/killring
                 :peek-killring-item)
   (:export :vi-move-to-beginning-of-line/universal-argument-0

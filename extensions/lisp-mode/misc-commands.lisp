@@ -94,8 +94,8 @@
          (reference (lem/detective::current-reference)))
     ;;TODO: Make a regex for the test posiblities
     (if (and (typep reference 'lem/detective:misc-reference)
-          (string-equal (lem/detective:misc-custom-type reference)
-                        "deftest"))
+             (string-equal (lem/detective:misc-custom-type reference)
+                           "deftest"))
         (%send-test-reference package reference)
         (message "Current reference is not a test."))))
 

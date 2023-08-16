@@ -6,7 +6,7 @@
 
 (defun %default-capture (class position)
   (let* ((line (str:split #\Space (line-string position)))
-         (name (str:replace-all ")" ""  (second line))))
+         (name (remove #\) (second line))))
     (make-instance class
                    :reference-name name
                    :reference-point position)))

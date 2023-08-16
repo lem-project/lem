@@ -81,12 +81,17 @@
           (when rest-definitions
             (run-test rest-definitions)))))))
 
-(define-command lisp-run-test () ()
-  (alexandria:when-let (test-definition (get-test-definition-at (current-point)))
+(define-command lisp-test-runner-run-current () ()
+  (let ((test-definition (get-test-definition-at (current-point))))
+    (unless test-definition
+      (editor-error "Current reference is not a test."))
     (run-test test-definition)))
 
-(define-command lisp-run-all-current-buffer-tests () ()
-  (run-test (get-buffer-test-definitions (current-buffer))))
+(define-command lisp-test-runner-run-buffer () ()
+  (let ((test-definitions (get-buffer-test-definitions (current-buffer))))
+    (unless test-definitions
+      (editor-error "No test found in this buffer."))
+    (run-test test-definitions)))
 
 ;; TODO:
 ;; - interrupt tests

@@ -262,6 +262,12 @@
                                          string
                                          (string #\newline))))))
 
+(defun send-string-to-listener (string)
+  (lisp-switch-to-repl-buffer)
+  (buffer-end (current-point))
+  (insert-string (current-point) string)
+  (lem/listener-mode:listener-return))
+
 (define-command start-lisp-repl (&optional (use-this-window nil)) ("P")
   (check-connection)
   (flet ((switch (buffer split-window-p)

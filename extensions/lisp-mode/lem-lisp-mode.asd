@@ -42,6 +42,7 @@
                (:file "trace")
                (:file "class-browser")
                (:file "macroexpand")
+               (:file "test-runner")
                (:file "package")))
 
 (defsystem "lem-lisp-mode/v2"

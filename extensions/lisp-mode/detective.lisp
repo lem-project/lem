@@ -33,10 +33,8 @@
 (defmethod capture-reference ((position lem:point) (class (eql :misc-reference)))
   (let* ((line (str:split #\Space (line-string position)))
          (type (str:replace-all "(" "" (first line)))
-         (name (second line)))
+         (name (remove #\) (second line))))
     (make-instance 'lem/detective:misc-reference
                    :misc-custom-type type
                    :reference-name name
                    :reference-point position)))
-
-

@@ -232,3 +232,14 @@
     (let ((string (points-to-string start end)))
       (eval-print string)
       (move-point (current-point) end))))
+
+(define-command lisp-eval-region (start end) ("r")
+  "Execute the region as Lisp code."
+  (check-connection)
+  (eval-with-transcript
+   `(micros:interactive-eval-region
+     ,(points-to-string start end))))
+
+(define-command lisp-eval-buffer () ()
+  "Execute the accessible portion of current buffer as Lisp code."
+  (lisp-eval-region (buffer-start-point (current-buffer)) (buffer-end-point (current-buffer))))

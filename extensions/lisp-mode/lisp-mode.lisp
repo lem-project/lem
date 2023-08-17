@@ -78,7 +78,6 @@
 (define-key *global-keymap* "M-:" 'lisp-eval-string)
 (define-key *lisp-mode-keymap* "C-c M-:" 'lisp-eval-string)
 (define-key *lisp-mode-keymap* "C-M-x" 'lisp-eval-defun)
-(define-key *lisp-mode-keymap* "C-c C-r" 'lisp-eval-region)
 (define-key *lisp-mode-keymap* "C-c C-n" 'lisp-next-compilation-notes)
 (define-key *lisp-mode-keymap* "C-c C-p" 'lisp-previous-compilation-notes)
 (define-key *lisp-mode-keymap* "C-c C-l" 'lisp-load-file)
@@ -522,17 +521,6 @@
         (if (ppcre:scan "^\\(defvar(?:\\s|$)" string)
             (re-eval-defvar string)
             (interactive-eval string))))))
-
-(define-command lisp-eval-region (start end) ("r")
-  "Execute the region as Lisp code."
-  (check-connection)
-  (eval-with-transcript
-   `(micros:interactive-eval-region
-     ,(points-to-string start end))))
-
-(define-command lisp-eval-buffer () ()
-  "Execute the accessible portion of current buffer as Lisp code."
-  (lisp-eval-region (buffer-start-point (current-buffer)) (buffer-end-point (current-buffer))))
 
 (define-command lisp-load-file (filename)
     ((prompt-for-file "Load File: "

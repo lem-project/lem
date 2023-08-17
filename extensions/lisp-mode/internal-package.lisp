@@ -56,7 +56,6 @@
    :lisp-eval-string
    :lisp-eval-last-expression
    :lisp-eval-defun
-   :lisp-eval-region
    :lisp-load-file
    :lisp-remove-notes
    :lisp-compile-and-load-file

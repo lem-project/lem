@@ -42,6 +42,7 @@
                (:file "trace")
                (:file "class-browser")
                (:file "macroexpand")
+               (:file "folding")
                (:file "test-runner")
                (:file "package")))
 

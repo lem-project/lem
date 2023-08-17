@@ -348,8 +348,9 @@
                                           (<= (incf nl-count) 1)
                                           (syntax-space-char-p c)))))))
         (delete-character p (- p1))
-        ;; Don't add a space when the next line is empty
-        (unless (char= (character-at p) #\Newline)
+        ;; Don't add a space when there's trailing spaces, or the next line is empty or starts with a ')'
+        (unless (or (member (character-at p) '(#\Newline #\)))
+                    (syntax-space-char-p (character-at p -1)))
           (insert-character p #\Space))))
     (vi-backward-char)))
 

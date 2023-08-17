@@ -4,12 +4,17 @@
                "lem"
                "cl-ppcre"
                "parse-number"
+               "cl-package-locks"
                "alexandria")
   :serial t
   :components ((:file "core")
                (:file "word")
                (:file "visual")
                (:file "jump-motions")
+               (:module "commands-dir"
+                :pathname "commands"
+                :components
+                ((:file "utils")))
                (:file "commands")
                (:file "options")
                (:file "ex-core")

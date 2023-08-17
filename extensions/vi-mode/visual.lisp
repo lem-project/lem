@@ -2,7 +2,8 @@
   (:use :cl
         :lem
         :lem-vi-mode/core)
-  (:export :vi-visual-end
+  (:export :*visual-keymap*
+           :vi-visual-end
            :vi-visual-char
            :vi-visual-line
            :vi-visual-block
@@ -12,21 +13,13 @@
            :visual-block-p
            :apply-visual-range
            :vi-visual-insert
-           :vi-visual-append
-           :vi-visual-upcase
-           :vi-visual-downcase))
+           :vi-visual-append))
 (in-package :lem-vi-mode/visual)
 
 (defvar *start-point* nil)
 (defvar *visual-overlays* '())
 
 (defvar *visual-keymap* (make-keymap :name '*visual-keymap* :parent *command-keymap*))
-
-(define-key *visual-keymap* "Escape" 'vi-visual-end)
-(define-key *visual-keymap* "A" 'vi-visual-append)
-(define-key *visual-keymap* "I" 'vi-visual-insert)
-(define-key *visual-keymap* "U" 'vi-visual-upcase)
-(define-key *visual-keymap* "u" 'vi-visual-downcase)
 
 (define-vi-state visual (vi-state) ()
   (:default-initargs
@@ -170,18 +163,3 @@
                               (rotatef start end))
                             (insert-string start str))))
     (vi-visual-end)))
-
-(defun %visual-case (f)
-  (with-point ((start *start-point*)
-               (end (current-point)))
-    (apply-visual-range f)
-    (vi-visual-end)
-    (move-point (current-point) (if (point< start end)
-                                    start
-                                    end))))
-
-(define-command vi-visual-upcase () ()
-  (%visual-case #'uppercase-region))
-
-(define-command vi-visual-downcase () ()
-  (%visual-case #'downcase-region))

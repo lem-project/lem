@@ -27,6 +27,8 @@
            :define-vi-operator))
 (in-package :lem-vi-mode/commands/utils)
 
+(defvar *cursor-offset* -1)
+
 (defun bolp (point)
   "Return t if POINT is at the beginning of a line."
   (zerop (point-charpos point)))
@@ -73,7 +75,6 @@
 (defclass vi-operator (vi-command) ())
 
 (defvar *vi-origin-point*)
-(defvar *cursor-offset* -1)
 
 (defun parse-vi-motion-arg-list (arg-list)
   (check-type arg-list list)

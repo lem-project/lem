@@ -40,7 +40,7 @@
 
 (defun get-buffer-test-definitions (buffer)
   (lem/detective::check-change :force t :buffer buffer)
-  (loop :for reference :in (gethash "misc" (lem/detective:buffer-references buffer))
+  (loop :for reference :in (lem/detective:references-misc (lem/detective:buffer-references buffer))
         :when (deftest-reference-p reference)
         :collect (make-definition-from-reference reference buffer)))
 

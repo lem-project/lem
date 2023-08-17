@@ -48,6 +48,11 @@
    :set-misc-regex
 
    :buffer-references
+   :references-functions
+   :references-classes
+   :references-packages
+   :references-variables
+   :references-misc
 
    :search-references
 
@@ -132,6 +137,23 @@
                :writer set-misc-regex
                :reader search-misc-regex)))
 
+(defun references-functions (references)
+  (gethash "functions" references))
+
+(defun references-classes (references)
+  (gethash "classes" references))
+
+(defun references-packages (references)
+  (gethash "packages" references))
+
+(defun references-variables (references)
+  (gethash "variables" references))
+
+(defun references-misc (references)
+  (gethash "misc" references))
+
+(defun references-all (references)
+  (alexandria:flatten (alexandria:hash-table-values references)))
 
 (defun buffer-references (buffer)
   (buffer-value buffer 'references))
@@ -156,7 +178,7 @@
                      (misc-regex search-misc-regex))
         search
       (let ((slots
-              (list (cons (cons "functions" function-regex):function-reference)
+              (list (cons (cons "functions" function-regex) :function-reference)
                     (cons (cons "classes" class-regex) :class-reference)
                     (cons (cons "packages" package-regex) :package-reference)
                     (cons (cons "variables" variable-regex) :variable-reference)
@@ -288,8 +310,6 @@
 (define-command detective-all () ()
   "Prompt for a definition defined in this buffer and move the point to it."
   (check-change)
-  (let* ((references
-          (alexandria:flatten
-           (alexandria:hash-table-values (buffer-references (current-buffer)))))
-        (reference (navigate-reference references)))
-     (move-to-reference reference)))
+  (let* ((references (references-all (buffer-references (current-buffer))))
+         (reference (navigate-reference references)))
+    (move-to-reference reference)))

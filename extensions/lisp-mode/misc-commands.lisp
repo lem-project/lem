@@ -76,11 +76,11 @@
   (alexandria:when-let*
       ((buffer-references (lem/detective:buffer-references
                            (current-buffer)))
-       (package (car (gethash "packages" buffer-references)))
+       (package (first (lem/detective:references-packages buffer-references)))
        (test-references
         (remove-if-not #'(lambda (x)
                            (string-equal "deftest" x))
-                       (gethash "misc" buffer-references)
+                       (lem/detective:references-misc buffer-references)
                        :key #'lem/detective:misc-custom-type))
        (selected-test
         (lem/detective::%get-reference test-references
@@ -91,7 +91,7 @@
   (lem/detective::check-change :force t)
   (let* ((buffer-references (lem/detective:buffer-references
                              (current-buffer)))
-         (package (car (gethash "packages" buffer-references)))
+         (package (first (lem/detective:references-packages buffer-references)))
          (reference (lem/detective::current-reference)))
     ;;TODO: Make a regex for the test posiblities
     (if (and (typep reference 'lem/detective:misc-reference)
@@ -104,5 +104,5 @@
   (lem/detective::check-change)
   (let* ((buffer-references (lem/detective:buffer-references
                              (current-buffer)))
-         (package (car (gethash "packages" buffer-references))))
+         (package (first (lem/detective:references-packages buffer-references))))
     (%send-test-suite package)))

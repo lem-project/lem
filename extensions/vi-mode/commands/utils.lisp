@@ -6,6 +6,7 @@
   (:import-from :lem-vi-mode/visual
                 :visual-p
                 :visual-line-p
+                :visual-block-p
                 :apply-visual-range
                 :vi-visual-end)
   (:import-from :lem/common/command
@@ -89,7 +90,7 @@
     (t (values arg-list '("P") nil))))
 
 (defmacro define-vi-motion (name arg-list (&key type jump) &body body)
-  (check-type type (or null (member :inclusive :exclusive :line)))
+  (check-type type (or null (member :inclusive :exclusive :line :block)))
   (check-type jump boolean)
   (multiple-value-bind (arg-list arg-descriptor default-n-arg)
       (parse-vi-motion-arg-list arg-list)
@@ -161,29 +162,36 @@
                            (command-motion-type command))))))))))
 
 (defun call-vi-operator (n fn &key motion keep-visual restore-point)
-  (with-point ((*vi-origin-point* (current-point)))
-    (unwind-protect
-         (if *vi-operator-arguments*
-             (apply fn *vi-operator-arguments*)
-             (multiple-value-bind (start end type)
-                 (vi-operator-region n motion)
-               (when (point< end start)
-                 (rotatef start end))
-               (ecase type
-                 (:line (unless (visual-p)
-                          (line-start start)
-                          (line-end end)))
-                 (:inclusive
-                  (unless (point= start end)
-                    (character-offset end 1)))
-                 (:exclusive))
-               (let ((*vi-operator-arguments* (list start end type)))
-                 (funcall fn start end type))))
-      (when restore-point
-        (move-point (current-point) *vi-origin-point*))
-      (unless keep-visual
-        (when (visual-p)
-          (vi-visual-end))))))
+  (flet ((call-with-region (fn start end type)
+           (when (point< end start)
+             (rotatef start end))
+           (ecase type
+             (:line (unless (visual-p)
+                      (line-start start)
+                      (line-end end)))
+             (:block)
+             (:inclusive
+              (unless (point= start end)
+                (character-offset end 1)))
+             (:exclusive))
+           (let ((*vi-operator-arguments* (list start end type)))
+             (funcall fn start end type))))
+    (with-point ((*vi-origin-point* (current-point)))
+      (unwind-protect
+           (if *vi-operator-arguments*
+               (apply fn *vi-operator-arguments*)
+               (if (visual-block-p)
+                   (apply-visual-range
+                    (lambda (start end)
+                      (call-with-region fn start end :block)))
+                   (multiple-value-bind (start end type)
+                       (vi-operator-region n motion)
+                     (call-with-region fn start end type))))
+        (when restore-point
+          (move-point (current-point) *vi-origin-point*))
+        (unless keep-visual
+          (when (visual-p)
+            (vi-visual-end)))))))
 
 (defmacro define-vi-operator (name arg-list (&key motion keep-visual restore-point) &body body)
   (with-gensyms (n extra-args)

@@ -287,7 +287,9 @@
 
 (define-vi-operator vi-delete (start end type) ()
   (let ((pos (point-charpos (current-point))))
-    (with-killring-context (:options (when (eq type :line) :vi-line))
+    (with-killring-context (:options (when (eq type :line) :vi-line)
+                            :appending (when (eq type :block)
+                                         (continue-flag :kill)))
       (kill-region start end))
     (when (and (eq type :line)
                (eq 'vi-delete (command-name (this-command))))

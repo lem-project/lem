@@ -410,10 +410,18 @@
     (:motion vi-forward-char)
   (move-point (current-point) start)
   (let* ((c (key-to-char (read-key)))
-         (count (count-characters start end)))
+         (string-to-replace
+           ;; Replace all chars in the region except newlines
+           (with-output-to-string (s)
+             (map-region start end
+                         (lambda (string lastp)
+                           (format s
+                                   "~v@{~C~:*~}~*~@[~%~]"
+                                   (length string)
+                                   c
+                                   (not lastp)))))))
     (delete-between-points start end)
-    (dotimes (i count)
-      (insert-character start c))
+    (insert-string start string-to-replace)
     (if (visual-p)
         (move-point (current-point) start)
         (character-offset (current-point) *cursor-offset*))))

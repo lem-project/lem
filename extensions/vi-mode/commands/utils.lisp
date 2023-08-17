@@ -133,33 +133,33 @@
                            (lambda (vstart vend)
                              (setf ,start vstart
                                    ,end vend)))
-                         (if ',motion
-                             (progn
-                               (let ((,command (get-command ',motion)))
-                                 (let ((*cursor-offset* 0))
-                                   (ignore-errors
-                                     (call-vi-motion-command ,command ,n)))
-                                 (when (typep ,command 'vi-motion)
-                                   (setf ,type (vi-motion-type ,command))))
-                               (move-point ,end (current-point)))
-                             (let* ((,n (read-universal-argument))
-                                    (,command-name (read-command))
-                                    (,command (get-command ,command-name)))
-                               (typecase ,command
-                                 (vi-operator
-                                   ;; Recursive call of the operator like 'dd', 'cc'
-                                   (when (eq ,command-name ',name)
-                                     (setf ,type :line)
-                                     (line-offset ,end (1- (or ,n 1)))))
-                                 (otherwise
+                         ,(if motion
+                              `(progn
+                                 (let ((,command (get-command ',motion)))
                                    (let ((*cursor-offset* 0))
                                      (ignore-errors
                                        (call-vi-motion-command ,command ,n)))
-                                   (when (and (typep ,command 'vi-motion)
-                                              (or (eq (vi-motion-type ,command) :line)
-                                                  (point/= ,end (current-point))))
-                                     (setf ,type (vi-motion-type ,command)))
-                                   (move-point ,end (current-point)))))))
+                                   (when (typep ,command 'vi-motion)
+                                     (setf ,type (vi-motion-type ,command))))
+                                 (move-point ,end (current-point)))
+                              `(let* ((,n (read-universal-argument))
+                                      (,command-name (read-command))
+                                      (,command (get-command ,command-name)))
+                                 (typecase ,command
+                                   (vi-operator
+                                     ;; Recursive call of the operator like 'dd', 'cc'
+                                     (when (eq ,command-name ',name)
+                                       (setf ,type :line)
+                                       (line-offset ,end (1- (or ,n 1)))))
+                                   (otherwise
+                                     (let ((*cursor-offset* 0))
+                                       (ignore-errors
+                                         (call-vi-motion-command ,command ,n)))
+                                     (when (and (typep ,command 'vi-motion)
+                                                (or (eq (vi-motion-type ,command) :line)
+                                                    (point/= ,end (current-point))))
+                                       (setf ,type (vi-motion-type ,command)))
+                                     (move-point ,end (current-point)))))))
                      (when (point< ,end ,start)
                        (rotatef ,start ,end))
                      (ecase ,type

@@ -33,13 +33,13 @@
                    :point (lem/detective:reference-point reference)))
 
 (defun get-test-definition-at (point)
-  (lem/detective::check-change :force t)
+  (lem/detective::check-change :force t :buffer (point-buffer point))
   (let ((reference (lem/detective::current-reference :point point)))
     (when (deftest-reference-p reference)
       (make-definition-from-reference reference (point-buffer point)))))
 
 (defun get-buffer-test-definitions (buffer)
-  (lem/detective::check-change :force t)
+  (lem/detective::check-change :force t :buffer buffer)
   (loop :for reference :in (gethash "misc" (lem/detective:buffer-references buffer))
         :when (deftest-reference-p reference)
         :collect (make-definition-from-reference reference buffer)))

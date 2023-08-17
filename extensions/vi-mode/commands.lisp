@@ -459,11 +459,12 @@
   (when (syntax-closed-paren-char-p (character-at point))
     (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t)))
 
-(define-command vi-move-to-matching-paren () ()
+(define-vi-motion vi-move-to-matching-paren ()
+    (:type :inclusive
+     :jump t)
   (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))
                                (vi-forward-matching-paren (current-window) (current-point) *cursor-offset*))))
-    (with-jump-motion
-      (move-point (current-point) p))))
+    (move-point (current-point) p)))
 
 (let ((old-forward-matching-paren)
       (old-backward-matching-paren))

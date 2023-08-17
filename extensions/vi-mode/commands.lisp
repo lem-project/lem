@@ -447,12 +447,12 @@
   (redo n)
   (fall-within-line (current-point)))
 
-(defun vi-forward-matching-paren (window point &optional (offset *cursor-offset*))
-  (declare (ignore window offset))
+(defun vi-forward-matching-paren (window point &optional (offset -1))
+  (declare (ignore window))
   (with-point ((point point))
     (when (syntax-open-paren-char-p (character-at point))
       (when (scan-lists point 1 0 t)
-        (character-offset point *cursor-offset*)))))
+        (character-offset point offset)))))
 
 (defun vi-backward-matching-paren (window point &optional (offset -1))
   (declare (ignore window offset))
@@ -463,7 +463,7 @@
     (:type :inclusive
      :jump t)
   (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))
-                               (vi-forward-matching-paren (current-window) (current-point) *cursor-offset*))))
+                               (vi-forward-matching-paren (current-window) (current-point)))))
     (move-point (current-point) p)))
 
 (let ((old-forward-matching-paren)

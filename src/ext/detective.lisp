@@ -173,13 +173,14 @@
 (defgeneric capture-reference (point class))
 
 (defun %get-reference (references &key (prompt "Navigate: "))
-  (alexandria:when-let* ((name-references (mapcar #'reference-name references))
-                         (item
-                          (prompt-for-string prompt
-                                             :completion-function (lambda (x) (completion-strings x name-references))
-
-                                             :test-function (lambda (name)
-                                                              (member name name-references :test #'string=)))))
+  (alexandria:when-let*
+      ((name-references (mapcar #'reference-name references))
+       (item
+        (prompt-for-string prompt
+                           :completion-function (lambda (x)
+                                                  (completion-strings x name-references))
+                           :test-function (lambda (name)
+                                            (member name name-references :test #'string=)))))
     (find item references :key #'reference-name :test #'string=)))
 
 (defgeneric navigate-reference (references))

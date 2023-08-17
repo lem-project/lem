@@ -10,6 +10,9 @@
 (define-attribute failure-test-attribute
   (t :foreground "red"))
 
+(define-key *lisp-mode-keymap* "C-c C-r" 'lisp-test-runner-run-current)
+(define-key *lisp-mode-keymap* "C-c R" 'lisp-test-runner-run-buffer)
+
 (defstruct definition
   package-name
   name

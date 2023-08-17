@@ -126,40 +126,31 @@
            (if (typep command 'vi-motion)
                (vi-motion-type command)
                :exclusive)))
-    (if (visual-p)
-        (let (start end)
-          (apply-visual-range
-           (lambda (vstart vend)
-             (setf start vstart
-                   end vend)))
-          (values start
-                  end
-                  (if (visual-line-p) :line :exclusive)))
-        (with-point ((start (current-point)))
-          (if motion
-              (let ((command (get-command motion)))
-                (call-motion command n)
-                (values
-                 start
-                 (copy-point (current-point))
-                 (command-motion-type command)))
-              (let* ((uarg (or (read-universal-argument) n))
-                     (command-name (read-command))
-                     (command (get-command command-name)))
-                (typecase command
-                  (vi-operator
-                   (if (eq command-name (command-name (this-command)))
-                       ;; Recursive call of the operator like 'dd', 'cc'
-                       (with-point ((end (current-point)))
-                         (line-offset end (1- (or uarg 1)))
-                         (values start end :line))
-                       ;; Ignore an invalid operator (like 'dJ')
-                       nil))
-                  (otherwise
-                   (call-motion command uarg)
-                   (values start
-                           (copy-point (current-point))
-                           (command-motion-type command))))))))))
+    (with-point ((start (current-point)))
+      (if motion
+          (let ((command (get-command motion)))
+            (call-motion command n)
+            (values
+              start
+              (copy-point (current-point))
+              (command-motion-type command)))
+          (let* ((uarg (or (read-universal-argument) n))
+                 (command-name (read-command))
+                 (command (get-command command-name)))
+            (typecase command
+              (vi-operator
+                (if (eq command-name (command-name (this-command)))
+                    ;; Recursive call of the operator like 'dd', 'cc'
+                    (with-point ((end (current-point)))
+                      (line-offset end (1- (or uarg 1)))
+                      (values start end :line))
+                    ;; Ignore an invalid operator (like 'dJ')
+                    nil))
+              (otherwise
+                (call-motion command uarg)
+                (values start
+                        (copy-point (current-point))
+                        (command-motion-type command)))))))))
 
 (defun call-vi-operator (n fn &key motion keep-visual restore-point)
   (flet ((call-with-region (fn start end type)
@@ -180,10 +171,14 @@
       (unwind-protect
            (if *vi-operator-arguments*
                (apply fn *vi-operator-arguments*)
-               (if (visual-block-p)
+               (if (visual-p)
                    (apply-visual-range
                     (lambda (start end)
-                      (call-with-region fn start end :block)))
+                      (call-with-region fn start end
+                                        (cond
+                                          ((visual-line-p) :line)
+                                          ((visual-block-p) :block)
+                                          (t :exclusive)))))
                    (multiple-value-bind (start end type)
                        (vi-operator-region n motion)
                      (call-with-region fn start end type))))

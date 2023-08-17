@@ -173,7 +173,9 @@
                  (:line (unless (visual-p)
                           (line-start start)
                           (line-end end)))
-                 (:inclusive (character-offset end 1))
+                 (:inclusive
+                  (unless (point= start end)
+                    (character-offset end 1)))
                  (:exclusive))
                (let ((*vi-operator-arguments* (list start end type)))
                  (funcall fn start end type))))

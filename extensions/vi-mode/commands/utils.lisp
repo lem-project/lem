@@ -113,67 +113,83 @@
 
 (defvar *vi-operator-arguments* nil)
 
+(defun vi-operator-region (n motion)
+  (check-type n (or null (integer 0)))
+  (check-type motion (or null symbol))
+  (flet ((call-motion (command uarg)
+           (let ((*cursor-offset* 0))
+             (ignore-errors
+               (call-vi-motion-command command uarg))))
+         (command-motion-type (command)
+           (if (typep command 'vi-motion)
+               (vi-motion-type command)
+               :exclusive)))
+    (if (visual-p)
+        (let (start end)
+          (apply-visual-range
+           (lambda (vstart vend)
+             (setf start vstart
+                   end vend)))
+          (values start
+                  end
+                  (if (visual-line-p) :line :exclusive)))
+        (with-point ((start (current-point)))
+          (if motion
+              (let ((command (get-command motion)))
+                (call-motion command n)
+                (values
+                 start
+                 (copy-point (current-point))
+                 (command-motion-type command)))
+              (let* ((uarg (or (read-universal-argument) n))
+                     (command-name (read-command))
+                     (command (get-command command-name)))
+                (typecase command
+                  (vi-operator
+                   (if (eq command-name (command-name (this-command)))
+                       ;; Recursive call of the operator like 'dd', 'cc'
+                       (with-point ((end (current-point)))
+                         (line-offset end (1- (or uarg 1)))
+                         (values start end :line))
+                       ;; Ignore an invalid operator (like 'dJ')
+                       nil))
+                  (otherwise
+                   (call-motion command uarg)
+                   (values start
+                           (copy-point (current-point))
+                           (command-motion-type command))))))))))
+
+(defun call-vi-operator (n fn &key motion keep-visual restore-point)
+  (with-point ((*vi-origin-point* (current-point)))
+    (unwind-protect
+         (if *vi-operator-arguments*
+             (apply fn *vi-operator-arguments*)
+             (multiple-value-bind (start end type)
+                 (vi-operator-region n motion)
+               (when (point< end start)
+                 (rotatef start end))
+               (ecase type
+                 (:line (unless (visual-p)
+                          (line-start start)
+                          (line-end end)))
+                 (:inclusive (character-offset end 1))
+                 (:exclusive))
+               (let ((*vi-operator-arguments* (list start end type)))
+                 (funcall fn start end type))))
+      (when restore-point
+        (move-point (current-point) *vi-origin-point*))
+      (unless keep-visual
+        (when (visual-p)
+          (vi-visual-end))))))
+
 (defmacro define-vi-operator (name arg-list (&key motion keep-visual restore-point) &body body)
-  (with-gensyms (start end n type command command-name)
+  (with-gensyms (n extra-args)
     `(define-command (,name (:advice-classes vi-operator)) (&optional ,n) ("P")
-       (with-point ((*vi-origin-point* (current-point)))
-         (unwind-protect
-             (if *vi-operator-arguments*
-                 (destructuring-bind ,(and arg-list
-                                           `(&optional ,@arg-list))
-                     (subseq *vi-operator-arguments* 0 ,(length arg-list))
-                   ,@body)
-                 (with-point ((,start (current-point))
-                              (,end (current-point)))
-                   (let ((,type (if (visual-line-p)
-                                    :line
-                                    :exclusive)))
-                     (if (visual-p)
-                         (apply-visual-range
-                           (lambda (vstart vend)
-                             (setf ,start vstart
-                                   ,end vend)))
-                         ,(if motion
-                              `(progn
-                                 (let ((,command (get-command ',motion)))
-                                   (let ((*cursor-offset* 0))
-                                     (ignore-errors
-                                       (call-vi-motion-command ,command ,n)))
-                                   (when (typep ,command 'vi-motion)
-                                     (setf ,type (vi-motion-type ,command))))
-                                 (move-point ,end (current-point)))
-                              `(let* ((,n (read-universal-argument))
-                                      (,command-name (read-command))
-                                      (,command (get-command ,command-name)))
-                                 (typecase ,command
-                                   (vi-operator
-                                     ;; Recursive call of the operator like 'dd', 'cc'
-                                     (when (eq ,command-name ',name)
-                                       (setf ,type :line)
-                                       (line-offset ,end (1- (or ,n 1)))))
-                                   (otherwise
-                                     (let ((*cursor-offset* 0))
-                                       (ignore-errors
-                                         (call-vi-motion-command ,command ,n)))
-                                     (when (and (typep ,command 'vi-motion)
-                                                (or (eq (vi-motion-type ,command) :line)
-                                                    (point/= ,end (current-point))))
-                                       (setf ,type (vi-motion-type ,command)))
-                                     (move-point ,end (current-point)))))))
-                     (when (point< ,end ,start)
-                       (rotatef ,start ,end))
-                     (ecase ,type
-                       (:exclusive)
-                       (:inclusive (character-offset ,end 1))
-                       (:line (unless (visual-p)
-                                (line-start ,start)
-                                (line-end ,end))))
-                     (let ((*vi-operator-arguments* (list ,start ,end ,type)))
-                       (destructuring-bind ,(and arg-list
-                                                 `(&optional ,@arg-list))
-                           (subseq *vi-operator-arguments* 0 ,(length arg-list))
-                         ,@body)))))
-           ,@(when restore-point
-               '((move-point (current-point) *vi-origin-point*)))
-           ,@(unless keep-visual
-               '((when (visual-p) (vi-visual-end)))))))))
+       (call-vi-operator ,n
+                         (lambda (,@(and arg-list `(&optional ,@arg-list))
+                                  &rest ,extra-args)
+                           (declare (ignore ,extra-args))
+                           ,@body)
+                         :motion ',motion
+                         :keep-visual ,keep-visual
+                         :restore-point ,restore-point))))

@@ -106,28 +106,30 @@
                       (list
                        (format nil "[~C]" (aref buffer-text (1- buffer-pos)))
                        (subseq buffer-text buffer-pos)))))))
-      (let ((read-pos 0))
-        (with-output-to-string (s)
-          (apply-visual-range
-           (lambda (start end)
-             (write-string buf-str s
-                           :start read-pos
-                           :end (1- (if (< buffer-pos (position-at-point start))
-                                        (+ (position-at-point start) 2)
-                                        (position-at-point start))))
-             (write-char #\< s)
-             (write-string buf-str s
-                           :start (1- (if (< buffer-pos (position-at-point start))
-                                          (+ (position-at-point start) 2)
-                                          (position-at-point start)))
-                           :end (1- (if (< buffer-pos (position-at-point end))
-                                        (+ (position-at-point end) 2)
-                                        (position-at-point end))))
-             (write-char #\> s)
-             (setf read-pos
-                   (if (< buffer-pos (position-at-point end))
-                       (+ (position-at-point end) 2)
-                       (position-at-point end))))))))))
+      (if (lem-vi-mode/visual:visual-p)
+          (let ((read-pos 0))
+            (with-output-to-string (s)
+              (apply-visual-range
+               (lambda (start end)
+                 (write-string buf-str s
+                               :start read-pos
+                               :end (1- (if (< buffer-pos (position-at-point start))
+                                            (+ (position-at-point start) 2)
+                                            (position-at-point start))))
+                 (write-char #\< s)
+                 (write-string buf-str s
+                               :start (1- (if (< buffer-pos (position-at-point start))
+                                              (+ (position-at-point start) 2)
+                                              (position-at-point start)))
+                               :end (1- (if (< buffer-pos (position-at-point end))
+                                            (+ (position-at-point end) 2)
+                                            (position-at-point end))))
+                 (write-char #\> s)
+                 (setf read-pos
+                       (if (< buffer-pos (position-at-point end))
+                           (+ (position-at-point end) 2)
+                           (position-at-point end)))))))
+          buf-str))))
 
 (defun make-buffer-string (buffer)
   (%make-buffer-string (buffer-text buffer)
@@ -280,7 +282,7 @@
 
 (defmethod form-description ((function (eql 'buf=)) args values &key negative)
   (declare (ignore args))
-  (format nil "Expect the buffer~:[~; not~] to be \"~A\"~@[~:* (actual: \"~A\")~]"
+  (format nil "Expect the buffer~:[~; not~] to be \"~A\"~@[ (actual: \"~A\")~]"
           negative
           (text-backslashed (first values))
           ;; NOTE: For the older versions of Rove that doesn't cache the assertion description
@@ -290,7 +292,7 @@
 
 (defmethod form-description ((function (eql 'state=)) args values &key negative)
   (declare (ignore args))
-  (format nil "Expect the vi state~:[~; not~] to be ~A~@[~:* (actual: ~A)~]"
+  (format nil "Expect the vi state~:[~; not~] to be ~A~@[ (actual: ~A)~]"
           negative
           (first values)
           (ignore-errors (current-state))))

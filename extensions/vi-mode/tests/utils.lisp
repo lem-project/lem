@@ -29,7 +29,8 @@
                 :remove-from-plistf
                 :with-gensyms
                 :once-only
-                :appendf)
+                :appendf
+                :if-let)
   (:export :with-test-buffer
            :with-vi-tests
            :cmd
@@ -140,11 +141,10 @@
                                (#\Tab "\\t")))
                            :simple-calls t))
 
-;; TODO: Support Esc, Return Backspace and etc.
 (defun parse-command-keys (keys-string)
   (check-type keys-string string)
   (let (keys)
-    (ppcre:do-matches-as-strings (key-str "<((H|S|M|C|Shift)-)+.>|." keys-string)
+    (ppcre:do-matches-as-strings (key-str "(?<!\\\\)<[^\\>]+?>|." keys-string)
       (push
        (if (= (length key-str) 1)
            (make-key :sym key-str)
@@ -162,8 +162,11 @@
                   (appendf key-args '(:ctrl t)))
                  ((string= modifier "Shift")
                   (appendf key-args '(:shift t)))))
-             (apply #'make-key :sym (ppcre:scan-to-strings ".(?=>)" key-str)
-                    key-args)))
+             (let ((sym-str (ppcre:scan-to-strings "[^<-]+(?=>$)" key-str)))
+               (apply #'make-key :sym (if-let (char (name-char sym-str))
+                                        (string char)
+                                        sym-str)
+                      key-args))))
        keys))
     (nreverse keys)))
 

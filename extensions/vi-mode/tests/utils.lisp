@@ -19,7 +19,8 @@
                 :current-state)
   (:import-from :lem-vi-mode/visual
                 :visual-line
-                :visual-block)
+                :visual-block
+                :apply-visual-range)
   (:import-from :cl-ppcre
                 :scan
                 :regex-replace)
@@ -33,49 +34,97 @@
            :cmd
            :pos=
            :text=
+           :state=
            :buf=))
 (in-package :lem-vi-mode/tests/utils)
 
-(defun change-state-by-keyword (state-keyword)
-  (change-state
-   (ecase state-keyword
-     (:normal 'normal)
-     (:insert 'insert)
-     (:visual 'visual-char)
-     (:visual-line 'visual-line)
-     (:visual-block 'visual-block))))
+(defun state-to-keyword (state)
+  (check-type state (and symbol (not keyword)))
+  (ecase state
+    (normal :normal)
+    (insert :insert)
+    (visual-char :visual)
+    (visual-line :visual-line)
+    (visual-block :visual-block)))
 
-;; TODO: Support visual mode
+(defun keyword-to-state (state-keyword)
+  (check-type state-keyword keyword)
+  (ecase state-keyword
+    (:normal 'normal)
+    (:insert 'insert)
+    (:visual 'visual-char)
+    (:visual-line 'visual-line)
+    (:visual-block 'visual-block)))
+
 (defun parse-buffer-string (buffer-string)
-  (multiple-value-bind (start end)
-      (ppcre:scan "(?<!\\\\)\\[" buffer-string)
-    (if start
-        (let ((len (length buffer-string)))
-          (assert
-           (or (and (< end len)
-                    (char= (aref buffer-string end) #\]))
-               (and (< (1+ end) len)
-                    (char= (aref buffer-string (1+ end)) #\]))))
-          (values (ppcre:regex-replace "\\[([^\\]])?\\]"
-                                       buffer-string
-                                       "\\1")
-                  end))
-        (values buffer-string 1))))
+  (let ((offset 0)
+        cursor
+        vstart
+        visual-regions)
+    (ppcre:do-matches (s e "(?<!\\\\)(\\[|\\]|<|>)" buffer-string)
+      (let ((char (aref buffer-string s)))
+        (ecase char
+          (#\[
+           (assert (null cursor))
+           (let ((len (length buffer-string)))
+             (assert
+              (or (and (< e len)
+                       (char= (aref buffer-string e) #\]))
+                  (and (< (1+ e) len)
+                       (char= (aref buffer-string (1+ e)) #\]))))
+             (setf cursor (- e offset))))
+          (#\]
+           (assert cursor))
+          (#\<
+           (assert (null vstart))
+           (setf vstart (- e offset)))
+          (#\>
+           (assert vstart)
+           (push (cons vstart (- e offset)) visual-regions)
+           (setf vstart nil)))
+        (incf offset)))
+    (values (ppcre:regex-replace-all "(?<!\\\\)(\\[|\\]|<|>)"
+                                     buffer-string
+                                     "")
+            cursor
+            (nreverse visual-regions))))
 
-;; TODO: Support visual mode
 (defun %make-buffer-string (buffer-text buffer-pos)
   (let ((state (current-state)))
-    (apply #'concatenate 'string
-           (subseq buffer-text 0 (1- buffer-pos))
-           (ecase state
-             (normal
-               (list
-                 (format nil "[~C]" (aref buffer-text (1- buffer-pos)))
-                 (subseq buffer-text buffer-pos)))
-             (insert
-               (list
-                 "[]"
-                 (subseq buffer-text (1- buffer-pos))))))))
+    (let ((buf-str
+            (apply #'concatenate 'string
+                   (subseq buffer-text 0 (1- buffer-pos))
+                   (case state
+                     (insert
+                      (list
+                       "[]"
+                       (subseq buffer-text (1- buffer-pos))))
+                     (otherwise
+                      (list
+                       (format nil "[~C]" (aref buffer-text (1- buffer-pos)))
+                       (subseq buffer-text buffer-pos)))))))
+      (let ((read-pos 0))
+        (with-output-to-string (s)
+          (apply-visual-range
+           (lambda (start end)
+             (write-string buf-str s
+                           :start read-pos
+                           :end (1- (if (< buffer-pos (position-at-point start))
+                                        (+ (position-at-point start) 2)
+                                        (position-at-point start))))
+             (write-char #\< s)
+             (write-string buf-str s
+                           :start (1- (if (< buffer-pos (position-at-point start))
+                                          (+ (position-at-point start) 2)
+                                          (position-at-point start)))
+                           :end (1- (if (< buffer-pos (position-at-point end))
+                                        (+ (position-at-point end) 2)
+                                        (position-at-point end))))
+             (write-char #\> s)
+             (setf read-pos
+                   (if (< buffer-pos (position-at-point end))
+                       (+ (position-at-point end) 2)
+                       (position-at-point end))))))))))
 
 (defun make-buffer-string (buffer)
   (%make-buffer-string (buffer-text buffer)
@@ -90,6 +139,7 @@
                                (#\Tab "\\t")))
                            :simple-calls t))
 
+;; TODO: Support Esc, Return Backspace and etc.
 (defun parse-command-keys (keys-string)
   (check-type keys-string string)
   (let (keys)
@@ -125,14 +175,22 @@
   (unless temporary-specified-p
     (setf (getf buffer-args :temporary) t))
   (remove-from-plistf buffer-args :name)
-  (with-gensyms (point buffer-content position)
+  (with-gensyms (point buffer-content position visual-regions)
     `(with-fake-interface ()
        (let* ((,var (make-buffer ,name ,@buffer-args))
               (,point (buffer-point ,var)))
-         (multiple-value-bind (,buffer-content ,position)
+         (multiple-value-bind (,buffer-content ,position ,visual-regions)
              (parse-buffer-string ,buffer-string)
            (insert-string ,point ,buffer-content)
-           (move-to-position ,point ,position))
+           (move-to-position ,point ,position)
+           (dolist (region ,visual-regions)
+             (destructuring-bind (from . to) region
+               (with-point ((start ,point)
+                            (end ,point))
+                 (move-to-position start from)
+                 (move-to-position end to)
+                 (push (lem:make-overlay start end 'lem:region)
+                       lem-vi-mode/visual::*visual-overlays*)))))
          ,@body))))
 
 (defmacro with-current-buffer ((buffer) &body body)
@@ -149,7 +207,7 @@
 (defmacro with-vi-tests ((buffer &key (state :normal)) &body body)
   `(with-current-buffer (,buffer)
      (lem-core:change-buffer-mode ,buffer 'lem-vi-mode:vi-mode)
-     (change-state-by-keyword ,state)
+     (change-state (keyword-to-state ,state))
      (rove:testing (format nil "[buf] \"~A\""
                            (text-backslashed
                              (make-buffer-string (current-buffer))))
@@ -163,6 +221,9 @@
                 (text= (expected-buffer-text)
                   (string= (buffer-text (current-buffer))
                            expected-buffer-text))
+                (state= (expected-state)
+                  (eq (keyword-to-state expected-state)
+                      (current-state)))
                 (buf= (expected-buffer-string)
                   (check-type expected-buffer-string string)
                   (multiple-value-bind (expected-buffer-text expected-position)
@@ -170,7 +231,8 @@
                     (with-point ((p (current-point)))
                       (move-to-position p expected-position)
                       (and (text= expected-buffer-text)
-                           (pos= p))))))
+                           (pos= p)
+                           (state= (state-to-keyword (current-state))))))))
          ,@body))))
 
 (defun point-coord (point)

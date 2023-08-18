@@ -6,12 +6,14 @@
   (:import-from :parse-number
                 :parse-number)
   (:import-from :cl-ppcre
-                :scan-to-strings)
+                :scan-to-strings
+                :register-groups-bind)
   (:import-from :alexandria
                 :if-let
                 :when-let
                 :once-only
-                :with-gensyms)
+                :with-gensyms
+                :disjoin)
   (:export :define-vi-option
            :get-option
            :vi-option
@@ -37,6 +39,8 @@
   (getter nil :type (or function null))
   (set-hook nil :type (or function null))
   (documentation nil :type (or string null)))
+
+(define-condition vi-option-error (simple-error) ())
 
 (defvar *options* (make-hash-table :test 'equal))
 (defvar *option-aliases* (make-hash-table :test 'equal))
@@ -75,13 +79,17 @@
         (lem:editor-error "Option '~A' accepts only ~S, but given ~S"
                           (vi-option-name option) type new-value))
       (let ((old-value (vi-option-value option)))
-        (when set-hook
-          (funcall set-hook new-value))
-        (setf (vi-option-%value option) new-value)
-        (values (vi-option-value option)
-                (vi-option-name option)
-                old-value
-                t)))))
+        (handler-case
+            (progn
+              (when set-hook
+                (funcall set-hook new-value))
+              (setf (vi-option-%value option) new-value)
+              (values (vi-option-value option)
+                      (vi-option-name option)
+                      old-value
+                      t))
+          (vi-option-error (e)
+            (lem:editor-error (princ-to-string e))))))))
 
 (defun reset-option-value (option)
   (setf (vi-option-value option)
@@ -182,6 +190,7 @@
             (lem:editor-error "Can't decrement a boolean option: ~A"
                               (vi-option-name option)))))
         (t
+         (assert (and (null prefix) (null suffix)))
          (if (eq (vi-option-type option) 'boolean)
              (setf (vi-option-value option) t)
              ;; Show the current value for other than boolean
@@ -241,6 +250,37 @@
 
 (defvar *default-iskeyword* '("@" "48-57" "_" "192-255"))
 
+(defun compile-iskeyword (value)
+  (apply #'disjoin
+         (mapcar (lambda (rule)
+                   (check-type rule string)
+                   (cond
+                     ((string= rule "@")
+                      #'alpha-char-p)
+                     ((string= rule "@-@")
+                      (lambda (c)
+                        (char= c #\@)))
+                     (t
+                      (or (ppcre:register-groups-bind ((#'parse-integer start) (#'parse-integer end))
+                              ("(\\d{2,})-(\\d{2,})" rule)
+                            (lambda (c)
+                              (<= start (char-code c) end)))
+                          (ppcre:register-groups-bind (start end)
+                              ("(.)-(.)" rule)
+                            (let ((start-code (char-code (aref start 0)))
+                                  (end-code (char-code (aref end 0))))
+                              (lambda (c)
+                                (<= start-code (char-code c) end-code))))
+                          (progn
+                            (unless (= (length rule) 1)
+                              (error 'vi-option-error
+                                     :format-control "Invalid rule in iskeyword: ~A"
+                                     :format-arguments (list rule)))
+                            (let ((rule-char (aref rule 0)))
+                              (lambda (c)
+                                (char= c rule-char))))))))
+                 value)))
+
 (define-vi-option "iskeyword" (*default-iskeyword* :type list :aliases ("isk"))
   (:documentation "Comma-separated string to specify the characters should be recognized as a keyword. (buffer local)
   Default: @,48-57,_,192-255
@@ -248,8 +288,12 @@
   (:getter
    (symbol-macrolet ((vi-iskeyword
                        (gethash "vi-iskeyword" (lem-base::buffer-variables (lem:current-buffer)))))
-     (or vi-iskeyword
-         (setf vi-iskeyword *default-iskeyword*))))
+     (car
+      (or vi-iskeyword
+          (setf vi-iskeyword
+                (cons *default-iskeyword*
+                      (compile-iskeyword *default-iskeyword*)))))))
   (:set-hook (new-value)
    (setf (gethash "vi-iskeyword" (lem-base::buffer-variables (lem:current-buffer)))
-         new-value)))
+         (cons new-value
+               (compile-iskeyword new-value)))))

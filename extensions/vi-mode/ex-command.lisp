@@ -153,12 +153,22 @@
 
 (define-ex-command "^set?$" (range option-string)
   (declare (ignore range))
-  (multiple-value-bind (option-value option-name old-value isset)
-      (execute-set-command option-string)
-    (if (and isset
-             (not (equal option-value old-value)))
-        (lem:show-message (format nil "~A: ~S => ~S" option-name old-value option-value) :timeout 10)
-        (lem:show-message (format nil "~A: ~S" option-name option-value) :timeout 10))))
+  (flet ((encode-value (value)
+           (typecase value
+             (list (format nil "~{~A~^,~}" value))
+             (otherwise value))))
+    (multiple-value-bind (option-value option-name old-value isset)
+        (execute-set-command option-string)
+      (let ((*print-case* :downcase))
+        (if (and isset
+                 (not (equal option-value old-value)))
+            (lem:show-message (format nil "~A: ~S => ~S"
+                                      option-name
+                                      (encode-value old-value)
+                                      (encode-value option-value))
+                              :timeout 10)
+            (lem:show-message (format nil "~A: ~S" option-name (encode-value option-value))
+                              :timeout 10))))))
 
 (define-ex-command "^cd$" (range new-directory)
   (declare (ignore range))

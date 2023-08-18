@@ -5,7 +5,8 @@
                "cl-ppcre"
                "parse-number"
                "cl-package-locks"
-               "alexandria")
+               "alexandria"
+               "split-sequence")
   :serial t
   :components ((:file "core")
                (:file "word")

@@ -1,5 +1,6 @@
 (defpackage :lem-vi-mode/options
-  (:use :cl)
+  (:use :cl
+        :split-sequence)
   (:import-from :lem-vi-mode/core
                 :change-directory)
   (:import-from :parse-number
@@ -31,7 +32,7 @@
   (name nil :type string)
   %value
   default
-  (type t :type (member t boolean number string))
+  (type t :type (member t boolean number string list))
   (aliases '() :type list)
   (getter nil :type (or function null))
   (set-hook nil :type (or function null))
@@ -74,14 +75,13 @@
         (lem:editor-error "Option '~A' accepts only ~S, but given ~S"
                           (vi-option-name option) type new-value))
       (let ((old-value (vi-option-value option)))
-        (multiple-value-prog1
-            (values
-             (setf (vi-option-%value option) new-value)
-             (vi-option-name option)
-             old-value
-             t)
-          (when set-hook
-            (funcall set-hook new-value)))))))
+        (when set-hook
+          (funcall set-hook new-value))
+        (setf (vi-option-%value option) new-value)
+        (values (vi-option-value option)
+                (vi-option-name option)
+                old-value
+                t)))))
 
 (defun reset-option-value (option)
   (setf (vi-option-value option)
@@ -97,12 +97,15 @@
 (defun parse-option-string (option-string)
   (coerce
    (nth-value 1
-              (ppcre:scan-to-strings "^(no|inv)?([^?!&=:]+)(\\?|\\!|&|=|:)?(.+)?$" option-string))
+              (ppcre:scan-to-strings "^(no|inv)?([^?!&=:\\+\\-\\^]+)(\\?|\\!|&|(?:\\+|\\-|\\^)?=|:)?(.+)?$" option-string))
    'list))
 
 (defun execute-set-command (option-string)
-  (destructuring-bind (prefix option-name suffix new-value)
+  (destructuring-bind (&optional prefix option-name suffix new-value)
       (parse-option-string option-string)
+    (unless option-name
+      (lem:editor-error "Unknown option: ~A" option-string)
+      (return-from execute-set-command nil))
     (let ((option (get-option option-name)))
       (cond
         ((equal suffix "?")
@@ -127,11 +130,62 @@
                     (error () new-value)))
                  (string
                   new-value)
+                 (list
+                  (check-type new-value string)
+                  (split-sequence #\, new-value))
                  (otherwise new-value))))
+        ((member suffix '("+=" "^=") :test 'equal)
+         (ecase (vi-option-type option)
+           (list
+            (let ((current-value (vi-option-value option)))
+              (if (member new-value current-value
+                          :test 'equal)
+                  (vi-option-value option)
+                  (setf (vi-option-value option)
+                        (if (string= suffix "+=")
+                            (append current-value (list new-value))
+                            (cons new-value current-value))))))
+           (string
+            (setf (vi-option-value option)
+                  (if (string= suffix "+=")
+                      (concatenate 'string
+                                   (vi-option-value option)
+                                   new-value)
+                      (concatenate 'string
+                                   new-value
+                                   (vi-option-value option)))))
+           (number
+            (setf (vi-option-value option)
+                  (funcall (if (string= suffix "+=")
+                               #'+
+                               #'*)
+                           (vi-option-value option)
+                           new-value)))
+           (boolean
+            (lem:editor-error "Can't ~A a boolean option: ~A"
+                              (if (string= suffix "+=")
+                                  "increment"
+                                  "multiply")
+                              (vi-option-name option)))))
+        ((string= suffix "-=")
+         (ecase (vi-option-type option)
+           (list
+            (setf (vi-option-value option)
+                  (remove new-value (vi-option-value option)
+                          :test 'equal)))
+           (string
+            (lem:editor-error "Can't subtract a string option: ~A"
+                              (vi-option-name option)))
+           (number
+            (decf (vi-option-value option) new-value))
+           (boolean
+            (lem:editor-error "Can't decrement a boolean option: ~A"
+                              (vi-option-name option)))))
         (t
-         (assert (and (null prefix)
-                      (null suffix)))
-         (setf (vi-option-value option) t))))))
+         (if (eq (vi-option-type option) 'boolean)
+             (setf (vi-option-value option) t)
+             ;; Show the current value for other than boolean
+             (vi-option-value option)))))))
 
 (defmacro define-vi-option (name (default &key (type t) aliases) &rest others)
   (check-type name string)
@@ -184,3 +238,18 @@
   (:getter (lem:variable-value 'lem/line-numbers:line-numbers :global))
   (:set-hook (new-value)
    (setf (lem:variable-value 'lem/line-numbers:line-numbers :global) new-value)))
+
+(defvar *default-iskeyword* '("@" "48-57" "_" "192-255"))
+
+(define-vi-option "iskeyword" (*default-iskeyword* :type list :aliases ("isk"))
+  (:documentation "Comma-separated string to specify the characters should be recognized as a keyword. (buffer local)
+  Default: @,48-57,_,192-255
+  Aliases: isk")
+  (:getter
+   (symbol-macrolet ((vi-iskeyword
+                       (gethash "vi-iskeyword" (lem-base::buffer-variables (lem:current-buffer)))))
+     (or vi-iskeyword
+         (setf vi-iskeyword *default-iskeyword*))))
+  (:set-hook (new-value)
+   (setf (gethash "vi-iskeyword" (lem-base::buffer-variables (lem:current-buffer)))
+         new-value)))

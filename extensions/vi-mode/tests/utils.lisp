@@ -13,10 +13,11 @@
   (:import-from :lem-vi-mode
                 :vi-mode)
   (:import-from :lem-vi-mode/core
-                :change-state
+                :state-keymap
                 :normal
                 :insert
-                :current-state)
+                :current-state
+                :ensure-state)
   (:import-from :lem-vi-mode/visual
                 :visual-line
                 :visual-block
@@ -204,36 +205,41 @@
                                             ,window)
            ,@body)))))
 
+(defmacro with-vi-state ((state) &body body)
+  `(let* ((*current-state* (ensure-state (keyword-to-state ,state))))
+     (change-global-mode-keymap 'vi-mode (lem-vi-mode/core::state-keymap *current-state*))
+     ,@body))
+
 (defmacro with-vi-tests ((buffer &key (state :normal)) &body body)
   `(with-current-buffer (,buffer)
-     (lem-core:change-buffer-mode ,buffer 'lem-vi-mode:vi-mode)
-     (change-state (keyword-to-state ,state))
-     (rove:testing (format nil "[buf] \"~A\""
-                           (text-backslashed
-                             (make-buffer-string (current-buffer))))
-       (labels ((cmd (keys)
-                  (check-type keys string)
-                  (rove:diag (format nil "[cmd] ~A" keys))
-                  (execute-key-sequence
-                    (parse-command-keys keys)))
-                (pos= (expected-point)
-                  (point= (current-point) expected-point))
-                (text= (expected-buffer-text)
-                  (string= (buffer-text (current-buffer))
-                           expected-buffer-text))
-                (state= (expected-state)
-                  (eq (keyword-to-state expected-state)
-                      (current-state)))
-                (buf= (expected-buffer-string)
-                  (check-type expected-buffer-string string)
-                  (multiple-value-bind (expected-buffer-text expected-position)
-                      (parse-buffer-string expected-buffer-string)
-                    (with-point ((p (current-point)))
-                      (move-to-position p expected-position)
-                      (and (text= expected-buffer-text)
-                           (pos= p)
-                           (state= (state-to-keyword (current-state))))))))
-         ,@body))))
+     (lem-core:change-buffer-mode ,buffer 'vi-mode)
+     (with-vi-state (,state)
+       (rove:testing (format nil "[buf] \"~A\""
+                             (text-backslashed
+                              (make-buffer-string (current-buffer))))
+         (labels ((cmd (keys)
+                    (check-type keys string)
+                    (rove:diag (format nil "[cmd] ~A" keys))
+                    (execute-key-sequence
+                     (parse-command-keys keys)))
+                  (pos= (expected-point)
+                    (point= (current-point) expected-point))
+                  (text= (expected-buffer-text)
+                    (string= (buffer-text (current-buffer))
+                             expected-buffer-text))
+                  (state= (expected-state)
+                    (eq (keyword-to-state expected-state)
+                        (current-state)))
+                  (buf= (expected-buffer-string)
+                    (check-type expected-buffer-string string)
+                    (multiple-value-bind (expected-buffer-text expected-position)
+                        (parse-buffer-string expected-buffer-string)
+                      (with-point ((p (current-point)))
+                        (move-to-position p expected-position)
+                        (and (text= expected-buffer-text)
+                             (pos= p)
+                             (state= (state-to-keyword (current-state))))))))
+           ,@body)))))
 
 (defun point-coord (point)
   (values (line-number-at-point point)

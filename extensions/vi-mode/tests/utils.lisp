@@ -240,8 +240,7 @@
                       (with-point ((p (current-point)))
                         (move-to-position p expected-position)
                         (and (text= expected-buffer-text)
-                             (pos= p)
-                             (state= (state-to-keyword (current-state))))))))
+                             (pos= p))))))
            ,@body)))))
 
 (defun point-coord (point)
@@ -283,3 +282,10 @@
           (ignore-errors
             (text-backslashed
               (make-buffer-string (current-buffer))))))
+
+(defmethod form-description ((function (eql 'state=)) args values &key negative)
+  (declare (ignore args))
+  (format nil "Expect the vi state~:[~; not~] to be ~A~@[~:* (actual: ~A)~]"
+          negative
+          (first values)
+          (ignore-errors (current-state))))

@@ -13,6 +13,7 @@
   (:import-from :lem-vi-mode
                 :vi-mode)
   (:import-from :lem-vi-mode/core
+                :*current-state*
                 :state-keymap
                 :normal
                 :insert
@@ -209,8 +210,10 @@
            ,@body)))))
 
 (defmacro with-vi-state ((state) &body body)
-  `(let* ((*current-state* (ensure-state (keyword-to-state ,state))))
-     (change-global-mode-keymap 'vi-mode (lem-vi-mode/core::state-keymap *current-state*))
+  `(let* ((lem-vi-mode/core::*current-state* (ensure-state (keyword-to-state ,state))))
+     (change-global-mode-keymap
+      'vi-mode
+      (lem-vi-mode/core::state-keymap lem-vi-mode/core::*current-state*))
      ,@body))
 
 (defmacro with-vi-tests ((buffer &key (state :normal)) &body body)

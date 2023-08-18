@@ -25,7 +25,9 @@
                 :regex-replace)
   (:import-from :alexandria
                 :remove-from-plistf
-                :with-gensyms)
+                :with-gensyms
+                :once-only
+                :appendf)
   (:export :with-test-buffer
            :with-vi-tests
            :cmd
@@ -79,9 +81,40 @@
   (%make-buffer-string (buffer-text buffer)
                        (position-at-point (buffer-point buffer))))
 
-;; TODO: Support more escape sequences
 (defun text-backslashed (text)
-  (ppcre:regex-replace-all "\\n" text "\\n"))
+  (ppcre:regex-replace-all "[\\n\\r\\t]" text
+                           (lambda (matches)
+                             (ecase (aref matches 0)
+                               (#\Newline "\\n")
+                               (#\Return "\\r")
+                               (#\Tab "\\t")))
+                           :simple-calls t))
+
+(defun parse-command-keys (keys-string)
+  (check-type keys-string string)
+  (let (keys)
+    (ppcre:do-matches-as-strings (key-str "<((H|S|M|C|Shift)-)+.>|." keys-string)
+      (push
+       (if (= (length key-str) 1)
+           (make-key :sym key-str)
+           (let (key-args)
+             (ppcre:do-register-groups (modifier)
+                 ("(H|S|M|C|Shift)-" key-str)
+               (cond
+                 ((string= modifier "H")
+                  (appendf key-args '(:hyper t)))
+                 ((string= modifier "S")
+                  (appendf key-args '(:super t)))
+                 ((string= modifier "M")
+                  (appendf key-args '(:meta t)))
+                 ((string= modifier "C")
+                  (appendf key-args '(:ctrl t)))
+                 ((string= modifier "Shift")
+                  (appendf key-args '(:shift t)))))
+             (apply #'make-key :sym (ppcre:scan-to-strings ".(?=>)" key-str)
+                    key-args)))
+       keys))
+    (nreverse keys)))
 
 (defmacro with-test-buffer ((var buffer-string
                              &rest buffer-args
@@ -93,47 +126,52 @@
     (setf (getf buffer-args :temporary) t))
   (remove-from-plistf buffer-args :name)
   (with-gensyms (point buffer-content position)
-    `(let* ((,var (make-buffer ,name ,@buffer-args))
-            (,point (buffer-point ,var)))
-       (multiple-value-bind (,buffer-content ,position)
-           (parse-buffer-string ,buffer-string)
-         (insert-string ,point ,buffer-content)
-         (move-to-position ,point ,position))
-       (setf (current-buffer) ,var)
-       ,@body)))
+    `(with-fake-interface ()
+       (let* ((,var (make-buffer ,name ,@buffer-args))
+              (,point (buffer-point ,var)))
+         (multiple-value-bind (,buffer-content ,position)
+             (parse-buffer-string ,buffer-string)
+           (insert-string ,point ,buffer-content)
+           (move-to-position ,point ,position))
+         ,@body))))
 
 (defmacro with-current-buffer ((buffer) &body body)
-  `(let ((lem-base::*current-buffer* ,buffer))
-     ,@body))
+  (with-gensyms (window)
+    (once-only (buffer)
+      `(lem-base::with-current-buffers ()
+         (let ((lem-base::*current-buffer* ,buffer)
+               (,window (current-window)))
+           (lem-core::set-window-buffer ,buffer ,window)
+           (lem-core::set-window-view-point (copy-point (lem:buffer-point ,buffer))
+                                            ,window)
+           ,@body)))))
 
 (defmacro with-vi-tests ((buffer &key (state :normal)) &body body)
-  `(with-fake-interface ()
-     (with-current-buffer (,buffer)
-       (lem-vi-mode:vi-mode)
-       (change-state-by-keyword ,state)
-       (rove:testing (format nil "[buf] \"~A\""
-                             (text-backslashed
-                               (make-buffer-string (current-buffer))))
-         (labels ((cmd (keys)
-                    (check-type keys string)
-                    (rove:diag (format nil "[cmd] ~A" keys))
-                    (execute-key-sequence
-                      (loop for c across keys
-                            collect (make-key :sym (string c)))))
-                  (pos= (expected-point)
-                    (point= (current-point) expected-point))
-                  (text= (expected-buffer-text)
-                    (string= (buffer-text (current-buffer))
-                             expected-buffer-text))
-                  (buf= (expected-buffer-string)
-                    (check-type expected-buffer-string string)
-                    (multiple-value-bind (expected-buffer-text expected-position)
-                        (parse-buffer-string expected-buffer-string)
-                      (with-point ((p (current-point)))
-                        (move-to-position p expected-position)
-                        (and (text= expected-buffer-text)
-                             (pos= p))))))
-           ,@body)))))
+  `(with-current-buffer (,buffer)
+     (lem-core:change-buffer-mode ,buffer 'lem-vi-mode:vi-mode)
+     (change-state-by-keyword ,state)
+     (rove:testing (format nil "[buf] \"~A\""
+                           (text-backslashed
+                             (make-buffer-string (current-buffer))))
+       (labels ((cmd (keys)
+                  (check-type keys string)
+                  (rove:diag (format nil "[cmd] ~A" keys))
+                  (execute-key-sequence
+                    (parse-command-keys keys)))
+                (pos= (expected-point)
+                  (point= (current-point) expected-point))
+                (text= (expected-buffer-text)
+                  (string= (buffer-text (current-buffer))
+                           expected-buffer-text))
+                (buf= (expected-buffer-string)
+                  (check-type expected-buffer-string string)
+                  (multiple-value-bind (expected-buffer-text expected-position)
+                      (parse-buffer-string expected-buffer-string)
+                    (with-point ((p (current-point)))
+                      (move-to-position p expected-position)
+                      (and (text= expected-buffer-text)
+                           (pos= p))))))
+         ,@body))))
 
 (defun point-coord (point)
   (values (line-number-at-point point)
@@ -167,8 +205,10 @@
 
 (defmethod form-description ((function (eql 'buf=)) args values &key negative)
   (declare (ignore args))
-  (format nil "Expect the buffer~:[~; not~] to be \"~A\" (actual: \"~A\")"
+  (format nil "Expect the buffer~:[~; not~] to be \"~A\"~@[~:* (actual: \"~A\")~]"
           negative
           (text-backslashed (first values))
-          (text-backslashed
-           (make-buffer-string (current-buffer)))))
+          ;; NOTE: For the older versions of Rove that doesn't cache the assertion description
+          (ignore-errors
+            (text-backslashed
+              (make-buffer-string (current-buffer))))))

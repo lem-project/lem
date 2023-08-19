@@ -86,6 +86,7 @@
             (nreverse visual-regions))))
 
 (defun %make-buffer-string (buffer-text buffer-pos)
+  (check-type buffer-pos (integer 0))
   (let ((state (current-state)))
     (let ((buf-str
             (apply #'concatenate 'string

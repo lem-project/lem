@@ -8,8 +8,6 @@
                 :testing)
   (:import-from :lem-base
                 :*current-buffer*)
-  (:import-from :lem-fake-interface
-                :with-fake-interface)
   (:import-from :lem-vi-mode
                 :vi-mode)
   (:import-from :lem-vi-mode/core
@@ -197,11 +195,10 @@
     (setf (getf buffer-args :temporary) t))
   (remove-from-plistf buffer-args :name)
 
-  `(with-fake-interface ()
-     (call-with-test-buffer
-       (make-buffer ,name ,@buffer-args)
-       ,buffer-string
-       (lambda (,var) ,@body))))
+  `(call-with-test-buffer
+    (make-buffer ,name ,@buffer-args)
+    ,buffer-string
+    (lambda (,var) ,@body)))
 
 (defun call-with-current-buffer (buffer fn)
   (lem-base::with-current-buffers ()

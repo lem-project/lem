@@ -22,9 +22,9 @@
   (:import-from :alexandria
                 :remove-from-plistf
                 :appendf
-                :if-let)
-  (:export :with-test-buffer
-           :with-vi-tests
+                :if-let
+                :with-gensyms)
+  (:export :with-vi-tests
            :cmd
            :pos=
            :text=
@@ -251,11 +251,17 @@
       (and (text= expected-buffer-text)
            (pos= p)))))
 
-(defmacro with-vi-tests ((buffer &key (state :normal)) &body body)
-  `(call-with-vi-tests
-    ,buffer
-    ,state
-    (lambda () ,@body)))
+(defmacro with-vi-tests ((buffer-string
+                          &rest buffer-args
+                          &key (state :normal)
+                          &allow-other-keys) &body body)
+  (remove-from-plistf buffer-args :state)
+  (with-gensyms (buffer)
+    `(with-test-buffer (,buffer ,buffer-string ,@buffer-args)
+       (call-with-vi-tests
+        ,buffer
+        ,state
+        (lambda () ,@body)))))
 
 (defun point-coord (point)
   (values (line-number-at-point point)

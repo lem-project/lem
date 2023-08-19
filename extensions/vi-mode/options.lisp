@@ -1,5 +1,6 @@
 (defpackage :lem-vi-mode/options
   (:use :cl
+        :lem
         :split-sequence)
   (:import-from :lem-vi-mode/core
                 :change-directory)
@@ -10,10 +11,10 @@
                 :register-groups-bind)
   (:import-from :alexandria
                 :if-let
-                :when-let
                 :once-only
                 :with-gensyms
                 :disjoin
+                :mappend
                 :copy-hash-table)
   (:export :define-vi-option
            :get-option
@@ -41,6 +42,7 @@
   (getter nil :type (or function null))
   (setter nil :type (or function null))
   (set-hook nil :type (or function null))
+  (initializer nil :type (or function null))
   (documentation nil :type (or string null)))
 
 (define-condition vi-option-error (simple-error) ())
@@ -54,12 +56,20 @@
   (or (gethash name *option-aliases*)
       name))
 
+(defun new-buffer-options ()
+  (copy-hash-table *default-buffer-options*
+                   :key (lambda (option)
+                          (let ((new-option (copy-structure option)))
+                            (when (vi-option-initializer new-option)
+                              (funcall (vi-option-initializer new-option) new-option))
+                            new-option))))
+
 (defun get-buffer-options (&optional (buffer (lem:current-buffer)))
   (or (gethash "vi-mode-options"
                (lem-base::buffer-variables buffer))
       (setf (gethash "vi-mode-options"
                      (lem-base::buffer-variables buffer))
-            (copy-hash-table *default-buffer-options*))))
+            (new-buffer-options))))
 
 (defun get-option (name &optional (error-if-not-exists t))
   (check-type name string)
@@ -223,32 +233,36 @@
   (check-type scope (member :global :buffer))
   (once-only (default scope)
     (with-gensyms (option alias)
-      `(progn
-         (check-type ,default ,type)
-         (dolist (,alias ',aliases)
-           (setf (gethash ,alias *option-aliases*) ,name))
-         (let ((,option
-                 (make-vi-option :name ,name
-                                 :%value ,default
-                                 :default ,default
-                                 :type ',type
-                                 :aliases ',aliases
-                                 :getter ,(when-let (getter-arg (find :getter others :key #'car))
-                                            `(lambda ,@(rest getter-arg)))
-                                 :setter ,(when-let (setter-arg (find :setter others :key #'car))
-                                            `(lambda ,@(rest setter-arg)))
-                                 :set-hook ,(when-let (set-hook-arg (find :set-hook others :key #'car))
-                                              `(lambda ,@(rest set-hook-arg)))
-                                 :documentation ,(when-let (doc-arg (find :documentation others :key #'car))
-                                                   (second doc-arg)))))
-           (setf (gethash
-                  ,name
-                  (ecase ,scope
-                    (:global *global-options*)
-                    (:buffer *default-buffer-options*)))
-                 ,option)
-           (setf (gethash ,name *option-scope*) ,scope)
-           ',name)))))
+      (destructuring-bind (&key getter setter set-hook initializer documentation)
+          (mappend (lambda (other-arg)
+                     (list (car other-arg) (cdr other-arg)))
+                   others)
+        `(progn
+           (check-type ,default ,type)
+           (dolist (,alias ',aliases)
+             (setf (gethash ,alias *option-aliases*) ,name))
+           (let ((,option
+                   (make-vi-option :name ,name
+                                   :%value ,default
+                                   :default ,default
+                                   :type ',type
+                                   :aliases ',aliases
+                                   :getter ,(and getter
+                                                 `(lambda ,@getter))
+                                   :setter ,(and setter `(lambda ,@setter))
+                                   :set-hook ,(and set-hook `(lambda ,@set-hook))
+                                   :initializer ,(and initializer
+                                                      `(lambda ,@initializer))
+                                   :documentation ,(and documentation
+                                                        (first documentation)))))
+             (setf (gethash
+                    ,name
+                    (ecase ,scope
+                      (:global *global-options*)
+                      (:buffer *default-buffer-options*)))
+                   ,option)
+             (setf (gethash ,name *option-scope*) ,scope)
+             ',name))))))
 
 (defun auto-change-directory (buffer-or-window)
   (change-directory (etypecase buffer-or-window
@@ -328,4 +342,15 @@
   (:setter (new-value option)
    (setf (vi-option-%value option)
          (cons new-value
-               (compile-iskeyword new-value)))))
+               (compile-iskeyword new-value))))
+  (:initializer (option)
+   (let ((syntax-table (lem:mode-syntax-table (lem:buffer-major-mode (lem:current-buffer)))))
+     (setf (vi-option-value option)
+           (delete-duplicates
+            (nconc (mapcar (lambda (c)
+                             (if (char= c #\@)
+                                 "@-@"
+                                 (string c)))
+                           (lem-base::syntax-table-symbol-chars syntax-table))
+                   (vi-option-value option))
+            :test 'equal)))))

@@ -24,16 +24,21 @@
 (define-vi-state visual (vi-state) ()
   (:default-initargs
    :message "-- VISUAL --"
+   :modeline-color 'lem-vi-mode/core::state-modeline-orange
    :keymap *visual-keymap*))
 
-(define-vi-state visual-char (visual) ())
+(define-vi-state visual-char (visual)
+  ()
+  (:default-initargs :name "VISUAL"))
 
 (define-vi-state visual-line (visual) ()
   (:default-initargs
+   :name "V-LINE"
    :message "-- VISUAL LINE --"))
 
 (define-vi-state visual-block (visual) ()
   (:default-initargs
+   :name "V-BLOCK"
    :message "-- VISUAL BLOCK --"))
 
 (defmethod state-enabled-hook :after ((state visual))

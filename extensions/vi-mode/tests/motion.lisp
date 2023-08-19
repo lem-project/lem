@@ -9,7 +9,7 @@
                 :in-readtable))
 (in-package :lem-vi-mode/tests/motion)
 
-(named-readtables:in-readtable :interpol-syntax)
+(in-readtable :interpol-syntax)
 
 (deftest vi-forward-char
   (with-test-buffer (b #?"[a]bcdef\n")

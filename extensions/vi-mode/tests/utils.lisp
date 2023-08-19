@@ -6,13 +6,10 @@
                 :form-description
                 :diag
                 :testing)
-  (:import-from :lem-base
-                :*current-buffer*)
+  (:import-from :lem-base)
   (:import-from :lem-vi-mode
                 :vi-mode)
   (:import-from :lem-vi-mode/core
-                :*current-state*
-                :state-keymap
                 :normal
                 :insert
                 :current-state
@@ -21,9 +18,7 @@
                 :visual-line
                 :visual-block
                 :apply-visual-range)
-  (:import-from :cl-ppcre
-                :scan
-                :regex-replace)
+  (:import-from :cl-ppcre)
   (:import-from :alexandria
                 :remove-from-plistf
                 :appendf
@@ -225,14 +220,14 @@
   (with-current-buffer (buffer)
     (lem-core:change-buffer-mode buffer 'vi-mode)
     (with-vi-state (state)
-      (rove:testing (format nil "[buf] \"~A\""
-                            (text-backslashed
-                             (make-buffer-string (current-buffer))))
+      (testing (format nil "[buf] \"~A\""
+                       (text-backslashed
+                        (make-buffer-string (current-buffer))))
         (funcall fn)))))
 
 (defun cmd (keys)
   (check-type keys string)
-  (rove:diag (format nil "[cmd] ~A" keys))
+  (diag (format nil "[cmd] ~A" keys))
   (execute-key-sequence
    (parse-command-keys keys)))
 

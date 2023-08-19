@@ -5,9 +5,11 @@
                "cl-ppcre"
                "parse-number"
                "cl-package-locks"
-               "alexandria")
+               "alexandria"
+               "split-sequence")
   :serial t
   :components ((:file "core")
+               (:file "options")
                (:file "word")
                (:file "visual")
                (:file "jump-motions")
@@ -16,7 +18,6 @@
                 :components
                 ((:file "utils")))
                (:file "commands")
-               (:file "options")
                (:file "ex-core")
                (:file "ex-parser")
                (:file "ex-command")

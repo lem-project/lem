@@ -21,10 +21,12 @@
   (:import-from :cl-ppcre)
   (:import-from :alexandria
                 :remove-from-plistf
+                :remove-from-plist
                 :appendf
                 :if-let
+                :once-only
                 :with-gensyms)
-  (:export :with-vi-tests
+  (:export :with-vi-buffer
            :cmd
            :pos=
            :text=
@@ -164,36 +166,42 @@
        keys))
     (nreverse keys)))
 
-(defun call-with-test-buffer (buffer buffer-string fn)
-  (multiple-value-bind (buffer-text position visual-regions)
-      (parse-buffer-string buffer-string)
-    (let ((point (buffer-point buffer)))
-      (insert-string point buffer-text)
-      (move-to-position point position)
-      (dolist (region visual-regions)
-        (destructuring-bind (from . to) region
-          (with-point ((start point)
-                       (end point))
-            (move-to-position start from)
-            (move-to-position end to)
-            (push (lem:make-overlay start end 'lem:region)
-                  lem-vi-mode/visual::*visual-overlays*))))))
-  (funcall fn buffer))
-
-(defmacro with-test-buffer ((var buffer-string
-                             &rest buffer-args
-                             &key name (temporary t temporary-specified-p)
-                             &allow-other-keys)
-                            &body body)
+(defun make-test-buffer (name &rest buffer-args
+                              &key content (temporary t temporary-specified-p)
+                              &allow-other-keys)
   (declare (ignore temporary))
   (unless temporary-specified-p
     (setf (getf buffer-args :temporary) t))
-  (remove-from-plistf buffer-args :name)
+  (remove-from-plistf buffer-args :name :content)
 
-  `(call-with-test-buffer
-    (make-buffer ,name ,@buffer-args)
-    ,buffer-string
-    (lambda (,var) ,@body)))
+  (let ((buffer (apply #'make-buffer name buffer-args)))
+    (when content
+      (multiple-value-bind (buffer-text position visual-regions)
+          (parse-buffer-string content)
+        (let ((point (buffer-point buffer)))
+          (insert-string point buffer-text)
+          (when position
+            (move-to-position point position))
+          (dolist (region visual-regions)
+            (destructuring-bind (from . to) region
+              (with-point ((start point)
+                           (end point))
+                (move-to-position start from)
+                (move-to-position end to)
+                (push (lem:make-overlay start end 'lem:region)
+                      lem-vi-mode/visual::*visual-overlays*)))))))
+    buffer))
+
+(defmacro with-test-buffer ((var buffer-content
+                             &rest buffer-args
+                             &key name
+                             &allow-other-keys)
+                            &body body)
+  (remove-from-plistf buffer-args :name)
+  `(let ((,var (make-test-buffer ,name
+                                 :content ,buffer-content
+                                 ,@buffer-args)))
+     ,@body))
 
 (defun call-with-current-buffer (buffer fn)
   (lem-base::with-current-buffers ()
@@ -216,7 +224,7 @@
       (lem-vi-mode/core::state-keymap lem-vi-mode/core::*current-state*))
      ,@body))
 
-(defun call-with-vi-tests (buffer state fn)
+(defun call-with-vi-buffer (buffer state fn)
   (with-current-buffer (buffer)
     (lem-core:change-buffer-mode buffer 'vi-mode)
     (with-vi-state (state)
@@ -224,6 +232,34 @@
                        (text-backslashed
                         (make-buffer-string (current-buffer))))
         (funcall fn)))))
+
+(defun ensure-buffer (buffer-or-string
+                      &rest buffer-args
+                      &key name
+                      &allow-other-keys)
+  (etypecase buffer-or-string
+    (string (apply #'make-test-buffer
+                   name
+                   :content buffer-or-string
+                   (remove-from-plist buffer-args :name)))
+    (buffer buffer-or-string)))
+
+(defmacro with-vi-buffer ((buffer-or-string
+                          &rest buffer-args
+                          &key (state :normal)
+                          &allow-other-keys) &body body)
+  (remove-from-plistf buffer-args :state)
+  (with-gensyms (buffer)
+    (once-only (buffer-or-string)
+      `(let ((,buffer (ensure-buffer ,buffer-or-string ,@buffer-args)))
+         (call-with-vi-buffer
+          ,buffer
+          ,state
+          (lambda () ,@body))))))
+
+(defun point-coord (point)
+  (values (line-number-at-point point)
+          (point-charpos point)))
 
 (defun cmd (keys)
   (check-type keys string)
@@ -250,22 +286,6 @@
       (move-to-position p expected-position)
       (and (text= expected-buffer-text)
            (pos= p)))))
-
-(defmacro with-vi-tests ((buffer-string
-                          &rest buffer-args
-                          &key (state :normal)
-                          &allow-other-keys) &body body)
-  (remove-from-plistf buffer-args :state)
-  (with-gensyms (buffer)
-    `(with-test-buffer (,buffer ,buffer-string ,@buffer-args)
-       (call-with-vi-tests
-        ,buffer
-        ,state
-        (lambda () ,@body)))))
-
-(defun point-coord (point)
-  (values (line-number-at-point point)
-          (point-charpos point)))
 
 (defmethod form-description ((function (eql 'lem:point=)) args values &key negative)
   (multiple-value-bind (expected-line expected-col)

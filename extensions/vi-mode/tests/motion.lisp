@@ -13,7 +13,7 @@
 
 (deftest vi-forward-char
   (with-fake-interface ()
-    (with-vi-tests (#?"[a]bcdef\n")
+    (with-vi-buffer (#?"[a]bcdef\n")
       (cmd "l")
       (ok (buf= #?"a[b]cdef\n"))
       (cmd "3l")

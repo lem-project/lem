@@ -264,7 +264,7 @@
 
 (defun cmd (keys)
   (check-type keys string)
-  (diag (format nil "[cmd] ~A" keys))
+  (diag (format nil "[cmd] ~A~%" keys))
   (execute-key-sequence
    (parse-command-keys keys)))
 

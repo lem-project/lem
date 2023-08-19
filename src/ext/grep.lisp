@@ -100,11 +100,11 @@
           *last-directory* directory)))
 
 
-(defvar *rgrep-command* "git grep -nH -e ~a")
+(defvar *rgrep-command* "git grep -nH -e")
 
 (define-command rgrep () ()
   (let* ((default (symbol-string-at-point (lem:current-point)))
          (search (prompt-for-string "Grep: " :initial-value default))
          (directory (prompt-for-directory "Directory: "
                                           :directory (buffer-directory))))
-    (lem/grep:grep (format nil *rgrep-command* search) directory)))
+    (lem/grep:grep (str:concat *rgrep-command* " " search) directory)))

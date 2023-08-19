@@ -1,6 +1,6 @@
 (in-package :lem-core)
 
-(defclass overlay ()
+(defclass <overlay> ()
   ((start
     :initarg :start
     :reader overlay-start
@@ -27,36 +27,35 @@
     :accessor overlay-alive-p
     :type boolean)))
 
-(defun make-temporary-overlay (start end attribute)
-  (when (point< end start) (rotatef start end))
-  (let* ((attribute (ensure-attribute attribute t))
-         (buffer (point-buffer start))
-         (overlay
-           (make-instance 'overlay
-                          :start start
-                          :end end
-                          :attribute attribute
-                          :buffer buffer)))
+(defclass temporary-overlay (<overlay>) ())
+
+(defclass overlay (<overlay>) ())
+
+(defmethod initialize-instance ((overlay <overlay>) &key &allow-other-keys)
+  (let ((overlay (call-next-method)))
+    (with-slots (start end attribute) overlay
+      (when (point< end start) (rotatef start end))
+      (setf attribute (ensure-attribute attribute t)))
+    overlay))
+
+(defmethod initialize-instance ((overlay overlay) &key &allow-other-keys)
+  (let ((overlay (call-next-method)))
+    (push overlay (buffer-value (overlay-buffer overlay) 'overlays))
     overlay))
 
 (defun make-overlay (start end attribute
                      &key (start-point-kind :right-inserting)
                           (end-point-kind :left-inserting))
-  (when (point< end start) (rotatef start end))
-  (let* ((attribute (ensure-attribute attribute t))
-         (buffer (point-buffer start))
-         (overlay
-           (make-instance 'overlay
-                          :start (copy-point start start-point-kind)
-                          :end (copy-point end end-point-kind)
-                          :attribute attribute
-                          :buffer buffer)))
-    (push overlay (buffer-value buffer 'overlays))
-    overlay))
+  (make-instance 'overlay
+                 :start (copy-point start start-point-kind)
+                 :end (copy-point end end-point-kind)
+                 :attribute attribute
+                 :buffer (point-buffer start)))
 
 (defun delete-overlay (overlay)
   (check-type overlay overlay)
-  (when (overlay-alive-p overlay)
+  (when (and (overlay-alive-p overlay)
+             (not (typep overlay 'temporary-overlay)))
     (delete-point (overlay-start overlay))
     (delete-point (overlay-end overlay))
     (let ((buffer (overlay-buffer overlay)))

@@ -110,14 +110,16 @@
   nil)
 
 (defun make-cursor-overlay (point)
-  (let ((overlay (lem-core::make-temporary-overlay
-                  point
-                  (lem:with-point ((p point))
-                    (lem:character-offset p 1)
-                    p)
-                  (if (typep point 'lem:fake-cursor)
-                      'lem:fake-cursor
-                      'lem:cursor))))
+  (let ((overlay
+          (make-instance
+           'lem-core::temporary-overlay
+           :start point
+           :end (lem:with-point ((p point))
+                  (lem:character-offset p 1)
+                  p)
+           :attribute (if (typep point 'lem:fake-cursor)
+                          'lem:fake-cursor
+                          'lem:cursor))))
     (lem:overlay-put overlay :cursor t)
     overlay))
 

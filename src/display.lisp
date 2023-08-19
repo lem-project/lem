@@ -128,16 +128,20 @@
   (when (and (variable-value 'highlight-line :default (current-buffer))
              (current-theme))
     (alexandria:when-let ((color (highlight-line-color)))
-      (let ((ov (make-temporary-overlay (buffer-point buffer)
-                                        (buffer-point buffer)
-                                        (make-attribute :background color))))
+      (let ((ov (make-instance 'temporary-overlay
+                               :start (buffer-point buffer)
+                               :end (buffer-point buffer)
+                               :attribute (make-attribute :background color))))
         (overlay-put ov :display-line t)
         ov))))
 
 (defun make-temporary-region-overlay-from-cursor (cursor)
   (let ((mark (cursor-mark cursor)))
     (when (mark-active-p mark)
-      (make-temporary-overlay cursor (mark-point mark) 'region))))
+      (make-instance 'temporary-overlay
+                     :start cursor
+                     :end (mark-point mark)
+                     :attribute 'region))))
 
 (defun get-window-overlays (window)
   (let* ((buffer (window-buffer window))

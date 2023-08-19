@@ -13,7 +13,8 @@
                 :when-let
                 :once-only
                 :with-gensyms
-                :disjoin)
+                :disjoin
+                :copy-hash-table)
   (:export :define-vi-option
            :get-option
            :vi-option
@@ -37,23 +38,37 @@
   (type t :type (member t boolean number string list))
   (aliases '() :type list)
   (getter nil :type (or function null))
+  (setter nil :type (or function null))
   (set-hook nil :type (or function null))
   (documentation nil :type (or string null)))
 
 (define-condition vi-option-error (simple-error) ())
 
-(defvar *options* (make-hash-table :test 'equal))
+(defvar *option-scope* (make-hash-table :test 'equal))
 (defvar *option-aliases* (make-hash-table :test 'equal))
+(defvar *global-options* (make-hash-table :test 'equal))
+(defvar *default-buffer-options* (make-hash-table :test 'equal))
 
 (defun canonical-option-name (name)
   (or (gethash name *option-aliases*)
       name))
 
+(defun get-buffer-options (&optional (buffer (lem:current-buffer)))
+  (or (gethash "vi-mode-options"
+               (lem-base::buffer-variables buffer))
+      (setf (gethash "vi-mode-options"
+                     (lem-base::buffer-variables buffer))
+            (copy-hash-table *default-buffer-options*))))
+
 (defun get-option (name &optional (error-if-not-exists t))
   (check-type name string)
-  (let ((name (canonical-option-name name)))
+  (let* ((name (canonical-option-name name))
+         (scope (gethash name *option-scope* :global)))
     (multiple-value-bind (option exists)
-        (gethash name *options*)
+        (gethash name
+                 (ecase scope
+                   (:global (gethash name *global-options*))
+                   (:buffer (get-buffer-options))))
       (when (and (null exists)
                  error-if-not-exists)
         (lem:editor-error "Unknown option: ~A" name))
@@ -68,26 +83,29 @@
   (let ((option (ensure-option option)))
     (values
      (if-let (getter (vi-option-getter option))
-       (funcall getter)
+       (funcall getter option)
        (vi-option-%value option))
      (vi-option-name option))))
 
 (defun (setf vi-option-value) (new-value option)
   (let ((option (ensure-option option)))
-    (with-slots (type set-hook) option
+    (with-slots (type setter set-hook) option
       (unless (typep new-value type)
         (lem:editor-error "Option '~A' accepts only ~S, but given ~S"
                           (vi-option-name option) type new-value))
       (let ((old-value (vi-option-value option)))
         (handler-case
             (progn
-              (when set-hook
-                (funcall set-hook new-value))
-              (setf (vi-option-%value option) new-value)
-              (values (vi-option-value option)
-                      (vi-option-name option)
-                      old-value
-                      t))
+              (if setter
+                  (funcall setter new-value option)
+                  (setf (vi-option-%value option) new-value))
+              (multiple-value-prog1
+                  (values (vi-option-value option)
+                          (vi-option-name option)
+                          old-value
+                          t)
+                (when set-hook
+                  (funcall set-hook new-value))))
           (vi-option-error (e)
             (lem:editor-error (princ-to-string e))))))))
 
@@ -196,9 +214,10 @@
              ;; Show the current value for other than boolean
              (vi-option-value option)))))))
 
-(defmacro define-vi-option (name (default &key (type t) aliases) &rest others)
+(defmacro define-vi-option (name (default &key (type t) aliases (scope :global)) &rest others)
   (check-type name string)
-  (once-only (default)
+  (check-type scope (member :global :buffer))
+  (once-only (default scope)
     (with-gensyms (option alias)
       `(progn
          (check-type ,default ,type)
@@ -211,12 +230,21 @@
                                  :type ',type
                                  :aliases ',aliases
                                  :getter ,(when-let (getter-arg (find :getter others :key #'car))
-                                            `(lambda () ,@(rest getter-arg)))
+                                            `(lambda ,@(rest getter-arg)))
+                                 :setter ,(when-let (setter-arg (find :setter others :key #'car))
+                                            `(lambda ,@(rest setter-arg)))
                                  :set-hook ,(when-let (set-hook-arg (find :set-hook others :key #'car))
                                               `(lambda ,@(rest set-hook-arg)))
                                  :documentation ,(when-let (doc-arg (find :documentation others :key #'car))
                                                    (second doc-arg)))))
-           (setf (gethash ,name *options*) ,option))))))
+           (setf (gethash
+                  ,name
+                  (ecase ,scope
+                    (:global *global-options*)
+                    (:buffer *default-buffer-options*)))
+                 ,option)
+           (setf (gethash ,name *option-scope*) ,scope)
+           ',name)))))
 
 (defun auto-change-directory (buffer-or-window)
   (change-directory (etypecase buffer-or-window
@@ -244,7 +272,9 @@
   (:documentation "Boolean to show the line number.
   Default: nil
   Aliases: nu")
-  (:getter (lem:variable-value 'lem/line-numbers:line-numbers :global))
+  (:getter (option)
+   (declare (ignore option))
+   (lem:variable-value 'lem/line-numbers:line-numbers :global))
   (:set-hook (new-value)
    (setf (lem:variable-value 'lem/line-numbers:line-numbers :global) new-value)))
 
@@ -281,19 +311,17 @@
                                 (char= c rule-char))))))))
                  value)))
 
-(define-vi-option "iskeyword" (*default-iskeyword* :type list :aliases ("isk"))
+(define-vi-option "iskeyword" ((cons *default-iskeyword*
+                                     (compile-iskeyword *default-iskeyword*))
+                               :type list
+                               :aliases ("isk")
+                               :scope :buffer)
   (:documentation "Comma-separated string to specify the characters should be recognized as a keyword. (buffer local)
   Default: @,48-57,_,192-255
   Aliases: isk")
-  (:getter
-   (symbol-macrolet ((vi-iskeyword
-                       (gethash "vi-iskeyword" (lem-base::buffer-variables (lem:current-buffer)))))
-     (car
-      (or vi-iskeyword
-          (setf vi-iskeyword
-                (cons *default-iskeyword*
-                      (compile-iskeyword *default-iskeyword*)))))))
-  (:set-hook (new-value)
-   (setf (gethash "vi-iskeyword" (lem-base::buffer-variables (lem:current-buffer)))
+  (:getter (option)
+   (car (vi-option-%value option)))
+  (:setter (new-value option)
+   (setf (vi-option-%value option)
          (cons new-value
                (compile-iskeyword new-value)))))

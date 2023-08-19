@@ -218,7 +218,7 @@
     (lambda (,buffer) ,@body)))
 
 (defmacro with-vi-state ((state) &body body)
-  `(let* ((lem-vi-mode/core::*current-state* (ensure-state (keyword-to-state ,state))))
+  `(let ((lem-vi-mode/core::*current-state* (ensure-state (keyword-to-state ,state))))
      (change-global-mode-keymap
       'vi-mode
       (lem-vi-mode/core::state-keymap lem-vi-mode/core::*current-state*))

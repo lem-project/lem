@@ -1,7 +1,9 @@
 (defpackage :lem/grep
   (:use :cl
         :lem)
-  (:export :grep)
+  (:export :grep
+           :rgrep
+           :*rgrep-command*)
   #+sbcl
   (:lock t))
 (in-package :lem/grep)
@@ -96,3 +98,13 @@
                     'change-grep-buffer)))
     (setf *last-query* query
           *last-directory* directory)))
+
+
+(defvar *rgrep-command* "git grep -nH -e ~a")
+
+(define-command rgrep () ()
+  (let* ((default (symbol-string-at-point (lem:current-point)))
+         (search (prompt-for-string "Grep: " :initial-value default))
+         (directory (prompt-for-directory "Directory: "
+                                          :directory (buffer-directory))))
+    (lem/grep:grep (format nil *rgrep-command* search) directory)))

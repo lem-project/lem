@@ -20,6 +20,7 @@
            :vi-option
            :vi-option-name
            :vi-option-value
+           :vi-option-raw-value
            :vi-option-default
            :vi-option-type
            :vi-option-aliases
@@ -79,12 +80,15 @@
     (vi-option name-or-option)
     (string (get-option name-or-option error-if-not-exists))))
 
+(defun vi-option-raw-value (option)
+  (vi-option-%value (ensure-option option)))
+
 (defun vi-option-value (option)
   (let ((option (ensure-option option)))
     (values
      (if-let (getter (vi-option-getter option))
        (funcall getter option)
-       (vi-option-%value option))
+       (vi-option-raw-value option))
      (vi-option-name option))))
 
 (defun (setf vi-option-value) (new-value option)
@@ -320,7 +324,7 @@
   Default: @,48-57,_,192-255
   Aliases: isk")
   (:getter (option)
-   (car (vi-option-%value option)))
+   (car (vi-option-raw-value option)))
   (:setter (new-value option)
    (setf (vi-option-%value option)
          (cons new-value

@@ -70,13 +70,13 @@
 (defun overlay-get (overlay key)
   (getf (overlay-plist overlay) key))
 
-(defun overlays (buffer)
+(defun buffer-overlays (buffer)
   (buffer-value buffer 'overlays))
 
 (defun clear-overlays (buffer)
-  (mapc #'delete-overlay (overlays buffer)))
+  (mapc #'delete-overlay (buffer-overlays buffer)))
 
 (defun point-overlays (point)
-  (loop :for ov :in (overlays (point-buffer point))
+  (loop :for ov :in (buffer-overlays (point-buffer point))
         :when (point<= (overlay-start ov) point (overlay-end ov))
         :collect ov))

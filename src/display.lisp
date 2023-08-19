@@ -141,7 +141,7 @@
 
 (defun get-window-overlays (window)
   (let* ((buffer (window-buffer window))
-         (overlays (overlays buffer)))
+         (overlays (buffer-overlays buffer)))
     (when (eq (current-window) window)
       (dolist (cursor (buffer-cursors buffer))
         (if-push (make-temporary-region-overlay-from-cursor cursor)

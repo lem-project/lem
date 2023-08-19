@@ -28,8 +28,6 @@
                 :regex-replace)
   (:import-from :alexandria
                 :remove-from-plistf
-                :with-gensyms
-                :once-only
                 :appendf
                 :if-let)
   (:export :with-test-buffer
@@ -173,6 +171,22 @@
        keys))
     (nreverse keys)))
 
+(defun call-with-test-buffer (buffer buffer-string fn)
+  (multiple-value-bind (buffer-text position visual-regions)
+      (parse-buffer-string buffer-string)
+    (let ((point (buffer-point buffer)))
+      (insert-string point buffer-text)
+      (move-to-position point position)
+      (dolist (region visual-regions)
+        (destructuring-bind (from . to) region
+          (with-point ((start point)
+                       (end point))
+            (move-to-position start from)
+            (move-to-position end to)
+            (push (lem:make-overlay start end 'lem:region)
+                  lem-vi-mode/visual::*visual-overlays*))))))
+  (funcall fn buffer))
+
 (defmacro with-test-buffer ((var buffer-string
                              &rest buffer-args
                              &key name (temporary t temporary-specified-p)
@@ -182,34 +196,26 @@
   (unless temporary-specified-p
     (setf (getf buffer-args :temporary) t))
   (remove-from-plistf buffer-args :name)
-  (with-gensyms (point buffer-content position visual-regions)
-    `(with-fake-interface ()
-       (let* ((,var (make-buffer ,name ,@buffer-args))
-              (,point (buffer-point ,var)))
-         (multiple-value-bind (,buffer-content ,position ,visual-regions)
-             (parse-buffer-string ,buffer-string)
-           (insert-string ,point ,buffer-content)
-           (move-to-position ,point ,position)
-           (dolist (region ,visual-regions)
-             (destructuring-bind (from . to) region
-               (with-point ((start ,point)
-                            (end ,point))
-                 (move-to-position start from)
-                 (move-to-position end to)
-                 (push (lem:make-overlay start end 'lem:region)
-                       lem-vi-mode/visual::*visual-overlays*)))))
-         ,@body))))
+
+  `(with-fake-interface ()
+     (call-with-test-buffer
+       (make-buffer ,name ,@buffer-args)
+       ,buffer-string
+       (lambda (,var) ,@body))))
+
+(defun call-with-current-buffer (buffer fn)
+  (lem-base::with-current-buffers ()
+    (let ((lem-base::*current-buffer* buffer)
+          (window (current-window)))
+      (lem-core::set-window-buffer buffer window)
+      (lem-core::set-window-view-point (copy-point (lem:buffer-point buffer))
+                                       window)
+      (funcall fn buffer))))
 
 (defmacro with-current-buffer ((buffer) &body body)
-  (with-gensyms (window)
-    (once-only (buffer)
-      `(lem-base::with-current-buffers ()
-         (let ((lem-base::*current-buffer* ,buffer)
-               (,window (current-window)))
-           (lem-core::set-window-buffer ,buffer ,window)
-           (lem-core::set-window-view-point (copy-point (lem:buffer-point ,buffer))
-                                            ,window)
-           ,@body)))))
+  `(call-with-current-buffer
+    ,buffer
+    (lambda (,buffer) ,@body)))
 
 (defmacro with-vi-state ((state) &body body)
   `(let* ((lem-vi-mode/core::*current-state* (ensure-state (keyword-to-state ,state))))
@@ -218,37 +224,46 @@
       (lem-vi-mode/core::state-keymap lem-vi-mode/core::*current-state*))
      ,@body))
 
+(defun call-with-vi-tests (buffer state fn)
+  (with-current-buffer (buffer)
+    (lem-core:change-buffer-mode buffer 'vi-mode)
+    (with-vi-state (state)
+      (rove:testing (format nil "[buf] \"~A\""
+                            (text-backslashed
+                             (make-buffer-string (current-buffer))))
+        (funcall fn)))))
+
+(defun cmd (keys)
+  (check-type keys string)
+  (rove:diag (format nil "[cmd] ~A" keys))
+  (execute-key-sequence
+   (parse-command-keys keys)))
+
+(defun pos= (expected-point)
+  (point= (current-point) expected-point))
+
+(defun text= (expected-buffer-text)
+  (string= (buffer-text (current-buffer))
+           expected-buffer-text))
+
+(defun state= (expected-state)
+  (eq (keyword-to-state expected-state)
+      (current-state)))
+
+(defun buf= (expected-buffer-string)
+  (check-type expected-buffer-string string)
+  (multiple-value-bind (expected-buffer-text expected-position)
+      (parse-buffer-string expected-buffer-string)
+    (with-point ((p (current-point)))
+      (move-to-position p expected-position)
+      (and (text= expected-buffer-text)
+           (pos= p)))))
+
 (defmacro with-vi-tests ((buffer &key (state :normal)) &body body)
-  `(with-current-buffer (,buffer)
-     (lem-core:change-buffer-mode ,buffer 'vi-mode)
-     (with-vi-state (,state)
-       (rove:testing (format nil "[buf] \"~A\""
-                             (text-backslashed
-                              (make-buffer-string (current-buffer))))
-         (locally
-             (declare #+sbcl (sb-ext:muffle-conditions sb-ext:code-deletion-note))
-           (labels ((cmd (keys)
-                      (check-type keys string)
-                      (rove:diag (format nil "[cmd] ~A" keys))
-                      (execute-key-sequence
-                       (parse-command-keys keys)))
-                    (pos= (expected-point)
-                      (point= (current-point) expected-point))
-                    (text= (expected-buffer-text)
-                      (string= (buffer-text (current-buffer))
-                               expected-buffer-text))
-                    (state= (expected-state)
-                      (eq (keyword-to-state expected-state)
-                          (current-state)))
-                    (buf= (expected-buffer-string)
-                      (check-type expected-buffer-string string)
-                      (multiple-value-bind (expected-buffer-text expected-position)
-                          (parse-buffer-string expected-buffer-string)
-                        (with-point ((p (current-point)))
-                          (move-to-position p expected-position)
-                          (and (text= expected-buffer-text)
-                               (pos= p))))))
-             ,@body))))))
+  `(call-with-vi-tests
+    ,buffer
+    ,state
+    (lambda () ,@body)))
 
 (defun point-coord (point)
   (values (line-number-at-point point)

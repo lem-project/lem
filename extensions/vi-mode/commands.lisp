@@ -216,7 +216,7 @@
     (with-killring-context (:options (when (eq type :line) :vi-line)
                             :appending (when (eq type :block)
                                          (continue-flag :kill)))
-      (kill-region start end))
+      (kill-region-without-appending start end))
     (when (and (eq type :line)
                (eq 'vi-delete (command-name (this-command))))
       (if (last-line-p (current-point))
@@ -234,7 +234,7 @@
     (line-start start)
     (line-end end)
     (character-offset end 1))
-  (kill-region start end)
+  (kill-region-without-appending start end)
   (fall-within-line (current-point)))
 
 (define-vi-operator vi-change () ()
@@ -357,7 +357,7 @@
 
 (define-vi-operator vi-kill-last-word (start end)
     (:motion vi-backward-word-end)
-  (kill-region start end))
+  (kill-region-without-appending start end))
 
 (define-vi-operator vi-upcase (start end) ()
   (uppercase-region start end)

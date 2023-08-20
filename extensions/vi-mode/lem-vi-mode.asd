@@ -40,6 +40,7 @@
     :depends-on ("utils")
     :components
     ((:file "motion")
+     (:file "operator")
      (:file "visual")))
    (:file "utils"
     :pathname "tests/utils"))

@@ -31,6 +31,7 @@
            :pos=
            :text=
            :state=
+           :visual=
            :buf=))
 (in-package :lem-vi-mode/tests/utils)
 
@@ -102,27 +103,30 @@
                        (subseq buffer-text buffer-pos)))))))
       (if (lem-vi-mode/visual:visual-p)
           (let ((read-pos 0))
-            (with-output-to-string (s)
-              (apply-visual-range
-               (lambda (start end)
-                 (write-string buf-str s
-                               :start read-pos
-                               :end (1- (if (< buffer-pos (position-at-point start))
-                                            (+ (position-at-point start) 2)
-                                            (position-at-point start))))
-                 (write-char #\< s)
-                 (write-string buf-str s
-                               :start (1- (if (< buffer-pos (position-at-point start))
-                                              (+ (position-at-point start) 2)
-                                              (position-at-point start)))
-                               :end (1- (if (< buffer-pos (position-at-point end))
-                                            (+ (position-at-point end) 2)
-                                            (position-at-point end))))
-                 (write-char #\> s)
-                 (setf read-pos
-                       (if (< buffer-pos (position-at-point end))
-                           (+ (position-at-point end) 2)
-                           (position-at-point end)))))))
+            (concatenate
+             'string
+             (with-output-to-string (s)
+               (apply-visual-range
+                (lambda (start end)
+                  (write-string buf-str s
+                                :start read-pos
+                                :end (1- (if (< buffer-pos (position-at-point start))
+                                             (+ (position-at-point start) 2)
+                                             (position-at-point start))))
+                  (write-char #\< s)
+                  (write-string buf-str s
+                                :start (1- (if (< buffer-pos (position-at-point start))
+                                               (+ (position-at-point start) 2)
+                                               (position-at-point start)))
+                                :end (1- (if (< buffer-pos (position-at-point end))
+                                             (+ (position-at-point end) 2)
+                                             (position-at-point end))))
+                  (write-char #\> s)
+                  (setf read-pos
+                        (if (< buffer-pos (position-at-point end))
+                            (+ (position-at-point end) 2)
+                            (position-at-point end))))))
+             (subseq buf-str (1- read-pos))))
           buf-str))))
 
 (defun make-buffer-string (buffer)
@@ -279,14 +283,25 @@
   (eq (keyword-to-state expected-state)
       (current-state)))
 
+(defun visual= (visual-regions)
+  (let (current-regions)
+    (apply-visual-range
+     (lambda (start end)
+       (push
+        (cons (position-at-point start)
+              (position-at-point end))
+        current-regions)))
+    (equalp (nreverse current-regions) visual-regions)))
+
 (defun buf= (expected-buffer-string)
   (check-type expected-buffer-string string)
-  (multiple-value-bind (expected-buffer-text expected-position)
+  (multiple-value-bind (expected-buffer-text expected-position visual-regions)
       (parse-buffer-string expected-buffer-string)
     (with-point ((p (current-point)))
       (move-to-position p expected-position)
       (and (text= expected-buffer-text)
-           (pos= p)))))
+           (pos= p)
+           (visual= visual-regions)))))
 
 (defmethod form-description ((function (eql 'lem:point=)) args values &key negative)
   (multiple-value-bind (expected-line expected-col)

@@ -2,6 +2,10 @@
   (:use :cl
         :lem
         :lem-vi-mode/core)
+  (:import-from :lem-vi-mode/core
+                :ensure-state)
+  (:import-from :lem-base
+                :alive-point-p)
   (:export :*visual-keymap*
            :vi-visual-end
            :vi-visual-char
@@ -46,6 +50,7 @@
 
 (defmethod state-disabled-hook ((state visual))
   (delete-point *start-point*)
+  (setf *start-point* nil)
   (clear-visual-overlays))
 
 (defun disable ()
@@ -102,34 +107,41 @@
   (clear-visual-overlays)
   (change-state 'normal))
 
+(defun enable-visual (new-state)
+  (let ((new-state (ensure-state new-state))
+        (current-state (current-state)))
+    (cond
+      ((typep current-state (class-name (class-of new-state)))
+       (vi-visual-end))
+      ((typep current-state 'visual)
+       (check-type *start-point* point)
+       (assert (alive-point-p *start-point*))
+       (let ((start (copy-point *start-point*)))
+         (prog1 (change-state new-state)
+           (setf *start-point* start))))
+      (t
+       (change-state new-state)))))
+
 (define-command vi-visual-char () ()
-  (if (visual-char-p)
-      (vi-visual-end)
-      (change-state 'visual-char)))
+  (enable-visual 'visual-char))
 
 (define-command vi-visual-line () ()
-  (if (visual-line-p)
-      (vi-visual-end)
-      (change-state 'visual-line)))
+  (enable-visual 'visual-line))
 
 (define-command vi-visual-block () ()
-  (if (visual-block-p)
-      (vi-visual-end)
-      (change-state 'visual-block)))
+  (enable-visual 'visual-block))
 
 (defun visual-p ()
-  (or (visual-line-p)
-      (visual-block-p)
-      (visual-char-p)))
+  (typep (current-state) 'visual))
 
 (defun visual-char-p ()
-  (eq 'visual-char (current-state)))
+  (typep (current-state) 'visual-char))
 
 (defun visual-line-p ()
-  (eq 'visual-line (current-state)))
+  (typep (current-state) 'visual-line))
 
 (defun visual-block-p ()
-  (eq 'visual-block (current-state)))
+  (typep (current-state) 'visual-block))
 
 (defun apply-visual-range (function)
   (dolist (ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start))

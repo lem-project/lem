@@ -20,6 +20,10 @@
    (output-callback
     :initarg :output-callback
     :reader process-output-callback)
+   (output-buffer
+    :initarg :output-buffer
+    :reader process-output-buffer
+    :type lem:buffer)
    (callback-type
     :initarg :output-callback-type
     :reader process-output-callback-type)))

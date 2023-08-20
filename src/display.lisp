@@ -175,22 +175,22 @@
         (loop :for overlay :in overlays
               :for start := (overlay-start overlay)
               :for end := (overlay-end overlay)
-              :do (when (overlay-get overlay :display-line-end)
+              :do (when (typep overlay 'overlay-line-endings)
                     (when (and (point<= view-point start)
                                (point<= end view-end-point))
                       (let ((i (calc-row end)))
                         (when (< i (screen-height screen))
-                          (let ((text (overlay-get overlay :text)))
+                          (let ((text (overlay-line-endings-text overlay)))
                             (setf (aref (screen-lines screen) i)
                                   (cover (aref (screen-lines screen) i)
                                          text
                                          (overlay-attribute overlay)
-                                         (or (overlay-get overlay :display-line-end-offset) 0)))))))))
+                                         (overlay-line-endings-offset overlay)))))))))
         (loop :for overlay :in overlays
               :for start := (overlay-start overlay)
               :for end := (overlay-end overlay)
               :do (cond
-                    ((overlay-get overlay :display-line-end))
+                    ((typep overlay 'overlay-line-endings))
                     ((overlay-get overlay :display-left)
                      (when (and (point<= view-point start)
                                 (point<= end view-end-point))

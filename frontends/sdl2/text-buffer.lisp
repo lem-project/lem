@@ -192,7 +192,7 @@
         (lem-base::line-string/attributes (lem-base::point-line point))
       (loop :for overlay :in overlays
             :when (overlay-within-point-p overlay point)
-            :do (cond ((lem:overlay-get overlay :display-line-end)
+            :do (cond ((typep overlay 'lem-core::overlay-line-endings)
                        (setf line-end-overlay overlay))
                       ((lem:overlay-get overlay :display-line)
                        (setf attributes
@@ -265,7 +265,7 @@
                                   (logical-line-line-end-overlay logical-line))
               (make-line-end-item :text (lem:overlay-get overlay :text)
                                   :attribute (lem:overlay-attribute overlay)
-                                  :offset (lem:overlay-get overlay :display-line-end-offset))))))
+                                  :offset (lem-core::overlay-line-endings-offset overlay))))))
 
 (defclass drawing-object ()
   ())

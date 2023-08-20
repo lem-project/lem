@@ -118,41 +118,38 @@
 (defun vi-operator-region (n motion)
   (check-type n (or null (integer 0)))
   (check-type motion (or null symbol))
-  (flet ((call-motion (command uarg)
-           (let ((*cursor-offset* 0))
-             (ignore-errors
-               (call-vi-motion-command command uarg))))
-         (command-motion-type (command)
-           (if (typep command 'vi-motion)
-               (vi-motion-type command)
-               :exclusive)))
-    (with-point ((start (current-point)))
+  (with-point ((start (current-point)))
+    (labels ((call-motion (command uarg)
+               (let ((*cursor-offset* 0))
+                 (save-excursion
+                   (ignore-errors
+                     (call-vi-motion-command command uarg))
+                   (values start
+                           (copy-point (current-point))
+                           (command-motion-type command)))))
+             (command-motion-type (command)
+               (if (typep command 'vi-motion)
+                   (vi-motion-type command)
+                   :exclusive)))
       (if motion
           (let ((command (get-command motion)))
-            (call-motion command n)
-            (values
-              start
-              (copy-point (current-point))
-              (command-motion-type command)))
+            (call-motion command n))
           (let* ((uarg (or (read-universal-argument) n))
                  (command-name (read-command))
                  (command (get-command command-name)))
             (typecase command
               (vi-operator
-                (if (eq command-name (command-name (this-command)))
-                    ;; Recursive call of the operator like 'dd', 'cc'
-                    (with-point ((end (current-point)))
-                      (line-offset end (1- (or uarg 1)))
-                      (values start end :line))
-                    ;; Ignore an invalid operator (like 'dJ')
-                    nil))
+               (if (eq command-name (command-name (this-command)))
+                   ;; Recursive call of the operator like 'dd', 'cc'
+                   (with-point ((end (current-point)))
+                     (line-offset end (1- (or uarg 1)))
+                     (values start end :line))
+                   ;; Ignore an invalid operator (like 'dJ')
+                   nil))
               (otherwise
-                (call-motion command uarg)
-                (values start
-                        (copy-point (current-point))
-                        (command-motion-type command)))))))))
+               (call-motion command uarg))))))))
 
-(defun call-vi-operator (n fn &key motion keep-visual restore-point)
+(defun call-vi-operator (n fn &key motion keep-visual (move-point t) restore-point)
   (flet ((call-with-region (fn start end type)
            (when (point< end start)
              (rotatef start end))
@@ -181,6 +178,8 @@
                                           (t :exclusive)))))
                    (multiple-value-bind (start end type)
                        (vi-operator-region n motion)
+                     (when move-point
+                       (move-point (current-point) start))
                      (call-with-region fn start end type))))
         (when restore-point
           (move-point (current-point) *vi-origin-point*))
@@ -188,7 +187,7 @@
           (when (visual-p)
             (vi-visual-end)))))))
 
-(defmacro define-vi-operator (name arg-list (&key motion keep-visual restore-point) &body body)
+(defmacro define-vi-operator (name arg-list (&key motion keep-visual (move-point t) restore-point) &body body)
   (with-gensyms (n extra-args)
     `(define-command (,name (:advice-classes vi-operator)) (&optional ,n) ("P")
        (call-vi-operator ,n
@@ -197,5 +196,6 @@
                            (declare (ignore ,extra-args))
                            ,@body)
                          :motion ',motion
+                         :move-point ,move-point
                          :keep-visual ,keep-visual
                          :restore-point ,restore-point))))

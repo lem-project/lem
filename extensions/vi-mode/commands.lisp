@@ -197,8 +197,7 @@
   (indent-points start end))
 
 (define-vi-operator vi-substitute ()
-    (:motion vi-forward-char
-     :restore-point t)
+    (:motion vi-forward-char)
   (vi-delete)
   (change-state 'insert))
 
@@ -282,7 +281,7 @@
           (insert-character p #\Space))))
     (vi-backward-char)))
 
-(define-vi-operator vi-yank (start end type) (:restore-point t)
+(define-vi-operator vi-yank (start end type) (:move-point nil)
   (with-killring-context (:options (when (eq type :line) :vi-line))
     (copy-region start end)))
 

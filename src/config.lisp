@@ -5,7 +5,7 @@
 	(dot-lem (merge-pathnames ".lem/" (user-homedir-pathname))))
     (or (uiop:getenv "LEM_HOME")
 	(and (probe-file dot-lem) dot-lem)
-	  xdg-lem)))
+	xdg-lem)))
 
 (defun lem-logdir-pathname ()
   (merge-pathnames "logs/" (lem-home)))

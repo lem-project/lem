@@ -28,14 +28,19 @@
     :initarg :output-callback-type
     :reader process-output-callback-type)))
 
-(defun run-process (command &key name output-callback output-callback-type directory)
+(defvar *process-hash* (make-hash-table :test #'equal))
+
+(defun run-process (command &key name output-callback output-callback-type directory output-buffer)
   (setf command (uiop:ensure-list command))
-  (let ((buffer-stream (make-string-output-stream)))
+  (let ((buffer-stream (make-string-output-stream))
+        (process-buffer (or output-buffer
+                           (make-buffer (format nil "*process-~a* " name)))))
     (let* ((pointer (async-process:create-process command :nonblock nil :directory directory))
            (process (make-instance 'process
                                    :pointer pointer
                                    :name name
                                    :command command
+                                   :output-buffer process-buffer
                                    :buffer-stream buffer-stream
                                    ;; :read-thread thread
                                    :output-callback output-callback
@@ -45,13 +50,18 @@
                       (loop
                         (unless (async-process:process-alive-p pointer)
                           (return))
+                        (send-event (lambda ()
+                                      (with-point ((p (buffer-point (get-buffer process-buffer))))
+                                        (lem:insert-string p (get-process-output-string process)))))
                         (alexandria:when-let
                             (string (async-process:process-receive-output pointer))
                           (send-event (lambda ()
                                         (write-to-buffer process string))))))
                     :name (format nil "run-process ~{~A~^ ~}" command))))
       (set-process-read-thread thread process)
-      process)))
+      (prog1
+          process
+          (setf (gethash name *process-hash*) process)))))
 
 (defun get-process-output-string (process)
   (get-output-stream-string (process-buffer-stream process)))

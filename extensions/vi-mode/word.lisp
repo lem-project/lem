@@ -1,57 +1,75 @@
 (defpackage :lem-vi-mode/word
-  (:use :cl :lem)
+  (:use :cl
+        :lem)
+  (:import-from :lem-vi-mode/options
+                :vi-option-raw-value)
   (:export :forward-word-begin
+           :forward-word-end
            :backward-word-begin
-           :forward-word-end))
+           :word-char-p
+           :char-type
+           :broad-char-type
+           :blank-char-p))
 (in-package :lem-vi-mode/word)
 
-(defun hiragana-p (c)
-  (<= #x3042 (char-code c) #x3093))
+(defun word-char-p (char)
+  (funcall (cdr (vi-option-raw-value "iskeyword"))
+           char))
 
-(defun katakana-p (c)
-  (<= #x30A2 (char-code c) #x30F3))
+(defun blank-char-p (char)
+  (and (member char '(#\Newline #\Space #\Tab))
+       t))
 
-(defun kanji-p (c)
-  (or (<= #x4E00 (char-code c) #x9FFF)
-      (find c "仝々〆〇ヶ")))
+(defun non-blank-char-p (char)
+  (not (blank-char-p char)))
 
-(defun paren-p (c)
-  (or (syntax-open-paren-char-p c)
-      (syntax-closed-paren-char-p c)))
+(defun char-type (char)
+  (when char
+    (cond
+      ((word-char-p char) :word)
+      ((blank-char-p char) :blank)
+      (t :non-word))))
 
-(defun word-type (c largep)
-  (flet ((w (small large) (if largep large small)))
-    (cond ((syntax-space-char-p c)
-           (w :space :space))
-          ((hiragana-p c)
-           (w :hiragana :symbol))
-          ((katakana-p c)
-           (w :katakana :symbol))
-          ((kanji-p c)
-           (w :kanji :symbol))
-          ((or (syntax-open-paren-char-p c)
-               (syntax-closed-paren-char-p c))
-           (w :paren :symbol))
-          (t
-           (w :symbol :symbol)))))
+(defun broad-char-type (char)
+  (when char
+    (cond
+      ((blank-char-p char) :blank)
+      (t :word))))
 
-(defun forward-word-begin (point n largep)
-  (loop :repeat n
-        :until (end-buffer-p point)
-        :do (let ((wt (word-type (character-at point) largep)))
-              (skip-chars-forward point (lambda (c) (eql wt (word-type c largep))))
-              (skip-whitespace-forward point))))
+(defun forward-word-begin (char-type-fn &optional (point (current-point)))
+  (flet ((point-char () (character-at point)))
+    (let ((type (funcall char-type-fn (point-char))))
+      (skip-chars-forward point
+                          (lambda (char)
+                            (eq type (funcall char-type-fn char)))))
+    (when (blank-char-p (point-char))
+      (skip-chars-forward point #'blank-char-p))))
 
-(defun backward-word-begin (point n largep)
-  (loop :repeat n
-        :until (start-buffer-p point)
-        :do (skip-whitespace-backward point)
-            (let ((wt (word-type (character-at point -1) largep)))
-              (skip-chars-backward point (lambda (c) (eql wt (word-type c largep)))))))
+(defun forward-word-end (char-type-fn &optional (point (current-point)))
+  (flet ((point-char () (character-at point)))
+    ;; Boundary
+    (unless (eq (funcall char-type-fn (point-char))
+                (funcall char-type-fn (character-at point 1)))
+      (character-offset point 1))
+    (when (blank-char-p (point-char))
+      (skip-chars-forward point #'blank-char-p))
+    (let ((type (funcall char-type-fn (point-char))))
+      (or (zerop
+           (skip-chars-forward point
+                               (lambda (char)
+                                 (eq type (funcall char-type-fn char)))))
+          (character-offset point -1)))))
 
-(defun forward-word-end (point n largep)
-  (loop :repeat n
-        :until (end-buffer-p point)
-        :do (skip-whitespace-forward point)
-            (let ((wt (word-type (character-at point) largep)))
-              (skip-chars-forward point (lambda (c) (eql wt (word-type c largep)))))))
+(defun backward-word-begin (char-type-fn &optional (point (current-point)))
+  (flet ((point-char () (character-at point)))
+    ;; Boundary
+    (unless (eq (funcall char-type-fn (point-char))
+                (funcall char-type-fn (character-at point -1)))
+      (character-offset point -1))
+    (when (blank-char-p (point-char))
+      (skip-chars-backward point #'blank-char-p)
+      (character-offset point -1))
+    (let ((type (funcall char-type-fn (point-char))))
+      (skip-chars-backward point
+                           (lambda (char)
+                             (eq type (funcall char-type-fn char)))))))

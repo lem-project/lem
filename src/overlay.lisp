@@ -65,14 +65,16 @@
                                   &key (start-point-kind :right-inserting)
                                        (end-point-kind :left-inserting)
                                        (text (alexandria:required-argument :text))
-                                       (offset 0))
+                                       (offset 0)
+                                       temporary)
   (make-instance 'overlay-line-endings
                  :start (copy-point start start-point-kind)
                  :end (copy-point end end-point-kind)
                  :attribute attribute
                  :buffer (point-buffer start)
                  :text text
-                 :offset offset))
+                 :offset offset
+                 :temporary temporary))
 
 (defun make-overlay-line (point attribute &key (temporary nil))
   (with-point ((point point))

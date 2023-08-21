@@ -75,7 +75,12 @@
   (pushnew *modeline-element* (lem:variable-value 'lem:modeline-format :global)))
 
 (defun finalize-vi-modeline ()
-  (modeline-remove-status-list *modeline-element*))
+  (setf (lem:variable-value 'lem:modeline-format :global)
+        (remove-if #'vi-modeline-element-p
+                   (lem:variable-value 'lem:modeline-format :global)))
+  (modeline-remove-status-list *modeline-element*)
+  (set-attribute 'cursor :background *default-cursor-color*)
+  (lem-if:update-cursor-shape (lem-core:implementation) :box))
 
 (defun change-element-by-state (state)
   (setf (element-name *modeline-element*) (format nil " ~A " (state-name state))

@@ -197,8 +197,7 @@
     (show-matched-line)))
 
 (defun highlight-matched-line (point)
-  (let ((overlay (make-overlay point point 'highlight)))
-    (overlay-put overlay :display-line t)
+  (let ((overlay (make-overlay-line point 'highlight)))
     (start-timer (make-timer (lambda ()
                                (delete-overlay overlay))
                              :name "highlight-matched-line")
@@ -248,9 +247,8 @@
 (defvar *highlight-overlays* '())
 
 (defun set-highlight-overlay (point)
-  (let ((overlay (make-overlay point point (ensure-attribute 'match-line-attribute))))
+  (let ((overlay (make-overlay-line point (ensure-attribute 'match-line-attribute))))
     (push overlay *highlight-overlays*)
-    (overlay-put overlay :display-line t)
     (setf (buffer-value (point-buffer point) 'highlight-overlay) overlay)))
 
 (defun get-highlight-overlay (point)

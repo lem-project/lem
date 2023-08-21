@@ -414,6 +414,8 @@
    :set-overlay-attribute
    :overlay-buffer
    :make-overlay
+   :make-overlay-line-endings
+   :make-overlay-line
    :delete-overlay
    :overlay-put
    :overlay-get

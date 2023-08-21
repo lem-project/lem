@@ -96,14 +96,17 @@
           (background-attribute
            (make-attribute :background (compute-evaluated-background-color))))
   (let ((popup-overlay
-          (make-overlay start
-                        end
-                        (or attribute
-                            (if is-error
-                                'eval-error-attribute
-                                'eval-value-attribute))
-                        :start-point-kind :left-inserting
-                        :end-point-kind :right-inserting))
+          (make-overlay-line-endings
+           start
+           end
+           (or attribute
+               (if is-error
+                   'eval-error-attribute
+                   'eval-value-attribute))
+           :start-point-kind :left-inserting
+           :end-point-kind :right-inserting
+           :text (fold-one-line-message message)
+           :offset 1))
         (background-overlay
           (when background-attribute
             (make-overlay start
@@ -113,9 +116,6 @@
                           :end-point-kind :right-inserting)))
         (buffer (point-buffer start)))
     (overlay-put popup-overlay 'relation-overlay background-overlay)
-    (overlay-put popup-overlay :display-line-end t)
-    (overlay-put popup-overlay :display-line-end-offset 1)
-    (overlay-put popup-overlay :text (fold-one-line-message message))
     (overlay-put popup-overlay :id id)
     (push popup-overlay (buffer-eval-result-overlays buffer))
     (add-hook (variable-value 'before-change-functions :buffer buffer)

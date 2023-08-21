@@ -23,4 +23,25 @@
                (:file "ex-command")
                (:file "ex")
                (:file "binds")
-               (:file "vi-mode")))
+               (:file "vi-mode"))
+  :in-order-to ((test-op (test-op "lem-vi-mode/tests"))))
+
+(defsystem "lem-vi-mode/tests"
+  :depends-on ("lem"
+               "lem-vi-mode"
+               "lem-fake-interface"
+               "rove"
+               "cl-ppcre"
+               "cl-interpol"
+               "named-readtables"
+               "alexandria")
+  :components
+  ((:module "tests"
+    :depends-on ("utils")
+    :components
+    ((:file "motion")
+     (:file "operator")
+     (:file "visual")))
+   (:file "utils"
+    :pathname "tests/utils"))
+  :perform (test-op (op c) (symbol-call :rove '#:run c)))

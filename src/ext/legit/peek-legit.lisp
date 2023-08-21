@@ -320,7 +320,13 @@ Notes:
 (define-command peek-legit-select () ()
   (alexandria:when-let ((file (get-matched-file)))
     (quit)
-    (alexandria:when-let ((buffer (find-file-buffer file)))
+    (alexandria:when-let
+        ((buffer (or (and (uiop:file-exists-p file)
+                          (find-file-buffer file))
+                     (find-file-buffer
+                      (format nil "~a~a"
+                              (lem-core/commands/project:find-root (buffer-filename))
+                              file)))))
       (switch-to-buffer buffer))))
 
 (define-command peek-legit-next () ()

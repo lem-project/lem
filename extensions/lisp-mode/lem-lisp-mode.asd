@@ -49,5 +49,4 @@
   :depends-on ("lem-lisp-mode")
   :serial t
   :pathname "v2"
-  :components ((:file "eval")
-               (:file "lsp-config")))
+  :components ((:file "lsp-config")))

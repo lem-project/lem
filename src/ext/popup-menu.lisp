@@ -32,13 +32,7 @@
   (buffer-point (popup-menu-buffer popup-menu)))
 
 (defun make-focus-overlay (point focus-attribute)
-  (with-point ((start point)
-               (end point))
-    (line-start start)
-    (line-end end)
-    (let ((ov (make-overlay start end focus-attribute)))
-      (overlay-put ov :display-line t)
-      ov)))
+  (make-overlay-line point focus-attribute))
 
 (defun update-focus-overlay (popup-menu point)
   (delete-overlay (popup-menu-focus-overlay popup-menu))

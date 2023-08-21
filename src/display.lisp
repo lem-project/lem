@@ -128,20 +128,21 @@
   (when (and (variable-value 'highlight-line :default (current-buffer))
              (current-theme))
     (alexandria:when-let ((color (highlight-line-color)))
-      (let ((ov (make-temporary-overlay (buffer-point buffer)
-                                        (buffer-point buffer)
-                                        (make-attribute :background color))))
-        (overlay-put ov :display-line t)
-        ov))))
+      (make-overlay-line (buffer-point buffer)
+                         (make-attribute :background color)
+                         :temporary t))))
 
 (defun make-temporary-region-overlay-from-cursor (cursor)
   (let ((mark (cursor-mark cursor)))
     (when (mark-active-p mark)
-      (make-temporary-overlay cursor (mark-point mark) 'region))))
+      (make-overlay cursor
+                    (mark-point mark)
+                    'region
+                    :temporary t))))
 
 (defun get-window-overlays (window)
   (let* ((buffer (window-buffer window))
-         (overlays (overlays buffer)))
+         (overlays (buffer-overlays buffer)))
     (when (eq (current-window) window)
       (dolist (cursor (buffer-cursors buffer))
         (if-push (make-temporary-region-overlay-from-cursor cursor)
@@ -171,22 +172,22 @@
         (loop :for overlay :in overlays
               :for start := (overlay-start overlay)
               :for end := (overlay-end overlay)
-              :do (when (overlay-get overlay :display-line-end)
+              :do (when (typep overlay 'overlay-line-endings)
                     (when (and (point<= view-point start)
                                (point<= end view-end-point))
                       (let ((i (calc-row end)))
                         (when (< i (screen-height screen))
-                          (let ((text (overlay-get overlay :text)))
+                          (let ((text (overlay-line-endings-text overlay)))
                             (setf (aref (screen-lines screen) i)
                                   (cover (aref (screen-lines screen) i)
                                          text
                                          (overlay-attribute overlay)
-                                         (or (overlay-get overlay :display-line-end-offset) 0)))))))))
+                                         (overlay-line-endings-offset overlay)))))))))
         (loop :for overlay :in overlays
               :for start := (overlay-start overlay)
               :for end := (overlay-end overlay)
               :do (cond
-                    ((overlay-get overlay :display-line-end))
+                    ((typep overlay 'overlay-line-endings))
                     ((overlay-get overlay :display-left)
                      (when (and (point<= view-point start)
                                 (point<= end view-end-point))
@@ -202,10 +203,10 @@
                      (draw-attribute-to-screen-line screen
                                                     (overlay-attribute overlay)
                                                     (calc-row start)
-                                                    (if (overlay-get overlay :display-line)
+                                                    (if (typep overlay 'overlay-line)
                                                         0
                                                         (point-charpos start))
-                                                    (if (overlay-get overlay :display-line)
+                                                    (if (typep overlay 'overlay-line)
                                                         nil
                                                         (point-charpos end))))
                     ((and (point<= view-point start)

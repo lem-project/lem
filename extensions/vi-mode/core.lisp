@@ -75,6 +75,9 @@
   (pushnew *modeline-element* (lem:variable-value 'lem:modeline-format :global)))
 
 (defun finalize-vi-modeline ()
+  (setf (lem:variable-value 'lem:modeline-format :global)
+        (remove-if #'vi-modeline-element-p
+                   (lem:variable-value 'lem:modeline-format :global)))
   (modeline-remove-status-list *modeline-element*))
 
 (defun change-element-by-state (state)

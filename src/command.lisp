@@ -8,6 +8,9 @@
 (defvar *this-command*
   "The command now being executed.")
 
+(defvar *current-prefix-arg* nil
+  "The raw prefix argument for the current command.")
+
 (defun this-command ()
   "Return the command now being executed."
   *this-command*)
@@ -16,7 +19,8 @@
 
 (defun call-command (this-command universal-argument)
   "Call first argument as the command, passing remaining arguments to it."
-  (let ((*this-command* (ensure-command this-command)))
+  (let ((*this-command* (ensure-command this-command))
+        (*current-prefix-arg* universal-argument))
     (unless *this-command*
       (editor-error "~A: command not found" this-command))
     (run-hooks *pre-command-hook*)

@@ -315,6 +315,7 @@
   (:export
    :*pre-command-hook*
    :*post-command-hook*
+   :*current-prefix-arg*
    :command-name
    :this-command
    :execute

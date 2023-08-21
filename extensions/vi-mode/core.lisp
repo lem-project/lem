@@ -15,6 +15,7 @@
            :*command-keymap*
            :*insert-keymap*
            :*inactive-keymap*
+           :pre-command-hook
            :post-command-hook
            :state-enabled-hook
            :state-disabled-hook
@@ -130,9 +131,11 @@
        (setf (get ',name 'state)
              (make-instance ',name)))))
 
-(defgeneric post-command-hook (state))
+(defgeneric pre-command-hook (state)
+  (:method ((state vi-state))))
 
-(defmethod post-command-hook ((state vi-state)))
+(defgeneric post-command-hook (state)
+  (:method ((state vi-state))))
 
 (defgeneric state-enabled-hook (state))
 
@@ -206,10 +209,15 @@
 (defun prompt-activate-hook () (change-state 'vi-modeline))
 (defun prompt-deactivate-hook () (change-state 'normal))
 
+(defun vi-pre-command-hook ()
+  (when (mode-active-p (current-buffer) 'vi-mode)
+    (pre-command-hook (ensure-state (current-state)))))
+
 (defun vi-post-command-hook ()
   (when (mode-active-p (current-buffer) 'vi-mode)
     (post-command-hook (ensure-state (current-state)))))
 
+(add-hook *pre-command-hook* 'vi-pre-command-hook)
 (add-hook *post-command-hook* 'vi-post-command-hook)
 
 (add-hook *enable-hook*

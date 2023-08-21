@@ -118,7 +118,9 @@
                     (with-slots (default-n-arg) command
                       default-n-arg))
                   (otherwise 1)))))
-    (call-command command n)))
+    (execute (lem-core::get-active-modes-class-instance (current-buffer))
+             command
+             n)))
 
 (defun motion-region (motion)
   (check-type motion (or null symbol))

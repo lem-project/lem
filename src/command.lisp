@@ -8,12 +8,19 @@
 (defvar *this-command*
   "The command now being executed.")
 
+(defvar *this-command-keys* '()
+  "List containing the key sequence that invoked the present command.")
+
 (defvar *current-prefix-arg* nil
   "The raw prefix argument for the current command.")
 
 (defun this-command ()
   "Return the command now being executed."
   *this-command*)
+
+(defun this-command-keys ()
+  "Return the list of key sequence that invoked the present command."
+  (reverse *this-command-keys*))
 
 (defgeneric execute (mode command argument))
 

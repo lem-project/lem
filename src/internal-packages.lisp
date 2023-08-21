@@ -318,6 +318,7 @@
    :*current-prefix-arg*
    :command-name
    :this-command
+   :this-command-keys
    :execute
    :call-command
    :all-command-names)

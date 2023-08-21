@@ -128,20 +128,17 @@
   (when (and (variable-value 'highlight-line :default (current-buffer))
              (current-theme))
     (alexandria:when-let ((color (highlight-line-color)))
-      (let ((ov (make-instance 'temporary-overlay
-                               :start (buffer-point buffer)
-                               :end (buffer-point buffer)
-                               :attribute (make-attribute :background color))))
-        (overlay-put ov :display-line t)
-        ov))))
+      (make-overlay-line (buffer-point buffer)
+                         (make-attribute :background color)
+                         :temporary t))))
 
 (defun make-temporary-region-overlay-from-cursor (cursor)
   (let ((mark (cursor-mark cursor)))
     (when (mark-active-p mark)
-      (make-instance 'temporary-overlay
-                     :start cursor
-                     :end (mark-point mark)
-                     :attribute 'region))))
+      (make-overlay cursor
+                    (mark-point mark)
+                    'region
+                    :temporary t))))
 
 (defun get-window-overlays (window)
   (let* ((buffer (window-buffer window))
@@ -206,10 +203,10 @@
                      (draw-attribute-to-screen-line screen
                                                     (overlay-attribute overlay)
                                                     (calc-row start)
-                                                    (if (overlay-get overlay :display-line)
+                                                    (if (typep overlay 'overlay-line)
                                                         0
                                                         (point-charpos start))
-                                                    (if (overlay-get overlay :display-line)
+                                                    (if (typep overlay 'overlay-line)
                                                         nil
                                                         (point-charpos end))))
                     ((and (point<= view-point start)

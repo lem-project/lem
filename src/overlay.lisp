@@ -1,7 +1,10 @@
 (in-package :lem-core)
 
-(defclass <overlay> ()
-  ((start
+(defclass overlay ()
+  ((temporary
+    :initarg :temporary
+    :reader overlay-temporary-p)
+   (start
     :initarg :start
     :reader overlay-start
     :type point)
@@ -27,10 +30,6 @@
     :accessor overlay-alive-p
     :type boolean)))
 
-(defclass temporary-overlay (<overlay>) ())
-
-(defclass overlay (<overlay>) ())
-
 (defclass overlay-line-endings (overlay)
   ((offset :initarg :offset
            :initform 0
@@ -39,24 +38,28 @@
          :initform (alexandria:required-argument :text)
          :accessor overlay-line-endings-text)))
 
-(defmethod initialize-instance ((overlay <overlay>) &key &allow-other-keys)
+(defclass overlay-line (overlay)
+  ())
+
+(defmethod initialize-instance ((overlay overlay) &key &allow-other-keys)
   (let ((overlay (call-next-method)))
     (with-slots (start end attribute) overlay
       (when (point< end start) (rotatef start end))
       (setf attribute (ensure-attribute attribute t)))
+    (unless (overlay-temporary-p overlay)
+      (push overlay (buffer-value (overlay-buffer overlay) 'overlays)))
     overlay))
-
-(defmethod initialize-instance :after ((overlay overlay) &key &allow-other-keys)
-  (push overlay (buffer-value (overlay-buffer overlay) 'overlays)))
 
 (defun make-overlay (start end attribute
                      &key (start-point-kind :right-inserting)
-                          (end-point-kind :left-inserting))
+                          (end-point-kind :left-inserting)
+                          temporary)
   (make-instance 'overlay
                  :start (copy-point start start-point-kind)
                  :end (copy-point end end-point-kind)
                  :attribute attribute
-                 :buffer (point-buffer start)))
+                 :buffer (point-buffer start)
+                 :temporary temporary))
 
 (defun make-overlay-line-endings (start end attribute
                                   &key (start-point-kind :right-inserting)
@@ -71,10 +74,19 @@
                  :text text
                  :offset offset))
 
+(defun make-overlay-line (point attribute &key (temporary nil))
+  (with-point ((point point))
+    (make-instance 'overlay-line
+                   :start point
+                   :end point
+                   :attribute attribute
+                   :buffer (point-buffer point)
+                   :temporary temporary)))
+
 (defun delete-overlay (overlay)
   (check-type overlay overlay)
   (when (and (overlay-alive-p overlay)
-             (not (typep overlay 'temporary-overlay)))
+             (not (overlay-temporary-p overlay)))
     (delete-point (overlay-start overlay))
     (delete-point (overlay-end overlay))
     (let ((buffer (overlay-buffer overlay)))

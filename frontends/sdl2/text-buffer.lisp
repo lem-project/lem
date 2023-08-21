@@ -111,15 +111,14 @@
 
 (defun make-cursor-overlay (point)
   (let ((overlay
-          (make-instance
-           'lem-core::temporary-overlay
-           :start point
-           :end (lem:with-point ((p point))
-                  (lem:character-offset p 1)
-                  p)
-           :attribute (if (typep point 'lem:fake-cursor)
-                          'lem:fake-cursor
-                          'lem:cursor))))
+          (lem-core::make-overlay point
+                                  (lem:with-point ((p point))
+                                    (lem:character-offset p 1)
+                                    p)
+                                  (if (typep point 'lem:fake-cursor)
+                                      'lem:fake-cursor
+                                      'lem:cursor)
+                                  :temporary t)))
     (lem:overlay-put overlay :cursor t)
     overlay))
 
@@ -194,7 +193,7 @@
             :when (overlay-within-point-p overlay point)
             :do (cond ((typep overlay 'lem-core::overlay-line-endings)
                        (setf line-end-overlay overlay))
-                      ((lem:overlay-get overlay :display-line)
+                      ((typep overlay 'lem-core::overlay-line)
                        (setf attributes
                              (lem-core::overlay-attributes attributes
                                                            0

@@ -115,7 +115,8 @@
   (let* ((spinner)
          (timer (start-timer (make-timer 
                               (lambda ()
-                                (update-line-spinner spinner)))
+                                (when spinner
+                                  (update-line-spinner spinner))))
                              +loading-interval+
                              t))
          (overlay (make-overlay-line-endings

@@ -15,7 +15,10 @@
            :visual-char-p
            :visual-line-p
            :visual-block-p
+           :visual-range
            :apply-visual-range
+           :visual-yank
+           :visual-kill
            :vi-visual-insert
            :vi-visual-append))
 (in-package :lem-vi-mode/visual)
@@ -143,11 +146,33 @@
 (defun visual-block-p ()
   (typep (current-state) 'visual-block))
 
+(defun visual-range ()
+  (let ((ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start)))
+    (if (visual-block-p)
+        (list *start-point* (copy-point (current-point)))
+        (progn
+          (assert (null (rest ov)))
+          (list
+           (overlay-start (first ov))
+           (overlay-end (first ov)))))))
+
 (defun apply-visual-range (function)
   (dolist (ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start))
     (funcall function
              (overlay-start ov)
              (overlay-end ov))))
+
+(defun visual-yank ()
+  (with-killring-context (:options (when (visual-line-p) :vi-line))
+    (apply-visual-range
+     (lambda (start end)
+       (copy-region start end)))))
+
+(defun visual-kill ()
+  (with-killring-context (:options (when (visual-line-p) :vi-line))
+    (apply-visual-range
+     (lambda (start end)
+       (kill-region start end)))))
 
 (defun string-without-escape ()
   (concatenate 'string

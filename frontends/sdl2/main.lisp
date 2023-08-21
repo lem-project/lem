@@ -144,8 +144,9 @@
 (defun current-renderer () (display-renderer *display*))
 
 (defun call-with-renderer (function)
-  (bt:with-recursive-lock-held ((display-mutex *display*))
-    (funcall function)))
+  (sdl2:in-main-thread ()
+    (bt:with-recursive-lock-held ((display-mutex *display*))
+      (funcall function))))
 
 (defmacro with-renderer (() &body body)
   `(call-with-renderer (lambda () ,@body)))
@@ -868,21 +869,18 @@
                               (sdl2:push-quit-event)))))
              (declare (ignore editor-thread))
              nil)))
-    (if (sbcl-on-darwin-p)
-        (progn
-          ;; called *before* any sdl windows are created
-          (sdl2:set-hint :video-mac-fullscreen-spaces
-                         ;; the sdl2 library expects zero or one NOTE since this
-                         ;; is a preference let's not change the default here
-                         ;; because it's easy enough to change it via a user's
-                         ;; config
-                         (if (lem:config :darwin-use-native-fullscreen) 1 0))
-          (sdl2:make-this-thread-main (lambda ()
-                                        (create-display #'thunk)
-                                        (cffi:foreign-funcall "_exit"))))
-        (let ((thread (bt:make-thread (lambda ()
-                                        (create-display #'thunk)))))
-          (bt:join-thread thread)))))
+    (progn
+      ;; called *before* any sdl windows are created
+      (sdl2:set-hint :video-mac-fullscreen-spaces
+		     ;; the sdl2 library expects zero or one NOTE since this
+		     ;; is a preference let's not change the default here
+		     ;; because it's easy enough to change it via a user's
+		     ;; config
+		     (if (lem:config :darwin-use-native-fullscreen) 1 0))
+      (sdl2:make-this-thread-main (lambda ()
+				    (create-display #'thunk)
+				    (when (sbcl-on-darwin-p)
+				      (cffi:foreign-funcall "_exit")))))))
 
 (defmethod lem-if:get-background-color ((implementation sdl2))
   (with-debug ("lem-if:get-background-color")

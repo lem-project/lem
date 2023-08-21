@@ -7,6 +7,7 @@
         :lem-vi-mode/word
         :lem-vi-mode/visual
         :lem-vi-mode/jump-motions
+        :lem-vi-mode/states
         :lem-vi-mode/commands/utils)
   (:import-from :lem/common/killring
                 :peek-killring-item)
@@ -77,6 +78,7 @@
            :vi-open-above
            :vi-jump-back
            :vi-jump-next
+           :vi-repeat
            :vi-normal
            :vi-keyboard-quit))
 (in-package :lem-vi-mode/commands)
@@ -583,6 +585,14 @@
 (define-command vi-jump-next (&optional (n 1)) ("p")
   (dotimes (i n)
     (jump-next)))
+
+(define-command vi-repeat (&optional (n 1)) ("p")
+  ;; TODO: Support N arg
+  (declare (ignore n))
+  (when *last-repeat-keys*
+    (let ((lem:*pre-command-hook* nil)
+          (lem:*post-command-hook* nil))
+      (execute-key-sequence *last-repeat-keys*))))
 
 (define-command vi-normal () ()
   (change-state 'normal))

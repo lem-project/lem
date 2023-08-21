@@ -17,6 +17,7 @@
                 :pathname "commands"
                 :components
                 ((:file "utils")))
+               (:file "states")
                (:file "commands")
                (:file "ex-core")
                (:file "ex-parser")

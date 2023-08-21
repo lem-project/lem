@@ -2,9 +2,7 @@
   (:use :cl
         :lem
         :lem-lsp-mode
-        :lem-lsp-base/converter)
-  (:import-from :lem-lisp-mode/v2/eval
-                :register-eval-methods))
+        :lem-lsp-base/converter))
 (in-package :lem-lisp-mode/v2/lsp-config)
 
 (defvar *self-connection* t)
@@ -40,8 +38,7 @@
         (setf (connection-workspace connection) workspace))
       (let* ((swank-port (gethash "swankPort" (lem-lsp-mode::workspace-server-info workspace)))
              (connection (lem-lisp-mode:connect-to-swank "127.0.0.1" swank-port)))
-        (setf (connection-workspace connection) workspace)))
-  (register-eval-methods workspace))
+        (setf (connection-workspace connection) workspace))))
 
 (defun start-micros-server (port)
   (setf (lem-language-server::config :backend-port) port)

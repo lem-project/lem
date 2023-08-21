@@ -49,3 +49,4 @@ jobs:
         fi
 
         rove lem-tests.asd
+        rove extensions/vi-mode/lem-vi-mode.asd

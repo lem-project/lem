@@ -81,36 +81,6 @@
            :vi-keyboard-quit))
 (in-package :lem-vi-mode/commands)
 
-;; Vim word
-;; See http://vimdoc.sourceforge.net/htmldoc/motion.html#word
-;; word = a sequence of letters, digits, underscores, or a 
-;; sequence of other non-blank characters.
-(defun vi-word-char-p (char)
-  (and (characterp char)
-       (or (alphanumericp char)
-           (char= char #\_)
-           (char= char #\_)
-           ;; TODO: Add mechanism to modify
-           ;; these based on isKeyword from lisp.vim https://github.com/vim/vim/blob/master/runtime/syntax/lisp.vim#L74C1-L387
-           ;; which is modified based on file extension.
-           (char= char #\*)
-           (char= char #\/)
-           (char= char #\%)
-           (char= char #\<)
-           (char= char #\=)
-           (char= char #\>)
-           (char= char #\:)
-           (char= char #\$)
-           (char= char #\?)
-           (char= char #\!)
-           (char= char #\^)
-           (char= char #\-))))
-
-(defun vi-space-char-p (char)
-  (and (characterp char)
-       (or (char= char #\Space)
-           (char= char #\Tab))))
-
 (define-command vi-move-to-beginning-of-line/universal-argument-0 () ()
   (if (mode-active-p (current-buffer) 'universal-argument)
       (universal-argument-0)
@@ -151,79 +121,35 @@
   (previous-line n)
   (fall-within-line (current-point)))
 
-(defun %vi-forward-word-begin (n)
-  (when (< 0 n)
-    (let ((p (current-point)))
-      (cond
-        ((vi-word-char-p (character-at p))
-         (loop
-           while (and (not (eolp p)) (vi-word-char-p (character-at p 1)))
-           do (vi-forward-char))
-         (character-offset p 1))
-        ((vi-space-char-p (character-at p))
-         (character-offset p 1)
-         (skip-chars-forward p '(#\Space #\Tab)))
-        (t
-         (loop until (or (eolp p)
-                         (vi-word-char-p (character-at p))
-                         (vi-space-char-p (character-at p)))
-               do (vi-forward-char))
-         (when (eolp p)
-           (character-offset p 1)))))
-    (%vi-forward-word-begin (1- n))))
-
-(define-vi-motion vi-forward-word-begin (&optional (n 1))
-    (:type :inclusive)
-  (when (eolp (current-point))
-    (line-offset (current-point) 1)
-    (line-start (current-point)))
-  (%vi-forward-word-begin n)
-  (skip-chars-forward (current-point) '(#\Space #\Tab #\Newline)))
+(define-command vi-forward-word-begin (&optional (n 1)) ("p")
+  (dotimes (i n)
+    (forward-word-begin #'char-type)))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
-  (let ((p (current-point)))
-    (when (and (< 0 n)
-	       (not (and (= (line-number-at-point p) 1)
-			 (bolp p))))
-      (cond
-	((vi-word-char-p (character-at p -1))
-	 (loop
-	   while (and (not (bolp p)) (vi-word-char-p (character-at p -1)))
-	   do (vi-backward-char)))
-	((or (bolp p)
-	     (vi-space-char-p (character-at p -1)))
-	 (skip-chars-backward p '(#\Space #\Tab #\Newline #\Return))
-	 (vi-backward-word-begin n))
-	(t
-	 (loop until (or (bolp p)
-			 (vi-word-char-p (character-at p -1))
-			 (vi-space-char-p (character-at p -1)))
-	       do (vi-backward-char))))
-      (vi-backward-word-begin (1- n)))))
-
-(define-command vi-forward-word-begin-broad (&optional (n 1)) ("p")
-  (forward-word-begin (current-point) n t))
-
-(define-command vi-backward-word-begin-broad (&optional (n 1)) ("p")
-  (backward-word-begin (current-point) n t))
+  (dotimes (i n)
+    (backward-word-begin #'char-type)))
 
 (define-vi-motion vi-forward-word-end (&optional (n 1))
     (:type :inclusive)
-  (character-offset (current-point) 1)
-  (skip-chars-forward (current-point) (lambda (char)
-                                        (or (char= char #\Newline)
-                                            (vi-space-char-p char))))
-  (%vi-forward-word-begin n)
-  (vi-backward-char))
+  (dotimes (i n)
+    (forward-word-end #'char-type)))
 
-(define-command vi-forward-word-end-broad (&optional (n 1)) ("p")
-  (forward-word-end (current-point) n t))
+(define-command vi-forward-word-begin-broad (&optional (n 1)) ("p")
+  (dotimes (i n)
+    (forward-word-begin #'broad-char-type)))
+
+(define-command vi-backward-word-begin-broad (&optional (n 1)) ("p")
+  (dotimes (i n)
+    (backward-word-begin #'broad-char-type)))
+
+(define-vi-motion vi-forward-word-end-broad (&optional (n 1))
+    (:type :inclusive)
+  (dotimes (i n)
+    (forward-word-end #'broad-char-type)))
 
 (define-command vi-backward-word-end (&optional (n 1)) ("p")
   (character-offset (current-point) -1)
-  (skip-chars-backward (current-point) (lambda (char)
-                                         (or (char= char #\Newline)
-                                             (vi-space-char-p char))))
+  (skip-chars-backward (current-point) #'blank-char-p)
   (vi-backward-word-begin n))
 
 (define-command vi-move-to-beginning-of-line () ()
@@ -290,7 +216,7 @@
     (with-killring-context (:options (when (eq type :line) :vi-line)
                             :appending (when (eq type :block)
                                          (continue-flag :kill)))
-      (kill-region start end))
+      (kill-region-without-appending start end))
     (when (and (eq type :line)
                (eq 'vi-delete (command-name (this-command))))
       (if (last-line-p (current-point))
@@ -308,7 +234,7 @@
     (line-start start)
     (line-end end)
     (character-offset end 1))
-  (kill-region start end)
+  (kill-region-without-appending start end)
   (fall-within-line (current-point)))
 
 (define-vi-operator vi-change () ()
@@ -431,7 +357,7 @@
 
 (define-vi-operator vi-kill-last-word (start end)
     (:motion vi-backward-word-end)
-  (kill-region start end))
+  (kill-region-without-appending start end))
 
 (define-vi-operator vi-upcase (start end) ()
   (uppercase-region start end)

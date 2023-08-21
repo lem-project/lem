@@ -4,9 +4,9 @@
 (defvar *site-init-comment ";; don't edit !!!")
 
 (defun site-init-path ()
-  (let ((path (merge-pathnames (format nil ".lem/~A.asd"
+  (let ((path (merge-pathnames (format nil "~A.asd"
                                        *site-init-name*)
-                               (user-homedir-pathname))))
+                               (lem-home))))
     (with-open-file (out (ensure-directories-exist path)
                          :direction :output
                          :if-exists nil)

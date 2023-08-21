@@ -110,14 +110,15 @@
   nil)
 
 (defun make-cursor-overlay (point)
-  (let ((overlay (lem-core::make-temporary-overlay
-                  point
-                  (lem:with-point ((p point))
-                    (lem:character-offset p 1)
-                    p)
-                  (if (typep point 'lem:fake-cursor)
-                      'lem:fake-cursor
-                      'lem:cursor))))
+  (let ((overlay
+          (lem-core::make-overlay point
+                                  (lem:with-point ((p point))
+                                    (lem:character-offset p 1)
+                                    p)
+                                  (if (typep point 'lem:fake-cursor)
+                                      'lem:fake-cursor
+                                      'lem:cursor)
+                                  :temporary t)))
     (lem:overlay-put overlay :cursor t)
     overlay))
 
@@ -190,9 +191,9 @@
         (lem-base::line-string/attributes (lem-base::point-line point))
       (loop :for overlay :in overlays
             :when (overlay-within-point-p overlay point)
-            :do (cond ((lem:overlay-get overlay :display-line-end)
+            :do (cond ((typep overlay 'lem-core::overlay-line-endings)
                        (setf line-end-overlay overlay))
-                      ((lem:overlay-get overlay :display-line)
+                      ((typep overlay 'lem-core::overlay-line)
                        (setf attributes
                              (lem-core::overlay-attributes attributes
                                                            0
@@ -263,7 +264,7 @@
                                   (logical-line-line-end-overlay logical-line))
               (make-line-end-item :text (lem:overlay-get overlay :text)
                                   :attribute (lem:overlay-attribute overlay)
-                                  :offset (lem:overlay-get overlay :display-line-end-offset))))))
+                                  :offset (lem-core::overlay-line-endings-offset overlay))))))
 
 (defclass drawing-object ()
   ())

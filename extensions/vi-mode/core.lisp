@@ -21,7 +21,8 @@
            :normal
            :insert
            :change-directory
-           :expand-filename-modifiers))
+           :expand-filename-modifiers
+           :kill-region-without-appending))
 (in-package :lem-vi-mode/core)
 
 (defvar *default-cursor-color* nil)
@@ -43,44 +44,73 @@
 
 (defvar *modeline-element*)
 
-(define-attribute state-attribute
-  (t :reverse t))
+(define-attribute state-modeline-white
+  (t :foreground "white" :reverse t))
+
+(define-attribute state-modeline-yellow
+  (t :foreground "yellow" :reverse t))
+
+(define-attribute state-modeline-green
+  (t :foreground "#003300" :reverse t))
+
+(define-attribute state-modeline-aqua
+  (t :foreground "#33CCFF" :reverse t))
+
+(define-attribute state-modeline-orange
+  (t :foreground "orange" :reverse t))
 
 (defstruct (vi-modeline-element (:conc-name element-))
-  name)
+  name
+  attribute)
 
 (defmethod convert-modeline-element ((element vi-modeline-element) window)
-  (values (element-name element) 'state-attribute))
+  (if (or (eq (lem:current-window) window)
+          (string= (element-name element) " COMMAND "))
+      (values (element-name element)
+              (element-attribute element))
+      (values "" 'state-modeline-white)))
 
 (defun initialize-vi-modeline ()
   (setf *modeline-element* (make-vi-modeline-element))
-  (modeline-add-status-list *modeline-element*))
+  (pushnew *modeline-element* (lem:variable-value 'lem:modeline-format :global)))
 
 (defun finalize-vi-modeline ()
   (modeline-remove-status-list *modeline-element*))
 
-(defun change-element-name (name)
-  (setf (element-name *modeline-element*) name))
+(defun change-element-by-state (state)
+  (setf (element-name *modeline-element*) (format nil " ~A " (state-name state))
+        (element-attribute *modeline-element*) (state-modeline-color state)))
 
 
 (defclass vi-state ()
-  ((message
-  :initarg :message
-  :reader state-message)
-  (cursor-type 
-  :initarg :cursor-type
-  :initform :box
-  :reader state-cursor-type)
-  (keymap
-  :initarg :keymap
-  :reader state-keymap)
-  (cursor-color
-  :initarg :cursor-color
-  :accessor state-cursor-color))
+  ((name :initarg :name
+         :reader state-name)
+   (message
+    :initarg :message
+    :reader state-message)
+   (cursor-type
+    :initarg :cursor-type
+    :initform :box
+    :reader state-cursor-type)
+   (modeline-color
+    :initarg :modeline-color
+    :initform 'state-modeline-white
+    :reader state-modeline-color)
+   (keymap
+    :initarg :keymap
+    :reader state-keymap)
+   (cursor-color
+    :initarg :cursor-color
+    :accessor state-cursor-color))
   (:default-initargs
-        :message nil
-        :cursor-color nil
-        :keymap *global-keymap*))
+   :message nil
+   :cursor-color nil
+   :keymap *global-keymap*))
+
+(defmethod initialize-instance ((state vi-state) &rest initargs &key name &allow-other-keys)
+  (unless name
+    (setf (getf initargs :name) (class-name (class-of state))))
+  (apply #'call-next-method state initargs))
 
 (defvar *current-state* nil)
 
@@ -127,7 +157,7 @@
   (let ((state (ensure-state name)))
     (setf *current-state* name)
     (change-global-mode-keymap 'vi-mode (state-keymap state))
-    (change-element-name (format nil "[~A]" name))
+    (change-element-by-state state)
     (state-enabled-hook state)
     (unless *default-cursor-color*
       (setf *default-cursor-color*
@@ -148,7 +178,8 @@
 
 (define-vi-state normal () ()
   (:default-initargs
-   :keymap *command-keymap*))
+   :keymap *command-keymap*
+   :modeline-color 'state-modeline-yellow))
 
 ;; insert state
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap* :parent *global-keymap*))
@@ -158,10 +189,13 @@
    :message "-- INSERT --"
    :cursor-color "IndianRed"
    :cursor-type :bar
+   :modeline-color 'state-modeline-aqua
    :keymap *insert-keymap*))
 
 (define-vi-state vi-modeline () ()
   (:default-initargs
+   :name "COMMAND"
+   :modeline-color 'state-modeline-green
    :keymap *inactive-keymap*))
 
 (defun prompt-activate-hook () (change-state 'vi-modeline))
@@ -239,3 +273,10 @@
                                          (#\e (or (pathname-type (pathname result))
                                                   "")))))))
                            :simple-calls t))
+
+(defun kill-region-without-appending (start end)
+  "Same as lem:kill-region except this won't append to the existing killring"
+  (when (point< end start)
+    (rotatef start end))
+  (let ((killed-string (delete-character start (count-characters start end))))
+    (copy-to-clipboard-with-killring killed-string)))

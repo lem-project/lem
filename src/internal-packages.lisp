@@ -315,7 +315,7 @@
   (:export
    :*pre-command-hook*
    :*post-command-hook*
-   :*current-prefix-arg*
+   :*universal-argument*
    :command-name
    :this-command
    :this-command-keys

@@ -11,7 +11,7 @@
 (defvar *this-command-keys* '()
   "List containing the key sequence that invoked the present command.")
 
-(defvar *current-prefix-arg* nil
+(defvar *universal-argument* nil
   "The raw prefix argument for the current command.")
 
 (defun this-command ()
@@ -27,7 +27,7 @@
 (defun call-command (this-command universal-argument)
   "Call first argument as the command, passing remaining arguments to it."
   (let ((*this-command* (ensure-command this-command))
-        (*current-prefix-arg* universal-argument))
+        (*universal-argument* universal-argument))
     (unless *this-command*
       (editor-error "~A: command not found" this-command))
     (run-hooks *pre-command-hook*)

@@ -317,6 +317,8 @@
    :*post-command-hook*
    :command-name
    :this-command
+   :this-command-keys
+   :universal-argument-of-this-command
    :execute
    :call-command
    :all-command-names)

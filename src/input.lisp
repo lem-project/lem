@@ -66,6 +66,7 @@
 (defun unread-key (key)
   (when *key-recording-p*
     (pop *record-keys*))
+  (pop *this-command-keys*)
   (push key *unread-keys*))
 
 (defun read-command ()
@@ -91,7 +92,9 @@
   (last-read-key-sequence))
 
 (defun unread-key-sequence (kseq)
-  (setf *unread-keys* (nconc *unread-keys* kseq)))
+  (prog1 (setf *unread-keys* (nconc *unread-keys* kseq))
+    (setf *this-command-keys*
+          (nthcdr (length kseq) *this-command-keys*))))
 
 (defun execute-key-sequence (key-sequence)
   (let ((*unread-keys* key-sequence))

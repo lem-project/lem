@@ -1,6 +1,8 @@
 (defpackage :lem-vi-mode/commands/utils
   (:use :cl
         :lem)
+  (:import-from :lem-vi-mode/core
+                :*command-keymap*)
   (:import-from :lem-vi-mode/jump-motions
                 :with-jump-motion)
   (:import-from :lem-vi-mode/visual
@@ -25,7 +27,8 @@
            :vi-motion-type
            :vi-operator
            :define-vi-motion
-           :define-vi-operator))
+           :define-vi-operator
+           :extract-count-keys))
 (in-package :lem-vi-mode/commands/utils)
 
 (defvar *cursor-offset* -1)
@@ -225,3 +228,19 @@
      (call-define-vi-operator (lambda () ,@body)
                               :keep-visual ,keep-visual
                               :restore-point ,restore-point)))
+
+(defun extract-count-keys (keys)
+  (loop for key in keys
+        for cmd = (lem-core::keymap-find-keybind *command-keymap* key nil)
+        unless (member cmd '(lem/universal-argument:universal-argument-0
+                             lem/universal-argument:universal-argument-1
+                             lem/universal-argument:universal-argument-2
+                             lem/universal-argument:universal-argument-3
+                             lem/universal-argument:universal-argument-4
+                             lem/universal-argument:universal-argument-5
+                             lem/universal-argument:universal-argument-6
+                             lem/universal-argument:universal-argument-7
+                             lem/universal-argument:universal-argument-8
+                             lem/universal-argument:universal-argument-9)
+                       :test 'eq)
+        collect key))

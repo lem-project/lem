@@ -13,7 +13,8 @@
 (defun vi-this-command-keys ()
   (append
    (and (numberp (universal-argument-of-this-command))
-        (coerce (princ-to-string (universal-argument-of-this-command)) 'list))
+        (map 'list (lambda (char) (lem:make-key :sym (string char)))
+             (princ-to-string (universal-argument-of-this-command))))
    (this-command-keys)))
 
 (defmethod post-command-hook ((state normal))

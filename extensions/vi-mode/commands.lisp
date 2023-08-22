@@ -586,13 +586,19 @@
   (dotimes (i n)
     (jump-next)))
 
-(define-command vi-repeat (&optional (n 1)) ("p")
-  ;; TODO: Support N arg
-  (declare (ignore n))
+(define-command vi-repeat (n) ("P")
   (when *last-repeat-keys*
     (let ((lem:*pre-command-hook* nil)
           (lem:*post-command-hook* nil))
-      (execute-key-sequence *last-repeat-keys*))))
+      (let ((keyseq (if n
+                        (append
+                         (map 'list (lambda (char) (lem:make-key :sym (string char)))
+                              (princ-to-string n))
+                         (extract-count-keys *last-repeat-keys*))
+                        *last-repeat-keys*))
+            ;; Clear the universal argument for vi-repeat
+            (lem/universal-argument::*argument* (lem/universal-argument::make-arg-state)))
+        (execute-key-sequence keyseq)))))
 
 (define-command vi-normal () ()
   (change-state 'normal))

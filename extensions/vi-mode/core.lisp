@@ -6,6 +6,7 @@
   (:import-from :cl-ppcre)
   (:export :*enable-hook*
            :*disable-hook*
+           :*last-repeat-keys*
            :vi-state
            :vi-mode
            :define-vi-state
@@ -23,9 +24,11 @@
            :insert
            :change-directory
            :expand-filename-modifiers
-           :kill-region-without-appending))
+           :kill-region-without-appending
+           :vi-this-command-keys))
 (in-package :lem-vi-mode/core)
 
+(defvar *last-repeat-keys* '())
 (defvar *default-cursor-color* nil)
 
 (defvar *enable-hook* '())
@@ -293,3 +296,10 @@
     (rotatef start end))
   (let ((killed-string (delete-character start (count-characters start end))))
     (copy-to-clipboard-with-killring killed-string)))
+
+(defun vi-this-command-keys ()
+  (append
+   (and (numberp (universal-argument-of-this-command))
+        (map 'list (lambda (char) (lem:make-key :sym (string char)))
+             (princ-to-string (universal-argument-of-this-command))))
+   (this-command-keys)))

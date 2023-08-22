@@ -7,7 +7,6 @@
         :lem-vi-mode/word
         :lem-vi-mode/visual
         :lem-vi-mode/jump-motions
-        :lem-vi-mode/states
         :lem-vi-mode/commands/utils)
   (:import-from :lem/common/killring
                 :peek-killring-item)

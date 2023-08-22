@@ -138,7 +138,7 @@
       (if motion
           (let ((command (get-command motion)))
             (call-motion command (universal-argument-of-this-command)))
-          (let* ((uarg (or (read-universal-argument) (universal-argument-of-this-command)))
+          (let* ((uarg (* (or (universal-argument-of-this-command) 1) (or (read-universal-argument) 1)))
                  (command-name (read-command))
                  (command (get-command command-name)))
             (typecase command

@@ -223,7 +223,7 @@
                          :end-of-line-cursor-attribute end-of-line-cursor-attribute
                          :line-end-overlay line-end-overlay))))
 
-(defun compute-items-from-string-and-attributes (logical-line)
+(defun compute-items-from-logical-line (logical-line)
   (let ((items '()))
     (flet ((add (item)
              (if (null items)
@@ -488,7 +488,7 @@
 
 (defun create-drawing-objects (logical-line)
   (multiple-value-bind (items line-end-item)
-      (compute-items-from-string-and-attributes logical-line)
+      (compute-items-from-logical-line logical-line)
     (append (loop :for item :in items
                   :append (create-drawing-object item))
             (when line-end-item

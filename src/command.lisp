@@ -22,6 +22,10 @@
   "Return the list of key sequence that invoked the present command."
   (reverse *this-command-keys*))
 
+(defun universal-argument-of-this-command ()
+  "Return the universal argument of this command now being executed."
+  *universal-argument*)
+
 (defgeneric execute (mode command argument))
 
 (defun call-command (this-command universal-argument)

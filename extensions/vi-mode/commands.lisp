@@ -247,7 +247,7 @@
   (change-state 'insert))
 
 (define-vi-motion vi-line (&optional (n 1)) ()
-  (line-offset (current-point) (1- n)))
+  (next-logical-line (1- n)))
 
 (define-vi-operator vi-join (start end) (:motion vi-line)
   (let ((count
@@ -255,7 +255,7 @@
                     (line-number-at-point start)))))
     (move-point (current-point) start)
     (dotimes (i count)
-      (move-to-end-of-line)
+      (move-to-end-of-logical-line)
       (delete-next-char)))
   (fall-within-line (current-point)))
 
@@ -265,7 +265,7 @@
                     (line-number-at-point start)))))
     (move-point (current-point) start)
     (dotimes (i count)
-      (move-to-end-of-line)
+      (move-to-end-of-logical-line)
       (let ((p (current-point))
             (p1
               (skip-chars-forward (current-point)

@@ -22,3 +22,10 @@
       (ok (buf= #?"ghi\n[d]ef\njkl\n"))
       (cmd "2dd")
       (ok (buf= #?"ghi\n[]")))))
+
+(deftest vi-join-line
+  (with-fake-interface ()
+    (lem:window-set-size (lem:current-window) 5 24)
+    (with-vi-buffer (#?"[a]bcdefgh\nijklmn\n")
+      (cmd "J")
+      (ok (buf= #?"abcdefgh[ ]ijklmn\n")))))

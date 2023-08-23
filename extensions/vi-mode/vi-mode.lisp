@@ -11,3 +11,12 @@
            :*insert-keymap*
            :*ex-keymap*
            :vi-option-value))
+(in-package :lem-vi-mode)
+
+(defmethod post-command-hook ((state insert))
+  (when (eq :separator (lem-base::last-edit-history (current-buffer)))
+    (vector-pop (lem-base::buffer-edit-history (current-buffer)))))
+
+(defmethod state-disabled-hook ((state insert))
+  (unless (eq :separator (lem-base::last-edit-history (current-buffer)))
+    (buffer-undo-boundary)))

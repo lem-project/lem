@@ -17,6 +17,8 @@
 (defmacro with-display-error (() &body body)
   `(call-with-display-error (lambda () ,@body)))
 
+(defgeneric compute-left-display-area-content (buffer point))
+
 (defun overlay-attributes (under-attributes over-start over-end over-attribute)
   ;; under-attributes := ((start-charpos end-charpos attribute) ...)
   (let* ((over-attribute (ensure-attribute over-attribute))

@@ -158,6 +158,7 @@
 (defstruct logical-line
   string
   attributes
+  left-content
   end-of-line-cursor-attribute
   extend-to-end
   line-end-overlay)
@@ -183,10 +184,15 @@
        (attribute-equal-careful-null-and-symbol (logical-line-extend-to-end a)
                                                 (logical-line-extend-to-end b))))
 
+(defmethod lem-core::compute-left-display-area-content (buffer point)
+  (let ((string (format nil "~6D " (lem:line-number-at-point point))))
+    (lem-base::make-content :string string)))
+
 (defun create-logical-line (point overlays)
-  (let ((end-of-line-cursor-attribute nil)
-        (extend-to-end-attribute nil)
-        (line-end-overlay nil))
+  (let* ((end-of-line-cursor-attribute nil)
+         (extend-to-end-attribute nil)
+         (line-end-overlay nil)
+         (left-content (lem-core::compute-left-display-area-content (lem-base:point-buffer point) point)))
     (destructuring-bind (string . attributes)
         (lem-base::line-string/attributes (lem-base::point-line point))
       (loop :for overlay :in overlays
@@ -219,6 +225,7 @@
                                 overlay-attribute))))))
       (make-logical-line :string string
                          :attributes attributes
+                         :left-content left-content
                          :extend-to-end extend-to-end-attribute
                          :end-of-line-cursor-attribute end-of-line-cursor-attribute
                          :line-end-overlay line-end-overlay))))
@@ -547,11 +554,10 @@
                               (push object physical-line-objects)))
                    :finally (return (nreverse physical-line-objects)))))
 
-(defun redraw-physical-line (window y height objects)
-  (clear-to-end-of-line window 0 y height)
-  (loop :for x := 0 :then (+ x (object-width object))
+(defun redraw-physical-line (window x y height objects)
+  (loop :for current-x := x :then (+ current-x (object-width object))
         :for object :in objects
-        :do (draw-object object x (+ y height) window)))
+        :do (draw-object object current-x (+ y height) window)))
 
 (defun validate-cache-p (window y height logical-line)
   (loop :for (cache-y cache-height cache-logical-line) :in (drawing-cache window)
@@ -586,17 +592,28 @@
 (defvar *invalidate-cache* nil)
 
 (defun redraw-logical-line (window y logical-line)
-  (let ((objects-per-physical-line
-          (separate-objects-by-width (create-drawing-objects logical-line)
-                                     (view-width-by-pixel window))))
+  (let* ((left-side-objects
+           (alexandria:when-let (content (logical-line-left-content logical-line))
+             (mapcan #'create-drawing-object
+                     (compute-items-from-string-and-attributes
+                      (lem-base::content-string content)
+                      (lem-base::content-attributes content)))))
+         (left-side-width
+           (loop :for object :in left-side-objects :sum (object-width object)))
+         (objects-per-physical-line
+           (separate-objects-by-width (append left-side-objects (create-drawing-objects logical-line))
+                                      (view-width-by-pixel window))))
+    #+(or)
     (when (and (not (alexandria:length= 1 objects-per-physical-line))
                *invalidate-cache*)
       (setf (drawing-cache window) '()))
     (loop :for objects :in objects-per-physical-line
           :for height := (max-height-of-objects objects)
+          :for x := 0 :then left-side-width
           :do (unless (update-and-validate-cache-p window y height logical-line)
                 (setf *invalidate-cache* t)
-                (redraw-physical-line window y height objects))
+                (clear-to-end-of-line window 0 y height)
+                (redraw-physical-line window x y height objects))
               (incf y height)
           :sum height)))
 

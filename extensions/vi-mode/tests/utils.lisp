@@ -168,7 +168,9 @@
                   (appendf key-args '(:shift t)))))
              (let ((sym-str (ppcre:scan-to-strings "[^<-]+(?=>$)" key-str)))
                (apply #'make-key :sym (if-let (char (name-char sym-str))
-                                        (string char)
+                                        (if (char= char #\Esc)
+                                            "Escape"
+                                            (string char))
                                         sym-str)
                       key-args))))
        keys))
@@ -187,7 +189,9 @@
       (multiple-value-bind (buffer-text position visual-regions)
           (parse-buffer-string content)
         (let ((point (buffer-point buffer)))
-          (insert-string point buffer-text)
+          (lem:insert-string point buffer-text)
+          (setf (lem-base::buffer-edit-history buffer)
+                (make-array 0 :adjustable t :fill-pointer 0))
           (when position
             (move-to-position point position))
           (dolist (region visual-regions)
@@ -329,10 +333,10 @@
                     :negative negative))
 
 (defmethod form-description ((function (eql 'text=)) args values &key negative)
+  (declare (ignore args))
   (let ((expected-text (first values))
         (actual-text (buffer-text (current-buffer))))
-    (format nil "Expect ~W~:[~; not~] to be ~S (actual: ~S)"
-            (first args)
+    (format nil "Expect the buffer text~:[~; not~] to be ~S (actual: ~S)"
             negative
             (text-backslashed expected-text)
             (text-backslashed actual-text))))

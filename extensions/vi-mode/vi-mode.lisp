@@ -21,3 +21,11 @@
     (when (and (typep command 'vi-command)
                (eq (vi-command-repeat command) t))
       (setf *last-repeat-keys* (vi-this-command-keys)))))
+
+(defmethod post-command-hook ((state insert))
+  (when (eq :separator (lem-base::last-edit-history (current-buffer)))
+    (vector-pop (lem-base::buffer-edit-history (current-buffer)))))
+
+(defmethod state-disabled-hook ((state insert))
+  (unless (eq :separator (lem-base::last-edit-history (current-buffer)))
+    (buffer-undo-boundary)))

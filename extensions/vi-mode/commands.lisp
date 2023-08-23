@@ -463,14 +463,15 @@
     (if (eq direction :forward)
         (line-end limit)
         (line-start limit))
-    (when (funcall (if (eq direction :forward)
-                       'search-forward
-                       'search-backward)
-                   p
-                   (string c)
-                   limit)
-      (character-offset p offset)
-      (move-point (current-point) p))))
+    (let ((lem:*case-fold-search* t))
+      (when (funcall (if (eq direction :forward)
+                         'search-forward
+                         'search-backward)
+                     p
+                     (string c)
+                     limit)
+        (character-offset p offset)
+        (move-point (current-point) p)))))
 
 (define-vi-motion vi-find-char () (:type :inclusive)
   (alexandria:when-let (c (key-to-char (read-key)))

@@ -212,3 +212,9 @@
       (ok (buf= "ab[g]hi # jkl"))
       (cmd "d2W")
       (ok (buf= "ab[j]kl")))))
+
+(deftest vi-find-char
+  (with-fake-interface ()
+    (with-vi-buffer ("[f]oo-bar-Baz")
+      (cmd "fB")
+      (ok (buf= "foo-bar-[B]az")))))

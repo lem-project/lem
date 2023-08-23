@@ -170,9 +170,12 @@
                   (appendf key-args '(:shift t)))))
              (let ((sym-str (ppcre:scan-to-strings "[^<-]+(?=>$)" key-str)))
                (apply #'make-key :sym (if-let (char (name-char sym-str))
-                                        (if (char= char #\Esc)
-                                            "Escape"
-                                            (string char))
+                                        (case char
+                                          (#\Esc "Escape")
+                                          (#\Return "Return")
+                                          (#\Space "Space")
+                                          (#\Tab "Tab")
+                                          (otherwise (string char)))
                                         sym-str)
                       key-args))))
        keys))

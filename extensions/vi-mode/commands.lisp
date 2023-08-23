@@ -437,7 +437,16 @@
 
 (define-command vi-search-forward () ()
   (with-jump-motion
-    (lem/isearch:isearch-forward-regexp "/")))
+    (lem/isearch::isearch-start "/"
+                                (lambda (point string)
+                                  (alexandria:when-let (p (lem/isearch::search-forward-regexp
+                                                           (copy-point lem/isearch::*isearch-start-point* :temporary)
+                                                           string))
+                                    (character-offset p (- (length string)))
+                                    (move-point point p)))
+                                #'lem/isearch::search-forward-regexp
+                                #'lem/isearch::search-backward-regexp
+                                "")))
 
 (define-command vi-search-backward () ()
   (with-jump-motion
@@ -445,7 +454,15 @@
 
 (define-command vi-search-next (n) ("p")
   (with-jump-motion
-    (dotimes (i n) (lem/isearch:isearch-next))))
+    (with-point ((p (current-point)))
+      (vi-forward-char (length lem/isearch::*isearch-string*))
+      (loop repeat n
+            for found = (lem/isearch:isearch-next)
+            unless found
+               do (move-point (current-point) p)
+                  (return)
+            finally
+               (vi-backward-char (length lem/isearch::*isearch-string*))))))
 
 (define-command vi-search-previous (n) ("p")
   (with-jump-motion

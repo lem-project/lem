@@ -220,18 +220,18 @@
 (defmacro with-current-buffer ((buffer) &body body)
   `(call-with-current-buffer
     ,buffer
-    (lambda (,buffer) ,@body)))
+    (lambda (,buffer)
+      (declare (ignorable ,buffer))
+      ,@body)))
 
 (defmacro with-vi-state ((state) &body body)
   `(let ((lem-vi-mode/core::*current-state* (ensure-state (keyword-to-state ,state))))
-     (change-global-mode-keymap
-      'vi-mode
-      (lem-vi-mode/core::state-keymap lem-vi-mode/core::*current-state*))
+     (lem-core::set-mode-keymap (lem-vi-mode/core::state-keymap lem-vi-mode/core::*current-state*) (lem-core::ensure-mode-object 'vi-mode))
      ,@body))
 
 (defun call-with-vi-buffer (buffer state fn)
   (with-current-buffer (buffer)
-    (lem-core:change-buffer-mode buffer 'vi-mode)
+    (lem:enable-minor-mode 'vi-mode)
     (with-vi-state (state)
       (testing (format nil "[buf] \"~A\""
                        (text-backslashed

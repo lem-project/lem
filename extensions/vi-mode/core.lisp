@@ -36,8 +36,12 @@
 (defun disable-hook ()
   (run-hooks *disable-hook*))
 
-(define-global-mode vi-mode (emacs-mode)
+(defvar *command-keymap* (make-keymap :name '*command-keymap*))
+
+(define-minor-mode vi-mode
   (:name "vi"
+   :keymap *command-keymap*
+   :global t
    :enable-hook #'enable-hook
    :disable-hook #'disable-hook))
 
@@ -161,7 +165,8 @@
        (state-disabled-hook (ensure-state *current-state*))) 
   (let ((state (ensure-state name)))
     (setf *current-state* name)
-    (change-global-mode-keymap 'vi-mode (state-keymap state))
+    (lem-core::set-mode-keymap (state-keymap state)
+                               (lem-core::ensure-mode-object 'vi-mode))
     (change-element-by-state state)
     (state-enabled-hook state)
     (unless *default-cursor-color*
@@ -177,9 +182,7 @@
          (change-state ,old-state)))))
 
 
-(defvar *command-keymap* (make-keymap :name '*command-keymap*
-                                      :parent *global-keymap*))
-(defvar *inactive-keymap* (make-keymap :parent *global-keymap*))
+(defvar *inactive-keymap* (make-keymap))
 
 (define-vi-state normal () ()
   (:default-initargs
@@ -187,7 +190,7 @@
    :modeline-color 'state-modeline-yellow))
 
 ;; insert state
-(defvar *insert-keymap* (make-keymap :name '*insert-keymap* :parent *global-keymap*))
+(defvar *insert-keymap* (make-keymap :name '*insert-keymap*))
 
 (define-vi-state insert () ()
   (:default-initargs

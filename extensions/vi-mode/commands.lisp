@@ -222,7 +222,8 @@
     (when (and (eq type :line)
                (eq 'vi-delete (command-name (this-command))))
       (if (last-line-p (current-point))
-          (delete-previous-char)
+          (unless (first-line-p (current-point))
+            (delete-previous-char))
           (delete-next-char))
       (setf (point-charpos (current-point))
             (max 0

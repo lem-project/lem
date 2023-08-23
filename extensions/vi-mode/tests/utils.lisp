@@ -101,9 +101,11 @@
                        "[]"
                        (subseq buffer-text (1- buffer-pos))))
                      (otherwise
-                      (list
-                       (format nil "[~C]" (aref buffer-text (1- buffer-pos)))
-                       (subseq buffer-text buffer-pos)))))))
+                      (if (< (length buffer-text) buffer-pos)
+                          (list "[]")
+                          (list
+                           (format nil "[~C]" (aref buffer-text (1- buffer-pos)))
+                           (subseq buffer-text buffer-pos))))))))
       (if (lem-vi-mode/visual:visual-p)
           (let ((read-pos 0))
             (concatenate

@@ -21,7 +21,10 @@
       (cmd "p")
       (ok (buf= #?"ghi\n[d]ef\njkl\n"))
       (cmd "2dd")
-      (ok (buf= #?"ghi\n[]")))))
+      (ok (buf= #?"ghi\n[]")))
+    (with-vi-buffer (#?"[a]bc\ndef\nghi\njkl\n")
+      (cmd "1000dd")
+      (ok (buf= "[]")))))
 
 (deftest vi-repeat
   (with-fake-interface ()

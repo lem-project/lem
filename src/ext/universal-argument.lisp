@@ -1,5 +1,7 @@
 (defpackage :lem/universal-argument
   (:use :cl :lem)
+  (:import-from :lem-core
+                :*universal-argument*)
   (:export :*base*
            :*universal-argument-keymap*
            :universal-argument
@@ -66,8 +68,9 @@
   (update-message))
 
 (define-command universal-argument-default () ()
-  (let ((key (last-read-key-sequence))
-        (n (to-integer *argument*)))
+  (let* ((key (last-read-key-sequence))
+         (n (to-integer *argument*))
+         (*universal-argument* n))
     (universal-argument-mode nil)
     (unread-key-sequence key)
     (call-command (read-command) n)

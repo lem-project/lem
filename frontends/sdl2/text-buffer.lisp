@@ -223,7 +223,7 @@
                          :end-of-line-cursor-attribute end-of-line-cursor-attribute
                          :line-end-overlay line-end-overlay))))
 
-(defun compute-items-from-logical-line (logical-line)
+(defun compute-items-from-string-and-attributes (string attributes)
   (let ((items '()))
     (flet ((add (item)
              (if (null items)
@@ -237,20 +237,25 @@
                              (str:concat (string-with-attribute-item-string last-item)
                                          (string-with-attribute-item-string item)))
                        (push item items))))))
-      (let ((string (logical-line-string logical-line)))
-        (loop :for last-pos := 0 :then end
-              :for (start end attribute) :in (logical-line-attributes logical-line)
-              :do (unless (= last-pos start)
-                    (add (make-string-with-attribute-item :string (subseq string last-pos start))))
-                  (add (if (and attribute
-                                (lem:attribute-p attribute)
-                                (cursor-attribute-p attribute))
-                           (make-cursor-item :string (subseq string start end) :attribute attribute)
-                           (make-string-with-attribute-item
-                            :string (subseq string start end)
-                            :attribute attribute)))
-              :finally (push (make-string-with-attribute-item :string (subseq string last-pos))
-                             items))))
+      (loop :for last-pos := 0 :then end
+            :for (start end attribute) :in attributes
+            :do (unless (= last-pos start)
+                  (add (make-string-with-attribute-item :string (subseq string last-pos start))))
+                (add (if (and attribute
+                              (lem:attribute-p attribute)
+                              (cursor-attribute-p attribute))
+                         (make-cursor-item :string (subseq string start end) :attribute attribute)
+                         (make-string-with-attribute-item
+                          :string (subseq string start end)
+                          :attribute attribute)))
+            :finally (push (make-string-with-attribute-item :string (subseq string last-pos))
+                           items)))
+    items))
+
+(defun compute-items-from-logical-line (logical-line)
+  (let ((items
+          (compute-items-from-string-and-attributes (logical-line-string logical-line)
+                                                    (logical-line-attributes logical-line))))
     (alexandria:when-let (attribute
                           (logical-line-extend-to-end logical-line))
       (push (make-extend-to-eol-item :color (attribute-background-color attribute))

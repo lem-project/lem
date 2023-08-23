@@ -452,7 +452,8 @@
 
 (defvar *find-char-args* nil)
 
-(defun %vi-find-char (c direction offset &key dont-keep)
+(defun %vi-find-char (count c direction offset &key dont-keep)
+  (check-type count (integer 0))
   (check-type direction (member :forward :backward))
   (check-type offset integer)
   (unless dont-keep
@@ -464,42 +465,46 @@
         (line-end limit)
         (line-start limit))
     (let ((lem:*case-fold-search* t))
-      (when (funcall (if (eq direction :forward)
-                         'search-forward
-                         'search-backward)
-                     p
-                     (string c)
-                     limit)
+      (when (loop repeat count
+                  for result = (funcall (if (eq direction :forward)
+                                            'search-forward
+                                            'search-backward)
+                                        p
+                                        (string c)
+                                        limit)
+                  unless result
+                    do (return nil)
+                  finally (return t))
         (character-offset p offset)
         (move-point (current-point) p)))))
 
-(define-vi-motion vi-find-char () (:type :inclusive)
+(define-vi-motion vi-find-char (&optional (n 1)) (:type :inclusive)
   (alexandria:when-let (c (key-to-char (read-key)))
-    (%vi-find-char c :forward -1)))
+    (%vi-find-char n c :forward -1)))
 
-(define-vi-motion vi-find-char-backward () ()
+(define-vi-motion vi-find-char-backward (&optional (n 1)) ()
   (alexandria:when-let (c (key-to-char (read-key)))
-    (%vi-find-char c :backward 0)))
+    (%vi-find-char n c :backward 0)))
 
-(define-vi-motion vi-find-char-before () (:type :inclusive)
+(define-vi-motion vi-find-char-before (&optional (n 1)) (:type :inclusive)
   (alexandria:when-let (c (key-to-char (read-key)))
-    (%vi-find-char c :forward -2)))
+    (%vi-find-char n c :forward -2)))
 
-(define-vi-motion vi-find-char-backward-after () ()
+(define-vi-motion vi-find-char-backward-after (&optional (n 1)) ()
   (alexandria:when-let (c (key-to-char (read-key)))
-    (%vi-find-char c :backward 1)))
+    (%vi-find-char n c :backward 1)))
 
-(define-vi-motion vi-find-char-repeat () (:type :inclusive)
+(define-vi-motion vi-find-char-repeat (&optional (n 1)) (:type :inclusive)
   (when *find-char-args*
-    (apply #'%vi-find-char *find-char-args*)))
+    (apply #'%vi-find-char n *find-char-args*)))
 
-(define-vi-motion vi-find-char-repeat-backward () ()
+(define-vi-motion vi-find-char-repeat-backward (&optional (n 1)) ()
   (when *find-char-args*
     (destructuring-bind (c direction offset)
         *find-char-args*
-      (apply #'%vi-find-char (ecase direction
-                               (:forward (list c :backward (1+ offset) :dont-keep t))
-                               (:backward (list c :forward (1- offset) :dont-keep t)))))))
+      (apply #'%vi-find-char n (ecase direction
+                                 (:forward (list c :backward (1+ offset) :dont-keep t))
+                                 (:backward (list c :forward (1- offset) :dont-keep t)))))))
 
 (define-command vi-write () ()
   (lem:write-file (lem:buffer-filename (lem:current-buffer))))

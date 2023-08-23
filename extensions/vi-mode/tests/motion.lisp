@@ -213,6 +213,13 @@
       (cmd "d2W")
       (ok (buf= "ab[j]kl")))))
 
+(deftest vi-move-to-end-of-line
+  (with-fake-interface ()
+    (lem:window-set-size (lem:current-window) 5 24)
+    (with-vi-buffer (#?"[a]bcdefgh\nijklmn\n")
+      (cmd "$")
+      (ok (buf= #?"abcdefg[h]\nijklmn\n")))))
+
 (deftest vi-find-char
   (with-fake-interface ()
     (with-vi-buffer ("[f]oo-bar-Baz")

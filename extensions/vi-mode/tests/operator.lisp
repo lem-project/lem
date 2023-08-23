@@ -26,6 +26,13 @@
       (cmd "1000dd")
       (ok (buf= "[]")))))
 
+(deftest vi-join-line
+  (with-fake-interface ()
+    (lem:window-set-size (lem:current-window) 5 24)
+    (with-vi-buffer (#?"[a]bcdefgh\nijklmn\n")
+      (cmd "J")
+      (ok (buf= #?"abcdefgh[ ]ijklmn\n")))))
+
 (deftest vi-repeat
   (with-fake-interface ()
     (with-vi-buffer (#?"[1]:abc\n2:def\n3:ghi\n4:jkl\n5:mno\n6:opq\n7:rst\n8:uvw")

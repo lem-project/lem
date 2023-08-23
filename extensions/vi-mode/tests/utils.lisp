@@ -7,6 +7,9 @@
                 :diag
                 :testing)
   (:import-from :lem-base)
+  (:import-from :lem-core
+                :*this-command-keys*
+                :*input-hook*)
   (:import-from :lem-vi-mode
                 :vi-mode)
   (:import-from :lem-vi-mode/core
@@ -273,8 +276,13 @@
 (defun cmd (keys)
   (check-type keys string)
   (diag (format nil "[cmd] ~A~%" keys))
-  (execute-key-sequence
-   (parse-command-keys keys)))
+  (let ((*this-command-keys* nil)
+        (*input-hook* (cons (cons (lambda (event)
+                                    (push event *this-command-keys*))
+                                  0)
+                            *input-hook*)))
+    (execute-key-sequence
+     (parse-command-keys keys))))
 
 (defun pos= (expected-point)
   (point= (current-point) expected-point))

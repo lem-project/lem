@@ -92,7 +92,7 @@
   (last-read-key-sequence))
 
 (defun unread-key-sequence (kseq)
-  (prog1 (setf *unread-keys* (nconc *unread-keys* kseq))
+  (prog1 (setf *unread-keys* (nconc kseq *unread-keys*))
     (setf *this-command-keys*
           (nthcdr (length kseq) *this-command-keys*))))
 

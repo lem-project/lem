@@ -22,3 +22,18 @@
       (ok (buf= #?"ghi\n[d]ef\njkl\n"))
       (cmd "2dd")
       (ok (buf= #?"ghi\n[]")))))
+
+(deftest vi-repeat
+  (with-fake-interface ()
+    (with-vi-buffer (#?"[1]:abc\n2:def\n3:ghi\n4:jkl\n5:mno\n6:opq\n7:rst\n8:uvw")
+      (cmd "dd")
+      (ok (buf= #?"[2]:def\n3:ghi\n4:jkl\n5:mno\n6:opq\n7:rst\n8:uvw"))
+      (cmd ".")
+      (ok (buf= #?"[3]:ghi\n4:jkl\n5:mno\n6:opq\n7:rst\n8:uvw"))
+      (cmd "2.")
+      (ok (buf= #?"[5]:mno\n6:opq\n7:rst\n8:uvw")))
+    (with-vi-buffer (#?"[1]:abc\n2:def\n3:ghi\n4:jkl\n5:mno\n6:opq\n7:rst\n8:uvw")
+      (cmd "2d2d")
+      (ok (buf= #?"[5]:mno\n6:opq\n7:rst\n8:uvw"))
+      (cmd "2.")
+      (ok (buf= #?"[7]:rst\n8:uvw")))))

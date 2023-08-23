@@ -13,7 +13,8 @@
                 :ensure-command)
   (:import-from :alexandria
                 :with-gensyms
-                :ensure-list)
+                :ensure-list
+                :ignore-some-conditions)
   (:export :bolp
            :eolp
            :goto-eol
@@ -141,9 +142,10 @@
               (vi-operator
                 (if (eq command-name (command-name (this-command)))
                     ;; Recursive call of the operator like 'dd', 'cc'
-                    (with-point ((end (current-point)))
-                      (line-offset end (1- (or uarg 1)))
-                      (values start end :line))
+                    (save-excursion
+                      (ignore-some-conditions (end-of-buffer)
+                        (next-logical-line (1- (or uarg 1))))
+                      (values start (copy-point (current-point)) :line))
                     ;; Ignore an invalid operator (like 'dJ')
                     nil))
               (otherwise

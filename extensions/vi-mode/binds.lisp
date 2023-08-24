@@ -108,6 +108,7 @@
 (define-key *command-keymap* "O" 'vi-open-above)
 (define-key *command-keymap* "C-o" 'vi-jump-back)
 (define-key *command-keymap* "C-i" 'vi-jump-next)
+(define-key *command-keymap* "." 'vi-repeat)
 (define-key *command-keymap* ":" 'vi-ex)
 (define-key *command-keymap* 'delete-previous-char 'vi-backward-char)
 (define-key *command-keymap* 'self-insert 'undefined-key)

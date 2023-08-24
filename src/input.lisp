@@ -92,7 +92,7 @@
   (last-read-key-sequence))
 
 (defun unread-key-sequence (kseq)
-  (prog1 (setf *unread-keys* (nconc *unread-keys* kseq))
+  (prog1 (setf *unread-keys* (nconc kseq *unread-keys*))
     (setf *this-command-keys*
           (nthcdr (length kseq) *this-command-keys*))))
 
@@ -101,7 +101,8 @@
     (do-command-loop (:interactive nil)
       (when (null *unread-keys*)
         (return))
-      (call-command (read-command) nil))))
+      (let ((*this-command-keys* nil))
+        (call-command (read-command) nil)))))
 
 (defun sit-for (seconds &optional (update-window-p t) (force-update-p nil))
   (when update-window-p (redraw-display force-update-p))

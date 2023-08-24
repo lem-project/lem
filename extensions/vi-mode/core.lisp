@@ -6,15 +6,19 @@
   (:import-from :cl-ppcre)
   (:export :*enable-hook*
            :*disable-hook*
+           :*last-repeat-keys*
+           :*enable-repeat-recording*
            :vi-state
            :vi-mode
            :define-vi-state
            :current-state
+           :state=
            :change-state
            :with-state
            :*command-keymap*
            :*insert-keymap*
            :*inactive-keymap*
+           :pre-command-hook
            :post-command-hook
            :state-enabled-hook
            :state-disabled-hook
@@ -22,13 +26,17 @@
            :insert
            :change-directory
            :expand-filename-modifiers
-           :kill-region-without-appending))
+           :kill-region-without-appending
+           :vi-this-command-keys))
 (in-package :lem-vi-mode/core)
 
+(defvar *last-repeat-keys* '())
 (defvar *default-cursor-color* nil)
 
 (defvar *enable-hook* '())
 (defvar *disable-hook* '())
+
+(defvar *enable-repeat-recording* t)
 
 (defun enable-hook ()
   (run-hooks *enable-hook*))
@@ -123,6 +131,11 @@
 
 (defvar *current-state* nil)
 
+(defun state= (state1 state2)
+  (and (typep state1 'vi-state)
+       (typep state2 'vi-state)
+       (eq (state-name state1) (state-name state2))))
+
 ;;; vi-state methods
 (defmacro define-vi-state (name direct-super-classes direct-slot-specs &rest options)
   (let ((cleaned-super-classes (if (null direct-super-classes) '(vi-state) direct-super-classes)))
@@ -134,9 +147,11 @@
        (setf (get ',name 'state)
              (make-instance ',name)))))
 
-(defgeneric post-command-hook (state))
+(defgeneric pre-command-hook (state)
+  (:method ((state vi-state))))
 
-(defmethod post-command-hook ((state vi-state)))
+(defgeneric post-command-hook (state)
+  (:method ((state vi-state))))
 
 (defgeneric state-enabled-hook (state))
 
@@ -209,10 +224,15 @@
 (defun prompt-activate-hook () (change-state 'vi-modeline))
 (defun prompt-deactivate-hook () (change-state 'normal))
 
+(defun vi-pre-command-hook ()
+  (when (mode-active-p (current-buffer) 'vi-mode)
+    (pre-command-hook (ensure-state (current-state)))))
+
 (defun vi-post-command-hook ()
   (when (mode-active-p (current-buffer) 'vi-mode)
     (post-command-hook (ensure-state (current-state)))))
 
+(add-hook *pre-command-hook* 'vi-pre-command-hook)
 (add-hook *post-command-hook* 'vi-post-command-hook)
 
 (add-hook *enable-hook*
@@ -288,3 +308,10 @@
     (rotatef start end))
   (let ((killed-string (delete-character start (count-characters start end))))
     (copy-to-clipboard-with-killring killed-string)))
+
+(defun vi-this-command-keys ()
+  (append
+   (and (numberp (universal-argument-of-this-command))
+        (map 'list (lambda (char) (lem:make-key :sym (string char)))
+             (princ-to-string (universal-argument-of-this-command))))
+   (this-command-keys)))

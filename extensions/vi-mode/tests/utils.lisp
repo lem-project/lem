@@ -7,6 +7,9 @@
                 :diag
                 :testing)
   (:import-from :lem-base)
+  (:import-from :lem-core
+                :*this-command-keys*
+                :*input-hook*)
   (:import-from :lem-vi-mode
                 :vi-mode)
   (:import-from :lem-vi-mode/core
@@ -27,6 +30,7 @@
                 :once-only
                 :with-gensyms)
   (:export :with-vi-buffer
+           :with-test-buffer
            :cmd
            :pos=
            :text=
@@ -98,9 +102,11 @@
                        "[]"
                        (subseq buffer-text (1- buffer-pos))))
                      (otherwise
-                      (list
-                       (format nil "[~C]" (aref buffer-text (1- buffer-pos)))
-                       (subseq buffer-text buffer-pos)))))))
+                      (if (< (length buffer-text) buffer-pos)
+                          (list "[]")
+                          (list
+                           (format nil "[~C]" (aref buffer-text (1- buffer-pos)))
+                           (subseq buffer-text buffer-pos))))))))
       (if (lem-vi-mode/visual:visual-p)
           (let ((read-pos 0))
             (concatenate
@@ -165,7 +171,9 @@
                   (appendf key-args '(:shift t)))))
              (let ((sym-str (ppcre:scan-to-strings "[^<-]+(?=>$)" key-str)))
                (apply #'make-key :sym (if-let (char (name-char sym-str))
-                                        (string char)
+                                        (if (char= char #\Esc)
+                                            "Escape"
+                                            (string char))
                                         sym-str)
                       key-args))))
        keys))
@@ -184,7 +192,9 @@
       (multiple-value-bind (buffer-text position visual-regions)
           (parse-buffer-string content)
         (let ((point (buffer-point buffer)))
-          (insert-string point buffer-text)
+          (lem:insert-string point buffer-text)
+          (setf (lem-base::buffer-edit-history buffer)
+                (make-array 0 :adjustable t :fill-pointer 0))
           (when position
             (move-to-position point position))
           (dolist (region visual-regions)
@@ -215,14 +225,12 @@
       (lem-core::set-window-buffer buffer window)
       (lem-core::set-window-view-point (copy-point (lem:buffer-point buffer))
                                        window)
-      (funcall fn buffer))))
+      (funcall fn))))
 
 (defmacro with-current-buffer ((buffer) &body body)
   `(call-with-current-buffer
     ,buffer
-    (lambda (,buffer)
-      (declare (ignorable ,buffer))
-      ,@body)))
+    (lambda () ,@body)))
 
 (defmacro with-vi-state ((state) &body body)
   `(let ((lem-vi-mode/core::*current-state* (ensure-state (keyword-to-state ,state))))
@@ -269,8 +277,12 @@
 (defun cmd (keys)
   (check-type keys string)
   (diag (format nil "[cmd] ~A~%" keys))
-  (execute-key-sequence
-   (parse-command-keys keys)))
+  (let ((*input-hook* (cons (cons (lambda (event)
+                                    (push event *this-command-keys*))
+                                  0)
+                            *input-hook*)))
+    (execute-key-sequence
+     (parse-command-keys keys))))
 
 (defun pos= (expected-point)
   (point= (current-point) expected-point))
@@ -321,10 +333,10 @@
                     :negative negative))
 
 (defmethod form-description ((function (eql 'text=)) args values &key negative)
+  (declare (ignore args))
   (let ((expected-text (first values))
         (actual-text (buffer-text (current-buffer))))
-    (format nil "Expect ~W~:[~; not~] to be ~S (actual: ~S)"
-            (first args)
+    (format nil "Expect the buffer text~:[~; not~] to be ~S (actual: ~S)"
             negative
             (text-backslashed expected-text)
             (text-backslashed actual-text))))

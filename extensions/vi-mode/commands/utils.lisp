@@ -97,8 +97,8 @@
 
 (defmethod execute :around (mode (command vi-operator) uarg)
   (declare (ignore mode uarg))
-  ;; XXX: This flag will be replaced by checking the current state
-  ;;   when operator-pending-state is implemented.
+  ;; XXX: This flag will be rewritten as a code to check the current state
+  ;;   when operator-pending state is implemented.
   (let ((*operator-pending-mode* t)
         (*this-motion-command* nil))
     (call-next-method)))

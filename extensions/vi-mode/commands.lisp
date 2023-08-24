@@ -139,7 +139,7 @@
         ;; For example, when the cursor is at [b],
         ;;   foo [b]ar
         ;;     baz
-        ;; 'dw' deletes only the 'bar', instead of the beginning of the next word.
+        ;; 'dw' deletes only the 'bar', instead of deleting to the beginning of the next word.
         (skip-whitespace-backward p t)
         (when (bolp p)
           (line-offset p -1)
@@ -610,14 +610,14 @@
                                           (back-to-indentation p))
                                      (line-start p))))))
     (line-end p)
-    (insert-character p #\newline)
-    (move-to-column p column t)
-    (change-state 'insert)))
+    (change-state 'insert)
+    (insert-character p #\Newline)
+    (move-to-column p column t)))
 
 (define-command vi-open-above () ()
   (line-start (current-point))
-  (open-line 1)
-  (change-state 'insert))
+  (change-state 'insert)
+  (open-line 1))
 
 (define-command vi-jump-back (&optional (n 1)) ("p")
   (dotimes (i n)
@@ -629,8 +629,8 @@
 
 (define-command vi-repeat (n) ("P")
   (when *last-repeat-keys*
-    (let ((lem:*pre-command-hook* nil)
-          (lem:*post-command-hook* nil))
+    (let ((*enable-repeat-recording* nil)
+          (prev-state (current-state)))
       (let ((keyseq (if n
                         (append
                          (map 'list (lambda (char) (lem:make-key :sym (string char)))
@@ -639,7 +639,10 @@
                         *last-repeat-keys*))
             ;; Clear the universal argument for vi-repeat
             (lem/universal-argument::*argument* (lem/universal-argument::make-arg-state)))
-        (execute-key-sequence keyseq)))))
+        (execute-key-sequence keyseq)
+        (unless (state= prev-state (current-state))
+          (change-state prev-state))
+        (fall-within-line (current-point))))))
 
 (define-command vi-normal () ()
   (change-state 'normal))

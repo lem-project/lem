@@ -122,9 +122,37 @@
   (previous-line n)
   (fall-within-line (current-point)))
 
+(defun on-only-space-line-p (point)
+  (with-point ((p point))
+    (line-end p)
+    (skip-whitespace-backward p t)
+    (bolp p)))
+
 (define-command vi-forward-word-begin (&optional (n 1)) ("p")
-  (dotimes (i n)
-    (forward-word-begin #'char-type)))
+  (let ((start-line (line-number-at-point (current-point))))
+    (dotimes (i n)
+      (forward-word-begin #'char-type))
+    ;; In operator-pending mode, this motion behaves differently.
+    (when (operator-pending-mode-p)
+      (with-point ((p (current-point)))
+        ;; Go back to the end of the previous line when the END point is in the next line.
+        ;; For example, when the cursor is at [b],
+        ;;   foo [b]ar
+        ;;     baz
+        ;; 'dw' deletes only the 'bar', instead of deleting to the beginning of the next word.
+        (skip-whitespace-backward p t)
+        (when (bolp p)
+          (line-offset p -1)
+          (line-end p)
+          (loop while (and (< start-line
+                              (line-number-at-point p))
+                           (on-only-space-line-p p))
+                do (line-offset p -1)
+                   (line-end p))
+          ;; Skip this line if the previous line is empty
+          (when (bolp p)
+            (character-offset p 1))
+          (move-point (current-point) p))))))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
   (dotimes (i n)
@@ -229,6 +257,13 @@
             (max 0
                  (min (1- (length (line-string (current-point)))) pos))))
     (when (eq 'vi-delete (command-name (this-command)))
+      ;; After 'dw' or 'dW', move to the first non-blank char
+      (when (and (this-motion-command)
+                 (member (command-name (this-motion-command))
+                         '(vi-forward-word-begin
+                           vi-forward-word-begin-broad)
+                         :test 'eq))
+        (skip-chars-forward (current-point) '(#\Space #\Tab)))
       (fall-within-line (current-point)))))
 
 (define-vi-operator vi-delete-line (start end type) ("<R>")

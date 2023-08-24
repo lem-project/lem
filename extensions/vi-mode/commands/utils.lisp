@@ -21,6 +21,8 @@
            :eolp
            :goto-eol
            :fall-within-line
+           :operator-pending-mode-p
+           :this-motion-command
            :read-universal-argument
            :*cursor-offset*
            :vi-command
@@ -33,6 +35,8 @@
 (in-package :lem-vi-mode/commands/utils)
 
 (defvar *cursor-offset* -1)
+(defvar *operator-pending-mode* nil)
+(defvar *this-motion-command* nil)
 
 (defun bolp (point)
   "Return t if POINT is at the beginning of a line."
@@ -54,6 +58,12 @@
 (defun fall-within-line (point)
   (when (eolp point)
     (goto-eol point)))
+
+(defun operator-pending-mode-p ()
+  *operator-pending-mode*)
+
+(defun this-motion-command ()
+  *this-motion-command*)
 
 (defun read-universal-argument ()
   (loop :for key := (read-key)
@@ -84,6 +94,14 @@
                   :accessor vi-motion-default-n-arg)))
 
 (defclass vi-operator (vi-command) ())
+
+(defmethod execute :around (mode (command vi-operator) uarg)
+  (declare (ignore mode uarg))
+  ;; XXX: This flag will be rewritten as a code to check the current state
+  ;;   when operator-pending state is implemented.
+  (let ((*operator-pending-mode* t)
+        (*this-motion-command* nil))
+    (call-next-method)))
 
 (defvar *vi-origin-point*)
 
@@ -130,6 +148,7 @@
   (check-type motion (or null symbol))
   (with-point ((start (current-point)))
     (labels ((call-motion (command uarg)
+               (setf *this-motion-command* command)
                (let ((*cursor-offset* 0))
                  (save-excursion
                    (ignore-errors

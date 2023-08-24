@@ -24,7 +24,13 @@
       (ok (buf= #?"ghi\n[]")))
     (with-vi-buffer (#?"[a]bc\ndef\nghi\njkl\n")
       (cmd "1000dd")
-      (ok (buf= "[]")))))
+      (ok (buf= "[]")))
+    (testing "with vi-forward-word-begin"
+      (with-vi-buffer (#?"[a]bc\n  def\n")
+        (cmd "dw")
+        (ok (buf= #?"[\n]  def\n"))
+        (cmd "dw")
+        (ok (buf= #?"  [d]ef\n"))))))
 
 (deftest vi-join-line
   (with-fake-interface ()

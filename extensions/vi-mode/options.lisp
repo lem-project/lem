@@ -71,15 +71,20 @@
                      (lem-base::buffer-variables buffer))
             (new-buffer-options))))
 
+(defun get-global-options ()
+  *global-options*)
+
+(defun get-options-by-scope (scope)
+  (ecase scope
+    (:global (get-global-options))
+    (:buffer (get-buffer-options))))
+
 (defun get-option (name &optional (error-if-not-exists t))
   (check-type name string)
   (let* ((name (canonical-option-name name))
          (scope (gethash name *option-scope* :global)))
     (multiple-value-bind (option exists)
-        (gethash name
-                 (ecase scope
-                   (:global (gethash name *global-options*))
-                   (:buffer (get-buffer-options))))
+        (gethash name (get-options-by-scope scope))
       (when (and (null exists)
                  error-if-not-exists)
         (lem:editor-error "Unknown option: ~A" name))

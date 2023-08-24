@@ -30,6 +30,7 @@
                 :once-only
                 :with-gensyms)
   (:export :with-vi-buffer
+           :with-test-buffer
            :cmd
            :pos=
            :text=
@@ -224,12 +225,12 @@
       (lem-core::set-window-buffer buffer window)
       (lem-core::set-window-view-point (copy-point (lem:buffer-point buffer))
                                        window)
-      (funcall fn buffer))))
+      (funcall fn))))
 
 (defmacro with-current-buffer ((buffer) &body body)
   `(call-with-current-buffer
     ,buffer
-    (lambda (,buffer) ,@body)))
+    (lambda () ,@body)))
 
 (defmacro with-vi-state ((state) &body body)
   `(let ((lem-vi-mode/core::*current-state* (ensure-state (keyword-to-state ,state))))

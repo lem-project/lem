@@ -19,7 +19,8 @@
                (,p (copy-point (current-point)) ; leak?
                    ))
            (prog1 (progn ,@body)
-             (push ,p *prev-jump-points*)
+             (unless (point= ,p (current-point))
+               (push ,p *prev-jump-points*))
              (setf *current-point* nil))))))
 
 (defun jump-back ()

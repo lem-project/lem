@@ -470,21 +470,52 @@
 (add-hook *enable-hook* 'on-matching-paren)
 (add-hook *disable-hook* 'off-matching-paren)
 
+(defvar *last-search-direction* nil)
+
 (define-command vi-search-forward () ()
+  (setf *last-search-direction* :forward)
   (with-jump-motion
-    (lem/isearch:isearch-forward-regexp "/")))
+    (lem/isearch::isearch-start "/"
+                                (lambda (point string)
+                                  (alexandria:when-let (p (lem/isearch::search-forward-regexp
+                                                           (copy-point lem/isearch::*isearch-start-point* :temporary)
+                                                           string))
+                                    (character-offset p (- (length string)))
+                                    (move-point point p)))
+                                #'lem/isearch::search-forward-regexp
+                                #'lem/isearch::search-backward-regexp
+                                "")))
 
 (define-command vi-search-backward () ()
+  (setf *last-search-direction* :backward)
   (with-jump-motion
     (lem/isearch:isearch-backward-regexp "?")))
 
-(define-command vi-search-next (n) ("p")
+(defun vi-search-repeat-forward (n)
   (with-jump-motion
-    (dotimes (i n) (lem/isearch:isearch-next))))
+    (with-point ((p (current-point)))
+      (vi-forward-char (length lem/isearch::*isearch-string*))
+      (loop repeat n
+            for found = (lem/isearch:isearch-next)
+            unless found
+               do (move-point (current-point) p)
+                  (return)
+            finally
+               (vi-backward-char (length lem/isearch::*isearch-string*))))))
 
-(define-command vi-search-previous (n) ("p")
+(defun vi-search-repeat-backward (n)
   (with-jump-motion
     (dotimes (i n) (lem/isearch:isearch-prev))))
+
+(define-command vi-search-next (n) ("p")
+  (case *last-search-direction*
+    (:forward (vi-search-repeat-forward n))
+    (:backward (vi-search-repeat-backward n))))
+
+(define-command vi-search-previous (n) ("p")
+  (case *last-search-direction*
+    (:forward (vi-search-repeat-backward n))
+    (:backward (vi-search-repeat-forward n))))
 
 (define-command vi-search-forward-symbol-at-point () ()
   (with-jump-motion

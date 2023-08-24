@@ -395,8 +395,9 @@
         (concatenate 'string
                      *isearch-string*
                      (string c)))
-  (unless (funcall *isearch-search-function* (current-point) *isearch-string*)
-    (move-point (current-point) *isearch-start-point*))
+  (with-point ((point (current-point)))
+    (unless (funcall *isearch-search-function* point *isearch-string*)
+      (move-point (current-point) point)))
   (isearch-update-display)
   t)
 

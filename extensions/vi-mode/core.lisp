@@ -7,10 +7,12 @@
   (:export :*enable-hook*
            :*disable-hook*
            :*last-repeat-keys*
+           :*enable-repeat-recording*
            :vi-state
            :vi-mode
            :define-vi-state
            :current-state
+           :state=
            :change-state
            :with-state
            :*command-keymap*
@@ -33,6 +35,8 @@
 
 (defvar *enable-hook* '())
 (defvar *disable-hook* '())
+
+(defvar *enable-repeat-recording* t)
 
 (defun enable-hook ()
   (run-hooks *enable-hook*))
@@ -122,6 +126,11 @@
   (apply #'call-next-method state initargs))
 
 (defvar *current-state* nil)
+
+(defun state= (state1 state2)
+  (and (typep state1 'vi-state)
+       (typep state2 'vi-state)
+       (eq (state-name state1) (state-name state2))))
 
 ;;; vi-state methods
 (defmacro define-vi-state (name direct-super-classes direct-slot-specs &rest options)

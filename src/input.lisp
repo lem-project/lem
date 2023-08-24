@@ -101,7 +101,8 @@
     (do-command-loop (:interactive nil)
       (when (null *unread-keys*)
         (return))
-      (call-command (read-command) nil))))
+      (let ((*this-command-keys* nil))
+        (call-command (read-command) nil)))))
 
 (defun sit-for (seconds &optional (update-window-p t) (force-update-p nil))
   (when update-window-p (redraw-display force-update-p))

@@ -155,7 +155,7 @@
   (declare (ignore range))
   (flet ((encode-value (value)
            (typecase value
-             (list (format nil "~{~A~^,~}" value))
+             (cons (format nil "~{~A~^,~}" value))
              (otherwise value))))
     (multiple-value-bind (option-value option-name old-value isset)
         (execute-set-command option-string)

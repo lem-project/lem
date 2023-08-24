@@ -42,7 +42,8 @@
     ((:file "motion")
      (:file "operator")
      (:file "visual")
-     (:file "commands")))
+     (:file "commands")
+     (:file "options")))
    (:file "utils"
     :pathname "tests/utils"))
   :perform (test-op (op c) (symbol-call :rove '#:run c)))

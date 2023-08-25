@@ -9,7 +9,7 @@
         :lem-vi-mode/jump-motions
         :lem-vi-mode/commands/utils)
   (:import-from :lem-vi-mode/states
-                :*command-keymap*
+                :*motion-keymap*
                 :normal
                 :insert)
   (:import-from :lem-vi-mode/commands/utils
@@ -92,7 +92,7 @@
 
 (defun extract-count-keys (keys)
   (loop for key in keys
-        for cmd = (lem-core::keymap-find-keybind *command-keymap* key nil)
+        for cmd = (lem-core::keymap-find-keybind *motion-keymap* key nil)
         unless (member cmd '(lem/universal-argument:universal-argument-0
                              lem/universal-argument:universal-argument-1
                              lem/universal-argument:universal-argument-2

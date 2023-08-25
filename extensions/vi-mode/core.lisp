@@ -18,6 +18,7 @@
            :state=
            :change-state
            :with-state
+           :mode-specific-keymaps
            :pre-command-hook
            :post-command-hook
            :state-enabled-hook
@@ -48,15 +49,17 @@
 (defun disable-hook ()
   (run-hooks *disable-hook*))
 
+(defvar *fallback-keymap* *global-keymap*)
+
 (define-global-mode vi-mode (emacs-mode)
   (:name "vi"
+   :keymap *fallback-keymap*
    :enable-hook #'enable-hook
    :disable-hook #'disable-hook))
 
-
-
 (defclass vi-state ()
   ((name :initarg :name
+         :initform nil
          :reader state-name)
    (message
     :initarg :message
@@ -70,10 +73,10 @@
     :initarg :modeline-color
     :initform 'state-modeline-white
     :reader state-modeline-color)
-   (keymap
-    :initarg :keymap
-    :initform *global-keymap*
-    :reader state-keymap)
+   (keymaps
+    :initarg :keymaps
+    :initform '()
+    :reader state-keymaps)
    (cursor-color
     :initarg :cursor-color
     :initform nil)))
@@ -81,11 +84,6 @@
 (defun state-cursor-color (state)
   (or (slot-value state 'cursor-color)
       *default-cursor-color*))
-
-(defmethod initialize-instance ((state vi-state) &rest initargs &key name &allow-other-keys)
-  (unless name
-    (setf (getf initargs :name) (class-name (class-of state))))
-  (apply #'call-next-method state initargs))
 
 (defvar *current-state* nil)
 
@@ -133,12 +131,26 @@
   (assert (typep state 'vi-state))
   state)
 
+(defgeneric mode-specific-keymaps (mode)
+  (:method (mode) nil))
+
+(defmethod compute-keymaps ((mode vi-mode))
+  (let* ((buffer (current-buffer))
+         (major-mode (ensure-mode-object (buffer-major-mode buffer)))
+         (minor-mode-keymaps (loop for mode-name in (buffer-minor-modes buffer)
+                                   for mode = (ensure-mode-object mode-name)
+                                   when (mode-keymap mode)
+                                   collect it)))
+    (append minor-mode-keymaps
+            (mode-specific-keymaps major-mode)
+            ;; Precede state keymaps over major-mode keymaps
+            (state-keymaps (ensure-state *current-state*)))))
+
 (defun change-state (name)
   (and *current-state*
        (state-disabled-hook (ensure-state *current-state*)))
   (let ((state (ensure-state name)))
     (setf *current-state* name)
-    (change-global-mode-keymap 'vi-mode (state-keymap state))
     (state-enabled-hook state)
     (set-attribute 'cursor :background (state-cursor-color state))))
 
@@ -160,7 +172,7 @@
 (add-hook *pre-command-hook* 'vi-pre-command-hook)
 (add-hook *post-command-hook* 'vi-post-command-hook)
 
-(defmethod state-enabled-hook :after (state)
+(defmethod state-enabled-hook :after ((state vi-state))
   (lem-if:update-cursor-shape (lem:implementation)
                               (state-cursor-type state)))
 

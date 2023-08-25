@@ -5,7 +5,8 @@
   (:import-from :lem-vi-mode/core
                 :ensure-state)
   (:import-from :lem-vi-mode/states
-                :*command-keymap*
+                :*motion-keymap*
+                :*normal-keymap*
                 :normal)
   (:import-from :lem-vi-mode/modeline
                 :state-modeline-orange)
@@ -31,13 +32,13 @@
 (defvar *start-point* nil)
 (defvar *visual-overlays* '())
 
-(defvar *visual-keymap* (make-keymap :name '*visual-keymap* :parent *command-keymap*))
+(defvar *visual-keymap* (make-keymap :name '*visual-keymap*))
 
 (define-vi-state visual (vi-state) ()
   (:default-initargs
    :message "-- VISUAL --"
    :modeline-color 'state-modeline-orange
-   :keymap *visual-keymap*))
+   :keymaps (list *visual-keymap* *motion-keymap* *normal-keymap*)))
 
 (define-vi-state visual-char (visual)
   ()

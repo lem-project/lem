@@ -3,6 +3,8 @@
         :lem
         :lem-vi-mode/core
         :lem-vi-mode/ex-parser)
+  (:import-from :lem-vi-mode/utils
+                :expand-filename-modifiers)
   (:export :vi-ex))
 (in-package :lem-vi-mode/ex)
 

@@ -10,13 +10,13 @@
   (:import-from :lem-core
                 :*this-command-keys*
                 :*input-hook*)
-  (:import-from :lem-vi-mode
-                :vi-mode)
   (:import-from :lem-vi-mode/core
-                :normal
-                :insert
+                :vi-mode
                 :current-state
                 :ensure-state)
+  (:import-from :lem-vi-mode/states
+                :normal
+                :insert)
   (:import-from :lem-vi-mode/visual
                 :visual-line
                 :visual-block

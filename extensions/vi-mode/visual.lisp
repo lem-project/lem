@@ -4,6 +4,11 @@
         :lem-vi-mode/core)
   (:import-from :lem-vi-mode/core
                 :ensure-state)
+  (:import-from :lem-vi-mode/states
+                :*command-keymap*
+                :normal)
+  (:import-from :lem-vi-mode/modeline
+                :state-modeline-orange)
   (:import-from :lem-base
                 :alive-point-p)
   (:export :*visual-keymap*
@@ -31,7 +36,7 @@
 (define-vi-state visual (vi-state) ()
   (:default-initargs
    :message "-- VISUAL --"
-   :modeline-color 'lem-vi-mode/core::state-modeline-orange
+   :modeline-color 'state-modeline-orange
    :keymap *visual-keymap*))
 
 (define-vi-state visual-char (visual)

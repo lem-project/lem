@@ -2,7 +2,7 @@
   (:use :cl
         :lem
         :split-sequence)
-  (:import-from :lem-vi-mode/core
+  (:import-from :lem-vi-mode/utils
                 :change-directory)
   (:import-from :parse-number
                 :parse-number)

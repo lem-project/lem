@@ -8,9 +8,11 @@
   (:import-from :lem-vi-mode/commands
                 :vi-open-below
                 :vi-open-above)
-  (:import-from :lem-vi-mode/commands/utils
-                :vi-command
-                :vi-command-repeat)
+  (:import-from :lem-vi-mode/states
+                :normal
+                :insert
+                :*command-keymap*
+                :*insert-keymap*)
   (:import-from :alexandria
                 :appendf)
   (:export :vi-mode

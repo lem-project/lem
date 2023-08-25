@@ -7,23 +7,25 @@
                "cl-package-locks"
                "alexandria"
                "split-sequence")
-  :serial t
   :components ((:file "core")
-               (:file "options")
-               (:file "word")
-               (:file "visual")
+               (:file "options" :depends-on ("utils"))
+               (:file "word" :depends-on ("options"))
+               (:file "modeline" :depends-on ("core"))
+               (:file "states" :depends-on ("core" "modeline"))
+               (:file "visual" :depends-on ("core" "states"))
                (:file "jump-motions")
-               (:module "commands-dir"
+               (:module "commands-utils"
                 :pathname "commands"
-                :components
-                ((:file "utils")))
-               (:file "commands")
+                :depends-on ("core" "jump-motions" "visual" "states")
+                :components ((:file "utils")))
+               (:file "commands" :depends-on ("core" "commands-utils" "word" "visual" "jump-motions" "states"))
                (:file "ex-core")
-               (:file "ex-parser")
-               (:file "ex-command")
-               (:file "ex")
-               (:file "binds")
-               (:file "vi-mode"))
+               (:file "ex-parser" :depends-on ("ex-core"))
+               (:file "ex-command" :depends-on ("ex-core" "options" "utils"))
+               (:file "ex" :depends-on ("core" "ex-parser"))
+               (:file "binds" :depends-on ("states" "commands" "ex" "visual"))
+               (:file "vi-mode" :depends-on ("core" "options" "ex" "commands" "states"))
+               (:file "utils"))
   :in-order-to ((test-op (test-op "lem-vi-mode/tests"))))
 
 (defsystem "lem-vi-mode/tests"

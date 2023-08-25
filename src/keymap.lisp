@@ -143,11 +143,16 @@
                 (match-key key :sym sym))
            (char sym 0)))))
 
+(defgeneric compute-keymaps (global-mode)
+  (:method ((mode global-mode)) nil))
+
 (defun all-keymaps ()
-  (let ((keymaps
-          (loop :for mode :in (all-active-modes (current-buffer))
-                :when (mode-keymap mode)
-                :collect :it)))
+  (let* ((keymaps (compute-keymaps (current-global-mode)))
+         (keymaps
+           (append keymaps
+                   (loop :for mode :in (all-active-modes (current-buffer))
+                         :when (mode-keymap mode)
+                         :collect :it))))
     (when *special-keymap*
       (push *special-keymap* keymaps))
     (nreverse keymaps)))

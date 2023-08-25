@@ -365,6 +365,7 @@
    :abort-key-p
    :with-special-keymap
    :traverse-keymap
+   :compute-keymaps
    :collect-command-keybindings)
   ;; reexport common/timer
   (:export

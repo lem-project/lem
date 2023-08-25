@@ -2,7 +2,11 @@
   (:use :cl
         :lem)
   (:import-from :lem-vi-mode/core
-                :*command-keymap*)
+                :*this-motion-command*
+                :vi-command
+                :vi-motion
+                :vi-motion-type
+                :vi-operator)
   (:import-from :lem-vi-mode/jump-motions
                 :with-jump-motion)
   (:import-from :lem-vi-mode/visual
@@ -22,21 +26,14 @@
            :goto-eol
            :fall-within-line
            :operator-pending-mode-p
-           :this-motion-command
            :read-universal-argument
            :*cursor-offset*
-           :vi-command
-           :vi-motion
-           :vi-motion-type
-           :vi-operator
            :define-vi-motion
-           :define-vi-operator
-           :extract-count-keys))
+           :define-vi-operator))
 (in-package :lem-vi-mode/commands/utils)
 
 (defvar *cursor-offset* -1)
 (defvar *operator-pending-mode* nil)
-(defvar *this-motion-command* nil)
 
 (defun bolp (point)
   "Return t if POINT is at the beginning of a line."
@@ -62,9 +59,6 @@
 (defun operator-pending-mode-p ()
   *operator-pending-mode*)
 
-(defun this-motion-command ()
-  *this-motion-command*)
-
 (defun read-universal-argument ()
   (loop :for key := (read-key)
         :for char := (key-to-char key)
@@ -74,26 +68,6 @@
                  (return-from read-universal-argument
                    (and digits
                         (parse-integer (format nil "~{~D~}" digits))))))
-
-(deftype repeat-type () '(member t nil :motion))
-
-(defclass vi-command ()
-  ((repeat :type repeat-type
-           :initarg :repeat
-           :initform nil
-           :accessor vi-command-repeat)))
-
-(defclass vi-motion (vi-command)
-  ((type :type keyword
-         :initarg :type
-         :initform :exclusive
-         :accessor vi-motion-type)
-   (default-n-arg :type (or null integer)
-                  :initarg :default-n-arg
-                  :initform 1
-                  :accessor vi-motion-default-n-arg)))
-
-(defclass vi-operator (vi-command) ())
 
 (defmethod execute :around (mode (command vi-operator) uarg)
   (declare (ignore mode uarg))
@@ -249,19 +223,3 @@
      (call-define-vi-operator (lambda () ,@body)
                               :keep-visual ,keep-visual
                               :restore-point ,restore-point)))
-
-(defun extract-count-keys (keys)
-  (loop for key in keys
-        for cmd = (lem-core::keymap-find-keybind *command-keymap* key nil)
-        unless (member cmd '(lem/universal-argument:universal-argument-0
-                             lem/universal-argument:universal-argument-1
-                             lem/universal-argument:universal-argument-2
-                             lem/universal-argument:universal-argument-3
-                             lem/universal-argument:universal-argument-4
-                             lem/universal-argument:universal-argument-5
-                             lem/universal-argument:universal-argument-6
-                             lem/universal-argument:universal-argument-7
-                             lem/universal-argument:universal-argument-8
-                             lem/universal-argument:universal-argument-9)
-                       :test 'eq)
-        collect key))

@@ -1,13 +1,13 @@
 (defpackage :lem-vi-mode/ex-command
-  (:use :cl :lem-vi-mode/ex-core)
-  (:import-from :lem-vi-mode/core
-                :expand-filename-modifiers)
+  (:use :cl
+        :lem-vi-mode/ex-core)
   (:import-from :lem-vi-mode/jump-motions
                 :with-jump-motion)
   (:import-from :lem-vi-mode/options
                 :execute-set-command)
-  (:import-from :lem-vi-mode/core
-                :change-directory))
+  (:import-from :lem-vi-mode/utils
+                :change-directory
+                :expand-filename-modifiers))
 (in-package :lem-vi-mode/ex-command)
 
 (defun ex-write (range filename touch)

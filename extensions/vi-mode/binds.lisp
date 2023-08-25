@@ -3,7 +3,7 @@
         :lem
         :lem/universal-argument
         :lem/abbrev
-        :lem-vi-mode/core
+        :lem-vi-mode/states
         :lem-vi-mode/commands
         :lem-vi-mode/ex
         :lem-vi-mode/visual))

@@ -8,8 +8,16 @@
         :lem-vi-mode/visual
         :lem-vi-mode/jump-motions
         :lem-vi-mode/commands/utils)
+  (:import-from :lem-vi-mode/states
+                :*command-keymap*
+                :normal
+                :insert)
+  (:import-from :lem-vi-mode/commands/utils
+                :visual-region)
   (:import-from :lem/common/killring
                 :peek-killring-item)
+  (:import-from :lem-vi-mode/utils
+                :kill-region-without-appending)
   (:export :vi-move-to-beginning-of-line/universal-argument-0
            :vi-forward-char
            :vi-backward-char
@@ -81,6 +89,22 @@
            :vi-normal
            :vi-keyboard-quit))
 (in-package :lem-vi-mode/commands)
+
+(defun extract-count-keys (keys)
+  (loop for key in keys
+        for cmd = (lem-core::keymap-find-keybind *command-keymap* key nil)
+        unless (member cmd '(lem/universal-argument:universal-argument-0
+                             lem/universal-argument:universal-argument-1
+                             lem/universal-argument:universal-argument-2
+                             lem/universal-argument:universal-argument-3
+                             lem/universal-argument:universal-argument-4
+                             lem/universal-argument:universal-argument-5
+                             lem/universal-argument:universal-argument-6
+                             lem/universal-argument:universal-argument-7
+                             lem/universal-argument:universal-argument-8
+                             lem/universal-argument:universal-argument-9)
+                       :test 'eq)
+        collect key))
 
 (define-command vi-move-to-beginning-of-line/universal-argument-0 () ()
   (if (mode-active-p (current-buffer) 'universal-argument)
@@ -351,7 +375,9 @@
     (cond
       ((visual-p)
        (let ((visual-line (visual-line-p)))
-         (vi-delete)
+         (multiple-value-bind (beg end type)
+             (visual-region)
+           (vi-delete beg end type))
          (when (and (not visual-line)
                     (member :vi-line type))
            (insert-character (current-point) #\Newline)))
@@ -372,7 +398,9 @@
       (vi-yank-from-clipboard-or-killring)
     (cond
       ((visual-p)
-       (vi-delete)
+       (multiple-value-bind (beg end type)
+           (visual-region)
+         (vi-delete beg end type))
        (when (member :vi-line type)
          (insert-character (current-point) #\Newline))
        (insert-string (current-point) string)

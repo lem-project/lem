@@ -184,15 +184,11 @@
        (attribute-equal-careful-null-and-symbol (logical-line-extend-to-end a)
                                                 (logical-line-extend-to-end b))))
 
-(defmethod lem-core::compute-left-display-area-content (buffer point)
-  (let ((string (format nil "~6D " (lem:line-number-at-point point))))
-    (lem-base::make-content :string string)))
-
-(defun create-logical-line (point overlays)
+(defun create-logical-line (point overlays active-modes)
   (let* ((end-of-line-cursor-attribute nil)
          (extend-to-end-attribute nil)
          (line-end-overlay nil)
-         (left-content (lem-core::compute-left-display-area-content (lem-base:point-buffer point) point)))
+         (left-content (lem-core::compute-left-display-area-content active-modes (lem-base:point-buffer point) point)))
     (destructuring-bind (string . attributes)
         (lem-base::line-string/attributes (lem-base::point-line point))
       (loop :for overlay :in overlays
@@ -620,11 +616,12 @@
 (defun redraw-lines (window)
   (lem:with-point ((point (lem:window-view-point window)))
     (let ((*invalidate-cache* nil)
-          (overlays (collect-overlays window)))
+          (overlays (collect-overlays window))
+          (active-modes (lem-core::get-active-modes-class-instance (lem:window-buffer window))))
       (loop :with y := 0 :and height := (view-height-by-pixel window)
             :do (incf y (redraw-logical-line window
                                              y
-                                             (create-logical-line point overlays)))
+                                             (create-logical-line point overlays active-modes)))
             :while (and (lem:line-offset point 1)
                         (< y height))
             :finally (sdl2:with-rects ((rect 0

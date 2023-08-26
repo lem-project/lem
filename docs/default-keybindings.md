@@ -121,32 +121,32 @@
 ## Window
 | Command                                                                                                        | Key bindings   | Documentation                                                         |
 |----------------------------------------------------------------------------------------------------------------|----------------|-----------------------------------------------------------------------|
-| [select-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L64)                     | C-x b          | Switches to the selected buffer.                                      |
-| [kill-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L103)                      | C-x k          | Delete buffer.                                                        |
-| [previous-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L112)                  | C-x Left       | Switches to the previous buffer.                                      |
-| [next-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L122)                      | C-x Right      | Switches to the next buffer.                                          |
-| [recenter](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L128)                         | C-l            | Scroll so that the cursor is in the middle.                           |
-| [split-active-window-vertically](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L135)   | C-x 2          | Split the current window vertically.                                  |
-| [split-active-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L141) | C-x 3          | Split the current window horizontally.                                |
-| [other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L147)                     | C-x o, M-o     | Go to the next window.                                                |
-| [switch-to-last-focused-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L159)    |                | Go to the window that was last in focus.                              |
-| [window-move-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L167)                 |                | Go to the window on the down.                                         |
-| [window-move-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L172)                   |                | Go to the window on the up.                                           |
-| [window-move-right](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L177)                |                | Go to the window on the right.                                        |
-| [window-move-left](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L182)                 |                | Go to the window on the left.                                         |
-| [delete-other-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L187)             | C-x 1          | Delete all other windows.                                             |
-| [delete-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L200)             | C-x 0, M-q     | Delete the active window.                                             |
-| [quit-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L205)               |                | Quit the active window. This is a command for a popped-up window.     |
-| [grow-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L210)                      | C-x ^          | Grow the window's height.                                             |
-| [shrink-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L218)                    | C-x C-z        | Shrink the window's height.                                           |
-| [grow-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L226)         | C-x }          | Grow the window's width.                                              |
-| [shrink-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L234)       | C-x {          | Shrink the window's width.                                            |
-| [scroll-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L245)                      | C-Down, M-Down | Scroll down.                                                          |
-| [scroll-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L259)                        | C-Up, M-Up     | Scroll up.                                                            |
-| [find-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L271)           | C-x 4 f        | Open a file in another window. Split the screen vertically if needed. |
-| [read-file-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L272)           | C-x 4 r        | Read a file in another window.                                        |
-| [select-buffer-other-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L273)       | C-x 4 b        | Select a buffer in another window.                                    |
-| [compare-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L277)                  |                |                                                                       |
+| [select-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L65)                     | C-x b          | Switches to the selected buffer.                                      |
+| [kill-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L104)                      | C-x k          | Delete buffer.                                                        |
+| [previous-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L113)                  | C-x Left       | Switches to the previous buffer.                                      |
+| [next-buffer](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L123)                      | C-x Right      | Switches to the next buffer.                                          |
+| [recenter](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L129)                         | C-l            | Scroll so that the cursor is in the middle.                           |
+| [split-active-window-vertically](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L136)   | C-x 2          | Split the current window vertically.                                  |
+| [split-active-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L142) | C-x 3          | Split the current window horizontally.                                |
+| [next-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L148)                      | C-x o, M-o     | Go to the next window.                                                |
+| [switch-to-last-focused-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L163)    |                | Go to the window that was last in focus.                              |
+| [window-move-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L171)                 |                | Go to the window on the down.                                         |
+| [window-move-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L176)                   |                | Go to the window on the up.                                           |
+| [window-move-right](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L181)                |                | Go to the window on the right.                                        |
+| [window-move-left](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L186)                 |                | Go to the window on the left.                                         |
+| [delete-other-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L191)             | C-x 1          | Delete all other windows.                                             |
+| [delete-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L204)             | C-x 0, M-q     | Delete the active window.                                             |
+| [quit-active-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L209)               |                | Quit the active window. This is a command for a popped-up window.     |
+| [grow-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L214)                      | C-x ^          | Grow the window's height.                                             |
+| [shrink-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L222)                    | C-x C-z        | Shrink the window's height.                                           |
+| [grow-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L230)         | C-x }          | Grow the window's width.                                              |
+| [shrink-window-horizontally](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L238)       | C-x {          | Shrink the window's width.                                            |
+| [scroll-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L249)                      | C-Down, M-Down | Scroll down.                                                          |
+| [scroll-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L263)                        | C-Up, M-Up     | Scroll up.                                                            |
+| [find-file-next-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L275)            | C-x 4 f        | Open a file in another window. Split the screen vertically if needed. |
+| [read-file-next-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L276)            | C-x 4 r        | Read a file in another window.                                        |
+| [select-buffer-next-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L277)        | C-x 4 b        | Select a buffer in another window.                                    |
+| [compare-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L281)                  |                |                                                                       |
 
 ## Multiple-Cursors
 | Command                                                                                                        | Key bindings | Documentation                                               |

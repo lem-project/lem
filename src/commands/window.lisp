@@ -157,7 +157,7 @@
               (get-next-window window window-list)))
       (switch-to-window window))))
 
-(define-command previous-winodw (&optional (n 1)) ("p")
+(define-command previous-window (&optional (n 1)) ("p")
   (next-window (- n)))
 
 (define-command switch-to-last-focused-window () ()

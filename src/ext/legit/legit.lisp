@@ -99,7 +99,7 @@ Next:
 (define-key *legit-diff-mode-keymap* "C-p" 'previous-line)
 (define-key lem/peek-legit:*peek-legit-keymap* "M-n" 'legit-next-header)
 (define-key lem/peek-legit:*peek-legit-keymap* "M-p" 'legit-previous-header)
-(define-key *legit-diff-mode-keymap* "Tab" 'other-window)
+(define-key *legit-diff-mode-keymap* "Tab" 'next-window)
 
 ;; help
 (define-key lem/peek-legit:*peek-legit-keymap* "?" 'legit-help)

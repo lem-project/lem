@@ -54,7 +54,7 @@ Notes:
 (define-key *peek-legit-keymap* 'previous-line 'peek-legit-previous)
 (define-key *peek-legit-keymap* "p" 'peek-legit-previous)
 (define-key *peek-legit-keymap* "C-p" 'peek-legit-previous)
-(define-key *peek-legit-keymap* "Tab" 'other-window)
+(define-key *peek-legit-keymap* "Tab" 'next-window)
 
 
 ;;;

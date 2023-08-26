@@ -11,15 +11,22 @@
   (:import-from :lem-vi-mode/states
                 :normal
                 :insert
-                :*command-keymap*
+                :*motion-keymap*
+                :*normal-keymap*
                 :*insert-keymap*)
+  (:import-from :lem-vi-mode/visual
+                :*visual-keymap*)
   (:import-from :alexandria
                 :appendf)
   (:export :vi-mode
            :define-vi-state
-           :*command-keymap*
+           :*motion-keymap*
+           :*normal-keymap*
            :*insert-keymap*
+           :*visual-keymap*
            :*ex-keymap*
+           :normal
+           :insert
            :vi-option-value))
 (in-package :lem-vi-mode)
 

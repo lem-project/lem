@@ -12,7 +12,7 @@
 
 (define-vi-state ex () ()
   (:default-initargs
-   :keymap *ex-keymap*))
+   :keymaps (list *ex-keymap*)))
 
 (define-command vi-ex () ()
   (let* ((directory (uiop:getcwd))

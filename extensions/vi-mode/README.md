@@ -12,8 +12,8 @@ To enable, add the following code to `~/.lem/init.lisp`:
 
 ```common-lisp
 ;; NORMAL mode
-(define-key lem-vi-mode:*command-keymap* "q" 'quit-window)
-(define-key lem-vi-mode:*command-keymap* "Space @" 'paredit-splice)
+(define-key lem-vi-mode:*normal-keymap* "q" 'quit-window)
+(define-key lem-vi-mode:*normal-keymap* "Space @" 'paredit-splice)
 
 ;; INSERT mode
 (define-key lem-vi-mode:*insert-keymap* "(" 'paredit-insert-paren)

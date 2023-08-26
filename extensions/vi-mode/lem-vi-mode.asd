@@ -24,6 +24,7 @@
                (:file "ex-command" :depends-on ("ex-core" "options" "utils"))
                (:file "ex" :depends-on ("core" "ex-parser"))
                (:file "binds" :depends-on ("states" "commands" "ex" "visual"))
+               (:file "special-binds" :depends-on ("core"))
                (:file "vi-mode" :depends-on ("core" "options" "ex" "commands" "states"))
                (:file "utils"))
   :in-order-to ((test-op (test-op "lem-vi-mode/tests"))))

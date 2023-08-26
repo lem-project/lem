@@ -44,7 +44,7 @@
 (define-key *directory-mode-keymap* "^" 'directory-mode-up-directory)
 (define-key *directory-mode-keymap* "Return" 'directory-mode-find-file)
 (define-key *directory-mode-keymap* "Space" 'directory-mode-read-file)
-(define-key *directory-mode-keymap* "o" 'directory-mode-find-file-other-window)
+(define-key *directory-mode-keymap* "o" 'directory-mode-find-file-next-window)
 (define-key *directory-mode-keymap* "n" 'directory-mode-next-line)
 (define-key *directory-mode-keymap* "p" 'directory-mode-previous-line)
 (define-key *directory-mode-keymap* "m" 'directory-mode-mark-and-next-line)
@@ -385,7 +385,7 @@
 (define-command directory-mode-read-file () ()
   (process-current-line-pathname 'read-file))
 
-(define-command directory-mode-find-file-other-window () ()
+(define-command directory-mode-find-file-next-window () ()
   (process-current-line-pathname (lambda (pathname)
                                    (let ((buffer (execute-find-file *find-file-executor*
                                                                     (get-file-mode pathname)

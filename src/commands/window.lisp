@@ -9,7 +9,7 @@
            :recenter
            :split-active-window-vertically
            :split-active-window-horizontally
-           :other-window
+           :next-window
            :window-move-up
            :window-move-down
            :window-move-right
@@ -23,9 +23,9 @@
            :shrink-window-horizontally
            :scroll-down
            :scroll-up
-           :find-file-other-window
-           :read-file-other-window
-           :select-buffer-other-window
+           :find-file-next-window
+           :read-file-next-window
+           :select-buffer-next-window
            :switch-to-last-focused-window
            :compare-windows))
 (in-package :lem-core/commands/window)
@@ -37,8 +37,9 @@
 (define-key *global-keymap* "C-l" 'recenter)
 (define-key *global-keymap* "C-x 2" 'split-active-window-vertically)
 (define-key *global-keymap* "C-x 3" 'split-active-window-horizontally)
-(define-key *global-keymap* "C-x o" 'other-window)
-(define-key *global-keymap* "M-o" 'other-window)
+(define-key *global-keymap* "C-x o" 'next-window)
+(define-key *global-keymap* "M-o" 'next-window)
+(define-key *global-keymap* "M-O" 'previous-window)
 (define-key *global-keymap* "C-x 1" 'delete-other-windows)
 (define-key *global-keymap* "C-x 0" 'delete-active-window)
 (define-key *global-keymap* "M-q" 'delete-active-window)
@@ -50,10 +51,10 @@
 (define-key *global-keymap* "M-Down" 'scroll-down)
 (define-key *global-keymap* "C-Up" 'scroll-up)
 (define-key *global-keymap* "M-Up" 'scroll-up)
-(define-key *global-keymap* "C-x 4 f" 'find-file-other-window)
-(define-key *global-keymap* "C-x 4 r" 'read-file-other-window)
-(define-key *global-keymap* "C-x 4 b" 'select-buffer-other-window)
-(define-key *global-keymap* "C-x 4 p f" 'project-find-file-other-window)
+(define-key *global-keymap* "C-x 4 f" 'find-file-next-window)
+(define-key *global-keymap* "C-x 4 r" 'read-file-next-window)
+(define-key *global-keymap* "C-x 4 b" 'select-buffer-next-window)
+(define-key *global-keymap* "C-x 4 p f" 'project-find-file-next-window)
 
 (defvar *balance-after-split-window* t)
 
@@ -62,16 +63,16 @@
     (balance-windows)))
 
 (eval-when (:compile-toplevel :load-toplevel)
-  (defmacro define-other-window-command (command prompt documentation)
+  (defmacro define-next-window-command (command prompt documentation)
     (if (exist-command-p (string-downcase command))
-        `(define-command ,(intern (format nil "~a-OTHER-WINDOW"
+        `(define-command ,(intern (format nil "~a-NEXT-WINDOW"
                                           (string-upcase command)))
              (arg) (,prompt)
            ,documentation
            (when (one-window-p)
              (split-window-sensibly (current-window))
              (maybe-balance-windows))
-           (other-window)
+           (next-window)
            (,command arg))
         (warn "command ~a is not defined." command)))
 
@@ -144,7 +145,7 @@
   (unless n
     (maybe-balance-windows)))
 
-(define-command other-window (&optional (n 1)) ("p")
+(define-command next-window (&optional (n 1)) ("p")
   "Go to the next window."
   (let ((window-list
           (compute-window-list (current-window))))
@@ -155,6 +156,9 @@
         (setf window
               (get-next-window window window-list)))
       (switch-to-window window))))
+
+(define-command previous-window (&optional (n 1)) ("p")
+  (next-window (- n)))
 
 (define-command switch-to-last-focused-window () ()
   "Go to the window that was last in focus."
@@ -268,11 +272,11 @@
      (with-current-window window
        (previous-line (window-offset-view window))))))
 
-(define-other-window-command lem-core/commands/file:find-file "FFind File Other Window: " "Open a file in another window. Split the screen vertically if needed.")
-(define-other-window-command lem-core/commands/file:read-file "FREAD File Other Window: " "Read a file in another window.")
-(define-other-window-command lem-core/commands/window:select-buffer "BUse Buffer Other Window: " "Select a buffer in another window.")
-(define-other-window-command lem-core/commands/project:project-find-file "pFind File in Project in Other Window: " "Open a file from the current project in another window. Split the screen vertically if needed.")
-(define-other-window-command lem-core/commands/project:project-root-directory "pOpen Project Directory in Other Window: " "Open this project directory in another window. Split the screen vertically if needed.")
+(define-next-window-command lem-core/commands/file:find-file "FFind File Other Window: " "Open a file in another window. Split the screen vertically if needed.")
+(define-next-window-command lem-core/commands/file:read-file "FREAD File Other Window: " "Read a file in another window.")
+(define-next-window-command lem-core/commands/window:select-buffer "BUse Buffer Other Window: " "Select a buffer in another window.")
+(define-next-window-command lem-core/commands/project:project-find-file "pFind File in Project in Other Window: " "Open a file from the current project in another window. Split the screen vertically if needed.")
+(define-next-window-command lem-core/commands/project:project-root-directory "pOpen Project Directory in Other Window: " "Open this project directory in another window. Split the screen vertically if needed.")
 
 (define-command compare-windows (ignore-whitespace) ("p")
   (setf ignore-whitespace (/= ignore-whitespace 1))

@@ -65,7 +65,7 @@
 (eval-when (:compile-toplevel :load-toplevel)
   (defmacro define-next-window-command (command prompt documentation)
     (if (exist-command-p (string-downcase command))
-        `(define-command ,(intern (format nil "~a-next-window"
+        `(define-command ,(intern (format nil "~a-NEXT-WINDOW"
                                           (string-upcase command)))
              (arg) (,prompt)
            ,documentation

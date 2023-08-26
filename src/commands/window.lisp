@@ -39,6 +39,7 @@
 (define-key *global-keymap* "C-x 3" 'split-active-window-horizontally)
 (define-key *global-keymap* "C-x o" 'next-window)
 (define-key *global-keymap* "M-o" 'next-window)
+(define-key *global-keymap* "M-O" 'previous-window)
 (define-key *global-keymap* "C-x 1" 'delete-other-windows)
 (define-key *global-keymap* "C-x 0" 'delete-active-window)
 (define-key *global-keymap* "M-q" 'delete-active-window)
@@ -155,6 +156,9 @@
         (setf window
               (get-next-window window window-list)))
       (switch-to-window window))))
+
+(define-command previous-winodw (&optional (n 1)) ("p")
+  (next-window (- n)))
 
 (define-command switch-to-last-focused-window () ()
   "Go to the window that was last in focus."

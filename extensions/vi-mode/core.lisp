@@ -29,6 +29,7 @@
            :vi-command-repeat
            :vi-motion
            :vi-motion-type
+           :vi-motion-default-n-arg
            :vi-operator))
 (in-package :lem-vi-mode/core)
 

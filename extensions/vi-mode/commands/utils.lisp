@@ -6,7 +6,12 @@
                 :vi-command
                 :vi-motion
                 :vi-motion-type
-                :vi-operator)
+                :vi-motion-default-n-arg
+                :vi-operator
+                :current-state
+                :change-state)
+  (:import-from :lem-vi-mode/states
+                :operator)
   (:import-from :lem-vi-mode/jump-motions
                 :with-jump-motion)
   (:import-from :lem-vi-mode/visual
@@ -29,7 +34,8 @@
            :read-universal-argument
            :*cursor-offset*
            :define-vi-motion
-           :define-vi-operator))
+           :define-vi-operator
+           :make-range))
 (in-package :lem-vi-mode/commands/utils)
 
 (defvar *cursor-offset* -1)
@@ -111,12 +117,16 @@
          (n (or n
                 (typecase command
                   (vi-motion
-                    (with-slots (default-n-arg) command
-                      default-n-arg))
+                    (vi-motion-default-n-arg command))
                   (otherwise 1)))))
     (execute (lem-core::get-active-modes-class-instance (current-buffer))
              command
              n)))
+
+(defstruct (range (:constructor make-range (beginning end &optional type)))
+  beginning
+  end
+  type)
 
 (defun motion-region (motion)
   (check-type motion (or null symbol))
@@ -125,11 +135,16 @@
                (setf *this-motion-command* command)
                (let ((*cursor-offset* 0))
                  (save-excursion
-                   (ignore-errors
-                     (call-vi-motion-command command uarg))
-                   (values start
-                           (copy-point (current-point))
-                           (command-motion-type command)))))
+                   (let ((retval (call-vi-motion-command command uarg)))
+                     (typecase retval
+                       (range
+                        (values (range-beginning retval)
+                                (range-end retval)
+                                (or (range-type retval) :exclusive)))
+                       (otherwise
+                        (values start
+                                (copy-point (current-point))
+                                (command-motion-type command))))))))
              (command-motion-type (command)
                (if (typep command 'vi-motion)
                    (vi-motion-type command)
@@ -137,21 +152,26 @@
       (if motion
           (let ((command (get-command motion)))
             (call-motion command (universal-argument-of-this-command)))
-          (let* ((uarg (* (or (universal-argument-of-this-command) 1) (or (read-universal-argument) 1)))
-                 (command-name (read-command))
-                 (command (get-command command-name)))
-            (typecase command
-              (vi-operator
-                (if (eq command-name (command-name (this-command)))
-                    ;; Recursive call of the operator like 'dd', 'cc'
-                    (save-excursion
-                      (ignore-some-conditions (end-of-buffer)
-                        (next-logical-line (1- (or uarg 1))))
-                      (values start (copy-point (current-point)) :line))
-                    ;; Ignore an invalid operator (like 'dJ')
-                    nil))
-              (otherwise
-               (call-motion command uarg))))))))
+          (let ((state (current-state)))
+            (unwind-protect
+                 (progn
+                   (change-state 'operator)
+                   (let* ((uarg (* (or (universal-argument-of-this-command) 1) (or (read-universal-argument) 1)))
+                          (command-name (read-command))
+                          (command (get-command command-name)))
+                     (typecase command
+                       (vi-operator
+                        (if (eq command-name (command-name (this-command)))
+                            ;; Recursive call of the operator like 'dd', 'cc'
+                            (save-excursion
+                              (ignore-some-conditions (end-of-buffer)
+                                (next-logical-line (1- (or uarg 1))))
+                              (values start (copy-point (current-point)) :line))
+                            ;; Ignore an invalid operator (like 'dJ')
+                            nil))
+                       (otherwise
+                        (call-motion command uarg)))))
+              (change-state state)))))))
 
 (defun visual-region ()
   (if (visual-p)

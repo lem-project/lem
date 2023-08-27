@@ -1,0 +1,9 @@
+(defsystem "lem-notmuch"
+  :depends-on ("lem")
+  :serial t
+  :components (
+	       (:file "package")
+	       (:file "backend")
+	       (:file "notmuch-search")
+	       (:file "notmuch-hello")
+	       (:file "notmuch")))

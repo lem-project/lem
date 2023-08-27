@@ -85,6 +85,8 @@
            :vi-open-above
            :vi-jump-back
            :vi-jump-next
+           :vi-a-word
+           :vi-inner-word
            :vi-repeat
            :vi-normal
            :vi-keyboard-quit))
@@ -155,7 +157,7 @@
 (define-command vi-forward-word-begin (&optional (n 1)) ("p")
   (let ((start-line (line-number-at-point (current-point))))
     (dotimes (i n)
-      (forward-word-begin #'char-type))
+      (forward-word-begin #'word-char-type))
     ;; In operator-pending mode, this motion behaves differently.
     (when (operator-pending-mode-p)
       (with-point ((p (current-point)))
@@ -180,25 +182,25 @@
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
   (dotimes (i n)
-    (backward-word-begin #'char-type)))
+    (backward-word-begin #'word-char-type)))
 
 (define-vi-motion vi-forward-word-end (&optional (n 1))
     (:type :inclusive)
   (dotimes (i n)
-    (forward-word-end #'char-type)))
+    (forward-word-end #'word-char-type)))
 
 (define-command vi-forward-word-begin-broad (&optional (n 1)) ("p")
   (dotimes (i n)
-    (forward-word-begin #'broad-char-type)))
+    (forward-word-begin #'broad-word-char-type)))
 
 (define-command vi-backward-word-begin-broad (&optional (n 1)) ("p")
   (dotimes (i n)
-    (backward-word-begin #'broad-char-type)))
+    (backward-word-begin #'broad-word-char-type)))
 
 (define-vi-motion vi-forward-word-end-broad (&optional (n 1))
     (:type :inclusive)
   (dotimes (i n)
-    (forward-word-end #'broad-char-type)))
+    (forward-word-end #'broad-word-char-type)))
 
 (define-command vi-backward-word-end (&optional (n 1)) ("p")
   (character-offset (current-point) -1)
@@ -702,6 +704,18 @@
         (unless (state= prev-state (current-state))
           (change-state prev-state))
         (fall-within-line (current-point))))))
+
+(define-command vi-a-word (count) ("p")
+  (multiple-value-bind (beg end)
+      (a-range-of #'word-char-type count)
+    (when beg
+      (make-range beg end))))
+
+(define-command vi-inner-word (count) ("p")
+  (multiple-value-bind (beg end)
+      (inner-range-of #'word-char-type count)
+    (when beg
+      (make-range beg end))))
 
 (define-command vi-normal () ()
   (change-state 'normal))

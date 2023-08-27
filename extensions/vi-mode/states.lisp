@@ -16,8 +16,12 @@
            :*motion-keymap*
            :*insert-keymap*
            :*inactive-keymap*
+           :*operator-keymap*
+           :*outer-text-objects-keymap*
+           :*inner-text-objects-keymap*
            :normal
-           :insert))
+           :insert
+           :operator))
 (in-package :lem-vi-mode/states)
 
 (defmethod state-enabled-hook :after (state)
@@ -29,8 +33,12 @@
 (defvar *emacs-keymap* *global-keymap*)
 
 (defvar *motion-keymap* (make-keymap :name '*motion-keymap*))
-(defvar *normal-keymap* (make-keymap :name '*normal-keymap*))
+(defvar *normal-keymap* (make-keymap :name '*normal-keymap*
+                                     :parent *motion-keymap*))
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap*))
+(defvar *operator-keymap* (make-keymap :name '*operator-keymap*))
+(defvar *outer-text-objects-keymap* (make-keymap :name '*outer-text-objects-keymap*))
+(defvar *inner-text-objects-keymap* (make-keymap :name '*inner-text-objects-keymap*))
 
 (defvar *inactive-keymap* (make-keymap))
 
@@ -41,8 +49,7 @@
   (:default-initargs
    :name "NORMAL"
    :modeline-color 'state-modeline-yellow
-   :keymaps (list *motion-keymap*
-                  *normal-keymap*)))
+   :keymaps (list *normal-keymap*)))
 
 ;;
 ;; Insert state
@@ -65,6 +72,12 @@
    :modeline-color 'state-modeline-green
    :keymaps (list *inactive-keymap*)))
 
+;;
+;; Operator-pending state
+
+(define-vi-state operator () ()
+  (:default-initargs
+   :keymaps (list *operator-keymap* *normal-keymap*)))
 
 ;;
 ;; Setup hooks

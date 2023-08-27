@@ -6,7 +6,9 @@
         :lem-vi-mode/states
         :lem-vi-mode/commands
         :lem-vi-mode/ex
-        :lem-vi-mode/visual))
+        :lem-vi-mode/visual)
+  (:import-from :lem-core
+                :keymap-table))
 (in-package :lem-vi-mode/binds)
 
 (define-key *motion-keymap* "0" 'vi-move-to-beginning-of-line/universal-argument-0)
@@ -128,3 +130,11 @@
 (define-key *visual-keymap* "I" 'vi-visual-insert)
 (define-key *visual-keymap* "U" 'vi-upcase)
 (define-key *visual-keymap* "u" 'vi-downcase)
+
+(define-key *outer-text-objects-keymap* "w" 'vi-a-word)
+(define-key *inner-text-objects-keymap* "w" 'vi-inner-word)
+
+(setf (gethash (lem:make-key :sym "a") (keymap-table *operator-keymap*))
+      (keymap-table *outer-text-objects-keymap*))
+(setf (gethash (lem:make-key :sym "i") (keymap-table *operator-keymap*))
+      (keymap-table *inner-text-objects-keymap*))

@@ -38,8 +38,9 @@
   attribute)
 
 (defmethod lem:convert-modeline-element ((element vi-modeline-element) window)
-  (if (or (eq (lem:current-window) window)
-          (string= (element-name element) "COMMAND"))
+  (if (and (element-name element)
+           (or (eq (lem:current-window) window)
+               (string= (element-name element) "COMMAND")))
       (values (format nil " ~A " (element-name element))
               (element-attribute element))
       (values "" 'state-modeline-white)))

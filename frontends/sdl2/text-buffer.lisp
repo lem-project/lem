@@ -188,7 +188,10 @@
   (let* ((end-of-line-cursor-attribute nil)
          (extend-to-end-attribute nil)
          (line-end-overlay nil)
-         (left-content (lem-core::compute-left-display-area-content active-modes (lem-base:point-buffer point) point)))
+         (left-content
+           (lem-core::compute-left-display-area-content active-modes
+                                                        (lem-base:point-buffer point)
+                                                        point)))
     (destructuring-bind (string . attributes)
         (lem-base::line-string/attributes (lem-base::point-line point))
       (loop :for overlay :in overlays

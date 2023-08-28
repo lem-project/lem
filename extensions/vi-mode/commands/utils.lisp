@@ -15,7 +15,10 @@
                 :make-range
                 :range-beginning
                 :range-end
-                :range-type)
+                :range-type
+                :operator-abort
+                :text-object-abort
+                :text-object-abort-range)
   (:import-from :lem-vi-mode/states
                 :operator)
   (:import-from :lem-vi-mode/jump-motions
@@ -87,7 +90,8 @@
   ;;   when operator-pending state is implemented.
   (let ((*operator-pending-mode* t)
         (*this-motion-command* nil))
-    (call-next-method)))
+    (handler-case (call-next-method)
+      (operator-abort ()))))
 
 (defvar *vi-origin-point*)
 
@@ -250,23 +254,27 @@
                               :restore-point ,restore-point)))
 
 (defun call-define-vi-text-object (fn)
-  (flet ((expand-visual-range (p1 p2)
-           (destructuring-bind (vstart vend)
-               (visual-range)
-             (let ((forward (point<= vstart vend)))
-               (setf (visual-range)
-                     (if forward
-                         (list (point-min p1 vstart)
-                               (point-max p2 vend))
-                         (list (point-max p1 vstart)
-                               (point-min p2 vend))))))))
-    (multiple-value-bind (range aborted)
-        (funcall fn)
-      (if (visual-p)
-          (expand-visual-range (range-beginning range)
-                               (range-end range))
-          (unless aborted
-            range)))))
+  (flet ((expand-visual-range (range)
+           (let ((p1 (range-beginning range))
+                 (p2 (range-end range)))
+             (destructuring-bind (vstart vend)
+                 (visual-range)
+               (let ((forward (point<= vstart vend)))
+                 (setf (visual-range)
+                       (if forward
+                           (list (point-min p1 vstart)
+                                 (point-max p2 vend))
+                           (list (point-max p1 vstart)
+                                 (point-min p2 vend)))))))))
+    (handler-bind ((text-object-abort
+                     (lambda (e)
+                       (when (visual-p)
+                         (expand-visual-range (text-object-abort-range e))
+                         (return-from call-define-vi-text-object)))))
+      (let ((range (funcall fn)))
+        (when (visual-p)
+          (expand-visual-range range))
+        range))))
 
 (defmacro define-vi-text-object (name arg-list arg-descriptors
                                  &body body)

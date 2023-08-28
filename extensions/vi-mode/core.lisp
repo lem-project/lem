@@ -36,7 +36,10 @@
            :make-range
            :range-beginning
            :range-end
-           :range-type))
+           :range-type
+           :operator-abort
+           :text-object-abort
+           :text-object-abort-range))
 (in-package :lem-vi-mode/core)
 
 (defvar *last-repeat-keys* '())
@@ -219,3 +222,9 @@
   beginning
   end
   type)
+
+(define-condition operator-abort () ())
+
+(define-condition text-object-abort (operator-abort)
+  ((range :initarg :range
+          :reader text-object-abort-range)))

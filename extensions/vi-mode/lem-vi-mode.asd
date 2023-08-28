@@ -9,7 +9,7 @@
                "split-sequence")
   :components ((:file "core")
                (:file "options" :depends-on ("utils"))
-               (:file "word" :depends-on ("options"))
+               (:file "word" :depends-on ("core" "options"))
                (:file "modeline" :depends-on ("core"))
                (:file "states" :depends-on ("core" "modeline"))
                (:file "visual" :depends-on ("core" "states"))

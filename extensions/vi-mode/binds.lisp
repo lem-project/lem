@@ -138,3 +138,7 @@
       (keymap-table *outer-text-objects-keymap*))
 (setf (gethash (lem:make-key :sym "i") (keymap-table *operator-keymap*))
       (keymap-table *inner-text-objects-keymap*))
+(setf (gethash (lem:make-key :sym "a") (keymap-table *visual-keymap*))
+      (keymap-table *outer-text-objects-keymap*))
+(setf (gethash (lem:make-key :sym "i") (keymap-table *visual-keymap*))
+      (keymap-table *inner-text-objects-keymap*))

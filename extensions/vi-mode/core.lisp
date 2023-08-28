@@ -30,7 +30,13 @@
            :vi-motion
            :vi-motion-type
            :vi-motion-default-n-arg
-           :vi-operator))
+           :vi-operator
+           :vi-text-object
+           :range
+           :make-range
+           :range-beginning
+           :range-end
+           :range-type))
 (in-package :lem-vi-mode/core)
 
 (defvar *last-repeat-keys* '())
@@ -149,9 +155,9 @@
 
 (defun change-state (name)
   (and *current-state*
-       (state-disabled-hook (ensure-state *current-state*)))
+       (state-disabled-hook *current-state*))
   (let ((state (ensure-state name)))
-    (setf *current-state* name)
+    (setf *current-state* state)
     (state-enabled-hook state)
     (set-attribute 'cursor :background (state-cursor-color state))))
 
@@ -206,3 +212,10 @@
      :accessor vi-motion-default-n-arg)))
 
 (defclass vi-operator (vi-command) ())
+
+(defclass vi-text-object (vi-motion) ())
+
+(defstruct (range (:constructor make-range (beginning end &optional type)))
+  beginning
+  end
+  type)

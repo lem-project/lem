@@ -153,14 +153,40 @@
   (typep (current-state) 'visual-block))
 
 (defun visual-range ()
-  (let ((ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start)))
-    (if (visual-block-p)
-        (list *start-point* (copy-point (current-point)))
-        (progn
-          (assert (null (rest ov)))
-          (list
-           (overlay-start (first ov))
-           (overlay-end (first ov)))))))
+  (if (or (visual-char-p)
+          (visual-block-p))
+      (with-point ((start *start-point*)
+                   (end (current-point)))
+        (cond
+          ((point< start end)
+           (character-offset end 1))
+          ((point< end start)
+           (character-offset start 1)))
+        (list start end))
+      (let ((ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start)))
+        (assert (null (rest ov)))
+        (list
+         (overlay-start (first ov))
+         (overlay-end (first ov))))))
+
+(defun (setf visual-range) (new-range)
+  (check-type new-range list)
+  (destructuring-bind (start end) new-range
+    (cond
+      ((point< start end)
+       (character-offset end -1))
+      ((point< end start)
+       (character-offset start -1)))
+    (cond
+      ((or (visual-char-p)
+           (visual-block-p))
+       (setf *start-point* start)
+       (move-point (current-point) end))
+      ((visual-line-p)
+       (unless (same-line-p *start-point* start)
+         (setf *start-point* start))
+       (unless (same-line-p end (current-point))
+         (move-point (current-point) end))))))
 
 (defun apply-visual-range (function)
   (dolist (ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start))

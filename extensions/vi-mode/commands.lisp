@@ -705,17 +705,23 @@
           (change-state prev-state))
         (fall-within-line (current-point))))))
 
-(define-command vi-a-word (count) ("p")
-  (multiple-value-bind (beg end)
-      (a-range-of #'word-char-type count)
-    (when beg
-      (make-range beg end))))
+(define-vi-text-object vi-a-word (count beg end type) ("p" "<v>")
+  (when (member type '(:line :block))
+    (vi-visual-char)
+    (destructuring-bind (new-beg new-end)
+        (visual-range)
+      (setf beg new-beg
+            end new-end)))
+  (a-range-of #'word-char-type count beg end))
 
-(define-command vi-inner-word (count) ("p")
-  (multiple-value-bind (beg end)
-      (inner-range-of #'word-char-type count)
-    (when beg
-      (make-range beg end))))
+(define-vi-text-object vi-inner-word (count beg end type) ("p" "<v>")
+  (when (member type '(:line :block))
+    (vi-visual-char)
+    (destructuring-bind (new-beg new-end)
+        (visual-range)
+      (setf beg new-beg
+            end new-end)))
+  (inner-range-of #'word-char-type count beg end))
 
 (define-command vi-normal () ()
   (change-state 'normal))

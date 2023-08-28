@@ -9,10 +9,11 @@
                "split-sequence")
   :components ((:file "core")
                (:file "options" :depends-on ("utils"))
-               (:file "word" :depends-on ("core" "options"))
+               (:file "word" :depends-on ("options"))
                (:file "modeline" :depends-on ("core"))
                (:file "states" :depends-on ("core" "modeline"))
                (:file "visual" :depends-on ("core" "states"))
+               (:file "text-objects" :depends-on ("core" "visual" "word"))
                (:file "jump-motions")
                (:module "commands-utils"
                 :pathname "commands"

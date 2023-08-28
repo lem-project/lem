@@ -8,8 +8,14 @@
                 :vi-motion-type
                 :vi-motion-default-n-arg
                 :vi-operator
+                :vi-text-object
                 :current-state
-                :change-state)
+                :change-state
+                :range
+                :make-range
+                :range-beginning
+                :range-end
+                :range-type)
   (:import-from :lem-vi-mode/states
                 :operator)
   (:import-from :lem-vi-mode/jump-motions
@@ -35,7 +41,7 @@
            :*cursor-offset*
            :define-vi-motion
            :define-vi-operator
-           :make-range))
+           :define-vi-text-object))
 (in-package :lem-vi-mode/commands/utils)
 
 (defvar *cursor-offset* -1)
@@ -85,7 +91,7 @@
 
 (defvar *vi-origin-point*)
 
-(defun parse-vi-motion-arg-list (arg-list)
+(defun parse-motion-arg-list (arg-list)
   (check-type arg-list list)
   (cond
     ((null arg-list)
@@ -101,7 +107,7 @@
   (check-type type (or null (member :inclusive :exclusive :line :block)))
   (check-type jump boolean)
   (multiple-value-bind (arg-list arg-descriptor default-n-arg)
-      (parse-vi-motion-arg-list arg-list)
+      (parse-motion-arg-list arg-list)
     `(define-command (,name (:advice-classes vi-motion)
                             (:initargs
                              :type ,(or type :exclusive)
@@ -118,15 +124,11 @@
                 (typecase command
                   (vi-motion
                     (vi-motion-default-n-arg command))
-                  (otherwise 1)))))
+                  (otherwise 1))))
+         (lem-core::*universal-argument* n))
     (execute (lem-core::get-active-modes-class-instance (current-buffer))
              command
              n)))
-
-(defstruct (range (:constructor make-range (beginning end &optional type)))
-  beginning
-  end
-  type)
 
 (defun motion-region (motion)
   (check-type motion (or null symbol))
@@ -186,22 +188,22 @@
 
 (defun operator-region (motion &key move-point with-type)
   (multiple-value-bind (start end type)
-      (if (visual-p)
-          (visual-region)
-          (multiple-value-bind (start end type)
-              (motion-region motion)
-            (when (point< end start)
-              (rotatef start end))
-            (ecase type
-              (:line (unless (visual-p)
-                       (line-start start)
-                       (line-end end)))
-              (:block)
-              (:inclusive
-               (unless (point= start end)
-                 (character-offset end 1)))
-              (:exclusive))
-            (values start end type)))
+      (multiple-value-bind (start end type)
+          (if (visual-p)
+              (visual-region)
+              (motion-region motion))
+        (when (point< end start)
+          (rotatef start end))
+        (ecase type
+          (:line (unless (visual-p)
+                   (line-start start)
+                   (line-end end)))
+          (:block)
+          (:inclusive
+           (unless (point= start end)
+             (character-offset end 1)))
+          (:exclusive))
+        (values start end type))
     (multiple-value-prog1
         (if with-type
             (values start end type)
@@ -218,7 +220,7 @@
         (when (visual-p)
           (vi-visual-end))))))
 
-(defun parse-operator-arg-descriptors (arg-descriptors motion &key move-point)
+(defun parse-arg-descriptors (arg-descriptors &key motion move-point)
   `(values-list
     (append
      ,@(mapcar (lambda (arg-descriptor)
@@ -230,7 +232,10 @@
                         `(multiple-value-list (operator-region ',motion :move-point ,move-point :with-type t)))
                        ((string= arg-descriptor "<v>")
                         '(multiple-value-list (visual-region)))
-                       ((string= arg-descriptor "<c>")))
+                       ((string= arg-descriptor "p")
+                        '(list (or (universal-argument-of-this-command) 1)))
+                       (t
+                        (error "Unknown arg descriptor: ~S" arg-descriptor)))
                      `(multiple-value-list ,arg-descriptor)))
                arg-descriptors))))
 
@@ -239,7 +244,32 @@
                               &body body)
   `(define-command (,name (:advice-classes vi-operator)
                           (:initargs :repeat ,repeat)) ,arg-list
-       (,(parse-operator-arg-descriptors arg-descriptors motion :move-point move-point))
+       (,(parse-arg-descriptors arg-descriptors :motion motion :move-point move-point))
      (call-define-vi-operator (lambda () ,@body)
                               :keep-visual ,keep-visual
                               :restore-point ,restore-point)))
+
+(defun call-define-vi-text-object (fn)
+  (flet ((expand-visual-range (p1 p2)
+           (destructuring-bind (vstart vend)
+               (visual-range)
+             (let ((forward (point<= vstart vend)))
+               (setf (visual-range)
+                     (if forward
+                         (list (point-min p1 vstart)
+                               (point-max p2 vend))
+                         (list (point-max p1 vstart)
+                               (point-min p2 vend))))))))
+    (multiple-value-bind (range aborted)
+        (funcall fn)
+      (if (visual-p)
+          (expand-visual-range (range-beginning range)
+                               (range-end range))
+          (unless aborted
+            range)))))
+
+(defmacro define-vi-text-object (name arg-list arg-descriptors
+                                 &body body)
+  `(define-command (,name (:advice-classes vi-text-object)) ,arg-list
+       (,(parse-arg-descriptors arg-descriptors))
+     (call-define-vi-text-object (lambda () ,@body))))

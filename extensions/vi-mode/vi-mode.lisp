@@ -9,7 +9,10 @@
                 :vi-open-below
                 :vi-open-above)
   (:import-from :lem-vi-mode/commands/utils
-                :fall-within-line)
+                :fall-within-line
+                :define-motion
+                :define-operator
+                :define-text-object-command)
   (:import-from :lem-vi-mode/states
                 :normal
                 :insert
@@ -22,6 +25,9 @@
                 :appendf)
   (:export :vi-mode
            :define-state
+           :define-motion
+           :define-operator
+           :define-text-object-command
            :*motion-keymap*
            :*normal-keymap*
            :*insert-keymap*

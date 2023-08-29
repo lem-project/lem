@@ -1,4 +1,3 @@
 (defsystem "lem-paredit-mode"
-  :depends-on ("lem" "lem-vi-mode")
-  :serial t
+  :depends-on ("lem")
   :components ((:file "paredit-mode")))

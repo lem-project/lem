@@ -10,7 +10,7 @@
 
 (defvar *ex-keymap* (make-keymap :name '*ex-keymap*))
 
-(define-vi-state ex () ()
+(define-state ex () ()
   (:default-initargs
    :keymaps (list *ex-keymap*)))
 

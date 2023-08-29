@@ -19,7 +19,10 @@
       (cmd "3l")
       (ok (buf= #?"abcd[e]f\n"))
       (cmd "10l")
-      (ok (buf= #?"abcde[f]\n")))))
+      (ok (buf= #?"abcde[f]\n")))
+    (with-vi-buffer (#?"abc\n[]\ndef")
+      (cmd "l")
+      (ok (buf= #?"abc\n[]\ndef")))))
 
 (deftest vi-forward-word-end
   (with-fake-interface ()

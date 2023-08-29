@@ -118,7 +118,8 @@
          (max-offset (- (length (line-string p))
                         (point-charpos p))))
     (character-offset p (min n max-offset))
-    (when (<= max-offset n)
+    (when (and (<= max-offset n)
+               (not (bolp p)))
       (character-offset p *cursor-offset*))))
 
 (define-command vi-backward-char (&optional (n 1)) ("p")

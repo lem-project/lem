@@ -7,6 +7,7 @@
         :lem-vi-mode/word
         :lem-vi-mode/visual
         :lem-vi-mode/jump-motions
+        :lem-vi-mode/text-objects
         :lem-vi-mode/commands/utils)
   (:import-from :lem-vi-mode/states
                 :*motion-keymap*
@@ -87,6 +88,10 @@
            :vi-jump-next
            :vi-a-word
            :vi-inner-word
+           :vi-a-double-quote
+           :vi-inner-double-quote
+           :vi-a-paren
+           :vi-inner-paren
            :vi-repeat
            :vi-normal
            :vi-keyboard-quit))
@@ -708,23 +713,23 @@
           (change-state prev-state))
         (fall-within-line (current-point))))))
 
-(define-vi-text-object vi-a-word (count beg end type) ("p" "<v>")
-  (when (member type '(:line :block))
-    (vi-visual-char)
-    (destructuring-bind (new-beg new-end)
-        (visual-range)
-      (setf beg new-beg
-            end new-end)))
-  (a-range-of #'word-char-type count beg end))
+(define-vi-text-object vi-a-word (count) ("p")
+  (a-range-of 'word-object (current-state) count))
 
-(define-vi-text-object vi-inner-word (count beg end type) ("p" "<v>")
-  (when (member type '(:line :block))
-    (vi-visual-char)
-    (destructuring-bind (new-beg new-end)
-        (visual-range)
-      (setf beg new-beg
-            end new-end)))
-  (inner-range-of #'word-char-type count beg end))
+(define-vi-text-object vi-inner-word (count) ("p")
+  (inner-range-of 'word-object (current-state) count))
+
+(define-vi-text-object vi-a-double-quote () ()
+  (a-range-of 'double-quoted-object (current-state) 1))
+
+(define-vi-text-object vi-inner-double-quote () ()
+  (inner-range-of 'double-quoted-object (current-state) 1))
+
+(define-vi-text-object vi-a-paren (count) ("p")
+  (a-range-of 'paren-object (current-state) count))
+
+(define-vi-text-object vi-inner-paren (count) ("p")
+  (inner-range-of 'paren-object (current-state) count))
 
 (define-command vi-normal () ()
   (change-state 'normal))

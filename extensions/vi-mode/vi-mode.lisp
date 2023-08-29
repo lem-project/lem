@@ -21,7 +21,7 @@
   (:import-from :alexandria
                 :appendf)
   (:export :vi-mode
-           :define-vi-state
+           :define-state
            :*motion-keymap*
            :*normal-keymap*
            :*insert-keymap*

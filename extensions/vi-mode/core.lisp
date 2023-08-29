@@ -13,7 +13,7 @@
            :*enable-repeat-recording*
            :vi-state
            :vi-mode
-           :define-vi-state
+           :define-state
            :current-state
            :state=
            :change-state
@@ -103,7 +103,7 @@
        (eq (state-name state1) (state-name state2))))
 
 ;;; vi-state methods
-(defmacro define-vi-state (name direct-super-classes direct-slot-specs &rest options)
+(defmacro define-state (name direct-super-classes direct-slot-specs &rest options)
   (let ((cleaned-super-classes (if (null direct-super-classes) '(vi-state) direct-super-classes)))
     `(progn
        (assert (find 'vi-state ',cleaned-super-classes :test #'(lambda (expected-class class) (closer-mop:subclassp class expected-class))) () "At least one of the direct-super-classes should be vi-state or a subclass of vi-state!")

@@ -2,7 +2,7 @@
   (:use :cl
         :lem)
   (:import-from :lem-vi-mode/core
-                :define-vi-state
+                :define-state
                 :*enable-hook*
                 :*disable-hook*
                 :change-state
@@ -45,7 +45,7 @@
 ;;
 ;; Normal state
 
-(define-vi-state normal () ()
+(define-state normal () ()
   (:default-initargs
    :name "NORMAL"
    :cursor-color "IndianRed"
@@ -56,7 +56,7 @@
 ;;
 ;; Insert state
 
-(define-vi-state insert () ()
+(define-state insert () ()
   (:default-initargs
    :name "INSERT"
    :message "-- INSERT --"
@@ -68,7 +68,7 @@
 ;;
 ;; Ex state
 
-(define-vi-state vi-modeline () ()
+(define-state vi-modeline () ()
   (:default-initargs
    :name "COMMAND"
    :modeline-color 'state-modeline-green
@@ -77,7 +77,7 @@
 ;;
 ;; Operator-pending state
 
-(define-vi-state operator () ()
+(define-state operator () ()
   (:default-initargs
    :keymaps (list *operator-keymap* *normal-keymap*)))
 

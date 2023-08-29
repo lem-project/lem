@@ -8,6 +8,8 @@
   (:import-from :lem-vi-mode/commands
                 :vi-open-below
                 :vi-open-above)
+  (:import-from :lem-vi-mode/commands/utils
+                :fall-within-line)
   (:import-from :lem-vi-mode/states
                 :normal
                 :insert
@@ -35,7 +37,8 @@
     (let ((command (this-command)))
       (when (and (typep command 'vi-command)
                  (eq (vi-command-repeat command) t))
-        (setf *last-repeat-keys* (vi-this-command-keys))))))
+        (setf *last-repeat-keys* (vi-this-command-keys)))))
+  (fall-within-line (current-point)))
 
 (defmethod post-command-hook ((state insert))
   (let ((command (this-command)))

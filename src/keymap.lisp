@@ -155,7 +155,7 @@
                          :collect :it))))
     (when *special-keymap*
       (push *special-keymap* keymaps))
-    (nreverse keymaps)))
+    (delete-duplicates (nreverse keymaps))))
 
 (defun lookup-keybind (key)
   (let (cmd)

@@ -3,6 +3,8 @@
         :lem)
   (:import-from :lem-vi-mode/core
                 :make-range
+                :range-beginning
+                :range-end
                 :text-object-abort)
   (:import-from :lem-vi-mode/visual
                 :visual
@@ -19,7 +21,8 @@
            :a-range-of
            :inner-range-of
 
-           :word-object))
+           :word-object
+           :double-quoted-object))
 (in-package :lem-vi-mode/text-objects)
 
 (defclass text-object () ())
@@ -52,12 +55,6 @@
   (:method ((object symbol) state count)
     (inner-range-of (make-instance object) state count)))
 
-(defun target-region ()
-  (if (visual-p)
-      (visual-range)
-      (list (copy-point (current-point))
-            (copy-point (current-point)))))
-
 (defmethod slurp-object ((object function-text-object) point direction)
   (check-type direction (member :forward :backward))
   (with-slots (function) object
@@ -80,7 +77,8 @@
                  p))
         (if (eq direction :forward)
             (move-forward point)
-            (move-backward point))))))
+            (move-backward point)))))
+  point)
 
 (defun a-range-with-direction (object count beg end direction)
   (check-type direction (member :forward :backward))
@@ -114,10 +112,9 @@
          (when (or (null direction)
                    (eq direction :backward))
            (skip-chars-backward beg '(#\Space #\Tab))))
-        ((not (member (character-at beg) '(#\Space #\Tab)))
-         (slurp-object object beg (if (eq direction :backward)
-                                      :forward
-                                      :backward))))
+        ((and (null direction)
+              (not (member (character-at beg) '(#\Space #\Tab))))
+         (slurp-object object beg :backward)))
       (prog1
           (a-range-with-direction object count beg end (or direction :forward))
         (unless initial-blank
@@ -128,7 +125,8 @@
                            (eq direction :forward))
                        (or (point= end (buffer-end-point (point-buffer end)))
                            (char= (character-at end) #\Newline))))
-              (skip-chars-backward beg '(#\Space #\Tab))
+              (unless direction
+                (skip-chars-backward beg '(#\Space #\Tab)))
               (skip-chars-forward end '(#\Space #\Tab))))))))
 
 (defmethod a-range-of (object state count)
@@ -149,118 +147,139 @@
               (skip-chars-backward beg '(#\Space #\Tab))
               (skip-chars-forward end '(#\Space #\Tab))))))))
 
-(defmethod inner-range-of ((object function-text-object) state count)
+(defmethod inner-range-of (object state count)
   (declare (ignore state))
-  (with-slots (function) object
-    (destructuring-bind (beg end)
-        (target-region)
-      (let* ((direction (cond
-                          ((point< beg end) :forward)
-                          ((point< end beg) :backward)))
-             (char-type (funcall function (character-at end)))
-             (check-fn (lambda (c) (eq (funcall function c) char-type)))
-             (buffer (point-buffer beg)))
-        (flet ((move-forward (p)
-                 (loop with buffer-end = (buffer-end-point (point-buffer p))
-                       while (and (point/= p buffer-end)
-                                  (char/= (character-at p) #\Newline)
-                                  (funcall check-fn (character-at p)))
-                       do (character-offset p 1))
-                 p)
-               (move-backward (p)
-                 (loop while (and (< 0 (point-charpos p))
-                                  (funcall check-fn (character-at p -1)))
-                       do (character-offset p -1))
-                 p))
-          (if (or (null direction)
-                  (eq direction :forward))
-              (progn
-                (move-backward beg)
-                (dotimes (i count)
-                  (when (or (point= end (buffer-end-point buffer))
-                            (char= (character-at end) #\Newline))
-                    (error 'text-object-abort
-                           :range (make-range beg end)))
-                  (move-forward end)
-                  (setf char-type (funcall function (character-at end)))))
-              (progn
-                (move-forward beg)
-                (dotimes (i count)
-                  (when (or (point= end (buffer-start-point buffer))
-                            (char= (character-at end -1) #\Newline))
-                    (error 'text-object-abort
-                           :range (make-range beg end)))
-                  (move-backward end)
-                  (setf char-type (funcall function (character-at end -1))))))
-          (make-range beg end))))))
+  (with-point ((beg (current-point))
+               (end (current-point)))
+    (if (member (character-at beg) '(#\Space #\Tab #\Newline))
+        (skip-chars-backward beg '(#\Space #\Tab #\Newline))
+        (slurp-object object beg :backward))
+    (dotimes (i count)
+      (when (or (point= end (buffer-end-point (point-buffer end)))
+                (char= (character-at end) #\Newline))
+        (error 'text-object-abort
+               :range (make-range beg end)))
+      (if (member (character-at end) '(#\Space #\Tab #\Newline))
+          (skip-chars-forward end '(#\Space #\Tab))
+          (slurp-object object end :forward)))
+    (make-range beg end)))
 
-(defmethod a-range-of ((object quoted-text-object) state count)
-  (declare (ignore state count))
+(defmethod inner-range-of (object (state visual) count)
+  (destructuring-bind (beg end)
+      (visual-range)
+    (let ((direction (cond
+                       ((point< beg end) :forward)
+                       ((point< end beg) :backward)))
+          (buffer (point-buffer end)))
+      (when (null direction)
+        (if (member (character-at beg) '(#\Space #\Tab #\Newline))
+            (skip-chars-backward beg '(#\Space #\Tab #\Newline))
+            (slurp-object object beg :backward)))
+      (if (or (null direction)
+              (eq direction :forward))
+          (progn
+            (dotimes (i count)
+              (when (or (point= end (buffer-end-point buffer))
+                        (char= (character-at end) #\Newline))
+                (error 'text-object-abort
+                       :range (make-range beg end)))
+              (slurp-object object end :forward)))
+          (progn
+            (slurp-object object beg :forward)
+            (dotimes (i count)
+              (when (or (point= end (buffer-start-point buffer))
+                        (char= (character-at end -1) #\Newline))
+                (error 'text-object-abort
+                       :range (make-range beg end)))
+              (slurp-object object end :backward)))))
+    (make-range beg end)))
+
+(defmethod slurp-object ((object quoted-text-object) point direction)
   (with-slots (quote-char escape-char) object
-    (destructuring-bind (beg end)
-        (target-region)
-      (let ((direction (cond
-                         ((point< beg end) :forward)
-                         ((point< end beg) :backward))))
-        (loop
-          (skip-chars-backward beg (lambda (c) (char/= c quote-char)))
-          (let ((prev-char (character-at beg -1)))
-            (cond
-              ;; No quote-char found
-              ((null prev-char)
-               (keyboard-quit))
-              ;; Skip escaped quote-char
-              ((and escape-char
-                    (char= prev-char escape-char)))
-              ;; Successfully found
-              (t
-               (character-offset beg -1)
-               (return)))))
-        (loop
-          (skip-chars-forward end (lambda (c) (char/= c quote-char)))
-          (let ((next-char (character-at end)))
-            (cond
-              ;; No quote-char found
-              ((null next-char)
-               (keyboard-quit))
-              ;; Skip escaped quote-char
-              ((and escape-char
-                    (char= (character-at end -1) escape-char)))
-              ;; Successfully found
-              (t
-               (character-offset end 1)
-               (return)))))
-        (if (member (character-at end) '(#\Space #\Tab))
-            (skip-chars-forward end '(#\Space #\Tab))
-            (skip-chars-backward beg '(#\Space #\Tab))))
-      (make-range beg end))))
+    (ecase direction
+      (:backward
+       (when (char= (character-at point) quote-char)
+         (character-offset point -1))
+       (loop
+         (skip-chars-backward point (lambda (c) (char/= c quote-char)))
+         (let ((prev-char (character-at point -1)))
+           (cond
+             ;; No quote-char found
+             ((null prev-char)
+              (keyboard-quit))
+             ;; Skip escaped quote-char
+             ((and escape-char
+                   (char= prev-char escape-char)))
+             ;; Successfully found
+             (t
+              (character-offset point -1)
+              (return))))))
+      (:forward
+       (when (char= (character-at point) quote-char)
+         (character-offset point 1))
+       (loop
+         (skip-chars-forward point (lambda (c) (char/= c quote-char)))
+         (let ((next-char (character-at point)))
+           (cond
+             ;; No quote-char found
+             ((null next-char)
+              (keyboard-quit))
+             ;; Skip escaped quote-char
+             ((and escape-char
+                   (char= (character-at point -1) escape-char)))
+             ;; Successfully found
+             (t
+              (character-offset point 1)
+              (return)))))))))
 
 (defmethod a-range-of ((object quoted-text-object) (state visual) count)
-  (declare (ignore count))
-  (with-slots (open-char escape-char) object
+  (with-slots (quote-char escape-char) object
     (destructuring-bind (beg end)
         (visual-range)
-      (let ((direction (cond
-                         ((point< beg end) :forward)
-                         ((point< end beg) :backward))))
-        (loop
-          (skip-chars-backward beg (lambda (c) (char/= c open-char)))
-          (unless (char= (character-at beg -1) escape-char)
-            (character-offset beg -1)
-            (return)))
-        (loop
-          (skip-chars-forward end (lambda (c) (char/= c open-char)))
-          (unless (char= (character-at end -1) escape-char)
-            (character-offset end 1)
-            (return)))
-        (if (member (character-at end) '(#\Space #\Tab))
-            (skip-chars-forward end '(#\Space #\Tab))
-            (skip-chars-backward beg '(#\Space #\Tab))))
-      (make-range beg end))))
+      (let* ((region-string (points-to-string beg end))
+             (len (length region-string))
+             (quote-count 0)
+             (direction (cond
+                          ((point< beg end) :forward)
+                          ((point< end beg) :backward))))
+        (when (/= len 0)
+          (do ((i 0 (1+ i)))
+              ((<= len i))
+            (let ((char (aref region-string i)))
+              (cond
+                ((char= char quote-char)
+                 (incf quote-count))
+                ((char= char escape-char)
+                 (incf i))))))
+        (if (= (mod quote-count 2) 1)
+            ;; Incomplete object in selected region
+            (progn
+              (if (eq direction :backward)
+                  (progn
+                    (skip-chars-backward end (lambda (c) (char/= c quote-char)))
+                    (character-offset end -1)
+                    (skip-chars-backward end '(#\Space #\Tab)))
+                  (progn
+                    (skip-chars-forward end (lambda (c) (char/= c quote-char)))
+                    (character-offset end 1)
+                    (skip-chars-forward end '(#\Space #\Tab))))
+              (make-range beg end))
+            (call-next-method))))))
+
+(defmethod inner-range-of ((object quoted-text-object) state count)
+  (declare (ignore state count))
+  (let ((range (call-next-method)))
+    (character-offset (range-beginning range) 1)
+    (character-offset (range-end range) -1)
+    range))
 
 (defclass word-object (function-text-object) ()
   (:default-initargs
    :function #'word-char-type))
+
+(defclass double-quoted-object (quoted-text-object) ()
+  (:default-initargs
+   :quote-char #\"))
 
 (defmethod a-range-of :before ((object word-object) (state visual) count)
   (unless (visual-char-p)

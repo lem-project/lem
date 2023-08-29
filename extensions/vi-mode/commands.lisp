@@ -88,6 +88,8 @@
            :vi-jump-next
            :vi-a-word
            :vi-inner-word
+           :vi-a-double-quote
+           :vi-inner-double-quote
            :vi-repeat
            :vi-normal
            :vi-keyboard-quit))
@@ -711,6 +713,12 @@
 
 (define-vi-text-object vi-inner-word (count) ("p")
   (inner-range-of 'word-object (current-state) count))
+
+(define-vi-text-object vi-a-double-quote () ()
+  (a-range-of 'double-quoted-object (current-state) 1))
+
+(define-vi-text-object vi-inner-double-quote () ()
+  (inner-range-of 'double-quoted-object (current-state) 1))
 
 (define-command vi-normal () ()
   (change-state 'normal))

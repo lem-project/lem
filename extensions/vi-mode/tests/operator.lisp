@@ -30,7 +30,10 @@
         (cmd "dw")
         (ok (buf= #?"[\n]  def\n"))
         (cmd "dw")
-        (ok (buf= #?"  [d]ef\n"))))
+        (ok (buf= #?"  [d]ef\n")))
+      (with-vi-buffer (#?"abc\n[ ] def\n")
+        (cmd "dw")
+        (ok (buf= #?"abc\n[d]ef\n"))))
     (testing "daw"
       (with-vi-buffer ("foo b[a]r baz")
         (cmd "daw")

@@ -24,10 +24,10 @@ To enable, add the following code to `~/.lem/init.lisp`:
 
 Vi-mode options are global settings, similarly to Vim.
 
-They can be set with `:set` command, or a function `vi-option-value` in `~/.lem/init.lisp`, like:
+They can be set with `:set` command, or a function `option-value` in `~/.lem/init.lisp`, like:
 
 ```common-lisp
-(setf (lem-vi-mode:vi-option-value "autochdir") t)
+(setf (lem-vi-mode:option-value "autochdir") t)
 ```
 
 Here's a list of all options currently implemented:

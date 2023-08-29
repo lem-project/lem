@@ -2,7 +2,7 @@
   (:use :cl
         :lem)
   (:import-from :lem-vi-mode/options
-                :vi-option-raw-value)
+                :option-raw-value)
   (:export :forward-word-begin
            :forward-word-end
            :backward-word-begin
@@ -13,7 +13,7 @@
 (in-package :lem-vi-mode/word)
 
 (defun word-char-p (char)
-  (funcall (cdr (vi-option-raw-value "iskeyword"))
+  (funcall (cdr (option-raw-value "iskeyword"))
            char))
 
 (defun blank-char-p (char)

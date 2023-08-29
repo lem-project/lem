@@ -4,7 +4,7 @@
         :lem-vi-mode/core
         :lem-vi-mode/ex)
   (:import-from :lem-vi-mode/options
-                :vi-option-value)
+                :option-value)
   (:import-from :lem-vi-mode/commands
                 :vi-open-below
                 :vi-open-above)
@@ -35,7 +35,7 @@
            :*ex-keymap*
            :normal
            :insert
-           :vi-option-value))
+           :option-value))
 (in-package :lem-vi-mode)
 
 (defmethod post-command-hook ((state normal))

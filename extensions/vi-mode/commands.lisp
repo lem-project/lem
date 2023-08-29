@@ -134,22 +134,22 @@
           (return)
           (character-offset p -1)))))
 
-(define-vi-motion vi-next-line (&optional (n 1))
+(define-motion vi-next-line (&optional (n 1))
     (:type :line)
   (next-logical-line n)
   (fall-within-line (current-point)))
 
-(define-vi-motion vi-next-display-line (&optional (n 1))
+(define-motion vi-next-display-line (&optional (n 1))
     (:type :line)
   (next-line n)
   (fall-within-line (current-point)))
 
-(define-vi-motion vi-previous-line (&optional (n 1))
+(define-motion vi-previous-line (&optional (n 1))
     (:type :line)
   (previous-logical-line n)
   (fall-within-line (current-point)))
 
-(define-vi-motion vi-previous-display-line (&optional (n 1))
+(define-motion vi-previous-display-line (&optional (n 1))
     (:type :line)
   (previous-line n)
   (fall-within-line (current-point)))
@@ -192,7 +192,7 @@
   (dotimes (i n)
     (backward-word-begin #'word-char-type)))
 
-(define-vi-motion vi-forward-word-end (&optional (n 1))
+(define-motion vi-forward-word-end (&optional (n 1))
     (:type :inclusive)
   (dotimes (i n)
     (forward-word-end #'word-char-type)))
@@ -205,7 +205,7 @@
   (dotimes (i n)
     (backward-word-begin #'broad-word-char-type)))
 
-(define-vi-motion vi-forward-word-end-broad (&optional (n 1))
+(define-motion vi-forward-word-end-broad (&optional (n 1))
     (:type :inclusive)
   (dotimes (i n)
     (forward-word-end #'broad-word-char-type)))
@@ -234,18 +234,18 @@
              (eql (character-at (current-point)) #\Space))
     (vi-backward-char)))
 
-(define-vi-motion vi-move-to-window-top ()
+(define-motion vi-move-to-window-top ()
     (:type :line
      :jump t)
   (move-point (current-point) (window-view-point (current-window))))
 
-(define-vi-motion vi-move-to-window-middle ()
+(define-motion vi-move-to-window-middle ()
     (:type :line
      :jump t)
   (vi-move-to-window-top)
   (next-line (floor (/ (- (window-height (current-window)) 2) 2))))
 
-(define-vi-motion vi-move-to-window-bottom ()
+(define-motion vi-move-to-window-bottom ()
     (:type :line
      :jump t)
   (vi-move-to-window-top)
@@ -255,26 +255,26 @@
   (vi-move-to-beginning-of-line)
   (skip-whitespace-forward (current-point) t))
 
-(define-vi-operator vi-indent (start end) ("<r>")
+(define-operator vi-indent (start end) ("<r>")
     (:restore-point t)
   (indent-points start end))
 
 ;; FIXME: support block
-(define-vi-operator vi-substitute (beg end) ("<r>")
+(define-operator vi-substitute (beg end) ("<r>")
     (:motion vi-forward-char)
   (vi-delete beg end :inclusive)
   (change-state 'insert))
 
-(define-vi-operator vi-delete-next-char (beg end) ("<r>")
+(define-operator vi-delete-next-char (beg end) ("<r>")
     (:motion vi-forward-char)
   (vi-delete beg end :inclusive)
   (fall-within-line (current-point)))
 
-(define-vi-operator vi-delete-previous-char (beg end) ("<r>")
+(define-operator vi-delete-previous-char (beg end) ("<r>")
     (:motion vi-backward-char)
   (vi-delete beg end :exclusive))
 
-(define-vi-operator vi-delete (start end type) ("<R>")
+(define-operator vi-delete (start end type) ("<R>")
     (:move-point nil)
   (let ((pos (point-charpos (current-point))))
     (if (visual-p)
@@ -300,7 +300,7 @@
         (skip-chars-forward (current-point) '(#\Space #\Tab)))
       (fall-within-line (current-point)))))
 
-(define-vi-operator vi-delete-line (start end type) ("<R>")
+(define-operator vi-delete-line (start end type) ("<R>")
     (:motion vi-move-to-end-of-line)
   (when (or (eq type :line)
             (visual-char-p))
@@ -318,20 +318,20 @@
       (kill-region-without-appending start end))
   (fall-within-line (current-point)))
 
-(define-vi-operator vi-change (beg end type) ("<R>")
+(define-operator vi-change (beg end type) ("<R>")
     ()
   (vi-delete beg end type)
   (change-state 'insert))
 
-(define-vi-operator vi-change-line (beg end type) ("<R>")
+(define-operator vi-change-line (beg end type) ("<R>")
     (:motion vi-move-to-end-of-line)
   (vi-change beg end type)
   (change-state 'insert))
 
-(define-vi-motion vi-line (&optional (n 1)) ()
+(define-motion vi-line (&optional (n 1)) ()
   (next-logical-line (1- n)))
 
-(define-vi-operator vi-join (start end) ("<r>")
+(define-operator vi-join (start end) ("<r>")
     (:motion vi-line)
   (let ((count
           (max 1 (- (line-number-at-point end)
@@ -342,7 +342,7 @@
       (delete-next-char)))
   (fall-within-line (current-point)))
 
-(define-vi-operator vi-join-line (start end) ("<r>")
+(define-operator vi-join-line (start end) ("<r>")
     (:motion vi-line)
   (let ((count
           (max 1 (- (line-number-at-point end)
@@ -366,7 +366,7 @@
           (insert-character p #\Space))))
     (vi-backward-char)))
 
-(define-vi-operator vi-yank (start end type) ("<R>")
+(define-operator vi-yank (start end type) ("<R>")
     (:move-point nil)
   (if (eq type :block)
       (visual-yank)
@@ -426,7 +426,7 @@
             (yank)))
          (move-point (current-point) p))))))
 
-(define-vi-operator vi-replace-char (start end type char) ("<R>" (key-to-char (read-key)))
+(define-operator vi-replace-char (start end type char) ("<R>" (key-to-char (read-key)))
     (:motion vi-forward-char)
   (if (eq type :block)
       (progn
@@ -451,17 +451,17 @@
             (move-point (current-point) start)
             (character-offset (current-point) *cursor-offset*)))))
 
-(define-vi-operator vi-kill-last-word (start end) ("<r>")
+(define-operator vi-kill-last-word (start end) ("<r>")
     (:motion vi-backward-word-end)
   (kill-region-without-appending start end))
 
-(define-vi-operator vi-upcase (start end type) ("<R>")
+(define-operator vi-upcase (start end type) ("<R>")
     (:move-point t)
   (if (eq type :block)
       (apply-visual-range #'uppercase-region)
       (uppercase-region start end)))
 
-(define-vi-operator vi-downcase (start end type) ("<R>")
+(define-operator vi-downcase (start end type) ("<R>")
     (:move-point t)
   (if (eq type :block)
       (apply-visual-range #'downcase-region)
@@ -487,7 +487,7 @@
   (when (syntax-closed-paren-char-p (character-at point))
     (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t)))
 
-(define-vi-motion vi-move-to-matching-paren ()
+(define-motion vi-move-to-matching-paren ()
     (:type :inclusive
      :jump t)
   (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))
@@ -561,13 +561,13 @@
     (lem/isearch:isearch-finish)
     (lem/isearch:isearch-next)))
 
-(define-vi-motion vi-goto-first-line ()
+(define-motion vi-goto-first-line ()
     (:type :line
      :jump t)
   (move-to-beginning-of-buffer)
   (skip-whitespace-forward (current-point) t))
 
-(define-vi-motion vi-goto-line (n)
+(define-motion vi-goto-line (n)
     (:type :line
      :jump t)
   (if (null n)
@@ -609,27 +609,27 @@
         (character-offset p offset)
         (move-point (current-point) p)))))
 
-(define-vi-motion vi-find-char (&optional (n 1)) (:type :inclusive)
+(define-motion vi-find-char (&optional (n 1)) (:type :inclusive)
   (alexandria:when-let (c (key-to-char (read-key)))
     (%vi-find-char n c :forward -1)))
 
-(define-vi-motion vi-find-char-backward (&optional (n 1)) ()
+(define-motion vi-find-char-backward (&optional (n 1)) ()
   (alexandria:when-let (c (key-to-char (read-key)))
     (%vi-find-char n c :backward 0)))
 
-(define-vi-motion vi-find-char-before (&optional (n 1)) (:type :inclusive)
+(define-motion vi-find-char-before (&optional (n 1)) (:type :inclusive)
   (alexandria:when-let (c (key-to-char (read-key)))
     (%vi-find-char n c :forward -2)))
 
-(define-vi-motion vi-find-char-backward-after (&optional (n 1)) ()
+(define-motion vi-find-char-backward-after (&optional (n 1)) ()
   (alexandria:when-let (c (key-to-char (read-key)))
     (%vi-find-char n c :backward 1)))
 
-(define-vi-motion vi-find-char-repeat (&optional (n 1)) (:type :inclusive)
+(define-motion vi-find-char-repeat (&optional (n 1)) (:type :inclusive)
   (when *find-char-args*
     (apply #'%vi-find-char n *find-char-args*)))
 
-(define-vi-motion vi-find-char-repeat-backward (&optional (n 1)) ()
+(define-motion vi-find-char-repeat-backward (&optional (n 1)) ()
   (when *find-char-args*
     (destructuring-bind (c direction offset)
         *find-char-args*
@@ -713,22 +713,22 @@
           (change-state prev-state))
         (fall-within-line (current-point))))))
 
-(define-vi-text-object vi-a-word (count) ("p")
+(define-text-object-command vi-a-word (count) ("p")
   (a-range-of 'word-object (current-state) count))
 
-(define-vi-text-object vi-inner-word (count) ("p")
+(define-text-object-command vi-inner-word (count) ("p")
   (inner-range-of 'word-object (current-state) count))
 
-(define-vi-text-object vi-a-double-quote () ()
+(define-text-object-command vi-a-double-quote () ()
   (a-range-of 'double-quoted-object (current-state) 1))
 
-(define-vi-text-object vi-inner-double-quote () ()
+(define-text-object-command vi-inner-double-quote () ()
   (inner-range-of 'double-quoted-object (current-state) 1))
 
-(define-vi-text-object vi-a-paren (count) ("p")
+(define-text-object-command vi-a-paren (count) ("p")
   (a-range-of 'paren-object (current-state) count))
 
-(define-vi-text-object vi-inner-paren (count) ("p")
+(define-text-object-command vi-inner-paren (count) ("p")
   (inner-range-of 'paren-object (current-state) count))
 
 (define-command vi-normal () ()

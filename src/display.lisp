@@ -508,9 +508,9 @@
               ((< point-column (screen-horizontal-scroll-start screen))
                (setf (screen-horizontal-scroll-start screen) point-column)))))))
 
-(defgeneric redraw-buffer (buffer window force))
+(defgeneric redraw-buffer (implementation buffer window force))
 
-(defmethod redraw-buffer :around (buffer window force)
+(defmethod redraw-buffer :around (implementation buffer window force)
   (with-display-error ()
     (let ((lem-if:*background-color-of-drawing-window*
             (get-background-color-of-window window)))
@@ -528,11 +528,11 @@
          *inactive-window-background-color*)
         (t nil)))
 
-(defmethod redraw-buffer :before ((buffer text-buffer) window force)
+(defmethod redraw-buffer :before (implementation (buffer text-buffer) window force)
   (lem-if:redraw-view-before (implementation)
                              (screen-view (window-screen window))))
 
-(defmethod redraw-buffer :after ((buffer text-buffer) window force)
+(defmethod redraw-buffer :after (implementation (buffer text-buffer) window force)
   (when (window-use-modeline-p window)
     (redraw-modeline window (or (screen-modified-p (window-screen window))
                                 force)))
@@ -545,7 +545,7 @@
                    (window-point window))
       -1))
 
-(defmethod redraw-buffer ((buffer text-buffer) window force)
+(defmethod redraw-buffer (implementation (buffer text-buffer) window force)
   (assert (eq buffer (window-buffer window)))
   (let ((screen (window-screen window)))
     (draw-window-to-screen window)

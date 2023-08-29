@@ -524,6 +524,7 @@
    :*background-color-of-drawing-window*
    :invoke
    :get-background-color
+   :get-foreground-color
    :update-foreground
    :update-background
    :update-cursor-shape
@@ -534,6 +535,8 @@
    :display-fullscreen-p
    :set-display-fullscreen-p
    :make-view
+   :view-width
+   :view-height
    :delete-view
    :clear
    :set-view-size
@@ -569,4 +572,8 @@
    :get-font-list
    :get-mouse-position
    :get-char-width
-   :get-char-height))
+   :get-char-height
+   :clear-to-end-of-window
+   :render-line
+   :object-width
+   :object-height))

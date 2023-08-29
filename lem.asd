@@ -65,6 +65,8 @@
                (:file "command-advices")
                (:file "interface")
                (:file "display")
+               (:file "display-2")
+               (:file "display-3")
                (:file "site-init")
                (:file "lem")
 

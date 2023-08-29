@@ -36,6 +36,7 @@
 
 (defgeneric lem-if:invoke (implementation function))
 (defgeneric lem-if:get-background-color (implementation))
+(defgeneric lem-if:get-foreground-color (implementation))
 (defgeneric lem-if:update-foreground (implementation color-name))
 (defgeneric lem-if:update-background (implementation color-name))
 (defgeneric lem-if:update-cursor-shape (implementation cursor-type)
@@ -47,6 +48,8 @@
 (defgeneric lem-if:display-fullscreen-p (implementation))
 (defgeneric lem-if:set-display-fullscreen-p (implementation fullscreen-p))
 (defgeneric lem-if:make-view (implementation window x y width height use-modeline))
+(defgeneric lem-if:view-width (implementation view))
+(defgeneric lem-if:view-height (implementation view))
 (defgeneric lem-if:delete-view (implementation view))
 (defgeneric lem-if:clear (implementation view))
 (defgeneric lem-if:set-view-size (implementation view width height))
@@ -77,17 +80,19 @@
                                             print-spec
                                             style
                                             max-display-items))
-(defgeneric lem-if:popup-menu-update (implementation popup-menu items &key print-spec max-display-items keep-focus))
+(defgeneric lem-if:popup-menu-update
+    (implementation popup-menu items &key print-spec max-display-items keep-focus))
 (defgeneric lem-if:popup-menu-quit (implementation popup-menu))
 (defgeneric lem-if:popup-menu-down (implementation popup-menu))
 (defgeneric lem-if:popup-menu-up (implementation popup-menu))
 (defgeneric lem-if:popup-menu-first (implementation popup-menu))
 (defgeneric lem-if:popup-menu-last (implementation popup-menu))
 (defgeneric lem-if:popup-menu-select (implementation popup-menu))
-(defgeneric lem-if:display-popup-message (implementation buffer-or-string &key timeout
-                                                                               destination-window
-                                                                               source-window
-                                                                               style))
+(defgeneric lem-if:display-popup-message
+    (implementation buffer-or-string &key timeout
+                                          destination-window
+                                          source-window
+                                          style))
 (defgeneric lem-if:delete-popup-message (implementation popup-message))
 (defgeneric lem-if:display-context-menu (implementation context-menu style)
   (:method (implementation context-menu style)))
@@ -115,6 +120,11 @@
 (defgeneric lem-if:get-char-width (implementation))
 (defgeneric lem-if:get-char-height (implementation))
 
+(defgeneric lem-if:render-line (implementation window x y objects height))
+(defgeneric lem-if:object-width (implementation drawing-object))
+(defgeneric lem-if:object-height (implementation drawing-object))
+(defgeneric lem-if:clear-to-end-of-window (implementation window y))
+
 (defvar *display-background-mode* nil)
 
 (defun implementation ()
@@ -139,6 +149,26 @@
 
 (defun set-background (name)
   (lem-if:update-background (implementation) name))
+
+(defun attribute-foreground-color (attribute)
+  (or (and attribute
+           (parse-color (attribute-foreground attribute)))
+      (lem-if:get-foreground-color (implementation))))
+
+(defun attribute-background-color (attribute)
+  (or (and attribute
+           (parse-color (attribute-background attribute)))
+      (lem-if:get-background-color (implementation))))
+
+(defun attribute-foreground-with-reverse (attribute)
+  (if (and attribute (attribute-reverse attribute))
+      (attribute-background-color attribute)
+      (attribute-foreground-color attribute)))
+
+(defun attribute-background-with-reverse (attribute)
+  (if (and attribute (attribute-reverse attribute))
+      (attribute-foreground-color attribute)
+      (attribute-background-color attribute)))
 
 (defun display-width () (lem-if:display-width (implementation)))
 (defun display-height () (lem-if:display-height (implementation)))

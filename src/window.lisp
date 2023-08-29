@@ -1344,7 +1344,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 
 (defgeneric window-redraw (window force)
   (:method (window force)
-    (redraw-buffer (window-buffer window) window force)))
+    (redraw-buffer (implementation) (window-buffer window) window force)))
 
 (defun redraw-current-window (window force)
   (assert (eq window (current-window)))

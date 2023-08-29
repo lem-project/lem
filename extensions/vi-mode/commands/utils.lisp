@@ -107,20 +107,18 @@
        (second (ensure-list (second arg-list)))))
     (t (values arg-list '("P") nil))))
 
-(defmacro define-motion (name arg-list (&key type jump (repeat :motion)) &body body)
+(defmacro define-motion (name arg-list arg-descriptors (&key type jump (repeat :motion) (default-n-arg 1)) &body body)
   (check-type type (or null (member :inclusive :exclusive :line :block)))
   (check-type jump boolean)
-  (multiple-value-bind (arg-list arg-descriptor default-n-arg)
-      (parse-motion-arg-list arg-list)
-    `(define-command (,name (:advice-classes vi-motion)
-                            (:initargs
-                             :type ,(or type :exclusive)
-                             :repeat ,repeat
-                             :default-n-arg ,default-n-arg))
-       ,arg-list ,arg-descriptor
-       (with-point ((*vi-origin-point* (current-point)))
-         (,(if jump 'with-jump-motion 'progn)
-           ,@body)))))
+  `(define-command (,name (:advice-classes vi-motion)
+                          (:initargs
+                           :type ,(or type :exclusive)
+                           :repeat ,repeat
+                           :default-n-arg ,default-n-arg))
+       ,arg-list ,arg-descriptors
+     (with-point ((*vi-origin-point* (current-point)))
+       (,(if jump 'with-jump-motion 'progn)
+        ,@body))))
 
 (defun call-motion-command (command n)
   (let* ((command (ensure-command command))

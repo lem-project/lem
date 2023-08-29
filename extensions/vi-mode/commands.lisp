@@ -134,22 +134,22 @@
           (return)
           (character-offset p -1)))))
 
-(define-motion vi-next-line (&optional (n 1))
+(define-motion vi-next-line (n) ("p")
     (:type :line)
   (next-logical-line n)
   (fall-within-line (current-point)))
 
-(define-motion vi-next-display-line (&optional (n 1))
+(define-motion vi-next-display-line (n) ("p")
     (:type :line)
   (next-line n)
   (fall-within-line (current-point)))
 
-(define-motion vi-previous-line (&optional (n 1))
+(define-motion vi-previous-line (n) ("p")
     (:type :line)
   (previous-logical-line n)
   (fall-within-line (current-point)))
 
-(define-motion vi-previous-display-line (&optional (n 1))
+(define-motion vi-previous-display-line (n) ("p")
     (:type :line)
   (previous-line n)
   (fall-within-line (current-point)))
@@ -192,7 +192,7 @@
   (dotimes (i n)
     (backward-word-begin #'word-char-type)))
 
-(define-motion vi-forward-word-end (&optional (n 1))
+(define-motion vi-forward-word-end (n) ("p")
     (:type :inclusive)
   (dotimes (i n)
     (forward-word-end #'word-char-type)))
@@ -205,7 +205,7 @@
   (dotimes (i n)
     (backward-word-begin #'broad-word-char-type)))
 
-(define-motion vi-forward-word-end-broad (&optional (n 1))
+(define-motion vi-forward-word-end-broad (n) ("p")
     (:type :inclusive)
   (dotimes (i n)
     (forward-word-end #'broad-word-char-type)))
@@ -234,18 +234,18 @@
              (eql (character-at (current-point)) #\Space))
     (vi-backward-char)))
 
-(define-motion vi-move-to-window-top ()
+(define-motion vi-move-to-window-top () ()
     (:type :line
      :jump t)
   (move-point (current-point) (window-view-point (current-window))))
 
-(define-motion vi-move-to-window-middle ()
+(define-motion vi-move-to-window-middle () ()
     (:type :line
      :jump t)
   (vi-move-to-window-top)
   (next-line (floor (/ (- (window-height (current-window)) 2) 2))))
 
-(define-motion vi-move-to-window-bottom ()
+(define-motion vi-move-to-window-bottom () ()
     (:type :line
      :jump t)
   (vi-move-to-window-top)
@@ -328,7 +328,8 @@
   (vi-change beg end type)
   (change-state 'insert))
 
-(define-motion vi-line (&optional (n 1)) ()
+(define-motion vi-line (n) ("p")
+    ()
   (next-logical-line (1- n)))
 
 (define-operator vi-join (start end) ("<r>")
@@ -487,7 +488,7 @@
   (when (syntax-closed-paren-char-p (character-at point))
     (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t)))
 
-(define-motion vi-move-to-matching-paren ()
+(define-motion vi-move-to-matching-paren () ()
     (:type :inclusive
      :jump t)
   (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))
@@ -561,13 +562,13 @@
     (lem/isearch:isearch-finish)
     (lem/isearch:isearch-next)))
 
-(define-motion vi-goto-first-line ()
+(define-motion vi-goto-first-line () ()
     (:type :line
      :jump t)
   (move-to-beginning-of-buffer)
   (skip-whitespace-forward (current-point) t))
 
-(define-motion vi-goto-line (n)
+(define-motion vi-goto-line (n) ("P")
     (:type :line
      :jump t)
   (if (null n)
@@ -609,27 +610,33 @@
         (character-offset p offset)
         (move-point (current-point) p)))))
 
-(define-motion vi-find-char (&optional (n 1)) (:type :inclusive)
+(define-motion vi-find-char (n) ("p")
+    (:type :inclusive)
   (alexandria:when-let (c (key-to-char (read-key)))
     (%vi-find-char n c :forward -1)))
 
-(define-motion vi-find-char-backward (&optional (n 1)) ()
+(define-motion vi-find-char-backward (n) ("p")
+    ()
   (alexandria:when-let (c (key-to-char (read-key)))
     (%vi-find-char n c :backward 0)))
 
-(define-motion vi-find-char-before (&optional (n 1)) (:type :inclusive)
+(define-motion vi-find-char-before (n) ("p")
+    (:type :inclusive)
   (alexandria:when-let (c (key-to-char (read-key)))
     (%vi-find-char n c :forward -2)))
 
-(define-motion vi-find-char-backward-after (&optional (n 1)) ()
+(define-motion vi-find-char-backward-after (n) ("p")
+    ()
   (alexandria:when-let (c (key-to-char (read-key)))
     (%vi-find-char n c :backward 1)))
 
-(define-motion vi-find-char-repeat (&optional (n 1)) (:type :inclusive)
+(define-motion vi-find-char-repeat (n) ("p")
+    (:type :inclusive)
   (when *find-char-args*
     (apply #'%vi-find-char n *find-char-args*)))
 
-(define-motion vi-find-char-repeat-backward (&optional (n 1)) ()
+(define-motion vi-find-char-repeat-backward (n) ("p")
+    ()
   (when *find-char-args*
     (destructuring-bind (c direction offset)
         *find-char-args*

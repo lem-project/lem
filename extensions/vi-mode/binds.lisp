@@ -135,6 +135,12 @@
 (define-key *inner-text-objects-keymap* "w" 'vi-inner-word)
 (define-key *outer-text-objects-keymap* "\"" 'vi-a-double-quote)
 (define-key *inner-text-objects-keymap* "\"" 'vi-inner-double-quote)
+(define-key *outer-text-objects-keymap* "(" 'vi-a-paren)
+(define-key *outer-text-objects-keymap* ")" 'vi-a-paren)
+(define-key *outer-text-objects-keymap* "b" 'vi-a-paren)
+(define-key *inner-text-objects-keymap* "(" 'vi-inner-paren)
+(define-key *inner-text-objects-keymap* ")" 'vi-inner-paren)
+(define-key *inner-text-objects-keymap* "b" 'vi-inner-paren)
 
 (setf (gethash (lem:make-key :sym "a") (keymap-table *operator-keymap*))
       (keymap-table *outer-text-objects-keymap*))

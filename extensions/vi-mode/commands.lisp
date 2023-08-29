@@ -90,6 +90,8 @@
            :vi-inner-word
            :vi-a-double-quote
            :vi-inner-double-quote
+           :vi-a-paren
+           :vi-inner-paren
            :vi-repeat
            :vi-normal
            :vi-keyboard-quit))
@@ -719,6 +721,12 @@
 
 (define-vi-text-object vi-inner-double-quote () ()
   (inner-range-of 'double-quoted-object (current-state) 1))
+
+(define-vi-text-object vi-a-paren (count) ("p")
+  (a-range-of 'paren-object (current-state) count))
+
+(define-vi-text-object vi-inner-paren (count) ("p")
+  (inner-range-of 'paren-object (current-state) count))
 
 (define-command vi-normal () ()
   (change-state 'normal))

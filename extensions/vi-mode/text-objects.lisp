@@ -22,6 +22,7 @@
            :inner-range-of
 
            :word-object
+           :paren-object
            :double-quoted-object))
 (in-package :lem-vi-mode/text-objects)
 
@@ -33,12 +34,7 @@
 
 (defclass block-text-object (text-object)
   ((open-char :type character
-              :initarg :open-char)
-   (close-char :type character
-               :initarg :close-char)
-   (escape-char :type (or null character)
-                :initarg :escape-char
-                :initform #\\)))
+              :initarg :open-char)))
 
 (defclass quoted-text-object (text-object)
   ((quote-char :type character
@@ -51,9 +47,17 @@
   (:method ((object symbol) state count)
     (a-range-of (make-instance object) state count)))
 
+(defmethod a-range-of :before ((object block-text-object) (state visual) count)
+  (unless (visual-char-p)
+    (vi-visual-char)))
+
 (defgeneric inner-range-of (object state count)
   (:method ((object symbol) state count)
     (inner-range-of (make-instance object) state count)))
+
+(defmethod inner-range-of :before ((object block-text-object) (state visual) count)
+  (unless (visual-char-p)
+    (vi-visual-char)))
 
 (defmethod slurp-object ((object function-text-object) point direction)
   (check-type direction (member :forward :backward))
@@ -194,6 +198,34 @@
               (slurp-object object end :backward)))))
     (make-range beg end)))
 
+;; XXX: Should not depend on lem:backward-up-list
+;;   to keep flexibility the pair of open/close chars
+(defmethod slurp-object ((object block-text-object) point direction)
+  (declare (ignore direction))
+  (with-slots (open-char) object
+    (let ((bob (buffer-start-point (point-buffer point))))
+      (loop
+        (lem:backward-up-list point)
+        (when (char= (character-at point) open-char)
+          (return))
+        (when (point= point bob)
+          (keyboard-quit)))))
+  point)
+
+(defmethod a-range-of ((object block-text-object) state count)
+  (with-point ((beg (current-point)))
+    (dotimes (i count)
+      (slurp-object object beg nil))
+    (with-point ((end beg))
+      (lem:form-offset end 1)
+      (make-range beg end))))
+
+(defmethod inner-range-of ((object block-text-object) state count)
+  (let ((range (a-range-of object state count)))
+    (character-offset (range-beginning range) 1)
+    (character-offset (range-end range) -1)
+    range))
+
 (defmethod slurp-object ((object quoted-text-object) point direction)
   (with-slots (quote-char escape-char) object
     (ecase direction
@@ -277,10 +309,6 @@
   (:default-initargs
    :function #'word-char-type))
 
-(defclass double-quoted-object (quoted-text-object) ()
-  (:default-initargs
-   :quote-char #\"))
-
 (defmethod a-range-of :before ((object word-object) (state visual) count)
   (unless (visual-char-p)
     (vi-visual-char)))
@@ -288,3 +316,11 @@
 (defmethod inner-range-of :before ((object word-object) (state visual) count)
   (unless (visual-char-p)
     (vi-visual-char)))
+
+(defclass paren-object (block-text-object) ()
+  (:default-initargs
+   :open-char #\())
+
+(defclass double-quoted-object (quoted-text-object) ()
+  (:default-initargs
+   :quote-char #\"))

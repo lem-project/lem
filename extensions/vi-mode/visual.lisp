@@ -36,7 +36,6 @@
 
 (define-vi-state visual (vi-state) ()
   (:default-initargs
-   :message "-- VISUAL --"
    :modeline-color 'state-modeline-orange
    :keymaps (list *visual-keymap* *motion-keymap* *normal-keymap*)))
 
@@ -46,13 +45,11 @@
 
 (define-vi-state visual-line (visual) ()
   (:default-initargs
-   :name "V-LINE"
-   :message "-- VISUAL LINE --"))
+   :name "V-LINE"))
 
 (define-vi-state visual-block (visual) ()
   (:default-initargs
-   :name "V-BLOCK"
-   :message "-- VISUAL BLOCK --"))
+   :name "V-BLOCK"))
 
 (defmethod state-enabled-hook :after ((state visual))
   (setf *start-point* (copy-point (current-point))))

@@ -59,7 +59,6 @@
 (define-vi-state insert () ()
   (:default-initargs
    :name "INSERT"
-   :message "-- INSERT --"
    :cursor-color "IndianRed"
    :cursor-type :bar
    :modeline-color 'state-modeline-aqua

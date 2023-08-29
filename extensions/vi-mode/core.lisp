@@ -68,10 +68,6 @@
   ((name :initarg :name
          :initform nil
          :reader state-name)
-   (message
-    :initarg :message
-    :initform nil
-    :reader state-message)
    (cursor-type
     :initarg :cursor-type
     :initform :box
@@ -116,12 +112,8 @@
 (defgeneric post-command-hook (state)
   (:method ((state vi-state))))
 
-(defgeneric state-enabled-hook (state))
-
-(defmethod state-enabled-hook ((state vi-state))
-  (let ((msg (state-message state)))
-    (unless (null msg)
-      (message msg))))
+(defgeneric state-enabled-hook (state)
+  (:method ((state vi-state))))
 
 (defgeneric state-disabled-hook (state))
 
@@ -180,8 +172,9 @@
 (add-hook *post-command-hook* 'vi-post-command-hook)
 
 (defmethod state-enabled-hook :after ((state vi-state))
-  (lem-if:update-cursor-shape (lem:implementation)
-                              (state-cursor-type state)))
+  (when (state-cursor-type state)
+    (lem-if:update-cursor-shape (lem:implementation)
+                                (state-cursor-type state))))
 
 (defun vi-this-command-keys ()
   (append

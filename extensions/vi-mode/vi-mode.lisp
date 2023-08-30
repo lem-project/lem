@@ -20,7 +20,8 @@
                 :*normal-keymap*
                 :*insert-keymap*
                 :*inner-text-objects-keymap*
-                :*outer-text-objects-keymap*)
+                :*outer-text-objects-keymap*
+                :*operator-keymap*)
   (:import-from :lem-vi-mode/visual
                 :*visual-keymap*)
   (:import-from :alexandria
@@ -34,6 +35,7 @@
            :*normal-keymap*
            :*insert-keymap*
            :*visual-keymap*
+           :*operator-keymap*
            :*ex-keymap*
            :*inner-text-objects-keymap*
            :*outer-text-objects-keymap*

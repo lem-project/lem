@@ -36,6 +36,9 @@
 (deftest text-objects
   (with-fake-interface ()
     (testing "vaw"
+      (with-vi-buffer (#?"  [f]oo\n")
+        (cmd "vaw")
+        (ok (buf= #?"  <fo[o]>\n")))
       (with-vi-buffer (#?"  [ ]foo bar   baz  \n")
         (cmd "vaw")
         (ok (buf= #?"<   fo[o]> bar   baz  \n")))

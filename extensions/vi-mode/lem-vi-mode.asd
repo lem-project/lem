@@ -47,6 +47,7 @@
      (:file "operator")
      (:file "visual")
      (:file "commands")
+     (:file "text-objects")
      (:file "options")))
    (:file "utils"
     :pathname "tests/utils"))

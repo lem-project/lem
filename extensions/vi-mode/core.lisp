@@ -44,7 +44,7 @@
 
 (defvar *last-repeat-keys* '())
 
-(defvar *default-cursor-color* nil)
+(defvar *default-cursor-color* "#ffb472")
 
 (defvar *enable-hook* '())
 (defvar *disable-hook* '())
@@ -154,7 +154,8 @@
   (let ((state (ensure-state name)))
     (setf *current-state* state)
     (state-enabled-hook state)
-    (set-attribute 'cursor :background (state-cursor-color state))))
+    (set-attribute 'cursor
+                   :background (or (state-cursor-color state) *default-cursor-color*))))
 
 (defmacro with-state (state &body body)
   (with-gensyms (old-state)
@@ -175,9 +176,8 @@
 (add-hook *post-command-hook* 'vi-post-command-hook)
 
 (defmethod state-enabled-hook :after ((state vi-state))
-  (when (state-cursor-type state)
-    (lem-if:update-cursor-shape (lem:implementation)
-                                (state-cursor-type state))))
+  (lem-if:update-cursor-shape (lem:implementation)
+                              (state-cursor-type state)))
 
 (defun vi-this-command-keys ()
   (append

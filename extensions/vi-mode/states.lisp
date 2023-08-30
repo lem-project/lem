@@ -48,7 +48,6 @@
 (define-state normal () ()
   (:default-initargs
    :name "NORMAL"
-   :cursor-color "IndianRed"
    :cursor-type :box
    :modeline-color 'state-modeline-yellow
    :keymaps (list *normal-keymap*)))

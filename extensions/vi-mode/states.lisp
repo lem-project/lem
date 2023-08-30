@@ -76,7 +76,7 @@
 ;;
 ;; Operator-pending state
 
-(define-state operator () ()
+(define-state operator (normal) ()
   (:default-initargs
    :keymaps (list *operator-keymap* *normal-keymap*)))
 

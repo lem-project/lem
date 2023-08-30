@@ -95,13 +95,17 @@
 (defmethod state-setup ((state visual-block))
   (with-point ((start *start-point*)
                (end (current-point)))
-    (when (point< end start)
-      (rotatef start end))
-    (character-offset end 1)
     (let ((start-column (point-column start))
           (end-column (point-column end)))
-      (unless (< start-column end-column)
-        (rotatef start-column end-column))
+      (if (< end-column start-column)
+          ;; left-top or left-bottom
+          (progn
+            (character-offset start 1)
+            (incf start-column))
+          ;; right-top or right-bottom
+          (progn
+            (character-offset end 1)
+            (incf end-column)))
       (apply-region-lines start end
                           (lambda (p)
                             (with-point ((s p) (e p))

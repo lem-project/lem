@@ -6,7 +6,8 @@
                "parse-number"
                "cl-package-locks"
                "alexandria"
-               "split-sequence")
+               "split-sequence"
+               "lem-lisp-mode")
   :components ((:file "core")
                (:file "options" :depends-on ("utils"))
                (:file "word" :depends-on ("options"))

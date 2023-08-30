@@ -18,7 +18,9 @@
                 :insert
                 :*motion-keymap*
                 :*normal-keymap*
-                :*insert-keymap*)
+                :*insert-keymap*
+                :*inner-text-objects-keymap*
+                :*outer-text-objects-keymap*)
   (:import-from :lem-vi-mode/visual
                 :*visual-keymap*)
   (:import-from :alexandria
@@ -33,8 +35,11 @@
            :*insert-keymap*
            :*visual-keymap*
            :*ex-keymap*
+           :*inner-text-objects-keymap*
+           :*outer-text-objects-keymap*
            :normal
            :insert
+           :change-state
            :option-value))
 (in-package :lem-vi-mode)
 

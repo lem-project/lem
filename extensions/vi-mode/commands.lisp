@@ -256,7 +256,7 @@
   (skip-whitespace-forward (current-point) t))
 
 (define-operator vi-indent (start end) ("<r>")
-    (:restore-point t)
+    (:move-point nil)
   (indent-points start end))
 
 ;; FIXME: support block

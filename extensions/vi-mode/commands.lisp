@@ -256,7 +256,7 @@
   (skip-whitespace-forward (current-point) t))
 
 (define-operator vi-indent (start end) ("<r>")
-    (:restore-point t)
+    (:move-point nil)
   (indent-points start end))
 
 ;; FIXME: support block
@@ -321,6 +321,12 @@
 (define-operator vi-change (beg end type) ("<R>")
     ()
   (vi-delete beg end type)
+  (when (eq type :line)
+    (let ((column (with-point ((p (current-point)))
+                    (point-column (or (and (line-offset p 1)
+                                           (back-to-indentation p))
+                                      (line-start p))))))
+      (move-to-column (current-point) column t)))
   (change-state 'insert))
 
 (define-operator vi-change-line (beg end type) ("<R>")
@@ -693,7 +699,12 @@
 (define-command vi-open-above () ()
   (line-start (current-point))
   (change-state 'insert)
-  (open-line 1))
+  (open-line 1)
+  (let ((column (with-point ((p (current-point)))
+                  (point-column (or (and (line-offset p 1)
+                                         (back-to-indentation p))
+                                    (line-start p))))))
+    (move-to-column (current-point) column t)))
 
 (define-command vi-jump-back (&optional (n 1)) ("p")
   (dotimes (i n)

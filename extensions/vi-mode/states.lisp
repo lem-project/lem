@@ -48,7 +48,6 @@
 (define-state normal () ()
   (:default-initargs
    :name "NORMAL"
-   :cursor-color "IndianRed"
    :cursor-type :box
    :modeline-color 'state-modeline-yellow
    :keymaps (list *normal-keymap*)))
@@ -76,7 +75,7 @@
 ;;
 ;; Operator-pending state
 
-(define-state operator () ()
+(define-state operator (normal) ()
   (:default-initargs
    :keymaps (list *operator-keymap* *normal-keymap*)))
 

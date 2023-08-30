@@ -92,3 +92,22 @@
       (with-vi-buffer (#?' "f[o]o" ')
         (cmd "vi\"")
         (ok (buf= #?' "<fo[o]>" '))))))
+
+(deftest visual-block
+  (with-fake-interface ()
+    (testing "right-bottom"
+      (with-vi-buffer (#?"apple\nor[a]nge\ngrape\n")
+        (cmd "<C-v>jl")
+        (ok (buf= #?"apple\nor<an>ge\ngr<a[p]>e\n"))))
+    (testing "right-top"
+      (with-vi-buffer (#?"apple\nor[a]nge\ngrape\n")
+        (cmd "<C-v>kl")
+        (ok (buf= #?"ap<p[l]>e\nor<an>ge\ngrape\n"))))
+    (testing "left-top"
+      (with-vi-buffer (#?"apple\nor[a]nge\ngrape\n")
+        (cmd "<C-v>kh")
+        (ok (buf= #?"a<[p]p>le\no<ra>nge\ngrape\n"))))
+    (testing "left-bottom"
+      (with-vi-buffer (#?"apple\nor[a]nge\ngrape\n")
+        (cmd "<C-v>jh")
+        (ok (buf= #?"apple\no<ra>nge\ng<[r]a>pe\n"))))))

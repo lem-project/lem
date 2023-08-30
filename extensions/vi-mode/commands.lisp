@@ -721,21 +721,27 @@
         (fall-within-line (current-point))))))
 
 (define-text-object-command vi-a-word (count) ("p")
+    (:expand-selection t)
   (a-range-of 'word-object (current-state) count))
 
 (define-text-object-command vi-inner-word (count) ("p")
+    (:expand-selection t)
   (inner-range-of 'word-object (current-state) count))
 
 (define-text-object-command vi-a-double-quote () ()
+    ()
   (a-range-of 'double-quoted-object (current-state) 1))
 
 (define-text-object-command vi-inner-double-quote () ()
+    ()
   (inner-range-of 'double-quoted-object (current-state) 1))
 
 (define-text-object-command vi-a-paren (count) ("p")
+    (:expand-selection t)
   (a-range-of 'paren-object (current-state) count))
 
 (define-text-object-command vi-inner-paren (count) ("p")
+    (:expand-selection t)
   (inner-range-of 'paren-object (current-state) count))
 
 (define-command vi-normal () ()

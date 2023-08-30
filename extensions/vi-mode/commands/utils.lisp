@@ -251,7 +251,7 @@
                               :keep-visual ,keep-visual
                               :restore-point ,restore-point)))
 
-(defun call-define-text-object-command (fn)
+(defun call-define-text-object-command (fn &key expand-selection)
   (flet ((expand-visual-range (range)
            (let ((p1 (range-beginning range))
                  (p2 (range-end range)))
@@ -271,11 +271,16 @@
                          (return-from call-define-text-object-command)))))
       (let ((range (funcall fn)))
         (when (visual-p)
-          (expand-visual-range range))
+          (if expand-selection
+              (expand-visual-range range)
+              (setf (visual-range)
+                    (list (range-beginning range) (range-end range)))))
         range))))
 
-(defmacro define-text-object-command (name arg-list arg-descriptors
+(defmacro define-text-object-command (name arg-list arg-descriptors (&key expand-selection)
                                       &body body)
   `(define-command (,name (:advice-classes vi-text-object)) ,arg-list
        (,(parse-arg-descriptors arg-descriptors))
-     (call-define-text-object-command (lambda () ,@body))))
+     (call-define-text-object-command
+      (lambda () ,@body)
+      :expand-selection ,expand-selection)))

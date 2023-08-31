@@ -381,6 +381,10 @@
       (with-killring-context (:options (when (eq type :line) :vi-line))
         (copy-region start end))))
 
+(define-operator vi-yank-line (start end type) ("<R>")
+    (:motion vi-move-to-end-of-line)
+  (vi-yank start end type))
+
 (defun vi-yank-from-clipboard-or-killring ()
   (multiple-value-bind (str options) (peek-killring-item (current-killring) 0)
     (if str

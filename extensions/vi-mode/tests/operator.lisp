@@ -92,6 +92,14 @@
       (cmd "J")
       (ok (buf= #?"abcdefgh[ ]ijklmn\n")))))
 
+(deftest vi-yank-line
+  (with-fake-interface ()
+    (with-vi-buffer (#?"a[b]cd\nefgh\n")
+      (cmd "Y")
+      (ok (buf= #?"a[b]cd\nefgh\n"))
+      (cmd "jlp")
+      (ok (buf= #?"abcd\nefgbc[d]h\n")))))
+
 (deftest vi-repeat
   (with-fake-interface ()
     (with-vi-buffer (#?"[1]:abc\n2:def\n3:ghi\n4:jkl\n5:mno\n6:opq\n7:rst\n8:uvw")

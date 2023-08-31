@@ -48,7 +48,6 @@
 (in-package :lem-vi-mode/commands/utils)
 
 (defvar *cursor-offset* -1)
-(defvar *operator-pending-mode* nil)
 
 (defun bolp (point)
   "Return t if POINT is at the beginning of a line."
@@ -72,7 +71,7 @@
     (goto-eol point)))
 
 (defun operator-pending-mode-p ()
-  *operator-pending-mode*)
+  (typep (current-state) 'operator))
 
 (defun read-universal-argument ()
   (loop :for key := (read-key)
@@ -86,10 +85,7 @@
 
 (defmethod execute :around (mode (command vi-operator) uarg)
   (declare (ignore mode uarg))
-  ;; XXX: This flag will be rewritten as a code to check the current state
-  ;;   when operator-pending state is implemented.
-  (let ((*operator-pending-mode* t)
-        (*this-motion-command* nil))
+  (let ((*this-motion-command* nil))
     (handler-case (call-next-method)
       (operator-abort ()))))
 

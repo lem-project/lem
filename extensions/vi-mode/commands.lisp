@@ -579,11 +579,12 @@
     (lem/isearch:isearch-finish)
     (lem/isearch:isearch-next)))
 
-(define-motion vi-goto-first-line () ()
+(define-motion vi-goto-first-line (&optional (n 1)) ("p")
     (:type :line
      :jump t)
-  (move-to-beginning-of-buffer)
-  (skip-whitespace-forward (current-point) t))
+  (let ((col (point-charpos (current-point))))
+    (goto-line n)
+    (move-to-column (current-point) col)))
 
 (define-motion vi-goto-line (&optional n) ("P")
     (:type :line

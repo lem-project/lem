@@ -152,26 +152,22 @@
       (if motion
           (let ((command (get-command motion)))
             (call-motion command (universal-argument-of-this-command)))
-          (let ((state (current-state)))
-            (unwind-protect
-                 (progn
-                   (change-state 'operator)
-                   (let* ((uarg (* (or (universal-argument-of-this-command) 1) (or (read-universal-argument) 1)))
-                          (command-name (read-command))
-                          (command (get-command command-name)))
-                     (typecase command
-                       (vi-operator
-                        (if (eq command-name (command-name (this-command)))
-                            ;; Recursive call of the operator like 'dd', 'cc'
-                            (save-excursion
-                              (ignore-some-conditions (end-of-buffer)
-                                (next-logical-line (1- (or uarg 1))))
-                              (values start (copy-point (current-point)) :line))
-                            ;; Ignore an invalid operator (like 'dJ')
-                            nil))
-                       (otherwise
-                        (call-motion command uarg)))))
-              (change-state state)))))))
+          (with-temporary-state 'operator
+            (let* ((uarg (* (or (universal-argument-of-this-command) 1) (or (read-universal-argument) 1)))
+                   (command-name (read-command))
+                   (command (get-command command-name)))
+              (typecase command
+                (vi-operator
+                 (if (eq command-name (command-name (this-command)))
+                     ;; Recursive call of the operator like 'dd', 'cc'
+                     (save-excursion
+                       (ignore-some-conditions (end-of-buffer)
+                         (next-logical-line (1- (or uarg 1))))
+                       (values start (copy-point (current-point)) :line))
+                     ;; Ignore an invalid operator (like 'dJ')
+                     nil))
+                (otherwise
+                 (call-motion command uarg)))))))))
 
 (defun visual-region ()
   (if (visual-p)

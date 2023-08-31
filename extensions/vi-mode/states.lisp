@@ -17,11 +17,13 @@
            :*insert-keymap*
            :*inactive-keymap*
            :*operator-keymap*
+           :*replace-state-keymap*
            :*outer-text-objects-keymap*
            :*inner-text-objects-keymap*
            :normal
            :insert
-           :operator))
+           :operator
+           :replace-state))
 (in-package :lem-vi-mode/states)
 
 (defmethod state-enabled-hook :after (state)
@@ -37,10 +39,15 @@
                                      :parent *motion-keymap*))
 (defvar *insert-keymap* (make-keymap :name '*insert-keymap*))
 (defvar *operator-keymap* (make-keymap :name '*operator-keymap*))
+(defvar *replace-state-keymap* (make-keymap :name '*replace-state-keymap*
+                                            :undef-hook 'return-last-read-char))
 (defvar *outer-text-objects-keymap* (make-keymap :name '*outer-text-objects-keymap*))
 (defvar *inner-text-objects-keymap* (make-keymap :name '*inner-text-objects-keymap*))
 
 (defvar *inactive-keymap* (make-keymap))
+
+(define-command return-last-read-char () ()
+  (key-to-char (first (lem-core:last-read-key-sequence))))
 
 ;;
 ;; Normal state
@@ -78,6 +85,14 @@
 (define-state operator (normal) ()
   (:default-initargs
    :keymaps (list *operator-keymap* *normal-keymap*)))
+
+;;
+;; Replace state
+
+(define-state replace-state (normal) ()
+  (:default-initargs
+   :cursor-type :underline
+   :keymaps (list *replace-state-keymap*)))
 
 ;;
 ;; Setup hooks

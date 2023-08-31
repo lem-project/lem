@@ -12,7 +12,8 @@
   (:import-from :lem-vi-mode/states
                 :*motion-keymap*
                 :normal
-                :insert)
+                :insert
+                :replace-state)
   (:import-from :lem-vi-mode/commands/utils
                 :visual-region)
   (:import-from :lem/common/killring
@@ -433,8 +434,18 @@
             (yank)))
          (move-point (current-point) p))))))
 
-(define-operator vi-replace-char (start end type char) ("<R>" (key-to-char (read-key)))
-    (:motion vi-forward-char)
+(defun read-key-to-replace ()
+  (unwind-protect (progn
+                    (change-state 'replace-state)
+                    (let ((command (read-command)))
+                      (unless command
+                        (escape))
+                      (call-command command (universal-argument-of-this-command))))
+    (change-state 'normal)))
+
+(define-operator vi-replace-char (start end type char) ("<R>" (read-key-to-replace))
+    (:motion vi-forward-char
+     :restore-point t)
   (if (eq type :block)
       (progn
         (apply-visual-range

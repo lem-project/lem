@@ -376,4 +376,7 @@
                    (option-value option))
             :test 'equal)))))
 
-(define-option "scrolloff" (0 :type number :aliases ("so")))
+(define-option "scrolloff" (0 :type number :aliases ("so"))
+  (:documentation "The minimal number of lines to keep above of below the cursor.
+Default: 0
+Aliases: so"))

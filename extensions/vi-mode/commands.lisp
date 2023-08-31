@@ -411,9 +411,12 @@
              (line-end (current-point))
              (insert-character (current-point) #\Newline))
            (character-offset (current-point) 1))
-       (with-point ((p (current-point)))
-         (yank)
-         (move-point (current-point) p))))))
+       (yank)
+       (if (member :vi-line type)
+           (progn
+             (line-start (current-point))
+             (back-to-indentation (current-point)))
+           (character-offset (current-point) -1))))))
 
 (define-command vi-paste-before () ()
   (multiple-value-bind (string type)

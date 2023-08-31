@@ -131,6 +131,9 @@
 (define-key *visual-keymap* "U" 'vi-upcase)
 (define-key *visual-keymap* "u" 'vi-downcase)
 
+(define-key *replace-state-keymap* "C-g" 'escape)
+(define-key *replace-state-keymap* "Escape" 'escape)
+
 (define-key *outer-text-objects-keymap* "w" 'vi-a-word)
 (define-key *inner-text-objects-keymap* "w" 'vi-inner-word)
 (define-key *outer-text-objects-keymap* "\"" 'vi-a-double-quote)

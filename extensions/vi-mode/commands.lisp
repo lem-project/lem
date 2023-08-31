@@ -589,12 +589,15 @@
 (define-motion vi-goto-line (&optional n) ("P")
     (:type :line
      :jump t)
-  (if (null n)
-      (progn
-        (move-to-end-of-buffer)
-        (line-start (current-point)))
-      (goto-line n))
-  (skip-whitespace-forward (current-point) t))
+  (let ((col (point-charpos (current-point))))
+    (if (null n)
+        (progn
+          (move-to-end-of-buffer)
+          (when (and (bolp (current-point))
+                     (eolp (current-point)))
+            (line-offset (current-point) -1)))
+        (goto-line n))
+    (move-to-column (current-point) col)))
 
 (define-command vi-return (&optional (n 1)) ("p")
   (vi-next-line n)

@@ -45,12 +45,28 @@
            :option-value))
 (in-package :lem-vi-mode)
 
+(define-command adjust-window-scroll () ()
+  (let* ((window (lem:current-window))
+         (window-height (lem-core::window-height-without-modeline window))
+         (cursor-y (lem:window-cursor-y window))
+         (window-scroll-offset (option-value "scrolloff"))
+         (scroll-offset (min (floor (/ window-height 2)) window-scroll-offset)))
+    (cond
+      ((< cursor-y scroll-offset)
+       (lem:window-scroll window (- cursor-y scroll-offset)))
+      ((and (< (- window-height scroll-offset) cursor-y)
+            (< (- window-height cursor-y)
+               (- (lem:buffer-nlines (lem:current-buffer))
+                  (lem:line-number-at-point (lem:current-point)))))
+       (lem:window-scroll window (- cursor-y (- window-height scroll-offset)))))))
+
 (defmethod post-command-hook ((state normal))
   (when *enable-repeat-recording*
     (let ((command (this-command)))
       (when (and (typep command 'vi-command)
                  (eq (vi-command-repeat command) t))
         (setf *last-repeat-keys* (vi-this-command-keys)))))
+  (adjust-window-scroll)
   (fall-within-line (current-point)))
 
 (defmethod post-command-hook ((state insert))

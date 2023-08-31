@@ -359,3 +359,5 @@
                            (lem-base::syntax-table-symbol-chars syntax-table))
                    (option-value option))
             :test 'equal)))))
+
+(define-option "scrolloff" (0 :type number :aliases ("so")))

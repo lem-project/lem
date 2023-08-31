@@ -26,7 +26,8 @@
            :visual-yank
            :visual-kill
            :vi-visual-insert
-           :vi-visual-append))
+           :vi-visual-append
+           :vi-visual-swap-points))
 (in-package :lem-vi-mode/visual)
 
 (defvar *start-point* nil)
@@ -238,3 +239,8 @@
                               (rotatef start end))
                             (insert-string start str))))
     (vi-visual-end)))
+
+(define-command vi-visual-swap-points () ()
+  (with-point ((start *start-point*))
+    (move-point *start-point* (current-point))
+    (move-point (current-point) start)))

@@ -131,6 +131,7 @@
 (define-key *visual-keymap* "U" 'vi-upcase)
 (define-key *visual-keymap* "u" 'vi-downcase)
 (define-key *visual-keymap* "o" 'vi-visual-swap-points)
+(define-key *visual-keymap* "O" 'vi-visual-opposite-side)
 
 (define-key *replace-state-keymap* "C-g" 'escape)
 (define-key *replace-state-keymap* "Escape" 'escape)

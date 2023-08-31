@@ -27,7 +27,8 @@
            :visual-kill
            :vi-visual-insert
            :vi-visual-append
-           :vi-visual-swap-points))
+           :vi-visual-swap-points
+           :vi-visual-opposite-side))
 (in-package :lem-vi-mode/visual)
 
 (defvar *start-point* nil)
@@ -244,3 +245,11 @@
   (with-point ((start *start-point*))
     (move-point *start-point* (current-point))
     (move-point (current-point) start)))
+
+(define-command vi-visual-opposite-side () ()
+  (if (visual-block-p)
+      (let ((start-col (point-charpos *start-point*))
+            (end-col (point-charpos (current-point))))
+        (move-to-column *start-point* end-col)
+        (move-to-column (current-point) start-col))
+      (vi-visual-swap-points)))

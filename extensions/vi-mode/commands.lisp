@@ -140,6 +140,10 @@
   (next-logical-line n)
   (fall-within-line (current-point)))
 
+(define-motion vi-line (&optional (n 1)) ("p")
+    ()
+  (next-logical-line (1- n)))
+
 (define-motion vi-next-display-line (&optional (n 1)) ("p")
     (:type :line)
   (next-line n)
@@ -225,7 +229,8 @@
                                          start)
         (move-point (current-point) start))))
 
-(define-command vi-move-to-end-of-line () ()
+(define-command vi-move-to-end-of-line (&optional (n 1)) ("p")
+  (vi-line n)
   (goto-eol (current-point)))
 
 (define-command vi-move-to-last-nonblank () ()
@@ -334,10 +339,6 @@
     (:motion vi-move-to-end-of-line)
   (vi-change beg end type)
   (change-state 'insert))
-
-(define-motion vi-line (&optional (n 1)) ("p")
-    ()
-  (next-logical-line (1- n)))
 
 (define-operator vi-join (start end) ("<r>")
     (:motion vi-line)

@@ -47,6 +47,7 @@
            :vi-delete
            :vi-delete-line
            :vi-change
+           :vi-change-whole-line
            :vi-change-line
            :vi-join
            :vi-join-line
@@ -322,13 +323,14 @@
 (define-operator vi-change (beg end type) ("<R>")
     ()
   (vi-delete beg end type)
-  (when (eq type :line)
-    (let ((column (with-point ((p (current-point)))
-                    (point-column (or (and (line-offset p 1)
-                                           (back-to-indentation p))
-                                      (line-start p))))))
-      (move-to-column (current-point) column t)))
+  (indent-line (current-point))
   (change-state 'insert))
+
+(define-operator vi-change-whole-line (beg end) ("<r>")
+    (:motion vi-line)
+  (line-start beg)
+  (line-end end)
+  (vi-change beg end :line))
 
 (define-operator vi-change-line (beg end type) ("<R>")
     (:motion vi-move-to-end-of-line)

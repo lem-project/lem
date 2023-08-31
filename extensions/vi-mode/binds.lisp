@@ -96,6 +96,7 @@
 (define-key *normal-keymap* "." 'vi-repeat)
 (define-key *normal-keymap* "=" 'vi-indent)
 (define-key *normal-keymap* "s" 'vi-substitute)
+(define-key *normal-keymap* "S" 'vi-change-whole-line)
 (define-key *normal-keymap* "x" 'vi-delete-next-char)
 (define-key *normal-keymap* "X" 'vi-delete-previous-char)
 (define-key *normal-keymap* "d" 'vi-delete)

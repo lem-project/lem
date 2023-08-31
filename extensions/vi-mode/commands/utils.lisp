@@ -204,7 +204,14 @@
             (values start end type)
             (values start end))
       (when move-point
-        (move-point (current-point) start)))))
+        (if (eq type :block)
+            (with-point ((p (current-point)))
+              (move-to-line p (min (line-number-at-point start)
+                                   (line-number-at-point end)))
+              (move-to-column p (min (point-charpos start)
+                                     (point-charpos end)))
+              (move-point (current-point) p))
+            (move-point (current-point) start))))))
 
 (defun call-define-operator (fn &key keep-visual restore-point)
   (with-point ((*vi-origin-point* (current-point)))

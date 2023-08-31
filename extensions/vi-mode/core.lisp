@@ -18,6 +18,7 @@
            :state=
            :change-state
            :with-state
+           :with-temporary-state
            :mode-specific-keymaps
            :pre-command-hook
            :post-command-hook
@@ -150,14 +151,19 @@
             ;; Precede state keymaps over major-mode keymaps
             (state-keymaps (ensure-state *current-state*)))))
 
+(defun update-cursor-styles (state)
+  (set-attribute 'cursor
+                 :background (or (state-cursor-color state) *default-cursor-color*))
+  (lem-if:update-cursor-shape (lem:implementation)
+                              (state-cursor-type state)))
+
 (defun change-state (name)
   (and *current-state*
        (state-disabled-hook *current-state*))
   (let ((state (ensure-state name)))
     (setf *current-state* state)
     (state-enabled-hook state)
-    (set-attribute 'cursor
-                   :background (or (state-cursor-color state) *default-cursor-color*))))
+    (update-cursor-styles state)))
 
 (defmacro with-state (state &body body)
   (with-gensyms (old-state)
@@ -165,6 +171,14 @@
        (change-state ,state)
        (unwind-protect (progn ,@body)
          (change-state ,old-state)))))
+
+(defmacro with-temporary-state (state &body body)
+  (with-gensyms (old-state)
+    `(let ((,old-state *current-state*)
+           (*current-state* (ensure-state ,state)))
+       (update-cursor-styles *current-state*)
+       (unwind-protect (progn ,@body)
+         (update-cursor-styles ,old-state)))))
 
 (defun vi-pre-command-hook ()
   (when (mode-active-p (current-buffer) 'vi-mode)
@@ -176,10 +190,6 @@
 
 (add-hook *pre-command-hook* 'vi-pre-command-hook)
 (add-hook *post-command-hook* 'vi-post-command-hook)
-
-(defmethod state-enabled-hook :after ((state vi-state))
-  (lem-if:update-cursor-shape (lem:implementation)
-                              (state-cursor-type state)))
 
 (defun vi-this-command-keys ()
   (append

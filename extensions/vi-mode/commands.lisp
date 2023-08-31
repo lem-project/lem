@@ -445,24 +445,21 @@
          (move-point (current-point) p))))))
 
 (defun read-key-to-replace ()
-  (unwind-protect (progn
-                    (change-state 'replace-state)
-                    (let ((command (read-command)))
-                      (unless command
-                        (escape))
-                      (call-command command (universal-argument-of-this-command))))
-    (change-state 'normal)))
+  (with-temporary-state 'replace-state
+    (let ((command (read-command)))
+      (unless command
+        (escape))
+      (call-command command (universal-argument-of-this-command)))))
 
 (define-operator vi-replace-char (start end type char) ("<R>" (read-key-to-replace))
     (:motion vi-forward-char
-     :restore-point t)
+     :move-point nil)
   (if (eq type :block)
       (progn
         (apply-visual-range
          (lambda (start end)
            (vi-replace-char start end :inclusive char)))
-        (move-point (current-point) start)
-        (character-offset (current-point) *cursor-offset*))
+        (move-point (current-point) start))
       (let ((string-to-replace
               ;; Replace all chars in the region except newlines
               (with-output-to-string (s)

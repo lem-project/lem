@@ -156,21 +156,33 @@
   (typep (current-state) 'visual-block))
 
 (defun visual-range ()
-  (if (or (visual-char-p)
-          (visual-block-p))
-      (with-point ((start *start-point*)
-                   (end (current-point)))
-        (cond
-          ((point< start end)
-           (character-offset end 1))
-          ((point< end start)
-           (character-offset start 1)))
-        (list start end))
-      (let ((ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start)))
-        (assert (null (rest ov)))
-        (list
-         (overlay-start (first ov))
-         (overlay-end (first ov))))))
+  (cond
+    ((visual-char-p)
+     (with-point ((start *start-point*)
+                  (end (current-point)))
+       (cond ((point< start end)
+              (character-offset end 1))
+             ((point< end start)
+              (character-offset start 1)))
+       (list start end)))
+    ((visual-block-p)
+     ;; Return left-top point and right-bottom point
+     (with-point ((start *start-point*)
+                  (end (current-point)))
+       (map nil #'move-to-line
+            (list start end)
+            (sort (mapcar #'line-number-at-point (list start end)) #'<))
+       (map nil #'move-to-column
+            (list start end)
+            (sort (mapcar #'point-charpos (list *start-point* (current-point))) #'<))
+       (character-offset end 1)
+       (list start end)))
+    (t
+     (let ((ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start)))
+       (assert (null (rest ov)))
+       (list
+        (overlay-start (first ov))
+        (overlay-end (first ov)))))))
 
 (defun (setf visual-range) (new-range)
   (check-type new-range list)

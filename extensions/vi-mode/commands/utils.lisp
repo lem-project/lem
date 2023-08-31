@@ -10,7 +10,7 @@
                 :vi-operator
                 :vi-text-object
                 :current-state
-                :change-state
+                :with-temporary-state
                 :range
                 :make-range
                 :range-beginning
@@ -194,7 +194,8 @@
           (if (visual-p)
               (visual-region)
               (motion-region motion))
-        (when (point< end start)
+        (when (and (not (eq type :block))
+                   (point< end start))
           (rotatef start end))
         (ecase type
           (:line (unless (visual-p)

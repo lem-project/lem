@@ -84,7 +84,8 @@
 
 (defun modeline-minor-modes (window)
   (values (with-output-to-string (out)
-            (dolist (mode (buffer-minor-modes (window-buffer window)))
+            (dolist (mode (append (buffer-minor-modes (window-buffer window))
+                                  (active-global-minor-modes)))
               (when (mode-name mode)
                 (princ (mode-name mode) out)
                 (princ " " out))))

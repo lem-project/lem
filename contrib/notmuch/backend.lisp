@@ -13,11 +13,13 @@
 	str
 	(editor-error "`notmuch ~A` returned ~A ~A ~A" query retval str err))))
 
-;; fixme
+;; fixme-- is this the right serialization format?
 (defun parse-notmuch-search (result)
   (read-from-string result))
 
-;; fixme
+(defun parse-notmuch-search (result)
+  (read-from-string result))
+
 (defun parse-notmuch-show (result)
   (read-from-string result))
 
@@ -27,10 +29,12 @@
 				(if oldest-first "oldest-first" "newest-first")
 				query))))
 
-
-(defun notmuch-show (query)
+(defun notmuch-show (query &key entire-thread decrypt)
   (parse-notmuch-show
-   (run-notmuch (format nil "show --format=sexp --format-version=5 ~S" query))))
+      (run-notmuch (format nil "show --format=sexp --format-version=5 --entire-thread=~A --decrypt=auto ~S"
+				(if entire-thread "true" "false")
+				query))))
+
 
 (defun notmuch-count (query)
   (parse-integer

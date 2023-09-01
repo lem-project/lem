@@ -5,18 +5,44 @@
     (:name "notmuch-message"
      :keymap *notmuch-message-mode-keymap*))
 
+(defun print-message-body (point body)
+  (dolist (item (alexandria:flatten body))
+    (with-notmuch-props item
+	((id "id")
+	 (content-type "content-type")
+	 (content "content"))
+      (if (equal content-type "text/plain")
+	  (progn
+	    ;; fixme insert link to part
+	    (insert-string point (format nil "~A~%" content)))
+	  (progn
+	    (insert-string point (format nil "[id: ~S, content type ~S]~%" id content-type))
+	    )
+	  )
+      )
+    )
+  )
+
 (defun notmuch-print-message (email)
-  (destructuring-bind (&key id content-type content filename tags body crypto headers &allow-other-keys)
-      email
-    (destructuring-bind (&key from subject to date &allow-other-keys)
-	headers
+  (with-notmuch-props email
+      ((id "id")
+       (content-type "content-type")
+       (content "content")
+       (filename "filename")
+       (body "body")
+       (headers "headers"))
+    (with-notmuch-props headers
+	((to "To")
+	 (from "From")
+	 (subject "Subject")
+	 (date "Date"))
       (let ((point (current-point)))
 	(insert-string point (format nil "From: ~A~%Subject: ~A~%To: ~A~%Date: ~A~%~%"
 				     from
 				     subject
 				     to
 				     date))
-	(insert-string point (format nil "~A" body))
+	(print-message-body point body)
 	(insert-character point #\newline 1)
 	)
       )))
@@ -28,7 +54,7 @@
     (switch-to-buffer buffer)
     (notmuch-message-mode)
     (erase-buffer buffer)
-    (dolist (email-message results)
+    (dolist (email-message (alexandria:flatten results))
       (when email-message
 	(notmuch-print-message email-message)))
     (setf (buffer-read-only-p buffer) t)

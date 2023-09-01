@@ -1,5 +1,5 @@
 (defsystem "lem-notmuch"
-  :depends-on ("lem")
+  :depends-on ("lem" "yason" "alexandria")
   :serial t
   :components (
 	       (:file "package")

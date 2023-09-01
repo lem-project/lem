@@ -14,8 +14,9 @@
 
 (define-minor-mode auto-save-mode
     (:name "AS"
-     :global t)
-  (enable))
+     :global t
+     :disable-hook #'disable
+     :enable-hook #'enable))
 
 (defun auto-save-filename (buffer)
   (format nil "~A~~" (buffer-filename buffer)))

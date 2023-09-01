@@ -226,6 +226,18 @@
       (cmd "3$")
       (ok (buf= #?"abc\ndef\ngh[i]\njkl\n")))))
 
+(deftest vi-goto-line
+  (with-fake-interface ()
+    (with-vi-buffer (#?"abc\ndef\nghi\nj[k]l\n")
+      (cmd "gg")
+      (ok (buf= #?"a[b]c\ndef\nghi\njkl\n"))
+      (cmd "3gg")
+      (ok (buf= #?"abc\ndef\ng[h]i\njkl\n"))
+      (cmd "G")
+      (ok (buf= #?"abc\ndef\nghi\nj[k]l\n"))
+      (cmd "2G")
+      (ok (buf= #?"abc\nd[e]f\nghi\njkl\n")))))
+
 (deftest vi-find-char
   (with-fake-interface ()
     (with-vi-buffer ("[f]oo-bar-Baz")

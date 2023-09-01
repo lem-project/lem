@@ -106,6 +106,7 @@
 (define-key *normal-keymap* "g J" 'vi-join)
 (define-key *normal-keymap* "J" 'vi-join-line)
 (define-key *normal-keymap* "y" 'vi-yank)
+(define-key *normal-keymap* "Y" 'vi-yank-line)
 (define-key *normal-keymap* "p" 'vi-paste-after)
 (define-key *normal-keymap* "P" 'vi-paste-before)
 (define-key *normal-keymap* "r" 'vi-replace-char)

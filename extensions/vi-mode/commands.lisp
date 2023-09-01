@@ -384,6 +384,10 @@
       (with-killring-context (:options (when (eq type :line) :vi-line))
         (copy-region start end))))
 
+(define-operator vi-yank-line (start end type) ("<R>")
+    (:motion vi-move-to-end-of-line)
+  (vi-yank start end type))
+
 (defun vi-yank-from-clipboard-or-killring ()
   (multiple-value-bind (str options) (peek-killring-item (current-killring) 0)
     (if str
@@ -410,9 +414,12 @@
              (line-end (current-point))
              (insert-character (current-point) #\Newline))
            (character-offset (current-point) 1))
-       (with-point ((p (current-point)))
-         (yank)
-         (move-point (current-point) p))))))
+       (yank)
+       (if (member :vi-line type)
+           (progn
+             (line-start (current-point))
+             (back-to-indentation (current-point)))
+           (character-offset (current-point) -1))))))
 
 (define-command vi-paste-before () ()
   (multiple-value-bind (string type)

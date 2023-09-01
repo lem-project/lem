@@ -160,7 +160,7 @@
     ((visual-char-p)
      (with-point ((start *start-point*)
                   (end (current-point)))
-       (cond ((point< start end)
+       (cond ((point<= start end)
               (character-offset end 1))
              ((point< end start)
               (character-offset start 1)))

@@ -6,7 +6,8 @@
                 :state-modeline-color
                 :*default-cursor-color*
                 :*enable-hook*
-                :*disable-hook*)
+                :*disable-hook*
+                :vi-current-window)
   (:import-from :lem-interface)
   (:export :state-modeline-white
            :state-modeline-yellow
@@ -39,8 +40,7 @@
 
 (defmethod lem:convert-modeline-element ((element vi-modeline-element) window)
   (if (and (element-name element)
-           (or (eq (lem:current-window) window)
-               (string= (element-name element) "COMMAND")))
+           (eq (vi-current-window) window))
       (values (format nil " ~A " (element-name element))
               (element-attribute element))
       (values "" 'state-modeline-white)))

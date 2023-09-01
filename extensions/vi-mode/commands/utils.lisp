@@ -10,7 +10,7 @@
                 :vi-operator
                 :vi-text-object
                 :current-state
-                :change-state
+                :with-temporary-state
                 :range
                 :make-range
                 :range-beginning
@@ -48,7 +48,6 @@
 (in-package :lem-vi-mode/commands/utils)
 
 (defvar *cursor-offset* -1)
-(defvar *operator-pending-mode* nil)
 
 (defun bolp (point)
   "Return t if POINT is at the beginning of a line."
@@ -72,7 +71,7 @@
     (goto-eol point)))
 
 (defun operator-pending-mode-p ()
-  *operator-pending-mode*)
+  (typep (current-state) 'operator))
 
 (defun read-universal-argument ()
   (loop :for key := (read-key)
@@ -86,10 +85,7 @@
 
 (defmethod execute :around (mode (command vi-operator) uarg)
   (declare (ignore mode uarg))
-  ;; XXX: This flag will be rewritten as a code to check the current state
-  ;;   when operator-pending state is implemented.
-  (let ((*operator-pending-mode* t)
-        (*this-motion-command* nil))
+  (let ((*this-motion-command* nil))
     (handler-case (call-next-method)
       (operator-abort ()))))
 
@@ -156,26 +152,22 @@
       (if motion
           (let ((command (get-command motion)))
             (call-motion command (universal-argument-of-this-command)))
-          (let ((state (current-state)))
-            (unwind-protect
-                 (progn
-                   (change-state 'operator)
-                   (let* ((uarg (* (or (universal-argument-of-this-command) 1) (or (read-universal-argument) 1)))
-                          (command-name (read-command))
-                          (command (get-command command-name)))
-                     (typecase command
-                       (vi-operator
-                        (if (eq command-name (command-name (this-command)))
-                            ;; Recursive call of the operator like 'dd', 'cc'
-                            (save-excursion
-                              (ignore-some-conditions (end-of-buffer)
-                                (next-logical-line (1- (or uarg 1))))
-                              (values start (copy-point (current-point)) :line))
-                            ;; Ignore an invalid operator (like 'dJ')
-                            nil))
-                       (otherwise
-                        (call-motion command uarg)))))
-              (change-state state)))))))
+          (with-temporary-state 'operator
+            (let* ((uarg (* (or (universal-argument-of-this-command) 1) (or (read-universal-argument) 1)))
+                   (command-name (read-command))
+                   (command (get-command command-name)))
+              (typecase command
+                (vi-operator
+                 (if (eq command-name (command-name (this-command)))
+                     ;; Recursive call of the operator like 'dd', 'cc'
+                     (save-excursion
+                       (ignore-some-conditions (end-of-buffer)
+                         (next-logical-line (1- (or uarg 1))))
+                       (values start (copy-point (current-point)) :line))
+                     ;; Ignore an invalid operator (like 'dJ')
+                     nil))
+                (otherwise
+                 (call-motion command uarg)))))))))
 
 (defun visual-region ()
   (if (visual-p)
@@ -194,7 +186,8 @@
           (if (visual-p)
               (visual-region)
               (motion-region motion))
-        (when (point< end start)
+        (when (and (not (eq type :block))
+                   (point< end start))
           (rotatef start end))
         (ecase type
           (:line (unless (visual-p)
@@ -211,7 +204,14 @@
             (values start end type)
             (values start end))
       (when move-point
-        (move-point (current-point) start)))))
+        (if (eq type :block)
+            (with-point ((p (current-point)))
+              (move-to-line p (min (line-number-at-point start)
+                                   (line-number-at-point end)))
+              (move-to-column p (min (point-charpos start)
+                                     (point-charpos end)))
+              (move-point (current-point) p))
+            (move-point (current-point) start))))))
 
 (defun call-define-operator (fn &key keep-visual restore-point)
   (with-point ((*vi-origin-point* (current-point)))

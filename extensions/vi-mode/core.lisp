@@ -39,7 +39,9 @@
            :range-type
            :operator-abort
            :text-object-abort
-           :text-object-abort-range))
+           :text-object-abort-range
+           :vi-current-window
+           :with-main-window))
 (in-package :lem-vi-mode/core)
 
 (defvar *last-repeat-keys* '())
@@ -221,3 +223,13 @@
 (define-condition text-object-abort (operator-abort)
   ((range :initarg :range
           :reader text-object-abort-range)))
+
+(defvar *vi-current-window* nil)
+
+(defun vi-current-window ()
+  (or *vi-current-window*
+      (lem:current-window)))
+
+(defmacro with-main-window (window &body body)
+  `(let ((*vi-current-window* ,window))
+     ,@body))

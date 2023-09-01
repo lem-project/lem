@@ -85,6 +85,15 @@
         (cmd "di\"")
         (ok (buf= " \"[\"]  "))))))
 
+(deftest vi-change-whole-line
+  (with-fake-interface ()
+    (with-vi-buffer (#?"a[b]c\ndef\n")
+      (cmd "S")
+      (ok (buf= #?"[]\ndef\n")))
+    (with-vi-buffer (#?"a[b]c\ndef\n")
+      (cmd "2S")
+      (ok (buf= #?"[]\n")))))
+
 (deftest vi-join-line
   (with-fake-interface ()
     (lem:window-set-size (lem:current-window) 5 24)

@@ -109,6 +109,10 @@
         #\_
         x)))
 
+;; Other flags are not implemented yet
+;; Full list will be (or #\& #\c #\e #\g #\i #\I #\n #\p #\# #\l #\r)
+(defrule subst-flag (or #\c #\g))
+
 (defrule ex-command (or (+ (or #\~ #\& #\* #\@ #\< #\> #\= #\:))
                         (+ (or command-char #\- #\!)))
   (:lambda (x)
@@ -135,7 +139,7 @@
 
 
 (defrule subst (and #\/ (* forward-pattern-char) #\/ (* forward-pattern-char)
-                    (? #\/) (? #\g))
+                    (? #\/) (* subst-flag))
   (:lambda (list)
     (list (coerce (elt list 1) 'string)
           (coerce (elt list 3) 'string)

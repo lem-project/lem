@@ -94,7 +94,7 @@
         ((2)
          (setf start (first range)
                end (second range))))
-      (destructuring-bind (before after flag)
+      (destructuring-bind (before after flags)
           (lem-vi-mode/ex-parser:parse-subst-argument argument)
         (if (not (lem:with-point ((s start)
                                   (e end))
@@ -103,29 +103,31 @@
             (lem:with-point ((last-match (lem:with-point ((s start)
                                                           (e end))
                                            (lem:search-backward-regexp e before s))))
-              (flet ((rep (start end count)
-                       (lem:with-point ((s start)
-                                        (e end))
-                         (lem/isearch::query-replace-internal before
-                                                              after
-                                                              #'lem:search-forward-regexp
-                                                              #'lem:search-backward-regexp
-                                                              :query nil
-                                                              :start s
-                                                              :end e
-                                                              :count count))))
-                (if (equal flag "g")
-                    (rep start end nil)
-                    (progn
-                      (lem:move-point (lem:current-point) start)
-                      (loop until (lem:point< end (lem:current-point))
-                            do (lem:with-point ((replace-start (lem:current-point))
-                                                (replace-end (lem:current-point)))
-                                 (lem:line-start replace-start)
-                                 (lem:line-end replace-end)
-                                 (rep replace-start replace-end 1))
-                               (lem:next-logical-line 1)
-                               (lem:line-start (lem:current-point))))))
+              (let ((query (find "c" flags :test 'string=))
+                    (replace-all-in-line (find "g" flags :test 'string=)))
+                (flet ((rep (start end count)
+                         (lem:with-point ((s start)
+                                          (e end))
+                           (lem/isearch::query-replace-internal before
+                                                                after
+                                                                #'lem:search-forward-regexp
+                                                                #'lem:search-backward-regexp
+                                                                :query query
+                                                                :start s
+                                                                :end e
+                                                                :count count))))
+                  (if replace-all-in-line
+                      (rep start end nil)
+                      (progn
+                        (lem:move-point (lem:current-point) start)
+                        (loop until (lem:point< end (lem:current-point))
+                              do (lem:with-point ((replace-start (lem:current-point))
+                                                  (replace-end (lem:current-point)))
+                                   (lem:line-start replace-start)
+                                   (lem:line-end replace-end)
+                                   (rep replace-start replace-end 1))
+                                 (lem:next-logical-line 1)
+                                 (lem:line-start (lem:current-point)))))))
               (let ((p (lem:current-point)))
                 (lem:move-point p last-match)
                 (lem:line-start p))))))))

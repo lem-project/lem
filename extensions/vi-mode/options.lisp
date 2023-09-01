@@ -51,6 +51,7 @@
 (defvar *option-aliases* (make-hash-table :test 'equal))
 (defvar *global-options* (make-hash-table :test 'equal))
 (defvar *default-buffer-options* (make-hash-table :test 'equal))
+(defvar *default-window-options* (make-hash-table :test 'equal))
 
 (defun canonical-option-name (name)
   (or (gethash name *option-aliases*)
@@ -64,6 +65,14 @@
                               (funcall (option-initializer new-option) new-option))
                             new-option))))
 
+(defun new-window-options ()
+  (copy-hash-table *default-window-options*
+                   :key (lambda (option)
+                          (let ((new-option (copy-structure option)))
+                            (when (option-initializer new-option)
+                              (funcall (option-initializer new-option) new-option))
+                            new-option))))
+
 (defun get-buffer-options (&optional (buffer (lem:current-buffer)))
   (or (gethash "vi-mode-options"
                (lem-base::buffer-variables buffer))
@@ -71,13 +80,19 @@
                      (lem-base::buffer-variables buffer))
             (new-buffer-options))))
 
+(defun get-window-options (&optional (window (lem:current-window)))
+  (or (lem:window-parameter window :vi-mode-options)
+      (setf (lem:window-parameter window :vi-mode-options)
+            (new-window-options))))
+
 (defun get-global-options ()
   *global-options*)
 
 (defun get-options-by-scope (scope)
   (ecase scope
     (:global (get-global-options))
-    (:buffer (get-buffer-options))))
+    (:buffer (get-buffer-options))
+    (:window (get-window-options))))
 
 (defun get-option (name &optional (error-if-not-exists t))
   (check-type name string)
@@ -235,7 +250,7 @@
 
 (defmacro define-option (name (default &key (type t) aliases (scope :global)) &rest others)
   (check-type name string)
-  (check-type scope (member :global :buffer))
+  (check-type scope (member :global :buffer :window))
   (once-only (default scope)
     (with-gensyms (option alias)
       (destructuring-bind (&key getter setter set-hook initializer documentation)
@@ -264,7 +279,8 @@
                     ,name
                     (ecase ,scope
                       (:global *global-options*)
-                      (:buffer *default-buffer-options*)))
+                      (:buffer *default-buffer-options*)
+                      (:window *default-window-options*)))
                    ,option)
              (setf (gethash ,name *option-scope*) ,scope)
              ',name))))))
@@ -359,3 +375,8 @@
                            (lem-base::syntax-table-symbol-chars syntax-table))
                    (option-value option))
             :test 'equal)))))
+
+(define-option "scrolloff" (0 :type number :aliases ("so"))
+  (:documentation "The minimal number of lines to keep above of below the cursor.
+Default: 0
+Aliases: so"))

@@ -221,7 +221,10 @@
     (lem:window-set-size (lem:current-window) 5 24)
     (with-vi-buffer (#?"[a]bcdefgh\nijklmn\n")
       (cmd "$")
-      (ok (buf= #?"abcdefg[h]\nijklmn\n")))))
+      (ok (buf= #?"abcdefg[h]\nijklmn\n")))
+    (with-vi-buffer (#?"[a]bc\ndef\nghi\njkl\n")
+      (cmd "3$")
+      (ok (buf= #?"abc\ndef\ngh[i]\njkl\n")))))
 
 (deftest vi-find-char
   (with-fake-interface ()

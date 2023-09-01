@@ -37,7 +37,6 @@
                 :ignore-some-conditions)
   (:export :bolp
            :eolp
-           :goto-eol
            :fall-within-line
            :operator-pending-mode-p
            :read-universal-argument
@@ -60,15 +59,11 @@
         (>= (point-charpos point)
             (1- len)))))
 
-(defun goto-eol (point)
-  "Goto end of a line."
-  (line-end point)
-  (unless (bolp point)
-    (character-offset point *cursor-offset*)))
-
 (defun fall-within-line (point)
   (when (eolp point)
-    (goto-eol point)))
+    (line-end point)
+    (unless (bolp point)
+      (character-offset point *cursor-offset*))))
 
 (defun operator-pending-mode-p ()
   (typep (current-state) 'operator))
@@ -133,18 +128,17 @@
   (with-point ((start (current-point)))
     (labels ((call-motion (command uarg)
                (setf *this-motion-command* command)
-               (let ((*cursor-offset* 0))
-                 (save-excursion
-                   (let ((retval (call-motion-command command uarg)))
-                     (typecase retval
-                       (range
-                        (values (range-beginning retval)
-                                (range-end retval)
-                                (or (range-type retval) :exclusive)))
-                       (otherwise
-                        (values start
-                                (copy-point (current-point))
-                                (command-motion-type command))))))))
+               (save-excursion
+                 (let ((retval (call-motion-command command uarg)))
+                   (typecase retval
+                     (range
+                      (values (range-beginning retval)
+                              (range-end retval)
+                              (or (range-type retval) :exclusive)))
+                     (otherwise
+                      (values start
+                              (copy-point (current-point))
+                              (command-motion-type command)))))))
              (command-motion-type (command)
                (if (typep command 'vi-motion)
                    (vi-motion-type command)

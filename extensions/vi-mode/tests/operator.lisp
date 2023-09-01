@@ -25,6 +25,10 @@
     (with-vi-buffer (#?"[a]bc\ndef\nghi\njkl\n")
       (cmd "1000dd")
       (ok (buf= "[]")))
+    (testing "visual mode"
+      (with-vi-buffer (#?"[a]bc\ndef\nghi\n")
+        (cmd "Vjd")
+        (ok (buf= #?"[g]hi\n"))))
     (testing "with vi-forward-word-begin"
       (with-vi-buffer (#?"[a]bc\n  def\n")
         (cmd "dw")

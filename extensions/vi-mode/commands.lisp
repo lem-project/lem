@@ -124,10 +124,7 @@
   (let* ((p (current-point))
          (max-offset (- (length (line-string p))
                         (point-charpos p))))
-    (character-offset p (min n max-offset))
-    (when (and (<= max-offset n)
-               (not (bolp p)))
-      (character-offset p *cursor-offset*))))
+    (character-offset p (min n max-offset))))
 
 (define-command vi-backward-char (&optional (n 1)) ("p")
   (let ((p (current-point)))
@@ -138,8 +135,7 @@
 
 (define-motion vi-next-line (&optional (n 1)) ("p")
     (:type :line)
-  (next-logical-line n)
-  (fall-within-line (current-point)))
+  (next-logical-line n))
 
 (define-motion vi-line (&optional (n 1)) ("p")
     ()
@@ -147,18 +143,15 @@
 
 (define-motion vi-next-display-line (&optional (n 1)) ("p")
     (:type :line)
-  (next-line n)
-  (fall-within-line (current-point)))
+  (next-line n))
 
 (define-motion vi-previous-line (&optional (n 1)) ("p")
     (:type :line)
-  (previous-logical-line n)
-  (fall-within-line (current-point)))
+  (previous-logical-line n))
 
 (define-motion vi-previous-display-line (&optional (n 1)) ("p")
     (:type :line)
-  (previous-line n)
-  (fall-within-line (current-point)))
+  (previous-line n))
 
 (defun on-only-space-line-p (point)
   (with-point ((p point))
@@ -232,7 +225,7 @@
 
 (define-command vi-move-to-end-of-line (&optional (n 1)) ("p")
   (vi-line n)
-  (goto-eol (current-point)))
+  (line-end (current-point)))
 
 (define-command vi-move-to-last-nonblank () ()
   (vi-move-to-end-of-line)
@@ -274,8 +267,7 @@
 
 (define-operator vi-delete-next-char (beg end) ("<r>")
     (:motion vi-forward-char)
-  (vi-delete beg end :inclusive)
-  (fall-within-line (current-point)))
+  (vi-delete beg end :inclusive))
 
 (define-operator vi-delete-previous-char (beg end) ("<r>")
     (:motion vi-backward-char)
@@ -304,8 +296,7 @@
                          '(vi-forward-word-begin
                            vi-forward-word-begin-broad)
                          :test 'eq))
-        (skip-chars-forward (current-point) '(#\Space #\Tab)))
-      (fall-within-line (current-point)))))
+        (skip-chars-forward (current-point) '(#\Space #\Tab))))))
 
 (define-operator vi-delete-line (start end type) ("<R>")
     (:motion vi-move-to-end-of-line)
@@ -322,8 +313,7 @@
                                 (move-to-column s column)
                                 (line-end e)
                                 (kill-region s e)))))
-      (kill-region-without-appending start end))
-  (fall-within-line (current-point)))
+      (kill-region-without-appending start end)))
 
 (define-operator vi-change (beg end type) ("<R>")
     ()
@@ -350,8 +340,7 @@
     (move-point (current-point) start)
     (dotimes (i count)
       (move-to-end-of-logical-line)
-      (delete-next-char)))
-  (fall-within-line (current-point)))
+      (delete-next-char))))
 
 (define-operator vi-join-line (start end) ("<r>")
     (:motion vi-line)
@@ -493,12 +482,10 @@
       (downcase-region start end)))
 
 (define-command vi-undo (&optional (n 1)) ("p")
-  (undo n)
-  (fall-within-line (current-point)))
+  (undo n))
 
 (define-command vi-redo (&optional (n 1)) ("p")
-  (redo n)
-  (fall-within-line (current-point)))
+  (redo n))
 
 (defun vi-forward-matching-paren (window point &optional (offset -1))
   (declare (ignore window))
@@ -750,8 +737,7 @@
             (lem/universal-argument::*argument* (lem/universal-argument::make-arg-state)))
         (execute-key-sequence keyseq)
         (unless (state= prev-state (current-state))
-          (change-state prev-state))
-        (fall-within-line (current-point))))))
+          (change-state prev-state))))))
 
 (define-text-object-command vi-a-word (count) ("p")
     (:expand-selection t)

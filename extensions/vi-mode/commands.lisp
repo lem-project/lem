@@ -590,13 +590,13 @@
     (:type :line
      :jump t)
   (let ((col (point-charpos (current-point))))
-    (if (null n)
-        (progn
-          (move-to-end-of-buffer)
-          (when (and (bolp (current-point))
-                     (eolp (current-point)))
-            (line-offset (current-point) -1)))
-        (goto-line n))
+    (cond
+      ((null n)
+       (move-to-end-of-buffer)
+       (when (and (bolp (current-point))
+                  (eolp (current-point)))
+         (line-offset (current-point) -1)))
+      (t (goto-line n)))
     (move-to-column (current-point) col)))
 
 (define-command vi-return (&optional (n 1)) ("p")

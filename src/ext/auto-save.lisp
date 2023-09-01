@@ -13,7 +13,8 @@
 (defvar *timer* nil)
 
 (define-minor-mode auto-save-mode
-    (:name "AS")
+    (:name "AS"
+     :global t)
   (enable))
 
 (defun auto-save-filename (buffer)

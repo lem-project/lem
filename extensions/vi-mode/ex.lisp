@@ -3,6 +3,9 @@
         :lem
         :lem-vi-mode/core
         :lem-vi-mode/ex-parser)
+  (:import-from :lem-vi-mode/visual
+                :visual-p
+                :vi-visual-end)
   (:import-from :lem-vi-mode/utils
                 :expand-filename-modifiers)
   (:export :vi-ex))
@@ -16,12 +19,13 @@
 
 (define-command vi-ex () ()
   (let* ((directory (uiop:getcwd))
-         (buffer-filename (lem:buffer-filename)))
+         (buffer-filename (lem:buffer-filename))
+         (in-visual (visual-p)))
     (with-state 'ex
       (with-main-window (lem:current-window)
         (execute-ex
          (prompt-for-string
-          ":"
+          (if in-visual ":'<,'>" ":")
           :completion-function
           (lambda (str)
             (cond
@@ -73,4 +77,5 @@
 
 (defun execute-ex (string)
   (let ((lem-vi-mode/ex-core:*point* (current-point)))
-    (eval (parse-ex string))))
+    (prog1 (eval (parse-ex string))
+      (vi-visual-end))))

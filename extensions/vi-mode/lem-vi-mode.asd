@@ -24,7 +24,7 @@
                (:file "ex-core")
                (:file "ex-parser" :depends-on ("ex-core"))
                (:file "ex-command" :depends-on ("ex-core" "options" "utils"))
-               (:file "ex" :depends-on ("core" "ex-parser"))
+               (:file "ex" :depends-on ("core" "ex-parser" "visual"))
                (:file "binds" :depends-on ("states" "commands" "ex" "visual"))
                (:file "special-binds" :depends-on ("core"))
                (:file "vi-mode" :depends-on ("core" "options" "ex" "commands" "states"))

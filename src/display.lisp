@@ -555,4 +555,6 @@
                           buffer
                           (point-charpos (window-view-point window))
                           (get-cursor-y-on-screen window))
+    (when (or force (required-whole-update-screen-p screen))
+      (lem-if:force-update-view (implementation) (screen-view screen)))
     (update-screen-cache screen buffer)))

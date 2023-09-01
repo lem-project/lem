@@ -543,6 +543,7 @@
    :redraw-view-after
    :will-update-display
    :update-display
+   :force-update-view
    :set-first-view
    :split-window-horizontally
    :split-window-vertically

@@ -21,7 +21,7 @@
   (let* ((directory (uiop:getcwd))
          (buffer-filename (lem:buffer-filename))
          (in-visual (visual-p)))
-    (with-state 'ex
+    (with-temporary-state 'ex
       (with-main-window (lem:current-window)
         (execute-ex
          (prompt-for-string

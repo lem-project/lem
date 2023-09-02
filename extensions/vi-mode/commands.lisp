@@ -368,10 +368,20 @@
 
 (define-operator vi-yank (start end type) ("<R>")
     (:move-point nil)
-  (if (eq type :block)
-      (visual-yank)
-      (with-killring-context (:options (when (eq type :line) :vi-line))
-        (copy-region start end))))
+  (flet ((yank-region ()
+           (with-killring-context (:options (when (eq type :line) :vi-line))
+             (copy-region start end))))
+    (case type
+      (:block
+       (visual-yank)
+       (move-point (current-point) (first (visual-range))))
+      (:line
+       (yank-region)
+       (move-to-column start (point-charpos (current-point)))
+       (move-point (current-point) start))
+      (otherwise
+       (yank-region)
+       (move-point (current-point) start)))))
 
 (define-operator vi-yank-line (start end type) ("<R>")
     (:motion vi-move-to-end-of-line)

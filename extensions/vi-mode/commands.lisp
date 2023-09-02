@@ -139,7 +139,7 @@
 
 (define-motion vi-line (&optional (n 1)) ("p")
     ()
-  (next-logical-line (1- n)))
+  (line-offset (current-point) (1- n)))
 
 (define-motion vi-next-display-line (&optional (n 1)) ("p")
     (:type :line)

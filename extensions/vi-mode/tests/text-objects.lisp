@@ -11,6 +11,12 @@
 
 (in-readtable :interpol-syntax)
 
+(deftest word-object
+  (with-fake-interface ()
+    (with-vi-buffer (#?"abc\n  [ ] def\n")
+      (cmd "viw")
+      (ok (buf= #?"abc\n<   [ ]>def\n")))))
+
 (deftest double-quoted
   (with-fake-interface ()
     (with-vi-buffer ("[ ]\"foo\" \"bar\"")

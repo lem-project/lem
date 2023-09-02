@@ -47,7 +47,7 @@
 	)
       )))
 
-(defun notmuch-open-message (subject query)
+(defun notmuch-show-message (subject query)
   (let ((buffer (make-buffer (format nil "*~A%*" subject)))
 	;; (first query) is the query that matches the message
 	(results (car (car (notmuch-show (first query) :decrypt t :entire-thread nil)))))

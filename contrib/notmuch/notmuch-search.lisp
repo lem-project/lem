@@ -31,13 +31,12 @@
 	       (tags "tags"))
 	    (lem/button:insert-button
 	     point
-	     (format nil "~20@A [~A/~A] ~25@A ~A"
-		     date_relative
-		     matched
-		     total
+	     (format nil "~12@A ~8@A ~25@A ~A"
+		     (truncate-field 12 date_relative)
+		     (format nil "[~A/~A]" matched total)
 		     (truncate-field 20 authors)
 		     (truncate-field 60 subject))
-	     (lambda () (notmuch-open-message subject query)))
+	     (lambda () (notmuch-show-message subject query)))
 	    (insert-character point #\newline 1)
 	    ))
       )

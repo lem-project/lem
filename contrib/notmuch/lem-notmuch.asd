@@ -4,7 +4,7 @@
   :components (
 	       (:file "package")
 	       (:file "backend")
-	       (:file "notmuch-message")
+	       (:file "notmuch-show")
 	       (:file "notmuch-search")
 	       (:file "notmuch-hello")
 	       (:file "notmuch")))

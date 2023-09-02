@@ -8,7 +8,8 @@
                 :vi-visual-end)
   (:import-from :lem-vi-mode/utils
                 :expand-filename-modifiers)
-  (:export :vi-ex))
+  (:export :vi-ex
+           :*ex-keymap*))
 (in-package :lem-vi-mode/ex)
 
 (defvar *ex-keymap* (make-keymap :name '*ex-keymap*))
@@ -73,7 +74,8 @@
                                 :end (line-end e)))))
                          (lem/completion-mode::completion-buffer
                           comp-str))))))
-          :history-symbol 'vi-ex))))))
+          :history-symbol 'vi-ex
+          :special-keymap *ex-keymap*))))))
 
 (defun execute-ex (string)
   (let ((lem-vi-mode/ex-core:*point* (current-point)))

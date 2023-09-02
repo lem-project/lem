@@ -8,7 +8,10 @@
         :lem-vi-mode/ex
         :lem-vi-mode/visual)
   (:import-from :lem-core
-                :keymap-table))
+                :keymap-table)
+  (:import-from :lem/prompt-window
+                :prompt-previous-history
+                :prompt-next-history))
 (in-package :lem-vi-mode/binds)
 
 (define-key *motion-keymap* "0" 'vi-move-to-beginning-of-line/universal-argument-0)
@@ -137,6 +140,9 @@
 
 (define-key *replace-state-keymap* "C-g" 'escape)
 (define-key *replace-state-keymap* "Escape" 'escape)
+
+(define-key *ex-keymap* "C-p" 'prompt-previous-history)
+(define-key *ex-keymap* "C-n" 'prompt-next-history)
 
 (define-key *outer-text-objects-keymap* "w" 'vi-a-word)
 (define-key *inner-text-objects-keymap* "w" 'vi-inner-word)

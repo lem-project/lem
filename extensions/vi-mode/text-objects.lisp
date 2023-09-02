@@ -118,7 +118,7 @@
                (end (current-point)))
     (if (on-object-p object beg)
         (slurp-object object beg :backward)
-        (skip-chars-backward beg '(#\Space #\Tab #\Newline)))
+        (skip-chars-backward beg '(#\Space #\Tab)))
     (dotimes (i count)
       (when (or (end-buffer-p end)
                 (char= (character-at end) #\Newline))

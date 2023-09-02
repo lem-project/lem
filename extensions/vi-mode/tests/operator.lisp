@@ -3,6 +3,8 @@
         :lem
         :rove
         :lem-vi-mode/tests/utils)
+  (:import-from :lem/common/killring
+                :peek-killring-item)
   (:import-from :lem-fake-interface
                 :with-fake-interface)
   (:import-from :named-readtables
@@ -104,6 +106,41 @@
     (with-vi-buffer (#?"[a]bcdefgh\nijklmn\n")
       (cmd "J")
       (ok (buf= #?"abcdefgh[ ]ijklmn\n")))))
+
+(deftest vi-yank
+  (with-fake-interface ()
+    (flet ((last-kill ()
+             (peek-killring-item (current-killring) 0)))
+      (with-vi-buffer (#?"a[b]cd\n")
+        (cmd "yl")
+        (ok (buf= #?"a[b]cd\n"))
+        (ok (equal (last-kill) "b")))
+      (with-vi-buffer (#?"ef[g]h\n")
+        (cmd "yh")
+        (ok (buf= #?"e[f]gh\n"))
+        (ok (equal (last-kill) "f")))
+      (with-vi-buffer (#?"ab[c]d\nefgh\n")
+        (cmd "yj")
+        (ok (buf= #?"ab[c]d\nefgh\n"))
+        (ok (equalp (multiple-value-list (last-kill))
+                    (list #?"abcd\nefgh" '(:vi-line)))))
+      (with-vi-buffer (#?"ijkl\n[m]nop\n")
+        (cmd "yk")
+        (ok (buf= #?"[i]jkl\nmnop\n"))
+        (ok (equalp (multiple-value-list (last-kill))
+                    (list #?"ijkl\nmnop" '(:vi-line)))))
+      (with-vi-buffer (#?"ab[c]d\nefgh\n")
+        (cmd "<C-v>hjy")
+        (ok (buf= #?"a[b]cd\nefgh\n")))
+      (with-vi-buffer (#?"a[b]cd\nefgh\n")
+        (cmd "<C-v>jky")
+        (ok (buf= #?"a[b]cd\nefgh\n")))
+      (with-vi-buffer (#?"abcd\ne[f]gh\n")
+        (cmd "<C-v>kly")
+        (ok (buf= #?"a[b]cd\nefgh\n")))
+      (with-vi-buffer (#?"abcd\nef[g]h\n")
+        (cmd "<C-v>khy")
+        (ok (buf= #?"a[b]cd\nefgh\n"))))))
 
 (deftest vi-yank-line
   (with-fake-interface ()

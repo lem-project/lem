@@ -282,7 +282,7 @@
          "Project: "
          :completion-function (lambda (x) (completion-strings x candidates))
          :test-function (lambda (name) (member name candidates :test #'string=)))
-        (show-message "No projects." :timeout 5))))
+        (progn (show-message "No projects." :timeout 5) nil))))
 
 (define-command project-switch () ()
   "Prompt for a saved project and find a file in this project."

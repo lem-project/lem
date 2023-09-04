@@ -173,12 +173,17 @@
   (setf *unnamed-register* #\0)
   (values))
 
+(defun small-deletion-p (start end type)
+  (and (= (line-number-at-point start)
+          (line-number-at-point end))
+       (not (eq type :line))))
+
 (defun delete-region (start end &key type)
   (with-killring-context (:options (when (eq type :line) :vi-line)
                           :appending (when (eq type :block)
                                        (continue-flag :vi-delete-block)))
-    (let* ((string (lem:delete-between-points start end))
-           (small (member type '(:exclusive :inclusive)))
+    (let* ((small (small-deletion-p start end type))
+           (string (lem:delete-between-points start end))
            (yank (make-yank string
                             (case type
                               (:line :line)

@@ -328,7 +328,7 @@ Notes:
                        (lem-core/commands/project:find-root (buffer-filename))
                        file)))))
       (switch-to-buffer buffer)
-      (message "File ~a doesn't exist." file))))
+      (editor-error "File ~a doesn't exist." file))))
 
 (define-command peek-legit-next () ()
   (next-move-point (current-point)))

@@ -76,22 +76,13 @@
                        (eq (vi-command-repeat command) nil))
                   (eq (command-name (this-command)) 'vi-end-insert))
         (appendf *last-repeat-keys*
-                 (vi-this-command-keys))))
-    (when (and (member (command-name command)
-                       '(self-insert
-                         ;; XXX: lem:call-command always adds a undo boundary
-                         ;;  Delete the last boundary after these commands executed.
-                         vi-open-below
-                         vi-open-above)
-                       :test 'eq)
-               (eq :separator (lem-base::last-edit-history (current-buffer))))
-      (vector-pop (lem-base::buffer-edit-history (current-buffer))))))
+                 (vi-this-command-keys))))))
 
 (defmethod state-enabled-hook ((state insert))
   (when *enable-repeat-recording*
     (setf *last-repeat-keys* nil))
-  (buffer-undo-boundary))
+  (buffer-undo-boundary)
+  (buffer-disable-undo-boundary (lem:current-buffer)))
 
 (defmethod state-disabled-hook ((state insert))
-  (unless (eq :separator (lem-base::last-edit-history (current-buffer)))
-    (buffer-undo-boundary)))
+  (buffer-enable-undo-boundary (lem:current-buffer)))

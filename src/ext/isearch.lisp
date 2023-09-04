@@ -1,6 +1,7 @@
 (defpackage :lem/isearch
   (:use :cl :lem)
   (:export :*isearch-keymap*
+           :*isearch-finish-hooks*
            :isearch-mode
            :isearch-highlight-attribute
            :isearch-highlight-active-attribute
@@ -42,6 +43,7 @@
 (defvar *isearch-search-forward-function*)
 (defvar *isearch-search-backward-function*)
 (defvar *isearch-popup-message* nil)
+(defvar *isearch-finish-hooks* '())
 
 (define-attribute isearch-highlight-attribute
   (t :foreground :base00 :background :base05))
@@ -339,6 +341,7 @@
   (setf (buffer-value (current-buffer) 'isearch-redisplay-string) *isearch-string*)
   (change-previous-string *isearch-string*)
   (isearch-add-hooks)
+  (run-hooks *isearch-finish-hooks* *isearch-string*)
   (isearch-redisplay-inactive (current-buffer))
   (isearch-mode nil))
 

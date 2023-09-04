@@ -7,6 +7,7 @@
         :lem-vi-mode/word
         :lem-vi-mode/visual
         :lem-vi-mode/jump-motions
+        :lem-vi-mode/registers
         :lem-vi-mode/text-objects
         :lem-vi-mode/commands/utils)
   (:import-from :lem-vi-mode/states
@@ -20,6 +21,10 @@
                 :peek-killring-item)
   (:import-from :lem-vi-mode/utils
                 :kill-region-without-appending)
+  (:import-from :lem/isearch
+                :*isearch-finish-hooks*)
+  (:import-from :alexandria
+                :when-let)
   (:export :vi-move-to-beginning-of-line/universal-argument-0
            :vi-forward-char
            :vi-backward-char
@@ -277,9 +282,10 @@
     (:move-point nil)
   (let ((pos (point-charpos (current-point))))
     (if (visual-p)
-        (visual-kill)
-        (with-killring-context (:options (when (eq type :line) :vi-line))
-          (kill-region-without-appending start end)))
+        (apply-visual-range
+         (lambda (start end)
+           (delete-region start end :type type)))
+        (delete-region start end :type type))
     (when (and (eq type :line)
                (eq 'vi-delete (command-name (this-command))))
       (if (last-line-p (current-point))
@@ -368,20 +374,19 @@
 
 (define-operator vi-yank (start end type) ("<R>")
     (:move-point nil)
-  (flet ((yank-region ()
-           (with-killring-context (:options (when (eq type :line) :vi-line))
-             (copy-region start end))))
-    (case type
-      (:block
-       (visual-yank)
-       (move-point (current-point) (first (visual-range))))
-      (:line
-       (yank-region)
-       (move-to-column start (point-charpos (current-point)))
-       (move-point (current-point) start))
-      (otherwise
-       (yank-region)
-       (move-point (current-point) start)))))
+  (case type
+    (:block
+     (apply-visual-range
+      (lambda (start end)
+        (yank-region start end :type type)))
+     (move-point (current-point) (first (visual-range))))
+    (:line
+     (yank-region start end :type type)
+     (move-to-column start (point-charpos (current-point)))
+     (move-point (current-point) start))
+    (otherwise
+     (yank-region start end :type type)
+     (move-point (current-point) start))))
 
 (define-operator vi-yank-line (start end type) ("<R>")
     (:motion vi-move-to-end-of-line)
@@ -532,8 +537,13 @@
 
 (defvar *last-search-direction* nil)
 
+(defun vi-isearch-finish-hook (string)
+  (setf (register #\/) string)
+  (remove-hook *isearch-finish-hooks* 'vi-isearch-finish-hook))
+
 (define-command vi-search-forward () ()
   (setf *last-search-direction* :forward)
+  (add-hook *isearch-finish-hooks* 'vi-isearch-finish-hook)
   (with-jump-motion
     (lem/isearch::isearch-start "/"
                                 (lambda (point string)
@@ -548,24 +558,29 @@
 
 (define-command vi-search-backward () ()
   (setf *last-search-direction* :backward)
+  (add-hook *isearch-finish-hooks* 'vi-isearch-finish-hook)
   (with-jump-motion
     (lem/isearch:isearch-backward-regexp "?")))
 
 (defun vi-search-repeat-forward (n)
-  (with-jump-motion
-    (with-point ((p (current-point)))
-      (vi-forward-char (length lem/isearch::*isearch-string*))
-      (loop repeat n
-            for found = (lem/isearch:isearch-next)
-            unless found
-               do (move-point (current-point) p)
-                  (return)
-            finally
-               (vi-backward-char (length lem/isearch::*isearch-string*))))))
+  (when-let ((query (register #\/)))
+    (lem/isearch::change-previous-string query)
+    (with-jump-motion
+      (with-point ((p (current-point)))
+        (vi-forward-char (length lem/isearch::*isearch-string*))
+        (loop repeat n
+              for found = (lem/isearch:isearch-next)
+              unless found
+              do (move-point (current-point) p)
+                 (return)
+              finally
+                 (vi-backward-char (length lem/isearch::*isearch-string*)))))))
 
 (defun vi-search-repeat-backward (n)
-  (with-jump-motion
-    (dotimes (i n) (lem/isearch:isearch-prev))))
+  (when-let ((query (register #\/)))
+    (lem/isearch::change-previous-string query)
+    (with-jump-motion
+      (dotimes (i n) (lem/isearch:isearch-prev)))))
 
 (define-command vi-search-next (n) ("p")
   (case *last-search-direction*

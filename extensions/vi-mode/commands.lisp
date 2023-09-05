@@ -287,9 +287,9 @@
       (delete-previous-char))
     (when (eq 'vi-delete (command-name (this-command)))
       (when (eq type :line)
-        (setf (point-charpos (current-point))
-              (max 0
-                   (min (1- (length (line-string (current-point)))) pos))))
+        (move-to-column (current-point)
+                        (max 0
+                             (min (1- (length (line-string (current-point)))) pos))))
       ;; After 'dw' or 'dW', move to the first non-blank char
       (when (and (this-motion-command)
                  (member (command-name (this-motion-command))

@@ -320,8 +320,15 @@ Notes:
 (define-command peek-legit-select () ()
   (alexandria:when-let ((file (get-matched-file)))
     (quit)
-    (alexandria:when-let ((buffer (find-file-buffer file)))
-      (switch-to-buffer buffer))))
+    (alexandria:if-let
+        ((buffer (or (and (uiop:file-exists-p file)
+                          (find-file-buffer file))
+                     (find-file-buffer
+                      (merge-pathnames
+                       (lem-core/commands/project:find-root (buffer-filename))
+                       file)))))
+      (switch-to-buffer buffer)
+      (editor-error "File ~a doesn't exist." file))))
 
 (define-command peek-legit-next () ()
   (next-move-point (current-point)))

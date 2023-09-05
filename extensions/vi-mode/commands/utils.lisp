@@ -186,7 +186,8 @@
         (ecase type
           (:line (unless (visual-p)
                    (line-start start)
-                   (line-end end)))
+                   (or (line-offset end 1 0)
+                       (line-end end))))
           (:block)
           (:inclusive
            (unless (point= start end)

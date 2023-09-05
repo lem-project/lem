@@ -181,7 +181,8 @@
        (when (point< end start)
          (rotatef start end))
        (line-start start)
-       (line-end end)
+       (or (line-offset end 1 0)
+           (line-end end))
        (list start end)))))
 
 (defun (setf visual-range) (new-range)

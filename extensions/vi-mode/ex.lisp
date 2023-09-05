@@ -28,7 +28,8 @@
       (with-main-window (lem:current-window)
         (execute-ex
          (prompt-for-string
-          (if in-visual ":'<,'>" ":")
+          ":"
+          :initial-value (if in-visual "'<,'>" "")
           :completion-function
           (lambda (str)
             (cond
@@ -77,10 +78,10 @@
                          (lem/completion-mode::completion-buffer
                           comp-str))))))
           :history-symbol 'vi-ex
-          :special-keymap *ex-keymap*))))))
+          :special-keymap *ex-keymap*))))
+    (vi-visual-end)))
 
 (defun execute-ex (string)
   (let ((lem-vi-mode/ex-core:*point* (current-point)))
     (prog1 (eval (parse-ex string))
-      (setf *last-ex-command* string)
-      (vi-visual-end))))
+      (setf *last-ex-command* string))))

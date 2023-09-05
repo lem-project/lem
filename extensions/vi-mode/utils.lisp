@@ -31,28 +31,30 @@
                            string
                            (lambda (match &rest registers)
                              (declare (ignore registers))
-                             (let ((result (enough-namestring (or base-filename
-                                                                  (buffer-filename)
-                                                                  (uiop:getcwd))
-                                                              (uiop:getcwd))))
-                               (ppcre:do-matches-as-strings (flag "(?<=:)([a-z])" match result)
+                             (let ((result (or base-filename
+                                               (buffer-filename)
+                                               (uiop:getcwd))))
+                               (ppcre:do-matches-as-strings (flag "(?<=:)([a-z])" match
+                                                                  (enough-namestring result))
                                  (setf result
                                        (ecase (aref flag 0)
                                          (#\p (namestring
                                                (uiop:ensure-absolute-pathname result (uiop:getcwd))))
                                          (#\h
-                                          (namestring
-                                           (if (uiop:directory-pathname-p result)
-                                               (uiop:pathname-parent-directory-pathname result)
-                                               (uiop:pathname-directory-pathname result))))
+                                          (let ((result-path (pathname result)))
+                                            (namestring
+                                             (if (uiop:directory-pathname-p result-path)
+                                                 (uiop:pathname-parent-directory-pathname result-path)
+                                                 (uiop:pathname-directory-pathname result-path)))))
                                          (#\t
                                           (let ((result-path (pathname result)))
                                             (namestring
                                              (make-pathname :name (pathname-name result-path)
                                                             :type (pathname-type result-path)))))
                                          (#\r
-                                          (make-pathname :defaults (pathname result)
-                                                         :type nil))
+                                          (namestring
+                                           (make-pathname :defaults (pathname result)
+                                                          :type nil)))
                                          (#\e (or (pathname-type (pathname result))
                                                   "")))))))
                            :simple-calls t))

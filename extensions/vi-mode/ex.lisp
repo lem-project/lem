@@ -6,6 +6,8 @@
   (:import-from :lem-vi-mode/visual
                 :visual-p
                 :vi-visual-end)
+  (:import-from :lem-vi-mode/registers
+                :*last-ex-command*)
   (:import-from :lem-vi-mode/utils
                 :expand-filename-modifiers)
   (:export :vi-ex
@@ -80,4 +82,5 @@
 (defun execute-ex (string)
   (let ((lem-vi-mode/ex-core:*point* (current-point)))
     (prog1 (eval (parse-ex string))
+      (setf *last-ex-command* string)
       (vi-visual-end))))

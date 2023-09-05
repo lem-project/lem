@@ -81,6 +81,7 @@
 (define-ex-command "^(vs|vsplit)$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-horizontally)
+  (lem:next-window)
   (unless (string= filename "")
     (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 

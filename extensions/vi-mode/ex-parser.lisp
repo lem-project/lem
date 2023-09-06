@@ -71,8 +71,12 @@
            (- (second list))
            (second list)))))
 
+(defrule visual-start (and #\' #\<))
+(defrule visual-end (and #\' #\>))
+
 (defrule ex-line (and whitespace (or goto-line current-line last-line marker
-                                     forward-pattern backward-pattern offset-line))
+                                     forward-pattern backward-pattern offset-line
+                                     visual-start visual-end))
   (:lambda (list)
     (second list)))
 

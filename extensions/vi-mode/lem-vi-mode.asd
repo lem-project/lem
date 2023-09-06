@@ -23,7 +23,7 @@
                 :depends-on ("core" "jump-motions" "visual" "states")
                 :components ((:file "utils")))
                (:file "commands" :depends-on ("core" "commands-utils" "word" "visual" "jump-motions" "states" "registers"))
-               (:file "ex-core")
+               (:file "ex-core" :depends-on ("visual"))
                (:file "ex-parser" :depends-on ("ex-core"))
                (:file "ex-command" :depends-on ("ex-core" "options" "utils"))
                (:file "ex" :depends-on ("core" "ex-parser" "visual" "registers"))

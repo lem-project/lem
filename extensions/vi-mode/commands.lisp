@@ -323,14 +323,23 @@
 
 (define-operator vi-change (beg end type) ("<R>")
     ()
-  (vi-delete beg end type)
-  (indent-line (current-point))
+  (let ((end-with-newline (char= (character-at end -1) #\Newline)))
+    (vi-delete beg end type)
+    (when (eq type :line)
+      (cond
+        (end-with-newline
+         (insert-character (current-point) #\Newline)
+         (character-offset (current-point) -1))
+        (t
+         (insert-character (current-point) #\Newline)))
+      (indent-line (current-point))))
   (change-state 'insert))
 
 (define-operator vi-change-whole-line (beg end) ("<r>")
     (:motion vi-line)
   (line-start beg)
-  (line-end end)
+  (or (line-offset end 1 0)
+      (line-end end))
   (vi-change beg end :line))
 
 (define-operator vi-change-line (beg end type) ("<R>")

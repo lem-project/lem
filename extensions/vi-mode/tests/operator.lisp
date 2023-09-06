@@ -91,6 +91,20 @@
         (cmd "di\"")
         (ok (buf= " \"[\"]  "))))))
 
+(deftest vi-change
+  (with-fake-interface ()
+    (testing "change linewise"
+      (with-vi-buffer (#?"a[b]c\ndef\n")
+        (cmd "cc")
+        (ok (buf= #?"[]\ndef\n")))
+      (with-vi-buffer (#?"abc\nd[e]f")
+        (cmd "cc")
+        (ok (buf= #?"abc\n[]"))))
+    (testing "change charwise"
+      (with-vi-buffer (#?"a[b]c\ndef\n")
+        (cmd "cl")
+        (ok (buf= #?"a[]c\ndef\n"))))))
+
 (deftest vi-change-whole-line
   (with-fake-interface ()
     (with-vi-buffer (#?"a[b]c\ndef\n")

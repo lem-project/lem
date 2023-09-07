@@ -66,6 +66,7 @@
 (defun unread-key (key)
   (when *key-recording-p*
     (pop *record-keys*))
+  (pop *this-command-keys*)
   (push key *unread-keys*))
 
 (defun read-command ()
@@ -91,14 +92,17 @@
   (last-read-key-sequence))
 
 (defun unread-key-sequence (kseq)
-  (setf *unread-keys* (nconc *unread-keys* kseq)))
+  (prog1 (setf *unread-keys* (nconc kseq *unread-keys*))
+    (setf *this-command-keys*
+          (nthcdr (length kseq) *this-command-keys*))))
 
 (defun execute-key-sequence (key-sequence)
   (let ((*unread-keys* key-sequence))
     (do-command-loop (:interactive nil)
       (when (null *unread-keys*)
         (return))
-      (call-command (read-command) nil))))
+      (let ((*this-command-keys* nil))
+        (call-command (read-command) nil)))))
 
 (defun sit-for (seconds &optional (update-window-p t) (force-update-p nil))
   (when update-window-p (redraw-display force-update-p))

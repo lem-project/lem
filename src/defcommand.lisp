@@ -59,7 +59,7 @@
                               (assert (alexandria:length= arg-descriptor 2))
                               (second arg-descriptor))
                              (t
-                              `(list ,arg-descriptor))))
+                              `(multiple-value-list ,arg-descriptor))))
                      arg-descriptors)))
       (if (null pre-forms)
           `(append ,@forms)

@@ -77,7 +77,10 @@ Options:
                 5000)
       (add-hook (variable-value 'before-save-hook :global)
                 (lambda (buffer)
-                  (process-file buffer))))))
+                  (process-file buffer)))
+      (add-hook *input-hook*
+                (lambda (event)
+                  (push event *this-command-keys*))))))
 
 (defun teardown ()
   (teardown-frames))

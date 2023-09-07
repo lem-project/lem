@@ -472,6 +472,10 @@
     (charms/ll:wnoutrefresh scrwin)
     (charms/ll:doupdate)))
 
+(defmethod lem-if:force-update-view ((implementation ncurses) view)
+  #+darwin
+  (charms/ll:redrawwin (ncurses-view-scrwin view)))
+
 (defmethod lem-if:clipboard-paste ((implementation ncurses))
   (lem-ncurses.clipboard:paste))
 

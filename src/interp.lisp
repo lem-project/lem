@@ -94,7 +94,8 @@
                          #'editor-abort-handler)
                        (editor-condition
                          #'editor-condition-handler))
-          (read-command-and-call))
+          (let ((*this-command-keys* nil))
+            (read-command-and-call)))
       (editor-condition (c)
         (restart-case (error c)
           (lem-restart:message ()

@@ -1,5 +1,7 @@
 (in-package :lem-sdl2)
 
+(defvar *line-wrap*)
+
 (defclass graphical-text-buffer (lem:text-buffer) ())
 
 (defun view-width-by-pixel (window)
@@ -158,6 +160,7 @@
 (defstruct logical-line
   string
   attributes
+  left-content
   end-of-line-cursor-attribute
   extend-to-end
   line-end-overlay)
@@ -183,10 +186,14 @@
        (attribute-equal-careful-null-and-symbol (logical-line-extend-to-end a)
                                                 (logical-line-extend-to-end b))))
 
-(defun create-logical-line (point overlays)
-  (let ((end-of-line-cursor-attribute nil)
-        (extend-to-end-attribute nil)
-        (line-end-overlay nil))
+(defun create-logical-line (point overlays active-modes)
+  (let* ((end-of-line-cursor-attribute nil)
+         (extend-to-end-attribute nil)
+         (line-end-overlay nil)
+         (left-content
+           (lem-core::compute-left-display-area-content active-modes
+                                                        (lem-base:point-buffer point)
+                                                        point)))
     (destructuring-bind (string . attributes)
         (lem-base::line-string/attributes (lem-base::point-line point))
       (loop :for overlay :in overlays
@@ -219,11 +226,12 @@
                                 overlay-attribute))))))
       (make-logical-line :string string
                          :attributes attributes
+                         :left-content left-content
                          :extend-to-end extend-to-end-attribute
                          :end-of-line-cursor-attribute end-of-line-cursor-attribute
                          :line-end-overlay line-end-overlay))))
 
-(defun compute-items-from-string-and-attributes (logical-line)
+(defun compute-items-from-string-and-attributes (string attributes)
   (let ((items '()))
     (flet ((add (item)
              (if (null items)
@@ -237,20 +245,25 @@
                              (str:concat (string-with-attribute-item-string last-item)
                                          (string-with-attribute-item-string item)))
                        (push item items))))))
-      (let ((string (logical-line-string logical-line)))
-        (loop :for last-pos := 0 :then end
-              :for (start end attribute) :in (logical-line-attributes logical-line)
-              :do (unless (= last-pos start)
-                    (add (make-string-with-attribute-item :string (subseq string last-pos start))))
-                  (add (if (and attribute
-                                (lem:attribute-p attribute)
-                                (cursor-attribute-p attribute))
-                           (make-cursor-item :string (subseq string start end) :attribute attribute)
-                           (make-string-with-attribute-item
-                            :string (subseq string start end)
-                            :attribute attribute)))
-              :finally (push (make-string-with-attribute-item :string (subseq string last-pos))
-                             items))))
+      (loop :for last-pos := 0 :then end
+            :for (start end attribute) :in attributes
+            :do (unless (= last-pos start)
+                  (add (make-string-with-attribute-item :string (subseq string last-pos start))))
+                (add (if (and attribute
+                              (lem:attribute-p attribute)
+                              (cursor-attribute-p attribute))
+                         (make-cursor-item :string (subseq string start end) :attribute attribute)
+                         (make-string-with-attribute-item
+                          :string (subseq string start end)
+                          :attribute attribute)))
+            :finally (push (make-string-with-attribute-item :string (subseq string last-pos))
+                           items)))
+    items))
+
+(defun compute-items-from-logical-line (logical-line)
+  (let ((items
+          (compute-items-from-string-and-attributes (logical-line-string logical-line)
+                                                    (logical-line-attributes logical-line))))
     (alexandria:when-let (attribute
                           (logical-line-extend-to-end logical-line))
       (push (make-extend-to-eol-item :color (attribute-background-color attribute))
@@ -275,7 +288,8 @@
   ((surface :initarg :surface :reader text-object-surface)
    (string :initarg :string :reader text-object-string)
    (attribute :initarg :attribute :reader text-object-attribute)
-   (type :initarg :type :reader text-object-type)))
+   (type :initarg :type :reader text-object-type)
+   (within-cursor :initform nil :initarg :within-cursor :reader text-object-within-cursor-p)))
 
 (defclass eol-cursor-object (drawing-object)
   ((color :initarg :color
@@ -294,6 +308,15 @@
    (width :initarg :width :reader image-object-width)
    (height :initarg :height :reader image-object-height)
    (attribute :initarg :attribute :reader image-object-attribute)))
+
+(defmethod cursor-object-p (drawing-object)
+  nil)
+
+(defmethod cursor-object-p ((drawing-object text-object))
+  (text-object-within-cursor-p drawing-object))
+
+(defmethod cursor-object-p ((drawing-object eol-cursor-object))
+  t)
 
 ;;; draw-object
 (defmethod draw-object ((drawing-object void-object) x bottom-y window)
@@ -439,7 +462,7 @@
       (values surface attribute))))
 
 (defun create-drawing-object (item)
-  (cond ((typep item 'eol-cursor-item)
+  (cond ((and *line-wrap* (typep item 'eol-cursor-item))
          (list (make-instance 'eol-cursor-object
                               :color (lem:parse-color
                                       (lem:attribute-background
@@ -475,11 +498,14 @@
                         :unless (alexandria:emptyp string)
                         :collect (multiple-value-bind (surface attribute)
                                      (make-text-surface-with-attribute string attribute :type type)
-                                   (make-instance 'text-object
-                                                  :surface surface
-                                                  :string string
-                                                  :attribute attribute
-                                                  :type type)))))))))
+                                   (make-instance
+                                    'text-object
+                                    :surface surface
+                                    :string string
+                                    :attribute attribute
+                                    :type type
+                                    :within-cursor (and attribute
+                                                        (cursor-attribute-p attribute)))))))))))
 
 (defun clear-to-end-of-line (window x y height)
   (sdl2:with-rects ((rect x y (- (view-width-by-pixel window) x) height))
@@ -488,7 +514,7 @@
 
 (defun create-drawing-objects (logical-line)
   (multiple-value-bind (items line-end-item)
-      (compute-items-from-string-and-attributes logical-line)
+      (compute-items-from-logical-line logical-line)
     (append (loop :for item :in items
                   :append (create-drawing-object item))
             (when line-end-item
@@ -542,11 +568,10 @@
                               (push object physical-line-objects)))
                    :finally (return (nreverse physical-line-objects)))))
 
-(defun redraw-physical-line (window y height objects)
-  (clear-to-end-of-line window 0 y height)
-  (loop :for x := 0 :then (+ x (object-width object))
+(defun redraw-physical-line (window x y height objects)
+  (loop :for current-x := x :then (+ current-x (object-width object))
         :for object :in objects
-        :do (draw-object object x (+ y height) window)))
+        :do (draw-object object current-x (+ y height) window)))
 
 (defun validate-cache-p (window y height logical-line)
   (loop :for (cache-y cache-height cache-logical-line) :in (drawing-cache window)
@@ -580,29 +605,106 @@
 
 (defvar *invalidate-cache* nil)
 
-(defun redraw-logical-line (window y logical-line)
-  (let ((objects-per-physical-line
-          (separate-objects-by-width (create-drawing-objects logical-line)
-                                     (view-width-by-pixel window))))
-    (when (and (not (alexandria:length= 1 objects-per-physical-line))
-               *invalidate-cache*)
-      (setf (drawing-cache window) '()))
+(defun redraw-logical-line-when-line-wrapping (window y logical-line)
+  (let* ((left-side-objects
+           (alexandria:when-let (content (logical-line-left-content logical-line))
+             (mapcan #'create-drawing-object
+                     (compute-items-from-string-and-attributes
+                      (lem-base::content-string content)
+                      (lem-base::content-attributes content)))))
+         (left-side-width
+           (loop :for object :in left-side-objects :sum (object-width object)))
+         (objects-per-physical-line
+           (separate-objects-by-width
+            (append left-side-objects (create-drawing-objects logical-line))
+            (view-width-by-pixel window))))
     (loop :for objects :in objects-per-physical-line
           :for height := (max-height-of-objects objects)
+          :for x := 0 :then left-side-width
           :do (unless (update-and-validate-cache-p window y height logical-line)
                 (setf *invalidate-cache* t)
-                (redraw-physical-line window y height objects))
+                (clear-to-end-of-line window 0 y height)
+                (redraw-physical-line window x y height objects))
               (incf y height)
           :sum height)))
+
+(defun find-cursor-object (objects)
+  (loop :for object :in objects
+        :and x := 0 :then (+ x (object-width object))
+        :when (cursor-object-p object)
+        :return (values object x)))
+
+(defun horizontal-scroll-start (window)
+  (or (lem:window-parameter window 'horizontal-scroll-start)
+      0))
+
+(defun (setf horizontal-scroll-start) (x window)
+  (setf (lem:window-parameter window 'horizontal-scroll-start) x))
+
+(defun extract-object-in-display-range (objects start-x end-x)
+  (loop :for object :in objects
+        :and x := 0 :then (+ x (object-width object))
+        :when (and (<= start-x x)
+                   (<= (+ x (object-width object)) end-x))
+        :collect object))
+
+(defun redraw-logical-line-when-horizontal-scroll (window y logical-line)
+  (let* ((left-side-objects
+           (alexandria:when-let (content (logical-line-left-content logical-line))
+             (mapcan #'create-drawing-object
+                     (compute-items-from-string-and-attributes
+                      (lem-base::content-string content)
+                      (lem-base::content-attributes content)))))
+         (left-side-width
+           (loop :for object :in left-side-objects :sum (object-width object)))
+         (objects
+           (append left-side-objects (create-drawing-objects logical-line)))
+         (height
+           (max-height-of-objects objects)))
+    (multiple-value-bind (cursor-object cursor-x)
+        (find-cursor-object objects)
+      (when cursor-object
+        (let ((width (- (view-width-by-pixel window) left-side-width)))
+          (cond ((< cursor-x (horizontal-scroll-start window))
+                 (setf (horizontal-scroll-start window) cursor-x))
+                ((< (+ (horizontal-scroll-start window)
+                       width)
+                    (+ cursor-x (object-width cursor-object)))
+                 (setf (horizontal-scroll-start window)
+                       (+ (- cursor-x width)
+                          (object-width cursor-object))))))
+        (setf objects
+              (extract-object-in-display-range
+               (mapcan (lambda (object)
+                         (if (typep object 'text-object)
+                             (explode-object object)
+                             (list object)))
+                       objects)
+               (horizontal-scroll-start window)
+               (+ (horizontal-scroll-start window)
+                  (view-width-by-pixel window)))))
+      (unless (update-and-validate-cache-p window y height logical-line)
+        (setf *invalidate-cache* t)
+        (clear-to-end-of-line window 0 y height)
+        (redraw-physical-line window 0 y height objects)))
+    height))
 
 (defun redraw-lines (window)
   (lem:with-point ((point (lem:window-view-point window)))
     (let ((*invalidate-cache* nil)
-          (overlays (collect-overlays window)))
+          (overlays (collect-overlays window))
+          (active-modes (lem-core::get-active-modes-class-instance (lem:window-buffer window))))
       (loop :with y := 0 :and height := (view-height-by-pixel window)
-            :do (incf y (redraw-logical-line window
-                                             y
-                                             (create-logical-line point overlays)))
+            :do (incf y
+                      (if *line-wrap*
+                          (redraw-logical-line-when-line-wrapping
+                           window
+                           y
+                           (create-logical-line point overlays active-modes))
+                          (redraw-logical-line-when-horizontal-scroll
+                           window
+                           y
+                           (create-logical-line point overlays active-modes))))
             :while (and (lem:line-offset point 1)
                         (< y height))
             :finally (sdl2:with-rects ((rect 0
@@ -615,9 +717,10 @@
 
 (defmethod lem-core::redraw-buffer ((buffer graphical-text-buffer) window force)
   (assert (eq buffer (lem:window-buffer window)))
-  (when (or force
-            (lem-core::screen-modified-p (lem:window-screen window)))
-    (setf (drawing-cache window) '()))
-  (sdl2:set-render-target (current-renderer) (view-texture (lem:window-view window)))
-  (redraw-lines window)
-  (lem-core::update-screen-cache (lem:window-screen window) buffer))
+  (let ((*line-wrap* (lem:variable-value 'lem:line-wrap :default (lem:window-buffer window))))
+    (when (or force
+              (lem-core::screen-modified-p (lem:window-screen window)))
+      (setf (drawing-cache window) '()))
+    (sdl2:set-render-target (current-renderer) (view-texture (lem:window-view window)))
+    (redraw-lines window)
+    (lem-core::update-screen-cache (lem:window-screen window) buffer)))

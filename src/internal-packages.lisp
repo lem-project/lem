@@ -317,6 +317,8 @@
    :*post-command-hook*
    :command-name
    :this-command
+   :this-command-keys
+   :universal-argument-of-this-command
    :execute
    :call-command
    :all-command-names)
@@ -363,6 +365,7 @@
    :abort-key-p
    :with-special-keymap
    :traverse-keymap
+   :compute-keymaps
    :collect-command-keybindings)
   ;; reexport common/timer
   (:export
@@ -540,6 +543,7 @@
    :redraw-view-after
    :will-update-display
    :update-display
+   :force-update-view
    :set-first-view
    :split-window-horizontally
    :split-window-vertically

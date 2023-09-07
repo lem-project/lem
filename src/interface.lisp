@@ -62,6 +62,8 @@
 (defgeneric lem-if::will-update-display (implementation)
   (:method (implementation)))
 (defgeneric lem-if:update-display (implementation))
+(defgeneric lem-if:force-update-view (implementation view)
+  (:method (implementation view)))
 
 (defgeneric lem-if:set-first-view (implementation view)
   (:method (implementation view)))

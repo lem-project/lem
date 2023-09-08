@@ -90,18 +90,23 @@
         (modifier (get-modifier keysym)))
     (make-key-event code modifier)))
 
-(defun mod-p (mod value)
-  (= value (logand value mod)))
+(defparameter *modifier-code-table*
+  `((:shift ,sdl2-ffi:+kmod-lshift+ ,sdl2-ffi:+kmod-rshift+)
+    (:ctrl ,sdl2-ffi:+kmod-lctrl+ ,sdl2-ffi:+kmod-rctrl+)
+    (:meta ,sdl2-ffi:+kmod-lalt+)
+    (:super ,sdl2-ffi:+kmod-lgui+ ,sdl2-ffi:+kmod-rgui+)))
+
+(defun mod-p (mod mod-type)
+  (some (lambda (value)
+          (= value (logand value mod)))
+        (cdr (assoc mod-type *modifier-code-table*))))
 
 (defun get-modifier (keysym)
   (let* ((mod (sdl2:mod-value keysym))
-         (shift (or (mod-p mod sdl2-ffi:+kmod-lshift+)
-                    (mod-p mod sdl2-ffi:+kmod-rshift+)))
-         (ctrl (or (mod-p mod sdl2-ffi:+kmod-lctrl+)
-                   (mod-p mod sdl2-ffi:+kmod-rctrl+)))
-         (meta (mod-p mod sdl2-ffi:+kmod-lalt+))
-         (super (or (mod-p mod sdl2-ffi:+kmod-lgui+)
-                    (mod-p mod sdl2-ffi:+kmod-rgui+))))
+         (shift (mod-p mod :shift))
+         (ctrl (mod-p mod :ctrl))
+         (meta (mod-p mod :meta))
+         (super (mod-p mod :super)))
     (make-modifier :shift shift :ctrl ctrl :meta meta :super super)))
 
 (defun update-modifier (modifier new-modifier)

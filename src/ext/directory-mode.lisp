@@ -283,7 +283,15 @@
       (sb-ext:delete-directory file :recursive t)
       (delete-file file))
   #-windows
-  (run-command `("rm" "-fr" ,file)))
+  (if (and (not (string= (namestring file)
+                         (namestring (uiop:resolve-symlinks file)))))
+      (and (prompt-for-y-or-n-p
+             (format nil "It appears that ~a is a symlink, delete it?" file))
+           (run-command `("unlink" ,(string-right-trim
+                                     (string
+                                      (uiop:directory-separator-for-host))
+                                     (namestring file)))))
+      (run-command `("rm" "-fr" ,file))))
 
 (defun subdirectory-p (to-pathname from-pathname)
   (let ((to-dir (pathname-directory to-pathname))

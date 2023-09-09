@@ -84,8 +84,9 @@
   (when *enable-repeat-recording*
     (setf *last-repeat-keys* nil))
   (unless *macro-running-p*
-    (buffer-undo-boundary))
-  (buffer-disable-undo-boundary (lem:current-buffer)))
+    (buffer-undo-boundary)
+    (buffer-disable-undo-boundary (lem:current-buffer))))
 
 (defmethod state-disabled-hook ((state insert))
-  (buffer-enable-undo-boundary (lem:current-buffer)))
+  (unless *macro-running-p*
+    (buffer-enable-undo-boundary (lem:current-buffer))))

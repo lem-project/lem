@@ -55,7 +55,9 @@
       (cmd "Q")
       (ok (buf= #?"set-command\nde[f]ine-command\ndefine-command\n"))
       (cmd "2Q")
-      (ok (buf= #?"set-command\nset-command\nset-command\n[]")))
+      (ok (buf= #?"set-command\nset-command\nset-command\n[]"))
+      (cmd "u")
+      (ok (text= #?"set-command\ndefine-command\ndefine-command\n")))
     (with-vi-buffer (#?"[d]efine-command\ndefine-command\ndefine-command\n")
       (handler-case
           (cmd "10@a")

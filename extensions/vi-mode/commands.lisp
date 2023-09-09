@@ -564,7 +564,7 @@
     ((macro-register-p macro)
      (let ((keyseq (register macro)))
        (cond
-         ((consp keyseq)
+         ((listp keyseq)
           (let ((*macro-running-p* t))
             (buffer-disable-undo-boundary (lem:current-buffer))
             (unwind-protect

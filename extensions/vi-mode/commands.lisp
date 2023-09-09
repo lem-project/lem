@@ -23,6 +23,8 @@
                 :kill-region-without-appending)
   (:import-from :lem/isearch
                 :*isearch-finish-hooks*)
+  (:import-from :lem/kbdmacro
+                :*macro-running-p*)
   (:import-from :alexandria
                 :when-let
                 :last-elt)
@@ -563,8 +565,12 @@
      (let ((keyseq (register macro)))
        (cond
          ((consp keyseq)
-          (dotimes (i n)
-            (execute-key-sequence keyseq)))
+          (let ((*macro-running-p* t))
+            (buffer-disable-undo-boundary (lem:current-buffer))
+            (unwind-protect
+                 (dotimes (i n)
+                   (execute-key-sequence keyseq))
+              (buffer-enable-undo-boundary (lem:current-buffer)))))
          (t
           (editor-error "No macro is recorded at the register '~A'" macro)))))
     (t

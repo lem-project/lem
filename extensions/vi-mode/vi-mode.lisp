@@ -24,6 +24,8 @@
                 :*operator-keymap*)
   (:import-from :lem-vi-mode/visual
                 :*visual-keymap*)
+  (:import-from :lem/kbdmacro
+                :*macro-running-p*)
   (:import-from :alexandria
                 :appendf)
   (:export :vi-mode
@@ -81,7 +83,8 @@
 (defmethod state-enabled-hook ((state insert))
   (when *enable-repeat-recording*
     (setf *last-repeat-keys* nil))
-  (buffer-undo-boundary)
+  (unless *macro-running-p*
+    (buffer-undo-boundary))
   (buffer-disable-undo-boundary (lem:current-buffer)))
 
 (defmethod state-disabled-hook ((state insert))

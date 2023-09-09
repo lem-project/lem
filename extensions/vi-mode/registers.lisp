@@ -15,6 +15,8 @@
   (:import-from :trivial-types
                 :proper-list)
   (:export :register
+           :named-register-p
+           :numbered-register-p
            :yank-region
            :delete-region))
 (in-package :lem-vi-mode/registers)

@@ -24,7 +24,8 @@
   (:import-from :lem/isearch
                 :*isearch-finish-hooks*)
   (:import-from :alexandria
-                :when-let)
+                :when-let
+                :last-elt)
   (:export :vi-move-to-beginning-of-line/universal-argument-0
            :vi-forward-char
            :vi-backward-char
@@ -66,6 +67,7 @@
            :vi-downcase
            :vi-undo
            :vi-redo
+           :vi-record-macro
            :vi-move-to-matching-paren
            :vi-search-forward
            :vi-search-backward
@@ -512,6 +514,46 @@
 
 (define-command vi-redo (&optional (n 1)) ("p")
   (redo n))
+
+(defvar *kbdmacro-recording-register* nil)
+
+(defun read-register ()
+  (let ((key (read-key)))
+    (cond
+      ((eq key (make-key :ctrl t :sym "g"))
+       (keyboard-quit))
+      ((eq key (make-key :sym "Escape"))
+       (escape))
+      (t
+       (lem-core:key-to-char key)))))
+
+(define-command vi-record-macro (register) ((or *kbdmacro-recording-register*
+                                                (read-register)))
+  (cond
+    ((or (named-register-p register)
+         (numbered-register-p register)
+         (char= register #\"))
+     (cond
+       ;; When recording
+       (*kbdmacro-recording-register*
+        ;; Finish recording
+        (lem/kbdmacro:kbdmacro-end)
+        (setf (register register)
+              ;; Omit the last 'q'
+              (let* ((last-key
+                       (last-elt lem/kbdmacro::*last-macro-chars*))
+                     (last-cmd
+                       (find-keybind last-key)))
+                (if (eq last-cmd 'vi-record-macro)
+                    (butlast lem/kbdmacro::*last-macro-chars*)
+                    lem/kbdmacro::*last-macro-chars*)))
+        (setf *kbdmacro-recording-register* nil))
+       (t
+        ;; Start recording
+        (setf *kbdmacro-recording-register* register)
+        (lem/kbdmacro:kbdmacro-start))))
+    (t
+     (editor-error "Invalid register: ~S" register))))
 
 (defun vi-forward-matching-paren (window point &optional (offset -1))
   (declare (ignore window))

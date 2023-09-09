@@ -17,6 +17,8 @@
   (:export :register
            :named-register-p
            :numbered-register-p
+           :macro-register-p
+           :downcase-char
            :yank-region
            :delete-region))
 (in-package :lem-vi-mode/registers)
@@ -80,6 +82,11 @@
 (defun numbered-register-p (name)
   (declare (type character name))
   (char<= #\0 name #\9))
+
+(defun macro-register-p (name)
+  (or (named-register-p name)
+      (numbered-register-p name)
+      (char= name #\")))
 
 (defun values-register-item (item)
   (etypecase item

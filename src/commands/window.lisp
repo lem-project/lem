@@ -301,3 +301,7 @@
                      (not (eql c1 c2)))
           :while (and (character-offset p1 1)
                       (character-offset p2 1)))))
+
+(define-command toggle-line-wrap () ()
+  "Toggle line wrap in the buffer."
+  (setf (variable-value 'line-wrap) (not (variable-value 'line-wrap))))

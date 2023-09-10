@@ -6,7 +6,8 @@
                 :*enable-hook*
                 :*disable-hook*
                 :change-state
-                :state-enabled-hook)
+                :state-enabled-hook
+                :define-keymap)
   (:import-from :lem-vi-mode/modeline
                 :state-modeline-yellow
                 :state-modeline-aqua
@@ -34,15 +35,13 @@
 
 (defvar *emacs-keymap* *global-keymap*)
 
-(defvar *motion-keymap* (make-keymap :name '*motion-keymap*))
-(defvar *normal-keymap* (make-keymap :name '*normal-keymap*
-                                     :parent *motion-keymap*))
-(defvar *insert-keymap* (make-keymap :name '*insert-keymap*))
-(defvar *operator-keymap* (make-keymap :name '*operator-keymap*))
-(defvar *replace-state-keymap* (make-keymap :name '*replace-state-keymap*
-                                            :undef-hook 'return-last-read-char))
-(defvar *outer-text-objects-keymap* (make-keymap :name '*outer-text-objects-keymap*))
-(defvar *inner-text-objects-keymap* (make-keymap :name '*inner-text-objects-keymap*))
+(define-keymap *motion-keymap*)
+(define-keymap *normal-keymap* :parent *motion-keymap*)
+(define-keymap *insert-keymap*)
+(define-keymap *operator-keymap*)
+(define-keymap *replace-state-keymap* :undef-hook 'return-last-read-char)
+(define-keymap *outer-text-objects-keymap*)
+(define-keymap *inner-text-objects-keymap*)
 
 (defvar *inactive-keymap* (make-keymap))
 

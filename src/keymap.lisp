@@ -14,8 +14,8 @@
 (defstruct (keymap (:constructor %make-keymap))
   undef-hook
   parent
-  table
-  function-table
+  (table (make-hash-table :test 'eq))
+  (function-table (make-hash-table :test 'eq))
   name)
 
 (defmethod print-object ((object keymap) stream)
@@ -27,8 +27,6 @@
   (let ((keymap (%make-keymap
                  :undef-hook undef-hook
                  :parent parent
-                 :table (make-hash-table :test 'eq)
-                 :function-table (make-hash-table :test 'eq)
                  :name name)))
     (push keymap *keymaps*)
     keymap))
@@ -108,28 +106,29 @@
                       table)))
     (f (keymap-table keymap) nil)))
 
-(defun keymap-find-keybind (keymap key cmd)
-  (let ((table (keymap-table keymap)))
-    (labels ((f (k)
-               (let ((cmd (gethash k table)))
-                 (if (prefix-command-p cmd)
-                     (setf table cmd)
-                     cmd))))
-      (let ((parent (keymap-parent keymap)))
-        (when parent
-          (setf cmd (keymap-find-keybind parent key cmd))))
-      (or (etypecase key
-            (key
-             (f key))
-            (list
-             (let (cmd)
-               (dolist (k key)
-                 (unless (setf cmd (f k))
-                   (return)))
-               cmd)))
-          (gethash cmd (keymap-function-table keymap))
-          (keymap-undef-hook keymap)
-          cmd))))
+(defgeneric keymap-find-keybind (keymap key cmd)
+  (:method ((keymap t) key cmd)
+    (let ((table (keymap-table keymap)))
+      (labels ((f (k)
+                 (let ((cmd (gethash k table)))
+                   (if (prefix-command-p cmd)
+                       (setf table cmd)
+                       cmd))))
+        (let ((parent (keymap-parent keymap)))
+          (when parent
+            (setf cmd (keymap-find-keybind parent key cmd))))
+        (or (etypecase key
+              (key
+               (f key))
+              (list
+               (let (cmd)
+                 (dolist (k key)
+                   (unless (setf cmd (f k))
+                     (return)))
+                 cmd)))
+            (gethash cmd (keymap-function-table keymap))
+            (keymap-undef-hook keymap)
+            cmd)))))
 
 (defun insertion-key-p (key)
   (let* ((key (typecase key

@@ -10,6 +10,7 @@
                "lem-lisp-mode"
                "trivial-types")
   :components ((:file "core")
+               (:file "leader" :depends-on ("core"))
                (:file "options" :depends-on ("utils"))
                (:file "word" :depends-on ("options"))
                (:file "modeline" :depends-on ("core"))

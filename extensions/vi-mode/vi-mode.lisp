@@ -5,6 +5,8 @@
         :lem-vi-mode/ex)
   (:import-from :lem-vi-mode/options
                 :option-value)
+  (:import-from :lem-vi-mode/leader
+                :leader-key)
   (:import-from :lem-vi-mode/commands
                 :vi-open-below
                 :vi-open-above)
@@ -42,7 +44,8 @@
            :normal
            :insert
            :change-state
-           :option-value))
+           :option-value
+           :leader-key))
 (in-package :lem-vi-mode)
 
 (define-command adjust-window-scroll () ()

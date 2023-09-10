@@ -5,7 +5,7 @@
 (in-package :lem-lisp-mode/hyperspec)
 
 (defparameter *hyperspec-root* "http://www.lispworks.com/reference/HyperSpec/"
-  "The root of the Common Lisp HyperSpec URL. 
+  "The root of the Common Lisp HyperSpec URL.
 It can also be a path to load it locally:
 `file://usr/local/doc/HyperSpec/`.")
 
@@ -1005,10 +1005,16 @@ It can also be a path to load it locally:
     (loop for (key path) in *symbols-list*
 	  do  (setf (gethash key *symbols*) path))))
 
+(defun valid-url-p (url)
+  (and (stringp url)
+       (member (quri:uri-scheme (quri:uri url))
+               '("http" "https")
+               :test #'equal)))
+
 (define-command hyperspec-at-point (point) ((current-point))
   (let* ((symbol (symbol-string-at-point point))
          (url (hlookup symbol)))
-    (if (typep url 'lem/thingatp:url)
+    (if (valid-url-p url)
         (open-external-file url)
         (message "This symbol isn't referenced in the HyperSpec."))))
 

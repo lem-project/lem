@@ -88,9 +88,21 @@
                        :end point
                        :url (points-to-string start point))))))
 
+(defun search-file-url-link (point &optional limit)
+  (when (search-forward point "file://" limit)
+    (unless (in-string-p point)
+      (assert (search-backward point "file://"))
+      (with-point ((start point))
+        (skip-chars-forward point (lambda (c) (not (member c '(#\space #\tab #\newline)))))
+        (make-instance 'file-link
+                       :start start
+                       :end point
+                       :file (subseq (points-to-string start point) (length "file://")))))))
+
 (defun search-link (point &optional limit)
   (or (search-url-link point limit)
-      (search-file-link point limit)))
+      (search-file-link point limit)
+      (search-file-url-link point limit)))
 
 (defun click-callback (window point)
   (declare (ignore window))

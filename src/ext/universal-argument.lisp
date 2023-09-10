@@ -73,8 +73,9 @@
          (*universal-argument* n))
     (universal-argument-mode nil)
     (unread-key-sequence key)
-    (call-command (read-command) n)
-    (reset-argument)))
+    (unwind-protect
+         (call-command (read-command) n)
+      (reset-argument))))
 
 (define-command universal-argument-abort () ()
   (universal-argument-mode nil)

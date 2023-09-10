@@ -119,6 +119,9 @@
 (define-key *normal-keymap* "C-r" 'vi-redo)
 (define-key *motion-keymap* 'delete-previous-char 'vi-backward-char)
 (define-key *motion-keymap* 'self-insert 'undefined-key)
+(define-key *normal-keymap* "q" 'vi-record-macro)
+(define-key *normal-keymap* "@" 'vi-execute-macro)
+(define-key *normal-keymap* "Q" 'vi-execute-last-recorded-macro)
 
 (define-key *insert-keymap* "Escape" 'vi-end-insert)
 (define-key *insert-keymap* "C-p" 'abbrev)

@@ -52,6 +52,7 @@
      (:file "commands")
      (:file "text-objects")
      (:file "registers")
+     (:file "kbdmacro")
      (:file "options")))
    (:file "utils"
     :pathname "tests/utils"))

@@ -764,7 +764,8 @@
       (return-from find-definitions-default result))
     (find-definitions-by-name name)))
 
-(defparameter *find-definitions* '(find-definitions-default))
+(defparameter *find-definitions* '(find-definitions-default
+                                   lem/link:find-definition))
 
 (defun lisp-find-definitions (point)
   (check-connection)

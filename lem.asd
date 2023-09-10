@@ -116,6 +116,7 @@
                              (:file "hover")
                              (:file "language-mode")
                              (:file "language-mode-tools")
+                             (:file "link")
                              (:file "thingatp")
                              (:file "gtags")
                              (:file "directory-mode")

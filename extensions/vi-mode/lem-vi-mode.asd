@@ -23,14 +23,15 @@
                 :pathname "commands"
                 :depends-on ("core" "jump-motions" "visual" "states")
                 :components ((:file "utils")))
-               (:file "commands" :depends-on ("core" "commands-utils" "word" "visual" "jump-motions" "states" "registers"))
+               (:file "commands" :depends-on ("core" "commands-utils" "word" "visual" "jump-motions" "states" "registers" "window"))
                (:file "ex-core" :depends-on ("visual"))
                (:file "ex-parser" :depends-on ("ex-core"))
                (:file "ex-command" :depends-on ("ex-core" "options" "utils"))
                (:file "ex" :depends-on ("core" "ex-parser" "visual" "registers"))
                (:file "binds" :depends-on ("states" "commands" "ex" "visual"))
                (:file "special-binds" :depends-on ("core"))
-               (:file "vi-mode" :depends-on ("core" "options" "ex" "commands" "states"))
+               (:file "window" :depends-on ("options"))
+               (:file "vi-mode" :depends-on ("core" "options" "ex" "commands" "states" "window"))
                (:file "utils"))
   :in-order-to ((test-op (test-op "lem-vi-mode/tests"))))
 

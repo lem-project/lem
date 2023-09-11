@@ -19,6 +19,10 @@
                 :visual-region)
   (:import-from :lem/common/killring
                 :peek-killring-item)
+  (:import-from :lem-vi-mode/window
+                :move-to-window-top
+                :move-to-window-middle
+                :move-to-window-bottom)
   (:import-from :lem-vi-mode/utils
                 :kill-region-without-appending)
   (:import-from :lem/isearch
@@ -248,19 +252,17 @@
 (define-motion vi-move-to-window-top () ()
     (:type :line
      :jump t)
-  (move-point (current-point) (window-view-point (current-window))))
+  (move-to-window-top))
 
 (define-motion vi-move-to-window-middle () ()
     (:type :line
      :jump t)
-  (vi-move-to-window-top)
-  (next-line (floor (/ (- (window-height (current-window)) 2) 2))))
+  (move-to-window-middle))
 
 (define-motion vi-move-to-window-bottom () ()
     (:type :line
      :jump t)
-  (vi-move-to-window-top)
-  (next-line (- (window-height (current-window)) 2)))
+  (move-to-window-bottom))
 
 (define-command vi-back-to-indentation () ()
   (vi-move-to-beginning-of-line)

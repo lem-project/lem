@@ -42,7 +42,9 @@
            :text-object-abort
            :text-object-abort-range
            :vi-current-window
-           :with-main-window))
+           :with-main-window
+           :vi-keymap
+           :define-keymap))
 (in-package :lem-vi-mode/core)
 
 (defvar *last-repeat-keys* '())
@@ -243,3 +245,17 @@
 (defmacro with-main-window (window &body body)
   `(let ((*vi-current-window* ,window))
      ,@body))
+
+(defstruct (vi-keymap (:include keymap)
+                      (:constructor %make-vi-keymap)))
+
+(defun make-vi-keymap (&rest args &key undef-hook parent name)
+  (declare (ignore undef-hook parent name))
+  (let ((keymap (apply #'%make-vi-keymap args)))
+    (push keymap *keymaps*)
+    keymap))
+
+(defmacro define-keymap (name &key undef-hook parent)
+  `(defvar ,name (make-vi-keymap :name ',name
+                                 :undef-hook ,undef-hook
+                                 :parent ,parent)))

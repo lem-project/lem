@@ -147,6 +147,7 @@
     (when string
       (parse-integer string))))
 
+
 (defmethod move-to-link ((link url-link))
   (let ((uri (quri:uri (url-link-url link))))
     (when (equal "github.com" (quri:uri-host uri))
@@ -154,7 +155,7 @@
           ("/([\\w-]+)/([\\w-]+)/blob/\\w+/(\\S+)" (quri:uri-path uri))
         (when (github-repository-p account-name repository)
           (when-let (line-number (number-fragment-p uri))
-            (let* ((file (asdf:system-relative-pathname :lem path))
+            (let* ((file (merge-pathnames path (lem-core/commands/project:find-root path)))
                    (buffer (find-file-buffer file :temporary t)))
               (with-point ((point (buffer-point buffer)))
                 (move-to-line point line-number)

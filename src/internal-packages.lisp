@@ -59,6 +59,8 @@
    :key-sym
    :match-key
    :insertion-key-sym-p
+   :named-key-sym-p
+   :define-named-key
    :key-to-char)
   ;; macros.lisp
   (:export
@@ -361,6 +363,7 @@
    :find-keybind
    :insertion-key-p
    :lookup-keybind
+   :keymap-find-keybind
    :*abort-key*
    :abort-key-p
    :with-special-keymap

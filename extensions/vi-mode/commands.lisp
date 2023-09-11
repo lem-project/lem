@@ -288,6 +288,8 @@
 
 (define-operator vi-delete (start end type) ("<R>")
     (:move-point nil)
+  (when (point= start end)
+    (return-from vi-delete))
   (let ((pos (point-charpos (current-point)))
         (ends-with-newline (char= (character-at end -1) #\Newline)))
     (if (visual-p)

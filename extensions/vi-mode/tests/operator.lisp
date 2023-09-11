@@ -164,6 +164,11 @@
       (cmd "jlp")
       (ok (buf= #?"abcd\nefgbc[d]h\n")))))
 
+(deftest vi-delete-next-char
+  (with-fake-interface ()
+    (with-vi-buffer ("")
+      (ok (not (signals (cmd "x")))))))
+
 (deftest vi-replace-char
   (with-fake-interface ()
     (with-vi-buffer ("a[n]t")

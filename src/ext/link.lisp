@@ -185,3 +185,8 @@
 (define-command link-open (&optional (point (current-point))) ()
   (when-let (link (link-at point))
     (open-link link)))
+
+(defun after-init-hook ()
+  (link-mode t))
+
+(add-hook *after-init-hook* 'after-init-hook)

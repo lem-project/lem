@@ -803,15 +803,11 @@
   (change-state 'insert))
 
 (define-command vi-open-below () ()
-  (let* ((p (current-point))
-         (column (with-point ((p (current-point)))
-                   (point-column (or (and (line-offset p 1)
-                                          (back-to-indentation p))
-                                     (line-start p))))))
+  (let ((p (current-point)))
     (line-end p)
     (change-state 'insert)
     (insert-character p #\Newline)
-    (move-to-column p column t)))
+    (indent-line (current-point))))
 
 (define-command vi-open-above () ()
   (line-start (current-point))

@@ -52,6 +52,7 @@
      (:file "operator")
      (:file "visual")
      (:file "commands")
+     (:file "ex")
      (:file "text-objects")
      (:file "registers")
      (:file "kbdmacro")

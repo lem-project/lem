@@ -117,18 +117,21 @@
                                                                 :start s
                                                                 :end e
                                                                 :count count))))
-                  (if replace-all-in-line
-                      (rep start end nil)
-                      (progn
-                        (lem:move-point (lem:current-point) start)
-                        (loop until (lem:point< end (lem:current-point))
-                              do (lem:with-point ((replace-start (lem:current-point))
-                                                  (replace-end (lem:current-point)))
-                                   (lem:line-start replace-start)
-                                   (lem:line-end replace-end)
-                                   (rep replace-start replace-end 1))
-                                 (lem:next-logical-line 1)
-                                 (lem:line-start (lem:current-point)))))))
+                  (cond
+                    (replace-all-in-line
+                     (lem:line-start start)
+                     (lem:line-end end)
+                     (rep start end nil))
+                    (t
+                     (lem:move-point (lem:current-point) start)
+                     (loop until (lem:point<= end (lem:current-point))
+                           do (lem:with-point ((replace-start (lem:current-point))
+                                               (replace-end (lem:current-point)))
+                                (lem:line-start replace-start)
+                                (lem:line-end replace-end)
+                                (rep replace-start replace-end 1))
+                              (lem:next-logical-line 1)
+                              (lem:line-start (lem:current-point)))))))
               (let ((p (lem:current-point)))
                 (lem:move-point p last-match)
                 (lem:line-start p))))))))

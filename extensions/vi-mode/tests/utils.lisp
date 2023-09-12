@@ -34,6 +34,7 @@
   (:export :with-vi-buffer
            :with-test-buffer
            :cmd
+           :ex-cmd
            :pos=
            :text=
            :state=
@@ -238,6 +239,7 @@
       (lem-core::set-window-buffer buffer window)
       (lem-core::set-window-view-point (copy-point (lem:buffer-point buffer))
                                        window)
+      (lem-core::set-window-point (lem:buffer-point buffer) window)
       (funcall fn))))
 
 (defmacro with-current-buffer ((buffer) &body body)
@@ -311,6 +313,11 @@
                             *input-hook*)))
     (execute-key-sequence
      (parse-command-keys keys))))
+
+(defun ex-cmd (command)
+  (check-type command string)
+  (diag (format nil "[ex-cmd] ~A~%" command))
+  (lem-vi-mode/ex::execute-ex command))
 
 (defun pos= (expected-point)
   (point= (current-point) expected-point))

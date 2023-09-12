@@ -142,16 +142,16 @@
   (enable-visual 'visual-block))
 
 (defun visual-p ()
-  (typep (current-state) 'visual))
+  (typep (current-main-state) 'visual))
 
 (defun visual-char-p ()
-  (typep (current-state) 'visual-char))
+  (typep (current-main-state) 'visual-char))
 
 (defun visual-line-p ()
-  (typep (current-state) 'visual-line))
+  (typep (current-main-state) 'visual-line))
 
 (defun visual-block-p ()
-  (typep (current-state) 'visual-block))
+  (typep (current-main-state) 'visual-block))
 
 (defun visual-range ()
   (cond

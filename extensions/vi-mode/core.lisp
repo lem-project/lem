@@ -15,6 +15,7 @@
            :vi-mode
            :define-state
            :current-state
+           :current-main-state
            :state=
            :change-state
            :with-state
@@ -97,6 +98,7 @@
       *default-cursor-color*))
 
 (defvar *current-state* nil)
+(defvar *current-main-state* nil)
 
 (defun state= (state1 state2)
   (and (typep state1 'vi-state)
@@ -129,6 +131,11 @@
 
 (defun current-state ()
   *current-state*)
+
+(defun current-main-state ()
+  "Same as `current-state` except it returns the previous state insinde `with-temporary-state` macro."
+  (or *current-main-state*
+      *current-state*))
 
 (defun ensure-state (state)
   (setf state
@@ -175,12 +182,11 @@
          (change-state ,old-state)))))
 
 (defmacro with-temporary-state (state &body body)
-  (with-gensyms (old-state)
-    `(let ((,old-state *current-state*)
-           (*current-state* (ensure-state ,state)))
-       (update-cursor-styles *current-state*)
-       (unwind-protect (progn ,@body)
-         (update-cursor-styles ,old-state)))))
+  `(let ((*current-main-state* *current-state*)
+         (*current-state* (ensure-state ,state)))
+     (update-cursor-styles *current-state*)
+     (unwind-protect (progn ,@body)
+       (update-cursor-styles *current-main-state*))))
 
 (defun vi-pre-command-hook ()
   (when (mode-active-p (current-buffer) 'vi-mode)

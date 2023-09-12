@@ -118,9 +118,9 @@
               (put-text-property (link-start link)
                                  (link-end link)
                                  'link link)
-              (put-text-property (link-start link)
-                                 (link-end link)
-                                 :click-callback 'click-callback))))
+              (lem-core::set-clickable (link-start link)
+                                       (link-end link)
+                                       'click-callback))))
 
 (defgeneric move-to-link (link))
 

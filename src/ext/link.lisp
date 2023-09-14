@@ -36,16 +36,15 @@
 
 (define-minor-mode link-mode
     (:name nil
-     :global t
      :enable-hook 'enable
      :disable-hook 'disable))
 
 (defun enable ()
-  (add-hook (variable-value 'after-syntax-scan-hook :global)
+  (add-hook (variable-value 'after-syntax-scan-hook :buffer (current-buffer))
             'scan-link))
 
 (defun disable ()
-  (remove-hook (variable-value 'after-syntax-scan-hook :global)
+  (remove-hook (variable-value 'after-syntax-scan-hook :buffer (current-buffer))
                'scan-link))
 
 (defun search-file-link (point &optional limit)

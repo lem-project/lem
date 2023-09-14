@@ -71,7 +71,9 @@
 
   (setf (buffer-context-menu (current-buffer))
         (make-instance 'lem/context-menu:context-menu
-                       :compute-items-function 'compute-context-menu-items)))
+                       :compute-items-function 'compute-context-menu-items))
+
+  (lem/link:link-mode t))
 
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)
 (define-key *lisp-mode-keymap* "C-c M-p" 'lisp-set-package)

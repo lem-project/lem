@@ -690,7 +690,8 @@
 
 (define-motion vi-goto-line (&optional n) ("P")
     (:type :line
-     :jump t)
+     :jump t
+     :default-n-arg nil)
   (let ((col (point-charpos (current-point))))
     (cond
       ((null n)

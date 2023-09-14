@@ -102,7 +102,11 @@
     (testing "di\""
       (with-vi-buffer (" \"f[o]o\"  ")
         (cmd "di\"")
-        (ok (buf= " \"[\"]  "))))))
+        (ok (buf= " \"[\"]  "))))
+    (testing "dG"
+      (with-vi-buffer (#?"abcd\ne[f]gh\nijkl\n")
+        (cmd "dG")
+        (ok (buf= #?"abcd\n[]"))))))
 
 (deftest vi-change
   (with-fake-interface ()

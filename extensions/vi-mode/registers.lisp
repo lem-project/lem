@@ -5,13 +5,16 @@
   (:import-from :lem-vi-mode/core
                 :vi-current-window)
   (:import-from :lem/common/killring
-                :make-item)
+                :make-item
+                :peek-killring-item)
   (:import-from :lem/common/ring
                 :make-ring
                 :ring-ref
                 :ring-empty-p
                 :ring-push
                 :invalid-index-error)
+  (:import-from :split-sequence
+                :split-sequence)
   (:import-from :trivial-types
                 :proper-list)
   (:export :register
@@ -20,7 +23,8 @@
            :macro-register-p
            :downcase-char
            :yank-region
-           :delete-region))
+           :delete-region
+           :paste-yank))
 (in-package :lem-vi-mode/registers)
 
 (deftype key-sequence ()
@@ -32,20 +36,30 @@
 
 (defstruct (yank (:constructor make-yank (text &optional (type :char))))
   (text nil :type string)
-  (type :char :type (member :char :line)))
+  (type :char :type (member :char :line :block)))
 
 (defun append-yank (text1 text2)
-  (if (or (eq (yank-type text1) :line)
-          (eq (yank-type text2) :line))
-      (make-yank
-       (with-output-to-string (s)
-         (write-string (yank-text text1) s)
-         (fresh-line s)
-         (write-string (yank-text text2) s)
-         (fresh-line s))
-       :line)
-      (make-yank
-       (format nil "~A~A" (yank-text text1) (yank-text text2)))))
+  (cond
+    ((or (eq (yank-type text1) :line)
+         (eq (yank-type text2) :line))
+     (make-yank
+      (with-output-to-string (s)
+        (write-string (yank-text text1) s)
+        (fresh-line s)
+        (write-string (yank-text text2) s)
+        (fresh-line s))
+      :line))
+    ((or (eq (yank-type text1) :block)
+         (eq (yank-type text2) :block))
+     (make-yank
+      (with-output-to-string (s)
+        (write-string (yank-text text1) s)
+        (fresh-line s)
+        (write-string (yank-text text2) s))
+      :block))
+    (t
+     (make-yank
+      (format nil "~A~A" (yank-text text1) (yank-text text2))))))
 
 (declaim (type hash-table *named-registers*))
 (defvar *named-registers* (make-hash-table))
@@ -166,14 +180,48 @@
                  item)))))
   (values))
 
+(defun process-block-region (start end &optional delete)
+  (labels ((move (p line col)
+             (move-to-line p line)
+             (move-to-column p col))
+           (region-string (start end end-col)
+             (concatenate 'string
+                          (points-to-string start end)
+                          (make-string (- end-col (point-charpos end))
+                                       :initial-element #\Space))))
+    (destructuring-bind (start-line end-line)
+        (sort (list (line-number-at-point start)
+                    (line-number-at-point end))
+              #'<)
+      (destructuring-bind (start-col end-col)
+          (sort (list (point-column start)
+                      (point-column end))
+                #'<)
+        (incf end-col)
+        (with-point ((s (current-point))
+                     (e (current-point)))
+          (loop for line from start-line to end-line
+                do (move s line start-col)
+                   (move e line end-col)
+                collect (region-string s e end-col) into results
+                do (when delete
+                     (delete-between-points s e))
+                finally
+                (return (format nil "~{~A~^~%~}" results))))))))
+
 (defun yank-region (start end &key type append)
-  (with-killring-context (:options (when (eq type :line) :vi-line)
-                          :appending (when (eq type :block)
-                                       (continue-flag :vi-yank-block)))
-    (copy-region start end))
-  (let ((item (make-yank (points-to-string start end)
+  (with-killring-context (:options (case type
+                                     (:line :vi-line)
+                                     (:block :vi-block)))
+    (copy-to-clipboard-with-killring
+     (case type
+       (:block
+        (process-block-region start end))
+       (otherwise
+        (points-to-string start end)))))
+  (let ((item (make-yank (peek-killring-item (current-killring) 0)
                          (case type
-                           (:line :line)
+                           ((:line :block) type)
                            (otherwise :char)))))
     (setf *yank-text*
           (if append
@@ -185,19 +233,23 @@
 (defun small-deletion-p (start end type)
   (and (= (line-number-at-point start)
           (line-number-at-point end))
-       (not (eq type :line))))
+       (not (member type '(:line :block)))))
 
 (defun delete-region (start end &key type)
-  (with-killring-context (:options (when (eq type :line) :vi-line)
-                          :appending (when (eq type :block)
-                                       (continue-flag :vi-delete-block)))
-    (let* ((small (small-deletion-p start end type))
-           (string (lem:delete-between-points start end))
-           (yank (make-yank string
-                            (case type
-                              (:line :line)
-                              (otherwise :char)))))
-      (copy-to-clipboard-with-killring string)
+  (let ((small (small-deletion-p start end type)))
+    (with-killring-context (:options (case type
+                                       (:line :vi-line)
+                                       (:block :vi-block)))
+      (copy-to-clipboard-with-killring
+       (case type
+         (:block
+          (process-block-region start end t))
+         (otherwise
+          (delete-between-points start end)))))
+    (let ((yank (make-yank (peek-killring-item (current-killring) 0)
+                           (case type
+                             ((:line :block) type)
+                             (otherwise :char)))))
       (unless small
         (ring-push *deletion-history* yank))
       (if small
@@ -205,6 +257,31 @@
                 *unnamed-register* #\-)
           (setf *unnamed-register* #\1))))
   (values))
+
+(defun paste-yank (string type &optional (position :after))
+  (check-type position (member :before :after))
+  (let ((point (current-point)))
+    (ecase type
+      (:line
+       (lem:yank)
+       (move-point point (cursor-yank-start point))
+       (back-to-indentation point))
+      (:block
+        (setf (cursor-yank-start point) (copy-point point :right-inserting))
+        (let ((col (point-charpos point))
+              (first-line t))
+          (dolist (row (split-sequence #\Newline string))
+            (if first-line
+                (setf first-line nil)
+                (line-offset point 1 col))
+            (dotimes (i (max 0 (- col (point-charpos point))))
+              (insert-character point #\Space))
+            (insert-string point row)))
+        (setf (cursor-yank-end point) (copy-point point :left-inserting))
+        (move-point point (cursor-yank-start point)))
+      (:char
+       (lem:yank)
+       (character-offset point -1)))))
 
 (defun register (name)
   (let ((name (ensure-char name)))

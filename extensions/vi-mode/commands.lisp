@@ -292,20 +292,22 @@
     (return-from vi-delete))
   (let ((pos (point-charpos (current-point)))
         (ends-with-newline (char= (character-at end -1) #\Newline)))
-    (if (visual-p)
-        (apply-visual-range
-         (lambda (start end)
-           (delete-region start end :type type)))
-        (delete-region start end :type type))
+    (delete-region start end :type type)
     (when (and (eq type :line)
                (not ends-with-newline)
                (not (= (position-at-point start) 1)))
       (delete-previous-char))
     (when (eq 'vi-delete (command-name (this-command)))
-      (when (eq type :line)
-        (move-to-column (current-point)
-                        (max 0
-                             (min (1- (length (line-string (current-point)))) pos))))
+      (case type
+        (:line
+         (move-to-column (current-point)
+                         (max 0
+                              (min (1- (length (line-string (current-point)))) pos))))
+        (:block
+         (move-to-line (current-point) (min (line-number-at-point start)
+                                            (line-number-at-point end)))
+         (move-to-column (current-point) (min (point-column start)
+                                              (point-column end)))))
       ;; After 'dw' or 'dW', move to the first non-blank char
       (when (and (this-motion-command)
                  (member (command-name (this-motion-command))
@@ -393,18 +395,17 @@
 
 (define-operator vi-yank (start end type) ("<R>")
     (:move-point nil)
+  (yank-region start end :type type)
   (case type
     (:block
-     (apply-visual-range
-      (lambda (start end)
-        (yank-region start end :type type)))
-     (move-point (current-point) (first (visual-range))))
+     (move-to-line (current-point) (min (line-number-at-point start)
+                                        (line-number-at-point end)))
+     (move-to-column (current-point) (min (point-column start)
+                                          (point-column end))))
     (:line
-     (yank-region start end :type type)
      (move-to-column start (point-charpos (current-point)))
      (move-point (current-point) start))
     (otherwise
-     (yank-region start end :type type)
      (move-point (current-point) start))))
 
 (define-operator vi-yank-line (start end type) ("<R>")
@@ -414,7 +415,11 @@
 (defun vi-yank-from-clipboard-or-killring ()
   (multiple-value-bind (str options) (peek-killring-item (current-killring) 0)
     (if str
-        (values str options)
+        (values str
+                (cond
+                  ((member :vi-line options) :line)
+                  ((member :vi-block options) :block)
+                  (t :char)))
         (and (enable-clipboard-p) (get-clipboard-data)))))
 
 (define-command vi-paste-after () ()
@@ -427,24 +432,17 @@
              (visual-region)
            (vi-delete beg end type))
          (when (and (not visual-line)
-                    (member :vi-line type))
-           (insert-character (current-point) #\Newline)))
-       (insert-string (current-point) string)
-       (character-offset (current-point) -1))
+                    (eq type :line))
+           (insert-character (current-point) #\Newline))))
       (t
-       (if (member :vi-line type)
+       (if (eq type :line)
            (progn
              (or (line-offset (current-point) 1 0)
                  (progn
                    (line-end (current-point))
                    (insert-character (current-point) #\Newline))))
-           (character-offset (current-point) 1))
-       (yank)
-       (cond
-         ((member :vi-line type)
-          (move-point (current-point) (cursor-yank-start (current-point)))
-          (back-to-indentation (current-point)))
-         (t (character-offset (current-point) -1)))))))
+           (character-offset (current-point) 1))))
+    (paste-yank string type :after)))
 
 (define-command vi-paste-before () ()
   (multiple-value-bind (string type)
@@ -454,20 +452,12 @@
        (multiple-value-bind (beg end type)
            (visual-region)
          (vi-delete beg end type))
-       (when (member :vi-line type)
-         (insert-character (current-point) #\Newline))
-       (insert-string (current-point) string)
-       (character-offset (current-point) -1))
+       (when (eq type :line)
+         (insert-character (current-point) #\Newline)))
       (t
-       (cond
-         ((member :vi-line type)
-          (line-start (current-point))
-          (yank)
-          (move-point (current-point) (cursor-yank-start (current-point)))
-          (back-to-indentation (current-point)))
-         (t
-          (yank)
-          (character-offset (current-point) -1)))))))
+       (when (eq type :line)
+         (line-start (current-point)))))
+    (paste-yank string type :before)))
 
 (defun read-key-to-replace ()
   (with-temporary-state 'replace-state
@@ -481,10 +471,15 @@
      :move-point nil)
   (if (eq type :block)
       (progn
-        (apply-visual-range
-         (lambda (start end)
-           (vi-replace-char start end :inclusive char)))
-        (move-point (current-point) start))
+        (let ((line (min (line-number-at-point start)
+                         (line-number-at-point end)))
+              (col (min (point-column start)
+                        (point-column end))))
+          (apply-visual-range
+           (lambda (start end)
+             (vi-replace-char start end :inclusive char)))
+          (move-to-line (current-point) line)
+          (move-to-column (current-point) col)))
       (let ((string-to-replace
               ;; Replace all chars in the region except newlines
               (with-output-to-string (s)

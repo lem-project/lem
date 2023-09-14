@@ -165,17 +165,8 @@
               (character-offset start 1)))
        (list start end)))
     ((visual-block-p)
-     ;; Return left-top point and right-bottom point
-     (with-point ((start *start-point*)
-                  (end (current-point)))
-       (map nil #'move-to-line
-            (list start end)
-            (sort (mapcar #'line-number-at-point (list start end)) #'<))
-       (map nil #'move-to-column
-            (list start end)
-            (sort (mapcar #'point-charpos (list *start-point* (current-point))) #'<))
-       (character-offset end 1)
-       (list start end)))
+     (list (copy-point *start-point*)
+           (copy-point (current-point))))
     (t
      (with-point ((start *start-point*)
                   (end (current-point)))

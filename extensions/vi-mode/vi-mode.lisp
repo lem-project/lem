@@ -25,6 +25,7 @@
                 :*outer-text-objects-keymap*
                 :*operator-keymap*)
   (:import-from :lem-vi-mode/visual
+                :visual
                 :*visual-keymap*)
   (:import-from :lem-vi-mode/window
                 :adjust-window-scroll)
@@ -47,6 +48,7 @@
            :*outer-text-objects-keymap*
            :normal
            :insert
+           :visual
            :change-state
            :option-value
            :leader-key))
@@ -68,7 +70,11 @@
                        (eq (vi-command-repeat command) nil))
                   (eq (command-name (this-command)) 'vi-end-insert))
         (appendf *last-repeat-keys*
-                 (vi-this-command-keys))))))
+                 (vi-this-command-keys)))))
+  (adjust-window-scroll))
+
+(defmethod post-command-hook :after ((state visual))
+  (adjust-window-scroll))
 
 (defmethod state-enabled-hook ((state insert))
   (when *enable-repeat-recording*

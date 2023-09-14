@@ -19,6 +19,7 @@
            :vi-visual-char
            :vi-visual-line
            :vi-visual-block
+           :visual
            :visual-p
            :visual-char-p
            :visual-line-p

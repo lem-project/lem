@@ -68,7 +68,8 @@
                        (eq (vi-command-repeat command) nil))
                   (eq (command-name (this-command)) 'vi-end-insert))
         (appendf *last-repeat-keys*
-                 (vi-this-command-keys))))))
+                 (vi-this-command-keys)))))
+  (adjust-window-scroll))
 
 (defmethod state-enabled-hook ((state insert))
   (when *enable-repeat-recording*

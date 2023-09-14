@@ -292,20 +292,22 @@
     (return-from vi-delete))
   (let ((pos (point-charpos (current-point)))
         (ends-with-newline (char= (character-at end -1) #\Newline)))
-    (if (visual-p)
-        (apply-visual-range
-         (lambda (start end)
-           (delete-region start end :type type)))
-        (delete-region start end :type type))
+    (delete-region start end :type type)
     (when (and (eq type :line)
                (not ends-with-newline)
                (not (= (position-at-point start) 1)))
       (delete-previous-char))
     (when (eq 'vi-delete (command-name (this-command)))
-      (when (eq type :line)
-        (move-to-column (current-point)
-                        (max 0
-                             (min (1- (length (line-string (current-point)))) pos))))
+      (case type
+        (:line
+         (move-to-column (current-point)
+                         (max 0
+                              (min (1- (length (line-string (current-point)))) pos))))
+        (:block
+         (move-to-line (current-point) (min (line-number-at-point start)
+                                            (line-number-at-point end)))
+         (move-to-column (current-point) (min (point-column start)
+                                              (point-column end)))))
       ;; After 'dw' or 'dW', move to the first non-blank char
       (when (and (this-motion-command)
                  (member (command-name (this-motion-command))
@@ -393,21 +395,17 @@
 
 (define-operator vi-yank (start end type) ("<R>")
     (:move-point nil)
+  (yank-region start end :type type)
   (case type
     (:block
-     (apply-visual-range
-      (lambda (start end)
-        (yank-region start end :type type)))
      (move-to-line (current-point) (min (line-number-at-point start)
                                         (line-number-at-point end)))
      (move-to-column (current-point) (min (point-column start)
                                           (point-column end))))
     (:line
-     (yank-region start end :type type)
      (move-to-column start (point-charpos (current-point)))
      (move-point (current-point) start))
     (otherwise
-     (yank-region start end :type type)
      (move-point (current-point) start))))
 
 (define-operator vi-yank-line (start end type) ("<R>")

@@ -268,8 +268,12 @@
   (vi-move-to-beginning-of-line)
   (skip-whitespace-forward (current-point) t))
 
-(define-operator vi-indent (start end) ("<r>")
+(define-operator vi-indent (start end type) ("<R>")
     (:move-point nil)
+  (when (and (eq type :line)
+             (point/= start end)
+             (zerop (point-charpos end)))
+    (character-offset end -1))
   (indent-points start end))
 
 ;; FIXME: support block
@@ -367,8 +371,12 @@
       (move-to-end-of-logical-line)
       (delete-next-char))))
 
-(define-operator vi-join-line (start end) ("<r>")
+(define-operator vi-join-line (start end type) ("<R>")
     (:motion vi-line)
+  (when (and (eq type :line)
+             (point/= start end)
+             (zerop (point-charpos end)))
+    (character-offset end -1))
   (let ((count
           (max 1 (- (line-number-at-point end)
                     (line-number-at-point start)))))

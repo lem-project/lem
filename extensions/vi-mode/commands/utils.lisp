@@ -180,8 +180,7 @@
           (if (visual-p)
               (visual-region)
               (motion-region motion))
-        (when (and (not (eq type :block))
-                   (point< end start))
+        (when (point< end start)
           (rotatef start end))
         (ecase type
           (:line (unless (visual-p)
@@ -203,8 +202,8 @@
             (with-point ((p (current-point)))
               (move-to-line p (min (line-number-at-point start)
                                    (line-number-at-point end)))
-              (move-to-column p (min (point-charpos start)
-                                     (point-charpos end)))
+              (move-to-column p (min (point-column start)
+                                     (point-column end)))
               (move-point (current-point) p))
             (move-point (current-point) start))))))
 

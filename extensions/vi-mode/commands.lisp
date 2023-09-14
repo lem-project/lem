@@ -398,7 +398,10 @@
      (apply-visual-range
       (lambda (start end)
         (yank-region start end :type type)))
-     (move-point (current-point) (first (visual-range))))
+     (move-to-line (current-point) (min (line-number-at-point start)
+                                        (line-number-at-point end)))
+     (move-to-column (current-point) (min (point-column start)
+                                          (point-column end))))
     (:line
      (yank-region start end :type type)
      (move-to-column start (point-charpos (current-point)))
@@ -481,10 +484,15 @@
      :move-point nil)
   (if (eq type :block)
       (progn
-        (apply-visual-range
-         (lambda (start end)
-           (vi-replace-char start end :inclusive char)))
-        (move-point (current-point) start))
+        (let ((line (min (line-number-at-point start)
+                         (line-number-at-point end)))
+              (col (min (point-column start)
+                        (point-column end))))
+          (apply-visual-range
+           (lambda (start end)
+             (vi-replace-char start end :inclusive char)))
+          (move-to-line (current-point) line)
+          (move-to-column (current-point) col)))
       (let ((string-to-replace
               ;; Replace all chars in the region except newlines
               (with-output-to-string (s)

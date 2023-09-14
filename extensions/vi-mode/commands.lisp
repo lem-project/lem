@@ -415,7 +415,11 @@
 (defun vi-yank-from-clipboard-or-killring ()
   (multiple-value-bind (str options) (peek-killring-item (current-killring) 0)
     (if str
-        (values str options)
+        (values str
+                (cond
+                  ((member :vi-line options) :line)
+                  ((member :vi-block options) :block)
+                  (t :char)))
         (and (enable-clipboard-p) (get-clipboard-data)))))
 
 (define-command vi-paste-after () ()
@@ -428,24 +432,17 @@
              (visual-region)
            (vi-delete beg end type))
          (when (and (not visual-line)
-                    (member :vi-line type))
-           (insert-character (current-point) #\Newline)))
-       (insert-string (current-point) string)
-       (character-offset (current-point) -1))
+                    (eq type :line))
+           (insert-character (current-point) #\Newline))))
       (t
-       (if (member :vi-line type)
+       (if (eq type :line)
            (progn
              (or (line-offset (current-point) 1 0)
                  (progn
                    (line-end (current-point))
                    (insert-character (current-point) #\Newline))))
-           (character-offset (current-point) 1))
-       (yank)
-       (cond
-         ((member :vi-line type)
-          (move-point (current-point) (cursor-yank-start (current-point)))
-          (back-to-indentation (current-point)))
-         (t (character-offset (current-point) -1)))))))
+           (character-offset (current-point) 1))))
+    (paste-yank string type :after)))
 
 (define-command vi-paste-before () ()
   (multiple-value-bind (string type)
@@ -455,20 +452,12 @@
        (multiple-value-bind (beg end type)
            (visual-region)
          (vi-delete beg end type))
-       (when (member :vi-line type)
-         (insert-character (current-point) #\Newline))
-       (insert-string (current-point) string)
-       (character-offset (current-point) -1))
+       (when (eq type :line)
+         (insert-character (current-point) #\Newline)))
       (t
-       (cond
-         ((member :vi-line type)
-          (line-start (current-point))
-          (yank)
-          (move-point (current-point) (cursor-yank-start (current-point)))
-          (back-to-indentation (current-point)))
-         (t
-          (yank)
-          (character-offset (current-point) -1)))))))
+       (when (eq type :line)
+         (line-start (current-point)))))
+    (paste-yank string type :before)))
 
 (defun read-key-to-replace ()
   (with-temporary-state 'replace-state

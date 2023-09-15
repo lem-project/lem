@@ -31,7 +31,7 @@
     (with-point ((p end-point))
       (move-to-next-virtual-line p)
       (and (point/= p end-point)
-           (not (string= (line-string p) ""))))))
+           (point/= p (buffer-end-point (window-buffer window)))))))
 
 (defun window-has-leading-lines-p (&optional (window (current-window)))
   (let ((start-point (window-start-point window)))

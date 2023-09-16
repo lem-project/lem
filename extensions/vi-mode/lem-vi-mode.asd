@@ -56,6 +56,7 @@
      (:file "text-objects")
      (:file "registers")
      (:file "kbdmacro")
+     (:file "jumplist")
      (:file "options")))
    (:file "utils"
     :pathname "tests/utils"))

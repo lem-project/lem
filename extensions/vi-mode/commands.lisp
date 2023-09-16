@@ -339,6 +339,8 @@
 
 (define-operator vi-change (beg end type) ("<R>")
     ()
+  (when (point= beg end)
+    (return-from vi-change))
   (let ((end-with-newline (char= (character-at end -1) #\Newline)))
     (vi-delete beg end type)
     (when (eq type :line)

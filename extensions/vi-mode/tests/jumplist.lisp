@@ -4,7 +4,7 @@
         :rove
         :lem-vi-mode/tests/utils)
   (:import-from :lem-vi-mode/jumplist
-                :window-jumplist
+                :current-jumplist
                 :jumplist-history-back
                 :jumplist-history-next
                 :jumplist-history-push
@@ -21,7 +21,7 @@
 (deftest jumplist-go-back-and-forth
   (with-fake-interface ()
     (with-vi-buffer (#?"[a]bc\ndef\nghi\njkl\n")
-      (let ((jumplist (window-jumplist)))
+      (let ((jumplist (current-jumplist)))
         (ok (not (signals (jumplist-history-next jumplist))))
         (jumplist-history-push jumplist (copy-point (current-point)))
         (cmd "j")
@@ -89,7 +89,7 @@
 (deftest jumplist-delete-newer-history
   (with-fake-interface ()
     (with-vi-buffer (#?"[a]bc\ndef\nghi\njkl\nmno\n")
-      (let ((jumplist (window-jumplist)))
+      (let ((jumplist (current-jumplist)))
         (jumplist-history-push jumplist (copy-point (current-point)))
         (cmd "j")
         (jumplist-history-push jumplist (copy-point (current-point)))
@@ -115,7 +115,7 @@
 (deftest jumplist-remove-same-line-points
   (with-fake-interface ()
     (with-vi-buffer (#?"[a]bc\ndef\nghi\njkl\nmno\n")
-      (let ((jumplist (window-jumplist)))
+      (let ((jumplist (current-jumplist)))
         (jumplist-history-push jumplist (copy-point (current-point)))
         (cmd "j")
         (jumplist-history-push jumplist (copy-point (current-point)))
@@ -131,7 +131,7 @@
   (with-fake-interface ()
     (let ((*max-jumplist-size* 3))
       (with-vi-buffer (#?"[a]bc\ndef\nghi\njkl\n")
-        (let ((jumplist (window-jumplist)))
+        (let ((jumplist (current-jumplist)))
           (jumplist-history-push jumplist (copy-point (current-point)))
           (cmd "j")
           (jumplist-history-push jumplist (copy-point (current-point)))

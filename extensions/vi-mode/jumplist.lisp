@@ -10,7 +10,9 @@
            :without-jumplist
            :jump-back
            :jump-next
-           :window-jumplist))
+           :window-jumplist
+           :current-jumplist
+           :copy-jumplist))
 (in-package :lem-vi-mode/jumplist)
 
 (defvar *max-jumplist-size* 100)
@@ -28,6 +30,13 @@
               (+ (length history)
                  (if current 1 0))
               index))))
+
+(defun delete-jumplist (jumplist)
+  (check-type jumplist jumplist)
+  (mapc #'delete-point (jumplist-history jumplist))
+  (when (jumplist-current jumplist)
+    (delete-point (jumplist-current jumplist)))
+  (values))
 
 (define-condition jumplist-invalid-index (error)
   ((jumplist :initarg :jumplist)
@@ -125,10 +134,20 @@
             (setf current nil))
           point)))))
 
-(defun window-jumplist (&optional (window (current-window)))
+(defun window-jumplist (window)
   (or (window-parameter window :vi-mode-jumplist)
       (setf (window-parameter window :vi-mode-jumplist)
             (make-jumplist))))
+
+(defun (setf window-jumplist) (jumplist window)
+  (check-type jumplist jumplist)
+  (when-let ((current-jumplist (window-parameter window :vi-mode-jumplist)))
+    (delete-jumplist current-jumplist))
+  (setf (window-parameter window :vi-mode-jumplist)
+        jumplist))
+
+(defun current-jumplist ()
+  (window-jumplist (current-window)))
 
 (defun jumplist-table (jumplist)
   (flet ((buffer-identifier (buffer)
@@ -181,7 +200,7 @@
         (unless (and (eq (point-buffer p)
                          (current-buffer))
                      (point= p (current-point)))
-          (jumplist-history-push (window-jumplist) p))))))
+          (jumplist-history-push (current-jumplist) p))))))
 
 (defmacro with-jumplist (&body body)
   `(if *disable-jumplist*
@@ -194,12 +213,12 @@
      ,@body))
 
 (defun jump-back ()
-  (when-let ((point (jumplist-history-back (window-jumplist))))
+  (when-let ((point (jumplist-history-back (current-jumplist))))
     (switch-to-buffer (point-buffer point))
     (move-point (current-point) point)
     point))
 
 (defun jump-next ()
-  (when-let ((point (jumplist-history-next (window-jumplist))))
+  (when-let ((point (jumplist-history-next (current-jumplist))))
     (switch-to-buffer (point-buffer point))
     (move-point (current-point) point)))

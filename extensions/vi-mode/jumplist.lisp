@@ -70,10 +70,13 @@
     (setf history
           (cons (copy-point point :left-inserting)
                 ;; Remove points at the same line in the history
-                (remove (line-number-at-point point)
+                (remove point
                         history
-                        :test (lambda (linum point)
-                                (when (= linum (line-number-at-point point))
+                        :test (lambda (new-point point)
+                                (when (and (eq (point-buffer new-point)
+                                               (point-buffer point))
+                                           (= (line-number-at-point new-point)
+                                              (line-number-at-point point)))
                                   (delete-point point)
                                   t))
                         :count 1)))

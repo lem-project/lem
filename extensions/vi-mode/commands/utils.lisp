@@ -22,7 +22,8 @@
   (:import-from :lem-vi-mode/states
                 :operator)
   (:import-from :lem-vi-mode/jumplist
-                :with-jump-motion)
+                :with-jump-motion
+                :without-jump-motion)
   (:import-from :lem-vi-mode/visual
                 :visual-p
                 :visual-line-p
@@ -213,12 +214,13 @@
 
 (defun call-define-operator (fn &key keep-visual restore-point)
   (with-point ((*vi-origin-point* (current-point)))
-    (unwind-protect (funcall fn)
-      (when restore-point
-        (move-point (current-point) *vi-origin-point*))
-      (unless keep-visual
-        (when (visual-p)
-          (vi-visual-end))))))
+    (without-jump-motion
+      (unwind-protect (funcall fn)
+        (when restore-point
+          (move-point (current-point) *vi-origin-point*))
+        (unless keep-visual
+          (when (visual-p)
+            (vi-visual-end)))))))
 
 (defun parse-arg-descriptors (arg-descriptors &key motion move-point)
   `(values-list

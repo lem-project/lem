@@ -7,6 +7,7 @@
                 :when-let
                 :ignore-some-conditions)
   (:export :with-jump-motion
+           :without-jump-motion
            :jump-back
            :jump-next
            :window-jumplist))
@@ -171,10 +172,11 @@
                 (and line column
                      (format nil "(~A, ~A)  ~A" line column file)))))))
 
-(defvar *jump-motion-recursive* nil)
+(defvar *disable-jumplist* nil)
+
 (defun call-with-jump-motion (fn)
   (with-point ((p (current-point)))
-    (let ((*jump-motion-recursive* t))
+    (let ((*disable-jumplist* t))
       (prog1 (funcall fn)
         (unless (and (eq (point-buffer p)
                          (current-buffer))
@@ -182,10 +184,14 @@
           (jumplist-history-push (window-jumplist) p))))))
 
 (defmacro with-jump-motion (&body body)
-  `(if *jump-motion-recursive*
+  `(if *disable-jumplist*
        (progn ,@body)
        (call-with-jump-motion
         (lambda () ,@body))))
+
+(defmacro without-jump-motion (&body body)
+  `(let ((*disable-jumplist* t))
+     ,@body))
 
 (defun jump-back ()
   (when-let ((point (jumplist-history-back (window-jumplist))))

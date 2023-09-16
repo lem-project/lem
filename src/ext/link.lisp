@@ -111,12 +111,11 @@
   (with-point ((point start))
     (loop :for link := (search-link point end)
           :while link
-          :do (put-text-property (link-start link)
-                                 (link-end link)
-                                 :sticky-attribute 'link-attribute)
-              (put-text-property (link-start link)
-                                 (link-end link)
-                                 'link link)
+          :do (lem-core::associate-object-with-region (link-start link)
+                                                      (link-end link)
+                                                      link
+                                                      :attribute 'link-attribute)
+              ;; TODO
               (lem-core::set-clickable (link-start link)
                                        (link-end link)
                                        'click-callback))))
@@ -161,7 +160,9 @@
                 point))))))))
 
 (defun link-at (point)
-  (text-property-at point 'link))
+  (when-let (object (lem-core::object-at point))
+    (when (typep object 'link)
+      object)))
 
 (defun move-to-link-at-point (point)
   (when-let ((link (link-at point)))

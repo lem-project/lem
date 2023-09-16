@@ -120,7 +120,9 @@
     (testing "change charwise"
       (with-vi-buffer (#?"a[b]c\ndef\n")
         (cmd "cl")
-        (ok (buf= #?"a[]c\ndef\n"))))))
+        (ok (buf= #?"a[]c\ndef\n"))))
+    (with-vi-buffer ("")
+      (ok (not (signals (cmd "cc")))))))
 
 (deftest vi-change-whole-line
   (with-fake-interface ()

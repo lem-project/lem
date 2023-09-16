@@ -150,7 +150,8 @@
 
 (define-ex-command "^(b|buffer)$" (range buffer-name)
   (declare (ignore range))
-  (lem:select-buffer buffer-name))
+  (with-jump-motion
+    (lem:select-buffer buffer-name)))
 
 (define-ex-command "^bd(?:elete)?$" (range buffer-name)
   (declare (ignore range))

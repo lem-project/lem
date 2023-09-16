@@ -203,7 +203,8 @@
       (prog1 (funcall fn)
         (unless (and (eq (point-buffer p)
                          (current-buffer))
-                     (point= p (current-point)))
+                     (= (line-number-at-point p)
+                        (line-number-at-point (current-point))))
           (jumplist-history-push (current-jumplist) p))))))
 
 (defmacro with-jumplist (&body body)

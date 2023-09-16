@@ -51,6 +51,7 @@
 (defun delete-exceeded-elements (list count)
   (let ((last-cdr (nthcdr (- count 1) list)))
     (when last-cdr
+      (mapc #'delete-point (cdr last-cdr))
       (setf (cdr last-cdr) nil))
     list))
 
@@ -58,16 +59,23 @@
   (with-slots (history index current) jumplist
     ;; Delete the newer history
     (when (< 0 index)
-      (setf history (nthcdr index history))
+      (loop repeat (1- index)
+            for point in history
+            do (delete-point point))
+      (setf history (nthcdr (1- index) history))
+      (when current
+        (delete-point current))
       (setf index 0
             current nil))
     (setf history
-          (cons point
+          (cons (copy-point point :left-inserting)
                 ;; Remove points at the same line in the history
                 (remove (line-number-at-point point)
                         history
-                        :key #'line-number-at-point
-                        :test #'=
+                        :test (lambda (linum point)
+                                (when (= linum (line-number-at-point point))
+                                  (delete-point point)
+                                  t))
                         :count 1)))
     ;; Keep only *max-jumplist-size* points (including `current`)
     (delete-exceeded-elements history (1- *max-jumplist-size*))
@@ -76,7 +84,7 @@
 (defun jumplist-history-back (jumplist)
   (with-slots (index current) jumplist
     (when (zerop index)
-      (setf current (copy-point (current-point))))
+      (setf current (copy-point (current-point) :left-inserting)))
     (handler-case
         (prog1 (jumplist-ref jumplist (1+ index))
           (incf index))
@@ -88,6 +96,7 @@
       (decf index)
       (prog1 (jumplist-ref jumplist index)
         (when (zerop index)
+          (delete-point current)
           (setf current nil))))))
 
 (defun window-jumplist (&optional (window (current-window)))
@@ -95,7 +104,7 @@
       (setf (window-parameter window :vi-mode-jumplist)
             (make-jumplist))))
 
-(defun jumplist-table (&optional (jumplist (window-jumplist)))
+(defun jumplist-table (jumplist)
   (flet ((buffer-identifier (buffer)
            (if (buffer-filename buffer)
                (enough-namestring (buffer-filename buffer))
@@ -121,26 +130,24 @@
                      results)
             finally (return results)))))
 
-(defun print-jumplist (&optional (jumplist (window-jumplist)))
+(defun print-jumplist (jumplist &optional (stream *standard-output*))
   (let ((table (jumplist-table jumplist)))
-    (message
-     (with-output-to-string (s)
-       (dolist (row table)
-         (destructuring-bind (current-p index line column file)
-             row
-           (format s "~:[  ~;> ~]~A: ~A~%"
-                   current-p
-                   index
-                   (and line column file
-                        (format nil "(~A, ~A)  ~A" line column file)))))))))
+    (dolist (row table)
+      (destructuring-bind (current-p index line column file)
+          row
+        (format stream "~:[  ~;> ~]~A: ~A~%"
+                current-p
+                index
+                (and line column
+                     (format nil "(~A, ~A)  ~A" line column file)))))))
 
 (defvar *jump-motion-recursive* nil)
 (defun call-with-jump-motion (fn)
-  (let ((*jump-motion-recursive* t)
-        (p (copy-point (current-point))))
-    (prog1 (funcall fn)
-      (unless (point= p (current-point))
-        (jumplist-history-push (window-jumplist) p)))))
+  (with-point ((p (current-point)))
+    (let ((*jump-motion-recursive* t))
+      (prog1 (funcall fn)
+        (unless (point= p (current-point))
+          (jumplist-history-push (window-jumplist) p))))))
 
 (defmacro with-jump-motion (&body body)
   `(if *jump-motion-recursive*

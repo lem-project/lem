@@ -54,7 +54,7 @@
       (setf (cdr last-cdr) nil))
     list))
 
-(defun jumplist-push (jumplist point)
+(defun jumplist-history-push (jumplist point)
   (with-slots (history index current) jumplist
     ;; Delete the newer history
     (when (< 0 index)
@@ -140,7 +140,7 @@
         (p (copy-point (current-point))))
     (prog1 (funcall fn)
       (unless (point= p (current-point))
-        (jumplist-push (window-jumplist) p)))))
+        (jumplist-history-push (window-jumplist) p)))))
 
 (defmacro with-jump-motion (&body body)
   `(if *jump-motion-recursive*

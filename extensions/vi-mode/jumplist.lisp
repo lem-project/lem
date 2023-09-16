@@ -6,8 +6,8 @@
   (:import-from :alexandria
                 :when-let
                 :ignore-some-conditions)
-  (:export :with-jump-motion
-           :without-jump-motion
+  (:export :with-jumplist
+           :without-jumplist
            :jump-back
            :jump-next
            :window-jumplist))
@@ -174,7 +174,7 @@
 
 (defvar *disable-jumplist* nil)
 
-(defun call-with-jump-motion (fn)
+(defun call-with-jumplist (fn)
   (with-point ((p (current-point)))
     (let ((*disable-jumplist* t))
       (prog1 (funcall fn)
@@ -183,13 +183,13 @@
                      (point= p (current-point)))
           (jumplist-history-push (window-jumplist) p))))))
 
-(defmacro with-jump-motion (&body body)
+(defmacro with-jumplist (&body body)
   `(if *disable-jumplist*
        (progn ,@body)
-       (call-with-jump-motion
+       (call-with-jumplist
         (lambda () ,@body))))
 
-(defmacro without-jump-motion (&body body)
+(defmacro without-jumplist (&body body)
   `(let ((*disable-jumplist* t))
      ,@body))
 

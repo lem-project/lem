@@ -2,7 +2,7 @@
   (:use :cl
         :lem-vi-mode/ex-core)
   (:import-from :lem-vi-mode/jumplist
-                :with-jump-motion)
+                :with-jumplist)
   (:import-from :lem-vi-mode/options
                 :execute-set-command)
   (:import-from :lem-vi-mode/utils
@@ -27,7 +27,7 @@
 
 (define-ex-command "^e$" (range filename)
   (declare (ignore range))
-  (with-jump-motion
+  (with-jumplist
     (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(w|write)$" (range filename)
@@ -87,7 +87,7 @@
     (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(s|substitute)$" (range argument)
-  (with-jump-motion
+  (with-jumplist
     (let (start end)
       (case (length range)
         ((0)
@@ -150,7 +150,7 @@
 
 (define-ex-command "^(b|buffer)$" (range buffer-name)
   (declare (ignore range))
-  (with-jump-motion
+  (with-jumplist
     (lem:select-buffer buffer-name)))
 
 (define-ex-command "^bd(?:elete)?$" (range buffer-name)

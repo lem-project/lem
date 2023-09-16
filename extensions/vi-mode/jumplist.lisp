@@ -136,8 +136,12 @@
 
 (defun window-jumplist (window)
   (or (window-parameter window :vi-mode-jumplist)
-      (setf (window-parameter window :vi-mode-jumplist)
-            (make-jumplist))))
+      (let ((jumplist (make-jumplist)))
+        (setf (window-parameter window :vi-mode-jumplist)
+              jumplist)
+        (push (lambda () (delete-jumplist jumplist))
+              (window-delete-hook window))
+        jumplist)))
 
 (defun (setf window-jumplist) (jumplist window)
   (check-type jumplist jumplist)

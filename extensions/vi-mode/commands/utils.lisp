@@ -21,7 +21,7 @@
                 :text-object-abort-range)
   (:import-from :lem-vi-mode/states
                 :operator)
-  (:import-from :lem-vi-mode/jump-motions
+  (:import-from :lem-vi-mode/jumplist
                 :with-jump-motion)
   (:import-from :lem-vi-mode/visual
                 :visual-p

@@ -1,11 +1,11 @@
-(defpackage :lem-vi-mode/jump-motions
+(defpackage :lem-vi-mode/jumplist
   (:use :cl
         :lem)
   (:export :with-jump-motion
            :jump-back
            :jump-next
            :window-jumplist))
-(in-package :lem-vi-mode/jump-motions)
+(in-package :lem-vi-mode/jumplist)
 
 (defvar *max-jumplist-size* 100)
 

@@ -1,7 +1,7 @@
 (defpackage :lem-vi-mode/ex-command
   (:use :cl
         :lem-vi-mode/ex-core)
-  (:import-from :lem-vi-mode/jump-motions
+  (:import-from :lem-vi-mode/jumplist
                 :with-jump-motion)
   (:import-from :lem-vi-mode/options
                 :execute-set-command)

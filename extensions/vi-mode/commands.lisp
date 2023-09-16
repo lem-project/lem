@@ -6,7 +6,7 @@
         :lem-vi-mode/core
         :lem-vi-mode/word
         :lem-vi-mode/visual
-        :lem-vi-mode/jump-motions
+        :lem-vi-mode/jumplist
         :lem-vi-mode/registers
         :lem-vi-mode/text-objects
         :lem-vi-mode/commands/utils)

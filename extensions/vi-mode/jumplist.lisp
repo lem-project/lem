@@ -149,7 +149,9 @@
   (with-point ((p (current-point)))
     (let ((*jump-motion-recursive* t))
       (prog1 (funcall fn)
-        (unless (point= p (current-point))
+        (unless (and (eq (point-buffer p)
+                         (current-buffer))
+                     (point= p (current-point)))
           (jumplist-history-push (window-jumplist) p))))))
 
 (defmacro with-jump-motion (&body body)

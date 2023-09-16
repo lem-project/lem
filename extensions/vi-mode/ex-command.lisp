@@ -27,7 +27,8 @@
 
 (define-ex-command "^e$" (range filename)
   (declare (ignore range))
-  (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd))))
+  (with-jump-motion
+    (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))

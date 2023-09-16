@@ -822,7 +822,7 @@
                                        :w window-width
                                        :h window-height
                                        :flags '(:shown :resizable #+darwin :allow-highdpi))
-               (sdl2:with-renderer (renderer window :index -1 :flags '(#-darwin :software #+darwin :accelerated))
+               (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
                  (let* ((renderer-size (multiple-value-list (sdl2:get-renderer-output-size renderer)))
                         (renderer-width (first renderer-size))
                         (renderer-height (second renderer-size))

@@ -20,11 +20,11 @@
     (setf (transport-connection transport) connection)
     (setf (transport-threads transport)
           (list
-           (bt:make-thread
+           (bt2:make-thread
             (lambda ()
               (run-processing-loop transport connection))
             :name "lem-lsp-mode/lem-stdio-transport processing")
-           (bt:make-thread
+           (bt2:make-thread
             (lambda ()
               (run-reading-loop transport connection))
             :name "lem-lsp-mode/lem-stdio-transport reading")))

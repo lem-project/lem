@@ -36,7 +36,7 @@
                                    ;; :read-thread thread
                                    :output-callback output-callback
                                    :output-callback-type output-callback-type))
-           (thread (bt:make-thread
+           (thread (bt2:make-thread
                     (lambda ()
                       (loop
                         (unless (async-process:process-alive-p pointer)
@@ -65,8 +65,8 @@
          (funcall output-callback string))))))
 
 (defun delete-process (process)
-  (when (bt:thread-alive-p (process-read-thread process))
-    (bt:destroy-thread (process-read-thread process)))
+  (when (bt2:thread-alive-p (process-read-thread process))
+    (bt2:destroy-thread (process-read-thread process)))
   (async-process:delete-process (process-pointer process)))
 
 (defun process-alive-p (process)

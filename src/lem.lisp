@@ -196,7 +196,7 @@ Options:
   (apply-args args))
 
 (defun run-editor-thread (initialize args finalize)
-  (bt:make-thread
+  (bt2:make-thread
    (lambda ()
      (when initialize (funcall initialize))
      (unwind-protect
@@ -218,9 +218,9 @@ Options:
         :key #'sb-thread:thread-name))
 #-sbcl
 (defun find-editor-thread ()
-  (find "editor" (bt:all-threads)
+  (find "editor" (bt2:all-threads)
         :test #'equal
-        :key #'bt:thread-name))
+        :key #'bt2:thread-name))
 
 (defun lem (&rest args)
 

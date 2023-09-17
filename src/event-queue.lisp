@@ -21,35 +21,35 @@
   (null (car queue)))
 
 (defstruct event-queue
-  (wait (bt:make-condition-variable))
-  (lock (bt:make-lock))
+  (wait (bt2:make-condition-variable))
+  (lock (bt2:make-lock))
   (queue (make-queue)))
 
 (defvar *editor-event-queue* (make-event-queue))
 
 (defun event-queue-length (&optional (evq *editor-event-queue*))
-  (bt:with-lock-held ((event-queue-lock evq))
+  (bt2:with-lock-held ((event-queue-lock evq))
     (length (car (event-queue-queue evq)))))
 
 (defun dequeue-event (timeout &optional (evq *editor-event-queue*))
-  (bt:with-lock-held ((event-queue-lock evq))
+  (bt2:with-lock-held ((event-queue-lock evq))
     (if (not (empty-queue-p (event-queue-queue evq)))
         (dequeue (event-queue-queue evq))
         (cond ((if timeout
-                   (bt:condition-wait (event-queue-wait evq) (event-queue-lock evq)
+                   (bt2:condition-wait (event-queue-wait evq) (event-queue-lock evq)
                                       :timeout timeout)
-                   (bt:condition-wait (event-queue-wait evq) (event-queue-lock evq)))
+                   (bt2:condition-wait (event-queue-wait evq) (event-queue-lock evq)))
                (dequeue (event-queue-queue evq)))
               (t
                :timeout)))))
 
 (defun send-event (obj &optional (evq *editor-event-queue*))
-  (bt:with-lock-held ((event-queue-lock evq))
+  (bt2:with-lock-held ((event-queue-lock evq))
     (enqueue (event-queue-queue evq) obj)
-    (bt:condition-notify (event-queue-wait evq))))
+    (bt2:condition-notify (event-queue-wait evq))))
 
 (defun send-abort-event (editor-thread force)
-  (bt:interrupt-thread editor-thread
+  (bt2:interrupt-thread editor-thread
                        (lambda ()
                          (lem-base::interrupt force))))
 

@@ -126,7 +126,7 @@
 (defmethod lem-if:invoke ((implementation jsonrpc) function)
   (with-error-handler ()
     (let ((ready nil))
-      (setf *main-thread* (bt:current-thread))
+      (setf *main-thread* (bt2:current-thread))
       (setf *editor-thread*
             (funcall function
                      (lambda ()

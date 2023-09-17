@@ -31,10 +31,10 @@
 
 (defmacro with-bindings (bindings &body body)
   `(let ,bindings
-     (let ((bt:*default-special-bindings*
+     (let ((bt2:*default-special-bindings*
              (list* ,@(loop :for (var) :in bindings
                             :collect `(cons ',var ,var))
-                    bt:*default-special-bindings*)))
+                    bt2:*default-special-bindings*)))
        ,@body)))
 
 (defun do-log (value)
@@ -88,7 +88,7 @@
 (defvar *display*)
 
 (defclass display ()
-  ((mutex :initform (bt:make-lock "lem-sdl2 display mutex")
+  ((mutex :initform (bt2:make-lock :name "lem-sdl2 display mutex")
           :reader display-mutex)
    (font-config :initarg :font-config
                 :accessor display-font-config)
@@ -145,7 +145,7 @@
 
 (defun call-with-renderer (function)
   (sdl2:in-main-thread ()
-    (bt:with-recursive-lock-held ((display-mutex *display*))
+    (bt2:with-recursive-lock-held ((display-mutex *display*))
       (funcall function))))
 
 (defmacro with-renderer (() &body body)
@@ -215,7 +215,7 @@
   (nth-value 1 (sdl2:get-window-size (display-window display))))
 
 (defmethod update-texture ((display display))
-  (bt:with-lock-held ((display-mutex display))
+  (bt2:with-lock-held ((display-mutex display))
     (sdl2:destroy-texture (display-texture display))
     (setf (display-texture display)
           (create-texture (display-renderer display)

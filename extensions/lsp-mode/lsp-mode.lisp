@@ -359,7 +359,7 @@
                 (funcall continuation workspace))))
 
 (defun connect (client continuation)
-  (bt:make-thread
+  (bt2:make-thread
    (lambda ()
      (loop :with condition := nil
            :repeat 20

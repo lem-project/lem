@@ -39,7 +39,8 @@
            :text=
            :state=
            :visual=
-           :buf=))
+           :buf=
+           :lines))
 (in-package :lem-vi-mode/tests/utils)
 
 (defun state-to-keyword (state)
@@ -394,3 +395,6 @@
           negative
           (first values)
           (ignore-errors (state-to-keyword (current-state)))))
+
+(defun lines (&rest lines)
+  (format nil "~{~A~%~}" lines))

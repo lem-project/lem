@@ -6,7 +6,7 @@
         :lem-vi-mode/core
         :lem-vi-mode/word
         :lem-vi-mode/visual
-        :lem-vi-mode/jump-motions
+        :lem-vi-mode/jumplist
         :lem-vi-mode/registers
         :lem-vi-mode/text-objects
         :lem-vi-mode/commands/utils)
@@ -632,7 +632,7 @@
 (define-command vi-search-forward () ()
   (setf *last-search-direction* :forward)
   (add-hook *isearch-finish-hooks* 'vi-isearch-finish-hook)
-  (with-jump-motion
+  (with-jumplist
     (lem/isearch::isearch-start "/"
                                 (lambda (point string)
                                   (alexandria:when-let (p (lem/isearch::search-forward-regexp
@@ -647,13 +647,13 @@
 (define-command vi-search-backward () ()
   (setf *last-search-direction* :backward)
   (add-hook *isearch-finish-hooks* 'vi-isearch-finish-hook)
-  (with-jump-motion
+  (with-jumplist
     (lem/isearch:isearch-backward-regexp "?")))
 
 (defun vi-search-repeat-forward (n)
   (when-let ((query (register #\/)))
     (lem/isearch::change-previous-string query)
-    (with-jump-motion
+    (with-jumplist
       (with-point ((p (current-point)))
         (vi-forward-char (length lem/isearch::*isearch-string*))
         (loop repeat n
@@ -667,7 +667,7 @@
 (defun vi-search-repeat-backward (n)
   (when-let ((query (register #\/)))
     (lem/isearch::change-previous-string query)
-    (with-jump-motion
+    (with-jumplist
       (dotimes (i n) (lem/isearch:isearch-prev)))))
 
 (define-command vi-search-next (n) ("p")
@@ -681,7 +681,7 @@
     (:backward (vi-search-repeat-forward n))))
 
 (define-command vi-search-forward-symbol-at-point () ()
-  (with-jump-motion
+  (with-jumplist
     (lem/isearch:isearch-forward-symbol-at-point)
     (lem/isearch:isearch-finish)
     (lem/isearch:isearch-next)))

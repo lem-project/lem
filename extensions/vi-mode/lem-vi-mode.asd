@@ -18,12 +18,12 @@
                (:file "visual" :depends-on ("core" "states"))
                (:file "text-objects" :depends-on ("core" "visual" "word"))
                (:file "registers" :depends-on ("core"))
-               (:file "jump-motions")
+               (:file "jumplist")
                (:module "commands-utils"
                 :pathname "commands"
-                :depends-on ("core" "jump-motions" "visual" "states")
+                :depends-on ("core" "jumplist" "visual" "states")
                 :components ((:file "utils")))
-               (:file "commands" :depends-on ("core" "commands-utils" "word" "visual" "jump-motions" "states" "registers" "window"))
+               (:file "commands" :depends-on ("core" "commands-utils" "word" "visual" "jumplist" "states" "registers" "window"))
                (:file "ex-core" :depends-on ("visual"))
                (:file "ex-parser" :depends-on ("ex-core"))
                (:file "ex-command" :depends-on ("ex-core" "options" "utils"))
@@ -56,6 +56,7 @@
      (:file "text-objects")
      (:file "registers")
      (:file "kbdmacro")
+     (:file "jumplist")
      (:file "options")))
    (:file "utils"
     :pathname "tests/utils"))

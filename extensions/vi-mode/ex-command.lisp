@@ -1,8 +1,11 @@
 (defpackage :lem-vi-mode/ex-command
   (:use :cl
         :lem-vi-mode/ex-core)
-  (:import-from :lem-vi-mode/jump-motions
-                :with-jump-motion)
+  (:import-from :lem-vi-mode/jumplist
+                :with-jumplist
+                :window-jumplist
+                :current-jumplist
+                :copy-jumplist)
   (:import-from :lem-vi-mode/options
                 :execute-set-command)
   (:import-from :lem-vi-mode/utils
@@ -27,7 +30,8 @@
 
 (define-ex-command "^e$" (range filename)
   (declare (ignore range))
-  (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd))))
+  (with-jumplist
+    (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))
@@ -72,21 +76,30 @@
 (define-ex-command "^(x|xit)!$" (range filename)
   (ex-write-quit range filename t nil))
 
+(defun copy-current-jumplist-to-next-window ()
+  (let* ((window-list
+           (lem:compute-window-list (lem:current-window)))
+         (new-window (lem:get-next-window (lem:current-window) window-list)))
+    (setf (window-jumplist new-window)
+          (copy-jumplist (current-jumplist)))))
+
 (define-ex-command "^(sp|split)$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-vertically)
+  (copy-current-jumplist-to-next-window)
   (unless (string= filename "")
     (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(vs|vsplit)$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-horizontally)
+  (copy-current-jumplist-to-next-window)
   (lem:next-window)
   (unless (string= filename "")
     (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(s|substitute)$" (range argument)
-  (with-jump-motion
+  (with-jumplist
     (let (start end)
       (case (length range)
         ((0)
@@ -149,7 +162,8 @@
 
 (define-ex-command "^(b|buffer)$" (range buffer-name)
   (declare (ignore range))
-  (lem:select-buffer buffer-name))
+  (with-jumplist
+    (lem:select-buffer buffer-name)))
 
 (define-ex-command "^bd(?:elete)?$" (range buffer-name)
   (declare (ignore range))

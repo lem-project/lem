@@ -21,8 +21,9 @@
                 :text-object-abort-range)
   (:import-from :lem-vi-mode/states
                 :operator)
-  (:import-from :lem-vi-mode/jump-motions
-                :with-jump-motion)
+  (:import-from :lem-vi-mode/jumplist
+                :with-jumplist
+                :without-jumplist)
   (:import-from :lem-vi-mode/visual
                 :visual-p
                 :visual-line-p
@@ -108,7 +109,7 @@
                            :default-n-arg ,default-n-arg))
        ,arg-list ,arg-descriptors
      (with-point ((*vi-origin-point* (current-point)))
-       (,(if jump 'with-jump-motion 'progn)
+       (,(if jump 'with-jumplist 'progn)
         ,@body))))
 
 (defun call-motion-command (command n)
@@ -213,12 +214,13 @@
 
 (defun call-define-operator (fn &key keep-visual restore-point)
   (with-point ((*vi-origin-point* (current-point)))
-    (unwind-protect (funcall fn)
-      (when restore-point
-        (move-point (current-point) *vi-origin-point*))
-      (unless keep-visual
-        (when (visual-p)
-          (vi-visual-end))))))
+    (without-jumplist
+      (unwind-protect (funcall fn)
+        (when restore-point
+          (move-point (current-point) *vi-origin-point*))
+        (unless keep-visual
+          (when (visual-p)
+            (vi-visual-end)))))))
 
 (defun parse-arg-descriptors (arg-descriptors &key motion move-point)
   `(values-list

@@ -1,0 +1,16 @@
+("quicklisp" .
+ (:class qlot/source/dist:source-dist
+  :initargs (:distribution "http://beta.quicklisp.org/dist/quicklisp.txt" :%version :latest)
+  :version "2023-06-18"))
+("micros" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/micros.git")
+  :version "git-ed264a27262baeed493cdde338873bf4afc3721c"))
+("lem-mailbox" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/lem-mailbox.git")
+  :version "git-12d629541da440fadf771b0225a051ae65fa342a"))
+("lem-base16-themes" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/lem-base16-themes.git")
+  :version "git-07dacae6c1807beaeffc730063b54487d5c82eb0"))

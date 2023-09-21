@@ -10,6 +10,7 @@
            :split-active-window-vertically
            :split-active-window-horizontally
            :next-window
+           :previous-window
            :window-move-up
            :window-move-down
            :window-move-right

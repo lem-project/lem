@@ -182,7 +182,8 @@
                 :components ((:file "porcelain")
                              (:file "peek-legit")
                              (:file "legit")
-                             (:file "legit-rebase")))
+                             (:file "legit-rebase")
+                             (:file "legit-commit")))
                (:module "scripts"
                 :components ((:static-file "dumbrebaseeditor.sh")))))
 

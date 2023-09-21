@@ -25,6 +25,7 @@ Done:
 - branch checkout, branch create&checkout
 - view commit at point
 - basic Fossil support (current branch, add change, commit)
+- redact a proper commit text in its own buffer, not only a one liner.
 
 TODO:
 
@@ -37,7 +38,6 @@ Ongoing:
 Nice to have/todo next:
 
 - view log
-- redact a proper commit text, not only one line
 - other VCS support
 
 Next:
@@ -161,7 +161,7 @@ Next:
     (setf (buffer-read-only-p buffer) t)
     (move-to-line (buffer-point buffer) 1)))
 
-(defun make-move-function (file  &key cached)
+(defun make-diff-function (file  &key cached)
   (lambda ()
     (with-current-project ()
       (show-diff (lem/porcelain:file-diff file :cached cached)))))
@@ -349,12 +349,47 @@ Next:
           point
           start))))
 
+(defparameter *commit-buffer-message*
+  "~%# Please enter the commit message for your changes.~%~
+  # Lines starting with '#' will be discarded, and an empty message does nothing.~%~
+  # Validate with C-c C-c, quit with M-q or C-c C-k")
+
 (define-command legit-commit () ()
-  (let ((message (prompt-for-string "Commit message: ")))
-    (with-current-project ()
-      (lem/porcelain:commit message)
-      (legit-status)
-      (message "Commited."))))
+  "Write a commit message in its dedicated buffer.
+
+  In this buffer, use C-c to validate, M-q or C-c C-k to quit."
+
+  ;; The git command accepts a commit message as argument (-m),
+  ;; but also a simple "git commit" starts an editing process, with a pre-formatted
+  ;; help text. As with the interactive rebase process, we would need to:
+  ;; - start the commit process with a dummy editor,
+  ;; - on validation kill the dummy editor and let the git process continue (at this moment git itself decides to validate or to ignore the message).
+  ;; This is used by Magit, and we do this for the interactive rebase, but:
+  ;; - our dummy editor script doesn't support windows (still as of <2023-09-22 Fri>).
+  ;;
+  ;; So we go with a simpler, cross-platform and pure Lem/Lisp workflow:
+  ;; - create a Lem buffer, add some help text
+  ;; - on validation, check ourselves that the message isn't void, extract other information (signature…) and run the commit, with the -m argument.
+
+  (let ((buffer (make-buffer "*legit-commit*")))
+    (setf (buffer-directory buffer) (buffer-directory))
+    (setf (buffer-read-only-p buffer) nil)
+    (erase-buffer buffer)
+    (move-to-line (buffer-point buffer) 1)
+    (insert-string (buffer-point buffer)
+                   (format nil *commit-buffer-message*))
+    (change-buffer-mode buffer 'legit-commit-mode)
+    (move-to-line (buffer-point buffer) 1)
+
+    ;; The Legit command, like grep, creates its own window.
+    ;; Where is it best to show the commit buffer?
+    ;; 1) quit the legit view altogether, open the commit buffer in full height:
+    ;; (lem/legit::legit-quit)
+    ;; 2) open the commit buffer on the left instead of legit status (and nice to have: show the full changes on the right)
+    ;; (setf (not-switchable-buffer-p (current-buffer)) nil)
+    ;; 3) open the commit buffer on the right, don't touch the ongoing legit status.
+    (next-window)
+    (switch-to-buffer buffer)))
 
 
 (define-command legit-status () ()
@@ -376,7 +411,7 @@ Next:
         (if untracked-files
             (loop :for file :in untracked-files
                   :do (lem/peek-legit:with-appending-source
-                          (point :move-function (make-move-function file)
+                          (point :move-function (make-diff-function file)
                                  :visit-file-function (make-visit-file-function file)
                                  :stage-function (make-stage-function file)
                                  :unstage-function (lambda () (message "File is not tracked, can't be unstaged.")))
@@ -389,7 +424,7 @@ Next:
         (if unstaged-files
             (loop :for file :in unstaged-files
                   :do (lem/peek-legit:with-appending-source
-                          (point :move-function (make-move-function file)
+                          (point :move-function (make-diff-function file)
                                  :visit-file-function (make-visit-file-function file)
                                  :stage-function (make-stage-function file)
                                  :unstage-function (make-unstage-function file :already-unstaged t))
@@ -406,7 +441,7 @@ Next:
             (loop :for file :in staged-files
                   :for i := 0 :then (incf i)
                   :do (lem/peek-legit:with-appending-source
-                          (point :move-function (make-move-function file :cached t)
+                          (point :move-function (make-diff-function file :cached t)
                                  :visit-file-function (make-visit-file-function file)
                                  :stage-function (make-stage-function file)
                                  :unstage-function (make-unstage-function file))

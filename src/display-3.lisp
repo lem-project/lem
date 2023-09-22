@@ -405,7 +405,7 @@
             (return-from outer))))
       (lem-if:clear-to-end-of-window (lem-core:implementation) window y))))
 
-(defun redraw-buffer-internal (buffer window force)
+(defun redraw-buffer-v2 (buffer window force)
   (assert (eq buffer (lem-core:window-buffer window)))
   (when (or force
             (lem-core::screen-modified-p (lem-core:window-screen window)))
@@ -413,11 +413,15 @@
   (redraw-lines window)
   (lem-core::update-screen-cache (lem-core:window-screen window) buffer))
 
-(defmethod lem-core::redraw-buffer (implementation (buffer text-buffer-v2) window force)
-  (redraw-buffer-internal buffer window force))
+(defvar *v2* nil)
+
+(defmethod lem-core::redraw-buffer (implementation (buffer lem-core:text-buffer) window force)
+  (if *v2*
+      (redraw-buffer-v2 buffer window force)
+      (lem-core::redraw-buffer-v1 buffer window force)))
 
 (lem-core:define-command change-buffer-to-v2 () ()
-  (change-class (lem-core:current-buffer) 'text-buffer-v2))
+  (setf *v2* t))
 
 (lem-core:define-command change-buffer-to-v1 () ()
-  (change-class (lem-core:current-buffer) 'lem-base:text-buffer))
+  (setf *v2* nil))

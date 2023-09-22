@@ -541,7 +541,7 @@
                    (window-point window))
       -1))
 
-(defun redraw-buffer-internal (buffer window force)
+(defun redraw-buffer-v1 (buffer window force)
   (assert (eq buffer (window-buffer window)))
   (let ((screen (window-screen window)))
     (draw-window-to-screen window)
@@ -554,6 +554,3 @@
     (when (or force (required-whole-update-screen-p screen))
       (lem-if:force-update-view (implementation) (screen-view screen)))
     (update-screen-cache screen buffer)))
-
-(defmethod redraw-buffer (implementation (buffer text-buffer) window force)
-  (redraw-buffer-internal buffer window force))

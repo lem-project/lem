@@ -512,9 +512,16 @@
 
 (defmethod redraw-buffer :around (implementation buffer window force)
   (with-display-error ()
+    (lem-if:redraw-view-before (implementation)
+                               (screen-view (window-screen window)))
     (let ((lem-if:*background-color-of-drawing-window*
             (get-background-color-of-window window)))
-      (call-next-method))))
+      (call-next-method))
+    (when (window-use-modeline-p window)
+      (redraw-modeline window (or (screen-modified-p (window-screen window))
+                                  force)))
+    (lem-if:redraw-view-after (implementation)
+                              (screen-view (window-screen window)))))
 
 (defun get-background-color-of-window (window)
   (cond ((typep window 'floating-window)
@@ -527,17 +534,6 @@
               (eq 'window (type-of window)))
          *inactive-window-background-color*)
         (t nil)))
-
-(defmethod redraw-buffer :before (implementation (buffer text-buffer) window force)
-  (lem-if:redraw-view-before (implementation)
-                             (screen-view (window-screen window))))
-
-(defmethod redraw-buffer :after (implementation (buffer text-buffer) window force)
-  (when (window-use-modeline-p window)
-    (redraw-modeline window (or (screen-modified-p (window-screen window))
-                                force)))
-  (lem-if:redraw-view-after (implementation)
-                            (screen-view (window-screen window))))
 
 (defun get-cursor-y-on-screen (window)
   (if (eq window (current-window))

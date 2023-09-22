@@ -192,11 +192,16 @@
                           (- (lem-core/display-3::window-view-height window) y)))
     (sdl2:render-fill-rect (lem-sdl2::current-renderer) rect)))
 
+(defmethod lem-core::redraw-buffer :before ((implementation lem-sdl2::sdl2)
+                                            (buffer lem-core/display-3::text-buffer-v2)
+                                            window
+                                            force)
+  (sdl2:set-render-target (lem-sdl2::current-renderer)
+                          (lem-sdl2::view-texture (lem:window-view window))))
+
 (defmethod lem-core::redraw-buffer :around ((implementation lem-sdl2::sdl2)
                                             (buffer lem-core/display-3::text-buffer-v2)
                                             window
                                             force)
   (sdl2:in-main-thread ()
-    (sdl2:set-render-target (lem-sdl2::current-renderer)
-                            (lem-sdl2::view-texture (lem:window-view window)))
     (call-next-method)))

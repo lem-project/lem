@@ -541,13 +541,14 @@
       (t
        (lem-core:key-to-char key)))))
 
-(define-command vi-record-macro (register) ((or *kbdmacro-recording-register*
+(define-command vi-record-macro (register) ((if (key-recording-p)
+                                                *kbdmacro-recording-register*
                                                 (read-register)))
   (cond
     ((macro-register-p register)
      (cond
        ;; When recording
-       (*kbdmacro-recording-register*
+       ((key-recording-p)
         ;; Finish recording
         (lem/kbdmacro:kbdmacro-end)
         (setf (register register)

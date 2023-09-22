@@ -1,0 +1,20 @@
+#!/bin/bash
+
+# This script builds lem from nothing but a valid SBCL installation and the lem repo.
+# It assumes quicklisp was not set up prior to this script running.
+# The lem executable ends up in ~/common-lisp/lem/bin
+
+cd ~/common-lisp
+wget https://beta.quicklisp.org/quicklisp.lisp
+sbcl  <<EOF
+(load "quicklisp")
+(quicklisp-quickstart:install)
+(ql:add-to-init-file)
+(exit)
+EOF
+cd lem/scripts
+sbcl --eval '(ql:quickload :lem-ncurses)' --load build.lisp
+mkdir -p ../bin
+mv lem ../bin
+
+

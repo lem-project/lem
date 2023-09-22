@@ -91,25 +91,27 @@ You can watch the screencast on Youtube.
 
 ## Installation with sbcl
 
-Please clone lem to a location where the path to asdf is accessible.
+The following assumes SBCL has been installed and nothing else.
 
 ```
-$ mkdir $HOME/common-lisp
+$ mkdir -p $HOME/common-lisp
 $ cd $HOME/common-lisp
 $ git clone --recursive https://github.com/lem-project/lem.git
+$ cd lem/scripts
+./raw-build
 ```
 
-You can start "lem" using the following command.
+The lem executable ends up in the `~/common-lisp/lem/bin` directory.
+It can be copied to `/usr/local/bin`
+
+Subsequently, lem may be updated as follows:
+
 ```
-$ sbcl
-* (ql:quickload :lem-ncurses)
-* (lem:lem)
+$ cd ~/common-lisp/lem/scripts
+$ ./update
 ```
 
-You can create the executable file of lem using the following command.
-```
-$ sbcl --eval '(ql:quickload :lem-ncurses)' --load build.lisp
-```
+An updated lem will exist in the `~/common-lisp/lem/bin` directory.
 
 ## Configuration
 

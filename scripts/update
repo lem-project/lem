@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# This script updates lem.
+# It assumes a prior build using the raw-build script.
+# The updated lem executable ends up in ~/common-lisp/lem/bin
+
+cd ~/common-lisp/lem
+rm -f bin/lem
+git pull
+cd scripts
+sbcl --eval '(ql:quickload :lem-ncurses)' --load build.lisp
+mv lem ../bin
+
+

@@ -23,25 +23,44 @@
         (attribute-font attribute))
       (lem-sdl2::get-display-font lem-sdl2::*display* :type type :bold bold)))
 
-(defun render-string (string attribute type)
-  (let ((foreground (lem-core::attribute-foreground-with-reverse attribute))
-        (bold (and attribute (lem:attribute-bold attribute))))
+(defgeneric get-surface (drawing-object))
+
+(defmethod get-surface :around (drawing-object)
+  (or (lem-core/display-3::text-object-surface drawing-object)
+      (setf (lem-core/display-3::text-object-surface drawing-object)
+            (call-next-method))))
+
+(defmethod get-surface ((drawing-object lem-core/display-3::text-object))
+  (let* ((attribute (lem-core/display-3::text-object-attribute drawing-object))
+         (foreground (lem-core::attribute-foreground-with-reverse attribute)))
+    (cffi:with-foreign-string (c-string (lem-core/display-3::text-object-string drawing-object))
+      (sdl2-ttf:render-utf8-blended
+       (get-font :attribute attribute
+                 :type (lem-core/display-3::text-object-type drawing-object)
+                 :bold (and attribute (lem:attribute-bold attribute)))
+       c-string
+       (lem:color-red foreground)
+       (lem:color-green foreground)
+       (lem:color-blue foreground)
+       0))))
+
+(defmethod get-surface ((drawing-object lem-core/display-3::icon-object))
+  (let* ((string (lem-core/display-3::text-object-string drawing-object))
+         (attribute (lem-core/display-3::text-object-attribute drawing-object))
+         (font (lem-sdl2::icon-font (char (lem-core/display-3::text-object-string drawing-object) 0)))
+         (foreground (lem-core::attribute-foreground-with-reverse attribute)))
     (cffi:with-foreign-string (c-string string)
-      (sdl2-ttf:render-utf8-blended (get-font :attribute attribute
-                                              :type type
-                                              :bold bold)
+      (sdl2-ttf:render-utf8-blended font
                                     c-string
                                     (lem:color-red foreground)
                                     (lem:color-green foreground)
                                     (lem:color-blue foreground)
                                     0))))
 
-(defmethod get-surface ((text-object lem-core/display-3::text-object))
-  (or (lem-core/display-3::text-object-surface text-object)
-      (setf (lem-core/display-3::text-object-surface text-object)
-            (render-string (lem-core/display-3::text-object-string text-object)
-                           (lem-core/display-3::text-object-attribute text-object)
-                           (lem-core/display-3::text-object-type text-object)))))
+(defmethod get-surface ((drawing-object lem-core/display-3::folder-object))
+  (sdl2-image:load-image
+   (lem-sdl2::get-resource-pathname
+    "resources/open-folder.png")))
 
 (defgeneric object-width (drawing-object))
 
@@ -49,9 +68,16 @@
   0)
 
 (defmethod object-width ((drawing-object lem-core/display-3::text-object))
-  (if (eq :emoji (lem-core/display-3::text-object-type drawing-object))
-      (* (lem-sdl2::char-width) 2 (length (lem-core/display-3::text-object-string drawing-object)))
-      (sdl2:surface-width (get-surface drawing-object))))
+  (sdl2:surface-width (get-surface drawing-object)))
+
+(defmethod object-width ((drawing-object lem-core/display-3::icon-object))
+  (sdl2:surface-width (get-surface drawing-object)))
+
+(defmethod object-width ((drawing-object lem-core/display-3::folder-object))
+  (* 2 (lem-sdl2::char-width)))
+
+(defmethod object-width ((drawing-object lem-core/display-3::emoji-object))
+  (* (lem-sdl2::char-width) 2 (length (lem-core/display-3::text-object-string drawing-object))))
 
 (defmethod object-width ((drawing-object lem-core/display-3::eol-cursor-object))
   0)
@@ -73,9 +99,16 @@
   (lem-sdl2::char-height))
 
 (defmethod object-height ((drawing-object lem-core/display-3::text-object))
-  (if (eq :emoji (lem-core/display-3::text-object-type drawing-object))
-      (lem-sdl2::char-height)
-      (sdl2:surface-height (get-surface drawing-object))))
+  (sdl2:surface-height (get-surface drawing-object)))
+
+(defmethod object-height ((drawing-object lem-core/display-3::icon-object))
+  (lem-sdl2::char-height))
+
+(defmethod object-height ((drawing-object lem-core/display-3::folder-object))
+  (lem-sdl2::char-height))
+
+(defmethod object-height ((drawing-object lem-core/display-3::emoji-object))
+  (lem-sdl2::char-height))
 
 (defmethod object-height ((drawing-object lem-core/display-3::eol-cursor-object))
   (lem-sdl2::char-height))

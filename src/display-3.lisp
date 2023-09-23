@@ -108,6 +108,10 @@
    (type :initarg :type :reader text-object-type)
    (within-cursor :initform nil :initarg :within-cursor :reader text-object-within-cursor-p)))
 
+(defclass icon-object (text-object) ())
+(defclass folder-object (text-object) ())
+(defclass emoji-object (text-object) ())
+
 (defclass eol-cursor-object (drawing-object)
   ((color :initarg :color
           :reader eol-cursor-object-color)))
@@ -195,9 +199,13 @@
                    :attribute attribute
                    :type type)))
 
-(defun make-text-object (string attribute type)
+(defun make-object-with-type (string attribute type)
   (let ((attribute (and attribute (lem-core:ensure-attribute attribute))))
-    (make-instance 'text-object
+    (make-instance (case type
+                     (:folder 'folder-object)
+                     (:icon 'icon-object)
+                     (:emoji 'emoji-object)
+                     (otherwise 'text-object))
                    :string string
                    :attribute attribute
                    :type type
@@ -235,7 +243,7 @@
                  (t
                   (loop :for (type . string) :in (split-string-by-character-type string)
                         :unless (alexandria:emptyp string)
-                        :collect (make-text-object string attribute type))))))))
+                        :collect (make-object-with-type string attribute type))))))))
 
 (defun create-drawing-objects (logical-line)
   (multiple-value-bind (items line-end-item)
@@ -246,9 +254,9 @@
               (create-drawing-object line-end-item)))))
 
 (defun make-letter-object (character attribute)
-  (make-text-object (string character)
-                    attribute
-                    (char-type character)))
+  (make-object-with-type (string character)
+                         attribute
+                         (char-type character)))
 
 (defun explode-object (text-object)
   (check-type text-object text-object)
@@ -413,7 +421,7 @@
   (redraw-lines window)
   (lem-core::update-screen-cache (lem-core:window-screen window) buffer))
 
-(defvar *v2* nil)
+(defvar *v2* t)
 
 (defmethod lem-core::redraw-buffer (implementation (buffer lem-core:text-buffer) window force)
   (if *v2*

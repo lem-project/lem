@@ -28,7 +28,7 @@ Other Lem features include:
 See our [Lem 2.1 realease](https://github.com/lem-project/lem/releases/tag/v2.1.0) to
 download binaries for Windows, MacOS and Linux.
 
-On mac, you need to run `xattr -d com.apple.quarantine /Applications/lem.app`.
+On mac, you need to run `xattr -d com.apple.quarantine /Applications/lem.app`.  
 See https://github.com/lem-project/lem/issues/635
 
 ![SDL2](screenshots/sdl2.png)
@@ -70,7 +70,7 @@ curl -L https://qlot.tech/installer | bash
 make
 ```
 ### SDL2
-Dependent packages must be installed.
+Dependent packages must be installed.  
 See https://github.com/lem-project/lem/blob/main/frontends/sdl2/README.md
 
 ```

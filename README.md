@@ -69,13 +69,17 @@ curl -L https://qlot.tech/installer | bash
 ```
 make
 ```
-
 ### SDL2
 Dependent packages must be installed.  
 See https://github.com/lem-project/lem/blob/main/frontends/sdl2/README.md
 
 ```
 make build-sdl2
+```
+
+## update
+```
+make update
 ```
 
 ## Usage

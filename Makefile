@@ -19,3 +19,9 @@ doc:
 update:
 	git pull
 	qlot install
+
+lint:
+	qlot exec .qlot/bin/sblint src/base/lem-base.asd
+	qlot exec .qlot/bin/sblint lem.asd
+	qlot exec .qlot/bin/sblint lib/lisp-syntax/lem-lisp-syntax.asd
+	qlot exec .qlot/bin/sblint extensions/lisp-mode/lem-lisp-mode.asd

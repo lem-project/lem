@@ -10,7 +10,7 @@ sdl2:
 
 test:
 	qlot install
-	qlot exec $(LISP) --load scripts/launch-tests.lisp
+	qlot exec .qlot/bin/rove lem-tests.asd
 
 doc:
 	qlot install

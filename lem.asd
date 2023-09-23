@@ -191,9 +191,3 @@
   :build-pathname "lem"
   :entry-point "lem:main"
   :depends-on ("lem-ncurses"))
-
-(defsystem "lem-sdl2/executable"
-  :build-operation program-op
-  :build-pathname "lem"
-  :entry-point "lem:main"
-  :depends-on ("lem-sdl2"))

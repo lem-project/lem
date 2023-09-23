@@ -14,3 +14,7 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-base16-themes.git")
   :version "git-07dacae6c1807beaeffc730063b54487d5c82eb0"))
+("async-process" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/async-process.git")
+  :version "git-9690530fc92b59636d9f17d821afa7697e7c8ca4"))

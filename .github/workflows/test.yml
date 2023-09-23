@@ -25,7 +25,7 @@ jobs:
         set -ex
 
         ros config set dynamic-space-size 2048
-        ros install fukamachi/qlot
+        curl -L https://qlot.tech/installer | bash
 
         qlot exec .qlot/bin/sblint src/base/lem-base.asd
         qlot exec .qlot/bin/sblint sblint lem.asd

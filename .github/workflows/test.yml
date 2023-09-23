@@ -28,6 +28,8 @@ jobs:
         curl -L https://qlot.tech/installer | bash
         export PATH="/home/runner/.qlot/bin:$PATH"
 
+        qlot install
+
         qlot exec .qlot/bin/sblint src/base/lem-base.asd
         qlot exec .qlot/bin/sblint sblint lem.asd
         qlot exec .qlot/bin/sblint lib/lisp-syntax/lem-lisp-syntax.asd

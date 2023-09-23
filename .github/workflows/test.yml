@@ -24,16 +24,9 @@ jobs:
       run: |
         set -ex
  
-        # workaround for sbcl and log4cl combination problems
-        mkdir ~/common-lisp
-        cd ~/common-lisp
-        git clone https://github.com/sharplispers/log4cl.git
-        cd -
-
         ros config set dynamic-space-size 2048
 
-        ros install lem-project/async-process lem
-        ros install cxxxr/sblint fukamachi/rove
+        ros install cxxxr/sblint fukamachi/rove fukamachi/qlot lem
 
         export PATH=$HOME/.roswell/bin:$PATH
 

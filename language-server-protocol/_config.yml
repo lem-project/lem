@@ -1,0 +1,65 @@
+# Site settings
+title: Official page for Language Server Protocol
+description: >
+  Language Server Protocol documentation and specification page.
+
+baseurl: /language-server-protocol # the subpath of your site, e.g. /blog/
+url: https://microsoft.github.io # the base hostname & protocol for your site
+git_address: https://github.com/Microsoft/language-server-protocol
+git_edit_address: https://github.com/Microsoft/language-server-protocol/blob/gh-pages
+
+# Build settings
+markdown: kramdown
+highlighter: rouge
+
+plugins:
+  - github-pages
+  - jemoji
+  - jekyll-redirect-from
+
+
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - .idea/
+  - .gitignore
+  - README.md
+  - resources/
+  - vendor/
+
+timezone: Europe/Zurich
+
+defaults:
+
+- scope:
+    path: _implementors
+    type: implementors
+  values:
+    layout: implementors
+    sectionid: implementors
+
+- scope:
+    path: _specifications
+    type: specifications
+  values:
+    layout: specifications
+    sectionid: specifications
+
+- scope:
+    path: _overviews
+    type: overviews
+  values:
+    layout: overviews
+    sectionid: overviews
+
+collections:
+  implementors:
+    permalink: /:collection/:path/
+    output: true
+  specifications:
+    permalink: /:collection/:path/
+    output: true
+  overviews:
+    permalink: /:collection/:path/
+    output: true
+

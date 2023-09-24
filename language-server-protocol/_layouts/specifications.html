@@ -1,0 +1,105 @@
+---
+layout: default
+---
+
+<div class="container">
+    <div class="row single-page">
+        <div class="d-none col-lg-2 d-lg-block lsp-sidebar">
+            <div class="card">
+                <div id="spec-group-accordion" data-children=".item">
+                    {% for spec-group in site.data.specifications %}
+                    <div class="item">
+                        <a class="nav-link" data-toggle="collapse" data-parent="#spec-group-accordion" href="#{{ spec-group.anchor }}" aria-expanded="true">
+                            {{ spec-group.title }}
+                        </a>
+                        <div id="{{ spec-group.anchor }}" class="show" role="tabpanel">
+                            <ul class="nav toc flex-column" style="padding-left: 0.5rem">
+                                {% for spec in spec-group.children %}
+                                <li {% if page.shortTitle==spec.title %} class="nav-item active" {% else %} class="nav-item" {% endif %}>
+                                    <a class="nav-link toc-link" href="{{ spec.url | prepend: site.baseurl }}">
+                                        {{ spec.title }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+
+        <div class="col-12 col-lg-7" role="navigation" aria-label="Main">
+            <nav id="small-nav" class="docs-nav d-lg-none">
+                <label for="small-nav-dropdown"><h4>Topics</h4></label>
+                <select name="specifications" id="small-nav-dropdown">
+                    {% for spec-group in site.data.specifications %}
+                    <optgroup class="item" label="{{ spec-group.title }}">
+                        {% for spec in spec-group.children %}
+                        <option value="{{ spec.url | prepend: site.baseurl }}" {% if page.shortTitle==spec.title %}selected{% endif %} >{{ spec.title }}</option>
+                        {% endfor %}
+                    </optgroup>
+                    {% endfor %}
+                </select>
+            </nav>
+
+            <h1>{{ page.fullTitle }}</h1>
+
+            <div class="d-block d-lg-none lsp-sidebar">
+                {% for toc-l1 in site.data[page.toc] %}
+                <div class="card">
+                    <div id="inline-sections-accordion" data-children=".item">
+                        {% for toc-l2 in toc-l1.children %}
+                        <div class="item">
+                            <a class="nav-link" data-toggle="collapse" data-parent="#inline-sections-accordion" href="#{{ toc-l2.anchor }}-inline" aria-expanded="true">
+                                {{ toc-l2.title }}
+                            </a>
+                            <div id="{{ toc-l2.anchor }}-inline" class="collapse" role="tabpanel">
+                                <ul class="nav toc flex-column" style="padding-left: 0.5rem">
+                                    {% for toc-l3 in toc-l2.children %}
+                                    <li class="nav-item">
+                                        <a class="nav-link toc-link" href="#{{ toc-l3.anchor }}">
+                                            {{ toc-l3.title }}
+                                        </a>
+                                    </li>
+                                    {% endfor %}
+                                </ul>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <div id="markdown-content-container">{{ content }}</div>
+        </div>
+
+        <div class="d-none col-lg-3 d-lg-block lsp-sidebar">
+            {% for toc-l1 in site.data[page.toc] %}
+            <div class="card">
+                <div id="side-sections-accordion" data-children=".item">
+                    {% for toc-l2 in toc-l1.children %}
+                    <div class="item">
+                        <a class="nav-link" data-toggle="collapse" data-parent="#side-sections-accordion" href="#{{ toc-l2.anchor }}-side" aria-expanded="true">
+                            {{ toc-l2.title }}
+                        </a>
+                        <div id="{{ toc-l2.anchor }}-side" class="collapse" role="tabpanel">
+                            <ul class="nav toc flex-column" style="padding-left: 0.5rem">
+                                {% for toc-l3 in toc-l2.children %}
+                                <li class="nav-item">
+                                    <a class="nav-link toc-link" href="#{{ toc-l3.anchor }}">
+                                        {{ toc-l3.title }}
+                                    </a>
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+</div>

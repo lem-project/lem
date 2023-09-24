@@ -13,14 +13,6 @@ $ brew install sdl2_image
 $ brew install sdl2_ttf
 ```
 
-```shell
-mkdir ~/common-lisp
-cd ~/common-lisp
-git clone --branch apple-silicon-patch git@github.com:lem-project/cl-sdl2.git
-git clone git@github.com:lem-project/cl-sdl2-ttf.git
-git clone git@github.com:lem-project/cl-sdl2-image.git
-```
-
 ### Windows
 #### Requirements
 - msys2
@@ -36,6 +28,11 @@ $ pacman -S mingw-w64-x86_64-SDL2_ttf
 ```
 
 ## Launch
+```shell
+$ qlot install
+$ qlot exec sbcl
+```
+
 ```common-lisp
 * (ql:quickload :lem-sdl2)
 * (lem:lem)

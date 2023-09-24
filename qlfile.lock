@@ -26,3 +26,15 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/fukamachi/rove.git")
   :version "git-f168cd177b5f83f171dd970dc1a9abb6eb43f044"))
+("cl-sdl2" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/cl-sdl2.git")
+  :version "git-24dd7f238f99065b0ae35266b71cce7783e89fa7"))
+("cl-sdl2-ttf" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/cl-sdl2-ttf.git")
+  :version "git-e61bb2119003d8ae7792d38aa11f7728d3ee5a00"))
+("cl-sdl2-image" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/cl-sdl2-image.git")
+  :version "git-8734b0e24de9ca390c9f763d9d7cd501546d17d4"))

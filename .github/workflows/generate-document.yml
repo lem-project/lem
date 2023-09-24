@@ -26,6 +26,7 @@ jobs:
         ros config set dynamic-space-size 2048
         curl -L https://qlot.tech/installer | bash
         export PATH="/home/runner/.qlot/bin:$PATH"
+        qlot install
 
         document_file=docs/default-keybindings.md
 

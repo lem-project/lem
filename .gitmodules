@@ -1,3 +1,0 @@
-[submodule "lib/lsp-utils/specification/language-server-protocol"]
-	path = language-server-protocol
-	url = https://github.com/microsoft/language-server-protocol.git

@@ -317,7 +317,7 @@
   (:set-hook (new-value)
    (setf (lem:variable-value 'lem/line-numbers:line-numbers :global) new-value)))
 
-(defun compile-rules (value)
+(defun compile-rules (value option-name)
   (apply #'disjoin
          (mapcar (lambda (rule)
                    (check-type rule string)
@@ -341,8 +341,8 @@
                           (progn
                             (unless (= (length rule) 1)
                               (error 'option-error
-                                     :format-control "Invalid rule in iskeyword: ~A"
-                                     :format-arguments (list rule)))
+                                     :format-control "Invalid rule in ~A: ~A"
+                                     :format-arguments (list option-name rule)))
                             (let ((rule-char (aref rule 0)))
                               (lambda (c)
                                 (char= c rule-char))))))))
@@ -351,7 +351,7 @@
 (defvar *default-iskeyword* '("@" "48-57" "_" "192-255"))
 
 (defun compile-iskeyword (value)
-  (compile-rules value))
+  (compile-rules value "iskeyword"))
 
 (define-option "iskeyword" ((cons *default-iskeyword*
                                      (compile-iskeyword *default-iskeyword*))
@@ -381,11 +381,15 @@
 
 (defvar *default-non-broad-word-char* (mapcar #'string '(#\Newline #\Space #\Tab)))
 
-(define-option "non-broad-word-char" ((cons *default-non-broad-word-char*
-                                            (compile-rules *default-non-broad-word-char*))
-                                      :type list
-                                      :aliases ("nbwc")
-                                      :scope :buffer)
+(defun compile-non-broad-word-char (value)
+  (compile-rules value "non-broad-word-char"))
+
+(define-option "non-broad-word-char" 
+  ((cons *default-non-broad-word-char*
+         (compile-non-broad-word-char *default-non-broad-word-char*))
+   :type list
+   :aliases ("nbwc")
+   :scope :buffer)
   (:documentation "Comma-separated string to specify the characters that should be recognized as non broad word characters. (buffer local)
   Aliases: nbwc")
   (:getter (option)
@@ -393,7 +397,7 @@
   (:setter (new-value option)
    (setf (option-%value option)
          (cons new-value
-               (compile-rules new-value))))
+               (compile-non-broad-word-char new-value))))
   (:initializer (option)
    (let ((syntax-table (lem:mode-syntax-table (lem:buffer-major-mode (lem:current-buffer)))))
      (setf (option-value option)

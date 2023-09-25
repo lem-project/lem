@@ -30,10 +30,15 @@
       ((blank-char-p char) :blank)
       (t :non-word))))
 
+(defun non-broad-word-char-p (char)
+  (funcall (cdr (option-raw-value "non-broad-word-char"))
+           char))
+
 (defun broad-word-char-type (char)
   (when char
     (cond
       ((blank-char-p char) :blank)
+      ((non-broad-word-char-p char) :non-word)
       (t :word))))
 
 (defun forward-word-begin (char-type-fn &optional (point (current-point)))

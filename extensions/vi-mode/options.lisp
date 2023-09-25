@@ -317,9 +317,7 @@
   (:set-hook (new-value)
    (setf (lem:variable-value 'lem/line-numbers:line-numbers :global) new-value)))
 
-(defvar *default-iskeyword* '("@" "48-57" "_" "192-255"))
-
-(defun compile-iskeyword (value)
+(defun compile-rules (value)
   (apply #'disjoin
          (mapcar (lambda (rule)
                    (check-type rule string)
@@ -350,6 +348,11 @@
                                 (char= c rule-char))))))))
                  value)))
 
+(defvar *default-iskeyword* '("@" "48-57" "_" "192-255"))
+
+(defun compile-iskeyword (value)
+  (compile-rules value))
+
 (define-option "iskeyword" ((cons *default-iskeyword*
                                      (compile-iskeyword *default-iskeyword*))
                             :type list
@@ -373,6 +376,33 @@
                                  "@-@"
                                  (string c)))
                            (lem-base::syntax-table-symbol-chars syntax-table))
+                   (option-value option))
+            :test 'equal)))))
+
+(defvar *default-non-broad-word-char* (mapcar #'string '(#\Newline #\Space #\Tab)))
+
+(define-option "non-broad-word-char" ((cons *default-non-broad-word-char*
+                                            (compile-rules *default-non-broad-word-char*))
+                                      :type list
+                                      :aliases ("nbwc")
+                                      :scope :buffer)
+  (:documentation "Comma-separated string to specify the characters that should be recognized as non broad word characters. (buffer local)
+  Aliases: nbwc")
+  (:getter (option)
+   (car (option-raw-value option)))
+  (:setter (new-value option)
+   (setf (option-%value option)
+         (cons new-value
+               (compile-rules new-value))))
+  (:initializer (option)
+   (let ((syntax-table (lem:mode-syntax-table (lem:buffer-major-mode (lem:current-buffer)))))
+     (setf (option-value option)
+           (delete-duplicates
+            (nconc (mapcar (lambda (c)
+                             (if (char= c #\@)
+                                 "@-@"
+                                 (string c)))
+                           (lem-base::syntax-table-space-chars syntax-table))
                    (option-value option))
             :test 'equal)))))
 

@@ -379,25 +379,25 @@
                    (option-value option))
             :test 'equal)))))
 
-(defvar *default-non-broad-word-char* (mapcar #'string '(#\Newline #\Space #\Tab)))
+(defvar *default-isWORDseparator* (mapcar #'string '(#\Newline #\Space #\Tab)))
 
-(defun compile-non-broad-word-char (value)
-  (compile-rules value "non-broad-word-char"))
+(defun compile-isWORDseparator (value)
+  (compile-rules value "isWORDseparator"))
 
-(define-option "non-broad-word-char" 
-  ((cons *default-non-broad-word-char*
-         (compile-non-broad-word-char *default-non-broad-word-char*))
+(define-option "isWORDseparator" 
+  ((cons *default-isWORDseparator*
+         (compile-isWORDseparator *default-isWORDseparator*))
    :type list
-   :aliases ("nbwc")
+   :aliases ("isWs")
    :scope :buffer)
   (:documentation "Comma-separated string to specify the characters that should be recognized as non broad word characters. (buffer local)
-  Aliases: nbwc")
+  Aliases: isWs")
   (:getter (option)
    (car (option-raw-value option)))
   (:setter (new-value option)
    (setf (option-%value option)
          (cons new-value
-               (compile-non-broad-word-char new-value))))
+               (compile-isWORDseparator new-value))))
   (:initializer (option)
    (let ((syntax-table (lem:mode-syntax-table (lem:buffer-major-mode (lem:current-buffer)))))
      (setf (option-value option)

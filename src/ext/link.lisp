@@ -58,23 +58,24 @@
           (unless (end-line-p point)
             (character-offset point -1))
           (let ((file (points-to-string link-start point)))
-            (multiple-value-bind (matched-string groups)
-                (looking-at point ":(\\d+)(?::(\\d+))?")
-              (cond (matched-string
-                     (character-offset point (length matched-string))
-                     (let ((line-number (elt groups 0))
-                           (charpos (elt groups 1)))
+            (when (probe-file file)
+              (multiple-value-bind (matched-string groups)
+                  (looking-at point ":(\\d+)(?::(\\d+))?")
+                (cond (matched-string
+                       (character-offset point (length matched-string))
+                       (let ((line-number (elt groups 0))
+                             (charpos (elt groups 1)))
+                         (make-instance 'file-link
+                                        :file file
+                                        :line-number (parse-integer line-number)
+                                        :charpos (when charpos (parse-integer charpos))
+                                        :start link-start
+                                        :end point)))
+                      (t
                        (make-instance 'file-link
                                       :file file
-                                      :line-number (parse-integer line-number)
-                                      :charpos (when charpos (parse-integer charpos))
                                       :start link-start
-                                      :end point)))
-                    (t
-                     (make-instance 'file-link
-                                    :file file
-                                    :start link-start
-                                    :end point))))))))))
+                                      :end point)))))))))))
 
 (defun search-url-link (point &optional limit)
   (when (search-forward-regexp point "https?://" limit)

@@ -379,25 +379,25 @@
                    (option-value option))
             :test 'equal)))))
 
-(defvar *default-isWORDseparator* (mapcar #'string '(#\Newline #\Space #\Tab)))
+(defvar *default-isseparator* (mapcar #'string '(#\Newline #\Space #\Tab)))
 
-(defun compile-isWORDseparator (value)
-  (compile-rules value "isWORDseparator"))
+(defun compile-isseparator (value)
+  (compile-rules value "isseparator"))
 
-(define-option "isWORDseparator" 
-  ((cons *default-isWORDseparator*
-         (compile-isWORDseparator *default-isWORDseparator*))
+(define-option "isseparator" 
+  ((cons *default-isseparator*
+         (compile-isseparator *default-isseparator*))
    :type list
-   :aliases ("isWs")
+   :aliases ("iss")
    :scope :buffer)
   (:documentation "Comma-separated string to specify the characters that should be recognized as non broad word characters. (buffer local)
-  Aliases: isWs")
+  Aliases: iss")
   (:getter (option)
    (car (option-raw-value option)))
   (:setter (new-value option)
    (setf (option-%value option)
          (cons new-value
-               (compile-isWORDseparator new-value))))
+               (compile-isseparator new-value))))
   (:initializer (option)
    (let ((syntax-table (lem:mode-syntax-table (lem:buffer-major-mode (lem:current-buffer)))))
      (setf (option-value option)

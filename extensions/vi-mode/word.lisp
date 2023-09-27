@@ -31,7 +31,7 @@
       (t :non-word))))
 
 (defun non-broad-word-char-p (char)
-  (funcall (cdr (option-raw-value "isWORDseparator"))
+  (funcall (cdr (option-raw-value "isseparator"))
            char))
 
 (defun broad-word-char-type (char)

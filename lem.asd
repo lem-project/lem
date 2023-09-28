@@ -138,6 +138,7 @@
                "lem-lisp-mode"
                #+sbcl
                "lem-go-mode"
+               "lem-swift-mode"
 
                "lem-c-mode"
                "lem-xml-mode"

@@ -317,9 +317,7 @@
   (:set-hook (new-value)
    (setf (lem:variable-value 'lem/line-numbers:line-numbers :global) new-value)))
 
-(defvar *default-iskeyword* '("@" "48-57" "_" "192-255"))
-
-(defun compile-iskeyword (value)
+(defun compile-rules (value option-name)
   (apply #'disjoin
          (mapcar (lambda (rule)
                    (check-type rule string)
@@ -343,12 +341,17 @@
                           (progn
                             (unless (= (length rule) 1)
                               (error 'option-error
-                                     :format-control "Invalid rule in iskeyword: ~A"
-                                     :format-arguments (list rule)))
+                                     :format-control "Invalid rule in ~A: ~A"
+                                     :format-arguments (list option-name rule)))
                             (let ((rule-char (aref rule 0)))
                               (lambda (c)
                                 (char= c rule-char))))))))
                  value)))
+
+(defvar *default-iskeyword* '("@" "48-57" "_" "192-255"))
+
+(defun compile-iskeyword (value)
+  (compile-rules value "iskeyword"))
 
 (define-option "iskeyword" ((cons *default-iskeyword*
                                      (compile-iskeyword *default-iskeyword*))
@@ -373,6 +376,37 @@
                                  "@-@"
                                  (string c)))
                            (lem-base::syntax-table-symbol-chars syntax-table))
+                   (option-value option))
+            :test 'equal)))))
+
+(defvar *default-isseparator* (mapcar #'string '(#\Newline #\Space #\Tab)))
+
+(defun compile-isseparator (value)
+  (compile-rules value "isseparator"))
+
+(define-option "isseparator" 
+  ((cons *default-isseparator*
+         (compile-isseparator *default-isseparator*))
+   :type list
+   :aliases ("iss")
+   :scope :buffer)
+  (:documentation "Comma-separated string to specify the characters that should be recognized as non broad word characters. (buffer local)
+  Aliases: iss")
+  (:getter (option)
+   (car (option-raw-value option)))
+  (:setter (new-value option)
+   (setf (option-%value option)
+         (cons new-value
+               (compile-isseparator new-value))))
+  (:initializer (option)
+   (let ((syntax-table (lem:mode-syntax-table (lem:buffer-major-mode (lem:current-buffer)))))
+     (setf (option-value option)
+           (delete-duplicates
+            (nconc (mapcar (lambda (c)
+                             (if (char= c #\@)
+                                 "@-@"
+                                 (string c)))
+                           (lem-base::syntax-table-space-chars syntax-table))
                    (option-value option))
             :test 'equal)))))
 

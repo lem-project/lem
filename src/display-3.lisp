@@ -99,7 +99,7 @@
           ((emoji-char-code-p code)
            :emoji)
           (t
-           :emoji))))
+           :cjk))))
 
 (defclass drawing-object ()
   ())

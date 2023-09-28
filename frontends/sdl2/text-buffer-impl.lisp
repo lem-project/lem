@@ -70,6 +70,9 @@
 (defmethod object-width ((drawing-object lem-core/display-3::text-object))
   (sdl2:surface-width (get-surface drawing-object)))
 
+(defmethod object-width ((drawing-object lem-core/display-3::control-character-object))
+  (* 2 (lem-sdl2::char-width)))
+
 (defmethod object-width ((drawing-object lem-core/display-3::icon-object))
   (sdl2:surface-width (get-surface drawing-object)))
 
@@ -104,6 +107,9 @@
 (defmethod object-height ((drawing-object lem-core/display-3::icon-object))
   (lem-sdl2::char-height))
 
+(defmethod object-height ((drawing-object lem-core/display-3::control-character-object))
+  (lem-sdl2::char-height))
+
 (defmethod object-height ((drawing-object lem-core/display-3::folder-object))
   (lem-sdl2::char-height))
 
@@ -131,7 +137,7 @@
 
 ;;; draw-object
 (defmethod draw-object ((drawing-object lem-core/display-3::void-object) x bottom-y window)
-  (values))
+  0)
 
 (defmethod draw-object ((drawing-object lem-core/display-3::text-object) x bottom-y window)
   (let* ((surface-width (object-width drawing-object))
@@ -164,7 +170,8 @@
                                       (if (eq underline t)
                                           (lem-sdl2::attribute-foreground-color attribute)
                                           (or (lem:parse-color underline)
-                                              (lem-sdl2::attribute-foreground-color attribute))))))))
+                                              (lem-sdl2::attribute-foreground-color attribute))))))
+    surface-width))
 
 (defmethod draw-object ((drawing-object lem-core/display-3::eol-cursor-object) x bottom-y window)
   (lem-sdl2::set-color (lem-core/display-3::eol-cursor-object-color drawing-object))
@@ -174,7 +181,8 @@
                             y
                             (lem-sdl2::char-width)
                             (object-height drawing-object)))
-      (sdl2:render-fill-rect (lem-sdl2::current-renderer) rect))))
+      (sdl2:render-fill-rect (lem-sdl2::current-renderer) rect)))
+  (object-width drawing-object))
 
 (defmethod draw-object ((drawing-object lem-core/display-3::extend-to-eol-object) x bottom-y window)
   (lem-sdl2::set-color (lem-core/display-3::extend-to-eol-object-color drawing-object))
@@ -183,7 +191,8 @@
                           (- (lem-core/display-3::window-view-width window) x)
                           (lem-sdl2::char-height)))
     (sdl2:render-fill-rect (lem-sdl2::current-renderer)
-                           rect)))
+                           rect))
+  (object-width drawing-object))
 
 (defmethod draw-object ((drawing-object lem-core/display-3::line-end-object) x bottom-y window)
   (call-next-method drawing-object
@@ -199,12 +208,13 @@
                                                     (lem-core/display-3::image-object-image drawing-object)))
          (y (- bottom-y surface-height)))
     (lem-sdl2::render-texture (lem-sdl2::current-renderer) texture x y surface-width surface-height)
-    (sdl2:destroy-texture texture)))
+    (sdl2:destroy-texture texture)
+    surface-width))
 
 (defun redraw-physical-line (window x y objects height)
-  (loop :for current-x := x :then (+ current-x (object-width object))
+  (loop :with current-x := x
         :for object :in objects
-        :do (draw-object object current-x (+ y height) window)))
+        :do (incf current-x (draw-object object current-x (+ y height) window))))
 
 (defun clear-to-end-of-line (window x y height)
   (sdl2:with-rects ((rect x y (- (lem-core/display-3::window-view-width window) x) height))

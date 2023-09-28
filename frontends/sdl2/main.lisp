@@ -174,8 +174,10 @@
                                       (font-config-size (display-font-config *display*)))))))))
 
 (defmethod get-display-font ((display display) &key type bold character)
-  (check-type type (member :latin :cjk :braille :emoji :icon))
-  (cond ((eq type :icon)
+  (check-type type lem-core/display-3::char-type)
+  (cond ((eq type :control)
+         (display-latin-font display))
+        ((eq type :icon)
          (or (and character (icon-font character))
              (display-emoji-font display)))
         ((eq type :emoji)

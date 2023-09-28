@@ -24,6 +24,9 @@
 
 (defvar *line-wrap*)
 
+(deftype char-type ()
+  '(member :latin :cjk :braille :emoji :icon :control))
+
 (defclass text-buffer-v2 (lem-core:text-buffer) ())
 
 (defun attribute-image (attribute)
@@ -79,7 +82,9 @@
 
 (defun char-type (char)
   (let ((code (char-code char)))
-    (cond ((eql code #x1f4c1)
+    (cond ((lem-base:control-char char)
+           :control)
+          ((eql code #x1f4c1)
            :folder)
           ((<= code 128)
            :latin)
@@ -107,6 +112,8 @@
    (attribute :initarg :attribute :reader text-object-attribute)
    (type :initarg :type :reader text-object-type)
    (within-cursor :initform nil :initarg :within-cursor :reader text-object-within-cursor-p)))
+
+(defclass control-character-object (text-object) ())
 
 (defclass icon-object (text-object) ())
 (defclass folder-object (text-object) ())
@@ -179,15 +186,15 @@
 (defun object-height (drawing-object)
   (lem-if:object-height (lem-core:implementation) drawing-object))
 
-;;; draw-object
 (defun split-string-by-character-type (string)
   (loop :with pos := 0 :and items := '()
         :while (< pos (length string))
         :for type := (char-type (char string pos))
         :do (loop :with start := pos
-                  :while (and (< pos (length string))
-                              (eq type (char-type (char string pos))))
                   :do (incf pos)
+                  :while (and (< pos (length string))
+                              (eq type (char-type (char string pos)))
+                              (not (eq type :control)))
                   :finally (push (cons type (subseq string start pos)) items))
         :finally (return (nreverse items))))
 
@@ -205,8 +212,11 @@
                      (:folder 'folder-object)
                      (:icon 'icon-object)
                      (:emoji 'emoji-object)
+                     (:control 'control-character-object)
                      (otherwise 'text-object))
-                   :string string
+                   :string (if (eq type :control)
+                               (lem-base:control-char (char string 0))
+                               string)
                    :attribute attribute
                    :type type
                    :within-cursor (and attribute

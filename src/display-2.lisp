@@ -86,6 +86,28 @@
         (t
          nil)))
 
+(defun expand-tab (string attributes tab-width)
+  (setf attributes (copy-tree attributes))
+  (values (with-output-to-string (out)
+            (loop :with i := 0
+                  :for c :across string
+                  :do (cond ((char= c #\tab)
+                             (let ((n (- tab-width (mod i tab-width))))
+                               (loop :for elt :in attributes
+                                     :do (cond ((< i (first elt))
+                                                (incf (first elt) (1- n))
+                                                (incf (second elt) (1- n)))
+                                               ((and (< i (second elt))
+                                                     (not (cursor-attribute-p (third elt))))
+                                                (incf (second elt) (1- n)))))
+                               (loop :repeat n
+                                     :do (write-char #\space out))
+                               (incf i n)))
+                            (t
+                             (write-char c out)
+                             (incf i)))))
+          attributes))
+
 (defun create-logical-line (point overlays active-modes)
   (let* ((end-of-line-cursor-attribute nil)
          (extend-to-end-attribute nil)
@@ -93,7 +115,8 @@
          (left-content
            (lem-core::compute-left-display-area-content active-modes
                                                         (lem-base:point-buffer point)
-                                                        point)))
+                                                        point))
+         (tab-width (lem-core:variable-value 'lem-core:tab-width :default point)))
     (destructuring-bind (string . attributes)
         (lem-base::line-string/attributes (lem-base::point-line point))
       (loop :for overlay :in overlays
@@ -101,12 +124,13 @@
             :do (cond ((typep overlay 'lem-core::overlay-line-endings)
                        (setf line-end-overlay overlay))
                       ((typep overlay 'lem-core::overlay-line)
-                       (setf attributes
-                             (lem-core::overlay-attributes attributes
-                                                           0
-                                                           (length string)
-                                                           (lem-core:overlay-attribute overlay)))
-                       (setf extend-to-end-attribute (lem-core:overlay-attribute overlay)))
+                       (let ((attribute (lem-core:overlay-attribute overlay)))
+                         (setf attributes
+                               (lem-core::overlay-attributes attributes
+                                                             0
+                                                             (length string)
+                                                             attribute))
+                         (setf extend-to-end-attribute attribute)))
                       (t
                        (let ((overlay-start-charpos (overlay-start-charpos overlay point))
                              (overlay-end-charpos (overlay-end-charpos overlay point))
@@ -124,6 +148,7 @@
                                 overlay-start-charpos
                                 (or overlay-end-charpos (length string))
                                 overlay-attribute))))))
+      (setf (values string attributes) (expand-tab string attributes tab-width))
       (make-logical-line :string string
                          :attributes attributes
                          :left-content left-content
@@ -176,42 +201,48 @@
   nil)
 
 (defun compute-items-from-string-and-attributes (string attributes)
-  (let ((items '()))
-    (flet ((add (item)
-             (if (null items)
-                 (push item items)
-                 (let ((last-item (first items)))
-                   (if (and (string-with-attribute-item-p last-item)
-                            (string-with-attribute-item-p item)
-                            (equal (string-with-attribute-item-attribute last-item)
-                                   (string-with-attribute-item-attribute item)))
-                       (setf (string-with-attribute-item-string (first items))
-                             (str:concat (string-with-attribute-item-string last-item)
-                                         (string-with-attribute-item-string item)))
-                       (push item items))))))
-      (loop :for last-pos := 0 :then end
-            :for (start end attribute) :in attributes
-            :do (unless (= last-pos start)
-                  (add (make-string-with-attribute-item :string (subseq string last-pos start))))
-                (add (if (and attribute
-                              (lem-core:attribute-p attribute)
-                              (cursor-attribute-p attribute))
-                         (make-cursor-item :string (subseq string start end) :attribute attribute)
-                         (make-string-with-attribute-item
-                          :string (subseq string start end)
-                          :attribute attribute)))
-            :finally (push (make-string-with-attribute-item :string (subseq string last-pos))
-                           items)))
-    items))
+  (handler-case
+      (let ((items '()))
+        (flet ((add (item)
+                 (if (null items)
+                     (push item items)
+                     (let ((last-item (first items)))
+                       (if (and (string-with-attribute-item-p last-item)
+                                (string-with-attribute-item-p item)
+                                (equal (string-with-attribute-item-attribute last-item)
+                                       (string-with-attribute-item-attribute item)))
+                           (setf (string-with-attribute-item-string (first items))
+                                 (str:concat (string-with-attribute-item-string last-item)
+                                             (string-with-attribute-item-string item)))
+                           (push item items))))))
+          (loop :for last-pos := 0 :then end
+                :for (start end attribute) :in attributes
+                :do (unless (= last-pos start)
+                      (add (make-string-with-attribute-item :string (subseq string last-pos start))))
+                    (add (if (and attribute
+                                  (lem-core:attribute-p attribute)
+                                  (cursor-attribute-p attribute))
+                             (make-cursor-item :string (subseq string start end) :attribute attribute)
+                             (make-string-with-attribute-item
+                              :string (subseq string start end)
+                              :attribute attribute)))
+                :finally (push (make-string-with-attribute-item :string (subseq string last-pos))
+                               items)))
+        items)
+    (error (e)
+      (log:info e string attributes)
+      nil)))
 
 (defun attribute-foreground-color (attribute)
   (or (and attribute
            (lem-core:parse-color (lem-core:attribute-foreground attribute)))
+      ;; TODO: fix
       (display-foreground-color *display*)))
 
 (defun attribute-background-color (attribute)
   (or (and attribute
            (lem-core:parse-color (lem-core:attribute-background attribute)))
+      ;; TODO: fix
       (display-background-color *display*)))
 
 (defun compute-items-from-logical-line (logical-line)

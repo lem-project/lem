@@ -22,7 +22,7 @@
                     (make-tm-string-region "\"")
                     (make-tm-string-region "'")
                     (make-tm-match (tokens nil '("-" "?" ":" "," "[" "]" "{" "}"))
-                                   :name 'syntax-builtin-atribute)
+                                   :name 'syntax-builtin-attribute)
                     (make-tm-match (tokens :word-boundary '("true" "false"))
                                    :name 'syntax-keyword-attribute)
                     (make-tm-match `(:sequence

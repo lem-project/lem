@@ -229,7 +229,7 @@
                                items)))
         items)
     (error (e)
-      (log:info e string attributes)
+      (log:error e string attributes)
       nil)))
 
 (defun attribute-foreground-color (attribute)

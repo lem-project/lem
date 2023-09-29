@@ -6,7 +6,8 @@
            :completion-item-label
            :completion-item-detail
            :run-completion
-           :completion-end)
+           :completion-end
+           :completion-mode)
   #+sbcl
   (:lock t))
 (in-package :lem/completion-mode)

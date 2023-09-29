@@ -66,7 +66,8 @@
   (lem-core:overlay-get overlay :cursor))
 
 (defun cursor-attribute-p (attribute)
-  (lem-core:attribute-value attribute :cursor))
+  (and (lem-core:attribute-p attribute)
+       (lem-core:attribute-value attribute :cursor)))
 
 (defun set-cursor-attribute (attribute)
   (setf (lem-core:attribute-value attribute :cursor) t))
@@ -219,9 +220,7 @@
                 :for (start end attribute) :in attributes
                 :do (unless (= last-pos start)
                       (add (make-string-with-attribute-item :string (subseq string last-pos start))))
-                    (add (if (and attribute
-                                  (lem-core:attribute-p attribute)
-                                  (cursor-attribute-p attribute))
+                    (add (if (cursor-attribute-p attribute)
                              (make-cursor-item :string (subseq string start end) :attribute attribute)
                              (make-string-with-attribute-item
                               :string (subseq string start end)

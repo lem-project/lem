@@ -199,7 +199,7 @@
         :finally (return (nreverse items))))
 
 (defun make-line-end-object (string attribute type offset)
-  (let ((attribute (and attribute (lem-core:ensure-attribute attribute))))
+  (let ((attribute (and attribute (lem-core:ensure-attribute attribute nil))))
     (make-instance 'line-end-object
                    :offset offset
                    :string string
@@ -207,7 +207,7 @@
                    :type type)))
 
 (defun make-object-with-type (string attribute type)
-  (let ((attribute (and attribute (lem-core:ensure-attribute attribute))))
+  (let ((attribute (and attribute (lem-core:ensure-attribute attribute nil))))
     (make-instance (case type
                      (:folder 'folder-object)
                      (:icon 'icon-object)

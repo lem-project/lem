@@ -738,7 +738,7 @@
     (do-sequence (diagnostic (lsp:publish-diagnostics-params-diagnostics params))
       (highlight-diagnostic buffer diagnostic))
     (setf (buffer-diagnostic-idle-timer buffer)
-          (start-timer (make-idle-timer #'popup-diagnostic :name "lsp-diagnostic")
+          (start-timer (make-idle-timer 'popup-diagnostic :name "lsp-diagnostic")
                        200
                        t))))
 
@@ -747,7 +747,8 @@
     (when (point<= (overlay-start overlay)
                    (current-point)
                    (overlay-end overlay))
-      (display-message (diagnostic-message (overlay-diagnostic overlay)))
+      (unless (mode-active-p (current-buffer) 'lem/completion-mode:completion-mode)
+        (display-message (diagnostic-message (overlay-diagnostic overlay))))
       (return))))
 
 (defun text-document/publish-diagnostics (params)

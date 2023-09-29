@@ -233,16 +233,12 @@
       nil)))
 
 (defun attribute-foreground-color (attribute)
-  (or (and attribute
-           (lem-core:parse-color (lem-core:attribute-foreground attribute)))
-      ;; TODO: fix
-      (display-foreground-color *display*)))
+  (assert attribute)
+  (lem-core:parse-color (lem-core:attribute-foreground attribute)))
 
 (defun attribute-background-color (attribute)
-  (or (and attribute
-           (lem-core:parse-color (lem-core:attribute-background attribute)))
-      ;; TODO: fix
-      (display-background-color *display*)))
+  (assert attribute)
+  (lem-core:parse-color (lem-core:attribute-background attribute)))
 
 (defun compute-items-from-logical-line (logical-line)
   (let ((items

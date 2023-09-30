@@ -232,14 +232,6 @@
       (log:error e string attributes)
       nil)))
 
-(defun attribute-foreground-color (attribute)
-  (assert attribute)
-  (lem-core:parse-color (lem-core:attribute-foreground attribute)))
-
-(defun attribute-background-color (attribute)
-  (assert attribute)
-  (lem-core:parse-color (lem-core:attribute-background attribute)))
-
 (defun compute-items-from-logical-line (logical-line)
   (let ((items
           (compute-items-from-string-and-attributes (logical-line-string logical-line)

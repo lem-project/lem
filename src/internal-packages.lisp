@@ -501,7 +501,11 @@
    :display-width
    :display-height
    :display-title
-   :display-fullscreen-p)
+   :display-fullscreen-p
+   :attribute-foreground-color
+   :attribute-background-color
+   :attribute-foreground-with-reverse
+   :attribute-background-with-reverse)
   ;; color-theme.lisp
   (:export
    :color-theme-names

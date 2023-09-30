@@ -246,7 +246,7 @@
                                                     (logical-line-attributes logical-line))))
     (alexandria:when-let (attribute
                           (logical-line-extend-to-end logical-line))
-      (push (make-extend-to-eol-item :color (attribute-background-color attribute))
+      (push (make-extend-to-eol-item :color (lem-core:attribute-background-color attribute))
             items))
     (alexandria:when-let (attribute
                           (logical-line-end-of-line-cursor-attribute logical-line))

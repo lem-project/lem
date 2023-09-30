@@ -32,7 +32,7 @@
 
 (defmethod get-surface ((drawing-object lem-core/display-3::text-object))
   (let* ((attribute (lem-core/display-3::text-object-attribute drawing-object))
-         (foreground (lem-core::attribute-foreground-with-reverse attribute)))
+         (foreground (lem-core:attribute-foreground-with-reverse attribute)))
     (cffi:with-foreign-string (c-string (lem-core/display-3::text-object-string drawing-object))
       (sdl2-ttf:render-utf8-blended
        (get-font :attribute attribute
@@ -48,7 +48,7 @@
   (let* ((string (lem-core/display-3::text-object-string drawing-object))
          (attribute (lem-core/display-3::text-object-attribute drawing-object))
          (font (lem-sdl2::icon-font (char (lem-core/display-3::text-object-string drawing-object) 0)))
-         (foreground (lem-core::attribute-foreground-with-reverse attribute)))
+         (foreground (lem-core:attribute-foreground-with-reverse attribute)))
     (cffi:with-foreign-string (c-string string)
       (sdl2-ttf:render-utf8-blended font
                                     c-string
@@ -143,7 +143,7 @@
   (let* ((surface-width (object-width drawing-object))
          (surface-height (object-height drawing-object))
          (attribute (lem-core/display-3::text-object-attribute drawing-object))
-         (background (lem-core::attribute-background-with-reverse attribute))
+         (background (lem-core:attribute-background-with-reverse attribute))
          (texture (sdl2:create-texture-from-surface
                    (lem-sdl2::current-renderer)
                    (get-surface drawing-object)))

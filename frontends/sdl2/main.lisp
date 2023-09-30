@@ -245,10 +245,10 @@
       (lem:update-on-display-resized))))
 
 (defun attribute-foreground-color (attribute)
-  (lem-core::attribute-foreground-color attribute))
+  (lem-core:attribute-foreground-color attribute))
 
 (defun attribute-background-color (attribute)
-  (lem-core::attribute-background-color attribute))
+  (lem-core:attribute-background-color attribute))
 
 (defun render-fill-rect-to-current-texture (x y width height &key color)
   (let ((x (* x (char-width)))

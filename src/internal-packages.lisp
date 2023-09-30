@@ -86,6 +86,7 @@
    :attribute-value
    :ensure-attribute
    :merge-attribute
+   :attribute-equal
    :set-attribute
    :set-attribute-foreground
    :set-attribute-background

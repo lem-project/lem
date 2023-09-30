@@ -35,8 +35,8 @@
 (defun attribute-equal-careful-null-and-symbol (a b)
   (if (or (null a) (null b))
       (and (null a) (null b))
-      (lem-core::attribute-equal (lem-core:ensure-attribute a)
-                                 (lem-core:ensure-attribute b))))
+      (lem-core:attribute-equal (lem-core:ensure-attribute a)
+                                (lem-core:ensure-attribute b))))
 
 (defun logical-line-equal (a b)
   (and (string= (logical-line-string a) (logical-line-string b))

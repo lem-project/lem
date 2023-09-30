@@ -5,8 +5,11 @@ exec ros -Q -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  #+quicklisp(ql:quickload '() :silent t)
-  )
+  #+quicklisp (ql:quickload '(:qlot) :silent t)
+  (uiop:symbol-call :qlot :install (ql:where-is-system :lem))
+  (setf ql:*quicklisp-home*
+        (asdf:system-relative-pathname :lem #P".qlot/"))
+  (load (asdf:system-relative-pathname :lem #P".qlot/setup.lisp")))
 
 (defpackage :ros.script.lem.3864804718
   (:use :cl))

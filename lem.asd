@@ -1,3 +1,14 @@
+#+ros.installing
+(progn
+  (unless (uiop:directory-exists-p (asdf:system-relative-pathname :lem #P".qlot/"))
+    (asdf:load-system :qlot)
+    (uiop:symbol-call :qlot :install
+                      (uiop:pathanme-directory-pathname *load-truename*)))
+  #+quicklisp
+  (setf ql:*quicklisp-home*
+          (asdf:system-relative-pathname :lem #P".qlot/"))
+  (load (asdf:system-relative-pathname :lem #P".qlot/setup.lisp")))
+
 (defsystem "lem"
   :version "2.1.0"
   :depends-on ("alexandria"

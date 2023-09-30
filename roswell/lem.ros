@@ -5,15 +5,15 @@ exec ros -Q -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  #+quicklisp (ql:quickload '(:qlot) :silent t)
-  (unless (uiop:directory-exists-p (asdf:system-relative-pathname :lem #P".qlot/"))
-    (asdf:load-system :qlot)
-    (uiop:symbol-call :qlot :install
-                      (ql:where-is-system :lem)))
-  #+quicklisp
-  (setf ql:*quicklisp-home*
-        (asdf:system-relative-pathname :lem #P".qlot/"))
-  (load (asdf:system-relative-pathname :lem #P".qlot/setup.lisp")))
+  #+quicklisp (ql:quickload '() :silent t)
+  (let ((project-dir (asdf:system-source-directory :lem)))
+    (unless (uiop:directory-exists-p (merge-pathnames #P".qlot/" project-dir))
+      (ql:quickload :qlot)
+      (uiop:symbol-call :qlot :install project-dir))
+    #+quicklisp
+    (setf ql:*quicklisp-home*
+          (merge-pathnames #P".qlot/" project-dir))
+    (load (merge-pathnames #P".qlot/setup.lisp" project-dir))))
 
 (defpackage :ros.script.lem.3864804718
   (:use :cl))

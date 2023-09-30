@@ -1,13 +1,12 @@
 #+ros.installing
-(progn
-  (unless (uiop:directory-exists-p (asdf:system-relative-pathname :lem #P".qlot/"))
+(let ((project-dir (uiop:pathname-directory-pathname *load-truename*)))
+  (unless (uiop:directory-exists-p (merge-pathnames #P".qlot/" project-dir))
     (asdf:load-system :qlot)
-    (uiop:symbol-call :qlot :install
-                      (uiop:pathanme-directory-pathname *load-truename*)))
+    (uiop:symbol-call :qlot :install project-dir))
   #+quicklisp
   (setf ql:*quicklisp-home*
-          (asdf:system-relative-pathname :lem #P".qlot/"))
-  (load (asdf:system-relative-pathname :lem #P".qlot/setup.lisp")))
+        (merge-pathnames #P".qlot/" project-dir))
+  (load (merge-pathnames #P".qlot/setup.lisp" project-dir)))
 
 (defsystem "lem"
   :version "2.1.0"

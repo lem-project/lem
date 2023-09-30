@@ -2,11 +2,11 @@ LISP ?= ${shell which sbcl}
 
 ncurses:
 	qlot install
-	$(LISP) --load .qlot/setup.lisp --load scripts/build-ncurses.lisp
+	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-ncurses.lisp
 
 sdl2:
 	qlot install
-	$(LISP) --load .qlot/setup.lisp --load scripts/build-sdl2.lisp
+	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2.lisp
 
 test:
 	qlot install
@@ -14,7 +14,7 @@ test:
 
 doc:
 	qlot install
-	$(LISP) --load .qlot/setup.lisp --load scripts/generate-documentation-tests.lisp --eval '(progn (lem-documentation-mode/tests::generate-markdown-file "test.md" :test) (quit))'
+	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/generate-documentation-tests.lisp --eval '(progn (lem-documentation-mode/tests::generate-markdown-file "test.md" :test) (quit))'
 
 update:
 	git pull

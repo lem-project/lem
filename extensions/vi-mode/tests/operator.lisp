@@ -106,7 +106,10 @@
     (testing "dG"
       (with-vi-buffer (#?"abcd\ne[f]gh\nijkl\n")
         (cmd "dG")
-        (ok (buf= #?"abcd\n[]"))))))
+        (ok (buf= #?"abcd\n[]"))))
+    (testing "dc"
+      (with-vi-buffer ("[a]bc")
+        (ok (signals (cmd "dc") 'editor-abort))))))
 
 (deftest vi-change
   (with-fake-interface ()

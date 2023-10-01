@@ -82,13 +82,11 @@
   code
   modifier)
 
-(defun make-key-event (code modifier)
-  (%make-key-event :code code :modifier modifier))
-
 (defun keysym-to-key-event (keysym)
   (let ((code (sdl2:sym-value keysym))
         (modifier (get-modifier keysym)))
-    (make-key-event code modifier)))
+    (%make-key-event :code code
+                     :modifier modifier)))
 
 (defparameter *modifier-code-table*
   `((:shift ,sdl2-ffi:+kmod-lshift+ ,sdl2-ffi:+kmod-rshift+)
@@ -128,7 +126,8 @@
 
 ;; linux
 (defun modifier-is-accept-text-input-p (modifier)
-  (not (modifier-ctrl modifier)))
+  (and (not (modifier-ctrl modifier))
+       (modifier-meta modifier)))
 
 (defmethod handle-text-input ((platform lem-sdl2/platform:linux) text)
   (when (modifier-is-accept-text-input-p *modifier*)

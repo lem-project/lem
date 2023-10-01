@@ -307,14 +307,14 @@
 
 (defun invalidate-cache (window y height)
   (setf (drawing-cache window)
-        (remove-if (lambda (elt)
-                     (destructuring-bind (cache-y cache-height cache-logical-line) elt
-                       (declare (ignore cache-logical-line))
-                       (not (or (<= (+ y height)
-                                    cache-y)
-                                (<= (+ cache-y cache-height)
-                                    y)))))
-                   (drawing-cache window))))
+        (remove-if-not (lambda (elt)
+                         (destructuring-bind (cache-y cache-height cache-logical-line) elt
+                           (declare (ignore cache-logical-line))
+                           (or (< (+ y height)
+                                   cache-y)
+                               (<= (+ cache-y cache-height)
+                                   y))))
+                       (drawing-cache window))))
 
 (defun update-and-validate-cache-p (window y height objects)
   (cond ((validate-cache-p window y height objects) t)
@@ -323,6 +323,10 @@
          (push (list y height objects)
                (drawing-cache window))
          nil)))
+
+(defun render-line-with-caching (window x y objects height)
+  (unless (update-and-validate-cache-p window y height objects)
+    (render-line window x y objects height)))
 
 (defun max-height-of-objects (objects)
   (loop :for object :in objects
@@ -344,8 +348,7 @@
     (loop :for objects :in objects-per-physical-line
           :for height := (max-height-of-objects objects)
           :for x := 0 :then left-side-width
-          :do (unless (update-and-validate-cache-p window y height objects)
-                (render-line window x y objects height))
+          :do (render-line-with-caching window x y objects height)
               (incf y height)
           :sum height)))
 
@@ -404,8 +407,7 @@
                (horizontal-scroll-start window)
                (+ (horizontal-scroll-start window)
                   (window-view-width window)))))
-      (unless (update-and-validate-cache-p window y height objects)
-        (render-line window 0 y objects height)))
+      (render-line-with-caching window 0 y objects height))
     height))
 
 (defun redraw-lines (window)

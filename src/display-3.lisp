@@ -295,7 +295,7 @@
                    :finally (return (nreverse physical-line-objects)))))
 
 (defun render-line (window x y objects height)
-  (%render-line (lem-core:implementation) window x y objects height))
+  (lem-if:render-line (lem-core:implementation) window x y objects height))
 
 (defun validate-cache-p (window y height objects)
   (loop :for (cache-y cache-height cache-objects) :in (drawing-cache window)

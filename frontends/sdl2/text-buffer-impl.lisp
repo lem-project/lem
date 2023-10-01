@@ -221,7 +221,7 @@
     (lem-sdl2::set-render-color lem-sdl2::*display* (lem-sdl2::display-background-color lem-sdl2::*display*))
     (sdl2:render-fill-rect (lem-sdl2::current-renderer) rect)))
 
-(defmethod lem-core/display-3::%render-line ((implementation lem-sdl2::sdl2) window x y objects height)
+(defmethod lem-if:render-line ((implementation lem-sdl2::sdl2) window x y objects height)
   (clear-to-end-of-line window 0 y height)
   (redraw-physical-line window x y objects height))
 

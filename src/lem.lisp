@@ -198,6 +198,11 @@ Options:
 (defun run-editor-thread (initialize args finalize)
   (bt:make-thread
    (lambda ()
+     (asdf:initialize-source-registry
+      `(:source-registry
+        :inherit-configuration
+        (:also-exclude ".qlot")
+        (:tree ,(asdf:system-source-directory :lem))))
      (when initialize (funcall initialize))
      (unwind-protect
           (let (#+lispworks (lw:*default-character-element-type* 'character))

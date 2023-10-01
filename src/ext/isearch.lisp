@@ -312,7 +312,7 @@
     (isearch-add-char char)))
 
 (defun isearch-end ()
-  (when (boundp '*isearch-string)
+  (when (boundp '*isearch-string*)
     (isearch-reset-overlays (current-buffer))
     (change-previous-string *isearch-string*)
     (buffer-unbound (current-buffer) 'isearch-redisplay-string)

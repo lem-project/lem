@@ -18,7 +18,6 @@
                 :logical-line-left-content
                 :compute-items-from-string-and-attributes
                 :create-logical-line
-                :collect-overlays
                 :do-logical-line))
 (in-package :lem-core/display-3)
 
@@ -433,15 +432,5 @@
   (redraw-lines window)
   (lem-core::update-screen-cache (lem-core:window-screen window) buffer))
 
-(defvar *v2* t)
-
 (defmethod lem-core::redraw-buffer (implementation (buffer lem-core:text-buffer) window force)
-  (if *v2*
-      (redraw-buffer-v2 buffer window force)
-      (lem-core::redraw-buffer-v1 buffer window force)))
-
-(lem-core:define-command change-buffer-to-v2 () ()
-  (setf *v2* t))
-
-(lem-core:define-command change-buffer-to-v1 () ()
-  (setf *v2* nil))
+  (redraw-buffer-v2 buffer window force))

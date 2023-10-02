@@ -2,22 +2,6 @@
   (:use :cl))
 (in-package :lem-core/display-2)
 
-(defun make-cursor-overlay (point)
-  (lem-core::make-overlay-cursor
-   point
-   (if (typep point 'lem-core:fake-cursor)
-       'lem-core:fake-cursor
-       'lem-core:cursor)))
-
-(defun collect-overlays (window)
-  (let ((overlays (lem-core::get-window-overlays window)))
-    (if (and (eq window (lem-core:current-window))
-             (not (lem-core:window-cursor-invisible-p window)))
-        (append overlays
-                (mapcar #'make-cursor-overlay
-                        (lem-core:buffer-cursors (lem-core:window-buffer window))))
-        overlays)))
-
 (defstruct logical-line
   string
   attributes
@@ -246,7 +230,7 @@
 
 (defun call-do-logical-line (window function)
   (lem-core:with-point ((point (lem-core:window-view-point window)))
-    (let ((overlays (collect-overlays window))
+    (let ((overlays (lem-core::get-window-overlays window))
           (active-modes (lem-core::get-active-modes-class-instance (lem-core:window-buffer window))))
       (loop :for logical-line := (create-logical-line point overlays active-modes)
             :do (funcall function logical-line)

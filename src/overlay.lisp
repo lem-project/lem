@@ -41,6 +41,9 @@
 (defclass overlay-line (overlay)
   ())
 
+(defclass overlay-cursor (overlay)
+  ())
+
 (defmethod initialize-instance ((overlay overlay) &key &allow-other-keys)
   (let ((overlay (call-next-method)))
     (with-slots (start end attribute) overlay
@@ -84,6 +87,15 @@
                    :attribute attribute
                    :buffer (point-buffer point)
                    :temporary temporary)))
+
+(defun make-overlay-cursor (point attribute)
+  (with-point ((point point))
+    (make-instance 'overlay-cursor
+                   :start point
+                   :end point
+                   :attribute attribute
+                   :buffer (point-buffer point)
+                   :temporary t)))
 
 (defun delete-overlay (overlay)
   (check-type overlay overlay)

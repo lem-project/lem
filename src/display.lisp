@@ -150,7 +150,8 @@
       (dolist (cursor (buffer-cursors buffer))
         (if-push (make-temporary-region-overlay-from-cursor cursor)
                  overlays))
-      (if-push (make-temporary-highlight-line-overlay buffer) overlays))
+      (if-push (make-temporary-highlight-line-overlay buffer)
+               overlays))
     overlays))
 
 (defun draw-window-overlays-to-screen (window)

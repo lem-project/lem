@@ -24,7 +24,7 @@
 (define-command toggle-line-numbers () ()
   (line-numbers-mode))
 
-(defmethod lem-core::compute-left-display-area-content ((mode line-numbers-mode) buffer point)
+(defmethod lem-core:compute-left-display-area-content ((mode line-numbers-mode) buffer point)
   (when (buffer-filename (point-buffer point))
     (let ((string (format nil "~6D " (line-number-at-point point))))
       (lem-base::make-content :string string

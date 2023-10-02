@@ -490,7 +490,8 @@
    :do-each-cursors)
   ;; display.lisp
   (:export
-   :highlight-line)
+   :highlight-line
+   :compute-left-display-area-content)
   ;; interface.lisp
   (:export
    :with-implementation

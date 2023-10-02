@@ -83,9 +83,9 @@
          (extend-to-end-attribute nil)
          (line-end-overlay nil)
          (left-content
-           (lem-core::compute-left-display-area-content active-modes
-                                                        (lem-base:point-buffer point)
-                                                        point))
+           (lem-core:compute-left-display-area-content active-modes
+                                                       (lem-base:point-buffer point)
+                                                       point))
          (tab-width (lem-core:variable-value 'lem-core:tab-width :default point)))
     (destructuring-bind (string . attributes)
         (lem-base::line-string/attributes (lem-base::point-line point))

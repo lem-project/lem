@@ -3,7 +3,8 @@
 #|
 Done:
 
-- "c" opens a commit message window on the right side, we can type a long message,
+- "c" opens a commit message window on the right side, we can type a long message
+  - this command is defined in legit.lisp.
 - lines starting by a # are ignored.
 
 TODOs:
@@ -18,6 +19,7 @@ Future:
 
 |#
 
+;; major-mode for the commit buffer.
 (define-major-mode legit-commit-mode lem-markdown-mode:markdown-mode
     (:name "legit-commit-mode"
      :syntax-table lem-markdown-mode::*markdown-syntax-table*
@@ -25,30 +27,23 @@ Future:
   ;; no syntax highlihgt in fact.
   (setf (variable-value 'enable-syntax-highlight) t))
 
-;; Validate, abort.
+;; User parameters.
+(defparameter *prompt-for-commit-abort-p* t
+  "If non t, abort the current commit message without asking for confirmation.")
+
+;; Keys:
+;; validate, abort.
 (define-key *legit-commit-mode-keymap* "C-c C-c" 'commit-continue)
 (define-key *legit-commit-mode-keymap* "C-Return" 'commit-continue)
 (define-key *legit-commit-mode-keymap* "M-q" 'commit-abort)
 (define-key *legit-commit-mode-keymap* "C-c C-k" 'commit-abort)
 
-;; Navigation.
-;; find and display the previous commit messages.
+;; Nice to have: find and display the previous commit messages.
 ;; (define-key *legit-commit-mode-keymap* "C-n" 'next-commit)
 ;; (define-key *legit-commit-mode-keymap* "C-p" 'previous-commit)
 
 ;; Help.
 (define-key *legit-commit-mode-keymap* "C-x ?" 'commit-help)
-
-(defun commit ()
-  (let ((buffer (make-buffer "*legit-commit*")))
-    (setf (buffer-directory buffer) (uiop:getcwd))
-    (setf (buffer-read-only-p buffer) nil)
-    (erase-buffer buffer)
-    (move-to-line (buffer-point buffer) 1)
-    (insert-string (buffer-point buffer) "write commit message:")
-    (change-buffer-mode buffer 'legit-commit-mode)
-    ;; (setf (buffer-read-only-p buffer) t)
-    (move-to-line (buffer-point buffer) 1)))
 
 (defun clean-commit-message (text)
   "Remove lines starting with a #."
@@ -87,7 +82,10 @@ two
 # with '#' will be ignored, and an empty message aborts the commit.
 ")))
 
-(defun commit-continue ()
+(define-command commit-continue () ()
+  "If the commit message is non-empty, commit, kill the commit buffer and come back to the legit status window.
+
+  Lines starting with '#' are ignored."
   (let* ((message (buffer-text (make-buffer "*legit-commit*")))
          (cleaned-message (clean-commit-message message)))
     (cond
@@ -105,12 +103,10 @@ two
          (legit-status))))))
 
 (define-command commit-abort () ()
-  (kill-buffer "*legit-commit*")
-  (lem-core/commands/window:previous-window))
-
-(define-command commit-abort-yes-or-no () ()
-  ;; TODO: prompt for confirmation.
-  (kill-buffer "*legit-commit*"))
+  (when (or (not *prompt-for-commit-abort-p*)
+            (prompt-for-y-or-n-p "Abort commit?"))
+    (lem-core/commands/window:previous-window)
+    (kill-buffer "*legit-commit*")))
 
 (define-command commit-help () ()
   "Show the important keybindings."

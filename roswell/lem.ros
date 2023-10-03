@@ -1,14 +1,13 @@
 #!/bin/sh
 #|-*- mode:lisp -*-|#
 #|
-exec ros -Q -- $0 "$@"
+exec ros +Q -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  #+quicklisp (ql:quickload '() :silent t)
   (let ((project-dir (asdf:system-source-directory :lem)))
     (unless (uiop:directory-exists-p (merge-pathnames #P".qlot/" project-dir))
-      (ql:quickload :qlot)
+      (asdf:load-system :qlot)
       (uiop:symbol-call :qlot :install project-dir))
     #+quicklisp
     (setf ql:*quicklisp-home*

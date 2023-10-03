@@ -1,9 +1,18 @@
 #!/bin/sh
 #|-*- mode:lisp -*-|#
 #| lem simple emacs clone.
-exec ros -Q -m lem-ncurses -L sbcl-bin -- $0 "$@"
+exec ros +Q -m lem-ncurses -L sbcl-bin -- $0 "$@"
 |#
 (progn
+  (ros:ensure-asdf)
+  (let ((project-dir (asdf:system-source-directory :lem)))
+    (unless (uiop:directory-exists-p (merge-pathnames #P".qlot/" project-dir))
+      (asdf:load-system :qlot)
+      (uiop:symbol-call :qlot :install project-dir))
+    #+quicklisp
+    (setf ql:*quicklisp-home*
+          (merge-pathnames #P".qlot/" project-dir))
+    (load (merge-pathnames #P".qlot/setup.lisp" project-dir)))
   (unless (find-package :lem)
     (ql:quickload :lem-ncurses :silent t)
     (uiop:symbol-call :lem-core :load-site-init))

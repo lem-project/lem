@@ -10,12 +10,6 @@
   extend-to-end
   line-end-overlay)
 
-(defun attribute-equal-careful-null-and-symbol (a b)
-  (if (or (null a) (null b))
-      (and (null a) (null b))
-      (lem-core:attribute-equal (lem-core:ensure-attribute a)
-                                (lem-core:ensure-attribute b))))
-
 (defun overlay-within-point-p (overlay point)
   (or (lem-core:point<= (lem-core:overlay-start overlay)
                         point

@@ -1,7 +1,6 @@
 (defpackage :lem-core/display-3
   (:use :cl)
   (:import-from :lem-core/display-2
-                :attribute-equal-careful-null-and-symbol
                 :eol-cursor-item
                 :eol-cursor-item-attribute
                 :extend-to-eol-item
@@ -155,9 +154,8 @@
 (defmethod object-equal ((drawing-object-1 text-object) (drawing-object-2 text-object))
   (and (equal (text-object-string drawing-object-1)
               (text-object-string drawing-object-2))
-       (attribute-equal-careful-null-and-symbol
-        (text-object-attribute drawing-object-1)
-        (text-object-attribute drawing-object-2))
+       (lem-core:attribute-equal (text-object-attribute drawing-object-1)
+                                 (text-object-attribute drawing-object-2))
        (eq (text-object-type drawing-object-1)
            (text-object-type drawing-object-2))
        (eq (text-object-within-cursor-p drawing-object-1)

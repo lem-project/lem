@@ -16,21 +16,6 @@
       (lem-core:attribute-equal (lem-core:ensure-attribute a)
                                 (lem-core:ensure-attribute b))))
 
-(defun logical-line-equal (a b)
-  (and (string= (logical-line-string a) (logical-line-string b))
-       (= (length (logical-line-attributes a))
-          (length (logical-line-attributes b)))
-       (every (lambda (elt1 elt2)
-                (and (equal (first elt1) (first elt2))
-                     (equal (second elt1) (second elt2))
-                     (attribute-equal-careful-null-and-symbol (third elt1) (third elt2))))
-              (logical-line-attributes a)
-              (logical-line-attributes b))
-       (attribute-equal-careful-null-and-symbol (logical-line-end-of-line-cursor-attribute a)
-                                                (logical-line-end-of-line-cursor-attribute b))
-       (attribute-equal-careful-null-and-symbol (logical-line-extend-to-end a)
-                                                (logical-line-extend-to-end b))))
-
 (defun overlay-within-point-p (overlay point)
   (or (lem-core:point<= (lem-core:overlay-start overlay)
                         point

@@ -14,7 +14,6 @@
                 :item-attribute
                 :cursor-attribute-p
                 :compute-items-from-logical-line
-                :logical-line-equal
                 :logical-line-left-content
                 :compute-items-from-string-and-attributes
                 :create-logical-line

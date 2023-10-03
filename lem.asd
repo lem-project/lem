@@ -3,10 +3,9 @@
   (unless (uiop:directory-exists-p (merge-pathnames #P".qlot/" project-dir))
     (asdf:load-system :qlot)
     (uiop:symbol-call :qlot :install project-dir))
-  #+quicklisp
-  (setf ql:*quicklisp-home*
-        (merge-pathnames #P".qlot/" project-dir))
-  (let ((local-project-dir roswell:*local-project-directories*))
+  (let (#+quicklisp
+        (ql:*quicklisp-home* (merge-pathnames #P".qlot/" project-dir))
+        (local-project-dir roswell:*local-project-directories*))
     (load (merge-pathnames #P".qlot/setup.lisp" project-dir))
     ;; XXX: Not to modify the local project directories to install ros scripts in ~/.roswell/bin
     ;;   ref. https://github.com/roswell/roswell/blob/5b267381a66d36a514e2eee7283543f828541a63/lisp/util-install-quicklisp.lisp#L146

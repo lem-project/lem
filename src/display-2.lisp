@@ -26,15 +26,6 @@
 (defun set-cursor-attribute (attribute)
   (setf (lem-core:attribute-value attribute :cursor) t))
 
-(defun overlay-start-charpos (overlay point)
-  (if (lem-core:same-line-p point (lem-core:overlay-start overlay))
-      (lem-core:point-charpos (lem-core:overlay-start overlay))
-      0))
-
-(defun overlay-end-charpos (overlay point)
-  (when (lem-core:same-line-p point (lem-core:overlay-end overlay))
-    (lem-core:point-charpos (lem-core:overlay-end overlay))))
-
 (defun expand-tab (string attributes tab-width)
   (setf attributes (copy-tree attributes))
   (values (with-output-to-string (out)
@@ -58,61 +49,68 @@
           attributes))
 
 (defun create-logical-line (point overlays active-modes)
-  (let* ((end-of-line-cursor-attribute nil)
-         (extend-to-end-attribute nil)
-         (line-end-overlay nil)
-         (left-content
-           (lem-core:compute-left-display-area-content active-modes
-                                                       (lem-base:point-buffer point)
-                                                       point))
-         (tab-width (lem-core:variable-value 'lem-core:tab-width :default point)))
-    (destructuring-bind (string . attributes)
-        (lem-base::line-string/attributes (lem-base::point-line point))
-      (loop :for overlay :in overlays
-            :when (overlay-within-point-p overlay point)
-            :do (cond ((typep overlay 'lem-core::overlay-line-endings)
-                       (setf line-end-overlay overlay))
-                      ((typep overlay 'lem-core::overlay-line)
-                       (let ((attribute (lem-core:overlay-attribute overlay)))
-                         (setf attributes
-                               (lem-core::overlay-attributes attributes
-                                                             0
-                                                             (length string)
-                                                             attribute))
-                         (setf extend-to-end-attribute attribute)))
-                      ((typep overlay 'lem-core::overlay-cursor)
-                       (let* ((overlay-start-charpos (overlay-start-charpos overlay point))
-                              (overlay-end-charpos (1+ overlay-start-charpos))
-                              (overlay-attribute (lem-core:overlay-attribute overlay)))
-                         (set-cursor-attribute overlay-attribute)
-                         (if (<= (length string) overlay-start-charpos)
-                             (setf end-of-line-cursor-attribute overlay-attribute)
-                             (setf attributes
-                                   (lem-core::overlay-attributes
-                                    attributes
-                                    overlay-start-charpos
-                                    overlay-end-charpos
-                                    overlay-attribute)))))
-                      (t
-                       (let ((overlay-start-charpos (overlay-start-charpos overlay point))
-                             (overlay-end-charpos (overlay-end-charpos overlay point))
-                             (overlay-attribute (lem-core:overlay-attribute overlay)))
-                         (unless overlay-end-charpos
-                           (setf extend-to-end-attribute
-                                 (lem-core:overlay-attribute overlay)))
-                         (setf attributes
-                               (lem-core::overlay-attributes
-                                attributes
-                                overlay-start-charpos
-                                (or overlay-end-charpos (length string))
-                                overlay-attribute))))))
-      (setf (values string attributes) (expand-tab string attributes tab-width))
-      (make-logical-line :string string
-                         :attributes attributes
-                         :left-content left-content
-                         :extend-to-end extend-to-end-attribute
-                         :end-of-line-cursor-attribute end-of-line-cursor-attribute
-                         :line-end-overlay line-end-overlay))))
+  (flet ((overlay-start-charpos (overlay point)
+           (if (lem-core:same-line-p point (lem-core:overlay-start overlay))
+               (lem-core:point-charpos (lem-core:overlay-start overlay))
+               0))
+         (overlay-end-charpos (overlay point)
+           (when (lem-core:same-line-p point (lem-core:overlay-end overlay))
+             (lem-core:point-charpos (lem-core:overlay-end overlay)))))
+    (let* ((end-of-line-cursor-attribute nil)
+           (extend-to-end-attribute nil)
+           (line-end-overlay nil)
+           (left-content
+             (lem-core:compute-left-display-area-content active-modes
+                                                         (lem-base:point-buffer point)
+                                                         point))
+           (tab-width (lem-core:variable-value 'lem-core:tab-width :default point)))
+      (destructuring-bind (string . attributes)
+          (lem-base::line-string/attributes (lem-base::point-line point))
+        (loop :for overlay :in overlays
+              :when (overlay-within-point-p overlay point)
+              :do (cond ((typep overlay 'lem-core::overlay-line-endings)
+                         (setf line-end-overlay overlay))
+                        ((typep overlay 'lem-core::overlay-line)
+                         (let ((attribute (lem-core:overlay-attribute overlay)))
+                           (setf attributes
+                                 (lem-core::overlay-attributes attributes
+                                                               0
+                                                               (length string)
+                                                               attribute))
+                           (setf extend-to-end-attribute attribute)))
+                        ((typep overlay 'lem-core::overlay-cursor)
+                         (let* ((overlay-start-charpos (overlay-start-charpos overlay point))
+                                (overlay-end-charpos (1+ overlay-start-charpos))
+                                (overlay-attribute (lem-core:overlay-attribute overlay)))
+                           (set-cursor-attribute overlay-attribute)
+                           (if (<= (length string) overlay-start-charpos)
+                               (setf end-of-line-cursor-attribute overlay-attribute)
+                               (setf attributes
+                                     (lem-core::overlay-attributes
+                                      attributes
+                                      overlay-start-charpos
+                                      overlay-end-charpos
+                                      overlay-attribute)))))
+                        (t
+                         (let ((overlay-start-charpos (overlay-start-charpos overlay point))
+                               (overlay-end-charpos (overlay-end-charpos overlay point))
+                               (overlay-attribute (lem-core:overlay-attribute overlay)))
+                           (unless overlay-end-charpos
+                             (setf extend-to-end-attribute
+                                   (lem-core:overlay-attribute overlay)))
+                           (setf attributes
+                                 (lem-core::overlay-attributes
+                                  attributes
+                                  overlay-start-charpos
+                                  (or overlay-end-charpos (length string))
+                                  overlay-attribute))))))
+        (setf (values string attributes) (expand-tab string attributes tab-width))
+        (make-logical-line :string string
+                           :attributes attributes
+                           :left-content left-content
+                           :extend-to-end extend-to-end-attribute
+                           :end-of-line-cursor-attribute end-of-line-cursor-attribute
+                           :line-end-overlay line-end-overlay)))))
 
 (defstruct string-with-attribute-item
   string

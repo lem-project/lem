@@ -6,11 +6,12 @@
   #+quicklisp
   (setf ql:*quicklisp-home*
         (merge-pathnames #P".qlot/" project-dir))
-  (let ((local-project-dir roswell:*local-project-directories*))
+  (let ((local-project-dir (or #+quicklisp (copy-list ql:*local-project-directories*)
+                               roswell:*local-project-directories*)))
     (load (merge-pathnames #P".qlot/setup.lisp" project-dir))
     ;; XXX: Not to modify the local project directories to install ros scripts in ~/.roswell/bin
     ;;   ref. https://github.com/roswell/roswell/blob/5b267381a66d36a514e2eee7283543f828541a63/lisp/util-install-quicklisp.lisp#L146
-    (setf roswell:*local-project-directories* local-project-dir)))
+    (set (intern (string :*local-project-directories*) :ql) local-project-dir)))
 
 (defsystem "lem"
   :version "2.1.0"

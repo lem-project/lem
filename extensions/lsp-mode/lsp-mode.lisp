@@ -1800,13 +1800,6 @@
   :readme-url "https://github.com/typescript-language-server/typescript-language-server"
   :connection-mode :stdio)
 
-(define-language-spec (rust-spec lem-rust-mode:rust-mode)
-  :language-id "rust"
-  :root-uri-patterns '("Cargo.toml")
-  :command '("rls")
-  :readme-url "https://github.com/rust-lang/rls"
-  :connection-mode :stdio)
-
 (define-language-spec (sql-spec lem-sql-mode:sql-mode)
   :language-id "sql"
   :root-uri-patterns '()

@@ -2,9 +2,7 @@
 
 (defstruct (screen (:constructor %make-screen))
   view
-  modified-p
-  (last-print-cursor-x 0)
-  (last-print-cursor-y 0))
+  modified-p)
 
 (defun make-screen (view)
   (%make-screen :view view))

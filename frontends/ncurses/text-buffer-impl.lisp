@@ -38,8 +38,7 @@
         (attribute (lem-core/display/physical-line::text-object-attribute object)))
     (when (and attribute (lem-core/display/physical-line::cursor-attribute-p attribute))
       (let ((screen (lem:window-screen window)))
-        (setf (lem-core::screen-last-print-cursor-x screen) x
-              (lem-core::screen-last-print-cursor-y screen) y)))
+        (lem-core::set-last-print-cursor window x y)))
     (lem-if:print (lem-core:implementation)
                   (lem-core::window-view window)
                   x
@@ -54,9 +53,7 @@
           (lem:color-blue color)))
 
 (defmethod draw-object ((object lem-core/display/physical-line::eol-cursor-object) x y window)
-  (let ((screen (lem:window-screen window)))
-    (setf (lem-core::screen-last-print-cursor-x screen) x
-          (lem-core::screen-last-print-cursor-y screen) y))
+  (lem-core::set-last-print-cursor window x y)
   (lem-if:print (lem:implementation)
                 (lem:window-view window)
                 x

@@ -107,9 +107,7 @@
 
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))
-  (set-window-screen (make-screen (make-view-from-window window)
-                                  (window-width window)
-                                  (window-height-without-modeline window))
+  (set-window-screen (make-screen (make-view-from-window window))
                      window)
   (set-window-view-point (buffer-start
                           (copy-point (buffer-point (window-buffer window))

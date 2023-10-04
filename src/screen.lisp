@@ -3,15 +3,12 @@
 (defstruct (screen (:constructor %make-screen))
   view
   modeline-elements
-  left-width
-  width
   modified-p
   (last-print-cursor-x 0)
   (last-print-cursor-y 0))
 
-(defun make-screen (view width height)
-  (%make-screen :view view
-                :width width))
+(defun make-screen (view)
+  (%make-screen :view view))
 
 (defun screen-delete (screen)
   (lem-if:delete-view (implementation) (screen-view screen)))
@@ -25,9 +22,7 @@
 
 (defun screen-set-size (screen width height)
   (screen-modify screen)
-  (lem-if:set-view-size (implementation) (screen-view screen) width height)
-  (setf (screen-width screen)
-        width))
+  (lem-if:set-view-size (implementation) (screen-view screen) width height))
 
 (defun screen-set-pos (screen x y)
   (screen-modify screen)

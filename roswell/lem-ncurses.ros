@@ -5,16 +5,18 @@ exec ros +Q -m lem-ncurses -L sbcl-bin -- $0 "$@"
 |#
 (progn
   (ros:ensure-asdf)
-  (let ((project-dir (asdf:system-source-directory :lem)))
-    (unless (uiop:directory-exists-p (merge-pathnames #P".qlot/" project-dir))
-      (asdf:load-system :qlot)
-      (uiop:symbol-call :qlot :install project-dir))
+  (let ((*default-pathname-defaults* (asdf:system-source-directory :lem)))
+    (uiop:chdir *default-pathname-defaults*)
+    (setf (uiop:getenv "SBCL_HOME") "")
+    (uiop:run-program '("qlot" "install" "--no-deps")
+                      :output t
+                      :error-output t)
     #+quicklisp
     (setf ql:*quicklisp-home*
-          (merge-pathnames #P".qlot/" project-dir))
-    (load (merge-pathnames #P".qlot/setup.lisp" project-dir)))
+          (merge-pathnames #P".qlot/"))
+    (load (merge-pathnames #P".qlot/setup.lisp")))
   (unless (find-package :lem)
-    (ql:quickload :lem-ncurses :silent t)
+    (uiop:symbol-call :ql :quickload :lem-ncurses :silent t)
     (uiop:symbol-call :lem-core :load-site-init))
   (when (find :roswell.dump.executable *features*)
     (mapc (lambda (x)

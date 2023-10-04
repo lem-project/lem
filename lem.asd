@@ -1,14 +1,16 @@
 #+ros.installing
-(let ((project-dir (uiop:pathname-directory-pathname *load-truename*)))
-  (unless (uiop:directory-exists-p (merge-pathnames #P".qlot/" project-dir))
-    (asdf:load-system :qlot)
-    (uiop:symbol-call :qlot :install project-dir))
+(let ((*default-pathname-defaults* (uiop:pathname-directory-pathname *load-truename*)))
+  (uiop:chdir *default-pathname-defaults*)
+  (unless (uiop:directory-exists-p (merge-pathnames #P".qlot/"))
+    (setf (uiop:getenv "SBCL_HOME") "")
+    (uiop:run-program '("qlot" "install" "--no-deps")
+                      :output t
+                      :error-output t))
   #+quicklisp
-  (setf ql:*quicklisp-home*
-        (merge-pathnames #P".qlot/" project-dir))
-  (let ((local-project-dir (or #+quicklisp (copy-list ql:*local-project-directories*)
-                               roswell:*local-project-directories*)))
-    (load (merge-pathnames #P".qlot/setup.lisp" project-dir))
+  (setf ql:*quicklisp-home* (merge-pathnames #P".qlot/"))
+  (let ((local-project-dir (or roswell:*local-project-directories*
+                               #+quicklisp (copy-list ql:*local-project-directories*))))
+    (load (merge-pathnames #P".qlot/setup.lisp"))
     ;; XXX: Not to modify the local project directories to install ros scripts in ~/.roswell/bin
     ;;   ref. https://github.com/roswell/roswell/blob/5b267381a66d36a514e2eee7283543f828541a63/lisp/util-install-quicklisp.lisp#L146
     (set (intern (string :*local-project-directories*) :ql) local-project-dir)))

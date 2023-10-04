@@ -5,14 +5,16 @@ exec ros +Q -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  (let ((project-dir (asdf:system-source-directory :lem)))
-    (unless (uiop:directory-exists-p (merge-pathnames #P".qlot/" project-dir))
-      (asdf:load-system :qlot)
-      (uiop:symbol-call :qlot :install project-dir))
+  (let ((*default-pathname-defaults* (asdf:system-source-directory :lem)))
+    (uiop:chdir *default-pathname-defaults*)
+    (setf (uiop:getenv "SBCL_HOME") "")
+    (uiop:run-program '("qlot" "install" "--no-deps")
+                      :output t
+                      :error-output t)
     #+quicklisp
     (setf ql:*quicklisp-home*
-          (merge-pathnames #P".qlot/" project-dir))
-    (load (merge-pathnames #P".qlot/setup.lisp" project-dir)))
+          (merge-pathnames #P".qlot/"))
+    (load (merge-pathnames #P".qlot/setup.lisp")))
   (uiop:symbol-call :ql :quickload '(:lem-language-server/cli) :silent t))
 
 (defpackage :ros.script.lem-language-server.3881471585

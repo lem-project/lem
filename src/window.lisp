@@ -85,6 +85,9 @@
    (left-width
     :initform 0
     :accessor window-left-width)
+   (modeline-elements-cache
+    :initform '()
+    :accessor window-modeline-elements-cache)
    (parameters
     :initform nil
     :accessor window-parameters)))

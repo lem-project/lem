@@ -2,7 +2,6 @@
 
 (defstruct (screen (:constructor %make-screen))
   view
-  modeline-elements
   modified-p
   (last-print-cursor-x 0)
   (last-print-cursor-y 0))

@@ -440,8 +440,7 @@
 
 (defun redraw-modeline (window force)
   (when (lem-core:window-use-modeline-p window)
-    (let* ((screen (lem-core:window-screen window))
-           (view (lem-core:screen-view screen))
+    (let* ((view (lem-core:screen-view (lem-core:window-screen window)))
            (default-attribute (if (eq window (lem-core:current-window))
                                   'lem-core:modeline
                                   'lem-core:modeline-inactive))
@@ -459,8 +458,8 @@
                                      (incf left-x (length string)))))
                                 default-attribute)
       (setf elements (nreverse elements))
-      (when (or force (not (equal elements (lem-core::screen-modeline-elements screen))))
-        (setf (lem-core::screen-modeline-elements screen) elements)
+      (when (or force (not (equal elements (lem-core::window-modeline-elements-cache window))))
+        (setf (lem-core::window-modeline-elements-cache window) elements)
         (lem-if:print-modeline (lem-core:implementation) view 0 0
                                (make-string (lem-core:window-width window) :initial-element #\space)
                                default-attribute)

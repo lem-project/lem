@@ -167,15 +167,15 @@
 (defmethod cursor-object-p ((drawing-object eol-cursor-object))
   t)
 
-(defgeneric object-equal (drawing-object-1 drawing-object-2))
+(defgeneric drawing-object-equal (drawing-object-1 drawing-object-2))
 
-(defmethod object-equal (drawing-object-1 drawing-object-2)
+(defmethod drawing-object-equal (drawing-object-1 drawing-object-2)
   nil)
 
-(defmethod object-equal ((drawing-object-1 void-object) (drawing-object-2 void-object))
+(defmethod drawing-object-equal ((drawing-object-1 void-object) (drawing-object-2 void-object))
   t)
 
-(defmethod object-equal ((drawing-object-1 text-object) (drawing-object-2 text-object))
+(defmethod drawing-object-equal ((drawing-object-1 text-object) (drawing-object-2 text-object))
   (and (equal (text-object-string drawing-object-1)
               (text-object-string drawing-object-2))
        (lem-core:attribute-equal (text-object-attribute drawing-object-1)
@@ -185,19 +185,19 @@
        (eq (text-object-within-cursor-p drawing-object-1)
            (text-object-within-cursor-p drawing-object-2))))
 
-(defmethod object-equal ((drawing-object-1 eol-cursor-object) (drawing-object-2 eol-cursor-object))
+(defmethod drawing-object-equal ((drawing-object-1 eol-cursor-object) (drawing-object-2 eol-cursor-object))
   (equal (eol-cursor-object-color drawing-object-1)
          (eol-cursor-object-color drawing-object-2)))
 
-(defmethod object-equal ((drawing-object-1 extend-to-eol-object) (drawing-object-2 extend-to-eol-object))
+(defmethod drawing-object-equal ((drawing-object-1 extend-to-eol-object) (drawing-object-2 extend-to-eol-object))
   (equal (extend-to-eol-object-color drawing-object-1)
          (extend-to-eol-object-color drawing-object-2)))
 
-(defmethod object-equal ((drawing-object-1 line-end-object) (drawing-object-2 line-end-object))
+(defmethod drawing-object-equal ((drawing-object-1 line-end-object) (drawing-object-2 line-end-object))
   (equal (line-end-object-offset drawing-object-1)
          (line-end-object-offset drawing-object-2)))
 
-(defmethod object-equal ((drawing-object-1 image-object) (drawing-object-2 image-object))
+(defmethod drawing-object-equal ((drawing-object-1 image-object) (drawing-object-2 image-object))
   nil)
 
 (defun object-width (drawing-object)
@@ -322,7 +322,7 @@
         :when (and (= y cache-y)
                    (= height cache-height)
                    (alexandria:length= objects cache-objects)
-                   (every #'object-equal objects cache-objects))
+                   (every #'drawing-object-equal objects cache-objects))
         :return t))
 
 (defun invalidate-cache (window y height)

@@ -174,7 +174,7 @@
                                       (font-config-size (display-font-config *display*)))))))))
 
 (defmethod get-display-font ((display display) &key type bold character)
-  (check-type type lem-core/display/physical-line::char-type)
+  (check-type type lem-core::char-type)
   (cond ((eq type :control)
          (display-latin-font display))
         ((eq type :icon)

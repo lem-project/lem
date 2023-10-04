@@ -1,47 +1,4 @@
-(defpackage :lem-core/display/physical-line
-  (:use :cl)
-  (:import-from :lem-core/display/logical-line
-                :eol-cursor-item
-                :eol-cursor-item-attribute
-                :extend-to-eol-item
-                :extend-to-eol-item-color
-                :line-end-item
-                :line-end-item-text
-                :line-end-item-attribute
-                :line-end-item-offset
-                :item-string
-                :item-attribute
-                :cursor-attribute-p
-                :compute-items-from-logical-line
-                :logical-line-left-content
-                :compute-items-from-string-and-attributes
-                :create-logical-line
-                :do-logical-line)
-  (:export :control-character-object
-           :cursor-attribute-p
-           :emoji-object
-           :eol-cursor-object
-           :eol-cursor-object-color
-           :extend-to-eol-object
-           :extend-to-eol-object-color
-           :folder-object
-           :icon-object
-           :image-object
-           :image-object-height
-           :image-object-image
-           :image-object-width
-           :line-end-object
-           :line-end-object-offset
-           :text-object
-           :text-object-attribute
-           :text-object-string
-           :text-object-surface
-           :text-object-type
-           :void-object
-           :window-view-height
-           :window-view-width
-           :text-object))
-(in-package :lem-core/display/physical-line)
+(in-package :lem-core)
 
 (defvar *line-wrap*)
 
@@ -49,31 +6,31 @@
   '(member :latin :cjk :braille :emoji :icon :control))
 
 (defun attribute-image (attribute)
-  (let ((attribute (lem-core:ensure-attribute attribute nil)))
+  (let ((attribute (ensure-attribute attribute nil)))
     (when attribute
-      (lem-core:attribute-value attribute 'image))))
+      (attribute-value attribute 'image))))
 
 (defun attribute-width (attribute)
-  (let ((attribute (lem-core:ensure-attribute attribute nil)))
+  (let ((attribute (ensure-attribute attribute nil)))
     (when attribute
-      (lem-core:attribute-value attribute :width))))
+      (attribute-value attribute :width))))
 
 (defun attribute-height (attribute)
-  (let ((attribute (lem-core:ensure-attribute attribute nil)))
+  (let ((attribute (ensure-attribute attribute nil)))
     (when attribute
-      (lem-core:attribute-value attribute :height))))
+      (attribute-value attribute :height))))
 
 (defun window-view-width (window)
-  (lem-if:view-width (lem-core:implementation) (lem-core:window-view window)))
+  (lem-if:view-width (implementation) (window-view window)))
 
 (defun window-view-height (window)
-  (lem-if:view-height (lem-core:implementation) (lem-core:window-view window)))
+  (lem-if:view-height (implementation) (window-view window)))
 
 (defun drawing-cache (window)
-  (lem-core:window-parameter window 'redrawing-cache))
+  (window-parameter window 'redrawing-cache))
 
 (defun (setf drawing-cache) (value window)
-  (setf (lem-core:window-parameter window 'redrawing-cache) value))
+  (setf (window-parameter window 'redrawing-cache) value))
 
 (defun cjk-char-code-p (code)
   (or (<= #x4E00 code #x9FFF)
@@ -97,7 +54,7 @@
   (<= #x2800 code #x28ff))
 
 (defun icon-char-code-p (code)
-  (lem-core:icon-value code :font))
+  (icon-value code :font))
 
 (defun char-type (char)
   (let ((code (char-code char)))
@@ -176,8 +133,8 @@
 (defmethod drawing-object-equal ((drawing-object-1 text-object) (drawing-object-2 text-object))
   (and (equal (text-object-string drawing-object-1)
               (text-object-string drawing-object-2))
-       (lem-core:attribute-equal (text-object-attribute drawing-object-1)
-                                 (text-object-attribute drawing-object-2))
+       (attribute-equal (text-object-attribute drawing-object-1)
+                        (text-object-attribute drawing-object-2))
        (eq (text-object-type drawing-object-1)
            (text-object-type drawing-object-2))
        (eq (text-object-within-cursor-p drawing-object-1)
@@ -199,10 +156,10 @@
   nil)
 
 (defun object-width (drawing-object)
-  (lem-if:object-width (lem-core:implementation) drawing-object))
+  (lem-if:object-width (implementation) drawing-object))
 
 (defun object-height (drawing-object)
-  (lem-if:object-height (lem-core:implementation) drawing-object))
+  (lem-if:object-height (implementation) drawing-object))
 
 (defun split-string-by-character-type (string)
   (loop :with pos := 0 :and items := '()
@@ -217,7 +174,7 @@
         :finally (return (nreverse items))))
 
 (defun make-line-end-object (string attribute type offset)
-  (let ((attribute (and attribute (lem-core:ensure-attribute attribute nil))))
+  (let ((attribute (and attribute (ensure-attribute attribute nil))))
     (make-instance 'line-end-object
                    :offset offset
                    :string string
@@ -225,7 +182,7 @@
                    :type type)))
 
 (defun make-object-with-type (string attribute type)
-  (let ((attribute (and attribute (lem-core:ensure-attribute attribute nil))))
+  (let ((attribute (and attribute (ensure-attribute attribute nil))))
     (make-instance (case type
                      (:folder 'folder-object)
                      (:icon 'icon-object)
@@ -243,8 +200,8 @@
 (defun create-drawing-object (item)
   (cond ((and *line-wrap* (typep item 'eol-cursor-item))
          (list (make-instance 'eol-cursor-object
-                              :color (lem-core:parse-color
-                                      (lem-core:attribute-background
+                              :color (parse-color
+                                      (attribute-background
                                        (eol-cursor-item-attribute item))))))
         ((typep item 'extend-to-eol-item)
          (list (make-instance 'extend-to-eol-object :color (extend-to-eol-item-color item))))
@@ -313,7 +270,7 @@
                    :finally (return (nreverse physical-line-objects)))))
 
 (defun render-line (window x y objects height)
-  (lem-if:render-line (lem-core:implementation) window x y objects height))
+  (lem-if:render-line (implementation) window x y objects height))
 
 (defun validate-cache-p (window y height objects)
   (loop :for (cache-y cache-height cache-objects) :in (drawing-cache window)
@@ -329,7 +286,7 @@
                          (destructuring-bind (cache-y cache-height cache-logical-line) elt
                            (declare (ignore cache-logical-line))
                            (or (< (+ y height)
-                                   cache-y)
+                                  cache-y)
                                (<= (+ cache-y cache-height)
                                    y))))
                        (drawing-cache window))))
@@ -373,11 +330,11 @@
         :return (values object x)))
 
 (defun horizontal-scroll-start (window)
-  (or (lem-core:window-parameter window 'horizontal-scroll-start)
+  (or (window-parameter window 'horizontal-scroll-start)
       0))
 
 (defun (setf horizontal-scroll-start) (x window)
-  (setf (lem-core:window-parameter window 'horizontal-scroll-start) x))
+  (setf (window-parameter window 'horizontal-scroll-start) x))
 
 (defun extract-object-in-display-range (objects start-x end-x)
   (loop :for object :in objects
@@ -421,8 +378,8 @@
     height))
 
 (defun redraw-lines (window)
-  (let* ((*line-wrap* (lem-core:variable-value 'lem-core:line-wrap
-                                               :default (lem-core:window-buffer window)))
+  (let* ((*line-wrap* (variable-value 'line-wrap
+                                      :default (window-buffer window)))
          (redraw-fn (if *line-wrap*
                         #'redraw-logical-line-when-line-wrapping
                         #'redraw-logical-line-when-horizontal-scroll)))
@@ -443,9 +400,9 @@
             (incf y (funcall redraw-fn window y logical-line left-side-objects left-side-width))
             (unless (< y height)
               (return-from outer)))))
-      (lem-if:clear-to-end-of-window (lem-core:implementation) window y)
-      (setf (lem-core::window-left-width window)
-            (floor left-side-width (lem-if:get-char-width (lem-core:implementation)))))))
+      (lem-if:clear-to-end-of-window (implementation) window y)
+      (setf (window-left-width window)
+            (floor left-side-width (lem-if:get-char-width (implementation)))))))
 
 (defun call-with-display-error (function)
   (handler-bind ((error (lambda (e)
@@ -453,7 +410,7 @@
                                      (with-output-to-string (out)
                                        (format out "~A~%" e)
                                        (uiop:print-backtrace :stream out :condition e)))
-                          (lem-core:message "~A" e)
+                          (message "~A" e)
                           (return-from call-with-display-error))))
     (funcall function)))
 
@@ -461,65 +418,65 @@
   `(call-with-display-error (lambda () ,@body)))
 
 (defun redraw-modeline (window force)
-  (when (lem-core:window-use-modeline-p window)
-    (let* ((view (lem-core:window-view window))
-           (default-attribute (if (eq window (lem-core:current-window))
-                                  'lem-core:modeline
-                                  'lem-core:modeline-inactive))
+  (when (window-use-modeline-p window)
+    (let* ((view (window-view window))
+           (default-attribute (if (eq window (current-window))
+                                  'modeline
+                                  'modeline-inactive))
            (elements '())
            (left-x 0)
-           (right-x (lem-core:window-width window)))
-      (lem-core::modeline-apply window
-                                (lambda (string attribute alignment)
-                                  (case alignment
-                                    ((:right)
-                                     (decf right-x (length string))
-                                     (push (list right-x string attribute) elements))
-                                    (otherwise
-                                     (push (list left-x string attribute) elements)
-                                     (incf left-x (length string)))))
-                                default-attribute)
+           (right-x (window-width window)))
+      (modeline-apply window
+                      (lambda (string attribute alignment)
+                        (case alignment
+                          ((:right)
+                           (decf right-x (length string))
+                           (push (list right-x string attribute) elements))
+                          (otherwise
+                           (push (list left-x string attribute) elements)
+                           (incf left-x (length string)))))
+                      default-attribute)
       (setf elements (nreverse elements))
-      (when (or force (not (equal elements (lem-core::window-modeline-elements-cache window))))
-        (setf (lem-core::window-modeline-elements-cache window) elements)
-        (lem-if:print-modeline (lem-core:implementation) view 0 0
-                               (make-string (lem-core:window-width window) :initial-element #\space)
+      (when (or force (not (equal elements (window-modeline-elements-cache window))))
+        (setf (window-modeline-elements-cache window) elements)
+        (lem-if:print-modeline (implementation) view 0 0
+                               (make-string (window-width window) :initial-element #\space)
                                default-attribute)
         (loop :for (x string attribute) :in elements
-              :do (lem-if:print-modeline (lem-core:implementation) view x 0 string attribute))))))
+              :do (lem-if:print-modeline (implementation) view x 0 string attribute))))))
 
 (defun get-background-color-of-window (window)
-  (cond ((typep window 'lem-core:floating-window)
-         (lem-core::floating-window-background-color window))
-        ((eq window (lem-core:current-window))
+  (cond ((typep window 'floating-window)
+         (floating-window-background-color window))
+        ((eq window (current-window))
          nil)
-        ((eq window (lem-core:window-parent (lem-core:current-window)))
+        ((eq window (window-parent (current-window)))
          nil)
-        ((and (lem-core:inactive-window-background-color)
-              (eq 'lem-core:window (type-of window)))
-         (lem-core:inactive-window-background-color))
+        ((and (inactive-window-background-color)
+              (eq 'window (type-of window)))
+         (inactive-window-background-color))
         (t nil)))
 
-(defmethod lem-core:redraw-buffer :around (implementation buffer window force)
+(defmethod redraw-buffer :around (implementation buffer window force)
   (with-display-error ()
-    (lem-if:redraw-view-before (lem-core:implementation)
-                               (lem-core:window-view window))
+    (lem-if:redraw-view-before (implementation)
+                               (window-view window))
     (let ((lem-if:*background-color-of-drawing-window*
             (get-background-color-of-window window)))
       (call-next-method))
-    (when (lem-core:window-use-modeline-p window)
+    (when (window-use-modeline-p window)
       (redraw-modeline window
-                       (or (lem-core::window-need-to-redraw-p window)
+                       (or (window-need-to-redraw-p window)
                            force)))
-    (lem-if:redraw-view-after (lem-core:implementation)
-                              (lem-core:window-view window))))
+    (lem-if:redraw-view-after (implementation)
+                              (window-view window))))
 
 (defun clear-cache-if-screen-modified (window force)
-  (when (or force (lem-core::window-need-to-redraw-p window))
+  (when (or force (window-need-to-redraw-p window))
     (setf (drawing-cache window) '())))
 
-(defmethod lem-core:redraw-buffer (implementation (buffer lem-core:text-buffer) window force)
-  (assert (eq buffer (lem-core:window-buffer window)))
+(defmethod redraw-buffer (implementation (buffer text-buffer) window force)
+  (assert (eq buffer (window-buffer window)))
   (clear-cache-if-screen-modified window force)
   (redraw-lines window)
-  (lem-core::finish-redraw window))
+  (finish-redraw window))

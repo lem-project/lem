@@ -48,8 +48,6 @@
 (deftype char-type ()
   '(member :latin :cjk :braille :emoji :icon :control))
 
-(defclass text-buffer-v2 (lem-core:text-buffer) ())
-
 (defun attribute-image (attribute)
   (let ((attribute (lem-core:ensure-attribute attribute nil)))
     (when attribute

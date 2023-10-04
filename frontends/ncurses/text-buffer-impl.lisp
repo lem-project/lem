@@ -85,7 +85,7 @@
   (values))
 
 (defmethod lem-if:render-line ((implementation lem-ncurses::ncurses) window x y objects height)
-  (let ((view (lem::window-view window)))
+  (let ((view (lem:window-view window)))
     (charms/ll:wmove (lem-ncurses::ncurses-view-scrwin view) y x)
     (charms/ll:wclrtoeol (lem-ncurses::ncurses-view-scrwin view))
     (loop :for object :in objects

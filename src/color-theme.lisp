@@ -58,7 +58,7 @@
 (defun apply-theme (theme)
  "Takes a color-theme hastable, inherits the theme, and maps the newly generated spec-table
  to defined attributes, such as :background, :foreground, etc.. in the text editor"
-  (setf *inactive-window-background-color* nil)
+  (setf (inactive-window-background-color) nil)
   (clear-all-attribute-cache)
   (let ((spec-table (make-hash-table)))
     (inherit-load-theme theme spec-table)
@@ -74,7 +74,7 @@
                  ((:background)
                   (apply #'set-background args))
                  ((:inactive-window-background)
-                  (setf *inactive-window-background-color* (first args)))
+                  (setf (inactive-window-background-color) (first args)))
                  (otherwise
                   (unless (typep name 'base-color)
                     (apply #'set-attribute name args)))))

@@ -64,9 +64,7 @@
                (:file "cursors")
                (:file "command-advices")
                (:file "interface")
-               (:file "display")
-               (:file "display-2")
-               (:file "display-3")
+               (:file "highlight-line")
                (:file "site-init")
                (:file "lem")
 
@@ -89,6 +87,12 @@
                              (:file "font")
                              (:file "other" :depends-on ("file"))
                              (:file "frame")))
+
+               (:module "display"
+                :serial t
+                :components ((:file "base")
+                             (:file "logical-line")
+                             (:file "physical-line")))
 
                (:file "external-packages")
 

@@ -1,6 +1,6 @@
-(defpackage :lem-core/display-2
+(defpackage :lem-core/display/logical-line
   (:use :cl))
-(in-package :lem-core/display-2)
+(in-package :lem-core/display/logical-line)
 
 (defstruct logical-line
   string
@@ -48,6 +48,39 @@
                              (incf i)))))
           attributes))
 
+(defun overlay-attributes (under-attributes over-start over-end over-attribute)
+  ;; under-attributes := ((start-charpos end-charpos attribute) ...)
+  (let* ((over-attribute (lem-core:ensure-attribute over-attribute))
+         (under-part-attributes (lem-base::subseq-elements under-attributes
+                                                           over-start
+                                                           over-end))
+         (merged-attributes (lem-base::remove-elements under-attributes
+                                                       over-start
+                                                       over-end)))
+    (flet ((add-element (start end attribute)
+             (when (< start end)
+               (push (list start end (lem-core:ensure-attribute attribute))
+                     merged-attributes))))
+      (if (null under-part-attributes)
+          (add-element over-start over-end over-attribute)
+          (loop :for prev-under := 0 :then under-end-offset
+                :for (under-start-offset under-end-offset under-attribute)
+                :in under-part-attributes
+                :do (add-element (+ over-start prev-under)
+                                 (+ over-start under-start-offset)
+                                 over-attribute)
+                    (add-element (+ over-start under-start-offset)
+                                 (+ over-start under-end-offset)
+                                 (alexandria:if-let (under-attribute
+                                                     (lem-core:ensure-attribute under-attribute nil))
+                                   (lem-core:merge-attribute under-attribute
+                                                             over-attribute)
+                                   over-attribute))
+                :finally (add-element (+ over-start under-end-offset)
+                                      over-end
+                                      over-attribute))))
+    (lem-base::normalization-elements merged-attributes)))
+
 (defun create-logical-line (point overlays active-modes)
   (flet ((overlay-start-charpos (overlay point)
            (if (lem-core:same-line-p point (lem-core:overlay-start overlay))
@@ -73,10 +106,10 @@
                         ((typep overlay 'lem-core::overlay-line)
                          (let ((attribute (lem-core:overlay-attribute overlay)))
                            (setf attributes
-                                 (lem-core::overlay-attributes attributes
-                                                               0
-                                                               (length string)
-                                                               attribute))
+                                 (overlay-attributes attributes
+                                                     0
+                                                     (length string)
+                                                     attribute))
                            (setf extend-to-end-attribute attribute)))
                         ((typep overlay 'lem-core::overlay-cursor)
                          (let* ((overlay-start-charpos (overlay-start-charpos overlay point))
@@ -86,7 +119,7 @@
                            (if (<= (length string) overlay-start-charpos)
                                (setf end-of-line-cursor-attribute overlay-attribute)
                                (setf attributes
-                                     (lem-core::overlay-attributes
+                                     (overlay-attributes
                                       attributes
                                       overlay-start-charpos
                                       overlay-end-charpos
@@ -99,7 +132,7 @@
                              (setf extend-to-end-attribute
                                    (lem-core:overlay-attribute overlay)))
                            (setf attributes
-                                 (lem-core::overlay-attributes
+                                 (overlay-attributes
                                   attributes
                                   overlay-start-charpos
                                   (or overlay-end-charpos (length string))
@@ -205,9 +238,48 @@
                                   :attribute (lem-core:overlay-attribute overlay)
                                   :offset (lem-core::overlay-line-endings-offset overlay))))))
 
+(defun make-temporary-highlight-line-overlay (buffer)
+  (when (and (lem-core:variable-value 'lem-core::highlight-line :default (lem-core:current-buffer))
+             (lem-core::current-theme))
+    (alexandria:when-let ((color (lem-core::highlight-line-color)))
+      (lem-core:make-overlay-line (lem-core:buffer-point buffer)
+                                  (lem-core:make-attribute :background color)
+                                  :temporary t))))
+
+(defun make-temporary-region-overlay-from-cursor (cursor)
+  (let ((mark (lem-core:cursor-mark cursor)))
+    (when (lem-core:mark-active-p mark)
+      (lem-core:make-overlay cursor
+                             (lem-core:mark-point mark)
+                             'lem-core:region
+                             :temporary t))))
+
+(defun make-cursor-overlay (point)
+  (lem-core::make-overlay-cursor
+   point
+   (if (typep point 'lem-core:fake-cursor)
+       'lem-core:fake-cursor
+       'lem-core:cursor)))
+
+(defun get-window-overlays (window)
+  (let* ((buffer (lem-core:window-buffer window))
+         (overlays (lem-core::buffer-overlays buffer)))
+    (when (eq (lem-core:current-window) window)
+      (dolist (cursor (lem-core:buffer-cursors buffer))
+        (lem-core:if-push (make-temporary-region-overlay-from-cursor cursor)
+                          overlays))
+      (lem-core:if-push (make-temporary-highlight-line-overlay buffer)
+                        overlays))
+    (if (and (eq window (lem-core:current-window))
+             (not (lem-core:window-cursor-invisible-p window)))
+        (append overlays
+                (mapcar #'make-cursor-overlay
+                        (lem-core:buffer-cursors (lem-core:window-buffer window))))
+        overlays)))
+
 (defun call-do-logical-line (window function)
   (lem-core:with-point ((point (lem-core:window-view-point window)))
-    (let ((overlays (lem-core::get-window-overlays window))
+    (let ((overlays (get-window-overlays window))
           (active-modes (lem-core::get-active-modes-class-instance (lem-core:window-buffer window))))
       (loop :for logical-line := (create-logical-line point overlays active-modes)
             :do (funcall function logical-line)

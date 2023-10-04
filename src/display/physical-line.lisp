@@ -1,6 +1,6 @@
-(defpackage :lem-core/display-3
+(defpackage :lem-core/display/physical-line
   (:use :cl)
-  (:import-from :lem-core/display-2
+  (:import-from :lem-core/display/logical-line
                 :eol-cursor-item
                 :eol-cursor-item-attribute
                 :extend-to-eol-item
@@ -17,7 +17,7 @@
                 :compute-items-from-string-and-attributes
                 :create-logical-line
                 :do-logical-line))
-(in-package :lem-core/display-3)
+(in-package :lem-core/display/physical-line)
 
 (defvar *line-wrap*)
 
@@ -421,13 +421,81 @@
             (return-from outer))))
       (lem-if:clear-to-end-of-window (lem-core:implementation) window y))))
 
-(defun redraw-buffer-v2 (buffer window force)
-  (assert (eq buffer (lem-core:window-buffer window)))
+(defun call-with-display-error (function)
+  (handler-bind ((error (lambda (e)
+                          (log:error "~A"
+                                     (with-output-to-string (out)
+                                       (format out "~A~%" e)
+                                       (uiop:print-backtrace :stream out :condition e)))
+                          (lem-core:message "~A" e)
+                          (return-from call-with-display-error))))
+    (funcall function)))
+
+(defmacro with-display-error (() &body body)
+  `(call-with-display-error (lambda () ,@body)))
+
+(defun redraw-modeline (window force)
+  (when (lem-core:window-use-modeline-p window)
+    (let* ((screen (lem-core:window-screen window))
+           (view (lem-core:screen-view screen))
+           (default-attribute (if (eq window (lem-core:current-window))
+                                  'lem-core:modeline
+                                  'lem-core:modeline-inactive))
+           (elements '())
+           (left-x 0)
+           (right-x (lem-core:window-width window)))
+      (lem-core::modeline-apply window
+                                (lambda (string attribute alignment)
+                                  (case alignment
+                                    ((:right)
+                                     (decf right-x (length string))
+                                     (push (list right-x string attribute) elements))
+                                    (otherwise
+                                     (push (list left-x string attribute) elements)
+                                     (incf left-x (length string)))))
+                                default-attribute)
+      (setf elements (nreverse elements))
+      (when (or force (not (equal elements (lem-core::screen-modeline-elements screen))))
+        (setf (lem-core::screen-modeline-elements screen) elements)
+        (lem-if:print-modeline (lem-core:implementation) view 0 0
+                               (make-string (lem-core:window-width window) :initial-element #\space)
+                               default-attribute)
+        (loop :for (x string attribute) :in elements
+              :do (lem-if:print-modeline (lem-core:implementation) view x 0 string attribute))))))
+
+(defun get-background-color-of-window (window)
+  (cond ((typep window 'lem-core:floating-window)
+         (lem-core::floating-window-background-color window))
+        ((eq window (lem-core:current-window))
+         nil)
+        ((eq window (lem-core:window-parent (lem-core:current-window)))
+         nil)
+        ((and (lem-core:inactive-window-background-color)
+              (eq 'lem-core:window (type-of window)))
+         (lem-core:inactive-window-background-color))
+        (t nil)))
+
+(defmethod lem-core:redraw-buffer :around (implementation buffer window force)
+  (with-display-error ()
+    (lem-if:redraw-view-before (lem-core:implementation)
+                               (lem-core:screen-view (lem-core:window-screen window)))
+    (let ((lem-if:*background-color-of-drawing-window*
+            (get-background-color-of-window window)))
+      (call-next-method))
+    (when (lem-core:window-use-modeline-p window)
+      (redraw-modeline window
+                       (or (lem-core::screen-modified-p (lem-core:window-screen window))
+                           force)))
+    (lem-if:redraw-view-after (lem-core:implementation)
+                              (lem-core:screen-view (lem-core:window-screen window)))))
+
+(defun clear-cache-if-screen-modified (window force)
   (when (or force
             (lem-core::screen-modified-p (lem-core:window-screen window)))
-    (setf (drawing-cache window) '()))
+    (setf (drawing-cache window) '())))
+
+(defmethod lem-core:redraw-buffer (implementation (buffer lem-core:text-buffer) window force)
+  (assert (eq buffer (lem-core:window-buffer window)))
+  (clear-cache-if-screen-modified window force)
   (redraw-lines window)
   (lem-core::update-screen-cache (lem-core:window-screen window) buffer))
-
-(defmethod lem-core::redraw-buffer (implementation (buffer lem-core:text-buffer) window force)
-  (redraw-buffer-v2 buffer window force))

@@ -488,9 +488,13 @@
    :jump-cursor-advice
    :process-each-cursors
    :do-each-cursors)
-  ;; display.lisp
+  ;; highlight-line.lisp
   (:export
-   :highlight-line
+   :highlight-line)
+  ;; display/base.lisp
+  (:export
+   :inactive-window-background-color
+   :redraw-buffer
    :compute-left-display-area-content)
   ;; interface.lisp
   (:export

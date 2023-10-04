@@ -1,25 +1,26 @@
 (defpackage :lem-ncurses/text-buffer-impl
-  (:use :cl))
+  (:use :cl
+        :lem-core/display/physical-line))
 (in-package :lem-ncurses/text-buffer-impl)
 
 (defgeneric object-width (drawing-object))
 
-(defmethod object-width ((drawing-object lem-core/display/physical-line::void-object))
+(defmethod object-width ((drawing-object void-object))
   0)
 
-(defmethod object-width ((drawing-object lem-core/display/physical-line::text-object))
-  (lem-core:string-width (lem-core/display/physical-line::text-object-string drawing-object)))
+(defmethod object-width ((drawing-object text-object))
+  (lem-core:string-width (text-object-string drawing-object)))
 
-(defmethod object-width ((drawing-object lem-core/display/physical-line::eol-cursor-object))
+(defmethod object-width ((drawing-object eol-cursor-object))
   0)
 
-(defmethod object-width ((drawing-object lem-core/display/physical-line::extend-to-eol-object))
+(defmethod object-width ((drawing-object extend-to-eol-object))
   0)
 
-(defmethod object-width ((drawing-object lem-core/display/physical-line::line-end-object))
+(defmethod object-width ((drawing-object line-end-object))
   0)
 
-(defmethod object-width ((drawing-object lem-core/display/physical-line::image-object))
+(defmethod object-width ((drawing-object image-object))
   0)
 
 (defmethod lem-if:view-width ((implementation lem-ncurses::ncurses) view)
@@ -30,13 +31,13 @@
 
 (defgeneric draw-object (object x y window))
 
-(defmethod draw-object ((object lem-core/display/physical-line::void-object) x y window)
+(defmethod draw-object ((object void-object) x y window)
   (values))
 
-(defmethod draw-object ((object lem-core/display/physical-line::text-object) x y window)
-  (let ((string (lem-core/display/physical-line::text-object-string object))
-        (attribute (lem-core/display/physical-line::text-object-attribute object)))
-    (when (and attribute (lem-core/display/physical-line::cursor-attribute-p attribute))
+(defmethod draw-object ((object text-object) x y window)
+  (let ((string (text-object-string object))
+        (attribute (text-object-attribute object)))
+    (when (and attribute (cursor-attribute-p attribute))
       (lem-core::set-last-print-cursor window x y))
     (lem-if:print (lem-core:implementation)
                   (lem-core::window-view window)
@@ -51,7 +52,7 @@
           (lem:color-green color)
           (lem:color-blue color)))
 
-(defmethod draw-object ((object lem-core/display/physical-line::eol-cursor-object) x y window)
+(defmethod draw-object ((object eol-cursor-object) x y window)
   (lem-core::set-last-print-cursor window x y)
   (lem-if:print (lem:implementation)
                 (lem:window-view window)
@@ -59,28 +60,28 @@
                 y
                 " "
                 (lem:make-attribute :foreground
-                                    (color-to-hex-string (lem-core/display/physical-line::eol-cursor-object-color object)))))
+                                    (color-to-hex-string (eol-cursor-object-color object)))))
 
-(defmethod draw-object ((object lem-core/display/physical-line::extend-to-eol-object) x y window)
+(defmethod draw-object ((object extend-to-eol-object) x y window)
   (lem-if:print (lem:implementation)
                 (lem:window-view window)
                 x
                 y
                 (make-string (- (lem:window-width window) x) :initial-element #\space)
                 (lem:make-attribute :background
-                                    (color-to-hex-string (lem-core/display/physical-line::extend-to-eol-object-color object)))))
+                                    (color-to-hex-string (extend-to-eol-object-color object)))))
 
-(defmethod draw-object ((object lem-core/display/physical-line::line-end-object) x y window)
-  (let ((string (lem-core/display/physical-line::text-object-string object))
-        (attribute (lem-core/display/physical-line::text-object-attribute object)))
+(defmethod draw-object ((object line-end-object) x y window)
+  (let ((string (text-object-string object))
+        (attribute (text-object-attribute object)))
     (lem-if:print (lem-core:implementation)
                   (lem-core::window-view window)
-                  (+ x (lem-core/display/physical-line::line-end-object-offset object))
+                  (+ x (line-end-object-offset object))
                   y
                   string
                   attribute)))
 
-(defmethod draw-object ((object lem-core/display/physical-line::image-object) x y window)
+(defmethod draw-object ((object image-object) x y window)
   (values))
 
 (defmethod lem-if:render-line ((implementation lem-ncurses::ncurses) window x y objects height)
@@ -89,7 +90,7 @@
     (charms/ll:wclrtoeol (lem-ncurses::ncurses-view-scrwin view))
     (loop :for object :in objects
           :do (draw-object object x y window)
-              (incf x (lem-core/display/physical-line::object-width object)))))
+              (incf x (object-width object)))))
 
 (defmethod lem-if:object-width ((implementation lem-ncurses::ncurses) drawing-object)
   (object-width drawing-object))

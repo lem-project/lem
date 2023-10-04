@@ -16,7 +16,31 @@
                 :logical-line-left-content
                 :compute-items-from-string-and-attributes
                 :create-logical-line
-                :do-logical-line))
+                :do-logical-line)
+  (:export :control-character-object
+           :cursor-attribute-p
+           :emoji-object
+           :eol-cursor-object
+           :eol-cursor-object-color
+           :extend-to-eol-object
+           :extend-to-eol-object-color
+           :folder-object
+           :icon-object
+           :image-object
+           :image-object-height
+           :image-object-image
+           :image-object-width
+           :line-end-object
+           :line-end-object-offset
+           :text-object
+           :text-object-attribute
+           :text-object-string
+           :text-object-surface
+           :text-object-type
+           :void-object
+           :window-view-height
+           :window-view-width
+           :text-object))
 (in-package :lem-core/display/physical-line)
 
 (defvar *line-wrap*)

@@ -100,7 +100,7 @@
 
 (defun update-line-spinner (spinner)
   (update-spinner-frame spinner)
-  (setf (lem-core::overlay-line-endings-text (line-spinner-overlay spinner))
+  (setf (lem-core::line-endings-overlay-text (line-spinner-overlay spinner))
         (spinner-text spinner)))
 
 (defmethod start-loading-spinner ((type (eql :line)) &key point loading-message)
@@ -113,13 +113,13 @@
   (check-type start point)
   (check-type end point)
   (let* ((spinner)
-         (timer (start-timer (make-timer 
+         (timer (start-timer (make-timer
                               (lambda ()
                                 (when spinner
                                   (update-line-spinner spinner))))
                              +loading-interval+
                              t))
-         (overlay (make-overlay-line-endings
+         (overlay (make-line-endings-overlay
                    start
                    end
                    'spinner-attribute

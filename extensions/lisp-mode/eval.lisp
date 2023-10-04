@@ -96,7 +96,7 @@
           (background-attribute
            (make-attribute :background (compute-evaluated-background-color))))
   (let ((popup-overlay
-          (make-overlay-line-endings
+          (make-line-endings-overlay
            start
            end
            (or attribute

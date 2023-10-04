@@ -101,9 +101,9 @@
           (lem-base::line-string/attributes (lem-base::point-line point))
         (loop :for overlay :in overlays
               :when (overlay-within-point-p overlay point)
-              :do (cond ((typep overlay 'lem-core::overlay-line-endings)
+              :do (cond ((typep overlay 'lem-core::line-endings-overlay)
                          (setf line-end-overlay overlay))
-                        ((typep overlay 'lem-core::overlay-line)
+                        ((typep overlay 'lem-core::line-overlay)
                          (let ((attribute (lem-core:overlay-attribute overlay)))
                            (setf attributes
                                  (overlay-attributes attributes
@@ -111,7 +111,7 @@
                                                      (length string)
                                                      attribute))
                            (setf extend-to-end-attribute attribute)))
-                        ((typep overlay 'lem-core::overlay-cursor)
+                        ((typep overlay 'lem-core::cursor-overlay)
                          (let* ((overlay-start-charpos (overlay-start-charpos overlay point))
                                 (overlay-end-charpos (1+ overlay-start-charpos))
                                 (overlay-attribute (lem-core:overlay-attribute overlay)))
@@ -234,15 +234,15 @@
     (values (nreverse items)
             (alexandria:when-let (overlay
                                   (logical-line-line-end-overlay logical-line))
-              (make-line-end-item :text (lem-core::overlay-line-endings-text overlay)
+              (make-line-end-item :text (lem-core::line-endings-overlay-text overlay)
                                   :attribute (lem-core:overlay-attribute overlay)
-                                  :offset (lem-core::overlay-line-endings-offset overlay))))))
+                                  :offset (lem-core::line-endings-overlay-offset overlay))))))
 
 (defun make-temporary-highlight-line-overlay (buffer)
   (when (and (lem-core:variable-value 'lem-core::highlight-line :default (lem-core:current-buffer))
              (lem-core::current-theme))
     (alexandria:when-let ((color (lem-core::highlight-line-color)))
-      (lem-core:make-overlay-line (lem-core:buffer-point buffer)
+      (lem-core:make-line-overlay (lem-core:buffer-point buffer)
                                   (lem-core:make-attribute :background color)
                                   :temporary t))))
 
@@ -255,7 +255,7 @@
                              :temporary t))))
 
 (defun make-cursor-overlay (point)
-  (lem-core::make-overlay-cursor
+  (lem-core::make-cursor-overlay
    point
    (if (typep point 'lem-core:fake-cursor)
        'lem-core:fake-cursor

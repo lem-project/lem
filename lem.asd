@@ -39,7 +39,6 @@
                (:file "clipboard")
                (:file "killring")
                (:file "file")
-               (:file "screen")
                (:file "frame")
                (:file "echo")
                (:file "prompt")

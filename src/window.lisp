@@ -47,9 +47,6 @@
     :reader window-buffer
     :writer set-window-buffer
     :type buffer)
-   (screen
-    :reader window-screen
-    :writer set-window-screen)
    (view-point
     :reader window-view-point
     :writer set-window-view-point
@@ -94,12 +91,24 @@
    (last-print-cursor-y
     :initform 0
     :accessor window-last-print-cursor-y)
+   (need-to-redraw
+    :initform nil
+    :accessor window-need-to-redraw-p)
+   (view
+    :initarg :view
+    :accessor window-view)
    (parameters
     :initform nil
     :accessor window-parameters)))
 
+(defun need-to-redraw (window)
+  (setf (window-need-to-redraw-p window) t))
+
+(defun finish-redraw (window)
+  (setf (window-need-to-redraw-p window) nil))
+
 (defmethod set-window-buffer :before (buffer (window window))
-  (screen-modify (window-screen window)))
+  (need-to-redraw window))
 
 (defun window-height-without-modeline (window)
   (- (window-height window)
@@ -116,8 +125,7 @@
 
 (defmethod initialize-instance :after ((window window) &rest initargs)
   (declare (ignore initargs))
-  (set-window-screen (make-screen (make-view-from-window window))
-                     window)
+  (setf (slot-value window 'view) (make-view-from-window window))
   (set-window-view-point (buffer-start
                           (copy-point (buffer-point (window-buffer window))
                                       :right-inserting))
@@ -139,13 +147,11 @@
 
 (defun clear-screens-of-window-list ()
   (flet ((clear-screen (window)
-           (screen-clear (window-screen window))))
+           (need-to-redraw window)
+           (lem-if:clear (implementation) (window-view window))))
     (mapc #'clear-screen (uiop:ensure-list (frame-leftside-window (current-frame))))
     (mapc #'clear-screen (window-list))
     (mapc #'clear-screen (frame-floating-windows (current-frame)))))
-
-(defun window-view (window)
-  (screen-view (window-screen window)))
 
 (defmethod set-last-print-cursor ((window window) x y)
   (setf (window-last-print-cursor-x window) x
@@ -228,7 +234,7 @@
 (defun %free-window (window)
   (delete-point (window-view-point window))
   (delete-point (%window-point window))
-  (screen-delete (window-screen window)))
+  (lem-if:delete-view (implementation) (window-view window)))
 
 (defun delete-window (window)
   (notify-frame-redisplay-required (current-frame))
@@ -537,7 +543,7 @@ next line because it is at the end of width."
   (move-to-previous-virtual-line (window-view-point window) n window))
 
 (defun window-scroll (window n)
-  (screen-modify (window-screen window))
+  (need-to-redraw window)
   (prog1 (if *use-new-vertical-move-function*
              (if (plusp n)
                  (window-scroll-down-n window n)
@@ -714,7 +720,8 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (notify-frame-redisplay-required (current-frame))
   (when (floating-window-p window)
     (notify-floating-window-modified (current-frame)))
-  (screen-set-pos (window-screen window) x y)
+  (need-to-redraw window)
+  (lem-if:set-view-pos (implementation) (window-view window) x y)
   (set-window-x x window)
   (set-window-y y window))
 
@@ -733,10 +740,12 @@ You can pass in the optional argument WINDOW-LIST to replace the default
     (notify-floating-window-modified (current-frame)))
   (set-window-width width window)
   (set-window-height height window)
-  (screen-set-size (window-screen window)
-                   width
-                   (- height
-                      (if (window-use-modeline-p window) 1 0))))
+  (need-to-redraw window)
+  (lem-if:set-view-size (implementation)
+                        (window-view window)
+                        width
+                        (- height
+                           (if (window-use-modeline-p window) 1 0))))
 
 (defun window-move (window dx dy)
   (window-set-pos window

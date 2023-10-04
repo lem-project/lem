@@ -440,7 +440,7 @@
 
 (defun redraw-modeline (window force)
   (when (lem-core:window-use-modeline-p window)
-    (let* ((view (lem-core:screen-view (lem-core:window-screen window)))
+    (let* ((view (lem-core:window-view window))
            (default-attribute (if (eq window (lem-core:current-window))
                                   'lem-core:modeline
                                   'lem-core:modeline-inactive))
@@ -481,24 +481,23 @@
 (defmethod lem-core:redraw-buffer :around (implementation buffer window force)
   (with-display-error ()
     (lem-if:redraw-view-before (lem-core:implementation)
-                               (lem-core:screen-view (lem-core:window-screen window)))
+                               (lem-core:window-view window))
     (let ((lem-if:*background-color-of-drawing-window*
             (get-background-color-of-window window)))
       (call-next-method))
     (when (lem-core:window-use-modeline-p window)
       (redraw-modeline window
-                       (or (lem-core::screen-modified-p (lem-core:window-screen window))
+                       (or (lem-core::window-need-to-redraw-p window)
                            force)))
     (lem-if:redraw-view-after (lem-core:implementation)
-                              (lem-core:screen-view (lem-core:window-screen window)))))
+                              (lem-core:window-view window))))
 
 (defun clear-cache-if-screen-modified (window force)
-  (when (or force
-            (lem-core::screen-modified-p (lem-core:window-screen window)))
+  (when (or force (lem-core::window-need-to-redraw-p window))
     (setf (drawing-cache window) '())))
 
 (defmethod lem-core:redraw-buffer (implementation (buffer lem-core:text-buffer) window force)
   (assert (eq buffer (lem-core:window-buffer window)))
   (clear-cache-if-screen-modified window force)
   (redraw-lines window)
-  (lem-core::update-screen-cache (lem-core:window-screen window) buffer))
+  (lem-core::finish-redraw window))

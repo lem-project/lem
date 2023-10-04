@@ -37,8 +37,7 @@
   (let ((string (lem-core/display/physical-line::text-object-string object))
         (attribute (lem-core/display/physical-line::text-object-attribute object)))
     (when (and attribute (lem-core/display/physical-line::cursor-attribute-p attribute))
-      (let ((screen (lem:window-screen window)))
-        (lem-core::set-last-print-cursor window x y)))
+      (lem-core::set-last-print-cursor window x y))
     (lem-if:print (lem-core:implementation)
                   (lem-core::window-view window)
                   x

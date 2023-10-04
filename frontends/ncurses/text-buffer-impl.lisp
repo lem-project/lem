@@ -107,3 +107,6 @@
     (unless (= y (lem-if:view-height (lem:implementation) view))
       (charms/ll:wmove win y 0)
       (charms/ll:wclrtobot win))))
+
+(defmethod lem-if:get-char-width ((implementation lem-ncurses::ncurses))
+  1)

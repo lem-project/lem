@@ -82,6 +82,9 @@
    (last-mouse-button-down-point
     :initform nil
     :accessor window-last-mouse-button-down-point)
+   (left-width
+    :initform 0
+    :accessor window-left-width)
    (parameters
     :initform nil
     :accessor window-parameters)))

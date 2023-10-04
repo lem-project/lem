@@ -328,16 +328,12 @@
   (loop :for object :in objects
         :maximize (object-height object)))
 
-(defun redraw-logical-line-when-line-wrapping (window y logical-line)
-  (let* ((left-side-objects
-           (alexandria:when-let (content (logical-line-left-content logical-line))
-             (mapcan #'create-drawing-object
-                     (compute-items-from-string-and-attributes
-                      (lem-base::content-string content)
-                      (lem-base::content-attributes content)))))
-         (left-side-width
-           (loop :for object :in left-side-objects :sum (object-width object)))
-         (objects-per-physical-line
+(defun redraw-logical-line-when-line-wrapping (window
+                                               y
+                                               logical-line
+                                               left-side-objects
+                                               left-side-width)
+  (let* ((objects-per-physical-line
            (separate-objects-by-width
             (append left-side-objects (create-drawing-objects logical-line))
             (window-view-width window))))
@@ -368,16 +364,12 @@
                    (<= (+ x (object-width object)) end-x))
         :collect object))
 
-(defun redraw-logical-line-when-horizontal-scroll (window y logical-line)
-  (let* ((left-side-objects
-           (alexandria:when-let (content (logical-line-left-content logical-line))
-             (mapcan #'create-drawing-object
-                     (compute-items-from-string-and-attributes
-                      (lem-base::content-string content)
-                      (lem-base::content-attributes content)))))
-         (left-side-width
-           (loop :for object :in left-side-objects :sum (object-width object)))
-         (objects
+(defun redraw-logical-line-when-horizontal-scroll (window
+                                                   y
+                                                   logical-line
+                                                   left-side-objects
+                                                   left-side-width)
+  (let* ((objects
            (append left-side-objects (create-drawing-objects logical-line)))
          (height
            (max-height-of-objects objects)))
@@ -413,13 +405,25 @@
                         #'redraw-logical-line-when-line-wrapping
                         #'redraw-logical-line-when-horizontal-scroll)))
     (let ((y 0)
-          (height (window-view-height window)))
+          (height (window-view-height window))
+          left-side-width)
       (block outer
         (do-logical-line (logical-line window)
-          (incf y (funcall redraw-fn window y logical-line))
-          (unless (< y height)
-            (return-from outer))))
-      (lem-if:clear-to-end-of-window (lem-core:implementation) window y))))
+          (let* ((left-side-objects
+                   (alexandria:when-let (content (logical-line-left-content logical-line))
+                     (mapcan #'create-drawing-object
+                             (compute-items-from-string-and-attributes
+                              (lem-base::content-string content)
+                              (lem-base::content-attributes content))))))
+            (setf left-side-width
+                  (loop :for object :in left-side-objects
+                        :sum (object-width object)))
+            (incf y (funcall redraw-fn window y logical-line left-side-objects left-side-width))
+            (unless (< y height)
+              (return-from outer)))))
+      (lem-if:clear-to-end-of-window (lem-core:implementation) window y)
+      (setf (lem-core::window-left-width window)
+            (floor left-side-width (lem-if:get-char-width (lem-core:implementation)))))))
 
 (defun call-with-display-error (function)
   (handler-bind ((error (lambda (e)

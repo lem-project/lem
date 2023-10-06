@@ -1375,7 +1375,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (run-show-buffer-hooks window)
   (window-redraw window force))
 
-(defun redraw-display (&optional force)
+(defun redraw-display (&key force)
   (when *in-redraw-display*
     (log:warn "redraw-display is called recursively")
     (return-from redraw-display))

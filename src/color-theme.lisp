@@ -91,7 +91,7 @@
       (editor-error "undefined color theme: ~A" name))
     (apply-theme theme)
     (message nil)
-    (redraw-display t)
+    (redraw-display :force t)
     (setf (current-theme) name)
     (when save-theme
       (setf (config :color-theme) (current-theme)))))

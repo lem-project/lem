@@ -1,6 +1,6 @@
 (defpackage :lem/thingatp
   (:use :cl :lem)
-  (:export 
+  (:export
    :urlp
    :url
    :pathp
@@ -13,7 +13,7 @@
     (and
      (stringp thing)
      (numberp
-      (ppcre:scan 
+      (ppcre:scan
        "(https://www\\.|http://www\\.|https://|http://|file://)[a-zA-Z0-9]{2,}(\\.[a-zA-Z0-9]{2,})?(\\.[a-zA-Z0-9]{2,})?" thing))))
 
   (deftype url ()
@@ -22,7 +22,7 @@
   ;; PATH
   (defun pathp (thing)
     (and (ppcre:scan "^(.*)\/([^\/]*)$" thing)
-	 (or (uiop:directory-exists-p thing) 
+	 (or (uiop:directory-exists-p thing)
 	     (uiop:file-exists-p thing))))
 
   (deftype path ()

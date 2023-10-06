@@ -14,6 +14,7 @@
                 :state-modeline-green
                 :change-element-by-state)
   (:export :*normal-keymap*
+           :*command-keymap*
            :*motion-keymap*
            :*insert-keymap*
            :*inactive-keymap*
@@ -42,6 +43,11 @@
 (define-keymap *replace-state-keymap* :undef-hook 'return-last-read-char)
 (define-keymap *outer-text-objects-keymap*)
 (define-keymap *inner-text-objects-keymap*)
+
+(define-symbol-macro *command-keymap*
+  (progn
+    (warn "*command-keymap* is deprecated. Use *normal-keymap* instead.")
+    *normal-keymap*))
 
 (defvar *inactive-keymap* (make-keymap))
 

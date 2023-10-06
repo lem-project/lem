@@ -20,6 +20,7 @@
                 :insert
                 :*motion-keymap*
                 :*normal-keymap*
+                :*command-keymap*
                 :*insert-keymap*
                 :*inner-text-objects-keymap*
                 :*outer-text-objects-keymap*
@@ -40,6 +41,7 @@
            :define-text-object-command
            :*motion-keymap*
            :*normal-keymap*
+           :*command-keymap*
            :*insert-keymap*
            :*visual-keymap*
            :*operator-keymap*

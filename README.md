@@ -1,3 +1,8 @@
+
+**You do not want to clone this repo.  It is an expermental clone of https://lem-project.github.io/lem-page/
+Clone that project.**
+
+
 # Lem is the editor/IDE well-tuned for Common Lisp.
 
 ![](https://github.com/Shinmera/lem-icon/blob/gh-pages/icon-blue.svg)

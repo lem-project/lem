@@ -245,8 +245,15 @@
 
 (defun explode-object (text-object)
   (check-type text-object text-object)
-  (loop :for c :across (text-object-string text-object)
-        :collect (make-letter-object c (text-object-attribute text-object))))
+  (let* ((string (text-object-string text-object))
+         (char-type (char-type (char string 0)))
+         (n (floor (length string) 2)))
+    (loop :for part-string :in (list (subseq string 0 n)
+                                     (subseq string n))
+          :unless (alexandria:emptyp part-string)
+          :collect (make-object-with-type
+                    part-string
+                    (text-object-attribute text-object) char-type))))
 
 (defun separate-objects-by-width (objects view-width)
   (loop

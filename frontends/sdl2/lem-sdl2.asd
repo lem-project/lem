@@ -11,7 +11,7 @@
                (:file "font")
                (:file "icon")
                (:file "main")
-               (:file "text-buffer")
+               (:file "text-buffer-impl")
                (:file "image-buffer")
                (:file "tree")))
 

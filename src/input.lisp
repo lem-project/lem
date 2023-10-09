@@ -105,7 +105,7 @@
         (call-command (read-command) nil)))))
 
 (defun sit-for (seconds &optional (update-window-p t) (force-update-p nil))
-  (when update-window-p (redraw-display force-update-p))
+  (when update-window-p (redraw-display :force force-update-p))
   (let ((e (receive-event seconds)))
     (cond ((null e) t)
           ((abort-key-p e) (error 'editor-abort))

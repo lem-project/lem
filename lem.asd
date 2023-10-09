@@ -39,7 +39,6 @@
                (:file "clipboard")
                (:file "killring")
                (:file "file")
-               (:file "screen")
                (:file "frame")
                (:file "echo")
                (:file "prompt")
@@ -64,7 +63,7 @@
                (:file "cursors")
                (:file "command-advices")
                (:file "interface")
-               (:file "display")
+               (:file "highlight-line")
                (:file "site-init")
                (:file "lem")
 
@@ -87,6 +86,12 @@
                              (:file "font")
                              (:file "other" :depends-on ("file"))
                              (:file "frame")))
+
+               (:module "display"
+                :serial t
+                :components ((:file "base")
+                             (:file "logical-line")
+                             (:file "physical-line")))
 
                (:file "external-packages")
 

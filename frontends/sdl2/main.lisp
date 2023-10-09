@@ -174,8 +174,10 @@
                                       (font-config-size (display-font-config *display*)))))))))
 
 (defmethod get-display-font ((display display) &key type bold character)
-  (check-type type (member :latin :cjk :braille :emoji :icon))
-  (cond ((eq type :icon)
+  (check-type type lem-core::char-type)
+  (cond ((eq type :control)
+         (display-latin-font display))
+        ((eq type :icon)
          (or (and character (icon-font character))
              (display-emoji-font display)))
         ((eq type :emoji)
@@ -243,14 +245,10 @@
       (lem:update-on-display-resized))))
 
 (defun attribute-foreground-color (attribute)
-  (or (and attribute
-           (lem:parse-color (lem:attribute-foreground attribute)))
-      (display-foreground-color *display*)))
+  (lem-core:attribute-foreground-color attribute))
 
 (defun attribute-background-color (attribute)
-  (or (and attribute
-           (lem:parse-color (lem:attribute-background attribute)))
-      (display-background-color *display*)))
+  (lem-core:attribute-background-color attribute))
 
 (defun render-fill-rect-to-current-texture (x y width height &key color)
   (let ((x (* x (char-width)))
@@ -278,21 +276,23 @@
                          :dest-rect dest-rect
                          :flip (list :none))))
 
-(defun cjk-char-code-p (display code)
-  (and (typep code '(UNSIGNED-BYTE 16))
-       (not (eql 0
-                 (sdl2-ffi.functions:ttf-glyph-is-provided (display-cjk-normal-font display)
-                                                           code)))))
+(defun cjk-char-code-p (code)
+  (or (<= #x4E00 code #x9FFF)
+      (<= #x3040 code #x309F)
+      (<= #x30A0 code #x30FF)
+      (<= #xAC00 code #xD7A3)))
 
-(defun latin-char-code-p (display code)
-  (and (typep code '(UNSIGNED-BYTE 16))
-       (not (eql 0
-                 (sdl2-ffi.functions:ttf-glyph-is-provided (display-latin-font display)
-                                                           code)))))
+(defun latin-char-code-p (code)
+  (or (<= #x0000 code #x007F)
+      (<= #x0080 code #x00FF)
+      (<= #x0100 code #x017F)
+      (<= #x0180 code #x024F)))
 
-(defun emoji-char-code-p (display code)
-  (and (typep code '(UNSIGNED-BYTE 16))
-       (not (eql 0 (sdl2-ffi.functions:ttf-glyph-is-provided (display-emoji-font display) code)))))
+(defun emoji-char-code-p (code)
+  (or (<= #x1F300 code #x1F6FF)
+      (<= #x1F900 code #x1F9FF)
+      (<= #x1F600 code #x1F64F)
+      (<= #x1F700 code #x1F77F)))
 
 (defun braille-char-code-p (code)
   (<= #x2800 code #x28ff))
@@ -342,10 +342,9 @@
     (sdl2:free-surface image)
     (sdl2:destroy-texture texture)))
 
-(defun guess-font-type (display code)
-  (cond #+windows
-        ((eql code #x1f4c1)
-         ;; sdl2_ttf.dllでなぜか絵文字を表示できないので代わりにフォルダの画像を使う
+(defun guess-font-type (code)
+  (cond ((eql code #x1f4c1)
+         ;; sdl2_ttf.dllでなぜか絵文字を表示できない環境があるので代わりにフォルダの画像を使う
          :folder)
         ((<= code 128)
          :latin)
@@ -353,11 +352,11 @@
          :icon)
         ((braille-char-code-p code)
          :braille)
-        ((cjk-char-code-p display code)
+        ((cjk-char-code-p code)
          :cjk)
-        ((latin-char-code-p display code)
+        ((latin-char-code-p code)
          :latin)
-        ((emoji-char-code-p display code)
+        ((emoji-char-code-p code)
          :emoji)
         (t
          :emoji)))
@@ -365,7 +364,7 @@
 (defun render-character (character x y &key color bold)
   (handler-case
       (let* ((code (char-code character))
-             (type (guess-font-type *display* code)))
+             (type (guess-font-type code)))
         (case type
           (:folder
            (render-folder-icon x y)
@@ -885,6 +884,10 @@
 (defmethod lem-if:get-background-color ((implementation sdl2))
   (with-debug ("lem-if:get-background-color")
     (display-background-color *display*)))
+
+(defmethod lem-if:get-foreground-color ((implementation sdl2))
+  (with-debug ("lem-if:get-foreground-color")
+    (display-foreground-color *display*)))
 
 (defmethod lem-if:update-foreground ((implementation sdl2) color)
   (with-debug ("lem-if:update-foreground" color)

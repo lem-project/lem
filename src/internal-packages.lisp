@@ -86,6 +86,7 @@
    :attribute-value
    :ensure-attribute
    :merge-attribute
+   :attribute-equal
    :set-attribute
    :set-attribute-foreground
    :set-attribute-background
@@ -420,8 +421,8 @@
    :set-overlay-attribute
    :overlay-buffer
    :make-overlay
-   :make-overlay-line-endings
-   :make-overlay-line
+   :make-line-endings-overlay
+   :make-line-overlay
    :delete-overlay
    :overlay-put
    :overlay-get
@@ -487,9 +488,14 @@
    :jump-cursor-advice
    :process-each-cursors
    :do-each-cursors)
-  ;; display.lisp
+  ;; highlight-line.lisp
   (:export
    :highlight-line)
+  ;; display/base.lisp
+  (:export
+   :inactive-window-background-color
+   :redraw-buffer
+   :compute-left-display-area-content)
   ;; interface.lisp
   (:export
    :with-implementation
@@ -501,7 +507,11 @@
    :display-width
    :display-height
    :display-title
-   :display-fullscreen-p)
+   :display-fullscreen-p
+   :attribute-foreground-color
+   :attribute-background-color
+   :attribute-foreground-with-reverse
+   :attribute-background-with-reverse)
   ;; color-theme.lisp
   (:export
    :color-theme-names
@@ -524,6 +534,7 @@
    :*background-color-of-drawing-window*
    :invoke
    :get-background-color
+   :get-foreground-color
    :update-foreground
    :update-background
    :update-cursor-shape
@@ -534,6 +545,8 @@
    :display-fullscreen-p
    :set-display-fullscreen-p
    :make-view
+   :view-width
+   :view-height
    :delete-view
    :clear
    :set-view-size
@@ -569,4 +582,8 @@
    :get-font-list
    :get-mouse-position
    :get-char-width
-   :get-char-height))
+   :get-char-height
+   :clear-to-end-of-window
+   :render-line
+   :object-width
+   :object-height))

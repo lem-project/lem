@@ -81,8 +81,9 @@
     bits))
 
 (defun attribute-to-bits (attribute-or-name)
-  (let ((attribute (ensure-attribute attribute-or-name nil))
-        (cursorp (eq attribute-or-name 'cursor)))
+  (let* ((attribute (ensure-attribute attribute-or-name nil))
+         (cursorp (or (eq attribute-or-name 'cursor)
+                      (and attribute (lem-core:attribute-value attribute :cursor)))))
     (when (and lem-if:*background-color-of-drawing-window* (null attribute))
       (setf attribute (make-attribute :background lem-if:*background-color-of-drawing-window*)))
     (if (null attribute)

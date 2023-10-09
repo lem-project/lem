@@ -89,7 +89,7 @@
 (defmethod state-setup ((state visual-line))
   (apply-region-lines *start-point* (current-point)
                       (lambda (p)
-                        (push (make-overlay-line p 'region)
+                        (push (make-line-overlay p 'region)
                               *visual-overlays*))))
 
 (defmethod state-setup ((state visual-block))

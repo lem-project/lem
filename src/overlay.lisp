@@ -30,15 +30,18 @@
     :accessor overlay-alive-p
     :type boolean)))
 
-(defclass overlay-line-endings (overlay)
+(defclass line-endings-overlay (overlay)
   ((offset :initarg :offset
            :initform 0
-           :reader overlay-line-endings-offset)
+           :reader line-endings-overlay-offset)
    (text :initarg :text
          :initform (alexandria:required-argument :text)
-         :accessor overlay-line-endings-text)))
+         :accessor line-endings-overlay-text)))
 
-(defclass overlay-line (overlay)
+(defclass line-overlay (overlay)
+  ())
+
+(defclass cursor-overlay (overlay)
   ())
 
 (defmethod initialize-instance ((overlay overlay) &key &allow-other-keys)
@@ -61,13 +64,13 @@
                  :buffer (point-buffer start)
                  :temporary temporary))
 
-(defun make-overlay-line-endings (start end attribute
+(defun make-line-endings-overlay (start end attribute
                                   &key (start-point-kind :right-inserting)
                                        (end-point-kind :left-inserting)
                                        (text (alexandria:required-argument :text))
                                        (offset 0)
                                        temporary)
-  (make-instance 'overlay-line-endings
+  (make-instance 'line-endings-overlay
                  :start (copy-point start start-point-kind)
                  :end (copy-point end end-point-kind)
                  :attribute attribute
@@ -76,14 +79,23 @@
                  :offset offset
                  :temporary temporary))
 
-(defun make-overlay-line (point attribute &key (temporary nil))
+(defun make-line-overlay (point attribute &key (temporary nil))
   (with-point ((point point))
-    (make-instance 'overlay-line
+    (make-instance 'line-overlay
                    :start point
                    :end point
                    :attribute attribute
                    :buffer (point-buffer point)
                    :temporary temporary)))
+
+(defun make-cursor-overlay (point attribute)
+  (with-point ((point point))
+    (make-instance 'cursor-overlay
+                   :start point
+                   :end point
+                   :attribute attribute
+                   :buffer (point-buffer point)
+                   :temporary t)))
 
 (defun delete-overlay (overlay)
   (check-type overlay overlay)

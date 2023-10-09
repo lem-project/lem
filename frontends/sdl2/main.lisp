@@ -956,27 +956,11 @@
     (with-renderer ()
       (move-position view x y))))
 
-(defmethod lem-if:print ((implementation sdl2) view x y string attribute-or-name)
-  (with-debug ("lem-if:print" view x y string attribute-or-name)
-    (with-renderer ()
-      (let ((attribute (lem:ensure-attribute attribute-or-name nil)))
-        (render-text-using-view view x y string attribute)))))
-
 (defmethod lem-if:print-modeline ((implementation sdl2) view x y string attribute-or-name)
   (with-debug ("lem-if:print-modeline" view x y string attribute-or-name)
     (with-renderer ()
       (let ((attribute (lem:ensure-attribute attribute-or-name nil)))
         (render-text-to-modeline-using-view view x y string attribute)))))
-
-(defmethod lem-if:clear-eol ((implementation sdl2) view x y)
-  (with-debug ("lem-if:clear-eol" view x y)
-    (with-renderer ()
-      (clear-eol view x y))))
-
-(defmethod lem-if:clear-eob ((implementation sdl2) view x y)
-  (with-debug ("lem-if:clear-eob" view x y)
-    (with-renderer ()
-      (clear-eob view x y))))
 
 (defmethod lem-if:redraw-view-before ((implementation sdl2) view)
   (with-debug ("lem-if:redraw-view-before" view)

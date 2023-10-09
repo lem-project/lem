@@ -551,18 +551,12 @@
    :clear
    :set-view-size
    :set-view-pos
-   :print
    :print-modeline
-   :clear-eol
-   :clear-eob
    :redraw-view-before
    :redraw-view-after
    :will-update-display
    :update-display
-   :force-update-view
    :set-first-view
-   :split-window-horizontally
-   :split-window-vertically
    :display-popup-menu
    :popup-menu-update
    :popup-menu-quit

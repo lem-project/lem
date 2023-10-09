@@ -191,16 +191,6 @@
   (with-error-handler ()
     (notify "clear" (params "viewInfo" view))))
 
-(defmethod lem-if:clear-eol ((implementation jsonrpc) view x y)
-  (with-error-handler ()
-    (notify "clear-eol"
-            (params "viewInfo" view "x" x "y" y))))
-
-(defmethod lem-if:clear-eob ((implementation jsonrpc) view x y)
-  (with-error-handler ()
-    (assert (= x 0))
-    (notify "clear-eob" (params "viewInfo" view "x" x "y" y))))
-
 (defun put-params (view x y string attribute)
   (with-error-handler ()
     (params "viewInfo" view
@@ -209,10 +199,6 @@
             "text" string
             "textWidth" (string-width string)
             "attribute" (ensure-attribute attribute nil))))
-
-(defmethod lem-if:print ((implementation jsonrpc) view x y string attribute)
-  (with-error-handler ()
-    (notify "put" (put-params view x y string attribute))))
 
 (defmethod lem-if:print-modeline
     ((implementation jsonrpc) view x y string attribute)

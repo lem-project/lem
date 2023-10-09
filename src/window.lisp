@@ -651,10 +651,7 @@ height, or close to it."
                        (- (window-height window) height)
                        t)))
     (set-window-height height window)
-    (split-window-after window new-window :vsplit)
-    (lem-if:split-window-vertically (implementation)
-                                    (window-view window)
-                                    (window-view new-window))))
+    (split-window-after window new-window :vsplit)))
 
 (defun split-window-horizontally (window &key width)
   "Split WINDOW into two side-by-side windows.
@@ -684,10 +681,7 @@ close to it."
                        (window-height window)
                        t)))
     (set-window-width width window)
-    (split-window-after window new-window :hsplit)
-    (lem-if:split-window-horizontally (implementation)
-                                      (window-view window)
-                                      (window-view new-window))))
+    (split-window-after window new-window :hsplit)))
 
 (defun split-window-sensibly (window)
   "Split WINDOW in a way suitable to display."

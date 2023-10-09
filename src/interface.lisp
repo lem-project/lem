@@ -54,10 +54,7 @@
 (defgeneric lem-if:clear (implementation view))
 (defgeneric lem-if:set-view-size (implementation view width height))
 (defgeneric lem-if:set-view-pos (implementation view x y))
-(defgeneric lem-if:print (implementation view x y string attribute))
 (defgeneric lem-if:print-modeline (implementation view x y string attribute))
-(defgeneric lem-if:clear-eol (implementation view x y))
-(defgeneric lem-if:clear-eob (implementation view x y))
 (defgeneric lem-if:redraw-view-before (implementation view)
   (:method (implementation view)))
 (defgeneric lem-if:redraw-view-after (implementation view)
@@ -65,15 +62,9 @@
 (defgeneric lem-if::will-update-display (implementation)
   (:method (implementation)))
 (defgeneric lem-if:update-display (implementation))
-(defgeneric lem-if:force-update-view (implementation view)
-  (:method (implementation view)))
 
 (defgeneric lem-if:set-first-view (implementation view)
   (:method (implementation view)))
-(defgeneric lem-if:split-window-horizontally (implementation view new-view)
-  (:method (implementation view new-view)))
-(defgeneric lem-if:split-window-vertically (implementation view new-view)
-  (:method (implementation view new-view)))
 
 (defgeneric lem-if:display-popup-menu (implementation items
                                        &key action-callback

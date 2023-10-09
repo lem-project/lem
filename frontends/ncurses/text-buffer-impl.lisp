@@ -63,12 +63,11 @@
         (attribute (text-object-attribute object)))
     (when (and attribute (cursor-attribute-p attribute))
       (lem-core::set-last-print-cursor window x y))
-    (lem-if:print (lem-core:implementation)
-                  (lem-core::window-view window)
-                  x
-                  y
-                  string
-                  attribute)))
+    (lem-ncurses::draw-string (lem-core::window-view window)
+                              x
+                              y
+                              string
+                              attribute)))
 
 (defun color-to-hex-string (color)
   (format nil "#~2,'0X~2,'0X~2,'0X"
@@ -78,32 +77,32 @@
 
 (defmethod draw-object ((object eol-cursor-object) x y window)
   (lem-core::set-last-print-cursor window x y)
-  (lem-if:print (lem:implementation)
-                (lem:window-view window)
-                x
-                y
-                " "
-                (lem:make-attribute :foreground
-                                    (color-to-hex-string (eol-cursor-object-color object)))))
+  (lem-ncurses::draw-string
+   (lem:window-view window)
+   x
+   y
+   " "
+   (lem:make-attribute :foreground
+                       (color-to-hex-string (eol-cursor-object-color object)))))
 
 (defmethod draw-object ((object extend-to-eol-object) x y window)
-  (lem-if:print (lem:implementation)
-                (lem:window-view window)
-                x
-                y
-                (make-string (- (lem:window-width window) x) :initial-element #\space)
-                (lem:make-attribute :background
-                                    (color-to-hex-string (extend-to-eol-object-color object)))))
+  (lem-ncurses::draw-string
+   (lem:window-view window)
+   x
+   y
+   (make-string (- (lem:window-width window) x) :initial-element #\space)
+   (lem:make-attribute :background
+                       (color-to-hex-string (extend-to-eol-object-color object)))))
 
 (defmethod draw-object ((object line-end-object) x y window)
   (let ((string (text-object-string object))
         (attribute (text-object-attribute object)))
-    (lem-if:print (lem-core:implementation)
-                  (lem-core::window-view window)
-                  (+ x (line-end-object-offset object))
-                  y
-                  string
-                  attribute)))
+    (lem-ncurses::draw-string
+     (lem-core::window-view window)
+     (+ x (line-end-object-offset object))
+     y
+     string
+     attribute)))
 
 (defmethod draw-object ((object image-object) x y window)
   (values))

@@ -277,18 +277,18 @@
   (indent-points start end))
 
 ;; FIXME: support block
-(define-operator vi-substitute (beg end) ("<r>")
+(define-operator vi-substitute (beg end type) ("<R>")
     (:motion vi-forward-char)
-  (vi-delete beg end :inclusive)
+  (vi-delete beg end type)
   (change-state 'insert))
 
-(define-operator vi-delete-next-char (beg end) ("<r>")
+(define-operator vi-delete-next-char (beg end type) ("<R>")
     (:motion vi-forward-char)
-  (vi-delete beg end :inclusive))
+  (vi-delete beg end type))
 
-(define-operator vi-delete-previous-char (beg end) ("<r>")
+(define-operator vi-delete-previous-char (beg end type) ("<R>")
     (:motion vi-backward-char)
-  (vi-delete beg end :exclusive))
+  (vi-delete beg end type))
 
 (define-operator vi-delete (start end type) ("<R>")
     (:move-point nil)

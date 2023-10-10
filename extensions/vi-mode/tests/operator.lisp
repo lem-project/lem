@@ -189,7 +189,22 @@
 (deftest vi-delete-next-char
   (with-fake-interface ()
     (with-vi-buffer ("")
-      (ok (not (signals (cmd "x")))))))
+      (ok (not (signals (cmd "x")))))
+    (with-vi-buffer (#?"[g]et-param\nget-option\n")
+      (cmd "<C-v>f-jx")
+      (ok (buf= #?"[p]aram\noption\n")))))
+
+(deftest vi-delete-previous-char
+  (with-fake-interface ()
+    (with-vi-buffer (#?"[g]et-param\nget-option\n")
+      (cmd "<C-v>f-jX")
+      (ok (buf= #?"[p]aram\noption\n")))))
+
+(deftest vi-substitute
+  (with-fake-interface ()
+    (with-vi-buffer (#?"[g]et-param\nget-option\n")
+      (cmd "<C-v>f-js")
+      (ok (buf= #?"[p]aram\noption\n")))))
 
 (deftest vi-replace-char
   (with-fake-interface ()

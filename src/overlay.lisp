@@ -42,7 +42,8 @@
   ())
 
 (defclass cursor-overlay (overlay)
-  ())
+  ((fake :initarg :fake
+         :reader cursor-overlay-fake-p)))
 
 (defmethod initialize-instance ((overlay overlay) &key &allow-other-keys)
   (let ((overlay (call-next-method)))
@@ -88,14 +89,15 @@
                    :buffer (point-buffer point)
                    :temporary temporary)))
 
-(defun make-cursor-overlay (point attribute)
+(defun make-cursor-overlay (point attribute &key fake)
   (with-point ((point point))
     (make-instance 'cursor-overlay
                    :start point
                    :end point
                    :attribute attribute
                    :buffer (point-buffer point)
-                   :temporary t)))
+                   :temporary t
+                   :fake fake)))
 
 (defun delete-overlay (overlay)
   (check-type overlay overlay)

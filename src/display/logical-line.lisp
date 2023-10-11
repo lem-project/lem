@@ -113,7 +113,8 @@
                          (let* ((overlay-start-charpos (overlay-start-charpos overlay point))
                                 (overlay-end-charpos (1+ overlay-start-charpos))
                                 (overlay-attribute (overlay-attribute overlay)))
-                           (set-cursor-attribute overlay-attribute)
+                           (unless (cursor-overlay-fake-p overlay)
+                             (set-cursor-attribute overlay-attribute))
                            (if (<= (length string) overlay-start-charpos)
                                (setf end-of-line-cursor-attribute overlay-attribute)
                                (setf attributes
@@ -257,7 +258,8 @@
    point
    (if (typep point 'fake-cursor)
        'fake-cursor
-       'cursor)))
+       'cursor)
+   :fake (typep point 'fake-cursor)))
 
 (defun get-window-overlays (window)
   (let* ((buffer (window-buffer window))

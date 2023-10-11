@@ -86,13 +86,14 @@
                        (color-to-hex-string (eol-cursor-object-color object)))))
 
 (defmethod draw-object ((object extend-to-eol-object) x y window)
-  (lem-ncurses::draw-string
-   (lem:window-view window)
-   x
-   y
-   (make-string (- (lem:window-width window) x) :initial-element #\space)
-   (lem:make-attribute :background
-                       (color-to-hex-string (extend-to-eol-object-color object)))))
+  (when (< x (lem:window-width window))
+    (lem-ncurses::draw-string
+     (lem:window-view window)
+     x
+     y
+     (make-string (- (lem:window-width window) x) :initial-element #\space)
+     (lem:make-attribute :background
+                         (color-to-hex-string (extend-to-eol-object-color object))))))
 
 (defmethod draw-object ((object line-end-object) x y window)
   (let ((string (text-object-string object))

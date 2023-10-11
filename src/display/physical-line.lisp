@@ -243,38 +243,37 @@
                          attribute
                          (char-type character)))
 
-(defun explode-object (text-object)
-  (check-type text-object text-object)
-  (let* ((string (text-object-string text-object))
-         (char-type (char-type (char string 0)))
-         (n (floor (length string) 2)))
-    (loop :for part-string :in (list (subseq string 0 n)
-                                     (subseq string n))
-          :unless (alexandria:emptyp part-string)
-          :collect (make-object-with-type
-                    part-string
-                    (text-object-attribute text-object) char-type))))
-
 (defun separate-objects-by-width (objects view-width)
-  (loop
-    :until (null objects)
-    :collect (loop :with total-width := 0
-                   :and physical-line-objects := '()
-                   :for object := (pop objects)
-                   :while object
-                   :do (cond ((<= view-width (+ total-width (object-width object)))
-                              (cond ((and (typep object 'text-object)
-                                          (< 1 (length (text-object-string object))))
-                                     (setf objects (nconc (explode-object object) objects)))
-                                    (t
-                                     (push object objects)
-                                     (push (make-letter-object #\\ nil)
-                                           physical-line-objects)
-                                     (return (nreverse physical-line-objects)))))
-                             (t
-                              (incf total-width (object-width object))
-                              (push object physical-line-objects)))
-                   :finally (return (nreverse physical-line-objects)))))
+  (flet ((explode-object (text-object)
+           (check-type text-object text-object)
+           (let* ((string (text-object-string text-object))
+                  (char-type (char-type (char string 0)))
+                  (n (floor (length string) 2)))
+             (loop :for part-string :in (list (subseq string 0 n)
+                                              (subseq string n))
+                   :unless (alexandria:emptyp part-string)
+                   :collect (make-object-with-type
+                             part-string
+                             (text-object-attribute text-object) char-type)))))
+    (loop
+      :until (null objects)
+      :collect (loop :with total-width := 0
+                     :and physical-line-objects := '()
+                     :for object := (pop objects)
+                     :while object
+                     :do (cond ((<= view-width (+ total-width (object-width object)))
+                                (cond ((and (typep object 'text-object)
+                                            (< 1 (length (text-object-string object))))
+                                       (setf objects (nconc (explode-object object) objects)))
+                                      (t
+                                       (push object objects)
+                                       (push (make-letter-object #\\ nil)
+                                             physical-line-objects)
+                                       (return (nreverse physical-line-objects)))))
+                               (t
+                                (incf total-width (object-width object))
+                                (push object physical-line-objects)))
+                     :finally (return (nreverse physical-line-objects))))))
 
 (defun render-line (window x y objects height)
   (lem-if:render-line (implementation) window x y objects height))
@@ -355,34 +354,38 @@
                                                    logical-line
                                                    left-side-objects
                                                    left-side-width)
-  (let* ((objects
-           (append left-side-objects (create-drawing-objects logical-line)))
-         (height
-           (max-height-of-objects objects)))
-    (multiple-value-bind (cursor-object cursor-x)
-        (find-cursor-object objects)
-      (when cursor-object
-        (let ((width (- (window-view-width window) left-side-width)))
-          (cond ((< cursor-x (horizontal-scroll-start window))
-                 (setf (horizontal-scroll-start window) cursor-x))
-                ((< (+ (horizontal-scroll-start window)
-                       width)
-                    (+ cursor-x (object-width cursor-object)))
-                 (setf (horizontal-scroll-start window)
-                       (+ (- cursor-x width)
-                          (object-width cursor-object))))))
-        (setf objects
-              (extract-object-in-display-range
-               (mapcan (lambda (object)
-                         (if (typep object 'text-object)
-                             (explode-object object)
-                             (list object)))
-                       objects)
-               (horizontal-scroll-start window)
-               (+ (horizontal-scroll-start window)
-                  (window-view-width window)))))
-      (render-line-with-caching window 0 y objects height))
-    height))
+  (flet ((explode-object (text-object)
+           (check-type text-object text-object)
+           (loop :for c :across (text-object-string text-object)
+                 :collect (make-letter-object c (text-object-attribute text-object)))))
+    (let* ((objects
+             (append left-side-objects (create-drawing-objects logical-line)))
+           (height
+             (max-height-of-objects objects)))
+      (multiple-value-bind (cursor-object cursor-x)
+          (find-cursor-object objects)
+        (when cursor-object
+          (let ((width (- (window-view-width window) left-side-width)))
+            (cond ((< cursor-x (horizontal-scroll-start window))
+                   (setf (horizontal-scroll-start window) cursor-x))
+                  ((< (+ (horizontal-scroll-start window)
+                         width)
+                      (+ cursor-x (object-width cursor-object)))
+                   (setf (horizontal-scroll-start window)
+                         (+ (- cursor-x width)
+                            (object-width cursor-object))))))
+          (setf objects
+                (extract-object-in-display-range
+                 (mapcan (lambda (object)
+                           (if (typep object 'text-object)
+                               (explode-object object)
+                               (list object)))
+                         objects)
+                 (horizontal-scroll-start window)
+                 (+ (horizontal-scroll-start window)
+                    (window-view-width window)))))
+        (render-line-with-caching window 0 y objects height))
+      height)))
 
 (defun redraw-lines (window)
   (let* ((*line-wrap* (variable-value 'line-wrap

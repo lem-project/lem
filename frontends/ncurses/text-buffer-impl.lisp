@@ -125,7 +125,7 @@
 (defmethod lem-if:clear-to-end-of-window ((implementation lem-ncurses::ncurses) window y)
   (let* ((view (lem-core::window-view window))
          (win (lem-ncurses::ncurses-view-scrwin view)))
-    (unless (= y (lem-if:view-height (lem:implementation) view))
+    (when (< y (lem-if:view-height (lem:implementation) view))
       (charms/ll:wmove win y 0)
       (charms/ll:wclrtobot win))))
 

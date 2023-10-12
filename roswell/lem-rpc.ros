@@ -1,11 +1,21 @@
 #!/bin/sh
 #|-*- mode:lisp -*-|#
 #|
-exec ros -Q -m lem-rpc -L sbcl-bin -- $0 "$@"
+exec ros +Q -m lem-rpc -L sbcl-bin -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  (ql:quickload '(:lem-jsonrpc :lem-electron-backend :command-line-arguments) :silent t)
+  (let ((*default-pathname-defaults* (asdf:system-source-directory :lem)))
+    (uiop:chdir *default-pathname-defaults*)
+    (setf (uiop:getenv "SBCL_HOME") "")
+    (uiop:run-program '("qlot" "install" "--no-deps")
+                      :output t
+                      :error-output t)
+    #+quicklisp
+    (setf ql:*quicklisp-home*
+          (merge-pathnames #P".qlot/"))
+    (load (merge-pathnames #P".qlot/setup.lisp")))
+  (uiop:symbol-call :ql :quickload '(:lem-jsonrpc :lem-electron-backend :command-line-arguments) :silent t)
   (uiop:symbol-call :lem-core :load-site-init))
 
 (defpackage :ros.script.lem-rpc.3715592460

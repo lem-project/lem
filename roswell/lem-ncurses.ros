@@ -1,11 +1,22 @@
 #!/bin/sh
 #|-*- mode:lisp -*-|#
 #| lem simple emacs clone.
-exec ros -Q -m lem-ncurses -L sbcl-bin -- $0 "$@"
+exec ros +Q -m lem-ncurses -L sbcl-bin -- $0 "$@"
 |#
 (progn
+  (ros:ensure-asdf)
+  (let ((*default-pathname-defaults* (asdf:system-source-directory :lem)))
+    (uiop:chdir *default-pathname-defaults*)
+    (setf (uiop:getenv "SBCL_HOME") "")
+    (uiop:run-program '("qlot" "install" "--no-deps")
+                      :output t
+                      :error-output t)
+    #+quicklisp
+    (setf ql:*quicklisp-home*
+          (merge-pathnames #P".qlot/"))
+    (load (merge-pathnames #P".qlot/setup.lisp")))
   (unless (find-package :lem)
-    (ql:quickload :lem-ncurses :silent t)
+    (uiop:symbol-call :ql :quickload :lem-ncurses :silent t)
     (uiop:symbol-call :lem-core :load-site-init))
   (when (find :roswell.dump.executable *features*)
     (mapc (lambda (x)

@@ -17,7 +17,7 @@ Options:
         --log-filename FILENAME file name of the log file
         --kill                  immediately exit
         -v, --version           print the version number and exit
-        -h, --help              display this help and exit" 
+        -h, --help              display this help and exit"
 "Help output for cli")
 
 (defun syntax-scan-window (window)
@@ -120,7 +120,6 @@ Options:
                                  (let ((filename (pop args)))
                                    (unless filename
                                      (error "Please, specify a filename to log to."))
-                                   
                                    (setf (command-line-arguments-log-filename parsed-args)
                                          filename)))
                                 ((equal arg "--kill")
@@ -216,12 +215,6 @@ Options:
        (setf *in-the-editor* nil)))
    :name "editor"))
 
-#+sbcl
-(defun find-editor-thread ()
-  (find "editor" (sb-thread:list-all-threads)
-        :test #'equal
-        :key #'sb-thread:thread-name))
-#-sbcl
 (defun find-editor-thread ()
   (find "editor" (bt:all-threads)
         :test #'equal

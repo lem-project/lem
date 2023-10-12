@@ -1050,6 +1050,10 @@
       process)))
 
 (defun send-swank-create-server (process port)
+  (let ((file (asdf:system-source-file (asdf:find-system :micros))))
+    (lem-process:process-send-input
+     process
+     (format nil "(asdf:load-asd ~S)" file)))
   (lem-process:process-send-input
    process
    "(ql:quickload :micros)")

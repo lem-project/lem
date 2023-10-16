@@ -38,6 +38,8 @@
      :keymap *directory-mode-keymap*)
   (setf (variable-value 'highlight-line :buffer (current-buffer)) nil))
 
+(define-key *global-keymap* "C-x C-j" 'find-file-directory)
+
 (define-key *directory-mode-keymap* "q" 'quit-active-window)
 (define-key *directory-mode-keymap* "M-q" 'quit-active-window)
 (define-key *directory-mode-keymap* "g" 'directory-mode-update-buffer)
@@ -551,6 +553,18 @@
   (setf filename (uiop:ensure-directory-pathname filename))
   (ensure-directories-exist filename)
   (update-all))
+
+(define-command find-file-directory () ()
+  "Open this file's directory and place point on the filename."
+  (let ((fullpath (buffer-filename)))
+    (cond
+      ((null fullpath)
+       (message "No file at point"))
+      (t
+       (switch-to-buffer
+        (find-file-buffer (lem-core/commands/file::directory-for-file-or-lose (buffer-directory))))
+       (let ((filename (file-namestring fullpath)))
+         (search-filename-and-recenter (file-namestring filename)))))))
 
 (setf *find-directory-function* 'directory-buffer)
 

@@ -93,7 +93,7 @@
 (defparameter *modifier-code-table*
   `((:shift ,sdl2-ffi:+kmod-lshift+ ,sdl2-ffi:+kmod-rshift+)
     (:ctrl ,sdl2-ffi:+kmod-lctrl+ ,sdl2-ffi:+kmod-rctrl+)
-    (:meta ,sdl2-ffi:+kmod-lalt+ ,sdl2-ffi:+kmod-ralt+)
+    (:meta ,sdl2-ffi:+kmod-lalt+)
     (:super ,sdl2-ffi:+kmod-lgui+ ,sdl2-ffi:+kmod-rgui+)))
 
 (defun mod-p (mod mod-type)

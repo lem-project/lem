@@ -183,11 +183,28 @@ Options:
       (unless (uiop:pathname-equal current-dir (user-homedir-pathname))
         (maybe-load (merge-pathnames ".lemrc" current-dir))))))
 
+(defun initialize-source-registry ()
+  (asdf:initialize-source-registry
+   `(:source-registry
+     :inherit-configuration
+     (:also-exclude ".qlot")
+     (:tree ,(asdf:system-source-directory :lem)))))
+
+(defun init-at-build-time ()
+  "This function is called when an lem executable file is built.
+If a file named $HOME/.lem/build-init.lisp exists, it is loaded.
+The difference is that init.lisp loading is called when the editor is started,
+while build-init.lisp is called when the binary file is created.
+See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
+  (initialize-source-registry)
+  (let ((file (merge-pathnames "build-init.lisp" (lem-home))))
+    (when (uiop:file-exists-p file)
+      (load file))))
+
 (defun init (args)
   (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
                  *original-home*)
     (init-quicklisp (merge-pathnames "quicklisp/" (lem-home))))
-  (uiop:symbol-call :lem-core :load-site-init)
   (run-hooks *before-init-hook*)
   (unless (command-line-arguments-no-init-file args)
     (load-init-file))
@@ -197,11 +214,6 @@ Options:
 (defun run-editor-thread (initialize args finalize)
   (bt:make-thread
    (lambda ()
-     (asdf:initialize-source-registry
-      `(:source-registry
-        :inherit-configuration
-        (:also-exclude ".qlot")
-        (:tree ,(asdf:system-source-directory :lem))))
      (when initialize (funcall initialize))
      (unwind-protect
           (let (#+lispworks (lw:*default-character-element-type* 'character))

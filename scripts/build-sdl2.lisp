@@ -1,2 +1,7 @@
 (ql:quickload :lem-sdl2)
-(asdf:make :lem-sdl2/executable)
+
+(lem:init-at-build-time)
+
+(sb-ext:save-lisp-and-die "lem"
+                          :toplevel #'lem:lem
+                          :executable t)

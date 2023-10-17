@@ -479,6 +479,7 @@
    :*splash-function*
    :setup-first-frame
    :find-editor-thread
+   :init-at-build-time
    :lem
    :main)
   ;; command-advices.lisp

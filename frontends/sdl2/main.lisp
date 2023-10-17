@@ -38,7 +38,7 @@
        ,@body)))
 
 (defun do-log (value)
-  (let ((log-file (merge-pathnames "error.log" (lem:lem-home))))
+  (let ((log-file (merge-pathnames "logs/error.log" (lem:lem-home))))
     (ensure-directories-exist log-file)
     (with-open-file (out log-file
                          :direction :output

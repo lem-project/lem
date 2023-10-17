@@ -200,8 +200,7 @@
 (defsystem "lem/legit"
   :serial t
   :depends-on ("lem")
-  :pathname "src"
-  :components ((:module "ext/legit"
+  :components ((:module "extensions/legit"
                 :components ((:file "porcelain")
                              (:file "peek-legit")
                              (:file "legit")

@@ -5,8 +5,7 @@ exec ros +Q -m lem-rpc -L sbcl-bin -- $0 "$@"
 |#
 (progn ;;init forms
   (ros:ensure-asdf)
-  (let ((*default-pathname-defaults* (asdf:system-source-directory :lem)))
-    (uiop:chdir *default-pathname-defaults*)
+  (uiop:with-current-directory ((asdf:system-source-directory :lem))
     (setf (uiop:getenv "SBCL_HOME") "")
     (uiop:run-program '("qlot" "install" "--no-deps")
                       :output t

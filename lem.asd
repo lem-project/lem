@@ -1,6 +1,5 @@
 #+ros.installing
-(let ((*default-pathname-defaults* (uiop:pathname-directory-pathname *load-truename*)))
-  (uiop:chdir *default-pathname-defaults*)
+(uiop:with-current-directory ((uiop:pathname-directory-pathname *load-truename*))
   (unless (uiop:directory-exists-p (merge-pathnames #P".qlot/"))
     (setf (uiop:getenv "SBCL_HOME") "")
     (uiop:run-program '("qlot" "install" "--no-deps")

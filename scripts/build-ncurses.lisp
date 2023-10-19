@@ -1,2 +1,7 @@
 (ql:quickload :lem-ncurses)
-(asdf:make :lem/executable)
+
+(lem:init-at-build-time)
+
+(sb-ext:save-lisp-and-die "lem"
+                          :toplevel #'lem:lem
+                          :executable t)

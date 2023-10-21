@@ -137,6 +137,10 @@
                                   (or overlay-end-charpos (length string))
                                   overlay-attribute))))))
         (setf (values string attributes) (expand-tab string attributes tab-width))
+        (let ((charpos (point-charpos point)))
+          (when (< 0 charpos)
+            (psetf string (subseq string charpos)
+                   attributes (lem-base::subseq-elements attributes charpos (length string)))))
         (make-logical-line :string string
                            :attributes attributes
                            :left-content left-content

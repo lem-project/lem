@@ -232,7 +232,7 @@
       (loop
         (handler-case
             (progn
-              (unless (bt:thread-alive-p editor-thread) (return))
+              (unless (bt2:thread-alive-p editor-thread) (return))
               (let ((event (get-event)))
                 (if (eq event :abort)
                     (send-abort-event editor-thread nil)
@@ -245,7 +245,7 @@
 
 (defmethod lem-if:invoke ((implementation ncurses) function)
   (let ((result nil)
-        (input-thread (bt:current-thread)))
+        (input-thread (bt2:current-thread)))
     (unwind-protect
          (when (lem.term:term-init)
            (let ((*standard-output* (make-broadcast-stream))
@@ -255,7 +255,7 @@
                      (funcall function
                               nil
                               (lambda (report)
-                                (bt:interrupt-thread
+                                (bt2:interrupt-thread
                                  input-thread
                                  (lambda () (error 'exit :value report)))))))
                (setf result (input-loop editor-thread)))))

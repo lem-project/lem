@@ -111,24 +111,24 @@
 (defclass timer (<timer>)
   ((mutex
     :accessor timer-mutex
-    :type bt:lock)
+    :type bt2:lock)
    (stop-mailbox
     :accessor timer-stop-mailbox
     :type lem-mailbox:mailbox)
    (thread
     :accessor timer-thread
-    :type bt:thread)))
+    :type bt2:thread)))
 
 (defmethod timer-expired-p ((timer timer))
-  (bt:with-lock-held ((timer-mutex timer))
+  (bt2:with-lock-held ((timer-mutex timer))
     (call-next-method)))
 
 (defmethod expire-timer ((timer timer))
-  (bt:with-lock-held ((timer-mutex timer))
+  (bt2:with-lock-held ((timer-mutex timer))
     (set-timer-expired-p t timer)))
 
 (defmethod inspire-timer ((timer timer))
-  (bt:with-lock-held ((timer-mutex timer))
+  (bt2:with-lock-held ((timer-mutex timer))
     (set-timer-expired-p nil timer)))
 
 (defun make-timer (function &key name handle-function)
@@ -138,7 +138,7 @@
   (setf (timer-ms timer) ms
         (timer-repeat-p timer) repeat-p
         (timer-mutex timer) 
-        (bt:make-lock "timer internal mutex"))
+        (bt2:make-lock :name "timer internal mutex"))
   (start-timer-thread timer ms repeat-p)
   timer)
 
@@ -152,7 +152,7 @@
     (setf (timer-stop-mailbox timer)
           stop-mailbox)
     (setf (timer-thread timer)
-          (bt:make-thread
+          (bt2:make-thread
            (lambda ()
              (loop
                (let ((recv-stop-msg

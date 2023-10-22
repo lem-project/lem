@@ -15,11 +15,11 @@
 
 (defvar *log-pathname* (merge-pathnames "language-client.log" (lem:lem-logdir-pathname)))
 (defvar *log-enable* t)
-(defvar *log-mutex* (bt:make-lock))
+(defvar *log-mutex* (bt2:make-lock))
 
 (defun do-log (string &rest args)
   (when *log-enable*
-    (bt:with-lock-held (*log-mutex*)
+    (bt2:with-lock-held (*log-mutex*)
       (ensure-directories-exist *log-pathname*)
       (with-open-file (out *log-pathname*
                            :direction :output

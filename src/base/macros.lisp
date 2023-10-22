@@ -60,7 +60,7 @@ Example:
              (setf *interrupted* nil)
              (error 'editor-interrupt)))))))
 
-;; 別のスレッドから(bt:interrupt-thread thread #'interrupt)で使う関数
+;; 別のスレッドから(bt2:interrupt-thread thread #'interrupt)で使う関数
 (defun interrupt (&optional force)
   (cond
     (force

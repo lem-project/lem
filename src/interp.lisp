@@ -149,7 +149,7 @@
   (signal 'exit-editor :report report))
 
 (defun call-background-job (function cont)
-  (bt:make-thread
+  (bt2:make-thread
    (lambda ()
      (let ((error-text))
        (handler-case

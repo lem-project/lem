@@ -262,20 +262,24 @@
 
 (defconstant +active-modes-class-name+ '%active-modes-class)
 
-(defvar *last-active-modes-class-instance-cache* nil)
+(defun buffer-active-modes-class-cache (buffer)
+  (buffer-value buffer 'mode-class-cache))
+
+(defun (setf buffer-active-modes-class-cache) (value buffer)
+  (setf (buffer-value buffer 'mode-class-cache) value))
 
 (defun get-active-modes-class-instance (buffer)
   (let ((mode-classes (all-active-mode-classes buffer)))
-    (cond ((or (null *last-active-modes-class-instance-cache*)
-               (not (equal (car *last-active-modes-class-instance-cache*)
+    (cond ((or (null (buffer-active-modes-class-cache buffer))
+               (not (equal (car (buffer-active-modes-class-cache buffer))
                            (mapcar #'class-name mode-classes))))
            (let ((instance
                    (make-instance
                     (c2mop:ensure-class +active-modes-class-name+
                                         :direct-superclasses mode-classes))))
-             (setf *last-active-modes-class-instance-cache*
+             (setf (buffer-active-modes-class-cache buffer)
                    (cons (mapcar #'class-name mode-classes)
                          instance))
              instance))
           (t
-           (cdr *last-active-modes-class-instance-cache*)))))
+           (cdr (buffer-active-modes-class-cache buffer))))))

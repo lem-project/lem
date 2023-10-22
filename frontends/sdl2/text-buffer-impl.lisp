@@ -55,19 +55,39 @@
       (setf (text-object-surface drawing-object)
             (call-next-method))))
 
+(defvar *surface-cache-table* (make-hash-table :test 'equal))
+
+(defstruct cache-entry
+  type
+  attribute
+  surface)
+
 (defmethod get-surface ((drawing-object text-object))
-  (let* ((attribute (text-object-attribute drawing-object))
-         (foreground (lem-core:attribute-foreground-with-reverse attribute)))
-    (cffi:with-foreign-string (c-string (text-object-string drawing-object))
-      (sdl2-ttf:render-utf8-blended
-       (get-font :attribute attribute
-                 :type (text-object-type drawing-object)
-                 :bold (and attribute (lem:attribute-bold attribute)))
-       c-string
-       (lem:color-red foreground)
-       (lem:color-green foreground)
-       (lem:color-blue foreground)
-       0))))
+  (let ((string (text-object-string drawing-object))
+        (attribute (text-object-attribute drawing-object))
+        (type (text-object-type drawing-object)))
+    (dolist (entry (gethash string *surface-cache-table*))
+      (when (and (lem-core:attribute-equal attribute (cache-entry-attribute entry))
+                 (eq type (cache-entry-type entry)))
+        (return-from get-surface (cache-entry-surface entry))))
+    (let ((surface
+            (cffi:with-foreign-string (c-string string)
+              (let ((foreground (lem-core:attribute-foreground-with-reverse attribute)))
+                (sdl2-ttf:render-utf8-blended
+                 (get-font :attribute attribute
+                           :type type
+                           :bold (and attribute (lem:attribute-bold attribute)))
+                 c-string
+                 (lem:color-red foreground)
+                 (lem:color-green foreground)
+                 (lem:color-blue foreground)
+                 0)))))
+      (push (make-cache-entry
+             :type type
+             :attribute attribute
+             :surface surface)
+            (gethash string *surface-cache-table*))
+      surface)))
 
 (defmethod get-surface ((drawing-object icon-object))
   (let* ((string (text-object-string drawing-object))

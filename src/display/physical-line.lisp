@@ -5,9 +5,11 @@
 (deftype char-type ()
   '(member :latin :cjk :braille :emoji :icon :control))
 
+;; TODO: remove
 (defun window-view-width (window)
   (lem-if:view-width (implementation) (window-view window)))
 
+;; TODO: remove
 (defun window-view-height (window)
   (lem-if:view-height (implementation) (window-view window)))
 
@@ -260,8 +262,8 @@
                                 (push object physical-line-objects)))
                      :finally (return (nreverse physical-line-objects))))))
 
-(defun render-line (window x y objects height)
-  (lem-if:render-line (implementation) window x y objects height))
+(defun render-line (view x y objects height)
+  (lem-if:render-line (implementation) view x y objects height))
 
 (defun validate-cache-p (window y height objects)
   (loop :for (cache-y cache-height cache-objects) :in (drawing-cache window)
@@ -292,7 +294,7 @@
 
 (defun render-line-with-caching (window x y objects height)
   (unless (update-and-validate-cache-p window y height objects)
-    (render-line window x y objects height)))
+    (render-line (window-view window) x y objects height)))
 
 (defun max-height-of-objects (objects)
   (loop :for object :in objects

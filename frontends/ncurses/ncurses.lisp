@@ -45,6 +45,7 @@
   (shape nil :type (member nil :drop-curtain)))
 
 (defstruct ncurses-view
+  window
   border
   scrwin
   modeline-scrwin
@@ -308,6 +309,7 @@
              (when use-modeline (charms/ll:keypad win 1))
              win)))
     (make-ncurses-view
+     :window window
      :border (when (and (floating-window-p window)
                         (floating-window-border window)
                         (< 0 (floating-window-border window)))

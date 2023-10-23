@@ -33,10 +33,9 @@
 (defmethod lem-if:view-height ((implementation lem-sdl2::sdl2) view)
   (* (lem-sdl2::char-height) (lem-sdl2::view-height view)))
 
-(defun set-cursor-position (window x y)
-  (let ((view (lem:window-view window)))
-    (setf (lem-sdl2::view-last-cursor-x view) x
-          (lem-sdl2::view-last-cursor-y view) y)))
+(defun set-cursor-position (view x y)
+  (setf (lem-sdl2::view-last-cursor-x view) x
+        (lem-sdl2::view-last-cursor-y view) y))
 
 (defgeneric get-surface (drawing-object))
 
@@ -166,10 +165,10 @@
   (object-height drawing-object))
 
 ;;; draw-object
-(defmethod draw-object ((drawing-object void-object) x bottom-y window)
+(defmethod draw-object ((drawing-object void-object) x bottom-y view)
   0)
 
-(defmethod draw-object ((drawing-object text-object) x bottom-y window)
+(defmethod draw-object ((drawing-object text-object) x bottom-y view)
   (let* ((surface-width (object-width drawing-object))
          (surface-height (object-height drawing-object))
          (attribute (text-object-attribute drawing-object))
@@ -179,7 +178,7 @@
                    (get-surface drawing-object)))
          (y (- bottom-y surface-height)))
     (when (and attribute (cursor-attribute-p attribute))
-      (set-cursor-position window x y))
+      (set-cursor-position view x y))
     (sdl2:with-rects ((rect x y surface-width surface-height))
       (lem-sdl2::set-render-color lem-sdl2::*display* background)
       (sdl2:render-fill-rect (lem-sdl2::current-renderer) rect))
@@ -203,10 +202,10 @@
                                               (lem-sdl2::attribute-foreground-color attribute))))))
     surface-width))
 
-(defmethod draw-object ((drawing-object eol-cursor-object) x bottom-y window)
+(defmethod draw-object ((drawing-object eol-cursor-object) x bottom-y view)
   (lem-sdl2::set-render-color lem-sdl2::*display* (eol-cursor-object-color drawing-object))
   (let ((y (- bottom-y (object-height drawing-object))))
-    (set-cursor-position window x y)
+    (set-cursor-position view x y)
     (sdl2:with-rects ((rect x
                             y
                             (lem-sdl2::char-width)
@@ -214,24 +213,24 @@
       (sdl2:render-fill-rect (lem-sdl2::current-renderer) rect)))
   (object-width drawing-object))
 
-(defmethod draw-object ((drawing-object extend-to-eol-object) x bottom-y window)
+(defmethod draw-object ((drawing-object extend-to-eol-object) x bottom-y view)
   (lem-sdl2::set-render-color lem-sdl2::*display* (extend-to-eol-object-color drawing-object))
   (sdl2:with-rects ((rect x
                           (- bottom-y (lem-sdl2::char-height))
-                          (- (window-view-width window) x)
+                          (- (lem-if:view-width (lem-core:implementation) view) x)
                           (lem-sdl2::char-height)))
     (sdl2:render-fill-rect (lem-sdl2::current-renderer)
                            rect))
   (object-width drawing-object))
 
-(defmethod draw-object ((drawing-object line-end-object) x bottom-y window)
+(defmethod draw-object ((drawing-object line-end-object) x bottom-y view)
   (call-next-method drawing-object
                     (+ x
                        (* (line-end-object-offset drawing-object)
                           (lem-sdl2::char-width)))
                     bottom-y))
 
-(defmethod draw-object ((drawing-object image-object) x bottom-y window)
+(defmethod draw-object ((drawing-object image-object) x bottom-y view)
   (let* ((surface-width (object-width drawing-object))
          (surface-height (object-height drawing-object))
          (texture (sdl2:create-texture-from-surface (lem-sdl2::current-renderer)
@@ -241,19 +240,19 @@
     (sdl2:destroy-texture texture)
     surface-width))
 
-(defun redraw-physical-line (window x y objects height)
+(defun redraw-physical-line (view x y objects height)
   (loop :with current-x := x
         :for object :in objects
-        :do (incf current-x (draw-object object current-x (+ y height) window))))
+        :do (incf current-x (draw-object object current-x (+ y height) view))))
 
-(defun clear-to-end-of-line (window x y height)
-  (sdl2:with-rects ((rect x y (- (window-view-width window) x) height))
+(defun clear-to-end-of-line (view x y height)
+  (sdl2:with-rects ((rect x y (- (lem-if:view-width (lem-core:implementation) view) x) height))
     (lem-sdl2::set-render-color lem-sdl2::*display* (lem-sdl2::display-background-color lem-sdl2::*display*))
     (sdl2:render-fill-rect (lem-sdl2::current-renderer) rect)))
 
-(defmethod lem-if:render-line ((implementation lem-sdl2::sdl2) window x y objects height)
-  (clear-to-end-of-line window 0 y height)
-  (redraw-physical-line window x y objects height))
+(defmethod lem-if:render-line ((implementation lem-sdl2::sdl2) view x y objects height)
+  (clear-to-end-of-line view 0 y height)
+  (redraw-physical-line view x y objects height))
 
 (defmethod lem-if:clear-to-end-of-window ((implementation lem-sdl2::sdl2) window y)
   (lem-sdl2::set-render-color

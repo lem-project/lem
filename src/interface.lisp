@@ -111,7 +111,7 @@
 (defgeneric lem-if:get-char-width (implementation))
 (defgeneric lem-if:get-char-height (implementation))
 
-(defgeneric lem-if:render-line (implementation window x y objects height))
+(defgeneric lem-if:render-line (implementation view x y objects height))
 (defgeneric lem-if:object-width (implementation drawing-object))
 (defgeneric lem-if:object-height (implementation drawing-object))
 (defgeneric lem-if:clear-to-end-of-window (implementation window y))

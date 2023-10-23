@@ -27,6 +27,9 @@
                 :text-object))
 (in-package :lem-ncurses/text-buffer-impl)
 
+(defun view-window (view)
+  (lem-ncurses::ncurses-view-window view))
+
 (defgeneric object-width (drawing-object))
 
 (defmethod object-width ((drawing-object void-object))
@@ -53,17 +56,17 @@
 (defmethod lem-if:view-height ((implementation lem-ncurses::ncurses) view)
   (lem-ncurses::ncurses-view-height view))
 
-(defgeneric draw-object (object x y window))
+(defgeneric draw-object (object x y view))
 
-(defmethod draw-object ((object void-object) x y window)
+(defmethod draw-object ((object void-object) x y view)
   (values))
 
-(defmethod draw-object ((object text-object) x y window)
+(defmethod draw-object ((object text-object) x y view)
   (let ((string (text-object-string object))
         (attribute (text-object-attribute object)))
     (when (and attribute (cursor-attribute-p attribute))
-      (lem-core::set-last-print-cursor window x y))
-    (lem-ncurses::draw-string (lem-core::window-view window)
+      (lem-core::set-last-print-cursor (view-window view) x y))
+    (lem-ncurses::draw-string view
                               x
                               y
                               string
@@ -75,46 +78,46 @@
           (lem:color-green color)
           (lem:color-blue color)))
 
-(defmethod draw-object ((object eol-cursor-object) x y window)
-  (lem-core::set-last-print-cursor window x y)
+(defmethod draw-object ((object eol-cursor-object) x y view)
+  (lem-core::set-last-print-cursor (view-window view) x y)
   (lem-ncurses::draw-string
-   (lem:window-view window)
+   view
    x
    y
    " "
    (lem:make-attribute :foreground
                        (color-to-hex-string (eol-cursor-object-color object)))))
 
-(defmethod draw-object ((object extend-to-eol-object) x y window)
-  (when (< x (lem:window-width window))
-    (lem-ncurses::draw-string
-     (lem:window-view window)
-     x
-     y
-     (make-string (- (lem:window-width window) x) :initial-element #\space)
-     (lem:make-attribute :background
-                         (color-to-hex-string (extend-to-eol-object-color object))))))
+(defmethod draw-object ((object extend-to-eol-object) x y view)
+  (let ((width (lem-if:view-width (lem-core:implementation) view)))
+    (when (< x width)
+      (lem-ncurses::draw-string
+       view
+       x
+       y
+       (make-string (- width x) :initial-element #\space)
+       (lem:make-attribute :background
+                           (color-to-hex-string (extend-to-eol-object-color object)))))))
 
-(defmethod draw-object ((object line-end-object) x y window)
+(defmethod draw-object ((object line-end-object) x y view)
   (let ((string (text-object-string object))
         (attribute (text-object-attribute object)))
     (lem-ncurses::draw-string
-     (lem-core::window-view window)
+     view
      (+ x (line-end-object-offset object))
      y
      string
      attribute)))
 
-(defmethod draw-object ((object image-object) x y window)
+(defmethod draw-object ((object image-object) x y view)
   (values))
 
-(defmethod lem-if:render-line ((implementation lem-ncurses::ncurses) window x y objects height)
-  (let ((view (lem:window-view window)))
-    (charms/ll:wmove (lem-ncurses::ncurses-view-scrwin view) y x)
-    (charms/ll:wclrtoeol (lem-ncurses::ncurses-view-scrwin view))
-    (loop :for object :in objects
-          :do (draw-object object x y window)
-              (incf x (object-width object)))))
+(defmethod lem-if:render-line ((implementation lem-ncurses::ncurses) view x y objects height)
+  (charms/ll:wmove (lem-ncurses::ncurses-view-scrwin view) y x)
+  (charms/ll:wclrtoeol (lem-ncurses::ncurses-view-scrwin view))
+  (loop :for object :in objects
+        :do (draw-object object x y view)
+            (incf x (object-width object))))
 
 (defmethod lem-if:object-width ((implementation lem-ncurses::ncurses) drawing-object)
   (object-width drawing-object))

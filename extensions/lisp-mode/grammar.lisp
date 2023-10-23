@@ -1,8 +1,8 @@
-(defpackage :lem-lisp-mode/grammer
+(defpackage :lem-lisp-mode/grammar
   (:use :cl :lem)
   (:export :get-features
            :make-tmlanguage-lisp))
-(in-package :lem-lisp-mode/grammer)
+(in-package :lem-lisp-mode/grammar)
 
 (defgeneric get-features () (:method () nil))
 

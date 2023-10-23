@@ -1,5 +1,5 @@
 (defsystem "lem-c-mode"
   :depends-on ("lem" "lem-lisp-mode")
   :serial t
-  :components ((:file "grammer")
+  :components ((:file "grammar")
                (:file "c-mode")))

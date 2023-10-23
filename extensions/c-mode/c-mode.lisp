@@ -18,7 +18,7 @@
                 :expr-suffix-chars '(#\, #\; #| #\= #\& #\| |#)
                 :line-comment-string "//"
                 :block-comment-pairs '(("/*" . "*/"))))
-        (tmlanguage (lem-c-mode.grammer:make-tmlanguage-c)))
+        (tmlanguage (lem-c-mode.grammar:make-tmlanguage-c)))
     (set-syntax-parser table tmlanguage)
     table))
 

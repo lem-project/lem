@@ -18,7 +18,7 @@
                (:file "errors")
                (:file "swank-protocol")
                (:file "package")
-               (:file "grammer")
+               (:file "grammar")
                (:file "scheme-mode")
                (:file "swank-connection")
                #+#.(cl:if (asdf:find-system :async-process cl:nil) '(and) '(or))

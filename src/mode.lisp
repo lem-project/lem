@@ -262,6 +262,9 @@
 
 (defconstant +active-modes-class-name+ '%active-modes-class)
 
+(defun buffer-mode-class-name (buffer)
+  (alexandria:symbolicate +active-modes-class-name+ '- (buffer-name buffer)))
+
 (defun buffer-active-modes-class-cache (buffer)
   (buffer-value buffer 'mode-class-cache))
 
@@ -275,7 +278,7 @@
                            (mapcar #'class-name mode-classes))))
            (let ((instance
                    (make-instance
-                    (c2mop:ensure-class +active-modes-class-name+
+                    (c2mop:ensure-class (buffer-mode-class-name buffer)
                                         :direct-superclasses mode-classes))))
              (setf (buffer-active-modes-class-cache buffer)
                    (cons (mapcar #'class-name mode-classes)

@@ -29,14 +29,6 @@
 
 (defvar +lem-x11-wm-class+ "Lem SDL2")
 
-(defmacro with-bindings (bindings &body body)
-  `(let ,bindings
-     (let ((bt:*default-special-bindings*
-             (list* ,@(loop :for (var) :in bindings
-                            :collect `(cons ',var ,var))
-                    bt:*default-special-bindings*)))
-       ,@body)))
-
 (defun do-log (value)
   (let ((log-file (merge-pathnames "logs/error.log" (lem:lem-home))))
     (ensure-directories-exist log-file)

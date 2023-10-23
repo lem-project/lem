@@ -122,7 +122,7 @@
                      `(:sequence
                        "("
                        (:sequence
-                        ,(lem-lisp-mode/grammer::wrap-symbol-names
+                        ,(lem-lisp-mode/grammar::wrap-symbol-names
                           "defun" "cl-defun" "defclass" "cl-defgeneric" "cl-defmacro" ))
                        (:greedy-repetition 0 1 (:register symbol)))
                      :captures (vector nil
@@ -131,7 +131,7 @@
                     
                     (make-tm-match
                      `(:sequence
-                       "(" ,(lem-lisp-mode/grammer::wrap-symbol-names "defun" "cl-defmethod" "cl-defun")
+                       "(" ,(lem-lisp-mode/grammar::wrap-symbol-names "defun" "cl-defmethod" "cl-defun")
                        ,(ppcre:parse-string "\\s*\\(")
                        ,(ppcre:parse-string "((?i:setf))\\s+")
                        (:greedy-repetition 0 1 (:register symbol)))
@@ -143,7 +143,7 @@
                     (make-tm-match
                      `(:sequence
                        "("
-                       ,(lem-lisp-mode/grammer::wrap-symbol-names
+                       ,(lem-lisp-mode/grammar::wrap-symbol-names
                          "defvar" "defconst")
                        (:greedy-repetition 0 1 (:register symbol)))
                      :captures (vector nil
@@ -152,7 +152,7 @@
 
                     (make-tm-match
                      `(:sequence
-                       "(" ,(lem-lisp-mode/grammer::wrap-symbol-names "defstruct" "cl-defstruct")
+                       "(" ,(lem-lisp-mode/grammar::wrap-symbol-names "defstruct" "cl-defstruct")
                        ,(ppcre:parse-string "\\s*\\(")
                        (:register symbol))
                      :captures (vector nil
@@ -161,7 +161,7 @@
 
                     (make-tm-match
                      `(:sequence
-                       "(" ,(lem-lisp-mode/grammer::wrap-symbol-names "error"))
+                       "(" ,(lem-lisp-mode/grammar::wrap-symbol-names "error"))
                      :captures (vector nil (make-tm-name 'syntax-warning-attribute)))
 
                     (make-tm-match

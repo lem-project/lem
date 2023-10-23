@@ -532,6 +532,7 @@
     (when save-font-size-p
       (save-font-size font-config (first (display-scale *display*))))
     (clear-font-cache)
+    (clear-text-surface-cache)
     (lem:send-event :resize)))
 
 (defun create-view-texture (width height)
@@ -1295,6 +1296,9 @@
   type
   attribute
   surface)
+
+(defun clear-text-surface-cache ()
+  (clrhash *text-surface-cache*))
 
 (defun get-text-surface-cache (string attribute type)
   (dolist (entry (gethash string *text-surface-cache*))

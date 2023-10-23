@@ -436,9 +436,9 @@
         (setf (window-modeline-elements-cache window) elements)
         (lem-if:print-modeline (implementation) view 0 0
                                (make-string (window-width window) :initial-element #\space)
-                               default-attribute)
+                               (ensure-attribute default-attribute nil))
         (loop :for (x string attribute) :in elements
-              :do (lem-if:print-modeline (implementation) view x 0 string attribute))))))
+              :do (lem-if:print-modeline (implementation) view x 0 string (ensure-attribute attribute nil)))))))
 
 (defun get-background-color-of-window (window)
   (cond ((typep window 'floating-window)

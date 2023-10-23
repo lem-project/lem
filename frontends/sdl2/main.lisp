@@ -92,10 +92,6 @@
   (or (lem:parse-color lem-if:*background-color-of-drawing-window*)
       (slot-value display 'background-color)))
 
-(defun set-color (color)
-  (when color
-    (lem-sdl2::set-render-color lem-sdl2::*display* color)))
-
 (defun char-width () (display-char-width *display*))
 (defun char-height () (display-char-height *display*))
 (defun current-renderer () (display-renderer *display*))
@@ -182,11 +178,12 @@
                           (display-height display)))))
 
 (defmethod set-render-color ((display display) color)
-  (sdl2:set-render-draw-color (display-renderer display)
-                              (lem:color-red color)
-                              (lem:color-green color)
-                              (lem:color-blue color)
-                              0))
+  (when color
+    (sdl2:set-render-draw-color (display-renderer display)
+                                (lem:color-red color)
+                                (lem:color-green color)
+                                (lem:color-blue color)
+                                0)))
 
 (defun notify-required-redisplay ()
   (with-renderer ()
@@ -911,7 +908,7 @@
   (with-debug ("will-update-display")
     (with-renderer ()
       (sdl2:set-render-target (current-renderer) (display-texture *display*))
-      (set-color (display-background-color *display*))
+      (set-render-color *display* (display-background-color *display*))
       (sdl2:render-clear (current-renderer)))))
 
 (defun set-input-method ()

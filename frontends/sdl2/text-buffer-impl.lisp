@@ -181,7 +181,7 @@
     (when (and attribute (cursor-attribute-p attribute))
       (set-cursor-position window x y))
     (sdl2:with-rects ((rect x y surface-width surface-height))
-      (lem-sdl2::set-color background)
+      (lem-sdl2::set-render-color lem-sdl2::*display* background)
       (sdl2:render-fill-rect (lem-sdl2::current-renderer) rect))
     (lem-sdl2::render-texture (lem-sdl2::current-renderer)
                               texture
@@ -204,7 +204,7 @@
     surface-width))
 
 (defmethod draw-object ((drawing-object eol-cursor-object) x bottom-y window)
-  (lem-sdl2::set-color (eol-cursor-object-color drawing-object))
+  (lem-sdl2::set-render-color lem-sdl2::*display* (eol-cursor-object-color drawing-object))
   (let ((y (- bottom-y (object-height drawing-object))))
     (set-cursor-position window x y)
     (sdl2:with-rects ((rect x
@@ -215,7 +215,7 @@
   (object-width drawing-object))
 
 (defmethod draw-object ((drawing-object extend-to-eol-object) x bottom-y window)
-  (lem-sdl2::set-color (extend-to-eol-object-color drawing-object))
+  (lem-sdl2::set-render-color lem-sdl2::*display* (extend-to-eol-object-color drawing-object))
   (sdl2:with-rects ((rect x
                           (- bottom-y (lem-sdl2::char-height))
                           (- (window-view-width window) x)

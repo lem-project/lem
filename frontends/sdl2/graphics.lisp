@@ -144,9 +144,8 @@
         (sdl2:destroy-texture texture)))))
 
 (defclass image ()
-  ((texture :initarg :texture
-            :reader image-texture
-            :writer set-image-texture)
+  ((surface :initarg :surface
+            :reader image-surface)
    (width :initarg :width
           :reader image-width)
    (height :initarg :height
@@ -157,13 +156,11 @@
     (make-instance 'image
                    :width (sdl2:surface-width image)
                    :height (sdl2:surface-height image)
-                   ;; TODO: memory leak
-                   :texture (sdl2:create-texture-from-surface (lem-sdl2:current-renderer)
-                                                              image))))
+                   :surface image)))
 
 (defun delete-image (image)
-  (sdl2:destroy-texture (image-texture image))
-  (set-image-texture nil image))
+  (declare (ignore image))
+  (values))
 
 (defun draw-image (target image
                    &key (x 0)
@@ -176,11 +173,13 @@
       (let ((source-rect
               (when clip-rect
                 (destructuring-bind (x y w h) clip-rect
-                  (sdl2:make-rect x y w h)))))
+                  (sdl2:make-rect x y w h))))
+            (texture (sdl2:create-texture-from-surface (lem-sdl2:current-renderer) (image-surface image))))
         (unwind-protect
              (sdl2:render-copy (lem-sdl2:current-renderer)
-                               (image-texture image)
+                               texture
                                :source-rect source-rect
                                :dest-rect dest-rect)
           (when source-rect
-            (sdl2:free-rect source-rect)))))))
+            (sdl2:free-rect source-rect))
+          (sdl2:destroy-texture texture))))))

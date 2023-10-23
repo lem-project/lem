@@ -14,6 +14,7 @@
                (:file "log")
                (:file "sdl2")
                (:file "main")
+               (:file "clipboard")
                (:file "text-buffer-impl")
                (:file "graphics")
                (:file "image-buffer")

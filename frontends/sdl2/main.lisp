@@ -1272,14 +1272,9 @@
 
 
 ;;;
-(defun attribute-font (attribute)
-  (let ((attribute (lem:ensure-attribute attribute nil)))
-    (when attribute
-      (lem:attribute-value attribute 'font))))
-
 (defun get-font (&key attribute type bold)
   (or (alexandria:when-let (attribute (and attribute (lem:ensure-attribute attribute)))
-        (attribute-font attribute))
+        (lem-core::attribute-font attribute))
       (lem-sdl2::get-display-font lem-sdl2::*display* :type type :bold bold)))
 
 (defvar *text-surface-cache* (make-hash-table :test 'equal))

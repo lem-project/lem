@@ -5,21 +5,6 @@
 (deftype char-type ()
   '(member :latin :cjk :braille :emoji :icon :control))
 
-(defun attribute-image (attribute)
-  (let ((attribute (ensure-attribute attribute nil)))
-    (when attribute
-      (attribute-value attribute 'image))))
-
-(defun attribute-width (attribute)
-  (let ((attribute (ensure-attribute attribute nil)))
-    (when attribute
-      (attribute-value attribute :width))))
-
-(defun attribute-height (attribute)
-  (let ((attribute (ensure-attribute attribute nil)))
-    (when attribute
-      (attribute-value attribute :height))))
-
 (defun window-view-width (window)
   (lem-if:view-width (implementation) (window-view window)))
 

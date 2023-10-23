@@ -232,3 +232,21 @@
 
 (define-attribute syntax-builtin-attribute
   (t :foreground "#FF87FF"))
+
+
+(defun attribute-value* (attribute key)
+  (let ((attribute (ensure-attribute attribute nil)))
+    (when attribute
+      (attribute-value attribute key))))
+
+(defun attribute-image (attribute)
+  (attribute-value* attribute :image))
+
+(defun attribute-width (attribute)
+  (attribute-value* attribute :width))
+
+(defun attribute-height (attribute)
+  (attribute-value* attribute :height))
+
+(defun attribute-font (attribute)
+  (attribute-value* attribute :font))

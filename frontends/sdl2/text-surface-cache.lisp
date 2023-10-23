@@ -1,6 +1,7 @@
 (defpackage :lem-sdl2/text-surface-cache
   (:use :cl)
-  (:export :get-text-surface-cache
+  (:export :clear-text-surface-cache
+           :get-text-surface-cache
            :register-text-surface-cache))
 (in-package :lem-sdl2/text-surface-cache)
 

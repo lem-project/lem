@@ -452,7 +452,7 @@
     (when save-font-size-p
       (save-font-size font-config (first (display-scale *display*))))
     (clear-font-cache)
-    (clear-text-surface-cache)
+    (lem-sdl2/text-surface-cache:clear-text-surface-cache)
     (lem:send-event :resize)))
 
 (defun create-view-texture (width height)

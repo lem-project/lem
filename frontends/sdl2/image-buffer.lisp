@@ -36,8 +36,8 @@
 (defun image-information (window)
   (let ((image (buffer-image (window-buffer window))))
     (format nil "  ~Dx~D (x~,2F)"
-            (lem-sdl2::image-width image)
-            (lem-sdl2::image-height image)
+            (image-width image)
+            (image-height image)
             (buffer-scaling (window-buffer window)))))
 
 ;; Zoom.
@@ -73,8 +73,8 @@
                 image
                 :x 0
                 :y 0
-                :width (round (* (lem-sdl2::image-width image) (buffer-scaling buffer)))
-                :height (round (* (lem-sdl2::image-height image) (buffer-scaling buffer))))))
+                :width (round (* (image-width image) (buffer-scaling buffer)))
+                :height (round (* (image-height image) (buffer-scaling buffer))))))
 
 (defun reset-buffer-scale (buffer)
   (clear-drawables buffer)
@@ -84,13 +84,13 @@
                 image
                 :x 0
                 :y 0
-                :width (lem-sdl2::image-width image)
-                :height (lem-sdl2::image-height image))))
+                :width (image-width image)
+                :height (image-height image))))
 
 (defun fit-to-width (buffer)
   (clear-drawables buffer)
   (let* ((image (buffer-image buffer))
-         (image-width (lem-sdl2::image-width image))
+         (image-width (image-width image))
          (display-width (* (lem-sdl2::char-width)
                            (window-width (current-window)))))
     (let* ((ratio (/ image-width display-width))
@@ -101,7 +101,7 @@
 (defun fit-to-height (buffer)
   (clear-drawables buffer)
   (let* ((image (buffer-image buffer))
-         (image-height (lem-sdl2::image-height image))
+         (image-height (image-height image))
          (display-height (* (lem-sdl2::char-height)
                             (1-
                              (window-height (current-window))))))
@@ -113,8 +113,8 @@
 (defun fit-to-screen (buffer)
   "If the image is bigger that the display, shrink it."
   (let* ((image (buffer-image buffer))
-         (width (lem-sdl2::image-width image))
-         (height (lem-sdl2::image-height image))
+         (width (image-width image))
+         (height (image-height image))
          (display-width (* (lem-sdl2::char-width)
                            (window-width (current-window))))
          (display-height (* (lem-sdl2::char-height)

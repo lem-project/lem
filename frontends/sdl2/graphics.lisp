@@ -9,7 +9,9 @@
            :draw-string
            :load-image
            :delete-image
-           :draw-image))
+           :draw-image
+           :image-width
+           :image-height))
 (in-package :lem-sdl2/graphics)
 
 (defclass drawable ()

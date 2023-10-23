@@ -72,7 +72,7 @@
   (let ((string (text-object-string drawing-object))
         (attribute (text-object-attribute drawing-object))
         (type (text-object-type drawing-object)))
-    (lem-sdl2::make-text-surface-with-cache string attribute type)))
+    (make-text-surface-with-cache string attribute type)))
 
 (defmethod get-surface ((drawing-object icon-object))
   (let* ((string (text-object-string drawing-object))

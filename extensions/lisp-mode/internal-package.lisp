@@ -10,7 +10,7 @@
         :lem-lisp-mode/connections
         :lem-lisp-mode/message-dispatcher
         :lem-lisp-mode/ui-mode
-        :lem-lisp-mode/grammer)
+        :lem-lisp-mode/grammar)
   (:export
    ;; reexport swank-protocol.lisp
    :connection-value)

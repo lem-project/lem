@@ -38,16 +38,6 @@
     (setf (lem-sdl2::view-last-cursor-x view) x
           (lem-sdl2::view-last-cursor-y view) y)))
 
-(defun attribute-font (attribute)
-  (let ((attribute (lem:ensure-attribute attribute nil)))
-    (when attribute
-      (lem:attribute-value attribute 'font))))
-
-(defun get-font (&key attribute type bold)
-  (or (alexandria:when-let (attribute (and attribute (lem:ensure-attribute attribute)))
-        (attribute-font attribute))
-      (lem-sdl2::get-display-font lem-sdl2::*display* :type type :bold bold)))
-
 (defgeneric get-surface (drawing-object))
 
 (defmethod get-surface :around (drawing-object)
@@ -55,39 +45,11 @@
       (setf (text-object-surface drawing-object)
             (call-next-method))))
 
-(defvar *surface-cache-table* (make-hash-table :test 'equal))
-
-(defstruct cache-entry
-  type
-  attribute
-  surface)
-
 (defmethod get-surface ((drawing-object text-object))
   (let ((string (text-object-string drawing-object))
         (attribute (text-object-attribute drawing-object))
         (type (text-object-type drawing-object)))
-    (dolist (entry (gethash string *surface-cache-table*))
-      (when (and (lem-core:attribute-equal attribute (cache-entry-attribute entry))
-                 (eq type (cache-entry-type entry)))
-        (return-from get-surface (cache-entry-surface entry))))
-    (let ((surface
-            (cffi:with-foreign-string (c-string string)
-              (let ((foreground (lem-core:attribute-foreground-with-reverse attribute)))
-                (sdl2-ttf:render-utf8-blended
-                 (get-font :attribute attribute
-                           :type type
-                           :bold (and attribute (lem:attribute-bold attribute)))
-                 c-string
-                 (lem:color-red foreground)
-                 (lem:color-green foreground)
-                 (lem:color-blue foreground)
-                 0)))))
-      (push (make-cache-entry
-             :type type
-             :attribute attribute
-             :surface surface)
-            (gethash string *surface-cache-table*))
-      surface)))
+    (lem-sdl2::make-text-surface-with-cache string attribute type)))
 
 (defmethod get-surface ((drawing-object icon-object))
   (let* ((string (text-object-string drawing-object))

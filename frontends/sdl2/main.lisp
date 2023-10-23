@@ -1276,3 +1276,51 @@
   (with-debug ("clipboard-copy")
     (with-renderer ()
       (sdl2-ffi.functions:sdl-set-clipboard-text text))))
+
+
+;;;
+(defun attribute-font (attribute)
+  (let ((attribute (lem:ensure-attribute attribute nil)))
+    (when attribute
+      (lem:attribute-value attribute 'font))))
+
+(defun get-font (&key attribute type bold)
+  (or (alexandria:when-let (attribute (and attribute (lem:ensure-attribute attribute)))
+        (attribute-font attribute))
+      (lem-sdl2::get-display-font lem-sdl2::*display* :type type :bold bold)))
+
+(defvar *text-surface-cache* (make-hash-table :test 'equal))
+
+(defstruct cache-entry
+  type
+  attribute
+  surface)
+
+(defun get-text-surface-cache (string attribute type)
+  (dolist (entry (gethash string *text-surface-cache*))
+    (when (and (lem-core:attribute-equal attribute (cache-entry-attribute entry))
+               (eq type (cache-entry-type entry)))
+      (return (cache-entry-surface entry)))))
+
+(defun make-text-surface (string attribute type)
+  (cffi:with-foreign-string (c-string string)
+    (let ((foreground (lem-core:attribute-foreground-with-reverse attribute)))
+      (sdl2-ttf:render-utf8-blended
+       (get-font :attribute attribute
+                 :type type
+                 :bold (and attribute (lem:attribute-bold attribute)))
+       c-string
+       (lem:color-red foreground)
+       (lem:color-green foreground)
+       (lem:color-blue foreground)
+       0))))
+
+(defun make-text-surface-with-cache (string attribute type)
+  (or (get-text-surface-cache string attribute type)
+      (let ((surface (make-text-surface string attribute type)))
+        (push (make-cache-entry
+               :type type
+               :attribute attribute
+               :surface surface)
+              (gethash string *text-surface-cache*))
+        surface)))

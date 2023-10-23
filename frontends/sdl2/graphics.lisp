@@ -48,11 +48,11 @@
 
 (defmethod add-drawable ((target lem:window) drawable)
   (push target (drawable-targets drawable))
-  (push drawable (lem:window-parameter target 'drawables)))
+  (push drawable (window-drawables target)))
 
 (defmethod add-drawable ((target lem:buffer) drawable)
   (push target (drawable-targets drawable))
-  (push drawable (lem:buffer-value target 'drawables)))
+  (push drawable (buffer-drawables target)))
 
 (defun delete-drawable (drawable)
   (dolist (target (drawable-targets drawable))

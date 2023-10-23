@@ -14,6 +14,7 @@
                (:file "log")
                (:file "main")
                (:file "text-buffer-impl")
+               (:file "graphics")
                (:file "image-buffer")
                (:file "tree")))
 

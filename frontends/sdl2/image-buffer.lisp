@@ -1,6 +1,9 @@
 (defpackage :lem-sdl2/image-buffer
-  (:use :cl
-   :lem :lem-sdl2)
+  (:use
+   :cl
+   :lem
+   :lem-sdl2
+   :lem-sdl2/graphics)
   (:export :image-fit-to-height
            :image-fit-to-screen
            :image-fit-to-width

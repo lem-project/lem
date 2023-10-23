@@ -9,17 +9,7 @@
   (:export :change-font
            :set-keyboard-layout
            :render
-           :current-renderer)
-  (:export :draw-line
-           :draw-rectangle
-           :draw-point
-           :draw-points
-           :draw-string
-           :load-image
-           :delete-image
-           :draw-image
-           :delete-drawable
-           :clear-drawables))
+           :current-renderer))
 (in-package :lem-sdl2)
 
 (pushnew :lem-sdl2 *features*)
@@ -108,6 +98,10 @@
 (defmethod display-background-color ((display display))
   (or (lem:parse-color lem-if:*background-color-of-drawing-window*)
       (slot-value display 'background-color)))
+
+(defun set-color (color)
+  (when color
+    (lem-sdl2::set-render-color lem-sdl2::*display* color)))
 
 (defun char-width () (display-char-width *display*))
 (defun char-height () (display-char-height *display*))
@@ -1001,185 +995,6 @@
 (defmethod lem-if:get-char-height ((implementation sdl2))
   (char-height))
 
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(defclass drawable ()
-  ((target :initarg :target
-           :reader drawable-target)
-   (draw-function :initarg :draw-function
-                  :reader drawable-draw-function)
-   (targets :initform '()
-            :accessor drawable-targets)))
-
-(defun buffer-drawables (buffer)
-  (lem:buffer-value buffer 'drawables))
-
-(defun (setf buffer-drawables) (drawables buffer)
-  (setf (lem:buffer-value buffer 'drawables) drawables))
-
-(defun window-drawables (window)
-  (lem:window-parameter window 'drawables))
-
-(defun (setf window-drawables) (drawables window)
-  (setf (lem:window-parameter window 'drawables) drawables))
-
-(defmethod drawables ((target lem:window))
-  (window-drawables target))
-
-(defmethod drawables ((target lem:buffer))
-  (buffer-drawables target))
-
-(defmethod (setf drawables) (drawables (target lem:window))
-  (setf (window-drawables target) drawables))
-
-(defmethod (setf drawables) (drawables (target lem:buffer))
-  (setf (buffer-drawables target) drawables))
-
-(defmethod add-drawable ((target lem:window) drawable)
-  (push target (drawable-targets drawable))
-  (push drawable (lem:window-parameter target 'drawables)))
-
-(defmethod add-drawable ((target lem:buffer) drawable)
-  (push target (drawable-targets drawable))
-  (push drawable (lem:buffer-value target 'drawables)))
-
-(defun delete-drawable (drawable)
-  (dolist (target (drawable-targets drawable))
-    (alexandria:deletef (drawables target) drawable)))
-
-(defun clear-drawables (target)
-  (mapc #'delete-drawable (drawables target))
-  (values))
-
-(defmethod render (texture window buffer)
-  (dolist (drawable (window-drawables window))
-    (funcall (drawable-draw-function drawable)))
-  (dolist (drawable (buffer-drawables buffer))
-    (funcall (drawable-draw-function drawable))))
-
-(defun call-with-drawable (target draw-function)
-  (let ((drawable
-          (make-instance 'drawable
-                         :target target
-                         :draw-function draw-function)))
-    (add-drawable target drawable)
-    drawable))
-
-(defmacro with-drawable ((target) &body body)
-  `(call-with-drawable ,target (lambda () ,@body)))
-
-(defun set-color (color)
-  (when color
-    (set-render-color *display* color)))
-
-(defun draw-line (target x1 y1 x2 y2 &key color)
-  (with-drawable (target)
-    (set-color color)
-    (sdl2:render-draw-line (current-renderer)
-                           x1
-                           y1
-                           x2
-                           y2)))
-
-(defun draw-rectangle (target x y width height &key filled color)
-  (with-drawable (target)
-    (set-color color)
-    (sdl2:with-rects ((rect x y width height))
-      (if filled
-          (sdl2:render-fill-rect (current-renderer) rect)
-          (sdl2:render-draw-rect (current-renderer) rect)))))
-
-(defun draw-point (target x y &key color)
-  (with-drawable (target)
-    (set-color color)
-    (sdl2:render-draw-point (current-renderer) x y)))
-
-(defun convert-to-points (x-y-seq)
-  (let ((num-points (length x-y-seq)))
-    (plus-c:c-let ((c-points sdl2-ffi:sdl-point :count num-points))
-      (etypecase x-y-seq
-        (vector
-         (loop :for i :from 0
-               :for (x . y) :across x-y-seq
-               :do (let ((dest-point (c-points i)))
-                     (sdl2::c-point (dest-point)
-                       (setf (dest-point :x) x
-                             (dest-point :y) y))))))
-      (values (c-points plus-c:&)
-              num-points))))
-
-(defun draw-points (target x-y-seq &key color)
-  (multiple-value-bind (points num-points)
-      (convert-to-points x-y-seq)
-    (with-drawable (target)
-      (set-color color)
-      (sdl2:render-draw-points (current-renderer)
-                               points
-                               num-points))))
-
-(defun draw-string (target string x y
-                    &key (font (font-latin-normal-font (display-font *display*)))
-                         color)
-  (let* ((surface (sdl2-ttf:render-utf8-blended font
-                                                string
-                                                (lem:color-red color)
-                                                (lem:color-green color)
-                                                (lem:color-blue color)
-                                                0)))
-    (with-drawable (target)
-      (let ((texture (sdl2:create-texture-from-surface (current-renderer) surface)))
-        (sdl2:with-rects ((dest-rect x
-                                     y
-                                     (sdl2:surface-width surface)
-                                     (sdl2:surface-height surface)))
-          (sdl2:render-copy (current-renderer) texture :dest-rect dest-rect))
-        (sdl2:destroy-texture texture)))))
-
-(defclass image ()
-  ((texture :initarg :texture
-            :reader image-texture
-            :writer set-image-texture)
-   (width :initarg :width
-          :reader image-width)
-   (height :initarg :height
-           :reader image-height)))
-
-(defun load-image (pathname)
-  (let ((image (sdl2-image:load-image pathname)))
-    (make-instance 'image
-                   :width (sdl2:surface-width image)
-                   :height (sdl2:surface-height image)
-                   ;; TODO: memory leak
-                   :texture (sdl2:create-texture-from-surface (current-renderer)
-                                                              image))))
-
-(defun delete-image (image)
-  (sdl2:destroy-texture (image-texture image))
-  (set-image-texture nil image))
-
-(defun draw-image (target image
-                   &key (x 0)
-                        (y 0)
-                        (width (image-width image))
-                        (height (image-height image))
-                        clip-rect)
-  (with-drawable (target)
-    (sdl2:with-rects ((dest-rect x y width height))
-      (let ((source-rect
-              (when clip-rect
-                (destructuring-bind (x y w h) clip-rect
-                  (sdl2:make-rect x y w h)))))
-        (unwind-protect
-             (sdl2:render-copy (current-renderer)
-                               (image-texture image)
-                               :source-rect source-rect
-                               :dest-rect dest-rect)
-          (when source-rect
-            (sdl2:free-rect source-rect)))))))
-
-;;;
-(lem:enable-clipboard)
-
 #-windows
 (defmethod lem-if:clipboard-paste ((implementation sdl2))
   (with-debug ("clipboard-paste")
@@ -1203,3 +1018,5 @@
   (with-debug ("clipboard-copy")
     (with-renderer ()
       (sdl2-ffi.functions:sdl-set-clipboard-text text))))
+
+(lem:enable-clipboard)

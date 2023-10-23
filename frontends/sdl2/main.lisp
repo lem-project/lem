@@ -246,30 +246,6 @@
                          :dest-rect dest-rect
                          :flip (list :none))))
 
-(defun cjk-char-code-p (code)
-  (or (<= #x4E00 code #x9FFF)
-      (<= #x3040 code #x309F)
-      (<= #x30A0 code #x30FF)
-      (<= #xAC00 code #xD7A3)))
-
-(defun latin-char-code-p (code)
-  (or (<= #x0000 code #x007F)
-      (<= #x0080 code #x00FF)
-      (<= #x0100 code #x017F)
-      (<= #x0180 code #x024F)))
-
-(defun emoji-char-code-p (code)
-  (or (<= #x1F300 code #x1F6FF)
-      (<= #x1F900 code #x1F9FF)
-      (<= #x1F600 code #x1F64F)
-      (<= #x1F700 code #x1F77F)))
-
-(defun braille-char-code-p (code)
-  (<= #x2800 code #x28ff))
-
-(defun icon-char-code-p (code)
-  (icon-font-name (code-char code)))
-
 (defun render-icon (character x y &key color)
   (cffi:with-foreign-string (c-string (string character))
     (let* ((x (* x (char-width)))
@@ -312,29 +288,9 @@
     (sdl2:free-surface image)
     (sdl2:destroy-texture texture)))
 
-(defun guess-font-type (code)
-  (cond ((eql code #x1f4c1)
-         ;; sdl2_ttf.dllでなぜか絵文字を表示できない環境があるので代わりにフォルダの画像を使う
-         :folder)
-        ((<= code 128)
-         :latin)
-        ((icon-char-code-p code)
-         :icon)
-        ((braille-char-code-p code)
-         :braille)
-        ((cjk-char-code-p code)
-         :cjk)
-        ((latin-char-code-p code)
-         :latin)
-        ((emoji-char-code-p code)
-         :emoji)
-        (t
-         :emoji)))
-
 (defun render-character (character x y &key color bold)
   (handler-case
-      (let* ((code (char-code character))
-             (type (guess-font-type code)))
+      (let ((type (lem-core::char-type character)))
         (case type
           (:folder
            (render-folder-icon x y)

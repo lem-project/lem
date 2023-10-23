@@ -8,3 +8,5 @@
   (:default-initargs
    :name :sdl2
    :redraw-after-modifying-floating-window nil))
+
+(pushnew :lem-sdl2 *features*)

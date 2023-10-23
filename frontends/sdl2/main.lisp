@@ -13,8 +13,6 @@
            :current-renderer))
 (in-package :lem-sdl2)
 
-(pushnew :lem-sdl2 *features*)
-
 (defconstant +display-width+ 100)
 (defconstant +display-height+ 40)
 

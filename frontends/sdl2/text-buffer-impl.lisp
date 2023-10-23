@@ -45,6 +45,29 @@
       (setf (text-object-surface drawing-object)
             (call-next-method))))
 
+(defun get-font (&key attribute type bold)
+  (or (lem-core::attribute-font attribute)
+      (lem-sdl2::get-display-font lem-sdl2::*display* :type type :bold bold)))
+
+(defun make-text-surface (string attribute type)
+  (cffi:with-foreign-string (c-string string)
+    (let ((foreground (lem-core:attribute-foreground-with-reverse attribute)))
+      (sdl2-ttf:render-utf8-blended
+       (get-font :attribute attribute
+                 :type type
+                 :bold (and attribute (lem:attribute-bold attribute)))
+       c-string
+       (lem:color-red foreground)
+       (lem:color-green foreground)
+       (lem:color-blue foreground)
+       0))))
+
+(defun make-text-surface-with-cache (string attribute type)
+  (or (lem-sdl2/text-surface-cache:get-text-surface-cache string attribute type)
+      (let ((surface (make-text-surface string attribute type)))
+        (lem-sdl2/text-surface-cache:register-text-surface-cache string attribute type surface)
+        surface)))
+
 (defmethod get-surface ((drawing-object text-object))
   (let ((string (text-object-string drawing-object))
         (attribute (text-object-attribute drawing-object))

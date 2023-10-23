@@ -125,8 +125,9 @@
                                num-points))))
 
 (defun draw-string (target string x y
-                    &key (font (lem-sdl2/font:font-latin-normal-font (lem-sdl2::display-font lem-sdl2::*display*)))
-                         color)
+                    &key (font (lem-sdl2/font:font-latin-normal-font
+                                (lem-sdl2::display-font lem-sdl2::*display*)))
+                         (color (alexandria:required-argument :color)))
   (let* ((surface (sdl2-ttf:render-utf8-blended font
                                                 string
                                                 (lem:color-red color)

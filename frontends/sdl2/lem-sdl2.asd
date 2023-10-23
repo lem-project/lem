@@ -11,6 +11,7 @@
                (:file "font")
                (:file "icon")
                (:file "text-surface-cache")
+               (:file "log")
                (:file "main")
                (:file "text-buffer-impl")
                (:file "image-buffer")

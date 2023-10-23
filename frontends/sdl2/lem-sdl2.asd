@@ -10,6 +10,7 @@
                (:file "keyboard")
                (:file "font")
                (:file "icon")
+               (:file "text-surface-cache")
                (:file "main")
                (:file "text-buffer-impl")
                (:file "image-buffer")

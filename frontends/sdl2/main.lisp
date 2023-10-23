@@ -1276,22 +1276,6 @@
   (or (lem-core::attribute-font attribute)
       (lem-sdl2::get-display-font lem-sdl2::*display* :type type :bold bold)))
 
-(defvar *text-surface-cache* (make-hash-table :test 'equal))
-
-(defstruct cache-entry
-  type
-  attribute
-  surface)
-
-(defun clear-text-surface-cache ()
-  (clrhash *text-surface-cache*))
-
-(defun get-text-surface-cache (string attribute type)
-  (dolist (entry (gethash string *text-surface-cache*))
-    (when (and (lem-core:attribute-equal attribute (cache-entry-attribute entry))
-               (eq type (cache-entry-type entry)))
-      (return (cache-entry-surface entry)))))
-
 (defun make-text-surface (string attribute type)
   (cffi:with-foreign-string (c-string string)
     (let ((foreground (lem-core:attribute-foreground-with-reverse attribute)))
@@ -1306,11 +1290,7 @@
        0))))
 
 (defun make-text-surface-with-cache (string attribute type)
-  (or (get-text-surface-cache string attribute type)
+  (or (lem-sdl2/text-surface-cache:get-text-surface-cache string attribute type)
       (let ((surface (make-text-surface string attribute type)))
-        (push (make-cache-entry
-               :type type
-               :attribute attribute
-               :surface surface)
-              (gethash string *text-surface-cache*))
+        (lem-sdl2/text-surface-cache:register-text-surface-cache string attribute type surface)
         surface)))

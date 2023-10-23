@@ -12,6 +12,7 @@
                (:file "icon")
                (:file "text-surface-cache")
                (:file "log")
+               (:file "sdl2")
                (:file "main")
                (:file "text-buffer-impl")
                (:file "graphics")

@@ -1,5 +1,6 @@
 (defpackage :lem-sdl2
   (:use :cl
+        :lem-sdl2/sdl2
         :lem-sdl2/keyboard
         :lem-sdl2/font
         :lem-sdl2/icon
@@ -38,12 +39,6 @@
                        sdl2-ffi:+sdl-textureaccess-target+
                        width
                        height))
-
-(defclass sdl2 (lem:implementation)
-  ()
-  (:default-initargs
-   :name :sdl2
-   :redraw-after-modifying-floating-window nil))
 
 (defvar *display*)
 

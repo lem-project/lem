@@ -76,7 +76,10 @@
 (defmethod get-surface ((drawing-object icon-object))
   (let* ((string (text-object-string drawing-object))
          (attribute (text-object-attribute drawing-object))
-         (font (lem-sdl2::icon-font (char (text-object-string drawing-object) 0)))
+         (font (lem-sdl2/icon-font:icon-font
+                (char (text-object-string drawing-object) 0)
+                (lem-sdl2/font:font-config-size
+                 (lem-sdl2::display-font-config lem-sdl2::*display*))))
          (foreground (lem-core:attribute-foreground-with-reverse attribute)))
     (cffi:with-foreign-string (c-string string)
       (sdl2-ttf:render-utf8-blended font

@@ -109,29 +109,14 @@
   (set-render-color display (display-background-color display))
   (sdl2:render-fill-rect (display-renderer display) nil))
 
-(defvar *font-cache* (make-hash-table :test 'eql))
-
-(defun clear-font-cache ()
-  (clrhash *font-cache*))
-
-(defun icon-font-name (character)
-  (lem:icon-value (char-code character) :font))
-
-(defun icon-font (character)
-  (or (gethash character *font-cache*)
-      (let ((font-name (icon-font-name character)))
-        (when font-name
-          (let ((pathname (get-resource-pathname (merge-pathnames font-name "resources/fonts/"))))
-            (setf (gethash character *font-cache*)
-                  (sdl2-ttf:open-font pathname
-                                      (font-config-size (display-font-config *display*)))))))))
-
 (defmethod get-display-font ((display display) &key type bold character)
   (check-type type lem-core::char-type)
   (cond ((eq type :control)
          (display-latin-font display))
         ((eq type :icon)
-         (or (and character (icon-font character))
+         (or (and character (lem-sdl2/icon-font:icon-font
+                             character
+                             (font-config-size (display-font-config *display*))))
              (display-emoji-font display)))
         ((eq type :emoji)
          (display-emoji-font display))
@@ -441,7 +426,7 @@
       (setf (display-font *display*) font))
     (when save-font-size-p
       (save-font-size font-config (first (display-scale *display*))))
-    (clear-font-cache)
+    (clear-icon-font-cache)
     (lem-sdl2/text-surface-cache:clear-text-surface-cache)
     (lem:send-event :resize)))
 

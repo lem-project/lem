@@ -13,6 +13,7 @@
                (:file "text-surface-cache")
                (:file "log")
                (:file "sdl2")
+               (:file "icon-font")
                (:file "main")
                (:file "clipboard")
                (:file "text-buffer-impl")

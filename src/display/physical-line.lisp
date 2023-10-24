@@ -414,26 +414,29 @@
 (defmacro with-display-error (() &body body)
   `(call-with-display-error (lambda () ,@body)))
 
+(defun make-modeline-elements (window default-attribute)
+  (let ((elements '())
+        (left-x 0)
+        (right-x (window-width window)))
+    (modeline-apply window
+                    (lambda (string attribute alignment)
+                      (case alignment
+                        ((:right)
+                         (decf right-x (length string))
+                         (push (list right-x string attribute) elements))
+                        (otherwise
+                         (push (list left-x string attribute) elements)
+                         (incf left-x (length string)))))
+                    default-attribute)
+    (nreverse elements)))
+
 (defun redraw-modeline (window force)
   (when (window-use-modeline-p window)
-    (let ((view (window-view window))
-          (default-attribute (if (eq window (current-window))
-                                 'modeline
-                                 'modeline-inactive))
-          (elements '())
-          (left-x 0)
-          (right-x (window-width window)))
-      (modeline-apply window
-                      (lambda (string attribute alignment)
-                        (case alignment
-                          ((:right)
-                           (decf right-x (length string))
-                           (push (list right-x string attribute) elements))
-                          (otherwise
-                           (push (list left-x string attribute) elements)
-                           (incf left-x (length string)))))
-                      default-attribute)
-      (setf elements (nreverse elements))
+    (let* ((view (window-view window))
+           (default-attribute (if (eq window (current-window))
+                                  'modeline
+                                  'modeline-inactive))
+           (elements (make-modeline-elements window default-attribute)))
       (when (or force (not (equal elements (window-modeline-elements-cache window))))
         (setf (window-modeline-elements-cache window) elements)
         (lem-if:print-modeline (implementation)

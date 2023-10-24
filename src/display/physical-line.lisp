@@ -416,13 +416,13 @@
 
 (defun redraw-modeline (window force)
   (when (window-use-modeline-p window)
-    (let* ((view (window-view window))
-           (default-attribute (if (eq window (current-window))
-                                  'modeline
-                                  'modeline-inactive))
-           (elements '())
-           (left-x 0)
-           (right-x (window-width window)))
+    (let ((view (window-view window))
+          (default-attribute (if (eq window (current-window))
+                                 'modeline
+                                 'modeline-inactive))
+          (elements '())
+          (left-x 0)
+          (right-x (window-width window)))
       (modeline-apply window
                       (lambda (string attribute alignment)
                         (case alignment
@@ -436,11 +436,19 @@
       (setf elements (nreverse elements))
       (when (or force (not (equal elements (window-modeline-elements-cache window))))
         (setf (window-modeline-elements-cache window) elements)
-        (lem-if:print-modeline (implementation) view 0 0
+        (lem-if:print-modeline (implementation)
+                               view
+                               0
+                               0
                                (make-string (window-width window) :initial-element #\space)
                                (ensure-attribute default-attribute nil))
         (loop :for (x string attribute) :in elements
-              :do (lem-if:print-modeline (implementation) view x 0 string (ensure-attribute attribute nil)))))))
+              :do (lem-if:print-modeline (implementation)
+                                         view
+                                         x
+                                         0
+                                         string
+                                         (ensure-attribute attribute nil)))))))
 
 (defun get-background-color-of-window (window)
   (cond ((typep window 'floating-window)

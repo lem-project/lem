@@ -436,6 +436,7 @@
             right-objects)))
 
 (defun redraw-modeline (window force)
+  (declare (ignore force))
   ;; TODO: cache
   (when (window-use-modeline-p window)
     (let* ((view (window-view window))

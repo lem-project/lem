@@ -200,9 +200,9 @@
                              (1- (+ y surface-height))
                              :color (let ((underline (lem:attribute-underline attribute)))
                                       (if (eq underline t)
-                                          (lem-sdl2::attribute-foreground-color attribute)
+                                          (lem-core:attribute-foreground-color attribute)
                                           (or (lem:parse-color underline)
-                                              (lem-sdl2::attribute-foreground-color attribute))))))
+                                              (lem-core:attribute-foreground-color attribute))))))
     surface-width))
 
 (defmethod draw-object ((drawing-object eol-cursor-object) x bottom-y view)

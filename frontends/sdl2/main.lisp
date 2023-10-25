@@ -183,12 +183,6 @@
       (adapt-high-dpi-font-size)
       (lem:update-on-display-resized))))
 
-(defun attribute-foreground-color (attribute)
-  (lem-core:attribute-foreground-color attribute))
-
-(defun attribute-background-color (attribute)
-  (lem-core:attribute-background-color attribute))
-
 (defun render-fill-rect-to-current-texture (x y width height &key color)
   (let ((x (* x (char-width)))
         (y (* y (char-height)))
@@ -255,14 +249,14 @@
                       y
                       1
                       height
-                      :color (attribute-background-color attribute))
+                      :color (lem-core:attribute-background-color attribute))
     (render-fill-rect-by-pixels (+ (* (1- x) (char-width))
                                    (floor (char-width) 2)
                                    -1)
                                 (* y (char-height))
                                 2
                                 (* height (char-height))
-                                :color (attribute-foreground-color attribute))))
+                                :color (lem-core:attribute-foreground-color attribute))))
 
 (defun change-font (font-config &optional (save-font-size-p t))
   (let ((font-config (merge-font-config font-config (display-font-config *display*))))

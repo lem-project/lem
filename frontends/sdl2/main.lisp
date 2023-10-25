@@ -218,7 +218,6 @@
     (sdl2:with-rects ((rect x1 y1 (- x2 x1) (- y2 y1)))
       (set-render-color *display* (display-background-color *display*))
       (sdl2:render-fill-rect (current-renderer) rect))
-
     (sdl2:with-points ((upleft x1 y1)
                        (downleft x1 y2)
                        (downright x2 y2)
@@ -233,16 +232,7 @@
             (set-render-color *display* (display-foreground-color *display*))
             (sdl2:render-draw-lines (current-renderer) (sdl2:points* downleft upleft upright) 3)))
       (set-render-color *display* (display-foreground-color *display*))
-      (sdl2:render-draw-lines (current-renderer) (sdl2:points* upright downright downleft) 3)
-
-      ;; shadow
-      #+(or)
-      (sdl2:with-points ((downleft x1 (+ y2 2))
-                         (downright (1+ x2) (+ y2 2))
-                         (upright (+ x2 2) y1))
-        (set-render-color *display* (lem:parse-color "black"))
-        (sdl2:render-draw-lines (current-renderer) (sdl2:points* upright downright downleft) 3)))
-    ))
+      (sdl2:render-draw-lines (current-renderer) (sdl2:points* upright downright downleft) 3))))
 
 (defun render-margin-line (x y height)
   (let ((attribute (lem:ensure-attribute 'lem:modeline-inactive)))

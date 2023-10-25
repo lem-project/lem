@@ -6,7 +6,8 @@
         :lem-sdl2/icon
         :lem-sdl2/platform
         :lem-sdl2/resource
-        :lem-sdl2/log)
+        :lem-sdl2/log
+        :lem-sdl2/mouse)
   (:export :change-font
            :set-keyboard-layout
            :render
@@ -370,14 +371,6 @@
 
 (defmethod render-border-using-view ((view view))
   (draw-window-border view (view-window view)))
-
-(defvar *cursor-shown* t)
-(defun show-cursor ()
-  (setf *cursor-shown* t)
-  (sdl2:show-cursor))
-(defun hide-cursor ()
-  (setf *cursor-shown* nil)
-  (sdl2:hide-cursor))
 
 (defun on-mouse-button-down (button x y clicks)
   (show-cursor)
@@ -761,7 +754,7 @@
   (get-font-list (get-platform)))
 
 (defmethod lem-if:get-mouse-position ((implementation sdl2))
-  (if (not *cursor-shown*)
+  (if (not (cursor-shown-p))
       (values 0 0)
       (multiple-value-bind (x y bitmask)
           (sdl2:mouse-state)

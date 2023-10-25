@@ -259,7 +259,7 @@
       (setf (display-font *display*) font))
     (when save-font-size-p
       (save-font-size font-config (first (display-scale *display*))))
-    (clear-icon-font-cache)
+    (lem-sdl2/icon-font:clear-icon-font-cache)
     (lem-sdl2/text-surface-cache:clear-text-surface-cache)
     (lem:send-event :resize)))
 

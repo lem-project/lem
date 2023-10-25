@@ -125,7 +125,7 @@
         ((eq type :icon)
          (or (and character (lem-sdl2/icon-font:icon-font
                              character
-                             (font-config-size (display-font-config *display*))))
+                             (font-config-size (display-font-config display))))
              (display-emoji-font display)))
         ((eq type :emoji)
          (display-emoji-font display))

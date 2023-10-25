@@ -194,7 +194,8 @@
     (sdl2:destroy-texture texture)
     (when (and attribute
                (lem:attribute-underline attribute))
-      (lem-sdl2::render-line x
+      (lem-sdl2::render-line lem-sdl2::*display*
+                             x
                              (1- (+ y surface-height))
                              (+ x surface-width)
                              (1- (+ y surface-height))

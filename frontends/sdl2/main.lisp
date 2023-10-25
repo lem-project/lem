@@ -38,6 +38,14 @@
                        width
                        height))
 
+(defun render-texture (renderer texture x y width height)
+  (sdl2:with-rects ((dest-rect x y width height))
+    (sdl2:render-copy-ex renderer
+                         texture
+                         :source-rect nil
+                         :dest-rect dest-rect
+                         :flip (list :none))))
+
 (defvar *display*)
 
 (defclass display ()
@@ -195,14 +203,6 @@
 (defun render-line (x1 y1 x2 y2 &key color)
   (set-render-color *display* color)
   (sdl2:render-draw-line (current-renderer) x1 y1 x2 y2))
-
-(defun render-texture (renderer texture x y width height)
-  (sdl2:with-rects ((dest-rect x y width height))
-    (sdl2:render-copy-ex renderer
-                         texture
-                         :source-rect nil
-                         :dest-rect dest-rect
-                         :flip (list :none))))
 
 (defun render-fill-rect-by-pixels (x y width height &key color)
   (sdl2:with-rects ((rect x y width height))

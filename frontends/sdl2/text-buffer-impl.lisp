@@ -185,12 +185,12 @@
     (sdl2:with-rects ((rect x y surface-width surface-height))
       (lem-sdl2::set-render-color lem-sdl2::*display* background)
       (sdl2:render-fill-rect (lem-sdl2::current-renderer) rect))
-    (lem-sdl2::render-texture (lem-sdl2::current-renderer)
-                              texture
-                              x
-                              y
-                              surface-width
-                              surface-height)
+    (lem-sdl2/utils:render-texture (lem-sdl2::current-renderer)
+                                   texture
+                                   x
+                                   y
+                                   surface-width
+                                   surface-height)
     (sdl2:destroy-texture texture)
     (when (and attribute
                (lem:attribute-underline attribute))
@@ -240,7 +240,7 @@
          (texture (sdl2:create-texture-from-surface (lem-sdl2::current-renderer)
                                                     (image-object-image drawing-object)))
          (y (- bottom-y surface-height)))
-    (lem-sdl2::render-texture (lem-sdl2::current-renderer) texture x y surface-width surface-height)
+    (lem-sdl2/utils:render-texture (lem-sdl2::current-renderer) texture x y surface-width surface-height)
     (sdl2:destroy-texture texture)
     surface-width))
 

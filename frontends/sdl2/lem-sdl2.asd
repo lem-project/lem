@@ -15,6 +15,7 @@
                (:file "sdl2")
                (:file "icon-font")
                (:file "mouse")
+               (:file "utils")
                (:file "main")
                (:file "text-buffer-impl")
                (:file "graphics")

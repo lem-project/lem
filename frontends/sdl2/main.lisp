@@ -32,21 +32,6 @@
 (defun set-x11-wm-class (classname)
   (setf (uiop:getenv "SDL_VIDEO_X11_WMCLASS") classname))
 
-(defun create-texture (renderer width height)
-  (sdl2:create-texture renderer
-                       sdl2:+pixelformat-rgba8888+
-                       sdl2-ffi:+sdl-textureaccess-target+
-                       width
-                       height))
-
-(defun render-texture (renderer texture x y width height)
-  (sdl2:with-rects ((dest-rect x y width height))
-    (sdl2:render-copy-ex renderer
-                         texture
-                         :source-rect nil
-                         :dest-rect dest-rect
-                         :flip (list :none))))
-
 (defvar *display*)
 
 (defclass display ()
@@ -167,9 +152,9 @@
   (bt:with-lock-held ((display-mutex display))
     (sdl2:destroy-texture (display-texture display))
     (setf (display-texture display)
-          (create-texture (display-renderer display)
-                          (display-width display)
-                          (display-height display)))))
+          (lem-sdl2/utils:create-texture (display-renderer display)
+                                         (display-width display)
+                                         (display-height display)))))
 
 (defmethod set-render-color ((display display) color)
   (when color
@@ -266,9 +251,9 @@
     (lem:send-event :resize)))
 
 (defmethod create-view-texture ((display display) width height)
-  (create-texture (display-renderer display)
-                  (* width (display-char-width display))
-                  (* height (display-char-height display))))
+  (lem-sdl2/utils:create-texture (display-renderer display)
+                                 (* width (display-char-width display))
+                                 (* height (display-char-height display))))
 
 (defclass view ()
   ((window
@@ -523,9 +508,9 @@
                         #+darwin(renderer-height (second renderer-size))
                         (scale-x #-darwin 1 #+darwin (/ renderer-width window-width))
                         (scale-y #-darwin 1 #+darwin (/ renderer-height window-height))
-                        (texture (create-texture renderer
-                                                 (* scale-x window-width)
-                                                 (* scale-y window-height))))
+                        (texture (lem-sdl2/utils:create-texture renderer
+                                                                (* scale-x window-width)
+                                                                (* scale-y window-height))))
                    (setf *display*
                          (make-instance
                           'display

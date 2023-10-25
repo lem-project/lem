@@ -16,6 +16,7 @@
                (:file "icon-font")
                (:file "mouse")
                (:file "utils")
+               (:file "display")
                (:file "main")
                (:file "text-buffer-impl")
                (:file "graphics")

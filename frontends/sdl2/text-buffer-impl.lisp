@@ -46,7 +46,7 @@
 
 (defun get-font (&key attribute type bold)
   (or (lem-core::attribute-font attribute)
-      (lem-sdl2::get-display-font lem-sdl2::*display* :type type :bold bold)))
+      (lem-sdl2/display::get-display-font lem-sdl2::*display* :type type :bold bold)))
 
 (defun make-text-surface (string attribute type)
   (cffi:with-foreign-string (c-string string)
@@ -79,7 +79,7 @@
          (font (lem-sdl2/icon-font:icon-font
                 (char (text-object-string drawing-object) 0)
                 (lem-sdl2/font:font-config-size
-                 (lem-sdl2::display-font-config lem-sdl2::*display*))))
+                 (lem-sdl2/display::display-font-config lem-sdl2::*display*))))
          (foreground (lem-core:attribute-foreground-with-reverse attribute)))
     (cffi:with-foreign-string (c-string string)
       (sdl2-ttf:render-utf8-blended font
@@ -183,7 +183,7 @@
     (when (and attribute (cursor-attribute-p attribute))
       (set-cursor-position view x y))
     (sdl2:with-rects ((rect x y surface-width surface-height))
-      (lem-sdl2::set-render-color lem-sdl2::*display* background)
+      (lem-sdl2/display::set-render-color lem-sdl2::*display* background)
       (sdl2:render-fill-rect (lem-sdl2::current-renderer) rect))
     (lem-sdl2/utils:render-texture (lem-sdl2::current-renderer)
                                    texture
@@ -194,7 +194,7 @@
     (sdl2:destroy-texture texture)
     (when (and attribute
                (lem:attribute-underline attribute))
-      (lem-sdl2::render-line lem-sdl2::*display*
+      (lem-sdl2/display::render-line lem-sdl2::*display*
                              x
                              (1- (+ y surface-height))
                              (+ x surface-width)
@@ -207,7 +207,7 @@
     surface-width))
 
 (defmethod draw-object ((drawing-object eol-cursor-object) x bottom-y view)
-  (lem-sdl2::set-render-color lem-sdl2::*display* (eol-cursor-object-color drawing-object))
+  (lem-sdl2/display::set-render-color lem-sdl2::*display* (eol-cursor-object-color drawing-object))
   (let ((y (- bottom-y (object-height drawing-object))))
     (set-cursor-position view x y)
     (sdl2:with-rects ((rect x
@@ -218,7 +218,7 @@
   (object-width drawing-object))
 
 (defmethod draw-object ((drawing-object extend-to-eol-object) x bottom-y view)
-  (lem-sdl2::set-render-color lem-sdl2::*display* (extend-to-eol-object-color drawing-object))
+  (lem-sdl2/display::set-render-color lem-sdl2::*display* (extend-to-eol-object-color drawing-object))
   (sdl2:with-rects ((rect x
                           (- bottom-y (lem-sdl2::char-height))
                           (- (lem-if:view-width (lem-core:implementation) view) x)
@@ -258,7 +258,7 @@
 
 (defun fill-to-end-of-line (view x y height &optional default-attribute)
   (sdl2:with-rects ((rect x y (- (lem-if:view-width (lem-core:implementation) view) x) height))
-    (lem-sdl2::set-render-color lem-sdl2::*display*
+    (lem-sdl2/display::set-render-color lem-sdl2::*display*
                                 (lem-core:attribute-background-color default-attribute))
     (sdl2:render-fill-rect (lem-sdl2::current-renderer) rect)))
 
@@ -286,9 +286,9 @@
   (redraw-physical-line-from-behind view right-objects))
 
 (defmethod lem-if:clear-to-end-of-window ((implementation lem-sdl2::sdl2) window y)
-  (lem-sdl2::set-render-color
+  (lem-sdl2/display::set-render-color
    lem-sdl2::*display*
-   (lem-sdl2::display-background-color lem-sdl2::*display*))
+   (lem-sdl2/display::display-background-color lem-sdl2::*display*))
   (sdl2:with-rects ((rect 0
                           y
                           (window-view-width window)

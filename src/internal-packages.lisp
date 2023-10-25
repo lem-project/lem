@@ -552,7 +552,6 @@
    :clear
    :set-view-size
    :set-view-pos
-   :print-modeline
    :redraw-view-before
    :redraw-view-after
    :will-update-display
@@ -580,5 +579,6 @@
    :get-char-height
    :clear-to-end-of-window
    :render-line
+   :render-line-on-modeline
    :object-width
    :object-height))

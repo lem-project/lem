@@ -83,9 +83,6 @@
   (setf (view-x view) x
         (view-y view) y))
 
-(defmethod lem-if:print-modeline ((implementation fake-interface) view x y string attribute)
-  )
-
 (defmethod lem-if:update-display ((implementation fake-interface)))
 
 (defmacro with-fake-interface (() &body body)

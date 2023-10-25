@@ -54,7 +54,6 @@
 (defgeneric lem-if:clear (implementation view))
 (defgeneric lem-if:set-view-size (implementation view width height))
 (defgeneric lem-if:set-view-pos (implementation view x y))
-(defgeneric lem-if:print-modeline (implementation view x y string attribute))
 (defgeneric lem-if:redraw-view-before (implementation view)
   (:method (implementation view)))
 (defgeneric lem-if:redraw-view-after (implementation view)
@@ -112,6 +111,8 @@
 (defgeneric lem-if:get-char-height (implementation))
 
 (defgeneric lem-if:render-line (implementation view x y objects height))
+(defgeneric lem-if:render-line-on-modeline (implementation view left-objects right-objects
+                                            default-attribute height))
 (defgeneric lem-if:object-width (implementation drawing-object))
 (defgeneric lem-if:object-height (implementation drawing-object))
 (defgeneric lem-if:clear-to-end-of-window (implementation window y))

@@ -248,14 +248,41 @@
         :for object :in objects
         :do (incf current-x (draw-object object current-x (+ y height) view))))
 
-(defun clear-to-end-of-line (view x y height)
+(defun redraw-physical-line-from-behind (view objects)
+  (loop :with current-x := (lem-if:view-width (lem-core:implementation) view)
+        :and y := (lem-if:view-height (lem-core:implementation) view)
+        :for object :in objects
+        :do (decf current-x (object-width object))
+            (draw-object object current-x y view)))
+
+(defun fill-to-end-of-line (view x y height &optional default-attribute)
   (sdl2:with-rects ((rect x y (- (lem-if:view-width (lem-core:implementation) view) x) height))
-    (lem-sdl2::set-render-color lem-sdl2::*display* (lem-sdl2::display-background-color lem-sdl2::*display*))
+    (lem-sdl2::set-render-color lem-sdl2::*display*
+                                (lem-core:attribute-background-color default-attribute))
     (sdl2:render-fill-rect (lem-sdl2::current-renderer) rect)))
 
 (defmethod lem-if:render-line ((implementation lem-sdl2::sdl2) view x y objects height)
-  (clear-to-end-of-line view 0 y height)
+  (fill-to-end-of-line view 0 y height)
   (redraw-physical-line view x y objects height))
+
+(defmethod lem-if:render-line-on-modeline ((implementation lem-sdl2::sdl2)
+                                           view
+                                           left-objects
+                                           right-objects
+                                           default-attribute
+                                           height)
+  (fill-to-end-of-line view
+                       0
+                       (- (lem-if:view-height (lem-core:implementation) view) height)
+                       height
+                       default-attribute)
+  (redraw-physical-line view
+                        0
+                        (- (lem-if:view-height (lem-core:implementation) view)
+                           (lem-sdl2::char-height))
+                        left-objects
+                        height)
+  (redraw-physical-line-from-behind view right-objects))
 
 (defmethod lem-if:clear-to-end-of-window ((implementation lem-sdl2::sdl2) window y)
   (lem-sdl2::set-render-color

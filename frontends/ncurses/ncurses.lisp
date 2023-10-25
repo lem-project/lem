@@ -375,19 +375,11 @@
                      (+ y (ncurses-view-height view))
                      x)))
 
-(defun draw-string (view x y string attribute)
+(defun print-string (scrwin x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
-    (charms/ll:wattron (ncurses-view-scrwin view) attr)
-    ;(charms/ll:scrollok (ncurses-view-scrwin view) 0)
-    (charms/ll:mvwaddstr (ncurses-view-scrwin view) y x string)
-    ;(charms/ll:scrollok (ncurses-view-scrwin view) 1)
-    (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
-
-(defmethod lem-if:print-modeline ((implementation ncurses) view x y string attribute)
-  (let ((attr (attribute-to-bits attribute)))
-    (charms/ll:wattron (ncurses-view-modeline-scrwin view) attr)
-    (charms/ll:mvwaddstr (ncurses-view-modeline-scrwin view) y x string)
-    (charms/ll:wattroff (ncurses-view-modeline-scrwin view) attr)))
+    (charms/ll:wattron scrwin attr)
+    (charms/ll:mvwaddstr scrwin y x string)
+    (charms/ll:wattroff scrwin attr)))
 
 (defun draw-border (border)
   (let ((win (border-win border))

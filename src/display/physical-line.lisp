@@ -1,6 +1,6 @@
 (in-package :lem-core)
 
-(defvar *line-wrap*)
+(defvar *line-wrap* nil)
 
 (deftype char-type ()
   '(member :latin :cjk :braille :emoji :icon :control))
@@ -414,44 +414,44 @@
 (defmacro with-display-error (() &body body)
   `(call-with-display-error (lambda () ,@body)))
 
-(defun make-modeline-elements (window default-attribute)
-  (let ((elements '())
-        (left-x 0)
-        (right-x (window-width window)))
+(defun make-modeline-objects (window default-attribute)
+  (let ((left-objects '())
+        (right-objects '()))
     (modeline-apply window
                     (lambda (string attribute alignment)
                       (case alignment
                         ((:right)
-                         (decf right-x (length string))
-                         (push (list right-x string attribute) elements))
+                         (alexandria:nconcf
+                          right-objects
+                          (create-drawing-object
+                           (make-string-with-attribute-item :string string
+                                                            :attribute attribute))))
                         (otherwise
-                         (push (list left-x string attribute) elements)
-                         (incf left-x (length string)))))
+                         (alexandria:nconcf left-objects
+                                            (create-drawing-object
+                                             (make-string-with-attribute-item :string string
+                                                                              :attribute attribute))))))
                     default-attribute)
-    (nreverse elements)))
+    (values left-objects
+            right-objects)))
 
 (defun redraw-modeline (window force)
+  ;; TODO: cache
   (when (window-use-modeline-p window)
     (let* ((view (window-view window))
-           (default-attribute (if (eq window (current-window))
-                                  'modeline
-                                  'modeline-inactive))
-           (elements (make-modeline-elements window default-attribute)))
-      (when (or force (not (equal elements (window-modeline-elements-cache window))))
-        (setf (window-modeline-elements-cache window) elements)
-        (lem-if:print-modeline (implementation)
-                               view
-                               0
-                               0
-                               (make-string (window-width window) :initial-element #\space)
-                               (ensure-attribute default-attribute nil))
-        (loop :for (x string attribute) :in elements
-              :do (lem-if:print-modeline (implementation)
-                                         view
-                                         x
-                                         0
-                                         string
-                                         (ensure-attribute attribute nil)))))))
+           (default-attribute (ensure-attribute
+                               (if (eq window (current-window))
+                                   'modeline
+                                   'modeline-inactive))))
+      (multiple-value-bind (left-objects right-objects)
+          (make-modeline-objects window default-attribute)
+        (lem-if:render-line-on-modeline (implementation)
+                                        view
+                                        left-objects
+                                        right-objects
+                                        default-attribute
+                                        (max (max-height-of-objects left-objects)
+                                             (max-height-of-objects right-objects)))))))
 
 (defun get-background-color-of-window (window)
   (cond ((typep window 'floating-window)

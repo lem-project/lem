@@ -200,11 +200,6 @@
             "textWidth" (string-width string)
             "attribute" (ensure-attribute attribute nil))))
 
-(defmethod lem-if:print-modeline
-    ((implementation jsonrpc) view x y string attribute)
-  (with-error-handler ()
-    (notify "modeline-put" (put-params view x y string attribute))))
-
 (defmethod move-cursor ((implementation jsonrpc) view x y)
   (with-error-handler ()
     (notify "move-cursor"

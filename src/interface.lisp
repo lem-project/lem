@@ -58,7 +58,7 @@
   (:method (implementation view)))
 (defgeneric lem-if:redraw-view-after (implementation view)
   (:method (implementation view)))
-(defgeneric lem-if::will-update-display (implementation)
+(defgeneric lem-if:will-update-display (implementation)
   (:method (implementation)))
 (defgeneric lem-if:update-display (implementation))
 

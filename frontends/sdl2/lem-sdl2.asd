@@ -16,7 +16,6 @@
                (:file "icon-font")
                (:file "mouse")
                (:file "main")
-               (:file "clipboard")
                (:file "text-buffer-impl")
                (:file "graphics")
                (:file "image-buffer")

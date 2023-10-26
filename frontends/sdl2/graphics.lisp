@@ -81,7 +81,7 @@
 
 (defun draw-line (target x1 y1 x2 y2 &key color)
   (with-drawable (target)
-    (lem-sdl2::set-render-color lem-sdl2::*display* color)
+    (lem-sdl2/display::set-render-color lem-sdl2/display::*display* color)
     (sdl2:render-draw-line (lem-sdl2:current-renderer)
                            x1
                            y1
@@ -90,7 +90,7 @@
 
 (defun draw-rectangle (target x y width height &key filled color)
   (with-drawable (target)
-    (lem-sdl2::set-render-color lem-sdl2::*display* color)
+    (lem-sdl2/display::set-render-color lem-sdl2/display::*display* color)
     (sdl2:with-rects ((rect x y width height))
       (if filled
           (sdl2:render-fill-rect (lem-sdl2:current-renderer) rect)
@@ -98,7 +98,7 @@
 
 (defun draw-point (target x y &key color)
   (with-drawable (target)
-    (lem-sdl2::set-render-color lem-sdl2::*display* color)
+    (lem-sdl2/display::set-render-color lem-sdl2/display::*display* color)
     (sdl2:render-draw-point (lem-sdl2:current-renderer) x y)))
 
 (defun convert-to-points (x-y-seq)
@@ -119,14 +119,14 @@
   (multiple-value-bind (points num-points)
       (convert-to-points x-y-seq)
     (with-drawable (target)
-      (lem-sdl2::set-render-color lem-sdl2::*display* color)
+      (lem-sdl2/display::set-render-color lem-sdl2/display::*display* color)
       (sdl2:render-draw-points (lem-sdl2:current-renderer)
                                points
                                num-points))))
 
 (defun draw-string (target string x y
                     &key (font (lem-sdl2/font:font-latin-normal-font
-                                (lem-sdl2::display-font lem-sdl2::*display*)))
+                                (lem-sdl2/display::display-font lem-sdl2/display::*display*)))
                          (color (alexandria:required-argument :color)))
   (let* ((surface (sdl2-ttf:render-utf8-blended font
                                                 string

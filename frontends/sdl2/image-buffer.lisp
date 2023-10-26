@@ -56,7 +56,7 @@
 
 (defmethod render :before (texture window (buffer image-buffer))
   (sdl2:set-render-target (current-renderer) texture)
-  (lem-sdl2::set-render-color lem-sdl2::*display* (lem-sdl2::display-background-color lem-sdl2::*display*))
+  (lem-sdl2/display::set-render-color lem-sdl2/display::*display* (lem-sdl2/display::display-background-color lem-sdl2/display::*display*))
   (sdl2:with-rects ((rect 0
                           0
                           (* (lem-sdl2::char-width)

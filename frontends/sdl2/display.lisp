@@ -2,6 +2,8 @@
   (:use :cl))
 (in-package :lem-sdl2/display)
 
+(defvar *display*)
+
 (defclass display ()
   ((mutex :initform (bt:make-lock "lem-sdl2 display mutex")
           :reader display-mutex)

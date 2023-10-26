@@ -17,6 +17,7 @@
                (:file "mouse")
                (:file "utils")
                (:file "display")
+               (:file "view")
                (:file "main")
                (:file "text-buffer-impl")
                (:file "graphics")

@@ -1,5 +1,6 @@
 (defpackage :lem-sdl2/wm
-  (:use :cl))
+  (:use :cl)
+  (:export :set-x11-wm-class))
 (in-package :lem-sdl2/wm)
 
 (defparameter +lem-x11-wm-class+ "Lem SDL2")

@@ -1,5 +1,24 @@
 (defpackage :lem-sdl2/view
-  (:use :cl))
+  (:use :cl)
+  (:local-nicknames (:display :lem-sdl2/display))
+  (:export
+   :last-cursor-x
+   :last-cursor-y
+   :create-view
+   :delete-view
+   :render-clear
+   :resize
+   :move-position
+   :draw-window-border
+   :render-border-using-view
+   :render-view-texture-to-display
+   :view-window
+   :view-x
+   :view-y
+   :view-width
+   :view-height
+   :view-use-modeline
+   :view-texture))
 (in-package :lem-sdl2/view)
 
 (defclass view ()
@@ -31,19 +50,19 @@
     :initform nil
     :accessor view-last-cursor-y)))
 
-(defmethod last-cursor-x ((view view))
+(defmethod last-cursor-x ((view view) display)
   (or (view-last-cursor-x view)
       ;; fallback to v1
       (* (lem:last-print-cursor-x (view-window view))
-         (lem-sdl2/display::display-char-width lem-sdl2/display::*display*))))
+         (display:display-char-width display))))
 
-(defmethod last-cursor-y ((view view))
+(defmethod last-cursor-y ((view view) display)
   (or (view-last-cursor-y view)
       ;; fallback to v1
       (* (lem:last-print-cursor-y (view-window view))
-         (lem-sdl2/display::display-char-height lem-sdl2/display::*display*))))
+         (display:display-char-height display))))
 
-(defun create-view (window x y width height use-modeline)
+(defun create-view (display window x y width height use-modeline)
   (when use-modeline (incf height))
   (make-instance 'view
                  :window window
@@ -52,48 +71,58 @@
                  :width width
                  :height height
                  :use-modeline use-modeline
-                 :texture (lem-sdl2/display::create-view-texture lem-sdl2/display::*display* width height)))
+                 :texture (display:create-view-texture display width height)))
 
 (defmethod delete-view ((view view))
   (when (view-texture view)
     (sdl2:destroy-texture (view-texture view))
     (setf (view-texture view) nil)))
 
-(defmethod render-clear ((view view))
-  (sdl2:set-render-target (lem-sdl2/display::display-renderer lem-sdl2/display::*display*) (view-texture view))
-  (lem-sdl2/display::set-render-color lem-sdl2/display::*display* (lem-sdl2/display::display-background-color lem-sdl2/display::*display*))
-  (sdl2:render-clear (lem-sdl2/display::display-renderer lem-sdl2/display::*display*)))
+(defmethod render-clear ((view view) display)
+  (sdl2:set-render-target (display:display-renderer display) (view-texture view))
+  (display:set-render-color display (display:display-background-color display))
+  (sdl2:render-clear (display:display-renderer display)))
 
-(defmethod resize ((view view) width height)
+(defmethod resize ((view view) display width height)
   (when (view-use-modeline view) (incf height))
   (setf (view-width view) width
         (view-height view) height)
   (sdl2:destroy-texture (view-texture view))
   (setf (view-texture view)
-        (lem-sdl2/display::create-view-texture lem-sdl2/display::*display* width height)))
+        (display:create-view-texture display width height)))
 
 (defmethod move-position ((view view) x y)
   (setf (view-x view) x
         (view-y view) y))
 
-(defmethod draw-window-border (view (window lem:floating-window))
+(defmethod draw-window-border (view display (window lem:floating-window))
   (when (and (lem:floating-window-border window)
              (< 0 (lem:floating-window-border window)))
-    (sdl2:set-render-target (lem-sdl2/display::display-renderer lem-sdl2/display::*display*) (lem-sdl2/display::display-texture lem-sdl2/display::*display*))
-    (lem-sdl2/display::render-border lem-sdl2/display::*display*
+    (sdl2:set-render-target (display:display-renderer display) (display:display-texture display))
+    (display:render-border display
                                      (lem:window-x window)
                                      (lem:window-y window)
                                      (lem:window-width window)
                                      (lem:window-height window)
                                      :without-topline (eq :drop-curtain (lem:floating-window-border-shape window)))))
 
-(defmethod draw-window-border (view (window lem:window))
+(defmethod draw-window-border (view display (window lem:window))
   (when (< 0 (lem:window-x window))
-    (sdl2:set-render-target (lem-sdl2/display::display-renderer lem-sdl2/display::*display*) (lem-sdl2/display::display-texture lem-sdl2/display::*display*))
-    (lem-sdl2/display::render-margin-line lem-sdl2/display::*display*
+    (sdl2:set-render-target (display:display-renderer display) (display:display-texture display))
+    (display:render-margin-line display
                                           (lem:window-x window)
                                           (lem:window-y window)
                                           (lem:window-height window))))
 
-(defmethod render-border-using-view ((view view))
-  (draw-window-border view (view-window view)))
+(defmethod render-border-using-view ((view view) display)
+  (draw-window-border view display (view-window view)))
+
+(defun render-view-texture-to-display (view display)
+  (sdl2:set-render-target (display:display-renderer display) (display:display-texture display))
+  (sdl2:with-rects ((dest-rect (* (view-x view) (display:display-char-width display))
+                               (* (view-y view) (display:display-char-height display))
+                               (* (view-width view) (display:display-char-width display))
+                               (* (view-height view) (display:display-char-height display))))
+    (sdl2:render-copy (display:display-renderer display)
+                      (view-texture view)
+                      :dest-rect dest-rect)))

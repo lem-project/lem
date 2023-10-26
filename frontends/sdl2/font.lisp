@@ -2,7 +2,8 @@
   (:use :cl)
   (:import-from :lem-sdl2/resource
                 :get-resource-pathname)
-  (:export :font
+  (:export :default-font-size
+           :font
            :font-latin-normal-font
            :font-latin-bold-font
            :font-cjk-normal-font
@@ -22,6 +23,8 @@
 (in-package :lem-sdl2/font)
 
 (defparameter *default-font-size* 15)
+
+(defun default-font-size () *default-font-size*)
 
 (defstruct (font-config (:constructor %make-font-config))
   size

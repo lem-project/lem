@@ -1,8 +1,55 @@
 (defpackage :lem-sdl2/display
-  (:use :cl))
+  (:use :cl)
+  (:local-nicknames (:font :lem-sdl2/font)
+                    (:icon-font :lem-sdl2/icon-font)
+                    (:text-surface-cache :lem-sdl2/text-surface-cache)
+                    (:utils :lem-sdl2/utils))
+  (:export :with-display
+           :display
+           :current-display
+           :display-latin-font
+           :display-cjk-normal-font
+           :display-redraw-at-least-once-p
+           :display-font-config
+           :display-scale
+           :display-window
+           :display-char-width
+           :display-char-height
+           :display-focus-p
+           :create-view-texture
+           :display-renderer
+           :set-render-color
+           :display-background-color
+           :display-foreground-color
+           :display-texture
+           :render-border
+           :clear
+           :render-margin-line
+           :scaled-char-width
+           :scaled-char-height
+           :notify-required-redisplay
+           :update-texture
+           :update-display
+           :display-width
+           :display-height
+           :adapt-high-dpi-font-size
+           :change-font
+           :with-renderer))
 (in-package :lem-sdl2/display)
 
 (defvar *display*)
+
+(defun current-display ()
+  *display*)
+
+(defun (setf current-display) (display)
+  (setf *display* display))
+
+(defun call-with-display (function)
+  (funcall function *display*))
+
+(defmacro with-display ((display) &body body)
+  `(call-with-display (lambda (,display) ,@body)))
 
 (defclass display ()
   ((mutex :initform (bt:make-lock "lem-sdl2 display mutex")
@@ -35,22 +82,22 @@
           :accessor display-scale)))
 
 (defmethod display-latin-font ((display display))
-  (lem-sdl2/font:font-latin-normal-font (display-font display)))
+  (font:font-latin-normal-font (display-font display)))
 
 (defmethod display-latin-bold-font ((display display))
-  (lem-sdl2/font:font-latin-bold-font (display-font display)))
+  (font:font-latin-bold-font (display-font display)))
 
 (defmethod display-cjk-normal-font ((display display))
-  (lem-sdl2/font:font-cjk-normal-font (display-font display)))
+  (font:font-cjk-normal-font (display-font display)))
 
 (defmethod display-cjk-bold-font ((display display))
-  (lem-sdl2/font:font-cjk-bold-font (display-font display)))
+  (font:font-cjk-bold-font (display-font display)))
 
 (defmethod display-emoji-font ((display display))
-  (lem-sdl2/font:font-emoji-font (display-font display)))
+  (font:font-emoji-font (display-font display)))
 
 (defmethod display-braille-font ((display display))
-  (lem-sdl2/font:font-braille-font (display-font display)))
+  (font:font-braille-font (display-font display)))
 
 (defmethod display-background-color ((display display))
   (or (lem:parse-color lem-if:*background-color-of-drawing-window*)
@@ -74,9 +121,9 @@
   (cond ((eq type :control)
          (display-latin-font display))
         ((eq type :icon)
-         (or (and character (lem-sdl2/icon-font:icon-font
+         (or (and character (icon-font:icon-font
                              character
-                             (lem-sdl2/font:font-config-size (display-font-config display))))
+                             (font:font-config-size (display-font-config display))))
              (display-emoji-font display)))
         ((eq type :emoji)
          (display-emoji-font display))
@@ -118,9 +165,9 @@
   (bt:with-lock-held ((display-mutex display))
     (sdl2:destroy-texture (display-texture display))
     (setf (display-texture display)
-          (lem-sdl2/utils:create-texture (display-renderer display)
-                                         (display-width display)
-                                         (display-height display)))))
+          (utils:create-texture (display-renderer display)
+                                (display-width display)
+                                (display-height display)))))
 
 (defmethod set-render-color ((display display) color)
   (when color
@@ -130,6 +177,25 @@
                                 (lem:color-blue color)
                                 0)))
 
+(defun adapt-high-dpi-display-scale (display)
+  (with-renderer (display)
+    (multiple-value-bind (renderer-width renderer-height)
+        (sdl2:get-renderer-output-size (display-renderer display))
+      (let* ((window-width (display-window-width display))
+             (window-height (display-window-height display))
+             (scale-x (/ renderer-width window-width))
+             (scale-y (/ renderer-height window-height)))
+        (setf (display-scale display) (list scale-x scale-y))))))
+
+(defun adapt-high-dpi-font-size (display)
+  (with-renderer (display)
+    (let ((font-config (display-font-config display))
+          (ratio (round (first (display-scale display)))))
+      (change-font display
+                   (font:change-size font-config
+                                     (* ratio (lem:config :sdl2-font-size (font:default-font-size))))
+                   nil))))
+
 (defmethod notify-required-redisplay ((display display))
   (with-renderer (display)
     (when (display-redraw-at-least-once-p display)
@@ -138,9 +204,9 @@
       (set-render-color display (display-background-color display))
       (sdl2:render-clear (display-renderer display))
       #+darwin
-      (adapt-high-dpi-display-scale)
+      (adapt-high-dpi-display-scale display)
       #+darwin
-      (adapt-high-dpi-font-size)
+      (adapt-high-dpi-font-size display)
       (lem:update-on-display-resized))))
 
 (defmethod render-fill-rect ((display display) x y width height &key color)
@@ -203,20 +269,20 @@
                                 :color (lem-core:attribute-foreground-color attribute))))
 
 (defmethod change-font ((display display) font-config &optional (save-font-size-p t))
-  (let ((font-config (lem-sdl2/font:merge-font-config font-config (display-font-config display))))
-    (lem-sdl2/font:close-font (display-font display))
-    (let ((font (lem-sdl2/font:open-font font-config)))
-      (setf (display-char-width display) (lem-sdl2/font:font-char-width font)
-            (display-char-height display) (lem-sdl2/font:font-char-height font))
+  (let ((font-config (font:merge-font-config font-config (display-font-config display))))
+    (font:close-font (display-font display))
+    (let ((font (font:open-font font-config)))
+      (setf (display-char-width display) (font:font-char-width font)
+            (display-char-height display) (font:font-char-height font))
       (setf (display-font-config display) font-config)
       (setf (display-font display) font))
     (when save-font-size-p
-      (lem-sdl2/font:save-font-size font-config (first (display-scale display))))
-    (lem-sdl2/icon-font:clear-icon-font-cache)
-    (lem-sdl2/text-surface-cache:clear-text-surface-cache)
+      (font:save-font-size font-config (first (display-scale display))))
+    (icon-font:clear-icon-font-cache)
+    (text-surface-cache:clear-text-surface-cache)
     (lem:send-event :resize)))
 
 (defmethod create-view-texture ((display display) width height)
-  (lem-sdl2/utils:create-texture (display-renderer display)
-                                 (* width (display-char-width display))
-                                 (* height (display-char-height display))))
+  (utils:create-texture (display-renderer display)
+                        (* width (display-char-width display))
+                        (* height (display-char-height display))))

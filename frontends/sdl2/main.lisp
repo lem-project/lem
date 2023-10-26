@@ -8,6 +8,8 @@
         :lem-sdl2/resource
         :lem-sdl2/log
         :lem-sdl2/mouse)
+  (:local-nicknames (:display :lem-sdl2/display)
+                    (:view :lem-sdl2/view))
   (:export :change-font
            :set-keyboard-layout
            :render
@@ -17,11 +19,7 @@
 (defconstant +display-width+ 100)
 (defconstant +display-height+ 40)
 
-(defun char-width () (lem-sdl2/display::display-char-width lem-sdl2/display::*display*))
-(defun char-height () (lem-sdl2/display::display-char-height lem-sdl2/display::*display*))
-(defun current-renderer () (lem-sdl2/display::display-renderer lem-sdl2/display::*display*))
-
-(defun on-mouse-button-down (button x y clicks)
+(defun on-mouse-button-down (display button x y clicks)
   (show-cursor)
   (let ((button
           (cond ((eql button sdl2-ffi:+sdl-button-left+) :button-1)
@@ -29,43 +27,43 @@
                 ((eql button sdl2-ffi:+sdl-button-middle+) :button-2)
                 ((eql button 4) :button-4))))
     (when button
-      (let ((char-x (lem-sdl2/display::scaled-char-width lem-sdl2/display::*display* x))
-            (char-y (lem-sdl2/display::scaled-char-height lem-sdl2/display::*display* y)))
+      (let ((char-x (display:scaled-char-width display x))
+            (char-y (display:scaled-char-height display y)))
         (lem:send-event
-          (lambda ()
-            (lem:receive-mouse-button-down char-x char-y x y button
-                                           clicks)))))))
+         (lambda ()
+           (lem:receive-mouse-button-down char-x char-y x y button
+                                          clicks)))))))
 
-(defun on-mouse-button-up (button x y)
+(defun on-mouse-button-up (display button x y)
   (show-cursor)
   (let ((button
           (cond ((eql button sdl2-ffi:+sdl-button-left+) :button-1)
                 ((eql button sdl2-ffi:+sdl-button-right+) :button-3)
                 ((eql button sdl2-ffi:+sdl-button-middle+) :button-2)
                 ((eql button 4) :button-4)))
-        (char-x (lem-sdl2/display::scaled-char-width lem-sdl2/display::*display* x))
-        (char-y (lem-sdl2/display::scaled-char-height lem-sdl2/display::*display* y)))
+        (char-x (display:scaled-char-width display x))
+        (char-y (display:scaled-char-height display y)))
     (lem:send-event
      (lambda ()
        (lem:receive-mouse-button-up char-x char-y x y button)))))
 
-(defun on-mouse-motion (x y state)
+(defun on-mouse-motion (display x y state)
   (show-cursor)
   (let ((button (if (= sdl2-ffi:+sdl-button-lmask+ (logand state sdl2-ffi:+sdl-button-lmask+))
                     :button-1
                     nil)))
-    (let ((char-x (lem-sdl2/display::scaled-char-width lem-sdl2/display::*display* x))
-          (char-y (lem-sdl2/display::scaled-char-height lem-sdl2/display::*display* y)))
+    (let ((char-x (display:scaled-char-width display x))
+          (char-y (display:scaled-char-height display y)))
       (lem:send-event
        (lambda ()
          (lem:receive-mouse-motion char-x char-y x y button))))))
 
-(defun on-mouse-wheel (wheel-x wheel-y which direction)
+(defun on-mouse-wheel (display wheel-x wheel-y which direction)
   (declare (ignore which direction))
   (show-cursor)
   (multiple-value-bind (x y) (sdl2:mouse-state)
-    (let ((char-x (lem-sdl2/display::scaled-char-width lem-sdl2/display::*display* x))
-          (char-y (lem-sdl2/display::scaled-char-height lem-sdl2/display::*display* y)))
+    (let ((char-x (display:scaled-char-width display x))
+          (char-y (display:scaled-char-height display y)))
       (lem:send-event
        (lambda ()
          (lem:receive-mouse-wheel char-x char-y x y wheel-x wheel-y)
@@ -90,21 +88,21 @@
 (defun on-keyup (key-event)
   (handle-key-up (get-platform) key-event))
 
-(defun on-windowevent (event)
+(defun on-windowevent (display event)
   (alexandria:switch (event)
     (sdl2-ffi:+sdl-windowevent-shown+
-     (lem-sdl2/display::notify-required-redisplay lem-sdl2/display::*display*))
+     (display:notify-required-redisplay display))
     (sdl2-ffi:+sdl-windowevent-exposed+
-     (lem-sdl2/display::notify-required-redisplay lem-sdl2/display::*display*))
+     (display:notify-required-redisplay display))
     (sdl2-ffi:+sdl-windowevent-resized+
-     (lem-sdl2/display::update-texture lem-sdl2/display::*display*)
-     (lem-sdl2/display::notify-required-redisplay lem-sdl2/display::*display*))
+     (display:update-texture display)
+     (display:notify-required-redisplay display))
     (sdl2-ffi:+sdl-windowevent-focus-gained+
-     (setf (lem-sdl2/display::display-focus-p lem-sdl2/display::*display*) t))
+     (setf (display:display-focus-p display) t))
     (sdl2-ffi:+sdl-windowevent-focus-lost+
-     (setf (lem-sdl2/display::display-focus-p lem-sdl2/display::*display*) nil))))
+     (setf (display:display-focus-p display) nil))))
 
-(defun event-loop ()
+(defun event-loop (display)
   (sdl2:with-event-loop (:method :wait)
     (:quit ()
      #+windows
@@ -119,44 +117,23 @@
     (:keyup (:keysym keysym)
      (on-keyup (keysym-to-key-event keysym)))
     (:mousebuttondown (:button button :x x :y y :clicks clicks)
-     (on-mouse-button-down button x y clicks))
+     (on-mouse-button-down display button x y clicks))
     (:mousebuttonup (:button button :x x :y y)
-     (on-mouse-button-up button x y))
+     (on-mouse-button-up display button x y))
     (:mousemotion (:x x :y y :state state)
-     (on-mouse-motion x y state))
+     (on-mouse-motion display x y state))
     (:mousewheel (:x x :y y :which which :direction direction)
-     (on-mouse-wheel x y which direction))
+     (on-mouse-wheel display x y which direction))
     (:windowevent (:event event)
-     (on-windowevent event))))
+     (on-windowevent display event))))
 
 (defun init-application-icon (window)
   (let ((image (sdl2-image:load-image (get-resource-pathname "resources/icon.png"))))
     (sdl2-ffi.functions:sdl-set-window-icon window image)
     (sdl2:free-surface image)))
 
-(defun adapt-high-dpi-display-scale ()
-  (with-debug ("adapt-high-dpi-display-scale")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (multiple-value-bind (renderer-width renderer-height)
-          (sdl2:get-renderer-output-size (lem-sdl2/display::display-renderer lem-sdl2/display::*display*))
-        (let* ((window-width (lem-sdl2/display::display-window-width lem-sdl2/display::*display*))
-               (window-height (lem-sdl2/display::display-window-height lem-sdl2/display::*display*))
-               (scale-x (/ renderer-width window-width))
-               (scale-y (/ renderer-height window-height)))
-          (setf (lem-sdl2/display::display-scale lem-sdl2/display::*display*) (list scale-x scale-y)))))))
-
-(defun adapt-high-dpi-font-size ()
-  (with-debug ("adapt-high-dpi-font-size")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (let ((font-config (lem-sdl2/display::display-font-config lem-sdl2/display::*display*))
-            (ratio (round (first (lem-sdl2/display::display-scale lem-sdl2/display::*display*)))))
-        (lem-sdl2/display::change-font lem-sdl2/display::*display*
-                                       (change-size font-config
-                                                    (* ratio (lem:config :sdl2-font-size lem-sdl2/font::*default-font-size*)))
-                                       nil)))))
-
 (defun create-display (function)
-  (lem-sdl2/wm::set-x11-wm-class)
+  (lem-sdl2/wm:set-x11-wm-class)
   (sdl2:with-init (:video)
     (sdl2-ttf:init)
     (sdl2-image:init '(:png))
@@ -164,40 +141,39 @@
          (let* ((font-config (make-font-config))
                 (font (open-font font-config))
                 (char-width (font-char-width font))
-                (char-height (font-char-height font)))
-           (let ((window-width (* +display-width+ char-width))
-                 (window-height (* +display-height+ char-height)))
-             (sdl2:with-window (window :title "Lem"
-                                       :w window-width
-                                       :h window-height
-                                       :flags '(:shown :resizable #+darwin :allow-highdpi))
-               (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
-                 (let* (#+darwin (renderer-size (multiple-value-list
-                                                 (sdl2:get-renderer-output-size renderer)))
-                        #+darwin (renderer-width (first renderer-size))
-                        #+darwin(renderer-height (second renderer-size))
-                        (scale-x #-darwin 1 #+darwin (/ renderer-width window-width))
-                        (scale-y #-darwin 1 #+darwin (/ renderer-height window-height))
-                        (texture (lem-sdl2/utils:create-texture renderer
-                                                                (* scale-x window-width)
-                                                                (* scale-y window-height))))
-                   (setf lem-sdl2/display::*display*
-                         (make-instance
-                          'lem-sdl2/display::display
-                          :font-config font-config
-                          :font font
-                          :renderer renderer
-                          :window window
-                          :texture texture
-                          :char-width (font-char-width font)
-                          :char-height (font-char-height font)
-                          :scale (list scale-x scale-y)))
-                   (init-application-icon window)
-                   #+darwin
-                   (adapt-high-dpi-font-size)
-                   (sdl2:start-text-input)
-                   (funcall function)
-                   (event-loop))))))
+                (char-height (font-char-height font))
+                (window-width (* +display-width+ char-width))
+                (window-height (* +display-height+ char-height)))
+           (sdl2:with-window (window :title "Lem"
+                                     :w window-width
+                                     :h window-height
+                                     :flags '(:shown :resizable #+darwin :allow-highdpi))
+             (init-application-icon window)
+             (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
+               (let* (#+darwin (renderer-size (multiple-value-list
+                                               (sdl2:get-renderer-output-size renderer)))
+                      #+darwin (renderer-width (first renderer-size))
+                      #+darwin(renderer-height (second renderer-size))
+                      (scale-x #-darwin 1 #+darwin (/ renderer-width window-width))
+                      (scale-y #-darwin 1 #+darwin (/ renderer-height window-height))
+                      (texture (lem-sdl2/utils:create-texture renderer
+                                                              (* scale-x window-width)
+                                                              (* scale-y window-height)))
+                      (display (make-instance 'display:display
+                                              :font-config font-config
+                                              :font font
+                                              :renderer renderer
+                                              :window window
+                                              :texture texture
+                                              :char-width (font-char-width font)
+                                              :char-height (font-char-height font)
+                                              :scale (list scale-x scale-y))))
+                 (setf (display:current-display) display)
+                 #+darwin
+                 (display:adapt-high-dpi-font-size display)
+                 (sdl2:start-text-input)
+                 (funcall function)
+                 (event-loop display)))))
       (sdl2-ttf:quit)
       (sdl2-image:quit))))
 
@@ -222,226 +198,252 @@
     (progn
       ;; called *before* any sdl windows are created
       (sdl2:set-hint :video-mac-fullscreen-spaces
-		     ;; the sdl2 library expects zero or one NOTE since this
-		     ;; is a preference let's not change the default here
-		     ;; because it's easy enough to change it via a user's
-		     ;; config
-		     (if (lem:config :darwin-use-native-fullscreen) 1 0))
+                     ;; the sdl2 library expects zero or one NOTE since this
+                     ;; is a preference let's not change the default here
+                     ;; because it's easy enough to change it via a user's
+                     ;; config
+                     (if (lem:config :darwin-use-native-fullscreen) 1 0))
       (sdl2:make-this-thread-main (lambda ()
-				    (create-display #'thunk)
-				    (when (sbcl-on-darwin-p)
-				      (cffi:foreign-funcall "_exit")))))))
+                                    (create-display #'thunk)
+                                    (when (sbcl-on-darwin-p)
+                                      (cffi:foreign-funcall "_exit")))))))
 
 (defmethod lem-if:get-background-color ((implementation sdl2))
   (with-debug ("lem-if:get-background-color")
-    (lem-sdl2/display::display-background-color lem-sdl2/display::*display*)))
+    (display:with-display (display)
+      (display:display-background-color display))))
 
 (defmethod lem-if:get-foreground-color ((implementation sdl2))
   (with-debug ("lem-if:get-foreground-color")
-    (lem-sdl2/display::display-foreground-color lem-sdl2/display::*display*)))
+    (display:with-display (display)
+      (display:display-foreground-color display))))
 
 (defmethod lem-if:update-foreground ((implementation sdl2) color)
   (with-debug ("lem-if:update-foreground" color)
-    (setf (lem-sdl2/display::display-foreground-color lem-sdl2/display::*display*) (lem:parse-color color))))
+    (display:with-display (display)
+      (setf (display:display-foreground-color display)
+            (lem:parse-color color)))))
 
 (defmethod lem-if:update-background ((implementation sdl2) color)
   (with-debug ("lem-if:update-background" color)
-    (setf (lem-sdl2/display::display-background-color lem-sdl2/display::*display*) (lem:parse-color color))))
+    (display:with-display (display)
+      (setf (display:display-background-color display)
+            (lem:parse-color color)))))
 
 (defmethod lem-if:display-width ((implementation sdl2))
   (with-debug ("lem-if:display-width")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (floor (lem-sdl2/display::display-width lem-sdl2/display::*display*) (lem-sdl2/display::display-char-width lem-sdl2/display::*display*)))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (floor (display:display-width display) (display:display-char-width display))))))
 
 (defmethod lem-if:display-height ((implementation sdl2))
   (with-debug ("lem-if:display-height")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (floor (lem-sdl2/display::display-height lem-sdl2/display::*display*) (lem-sdl2/display::display-char-height lem-sdl2/display::*display*)))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (floor (display:display-height display) (display:display-char-height display))))))
 
 (defmethod lem-if:display-title ((implementation sdl2))
   (with-debug ("lem-if:display-title")
-    (sdl2:get-window-title (lem-sdl2/display::display-window lem-sdl2/display::*display*))))
+    (display:with-display (display)
+      (sdl2:get-window-title (display:display-window display)))))
 
 (defmethod lem-if:set-display-title ((implementation sdl2) title)
   (with-debug ("lem-if:set-display-title")
     (sdl2:in-main-thread ()
-      (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-        (sdl2:set-window-title (lem-sdl2/display::display-window lem-sdl2/display::*display*) title)
-        ;; return the title instead of nil
-        title))))
+      (display:with-display (display)
+        (display:with-renderer (display)
+          (sdl2:set-window-title (display:display-window display) title)
+          ;; return the title instead of nil
+          title)))))
 
 (defmethod lem-if:display-fullscreen-p ((implementation sdl2))
   (with-debug ("lem-if:display-fullscreen-p")
-    (not (null (member :fullscreen (sdl2:get-window-flags (lem-sdl2/display::display-window lem-sdl2/display::*display*)))))))
+    (display:with-display (display)
+      (not (null (member :fullscreen (sdl2:get-window-flags (display:display-window display))))))))
 
 (defmethod lem-if:set-display-fullscreen-p ((implementation sdl2) fullscreen-p)
   (with-debug ("lem-if:set-display-fullscreen-p")
     (sdl2:in-main-thread ()
-      (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-        ;; always send :desktop over :fullscreen due to weird bugs on macOS
-        (sdl2:set-window-fullscreen (lem-sdl2/display::display-window lem-sdl2/display::*display*)
-                                    (if fullscreen-p :desktop))))))
+      (display:with-display (display)
+        (display:with-renderer (display)
+          ;; always send :desktop over :fullscreen due to weird bugs on macOS
+          (sdl2:set-window-fullscreen (display:display-window display)
+                                      (if fullscreen-p :desktop)))))))
 
 (defmethod lem-if:make-view ((implementation sdl2) window x y width height use-modeline)
   (with-debug ("lem-if:make-view" window x y width height use-modeline)
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (lem-sdl2/view::create-view window x y width height use-modeline))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (view:create-view display window x y width height use-modeline)))))
 
 (defmethod lem-if:delete-view ((implementation sdl2) view)
   (with-debug ("lem-if:delete-view")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (lem-sdl2/view::delete-view view))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (view:delete-view view)))))
 
 (defmethod lem-if:clear ((implementation sdl2) view)
   (with-debug ("lem-if:clear" view)
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (lem-sdl2/view::render-clear view))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (view:render-clear view display)))))
 
 (defmethod lem-if:set-view-size ((implementation sdl2) view width height)
   (with-debug ("lem-if:set-view-size" view width height)
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (lem-sdl2/view::resize view width height))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (view:resize view display width height)))))
 
 (defmethod lem-if:set-view-pos ((implementation sdl2) view x y)
   (with-debug ("lem-if:set-view-pos" view x y)
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (lem-sdl2/view::move-position view x y))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (view:move-position view x y)))))
 
 (defmethod lem-if:redraw-view-before ((implementation sdl2) view)
   (with-debug ("lem-if:redraw-view-before" view)
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (lem-sdl2/view::render-border-using-view view))))
-
-(defun render-view-texture-to-display (view)
-  (sdl2:set-render-target (lem-sdl2/display::display-renderer lem-sdl2/display::*display*) (lem-sdl2/display::display-texture lem-sdl2/display::*display*))
-  (sdl2:with-rects ((dest-rect (* (lem-sdl2/view::view-x view) (lem-sdl2/display::display-char-width lem-sdl2/display::*display*))
-                               (* (lem-sdl2/view::view-y view) (lem-sdl2/display::display-char-height lem-sdl2/display::*display*))
-                               (* (lem-sdl2/view::view-width view) (lem-sdl2/display::display-char-width lem-sdl2/display::*display*))
-                               (* (lem-sdl2/view::view-height view) (lem-sdl2/display::display-char-height lem-sdl2/display::*display*))))
-    (sdl2:render-copy (lem-sdl2/display::display-renderer lem-sdl2/display::*display*)
-                      (lem-sdl2/view::view-texture view)
-                      :dest-rect dest-rect)))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (view:render-border-using-view view display)))))
 
 (defgeneric render (texture window buffer))
 
 (defmethod lem-if:redraw-view-after ((implementation sdl2) view)
   (with-debug ("lem-if:redraw-view-after" view)
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (sdl2:with-rects ((view-rect 0
-                                   0
-                                   (* (lem-sdl2/view::view-width view) (lem-sdl2/display::display-char-width lem-sdl2/display::*display*))
-                                   (* (1- (lem-sdl2/view::view-height view)) (lem-sdl2/display::display-char-height lem-sdl2/display::*display*))))
-        (sdl2:render-set-viewport (lem-sdl2/display::display-renderer lem-sdl2/display::*display*) view-rect)
-        (render (lem-sdl2/view::view-texture view)
-                (lem-sdl2/view::view-window view)
-                (lem:window-buffer (lem-sdl2/view::view-window view)))
-        (sdl2:render-set-viewport (lem-sdl2/display::display-renderer lem-sdl2/display::*display*) nil))
-      (render-view-texture-to-display view))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (sdl2:with-rects ((view-rect 0
+                                     0
+                                     (* (view:view-width view) (display:display-char-width display))
+                                     (* (1- (view:view-height view)) (display:display-char-height display))))
+          (sdl2:render-set-viewport (display:display-renderer display) view-rect)
+          (render (view:view-texture view)
+                  (view:view-window view)
+                  (lem:window-buffer (view:view-window view)))
+          (sdl2:render-set-viewport (display:display-renderer display) nil))
+        (view:render-view-texture-to-display view display)))))
 
 (defmethod lem-if:will-update-display ((implementation sdl2))
   (with-debug ("will-update-display")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (sdl2:set-render-target (lem-sdl2/display::display-renderer lem-sdl2/display::*display*) (lem-sdl2/display::display-texture lem-sdl2/display::*display*))
-      (lem-sdl2/display::set-render-color lem-sdl2/display::*display* (lem-sdl2/display::display-background-color lem-sdl2/display::*display*))
-      (sdl2:render-clear (lem-sdl2/display::display-renderer lem-sdl2/display::*display*)))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (sdl2:set-render-target (display:display-renderer display) (display:display-texture display))
+        (display:set-render-color display (display:display-background-color display))
+        (sdl2:render-clear (display:display-renderer display))))))
 
-(defun set-input-method ()
+(defun set-input-method (display)
   (let* ((view (lem:window-view (lem:current-window)))
-         (cursor-x (lem-sdl2/view::last-cursor-x view))
-         (cursor-y (lem-sdl2/view::last-cursor-y view))
+         (cursor-x (view:last-cursor-x view display))
+         (cursor-y (view:last-cursor-y view display))
          (text lem-sdl2/keyboard::*textediting-text*)
-         (x (+ (* (lem-sdl2/view::view-x view) (lem-sdl2/display::display-char-width lem-sdl2/display::*display*))
+         (x (+ (* (view:view-x view) (display:display-char-width display))
                cursor-x))
-         (y (+ (* (lem-sdl2/view::view-y view) (lem-sdl2/display::display-char-height lem-sdl2/display::*display*))
+         (y (+ (* (view:view-y view) (display:display-char-height display))
                cursor-y)))
-    (sdl2:with-rects ((rect x y (* (lem-sdl2/display::display-char-width lem-sdl2/display::*display*) (lem:string-width text)) (lem-sdl2/display::display-char-height lem-sdl2/display::*display*)))
+    (sdl2:with-rects ((rect x y (* (display:display-char-width display) (lem:string-width text)) (display:display-char-height display)))
       (sdl2-ffi.functions:sdl-set-text-input-rect rect)
       (when (plusp (length text))
-        (let* ((color (lem-sdl2/display::display-foreground-color lem-sdl2/display::*display*))
-               (surface (sdl2-ttf:render-utf8-blended (lem-sdl2/display::display-cjk-normal-font lem-sdl2/display::*display*)
+        (let* ((color (display:display-foreground-color display))
+               (surface (sdl2-ttf:render-utf8-blended (display:display-cjk-normal-font display)
                                                       text
                                                       (lem:color-red color)
                                                       (lem:color-green color)
                                                       (lem:color-blue color)
                                                       0))
-               (texture (sdl2:create-texture-from-surface (lem-sdl2/display::display-renderer lem-sdl2/display::*display*) surface)))
+               (texture (sdl2:create-texture-from-surface (display:display-renderer display) surface)))
           (sdl2:with-rects ((rect x y (sdl2:surface-width surface) (sdl2:surface-height surface)))
-            (lem-sdl2/display::set-render-color lem-sdl2/display::*display* (lem-sdl2/display::display-background-color lem-sdl2/display::*display*))
-            (sdl2:render-fill-rect (lem-sdl2/display::display-renderer lem-sdl2/display::*display*) rect)
-            (sdl2:render-copy (lem-sdl2/display::display-renderer lem-sdl2/display::*display*) texture :dest-rect rect))
+            (display:set-render-color display (display:display-background-color display))
+            (sdl2:render-fill-rect (display:display-renderer display) rect)
+            (sdl2:render-copy (display:display-renderer display) texture :dest-rect rect))
           (sdl2:destroy-texture texture))))))
 
 (defmethod lem-if:update-display ((implementation sdl2))
   (with-debug ("lem-if:update-display")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (setf (lem-sdl2/display::display-redraw-at-least-once-p lem-sdl2/display::*display*) t)
-      (sdl2:set-render-target (lem-sdl2/display::display-renderer lem-sdl2/display::*display*) nil)
-      (sdl2:render-copy (lem-sdl2/display::display-renderer lem-sdl2/display::*display*) (lem-sdl2/display::display-texture lem-sdl2/display::*display*))
-      (set-input-method)
-      (lem-sdl2/display::update-display lem-sdl2/display::*display*))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (setf (display:display-redraw-at-least-once-p display) t)
+        (sdl2:set-render-target (display:display-renderer display) nil)
+        (sdl2:render-copy (display:display-renderer display) (display:display-texture display))
+        (set-input-method display)
+        (display:update-display display)))))
 
 (defmethod lem-if:increase-font-size ((implementation sdl2))
   (with-debug ("increase-font-size")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (let ((font-config (lem-sdl2/display::display-font-config lem-sdl2/display::*display*))
-            (ratio (round (first (lem-sdl2/display::display-scale lem-sdl2/display::*display*)))))
-        (lem-sdl2/display::change-font lem-sdl2/display::*display*
-                     (change-size font-config
-                                  (+ (font-config-size font-config) ratio)))))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (let ((font-config (display:display-font-config display))
+              (ratio (round (first (display:display-scale display)))))
+          (display:change-font display
+                               (change-size font-config
+                                            (+ (font-config-size font-config) ratio))))))))
 
 (defmethod lem-if:decrease-font-size ((implementation sdl2))
   (with-debug ("decrease-font-size")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (let ((font-config (lem-sdl2/display::display-font-config lem-sdl2/display::*display*))
-            (ratio (round (first (lem-sdl2/display::display-scale lem-sdl2/display::*display*)))))
-        (lem-sdl2/display::change-font lem-sdl2/display::*display*
-                     (change-size font-config
-                                  (- (font-config-size font-config) ratio)))))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (let ((font-config (display:display-font-config display))
+              (ratio (round (first (display:display-scale display)))))
+          (display:change-font display
+                               (change-size font-config
+                                            (- (font-config-size font-config) ratio))))))))
 
 (defmethod lem-if:resize-display-before ((implementation sdl2))
   (with-debug ("resize-display-before")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (lem-sdl2/display::clear lem-sdl2/display::*display*))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (display:clear display)))))
 
 (defmethod lem-if:get-font-list ((implementation sdl2))
   (get-font-list (get-platform)))
 
 (defmethod lem-if:get-mouse-position ((implementation sdl2))
-  (if (not (cursor-shown-p))
-      (values 0 0)
-      (multiple-value-bind (x y bitmask)
-          (sdl2:mouse-state)
-        (declare (ignore bitmask))
-        (values (lem-sdl2/display::scaled-char-width lem-sdl2/display::*display* x)
-                (lem-sdl2/display::scaled-char-height lem-sdl2/display::*display* y)))))
+  (display:with-display (display)
+    (if (not (cursor-shown-p))
+        (values 0 0)
+        (multiple-value-bind (x y bitmask)
+            (sdl2:mouse-state)
+          (declare (ignore bitmask))
+          (values (display:scaled-char-width display x)
+                  (display:scaled-char-height display y))))))
 
 (defmethod lem-if:get-char-width ((implementation sdl2))
-  (lem-sdl2/display::display-char-width lem-sdl2/display::*display*))
+  (display:with-display (display)
+    (display:display-char-width display)))
 
 (defmethod lem-if:get-char-height ((implementation sdl2))
-  (lem-sdl2/display::display-char-height lem-sdl2/display::*display*))
+  (display:with-display (display)
+    (display:display-char-height display)))
 
 #-windows
 (defmethod lem-if:clipboard-paste ((implementation sdl2))
   (lem-sdl2/log:with-debug ("clipboard-paste")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (sdl2-ffi.functions:sdl-get-clipboard-text))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (sdl2-ffi.functions:sdl-get-clipboard-text)))))
 
 #+windows
 (defmethod lem-if:clipboard-paste ((implementation sdl2))
   (lem-sdl2/log:with-debug ("clipboard-paste")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (with-output-to-string (out)
-        (let ((text (sdl2-ffi.functions:sdl-get-clipboard-text)))
-          (loop :for string :in (split-sequence:split-sequence #\newline text)
-                :do (if (and (< 0 (length string))
-                             (char= #\return (char string (1- (length string)))))
-                        (write-line (subseq string 0 (1- (length string))) out)
-                        (write-string string out))))))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (with-output-to-string (out)
+          (let ((text (sdl2-ffi.functions:sdl-get-clipboard-text)))
+            (loop :for string :in (split-sequence:split-sequence #\newline text)
+                  :do (if (and (< 0 (length string))
+                               (char= #\return (char string (1- (length string)))))
+                          (write-line (subseq string 0 (1- (length string))) out)
+                          (write-string string out)))))))))
 
 (defmethod lem-if:clipboard-copy ((implementation sdl2) text)
   (lem-sdl2/log:with-debug ("clipboard-copy")
-    (lem-sdl2/display::with-renderer (lem-sdl2/display::*display*)
-      (sdl2-ffi.functions:sdl-set-clipboard-text text))))
+    (display:with-display (display)
+      (display:with-renderer (display)
+        (sdl2-ffi.functions:sdl-set-clipboard-text text)))))
 
 (lem:enable-clipboard)
+
+
+;; helpers
+(defun char-width () (display:display-char-width (display:current-display)))
+(defun char-height () (display:display-char-height (display:current-display)))
+(defun current-renderer () (display:display-renderer (display:current-display)))

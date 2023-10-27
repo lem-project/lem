@@ -106,6 +106,7 @@
                (:module "display"
                 :serial t
                 :components ((:file "base")
+                             (:file "char-type")
                              (:file "logical-line")
                              (:file "physical-line")))
 

@@ -11,4 +11,4 @@
                (:file "style")
                (:file "key")
                (:file "ncurses")
-               (:file "text-buffer-impl")))
+               (:file "drawing")))

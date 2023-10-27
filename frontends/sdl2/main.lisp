@@ -414,6 +414,16 @@
   (display:with-display (display)
     (display:display-char-height display)))
 
+(defmethod lem-if:view-width ((implementation sdl2) view)
+  (display:with-display (display)
+    (* (display:display-char-width display)
+       (lem-sdl2/view:view-width view))))
+
+(defmethod lem-if:view-height ((implementation sdl2) view)
+  (display:with-display (display)
+    (* (display:display-char-height display)
+       (lem-sdl2/view:view-height view))))
+
 #-windows
 (defmethod lem-if:clipboard-paste ((implementation sdl2))
   (lem-sdl2/log:with-debug ("clipboard-paste")

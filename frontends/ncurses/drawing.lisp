@@ -1,31 +1,7 @@
-(defpackage :lem-ncurses/text-buffer-impl
-  (:use :cl)
-  (:import-from :lem-core
-                :control-character-object
-                :cursor-attribute-p
-                :emoji-object
-                :eol-cursor-object
-                :eol-cursor-object-color
-                :extend-to-eol-object
-                :extend-to-eol-object-color
-                :folder-object
-                :icon-object
-                :image-object
-                :image-object-height
-                :image-object-image
-                :image-object-width
-                :line-end-object
-                :line-end-object-offset
-                :text-object
-                :text-object-attribute
-                :text-object-string
-                :text-object-surface
-                :text-object-type
-                :void-object
-                :window-view-height
-                :window-view-width
-                :text-object))
-(in-package :lem-ncurses/text-buffer-impl)
+(defpackage :lem-ncurses/drawing
+  (:use :cl
+        :lem-core/display))
+(in-package :lem-ncurses/drawing)
 
 (defun view-window (view)
   (lem-ncurses::ncurses-view-window view))
@@ -64,7 +40,7 @@
 (defmethod draw-object ((object text-object) x y view scrwin)
   (let ((string (text-object-string object))
         (attribute (text-object-attribute object)))
-    (when (and attribute (cursor-attribute-p attribute))
+    (when (and attribute (lem-core:cursor-attribute-p attribute))
       (lem-core::set-last-print-cursor (view-window view) x y))
     (lem-ncurses::print-string scrwin x y string attribute)))
 
@@ -147,9 +123,8 @@
 (defmethod lem-if:object-height ((implementation lem-ncurses::ncurses) drawing-object)
   1)
 
-(defmethod lem-if:clear-to-end-of-window ((implementation lem-ncurses::ncurses) window y)
-  (let* ((view (lem-core::window-view window))
-         (win (lem-ncurses::ncurses-view-scrwin view)))
+(defmethod lem-if:clear-to-end-of-window ((implementation lem-ncurses::ncurses) view y)
+  (let ((win (lem-ncurses::ncurses-view-scrwin view)))
     (when (< y (lem-if:view-height (lem:implementation) view))
       (charms/ll:wmove win y 0)
       (charms/ll:wclrtobot win))))

@@ -1,8 +1,34 @@
+(defpackage :lem-core/display
+  (:use)
+  (:export
+   :control-character-object
+   :emoji-object
+   :eol-cursor-object
+   :eol-cursor-object-color
+   :extend-to-eol-object
+   :extend-to-eol-object-color
+   :folder-object
+   :icon-object
+   :image-object
+   :image-object-height
+   :image-object-image
+   :image-object-width
+   :line-end-object
+   :line-end-object-offset
+   :text-object
+   :text-object-attribute
+   :text-object-string
+   :text-object-surface
+   :text-object-type
+   :void-object
+   :text-object))
+
 (uiop:define-package :lem-core
   (:use :cl
         :lem/common/killring
         :lem/common/timer
-        :lem/common/command)
+        :lem/common/command
+        :lem-core/display)
   (:use-reexport :lem-base)
   ;; reexport common/killring
   (:export
@@ -116,7 +142,13 @@
    :syntax-type-attribute
    :syntax-builtin-attribute
    :completion-attribute
-   :non-focus-completion-attribute)
+   :non-focus-completion-attribute
+   :attribute-image
+   :attribute-width
+   :attribute-height
+   :attribute-font
+   :cursor-attribute-p
+   :set-cursor-attribute)
   ;; clipboard.lisp
   (:export
    :wsl-p

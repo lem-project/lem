@@ -250,3 +250,10 @@
 
 (defun attribute-font (attribute)
   (attribute-value* attribute :font))
+
+(defun cursor-attribute-p (attribute)
+  (and (attribute-p attribute)
+       (attribute-value attribute :cursor)))
+
+(defun set-cursor-attribute (attribute)
+  (setf (attribute-value attribute :cursor) t))

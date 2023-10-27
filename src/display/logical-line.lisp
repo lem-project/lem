@@ -17,13 +17,6 @@
       (same-line-p (overlay-end overlay)
                    point)))
 
-(defun cursor-attribute-p (attribute)
-  (and (attribute-p attribute)
-       (attribute-value attribute :cursor)))
-
-(defun set-cursor-attribute (attribute)
-  (setf (attribute-value attribute :cursor) t))
-
 (defun expand-tab (string attributes tab-width)
   (setf attributes (copy-tree attributes))
   (values (with-output-to-string (out)

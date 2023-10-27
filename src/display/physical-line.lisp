@@ -2,14 +2,9 @@
 
 (defvar *line-wrap* nil)
 
-(deftype char-type ()
-  '(member :latin :cjk :braille :emoji :icon :control))
-
-;; TODO: remove
 (defun window-view-width (window)
   (lem-if:view-width (implementation) (window-view window)))
 
-;; TODO: remove
 (defun window-view-height (window)
   (lem-if:view-height (implementation) (window-view window)))
 
@@ -18,51 +13,6 @@
 
 (defun (setf drawing-cache) (value window)
   (setf (window-parameter window 'redrawing-cache) value))
-
-(defun cjk-char-code-p (code)
-  (or (<= #x4E00 code #x9FFF)
-      (<= #x3040 code #x309F)
-      (<= #x30A0 code #x30FF)
-      (<= #xAC00 code #xD7A3)))
-
-(defun latin-char-code-p (code)
-  (or (<= #x0000 code #x007F)
-      (<= #x0080 code #x00FF)
-      (<= #x0100 code #x017F)
-      (<= #x0180 code #x024F)))
-
-(defun emoji-char-code-p (code)
-  (or (<= #x1F300 code #x1F6FF)
-      (<= #x1F900 code #x1F9FF)
-      (<= #x1F600 code #x1F64F)
-      (<= #x1F700 code #x1F77F)))
-
-(defun braille-char-code-p (code)
-  (<= #x2800 code #x28ff))
-
-(defun icon-char-code-p (code)
-  (icon-value code :font))
-
-(defun char-type (char)
-  (let ((code (char-code char)))
-    (cond ((lem-base:control-char char)
-           :control)
-          ((eql code #x1f4c1)
-           :folder)
-          ((<= code 128)
-           :latin)
-          ((icon-char-code-p code)
-           :icon)
-          ((braille-char-code-p code)
-           :braille)
-          ((cjk-char-code-p code)
-           :cjk)
-          ((latin-char-code-p code)
-           :latin)
-          ((emoji-char-code-p code)
-           :emoji)
-          (t
-           :cjk))))
 
 (defclass drawing-object ()
   ())
@@ -397,7 +347,7 @@
             (incf y (funcall redraw-fn window y logical-line left-side-objects left-side-width))
             (unless (< y height)
               (return-from outer)))))
-      (lem-if:clear-to-end-of-window (implementation) window y)
+      (lem-if:clear-to-end-of-window (implementation) (window-view window) y)
       (setf (window-left-width window)
             (floor left-side-width (lem-if:get-char-width (implementation)))))))
 

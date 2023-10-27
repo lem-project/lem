@@ -23,7 +23,9 @@
            :display-foreground-color
            :display-texture
            :render-border
+           :render-line
            :clear
+           :get-display-font
            :render-margin-line
            :scaled-char-width
            :scaled-char-height

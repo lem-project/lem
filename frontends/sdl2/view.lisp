@@ -2,6 +2,7 @@
   (:use :cl)
   (:local-nicknames (:display :lem-sdl2/display))
   (:export
+   :set-cursor-position
    :last-cursor-x
    :last-cursor-y
    :create-view
@@ -49,6 +50,10 @@
    (last-cursor-y
     :initform nil
     :accessor view-last-cursor-y)))
+
+(defmethod set-cursor-position ((view view) x y)
+  (setf (view-last-cursor-x view) x
+        (view-last-cursor-y view) y))
 
 (defmethod last-cursor-x ((view view) display)
   (or (view-last-cursor-x view)

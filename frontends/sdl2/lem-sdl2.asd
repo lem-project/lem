@@ -20,7 +20,7 @@
                (:file "display")
                (:file "view")
                (:file "main")
-               (:file "text-buffer-impl")
+               (:file "drawing")
                (:file "graphics")
                (:file "image-buffer")
                (:file "tree")))

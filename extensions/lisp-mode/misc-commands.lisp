@@ -34,6 +34,8 @@
                                 "(def"
                                 (:greedy-repetition 1 nil (:CHAR-CLASS :WORD-CHAR-CLASS #\-))
                                 (:greedy-repetition 1 nil :whitespace-char-class)
+                                (:greedy-repetition 0 1 #\()
+                                (:greedy-repetition 0 nil :whitespace-char-class)
                                 ,name
                                 :whitespace-char-class))
                              (line-start point)

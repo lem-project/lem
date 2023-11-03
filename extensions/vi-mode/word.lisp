@@ -2,18 +2,18 @@
   (:use :cl
         :lem)
   (:import-from :lem-vi-mode/options
-                :vi-option-raw-value)
+                :option-raw-value)
   (:export :forward-word-begin
            :forward-word-end
            :backward-word-begin
            :word-char-p
-           :char-type
-           :broad-char-type
+           :word-char-type
+           :broad-word-char-type
            :blank-char-p))
 (in-package :lem-vi-mode/word)
 
 (defun word-char-p (char)
-  (funcall (cdr (vi-option-raw-value "iskeyword"))
+  (funcall (cdr (option-raw-value "iskeyword"))
            char))
 
 (defun blank-char-p (char)
@@ -23,17 +23,22 @@
 (defun non-blank-char-p (char)
   (not (blank-char-p char)))
 
-(defun char-type (char)
+(defun word-char-type (char)
   (when char
     (cond
       ((word-char-p char) :word)
       ((blank-char-p char) :blank)
       (t :non-word))))
 
-(defun broad-char-type (char)
+(defun non-broad-word-char-p (char)
+  (funcall (cdr (option-raw-value "isseparator"))
+           char))
+
+(defun broad-word-char-type (char)
   (when char
     (cond
       ((blank-char-p char) :blank)
+      ((non-broad-word-char-p char) :non-word)
       (t :word))))
 
 (defun forward-word-begin (char-type-fn &optional (point (current-point)))

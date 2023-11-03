@@ -1,11 +1,14 @@
 (defpackage :lem/line-numbers
   (:use :cl :lem)
-  (:export :line-numbers-attribute
+  (:export :*relative-line*
+           :line-numbers-attribute
            :line-numbers
            :toggle-line-numbers)
   #+sbcl
   (:lock t))
 (in-package :lem/line-numbers)
+
+(defparameter *relative-line* nil)
 
 (defvar *initialized* nil)
 (defvar *line-number-format* nil)
@@ -15,57 +18,26 @@
 
 (define-editor-variable line-numbers nil ""
   (lambda (value)
-    (if value
-        (line-numbers-on)
-        (line-numbers-off))))
+    (line-numbers-mode value)))
 
-(add-hook *post-command-hook* 'update)
-
-(defun update (&optional (window (current-window)))
-  (let ((buffer (window-buffer window)))
-    (mapc #'delete-overlay (buffer-value buffer 'line-number-overlays))
-    (when (variable-value 'line-numbers :default buffer)
-      (let ((overlays '())
-            (current-line-number (line-number-at-point (window-point (current-window)))))
-        (dolist (window (get-buffer-windows buffer))
-          (with-point ((p (window-view-point window)))
-            (let ((n (length (prin1-to-string (buffer-nlines buffer)))))
-              (loop :for linum :from (line-number-at-point p) :repeat (window-height window)
-                    :do (let ((ov (make-overlay p p 'line-numbers-attribute)))
-                          (overlay-put ov :display-left t)
-                          (if *line-number-format*
-                              (overlay-put ov :text
-                                           (if (eql linum current-line-number)
-                                               (format nil "~vD " n linum)
-                                               (format nil "~v@D " n
-                                                       (- linum current-line-number))))
-                              (overlay-put ov :text (format nil "~vD " n linum)))
-                          (push ov overlays))
-                        (unless (line-offset p 1)
-                          (return))))))
-        (setf (buffer-value buffer 'line-number-overlays) overlays)))))
-
-(defun line-numbers-init ()
-  (unless *initialized*
-    (setf *initialized* t)
-    (add-hook *window-scroll-functions* 'update)))
-
-(defun line-numbers-on ()
-  (unless (variable-value 'line-numbers :global)
-    (line-numbers-init)))
-
-(defun line-numbers-off ()
-  (when (variable-value 'line-numbers)
-    (setf *initialized* nil)
-    (remove-hook *window-scroll-functions* 'update)
-    (dolist (buffer (buffer-list))
-      (mapc #'delete-overlay (buffer-value buffer 'line-number-overlays)))))
+(define-minor-mode line-numbers-mode
+    (:name "Line numbers"
+     :global t))
 
 (define-command toggle-line-numbers () ()
-  (setf (variable-value 'line-numbers :global)
-        (not (variable-value 'line-numbers :global))))
+  (line-numbers-mode))
 
-(add-hook *after-init-hook*
-          (lambda ()
-            (when (variable-value 'line-numbers :global)
-              (line-numbers-init))))
+(defun compute-line (buffer point)
+  (if *relative-line*
+      (let* ((cursor-line (line-number-at-point (buffer-point buffer)))
+             (line (line-number-at-point point)))
+        (if (= cursor-line line)
+            line
+            (abs (- cursor-line line))))
+      (line-number-at-point point)))
+
+(defmethod lem-core:compute-left-display-area-content ((mode line-numbers-mode) buffer point)
+  (when (buffer-filename (point-buffer point))
+    (let* ((string (format nil "~6D " (compute-line buffer point))))
+      (lem-base::make-content :string string
+                              :attributes `((0 ,(length string) line-numbers-attribute))))))

@@ -38,13 +38,15 @@
      :keymap *directory-mode-keymap*)
   (setf (variable-value 'highlight-line :buffer (current-buffer)) nil))
 
+(define-key *global-keymap* "C-x C-j" 'find-file-directory)
+
 (define-key *directory-mode-keymap* "q" 'quit-active-window)
 (define-key *directory-mode-keymap* "M-q" 'quit-active-window)
 (define-key *directory-mode-keymap* "g" 'directory-mode-update-buffer)
 (define-key *directory-mode-keymap* "^" 'directory-mode-up-directory)
 (define-key *directory-mode-keymap* "Return" 'directory-mode-find-file)
 (define-key *directory-mode-keymap* "Space" 'directory-mode-read-file)
-(define-key *directory-mode-keymap* "o" 'directory-mode-find-file-other-window)
+(define-key *directory-mode-keymap* "o" 'directory-mode-find-file-next-window)
 (define-key *directory-mode-keymap* "n" 'directory-mode-next-line)
 (define-key *directory-mode-keymap* "p" 'directory-mode-previous-line)
 (define-key *directory-mode-keymap* "m" 'directory-mode-mark-and-next-line)
@@ -283,7 +285,15 @@
       (sb-ext:delete-directory file :recursive t)
       (delete-file file))
   #-windows
-  (run-command `("rm" "-fr" ,file)))
+  (if (and (not (string= (namestring file)
+                         (namestring (uiop:resolve-symlinks file)))))
+      (and (prompt-for-y-or-n-p
+             (format nil "It appears that ~a is a symlink, delete it?" file))
+           (run-command `("unlink" ,(string-right-trim
+                                     (string
+                                      (uiop:directory-separator-for-host))
+                                     (namestring file)))))
+      (run-command `("rm" "-fr" ,file))))
 
 (defun subdirectory-p (to-pathname from-pathname)
   (let ((to-dir (pathname-directory to-pathname))
@@ -385,7 +395,7 @@
 (define-command directory-mode-read-file () ()
   (process-current-line-pathname 'read-file))
 
-(define-command directory-mode-find-file-other-window () ()
+(define-command directory-mode-find-file-next-window () ()
   (process-current-line-pathname (lambda (pathname)
                                    (let ((buffer (execute-find-file *find-file-executor*
                                                                     (get-file-mode pathname)
@@ -543,6 +553,18 @@
   (setf filename (uiop:ensure-directory-pathname filename))
   (ensure-directories-exist filename)
   (update-all))
+
+(define-command find-file-directory () ()
+  "Open this file's directory and place point on the filename."
+  (let ((fullpath (buffer-filename)))
+    (cond
+      ((null fullpath)
+       (message "No file at point"))
+      (t
+       (switch-to-buffer
+        (find-file-buffer (lem-core/commands/file::directory-for-file-or-lose (buffer-directory))))
+       (let ((filename (file-namestring fullpath)))
+         (search-filename-and-recenter (file-namestring filename)))))))
 
 (setf *find-directory-function* 'directory-buffer)
 

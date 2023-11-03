@@ -1,5 +1,9 @@
 (in-package :lem-base)
 
+(defstruct content
+  string
+  attributes)
+
 (defstruct (line (:constructor %make-line))
   prev
   next

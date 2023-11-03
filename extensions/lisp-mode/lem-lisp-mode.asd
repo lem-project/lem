@@ -17,7 +17,7 @@
                (:file "connections")
                (:file "message-dispatcher")
                (:file "ui-mode")
-               (:file "grammer")
+               (:file "grammar")
                (:file "implementation")
                (:file "internal-package")
                (:file "completion")

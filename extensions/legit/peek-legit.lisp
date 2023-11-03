@@ -54,7 +54,7 @@ Notes:
 (define-key *peek-legit-keymap* 'previous-line 'peek-legit-previous)
 (define-key *peek-legit-keymap* "p" 'peek-legit-previous)
 (define-key *peek-legit-keymap* "C-p" 'peek-legit-previous)
-(define-key *peek-legit-keymap* "Tab" 'other-window)
+(define-key *peek-legit-keymap* "Tab" 'next-window)
 
 
 ;;;
@@ -310,7 +310,7 @@ Notes:
     (show-matched-line)))
 
 (defun highlight-matched-line (point)
-  (let ((overlay (make-overlay-line point 'highlight)))
+  (let ((overlay (make-line-overlay point 'highlight)))
     (start-timer (make-timer (lambda ()
                                (delete-overlay overlay))
                              :name "highlight-matched-line")
@@ -320,8 +320,15 @@ Notes:
 (define-command peek-legit-select () ()
   (alexandria:when-let ((file (get-matched-file)))
     (quit)
-    (alexandria:when-let ((buffer (find-file-buffer file)))
-      (switch-to-buffer buffer))))
+    (alexandria:if-let
+        ((buffer (or (and (uiop:file-exists-p file)
+                          (find-file-buffer file))
+                     (find-file-buffer
+                      (merge-pathnames
+                       (lem-core/commands/project:find-root (buffer-filename))
+                       file)))))
+      (switch-to-buffer buffer)
+      (editor-error "File ~a doesn't exist." file))))
 
 (define-command peek-legit-next () ()
   (next-move-point (current-point)))
@@ -366,7 +373,7 @@ Notes:
 (defvar *highlight-overlays* '())
 
 (defun set-highlight-overlay (point)
-  (let ((overlay (make-overlay-line point (ensure-attribute 'match-line-attribute))))
+  (let ((overlay (make-line-overlay point (ensure-attribute 'match-line-attribute))))
     (push overlay *highlight-overlays*)
     (setf (buffer-value (point-buffer point) 'highlight-overlay) overlay)))
 

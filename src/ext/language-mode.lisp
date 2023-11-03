@@ -346,11 +346,13 @@
                                                 (xref-location-position location2))))))))
 
 (defun same-locations-p (locations)
-  (apply #'=
-         (loop :for location :in locations
-               :for point := (location-to-point location :temporary t)
-               :when point
-               :collect (line-number-at-point point))))
+  (let ((line-numbers
+          (loop :for location :in locations
+                :for point := (location-to-point location :temporary t)
+                :when point
+                :collect (line-number-at-point point))))
+    (when line-numbers
+      (apply #'= line-numbers))))
 
 (defun display-xref-locations (locations)
   (unless locations

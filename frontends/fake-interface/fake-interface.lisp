@@ -83,21 +83,6 @@
   (setf (view-x view) x
         (view-y view) y))
 
-(defmethod lem-if:print ((implementation fake-interface) view x y string attribute)
-  (let ((line (aref (view-lines view) y)))
-    (loop :for i :from x
-          :for c :across string
-          :do (setf (aref line i) c))))
-
-(defmethod lem-if:print-modeline ((implementation fake-interface) view x y string attribute)
-  )
-
-(defmethod lem-if:clear-eol ((implementation fake-interface) view x y)
-  )
-
-(defmethod lem-if:clear-eob ((implementation fake-interface) view x y)
-  )
-
 (defmethod lem-if:update-display ((implementation fake-interface)))
 
 (defmacro with-fake-interface (() &body body)

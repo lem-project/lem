@@ -71,7 +71,9 @@
 
   (setf (buffer-context-menu (current-buffer))
         (make-instance 'lem/context-menu:context-menu
-                       :compute-items-function 'compute-context-menu-items)))
+                       :compute-items-function 'compute-context-menu-items))
+
+  (lem/link:link-mode t))
 
 (define-key *lisp-mode-keymap* "C-M-q" 'lisp-indent-sexp)
 (define-key *lisp-mode-keymap* "C-c M-p" 'lisp-set-package)
@@ -764,7 +766,8 @@
       (return-from find-definitions-default result))
     (find-definitions-by-name name)))
 
-(defparameter *find-definitions* '(find-definitions-default))
+(defparameter *find-definitions* '(find-definitions-default
+                                   lem/link:find-definition))
 
 (defun lisp-find-definitions (point)
   (check-connection)
@@ -1047,6 +1050,10 @@
       process)))
 
 (defun send-swank-create-server (process port)
+  (let ((file (asdf:system-source-file (asdf:find-system :micros))))
+    (lem-process:process-send-input
+     process
+     (format nil "(asdf:load-asd ~S)" file)))
   (lem-process:process-send-input
    process
    "(ql:quickload :micros)")

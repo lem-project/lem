@@ -45,6 +45,7 @@
   (shape nil :type (member nil :drop-curtain)))
 
 (defstruct ncurses-view
+  window
   border
   scrwin
   modeline-scrwin
@@ -81,8 +82,9 @@
     bits))
 
 (defun attribute-to-bits (attribute-or-name)
-  (let ((attribute (ensure-attribute attribute-or-name nil))
-        (cursorp (eq attribute-or-name 'cursor)))
+  (let* ((attribute (ensure-attribute attribute-or-name nil))
+         (cursorp (or (eq attribute-or-name 'cursor)
+                      (and attribute (lem-core:attribute-value attribute :cursor)))))
     (when (and lem-if:*background-color-of-drawing-window* (null attribute))
       (setf attribute (make-attribute :background lem-if:*background-color-of-drawing-window*)))
     (if (null attribute)
@@ -307,6 +309,7 @@
              (when use-modeline (charms/ll:keypad win 1))
              win)))
     (make-ncurses-view
+     :window window
      :border (when (and (floating-window-p window)
                         (floating-window-border window)
                         (< 0 (floating-window-border window)))
@@ -372,50 +375,11 @@
                      (+ y (ncurses-view-height view))
                      x)))
 
-(defmethod lem-if:print ((implementation ncurses) view x y string attribute)
+(defun print-string (scrwin x y string attribute)
   (let ((attr (attribute-to-bits attribute)))
-    (charms/ll:wattron (ncurses-view-scrwin view) attr)
-    ;(charms/ll:scrollok (ncurses-view-scrwin view) 0)
-    (charms/ll:mvwaddstr (ncurses-view-scrwin view) y x string)
-    ;(charms/ll:scrollok (ncurses-view-scrwin view) 1)
-    (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
-
-(defmethod lem-if:print-modeline ((implementation ncurses) view x y string attribute)
-  (let ((attr (attribute-to-bits attribute)))
-    (charms/ll:wattron (ncurses-view-modeline-scrwin view) attr)
-    (charms/ll:mvwaddstr (ncurses-view-modeline-scrwin view) y x string)
-    (charms/ll:wattroff (ncurses-view-modeline-scrwin view) attr)))
-
-(defmethod lem-if:clear-eol ((implementation ncurses) view x y)
-  (cond (lem-if:*background-color-of-drawing-window*
-         (let ((attr (attribute-to-bits (make-attribute :background lem-if:*background-color-of-drawing-window*))))
-           (charms/ll:wattron (ncurses-view-scrwin view) attr)
-           (charms/ll:mvwaddstr (ncurses-view-scrwin view)
-                                y
-                                x
-                                (make-string (- (ncurses-view-width view) x) :initial-element #\space))
-           (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
-        (t
-         (charms/ll:wmove (ncurses-view-scrwin view) y x)
-         (charms/ll:wclrtoeol (ncurses-view-scrwin view)))))
-
-(defmethod lem-if:clear-eob ((implementation ncurses) view x y)
-  (cond (lem-if:*background-color-of-drawing-window*
-         (let ((attr (attribute-to-bits (make-attribute :background lem-if:*background-color-of-drawing-window*))))
-           (charms/ll:wattron (ncurses-view-scrwin view) attr)
-           (charms/ll:mvwaddstr (ncurses-view-scrwin view)
-                                y
-                                x
-                                (make-string (- (ncurses-view-width view) x) :initial-element #\space))
-           (loop :for y1 :from y :to (ncurses-view-height view)
-                 :do (charms/ll:mvwaddstr (ncurses-view-scrwin view)
-                                          y1
-                                          0
-                                          (make-string (ncurses-view-width view) :initial-element #\space)))
-           (charms/ll:wattroff (ncurses-view-scrwin view) attr)))
-        (t
-         (charms/ll:wmove (ncurses-view-scrwin view) y x)
-         (charms/ll:wclrtobot (ncurses-view-scrwin view)))))
+    (charms/ll:wattron scrwin attr)
+    (charms/ll:mvwaddstr scrwin y x string)
+    (charms/ll:wattroff scrwin attr)))
 
 (defun draw-border (border)
   (let ((win (border-win border))

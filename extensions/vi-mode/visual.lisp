@@ -4,46 +4,55 @@
         :lem-vi-mode/core)
   (:import-from :lem-vi-mode/core
                 :ensure-state)
+  (:import-from :lem-vi-mode/states
+                :*motion-keymap*
+                :*normal-keymap*
+                :normal)
+  (:import-from :lem-vi-mode/modeline
+                :state-modeline-orange)
   (:import-from :lem-base
                 :alive-point-p)
+  (:import-from :alexandria
+                :last-elt)
   (:export :*visual-keymap*
            :vi-visual-end
            :vi-visual-char
            :vi-visual-line
            :vi-visual-block
+           :visual
            :visual-p
            :visual-char-p
            :visual-line-p
            :visual-block-p
+           :visual-range
            :apply-visual-range
            :vi-visual-insert
-           :vi-visual-append))
+           :vi-visual-append
+           :vi-visual-swap-points
+           :vi-visual-opposite-side))
 (in-package :lem-vi-mode/visual)
 
 (defvar *start-point* nil)
 (defvar *visual-overlays* '())
 
-(defvar *visual-keymap* (make-keymap :name '*visual-keymap* :parent *command-keymap*))
+(defvar *visual-keymap* (make-keymap :name '*visual-keymap*))
 
-(define-vi-state visual (vi-state) ()
+(define-state visual (vi-state) ()
   (:default-initargs
-   :message "-- VISUAL --"
-   :modeline-color 'lem-vi-mode/core::state-modeline-orange
-   :keymap *visual-keymap*))
+   :modeline-color 'state-modeline-orange
+   :keymaps (list *visual-keymap* *motion-keymap* *normal-keymap*)))
 
-(define-vi-state visual-char (visual)
+(define-state visual-char (visual)
   ()
   (:default-initargs :name "VISUAL"))
 
-(define-vi-state visual-line (visual) ()
+(define-state visual-line (visual) ()
   (:default-initargs
-   :name "V-LINE"
-   :message "-- VISUAL LINE --"))
+   :name "V-LINE"))
 
-(define-vi-state visual-block (visual) ()
+(define-state visual-block (visual) ()
   (:default-initargs
-   :name "V-BLOCK"
-   :message "-- VISUAL BLOCK --"))
+   :name "V-BLOCK"))
 
 (defmethod state-enabled-hook :after ((state visual))
   (setf *start-point* (copy-point (current-point))))
@@ -78,24 +87,26 @@
           *visual-overlays*)))
 
 (defmethod state-setup ((state visual-line))
-  (with-point ((start *start-point*)
-               (end (current-point)))
-    (when (point< end start) (rotatef start end))
-    (line-start start)
-    (line-end end)
-    (push (make-overlay start end 'region)
-          *visual-overlays*)))
+  (apply-region-lines *start-point* (current-point)
+                      (lambda (p)
+                        (push (make-line-overlay p 'region)
+                              *visual-overlays*))))
 
 (defmethod state-setup ((state visual-block))
   (with-point ((start *start-point*)
                (end (current-point)))
-    (when (point< end start)
-      (rotatef start end))
-    (character-offset end 1)
     (let ((start-column (point-column start))
           (end-column (point-column end)))
-      (unless (< start-column end-column)
-        (rotatef start-column end-column))
+      (cond
+        ;; left-top or left-bottom
+        ((< end-column start-column)
+         (character-offset start 1)
+         (incf start-column))
+        ;; right-top or right-bottom
+        (t
+         (unless (= end-column (length (line-string end)))
+           (character-offset end 1))
+         (incf end-column)))
       (apply-region-lines start end
                           (lambda (p)
                             (with-point ((s p) (e p))
@@ -132,22 +143,66 @@
   (enable-visual 'visual-block))
 
 (defun visual-p ()
-  (typep (current-state) 'visual))
+  (typep (current-main-state) 'visual))
 
 (defun visual-char-p ()
-  (typep (current-state) 'visual-char))
+  (typep (current-main-state) 'visual-char))
 
 (defun visual-line-p ()
-  (typep (current-state) 'visual-line))
+  (typep (current-main-state) 'visual-line))
 
 (defun visual-block-p ()
-  (typep (current-state) 'visual-block))
+  (typep (current-main-state) 'visual-block))
+
+(defun visual-range ()
+  (cond
+    ((visual-char-p)
+     (with-point ((start *start-point*)
+                  (end (current-point)))
+       (cond ((point<= start end)
+              (character-offset end 1))
+             ((point< end start)
+              (character-offset start 1)))
+       (list start end)))
+    ((visual-block-p)
+     (list (copy-point *start-point*)
+           (copy-point (current-point))))
+    (t
+     (with-point ((start *start-point*)
+                  (end (current-point)))
+       (when (point< end start)
+         (rotatef start end))
+       (line-start start)
+       (or (line-offset end 1 0)
+           (line-end end))
+       (list start end)))))
+
+(defun (setf visual-range) (new-range)
+  (check-type new-range list)
+  (destructuring-bind (start end) new-range
+    (cond
+      ((point< start end)
+       (character-offset end -1))
+      ((point< end start)
+       (character-offset start -1)))
+    (cond
+      ((or (visual-char-p)
+           (visual-block-p))
+       (setf *start-point* start)
+       (move-point (current-point) end))
+      ((visual-line-p)
+       (unless (same-line-p *start-point* start)
+         (setf *start-point* start))
+       (unless (same-line-p end (current-point))
+         (move-point (current-point) end))))))
 
 (defun apply-visual-range (function)
-  (dolist (ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start))
-    (funcall function
-             (overlay-start ov)
-             (overlay-end ov))))
+  (if (visual-line-p)
+      (apply function (visual-range))
+      (dolist (ov (sort (copy-list *visual-overlays*) #'point< :key #'overlay-start))
+        (funcall function
+                 (overlay-start ov)
+                 (overlay-end ov)))))
 
 (defun string-without-escape ()
   (concatenate 'string
@@ -180,3 +235,16 @@
                               (rotatef start end))
                             (insert-string start str))))
     (vi-visual-end)))
+
+(define-command vi-visual-swap-points () ()
+  (with-point ((start *start-point*))
+    (move-point *start-point* (current-point))
+    (move-point (current-point) start)))
+
+(define-command vi-visual-opposite-side () ()
+  (if (visual-block-p)
+      (let ((start-col (point-charpos *start-point*))
+            (end-col (point-charpos (current-point))))
+        (move-to-column *start-point* end-col)
+        (move-to-column (current-point) start-col))
+      (vi-visual-swap-points)))

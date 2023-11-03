@@ -1,5 +1,8 @@
 (defpackage :lem-vi-mode/ex-core
   (:use :cl)
+  (:import-from :lem-vi-mode/visual
+                :visual-p
+                :visual-range)
   (:export :*point*
            :syntax-error
            :search-forward
@@ -45,7 +48,15 @@
   (lem:buffer-end *point*))
 
 (defun marker (char)
-  (declare (ignore char)))
+  (ecase char
+    (#\<
+     (unless (visual-p)
+       (lem:editor-error "Mark not set"))
+     (first (visual-range)))
+    (#\>
+     (unless (visual-p)
+       (lem:editor-error "Mark not set"))
+     (second (visual-range)))))
 
 (defun offset-line (offset)
   (declare (ignore offset)))

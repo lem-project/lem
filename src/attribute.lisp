@@ -79,16 +79,20 @@
                                  (attribute-plist under))))
 
 (defun attribute-equal (attribute1 attribute2)
-  (and (equal (attribute-foreground attribute1)
-              (attribute-foreground attribute2))
-       (equal (attribute-background attribute1)
-              (attribute-background attribute2))
-       (equal (attribute-reverse attribute1)
-              (attribute-reverse attribute2))
-       (equal (attribute-bold attribute1)
-              (attribute-bold attribute2))
-       (equal (attribute-underline attribute1)
-              (attribute-underline attribute2))))
+  (if (or (null attribute1) (null attribute2))
+      (and (null attribute1) (null attribute2))
+      (let ((attribute1 (lem-core:ensure-attribute attribute1))
+            (attribute2 (lem-core:ensure-attribute attribute2)))
+        (and (equal (attribute-foreground attribute1)
+                    (attribute-foreground attribute2))
+             (equal (attribute-background attribute1)
+                    (attribute-background attribute2))
+             (equal (attribute-reverse attribute1)
+                    (attribute-reverse attribute2))
+             (equal (attribute-bold attribute1)
+                    (attribute-bold attribute2))
+             (equal (attribute-underline attribute1)
+                    (attribute-underline attribute2))))))
 
 (defun set-attribute (attribute &key (foreground nil foregroundp)
                                      (background nil backgroundp)
@@ -228,3 +232,28 @@
 
 (define-attribute syntax-builtin-attribute
   (t :foreground "#FF87FF"))
+
+
+(defun attribute-value* (attribute key)
+  (let ((attribute (ensure-attribute attribute nil)))
+    (when attribute
+      (attribute-value attribute key))))
+
+(defun attribute-image (attribute)
+  (attribute-value* attribute :image))
+
+(defun attribute-width (attribute)
+  (attribute-value* attribute :width))
+
+(defun attribute-height (attribute)
+  (attribute-value* attribute :height))
+
+(defun attribute-font (attribute)
+  (attribute-value* attribute :font))
+
+(defun cursor-attribute-p (attribute)
+  (and (attribute-p attribute)
+       (attribute-value attribute :cursor)))
+
+(defun set-cursor-attribute (attribute)
+  (setf (attribute-value attribute :cursor) t))

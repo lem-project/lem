@@ -4,6 +4,6 @@
   :components((:file "main"))
   :depends-on("lem"
               :cl-migemo))
-(UNLESS (ASDF/SYSTEM:FIND-SYSTEM "cl-migemo" NIL)
+#+roswell(UNLESS (ASDF/SYSTEM:FIND-SYSTEM "cl-migemo" NIL)
   (UIOP/PACKAGE:SYMBOL-CALL "ROSWELL" "ROSWELL"
                             '("install" "snmsts/cl-migemo")))

@@ -32,7 +32,7 @@
   (buffer-point (popup-menu-buffer popup-menu)))
 
 (defun make-focus-overlay (point focus-attribute)
-  (make-overlay-line point focus-attribute))
+  (make-line-overlay point focus-attribute))
 
 (defun update-focus-overlay (popup-menu point)
   (delete-overlay (popup-menu-focus-overlay popup-menu))

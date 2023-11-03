@@ -1,11 +1,15 @@
 (in-package :lem-core)
 
-(defparameter *named-key-syms*
+(defvar *named-key-syms*
   '("Backspace" "Delete" "Down" "End" "Escape" "F0" "F1" "F10" "F11" "F12" "F2" "F3" "F4" "F5" "F6" "F7" "F8" "F9"
     "Home" "Left" "NopKey" "PageDown" "PageUp" "Return" "Right" "Space" "Tab" "Up"))
 
 (defun named-key-sym-p (key-sym)
   (find key-sym *named-key-syms* :test #'string=))
+
+(defmacro define-named-key (name)
+  `(eval-when (:compile-toplevel :load-toplevel :execute)
+     (pushnew ,name *named-key-syms* :test 'string=)))
 
 (defparameter *key-sym-to-character-table* (make-hash-table :test 'equal))
 

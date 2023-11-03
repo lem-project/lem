@@ -17,7 +17,7 @@ Options:
         --log-filename FILENAME file name of the log file
         --kill                  immediately exit
         -v, --version           print the version number and exit
-        -h, --help              display this help and exit" 
+        -h, --help              display this help and exit"
 "Help output for cli")
 
 (defun syntax-scan-window (window)
@@ -77,7 +77,10 @@ Options:
                 5000)
       (add-hook (variable-value 'before-save-hook :global)
                 (lambda (buffer)
-                  (process-file buffer))))))
+                  (process-file buffer)))
+      (add-hook *input-hook*
+                (lambda (event)
+                  (push event *this-command-keys*))))))
 
 (defun teardown ()
   (teardown-frames))
@@ -117,7 +120,6 @@ Options:
                                  (let ((filename (pop args)))
                                    (unless filename
                                      (error "Please, specify a filename to log to."))
-                                   
                                    (setf (command-line-arguments-log-filename parsed-args)
                                          filename)))
                                 ((equal arg "--kill")
@@ -181,11 +183,28 @@ Options:
       (unless (uiop:pathname-equal current-dir (user-homedir-pathname))
         (maybe-load (merge-pathnames ".lemrc" current-dir))))))
 
+(defun initialize-source-registry ()
+  (asdf:initialize-source-registry
+   `(:source-registry
+     :inherit-configuration
+     (:also-exclude ".qlot")
+     (:tree ,(asdf:system-source-directory :lem)))))
+
+(defun init-at-build-time ()
+  "This function is called when an lem executable file is built.
+If a file named $HOME/.lem/build-init.lisp exists, it is loaded.
+The difference is that init.lisp loading is called when the editor is started,
+while build-init.lisp is called when the binary file is created.
+See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
+  (initialize-source-registry)
+  (let ((file (merge-pathnames "build-init.lisp" (lem-home))))
+    (when (uiop:file-exists-p file)
+      (load file))))
+
 (defun init (args)
   (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
                  *original-home*)
     (init-quicklisp (merge-pathnames "quicklisp/" (lem-home))))
-  (uiop:symbol-call :lem-core :load-site-init)
   (run-hooks *before-init-hook*)
   (unless (command-line-arguments-no-init-file args)
     (load-init-file))
@@ -208,12 +227,6 @@ Options:
        (setf *in-the-editor* nil)))
    :name "editor"))
 
-#+sbcl
-(defun find-editor-thread ()
-  (find "editor" (sb-thread:list-all-threads)
-        :test #'equal
-        :key #'sb-thread:thread-name))
-#-sbcl
 (defun find-editor-thread ()
   (find "editor" (bt:all-threads)
         :test #'equal

@@ -42,7 +42,8 @@ https://github.com/lem-project/lem/issues/628
 
 ## Requirement
 - ncurses
-- [roswell](https://github.com/roswell/roswell) (optional)
+- sbcl
+- qlot
 - SDL2 (optional)
 
 ## Platform
@@ -50,36 +51,38 @@ https://github.com/lem-project/lem/issues/628
 - MacOS
 - [Windows](https://github.com/lem-project/lem/wiki/Windows-Platform)
 
-## Installation with roswell
+## Install
 
-Please install roswell at first.
+### Requirement
 
-[Roswell Installation Guide](https://github.com/roswell/roswell/wiki/Installation)
+#### sbcl
+#### qlot
 
-After that, please follow the steps bellow.
-
-```
-1. install lem by roswell
-$ ros follow-dependency=t install lem-project/lem
-
-2. add the PATH in the initialization file(such as ~/.bashrc)
-export PATH=$PATH:~/.roswell/bin
-```
-
-### Updating
+See https://github.com/fukamachi/qlot#installation
 
 ```
-$ ros update lem
-```
-note: Perhaps this is not enough.
-If you get an error, try updating the submodule.
-```
-$ cd $(ros -e '(princ (ql:where-is-system :lem))')
-$ git submodule update --init --recursive
-$ ros follow-dependency=t install lem-project/lem
+curl -L https://qlot.tech/installer | bash
 ```
 
-### Usage
+## build
+
+```
+make
+```
+### SDL2
+Dependent packages must be installed.  
+See https://github.com/lem-project/lem/blob/main/frontends/sdl2/README.md
+
+```
+make sdl2
+```
+
+## update
+```
+make update
+```
+
+## Usage
 
 ```
 $ lem <filename.lisp>
@@ -89,26 +92,12 @@ You can watch the screencast on Youtube.
 
 [Screencast](https://youtu.be/YkSJ3p7Z9H0)
 
-## Installation with sbcl
-
-Please clone lem to a location where the path to asdf is accessible.
-
-```
-$ mkdir $HOME/common-lisp
-$ cd $HOME/common-lisp
-$ git clone --recursive https://github.com/lem-project/lem.git
-```
 
 You can start "lem" using the following command.
 ```
-$ sbcl
+$ qlot exec sbcl
 * (ql:quickload :lem-ncurses)
 * (lem:lem)
-```
-
-You can create the executable file of lem using the following command.
-```
-$ sbcl --eval '(ql:quickload :lem-ncurses)' --load build.lisp
 ```
 
 ## Configuration

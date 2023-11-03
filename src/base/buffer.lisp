@@ -31,6 +31,10 @@
     :initarg :%enable-undo-p
     :accessor buffer-%enable-undo-p
     :type boolean)
+   (%enable-undo-boundary-p
+    :initarg :%enable-undo-boundary-p
+    :initform t
+    :accessor buffer-%enable-undo-boundary-p)
    (read-only-p
     :initarg :read-only-p
     :accessor buffer-read-only-p
@@ -194,6 +198,17 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   (setf (buffer-redo-stack buffer) nil)
   nil)
 
+(defun buffer-enable-undo-boundary-p (&optional (buffer (current-buffer)))
+  (buffer-%enable-undo-boundary-p buffer))
+
+(defun buffer-enable-undo-boundary (buffer)
+  (setf (buffer-%enable-undo-boundary-p buffer) t)
+  nil)
+
+(defun buffer-disable-undo-boundary (buffer)
+  (setf (buffer-%enable-undo-boundary-p buffer) nil)
+  nil)
+
 (defmethod print-object ((buffer buffer) stream)
   (print-unreadable-object (buffer stream :identity t :type t)
     (format stream "~A ~A"
@@ -339,8 +354,9 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
       result0)))
 
 (defun buffer-undo-boundary (&optional (buffer (current-buffer)))
-  (unless (eq :separator (last-edit-history buffer))
-    (vector-push-extend :separator (buffer-edit-history buffer))))
+  (when (buffer-enable-undo-boundary-p)
+    (unless (eq :separator (last-edit-history buffer))
+      (vector-push-extend :separator (buffer-edit-history buffer)))))
 
 (defun buffer-value (buffer name &optional default)
   "`buffer`のバッファ変数`name`に束縛されている値を返します。

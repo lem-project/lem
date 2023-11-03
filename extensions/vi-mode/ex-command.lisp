@@ -1,13 +1,16 @@
 (defpackage :lem-vi-mode/ex-command
-  (:use :cl :lem-vi-mode/ex-core)
-  (:import-from :lem-vi-mode/core
-                :expand-filename-modifiers)
-  (:import-from :lem-vi-mode/jump-motions
-                :with-jump-motion)
+  (:use :cl
+        :lem-vi-mode/ex-core)
+  (:import-from :lem-vi-mode/jumplist
+                :with-jumplist
+                :window-jumplist
+                :current-jumplist
+                :copy-jumplist)
   (:import-from :lem-vi-mode/options
                 :execute-set-command)
-  (:import-from :lem-vi-mode/core
-                :change-directory))
+  (:import-from :lem-vi-mode/utils
+                :change-directory
+                :expand-filename-modifiers))
 (in-package :lem-vi-mode/ex-command)
 
 (defun ex-write (range filename touch)
@@ -27,7 +30,8 @@
 
 (define-ex-command "^e$" (range filename)
   (declare (ignore range))
-  (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd))))
+  (with-jumplist
+    (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))
@@ -72,20 +76,30 @@
 (define-ex-command "^(x|xit)!$" (range filename)
   (ex-write-quit range filename t nil))
 
+(defun copy-current-jumplist-to-next-window ()
+  (let* ((window-list
+           (lem:compute-window-list (lem:current-window)))
+         (new-window (lem:get-next-window (lem:current-window) window-list)))
+    (setf (window-jumplist new-window)
+          (copy-jumplist (current-jumplist)))))
+
 (define-ex-command "^(sp|split)$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-vertically)
+  (copy-current-jumplist-to-next-window)
   (unless (string= filename "")
     (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(vs|vsplit)$" (range filename)
   (declare (ignore range))
   (lem:split-active-window-horizontally)
+  (copy-current-jumplist-to-next-window)
+  (lem:next-window)
   (unless (string= filename "")
     (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
 
 (define-ex-command "^(s|substitute)$" (range argument)
-  (with-jump-motion
+  (with-jumplist
     (let (start end)
       (case (length range)
         ((0)
@@ -94,7 +108,7 @@
         ((2)
          (setf start (first range)
                end (second range))))
-      (destructuring-bind (before after flag)
+      (destructuring-bind (before after flags)
           (lem-vi-mode/ex-parser:parse-subst-argument argument)
         (if (not (lem:with-point ((s start)
                                   (e end))
@@ -103,29 +117,34 @@
             (lem:with-point ((last-match (lem:with-point ((s start)
                                                           (e end))
                                            (lem:search-backward-regexp e before s))))
-              (flet ((rep (start end count)
-                       (lem:with-point ((s start)
-                                        (e end))
-                         (lem/isearch::query-replace-internal before
-                                                              after
-                                                              #'lem:search-forward-regexp
-                                                              #'lem:search-backward-regexp
-                                                              :query nil
-                                                              :start s
-                                                              :end e
-                                                              :count count))))
-                (if (equal flag "g")
-                    (rep start end nil)
-                    (progn
-                      (lem:move-point (lem:current-point) start)
-                      (loop until (lem:point< end (lem:current-point))
-                            do (lem:with-point ((replace-start (lem:current-point))
-                                                (replace-end (lem:current-point)))
-                                 (lem:line-start replace-start)
-                                 (lem:line-end replace-end)
-                                 (rep replace-start replace-end 1))
-                               (lem:next-logical-line 1)
-                               (lem:line-start (lem:current-point))))))
+              (let ((query (find "c" flags :test 'string=))
+                    (replace-all-in-line (find "g" flags :test 'string=)))
+                (flet ((rep (start end count)
+                         (lem:with-point ((s start)
+                                          (e end))
+                           (lem/isearch::query-replace-internal before
+                                                                after
+                                                                #'lem:search-forward-regexp
+                                                                #'lem:search-backward-regexp
+                                                                :query query
+                                                                :start s
+                                                                :end e
+                                                                :count count))))
+                  (cond
+                    (replace-all-in-line
+                     (lem:line-start start)
+                     (lem:line-end end)
+                     (rep start end nil))
+                    (t
+                     (lem:move-point (lem:current-point) start)
+                     (loop until (lem:point<= end (lem:current-point))
+                           do (lem:with-point ((replace-start (lem:current-point))
+                                               (replace-end (lem:current-point)))
+                                (lem:line-start replace-start)
+                                (lem:line-end replace-end)
+                                (rep replace-start replace-end 1))
+                              (lem:next-logical-line 1)
+                              (lem:line-start (lem:current-point)))))))
               (let ((p (lem:current-point)))
                 (lem:move-point p last-match)
                 (lem:line-start p))))))))
@@ -143,7 +162,8 @@
 
 (define-ex-command "^(b|buffer)$" (range buffer-name)
   (declare (ignore range))
-  (lem:select-buffer buffer-name))
+  (with-jumplist
+    (lem:select-buffer buffer-name)))
 
 (define-ex-command "^bd(?:elete)?$" (range buffer-name)
   (declare (ignore range))
@@ -155,7 +175,7 @@
   (declare (ignore range))
   (flet ((encode-value (value)
            (typecase value
-             (list (format nil "~{~A~^,~}" value))
+             (cons (format nil "~{~A~^,~}" value))
              (otherwise value))))
     (multiple-value-bind (option-value option-name old-value isset)
         (execute-set-command option-string)

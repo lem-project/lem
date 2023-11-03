@@ -61,14 +61,14 @@
    :navigate-reference
 
    :move-to-reference)
-  
+
   #+sbcl
   (:lock t))
 
 (in-package :lem/detective)
 
 (defclass reference ()
-  ((name :type string 
+  ((name :type string
          :initarg :reference-name
          :reader reference-name)
 
@@ -168,7 +168,7 @@
              (with-point ((p (buffer-start-point (point-buffer (current-point)))))
                (loop :for point = (search-forward-regexp p (capture-regex-regex regex))
                      :while point
-                     :collect (funcall (capture-regex-function regex) 
+                     :collect (funcall (capture-regex-function regex)
                                        (copy-point point :temporary)
                                        class)))))
     (with-accessors ((function-regex search-function-regex)
@@ -183,7 +183,7 @@
                     (cons (cons "packages" package-regex) :package-reference)
                     (cons (cons "variables" variable-regex) :variable-reference)
                     (cons (cons "misc" misc-regex) :misc-reference))))
-    
+
         (setf (buffer-references (current-buffer))
               (make-hash-table :test 'equal))
 
@@ -244,16 +244,16 @@
   (let ((closest (%closest-reference))
         (current-expression
           (lem:with-point ((p point))
-            (funcall
-             (variable-value 'lem/language-mode:beginning-of-defun-function :buffer)
-             p 1) p)))
+            (funcall (variable-value 'lem/language-mode:beginning-of-defun-function :buffer)
+                     p 1)
+            p)))
 
-    (if  (= (line-number-at-point (car closest))
-              (line-number-at-point current-expression))
-         (find (car closest)
-               (cdr closest)
-               :key #'reference-point :test #'point=)
-      (message "Not inside a reference."))))
+    (if (= (line-number-at-point (car closest))
+           (line-number-at-point current-expression))
+        (find (car closest)
+              (cdr closest)
+              :key #'reference-point :test #'point=)
+        (message "Not inside a reference."))))
 
 (defun %closest-reference (&key (direction :up))
   (let* ((references (buffer-references (current-buffer)))

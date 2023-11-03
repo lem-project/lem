@@ -24,7 +24,7 @@
 
 (defmethod tree-view-display-end ((buffer tree-view-buffer))
   (+ (tree-view-buffer-scroll-y buffer)
-     (lem-sdl2::display-height lem-sdl2::*display*)))
+     (lem-sdl2/display::display-height lem-sdl2/display::*display*)))
 
 (defmethod tree-view-scroll-vertically ((buffer tree-view-buffer) window n)
   (incf (tree-view-buffer-scroll-y buffer) n)
@@ -132,7 +132,7 @@
         (font (sdl2-ttf:open-font
                (lem-sdl2/resource:get-resource-pathname
                 "resources/fonts/NotoSansMono-Regular.ttf")
-               (lem-sdl2/font:font-config-size (lem-sdl2::display-font-config lem-sdl2::*display*)))))
+               (lem-sdl2/font:font-config-size (lem-sdl2/display::display-font-config lem-sdl2/display::*display*)))))
     (labels ((recursive (node current-x)
                (let ((y (round (* (tree-view-buffer-margin-y buffer) (node-y node)))))
                  (let* ((surface (sdl2-ttf:render-utf8-blended font
@@ -204,7 +204,7 @@
         (start-y (tree-view-buffer-scroll-y buffer))
         (end (tree-view-display-end buffer)))
     (unless (or (< y1 start-y) (< end y0))
-      (lem-sdl2::set-render-color lem-sdl2::*display* (line-edge-color line-edge))
+      (lem-sdl2/display::set-render-color lem-sdl2/display::*display* (line-edge-color line-edge))
       (sdl2:render-draw-line (lem-sdl2:current-renderer)
                              (- (line-edge-x0 line-edge)
                                 start-x)
@@ -276,12 +276,12 @@
 (define-command tree-view-scroll-pagedown () ()
   (tree-view-scroll-vertically (current-buffer)
                                (current-window)
-                               (floor (lem-sdl2::display-height lem-sdl2::*display*) 1.1)))
+                               (floor (lem-sdl2/display::display-height lem-sdl2/display::*display*) 1.1)))
 
 (define-command tree-view-scroll-pageup () ()
   (tree-view-scroll-vertically (current-buffer)
                                (current-window)
-                               (- (floor (lem-sdl2::display-height lem-sdl2::*display*) 1.1))))
+                               (- (floor (lem-sdl2/display::display-height lem-sdl2/display::*display*) 1.1))))
 
 (define-command tree-view-scroll-bottom () ()
   (tree-view-scroll-vertically (current-buffer)
@@ -295,8 +295,8 @@
 
 (defmethod lem-sdl2:render (texture window (buffer tree-view-buffer))
   (sdl2:set-render-target (lem-sdl2:current-renderer) texture)
-  (lem-sdl2::set-render-color lem-sdl2::*display*
-                              (lem-sdl2::display-background-color lem-sdl2::*display*))
+  (lem-sdl2/display::set-render-color lem-sdl2/display::*display*
+                                      (lem-sdl2/display::display-background-color lem-sdl2/display::*display*))
   (sdl2:render-fill-rect (lem-sdl2:current-renderer) nil)
   (render-all buffer))
 

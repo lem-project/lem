@@ -1,8 +1,34 @@
+(defpackage :lem-core/display
+  (:use)
+  (:export
+   :control-character-object
+   :emoji-object
+   :eol-cursor-object
+   :eol-cursor-object-color
+   :extend-to-eol-object
+   :extend-to-eol-object-color
+   :folder-object
+   :icon-object
+   :image-object
+   :image-object-height
+   :image-object-image
+   :image-object-width
+   :line-end-object
+   :line-end-object-offset
+   :text-object
+   :text-object-attribute
+   :text-object-string
+   :text-object-surface
+   :text-object-type
+   :void-object
+   :text-object))
+
 (uiop:define-package :lem-core
   (:use :cl
         :lem/common/killring
         :lem/common/timer
-        :lem/common/command)
+        :lem/common/command
+        :lem-core/display)
   (:use-reexport :lem-base)
   ;; reexport common/killring
   (:export
@@ -59,6 +85,8 @@
    :key-sym
    :match-key
    :insertion-key-sym-p
+   :named-key-sym-p
+   :define-named-key
    :key-to-char)
   ;; macros.lisp
   (:export
@@ -84,6 +112,7 @@
    :attribute-value
    :ensure-attribute
    :merge-attribute
+   :attribute-equal
    :set-attribute
    :set-attribute-foreground
    :set-attribute-background
@@ -113,7 +142,13 @@
    :syntax-type-attribute
    :syntax-builtin-attribute
    :completion-attribute
-   :non-focus-completion-attribute)
+   :non-focus-completion-attribute
+   :attribute-image
+   :attribute-width
+   :attribute-height
+   :attribute-font
+   :cursor-attribute-p
+   :set-cursor-attribute)
   ;; clipboard.lisp
   (:export
    :wsl-p
@@ -317,6 +352,8 @@
    :*post-command-hook*
    :command-name
    :this-command
+   :this-command-keys
+   :universal-argument-of-this-command
    :execute
    :call-command
    :all-command-names)
@@ -359,10 +396,12 @@
    :find-keybind
    :insertion-key-p
    :lookup-keybind
+   :keymap-find-keybind
    :*abort-key*
    :abort-key-p
    :with-special-keymap
    :traverse-keymap
+   :compute-keymaps
    :collect-command-keybindings)
   ;; reexport common/timer
   (:export
@@ -414,8 +453,8 @@
    :set-overlay-attribute
    :overlay-buffer
    :make-overlay
-   :make-overlay-line-endings
-   :make-overlay-line
+   :make-line-endings-overlay
+   :make-line-overlay
    :delete-overlay
    :overlay-put
    :overlay-get
@@ -472,6 +511,7 @@
    :*splash-function*
    :setup-first-frame
    :find-editor-thread
+   :init-at-build-time
    :lem
    :main)
   ;; command-advices.lisp
@@ -481,9 +521,14 @@
    :jump-cursor-advice
    :process-each-cursors
    :do-each-cursors)
-  ;; display.lisp
+  ;; highlight-line.lisp
   (:export
    :highlight-line)
+  ;; display/base.lisp
+  (:export
+   :inactive-window-background-color
+   :redraw-buffer
+   :compute-left-display-area-content)
   ;; interface.lisp
   (:export
    :with-implementation
@@ -495,7 +540,11 @@
    :display-width
    :display-height
    :display-title
-   :display-fullscreen-p)
+   :display-fullscreen-p
+   :attribute-foreground-color
+   :attribute-background-color
+   :attribute-foreground-with-reverse
+   :attribute-background-with-reverse)
   ;; color-theme.lisp
   (:export
    :color-theme-names
@@ -518,6 +567,7 @@
    :*background-color-of-drawing-window*
    :invoke
    :get-background-color
+   :get-foreground-color
    :update-foreground
    :update-background
    :update-cursor-shape
@@ -528,21 +578,17 @@
    :display-fullscreen-p
    :set-display-fullscreen-p
    :make-view
+   :view-width
+   :view-height
    :delete-view
    :clear
    :set-view-size
    :set-view-pos
-   :print
-   :print-modeline
-   :clear-eol
-   :clear-eob
    :redraw-view-before
    :redraw-view-after
    :will-update-display
    :update-display
    :set-first-view
-   :split-window-horizontally
-   :split-window-vertically
    :display-popup-menu
    :popup-menu-update
    :popup-menu-quit
@@ -562,4 +608,9 @@
    :get-font-list
    :get-mouse-position
    :get-char-width
-   :get-char-height))
+   :get-char-height
+   :clear-to-end-of-window
+   :render-line
+   :render-line-on-modeline
+   :object-width
+   :object-height))

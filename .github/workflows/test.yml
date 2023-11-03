@@ -13,8 +13,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-      with:
-        submodules: true
     - name: Install Roswell
       env:
         LISP: ${{ matrix.lisp }}
@@ -23,24 +21,14 @@ jobs:
     - name: Run test
       run: |
         set -ex
- 
-        # workaround for sbcl and log4cl combination problems
-        mkdir ~/common-lisp
-        cd ~/common-lisp
-        git clone https://github.com/sharplispers/log4cl.git
-        cd -
 
         ros config set dynamic-space-size 2048
+        curl -L https://qlot.tech/installer | bash
+        export PATH="/home/runner/.qlot/bin:$PATH"
 
-        ros install lem-project/async-process lem
-        ros install cxxxr/sblint fukamachi/rove
+        qlot install
 
-        export PATH=$HOME/.roswell/bin:$PATH
-
-        sblint src/base/lem-base.asd
-        sblint lem.asd
-        sblint lib/lisp-syntax/lem-lisp-syntax.asd
-        sblint extensions/lisp-mode/lem-lisp-mode.asd
+        make lint
 
         if [ $(grep -r --include="*.lisp" 'lem::' | wc -l) -ne 0 ]; then
           echo 'using `lem::` internal symbols'
@@ -48,5 +36,5 @@ jobs:
           exit 1
         fi
 
-        rove lem-tests.asd
-        rove extensions/vi-mode/lem-vi-mode.asd
+        qlot exec .qlot/bin/rove lem-tests.asd
+        qlot exec .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd

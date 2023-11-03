@@ -4,8 +4,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 (defpackage :lem-paredit-mode
   (:use :cl
-        :lem
-        :lem-vi-mode/word)
+        :lem)
   (:export :paredit-mode
            :paredit-forward
            :paredit-backward

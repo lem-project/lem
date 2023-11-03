@@ -4,31 +4,60 @@
         :lem/universal-argument)
   (:import-from :cl-package-locks)
   (:import-from :cl-ppcre)
+  (:import-from :alexandria
+                :with-gensyms)
   (:export :*enable-hook*
            :*disable-hook*
+           :*default-cursor-color*
+           :*last-repeat-keys*
+           :*enable-repeat-recording*
            :vi-state
            :vi-mode
-           :define-vi-state
+           :define-state
            :current-state
+           :current-main-state
+           :state=
            :change-state
            :with-state
-           :*command-keymap*
-           :*insert-keymap*
-           :*inactive-keymap*
+           :with-temporary-state
+           :mode-specific-keymaps
+           :pre-command-hook
            :post-command-hook
            :state-enabled-hook
            :state-disabled-hook
-           :normal
-           :insert
-           :change-directory
-           :expand-filename-modifiers
-           :kill-region-without-appending))
+           :vi-this-command-keys
+           :this-motion-command
+           :vi-command
+           :vi-command-repeat
+           :vi-motion
+           :vi-motion-type
+           :vi-motion-default-n-arg
+           :vi-operator
+           :vi-text-object
+           :range
+           :make-range
+           :range-beginning
+           :range-end
+           :range-type
+           :operator-abort
+           :text-object-abort
+           :text-object-abort-range
+           :vi-current-window
+           :with-main-window
+           :vi-keymap
+           :define-keymap))
 (in-package :lem-vi-mode/core)
 
-(defvar *default-cursor-color* nil)
+(defvar *last-repeat-keys* '())
+
+(defvar *default-cursor-color* "#ffb472")
 
 (defvar *enable-hook* '())
 (defvar *disable-hook* '())
+
+(defvar *enable-repeat-recording* t)
+
+(defvar *this-motion-command* nil)
 
 (defun enable-hook ()
   (run-hooks *enable-hook*))
@@ -36,58 +65,18 @@
 (defun disable-hook ()
   (run-hooks *disable-hook*))
 
+(defvar *fallback-keymap* *global-keymap*)
+
 (define-global-mode vi-mode (emacs-mode)
   (:name "vi"
+   :keymap *fallback-keymap*
    :enable-hook #'enable-hook
    :disable-hook #'disable-hook))
 
-
-(defvar *modeline-element*)
-
-(define-attribute state-modeline-white
-  (t :foreground "white" :reverse t))
-
-(define-attribute state-modeline-yellow
-  (t :foreground "yellow" :reverse t))
-
-(define-attribute state-modeline-green
-  (t :foreground "#003300" :reverse t))
-
-(define-attribute state-modeline-aqua
-  (t :foreground "#33CCFF" :reverse t))
-
-(define-attribute state-modeline-orange
-  (t :foreground "orange" :reverse t))
-
-(defstruct (vi-modeline-element (:conc-name element-))
-  name
-  attribute)
-
-(defmethod convert-modeline-element ((element vi-modeline-element) window)
-  (if (or (eq (lem:current-window) window)
-          (string= (element-name element) " COMMAND "))
-      (values (element-name element)
-              (element-attribute element))
-      (values "" 'state-modeline-white)))
-
-(defun initialize-vi-modeline ()
-  (setf *modeline-element* (make-vi-modeline-element))
-  (pushnew *modeline-element* (lem:variable-value 'lem:modeline-format :global)))
-
-(defun finalize-vi-modeline ()
-  (modeline-remove-status-list *modeline-element*))
-
-(defun change-element-by-state (state)
-  (setf (element-name *modeline-element*) (format nil " ~A " (state-name state))
-        (element-attribute *modeline-element*) (state-modeline-color state)))
-
-
 (defclass vi-state ()
   ((name :initarg :name
+         :initform nil
          :reader state-name)
-   (message
-    :initarg :message
-    :reader state-message)
    (cursor-type
     :initarg :cursor-type
     :initform :box
@@ -96,26 +85,28 @@
     :initarg :modeline-color
     :initform 'state-modeline-white
     :reader state-modeline-color)
-   (keymap
-    :initarg :keymap
-    :reader state-keymap)
+   (keymaps
+    :initarg :keymaps
+    :initform '()
+    :reader state-keymaps)
    (cursor-color
     :initarg :cursor-color
-    :accessor state-cursor-color))
-  (:default-initargs
-   :message nil
-   :cursor-color nil
-   :keymap *global-keymap*))
+    :initform nil)))
 
-(defmethod initialize-instance ((state vi-state) &rest initargs &key name &allow-other-keys)
-  (unless name
-    (setf (getf initargs :name) (class-name (class-of state))))
-  (apply #'call-next-method state initargs))
+(defun state-cursor-color (state)
+  (or (slot-value state 'cursor-color)
+      *default-cursor-color*))
 
 (defvar *current-state* nil)
+(defvar *current-main-state* nil)
+
+(defun state= (state1 state2)
+  (and (typep state1 'vi-state)
+       (typep state2 'vi-state)
+       (eq (state-name state1) (state-name state2))))
 
 ;;; vi-state methods
-(defmacro define-vi-state (name direct-super-classes direct-slot-specs &rest options)
+(defmacro define-state (name direct-super-classes direct-slot-specs &rest options)
   (let ((cleaned-super-classes (if (null direct-super-classes) '(vi-state) direct-super-classes)))
     `(progn
        (assert (find 'vi-state ',cleaned-super-classes :test #'(lambda (expected-class class) (closer-mop:subclassp class expected-class))) () "At least one of the direct-super-classes should be vi-state or a subclass of vi-state!")
@@ -125,16 +116,14 @@
        (setf (get ',name 'state)
              (make-instance ',name)))))
 
-(defgeneric post-command-hook (state))
+(defgeneric pre-command-hook (state)
+  (:method ((state vi-state))))
 
-(defmethod post-command-hook ((state vi-state)))
+(defgeneric post-command-hook (state)
+  (:method ((state vi-state))))
 
-(defgeneric state-enabled-hook (state))
-
-(defmethod state-enabled-hook ((state vi-state))
-  (let ((msg (state-message state)))
-    (unless (null msg)
-      (message msg))))
+(defgeneric state-enabled-hook (state)
+  (:method ((state vi-state))))
 
 (defgeneric state-disabled-hook (state))
 
@@ -142,6 +131,11 @@
 
 (defun current-state ()
   *current-state*)
+
+(defun current-main-state ()
+  "Same as `current-state` except it returns the previous state insinde `with-temporary-state` macro."
+  (or *current-main-state*
+      *current-state*))
 
 (defun ensure-state (state)
   (setf state
@@ -151,132 +145,123 @@
   (assert (typep state 'vi-state))
   state)
 
+(defgeneric mode-specific-keymaps (mode)
+  (:method (mode) nil))
+
+(defmethod compute-keymaps ((mode vi-mode))
+  (let* ((buffer (current-buffer))
+         (major-mode (ensure-mode-object (buffer-major-mode buffer)))
+         (minor-mode-keymaps (loop for mode-name in (buffer-minor-modes buffer)
+                                   for mode = (ensure-mode-object mode-name)
+                                   when (mode-keymap mode)
+                                   collect it)))
+    (append minor-mode-keymaps
+            (mode-specific-keymaps major-mode)
+            ;; Precede state keymaps over major-mode keymaps
+            (state-keymaps (ensure-state *current-state*)))))
+
+(defun update-cursor-styles (state)
+  (set-attribute 'cursor
+                 :background (or (state-cursor-color state) *default-cursor-color*))
+  (lem-if:update-cursor-shape (lem:implementation)
+                              (state-cursor-type state)))
+
 (defun change-state (name)
   (and *current-state*
-       (state-disabled-hook (ensure-state *current-state*))) 
+       (state-disabled-hook *current-state*))
   (let ((state (ensure-state name)))
-    (setf *current-state* name)
-    (change-global-mode-keymap 'vi-mode (state-keymap state))
-    (change-element-by-state state)
+    (setf *current-state* state)
     (state-enabled-hook state)
-    (unless *default-cursor-color*
-      (setf *default-cursor-color*
-            (attribute-background (ensure-attribute 'cursor nil))))
-    (set-attribute 'cursor :background (or (state-cursor-color state) *default-cursor-color*))))
+    (update-cursor-styles state)))
 
 (defmacro with-state (state &body body)
-  (alexandria:with-gensyms (old-state)
+  (with-gensyms (old-state)
     `(let ((,old-state (current-state)))
        (change-state ,state)
        (unwind-protect (progn ,@body)
          (change-state ,old-state)))))
 
-
-(defvar *command-keymap* (make-keymap :name '*command-keymap*
-                                      :parent *global-keymap*))
-(defvar *inactive-keymap* (make-keymap :parent *global-keymap*))
+(defmacro with-temporary-state (state &body body)
+  `(let ((*current-main-state* *current-state*)
+         (*current-state* (ensure-state ,state)))
+     (update-cursor-styles *current-state*)
+     (unwind-protect (progn ,@body)
+       (update-cursor-styles *current-main-state*))))
 
-(define-vi-state normal () ()
-  (:default-initargs
-   :keymap *command-keymap*
-   :modeline-color 'state-modeline-yellow))
-
-;; insert state
-(defvar *insert-keymap* (make-keymap :name '*insert-keymap* :parent *global-keymap*))
-
-(define-vi-state insert () ()
-  (:default-initargs
-   :message "-- INSERT --"
-   :cursor-color "IndianRed"
-   :cursor-type :bar
-   :modeline-color 'state-modeline-aqua
-   :keymap *insert-keymap*))
-
-(define-vi-state vi-modeline () ()
-  (:default-initargs
-   :name "COMMAND"
-   :modeline-color 'state-modeline-green
-   :keymap *inactive-keymap*))
-
-(defun prompt-activate-hook () (change-state 'vi-modeline))
-(defun prompt-deactivate-hook () (change-state 'normal))
+(defun vi-pre-command-hook ()
+  (when (mode-active-p (current-buffer) 'vi-mode)
+    (pre-command-hook (ensure-state (current-state)))))
 
 (defun vi-post-command-hook ()
   (when (mode-active-p (current-buffer) 'vi-mode)
     (post-command-hook (ensure-state (current-state)))))
 
+(add-hook *pre-command-hook* 'vi-pre-command-hook)
 (add-hook *post-command-hook* 'vi-post-command-hook)
 
-(add-hook *enable-hook*
-          (lambda ()
-            (initialize-vi-modeline)
-            (change-state 'normal)
-            (add-hook *prompt-activate-hook* 'prompt-activate-hook)
-            (add-hook *prompt-deactivate-hook* 'prompt-deactivate-hook)))
+(defun vi-this-command-keys ()
+  (append
+   (and (numberp (universal-argument-of-this-command))
+        (map 'list (lambda (char) (lem:make-key :sym (string char)))
+             (princ-to-string (universal-argument-of-this-command))))
+   (this-command-keys)))
 
-(add-hook *disable-hook*
-          (lambda ()
-            (finalize-vi-modeline)
-            (remove-hook *prompt-activate-hook* 'prompt-activate-hook)
-            (remove-hook *prompt-deactivate-hook* 'prompt-deactivate-hook)))
+(defun this-motion-command ()
+  *this-motion-command*)
 
-(defmethod state-enabled-hook :after (state)
-  (lem-if:update-cursor-shape (lem-core:implementation)
-                              (state-cursor-type state)))
+(deftype repeat-type () '(member t nil :motion))
 
-(defvar *previous-cwd* nil)
+(defclass vi-command ()
+  ((repeat :type repeat-type
+           :initarg :repeat
+           :initform nil
+           :accessor vi-command-repeat)))
 
-(defun change-directory (new-directory)
-  (check-type new-directory (or string pathname))
-  (let* ((previous-directory (uiop:getcwd))
-         (new-directory (cond
-                          ((equal new-directory "")
-                           (user-homedir-pathname))
-                          ((equal new-directory "-")
-                           (or *previous-cwd* previous-directory))
-                          (t
-                           (truename
-                            (merge-pathnames (uiop:ensure-directory-pathname new-directory) previous-directory))))))
-    (assert (uiop:absolute-pathname-p new-directory))
-    (uiop:chdir new-directory)
-    (unless (uiop:pathname-equal *previous-cwd* previous-directory)
-      (setf *previous-cwd* previous-directory))
-    new-directory))
+(defclass vi-motion (vi-command)
+  ((type :type keyword
+         :initarg :type
+         :initform :exclusive
+         :accessor vi-motion-type)
+   (default-n-arg :type (or null integer)
+     :initarg :default-n-arg
+     :initform 1
+     :accessor vi-motion-default-n-arg)))
 
-(defun expand-filename-modifiers (string &optional (base-filename (lem:buffer-filename)))
-  (ppcre:regex-replace-all "%(?::[a-z])*"
-                           string
-                           (lambda (match &rest registers)
-                             (declare (ignore registers))
-                             (let ((result (enough-namestring (or base-filename
-                                                                  (lem:buffer-filename)
-                                                                  (uiop:getcwd))
-                                                              (uiop:getcwd))))
-                               (ppcre:do-matches-as-strings (flag "(?<=:)([a-z])" match result)
-                                 (setf result
-                                       (ecase (aref flag 0)
-                                         (#\p (namestring
-                                               (uiop:ensure-absolute-pathname result (uiop:getcwd))))
-                                         (#\h
-                                          (namestring
-                                           (if (uiop:directory-pathname-p result)
-                                               (uiop:pathname-parent-directory-pathname result)
-                                               (uiop:pathname-directory-pathname result))))
-                                         (#\t
-                                          (let ((result-path (pathname result)))
-                                            (namestring
-                                             (make-pathname :name (pathname-name result-path)
-                                                            :type (pathname-type result-path)))))
-                                         (#\r
-                                          (make-pathname :defaults (pathname result)
-                                                         :type nil))
-                                         (#\e (or (pathname-type (pathname result))
-                                                  "")))))))
-                           :simple-calls t))
+(defclass vi-operator (vi-command) ())
 
-(defun kill-region-without-appending (start end)
-  "Same as lem:kill-region except this won't append to the existing killring"
-  (when (point< end start)
-    (rotatef start end))
-  (let ((killed-string (delete-character start (count-characters start end))))
-    (copy-to-clipboard-with-killring killed-string)))
+(defclass vi-text-object (vi-motion) ())
+
+(defstruct (range (:constructor make-range (beginning end &optional type)))
+  beginning
+  end
+  type)
+
+(define-condition operator-abort () ())
+
+(define-condition text-object-abort (operator-abort)
+  ((range :initarg :range
+          :reader text-object-abort-range)))
+
+(defvar *vi-current-window* nil)
+
+(defun vi-current-window ()
+  (or *vi-current-window*
+      (lem:current-window)))
+
+(defmacro with-main-window (window &body body)
+  `(let ((*vi-current-window* ,window))
+     ,@body))
+
+(defstruct (vi-keymap (:include keymap)
+                      (:constructor %make-vi-keymap)))
+
+(defun make-vi-keymap (&rest args &key undef-hook parent name)
+  (declare (ignore undef-hook parent name))
+  (let ((keymap (apply #'%make-vi-keymap args)))
+    (push keymap *keymaps*)
+    keymap))
+
+(defmacro define-keymap (name &key undef-hook parent)
+  `(defvar ,name (make-vi-keymap :name ',name
+                                 :undef-hook ,undef-hook
+                                 :parent ,parent)))

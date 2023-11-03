@@ -109,6 +109,8 @@
    :buffer-undo
    :buffer-redo
    :buffer-undo-boundary
+   :buffer-enable-undo-boundary
+   :buffer-disable-undo-boundary
    :buffer-value
    :buffer-unbound
    :clear-buffer-variables)

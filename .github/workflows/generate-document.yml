@@ -12,8 +12,6 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-      with:
-        submodules: true
     - name: Install Roswell
       env:
         LISP: ${{ matrix.lisp }}
@@ -25,23 +23,14 @@ jobs:
       run: |
         set -ex
 
-        # workaround for sbcl and log4cl combination problems
-        mkdir ~/common-lisp
-        cd ~/common-lisp
-        git clone https://github.com/sharplispers/log4cl.git
-        cd -
-
         ros config set dynamic-space-size 2048
-
-        ros install lem-project/async-process lem
-
-        export PATH=$HOME/.roswell/bin:$PATH
-
-        cd $(ros -e '(princ (ql:where-is-system :lem))')
+        curl -L https://qlot.tech/installer | bash
+        export PATH="/home/runner/.qlot/bin:$PATH"
+        qlot install
 
         document_file=docs/default-keybindings.md
 
-        ros -s lem -s lem/extensions -e "(lem-documentation-mode:generate-markdown-file \"${document_file}\" :command)"
+        qlot exec ros -s lem -s lem/extensions -e "(lem-documentation-mode:generate-markdown-file \"${document_file}\" :command)"
 
         if [ -z "$(git diff ${document_file})" ]; then
           exit 0

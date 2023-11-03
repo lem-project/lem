@@ -7,17 +7,22 @@
                 :diag
                 :testing)
   (:import-from :lem-base)
-  (:import-from :lem-vi-mode
-                :vi-mode)
+  (:import-from :lem-core
+                :*this-command-keys*
+                :*input-hook*)
   (:import-from :lem-vi-mode/core
-                :normal
-                :insert
+                :vi-mode
                 :current-state
                 :ensure-state)
+  (:import-from :lem-vi-mode/states
+                :normal
+                :insert)
   (:import-from :lem-vi-mode/visual
+                :visual-char
                 :visual-line
                 :visual-block
-                :apply-visual-range)
+                :apply-visual-range
+                :clear-visual-overlays)
   (:import-from :cl-ppcre)
   (:import-from :alexandria
                 :remove-from-plistf
@@ -27,17 +32,19 @@
                 :once-only
                 :with-gensyms)
   (:export :with-vi-buffer
+           :with-test-buffer
            :cmd
+           :ex-cmd
            :pos=
            :text=
            :state=
            :visual=
-           :buf=))
+           :buf=
+           :lines))
 (in-package :lem-vi-mode/tests/utils)
 
 (defun state-to-keyword (state)
-  (check-type state (and symbol (not keyword)))
-  (ecase state
+  (etypecase state
     (normal :normal)
     (insert :insert)
     (visual-char :visual)
@@ -98,9 +105,11 @@
                        "[]"
                        (subseq buffer-text (1- buffer-pos))))
                      (otherwise
-                      (list
-                       (format nil "[~C]" (aref buffer-text (1- buffer-pos)))
-                       (subseq buffer-text buffer-pos)))))))
+                      (if (< (length buffer-text) buffer-pos)
+                          (list "[]")
+                          (list
+                           (format nil "[~C]" (aref buffer-text (1- buffer-pos)))
+                           (subseq buffer-text buffer-pos))))))))
       (if (lem-vi-mode/visual:visual-p)
           (let ((read-pos 0))
             (concatenate
@@ -165,7 +174,12 @@
                   (appendf key-args '(:shift t)))))
              (let ((sym-str (ppcre:scan-to-strings "[^<-]+(?=>$)" key-str)))
                (apply #'make-key :sym (if-let (char (name-char sym-str))
-                                        (string char)
+                                        (case char
+                                          (#\Esc "Escape")
+                                          (#\Return "Return")
+                                          (#\Space "Space")
+                                          (#\Tab "Tab")
+                                          (otherwise (string char)))
                                         sym-str)
                       key-args))))
        keys))
@@ -184,9 +198,20 @@
       (multiple-value-bind (buffer-text position visual-regions)
           (parse-buffer-string content)
         (let ((point (buffer-point buffer)))
-          (insert-string point buffer-text)
+          (lem:insert-string point buffer-text)
+          (setf (lem-base::buffer-edit-history buffer)
+                (make-array 0 :adjustable t :fill-pointer 0))
           (when position
             (move-to-position point position))
+          (when visual-regions
+            (let ((top-left-pos (car (first visual-regions)))
+                  (bot-right-pos (cdr (car (last visual-regions)))))
+              (with-point ((p point))
+                (move-to-position p
+                                  (if (= position top-left-pos)
+                                      (1- bot-right-pos)
+                                      top-left-pos))
+                (setf lem-vi-mode/visual::*start-point* p))))
           (dolist (region visual-regions)
             (destructuring-bind (from . to) region
               (with-point ((start point)
@@ -215,28 +240,42 @@
       (lem-core::set-window-buffer buffer window)
       (lem-core::set-window-view-point (copy-point (lem:buffer-point buffer))
                                        window)
-      (funcall fn buffer))))
+      (lem-core::set-window-point (lem:buffer-point buffer) window)
+      (funcall fn))))
 
 (defmacro with-current-buffer ((buffer) &body body)
   `(call-with-current-buffer
     ,buffer
-    (lambda (,buffer) ,@body)))
+    (lambda () ,@body)))
 
 (defmacro with-vi-state ((state) &body body)
-  `(let ((lem-vi-mode/core::*current-state* (ensure-state (keyword-to-state ,state))))
-     (change-global-mode-keymap
-      'vi-mode
-      (lem-vi-mode/core::state-keymap lem-vi-mode/core::*current-state*))
-     ,@body))
+  (once-only (state)
+    `(if ,state
+         (let ((lem-vi-mode/core::*current-state* nil))
+           (lem-vi-mode/core::change-state (if (keywordp ,state)
+                                               (keyword-to-state ,state)
+                                               ,state))
+           ,@body)
+         (progn ,@body))))
 
 (defun call-with-vi-buffer (buffer state fn)
   (with-current-buffer (buffer)
-    (lem-core:change-buffer-mode buffer 'vi-mode)
-    (with-vi-state (state)
-      (testing (format nil "[buf] \"~A\""
-                       (text-backslashed
-                        (make-buffer-string (current-buffer))))
-        (funcall fn)))))
+    (let ((state (or state
+                     (if lem-vi-mode/visual::*visual-overlays*
+                         'visual-char
+                         (current-state))))
+          (voverlay lem-vi-mode/visual::*visual-overlays*)
+          (start (and lem-vi-mode/visual::*start-point*
+                      (copy-point lem-vi-mode/visual::*start-point*))))
+      (lem-core:change-buffer-mode buffer 'vi-mode)
+      (with-vi-state (state)
+        (setf lem-vi-mode/visual::*visual-overlays* voverlay
+              lem-vi-mode/visual::*start-point* start)
+        (testing (format nil "[buf] \"~A\""
+                         (text-backslashed
+                          (make-buffer-string (current-buffer))))
+                 (funcall fn))))
+    (clear-visual-overlays)))
 
 (defun ensure-buffer (buffer-or-string
                       &rest buffer-args
@@ -251,7 +290,7 @@
 
 (defmacro with-vi-buffer ((buffer-or-string
                           &rest buffer-args
-                          &key (state :normal)
+                          &key state
                           &allow-other-keys) &body body)
   (remove-from-plistf buffer-args :state)
   (with-gensyms (buffer)
@@ -269,8 +308,17 @@
 (defun cmd (keys)
   (check-type keys string)
   (diag (format nil "[cmd] ~A~%" keys))
-  (execute-key-sequence
-   (parse-command-keys keys)))
+  (let ((*input-hook* (cons (cons (lambda (event)
+                                    (push event *this-command-keys*))
+                                  0)
+                            *input-hook*)))
+    (execute-key-sequence
+     (parse-command-keys keys))))
+
+(defun ex-cmd (command)
+  (check-type command string)
+  (diag (format nil "[ex-cmd] ~A~%" command))
+  (lem-vi-mode/ex::execute-ex command))
 
 (defun pos= (expected-point)
   (point= (current-point) expected-point))
@@ -280,8 +328,8 @@
            expected-buffer-text))
 
 (defun state= (expected-state)
-  (eq (keyword-to-state expected-state)
-      (current-state)))
+  (eq expected-state
+      (state-to-keyword (current-state))))
 
 (defun visual= (visual-regions)
   (let (current-regions)
@@ -297,6 +345,8 @@
   (check-type expected-buffer-string string)
   (multiple-value-bind (expected-buffer-text expected-position visual-regions)
       (parse-buffer-string expected-buffer-string)
+    (unless expected-position
+      (error "No cursor is on the expected buffer"))
     (with-point ((p (current-point)))
       (move-to-position p expected-position)
       (and (text= expected-buffer-text)
@@ -321,10 +371,10 @@
                     :negative negative))
 
 (defmethod form-description ((function (eql 'text=)) args values &key negative)
+  (declare (ignore args))
   (let ((expected-text (first values))
         (actual-text (buffer-text (current-buffer))))
-    (format nil "Expect ~W~:[~; not~] to be ~S (actual: ~S)"
-            (first args)
+    (format nil "Expect the buffer text~:[~; not~] to be ~S (actual: ~S)"
             negative
             (text-backslashed expected-text)
             (text-backslashed actual-text))))
@@ -344,4 +394,7 @@
   (format nil "Expect the vi state~:[~; not~] to be ~A~@[ (actual: ~A)~]"
           negative
           (first values)
-          (ignore-errors (current-state))))
+          (ignore-errors (state-to-keyword (current-state)))))
+
+(defun lines (&rest lines)
+  (format nil "~{~A~%~}" lines))

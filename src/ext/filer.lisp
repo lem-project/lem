@@ -64,7 +64,7 @@
 
 (defmethod open-item ((item file-item) buffer)
   (when (typep (current-window) 'lem-core:side-window)
-    (other-window))
+    (next-window))
   (find-file (item-pathname item)))
 
 (defmethod open-item ((item directory-item) buffer)
@@ -162,7 +162,7 @@
 
 (defun deactive-filer ()
   (when (eq (current-window) (lem-core::frame-leftside-window (current-frame)))
-    (other-window))
+    (next-window))
   (delete-leftside-window))
 
 (define-command filer () ()

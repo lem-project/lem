@@ -2,7 +2,7 @@
   (:use :cl
         :lem
         :split-sequence)
-  (:import-from :lem-vi-mode/core
+  (:import-from :lem-vi-mode/utils
                 :change-directory)
   (:import-from :parse-number
                 :parse-number)
@@ -16,24 +16,24 @@
                 :disjoin
                 :mappend
                 :copy-hash-table)
-  (:export :define-vi-option
+  (:export :define-option
            :get-option
-           :vi-option
-           :vi-option-name
-           :vi-option-value
-           :vi-option-raw-value
-           :vi-option-default
-           :vi-option-type
-           :vi-option-aliases
-           :vi-option-getter
-           :vi-option-set-hook
-           :vi-option-documentation
-           :reset-vi-option-value
-           :toggle-vi-option-value
+           :option
+           :option-name
+           :option-value
+           :option-raw-value
+           :option-default
+           :option-type
+           :option-aliases
+           :option-getter
+           :option-set-hook
+           :option-documentation
+           :reset-option-value
+           :toggle-option-value
            :execute-set-command))
 (in-package :lem-vi-mode/options)
 
-(defstruct vi-option
+(defstruct option
   (name nil :type string)
   %value
   default
@@ -45,12 +45,13 @@
   (initializer nil :type (or function null))
   (documentation nil :type (or string null)))
 
-(define-condition vi-option-error (simple-error) ())
+(define-condition option-error (simple-error) ())
 
 (defvar *option-scope* (make-hash-table :test 'equal))
 (defvar *option-aliases* (make-hash-table :test 'equal))
 (defvar *global-options* (make-hash-table :test 'equal))
 (defvar *default-buffer-options* (make-hash-table :test 'equal))
+(defvar *default-window-options* (make-hash-table :test 'equal))
 
 (defun canonical-option-name (name)
   (or (gethash name *option-aliases*)
@@ -60,8 +61,16 @@
   (copy-hash-table *default-buffer-options*
                    :key (lambda (option)
                           (let ((new-option (copy-structure option)))
-                            (when (vi-option-initializer new-option)
-                              (funcall (vi-option-initializer new-option) new-option))
+                            (when (option-initializer new-option)
+                              (funcall (option-initializer new-option) new-option))
+                            new-option))))
+
+(defun new-window-options ()
+  (copy-hash-table *default-window-options*
+                   :key (lambda (option)
+                          (let ((new-option (copy-structure option)))
+                            (when (option-initializer new-option)
+                              (funcall (option-initializer new-option) new-option))
                             new-option))))
 
 (defun get-buffer-options (&optional (buffer (lem:current-buffer)))
@@ -71,15 +80,26 @@
                      (lem-base::buffer-variables buffer))
             (new-buffer-options))))
 
+(defun get-window-options (&optional (window (lem:current-window)))
+  (or (lem:window-parameter window :vi-mode-options)
+      (setf (lem:window-parameter window :vi-mode-options)
+            (new-window-options))))
+
+(defun get-global-options ()
+  *global-options*)
+
+(defun get-options-by-scope (scope)
+  (ecase scope
+    (:global (get-global-options))
+    (:buffer (get-buffer-options))
+    (:window (get-window-options))))
+
 (defun get-option (name &optional (error-if-not-exists t))
   (check-type name string)
   (let* ((name (canonical-option-name name))
          (scope (gethash name *option-scope* :global)))
     (multiple-value-bind (option exists)
-        (gethash name
-                 (ecase scope
-                   (:global (gethash name *global-options*))
-                   (:buffer (get-buffer-options))))
+        (gethash name (get-options-by-scope scope))
       (when (and (null exists)
                  error-if-not-exists)
         (lem:editor-error "Unknown option: ~A" name))
@@ -87,52 +107,52 @@
 
 (defun ensure-option (name-or-option &optional (error-if-not-exists t))
   (etypecase name-or-option
-    (vi-option name-or-option)
+    (option name-or-option)
     (string (get-option name-or-option error-if-not-exists))))
 
-(defun vi-option-raw-value (option)
-  (vi-option-%value (ensure-option option)))
+(defun option-raw-value (option)
+  (option-%value (ensure-option option)))
 
-(defun vi-option-value (option)
+(defun option-value (option)
   (let ((option (ensure-option option)))
     (values
-     (if-let (getter (vi-option-getter option))
+     (if-let (getter (option-getter option))
        (funcall getter option)
-       (vi-option-raw-value option))
-     (vi-option-name option))))
+       (option-raw-value option))
+     (option-name option))))
 
-(defun (setf vi-option-value) (new-value option)
+(defun (setf option-value) (new-value option)
   (let ((option (ensure-option option)))
     (with-slots (type setter set-hook) option
       (unless (typep new-value type)
         (lem:editor-error "Option '~A' accepts only ~S, but given ~S"
-                          (vi-option-name option) type new-value))
-      (let ((old-value (vi-option-value option)))
+                          (option-name option) type new-value))
+      (let ((old-value (option-value option)))
         (handler-case
             (progn
               (if setter
                   (funcall setter new-value option)
-                  (setf (vi-option-%value option) new-value))
+                  (setf (option-%value option) new-value))
               (multiple-value-prog1
-                  (values (vi-option-value option)
-                          (vi-option-name option)
+                  (values (option-value option)
+                          (option-name option)
                           old-value
                           t)
                 (when set-hook
                   (funcall set-hook new-value))))
-          (vi-option-error (e)
+          (option-error (e)
             (lem:editor-error (princ-to-string e))))))))
 
 (defun reset-option-value (option)
-  (setf (vi-option-value option)
-        (vi-option-default option)))
+  (setf (option-value option)
+        (option-default option)))
 
 (defun toggle-option-value (option)
   (with-slots (name type) option
     (unless (eq type 'boolean)
       (lem:editor-error "Can't toggle non-boolean option: '~A' (type=~S)" name type)))
-  (setf (vi-option-value option)
-        (not (vi-option-value option))))
+  (setf (option-value option)
+        (not (option-value option))))
 
 (defun parse-option-string (option-string)
   (coerce
@@ -149,17 +169,17 @@
     (let ((option (get-option option-name)))
       (cond
         ((equal suffix "?")
-         (vi-option-value option))
+         (option-value option))
         ((equal prefix "no")
-         (setf (vi-option-value option) nil))
+         (setf (option-value option) nil))
         ((or (equal prefix "inv")
              (equal suffix "!"))
          (toggle-option-value option))
         ((equal suffix "&")
          (reset-option-value option))
         ((member suffix '("=" ":") :test 'equal)
-         (setf (vi-option-value option)
-               (case (vi-option-type option)
+         (setf (option-value option)
+               (case (option-type option)
                  (boolean
                   (cond
                     ((string-equal new-value "t") t)
@@ -175,62 +195,62 @@
                   (split-sequence #\, new-value))
                  (otherwise new-value))))
         ((member suffix '("+=" "^=") :test 'equal)
-         (ecase (vi-option-type option)
+         (ecase (option-type option)
            (list
-            (let ((current-value (vi-option-value option)))
+            (let ((current-value (option-value option)))
               (if (member new-value current-value
                           :test 'equal)
-                  (vi-option-value option)
-                  (setf (vi-option-value option)
+                  (option-value option)
+                  (setf (option-value option)
                         (if (string= suffix "+=")
                             (append current-value (list new-value))
                             (cons new-value current-value))))))
            (string
-            (setf (vi-option-value option)
+            (setf (option-value option)
                   (if (string= suffix "+=")
                       (concatenate 'string
-                                   (vi-option-value option)
+                                   (option-value option)
                                    new-value)
                       (concatenate 'string
                                    new-value
-                                   (vi-option-value option)))))
+                                   (option-value option)))))
            (number
-            (setf (vi-option-value option)
+            (setf (option-value option)
                   (funcall (if (string= suffix "+=")
                                #'+
                                #'*)
-                           (vi-option-value option)
+                           (option-value option)
                            new-value)))
            (boolean
             (lem:editor-error "Can't ~A a boolean option: ~A"
                               (if (string= suffix "+=")
                                   "increment"
                                   "multiply")
-                              (vi-option-name option)))))
+                              (option-name option)))))
         ((string= suffix "-=")
-         (ecase (vi-option-type option)
+         (ecase (option-type option)
            (list
-            (setf (vi-option-value option)
-                  (remove new-value (vi-option-value option)
+            (setf (option-value option)
+                  (remove new-value (option-value option)
                           :test 'equal)))
            (string
             (lem:editor-error "Can't subtract a string option: ~A"
-                              (vi-option-name option)))
+                              (option-name option)))
            (number
-            (decf (vi-option-value option) new-value))
+            (decf (option-value option) new-value))
            (boolean
             (lem:editor-error "Can't decrement a boolean option: ~A"
-                              (vi-option-name option)))))
+                              (option-name option)))))
         (t
          (assert (and (null prefix) (null suffix)))
-         (if (eq (vi-option-type option) 'boolean)
-             (setf (vi-option-value option) t)
+         (if (eq (option-type option) 'boolean)
+             (setf (option-value option) t)
              ;; Show the current value for other than boolean
-             (vi-option-value option)))))))
+             (option-value option)))))))
 
-(defmacro define-vi-option (name (default &key (type t) aliases (scope :global)) &rest others)
+(defmacro define-option (name (default &key (type t) aliases (scope :global)) &rest others)
   (check-type name string)
-  (check-type scope (member :global :buffer))
+  (check-type scope (member :global :buffer :window))
   (once-only (default scope)
     (with-gensyms (option alias)
       (destructuring-bind (&key getter setter set-hook initializer documentation)
@@ -242,24 +262,25 @@
            (dolist (,alias ',aliases)
              (setf (gethash ,alias *option-aliases*) ,name))
            (let ((,option
-                   (make-vi-option :name ,name
-                                   :%value ,default
-                                   :default ,default
-                                   :type ',type
-                                   :aliases ',aliases
-                                   :getter ,(and getter
-                                                 `(lambda ,@getter))
-                                   :setter ,(and setter `(lambda ,@setter))
-                                   :set-hook ,(and set-hook `(lambda ,@set-hook))
-                                   :initializer ,(and initializer
-                                                      `(lambda ,@initializer))
-                                   :documentation ,(and documentation
-                                                        (first documentation)))))
+                   (make-option :name ,name
+                                :%value ,default
+                                :default ,default
+                                :type ',type
+                                :aliases ',aliases
+                                :getter ,(and getter
+                                              `(lambda ,@getter))
+                                :setter ,(and setter `(lambda ,@setter))
+                                :set-hook ,(and set-hook `(lambda ,@set-hook))
+                                :initializer ,(and initializer
+                                                   `(lambda ,@initializer))
+                                :documentation ,(and documentation
+                                                     (first documentation)))))
              (setf (gethash
                     ,name
                     (ecase ,scope
                       (:global *global-options*)
-                      (:buffer *default-buffer-options*)))
+                      (:buffer *default-buffer-options*)
+                      (:window *default-window-options*)))
                    ,option)
              (setf (gethash ,name *option-scope*) ,scope)
              ',name))))))
@@ -269,7 +290,7 @@
                       (lem:buffer (lem:buffer-directory buffer-or-window))
                       (lem:window (lem:buffer-directory (lem:window-buffer buffer-or-window))))))
 
-(define-vi-option "autochdir" (nil :type boolean :aliases ("acd"))
+(define-option "autochdir" (nil :type boolean :aliases ("acd"))
   (:documentation "Boolean to change the current directory to the buffer's directory automatically.
   Default: nil
   Aliases: acd")
@@ -286,7 +307,7 @@
            (lem:remove-hook (lem-core::window-switch-to-buffer-hook window) 'auto-change-directory)
            (lem:remove-hook (lem-core:window-leave-hook window) 'auto-change-directory))))))
 
-(define-vi-option "number" (nil :type boolean :aliases ("nu"))
+(define-option "number" (nil :type boolean :aliases ("nu"))
   (:documentation "Boolean to show the line number.
   Default: nil
   Aliases: nu")
@@ -296,9 +317,7 @@
   (:set-hook (new-value)
    (setf (lem:variable-value 'lem/line-numbers:line-numbers :global) new-value)))
 
-(defvar *default-iskeyword* '("@" "48-57" "_" "192-255"))
-
-(defun compile-iskeyword (value)
+(defun compile-rules (value option-name)
   (apply #'disjoin
          (mapcar (lambda (rule)
                    (check-type rule string)
@@ -321,36 +340,77 @@
                                 (<= start-code (char-code c) end-code))))
                           (progn
                             (unless (= (length rule) 1)
-                              (error 'vi-option-error
-                                     :format-control "Invalid rule in iskeyword: ~A"
-                                     :format-arguments (list rule)))
+                              (error 'option-error
+                                     :format-control "Invalid rule in ~A: ~A"
+                                     :format-arguments (list option-name rule)))
                             (let ((rule-char (aref rule 0)))
                               (lambda (c)
                                 (char= c rule-char))))))))
                  value)))
 
-(define-vi-option "iskeyword" ((cons *default-iskeyword*
+(defvar *default-iskeyword* '("@" "48-57" "_" "192-255"))
+
+(defun compile-iskeyword (value)
+  (compile-rules value "iskeyword"))
+
+(define-option "iskeyword" ((cons *default-iskeyword*
                                      (compile-iskeyword *default-iskeyword*))
-                               :type list
-                               :aliases ("isk")
-                               :scope :buffer)
+                            :type list
+                            :aliases ("isk")
+                            :scope :buffer)
   (:documentation "Comma-separated string to specify the characters should be recognized as a keyword. (buffer local)
   Default: @,48-57,_,192-255
   Aliases: isk")
   (:getter (option)
-   (car (vi-option-raw-value option)))
+   (car (option-raw-value option)))
   (:setter (new-value option)
-   (setf (vi-option-%value option)
+   (setf (option-%value option)
          (cons new-value
                (compile-iskeyword new-value))))
   (:initializer (option)
    (let ((syntax-table (lem:mode-syntax-table (lem:buffer-major-mode (lem:current-buffer)))))
-     (setf (vi-option-value option)
+     (setf (option-value option)
            (delete-duplicates
             (nconc (mapcar (lambda (c)
                              (if (char= c #\@)
                                  "@-@"
                                  (string c)))
                            (lem-base::syntax-table-symbol-chars syntax-table))
-                   (vi-option-value option))
+                   (option-value option))
             :test 'equal)))))
+
+(defvar *default-isseparator* (mapcar #'string '(#\Newline #\Space #\Tab)))
+
+(defun compile-isseparator (value)
+  (compile-rules value "isseparator"))
+
+(define-option "isseparator" 
+  ((cons *default-isseparator*
+         (compile-isseparator *default-isseparator*))
+   :type list
+   :aliases ("iss")
+   :scope :buffer)
+  (:documentation "Comma-separated string to specify the characters that should be recognized as non broad word characters. (buffer local)
+  Aliases: iss")
+  (:getter (option)
+   (car (option-raw-value option)))
+  (:setter (new-value option)
+   (setf (option-%value option)
+         (cons new-value
+               (compile-isseparator new-value))))
+  (:initializer (option)
+   (let ((syntax-table (lem:mode-syntax-table (lem:buffer-major-mode (lem:current-buffer)))))
+     (setf (option-value option)
+           (delete-duplicates
+            (nconc (mapcar (lambda (c)
+                             (if (char= c #\@)
+                                 "@-@"
+                                 (string c)))
+                           (lem-base::syntax-table-space-chars syntax-table))
+                   (option-value option))
+            :test 'equal)))))
+
+(define-option "scrolloff" (0 :type number :aliases ("so"))
+  (:documentation "The minimal number of lines to keep above of below the cursor.
+Default: 0
+Aliases: so"))

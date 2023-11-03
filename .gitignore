@@ -34,3 +34,4 @@ lem-ncurses
 build/*
 
 *.lx64fsl
+.qlot

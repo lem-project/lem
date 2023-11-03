@@ -1,6 +1,7 @@
 (defpackage :lem/isearch
   (:use :cl :lem)
   (:export :*isearch-keymap*
+           :*isearch-finish-hooks*
            :isearch-mode
            :isearch-highlight-attribute
            :isearch-highlight-active-attribute
@@ -42,6 +43,7 @@
 (defvar *isearch-search-forward-function*)
 (defvar *isearch-search-backward-function*)
 (defvar *isearch-popup-message* nil)
+(defvar *isearch-finish-hooks* '())
 
 (define-attribute isearch-highlight-attribute
   (t :foreground :base00 :background :base05))
@@ -310,13 +312,14 @@
     (isearch-add-char char)))
 
 (defun isearch-end ()
-  (isearch-reset-overlays (current-buffer))
-  (change-previous-string *isearch-string*)
-  (buffer-unbound (current-buffer) 'isearch-redisplay-string)
-  (remove-hook (variable-value 'after-change-functions :buffer)
-               'isearch-change-buffer-hook)
-  (isearch-mode nil)
-  t)
+  (when (boundp '*isearch-string*)
+    (isearch-reset-overlays (current-buffer))
+    (change-previous-string *isearch-string*)
+    (buffer-unbound (current-buffer) 'isearch-redisplay-string)
+    (remove-hook (variable-value 'after-change-functions :buffer)
+                 'isearch-change-buffer-hook)
+    (isearch-mode nil)
+    t))
 
 (defun isearch-redisplay-inactive (buffer)
   (alexandria:when-let ((string (buffer-value buffer 'isearch-redisplay-string)))
@@ -339,6 +342,7 @@
   (setf (buffer-value (current-buffer) 'isearch-redisplay-string) *isearch-string*)
   (change-previous-string *isearch-string*)
   (isearch-add-hooks)
+  (run-hooks *isearch-finish-hooks* *isearch-string*)
   (isearch-redisplay-inactive (current-buffer))
   (isearch-mode nil))
 
@@ -347,30 +351,42 @@
     (when (string= "" *isearch-string*)
       (setq *isearch-string* (isearch-default-string)))
     (setf (variable-value 'isearch-prev-last :buffer) nil)
-    (cond ((variable-value 'isearch-next-last :buffer)
-           (setf (variable-value 'isearch-next-last :buffer) nil)
-           (with-point ((p (current-point)))
-             (buffer-start p)
-             (when (funcall *isearch-search-forward-function* p *isearch-string*)
-               (move-point (current-point) p))))
-          ((not (funcall *isearch-search-forward-function* (current-point) *isearch-string*))
-           (setf (variable-value 'isearch-next-last :buffer) t)))
-    (isearch-update-display)))
+    (prog1
+        (cond ((variable-value 'isearch-next-last :buffer)
+               (setf (variable-value 'isearch-next-last :buffer) nil)
+               (with-point ((p (current-point)))
+                 (buffer-start p)
+                 (if (funcall *isearch-search-forward-function* p *isearch-string*)
+                     (progn
+                       (move-point (current-point) p)
+                       t)
+                     nil)))
+              ((not (funcall *isearch-search-forward-function* (current-point) *isearch-string*))
+               (setf (variable-value 'isearch-next-last :buffer) t)
+               nil)
+              (t))
+      (isearch-update-display))))
 
 (define-command isearch-prev () ()
   (when (boundp '*isearch-string*)
     (when (string= "" *isearch-string*)
       (setq *isearch-string* (isearch-default-string)))
     (setf (variable-value 'isearch-next-last :buffer) nil)
-    (cond ((variable-value 'isearch-prev-last :buffer)
-           (setf (variable-value 'isearch-prev-last :buffer) nil)
-           (with-point ((p (current-point)))
-             (buffer-end p)
-             (when (funcall *isearch-search-backward-function* p *isearch-string*)
-               (move-point (current-point) p))))
-          ((not (funcall *isearch-search-backward-function* (current-point) *isearch-string*))
-           (setf (variable-value 'isearch-prev-last :buffer) t)))
-    (isearch-update-display)))
+    (prog1
+        (cond ((variable-value 'isearch-prev-last :buffer)
+               (setf (variable-value 'isearch-prev-last :buffer) nil)
+               (with-point ((p (current-point)))
+                 (buffer-end p)
+                 (if (funcall *isearch-search-backward-function* p *isearch-string*)
+                     (progn
+                       (move-point (current-point) p)
+                       t)
+                     nil)))
+              ((not (funcall *isearch-search-backward-function* (current-point) *isearch-string*))
+               (setf (variable-value 'isearch-prev-last :buffer) t)
+               nil)
+              (t))
+      (isearch-update-display))))
 
 (define-command isearch-yank () ()
   (let ((str (yank-from-clipboard-or-killring)))
@@ -383,9 +399,8 @@
         (concatenate 'string
                      *isearch-string*
                      (string c)))
-  (with-point ((start-point (current-point)))
-    (unless (funcall *isearch-search-function* (current-point) *isearch-string*)
-      (move-point (current-point) start-point)))
+  (unless (funcall *isearch-search-function* (current-point) *isearch-string*)
+    (move-point (current-point) *isearch-start-point*))
   (isearch-update-display)
   t)
 

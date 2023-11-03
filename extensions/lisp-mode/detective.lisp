@@ -31,10 +31,9 @@
   (%default-capture 'lem/detective:package-reference position))
 
 (defmethod capture-reference ((position lem:point) (class (eql :misc-reference)))
-  (let* ((line (str:split #\Space (line-string position)))
-         (type (str:replace-all "(" "" (first line)))
-         (name (remove #\) (second line))))
+  (ppcre:register-groups-bind (type name)
+      ("^\\s*\\(\\s*(\\w+)\\s+(.*)\\s*" (line-string position))
     (make-instance 'lem/detective:misc-reference
                    :misc-custom-type type
-                   :reference-name name
+                   :reference-name (string-right-trim '(#\space #\tab) name)
                    :reference-point position)))

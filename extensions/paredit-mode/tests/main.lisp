@@ -34,3 +34,9 @@
       (ok (equal "\"|asdf\"" (buffer-text (current-buffer))))
       (paredit-backward-delete)
       (ok (equal "\"asdf\"" (buffer-text (current-buffer)))))))
+
+(deftest paredit-vertical-line-wrap
+  (with-current-buffers ()
+    (setup-testing-current-buffer "asdf")
+    (paredit-vertical-line-wrap)
+    (ok (equal "|asdf|" (buffer-text (current-buffer))))))

@@ -10,6 +10,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            :paredit-backward
            :paredit-insert-paren
            :paredit-insert-doublequote
+           :paredit-insert-vertical-line
            :paredit-backward-delete
            :paredit-forward-delete
            :paredit-close-parenthesis
@@ -22,6 +23,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            :paredit-raise
            :paredit-wrap-round
            :paredit-meta-doublequote
+           :paredit-vertical-line-wrap
            :*paredit-mode-keymap*))
 (in-package :lem-paredit-mode)
 
@@ -160,6 +162,15 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            (character-offset p -1))
          (character-offset p -1)))))
 
+(define-command paredit-insert-vertical-line () ()
+  (let ((p (current-point)))
+    (when (or (in-string-or-comment-p p)
+              (lem-base::syntax-escape-point-p p 0))
+      (insert-character p #\|)
+      (return-from paredit-insert-vertical-line))
+    (insert-character p #\| 2)
+    (character-offset p -1)))
+
 (define-command paredit-backward-delete (&optional (n 1)) ("p")
   (when (< 0 n)
     (let ((p (current-point)))
@@ -189,9 +200,16 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (progn (delete-next-char)
                     (delete-previous-char))
              (backward-char)))
-        ;; Should not delete #\) nor #\"
+        ;; The previous char is #\|
+        ((eql (character-at p -1) #\|)
+         (if (eql (character-at p) #\|)
+             (progn (delete-next-char)
+                    (delete-previous-char))
+             (backward-char)))
+        ;; Should not delete #\) nor #\" nor #\|
         ((or (eql (character-at p -1) #\))
-             (eql (character-at p -1) #\"))
+             (eql (character-at p -1) #\")
+             (eql (character-at p -1) #\|))
          (backward-char))
         (t
          (delete-previous-char))))
@@ -228,9 +246,17 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (progn (delete-next-char)
                     (delete-previous-char))
              (forward-char)))
-        ;; Should not delete #\( not #\"
+        ;; The next char is #\|
+        ((eql (character-at p) #\|)
+         (if (and (eql (character-at p -1) #\|)
+                  (not (lem-base::syntax-escape-point-p p -1)))
+             (progn (delete-next-char)
+                    (delete-previous-char))
+             (forward-char)))
+        ;; Should not delete #\( nor #\" nor #\|
         ((or (eql (character-at p) #\()
-             (eql (character-at p) #\"))
+             (eql (character-at p) #\")
+             (eql (character-at p) #\|))
          (forward-char))
         (t
          (delete-next-char))))
@@ -497,11 +523,15 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 (define-command paredit-meta-doublequote () ()
   (%paredit-wrap #\" #\"))
 
+(define-command paredit-vertical-line-wrap () ()
+  (lem-paredit-mode::%paredit-wrap #\| #\|))
+
 (loop for (k . f) in '((forward-sexp . paredit-forward)
                        (backward-sexp . paredit-backward)
                        ("(" . paredit-insert-paren)
                        (")" . paredit-close-parenthesis)
                        ("\"" . paredit-insert-doublequote)
+                       ("|" . paredit-insert-vertical-line)
                        (delete-previous-char . paredit-backward-delete)
                        (delete-next-char . paredit-forward-delete)
                        ("C-k" . paredit-kill)
@@ -511,5 +541,6 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                        ("M-Up" . paredit-splice-backward)
                        ("M-r" . paredit-raise)
                        ("M-(" . paredit-wrap-round)
+                       ("M-|" . paredit-vertical-line-wrap)
                        ("M-\"" . paredit-meta-doublequote))
       do (define-key *paredit-mode-keymap* k f))

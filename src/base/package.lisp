@@ -113,7 +113,9 @@
    :buffer-disable-undo-boundary
    :buffer-value
    :buffer-unbound
-   :clear-buffer-variables)
+   :clear-buffer-variables
+   :with-buffer-point
+   :with-current-buffer)
   ;; buffer-insert.lisp
   (:export
    :*inhibit-read-only*

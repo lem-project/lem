@@ -390,3 +390,7 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
 
 (defmacro with-buffer-point ((buffer point) &body body)
   `(call-with-buffer-point ,buffer ,point (lambda () ,@body)))
+
+(defmacro with-current-buffer (buffer-or-name &body body)
+  `(let ((*current-buffer* (get-buffer ,buffer-or-name)))
+     ,@body))

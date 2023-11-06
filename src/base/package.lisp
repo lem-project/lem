@@ -124,7 +124,7 @@
   (:export
    :delete-buffer-using-manager
    :buffer-list-manager
-   :with-current-buffer)
+   :with-current-buffers)
   ;; buffers.lisp
   (:export
    :kill-buffer-hook

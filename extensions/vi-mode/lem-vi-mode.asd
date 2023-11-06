@@ -32,7 +32,8 @@
                (:file "special-binds" :depends-on ("core"))
                (:file "window" :depends-on ("options"))
                (:file "vi-mode" :depends-on ("core" "options" "ex" "commands" "states" "window"))
-               (:file "utils"))
+               (:file "utils")
+               (:file "lisp-setup" :depends-on ("core" "options")))
   :in-order-to ((test-op (test-op "lem-vi-mode/tests"))))
 
 (defsystem "lem-vi-mode/tests"

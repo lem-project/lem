@@ -23,6 +23,11 @@ Other Lem features include:
 
 ## Install
 
+With Docker (ncurses version):
+
+    $ docker build -t lem .
+    $ docker run --rm -it -v .:/shared lem
+
 ### Lem-ncurses
 - [GNU/Linux](https://lem-project.github.io/lem-page/installation/ncurses/linux/)
 - [MacOS](https://lem-project.github.io/lem-page/installation/ncurses/macos/)

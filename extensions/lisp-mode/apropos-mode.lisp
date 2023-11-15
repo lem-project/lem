@@ -111,3 +111,12 @@
                                                     (completion-symbol-for-search-symbol
                                                      query)))))
     (display-xref-locations (find-definitions-by-name name))))
+
+(define-command lisp-search-asdf-definition () ()
+  (check-connection)
+  (let* ((system (read-asdf-system-name))
+         (file (read-from-string
+                (cadr (lisp-eval
+                       `(micros:eval-and-grab-output
+                         ,(format nil "(asdf:system-source-file \"~a\")" system)))))))
+    (find-file file)))

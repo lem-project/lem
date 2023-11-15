@@ -394,6 +394,17 @@
                                      (find string package-names :test #'string=))
                     :history-symbol 'mh-lisp-package))))
 
+(defun read-asdf-system-name ()
+  (check-connection)
+  (let ((system-names (lisp-eval '(micros:list-systems))))
+    (prompt-for-string
+     "System: "
+     :completion-function (lambda (string)
+                            (completion string system-names))
+     :test-function (lambda (string)
+                      (find string system-names :test #'string=))
+     :history-symbol 'mh-lisp-system)))
+
 (defun lisp-beginning-of-defun (point n)
   (lem-lisp-syntax:beginning-of-defun point (- n)))
 

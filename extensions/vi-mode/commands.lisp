@@ -104,7 +104,10 @@
            :vi-jump-back
            :vi-jump-next
            :vi-a-word
+           :vi-a-word
+           :vi-a-broad-word
            :vi-inner-word
+           :vi-inner-broad-word
            :vi-a-double-quote
            :vi-inner-double-quote
            :vi-a-paren
@@ -857,6 +860,14 @@
 (define-text-object-command vi-inner-word (count) ("p")
     (:expand-selection t)
   (inner-range-of 'word-object (current-state) count))
+
+(define-text-object-command vi-a-broad-word (count) ("p")
+    (:expand-selection t)
+  (a-range-of 'broad-word-object (current-state) count))
+
+(define-text-object-command vi-inner-broad-word (count) ("p")
+    (:expand-selection t)
+  (inner-range-of 'broad-word-object (current-state) count))
 
 (define-text-object-command vi-a-double-quote () ()
     ()

@@ -17,6 +17,15 @@
       (cmd "viw")
       (ok (buf= #?"abc\n<   [ ]>def\n")))))
 
+(deftest broad-word-object
+  (with-fake-interface ()
+    (with-vi-buffer (#?"abc [d]ef.ghi \n")
+      (cmd "viW")
+      (ok (buf= #?"abc <def.gh[i]> \n"))
+      (cmd "vvaW")
+      (ok (buf= #?"abc <def.ghi[ ]>\n"))
+      )))
+
 (deftest double-quoted
   (with-fake-interface ()
     (with-vi-buffer ("[ ]\"foo\" \"bar\"")

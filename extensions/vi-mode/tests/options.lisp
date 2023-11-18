@@ -43,3 +43,34 @@
       (execute-set-command "iss+=)")
       (cmd "WE")
       (ok (buf= #?"abc\n(de[f])\n")))))
+
+(deftest lisp-word-separators
+  (with-fake-interface ()
+    (with-vi-buffer (#?"[(]qwe/rty.uio:pas-dfg hjk
+\"lzx\")")
+      (change-buffer-mode (current-buffer) 'lem-lisp-mode:lisp-mode)
+      (cmd "w")
+      (ok (buf= "([q]we/rty.uio:pas-dfg hjk
+\"lzx\")"))
+      (cmd "w")
+      (ok (buf= "(qwe[/]rty.uio:pas-dfg hjk
+\"lzx\")"))
+      (cmd "ww")
+      (ok (buf= "(qwe/rty[.]uio:pas-dfg hjk
+\"lzx\")"))
+      (cmd "ww")
+      (ok (buf= "(qwe/rty.uio[:]pas-dfg hjk
+\"lzx\")"))
+      (cmd "ww")
+      (ok (buf= "(qwe/rty.uio:pas[-]dfg hjk
+\"lzx\")"))
+      (cmd "ww")
+      (ok (buf= "(qwe/rty.uio:pas-dfg [h]jk
+\"lzx\")"))
+      (cmd "ww")
+      (ok (buf= "(qwe/rty.uio:pas-dfg hjk
+\"[l]zx\")"))
+      (cmd "BBB")
+      (ok (buf= "([q]we/rty.uio:pas-dfg hjk
+\"lzx\")"))
+      )))

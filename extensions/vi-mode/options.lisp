@@ -348,67 +348,66 @@
                                 (char= c rule-char))))))))
                  value)))
 
-(defvar *default-iskeyword* '("@" "48-57" "_" "192-255"))
+(defgeneric rules-option-init-chars (option-symbol syntax-table))
 
-(defun compile-iskeyword (value)
-  (compile-rules value "iskeyword"))
+(defmethod rules-option-init-chars ((option-symbol (eql :iskeyword)) syntax-table)
+  (declare (ignorable option-symbol))
+  (lem-base::syntax-table-symbol-chars syntax-table))
 
-(define-option "iskeyword" ((cons *default-iskeyword*
-                                     (compile-iskeyword *default-iskeyword*))
-                            :type list
-                            :aliases ("isk")
-                            :scope :buffer)
-  (:documentation "Comma-separated string to specify the characters should be recognized as a keyword. (buffer local)
+(defmethod rules-option-init-chars ((option-symbol (eql :iskeyword)) 
+                                    (syntax-table (eql lem-lisp-syntax:*syntax-table*)))
+  (declare (ignorable option-symbol))
+  (set-difference (lem-base::syntax-table-symbol-chars syntax-table)
+                  '(#\/ #\. #\: #\-)))
+
+(defmethod rules-option-init-chars ((option-symbol (eql :isseparator)) syntax-table)
+  (declare (ignorable option-symbol))
+  (lem-base::syntax-table-space-chars syntax-table))
+
+(defmethod rules-option-init-chars ((option-symbol (eql :isseparator)) 
+                                    (syntax-table (eql lem-lisp-syntax:*syntax-table*)))
+  (declare (ignorable option-symbol))
+  (union (lem-base::syntax-table-space-chars syntax-table)
+         '(#\( #\) #\")))
+
+(defmacro define-rules-option (name default &key (alias (subseq name 0 3)) doc)
+  (once-only (default)
+    `(define-option ,name ((cons ,default
+                                 (compile-rules ,default ,name))
+                           :type list
+                           :aliases (,alias)
+                           :scope :buffer)
+       (:documentation ,doc)
+       (:getter (option)
+        (car (option-raw-value option)))
+       (:setter (new-value option)
+        (setf (option-%value option)
+              (cons new-value
+                    (compile-rules new-value ,name))))
+       (:initializer (option)
+        (let ((syntax-table (lem:mode-syntax-table (lem:buffer-major-mode (lem:current-buffer)))))
+          (setf (option-value option)
+                (delete-duplicates
+                 (nconc (mapcar (lambda (c)
+                                  (if (char= c #\@)
+                                      "@-@"
+                                      (string c)))
+                                (rules-option-init-chars 
+                                 (intern ,(string-upcase name) "KEYWORD")
+                                 syntax-table))
+                        (option-value option))
+                 :test 'equal)))))))
+
+(define-rules-option "iskeyword" '("@" "48-57" "_" "192-255")
+  :doc "Comma-separated string to specify the characters should be recognized as a keyword. (buffer local)
   Default: @,48-57,_,192-255
   Aliases: isk")
-  (:getter (option)
-   (car (option-raw-value option)))
-  (:setter (new-value option)
-   (setf (option-%value option)
-         (cons new-value
-               (compile-iskeyword new-value))))
-  (:initializer (option)
-   (let ((syntax-table (lem:mode-syntax-table (lem:buffer-major-mode (lem:current-buffer)))))
-     (setf (option-value option)
-           (delete-duplicates
-            (nconc (mapcar (lambda (c)
-                             (if (char= c #\@)
-                                 "@-@"
-                                 (string c)))
-                           (lem-base::syntax-table-symbol-chars syntax-table))
-                   (option-value option))
-            :test 'equal)))))
 
-(defvar *default-isseparator* (mapcar #'string '(#\Newline #\Space #\Tab)))
-
-(defun compile-isseparator (value)
-  (compile-rules value "isseparator"))
-
-(define-option "isseparator" 
-  ((cons *default-isseparator*
-         (compile-isseparator *default-isseparator*))
-   :type list
-   :aliases ("iss")
-   :scope :buffer)
-  (:documentation "Comma-separated string to specify the characters that should be recognized as non broad word characters. (buffer local)
+(define-rules-option 
+    "isseparator"
+  (mapcar 'string (lem-base::syntax-table-space-chars (lem:fundamental-syntax-table)))
+  :doc "Comma-separated string to specify the characters that should be recognized as a non broad word characters. (buffer local)
   Aliases: iss")
-  (:getter (option)
-   (car (option-raw-value option)))
-  (:setter (new-value option)
-   (setf (option-%value option)
-         (cons new-value
-               (compile-isseparator new-value))))
-  (:initializer (option)
-   (let ((syntax-table (lem:mode-syntax-table (lem:buffer-major-mode (lem:current-buffer)))))
-     (setf (option-value option)
-           (delete-duplicates
-            (nconc (mapcar (lambda (c)
-                             (if (char= c #\@)
-                                 "@-@"
-                                 (string c)))
-                           (lem-base::syntax-table-space-chars syntax-table))
-                   (option-value option))
-            :test 'equal)))))
 
 (define-option "scrolloff" (0 :type number :aliases ("so"))
   (:documentation "The minimal number of lines to keep above of below the cursor.

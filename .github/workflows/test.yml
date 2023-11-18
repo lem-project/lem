@@ -36,5 +36,5 @@ jobs:
           exit 1
         fi
 
-        qlot exec .qlot/bin/rove lem-tests.asd
-        qlot exec .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd
+        .qlot/bin/rove lem-tests.asd
+        .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd

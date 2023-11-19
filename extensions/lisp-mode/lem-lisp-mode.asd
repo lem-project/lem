@@ -44,6 +44,7 @@
                (:file "macroexpand")
                (:file "test-runner")
                (:file "utopian")
+               (:file "highlight")
                (:file "package")))
 
 (defsystem "lem-lisp-mode/v2"

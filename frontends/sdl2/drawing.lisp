@@ -197,7 +197,9 @@
                     (+ x
                        (* (line-end-object-offset drawing-object)
                           (display:display-char-width display)))
-                    bottom-y))
+                    bottom-y
+                    display
+                    view))
 
 (defmethod draw-object ((drawing-object image-object) x bottom-y display view)
   (let* ((surface-width (object-width drawing-object display))

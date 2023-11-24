@@ -115,7 +115,7 @@
                                             default-attribute height))
 (defgeneric lem-if:object-width (implementation drawing-object))
 (defgeneric lem-if:object-height (implementation drawing-object))
-(defgeneric lem-if:clear-to-end-of-window (implementation window y))
+(defgeneric lem-if:clear-to-end-of-window (implementation view y))
 
 (defvar *display-background-mode* nil)
 

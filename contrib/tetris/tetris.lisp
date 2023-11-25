@@ -307,4 +307,4 @@
                                                               (pop-up-backtrace condition)
                                                               (stop-timer *timer*)))
                                1000
-                               t))))
+                               :repeat t))))

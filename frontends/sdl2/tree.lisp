@@ -344,7 +344,6 @@
                  :name (first tree)
                  :value (first tree)
                  :click-callback (lambda (node)
-                                   (log:info (node-value node))
                                    (alexandria:when-let (window (find-tree-view-window buffer-name))
                                      (setf (current-window) window)
                                      (lem-lisp-mode:lisp-inspect

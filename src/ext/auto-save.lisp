@@ -57,7 +57,7 @@
                                                                (disable))
                                             :name "autosave")
                            (* interval 1000)
-                           t))))
+                           :repeat t))))
     (add-hook *input-hook* 'count-keys)))
 
 (defun disable ()

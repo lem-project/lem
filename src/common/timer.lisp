@@ -134,12 +134,12 @@
 (defun make-timer (function &key name handle-function)
   (make-timer-instance 'timer function name handle-function))
 
-(defmethod start-timer ((timer timer) ms &optional repeat-p)
+(defmethod start-timer ((timer timer) ms &key repeat)
   (setf (timer-ms timer) ms
-        (timer-repeat-p timer) repeat-p
+        (timer-repeat-p timer) repeat
         (timer-mutex timer) 
         (bt:make-lock "timer internal mutex"))
-  (start-timer-thread timer ms repeat-p)
+  (start-timer-thread timer ms repeat)
   timer)
 
 (defmethod stop-timer ((timer timer))
@@ -202,9 +202,9 @@
 (defun make-idle-timer (function &key name handle-function)
   (make-timer-instance 'idle-timer function name handle-function))
 
-(defmethod start-timer ((timer idle-timer) ms &optional repeat-p)
+(defmethod start-timer ((timer idle-timer) ms &key repeat)
   (setf (timer-ms timer) ms)
-  (setf (timer-repeat-p timer) repeat-p)
+  (setf (timer-repeat-p timer) repeat)
   (when *idle-p*
     (setf (timer-last-time timer)
           (get-microsecond-time *timer-manager*)))

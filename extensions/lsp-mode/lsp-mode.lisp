@@ -740,7 +740,7 @@
     (setf (buffer-diagnostic-idle-timer buffer)
           (start-timer (make-idle-timer 'popup-diagnostic :name "lsp-diagnostic")
                        200
-                       t))))
+                       :repeat t))))
 
 (defun popup-diagnostic ()
   (dolist (overlay (buffer-diagnostic-overlays (current-buffer)))
@@ -1323,7 +1323,7 @@
           (start-timer (make-idle-timer #'document-highlight-calls-timer
                                         :name "lsp-document-highlight")
                        200
-                       t))))
+                       :repeat t))))
 
 (defmethod execute :after ((mode lsp-mode) command argument)
   (clear-document-highlight-overlays-if-required))

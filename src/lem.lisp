@@ -56,7 +56,7 @@ Options:
       (start-timer (make-idle-timer (lambda ()
                                       (syntax-scan-window (current-window)))
                                     :name "syntax-scan")
-                   100 t)
+                   100 :repeat t)
       (add-hook *window-scroll-functions*
                 (lambda (window)
                   (syntax-scan-window window)))

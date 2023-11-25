@@ -77,7 +77,7 @@
     (let* ((spinner)
            (timer (start-timer (make-timer (lambda () (update-spinner-frame spinner)))
                                +loading-interval+
-                               t)))
+                               :repeat t)))
       (setf spinner
             (make-instance 'modeline-spinner
                            :timer timer
@@ -118,7 +118,7 @@
                                 (when spinner
                                   (update-line-spinner spinner))))
                              +loading-interval+
-                             t))
+                             :repeat t))
          (overlay (make-line-endings-overlay
                    start
                    end

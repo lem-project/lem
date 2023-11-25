@@ -77,7 +77,7 @@
                                                            (pop-up-backtrace condition)
                                                            (setf *idle-timer* nil))
                                         :name "language-idle-function")
-                       200 t))))
+                       200 :repeat t))))
 
 (define-key *language-mode-keymap* "C-M-a" 'beginning-of-defun)
 (define-key *language-mode-keymap* "C-M-e" 'end-of-defun)

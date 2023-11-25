@@ -677,7 +677,7 @@
   (setf (buffer-compilation-notes-timer (current-buffer))
         (start-timer (make-idle-timer 'show-compilation-notes :name "lisp-show-compilation-notes")
                      200
-                     t))
+                     :repeat t))
 
   (add-hook (variable-value 'before-change-functions :buffer (current-buffer))
             'remove-compilation-notes-overlay-in-the-changed-point))
@@ -1115,7 +1115,7 @@
                  (finalize ()
                    (stop-timer timer)
                    (stop-loading-spinner spinner)))
-          (setf timer (start-timer (make-timer #'interval) 500 t)))))))
+          (setf timer (start-timer (make-timer #'interval) 500 :repeat t)))))))
 
 (define-command slime (&optional ask-command) ("P")
   (let ((command (if ask-command

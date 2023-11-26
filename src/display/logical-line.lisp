@@ -93,7 +93,8 @@
         (loop :for overlay :in overlays
               :when (overlay-within-point-p overlay point)
               :do (cond ((typep overlay 'line-endings-overlay)
-                         (setf line-end-overlay overlay))
+                         (when (same-line-p (overlay-end overlay) point)
+                           (setf line-end-overlay overlay)))
                         ((typep overlay 'line-overlay)
                          (let ((attribute (overlay-attribute overlay)))
                            (setf attributes

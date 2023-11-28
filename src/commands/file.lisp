@@ -82,7 +82,8 @@
                     :directory (buffer-directory)
                     :default nil
                     :existing nil))
-                  ((pathnamep arg)
+                  ((or (pathnamep arg)
+                       (uiop:absolute-pathname-p arg))
                    (namestring arg)))))
       (let (buffer)
         (dolist (pathname (expand-files* filename))

@@ -84,9 +84,9 @@
     (setf (view-texture view) nil)))
 
 (defmethod render-clear ((view view) display)
-  (sdl2:set-render-target (display:display-renderer display) (view-texture view))
-  (display:set-render-color display (display:display-background-color display))
-  (sdl2:render-clear (display:display-renderer display)))
+  (display::with-display-render-target (display (view-texture view))
+    (display:set-render-color display (display:display-background-color display))
+    (sdl2:render-clear (display:display-renderer display))))
 
 (defmethod resize ((view view) display width height)
   (when (view-use-modeline view) (incf height))

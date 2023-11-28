@@ -43,6 +43,7 @@
                (:file "class-browser")
                (:file "macroexpand")
                (:file "test-runner")
+               (:file "utopian")
                (:file "package")))
 
 (defsystem "lem-lisp-mode/v2"

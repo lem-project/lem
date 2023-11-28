@@ -1386,7 +1386,6 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                (dolist (window (frame-floating-windows (current-frame)))
                  (window-redraw window (redraw-after-modifying-floating-window (implementation)))))
              (redraw-all-windows ()
-               (lem-if:will-update-display (implementation))
                (redraw-header-windows force)
                (redraw-window-list
                 (if (redraw-after-modifying-floating-window (implementation))
@@ -1398,6 +1397,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                (redraw-floating-windows)
                (lem-if:update-display (implementation))))
       (without-interrupts
+        (lem-if:will-update-display (implementation))
         (update-floating-prompt-window (current-frame))
         (when (frame-modified-header-windows (current-frame))
           (adjust-all-window-size))

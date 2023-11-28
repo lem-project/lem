@@ -2,6 +2,8 @@
   (:use :cl :lem :lem-lisp-mode/internal))
 (in-package :lem-lisp-mode/utopian)
 
+(pushnew 'find-utopian-route *find-definitions*)
+
 (defun find-utopian-route (point)
   (when (in-string-p point)
     (with-point ((start point)
@@ -40,5 +42,3 @@
                                 :whitespace-char-class))
                              (line-start point)
                              (position-at-point point)))))))))))
-
-(pushnew 'find-utopian-route lem-lisp-mode/internal:*find-definitions*)

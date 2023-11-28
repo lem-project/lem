@@ -120,7 +120,7 @@
                               directory :directory-only t)))
                  :test-function (and existing #'virtual-probe-file)
                  :history-symbol 'prompt-for-directory
-                 (alexandria:remove-from-plist args :directory default existing))))
+                 (alexandria:remove-from-plist args :directory :default :existing))))
     (if (string= result "")
         default
         result)))

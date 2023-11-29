@@ -38,10 +38,37 @@
         (variable-value 'tab-width) 4
         (variable-value 'calc-indent-function) 'markdown-calc-indent))
 
+(define-key *markdown-mode-keymap* "C-c C-l" 'markdown-insert-link)
+
 (defun markdown-calc-indent (point)
   (with-point ((point point))
     (let ((tab-width (variable-value 'tab-width :default point))
           (column (point-column point)))
       (+ column (- tab-width (rem column tab-width))))))
+
+(define-command markdown-insert-link () ()
+  (let ((url (prompt-for-string "URL: "
+                                :history-symbol 'mh-markdown-url))
+        (text
+          (prompt-for-string "Link text (blank for plain URL): "))
+        (title
+          (prompt-for-string "Title (tooltip text, optional): ")))
+    (with-point ((p (current-point)))
+      (cond
+        ((and url
+              (uiop:emptyp text)
+              (uiop:emptyp title))
+         (insert-string p (format nil "<~a>" url)))
+        ((and url text (uiop:emptyp title))
+         (insert-string p (format nil
+                                  "[~a](~a)"
+                                  text
+                                  url)))
+        ((and url text title)
+         (insert-string p (format nil
+                                  "[~a](~a \"~a\")"
+                                  text
+                                  url
+                                  title)))))))
 
 (define-file-type ("md" "markdown") markdown-mode)

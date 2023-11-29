@@ -85,6 +85,38 @@
 
 (defmethod lem-if:update-display ((implementation fake-interface)))
 
+(defmethod lem-if:view-width ((implementation fake-interface) view)
+  (view-width view))
+
+(defmethod lem-if:view-height ((implementation fake-interface) view)
+  (view-height view))
+
+(defmethod lem-if:object-width ((implementation fake-interface) object)
+  1)
+
+(defmethod lem-if:object-height ((implementation fake-interface) object)
+  1)
+
+(defmethod lem-if:render-line ((implementation fake-interface) view x y objects height)
+  nil)
+
+(defmethod lem-if:clear-to-end-of-window ((implementation fake-interface) view y)
+  nil)
+
+(defmethod lem-if:get-char-width ((implementation fake-interface))
+  1)
+
+(defmethod lem-if:get-char-height ((implementation fake-interface))
+  1)
+
+(defmethod lem-if:render-line-on-modeline ((implementation fake-interface)
+                                           view
+                                           left-objects
+                                           right-objects
+                                           default-attribute
+                                           height)
+  nil)
+
 (defmacro with-fake-interface (() &body body)
   `(with-implementation (make-instance 'fake-interface)
      (setup-first-frame)

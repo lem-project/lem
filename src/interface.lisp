@@ -123,7 +123,11 @@
   *implementation*)
 
 (defmacro with-implementation (implementation &body body)
-  `(let ((*implementation* ,implementation))
+  `(let* ((*implementation* ,implementation)
+          (bt:*default-special-bindings*
+            (acons '*implementation*
+                   *implementation*
+                   bt:*default-special-bindings*)))
      ,@body))
 
 (defun display-background-mode ()

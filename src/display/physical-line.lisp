@@ -198,9 +198,9 @@
                      :and physical-line-objects := '()
                      :for object := (pop objects)
                      :while object
-                     :do (cond ((<= view-width (+ total-width (object-width object)))
-                                (cond ((and (typep object 'text-object)
-                                            (< 1 (length (text-object-string object))))
+                     :do (cond ((and (typep object 'text-object)
+                                     (<= view-width (+ total-width (object-width object))))
+                                (cond ((< 1 (length (text-object-string object)))
                                        (setf objects (nconc (explode-object object) objects)))
                                       (t
                                        (push object objects)

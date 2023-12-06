@@ -249,9 +249,16 @@
         (move-to-column (current-point) start-col))
       (vi-visual-swap-points)))
 
-(defmethod lem/language-mode:set-region-point ((start point) (end point) &key (global-mode (eql :|vi|)))
+(defmethod lem/language-mode:set-region-point ((start point) (end point) (global-mode (eql :|vi|)))
   (declare (ignore global-mode))
   (when (visual-p)
     (let ((v-range (visual-range)))
       (move-point start (car v-range))
       (move-point end (cadr v-range)))))
+
+(defmethod lem-core::operate-region ((global-mode (eql :|vi|)))
+  (if (lem-vi-mode/visual:visual-p)
+      (let ((v-range (lem-vi-mode/visual:visual-range)))
+        `(list
+          ,(car v-range)
+          ,(cadr v-range)))))

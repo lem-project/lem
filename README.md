@@ -29,14 +29,14 @@ With Docker (ncurses version):
     $ docker run --rm -it -v .:/shared lem
 
 ### Lem-ncurses
-- [GNU/Linux](https://lem-project.github.io/lem-page/installation/ncurses/linux/)
-- [MacOS](https://lem-project.github.io/lem-page/installation/ncurses/macos/)
-- [Windows](https://lem-project.github.io/lem-page/installation/ncurses/windows/)
+- [GNU/Linux](https://lem-project.github.io/installation/ncurses/linux/)
+- [MacOS](https://lem-project.github.io/installation/ncurses/macos/)
+- [Windows](https://lem-project.github.io/installation/ncurses/windows/)
 
 ### Lem-sdl2
-- [GNU/Linux](https://lem-project.github.io/lem-page/installation/sdl2/linux/)
-- [MacOS](https://lem-project.github.io/lem-page/installation/sdl2/macos/)
-- [Windows](https://lem-project.github.io/lem-page/installation/sdl2/windows/)
+- [GNU/Linux](https://lem-project.github.io//installation/sdl2/linux/)
+- [MacOS](https://lem-project.github.io//installation/sdl2/macos/)
+- [Windows](https://lem-project.github.io//installation/sdl2/windows/)
 
 
 ## Screenshots

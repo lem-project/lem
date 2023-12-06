@@ -248,3 +248,10 @@
         (move-to-column *start-point* end-col)
         (move-to-column (current-point) start-col))
       (vi-visual-swap-points)))
+
+(defmethod lem/language-mode:set-region-point ((start point) (end point) &key (global-mode (eql :|vi|)))
+  (declare (ignore global-mode))
+  (when (visual-p)
+    (let ((v-range (visual-range)))
+      (move-point start (car v-range))
+      (move-point end (cadr v-range)))))

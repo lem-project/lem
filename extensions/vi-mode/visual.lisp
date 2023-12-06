@@ -255,10 +255,3 @@
     (let ((v-range (visual-range)))
       (move-point start (car v-range))
       (move-point end (cadr v-range)))))
-
-(defmethod lem-core::operate-region ((global-mode (eql :|vi|)))
-  (if (lem-vi-mode/visual:visual-p)
-      (let ((v-range (lem-vi-mode/visual:visual-range)))
-        `(list
-          ,(car v-range)
-          ,(cadr v-range)))))

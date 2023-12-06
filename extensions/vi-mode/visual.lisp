@@ -255,3 +255,21 @@
     (let ((v-range (visual-range)))
       (move-point start (car v-range))
       (move-point end (cadr v-range)))))
+
+
+(eval-when (:compile-toplevel :load-toplevel)
+  (sb-ext:unlock-package :lem-base)
+
+  (defmethod lem-base::global-mode-region-beginning ((global-mode (eql :|vi|)) &optional (buffer (current-buffer)))
+    (declare (ignore buffer))
+    (if (visual-p)
+        (car (visual-range))
+        (editor-error "Not in visual mode")))
+
+  (defmethod lem-base::global-mode-region-end ((global-mode (eql :|vi|)) &optional (buffer (current-buffer)))
+    (declare (ignore buffer))
+    (if (visual-p)
+        (cadr (visual-range))
+        (editor-error "Not in visual mode")))
+
+  (sb-ext:lock-package :lem-base))

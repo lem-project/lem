@@ -1,5 +1,10 @@
 (in-package :lem-core)
 
+
+(defun maybe-marked ()
+  (when (eql (current-global-mode-keyword-name) :|emacs|)
+    (check-marked)))
+
 (eval-when (:compile-toplevel :load-toplevel)
   (defun parse-arg-descriptors (arg-descriptors universal-argument)
     "Parse arg descriptors given to define-command.
@@ -50,10 +55,11 @@
                                          :default nil
                                          :existing nil)))
                                 (#\r
-                                 (push '(check-marked) pre-forms)
-                                 '(list
-                                   (region-beginning)
-                                   (region-end)))))
+                                 (push '(maybe-marked) pre-forms)
+                                 '(list (global-mode-region-beginning
+                                         (current-global-mode-keyword-name))
+                                   (global-mode-region-end
+                                    (current-global-mode-keyword-name))))))
                              ((and (consp arg-descriptor)
                                    (eq :splice (first arg-descriptor)))
                               (assert (alexandria:length= arg-descriptor 2))

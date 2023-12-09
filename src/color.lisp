@@ -841,3 +841,9 @@
             ((= i 3) (rgb (* p 255) (* q 255) (* v 255)))
             ((= i 4) (rgb (* tmp 255) (* p 255) (* v 255)))
             (t (rgb (* v 255) (* p 255) (* q 255)))))))
+
+(defun color-to-hex-string (color)
+  (format nil "#~2,'0X~2,'0X~2,'0X"
+          (color-red color)
+          (color-green color)
+          (color-blue color)))

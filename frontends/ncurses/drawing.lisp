@@ -44,12 +44,6 @@
       (lem-core::set-last-print-cursor (view-window view) x y))
     (lem-ncurses::print-string scrwin x y string attribute)))
 
-(defun color-to-hex-string (color)
-  (format nil "#~2,'0X~2,'0X~2,'0X"
-          (lem:color-red color)
-          (lem:color-green color)
-          (lem:color-blue color)))
-
 (defmethod draw-object ((object eol-cursor-object) x y view scrwin)
   (lem-core::set-last-print-cursor (view-window view) x y)
   (lem-ncurses::print-string
@@ -58,7 +52,7 @@
    y
    " "
    (lem:make-attribute :foreground
-                       (color-to-hex-string (eol-cursor-object-color object)))))
+                       (lem:color-to-hex-string (eol-cursor-object-color object)))))
 
 (defmethod draw-object ((object extend-to-eol-object) x y view scrwin)
   (let ((width (lem-if:view-width (lem-core:implementation) view)))
@@ -69,7 +63,7 @@
        y
        (make-string (- width x) :initial-element #\space)
        (lem:make-attribute :background
-                           (color-to-hex-string (extend-to-eol-object-color object)))))))
+                           (lem:color-to-hex-string (extend-to-eol-object-color object)))))))
 
 (defmethod draw-object ((object line-end-object) x y view scrwin)
   (let ((string (text-object-string object))

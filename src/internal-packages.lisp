@@ -103,7 +103,8 @@
    :color-blue
    :parse-color
    :rgb-to-hsv
-   :hsv-to-rgb)
+   :hsv-to-rgb
+   :color-to-hex-string)
   ;; attribute.lisp
   (:export
    :make-attribute

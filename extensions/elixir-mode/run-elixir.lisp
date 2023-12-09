@@ -1,5 +1,5 @@
 (defpackage :lem-elixir-mode.run-elixir
-  (:use :cl :lem :lem-elixir-mode)
+  (:use :cl :lem :lem-elixir-mode :alexandria)
   (:export :*elixir-run-command*
            :run-elixir))
 
@@ -30,12 +30,11 @@
   (declare (ignore point))
   (unless (alive-process-p)
     (editor-error "Elixir process doesn't exist."))
-  (lem-process:process-send-input *process*
-                                  (concatenate 'string string (string #\newline))))
+  (ipm/impl:process-send-line string *process*))
 
 (defun alive-process-p ()
   (and *process*
-       (lem-process:process-alive-p *process*)))
+       (ipm/impl:process-alive-p *process*)))
 
 (defun repl-buffer-exists-p ()
   (get-buffer "*elixir*"))
@@ -47,35 +46,38 @@
     buffer))
 
 (defun output-callback (string)
-  (let* ((already-exists (repl-buffer-exists-p))
-         (buffer (get-repl-buffer))
-         (p (buffer-point buffer)))
-    (buffer-end p)
-    (setf string (ppcre:regex-replace-all "\\r\\n" string (string #\newline)))
-    (insert-string p string)
-    (when (ppcre:scan "^(iex|...)(.+)" (line-string p))
-      (lem/listener-mode:refresh-prompt buffer nil))
-    (unless already-exists
-      (switch-to-window (pop-to-buffer buffer)))
-    (alexandria:when-let (window (first (get-buffer-windows buffer)))
-      (with-current-window window
-        (buffer-end p)
-        (window-see window)))
-    (redraw-display)))
+  (when (not (str:emptyp string))
+    (let* ((already-exists (repl-buffer-exists-p))
+           (buffer (get-repl-buffer))
+           (p (buffer-point buffer)))
+      (buffer-end p)
+
+      (insert-string p string)
+      (when (ppcre:scan "^(iex|...)(.+)" (line-string p))
+        (lem/listener-mode:refresh-prompt buffer nil))
+      (unless already-exists
+        (switch-to-window (pop-to-buffer buffer)))
+      (alexandria:when-let (window (first (get-buffer-windows buffer)))
+        (with-current-window window
+          (buffer-end p)
+          (window-see window)))
+      (redraw-display))))
 
 (defun run-elixir-internal ()
   (unless (alive-process-p)
     (when *process*
-      (lem-process:delete-process *process*))
+      (ipm/impl:delete-process *process*))
     (setf *process*
-          (lem-process:run-process *elixir-run-command*
-                                   :name "run-elixir"
-                                   :output-callback 'output-callback))))
+          (lem/run-process:run-process
+           *elixir-run-command*
+           :name "run-elixir"
+           :output-callback 'output-callback))))
 
 (define-command elixir-eval-region (start end) ("r")
-  (unless (alive-process-p)
+  (unless (ipm/impl:process-alive-p *process* )
     (editor-error "elixir process doesn't exist."))
-  (lem-process:process-send-input *process* (points-to-string start end)))
+  (ipm/impl:process-send-line (points-to-string start end)
+                              *process* ))
 
 (define-command run-elixir () ()
   (run-elixir-internal))
@@ -83,4 +85,4 @@
 (add-hook *exit-editor-hook*
           (lambda ()
             (when *process*
-              (lem-process:delete-process *process*))))
+              (ipm/impl:delete-process *process*))))

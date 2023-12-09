@@ -187,6 +187,7 @@
 | [execute-command](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L55)   | M-x            | Read a command name, then read the ARG and call the command. |
 | [show-context-menu](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L74) | Shift-F10, M-h |                                                              |
 | [load-library](https://github.com/lem-project/lem/blob/main/src/commands/other.lisp#L80)      |                | Load the Lisp library named NAME.                            |
+| [filer](https://github.com/lem-project/lem/blob/main/src/ext/filer.lisp#L17)                  | C-x d          | Toggle the "tree view" (file-directory) sidebar.
 
 ## Frame
 | Command                                                                                            | Key bindings | Documentation       |

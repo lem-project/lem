@@ -5,7 +5,7 @@
 ("micros" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/micros.git")
-  :version "git-ed264a27262baeed493cdde338873bf4afc3721c"))
+  :version "git-994d4d67467ec1b6eddacad9dba385b42101679e"))
 ("lem-mailbox" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-mailbox.git")

@@ -196,7 +196,7 @@ class LemEditor extends HTMLElement {
 
     let timeoutId = null;
     const resizeHandler = () => {
-      if (process.platform === "win32") {
+      if (process.platform === "win32" || process.platform === 'linux') {
         const { width, height } = mainWindow.getContentBounds();
         this.resize(width, height);
       } else {

@@ -34,6 +34,7 @@
 	       #+sbcl
 	       sb-concurrency
 	       "lem-mailbox"
+               #+unix
 	       "ip-management")
   :pathname "src"
   :serial t

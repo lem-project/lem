@@ -18,6 +18,9 @@ jobs:
         LISP: ${{ matrix.lisp }}
       run: |
         curl -L https://raw.githubusercontent.com/roswell/roswell/v22.12.14.113/scripts/install-for-ci.sh | sh
+    - name: Install dependencies
+      run: apt-install libfixposix-dev
+
     - name: Run test
       run: |
         set -ex
@@ -25,6 +28,7 @@ jobs:
         ros config set dynamic-space-size 2048
         curl -L https://qlot.tech/installer | bash
         export PATH="/home/runner/.qlot/bin:$PATH"
+
 
         qlot install
 

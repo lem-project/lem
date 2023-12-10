@@ -2,7 +2,7 @@
 
 var option = {
   fontName: "monospace",
-  fontSize: 14,
+  fontSize: 18,
   background: "#333",
   foreground: "#ccc",
   cols: 80,

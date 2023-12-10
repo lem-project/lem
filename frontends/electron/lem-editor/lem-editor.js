@@ -515,7 +515,13 @@ class Picker {
 }
 
 const viewStyleTable = {
-  popup: { zIndex: 2, "box-shadow": "0 0 0 12px #555555" },
+  popup: {
+    "zIndex": 5,
+    "border-radius": "10px",
+    "border":"2px solid #FFF",
+    "padding": "10px",
+    "background": "#333" // option.background
+  },
   tile: { },
 };
 

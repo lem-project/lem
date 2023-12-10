@@ -229,12 +229,6 @@
 #+(or)(defmethod lem-if:popup-menu-first ((jsonrpc jsonrpc) popup-menu))
 #+(or)(defmethod lem-if:popup-menu-last ((jsonrpc jsonrpc) popup-menu))
 #+(or)(defmethod lem-if:popup-menu-select ((jsonrpc jsonrpc) popup-menu))
-#+(or)(defmethod lem-if:display-popup-message
-    ((jsonrpc jsonrpc) buffer-or-string &key timeout
-                                          destination-window
-                                          source-window
-                                          style))
-#+(or)(defmethod lem-if:delete-popup-message ((jsonrpc jsonrpc) popup-message))
 #+(or)(defmethod lem-if:display-context-menu ((jsonrpc jsonrpc) context-menu style))
 
 (defmethod lem-if:clipboard-paste ((jsonrpc jsonrpc))

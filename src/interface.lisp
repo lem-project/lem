@@ -79,12 +79,6 @@
 (defgeneric lem-if:popup-menu-first (implementation popup-menu))
 (defgeneric lem-if:popup-menu-last (implementation popup-menu))
 (defgeneric lem-if:popup-menu-select (implementation popup-menu))
-(defgeneric lem-if:display-popup-message
-    (implementation buffer-or-string &key timeout
-                                          destination-window
-                                          source-window
-                                          style))
-(defgeneric lem-if:delete-popup-message (implementation popup-message))
 (defgeneric lem-if:display-context-menu (implementation context-menu style)
   (:method (implementation context-menu style)))
 

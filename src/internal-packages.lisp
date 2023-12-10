@@ -554,6 +554,12 @@
 #+sbcl
 (sb-ext:lock-package :lem-core)
 
+(defpackage :lem-core/popup-message-interface
+  (:use :cl)
+  (:export :*popup-messenger*
+           :display-popup-message
+           :delete-popup-message))
+
 (defpackage :lem-restart
   (:use)
   (:export :message
@@ -597,8 +603,6 @@
    :popup-menu-first
    :popup-menu-last
    :popup-menu-select
-   :display-popup-message
-   :delete-popup-message
    :display-context-menu
    :clipboard-paste
    :clipboard-copy

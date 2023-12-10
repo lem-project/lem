@@ -15,4 +15,4 @@
   :build-operation program-op
   :build-pathname "lem-rpc"
   :entry-point "lem-jsonrpc:program"
-  :depends-on ("lem-jsonrpc" "lem-electron-backend"))
+  :depends-on ("lem-jsonrpc"))

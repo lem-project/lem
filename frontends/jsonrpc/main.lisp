@@ -30,11 +30,6 @@
   (setf (jsonrpc-display-width jsonrpc) width
         (jsonrpc-display-height jsonrpc) height))
 
-(defun pretty-json (value)
-  (with-output-to-string (out)
-    (yason:encode value
-                  (yason:make-json-output-stream out))))
-
 (defmethod notify ((jsonrpc jsonrpc) method argument)
   (pdebug "notify: ~A ~A" method (pretty-json argument))
   (let ((jsonrpc/connection:*connection*

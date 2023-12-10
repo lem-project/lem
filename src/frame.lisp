@@ -183,10 +183,14 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
 
 
 (defun within-window-p (window x y)
+  (check-type x integer)
+  (check-type y integer)
   (and (<= (window-x window) x (+ (window-x window) (window-width window) -1))
        (<= (window-y window) y (+ (window-y window) (window-height window) -1))))
 
 (defun focus-window-position (frame x y)
+  (check-type x integer)
+  (check-type y integer)
   (dolist (window (append (frame-header-windows frame)
                           ;; リストの後ろにあるウィンドウほど手前に出てくるという前提
                           (reverse (frame-floating-windows frame))

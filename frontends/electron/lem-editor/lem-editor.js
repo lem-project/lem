@@ -4,7 +4,9 @@ const rpc = require("vscode-jsonrpc");
 const cp = require("child_process");
 const utf8 = require("utf-8");
 const ipcRenderer = require("electron").ipcRenderer;
-const getCurrentWindow = require("electron").remote.getCurrentWindow;
+
+const remote = require('@electron/remote');
+
 const keyevent = require("./keyevent");
 
 // load option file
@@ -63,7 +65,7 @@ function calcDisplayRows(height) {
 }
 
 function getCurrentWindowSize() {
-  return getCurrentWindow().getSize();
+  return remote.getCurrentWindow().getSize();
 }
 
 function getCurrentWindowWidth() {
@@ -142,7 +144,7 @@ class LemEditor extends HTMLElement {
 
     this.lemSidePane = null;
 
-    const mainWindow = getCurrentWindow();
+    const mainWindow = remote.getCurrentWindow();
     const contentBounds = mainWindow.getContentBounds();
     this.width = contentBounds.width;
     this.height = contentBounds.height;
@@ -225,7 +227,7 @@ class LemEditor extends HTMLElement {
   }
 
   resizeTo(col, row) {
-    const mainWindow = getCurrentWindow();
+    const mainWindow = remote.getCurrentWindow();
     const { x, y, width, height } = mainWindow.getBounds();
     const cb = mainWindow.getContentBounds();
     const dw = width - cb.width;
@@ -305,16 +307,19 @@ class LemEditor extends HTMLElement {
   }
 
   updateForeground(params) {
+    //console.log('update-foreground', params);
     option.foreground = params;
     this.picker.updateForeground(params);
   }
 
   updateBackground(params) {
+    //console.log('update-background', params);
     option.background = params;
     this.picker.updateBackground(params);
   }
 
   makeView(params) {
+    //console.log('make-view', params);
     const { id, x, y, width, height, use_modeline, kind } = params;
     const view = new View(id, x, y, width, height, use_modeline, kind);
     view.allTags().forEach((child) => {
@@ -324,6 +329,7 @@ class LemEditor extends HTMLElement {
   }
 
   deleteView(params) {
+    //console.log('delete-view', params);
     const { id } = params.viewInfo;
     const view = viewTable[id];
     view.delete();
@@ -331,53 +337,62 @@ class LemEditor extends HTMLElement {
   }
 
   resizeView(params) {
+    //console.log('resize-view', params);
     const { viewInfo, width, height } = params;
     const view = viewTable[viewInfo.id];
     view.resize(width, height);
   }
 
   moveView(params) {
+    //console.log('move-view', params);
     const { x, y, viewInfo } = params;
     const view = viewTable[viewInfo.id];
     view.move(x, y);
   }
 
   clear(params) {
+    //console.log('clear', params);
     const view = viewTable[params.viewInfo.id];
     view.clear();
   }
 
   clearEol(params) {
+    //console.log('clear-eol', params);
     const { viewInfo, x, y } = params;
     const view = viewTable[viewInfo.id];
     view.clearEol(x, y);
   }
 
   clearEob(params) {
+    //console.log('clear-eob', params);
     const { viewInfo, x, y } = params;
     const view = viewTable[viewInfo.id];
     view.clearEob(x, y);
   }
 
   put(params) {
+    //console.log('put', params);
     const { viewInfo, x, y, text, textWidth, attribute } = params;
     const view = viewTable[viewInfo.id];
     view.put(x, y, text, textWidth, attribute);
   }
 
   modelinePut(params) {
+    //console.log('modeline-put', params);
     const { viewInfo, x, y, text, textWidth, attribute } = params;
     const view = viewTable[viewInfo.id];
     view.modelinePut(x, text, textWidth, attribute);
   }
 
   touch(params) {
+    //console.log('touch', params);
     const { viewInfo } = params;
     const view = viewTable[viewInfo.id];
     view.touch();
   }
 
   moveCursor(params) {
+    //console.log('move-cursor', params);
     const { viewInfo, x, y } = params;
     const view = viewTable[viewInfo.id];
     view.setCursor(x, y);
@@ -390,6 +405,7 @@ class LemEditor extends HTMLElement {
   }
 
   scroll(params) {
+    //console.log('scroll', params);
     const { viewInfo, n } = params;
     const view = viewTable[viewInfo.id];
     view.scroll(n);
@@ -500,6 +516,7 @@ class Picker {
 
 const viewStyleTable = {
   popup: { zIndex: 2, "box-shadow": "0 0 0 12px #555555" },
+  tile: { },
 };
 
 class View {

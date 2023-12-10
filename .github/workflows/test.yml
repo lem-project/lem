@@ -19,7 +19,7 @@ jobs:
       run: |
         curl -L https://raw.githubusercontent.com/roswell/roswell/v22.12.14.113/scripts/install-for-ci.sh | sh
     - name: Install dependencies
-      run: apt-install libfixposix-dev
+      run: apt install libfixposix-dev
 
     - name: Run test
       run: |

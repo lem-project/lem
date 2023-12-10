@@ -22,7 +22,8 @@
    (foreground-color :accessor jsonrpc-foreground-color))
   (:default-initargs
    :name :jsonrpc
-   :redraw-after-modifying-floating-window nil))
+   :redraw-after-modifying-floating-window nil
+   :window-left-margin 0))
 
 (defmethod resize-display ((jsonrpc jsonrpc) width height)
   (setf (jsonrpc-display-width jsonrpc) width

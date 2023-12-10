@@ -14,7 +14,11 @@
    (support-floating-window
     :initform t
     :initarg :support-floating-window
-    :reader support-floating-window)))
+    :reader support-floating-window)
+   (window-left-margin
+    :initform 1
+    :initarg :window-left-margin
+    :reader window-left-margin)))
 
 (defun get-default-implementation (&key (errorp t))
   (let* ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))

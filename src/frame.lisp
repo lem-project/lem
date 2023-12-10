@@ -8,8 +8,7 @@
 
 (defclass frame ()
   ((window-left-margin
-    :initform 1
-    :allocation :class
+    :initarg :window-left-margin
     :reader frame-window-left-margin)
    (current-window
     :initarg :current-window
@@ -94,7 +93,7 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
     (prompt-active-p prompt)))
 
 (defun make-frame (&optional (old-frame (current-frame)))
-  (let ((frame (make-instance 'frame)))
+  (let ((frame (make-instance 'frame :window-left-margin (window-left-margin (implementation)))))
     (push frame *frames*)
     (when old-frame
       (dolist (window (frame-header-windows old-frame))

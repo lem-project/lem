@@ -518,11 +518,13 @@ const viewStyleTable = {
   popup: {
     "zIndex": 5,
     "border-radius": "10px",
-    "border":"2px solid #FFF",
+    "border": "2px solid #FFF",
     "padding": "10px",
     "background": "#333" // option.background
   },
-  tile: { },
+  tile: {
+    "border-left": "1px solid #ccc",
+  },
 };
 
 class View {

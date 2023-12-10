@@ -5,10 +5,14 @@
            :with-error-handler))
 (in-package :lem-jsonrpc/utils)
 
+(defvar *log-filename* (merge-pathnames "logs/jsonrpc.log" (lem:lem-home)))
+
 (defun pdebug (fmt &rest args)
-  (with-open-file (out "~/lem-jsonrpc.log" :direction :output :if-exists :append :if-does-not-exist :create)
-    (apply #'format out fmt args)
-    (terpri out)))
+  (when *log-filename*
+    (ensure-directories-exist *log-filename*)
+    (with-open-file (out *log-filename* :direction :output :if-exists :append :if-does-not-exist :create)
+      (apply #'format out fmt args)
+      (terpri out))))
 
 (defun hash (&rest args)
   (alexandria:plist-hash-table args :test #'equal))

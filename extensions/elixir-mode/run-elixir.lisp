@@ -9,7 +9,7 @@
 
 (defvar *process* nil)
 
-(define-major-mode run-elixir-mode lem-elixir-mode:elixir-mode
+(define-major-mode run-elixir-mode ()
     (:name "elixir"
      :keymap *run-elixir-mode-keymap*
      :syntax-table *elixir-syntax-table*)
@@ -86,7 +86,13 @@
 (define-command run-elixir () ()
   (run-elixir-internal))
 
+(define-command run-elixir-project () ()
+  (alexandria:if-let ((root (lem-core/commands/project:find-root (buffer-directory)))
+                      (*elixir-run-command* "iex -S mix"))
+    (uiop:with-current-directory (root)
+      (run-elixir-internal))))
+
 (add-hook *exit-editor-hook*
           (lambda ()
             (when *process*
-              (ipm/impl:delete-process *process*))))
+              (ignore-errors  (ipm/impl:delete-process *process*)))))

@@ -5,7 +5,8 @@
                "trivial-utf-8"
                "jsonrpc/transport/stdio")
   :serial t
-  :components ((:file "utils")
+  :components ((:file "jsonrpc-stdio-patch")
+               (:file "utils")
                (:file "view")
                (:file "main")))
 

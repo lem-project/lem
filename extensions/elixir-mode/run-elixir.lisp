@@ -40,7 +40,7 @@
   (get-buffer "*elixir*"))
 
 (defun get-repl-buffer ()
-  (let ((buffer (make-buffer "*elixir*")))
+  (let ((buffer (or (repl-buffer-exists-p) (make-buffer "*elixir*"))))
     (unless (eq (buffer-major-mode buffer) 'run-elixir-mode)
       (change-buffer-mode buffer 'run-elixir-mode))
     buffer))
@@ -76,8 +76,12 @@
 (define-command elixir-eval-region (start end) ("r")
   (unless (ipm/impl:process-alive-p *process* )
     (editor-error "elixir process doesn't exist."))
-  (ipm/impl:process-send-line (points-to-string start end)
-                              *process* ))
+  (let* ((buffer (get-repl-buffer))
+         (p (buffer-point buffer)))
+    (buffer-end p)
+    (insert-string p (format nil "~%"))
+    (ipm/impl:process-send-line (points-to-string start end) *process*)
+    (lem/listener-mode:refresh-prompt buffer nil)))
 
 (define-command run-elixir () ()
   (run-elixir-internal))

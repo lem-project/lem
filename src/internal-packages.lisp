@@ -589,7 +589,6 @@
    :redraw-view-after
    :will-update-display
    :update-display
-   :set-first-view
    :display-popup-menu
    :popup-menu-update
    :popup-menu-quit

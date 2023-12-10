@@ -66,9 +66,6 @@
   (:method (implementation)))
 (defgeneric lem-if:update-display (implementation))
 
-(defgeneric lem-if:set-first-view (implementation view)
-  (:method (implementation view)))
-
 (defgeneric lem-if:display-popup-menu (implementation items
                                        &key action-callback
                                             print-spec

@@ -215,9 +215,6 @@
               (hash "viewInfo" view "x" x "y" y)))
     (notify jsonrpc "touch" nil)))
 
-(defmethod lem-if:set-first-view ((jsonrpc jsonrpc) view)
-  (log:info jsonrpc view))
-
 #+(or)
 (defmethod lem-if:display-popup-menu ((jsonrpc jsonrpc) items
                                        &key action-callback

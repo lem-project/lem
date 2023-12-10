@@ -118,8 +118,7 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
     frame))
 
 (defun setup-frame (frame buffer)
-  (setup-frame-windows frame buffer)
-  (lem-if:set-first-view (implementation) (window-view (frame-current-window frame))))
+  (setup-frame-windows frame buffer))
 
 (defun teardown-frame (frame)
   (alexandria:deletef *frames* frame)

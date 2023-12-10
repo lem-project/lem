@@ -2,11 +2,12 @@
   (:use :cl
         :lem-jsonrpc/utils
         :lem-jsonrpc/view)
-  (:local-nicknames (:display :lem-core/display)))
+  (:local-nicknames (:display :lem-core/display))
+  (:export :program))
 (in-package :lem-jsonrpc)
 
-(defparameter *default-port* 50879)
-
+(defvar *mode*)
+(defvar *port*)
 (defvar *editor-thread*)
 
 (pushnew :lem-jsonrpc *features*)
@@ -79,12 +80,14 @@
                     (notify jsonrpc "exit" nil)
                     (uiop:quit 0)))
 
-    #+(or)
-    (jsonrpc:server-listen (jsonrpc-server jsonrpc)
-                           :mode :tcp
-                           :port *default-port*)
-    (jsonrpc:server-listen (jsonrpc-server jsonrpc)
-                           :mode :stdio)))
+    (ecase *mode*
+      (:tcp
+       (jsonrpc:server-listen (jsonrpc-server jsonrpc)
+                              :mode :tcp
+                              :port *port*))
+      (:stdio
+       (jsonrpc:server-listen (jsonrpc-server jsonrpc)
+                              :mode :stdio)))))
 
 (defmethod lem-if:get-background-color ((jsonrpc jsonrpc))
   (log:info jsonrpc)
@@ -495,3 +498,30 @@
               (with-output-to-string (stream)
                 (let ((stream (yason:make-json-output-stream stream)))
                   (yason:encode args stream)))))))
+
+;;;
+(defparameter +command-line-spec+
+  ;; TODO: more helpful documentation
+  '((("mode" #\m) :type string :optional t :documentation "\"tcp\" or \"stdio\"")
+    (("port" #\p) :type integer :optional nil :documentation "port of \"tcp\"")))
+
+(defun program (&optional (args (uiop:command-line-arguments)))
+  (command-line-arguments:handle-command-line
+   +command-line-spec+
+   (lambda (&key (mode "stdio") port)
+     (cond ((string= mode "tcp")
+            (unless port
+              (command-line-arguments:show-option-help +command-line-spec+)
+              (uiop:quit 1))
+            (let ((*mode* :tcp)
+                  (*port* port))
+              (lem:lem)))
+           ((string= mode "stdio")
+            (let ((*mode* :stdio))
+              (lem:lem)))
+           (t
+            (command-line-arguments:show-option-help +command-line-spec+)
+            (uiop:quit 1))))
+   :name "lem-rpc"
+   :positional-arity 0
+   :command-line args))

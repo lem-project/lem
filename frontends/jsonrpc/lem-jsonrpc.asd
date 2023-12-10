@@ -3,7 +3,8 @@
                "lem/extensions"
                "jsonrpc"
                "trivial-utf-8"
-               "jsonrpc/transport/stdio")
+               "jsonrpc/transport/stdio"
+               "command-line-arguments")
   :serial t
   :components ((:file "jsonrpc-stdio-patch")
                (:file "utils")
@@ -13,5 +14,5 @@
 (defsystem "lem-jsonrpc/executable"
   :build-operation program-op
   :build-pathname "lem-rpc"
-  :entry-point "lem:main"
+  :entry-point "lem-jsonrpc:program"
   :depends-on ("lem-jsonrpc" "lem-electron-backend"))

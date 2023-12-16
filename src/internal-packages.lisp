@@ -28,8 +28,10 @@
         :lem/common/killring
         :lem/common/timer
         :lem/common/command
+        :lem/common/color
         :lem-core/display)
   (:use-reexport :lem-base)
+  (:use-reexport :lem/common/color)
   ;; reexport common/killring
   (:export
    :with-killring-context)
@@ -95,16 +97,6 @@
    :with-pop-up-typeout-window
    :define-buffer-accessor
    :define-overlay-accessors)
-  ;; color.lisp
-  (:export
-   :make-color
-   :color-red
-   :color-green
-   :color-blue
-   :parse-color
-   :rgb-to-hsv
-   :hsv-to-rgb
-   :color-to-hex-string)
   ;; attribute.lisp
   (:export
    :make-attribute

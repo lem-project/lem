@@ -262,16 +262,6 @@
    :compute-window-list
    :one-window-p
    :deleted-window-p
-   :window-recenter
-   :window-scroll
-   :window-cursor-x
-   :window-cursor-y
-   :backward-line-wrap
-   :forward-line-wrap
-   :move-to-next-virtual-line
-   :move-to-previous-virtual-line
-   :point-virtual-line-column
-   :move-to-virtual-line-column
    :window-see
    :split-window-vertically
    :split-window-horizontally
@@ -294,10 +284,6 @@
    :floating-window-border-shape
    :floating-window-focusable-p
    :floating-window-p
-   :side-window
-   :make-leftside-window
-   :delete-leftside-window
-   :header-window
    :update-on-display-resized
    :covered-with-floating-window-p
    :redraw-display
@@ -314,6 +300,26 @@
    :grow-window-width
    :shrink-window-width
    :window-offset-view)
+  ;; virtual-line
+  (:export
+   :window-recenter
+   :window-cursor-x
+   :window-cursor-y
+   :backward-line-wrap
+   :forward-line-wrap
+   :move-to-next-virtual-line
+   :move-to-previous-virtual-line
+   :point-virtual-line-column
+   :move-to-virtual-line-column
+   :window-scroll)
+  ;; header-window.lisp
+  (:export
+   :header-window)
+  ;; side-window.lisp
+  (:export
+   :side-window
+   :make-leftside-window
+   :delete-leftside-window)
   ;; popup.lisp
   (:export
    :*default-popup-message-timeout*

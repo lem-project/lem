@@ -62,6 +62,7 @@
                 :serial t
                 :components ((:file "window-tree")
                              (:file "window")
+                             (:file "virtual-line")
                              (:file "floating-window")
                              (:file "header-window")
                              (:file "side-window")))

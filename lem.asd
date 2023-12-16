@@ -34,7 +34,7 @@
 	       #+sbcl
 	       sb-concurrency
 	       "lem-mailbox"
-               #+unix
+               #+ip-management
 	       "ip-management")
   :pathname "src"
   :serial t
@@ -153,6 +153,7 @@
                              (:file "deepl")
                              (:file "themes")
                              (:file "detective")
+                             #+ip-management
 			     (:file "run-process")))))
 
 (defsystem "lem/extensions"

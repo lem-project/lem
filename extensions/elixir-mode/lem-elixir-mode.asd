@@ -1,9 +1,9 @@
 (defsystem "lem-elixir-mode"
   :depends-on ("lem"
-               #+unix
+               #+ip-management
                "ip-management")
   :serial t
   :components ((:file "elixir-mode")
 	       (:file "lsp-config")
-               #+unix
+               #+ip-management
                (:file "run-elixir")))

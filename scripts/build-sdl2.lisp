@@ -1,3 +1,5 @@
+(load "scripts/features.lisp")
+
 (ql:quickload :lem-sdl2)
 
 (lem:init-at-build-time)

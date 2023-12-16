@@ -1,3 +1,5 @@
+(load "scripts/features.lisp")
+
 (ql:quickload :lem-ncurses)
 
 (lem:init-at-build-time)

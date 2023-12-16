@@ -58,8 +58,10 @@
                (:file "frame")
                (:file "echo")
                (:file "prompt")
-               (:file "window-tree")
-               (:file "window")
+               (:module "window"
+                :serial t
+                :components ((:file "window-tree")
+                             (:file "window")))
                (:file "popup")
                (:file "modeline")
                (:file "command")

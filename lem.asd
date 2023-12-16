@@ -61,7 +61,10 @@
                (:module "window"
                 :serial t
                 :components ((:file "window-tree")
-                             (:file "window")))
+                             (:file "window")
+                             (:file "floating-window")
+                             (:file "header-window")
+                             (:file "side-window")))
                (:file "popup")
                (:file "modeline")
                (:file "command")

@@ -606,6 +606,7 @@
    :clipboard-copy
    :increase-font-size
    :decrease-font-size
+   :set-font-size
    :resize-display-before
    :get-font-list
    :get-mouse-position

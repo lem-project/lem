@@ -393,7 +393,7 @@
       (let ((font-config (display:display-font-config display)))
         (display:change-font 
          display 
-         (font:change-size font-config size))))))
+         (change-size font-config size))))))
 
 (defmethod lem-if:resize-display-before ((implementation sdl2))
   (with-debug ("resize-display-before")

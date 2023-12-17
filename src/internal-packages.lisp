@@ -391,6 +391,7 @@
    :make-keymap
    :*global-keymap*
    :define-key
+   :define-keys
    :keyseq-to-string
    :find-keybind
    :insertion-key-p

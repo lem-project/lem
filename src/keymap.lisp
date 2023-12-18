@@ -46,6 +46,14 @@
        (define-key-internal keymap keys command-name))))
   (values))
 
+(defmacro define-keys (keymap &body bindings)
+  `(progn ,@(mapcar 
+             (lambda (binding)
+               `(define-key ,keymap
+                  ,(first binding) 
+                  ,(second binding)))
+             bindings)))
+
 (defun define-key-internal (keymap keys symbol)
   (loop :with table := (keymap-table keymap)
         :for rest :on (uiop:ensure-list keys)

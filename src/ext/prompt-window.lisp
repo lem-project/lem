@@ -384,18 +384,13 @@
   (let ((split (str:split marker path)))
     (if (= 1 (length split))
         path 
-        (concatenate 'string 
-                     (or replace marker)
-                     (car (last split))))))
+        (concatenate 'string replace (car (last split))))))
 
 (defun normalize-path-input (path)
-  (let ((result path))
-    (loop :for pair :in *special-paths*
-          :do (setf result (normalize-path-marker 
-                            result 
-                            (car pair) 
-                            (cdr pair))))
-    result))
+  (reduce 
+   (lambda (ag pair) (normalize-path-marker ag (car pair) (cdr pair)) ) 
+   *special-paths* 
+   :initial-value path))
 
 
 (defun prompt-file-completion (string directory &key directory-only)

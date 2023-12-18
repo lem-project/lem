@@ -40,13 +40,11 @@
   (setf (not-switchable-buffer-p (current-buffer)) t))
 
 (define-key *peek-source-keymap* "Return" 'peek-source-select)
-(define-key *peek-source-keymap* "q" 'peek-source-quit)
 (define-key *peek-source-keymap* 'next-line 'peek-source-next)
 (define-key *peek-source-keymap* 'previous-line 'peek-source-previous)
 (define-key *peek-source-keymap* "Escape" 'peek-source-quit)  ;; also C-x 0 by default.
 (define-key *peek-source-keymap* "C-c C-k" 'peek-source-quit)
 (define-key *peek-source-keymap* "M-q" 'peek-source-quit)
-(define-key *peek-source-keymap* "C-x ?" 'grep-help)  ;; originally bound to describe-key.
 
 (defclass peek-window (floating-window) ())
 (defclass source-window (floating-window) ())
@@ -224,24 +222,6 @@
                       (delete-window *peek-window*)
                       (delete-window *source-window*)))
    0))
-
-(define-command grep-help () ()
-  "Show grep help."
-  (with-pop-up-typeout-window (s (make-buffer "*Help*") :erase t)
-    (format s "grep command (M-x grep)~&")
-    (format s "~%")
-    (format s "The left window shows grep results, the right window shows a result in its source file.~&")
-    (format s "~%")
-    (format s "Available keybindings:~&")
-    (format s "- up/down arrows or C-p/C-n: go to the previous/next line~&")
-    (format s "- C-x o or M-o: go to the other window~&")
-    (format s "- Enter: visit the file of the result at point~&")
-    (format s "- Escape or C-x 0: quit~&")
-    (format s "- C-x ?: bring this help~&")
-    (format s "~%")
-    (format s "The results buffer on the left is editable. Any change is written to file and is reflected immediately on the right.~&")
-    (format s "You can use editing tools such as M-x query-replace in the results buffer.~&")
-    (format s "~%")))
 
 ;;;
 (defvar *highlight-overlays* '())

@@ -14,6 +14,11 @@
 
 (defvar *history-table* (make-hash-table))
 
+(defvar *special-paths*
+  #+unix '(("//" . "/")
+           ("~/" . "~/"))
+  #-unix nil)
+
 (define-condition execute-condition ()
   ((input
     :initarg :input
@@ -375,8 +380,26 @@
 (defmethod prompt-active-p ((prompt floating-prompt))
   (eq prompt (current-window)))
 
+(defun normalize-path-marker (path marker replace)
+  (let ((split (str:split marker path)))
+    (if (= 1 (length split))
+        path 
+        (concatenate 'string 
+                     (or replace marker)
+                     (car (last split))))))
+
+(defun normalize-path-input (path)
+  (let ((result path))
+    (loop :for pair :in *special-paths*
+          :do (setf result (normalize-path-marker 
+                            result 
+                            (car pair) 
+                            (cdr pair))))
+    result))
+
 
 (defun prompt-file-completion (string directory &key directory-only)
+  (replace-prompt-input (normalize-path-input string))
   (flet ((move-to-file-start (point)
            ;; Move the point to the start of the file.
            ;; /foo/bar/baz.txt

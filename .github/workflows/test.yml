@@ -18,8 +18,6 @@ jobs:
         LISP: ${{ matrix.lisp }}
       run: |
         curl -L https://raw.githubusercontent.com/roswell/roswell/v22.12.14.113/scripts/install-for-ci.sh | sh
-    - name: Install dependencies
-      run: sudo apt install libfixposix-dev
 
     - name: Run test
       run: |

@@ -387,10 +387,9 @@
         (concatenate 'string replace (car (last split))))))
 
 (defun normalize-path-input (path)
-  (reduce 
-   (lambda (ag pair) (normalize-path-marker ag (car pair) (cdr pair)) ) 
-   *special-paths* 
-   :initial-value path))
+  (reduce (lambda (ag pair) (normalize-path-marker ag (car pair) (cdr pair)))
+          *special-paths* 
+          :initial-value path))
 
 
 (defun prompt-file-completion (string directory &key directory-only)

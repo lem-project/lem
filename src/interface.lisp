@@ -91,6 +91,8 @@
   (:method (implementation)))
 (defgeneric lem-if:decrease-font-size (implementation)
   (:method (implementation)))
+(defgeneric lem-if:set-font-size (implementation size)
+  (:method (implementation size)))
 
 (defgeneric lem-if:resize-display-before (implementation)
   (:method (implementation)))

@@ -274,7 +274,7 @@
                                                 (buffer-list))
                        :test #'equal)
                  (not (prompt-for-y-or-n-p (format nil
-                                                   "~a is opend, overwrite it?"
+                                                   "~a is opened, overwrite it?"
                                                    expand-file-name))))
       (directory-for-file-or-lose filename)
       (unless (string= old new)

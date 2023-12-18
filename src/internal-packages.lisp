@@ -391,6 +391,7 @@
    :make-keymap
    :*global-keymap*
    :define-key
+   :define-keys
    :keyseq-to-string
    :find-keybind
    :insertion-key-p
@@ -606,6 +607,7 @@
    :clipboard-copy
    :increase-font-size
    :decrease-font-size
+   :set-font-size
    :resize-display-before
    :get-font-list
    :get-mouse-position

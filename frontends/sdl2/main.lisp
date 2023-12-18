@@ -387,6 +387,14 @@
                                (change-size font-config
                                             (- (font-config-size font-config) ratio))))))))
 
+(defmethod lem-if:set-font-size ((implementation sdl2) size)
+  (display:with-display (display)
+    (display:with-renderer (display)
+      (let ((font-config (display:display-font-config display)))
+        (display:change-font 
+         display 
+         (change-size font-config size))))))
+
 (defmethod lem-if:resize-display-before ((implementation sdl2))
   (with-debug ("resize-display-before")
     (display:with-display (display)

@@ -309,7 +309,7 @@ M	src/ext/porcelain.lisp
   This is used to stage hunks of files."
   (when *verbose*
     (log:info diff)
-    (with-open-file (f (merge-pathnames "lem-hunk-latest.patch" (lem-home))
+    (with-open-file (f (merge-pathnames "lem-hunk-latest.patch" (%maybe-lem-home))
                        :direction :output
                        :if-exists :supersede
                        :if-does-not-exist :create)
@@ -388,7 +388,7 @@ M	src/ext/porcelain.lisp
 (defun %maybe-lem-home ()
   "Return Lem's home directory by calling lem:lem-home only if the :lem package exists,
   otherwise return ~/.lem/.
-  We don't want a hard-coded dependency on Lem, to ease testing."
+  We don't want a hard-coded dependency on Lem in the porcelain package, to ease testing."
   (if (find-package :lem)
       (uiop:symbol-call :lem :lem-home)
       (merge-pathnames ".lem/" (user-homedir-pathname))))

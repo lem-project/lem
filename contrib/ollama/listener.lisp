@@ -2,7 +2,7 @@
   (:use :cl :lem :lem-ollama))
 (in-package :lem-ollama/listener)
 
-(define-major-mode ollama-listener-mode ollama-mode
+(define-major-mode ollama-listener-mode lem-ollama::ollama-mode
     (:name "ollama-listener"
      :keymap *ollama-listener-mode-keymap*)
   (reset-listener-variables (current-buffer))
@@ -19,16 +19,18 @@
 (defun execute-input (point string)
   (bt2:make-thread
    (lambda ()
-     (message string)
      (ollama-request string)
      (with-open-stream (out (make-buffer-output-stream point))
-       (setf *close-hook* (lambda () (format out "~%~%ollama> ")))
-       (handle-stream out)
-       ))))
+       (setf *close-hook* 
+             (lambda ()
+               (insert-string (buffer-end-point (get-repl-buffer))
+                              (format nil "~%~%ollama> "))))
+       (handle-stream out)))))
 
 (defun get-repl-buffer ()
   (let ((buffer (make-buffer "*ollama*")))
     (unless (eq (buffer-major-mode buffer) 'ollama-listener-mode)
+      (message "getting new buffer")
       (change-buffer-mode buffer 'ollama-listener-mode)
       (insert-string (buffer-end-point buffer) "ollama> "))
     buffer))

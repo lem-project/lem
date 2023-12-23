@@ -4,7 +4,6 @@
            #:*model* 
            #:*close-hook* 
            #:*ollama-mode-keymap*
-           #:ollama-mode
            #:ollama-prompt 
            #:ollama-request 
            #:handle-stream))
@@ -74,7 +73,7 @@
     (bt2:make-thread 
      (lambda () 
        (ignore-errors
-         (setf *close-hook* nil)
+         (setf *close-hook* (lambda () (message "done")))
          (ollama-request prompt)
          (with-open-stream (out (make-buffer-output-stream (buffer-point buf)))
            (handle-stream out)))))))

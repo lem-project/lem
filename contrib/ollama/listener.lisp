@@ -17,6 +17,7 @@
         #'execute-input))
 
 (defun print-prompt ()
+  (message "ready")
   (insert-string (buffer-end-point (get-repl-buffer))
                  (format nil "~%~%ollama> "))
   (redraw-display))
@@ -40,7 +41,6 @@
 (defun get-repl-buffer ()
   (let ((buffer (make-buffer "*ollama*")))
     (unless (eq (buffer-major-mode buffer) 'ollama-listener-mode)
-      (message "getting new buffer")
       (change-buffer-mode buffer 'ollama-listener-mode)
       (insert-string (buffer-end-point buffer) "ollama> "))
     buffer))

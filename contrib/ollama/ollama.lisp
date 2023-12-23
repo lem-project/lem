@@ -24,11 +24,10 @@
 
 (define-command ollama-close () ()
   "close any ollama response currently being processed"
-  (message "closing")
   (when *resp*
     (close *resp*)
     (setf *resp* nil))
-  (bt2:destroy-thread *handler*))
+  (ignore-errors (bt2:destroy-thread *handler*)))
 
 (defun chunga-read-line (stream)
   "chunga:read-line* doesnt work, so use this."
@@ -52,7 +51,6 @@
                  :do (format output (assoc-value data :response))
                  :do (redraw-display)))))
   (ignore-errors (bt2:join-thread *handler*))
-  (message "done handling")
   (when close-hook (funcall close-hook)))
 
 (defun ollama-request (prompt)
@@ -80,4 +78,4 @@
        (ignore-errors
          (ollama-request prompt)
          (with-open-stream (out (make-buffer-output-stream (buffer-point buf)))
-           (handle-stream out :close-hook (lambda () (message "done")))))))))
+           (handle-stream out)))))))

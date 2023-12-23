@@ -19,18 +19,19 @@
 (defun execute-input (point string)
   (bt2:make-thread
    (lambda ()
+     (message string)
+     (ollama-request string)
      (with-open-stream (out (make-buffer-output-stream point))
-       (ollama-request string)
-       (handle-stream out)))))
+       (setf *close-hook* (lambda () (format out "~%~%ollama> ")))
+       (handle-stream out)
+       ))))
 
 (defun get-repl-buffer ()
   (let ((buffer (make-buffer "*ollama*")))
     (unless (eq (buffer-major-mode buffer) 'ollama-listener-mode)
-      (change-buffer-mode buffer 'ollama-listener-mode))
+      (change-buffer-mode buffer 'ollama-listener-mode)
+      (insert-string (buffer-end-point buffer) "ollama> "))
     buffer))
 
-(defun run-ollama-internal ()
+(define-command run-ollama () ()
   (pop-to-buffer (get-repl-buffer)))
-
-(define-command run-ollama () () 
-  (run-ollama-internal))

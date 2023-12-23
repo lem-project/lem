@@ -15,7 +15,7 @@
 (define-key *ollama-mode-keymap* "C-c C-c" 'ollama-close)
 
 ;; Customize these:
-(defparameter *host* "192.168.68.110:11434")
+(defparameter *host* "localhost:11434")
 (defparameter *model* "mistral")
 
 ;; global response stream

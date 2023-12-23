@@ -2,7 +2,7 @@
 
 A client for interacting with LLMs
 
-## setup
+## Setup
 
 in ``~/.config/lem/init.lisp``
 
@@ -24,7 +24,7 @@ Start an listener-mode buffer talking to the LLM.
 
 ## ollama-prompt
 
-Make a simple prompt and stream it into a temp buffer.
+Send a prompt and stream the response into a temp buffer.
 
 ## ollama-close
 

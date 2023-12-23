@@ -2,13 +2,11 @@
   (:use :cl :lem :lem-ollama))
 (in-package :lem-ollama/listener)
 
-(define-major-mode ollama-mode nil 
-    (:name "ollama"
-     :keymap *ollama-mode-keymap*)
+(define-major-mode ollama-listener-mode ollama-mode
+    (:name "ollama-listener"
+     :keymap *ollama-listener-mode-keymap*)
   (reset-listener-variables (current-buffer))
   (lem/listener-mode:start-listener-mode))
-
-(define-key *ollama-mode-keymap* "C-c C-c" 'ollama-cancel)
 
 (defun reset-listener-variables (buffer)
   (setf (variable-value 'lem/listener-mode:listener-set-prompt-function :buffer buffer)
@@ -27,8 +25,8 @@
 
 (defun get-repl-buffer ()
   (let ((buffer (make-buffer "*ollama*")))
-    (unless (eq (buffer-major-mode buffer) 'ollama-mode)
-      (change-buffer-mode buffer 'ollama-mode))
+    (unless (eq (buffer-major-mode buffer) 'ollama-listener-mode)
+      (change-buffer-mode buffer 'ollama-listener-mode))
     buffer))
 
 (defun run-ollama-internal ()

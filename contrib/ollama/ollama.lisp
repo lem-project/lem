@@ -2,7 +2,8 @@
   (:use :cl :lem :alexandria)
   (:export #:*host* 
            #:*model* 
-           #:ollama-cancel
+           #:*ollama-mode-keymap*
+           #:ollama-mode
            #:ollama-prompt 
            #:ollama-request 
            #:handle-stream))
@@ -12,11 +13,15 @@
 (defparameter *model* "mistral")
 (defparameter *resp* nil)
 
+(define-major-mode ollama-mode nil 
+    (:name "ollama"
+     :keymap *ollama-mode-keymap*))
+(define-key *ollama-mode-keymap* "C-c C-c" 'ollama-cancel)
+
 (define-command ollama-cancel () ()
-  (if (null *resp*)
-      (message "ollama stream does not exist")
-      (progn (close *resp*)
-             (setf *resp* nil))))
+  (unless (null *resp*)
+    (close *resp*)
+    (setf *resp* nil)))
 
 (defun chunga-read-line (stream)
   "chunga:read-line* doesnt work, so use this."
@@ -48,9 +53,11 @@
 
 (define-command ollama-prompt (prompt) ("sPrompt: ")
   (let ((buf (make-buffer "*ollama*" :temporary t)))
+    (unless (eq (buffer-major-mode buf) 'ollama-mode)
+      (change-buffer-mode buf 'ollama-mode))
     (pop-to-buffer buf)
     (bt2:make-thread 
      (lambda () 
+       (ollama-request prompt)
        (with-open-stream (out (make-buffer-output-stream (buffer-point buf)))
-         (ollama-request prompt)
          (handle-stream out))))))

@@ -1,5 +1,5 @@
 (defpackage :lem-ollama/listener
-  (:use :cl :lem :lem-ollama))
+  (:use :cl :lem :lem-ollama :alexandria-2))
 (in-package :lem-ollama/listener)
 
 (define-major-mode ollama-listener-mode lem-ollama::ollama-mode
@@ -16,16 +16,26 @@
         (variable-value 'lem/listener-mode:listener-execute-function :buffer buffer)
         #'execute-input))
 
+(defun print-prompt ()
+  (insert-string (buffer-end-point (get-repl-buffer))
+                 (format nil "~%~%ollama> "))
+  (redraw-display))
+
 (defun execute-input (point string)
   (bt2:make-thread
    (lambda ()
-     (ollama-request string)
      (with-open-stream (out (make-buffer-output-stream point))
-       (setf *close-hook* 
-             (lambda ()
-               (insert-string (buffer-end-point (get-repl-buffer))
-                              (format nil "~%~%ollama> "))))
-       (handle-stream out)))))
+       (handler-case
+           (progn
+             (line-up-last string
+                           (ppcre:split "ollama>")
+                           (last)
+                           (car)
+                           (str:trim)
+                           (ollama-request))
+             (handle-stream out :close-hook #'print-prompt))
+         (error (c)
+           (format out "Error: ~a~%" c)))))))
 
 (defun get-repl-buffer ()
   (let ((buffer (make-buffer "*ollama*")))

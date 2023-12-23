@@ -2,7 +2,6 @@
   (:use :cl :lem :alexandria)
   (:export #:*host* 
            #:*model* 
-           #:*close-hook* 
            #:*ollama-mode-keymap*
            #:ollama-prompt 
            #:ollama-request 
@@ -18,37 +17,43 @@
 ;; Customize these:
 (defparameter *host* "192.168.68.110:11434")
 (defparameter *model* "mistral")
-(defvar *close-hook* nil)
 
 ;; global response stream
 (defvar *resp* nil)
+(defvar *handler* nil)
 
 (define-command ollama-close () ()
   "close any ollama response currently being processed"
+  (message "closing")
   (when *resp*
     (close *resp*)
     (setf *resp* nil))
-  (when *close-hook*
-    (ignore-errors (funcall *close-hook*))))
+  (bt2:destroy-thread *handler*))
 
 (defun chunga-read-line (stream)
   "chunga:read-line* doesnt work, so use this."
-  (ignore-errors
-    (loop :with line := ""
-          :for c := (chunga:read-char* stream)
-          :while (not (eql c #\newline))
-          :do (setf line (concatenate 'string line (string c)))
-          :finally (return line))))
+  (when stream
+    (ignore-errors
+      (loop :with line := ""
+            :for c := (chunga:read-char* stream)
+            :while (not (eql c #\newline))
+            :do (setf line (concatenate 'string line (string c)))
+            :finally (return line)))))
 
-(defun handle-stream (output)
+(defun handle-stream (output &key close-hook)
   "direct the stream created by #'ollama-request to output"
-  (loop :for line := (chunga-read-line *resp*)
-        :while line
-        :for data := (cl-json:decode-json-from-string line)
-        :while (not (assoc-value data :done))
-        :do (format output (assoc-value data :response))
-        :do (redraw-display))
-  (ollama-close))
+  (setf *handler*
+        (bt2:make-thread 
+         (lambda ()
+           (loop :for line := (chunga-read-line *resp*)
+                 :while line
+                 :for data := (cl-json:decode-json-from-string line)
+                 :while (not (assoc-value data :done))
+                 :do (format output (assoc-value data :response))
+                 :do (redraw-display)))))
+  (ignore-errors (bt2:join-thread *handler*))
+  (message "done handling")
+  (when close-hook (funcall close-hook)))
 
 (defun ollama-request (prompt)
   "prompt the ollama server and set the response stream variable"
@@ -73,7 +78,6 @@
     (bt2:make-thread 
      (lambda () 
        (ignore-errors
-         (setf *close-hook* (lambda () (message "done")))
          (ollama-request prompt)
          (with-open-stream (out (make-buffer-output-stream (buffer-point buf)))
-           (handle-stream out)))))))
+           (handle-stream out :close-hook (lambda () (message "done")))))))))

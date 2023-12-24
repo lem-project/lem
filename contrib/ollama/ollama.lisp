@@ -4,8 +4,7 @@
            #:*model* 
            #:*ollama-mode-keymap*
            #:ollama-prompt 
-           #:ollama-request 
-           #:handle-stream))
+           #:ollama-request-and-handle))
 (in-package :lem-ollama)
 
 (define-major-mode ollama-mode nil 
@@ -39,33 +38,36 @@
             :do (setf line (concatenate 'string line (string c)))
             :finally (return line)))))
 
-(defun handle-stream (output &key close-hook)
+(defun handle-stream (output)
   "direct the stream created by #'ollama-request to output"
-  (setf *handler*
-        (bt2:make-thread 
-         (lambda ()
-           (loop :for line := (chunga-read-line *resp*)
-                 :while line
-                 :for data := (cl-json:decode-json-from-string line)
-                 :while (not (assoc-value data :done))
-                 :do (format output (assoc-value data :response))
-                 :do (redraw-display)))))
-  (ignore-errors (bt2:join-thread *handler*))
-  (when close-hook (funcall close-hook)))
+  (loop :for line := (chunga-read-line *resp*)
+        :while line
+        :for data := (cl-json:decode-json-from-string line)
+        :while (not (assoc-value data :done))
+        :do (format output (assoc-value data :response))
+        :do (redraw-display)))
 
 (defun ollama-request (prompt)
   "prompt the ollama server and set the response stream variable"
-  (setf *resp*
-        (dex:post
-         (format nil "http://~a/api/generate" *host*)
-         :want-stream t
-         :force-binary t
-         :keep-alive nil
-         :read-timeout 120
-         :headers '(("content-type" . "application/json"))
-         :content (cl-json:encode-json-to-string
-                   `(("model" . ,*model*)
-                     ("prompt" . ,prompt))))))
+  (dex:post
+   (format nil "http://~a/api/generate" *host*)
+   :want-stream t
+   :force-binary t
+   :keep-alive nil
+   :read-timeout 120
+   :headers '(("content-type" . "application/json"))
+   :content (cl-json:encode-json-to-string
+             `(("model" . ,*model*)
+               ("prompt" . ,prompt)))))
+
+(defun ollama-request-and-handle (prompt output &key close-hook)
+  (setf *resp* (ollama-request prompt))
+  (setf *handler* 
+        (bt2:make-thread 
+         (lambda () 
+           (handle-stream output))))
+  (ignore-errors (bt2:join-thread *handler*))
+  (when close-hook (funcall close-hook)))
 
 (define-command ollama-prompt (prompt) ("sPrompt: ")
   "prompt ollama, and stream the response to a temp buffer"
@@ -76,6 +78,5 @@
     (bt2:make-thread 
      (lambda () 
        (ignore-errors
-         (ollama-request prompt)
          (with-open-stream (out (make-buffer-output-stream (buffer-point buf)))
-           (handle-stream out)))))))
+           (ollama-request-and-handle prompt out)))))))

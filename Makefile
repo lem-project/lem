@@ -8,6 +8,10 @@ sdl2:
 	qlot install
 	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2.lisp
 
+jsonrpc:
+	qlot install
+	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-jsonrpc.lisp
+
 test:
 	qlot install
 	.qlot/bin/rove lem-tests.asd

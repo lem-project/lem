@@ -508,6 +508,6 @@
            (t
             (command-line-arguments:show-option-help +command-line-spec+)
             (uiop:quit 1))))
-   :name "lem-rpc"
+   :name "lem-jsonrpc"
    :positional-arity 0
    :command-line args))

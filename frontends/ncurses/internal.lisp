@@ -50,9 +50,6 @@
   width
   height)
 
-(defun view-window (view)
-  (ncurses-view-window view))
-
 ;; for input
 ;;  (we don't use stdscr for input because it calls wrefresh implicitly
 ;;   and causes the display confliction by two threads)

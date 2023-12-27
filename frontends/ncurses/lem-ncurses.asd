@@ -11,6 +11,8 @@
                (:file "style")
                (:file "key")
                (:file "attribute")
+               (:file "view")
                (:file "internal")
+               (:file "drawing-object")
                (:file "drawing")
                (:file "ncurses")))

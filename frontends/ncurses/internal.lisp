@@ -2,7 +2,8 @@
   (:use :cl
         :lem
         :lem-ncurses/style
-        :lem-ncurses/key)
+        :lem-ncurses/key
+        :lem-ncurses/view)
   (:export
    ;; ncurses.lisp
    :*terminal-io-saved*
@@ -21,12 +22,6 @@
 (setf lem/popup-window::*extra-right-margin* 1)
 (setf lem/popup-window::*extra-width-margin* 0)
 
-(defclass ncurses (lem:implementation)
-  ()
-  (:default-initargs
-   :name :ncurses
-   :redraw-after-modifying-floating-window t))
-
 (define-condition exit (editor-condition)
   ((value
     :initarg :value
@@ -39,16 +34,6 @@
   height
   size
   (shape nil :type (member nil :drop-curtain)))
-
-(defstruct ncurses-view
-  window
-  border
-  scrwin
-  modeline-scrwin
-  x
-  y
-  width
-  height)
 
 ;; for input
 ;;  (we don't use stdscr for input because it calls wrefresh implicitly
@@ -236,9 +221,6 @@
 (defun update-background-color (color-name)
   (lem-ncurses/term:term-set-background color-name))
 
-(defmethod lem-if:update-background ((implementation ncurses) color-name)
-  (update-background-color color-name))
-
 (defun get-display-width ()
   (max 5 charms/ll:*cols*))
 
@@ -327,12 +309,6 @@
                      (+ y (ncurses-view-height view))
                      x)))
 
-(defun print-string (scrwin x y string attribute)
-  (let ((attr (lem-ncurses/attribute:attribute-to-bits attribute)))
-    (charms/ll:wattron scrwin attr)
-    (charms/ll:mvwaddstr scrwin y x string)
-    (charms/ll:wattroff scrwin attr)))
-
 (defun draw-border (border)
   (let ((win (border-win border))
         (h (1- (border-height border)))
@@ -387,5 +363,3 @@
              (charms/ll:wmove scrwin cursor-y cursor-x))))
     (charms/ll:wnoutrefresh scrwin)
     (charms/ll:doupdate)))
-
-(pushnew :lem-ncurses *features*)

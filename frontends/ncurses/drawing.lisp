@@ -3,9 +3,6 @@
         :lem-core/display))
 (in-package :lem-ncurses/drawing)
 
-(defun view-window (view)
-  (lem-ncurses/internal::ncurses-view-window view))
-
 (defgeneric object-width (drawing-object))
 
 (defmethod object-width ((drawing-object void-object))
@@ -38,11 +35,11 @@
   (let ((string (text-object-string object))
         (attribute (text-object-attribute object)))
     (when (and attribute (lem-core:cursor-attribute-p attribute))
-      (lem-core::set-last-print-cursor (view-window view) x y))
+      (lem-core::set-last-print-cursor (lem-ncurses/internal::view-window view) x y))
     (lem-ncurses/internal::print-string scrwin x y string attribute)))
 
 (defmethod draw-object ((object eol-cursor-object) x y view scrwin)
-  (lem-core::set-last-print-cursor (view-window view) x y)
+  (lem-core::set-last-print-cursor (lem-ncurses/internal::view-window view) x y)
   (lem-ncurses/internal::print-string
    scrwin
    x

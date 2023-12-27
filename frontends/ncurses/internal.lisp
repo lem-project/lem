@@ -50,6 +50,9 @@
   width
   height)
 
+(defun view-window (view)
+  (ncurses-view-window view))
+
 (defun underline-color (attribute)
   (cond ((eq t (attribute-underline attribute))
          nil)

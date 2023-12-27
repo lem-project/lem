@@ -4,7 +4,7 @@
 (in-package :lem-ncurses/drawing)
 
 (defun view-window (view)
-  (lem-ncurses::ncurses-view-window view))
+  (lem-ncurses/internal::ncurses-view-window view))
 
 (defgeneric object-width (drawing-object))
 
@@ -26,11 +26,8 @@
 (defmethod object-width ((drawing-object image-object))
   0)
 
-(defmethod lem-if:view-width ((implementation lem-ncurses::ncurses) view)
-  (lem-ncurses::ncurses-view-width view))
-
-(defmethod lem-if:view-height ((implementation lem-ncurses::ncurses) view)
-  (lem-ncurses::ncurses-view-height view))
+(defmethod object-height (drawing-object)
+  1)
 
 (defgeneric draw-object (object x y view scrwin))
 
@@ -42,11 +39,11 @@
         (attribute (text-object-attribute object)))
     (when (and attribute (lem-core:cursor-attribute-p attribute))
       (lem-core::set-last-print-cursor (view-window view) x y))
-    (lem-ncurses::print-string scrwin x y string attribute)))
+    (lem-ncurses/internal::print-string scrwin x y string attribute)))
 
 (defmethod draw-object ((object eol-cursor-object) x y view scrwin)
   (lem-core::set-last-print-cursor (view-window view) x y)
-  (lem-ncurses::print-string
+  (lem-ncurses/internal::print-string
    scrwin
    x
    y
@@ -57,7 +54,7 @@
 (defmethod draw-object ((object extend-to-eol-object) x y view scrwin)
   (let ((width (lem-if:view-width (lem-core:implementation) view)))
     (when (< x width)
-      (lem-ncurses::print-string
+      (lem-ncurses/internal::print-string
        scrwin
        x
        y
@@ -68,7 +65,7 @@
 (defmethod draw-object ((object line-end-object) x y view scrwin)
   (let ((string (text-object-string object))
         (attribute (text-object-attribute object)))
-    (lem-ncurses::print-string
+    (lem-ncurses/internal::print-string
      scrwin
      (+ x (line-end-object-offset object))
      y
@@ -88,41 +85,36 @@
   (charms/ll:wmove scrwin y x)
   (charms/ll:wclrtoeol scrwin))
 
-(defun render-line (view x y objects scrwin)
+(defun %render-line (view x y objects scrwin)
   (loop :for object :in objects
         :do (draw-object object x y view scrwin)
             (incf x (object-width object))))
 
-(defmethod lem-if:render-line ((implementation lem-ncurses::ncurses) view x y objects height)
-  (clear-line (lem-ncurses::ncurses-view-scrwin view) x y)
-  (render-line view x y objects (lem-ncurses::ncurses-view-scrwin view)))
+(defun render-line (view x y objects)
+  (clear-line (lem-ncurses/internal::ncurses-view-scrwin view) x y)
+  (%render-line view x y objects (lem-ncurses/internal::ncurses-view-scrwin view)))
 
-(defmethod lem-if:render-line-on-modeline ((implementation lem-ncurses::ncurses)
-                                           view
-                                           left-objects
-                                           right-objects
-                                           default-attribute
-                                           height)
-  (lem-ncurses::print-string (lem-ncurses::ncurses-view-modeline-scrwin view)
-                             0
-                             0
-                             (make-string (lem-ncurses::ncurses-view-width view)
-                                          :initial-element #\space)
-                             default-attribute)
-  (render-line view 0 0 left-objects (lem-ncurses::ncurses-view-modeline-scrwin view))
-  (render-line-from-behind view 0 right-objects (lem-ncurses::ncurses-view-modeline-scrwin view)))
+(defun render-line-on-modeline (view
+                                left-objects
+                                right-objects
+                                default-attribute)
+  (lem-ncurses/internal::print-string (lem-ncurses/internal::ncurses-view-modeline-scrwin view)
+                                      0
+                                      0
+                                      (make-string (lem-ncurses/internal::ncurses-view-width view)
+                                                   :initial-element #\space)
+                                      default-attribute)
+  (%render-line view 0 0 left-objects (lem-ncurses/internal::ncurses-view-modeline-scrwin view))
+  (render-line-from-behind view
+                           0
+                           right-objects
+                           (lem-ncurses/internal::ncurses-view-modeline-scrwin view)))
 
-(defmethod lem-if:object-width ((implementation lem-ncurses::ncurses) drawing-object)
-  (object-width drawing-object))
-
-(defmethod lem-if:object-height ((implementation lem-ncurses::ncurses) drawing-object)
-  1)
-
-(defmethod lem-if:clear-to-end-of-window ((implementation lem-ncurses::ncurses) view y)
-  (let ((win (lem-ncurses::ncurses-view-scrwin view)))
-    (when (< y (lem-if:view-height implementation view))
+(defun clear-to-end-of-window (view y)
+  (let ((win (lem-ncurses/internal::ncurses-view-scrwin view)))
+    (when (< y (lem-ncurses/internal::ncurses-view-height view))
       (charms/ll:wmove win y 0)
       (charms/ll:wclrtobot win))))
 
-(defmethod lem-if:get-char-width ((implementation lem-ncurses::ncurses))
+(defun get-char-width ()
   1)

@@ -1,5 +1,4 @@
 (defpackage :lem-ncurses/internal
-  (:nicknames :lem-ncurses)
   (:use :cl
         :lem
         :lem-ncurses/style
@@ -10,7 +9,7 @@
    :escape-delay
    ;; ncurses-pdcurseswin32.lisp
    :input-polling-interval))
-(in-package :lem-ncurses)
+(in-package :lem-ncurses/internal)
 
 ;; for mouse control
 (defparameter *terminal-io-saved* *terminal-io*)
@@ -241,7 +240,7 @@
             (send-abort-event editor-thread t))))
     (exit (c) (return-from input-loop c))))
 
-(defmethod lem-if:invoke ((implementation ncurses) function)
+(defun invoke (function)
   (let ((result nil)
         (input-thread (bt:current-thread)))
     (unwind-protect
@@ -262,13 +261,13 @@
                (exit-editor-value result))
       (format t "~&~A~%" (exit-editor-value result)))))
 
-(defmethod lem-if:get-background-color ((implementation ncurses))
+(defun get-background-color ()
   (lem-ncurses/term:background-mode))
 
-(defmethod lem-if:update-foreground ((implementation ncurses) color-name)
+(defun update-foreground-color (color-name)
   (lem-ncurses/term:term-set-foreground color-name))
 
-(defmethod lem-if:update-cursor-shape ((implementation ncurses) cursor-type)
+(defun update-cursor-shape (cursor-type)
   (uiop:run-program `("printf"
                       ,(format nil "~C[~D q"
                                #\Esc
@@ -280,13 +279,16 @@
                     :output :interactive
                     :ignore-error-status t))
 
-(defmethod lem-if:update-background ((implementation ncurses) color-name)
+(defun update-background-color (color-name)
   (lem-ncurses/term:term-set-background color-name))
 
-(defmethod lem-if:display-width ((implementation ncurses))
+(defmethod lem-if:update-background ((implementation ncurses) color-name)
+  (update-background-color color-name))
+
+(defun get-display-width ()
   (max 5 charms/ll:*cols*))
 
-(defmethod lem-if:display-height ((implementation ncurses))
+(defun get-display-height ()
   (max 3 charms/ll:*lines*))
 
 (defun compute-border-window-size (width height border-size)
@@ -299,8 +301,7 @@
         (y (- y border-size)))
     (list x y)))
 
-(defmethod lem-if:make-view
-    ((implementation ncurses) window x y width height use-modeline)
+(defun make-view (window x y width height use-modeline)
   (flet ((newwin (nlines ncols begin-y begin-x)
            (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
              (when use-modeline (charms/ll:keypad win 1))
@@ -331,17 +332,17 @@
      :width width
      :height height)))
 
-(defmethod lem-if:delete-view ((implementation ncurses) view)
+(defun delete-view (view)
   (charms/ll:delwin (ncurses-view-scrwin view))
   (when (ncurses-view-modeline-scrwin view)
     (charms/ll:delwin (ncurses-view-modeline-scrwin view))))
 
-(defmethod lem-if:clear ((implementation ncurses) view)
+(defun clear (view)
   (charms/ll:clearok (ncurses-view-scrwin view) 1)
   (when (ncurses-view-modeline-scrwin view)
     (charms/ll:clearok (ncurses-view-modeline-scrwin view) 1)))
 
-(defmethod lem-if:set-view-size ((implementation ncurses) view width height)
+(defun set-view-size (view width height)
   (setf (ncurses-view-width view) width)
   (setf (ncurses-view-height view) height)
   (charms/ll:wresize (ncurses-view-scrwin view) height width)
@@ -359,7 +360,7 @@
                        1
                        width)))
 
-(defmethod lem-if:set-view-pos ((implementation ncurses) view x y)
+(defun set-view-pos (view x y)
   (setf (ncurses-view-x view) x)
   (setf (ncurses-view-y view) y)
   (charms/ll:mvwin (ncurses-view-scrwin view) y x)
@@ -401,7 +402,7 @@
     (charms/ll:attroff attr)
     (charms/ll:wnoutrefresh win)))
 
-(defmethod lem-if:redraw-view-after ((implementation ncurses) view)
+(defun redraw-view-after (view)
   (alexandria:when-let (border (ncurses-view-border view))
     (draw-border border))
   (let ((attr (attribute-to-bits 'modeline-inactive)))
@@ -419,7 +420,7 @@
     (charms/ll:wnoutrefresh (ncurses-view-modeline-scrwin view)))
   (charms/ll:wnoutrefresh (ncurses-view-scrwin view)))
 
-(defmethod lem-if:update-display ((implementation ncurses))
+(defun update-display ()
   (let ((scrwin (ncurses-view-scrwin (window-view (current-window)))))
     (let ((cursor-x (last-print-cursor-x (current-window)))
           (cursor-y (last-print-cursor-y (current-window))))
@@ -432,11 +433,5 @@
              (charms/ll:wmove scrwin cursor-y cursor-x))))
     (charms/ll:wnoutrefresh scrwin)
     (charms/ll:doupdate)))
-
-(defmethod lem-if:clipboard-paste ((implementation ncurses))
-  (lem-ncurses/clipboard:paste))
-
-(defmethod lem-if:clipboard-copy ((implementation ncurses) text)
-  (lem-ncurses/clipboard:copy text))
 
 (pushnew :lem-ncurses *features*)

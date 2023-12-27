@@ -10,6 +10,7 @@
                (:file "clipboard")
                (:file "style")
                (:file "key")
+               (:file "attribute")
                (:file "internal")
                (:file "drawing")
                (:file "ncurses")))

@@ -53,52 +53,6 @@
 (defun view-window (view)
   (ncurses-view-window view))
 
-(defun underline-color (attribute)
-  (cond ((eq t (attribute-underline attribute))
-         nil)
-        ((and (attribute-underline attribute)
-              (parse-color (attribute-underline attribute)))
-         (attribute-underline attribute))
-        (t
-         nil)))
-
-(defun compute-attribute-value (attribute cursorp)
-  (let* ((underline-color (underline-color attribute))
-         (foreground (or underline-color (attribute-foreground attribute)))
-         (background (or (attribute-background attribute)
-                         lem-if:*background-color-of-drawing-window*))
-         (bits (logior (lem-ncurses/term:get-color-pair foreground background)
-                       0
-                       (if (attribute-bold attribute)
-                           charms/ll:a_bold
-                           0)
-                       (if (attribute-underline attribute)
-                           charms/ll:a_underline
-                           0)
-                       (if (or cursorp (attribute-reverse attribute))
-                           charms/ll:a_reverse
-                           0))))
-    bits))
-
-(defun attribute-to-bits (attribute-or-name)
-  (let* ((attribute (ensure-attribute attribute-or-name nil))
-         (cursorp (or (eq attribute-or-name 'cursor)
-                      (and attribute (lem-core:attribute-value attribute :cursor)))))
-    (when (and lem-if:*background-color-of-drawing-window* (null attribute))
-      (setf attribute (make-attribute :background lem-if:*background-color-of-drawing-window*)))
-    (if (null attribute)
-        0
-        (cond ((get-attribute-cache
-                attribute
-                :background lem-if:*background-color-of-drawing-window*))
-              (t
-               (let ((bits (compute-attribute-value attribute cursorp)))
-                 (setf (get-attribute-cache
-                        attribute
-                        :background lem-if:*background-color-of-drawing-window*)
-                       bits)
-                 bits))))))
-
 ;; for input
 ;;  (we don't use stdscr for input because it calls wrefresh implicitly
 ;;   and causes the display confliction by two threads)
@@ -377,7 +331,7 @@
                      x)))
 
 (defun print-string (scrwin x y string attribute)
-  (let ((attr (attribute-to-bits attribute)))
+  (let ((attr (lem-ncurses/attribute:attribute-to-bits attribute)))
     (charms/ll:wattron scrwin attr)
     (charms/ll:mvwaddstr scrwin y x string)
     (charms/ll:wattroff scrwin attr)))
@@ -386,7 +340,7 @@
   (let ((win (border-win border))
         (h (1- (border-height border)))
         (w (1- (border-width border)))
-        (attr (attribute-to-bits (border-attribute))))
+        (attr (lem-ncurses/attribute:attribute-to-bits (border-attribute))))
     (charms/ll:wattron win attr)
     (cond ((eq :drop-curtain (border-shape border))
            (charms/ll:mvwaddstr win 0 0 (border-vertical-and-right))
@@ -408,7 +362,7 @@
 (defun redraw-view-after (view)
   (alexandria:when-let (border (ncurses-view-border view))
     (draw-border border))
-  (let ((attr (attribute-to-bits 'modeline-inactive)))
+  (let ((attr (lem-ncurses/attribute:attribute-to-bits 'modeline-inactive)))
     (charms/ll:attron attr)
     (when (and (ncurses-view-modeline-scrwin view)
                (< 0 (ncurses-view-x view)))

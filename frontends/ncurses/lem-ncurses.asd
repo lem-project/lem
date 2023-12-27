@@ -10,5 +10,5 @@
                (:file "clipboard")
                (:file "style")
                (:file "key")
-               (:file "ncurses")
+               (:file "internal")
                (:file "drawing")))

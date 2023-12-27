@@ -437,9 +437,9 @@
     (charms/ll:doupdate)))
 
 (defmethod lem-if:clipboard-paste ((implementation ncurses))
-  (lem-ncurses.clipboard:paste))
+  (lem-ncurses/clipboard:paste))
 
 (defmethod lem-if:clipboard-copy ((implementation ncurses) text)
-  (lem-ncurses.clipboard:copy text))
+  (lem-ncurses/clipboard:copy text))
 
 (pushnew :lem-ncurses *features*)

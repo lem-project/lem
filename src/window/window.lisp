@@ -830,18 +830,22 @@ You can pass in the optional argument WINDOW-LIST to replace the default
               (if (frame-prompt-active-p (current-frame))
                   (frame-caller-of-prompt-window (current-frame))
                   (current-window))))
-        (when (or (one-window-p) split-action)
-          (split-window-using-split-action split-action dst-window))
-        (with-current-window
-            (or (window-tree-find-if (window-tree)
+        (let ((same-buffer-window
+                (window-tree-find-if (window-tree)
                                      (lambda (window)
-                                       (eq buffer (window-buffer window))))
-                (get-next-window dst-window))
-          (switch-to-buffer buffer)
-          (setf (window-pop-to-buffer-state (current-window))
-                (make-pop-to-buffer-state :split-action split-action
-                                          :parent-window parent-window))
-          (current-window)))))
+                                       (eq buffer (window-buffer window))))))
+          (when (or (one-window-p)
+                    (and (not same-buffer-window)
+                         split-action))
+            (split-window-using-split-action split-action dst-window))
+          (with-current-window
+              (or same-buffer-window
+                  (get-next-window dst-window))
+            (switch-to-buffer buffer)
+            (setf (window-pop-to-buffer-state (current-window))
+                  (make-pop-to-buffer-state :split-action split-action
+                                            :parent-window parent-window))
+            (current-window))))))
 
 (defun quit-window (window &key kill-buffer)
   (let* ((pop-to-buffer-state

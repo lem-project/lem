@@ -958,7 +958,7 @@
        (go-to-location xref-location
                        (lambda (buffer)
                          (switch-to-window
-                               (pop-to-buffer buffer))))))))
+                          (pop-to-buffer buffer))))))))
 
 (defun source-location-to-xref-location (location &optional content no-errors)
   (alexandria:destructuring-ecase location

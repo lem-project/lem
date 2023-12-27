@@ -106,7 +106,8 @@
   (lem-ncurses::print-string (lem-ncurses::ncurses-view-modeline-scrwin view)
                              0
                              0
-                             (make-string (lem-ncurses::ncurses-view-width view) :initial-element #\space)
+                             (make-string (lem-ncurses::ncurses-view-width view)
+                                          :initial-element #\space)
                              default-attribute)
   (render-line view 0 0 left-objects (lem-ncurses::ncurses-view-modeline-scrwin view))
   (render-line-from-behind view 0 right-objects (lem-ncurses::ncurses-view-modeline-scrwin view)))

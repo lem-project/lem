@@ -68,7 +68,7 @@
          (foreground (or underline-color (attribute-foreground attribute)))
          (background (or (attribute-background attribute)
                          lem-if:*background-color-of-drawing-window*))
-         (bits (logior (lem.term:get-color-pair foreground background)
+         (bits (logior (lem-ncurses/term:get-color-pair foreground background)
                        0
                        (if (attribute-bold attribute)
                            charms/ll:a_bold
@@ -248,7 +248,7 @@
   (let ((result nil)
         (input-thread (bt:current-thread)))
     (unwind-protect
-         (when (lem.term:term-init)
+         (when (lem-ncurses/term:term-init)
            (let ((*standard-output* (make-broadcast-stream))
                  (*error-output* (make-broadcast-stream))
                  (*terminal-io* (make-broadcast-stream)))
@@ -260,16 +260,16 @@
                                  input-thread
                                  (lambda () (error 'exit :value report)))))))
                (setf result (input-loop editor-thread)))))
-      (lem.term:term-finalize))
+      (lem-ncurses/term:term-finalize))
     (when (and (typep result 'exit)
                (exit-editor-value result))
       (format t "~&~A~%" (exit-editor-value result)))))
 
 (defmethod lem-if:get-background-color ((implementation ncurses))
-  (lem.term:background-mode))
+  (lem-ncurses/term:background-mode))
 
 (defmethod lem-if:update-foreground ((implementation ncurses) color-name)
-  (lem.term:term-set-foreground color-name))
+  (lem-ncurses/term:term-set-foreground color-name))
 
 (defmethod lem-if:update-cursor-shape ((implementation ncurses) cursor-type)
   (uiop:run-program `("printf"
@@ -284,7 +284,7 @@
                     :ignore-error-status t))
 
 (defmethod lem-if:update-background ((implementation ncurses) color-name)
-  (lem.term:term-set-background color-name))
+  (lem-ncurses/term:term-set-background color-name))
 
 (defmethod lem-if:display-width ((implementation ncurses))
   (max 5 charms/ll:*cols*))

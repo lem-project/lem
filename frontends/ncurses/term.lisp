@@ -1,4 +1,4 @@
-(defpackage :lem.term
+(defpackage :lem-ncurses/term
   (:use :cl)
   (:export :get-color-pair
            :term-set-foreground
@@ -12,7 +12,7 @@
            :get-mouse-mode
            :enable-mouse
            :disable-mouse))
-(in-package :lem.term)
+(in-package :lem-ncurses/term)
 
 (cffi:defcvar ("COLOR_PAIRS" *COLOR-PAIRS* :library charms/ll::libcurses) :int)
 

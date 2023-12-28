@@ -1,4 +1,17 @@
-(in-package :lem-core)
+(defpackage :lem/common/color
+  (:use :cl)
+  (:export :make-color
+           :color-red
+           :color-blue
+           :color-green
+           :light-color-p
+           :parse-color
+           :rgb-to-hsv
+           :hsv-to-rgb
+           :color-to-hex-string)
+  #+sbcl
+  (:lock t))
+(in-package :lem/common/color)
 
 (defparameter *rgb.txt* "! $Xorg: rgb.txt,v 1.3 2000/08/17 19:54:00 cpqbld Exp $
 255 250 250  snow
@@ -841,3 +854,9 @@
             ((= i 3) (rgb (* p 255) (* q 255) (* v 255)))
             ((= i 4) (rgb (* tmp 255) (* p 255) (* v 255)))
             (t (rgb (* v 255) (* p 255) (* q 255)))))))
+
+(defun color-to-hex-string (color)
+  (format nil "#~2,'0X~2,'0X~2,'0X"
+          (color-red color)
+          (color-green color)
+          (color-blue color)))

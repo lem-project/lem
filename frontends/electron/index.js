@@ -3,14 +3,27 @@
 const electron = require("electron");
 const menu = require("./menu");
 
+require('@electron/remote/main').initialize();
+
 let mainWindow;
 
 electron.app.on("ready", function () {
   mainWindow = new electron.BrowserWindow({
+    show: false,
     webPreferences: {
       nodeIntegration: true,
+      contextIsolation: false,
+      devTools: true,
     },
   });
+
+  require('@electron/remote/main').enable(mainWindow.webContents);
+
+  mainWindow.once('ready-to-show', () => {
+    mainWindow.show();
+    //mainWindow.webContents.openDevTools();
+  });
+
   mainWindow.setMenu(null);
   menu.setMenu(mainWindow);
   mainWindow.loadURL(`file://${__dirname}/index.html`);

@@ -28,8 +28,10 @@
         :lem/common/killring
         :lem/common/timer
         :lem/common/command
+        :lem/common/color
         :lem-core/display)
   (:use-reexport :lem-base)
+  (:use-reexport :lem/common/color)
   ;; reexport common/killring
   (:export
    :with-killring-context)
@@ -95,15 +97,6 @@
    :with-pop-up-typeout-window
    :define-buffer-accessor
    :define-overlay-accessors)
-  ;; color.lisp
-  (:export
-   :make-color
-   :color-red
-   :color-green
-   :color-blue
-   :parse-color
-   :rgb-to-hsv
-   :hsv-to-rgb)
   ;; attribute.lisp
   (:export
    :make-attribute
@@ -269,16 +262,6 @@
    :compute-window-list
    :one-window-p
    :deleted-window-p
-   :window-recenter
-   :window-scroll
-   :window-cursor-x
-   :window-cursor-y
-   :backward-line-wrap
-   :forward-line-wrap
-   :move-to-next-virtual-line
-   :move-to-previous-virtual-line
-   :point-virtual-line-column
-   :move-to-virtual-line-column
    :window-see
    :split-window-vertically
    :split-window-horizontally
@@ -301,10 +284,6 @@
    :floating-window-border-shape
    :floating-window-focusable-p
    :floating-window-p
-   :side-window
-   :make-leftside-window
-   :delete-leftside-window
-   :header-window
    :update-on-display-resized
    :covered-with-floating-window-p
    :redraw-display
@@ -321,6 +300,26 @@
    :grow-window-width
    :shrink-window-width
    :window-offset-view)
+  ;; virtual-line
+  (:export
+   :window-recenter
+   :window-cursor-x
+   :window-cursor-y
+   :backward-line-wrap
+   :forward-line-wrap
+   :move-to-next-virtual-line
+   :move-to-previous-virtual-line
+   :point-virtual-line-column
+   :move-to-virtual-line-column
+   :window-scroll)
+  ;; header-window.lisp
+  (:export
+   :header-window)
+  ;; side-window.lisp
+  (:export
+   :side-window
+   :make-leftside-window
+   :delete-leftside-window)
   ;; popup.lisp
   (:export
    :*default-popup-message-timeout*
@@ -392,6 +391,7 @@
    :make-keymap
    :*global-keymap*
    :define-key
+   :define-keys
    :keyseq-to-string
    :find-keybind
    :insertion-key-p
@@ -553,6 +553,12 @@
 #+sbcl
 (sb-ext:lock-package :lem-core)
 
+(defpackage :lem-core/popup-message-interface
+  (:use :cl)
+  (:export :*popup-messenger*
+           :display-popup-message
+           :delete-popup-message))
+
 (defpackage :lem-restart
   (:use)
   (:export :message
@@ -588,7 +594,6 @@
    :redraw-view-after
    :will-update-display
    :update-display
-   :set-first-view
    :display-popup-menu
    :popup-menu-update
    :popup-menu-quit
@@ -597,13 +602,12 @@
    :popup-menu-first
    :popup-menu-last
    :popup-menu-select
-   :display-popup-message
-   :delete-popup-message
    :display-context-menu
    :clipboard-paste
    :clipboard-copy
    :increase-font-size
    :decrease-font-size
+   :set-font-size
    :resize-display-before
    :get-font-list
    :get-mouse-position

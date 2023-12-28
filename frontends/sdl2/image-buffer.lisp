@@ -111,7 +111,7 @@
       (scale-buffer-image buffer (* -1 (/ percent 100))))))
 
 (defun fit-to-screen (buffer)
-  "If the image is bigger that the display, shrink it."
+  "Change the image dimensions so it fits in the screen."
   (let* ((image (buffer-image buffer))
          (width (image-width image))
          (height (image-height image))
@@ -121,14 +121,11 @@
                             (1-
                              (window-height (current-window)))))
          (ratio-image (/ height width))
-         (ratio-display (/ display-height display-width))
-         (needs-resizing-p (or (> width display-width)
-                               (> height display-height))))
+         (ratio-display (/ display-height display-width)))
 
-    (when needs-resizing-p
-      (if (>= ratio-image ratio-display)
-          (fit-to-height buffer)
-          (fit-to-width buffer)))))
+    (if (>= ratio-image ratio-display)
+        (fit-to-height buffer)
+        (fit-to-width buffer))))
 
 (define-command image-zoom-in () ()
   (scale-buffer-image (current-buffer) 0.1))
@@ -137,15 +134,19 @@
   (scale-buffer-image (current-buffer) -0.1))
 
 (define-command image-zoom-reset () ()
+  "Set the image to its original size."
   (reset-buffer-scale (current-buffer)))
 
 (define-command image-fit-to-width () ()
+  "Make the image as large as the display width."
   (fit-to-width (current-buffer)))
 
 (define-command image-fit-to-height () ()
+  "Make the image as big as the display height."
   (fit-to-height (current-buffer)))
 
 (define-command image-fit-to-screen () ()
+  "Enlarge or shrink the image to fit the display."
   (fit-to-screen (current-buffer)))
 
 (defclass sdl2-find-file-executor (lem:find-file-executor) ())

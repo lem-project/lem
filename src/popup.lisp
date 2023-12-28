@@ -2,20 +2,35 @@
 
 (defparameter *default-popup-message-timeout* 5)
 
+(defvar lem-core/popup-message-interface:*popup-messenger*)
+
+(defgeneric lem-core/popup-message-interface:display-popup-message
+    (popup-messenger
+     buffer-or-string
+     &key timeout
+          destination-window
+          source-window
+          style))
+
+(defgeneric lem-core/popup-message-interface:delete-popup-message (popup-messenger popup-message))
+
 (defun display-popup-message (buffer-or-string
                               &key (timeout *default-popup-message-timeout*)
                                    destination-window
                                    source-window
                                    style)
-  (lem-if:display-popup-message (implementation)
-                                buffer-or-string
-                                :timeout timeout
-                                :destination-window destination-window
-                                :source-window source-window
-                                :style style))
+  (lem-core/popup-message-interface:display-popup-message
+   lem-core/popup-message-interface:*popup-messenger*
+   buffer-or-string
+   :timeout timeout
+   :destination-window destination-window
+   :source-window source-window
+   :style style))
 
 (defun delete-popup-message (popup-message)
-  (lem-if:delete-popup-message (implementation) popup-message))
+  (lem-core/popup-message-interface:delete-popup-message
+   lem-core/popup-message-interface:*popup-messenger*
+   popup-message))
 
 (defun display-popup-menu (items
                            &rest args

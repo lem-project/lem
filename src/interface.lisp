@@ -14,7 +14,11 @@
    (support-floating-window
     :initform t
     :initarg :support-floating-window
-    :reader support-floating-window)))
+    :reader support-floating-window)
+   (window-left-margin
+    :initform 1
+    :initarg :window-left-margin
+    :reader window-left-margin)))
 
 (defun get-default-implementation (&key (errorp t))
   (let* ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))
@@ -62,9 +66,6 @@
   (:method (implementation)))
 (defgeneric lem-if:update-display (implementation))
 
-(defgeneric lem-if:set-first-view (implementation view)
-  (:method (implementation view)))
-
 (defgeneric lem-if:display-popup-menu (implementation items
                                        &key action-callback
                                             print-spec
@@ -78,12 +79,6 @@
 (defgeneric lem-if:popup-menu-first (implementation popup-menu))
 (defgeneric lem-if:popup-menu-last (implementation popup-menu))
 (defgeneric lem-if:popup-menu-select (implementation popup-menu))
-(defgeneric lem-if:display-popup-message
-    (implementation buffer-or-string &key timeout
-                                          destination-window
-                                          source-window
-                                          style))
-(defgeneric lem-if:delete-popup-message (implementation popup-message))
 (defgeneric lem-if:display-context-menu (implementation context-menu style)
   (:method (implementation context-menu style)))
 
@@ -96,6 +91,8 @@
   (:method (implementation)))
 (defgeneric lem-if:decrease-font-size (implementation)
   (:method (implementation)))
+(defgeneric lem-if:set-font-size (implementation size)
+  (:method (implementation size)))
 
 (defgeneric lem-if:resize-display-before (implementation)
   (:method (implementation)))

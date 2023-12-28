@@ -224,5 +224,5 @@
   1)
 
 (defun update-display ()
-  (lem-ncurses/view:update-view (current-window))
+  (update-view (window-view (current-window)))
   (charms/ll:doupdate))

@@ -2,8 +2,11 @@
   (:use :cl :lem))
 (in-package :lem/filer)
 
-(defparameter *right-pointing-triangle* (uiop:strcat (string (code-char #x25B8)) " "))
-(defparameter *down-pointing-triangle* (uiop:strcat (string (code-char #x25BE)) " "))
+(defparameter *right-pointing-triangle* 
+  (uiop:strcat (icon-string "right-pointing-triangle") " "))
+
+(defparameter *down-pointing-triangle* 
+  (uiop:strcat (icon-string "down-pointing-triangle") " "))
 
 (define-attribute triangle-attribute
   (t :bold t :foreground :base0D))

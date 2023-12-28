@@ -186,11 +186,11 @@
   (let ((string (text-object-string object))
         (attribute (text-object-attribute object)))
     (when (and attribute (lem-core:cursor-attribute-p attribute))
-      (lem-core::set-last-print-cursor (view-window view) x y))
+      (set-last-print-cursor (view-window view) x y))
     (print-string scrwin x y string attribute)))
 
 (defmethod draw-object ((object eol-cursor-object) x y view scrwin)
-  (lem-core::set-last-print-cursor (view-window view) x y)
+  (set-last-print-cursor (view-window view) x y)
   (print-string
    scrwin
    x

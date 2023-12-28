@@ -7,17 +7,10 @@
            :view
            :view-window
            :view-border
-           :view-scrwin
-           :view-modeline-scrwin
            :view-x
            :view-y
            :view-width
            :view-height
-           :border-win
-           :border-Width
-           :border-height
-           :border-size
-           :border-shape
            :delete-view
            :clear
            :set-view-size

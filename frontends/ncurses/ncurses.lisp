@@ -64,10 +64,10 @@
   (lem-ncurses/clipboard:copy text))
 
 (defmethod lem-if:view-width ((implementation ncurses) view)
-  (lem-ncurses/view:ncurses-view-width view))
+  (lem-ncurses/view:view-width view))
 
 (defmethod lem-if:view-height ((implementation ncurses) view)
-  (lem-ncurses/view:ncurses-view-height view))
+  (lem-ncurses/view:view-height view))
 
 (defmethod lem-if:render-line ((implementation ncurses)
                                view x y objects height)

@@ -63,14 +63,10 @@
           (window-see window)))
       (redraw-display))))
 
-(defun delete-internal-process ()
-  (ignore-errors (ipm/impl:delete-process *process*)))
-
 (defun run-elixir-internal ()
   (unless (and (alive-process-p) (repl-buffer-exists-p))
     (when *process*
-      (bt:destroy-thread (ipm/impl:process-read-thread *process*))
-      (delete-internal-process))
+      (lem/run-process:destroy-process *process*))
     (setf *process*
           (lem/run-process:run-process
            *elixir-run-command*
@@ -98,4 +94,5 @@
 
 (add-hook *exit-editor-hook*
           (lambda ()
-            (when *process* (delete-internal-process))))
+            (when *process*
+              (lem/run-process:destroy-process *process*))))

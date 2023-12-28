@@ -1,6 +1,6 @@
 (defpackage :lem/run-process
   (:use :cl :lem :ip-management/impl)
-  (:export #:run-process)
+  (:export #:run-process #:destroy-process)
   #+sbcl
   (:lock t))
 
@@ -18,7 +18,7 @@
                          :buffer-stream buffer-stream
                          :output-callback output-callback
                          :output-callback-type output-callback-type))
-         (thread (bt:make-thread
+         (thread (bt2:make-thread
                   (lambda ()
                     (loop
                       (unless (process-alive-p process)
@@ -30,6 +30,12 @@
                   :name (format nil "run-process ~A }" command))))
     (set-process-read-thread thread process)
     process))
+
+(defmethod destroy-process ((process ip-management/impl::process))
+  "Destroy the process and the thread associated with it."
+  (bt2:destroy-thread
+   (ipm/impl:process-read-thread process))
+  (ignore-errors (delete-process process)))
 
 (defun write-to-buffer (process string)
   (let ((buffer-stream (ipm/impl::process-buffer-stream process))

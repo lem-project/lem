@@ -28,13 +28,6 @@
     :reader exit-editor-value
     :initform nil)))
 
-(defstruct border
-  win
-  width
-  height
-  size
-  (shape nil :type (member nil :drop-curtain)))
-
 ;; for input
 ;;  (we don't use stdscr for input because it calls wrefresh implicitly
 ;;   and causes the display confliction by two threads)
@@ -227,139 +220,9 @@
 (defun get-display-height ()
   (max 3 charms/ll:*lines*))
 
-(defun compute-border-window-size (width height border-size)
-  (let ((width (+ width (* border-size 2)))
-        (height (+ height (* border-size 2))))
-    (list width height)))
-
-(defun compute-border-window-position (x y border-size)
-  (let ((x (- x border-size))
-        (y (- y border-size)))
-    (list x y)))
-
-(defun make-view (window x y width height use-modeline)
-  (flet ((newwin (nlines ncols begin-y begin-x)
-           (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
-             (when use-modeline (charms/ll:keypad win 1))
-             win)))
-    (make-ncurses-view
-     :window window
-     :border (when (and (floating-window-p window)
-                        (floating-window-border window)
-                        (< 0 (floating-window-border window)))
-               (destructuring-bind (x y)
-                   (compute-border-window-position x
-                                                   y
-                                                   (floating-window-border window))
-                 (destructuring-bind (width height)
-                     (compute-border-window-size width
-                                                 height
-                                                 (floating-window-border window))
-                   (let ((win (newwin height width y x)))
-                     (make-border :win win
-                                  :width width
-                                  :height height
-                                  :size (floating-window-border window)
-                                  :shape (floating-window-border-shape window))))))
-     :scrwin (newwin height width y x)
-     :modeline-scrwin (when use-modeline (newwin 1 width (+ y height) x))
-     :x x
-     :y y
-     :width width
-     :height height)))
-
-(defun delete-view (view)
-  (charms/ll:delwin (ncurses-view-scrwin view))
-  (when (ncurses-view-modeline-scrwin view)
-    (charms/ll:delwin (ncurses-view-modeline-scrwin view))))
-
-(defun clear (view)
-  (charms/ll:clearok (ncurses-view-scrwin view) 1)
-  (when (ncurses-view-modeline-scrwin view)
-    (charms/ll:clearok (ncurses-view-modeline-scrwin view) 1)))
-
-(defun set-view-size (view width height)
-  (setf (ncurses-view-width view) width)
-  (setf (ncurses-view-height view) height)
-  (charms/ll:wresize (ncurses-view-scrwin view) height width)
-  (alexandria:when-let (border (ncurses-view-border view))
-    (destructuring-bind (b-width b-height)
-        (compute-border-window-size width height (border-size border))
-      (setf (border-width border) b-width
-            (border-height border) b-height)
-      (charms/ll:wresize (border-win border) b-height b-width)))
-  (when (ncurses-view-modeline-scrwin view)
-    (charms/ll:mvwin (ncurses-view-modeline-scrwin view)
-                     (+ (ncurses-view-y view) height)
-                     (ncurses-view-x view))
-    (charms/ll:wresize (ncurses-view-modeline-scrwin view)
-                       1
-                       width)))
-
-(defun set-view-pos (view x y)
-  (setf (ncurses-view-x view) x)
-  (setf (ncurses-view-y view) y)
-  (charms/ll:mvwin (ncurses-view-scrwin view) y x)
-  (alexandria:when-let (border (ncurses-view-border view))
-    (destructuring-bind (b-x b-y)
-        (compute-border-window-position x y (border-size border))
-      (charms/ll:mvwin (border-win border) b-y b-x)))
-  (when (ncurses-view-modeline-scrwin view)
-    (charms/ll:mvwin (ncurses-view-modeline-scrwin view)
-                     (+ y (ncurses-view-height view))
-                     x)))
-
-(defun draw-border (border)
-  (let ((win (border-win border))
-        (h (1- (border-height border)))
-        (w (1- (border-width border)))
-        (attr (lem-ncurses/attribute:attribute-to-bits (border-attribute))))
-    (charms/ll:wattron win attr)
-    (cond ((eq :drop-curtain (border-shape border))
-           (charms/ll:mvwaddstr win 0 0 (border-vertical-and-right))
-           (charms/ll:mvwaddstr win 0 w (border-vertical-and-left)))
-          (t
-           (charms/ll:mvwaddstr win 0 0 (border-upleft))
-           (charms/ll:mvwaddstr win 0 w (border-upright))))
-    (charms/ll:mvwaddstr win h 0 (border-downleft))
-    (charms/ll:mvwaddstr win h w (border-downright))
-    (loop :for x :from 1 :below w
-          :do (charms/ll:mvwaddstr win 0 x (border-up))
-              (charms/ll:mvwaddstr win (1- (border-height border)) x (border-down)))
-    (loop :for y :from 1 :below h
-          :do (charms/ll:mvwaddstr win y 0 (border-left))
-              (charms/ll:mvwaddstr win y w (border-right)))
-    (charms/ll:attroff attr)
-    (charms/ll:wnoutrefresh win)))
-
-(defun redraw-view-after (view)
-  (alexandria:when-let (border (ncurses-view-border view))
-    (draw-border border))
-  (let ((attr (lem-ncurses/attribute:attribute-to-bits 'modeline-inactive)))
-    (charms/ll:attron attr)
-    (when (and (ncurses-view-modeline-scrwin view)
-               (< 0 (ncurses-view-x view)))
-      (charms/ll:move (ncurses-view-y view) (1- (ncurses-view-x view)))
-      (loop :for y :from 0 :to (ncurses-view-height view)
-            :do (charms/ll:mvaddstr (+ (ncurses-view-y view) y)
-                                    (1- (ncurses-view-x view))
-                                    (border-left))))
-    (charms/ll:attroff attr)
-    (charms/ll:wnoutrefresh charms/ll:*stdscr*))
-  (when (ncurses-view-modeline-scrwin view)
-    (charms/ll:wnoutrefresh (ncurses-view-modeline-scrwin view)))
-  (charms/ll:wnoutrefresh (ncurses-view-scrwin view)))
+(defun get-char-width ()
+  1)
 
 (defun update-display ()
-  (let ((scrwin (ncurses-view-scrwin (window-view (current-window)))))
-    (let ((cursor-x (last-print-cursor-x (current-window)))
-          (cursor-y (last-print-cursor-y (current-window))))
-      (cond ((covered-with-floating-window-p (current-window) cursor-x cursor-y)
-             (charms/ll:curs-set 0))
-            ((window-cursor-invisible-p (current-window))
-             (charms/ll:curs-set 0))
-            (t
-             (charms/ll:curs-set 1)
-             (charms/ll:wmove scrwin cursor-y cursor-x))))
-    (charms/ll:wnoutrefresh scrwin)
-    (charms/ll:doupdate)))
+  (lem-ncurses/view:update-view (current-window))
+  (charms/ll:doupdate))

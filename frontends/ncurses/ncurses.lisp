@@ -37,22 +37,22 @@
 
 (defmethod lem-if:make-view
     ((implementation ncurses) window x y width height use-modeline)
-  (lem-ncurses/internal::make-view window x y width height use-modeline))
+  (lem-ncurses/view:make-view window x y width height use-modeline))
 
 (defmethod lem-if:delete-view ((implementation ncurses) view)
-  (lem-ncurses/internal::delete-view view))
+  (lem-ncurses/view:delete-view view))
 
 (defmethod lem-if:clear ((implementation ncurses) view)
-  (lem-ncurses/internal::clear view))
+  (lem-ncurses/view:clear view))
 
 (defmethod lem-if:set-view-size ((implementation ncurses) view width height)
-  (lem-ncurses/internal::set-view-size view width height))
+  (lem-ncurses/view:set-view-size view width height))
 
 (defmethod lem-if:set-view-pos ((implementation ncurses) view x y)
-  (lem-ncurses/internal::set-view-pos view x y))
+  (lem-ncurses/view:set-view-pos view x y))
 
 (defmethod lem-if:redraw-view-after ((implementation ncurses) view)
-  (lem-ncurses/internal::redraw-view-after view))
+  (lem-ncurses/view:redraw-view-after view))
 
 (defmethod lem-if:update-display ((implementation ncurses))
   (lem-ncurses/internal::update-display))
@@ -71,7 +71,7 @@
 
 (defmethod lem-if:render-line ((implementation ncurses)
                                view x y objects height)
-  (lem-ncurses/drawing::render-line view x y objects))
+  (lem-ncurses/view:render-line view x y objects))
 
 (defmethod lem-if:render-line-on-modeline ((implementation ncurses)
                                            view
@@ -79,7 +79,7 @@
                                            right-objects
                                            default-attribute
                                            height)
-  (lem-ncurses/drawing::render-line-on-modeline view left-objects right-objects default-attribute))
+  (lem-ncurses/view:render-line-on-modeline view left-objects right-objects default-attribute))
 
 (defmethod lem-if:object-width ((implementation ncurses) drawing-object)
   (lem-ncurses/drawing-object:object-width drawing-object))
@@ -88,7 +88,7 @@
   (lem-ncurses/drawing-object:object-height drawing-object))
 
 (defmethod lem-if:clear-to-end-of-window ((implementation ncurses) view y)
-  (lem-ncurses/drawing::clear-to-end-of-window view y))
+  (lem-ncurses/view:clear-to-end-of-window view y))
 
 (defmethod lem-if:get-char-width ((implementation ncurses))
-  (lem-ncurses/drawing::get-char-width))
+  (lem-ncurses/internal::get-char-width))

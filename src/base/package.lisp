@@ -151,6 +151,8 @@
    :copy-point
    :delete-point
    :point-buffer
+   :point-line
+   :point-linum
    :point-charpos
    :point-kind
    :point=

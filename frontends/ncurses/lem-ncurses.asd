@@ -6,6 +6,7 @@
                "lem/extensions")
   :serial t
   :components (#+win32(:file "cl-charms-pdcurseswin32")
+               (:file "config")
                (:file "term")
                (:file "clipboard")
                (:file "style")

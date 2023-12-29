@@ -5,9 +5,7 @@
         :lem-ncurses/key
         :lem-ncurses/view)
   (:export
-   ;; ncurses.lisp
    :*terminal-io-saved*
-   :escape-delay
    ;; ncurses-pdcurseswin32.lisp
    :input-polling-interval))
 (in-package :lem-ncurses/internal)

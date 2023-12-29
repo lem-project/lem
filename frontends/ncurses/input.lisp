@@ -5,9 +5,6 @@
   (:export :get-event))
 (in-package :lem-ncurses/input)
 
-;; escape key delay setting
-(define-editor-variable escape-delay 100)
-
 ;; for input
 ;;  (we don't use stdscr for input because it calls wrefresh implicitly
 ;;   and causes the display confliction by two threads)
@@ -115,7 +112,7 @@
                 ((= code abort-code) :abort)
                 ((= code escape-code)
                  (let ((code (with-getch-input-timeout
-                                 ((variable-value 'escape-delay))
+                                 ((variable-value 'lem-ncurses/config:escape-delay))
                                (getch))))
                    (cond ((= code -1)
                           (get-key-from-name "escape"))

@@ -1,13 +1,14 @@
 (uiop:define-package :lem-ncurses
   (:use :cl)
-  (:use-reexport :lem-ncurses/internal))
+  (:use-reexport :lem-ncurses/internal)
+  (:use-reexport :lem-ncurses/config))
 (in-package :lem-ncurses)
-
-(pushnew :lem-ncurses *features*)
 
 ;; popup window margin setting
 (setf lem/popup-window::*extra-right-margin* 1)
 (setf lem/popup-window::*extra-width-margin* 0)
+
+(pushnew :lem-ncurses *features*)
 
 (defclass ncurses (lem:implementation)
   ()

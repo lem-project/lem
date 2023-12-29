@@ -5,6 +5,10 @@
 
 (pushnew :lem-ncurses *features*)
 
+;; popup window margin setting
+(setf lem/popup-window::*extra-right-margin* 1)
+(setf lem/popup-window::*extra-width-margin* 0)
+
 (defclass ncurses (lem:implementation)
   ()
   (:default-initargs

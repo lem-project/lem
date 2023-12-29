@@ -15,10 +15,6 @@
 ;; for mouse control
 (defparameter *terminal-io-saved* *terminal-io*)
 
-;; popup window margin setting
-(setf lem/popup-window::*extra-right-margin* 1)
-(setf lem/popup-window::*extra-width-margin* 0)
-
 (define-condition exit (editor-condition)
   ((value
     :initarg :value

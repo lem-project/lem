@@ -109,10 +109,11 @@
 
 (defmethod render-item (point (item directory-item) depth)
   (insert-string point
-                 (strcat (if (directory-item-open-p item)
-                             (icon-string "down-pointing-triangle")
-                             (icon-string "right-pointing-triangle"))
-                         " ")
+                 (uiop:strcat 
+                  (if (directory-item-open-p item)
+                      (icon-string "down-pointing-triangle")
+                      (icon-string "right-pointing-triangle"))
+                  " ")
                  :attribute 'triangle-attribute)
   (insert-item point item)
   (dolist (item (directory-item-children item))

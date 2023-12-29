@@ -36,3 +36,6 @@
       (getf (icon-plist icon) key))))
 
 (register-icon "folder" #x1f4c1)
+(register-icon "right-pointing-triangle" #x25B8)
+(register-icon "down-pointing-triangle" #x25BE)
+(register-icon "lock" #xD83D)

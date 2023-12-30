@@ -36,7 +36,7 @@
 
 (defun define-key (keymap keyspec command-name)
   (check-type keyspec (or symbol string))
-  (check-type command-name symbol)
+  (check-type command-name (or symbol keymap))
   (typecase keyspec
     (symbol
      (setf (gethash keyspec (keymap-function-table keymap))
@@ -119,9 +119,11 @@
     (let ((table (keymap-table keymap)))
       (labels ((f (k)
                  (let ((cmd (gethash k table)))
-                   (if (prefix-command-p cmd)
-                       (setf table cmd)
-                       cmd))))
+                   (cond ((prefix-command-p cmd)
+                          (setf table cmd))
+                         ((keymap-p cmd)
+                          (setf table (keymap-table cmd)))
+                         (t cmd)))))
         (let ((parent (keymap-parent keymap)))
           (when parent
             (setf cmd (keymap-find-keybind parent key cmd))))

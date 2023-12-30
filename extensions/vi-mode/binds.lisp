@@ -60,6 +60,7 @@
 (define-key *motion-keymap* "*" 'vi-search-forward-symbol-at-point)
 (define-key *motion-keymap* "g g" 'vi-goto-first-line)
 (define-key *motion-keymap* "G" 'vi-goto-line)
+(define-key *motion-keymap* "|" 'vi-goto-column)
 (define-key *motion-keymap* "Return" 'vi-return)
 (define-key *motion-keymap* "f" 'vi-find-char)
 (define-key *motion-keymap* "F" 'vi-find-char-backward)

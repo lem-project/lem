@@ -84,6 +84,7 @@
            :vi-search-forward-symbol-at-point
            :vi-goto-first-line
            :vi-goto-line
+           :vi-goto-column
            :vi-return
            :vi-find-char
            :vi-find-char-backward
@@ -710,6 +711,11 @@
          (line-offset (current-point) -1)))
       (t (goto-line n)))
     (move-to-column (current-point) col)))
+
+(define-motion vi-goto-column (&optional (n 1)) ("p")
+    (:type :exclusive
+     :jump t)
+  (move-to-column (current-point) (1- n)))
 
 (define-command vi-return (&optional (n 1)) ("p")
   (vi-next-line n)

@@ -1,7 +1,6 @@
 (defpackage :lem-ncurses/view
   (:use :cl
-        :lem-ncurses/style
-        :lem-core/display)
+        :lem-ncurses/style)
   (:export :make-view
            :view
            :view-border

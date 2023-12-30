@@ -20,9 +20,31 @@
    :unstage
    :vcs-project-p
    )
-  (:documentation "Functions to run Git operations: get the list of changes, of untracked files, commit, push… A simple dispatch mechanism is used to use other VCS systems. In the caller, bind the `*VCS*` variable. See `legit:with-current-project`."))
+  (:documentation "Functions to run VCS operations: get the list of changes, of untracked files, commit, push… Git support is the main goal, a simple layer is used with other VCS systems (Fossil, Mercurial).
+
+On interactive commands, Legit will check what VCS is in use in the current project.
+When used programmatically, bind the `lem/porcelain:*vcs*` variable in your caller. See `lem/legit:with-current-project`.
+
+When multiple VCS are used at the same time in a project, Git takes
+precedence by default. See `lem/porcelain:*vcs-existence-order*`."))
 
 (in-package :lem/porcelain)
+
+#|
+Supported version control systems:
+- Git: main support
+- Fossil: preliminary support
+- Mercurial: preliminary support
+
+TODOs:
+
+- show missing files.
+
+Mercurial:
+
+- add (stage) diff hunks
+
+|#
 
 (declaim (type (cons) *git-base-arglist*))
 (defvar *git-base-arglist* (list "git")
@@ -30,8 +52,13 @@
 
 (declaim (type (cons) *fossil-base-args*))
 (defvar *fossil-base-args* (list "fossil")
-  "fossil, to be appended command-line options.")
+  "The fossil program, to be appended command-line options.")
 
+(declaim (type (cons) *hg-base-arglist*))
+(defvar *hg-base-arglist* (list "hg")
+  "The mercurial program (hg), to be appended command-line options.")
+
+;;; Global variables, for all VCS.
 (defvar *nb-latest-commits* 10
   "Number of commits to show in the status.")
 
@@ -53,10 +80,12 @@
   For instance, see the legit::with-current-project macro that lexically binds *vcs* for an operation.")
 
 (defun git-project-p ()
+  "Return t if we find a .git/ directory in the current directory (which should be the project root. Use `lem/legit::with-current-project`)."
   (values (uiop:directory-exists-p ".git")
           :git))
 
 (defun fossil-project-p ()
+  "Return t if we either find a .fslckout file in the current directory (should be the project root) or a file with a .fossil extension."
   (cond
     ((uiop:file-exists-p ".fslckout")
      (values ".fslckout" :fossil))
@@ -66,15 +95,21 @@
            if (equal "fossil" (pathname-type file))
              return (values file :fossil)))))
 
+(defun hg-project-p ()
+  "Return t if we find a .hg/ directory in the current directory (which should be the project root. Use `lem/legit::with-current-project`)."
+  (values (uiop:directory-exists-p ".hg")
+          :hg))
+
 (defvar *vcs-existence-order*
   '(
     git-project-p
     fossil-project-p
+    hg-project-p
     ))
 
 (defun vcs-project-p ()
-  "If this project under a known version control system?
-  Return two values: the project root (pathname), the VCS (:git or :fossil)."
+  "Is this project under a known version control system?
+  Return two values: the current directory (pathname), which is then considered the project root, and the VCS found (:git, :fossil or :hg)."
   ;; This doesn't return the 2 values :(
   ;; (or (fossil-project-p)
   ;;     (git-project-p))
@@ -92,7 +127,9 @@
   (but return the error message, so it can be displayed by the caller).
   However, if uiop:run-program fails to run the command, the interactive debugger
   is invoked (and shown correctly in Lem)."
-  (uiop:run-program (concatenate 'list *git-base-arglist* arglist)
+  (uiop:run-program (concatenate 'list
+                                 *git-base-arglist*
+                                 (uiop:ensure-list arglist))
                     :output :string
                     :error-output :string
                     :ignore-error-status t))
@@ -109,11 +146,36 @@
                     :error-output :string
                     :ignore-error-status t))
 
+(defun run-hg (arglist)
+  "Run the mercurial command with these options (list).
+  Return standard and error output as strings.
+
+  For error handling strategy, see `run-git`."
+  (uiop:run-program (concatenate 'list
+                                 *hg-base-arglist*
+                                 (uiop:ensure-list arglist)
+                                 '("--pager" "never")   ;; no interactive pager.
+                                 )
+                    :output :string
+                    :error-output :string
+                    :ignore-error-status t))
+
 
+;;;
+;;; Getting changes.
+;;;
+
 (defun git-porcelain ()
+  "Return the git status: for each file in the project, the `git status --porcelain` command
+allows to learn about the file state: modified, deleted, ignored… "
   (run-git (list "status" "--porcelain=v1")))
 
+(defun hg-porcelain ()
+  "Return changes."
+  (run-hg "status"))
+
 (defun fossil-porcelain ()
+  "Get changes."
   (multiple-value-bind (out error code)
       (run-fossil "changes")
     (cond
@@ -125,15 +187,35 @@
 ;; Dispatching on the right VCS:
 ;; *vcs* is bound in the caller (in legit::with-current-project).
 (defun porcelain ()
+  "Dispatch on the current `*vcs*` and get current changes (added, modified files…)."
   (case *vcs*
+    (:git (git-porcelain))
     (:fossil (fossil-porcelain))
-    (t (git-porcelain))))
+    (:hg (hg-porcelain))
+    (t (error "VCS not supported: ~a" *vcs*))))
 
 (defun git-components()
   "Return 3 values:
   - untracked files
   - modified and unstaged files
-  - modified and stages files."
+  - modified and stages files.
+
+   Git manual:
+
+   In the short-format, the status of each path is shown as one of these forms
+           XY PATH
+           XY ORIG_PATH -> PATH
+   For paths with merge conflicts, X and Y show the modification states of each side of the
+       merge. For paths that do not have merge conflicts, X shows the status of the index, and Y
+       shows the status of the work tree. For untracked paths, XY are ??. Other status codes can
+       be interpreted as follows:
+       •   ' ' = unmodified
+       •   M = modified
+       •   A = added
+       •   D = deleted
+       •   R = renamed
+       •   C = copied
+       •   U = updated but unmerged"
   (loop for line in (str:lines (porcelain))
         for file = (subseq line 3)
         unless (str:blankp line)
@@ -151,6 +233,44 @@
                                 modified-unstaged-files
                                 modified-staged-files))))
 
+(defun hg-components ()
+  "Return 3 values:
+  - untracked files
+  - modified and unstaged files
+  - modified and staged files."
+  ;; Mercurial manual:
+  ;; The codes used to show the status of files are:
+  ;;    M = modified
+  ;;    A = added
+  ;;    R = removed => difference with Git
+  ;;    C = clean   => difference
+  ;;    ! = missing (deleted by non-hg command, but still tracked)
+  ;;    ? = not tracked
+  ;;    I = ignored (=> not shown without -A)
+  ;;      = origin of the previous file (with --copies)
+  (loop for line in (str:lines (hg-porcelain))
+        for file = (subseq line 2)  ;; a slight difference than with git.
+        unless (str:blankp line)
+          ;; Modified
+          if (equal (elt line 0) #\M)
+            collect file into modified-staged-files
+        ;; Added
+        if (equal (elt line 0) #\A)
+          ;; is that enough?
+          collect file into modified-staged-files
+        ;; Modified
+        if (equal (elt line 1) #\X)  ;?
+          collect file into modified-unstaged-files
+        ;; Untracked
+        if (str:starts-with-p "?" line)
+          collect file into untracked-files
+        ;; Missing (deleted)
+        if (str:starts-with-p "!" line)
+          collect file into missing-files
+        finally (return (values untracked-files
+                                modified-unstaged-files
+                                modified-staged-files
+                                missing-files))))
 (defun fossil-components ()
   "Return values:
   - untracked files (todo)
@@ -170,16 +290,31 @@
 
 (defun components ()
   (case *vcs*
+    (:git (git-components))
     (:fossil (fossil-components))
-    (t (git-components))))
+    (:hg (hg-components))
+    (t (error "VCS not supported: ~a" *vcs*))))
 
-;; diff
+
+;;;
+;;; diff
+;;;
 (defun git-file-diff (file &key cached)
+  ;; --cached is a synonym for --staged.
+  ;; So it is set only for staged files. From git-components: the 3rd value, modified and staged files.
   (run-git
    (concatenate 'list
                 *file-diff-args*
                 (if cached '("--cached"))
                 (list file))))
+
+(defun hg-file-diff (file &key cached)
+  "Show the diff of staged files (and only them)."
+  (when cached
+      (run-hg (list "diff" file))
+      ;; files not staged can't be diffed.
+      ;; We could read and display their full content anyways?
+      ))
 
 (defun fossil-file-diff (file &key cached)
   (declare (ignorable cached))
@@ -189,21 +324,33 @@
   (case *vcs*
     (:fossil
      (fossil-file-diff file))
+    (:hg
+     (hg-file-diff file :cached cached))
     (t
      (git-file-diff file :cached cached))))
 
-;; show commits.
+
+;;;
+;;; Show commits.
+;;;
 (defun git-show-commit-diff (ref)
   (run-git (list "show" ref)))
+
+(defun hg-show-commit-diff (ref)
+  (run-hg (list "log" "-r" ref "-p")))
 
 (defun show-commit-diff (ref)
   (case *vcs*
     (:fossil nil)
+    (:hg (hg-show-commit-diff ref))
     (t (git-show-commit-diff ref))))
 
 ;; commit
 (defun git-commit (message)
   (run-git (list "commit" "-m" message)))
+
+(defun hg-commit (message)
+   (run-hg (list "commit" "-m" message)))
 
 (defun fossil-commit (message)
   (run-fossil (list "commit" "-m" message)))
@@ -211,6 +358,7 @@
 (defun commit (message)
   (case *vcs*
     (:fossil (fossil-commit message))
+    (:hg (hg-commit message))
     (t (git-commit message))))
 
 ;; branches
@@ -236,19 +384,29 @@
           if (str:starts-with-p "*" branch)
             return (subseq branch 2))))
 
+(defun hg-current-branch ()
+  "Return the current branch name."
+  (str:trim
+   (run-hg "branch")))
+
 (defun fossil-current-branch ()
   ;; strip out "* " from "* trunk"
   (str:trim
    (subseq (run-fossil "branch") 2)))
 
 (defun current-branch ()
+  "Return the current branch name."
   (case *vcs*
     (:fossil
      (fossil-current-branch))
+    (:hg
+     (hg-current-branch))
     (t
      (git-current-branch))))
 
-;; latest commits.
+;;;
+;;; Latest commits.
+;;;
 (defun %git-list-latest-commits (&optional (n *nb-latest-commits*))
   (when (plusp n)
     (str:lines
@@ -264,6 +422,61 @@
                         :message message
                         :hash small-hash))))
 
+(defun hg-latest-commits (&key (hash-length 8))
+  (declare (ignorable hash-length))
+  (let ((out (run-hg "log")))
+    ;; Split by paragraph.
+        #| $ hg log
+changeset:   1:c20c766359d3
+user:        user@machine
+date:        Mon Oct 02 23:01:32 2023 +0200
+summary:     second line
+
+changeset:   0:b27dda897ba8
+user:        user@machine
+date:        Mon Oct 02 22:51:57 2023 +0200
+summary:     test
+
+|#
+    (loop for paragraph in (ppcre:split "\\n\\n" out)
+          collect
+          (loop for line in (str:lines (str:trim paragraph))
+                with entry = (list :line ""
+                                   :message ""
+                                   :hash "")
+                for (key %val) = (str:split ":" line :limit 2)
+                for val = (str:trim %val)
+                for changeset = ""
+                for tag = ""
+                for user = ""
+                for date = ""
+                for summary = ""
+                do
+                   (cond
+                     ;; we can use str:string-case with a recent enough quicklisp dist > July 2023 (PR 103)
+                     ((equal key "changeset")
+                      (setf changeset val)
+                      (setf (getf entry :changeset) val)
+                      (setf (getf entry :hash) val))
+                     ((equal key "tag")
+                      (setf tag val)
+                      (setf (getf entry :tag) val))
+                     ((equal key "user")
+                      (setf user val)
+                      (setf (getf entry :user) val))
+                     ((equal key "date")
+                      (setf date val)
+                      (setf (getf entry :date) val))
+                     ((equal key "summary")
+                      (setf summary (str:trim val))
+                      (setf (getf entry :summary) val)
+                      (setf (getf entry :message) val)
+                            (str:concat " " val))
+                      (setf (getf entry :line)
+                            (str:concat changeset " " summary))))
+                finally (return entry)))))
+
+
 (defun fossil-latest-commits (&key &allow-other-keys)
   ;; return bare result.
   (str:lines (run-fossil "timeline")))
@@ -274,6 +487,8 @@
   (case *vcs*
     (:fossil
      (fossil-latest-commits))
+    (:hg
+     (hg-latest-commits))
     (t
      (git-latest-commits :hash-length hash-length))))
 
@@ -281,17 +496,29 @@
 (defun git-stage (file)
   (run-git (list "add" file)))
 
+(defun hg-stage (file)
+  (run-hg (list "add" file)))
+
 (defun fossil-stage (file)
   (run-fossil (list "add" file)))
 
 (defun stage (file)
   (case *vcs*
     (:fossil (fossil-stage file))
+    (:hg (hg-stage file))
     (t (git-stage file))))
 
 (defun unstage (file)
+  "Unstage changes to this file.
+  The reverse of \"add\"."
+  (case *vcs*
+    (:git (git-unstage file))
+    (:hg (hg-unstage file))
+    (:fossil (error "unstage not implemented for Fossil."))
+    (t (error "VCS not supported: ~a" *vcs*))))
+
+(defun git-unstage (file)
   "Unstage changes to a file."
-  ;; test with me: this hunk was added with Lem!
   (run-git (list "reset" "HEAD" "--" file)))
 #|
 Interestingly, this returns the list of unstaged changes:
@@ -302,6 +529,11 @@ M	src/ext/porcelain.lisp
 ""
 |#
 
+(defun hg-unstage (file)
+  (declare (ignorable file))
+  ;; no index like git, we'd need to exclude files from the commit with -X ?
+  (error "no unstage support for Mercurial"))
+
 (defvar *verbose* nil)
 
 (defun git-apply-patch (diff &key reverse)
@@ -309,7 +541,7 @@ M	src/ext/porcelain.lisp
   This is used to stage hunks of files."
   (when *verbose*
     (log:info diff)
-    (with-open-file (f (merge-pathnames "lem-hunk-latest.patch" (lem-home))
+    (with-open-file (f (merge-pathnames "lem-hunk-latest.patch" (%maybe-lem-home))
                        :direction :output
                        :if-exists :supersede
                        :if-does-not-exist :create)
@@ -347,6 +579,7 @@ M	src/ext/porcelain.lisp
   diff: string."
   (case *vcs*
     (:fossil (fossil-apply-patch diff :reverse reverse))
+    (:hg (error "applying patch not yet implemented for Mercurial"))
     (t (git-apply-patch diff :reverse reverse))))
 
 (defun checkout (branch)
@@ -388,7 +621,7 @@ M	src/ext/porcelain.lisp
 (defun %maybe-lem-home ()
   "Return Lem's home directory by calling lem:lem-home only if the :lem package exists,
   otherwise return ~/.lem/.
-  We don't want a hard-coded dependency on Lem, to ease testing."
+  We don't want a hard-coded dependency on Lem in the porcelain package, to ease testing."
   (if (find-package :lem)
       (uiop:symbol-call :lem :lem-home)
       (merge-pathnames ".lem/" (user-homedir-pathname))))
@@ -433,6 +666,13 @@ M	src/ext/porcelain.lisp
     (str:starts-with-p hash root)))
 
 (defun rebase-interactively (&key from)
+  (case *vcs*
+    (:git (git-rebase-interactively :from from))
+    (:hg (error "Interactive rebase not implemented for Mercurial"))
+    (:fossil (error "No interactive rebase for Fossil."))
+    (t (error "Interactive rebase not available for this VCS: ~a" *vcs*))))
+
+(defun git-rebase-interactively (&key from)
   "Start a rebase session.
 
   Then edit the git rebase file and validate the rebase with `rebase-continue`
@@ -455,7 +695,7 @@ and run me again.
 I am stopping in case you still have something valuable there."))
 
   (unless from
-    (return-from rebase-interactively
+    (return-from git-rebase-interactively
       (values "Git rebase is missing the commit to rebase from. We are too shy to rebase everything from the root commit yet. Aborting"
               nil
               1)))

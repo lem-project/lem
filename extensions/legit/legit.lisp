@@ -1,7 +1,8 @@
 (defpackage :lem/legit
   (:use :cl
    :lem)
-  (:export :legit-status)
+  (:export :legit-status
+           :*prompt-for-commit-abort-p*)
   (:documentation "Display version control data of the current project in an interactive two-panes window.
 
   This package in particular defines the right window of the legit interface and the user-level commands.
@@ -11,7 +12,7 @@
 (in-package :lem/legit)
 
 #|
-An interactive interface to Git.
+An interactive interface to Git, with preliminary support for other version-control systems (Fossil, Mercurial).
 
 Done:
 

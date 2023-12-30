@@ -1,8 +1,8 @@
 (in-package :lem-core)
 
-(defun window-recenter (window &key (line nil) (from-bottom nil))
+(defun window-recenter (window &key line from-bottom)
   "Recenter WINDOW to the given LINE number.
-LINE must be omitted, NIL, or a positive number.
+LINE must be NIL or a positive number.
 If LINE is NIL, recenter to the middle of the WINDOW.
 Otherwise, recenter to the nth LINE (starting at 0), counted from the top.
 If FROM-BOTTOM is T, start counting from the bottom."

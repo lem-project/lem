@@ -21,16 +21,16 @@
   (lem-ncurses/term:background-color))
 
 (defmethod lem-if:update-background ((implementation ncurses) color-name)
-  (lem-ncurses/term:set-background color-name))
+  (lem-ncurses/term:update-background-color color-name))
 
 (defmethod lem-if:update-foreground ((implementation ncurses) color-name)
-  (lem-ncurses/term:set-foreground color-name))
+  (lem-ncurses/term:update-foreground-color color-name))
 
 (defmethod lem-if:update-cursor-shape ((implementation ncurses) cursor-type)
   (lem-ncurses/term:update-cursor-shape cursor-type))
 
 (defmethod lem-if:update-background ((implementation ncurses) color-name)
-  (lem-ncurses/term:set-background color-name))
+  (lem-ncurses/term:update-background-color color-name))
 
 (defmethod lem-if:display-width ((implementation ncurses))
   (lem-ncurses/term:get-display-width))

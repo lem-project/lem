@@ -1,8 +1,8 @@
 (defpackage :lem-ncurses/term
   (:use :cl)
   (:export :get-color-pair
-           :set-foreground
-           :set-background
+           :update-foreground-color
+           :update-background-color
            :background-color
            :term-init
            :term-finalize
@@ -400,7 +400,7 @@
     (charms/ll:assume-default-colors fg-color
                                      bg-color)))
 
-(defun set-foreground (name)
+(defun update-foreground-color (name)
   (multiple-value-bind (fg found) (get-color name)
     (let ((bg (nth-value 1 (get-default-colors))))
       (cond (found
@@ -409,7 +409,7 @@
             (t
              (error "Undefined color: ~A" name))))))
 
-(defun set-background (name)
+(defun update-background-color (name)
   (multiple-value-bind (bg found) (get-color name)
     (let ((fg (nth-value 0 (get-default-colors))))
       (cond (found

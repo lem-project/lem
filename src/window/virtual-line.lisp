@@ -1,14 +1,23 @@
 (in-package :lem-core)
 
-(defun window-recenter (window)
-  (unless (= (window-cursor-y window)
-             (floor (window-height-without-modeline window) 2))
+(defun window-recenter (window &key line from-bottom)
+  "Recenter WINDOW to the given LINE number.
+LINE must be NIL or a positive number.
+If LINE is NIL, recenter to the middle of the WINDOW.
+Otherwise, recenter to the nth LINE (starting at 0), counted from the top.
+If FROM-BOTTOM is T, start counting from the bottom."
+  (check-type line (or null integer))
+  (check-type from-bottom boolean)
+  (setq line (cond ((null line)
+                    (floor (window-height-without-modeline window) 2))
+                   (from-bottom
+                    (- (window-height-without-modeline window) line 1))
+                   (t line)))
+  (unless (= line (window-cursor-y window))
     (line-start
      (move-point (window-view-point window)
                  (window-buffer-point window)))
-    (let* ((height (window-height-without-modeline window))
-           (n      (- (window-cursor-y window)
-                      (floor height 2))))
+    (let ((n (- (window-cursor-y window) line)))
       (window-scroll window n)
       n)))
 

@@ -14,6 +14,7 @@
                (:file "attribute")
                (:file "drawing-object")
                (:file "view")
+               (:file "render")
                (:file "input")
                (:file "mainloop")
                (:file "ncurses")))

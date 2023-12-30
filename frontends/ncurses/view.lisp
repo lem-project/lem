@@ -21,8 +21,7 @@
 (in-package :lem-ncurses/view)
 
 (defclass view ()
-  ((window :initarg :window :reader view-window)
-   (border :initarg :border :reader view-border)
+  ((border :initarg :border :reader view-border)
    (scrwin :initarg :scrwin :reader view-scrwin)
    (modeline-scrwin :initarg :modeline-scrwin :reader view-modeline-scrwin)
    (x :initarg :x :accessor view-x)
@@ -30,18 +29,22 @@
    (width :initarg :width :accessor view-width)
    (height :initarg :height :accessor view-height)
    (last-print-cursor-x :initform 0 :accessor view-last-print-cursor-x)
-   (last-print-cursor-y :initform 0 :accessor view-last-print-cursor-y)))
+   (last-print-cursor-y :initform 0 :accessor view-last-print-cursor-y)
+   (cursor-invisible-p :initarg :cursor-invisible :reader view-cursor-invisible-p)))
 
 (defun set-last-print-cursor (view x y)
   (setf (view-last-print-cursor-x view) x
         (view-last-print-cursor-y view) y))
+
+(deftype border-shape ()
+  '(member nil :drop-curtain))
 
 (defstruct border
   win
   width
   height
   size
-  (shape nil :type (member nil :drop-curtain)))
+  (shape nil :type border-shape))
 
 (defun compute-border-window-position (x y border-size)
   (let ((x (- x border-size))
@@ -53,37 +56,33 @@
         (height (+ height (* border-size 2))))
     (list width height)))
 
-(defun make-view (window x y width height use-modeline)
+(defun make-view (x y width height &key modeline type border border-shape cursor-invisible)
+  (check-type type (or null (member :tile :floating)))
+  (check-type border (or null integer))
+  (check-type border-shape border-shape)
   (flet ((newwin (nlines ncols begin-y begin-x)
            (let ((win (charms/ll:newwin nlines ncols begin-y begin-x)))
-             (when use-modeline (charms/ll:keypad win 1))
+             (when modeline (charms/ll:keypad win 1))
              win)))
-    (make-instance
-     'view
-     :window window
-     :border (when (and (lem:floating-window-p window)
-                        (lem:floating-window-border window)
-                        (< 0 (lem:floating-window-border window)))
-               (destructuring-bind (x y)
-                   (compute-border-window-position x
-                                                   y
-                                                   (lem:floating-window-border window))
-                 (destructuring-bind (width height)
-                     (compute-border-window-size width
-                                                 height
-                                                 (lem:floating-window-border window))
-                   (let ((win (newwin height width y x)))
-                     (make-border :win win
-                                  :width width
-                                  :height height
-                                  :size (lem:floating-window-border window)
-                                  :shape (lem:floating-window-border-shape window))))))
-     :scrwin (newwin height width y x)
-     :modeline-scrwin (when use-modeline (newwin 1 width (+ y height) x))
-     :x x
-     :y y
-     :width width
-     :height height)))
+    (make-instance 'view
+                   :border (when (and border (< 0 border))
+                             (destructuring-bind (x y)
+                                 (compute-border-window-position x y border)
+                               (destructuring-bind (width height)
+                                   (compute-border-window-size width height border)
+                                 (let ((win (newwin height width y x)))
+                                   (make-border :win win
+                                                :width width
+                                                :height height
+                                                :size border
+                                                :shape border-shape)))))
+                   :scrwin (newwin height width y x)
+                   :modeline-scrwin (when modeline (newwin 1 width (+ y height) x))
+                   :x x
+                   :y y
+                   :width width
+                   :height height
+                   :cursor-invisible cursor-invisible)))
 
 (defun delete-view (view)
   (charms/ll:delwin (view-scrwin view))
@@ -262,13 +261,10 @@
       (charms/ll:wclrtobot win))))
 
 (defun update-cursor (view)
-  (let* ((window (view-window view))
-         (cursor-x (view-last-print-cursor-x view))
-         (cursor-y (view-last-print-cursor-y view))
-         (scrwin (view-scrwin view)))
-    (cond ((lem:covered-with-floating-window-p window cursor-x cursor-y)
-           (charms/ll:curs-set 0))
-          ((lem:window-cursor-invisible-p window)
+  (let ((cursor-x (view-last-print-cursor-x view))
+        (cursor-y (view-last-print-cursor-y view))
+        (scrwin (view-scrwin view)))
+    (cond ((view-cursor-invisible-p view)
            (charms/ll:curs-set 0))
           (t
            (charms/ll:curs-set 1)

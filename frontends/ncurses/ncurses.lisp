@@ -39,7 +39,19 @@
   (lem-ncurses/term:get-display-height))
 
 (defmethod lem-if:make-view ((implementation ncurses) window x y width height use-modeline)
-  (lem-ncurses/view:make-view window x y width height use-modeline))
+  (lem-ncurses/view:make-view x
+                              y
+                              width
+                              height
+                              :modeline use-modeline
+                              :type (if (lem:floating-window-p window)
+                                        :tile
+                                        :floating)
+                              :border (and (lem:floating-window-p window)
+                                           (lem:floating-window-border window))
+                              :border-shape (and (lem:floating-window-p window)
+                                                 (lem:floating-window-border-shape window))
+                              :cursor-invisible (lem:window-cursor-invisible-p window)))
 
 (defmethod lem-if:delete-view ((implementation ncurses) view)
   (lem-ncurses/view:delete-view view))

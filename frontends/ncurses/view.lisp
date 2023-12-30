@@ -4,7 +4,6 @@
         :lem-core/display)
   (:export :make-view
            :view
-           :view-window
            :view-border
            :view-x
            :view-y
@@ -22,10 +21,10 @@
 (in-package :lem-ncurses/view)
 
 (defclass view ()
-  ((window :initarg :window :accessor view-window)
-   (border :initarg :border :accessor view-border)
-   (scrwin :initarg :scrwin :accessor view-scrwin)
-   (modeline-scrwin :initarg :modeline-scrwin :accessor view-modeline-scrwin)
+  ((window :initarg :window :reader view-window)
+   (border :initarg :border :reader view-border)
+   (scrwin :initarg :scrwin :reader view-scrwin)
+   (modeline-scrwin :initarg :modeline-scrwin :reader view-modeline-scrwin)
    (x :initarg :x :accessor view-x)
    (y :initarg :y :accessor view-y)
    (width :initarg :width :accessor view-width)

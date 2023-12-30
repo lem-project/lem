@@ -1,17 +1,7 @@
-(defpackage :lem-ncurses/internal
-  (:use :cl
-        :lem
-        :lem-ncurses/style
-        :lem-ncurses/key
-        :lem-ncurses/view)
-  (:export
-   :*terminal-io-saved*
-   ;; ncurses-pdcurseswin32.lisp
-   :input-polling-interval))
-(in-package :lem-ncurses/internal)
-
-;; for mouse control
-(defparameter *terminal-io-saved* *terminal-io*)
+(defpackage :lem-ncurses/mainloop
+  (:use :cl :lem)
+  (:export :invoke))
+(in-package :lem-ncurses/mainloop)
 
 (define-condition exit (editor-condition)
   ((value
@@ -55,37 +45,3 @@
     (when (and (typep result 'exit)
                (exit-editor-value result))
       (format t "~&~A~%" (exit-editor-value result)))))
-
-(defun get-background-color ()
-  (lem-ncurses/term:background-mode))
-
-(defun update-foreground-color (color-name)
-  (lem-ncurses/term:term-set-foreground color-name))
-
-(defun update-background-color (color-name)
-  (lem-ncurses/term:term-set-background color-name))
-
-(defun update-cursor-shape (cursor-type)
-  (uiop:run-program `("printf"
-                      ,(format nil "~C[~D q"
-                               #\Esc
-                               (case cursor-type
-                                 (:box 2)
-                                 (:bar 5)
-                                 (:underline 4)
-                                 (otherwise 2))))
-                    :output :interactive
-                    :ignore-error-status t))
-
-(defun get-display-width ()
-  (max 5 charms/ll:*cols*))
-
-(defun get-display-height ()
-  (max 3 charms/ll:*lines*))
-
-(defun get-char-width ()
-  1)
-
-(defun update-display ()
-  (update-view (window-view (current-window)))
-  (charms/ll:doupdate))

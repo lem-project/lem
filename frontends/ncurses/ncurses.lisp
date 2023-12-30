@@ -1,12 +1,10 @@
 (uiop:define-package :lem-ncurses
   (:use :cl)
-  (:use-reexport :lem-ncurses/internal)
-  (:use-reexport :lem-ncurses/config))
+  (:use-reexport :lem-ncurses/config)
+  (:export :*terminal-io-saved*
+           ;; ncurses-pdcurseswin32.lisp
+           :input-polling-interval))
 (in-package :lem-ncurses)
-
-;; popup window margin setting
-(setf lem/popup-window::*extra-right-margin* 1)
-(setf lem/popup-window::*extra-width-margin* 0)
 
 (pushnew :lem-ncurses *features*)
 
@@ -17,31 +15,30 @@
    :redraw-after-modifying-floating-window t))
 
 (defmethod lem-if:invoke ((implementation ncurses) function)
-  (lem-ncurses/internal::invoke function))
+  (lem-ncurses/mainloop:invoke function))
 
 (defmethod lem-if:get-background-color ((implementation ncurses))
-  (lem-ncurses/internal::get-background-color))
+  (lem-ncurses/term:background-color))
 
 (defmethod lem-if:update-background ((implementation ncurses) color-name)
-  (lem-ncurses/internal::update-background-color color-name))
+  (lem-ncurses/term:set-background color-name))
 
 (defmethod lem-if:update-foreground ((implementation ncurses) color-name)
-  (lem-ncurses/internal::update-foreground-color color-name))
+  (lem-ncurses/term:set-foreground color-name))
 
 (defmethod lem-if:update-cursor-shape ((implementation ncurses) cursor-type)
-  (lem-ncurses/internal::update-cursor-shape cursor-type))
+  (lem-ncurses/term:update-cursor-shape cursor-type))
 
 (defmethod lem-if:update-background ((implementation ncurses) color-name)
-  (lem-ncurses/internal::update-background-color color-name))
+  (lem-ncurses/term:set-background color-name))
 
 (defmethod lem-if:display-width ((implementation ncurses))
-  (lem-ncurses/internal::get-display-width))
+  (lem-ncurses/term:get-display-width))
 
 (defmethod lem-if:display-height ((implementation ncurses))
-  (lem-ncurses/internal::get-display-height))
+  (lem-ncurses/term:get-display-height))
 
-(defmethod lem-if:make-view
-    ((implementation ncurses) window x y width height use-modeline)
+(defmethod lem-if:make-view ((implementation ncurses) window x y width height use-modeline)
   (lem-ncurses/view:make-view window x y width height use-modeline))
 
 (defmethod lem-if:delete-view ((implementation ncurses) view)
@@ -60,7 +57,7 @@
   (lem-ncurses/view:redraw-view-after view))
 
 (defmethod lem-if:update-display ((implementation ncurses))
-  (lem-ncurses/internal::update-display))
+  (lem-ncurses/view:update-cursor (lem:window-view (lem:current-window))))
 
 (defmethod lem-if:clipboard-paste ((implementation ncurses))
   (lem-ncurses/clipboard:paste))
@@ -96,4 +93,11 @@
   (lem-ncurses/view:clear-to-end-of-window view y))
 
 (defmethod lem-if:get-char-width ((implementation ncurses))
-  (lem-ncurses/internal::get-char-width))
+  1)
+
+;; for mouse control
+(defparameter *terminal-io-saved* *terminal-io*)
+
+;; popup window margin setting
+(setf lem/popup-window::*extra-right-margin* 1)
+(setf lem/popup-window::*extra-width-margin* 0)

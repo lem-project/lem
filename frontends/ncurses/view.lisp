@@ -19,7 +19,7 @@
            :render-line
            :render-line-on-modeline
            :clear-to-end-of-window
-           :update-view))
+           :update-cursor))
 (in-package :lem-ncurses/view)
 
 (defclass view ()
@@ -257,7 +257,7 @@
       (charms/ll:wmove win y 0)
       (charms/ll:wclrtobot win))))
 
-(defun update-view (view)
+(defun update-cursor (view)
   (let* ((window (view-window view))
          (cursor-x (last-print-cursor-x window))
          (cursor-y (last-print-cursor-y window))
@@ -269,4 +269,5 @@
           (t
            (charms/ll:curs-set 1)
            (charms/ll:wmove scrwin cursor-y cursor-x)))
-    (charms/ll:wnoutrefresh scrwin)))
+    (charms/ll:wnoutrefresh scrwin)
+    (charms/ll:doupdate)))

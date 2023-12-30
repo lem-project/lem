@@ -491,6 +491,15 @@
   '((("mode" #\m) :type string :optional t :documentation "\"tcp\" or \"stdio\"")
     (("port" #\p) :type integer :optional nil :documentation "port of \"tcp\"")))
 
+(defun run-tcp-server (port)
+  (let ((*mode* :tcp)
+        (*port* port))
+    (lem:lem)))
+
+(defun run-stdio-server ()
+  (let ((*mode* :stdio))
+    (lem:lem)))
+
 (defun program (&optional (args (uiop:command-line-arguments)))
   (command-line-arguments:handle-command-line
    +command-line-spec+
@@ -499,12 +508,9 @@
             (unless port
               (command-line-arguments:show-option-help +command-line-spec+)
               (uiop:quit 1))
-            (let ((*mode* :tcp)
-                  (*port* port))
-              (lem:lem)))
+            (run-tcp-server port))
            ((string= mode "stdio")
-            (let ((*mode* :stdio))
-              (lem:lem)))
+            (run-stdio-server))
            (t
             (command-line-arguments:show-option-help +command-line-spec+)
             (uiop:quit 1))))

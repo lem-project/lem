@@ -1,6 +1,5 @@
 (defpackage :lem-ncurses/view
   (:use :cl
-        :lem
         :lem-ncurses/style
         :lem-core/display)
   (:export :make-view
@@ -57,23 +56,23 @@
     (make-instance
      'view
      :window window
-     :border (when (and (floating-window-p window)
-                        (floating-window-border window)
-                        (< 0 (floating-window-border window)))
+     :border (when (and (lem:floating-window-p window)
+                        (lem:floating-window-border window)
+                        (< 0 (lem:floating-window-border window)))
                (destructuring-bind (x y)
                    (compute-border-window-position x
                                                    y
-                                                   (floating-window-border window))
+                                                   (lem:floating-window-border window))
                  (destructuring-bind (width height)
                      (compute-border-window-size width
                                                  height
-                                                 (floating-window-border window))
+                                                 (lem:floating-window-border window))
                    (let ((win (newwin height width y x)))
                      (make-border :win win
                                   :width width
                                   :height height
-                                  :size (floating-window-border window)
-                                  :shape (floating-window-border-shape window))))))
+                                  :size (lem:floating-window-border window)
+                                  :shape (lem:floating-window-border-shape window))))))
      :scrwin (newwin height width y x)
      :modeline-scrwin (when use-modeline (newwin 1 width (+ y height) x))
      :x x
@@ -178,12 +177,12 @@
 (defmethod draw-object ((object text-object) x y view scrwin)
   (let ((string (text-object-string object))
         (attribute (text-object-attribute object)))
-    (when (and attribute (lem-core:cursor-attribute-p attribute))
-      (set-last-print-cursor (view-window view) x y))
+    (when (and attribute (lem:cursor-attribute-p attribute))
+      (lem:set-last-print-cursor (view-window view) x y))
     (print-string scrwin x y string attribute)))
 
 (defmethod draw-object ((object eol-cursor-object) x y view scrwin)
-  (set-last-print-cursor (view-window view) x y)
+  (lem:set-last-print-cursor (view-window view) x y)
   (print-string
    scrwin
    x
@@ -193,7 +192,7 @@
                        (lem:color-to-hex-string (eol-cursor-object-color object)))))
 
 (defmethod draw-object ((object extend-to-eol-object) x y view scrwin)
-  (let ((width (lem-if:view-width (lem-core:implementation) view)))
+  (let ((width (lem-if:view-width (lem:implementation) view)))
     (when (< x width)
       (print-string
        scrwin
@@ -217,7 +216,7 @@
   (values))
 
 (defun render-line-from-behind (view y objects scrwin)
-  (loop :with current-x := (lem-if:view-width (lem-core:implementation) view)
+  (loop :with current-x := (lem-if:view-width (lem:implementation) view)
         :for object :in objects
         :do (decf current-x (lem-ncurses/drawing-object:object-width object))
             (draw-object object current-x y view scrwin)))
@@ -259,12 +258,12 @@
 
 (defun update-cursor (view)
   (let* ((window (view-window view))
-         (cursor-x (last-print-cursor-x window))
-         (cursor-y (last-print-cursor-y window))
+         (cursor-x (lem:last-print-cursor-x window))
+         (cursor-y (lem:last-print-cursor-y window))
          (scrwin (view-scrwin view)))
-    (cond ((covered-with-floating-window-p window cursor-x cursor-y)
+    (cond ((lem:covered-with-floating-window-p window cursor-x cursor-y)
            (charms/ll:curs-set 0))
-          ((window-cursor-invisible-p window)
+          ((lem:window-cursor-invisible-p window)
            (charms/ll:curs-set 0))
           (t
            (charms/ll:curs-set 1)

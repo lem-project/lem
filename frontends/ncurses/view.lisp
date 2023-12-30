@@ -29,7 +29,13 @@
    (x :initarg :x :accessor view-x)
    (y :initarg :y :accessor view-y)
    (width :initarg :width :accessor view-width)
-   (height :initarg :height :accessor view-height)))
+   (height :initarg :height :accessor view-height)
+   (last-print-cursor-x :initform 0 :accessor view-last-print-cursor-x)
+   (last-print-cursor-y :initform 0 :accessor view-last-print-cursor-y)))
+
+(defun set-last-print-cursor (view x y)
+  (setf (view-last-print-cursor-x view) x
+        (view-last-print-cursor-y view) y))
 
 (defstruct border
   win
@@ -178,11 +184,11 @@
   (let ((string (text-object-string object))
         (attribute (text-object-attribute object)))
     (when (and attribute (lem:cursor-attribute-p attribute))
-      (lem:set-last-print-cursor (view-window view) x y))
+      (set-last-print-cursor view x y))
     (print-string scrwin x y string attribute)))
 
 (defmethod draw-object ((object eol-cursor-object) x y view scrwin)
-  (lem:set-last-print-cursor (view-window view) x y)
+  (set-last-print-cursor view x y)
   (print-string
    scrwin
    x
@@ -258,8 +264,8 @@
 
 (defun update-cursor (view)
   (let* ((window (view-window view))
-         (cursor-x (lem:last-print-cursor-x window))
-         (cursor-y (lem:last-print-cursor-y window))
+         (cursor-x (view-last-print-cursor-x view))
+         (cursor-y (view-last-print-cursor-y view))
          (scrwin (view-scrwin view)))
     (cond ((lem:covered-with-floating-window-p window cursor-x cursor-y)
            (charms/ll:curs-set 0))

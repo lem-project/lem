@@ -48,10 +48,6 @@ function calcDisplayRows(height) {
   return Math.floor(height / fontAttribute.height);
 }
 
-function getCurrentWindowSize() {
-  return remote.getCurrentWindow().getSize();
-}
-
 class LemEditorPane extends HTMLElement {
   constructor() {
     super();

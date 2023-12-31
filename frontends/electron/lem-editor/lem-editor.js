@@ -30,11 +30,13 @@ class FontAttribute {
 
 let fontAttribute = new FontAttribute(option.fontName, option.fontSize);
 
-const kindAbort = 0;
-const kindKeyEvent = 1;
-const kindResize = 2;
-const kindCommand = 3;
-const kindMethod = 4;
+const inputKinds = {
+  abort: 0,
+  keyEvent: 1,
+  resize: 2,
+  command: 3,
+  method: 4,
+};
 
 const viewTable = {};
 
@@ -162,7 +164,7 @@ class LemEditor extends HTMLElement {
     });
 
     ipcRenderer.on("command", (event, message) => {
-      this.emitInput(kindCommand, message);
+      this.emitInput(inputKinds.command, message);
     });
 
     // create input text box;
@@ -198,7 +200,7 @@ class LemEditor extends HTMLElement {
   }
 
   sendNotification(method, params) {
-    this.emitInput(kindMethod, { method: method, params: params });
+    this.emitInput(inputKinds.method, { method: method, params: params });
   }
 
   emitInput(kind, value) {
@@ -212,7 +214,7 @@ class LemEditor extends HTMLElement {
   resize(width, height) {
     this.width = width;
     this.height = height;
-    this.emitInput(kindResize, {
+    this.emitInput(inputKinds.resize, {
       width: calcDisplayCols(width),
       height: calcDisplayRows(height),
     });
@@ -364,7 +366,7 @@ class Picker {
       event.preventDefault();
       if (event.isComposing !== true && event.code !== "") {
         const k = keyevent.convertKeyEvent(event);
-        this.editor.emitInput(kindKeyEvent, k);
+        this.editor.emitInput(inputKinds.keyEvent, k);
         this.picker.value = "";
         return false;
       }
@@ -393,7 +395,7 @@ class Picker {
       let chars = this.picker.value
         .split("")
         .map((char) => utf8.setBytesFromString(char));
-      this.editor.emitInput(kindCommand, ["input-string", chars]);
+      this.editor.emitInput(inputKinds.command, ["input-string", chars]);
       this.picker.value = "";
       this.measure.innerHTML = this.picker.value;
       this.picker.style.width = "0";

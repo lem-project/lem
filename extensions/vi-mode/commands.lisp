@@ -44,7 +44,9 @@
            :vi-forward-word-begin-broad
            :vi-backward-word-begin-broad
            :vi-forward-word-end
+           :vi-backward-word-end
            :vi-forward-word-end-broad
+           :vi-backward-word-end-broad
            :vi-move-to-beginning-of-line
            :vi-move-to-end-of-line
            :vi-move-to-last-nonblank
@@ -229,9 +231,12 @@
     (forward-word-end #'broad-word-char-type)))
 
 (define-command vi-backward-word-end (&optional (n 1)) ("p")
-  (character-offset (current-point) -1)
-  (skip-chars-backward (current-point) #'blank-char-p)
-  (vi-backward-word-begin n))
+  (dotimes (i n)
+    (backward-word-end #'word-char-type)))
+
+(define-command vi-backward-word-end-broad (&optional (n 1)) ("p")
+  (dotimes (i n)
+    (backward-word-end #'broad-word-char-type)))
 
 (define-command vi-move-to-beginning-of-line () ()
   (with-point ((start (current-point)))

@@ -3,30 +3,12 @@
 const rpc = require("vscode-jsonrpc");
 const cp = require("child_process");
 const utf8 = require("utf-8");
-const ipcRenderer = require("electron").ipcRenderer;
 
+const ipcRenderer = require("electron").ipcRenderer;
 const remote = require('@electron/remote');
 
 const keyevent = require("./keyevent");
-
-// load option file
-const defaultOption = require("./option").option;
-const OPTION_FILE_NAME = "electron.yml";
-const fs = require("fs");
-const path = require("path");
-const yaml = require("js-yaml");
-const homedir =
-  process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"];
-const lemHome = process.env["LEM_HOME"] || path.join(homedir, ".lem");
-const optionFilePath = path.join(lemHome, OPTION_FILE_NAME);
-function loadOption(path) {
-  try {
-    return yaml.safeLoad(fs.readFileSync(path, "utf-8"));
-  } catch (e) {
-    return {};
-  }
-}
-const option = Object.assign(defaultOption, loadOption(optionFilePath));
+const option = require("./option").option;
 
 class FontAttribute {
   constructor(name, size) {

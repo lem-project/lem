@@ -59,6 +59,8 @@
 (define-key *motion-keymap* "N" 'vi-search-previous)
 (define-key *motion-keymap* "*" 'vi-search-forward-symbol-at-point)
 (define-key *motion-keymap* "g g" 'vi-goto-first-line)
+(define-key *motion-keymap* "g e" 'vi-backward-word-end)
+(define-key *motion-keymap* "g E" 'vi-backward-word-end-broad)
 (define-key *motion-keymap* "G" 'vi-goto-line)
 (define-key *motion-keymap* "Return" 'vi-return)
 (define-key *motion-keymap* "f" 'vi-find-char)

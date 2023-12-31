@@ -127,6 +127,10 @@
 (define-key *insert-keymap* "Escape" 'vi-end-insert)
 (define-key *insert-keymap* "C-p" 'abbrev)
 (define-key *insert-keymap* "C-w" 'vi-kill-last-word)
+(define-key *insert-keymap* "Shift-Up" 'previous-page)
+(define-key *insert-keymap* "Shift-Down" 'next-page)
+(define-key *insert-keymap* "Shift-Left" 'vi-backward-word-begin)
+(define-key *insert-keymap* "Shift-Right" 'vi-forward-word-begin)
 
 (define-key *normal-keymap* "C-p" 'yank-pop)
 (define-key *normal-keymap* "C-n" 'yank-pop-next)

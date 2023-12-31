@@ -68,14 +68,6 @@ function getCurrentWindowSize() {
   return remote.getCurrentWindow().getSize();
 }
 
-function getCurrentWindowWidth() {
-  return getCurrentWindowSize()[0];
-}
-
-function getCurrentWindowHeight() {
-  return getCurrentWindowSize()[1];
-}
-
 class LemEditorPane extends HTMLElement {
   constructor() {
     super();
@@ -411,7 +403,7 @@ class LemEditor extends HTMLElement {
     view.scroll(n);
   }
 
-  updateDisplay(params) {}
+  updateDisplay(params) { }
 
   jsEval(params) {
     try {
@@ -629,7 +621,7 @@ class View {
   }
 }
 
-class DrawingEvent {}
+class DrawingEvent { }
 
 class DrawBlock extends DrawingEvent {
   constructor({ style, x, y, w, h }) {

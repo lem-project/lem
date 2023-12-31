@@ -273,7 +273,7 @@
 (defun bool (x) (if x 'yason:true 'yason:false))
 
 (defun ensure-rgb (color)
-  (if (typep color 'lem-core::color)
+  (if (typep color 'lem:color)
       (lem:color-to-hex-string color)
       color))
 

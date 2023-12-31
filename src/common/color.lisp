@@ -1,6 +1,7 @@
 (defpackage :lem/common/color
   (:use :cl)
-  (:export :make-color
+  (:export :color
+           :make-color
            :color-red
            :color-blue
            :color-green

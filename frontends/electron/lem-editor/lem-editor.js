@@ -74,28 +74,6 @@ class LemEditorPane extends HTMLElement {
   }
 }
 
-class LemSidePane extends HTMLElement {
-  constructor() {
-    super();
-    this.elements = [];
-  }
-
-  append(element) {
-    const div = document.createElement("div");
-    div.style.overflow = "hidden";
-    div.appendChild(element);
-    this.appendChild(div);
-    this.elements.push(div);
-    this.elements.forEach((e, i) => {
-      e.style.height = `${100 / this.elements.length}%`;
-    });
-  }
-
-  deleteAll() {
-    this.elements.forEach((e) => this.removeChild(e));
-  }
-}
-
 class LemEditor extends HTMLElement {
   constructor() {
     super();
@@ -121,10 +99,6 @@ class LemEditor extends HTMLElement {
     this.on("move-cursor", this.moveCursor.bind(this));
     this.on("scroll", this.scroll.bind(this));
     this.on("update-display", this.updateDisplay.bind(this));
-    this.on("js-eval", this.jsEval.bind(this));
-    this.on("set-pane", this.setHtmlPane.bind(this));
-    this.on("delete-pane", this.deletePane.bind(this));
-    this.on("import", this.importModule.bind(this));
     this.on("set-font", this.setFont.bind(this));
     this.on("exit", this.exit.bind(this));
 
@@ -133,8 +107,6 @@ class LemEditor extends HTMLElement {
     this.lemEditorPane = document.createElement("lem-editor-pane");
     this.lemEditorPane.style.float = "left";
     this.appendChild(this.lemEditorPane);
-
-    this.lemSidePane = null;
 
     const mainWindow = remote.getCurrentWindow();
     const contentBounds = mainWindow.getContentBounds();
@@ -233,35 +205,6 @@ class LemEditor extends HTMLElement {
     this.rpcConnection.onNotification(method, handler);
   }
 
-  setPane(e) {
-    if (this.lemSidePane === null) {
-      this.lemSidePane = document.createElement("lem-side-pane");
-      this.appendChild(this.lemSidePane);
-      this.resize(this.width, this.height);
-    }
-    this.lemSidePane.append(e);
-  }
-
-  setHtmlPane(params) {
-    const div = document.createElement("div");
-    div.innerHTML = utf8.getStringFromBytes(params.html);
-    this.setPane(div);
-  }
-
-  deletePane() {
-    this.removeChild(this.lemSidePane);
-    this.lemSidePane = null;
-    this.resize(...getCurrentWindowSize());
-  }
-
-  importModule(params) {
-    try {
-      require(params.name);
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
   setFont(params) {
     fontAttribute = new FontAttribute(params.name, params.size);
     this.fontWidth = fontAttribute.width;
@@ -285,9 +228,6 @@ class LemEditor extends HTMLElement {
   }
 
   resize(width, height) {
-    if (this.lemSidePane !== null) {
-      width /= 2;
-    }
     this.width = width;
     this.height = height;
     this.emitInput(kindResize, {
@@ -404,14 +344,6 @@ class LemEditor extends HTMLElement {
   }
 
   updateDisplay(params) { }
-
-  jsEval(params) {
-    try {
-      eval(params.string);
-    } catch (e) {
-      console.log(e);
-    }
-  }
 }
 
 class Picker {
@@ -803,5 +735,4 @@ class Surface {
 
 
 customElements.define("lem-editor", LemEditor);
-customElements.define("lem-side-pane", LemSidePane);
 customElements.define("lem-editor-pane", LemEditorPane);

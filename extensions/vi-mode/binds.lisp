@@ -72,6 +72,7 @@
 (define-key *motion-keymap* "," 'vi-find-char-repeat-backward)
 (define-key *motion-keymap* "z z" 'recenter)
 (define-key *motion-keymap* "Z Z" 'vi-write-quit)
+(define-key *motion-keymap* "Z Q" 'vi-quit)
 (define-key *motion-keymap* "C-w s" 'split-active-window-vertically)
 (define-key *motion-keymap* "C-w C-s" 'split-active-window-vertically)
 (define-key *motion-keymap* "C-w w" 'next-window)

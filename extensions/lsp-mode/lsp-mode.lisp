@@ -1236,7 +1236,7 @@
 ;;; document highlights
 
 (define-attribute document-highlight-text-attribute
-  (t :background :base0A))
+  (t :background :base02))
 
 (defun provide-document-highlight-p (workspace)
   (handler-case (lsp:server-capabilities-document-highlight-provider

@@ -146,7 +146,7 @@
                          :height height
                          :use-modeline use-modeline
                          :kind (if (lem:floating-window-p window)
-                                   "popup"
+                                   "floating"
                                    "tile"))))
     (notify jsonrpc "make-view" view)
     view))

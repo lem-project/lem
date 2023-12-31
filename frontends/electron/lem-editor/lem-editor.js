@@ -108,7 +108,7 @@ class LemEditor extends HTMLElement {
   constructor() {
     super();
 
-    const childProcess = cp.spawn("lem-rpc");
+    const childProcess = cp.spawn("lem-jsonrpc");
     this.rpcConnection = rpc.createMessageConnection(
       new rpc.StreamMessageReader(childProcess.stdout),
       new rpc.StreamMessageWriter(childProcess.stdin)
@@ -515,7 +515,7 @@ class Picker {
 }
 
 const viewStyleTable = {
-  popup: {
+  floating: {
     "zIndex": 5,
     "border-radius": "10px",
     "border": "2px solid #FFF",

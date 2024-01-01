@@ -84,6 +84,7 @@
            :vi-kill-last-word
            :vi-upcase
            :vi-downcase
+           :vi-swapcase
            :vi-undo
            :vi-redo
            :vi-record-macro
@@ -584,6 +585,22 @@ Move the cursor to the first non-blank character of the line."
   (if (eq type :block)
       (apply-visual-range #'downcase-region)
       (downcase-region start end)))
+
+(define-operator vi-swapcase (start end type) ("<R>")
+    (:move-point t)
+  (flet ((swapcase-region (start end)
+           (save-excursion
+             (with-point ((pt start :left-inserting))
+               (loop :while (and (point< pt end)
+                                 (not (end-buffer-p pt)))
+                     :do (let ((chr (character-at pt 0)))
+                           (delete-character pt)
+                           (insert-character pt (if (upper-case-p chr)
+                                                    (char-downcase chr)
+                                                    (char-upcase chr)))))))))
+    (if (eq type :block)
+        (apply-visual-range #'swapcase-region)
+        (swapcase-region start end))))
 
 (define-command vi-undo (&optional (n 1)) ("p")
   (undo n))

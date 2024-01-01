@@ -15,6 +15,7 @@
    :stop-timer
    :with-idle-timers
    :update-idle-timers
+   :timer-ms
    :get-next-timer-timing-ms)
   #+sbcl
   (:lock t))

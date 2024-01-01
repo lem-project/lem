@@ -23,6 +23,7 @@
     "lem-electron": "frontends/electron/cli.js"
   },
   "devDependencies": {
-    "electron-rebuild": "^1.10.1"
+    "electron-rebuild": "^1.10.1",
+    "prettier": "3.1.1"
   }
 }

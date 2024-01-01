@@ -216,8 +216,8 @@
         (when (< 0 (- (floor *delete-nlines* 4)
                       (floor prev-nlines 4)))
           (incf *level*)
-          (when (< 100 (timer-ms *timer*))
-            (decf (timer-ms *timer*) 100)))))))
+          (when (< 100 (lem/common/timer:timer-ms *timer*))
+            (decf (lem/common/timer:timer-ms *timer*) 100)))))))
 
 (defun gameover-p ()
   (loop :for x :from 1 :below (1- +field-width+) :do

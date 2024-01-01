@@ -609,15 +609,19 @@ class Surface {
   move(x, y) {
     this.x = x;
     this.y = y;
-    this.canvas.style.left = x * fontAttribute.width;
-    this.canvas.style.top = y * fontAttribute.height;
+    this.canvas.style.left = Math.floor(x * fontAttribute.width);
+    this.canvas.style.top = Math.floor(y * fontAttribute.height);
   }
 
   resize(width, height) {
+    const ratio = window.devicePixelRatio || 1;
     this.width = width;
     this.height = height;
-    this.canvas.width = width * fontAttribute.width;
-    this.canvas.height = height * fontAttribute.height;
+    this.canvas.width = width * fontAttribute.width * ratio;
+    this.canvas.height = height * fontAttribute.height * ratio;
+    this.canvas.style.width = (width * fontAttribute.width) + 'px';
+    this.canvas.style.height = (height * fontAttribute.height) + 'px';
+    this.ctx.scale(ratio, ratio);
   }
 
   drawBlock(x, y, w, h, color) {

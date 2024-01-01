@@ -38,8 +38,6 @@ const inputKinds = {
   method: 4,
 };
 
-const viewTable = {};
-
 function calcDisplayCols(width) {
   return Math.floor(width / fontAttribute.width);
 }
@@ -57,6 +55,8 @@ class LemEditorPane extends HTMLElement {
 class LemEditor extends HTMLElement {
   constructor() {
     super();
+
+    this.viewTable = {};
 
     const childProcess = cp.spawn("lem-jsonrpc");
     this.rpcConnection = rpc.createMessageConnection(
@@ -238,76 +238,76 @@ class LemEditor extends HTMLElement {
     view.allTags().forEach((child) => {
       this.lemEditorPane.appendChild(child);
     });
-    viewTable[id] = view;
+    this.viewTable[id] = view;
   }
 
   deleteView(params) {
     //console.log('delete-view', params);
     const { id } = params.viewInfo;
-    const view = viewTable[id];
+    const view = this.viewTable[id];
     view.delete();
-    delete viewTable[id];
+    delete this.viewTable[id];
   }
 
   resizeView(params) {
     //console.log('resize-view', params);
     const { viewInfo, width, height } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.resize(width, height);
   }
 
   moveView(params) {
     //console.log('move-view', params);
     const { x, y, viewInfo } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.move(x, y);
   }
 
   clear(params) {
     //console.log('clear', params);
-    const view = viewTable[params.viewInfo.id];
+    const view = this.viewTable[params.viewInfo.id];
     view.clear();
   }
 
   clearEol(params) {
     //console.log('clear-eol', params);
     const { viewInfo, x, y } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.clearEol(x, y);
   }
 
   clearEob(params) {
     //console.log('clear-eob', params);
     const { viewInfo, x, y } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.clearEob(x, y);
   }
 
   put(params) {
     //console.log('put', params);
     const { viewInfo, x, y, text, textWidth, attribute } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.put(x, y, text, textWidth, attribute);
   }
 
   modelinePut(params) {
     //console.log('modeline-put', params);
     const { viewInfo, x, y, text, textWidth, attribute } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.modelinePut(x, text, textWidth, attribute);
   }
 
   touch(params) {
     //console.log('touch', params);
     const { viewInfo } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.touch();
   }
 
   moveCursor(params) {
     //console.log('move-cursor', params);
     const { viewInfo, x, y } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.setCursor(x, y);
     const left =
       view.editSurface.canvas.offsetLeft + x * fontAttribute.width + 3;
@@ -320,7 +320,7 @@ class LemEditor extends HTMLElement {
   scroll(params) {
     //console.log('scroll', params);
     const { viewInfo, n } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.scroll(n);
   }
 

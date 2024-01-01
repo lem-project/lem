@@ -24,7 +24,7 @@
   (:default-initargs
    :name :jsonrpc
    :redraw-after-modifying-floating-window nil
-   :window-left-margin 0))
+   :window-left-margin 1))
 
 (defmethod resize-display ((jsonrpc jsonrpc) width height)
   (setf (jsonrpc-display-width jsonrpc) width

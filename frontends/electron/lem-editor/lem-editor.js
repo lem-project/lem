@@ -228,6 +228,7 @@ class LemEditor extends HTMLElement {
     //console.log('update-background', params);
     option.background = params;
     this.picker.updateBackground(params);
+    this.lemEditorPane.style['background-color'] = option.background;
   }
 
   makeView(params) {
@@ -418,18 +419,46 @@ class Picker {
   }
 }
 
-const viewStyleTable = {
-  floating: {
-    "zIndex": 5,
-    "border-radius": "10px",
-    "border": "2px solid #FFF",
-    "padding": "10px",
-    "background": "#333" // option.background
-  },
-  tile: {
-    "border-left": "1px solid #ccc",
-  },
+class VerticalBorder {
+  constructor(x, y, height) {
+    this.border = document.createElement("div");
+    this.border.style.backgroundColor = "#ccc";
+    this.border.style.width = '2px';
+    this.border.style.height = height * fontAttribute.height;
+    this.border.style.position = "absolute";
+    this.move(x, y);
+  }
+
+  move(x, y) {
+    this.border.style.left = Math.floor(x * fontAttribute.width - fontAttribute.width / 2);
+    this.border.style.top = y * fontAttribute.height;
+  }
+
+  resize(height) {
+    this.border.style.height = height * fontAttribute.height;
+  }
+}
+
+const floatingViewStyle = {
+  "zIndex": 5,
+  "border-radius": "10px",
+  "border": "2px solid #FFF",
+  "padding": "10px",
+  "background": "#333" // option.background
+}
+
+const tileViewStyle = {
+  //"border-left": "2px solid #ccc",
+}
+
+const viewStyles = {
+  "tile": tileViewStyle,
+  "floating": floatingViewStyle,
 };
+
+function getViewStyle(kind) {
+  return viewStyles[kind] || {};
+}
 
 class View {
   constructor(id, x, y, width, height, use_modeline, kind) {
@@ -437,13 +466,15 @@ class View {
     this.width = width;
     this.height = height;
     this.use_modeline = use_modeline;
+    this.kind = kind;
     this.editSurface = new Surface(
       x,
       y,
       width,
       height,
-      viewStyleTable[kind] || {}
+      getViewStyle(kind),
     );
+
     if (use_modeline) {
       this.modelineSurface = new Surface(x, y + height, width, 1, {
         zIndex: 1,
@@ -451,17 +482,38 @@ class View {
     } else {
       this.modelineSurface = null;
     }
+
+    if (x > 0 && kind === "tile") {
+      this.leftSideBorder = new VerticalBorder(
+        x - 2,
+        y,
+        height + (this.modelineSurface === null ? 0 : 1),
+      );
+    } else {
+      this.leftSideBorder = null;
+    }
+
     this.move(x, y);
     this.resize(width, height);
+
     this.cursor = { x: null, y: null, color: option.foreground };
   }
 
+  updateEditSurfaceStyle() {
+    this.editSurface.updateStyle(getViewStyle(this.kind))
+  }
+
   allTags() {
+    let tags = [this.editSurface.canvas];
+
     if (this.modelineSurface !== null) {
-      return [this.editSurface.canvas, this.modelineSurface.canvas];
-    } else {
-      return [this.editSurface.canvas];
+      tags.push(this.modelineSurface.canvas);
     }
+    if (this.leftSideBorder !== null) {
+      tags.push(this.leftSideBorder.border);
+    }
+
+    return tags;
   }
 
   delete() {
@@ -471,12 +523,20 @@ class View {
         this.modelineSurface.canvas
       );
     }
+    if (this.leftSideBorder !== null) {
+      this.leftSideBorder.border.parentNode.removeChild(
+        this.leftSideBorder.border
+      );
+    }
   }
 
   move(x, y) {
     this.editSurface.move(x, y);
     if (this.modelineSurface !== null) {
       this.modelineSurface.move(x, y + this.height);
+    }
+    if (this.leftSideBorder !== null) {
+      this.leftSideBorder.move(x, y);
     }
   }
 
@@ -490,6 +550,13 @@ class View {
         this.editSurface.y + this.editSurface.height
       );
       this.modelineSurface.resize(width, 1);
+    }
+    if (this.leftSideBorder !== null) {
+      this.leftSideBorder.move(
+        this.x,
+        this.editSurface.y - 2,
+      );
+      this.leftSideBorder.resize(height + (this.modelineSurface === null ? 0 : 1));
     }
   }
 
@@ -597,13 +664,17 @@ class Surface {
     this.height = height;
     this.canvas = document.createElement("canvas");
     this.canvas.style.position = "absolute";
-    for (let key in styles) {
-      this.canvas.style[key] = styles[key];
-    }
+    this.updateStyle(styles);
     this.ctx = this.canvas.getContext("2d", { alpha: false });
     this.ctx.textBaseline = "top";
     this.ctx.font = fontAttribute.font;
     this.event_queue = [];
+  }
+
+  updateStyle(styles) {
+    for (let key in styles) {
+      this.canvas.style[key] = styles[key];
+    }
   }
 
   move(x, y) {

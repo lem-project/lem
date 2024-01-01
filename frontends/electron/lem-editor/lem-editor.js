@@ -439,21 +439,15 @@ class VerticalBorder {
   }
 }
 
-const floatingViewStyle = {
-  "zIndex": 5,
-  "border-radius": "10px",
-  "border": "2px solid #FFF",
-  "padding": "10px",
-  "background": "#333" // option.background
-}
-
-const tileViewStyle = {
-  //"border-left": "2px solid #ccc",
-}
-
 const viewStyles = {
-  "tile": tileViewStyle,
-  "floating": floatingViewStyle,
+  "tile": {},
+  "floating": {
+    "zIndex": 5,
+    "border-radius": "10px",
+    "border": "2px solid #FFF",
+    "padding": "10px",
+    "background": "#333" // option.background
+  },
 };
 
 function getViewStyle(kind) {

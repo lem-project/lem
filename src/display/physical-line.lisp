@@ -256,13 +256,16 @@
                                                left-side-objects
                                                left-side-width)
   (let* ((objects-per-physical-line
-           (separate-objects-by-width
-            (append left-side-objects (create-drawing-objects logical-line))
-            (window-view-width window))))
+           (separate-objects-by-width (create-drawing-objects logical-line)
+                                      (- (window-view-width window) left-side-width)))
+         (height (max-height-of-objects (car objects-per-physical-line)))
+         (empty-left-side-objects (list (make-object-with-type (make-string left-side-width :initial-element #\space) nil nil))))
+    (render-line-with-caching window 0 y left-side-objects height)
     (loop :for objects :in objects-per-physical-line
           :for height := (max-height-of-objects objects)
-          :for x := 0 :then left-side-width
-          :do (render-line-with-caching window x y objects height)
+          :for first := t :then nil
+          :do (unless first (render-line-with-caching window 0 y empty-left-side-objects height))
+              (render-line-with-caching window left-side-width y objects height)
               (incf y height)
           :sum height)))
 

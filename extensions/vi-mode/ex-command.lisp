@@ -198,3 +198,7 @@
 (define-ex-command "^noh(?:lsearch)?$" (range argument)
   (declare (ignore range argument))
   (lem/isearch:isearch-end))
+
+(define-ex-command "^pwd?$" (range argument)
+  (declare (ignore range argument))
+  (lem:current-directory))

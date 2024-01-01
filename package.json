@@ -14,7 +14,6 @@
     "child_process": "^1.0.2",
     "electron": "^25.9.8",
     "js-yaml": "^3.13.1",
-    "marked": "^0.3.6",
     "native-keymap": "^2.1.2",
     "node-gyp": "^10.0.1",
     "utf-8": "^1.0.0",

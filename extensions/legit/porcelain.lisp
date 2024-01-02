@@ -470,7 +470,7 @@ summary:     test
                      ((equal key "summary")
                       (setf summary (str:trim val))
                       (setf (getf entry :summary) val)
-                      (setf (getf entry :message) val)
+                      (setf (getf entry :message)
                             (str:concat " " val))
                       (setf (getf entry :line)
                             (str:concat changeset " " summary))))

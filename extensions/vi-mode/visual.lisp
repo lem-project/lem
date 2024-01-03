@@ -258,6 +258,7 @@
 
 
 (eval-when (:compile-toplevel :load-toplevel)
+  #+sbcl
   (sb-ext:unlock-package :lem-base)
 
   (defmethod lem-base::global-mode-region-beginning ((global-mode (eql :|vi|)) &optional (buffer (current-buffer)))
@@ -272,4 +273,5 @@
         (cadr (visual-range))
         (editor-error "Not in visual mode")))
 
+  #+sbcl
   (sb-ext:lock-package :lem-base))

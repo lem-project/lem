@@ -1,22 +1,24 @@
-(defpackage :lem-elixir-mode.run-elixir
-  (:use :cl :lem :lem-elixir-mode :alexandria)
-  (:export :*elixir-run-command*
-           :run-elixir))
+(defpackage :lem-python-mode.run-ipython
+  (:use :cl :lem :lem-python-mode)
+  (:export :*ipython-run-command*
+           :run-ipython))
 
-(in-package :lem-elixir-mode.run-elixir)
+(in-package :lem-python-mode.run-ipython)
 
-(defvar *elixir-run-command* "iex")
+(defvar *ipython-flags* '("--simple-prompt" "--colors=NoColor"))
+
+(defvar *ipython-run-command* "ipython3")
 
 (defvar *process* nil)
 
-(define-major-mode run-elixir-mode ()
-    (:name "elixir"
-     :keymap *run-elixir-mode-keymap*
-     :syntax-table *elixir-syntax-table*)
+(define-major-mode run-ipython-mode ()
+    (:name "Python"
+     :keymap *run-ipython-mode-keymap*
+     :syntax-table lem-python-mode::*python-syntax-table*)
   (reset-listener-variables (current-buffer))
   (lem/listener-mode:start-listener-mode))
 
-(define-key *elixir-mode-keymap* "C-c C-r" 'elixir-eval-region)
+(define-key lem-python-mode::*python-mode-keymap* "C-c C-r" 'ipython-eval-region)
 
 (defun reset-listener-variables (buffer)
   (setf (variable-value 'lem/listener-mode:listener-set-prompt-function :buffer buffer)
@@ -29,7 +31,7 @@
 (defun execute-input (point string)
   (declare (ignore point))
   (unless (alive-process-p)
-    (editor-error "Elixir process doesn't exist."))
+    (editor-error "IPython process doesn't exist."))
   (ipm/impl:process-send-line string *process*))
 
 (defun alive-process-p ()
@@ -37,12 +39,12 @@
        (ipm/impl:process-alive-p *process*)))
 
 (defun repl-buffer-exists-p ()
-  (get-buffer "*elixir*"))
+  (get-buffer "*ipython*"))
 
 (defun get-repl-buffer ()
-  (let ((buffer (or (repl-buffer-exists-p) (make-buffer "*elixir*"))))
-    (unless (eq (buffer-major-mode buffer) 'run-elixir-mode)
-      (change-buffer-mode buffer 'run-elixir-mode))
+  (let ((buffer (make-buffer "*ipython*")))
+    (unless (eq (buffer-major-mode buffer) 'run-ipython-mode)
+      (change-buffer-mode buffer 'run-ipython-mode))
     buffer))
 
 (defun output-callback (string)
@@ -53,7 +55,7 @@
       (buffer-end p)
 
       (insert-string p string)
-      (when (ppcre:scan "^(iex|...)(.+)" (line-string p))
+      (when (ppcre:scan "^(In \\[[0-9]+\\]: )|(   ...: )" (line-string p))
         (lem/listener-mode:refresh-prompt buffer nil))
       (unless already-exists
         (switch-to-window (pop-to-buffer buffer)))
@@ -63,19 +65,21 @@
           (window-see window)))
       (redraw-display))))
 
-(defun run-elixir-internal ()
+(defun run-ipython-internal ()
   (unless (and (alive-process-p) (repl-buffer-exists-p))
     (when *process*
       (lem/run-process:destroy-process *process*))
     (setf *process*
           (lem/run-process:run-process
-           *elixir-run-command*
-           :name "run-elixir"
+           (str:join #\Space (concatenate 'List
+                                          (list *ipython-run-command*)
+                                          *ipython-flags*))
+           :name "run-ipython"
            :output-callback 'output-callback))))
 
-(define-command elixir-eval-region (start end) ("r")
+(define-command ipython-eval-region (start end) ("r")
   (unless (ipm/impl:process-alive-p *process* )
-    (editor-error "elixir process doesn't exist."))
+    (editor-error "IPython process doesn't exist."))
   (let* ((buffer (get-repl-buffer))
          (p (buffer-point buffer)))
     (buffer-end p)
@@ -83,16 +87,10 @@
     (ipm/impl:process-send-line (points-to-string start end) *process*)
     (lem/listener-mode:refresh-prompt buffer nil)))
 
-(define-command run-elixir () ()
-  (run-elixir-internal))
-
-(define-command run-elixir-project () ()
-  (alexandria:if-let ((root (lem-core/commands/project:find-root (buffer-directory)))
-                      (*elixir-run-command* "iex -S mix"))
-    (uiop:with-current-directory (root)
-      (run-elixir-internal))))
+(define-command run-ipython () ()
+  (run-ipython-internal))
 
 (add-hook *exit-editor-hook*
           (lambda ()
             (when *process*
-              (lem/run-process:destroy-process *process*))))
+              (ignore-errors (lem/run-process:destroy-process *process*)))))

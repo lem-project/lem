@@ -33,7 +33,9 @@
                "lem-encodings"
 	       #+sbcl
 	       sb-concurrency
-	       "lem-mailbox")
+	       "lem-mailbox"
+               #+ip-management
+	       "ip-management")
   :pathname "src"
   :serial t
   :components ((:module "common"
@@ -156,7 +158,9 @@
                              (:file "filer")
                              (:file "deepl")
                              (:file "themes")
-                             (:file "detective")))))
+                             (:file "detective")
+                             #+ip-management
+			     (:file "run-process")))))
 
 (defsystem "lem/extensions"
   :depends-on (#+sbcl

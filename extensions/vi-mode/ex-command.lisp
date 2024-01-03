@@ -195,9 +195,9 @@
   ;; This makes it impossible to insert at the beginning of the file
   (cond
     ((string= "" filename)
-     (lem:message "No file name"))
+     (lem:editor-error "No file name"))
     ((char= #\! (char filename 0))
-     (lem:message "Command execution not supported"))
+     (lem:editor-error "Command execution not supported"))
     (t
      (let ((insert-point (case (length range)
                            (0 (lem:current-point))
@@ -207,7 +207,7 @@
        (lem:line-start (lem:current-point))
        (unless (lem:line-offset (lem:current-point) 1)
          (lem:line-end (lem:current-point))
-         (lem:newline))
+         (lem:insert-character (lem:current-point) #\newline))
        (lem:insert-file-contents (lem:current-point) filename)))))
 
 (define-ex-command "^cd$" (range new-directory)

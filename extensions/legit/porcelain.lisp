@@ -476,7 +476,7 @@ summary:     test
                             (str:concat " " val))
                       (setf (getf entry :line)
                             (str:concat changeset " " summary))))
-                finally (return entry))))
+                finally (return entry)))))
 
 
 (defun fossil-latest-commits (&key &allow-other-keys)

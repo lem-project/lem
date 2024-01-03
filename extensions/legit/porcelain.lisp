@@ -2,6 +2,8 @@
 (defpackage :lem/porcelain
   (:use :cl)
   (:shadow :push)
+  (:import-from :trivial-types
+                :proper-list)
   (:export
    :*vcs*
    :apply-patch
@@ -46,15 +48,15 @@ Mercurial:
 
 |#
 
-(declaim (type (cons) *git-base-arglist*))
+(declaim (type (proper-list string) *git-base-arglist*))
 (defvar *git-base-arglist* (list "git")
   "The git program, to be appended command-line options.")
 
-(declaim (type (cons) *fossil-base-args*))
+(declaim (type (proper-list string) *fossil-base-args*))
 (defvar *fossil-base-args* (list "fossil")
   "The fossil program, to be appended command-line options.")
 
-(declaim (type (cons) *hg-base-arglist*))
+(declaim (type (proper-list string) *hg-base-arglist*))
 (defvar *hg-base-arglist* (list "hg")
   "The mercurial program (hg), to be appended command-line options.")
 

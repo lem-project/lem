@@ -614,9 +614,12 @@ M	src/ext/porcelain.lisp
 
 ;; Save our script as a string at compile time.
 (defparameter *rebase-script-content*
+  #+(or lem-ncurses lem-sdl2)
   (str:from-file
    (asdf:system-relative-pathname (asdf:find-system "lem")
                                   "scripts/dumbrebaseeditor.sh"))
+  #-(or lem-ncurses lem-sdl2)
+  ""
   "Our dumb editor shell script, saved as a string at compile time.
   We then save it to the user's ~/.lem/legit/rebaseetidor.sh at first use.")
 

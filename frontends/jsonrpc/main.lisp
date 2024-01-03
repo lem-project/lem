@@ -39,7 +39,7 @@
 
 (defun ready (jsonrpc loaded-fn)
   (lambda (params)
-    (log:info "ready" (pretty-json params))
+    (pdebug "ready: ~A" (pretty-json params))
     (with-error-handler ()
       (let ((width (gethash "width" params))
             (height (gethash "height" params))
@@ -82,7 +82,11 @@
                               :port *port*))
       (:stdio
        (jsonrpc:server-listen (jsonrpc-server jsonrpc)
-                              :mode :stdio)))))
+                              :mode :stdio))
+      (:websocket
+       (jsonrpc:server-listen (jsonrpc-server jsonrpc)
+                              :mode :websocket
+                              :port *port*)))))
 
 (defmethod lem-if:get-background-color ((jsonrpc jsonrpc))
   (log:info jsonrpc)
@@ -488,8 +492,8 @@
 ;;;
 (defparameter +command-line-spec+
   ;; TODO: more helpful documentation
-  '((("mode" #\m) :type string :optional t :documentation "\"tcp\" or \"stdio\"")
-    (("port" #\p) :type integer :optional nil :documentation "port of \"tcp\"")))
+  '((("mode" #\m) :type string :optional t :documentation "\"tcp\", \"stdio\" or \"websocket\"")
+    (("port" #\p) :type integer :optional nil :documentation "port of \"tcp\" or \"websocket\"")))
 
 (defun run-tcp-server (port)
   (let ((*mode* :tcp)
@@ -500,15 +504,26 @@
   (let ((*mode* :stdio))
     (lem:lem)))
 
+(defun run-websocket-server (port)
+  (let ((*mode* :websocket)
+        (*port* port))
+    (lem:lem)))
+
+(defun check-port-specified (port)
+  (unless port
+    (command-line-arguments:show-option-help +command-line-spec+)
+    (uiop:quit 1)))
+
 (defun program (&optional (args (uiop:command-line-arguments)))
   (command-line-arguments:handle-command-line
    +command-line-spec+
    (lambda (&key (mode "stdio") port)
      (cond ((string= mode "tcp")
-            (unless port
-              (command-line-arguments:show-option-help +command-line-spec+)
-              (uiop:quit 1))
+            (check-port-specified port)
             (run-tcp-server port))
+           ((string= mode "websocket")
+            (check-port-specified port)
+            (run-websocket-server port))
            ((string= mode "stdio")
             (run-stdio-server))
            (t

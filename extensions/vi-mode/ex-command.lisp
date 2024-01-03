@@ -13,6 +13,13 @@
                 :expand-filename-modifiers))
 (in-package :lem-vi-mode/ex-command)
 
+(defun ex-edit (filename force)
+  (if (string= filename "")
+      (lem:revert-buffer force)
+      (with-jumplist
+        (lem:find-file (merge-pathnames (expand-filename-modifiers filename)
+                                        (uiop:getcwd))))))
+
 (defun ex-write (range filename touch)
   (case (length range)
     (0 (if (string= filename "")
@@ -28,10 +35,13 @@
   (ex-write range filename touch)
   (lem-vi-mode/commands:vi-quit force))
 
-(define-ex-command "^e$" (range filename)
+(define-ex-command "^e(?:dit)?$" (range filename)
   (declare (ignore range))
-  (with-jumplist
-    (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
+  (ex-edit filename nil))
+
+(define-ex-command "^e(?:dit)?!$" (range filename)
+  (declare (ignore range))
+  (ex-edit filename t))
 
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))
@@ -198,3 +208,7 @@
 (define-ex-command "^noh(?:lsearch)?$" (range argument)
   (declare (ignore range argument))
   (lem/isearch:isearch-end))
+
+(define-ex-command "^pwd?$" (range argument)
+  (declare (ignore range argument))
+  (lem:current-directory))

@@ -4,7 +4,8 @@
   (:import-from :cl-ppcre)
   (:export :change-directory
            :expand-filename-modifiers
-           :kill-region-without-appending))
+           :kill-region-without-appending
+           :save-column))
 (in-package :lem-vi-mode/utils)
 
 (defvar *previous-cwd* nil)
@@ -65,3 +66,9 @@
     (rotatef start end))
   (let ((killed-string (delete-character start (count-characters start end))))
     (copy-to-clipboard-with-killring killed-string)))
+
+(defmacro save-column (&body body)
+  (let ((column (gensym "COLUMN")))
+    `(let ((,column (point-column (current-point))))
+       (unwind-protect (progn ,@body)
+         (move-to-column (current-point) ,column)))))

@@ -22,7 +22,10 @@
   (:import-from :lem-vi-mode/window
                 :move-to-window-top
                 :move-to-window-middle
-                :move-to-window-bottom)
+                :move-to-window-bottom
+                :move-to-window-bottom-below
+                :move-to-window-top-above
+                :scroll-line)
   (:import-from :lem-vi-mode/utils
                 :kill-region-without-appending)
   (:import-from :lem/isearch
@@ -53,6 +56,14 @@
            :vi-move-to-window-top
            :vi-move-to-window-middle
            :vi-move-to-window-bottom
+           :vi-scroll-line-to-center
+           :vi-scroll-line-to-center-back-to-indentation
+           :vi-scroll-line-to-top
+           :vi-scroll-line-to-top-back-to-indentation
+           :vi-scroll-line-to-bottom
+           :vi-scroll-line-to-bottom-back-to-indentation
+           :vi-scroll-bottom-line-to-top
+           :vi-scroll-top-line-to-bottom
            :vi-back-to-indentation
            :vi-indent
            :vi-substitute
@@ -272,6 +283,49 @@
     (:type :line
      :jump t)
   (move-to-window-bottom))
+
+(define-command vi-scroll-line-to-center (&optional n) ("P")
+  "Scroll line number N (or the current line) to the center of the screen."
+  (scroll-line n :center))
+
+(define-command vi-scroll-line-to-center-back-to-indentation (&optional n) ("P")
+  "Scroll line number N (or the current line) to the center of the screen.
+Move the cursor to the first non-blank character of the line."
+  (scroll-line n :center)
+  (vi-back-to-indentation))
+
+(define-command vi-scroll-line-to-top (&optional n) ("P")
+  "Scroll line number N (or the current line) to the top of the screen."
+  (scroll-line n :top))
+
+(define-command vi-scroll-line-to-top-back-to-indentation (&optional n) ("P")
+  "Scroll line number N (or the current line) to the top of the screen.
+Move the cursor to the first non-blank character of the line."
+  (scroll-line n :top)
+  (vi-back-to-indentation))
+
+(define-command vi-scroll-line-to-bottom (&optional n) ("P")
+  "Scroll line number N (or the current line) to the bottom of the screen."
+  (scroll-line n :bottom))
+
+(define-command vi-scroll-line-to-bottom-back-to-indentation (&optional n) ("P")
+  "Scroll line number N (or the current line) to the bottom of the screen.
+Move the cursor to the first non-blank character of the line."
+  (scroll-line n :bottom)
+  (vi-back-to-indentation))
+
+(define-command vi-scroll-bottom-line-to-top (&optional n) ("P")
+  (unless n
+    (move-to-window-bottom-below))
+  (vi-scroll-line-to-top-back-to-indentation n))
+
+(define-command vi-scroll-top-line-to-bottom (&optional n) ("P")
+  (if n
+      (progn
+        (vi-scroll-line-to-bottom n)
+        (vi-move-to-window-top))
+      (move-to-window-top-above))
+  (vi-scroll-line-to-bottom-back-to-indentation nil))
 
 (define-command vi-back-to-indentation () ()
   (vi-move-to-beginning-of-line)

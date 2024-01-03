@@ -4,6 +4,7 @@
                "jsonrpc"
                "trivial-utf-8"
                "jsonrpc/transport/stdio"
+               "jsonrpc/transport/websocket"
                "command-line-arguments")
   :serial t
   :components ((:file "jsonrpc-stdio-patch")

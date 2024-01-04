@@ -6,6 +6,7 @@
                 :proper-list)
   (:export
    :*vcs*
+   :porcelain-error
    :apply-patch
    :branches
    :checkout
@@ -81,6 +82,23 @@ Mercurial:
 
   For instance, see the legit::with-current-project macro that lexically binds *vcs* for an operation.")
 
+(define-condition porcelain-condition (simple-error)
+  ())
+
+(define-condition porcelain-error (porcelain-condition)
+  ((message
+    :initform ""
+    :initarg :message
+    :type :string))
+  (:report
+   (lambda (condition stream)
+     (with-slots (message) condition
+       (princ message stream)))))
+
+(defun porcelain-error (message &rest args)
+  (error 'porcelain-error :message (apply #'format nil message args)))
+
+
 (defun git-project-p ()
   "Return t if we find a .git/ directory in the current directory (which should be the project root. Use `lem/legit::with-current-project`)."
   (values (uiop:directory-exists-p ".git")
@@ -182,7 +200,7 @@ allows to learn about the file state: modified, deleted, ignored… "
       (run-fossil "changes")
     (cond
       ((not (zerop code))
-       (error (str:join #\newline (list out error))))
+       (porcelain-error (str:join #\newline (list out error))))
       (t
        (values out error)))))
 
@@ -194,7 +212,7 @@ allows to learn about the file state: modified, deleted, ignored… "
     (:git (git-porcelain))
     (:fossil (fossil-porcelain))
     (:hg (hg-porcelain))
-    (t (error "VCS not supported: ~a" *vcs*))))
+    (t (porcelain-error "VCS not supported: ~a" *vcs*))))
 
 (defun git-components()
   "Return 3 values:
@@ -295,7 +313,7 @@ allows to learn about the file state: modified, deleted, ignored… "
     (:git (git-components))
     (:fossil (fossil-components))
     (:hg (hg-components))
-    (t (error "VCS not supported: ~a" *vcs*))))
+    (t (porcelain-error "VCS not supported: ~a" *vcs*))))
 
 
 ;;;
@@ -378,7 +396,7 @@ allows to learn about the file state: modified, deleted, ignored… "
         collect (subseq branch 2 (length branch))))
 
 (defun fossil-branches (&key &allow-other-keys)
-  (error "not implemented"))
+  (porcelain-error "not implemented"))
 
 (defun git-current-branch ()
   (let ((branches (git-list-branches :sort-by "-creatordate")))
@@ -516,8 +534,8 @@ summary:     test
   (case *vcs*
     (:git (git-unstage file))
     (:hg (hg-unstage file))
-    (:fossil (error "unstage not implemented for Fossil."))
-    (t (error "VCS not supported: ~a" *vcs*))))
+    (:fossil (porcelain-error "unstage not implemented for Fossil."))
+    (t (porcelain-error "VCS not supported: ~a" *vcs*))))
 
 (defun git-unstage (file)
   "Unstage changes to a file."
@@ -534,7 +552,7 @@ M	src/ext/porcelain.lisp
 (defun hg-unstage (file)
   (declare (ignorable file))
   ;; no index like git, we'd need to exclude files from the commit with -X ?
-  (error "no unstage support for Mercurial"))
+  (porcelain-error "no unstage support for Mercurial"))
 
 (defvar *verbose* nil)
 
@@ -581,7 +599,7 @@ M	src/ext/porcelain.lisp
   diff: string."
   (case *vcs*
     (:fossil (fossil-apply-patch diff :reverse reverse))
-    (:hg (error "applying patch not yet implemented for Mercurial"))
+    (:hg (porcelain-error "applying patch not yet implemented for Mercurial"))
     (t (git-apply-patch diff :reverse reverse))))
 
 (defun checkout (branch)
@@ -596,7 +614,7 @@ M	src/ext/porcelain.lisp
 
 (defun push (&rest args)
   (when args
-    (error "Our git push command doesn't accept args. Did you mean cl:push ?!!"))
+    (porcelain-error "Our git push command doesn't accept args. Did you mean cl:push ?!!"))
   (run-git (list "push")))
 
 ;;
@@ -614,9 +632,12 @@ M	src/ext/porcelain.lisp
 
 ;; Save our script as a string at compile time.
 (defparameter *rebase-script-content*
+  #+(or lem-ncurses lem-sdl2)
   (str:from-file
    (asdf:system-relative-pathname (asdf:find-system "lem")
                                   "scripts/dumbrebaseeditor.sh"))
+  #-(or lem-ncurses lem-sdl2)
+  ""
   "Our dumb editor shell script, saved as a string at compile time.
   We then save it to the user's ~/.lem/legit/rebaseetidor.sh at first use.")
 
@@ -643,7 +664,7 @@ M	src/ext/porcelain.lisp
                         :error-output :string
                         :ignore-error-status t)
       #-unix
-      (error "lem/legit: our rebase script is only for Unix platforms currently. We need to run a shell script and trap a signal.")
+      (porcelain-error "lem/legit: our rebase script is only for Unix platforms currently. We need to run a shell script and trap a signal.")
       (setf *rebase-script-path* script-path))))
 
 (defvar *rebase-pid* nil
@@ -670,9 +691,9 @@ M	src/ext/porcelain.lisp
 (defun rebase-interactively (&key from)
   (case *vcs*
     (:git (git-rebase-interactively :from from))
-    (:hg (error "Interactive rebase not implemented for Mercurial"))
-    (:fossil (error "No interactive rebase for Fossil."))
-    (t (error "Interactive rebase not available for this VCS: ~a" *vcs*))))
+    (:hg (porcelain-error "Interactive rebase not implemented for Mercurial"))
+    (:fossil (porcelain-error "No interactive rebase for Fossil."))
+    (t (porcelain-error "Interactive rebase not available for this VCS: ~a" *vcs*))))
 
 (defun git-rebase-interactively (&key from)
   "Start a rebase session.
@@ -687,7 +708,7 @@ M	src/ext/porcelain.lisp
   ;; .git/rebase-merge/git-rebase-merge-todo
   ;; Beware of C-c ~ lol^^
   (when (uiop:directory-exists-p ".git/rebase-merge/")
-    (error "It seems that there is already a rebase-merge directory,
+    (porcelain-error "It seems that there is already a rebase-merge directory,
 and I wonder if you are in the middle of another rebase.
 If that is the case, please try
    git rebase (--continue | --abort | --skip)
@@ -728,7 +749,7 @@ I am stopping in case you still have something valuable there."))
                  (values (format nil "rebase started")
                          nil
                          0))
-               (error "git rebase process didn't start properly. Aborting.")))
+               (porcelain-error "git rebase process didn't start properly. Aborting.")))
       (setf (uiop:getenv "EDITOR") editor))))
 
 (defun rebase-continue ()
@@ -751,4 +772,4 @@ I am stopping in case you still have something valuable there."))
              ""
              0))
     (t
-      (error  "No git rebase in process? PID not found."))))
+      (porcelain-error  "No git rebase in process? PID not found."))))

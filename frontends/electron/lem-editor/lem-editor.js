@@ -59,7 +59,7 @@ function doLog(message, params) {
 
 class WebSocketRPCDelegator {
   constructor() {
-    const webSocket = new WebSocket("ws://localhost:50000");
+    const webSocket = new WebSocket("ws://127.0.0.1:50000");
     this.jsonrpc = new JSONRPC(webSocket);
   }
 
@@ -110,8 +110,8 @@ class LemEditor extends HTMLElement {
 
     this.viewTable = {};
 
-    // this.rpcDelegator = new WebSocketRPCDelegator();
-    this.rpcDelegator = new VSCodeJSONRPCDelegator();
+    this.rpcDelegator = new WebSocketRPCDelegator();
+    // this.rpcDelegator = new VSCodeJSONRPCDelegator();
 
     this.rpcDelegator.on("update-foreground", this.updateForeground.bind(this));
     this.rpcDelegator.on("update-background", this.updateBackground.bind(this));

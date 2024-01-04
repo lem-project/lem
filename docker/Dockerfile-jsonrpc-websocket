@@ -1,0 +1,7 @@
+FROM docker.io/fukamachi/qlot
+
+COPY . .
+
+EXPOSE 50000
+
+ENTRYPOINT qlot exec sbcl --noinform --eval '(ql:quickload :lem-jsonrpc)' --eval '(lem-jsonrpc:run-websocket-server :port 50000 :hostname "0.0.0.0")' --quit

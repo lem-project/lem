@@ -3,7 +3,10 @@
         :lem-jsonrpc/utils
         :lem-jsonrpc/view)
   (:local-nicknames (:display :lem-core/display))
-  (:export :program))
+  (:export :run-tcp-server
+           :run-stdio-server
+           :run-websocket-server
+           :program))
 (in-package :lem-jsonrpc)
 
 (defvar *mode*)

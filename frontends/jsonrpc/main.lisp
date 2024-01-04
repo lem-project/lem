@@ -12,6 +12,8 @@
 (defvar *mode*)
 (defvar *hostname*)
 (defvar *port*)
+(defvar *websocket-url*)
+
 (defvar *editor-thread*)
 
 (pushnew :lem-jsonrpc *features*)
@@ -92,7 +94,8 @@
        (jsonrpc:server-listen (jsonrpc-server jsonrpc)
                               :mode :websocket
                               :port *port*
-                              :host *hostname*)))))
+                              :host *hostname*
+                              :url *websocket-url*)))))
 
 (defmethod lem-if:get-background-color ((jsonrpc jsonrpc))
   (log:info jsonrpc)
@@ -510,10 +513,11 @@
   (let ((*mode* :stdio))
     (lem:lem)))
 
-(defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1"))
+(defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1") url)
   (let ((*mode* :websocket)
         (*port* port)
-        (*hostname* hostname))
+        (*hostname* hostname)
+        (*websocket-url* url))
     (lem:lem)))
 
 (defun check-port-specified (port)

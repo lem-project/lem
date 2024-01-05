@@ -37,6 +37,12 @@
         (frame-multiplexer-on)
         (frame-multiplexer-off))))
 
+(define-key *global-keymap* "C-z c" 'frame-multiplexer-create-with-new-buffer-list)
+(define-key *global-keymap* "C-z d" 'frame-multiplexer-delete)
+(define-key *global-keymap* "C-z p" 'frame-multiplexer-prev)
+(define-key *global-keymap* "C-z n" 'frame-multiplexer-next)
+(define-key *global-keymap* "C-z r" 'frame-mulitplexer-rename)
+
 (defstruct tab
   focus-p
   number
@@ -318,7 +324,6 @@ This does not change the order of the frames."
                 (setf (aref (virtual-frame-id/frame-table vf) index) nil)
                 (setq free-index (next-free (1+ free-index)))))))
 
-(define-key *global-keymap* "C-z c" 'frame-multiplexer-create-with-new-buffer-list)
 (define-command frame-multiplexer-create-with-new-buffer-list () ()
   (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
@@ -329,7 +334,6 @@ This does not change the order of the frames."
       (allocate-frame vf frame)
       (switch-current-frame vf frame))))
 
-(define-key *global-keymap* "C-z d" 'frame-multiplexer-delete)
 (define-command frame-multiplexer-delete (&optional id) ("P")
   "Delete the current frame.
 With prefix argument ID, delete the frame with the given ID."
@@ -347,7 +351,6 @@ With prefix argument ID, delete the frame with the given ID."
         (switch-current-frame vf (search-previous-frame vf frame-now)))
       (free-frame vf frame-now))))
 
-(define-key *global-keymap* "C-z p" 'frame-multiplexer-prev)
 (define-command frame-multiplexer-prev (&optional (n 1)) ("p")
   "Switch to the Nth previous frame.
 The prefix argument N defaults to 1."
@@ -358,7 +361,6 @@ The prefix argument N defaults to 1."
       (setq frame (search-previous-frame vf frame)))
     (switch-current-frame vf frame)))
 
-(define-key *global-keymap* "C-z n" 'frame-multiplexer-next)
 (define-command frame-multiplexer-next (&optional (n 1)) ("p")
   "Switch to the Nth next frame.
 The prefix argument N defaults to 1."
@@ -402,7 +404,6 @@ The prefix argument N defaults to 1."
           (let ((entry (aref (virtual-frame-id/frame-table vf) recent-frame-id)))
             (switch-current-frame vf (frame-table-entry-frame entry)))))))
 
-(define-key *global-keymap* "C-z r" 'frame-mulitplexer-rename)
 (define-command frame-mulitplexer-rename (name &optional id) ("sNew name: " "P")
   "Rename the current frame to NAME.
 With prefix argument ID, rename the frame with the given ID."

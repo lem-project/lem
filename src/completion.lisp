@@ -72,8 +72,8 @@
                                       (enough-namestring path input-directory))))))
       strings)))
 
-(defun completion-strings (str strings)
-  (completion str strings :test #'fuzzy-match-p))
+(defun completion-strings (str strings &key key)
+  (completion str strings :test #'fuzzy-match-p :key key))
 
 (defun completion-buffer (str &optional (buffer-list (buffer-list)))
   (let ((candidates1

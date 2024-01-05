@@ -69,8 +69,8 @@ class WebSocketRPCDelegator {
     this.jsonrpc.on(method, handler);
   }
 
-  request(method, arg) {
-    this.jsonrpc.request(method, arg);
+  request(method, arg, callback) {
+    this.jsonrpc.request(method, arg, callback);
   }
 
   notify(method, arg) {
@@ -95,8 +95,8 @@ class VSCodeJSONRPCDelegator {
     this.rpcConnection.onNotification(method, handler);
   }
 
-  request(method, arg) {
-    this.rpcConnection.sendRequest(method, arg);
+  request(method, arg, callback) {
+    this.rpcConnection.sendRequest(method, arg, callback);
   }
 
   notify(method, arg) {
@@ -142,11 +142,15 @@ class LemEditor extends HTMLElement {
     this.width = contentBounds.width;
     this.height = contentBounds.height;
 
-    this.rpcDelegator.request("ready", {
+    this.userId = null;
+
+    this.rpcDelegator.request("login", {
       width: calcDisplayCols(this.width),
       height: calcDisplayRows(this.height),
       foreground: option.foreground,
       background: option.background,
+    }, (response) => {
+      this.userId = response.userId;
     });
 
     // will updated by setFont()
@@ -244,6 +248,7 @@ class LemEditor extends HTMLElement {
 
   emitInput(kind, value) {
     this.rpcDelegator.notify("input", {
+      userId: this.userId,
       kind: kind,
       value: value,
     });

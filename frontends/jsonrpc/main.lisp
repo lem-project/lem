@@ -46,7 +46,7 @@
         (jsonrpc:notify (jsonrpc-server jsonrpc) method argument))
       (jsonrpc:broadcast (jsonrpc-server jsonrpc) method argument)))
 
-(defun ready (jsonrpc loaded-fn)
+(defun login (jsonrpc logged-in-callback)
   (lambda (params)
     (pdebug "ready: ~A" (pretty-json params))
     (with-error-handler ()
@@ -59,9 +59,10 @@
           (setf (jsonrpc-background-color jsonrpc) color))
         (alexandria:when-let (color (lem:parse-color foreground))
           (setf (jsonrpc-foreground-color jsonrpc) color))
-        (funcall loaded-fn)
+        (funcall logged-in-callback)
         (hash "width" width
-              "height" height)))))
+              "height" height
+              "userId" 0)))))
 
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
   (let ((ready nil))
@@ -70,8 +71,8 @@
                    (lambda ()
                      (loop :until ready))))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
-                    "ready"
-                    (ready jsonrpc
+                    "login"
+                    (login jsonrpc
                            (lambda ()
                              (setf ready t))))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
@@ -472,7 +473,9 @@
 (defun input-callback (jsonrpc args)
   (handler-case
       (let ((kind (gethash "kind" args))
-            (value (gethash "value" args)))
+            (value (gethash "value" args))
+            (user-id (gethash "userId" args)))
+        (declare (ignore user-id))
         (cond ((= kind +abort+)
                (lem:send-abort-event *editor-thread* nil))
               ((= kind +keyevent+)

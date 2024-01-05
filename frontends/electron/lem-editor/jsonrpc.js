@@ -17,24 +17,26 @@ class JSONRPC {
     this.serverAndClient.addMethod(method, handler);
   }
 
-  async requestInternal(method, arg) {
+  async requestInternal(method, arg, callback) {
     const result = await this.serverAndClient.request(method, arg);
-    console.log(result);
+    if (callback) {
+      callback(result);
+    }
   }
 
   requestMessageQueue() {
     this.messageQueue.forEach((value) => {
-      const [method, arg] = value;
-      this.requestInternal(method, arg);
+      const [method, arg, callback] = value;
+      this.requestInternal(method, arg, callback);
     });
     this.messageQueue = [];
   }
 
-  request(method, arg) {
+  request(method, arg, callback) {
     if (this.webSocket.readyState === WebSocket.OPEN) {
-      this.requestInternal(method, arg);
+      this.requestInternal(method, arg, callback);
     } else {
-      this.messageQueue.push([method, arg]);
+      this.messageQueue.push([method, arg, callback]);
     }
   }
 

@@ -538,7 +538,7 @@
             (run-tcp-server port))
            ((string= mode "websocket")
             (check-port-specified port)
-            (run-websocket-server port))
+            (run-websocket-server :port port))
            ((string= mode "stdio")
             (run-stdio-server))
            (t

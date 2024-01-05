@@ -19,7 +19,8 @@
 (pushnew :lem-jsonrpc *features*)
 
 (defclass jsonrpc (lem:implementation)
-  ((server :initform (jsonrpc:make-server)
+  ((mode :accessor jsonrpc-mode)
+   (server :initform (jsonrpc:make-server)
            :reader jsonrpc-server)
    (display-width :initform 80
                   :accessor jsonrpc-display-width)
@@ -38,10 +39,12 @@
 
 (defmethod notify ((jsonrpc jsonrpc) method argument)
   (pdebug "notify: ~A ~A" method (pretty-json argument))
-  (let ((jsonrpc/connection:*connection*
-          (jsonrpc/transport/interface:transport-connection
-           (jsonrpc/class:jsonrpc-transport (jsonrpc-server jsonrpc)))))
-    (jsonrpc:notify (jsonrpc-server jsonrpc) method argument)))
+  (if (eq (jsonrpc-mode jsonrpc) :stdio)
+      (let ((jsonrpc/connection:*connection*
+              (jsonrpc/transport/interface:transport-connection
+               (jsonrpc/class:jsonrpc-transport (jsonrpc-server jsonrpc)))))
+        (jsonrpc:notify (jsonrpc-server jsonrpc) method argument))
+      (jsonrpc:broadcast (jsonrpc-server jsonrpc) method argument)))
 
 (defun ready (jsonrpc loaded-fn)
   (lambda (params)
@@ -81,6 +84,7 @@
                     (notify jsonrpc "exit" nil)
                     (uiop:quit 0)))
 
+    (setf (jsonrpc-mode jsonrpc) *mode*)
     (ecase *mode*
       (:tcp
        (jsonrpc:server-listen (jsonrpc-server jsonrpc)

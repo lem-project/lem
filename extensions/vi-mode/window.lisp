@@ -27,7 +27,7 @@
   (window-view-point window))
 
 (defun window-end-point (&optional (window (current-window)))
-  (let ((point (copy-point (window-start-point window))))
+  (let ((point (copy-point (window-start-point window) :temporary)))
     (move-to-next-virtual-line point (1- (window-height* window)) window)
     point))
 

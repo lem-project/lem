@@ -96,6 +96,7 @@
            :vi-search-next
            :vi-search-previous
            :vi-search-forward-symbol-at-point
+           :vi-search-backward-symbol-at-point
            :vi-goto-first-line
            :vi-goto-line
            :vi-goto-column
@@ -761,11 +762,33 @@ Move the cursor to the first non-blank character of the line."
     (:forward (vi-search-repeat-backward n))
     (:backward (vi-search-repeat-forward n))))
 
-(define-command vi-search-forward-symbol-at-point () ()
+(define-command vi-search-forward-symbol-at-point (&optional (n 1)) ("p")
   (with-jumplist
     (lem/isearch:isearch-forward-symbol-at-point)
     (lem/isearch:isearch-finish)
-    (lem/isearch:isearch-next)))
+    (let ((wrapped nil))
+      (loop :repeat n
+            :unless (lem/isearch:isearch-next)
+            :do (move-point (current-point) (buffer-start-point (current-buffer)))
+                (lem/isearch:isearch-next)
+                (setq wrapped t))
+      (skip-chars-backward (current-point) #'syntax-symbol-char-p)
+      (when wrapped
+        (message "Search wrapped around from bottom to top")))))
+
+(define-command vi-search-backward-symbol-at-point (&optional (n 1)) ("p")
+  (with-jumplist
+    (lem/isearch:isearch-forward-symbol-at-point)
+    (lem/isearch:isearch-finish)
+    (lem/isearch:isearch-prev)
+    (let ((wrapped nil))
+      (loop :repeat n
+            :unless (lem/isearch:isearch-prev)
+            :do (move-point (current-point) (buffer-end-point (current-buffer)))
+                (lem/isearch:isearch-prev)
+                (setq wrapped t))
+      (when wrapped
+        (message "Search wrapped around from top to bottom")))))
 
 (define-motion vi-goto-first-line (&optional (n 1)) ("p")
     (:type :line

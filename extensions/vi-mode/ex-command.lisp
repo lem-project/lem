@@ -31,6 +31,9 @@
                                   filename)))
     (otherwise (syntax-error))))
 
+(defun ex-write-all (force)
+  (lem:save-some-buffers force))
+
 (defun ex-write-quit (range filename force touch)
   (ex-write range filename touch)
   (lem-vi-mode/commands:vi-quit force))
@@ -72,12 +75,14 @@
   (declare (ignore range argument))
   (lem:exit-lem nil))
 
-(define-ex-command "^wqa$" (range filename)
-  (ex-write range filename nil)
+(define-ex-command "^(?:wqa|xa)(?:ll)?$" (range argument)
+  (declare (ignore range argument))
+  (ex-write-all nil)
   (lem:exit-lem t))
 
-(define-ex-command "^wqa!$" (range filename)
-  (ex-write range filename nil)
+(define-ex-command "^(?:wqa|xa)(?:ll)?!$" (range argument)
+  (declare (ignore range argument))
+  (ex-write-all t)
   (lem:exit-lem nil))
 
 (define-ex-command "^(x|xit)$" (range filename)

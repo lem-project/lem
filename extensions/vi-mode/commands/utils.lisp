@@ -138,7 +138,7 @@
                               (or (range-type retval) :exclusive)))
                      (otherwise
                       (values start
-                              (copy-point (current-point))
+                              (copy-point (current-point) :temporary)
                               (command-motion-type command)))))))
              (command-motion-type (command)
                (if (typep command 'vi-motion)
@@ -162,7 +162,7 @@
                      (save-excursion
                        (ignore-some-conditions (end-of-buffer)
                          (next-logical-line (1- (or uarg 1))))
-                       (values start (copy-point (current-point)) :line))
+                       (values start (copy-point (current-point) :temporary) :line))
                      ;; raise error for invalid commands
                      (error 'editor-abort :message nil)))
                 (otherwise

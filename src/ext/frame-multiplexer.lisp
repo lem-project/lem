@@ -3,7 +3,8 @@
         :lem
         :lem/button
         :lem/common/ring)
-  (:export :frame-multiplexer-next
+  (:export :*keymap*
+           :frame-multiplexer-next
            :frame-multiplexer-prev
            :frame-multiplexer-switch
            :frame-multiplexer-create-with-new-buffer-list
@@ -37,11 +38,16 @@
         (frame-multiplexer-on)
         (frame-multiplexer-off))))
 
-(define-key *global-keymap* "C-z c" 'frame-multiplexer-create-with-new-buffer-list)
-(define-key *global-keymap* "C-z d" 'frame-multiplexer-delete)
-(define-key *global-keymap* "C-z p" 'frame-multiplexer-prev)
-(define-key *global-keymap* "C-z n" 'frame-multiplexer-next)
-(define-key *global-keymap* "C-z r" 'frame-mulitplexer-rename)
+(defvar *keymap*
+  (make-keymap :name '*frame-multiplexer-keymap*)
+  "Keymap for commands related to the frame-multiplexer.")
+
+(define-key *keymap* "c" 'frame-multiplexer-create-with-new-buffer-list)
+(define-key *keymap* "d" 'frame-multiplexer-delete)
+(define-key *keymap* "p" 'frame-multiplexer-prev)
+(define-key *keymap* "n" 'frame-multiplexer-next)
+(define-key *keymap* "r" 'frame-mulitplexer-rename)
+(define-key *global-keymap* "C-z" *keymap*)
 
 (defstruct tab
   focus-p

@@ -357,9 +357,11 @@ The prefix argument N defaults to 1."
   (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (frame (virtual-frame-current vf)))
-    (dotimes (_ n)
-      (setq frame (search-previous-frame vf frame)))
-    (switch-current-frame vf frame)))
+    (loop :repeat n
+          :while frame
+          :do (setq frame (search-previous-frame vf frame)))
+    (when frame
+      (switch-current-frame vf frame))))
 
 (define-command frame-multiplexer-next (&optional (n 1)) ("p")
   "Switch to the Nth next frame.
@@ -367,9 +369,11 @@ The prefix argument N defaults to 1."
   (check-frame-multiplexer-enabled)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (frame (virtual-frame-current vf)))
-    (dotimes (_ n)
-      (setq frame (search-next-frame vf frame)))
-    (switch-current-frame vf frame)))
+    (loop :repeat n
+          :while frame
+          :do (setq frame (search-next-frame vf frame)))
+    (when frame
+      (switch-current-frame vf frame))))
 
 (define-command frame-multiplexer-switch (&optional (id 1)) ("p")
   "Switch to the frame with ID.

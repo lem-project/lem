@@ -347,7 +347,8 @@
   (isearch-mode nil))
 
 (define-command isearch-next () ()
-  (when (boundp '*isearch-string*)
+  (when (and (boundp '*isearch-string*)
+             (boundp '*isearch-search-forward-function*))
     (when (string= "" *isearch-string*)
       (setq *isearch-string* (isearch-default-string)))
     (setf (variable-value 'isearch-prev-last :buffer) nil)
@@ -368,7 +369,8 @@
       (isearch-update-display))))
 
 (define-command isearch-prev () ()
-  (when (boundp '*isearch-string*)
+  (when (and (boundp '*isearch-string*)
+             (boundp '*isearch-search-backward-function*))
     (when (string= "" *isearch-string*)
       (setq *isearch-string* (isearch-default-string)))
     (setf (variable-value 'isearch-next-last :buffer) nil)
@@ -427,7 +429,8 @@
 
 (defun search-next-matched (point n)
   (alexandria:when-let ((string (or (buffer-value (current-buffer) 'isearch-redisplay-string)
-                                    *isearch-string*)))
+                                    (and (boundp '*isearch-string*)
+                                         *isearch-string*))))
     (let ((search-fn
             (if (plusp n)
                 *isearch-search-forward-function*

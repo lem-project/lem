@@ -259,7 +259,7 @@
            (separate-objects-by-width (create-drawing-objects logical-line)
                                       (- (window-view-width window) left-side-width)))
          (height (max-height-of-objects (car objects-per-physical-line)))
-         (empty-left-side-objects (list (make-object-with-type (make-string left-side-width :initial-element #\space) nil nil))))
+         (empty-left-side-objects (list (make-object-with-type (make-string left-side-width :initial-element #\space) nil (char-type #\space)))))
     (render-line-with-caching window 0 y left-side-objects height)
     (loop :for objects :in objects-per-physical-line
           :for height := (max-height-of-objects objects)

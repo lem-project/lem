@@ -236,7 +236,7 @@
 
 (defmethod lem-if:render-line ((implementation lem-sdl2/sdl2:sdl2) view x y objects height)
   (display:with-display (display)
-    (fill-to-end-of-line display view 0 y height)
+    (fill-to-end-of-line display view x y height)
     (redraw-physical-line display view x y objects height)))
 
 (defmethod lem-if:render-line-on-modeline ((implementation lem-sdl2/sdl2:sdl2)

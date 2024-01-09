@@ -29,7 +29,7 @@ next line because it is at the end of width."
   (let* ((tab-size (variable-value 'tab-width :default (window-buffer window)))
          (charpos (point-charpos point))
          (line    (line-string point))
-         (width   (1- (window-width window)))
+         (width   (1- (window-body-width window)))
          (cur-x   0)
          (add-x   (if (< charpos (length line))
                       (char-width (schar line charpos) 0 :tab-size tab-size)
@@ -59,7 +59,7 @@ next line because it is at the end of width."
 (defun map-wrapping-line (window string fn)
   (let ((tab-size (variable-value 'tab-width :default (window-buffer window))))
     (loop :with start := 0
-          :and width := (1- (window-width window))
+          :and width := (1- (window-body-width window))
           :for i := (wide-index string width :start start :tab-size tab-size)
           :while i
           :do (funcall fn i)
@@ -241,7 +241,7 @@ next line because it is at the end of width."
                (eq point (window-buffer-point window))
                (variable-value 'line-wrap :default (point-buffer point))
                (numberp (cursor-saved-column point))
-               (>= (cursor-saved-column point) (- (window-width window) 3)))
+               (>= (cursor-saved-column point) (- (window-body-width window) 3)))
       (setf (cursor-saved-column point) 0))
 
     (if *use-new-vertical-move-function*

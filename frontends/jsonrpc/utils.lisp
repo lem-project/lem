@@ -11,7 +11,10 @@
 (defun pdebug (fmt &rest args)
   (when *log-filename*
     (ensure-directories-exist *log-filename*)
-    (with-open-file (out *log-filename* :direction :output :if-exists :append :if-does-not-exist :create)
+    (with-open-file (out *log-filename*
+                         :direction :output
+                         :if-exists :append
+                         :if-does-not-exist :create)
       (apply #'format out fmt args)
       (terpri out))))
 

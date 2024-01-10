@@ -103,10 +103,10 @@
                  (move-to-line point (car inspector-position))
                  (line-offset point 0 (cdr inspector-position))))))
       (cond (focus
-             (switch-to-window (pop-to-buffer buffer :split-action :negative))
+             (switch-to-window (pop-to-buffer buffer))
              (body))
             (t
-             (with-current-window (pop-to-buffer buffer :split-action :negative)
+             (with-current-window (pop-to-buffer buffer)
                (body)))))))
 
 (defun inspector-insert-content (content)

@@ -3,30 +3,13 @@
 const rpc = require("vscode-jsonrpc");
 const cp = require("child_process");
 const utf8 = require("utf-8");
+
 const ipcRenderer = require("electron").ipcRenderer;
+const remote = require("@electron/remote");
 
-const remote = require('@electron/remote');
-
+const { JSONRPC } = require("./jsonrpc");
 const keyevent = require("./keyevent");
-
-// load option file
-const defaultOption = require("./option").option;
-const OPTION_FILE_NAME = "electron.yml";
-const fs = require("fs");
-const path = require("path");
-const yaml = require("js-yaml");
-const homedir =
-  process.env[process.platform === "win32" ? "USERPROFILE" : "HOME"];
-const lemHome = process.env["LEM_HOME"] || path.join(homedir, ".lem");
-const optionFilePath = path.join(lemHome, OPTION_FILE_NAME);
-function loadOption(path) {
-  try {
-    return yaml.safeLoad(fs.readFileSync(path, "utf-8"));
-  } catch (e) {
-    return {};
-  }
-}
-const option = Object.assign(defaultOption, loadOption(optionFilePath));
+const option = require("./option").option;
 
 class FontAttribute {
   constructor(name, size) {
@@ -48,13 +31,13 @@ class FontAttribute {
 
 let fontAttribute = new FontAttribute(option.fontName, option.fontSize);
 
-const kindAbort = 0;
-const kindKeyEvent = 1;
-const kindResize = 2;
-const kindCommand = 3;
-const kindMethod = 4;
-
-const viewTable = {};
+const inputKinds = {
+  abort: 0,
+  keyEvent: 1,
+  resize: 2,
+  command: 3,
+  method: 4,
+};
 
 function calcDisplayCols(width) {
   return Math.floor(width / fontAttribute.width);
@@ -64,43 +47,60 @@ function calcDisplayRows(height) {
   return Math.floor(height / fontAttribute.height);
 }
 
-function getCurrentWindowSize() {
-  return remote.getCurrentWindow().getSize();
-}
-
-function getCurrentWindowWidth() {
-  return getCurrentWindowSize()[0];
-}
-
-function getCurrentWindowHeight() {
-  return getCurrentWindowSize()[1];
-}
-
 class LemEditorPane extends HTMLElement {
   constructor() {
     super();
   }
 }
 
-class LemSidePane extends HTMLElement {
+function doLog(message, params) {
+  //console.log(message, params);
+}
+
+class WebSocketRPCDelegator {
   constructor() {
-    super();
-    this.elements = [];
+    const webSocket = new WebSocket("ws://127.0.0.1:50000");
+    this.jsonrpc = new JSONRPC(webSocket);
   }
 
-  append(element) {
-    const div = document.createElement("div");
-    div.style.overflow = "hidden";
-    div.appendChild(element);
-    this.appendChild(div);
-    this.elements.push(div);
-    this.elements.forEach((e, i) => {
-      e.style.height = `${100 / this.elements.length}%`;
-    });
+  listen() {}
+
+  on(method, handler) {
+    this.jsonrpc.on(method, handler);
   }
 
-  deleteAll() {
-    this.elements.forEach((e) => this.removeChild(e));
+  request(method, arg, callback) {
+    this.jsonrpc.request(method, arg, callback);
+  }
+
+  notify(method, arg) {
+    this.jsonrpc.notify(method, arg);
+  }
+}
+
+class VSCodeJSONRPCDelegator {
+  constructor() {
+    const childProcess = cp.spawn("lem-jsonrpc", ["--mode", "stdio"]);
+    this.rpcConnection = rpc.createMessageConnection(
+      new rpc.StreamMessageReader(childProcess.stdout),
+      new rpc.StreamMessageWriter(childProcess.stdin),
+    );
+  }
+
+  listen() {
+    this.rpcConnection.listen();
+  }
+
+  on(method, handler) {
+    this.rpcConnection.onNotification(method, handler);
+  }
+
+  request(method, arg, callback) {
+    this.rpcConnection.sendRequest(method, arg, callback);
+  }
+
+  notify(method, arg) {
+    this.rpcConnection.sendNotification(method, arg);
   }
 }
 
@@ -108,52 +108,49 @@ class LemEditor extends HTMLElement {
   constructor() {
     super();
 
-    const childProcess = cp.spawn("lem-rpc");
-    this.rpcConnection = rpc.createMessageConnection(
-      new rpc.StreamMessageReader(childProcess.stdout),
-      new rpc.StreamMessageWriter(childProcess.stdin)
-    );
+    this.viewTable = {};
 
-    this.on("update-foreground", this.updateForeground.bind(this));
-    this.on("update-background", this.updateBackground.bind(this));
-    this.on("make-view", this.makeView.bind(this));
-    this.on("delete-view", this.deleteView.bind(this));
-    this.on("resize-view", this.resizeView.bind(this));
-    this.on("move-view", this.moveView.bind(this));
-    this.on("clear", this.clear.bind(this));
-    this.on("clear-eol", this.clearEol.bind(this));
-    this.on("clear-eob", this.clearEob.bind(this));
-    this.on("put", this.put.bind(this));
-    this.on("modeline-put", this.modelinePut.bind(this));
-    this.on("touch", this.touch.bind(this));
-    this.on("move-cursor", this.moveCursor.bind(this));
-    this.on("scroll", this.scroll.bind(this));
-    this.on("update-display", this.updateDisplay.bind(this));
-    this.on("js-eval", this.jsEval.bind(this));
-    this.on("set-pane", this.setHtmlPane.bind(this));
-    this.on("delete-pane", this.deletePane.bind(this));
-    this.on("import", this.importModule.bind(this));
-    this.on("set-font", this.setFont.bind(this));
-    this.on("exit", this.exit.bind(this));
+    this.rpcDelegator = new WebSocketRPCDelegator();
+    // this.rpcDelegator = new VSCodeJSONRPCDelegator();
 
-    this.rpcConnection.listen();
+    this.rpcDelegator.on("update-foreground", this.updateForeground.bind(this));
+    this.rpcDelegator.on("update-background", this.updateBackground.bind(this));
+    this.rpcDelegator.on("make-view", this.makeView.bind(this));
+    this.rpcDelegator.on("delete-view", this.deleteView.bind(this));
+    this.rpcDelegator.on("resize-view", this.resizeView.bind(this));
+    this.rpcDelegator.on("move-view", this.moveView.bind(this));
+    this.rpcDelegator.on("clear", this.clear.bind(this));
+    this.rpcDelegator.on("clear-eol", this.clearEol.bind(this));
+    this.rpcDelegator.on("clear-eob", this.clearEob.bind(this));
+    this.rpcDelegator.on("put", this.put.bind(this));
+    this.rpcDelegator.on("modeline-put", this.modelinePut.bind(this));
+    this.rpcDelegator.on("touch", this.touch.bind(this));
+    this.rpcDelegator.on("move-cursor", this.moveCursor.bind(this));
+    this.rpcDelegator.on("scroll", this.scroll.bind(this));
+    this.rpcDelegator.on("update-display", this.updateDisplay.bind(this));
+    this.rpcDelegator.on("set-font", this.setFont.bind(this));
+    this.rpcDelegator.on("exit", this.exit.bind(this));
+
+    this.rpcDelegator.listen();
 
     this.lemEditorPane = document.createElement("lem-editor-pane");
     this.lemEditorPane.style.float = "left";
     this.appendChild(this.lemEditorPane);
-
-    this.lemSidePane = null;
 
     const mainWindow = remote.getCurrentWindow();
     const contentBounds = mainWindow.getContentBounds();
     this.width = contentBounds.width;
     this.height = contentBounds.height;
 
-    this.rpcConnection.sendRequest("ready", {
+    this.userId = null;
+
+    this.rpcDelegator.request("login", {
       width: calcDisplayCols(this.width),
       height: calcDisplayRows(this.height),
       foreground: option.foreground,
       background: option.background,
+    }, (response) => {
+      this.userId = response.userId;
     });
 
     // will updated by setFont()
@@ -187,23 +184,21 @@ class LemEditor extends HTMLElement {
     // MacOS: Does not work properly e.g. https://github.com/electron/electron/issues/21777
     if (process.platform === "win32") {
       mainWindow.on("will-resize", (_, newBounds) => {
-        const { contentWidth, contentHeight, windowRect } = charUnitWindowRect(
-          newBounds
-        );
+        const { contentWidth, contentHeight, windowRect } =
+          charUnitWindowRect(newBounds);
         mainWindow.setBounds(windowRect);
       });
     }
 
     let timeoutId = null;
     const resizeHandler = () => {
-      if (process.platform === "win32" || process.platform === 'linux') {
+      if (process.platform === "win32" || process.platform === "linux") {
         const { width, height } = mainWindow.getContentBounds();
         this.resize(width, height);
       } else {
         const r = mainWindow.getBounds();
-        const { contentWidth, contentHeight, windowRect } = charUnitWindowRect(
-          r
-        );
+        const { contentWidth, contentHeight, windowRect } =
+          charUnitWindowRect(r);
         mainWindow.setBounds(windowRect);
         this.resize(contentWidth, contentHeight);
       }
@@ -216,7 +211,7 @@ class LemEditor extends HTMLElement {
     });
 
     ipcRenderer.on("command", (event, message) => {
-      this.emitInput(kindCommand, message);
+      this.emitInput(inputKinds.command, message);
     });
 
     // create input text box;
@@ -237,39 +232,6 @@ class LemEditor extends HTMLElement {
     mainWindow.setBounds({ x: x, y: y, width: nw, height: nh });
   }
 
-  on(method, handler) {
-    this.rpcConnection.onNotification(method, handler);
-  }
-
-  setPane(e) {
-    if (this.lemSidePane === null) {
-      this.lemSidePane = document.createElement("lem-side-pane");
-      this.appendChild(this.lemSidePane);
-      this.resize(this.width, this.height);
-    }
-    this.lemSidePane.append(e);
-  }
-
-  setHtmlPane(params) {
-    const div = document.createElement("div");
-    div.innerHTML = utf8.getStringFromBytes(params.html);
-    this.setPane(div);
-  }
-
-  deletePane() {
-    this.removeChild(this.lemSidePane);
-    this.lemSidePane = null;
-    this.resize(...getCurrentWindowSize());
-  }
-
-  importModule(params) {
-    try {
-      require(params.name);
-    } catch (e) {
-      console.log(e);
-    }
-  }
-
   setFont(params) {
     fontAttribute = new FontAttribute(params.name, params.size);
     this.fontWidth = fontAttribute.width;
@@ -281,24 +243,21 @@ class LemEditor extends HTMLElement {
   }
 
   sendNotification(method, params) {
-    this.emitInput(kindMethod, { method: method, params: params });
+    this.emitInput(inputKinds.method, { method: method, params: params });
   }
 
   emitInput(kind, value) {
-    //console.log(kind, value);
-    this.rpcConnection.sendNotification("input", {
+    this.rpcDelegator.notify("input", {
+      userId: this.userId,
       kind: kind,
       value: value,
     });
   }
 
   resize(width, height) {
-    if (this.lemSidePane !== null) {
-      width /= 2;
-    }
     this.width = width;
     this.height = height;
-    this.emitInput(kindResize, {
+    this.emitInput(inputKinds.resize, {
       width: calcDisplayCols(width),
       height: calcDisplayRows(height),
     });
@@ -307,119 +266,111 @@ class LemEditor extends HTMLElement {
   }
 
   updateForeground(params) {
-    //console.log('update-foreground', params);
+    doLog("update-foreground", params);
     option.foreground = params;
     this.picker.updateForeground(params);
   }
 
   updateBackground(params) {
-    //console.log('update-background', params);
+    doLog("update-background", params);
     option.background = params;
     this.picker.updateBackground(params);
+    this.lemEditorPane.style["background-color"] = option.background;
   }
 
   makeView(params) {
-    //console.log('make-view', params);
+    doLog("make-view", params);
     const { id, x, y, width, height, use_modeline, kind } = params;
     const view = new View(id, x, y, width, height, use_modeline, kind);
     view.allTags().forEach((child) => {
       this.lemEditorPane.appendChild(child);
     });
-    viewTable[id] = view;
+    this.viewTable[id] = view;
   }
 
   deleteView(params) {
-    //console.log('delete-view', params);
+    doLog("delete-view", params);
     const { id } = params.viewInfo;
-    const view = viewTable[id];
+    const view = this.viewTable[id];
     view.delete();
-    delete viewTable[id];
+    delete this.viewTable[id];
   }
 
   resizeView(params) {
-    //console.log('resize-view', params);
+    doLog("resize-view", params);
     const { viewInfo, width, height } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.resize(width, height);
   }
 
   moveView(params) {
-    //console.log('move-view', params);
+    doLog("move-view", params);
     const { x, y, viewInfo } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.move(x, y);
   }
 
   clear(params) {
-    //console.log('clear', params);
-    const view = viewTable[params.viewInfo.id];
+    doLog("clear", params);
+    const view = this.viewTable[params.viewInfo.id];
     view.clear();
   }
 
   clearEol(params) {
-    //console.log('clear-eol', params);
+    doLog("clear-eol", params);
     const { viewInfo, x, y } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.clearEol(x, y);
   }
 
   clearEob(params) {
-    //console.log('clear-eob', params);
+    doLog("clear-eob", params);
     const { viewInfo, x, y } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.clearEob(x, y);
   }
 
   put(params) {
-    //console.log('put', params);
+    doLog("put", params);
     const { viewInfo, x, y, text, textWidth, attribute } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.put(x, y, text, textWidth, attribute);
   }
 
   modelinePut(params) {
-    //console.log('modeline-put', params);
+    doLog("modeline-put", params);
     const { viewInfo, x, y, text, textWidth, attribute } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.modelinePut(x, text, textWidth, attribute);
   }
 
   touch(params) {
-    //console.log('touch', params);
+    doLog("touch", params);
     const { viewInfo } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.touch();
   }
 
   moveCursor(params) {
-    //console.log('move-cursor', params);
+    doLog("move-cursor", params);
     const { viewInfo, x, y } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.setCursor(x, y);
     const left =
       view.editSurface.canvas.offsetLeft + x * fontAttribute.width + 3;
     const top =
       view.editSurface.canvas.offsetTop + y * fontAttribute.height + 3;
-    //console.log(view.editSurface.canvas.style);
     this.picker.movePicker(left, top);
   }
 
   scroll(params) {
-    //console.log('scroll', params);
+    doLog("scroll", params);
     const { viewInfo, n } = params;
-    const view = viewTable[viewInfo.id];
+    const view = this.viewTable[viewInfo.id];
     view.scroll(n);
   }
 
   updateDisplay(params) {}
-
-  jsEval(params) {
-    try {
-      eval(params.string);
-    } catch (e) {
-      console.log(e);
-    }
-  }
 }
 
 class Picker {
@@ -458,7 +409,7 @@ class Picker {
       event.preventDefault();
       if (event.isComposing !== true && event.code !== "") {
         const k = keyevent.convertKeyEvent(event);
-        this.editor.emitInput(kindKeyEvent, k);
+        this.editor.emitInput(inputKinds.keyEvent, k);
         this.picker.value = "";
         return false;
       }
@@ -487,7 +438,7 @@ class Picker {
       let chars = this.picker.value
         .split("")
         .map((char) => utf8.setBytesFromString(char));
-      this.editor.emitInput(kindCommand, ["input-string", chars]);
+      this.editor.emitInput(inputKinds.command, ["input-string", chars]);
       this.picker.value = "";
       this.measure.innerHTML = this.picker.value;
       this.picker.style.width = "0";
@@ -514,18 +465,42 @@ class Picker {
   }
 }
 
-const viewStyleTable = {
-  popup: {
-    "zIndex": 5,
+class VerticalBorder {
+  constructor(x, y, height) {
+    this.border = document.createElement("div");
+    this.border.style.backgroundColor = "#ccc";
+    this.border.style.width = "2px";
+    this.border.style.height = height * fontAttribute.height;
+    this.border.style.position = "absolute";
+    this.move(x, y);
+  }
+
+  move(x, y) {
+    this.border.style.left = Math.floor(
+      x * fontAttribute.width - fontAttribute.width / 2,
+    );
+    this.border.style.top = y * fontAttribute.height;
+  }
+
+  resize(height) {
+    this.border.style.height = height * fontAttribute.height;
+  }
+}
+
+const viewStyles = {
+  tile: {},
+  floating: {
+    zIndex: 5,
     "border-radius": "10px",
-    "border": "2px solid #FFF",
-    "padding": "10px",
-    "background": "#333" // option.background
-  },
-  tile: {
-    "border-left": "1px solid #ccc",
+    border: "2px solid #FFF",
+    padding: "10px",
+    background: "#333", // option.background
   },
 };
+
+function getViewStyle(kind) {
+  return viewStyles[kind] || {};
+}
 
 class View {
   constructor(id, x, y, width, height, use_modeline, kind) {
@@ -533,13 +508,9 @@ class View {
     this.width = width;
     this.height = height;
     this.use_modeline = use_modeline;
-    this.editSurface = new Surface(
-      x,
-      y,
-      width,
-      height,
-      viewStyleTable[kind] || {}
-    );
+    this.kind = kind;
+    this.editSurface = new Surface(x, y, width, height, getViewStyle(kind));
+
     if (use_modeline) {
       this.modelineSurface = new Surface(x, y + height, width, 1, {
         zIndex: 1,
@@ -547,24 +518,50 @@ class View {
     } else {
       this.modelineSurface = null;
     }
+
+    if (x > 0 && kind === "tile") {
+      this.leftSideBorder = new VerticalBorder(
+        x - 2,
+        y,
+        height + (this.modelineSurface === null ? 0 : 1),
+      );
+    } else {
+      this.leftSideBorder = null;
+    }
+
     this.move(x, y);
     this.resize(width, height);
+
     this.cursor = { x: null, y: null, color: option.foreground };
   }
 
+  updateEditSurfaceStyle() {
+    this.editSurface.updateStyle(getViewStyle(this.kind));
+  }
+
   allTags() {
+    let tags = [this.editSurface.canvas];
+
     if (this.modelineSurface !== null) {
-      return [this.editSurface.canvas, this.modelineSurface.canvas];
-    } else {
-      return [this.editSurface.canvas];
+      tags.push(this.modelineSurface.canvas);
     }
+    if (this.leftSideBorder !== null) {
+      tags.push(this.leftSideBorder.border);
+    }
+
+    return tags;
   }
 
   delete() {
     this.editSurface.canvas.parentNode.removeChild(this.editSurface.canvas);
     if (this.modelineSurface !== null) {
       this.modelineSurface.canvas.parentNode.removeChild(
-        this.modelineSurface.canvas
+        this.modelineSurface.canvas,
+      );
+    }
+    if (this.leftSideBorder !== null) {
+      this.leftSideBorder.border.parentNode.removeChild(
+        this.leftSideBorder.border,
       );
     }
   }
@@ -573,6 +570,9 @@ class View {
     this.editSurface.move(x, y);
     if (this.modelineSurface !== null) {
       this.modelineSurface.move(x, y + this.height);
+    }
+    if (this.leftSideBorder !== null) {
+      this.leftSideBorder.move(x, y);
     }
   }
 
@@ -583,9 +583,15 @@ class View {
     if (this.modelineSurface !== null) {
       this.modelineSurface.move(
         this.x,
-        this.editSurface.y + this.editSurface.height
+        this.editSurface.y + this.editSurface.height,
       );
       this.modelineSurface.resize(width, 1);
+    }
+    if (this.leftSideBorder !== null) {
+      this.leftSideBorder.move(this.x, this.editSurface.y - 2);
+      this.leftSideBorder.resize(
+        height + (this.modelineSurface === null ? 0 : 1),
+      );
     }
   }
 
@@ -693,27 +699,35 @@ class Surface {
     this.height = height;
     this.canvas = document.createElement("canvas");
     this.canvas.style.position = "absolute";
-    for (let key in styles) {
-      this.canvas.style[key] = styles[key];
-    }
+    this.updateStyle(styles);
     this.ctx = this.canvas.getContext("2d", { alpha: false });
     this.ctx.textBaseline = "top";
     this.ctx.font = fontAttribute.font;
     this.event_queue = [];
   }
 
+  updateStyle(styles) {
+    for (let key in styles) {
+      this.canvas.style[key] = styles[key];
+    }
+  }
+
   move(x, y) {
     this.x = x;
     this.y = y;
-    this.canvas.style.left = x * fontAttribute.width;
-    this.canvas.style.top = y * fontAttribute.height;
+    this.canvas.style.left = Math.floor(x * fontAttribute.width);
+    this.canvas.style.top = Math.floor(y * fontAttribute.height);
   }
 
   resize(width, height) {
+    const ratio = window.devicePixelRatio || 1;
     this.width = width;
     this.height = height;
-    this.canvas.width = width * fontAttribute.width;
-    this.canvas.height = height * fontAttribute.height;
+    this.canvas.width = width * fontAttribute.width * ratio;
+    this.canvas.height = height * fontAttribute.height * ratio;
+    this.canvas.style.width = width * fontAttribute.width + "px";
+    this.canvas.style.height = height * fontAttribute.height + "px";
+    this.ctx.scale(ratio, ratio);
   }
 
   drawBlock(x, y, w, h, color) {
@@ -724,7 +738,7 @@ class Surface {
         y: y * fontAttribute.height,
         w: w * fontAttribute.width + 1,
         h: h * fontAttribute.height,
-      })
+      }),
     );
   }
 
@@ -736,7 +750,7 @@ class Surface {
         x: x * fontAttribute.width,
         y: y * fontAttribute.height,
         text: text,
-      })
+      }),
     );
   }
 
@@ -747,7 +761,7 @@ class Surface {
         x: x * fontAttribute.width,
         y: (y + 1) * fontAttribute.height - 3,
         width: fontAttribute.width * length,
-      })
+      }),
     );
   }
 
@@ -789,7 +803,7 @@ class Surface {
         0,
         n * fontAttribute.height,
         this.width * fontAttribute.width,
-        (this.height - n) * fontAttribute.height
+        (this.height - n) * fontAttribute.height,
       );
       this.ctx.putImageData(image, 0, 0);
     } else {
@@ -798,18 +812,16 @@ class Surface {
         0,
         0,
         this.width * fontAttribute.width,
-        (this.height - n) * fontAttribute.height
+        (this.height - n) * fontAttribute.height,
       );
       this.ctx.putImageData(
         image,
         x * fontAttribute.width,
-        (y + n) * fontAttribute.height
+        (y + n) * fontAttribute.height,
       );
     }
   }
 }
 
-
 customElements.define("lem-editor", LemEditor);
-customElements.define("lem-side-pane", LemSidePane);
 customElements.define("lem-editor-pane", LemEditorPane);

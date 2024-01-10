@@ -1,8 +1,8 @@
-(defpackage :lem-ncurses.clipboard
+(defpackage :lem-ncurses/clipboard
   (:use :cl :alexandria)
   (:export :copy
            :paste))
-(in-package :lem-ncurses.clipboard)
+(in-package :lem-ncurses/clipboard)
 
 (defparameter *unix-copy-commands*
   '(("wl-copy")

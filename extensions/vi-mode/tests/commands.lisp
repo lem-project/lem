@@ -85,3 +85,27 @@
         (ok (buf= #?"abcd\nef[b]cgh\n  fg\nijk\n"))
         (cmd "u$2hP")
         (ok (buf= #?"abcd\ne[b]cfgh\n fg\nijk\n"))))))
+
+(deftest vi-search-forward-symbol-at-point
+  (with-fake-interface ()
+    (with-vi-buffer (#?"f[o]o\nbar\nfoo\nbar\nfoo")
+      (cmd "*")
+      (ok (buf= #?"foo\nbar\n[f]oo\nbar\nfoo")))
+    (with-vi-buffer (#?"f[o]o\nbar\nfoo\nbar\nfoo")
+      (cmd "1*")
+      (ok (buf= #?"foo\nbar\n[f]oo\nbar\nfoo")))
+    (with-vi-buffer (#?"f[o]o\nbar\nfoo\nbar\nfoo")
+      (cmd "2*")
+      (ok (buf= #?"foo\nbar\nfoo\nbar\n[f]oo")))))
+
+(deftest vi-search-backward-symbol-at-point
+  (with-fake-interface ()
+    (with-vi-buffer (#?"foo\nbar\nfoo\nbar\nf[o]o")
+      (cmd "#")
+      (ok (buf= #?"foo\nbar\n[f]oo\nbar\nfoo")))
+    (with-vi-buffer (#?"foo\nbar\nfoo\nbar\nf[o]o")
+      (cmd "1#")
+      (ok (buf= #?"foo\nbar\n[f]oo\nbar\nfoo")))
+    (with-vi-buffer (#?"foo\nbar\nfoo\nbar\nf[o]o")
+      (cmd "2#")
+      (ok (buf= #?"[f]oo\nbar\nfoo\nbar\nfoo")))))

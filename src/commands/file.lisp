@@ -18,6 +18,7 @@
            :revert-buffer
            :revert-buffer-function
            :change-directory
+           :current-directory
            :prompt-for-files-recursively))
 (in-package :lem-core/commands/file)
 
@@ -373,3 +374,11 @@
     (uiop:chdir directory)
     (setf *default-pathname-defaults* (uiop:getcwd)))
   t)
+
+(define-command current-directory (&optional insert) ("P")
+  "Display the directory of the active buffer.
+With prefix argument INSERT, insert the directory of the active buffer at point."
+  (let ((dir (buffer-directory)))
+    (if insert
+        (insert-string (current-point) dir)
+        (message "Directory ~a" dir))))

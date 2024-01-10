@@ -3,17 +3,24 @@
         :lem-jsonrpc/utils
         :lem-jsonrpc/view)
   (:local-nicknames (:display :lem-core/display))
-  (:export :program))
+  (:export :run-tcp-server
+           :run-stdio-server
+           :run-websocket-server
+           :program))
 (in-package :lem-jsonrpc)
 
 (defvar *mode*)
+(defvar *hostname*)
 (defvar *port*)
+(defvar *websocket-url*)
+
 (defvar *editor-thread*)
 
 (pushnew :lem-jsonrpc *features*)
 
 (defclass jsonrpc (lem:implementation)
-  ((server :initform (jsonrpc:make-server)
+  ((mode :accessor jsonrpc-mode)
+   (server :initform (jsonrpc:make-server)
            :reader jsonrpc-server)
    (display-width :initform 80
                   :accessor jsonrpc-display-width)
@@ -24,7 +31,7 @@
   (:default-initargs
    :name :jsonrpc
    :redraw-after-modifying-floating-window nil
-   :window-left-margin 0))
+   :window-left-margin 1))
 
 (defmethod resize-display ((jsonrpc jsonrpc) width height)
   (setf (jsonrpc-display-width jsonrpc) width
@@ -32,14 +39,16 @@
 
 (defmethod notify ((jsonrpc jsonrpc) method argument)
   (pdebug "notify: ~A ~A" method (pretty-json argument))
-  (let ((jsonrpc/connection:*connection*
-          (jsonrpc/transport/interface:transport-connection
-           (jsonrpc/class:jsonrpc-transport (jsonrpc-server jsonrpc)))))
-    (jsonrpc:notify (jsonrpc-server jsonrpc) method argument)))
+  (if (eq (jsonrpc-mode jsonrpc) :stdio)
+      (let ((jsonrpc/connection:*connection*
+              (jsonrpc/transport/interface:transport-connection
+               (jsonrpc/class:jsonrpc-transport (jsonrpc-server jsonrpc)))))
+        (jsonrpc:notify (jsonrpc-server jsonrpc) method argument))
+      (jsonrpc:broadcast (jsonrpc-server jsonrpc) method argument)))
 
-(defun ready (jsonrpc loaded-fn)
+(defun login (jsonrpc logged-in-callback)
   (lambda (params)
-    (log:info "ready" (pretty-json params))
+    (pdebug "ready: ~A" (pretty-json params))
     (with-error-handler ()
       (let ((width (gethash "width" params))
             (height (gethash "height" params))
@@ -50,9 +59,10 @@
           (setf (jsonrpc-background-color jsonrpc) color))
         (alexandria:when-let (color (lem:parse-color foreground))
           (setf (jsonrpc-foreground-color jsonrpc) color))
-        (funcall loaded-fn)
+        (funcall logged-in-callback)
         (hash "width" width
-              "height" height)))))
+              "height" height
+              "userId" 0)))))
 
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
   (let ((ready nil))
@@ -61,8 +71,8 @@
                    (lambda ()
                      (loop :until ready))))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
-                    "ready"
-                    (ready jsonrpc
+                    "login"
+                    (login jsonrpc
                            (lambda ()
                              (setf ready t))))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
@@ -75,14 +85,22 @@
                     (notify jsonrpc "exit" nil)
                     (uiop:quit 0)))
 
+    (setf (jsonrpc-mode jsonrpc) *mode*)
     (ecase *mode*
       (:tcp
        (jsonrpc:server-listen (jsonrpc-server jsonrpc)
                               :mode :tcp
-                              :port *port*))
+                              :port *port*
+                              :host *hostname*))
       (:stdio
        (jsonrpc:server-listen (jsonrpc-server jsonrpc)
-                              :mode :stdio)))))
+                              :mode :stdio))
+      (:websocket
+       (jsonrpc:server-listen (jsonrpc-server jsonrpc)
+                              :mode :websocket
+                              :port *port*
+                              :host *hostname*
+                              :url *websocket-url*)))))
 
 (defmethod lem-if:get-background-color ((jsonrpc jsonrpc))
   (log:info jsonrpc)
@@ -146,7 +164,7 @@
                          :height height
                          :use-modeline use-modeline
                          :kind (if (lem:floating-window-p window)
-                                   "popup"
+                                   "floating"
                                    "tile"))))
     (notify jsonrpc "make-view" view)
     view))
@@ -273,7 +291,7 @@
 (defun bool (x) (if x 'yason:true 'yason:false))
 
 (defun ensure-rgb (color)
-  (if (typep color 'lem-core::color)
+  (if (typep color 'lem:color)
       (lem:color-to-hex-string color)
       color))
 
@@ -455,7 +473,9 @@
 (defun input-callback (jsonrpc args)
   (handler-case
       (let ((kind (gethash "kind" args))
-            (value (gethash "value" args)))
+            (value (gethash "value" args))
+            (user-id (gethash "userId" args)))
+        (declare (ignore user-id))
         (cond ((= kind +abort+)
                (lem:send-abort-event *editor-thread* nil))
               ((= kind +keyevent+)
@@ -488,26 +508,45 @@
 ;;;
 (defparameter +command-line-spec+
   ;; TODO: more helpful documentation
-  '((("mode" #\m) :type string :optional t :documentation "\"tcp\" or \"stdio\"")
-    (("port" #\p) :type integer :optional nil :documentation "port of \"tcp\"")))
+  '((("mode" #\m) :type string :optional t :documentation "\"tcp\", \"stdio\" or \"websocket\"")
+    (("port" #\p) :type integer :optional nil :documentation "port of \"tcp\" or \"websocket\"")))
+
+(defun run-tcp-server (port)
+  (let ((*mode* :tcp)
+        (*port* port))
+    (lem:lem)))
+
+(defun run-stdio-server ()
+  (let ((*mode* :stdio))
+    (lem:lem)))
+
+(defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1") url)
+  (let ((*mode* :websocket)
+        (*port* port)
+        (*hostname* hostname)
+        (*websocket-url* url))
+    (lem:lem)))
+
+(defun check-port-specified (port)
+  (unless port
+    (command-line-arguments:show-option-help +command-line-spec+)
+    (uiop:quit 1)))
 
 (defun program (&optional (args (uiop:command-line-arguments)))
   (command-line-arguments:handle-command-line
    +command-line-spec+
    (lambda (&key (mode "stdio") port)
      (cond ((string= mode "tcp")
-            (unless port
-              (command-line-arguments:show-option-help +command-line-spec+)
-              (uiop:quit 1))
-            (let ((*mode* :tcp)
-                  (*port* port))
-              (lem:lem)))
+            (check-port-specified port)
+            (run-tcp-server port))
+           ((string= mode "websocket")
+            (check-port-specified port)
+            (run-websocket-server :port port))
            ((string= mode "stdio")
-            (let ((*mode* :stdio))
-              (lem:lem)))
+            (run-stdio-server))
            (t
             (command-line-arguments:show-option-help +command-line-spec+)
             (uiop:quit 1))))
-   :name "lem-rpc"
+   :name "lem-jsonrpc"
    :positional-arity 0
    :command-line args))

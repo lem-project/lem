@@ -1,14 +1,23 @@
 (in-package :lem-core)
 
-(defun window-recenter (window)
-  (unless (= (window-cursor-y window)
-             (floor (window-height-without-modeline window) 2))
+(defun window-recenter (window &key line from-bottom)
+  "Recenter WINDOW to the given LINE number.
+LINE must be NIL or a positive number.
+If LINE is NIL, recenter to the middle of the WINDOW.
+Otherwise, recenter to the nth LINE (starting at 0), counted from the top.
+If FROM-BOTTOM is T, start counting from the bottom."
+  (check-type line (or null integer))
+  (check-type from-bottom boolean)
+  (setq line (cond ((null line)
+                    (floor (window-height-without-modeline window) 2))
+                   (from-bottom
+                    (- (window-height-without-modeline window) line 1))
+                   (t line)))
+  (unless (= line (window-cursor-y window))
     (line-start
      (move-point (window-view-point window)
                  (window-buffer-point window)))
-    (let* ((height (window-height-without-modeline window))
-           (n      (- (window-cursor-y window)
-                      (floor height 2))))
+    (let ((n (- (window-cursor-y window) line)))
       (window-scroll window n)
       n)))
 
@@ -20,7 +29,7 @@ next line because it is at the end of width."
   (let* ((tab-size (variable-value 'tab-width :default (window-buffer window)))
          (charpos (point-charpos point))
          (line    (line-string point))
-         (width   (1- (window-width window)))
+         (width   (1- (window-body-width window)))
          (cur-x   0)
          (add-x   (if (< charpos (length line))
                       (char-width (schar line charpos) 0 :tab-size tab-size)
@@ -50,7 +59,7 @@ next line because it is at the end of width."
 (defun map-wrapping-line (window string fn)
   (let ((tab-size (variable-value 'tab-width :default (window-buffer window))))
     (loop :with start := 0
-          :and width := (1- (window-width window))
+          :and width := (1- (window-body-width window))
           :for i := (wide-index string width :start start :tab-size tab-size)
           :while i
           :do (funcall fn i)
@@ -232,7 +241,7 @@ next line because it is at the end of width."
                (eq point (window-buffer-point window))
                (variable-value 'line-wrap :default (point-buffer point))
                (numberp (cursor-saved-column point))
-               (>= (cursor-saved-column point) (- (window-width window) 3)))
+               (>= (cursor-saved-column point) (- (window-body-width window) 3)))
       (setf (cursor-saved-column point) 0))
 
     (if *use-new-vertical-move-function*

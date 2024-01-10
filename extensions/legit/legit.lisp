@@ -1,7 +1,8 @@
 (defpackage :lem/legit
   (:use :cl
    :lem)
-  (:export :legit-status)
+  (:export :legit-status
+           :*prompt-for-commit-abort-p*)
   (:documentation "Display version control data of the current project in an interactive two-panes window.
 
   This package in particular defines the right window of the legit interface and the user-level commands.
@@ -11,7 +12,7 @@
 (in-package :lem/legit)
 
 #|
-An interactive interface to Git.
+An interactive interface to Git, with preliminary support for other version-control systems (Fossil, Mercurial).
 
 Done:
 
@@ -121,22 +122,34 @@ Next:
 (defun last-character (s)
   (subseq s (- (length s) 2) (- (length s) 1)))
 
+(defun call-with-porcelain-error (function)
+  (handler-bind ((lem/porcelain:porcelain-error
+                   (lambda (c)
+                     (lem:editor-error (slot-value c 'lem/porcelain::message)))))
+      (funcall function)))
+
+(defmacro with-porcelain-error (&body body)
+  "Handle porcelain errors and turn them into a lem:editor-error."
+  ;; This helps avoiding tight coupling.
+  `(call-with-porcelain-error (lambda () ,@body)))
+
 (defun call-with-current-project (function)
-  (let ((root (lem-core/commands/project:find-root (buffer-directory))))
-        (uiop:with-current-directory (root)
-          (multiple-value-bind (root vcs)
-              (lem/porcelain:vcs-project-p)
-            (if root
-                (let ((lem/porcelain:*vcs* vcs))
-                  (progn
-                    (funcall function)))
-                (message "Not inside a version-controlled project?"))))))
+  (with-porcelain-error ()
+    (let ((root (lem-core/commands/project:find-root (buffer-directory))))
+      (uiop:with-current-directory (root)
+        (multiple-value-bind (root vcs)
+            (lem/porcelain:vcs-project-p)
+          (if root
+              (let ((lem/porcelain:*vcs* vcs))
+                (progn
+                  (funcall function)))
+              (message "Not inside a version-controlled project?")))))))
 
 (defmacro with-current-project (&body body)
   "Execute body with the current working directory changed to the project's root,
   find and set the VCS system for this operation.
 
-  If no Git directory (or .fossil file) are found, message the user."
+  If no Git directory (or other supported VCS system) are found, message the user."
   `(call-with-current-project (lambda () ,@body)))
 
 

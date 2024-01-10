@@ -29,6 +29,7 @@
         :lem/common/timer
         :lem/common/command
         :lem/common/color
+        :lem/common/queue
         :lem-core/display)
   (:use-reexport :lem-base)
   (:use-reexport :lem/common/color)
@@ -249,6 +250,7 @@
    :window-view
    :window-point
    :window-cursor-invisible-p
+   :set-last-print-cursor
    :last-print-cursor-x
    :last-print-cursor-y
    :window-parameter

@@ -1,9 +1,9 @@
-(defpackage :lem.term
+(defpackage :lem-ncurses/term
   (:use :cl)
   (:export :get-color-pair
-           :term-set-foreground
-           :term-set-background
-           :background-mode
+           :update-foreground-color
+           :update-background-color
+           :background-color
            :term-init
            :term-finalize
            :term-set-tty
@@ -11,8 +11,11 @@
            ;;win32 patch
            :get-mouse-mode
            :enable-mouse
-           :disable-mouse))
-(in-package :lem.term)
+           :disable-mouse
+           :update-cursor-shape
+           :get-display-width
+           :get-display-height))
+(in-package :lem-ncurses/term)
 
 (cffi:defcvar ("COLOR_PAIRS" *COLOR-PAIRS* :library charms/ll::libcurses) :int)
 
@@ -397,7 +400,7 @@
     (charms/ll:assume-default-colors fg-color
                                      bg-color)))
 
-(defun term-set-foreground (name)
+(defun update-foreground-color (name)
   (multiple-value-bind (fg found) (get-color name)
     (let ((bg (nth-value 1 (get-default-colors))))
       (cond (found
@@ -406,7 +409,7 @@
             (t
              (error "Undefined color: ~A" name))))))
 
-(defun term-set-background (name)
+(defun update-background-color (name)
   (multiple-value-bind (bg found) (get-color name)
     (let ((fg (nth-value 0 (get-default-colors))))
       (cond (found
@@ -415,7 +418,7 @@
             (t
              (error "Undefined color: ~A" name))))))
 
-(defun background-mode ()
+(defun background-color ()
   (let ((b (nth-value 1 (get-default-colors))))
     (cond ((= b -1) (lem:make-color 0 0 0))
           (t
@@ -493,3 +496,21 @@
     (setf *term-io* nil))
   (charms/ll:endwin)
   (charms/ll:delscreen charms/ll:*stdscr*))
+
+(defun update-cursor-shape (cursor-type)
+  (uiop:run-program `("printf"
+                      ,(format nil "~C[~D q"
+                               #\Esc
+                               (case cursor-type
+                                 (:box 2)
+                                 (:bar 5)
+                                 (:underline 4)
+                                 (otherwise 2))))
+                    :output :interactive
+                    :ignore-error-status t))
+
+(defun get-display-width ()
+  (max 5 charms/ll:*cols*))
+
+(defun get-display-height ()
+  (max 3 charms/ll:*lines*))

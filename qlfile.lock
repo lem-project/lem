@@ -38,3 +38,7 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2-image.git")
   :version "git-8734b0e24de9ca390c9f763d9d7cd501546d17d4"))
+("jsonrpc" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/cxxxr/jsonrpc.git")
+  :version "git-28c4c962cfe936c7cd00dcab3bcae47b6f9de071"))

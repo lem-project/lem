@@ -13,6 +13,13 @@
                 :expand-filename-modifiers))
 (in-package :lem-vi-mode/ex-command)
 
+(defun ex-edit (filename force)
+  (if (string= filename "")
+      (lem:revert-buffer force)
+      (with-jumplist
+        (lem:find-file (merge-pathnames (expand-filename-modifiers filename)
+                                        (uiop:getcwd))))))
+
 (defun ex-write (range filename touch)
   (case (length range)
     (0 (if (string= filename "")
@@ -24,14 +31,20 @@
                                   filename)))
     (otherwise (syntax-error))))
 
+(defun ex-write-all (force)
+  (lem:save-some-buffers force))
+
 (defun ex-write-quit (range filename force touch)
   (ex-write range filename touch)
   (lem-vi-mode/commands:vi-quit force))
 
-(define-ex-command "^e$" (range filename)
+(define-ex-command "^e(?:dit)?$" (range filename)
   (declare (ignore range))
-  (with-jumplist
-    (lem:find-file (merge-pathnames (expand-filename-modifiers filename) (uiop:getcwd)))))
+  (ex-edit filename nil))
+
+(define-ex-command "^e(?:dit)?!$" (range filename)
+  (declare (ignore range))
+  (ex-edit filename t))
 
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))
@@ -62,12 +75,14 @@
   (declare (ignore range argument))
   (lem:exit-lem nil))
 
-(define-ex-command "^wqa$" (range filename)
-  (ex-write range filename nil)
+(define-ex-command "^(?:wqa|xa)(?:ll)?$" (range argument)
+  (declare (ignore range argument))
+  (ex-write-all nil)
   (lem:exit-lem t))
 
-(define-ex-command "^wqa!$" (range filename)
-  (ex-write range filename nil)
+(define-ex-command "^(?:wqa|xa)(?:ll)?!$" (range argument)
+  (declare (ignore range argument))
+  (ex-write-all t)
   (lem:exit-lem nil))
 
 (define-ex-command "^(x|xit)$" (range filename)
@@ -190,6 +205,26 @@
             (lem:show-message (format nil "~A: ~S" option-name (encode-value option-value))
                               :timeout 10))))))
 
+(define-ex-command "^r(?:e|ead)?$" (range filename)
+  ;; TODO: range currently does not distinguish between :0 and :1.
+  ;; This makes it impossible to insert at the beginning of the file
+  (cond
+    ((string= "" filename)
+     (lem:editor-error "No file name"))
+    ((char= #\! (char filename 0))
+     (lem:editor-error "Command execution not supported"))
+    (t
+     (let ((insert-point (case (length range)
+                           (0 (lem:current-point))
+                           (1 (first range))
+                           (2 (lem:point-max (first range) (second range))))))
+       (lem:move-point (lem:current-point) insert-point)
+       (lem:line-start (lem:current-point))
+       (unless (lem:line-offset (lem:current-point) 1)
+         (lem:line-end (lem:current-point))
+         (lem:insert-character (lem:current-point) #\newline))
+       (lem:insert-file-contents (lem:current-point) filename)))))
+
 (define-ex-command "^cd$" (range new-directory)
   (declare (ignore range))
   (let ((new-directory (change-directory (expand-filename-modifiers new-directory))))
@@ -198,3 +233,7 @@
 (define-ex-command "^noh(?:lsearch)?$" (range argument)
   (declare (ignore range argument))
   (lem/isearch:isearch-end))
+
+(define-ex-command "^pwd?$" (range argument)
+  (declare (ignore range argument))
+  (lem:current-directory))

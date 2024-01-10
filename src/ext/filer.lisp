@@ -2,9 +2,6 @@
   (:use :cl :lem))
 (in-package :lem/filer)
 
-(defparameter *right-pointing-triangle* (uiop:strcat (string (code-char #x25B8)) " "))
-(defparameter *down-pointing-triangle* (uiop:strcat (string (code-char #x25BE)) " "))
-
 (define-attribute triangle-attribute
   (t :bold t :foreground :base0D))
 
@@ -112,9 +109,11 @@
 
 (defmethod render-item (point (item directory-item) depth)
   (insert-string point
-                 (if (directory-item-open-p item)
-                     *down-pointing-triangle*
-                     *right-pointing-triangle*)
+                 (uiop:strcat 
+                  (if (directory-item-open-p item)
+                      (icon-string "down-pointing-triangle")
+                      (icon-string "right-pointing-triangle"))
+                  " ")
                  :attribute 'triangle-attribute)
   (insert-item point item)
   (dolist (item (directory-item-children item))

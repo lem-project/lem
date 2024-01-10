@@ -443,12 +443,12 @@
 
 (define-command backward-prompt () ()
   (when (equal (current-buffer) (repl-buffer))
-    (move-to-previous-virtual-line (current-point))
+    (line-start (current-point))
     (lem:previous-single-property-change (lem:current-point) :field)))
 
 (define-command forward-prompt () ()
   (when (equal (current-buffer) (repl-buffer))
-    (move-to-next-virtual-line (current-point))
+    (line-end (current-point))
     (lem:next-single-property-change (lem:current-point) :field)
     (lem:next-single-property-change (lem:current-point) :field)))
 

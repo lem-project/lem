@@ -22,7 +22,10 @@
   (:import-from :lem-vi-mode/window
                 :move-to-window-top
                 :move-to-window-middle
-                :move-to-window-bottom)
+                :move-to-window-bottom
+                :move-to-window-bottom-below
+                :move-to-window-top-above
+                :scroll-line)
   (:import-from :lem-vi-mode/utils
                 :kill-region-without-appending)
   (:import-from :lem/isearch
@@ -44,13 +47,23 @@
            :vi-forward-word-begin-broad
            :vi-backward-word-begin-broad
            :vi-forward-word-end
+           :vi-backward-word-end
            :vi-forward-word-end-broad
+           :vi-backward-word-end-broad
            :vi-move-to-beginning-of-line
            :vi-move-to-end-of-line
            :vi-move-to-last-nonblank
            :vi-move-to-window-top
            :vi-move-to-window-middle
            :vi-move-to-window-bottom
+           :vi-scroll-line-to-center
+           :vi-scroll-line-to-center-back-to-indentation
+           :vi-scroll-line-to-top
+           :vi-scroll-line-to-top-back-to-indentation
+           :vi-scroll-line-to-bottom
+           :vi-scroll-line-to-bottom-back-to-indentation
+           :vi-scroll-bottom-line-to-top
+           :vi-scroll-top-line-to-bottom
            :vi-back-to-indentation
            :vi-indent
            :vi-substitute
@@ -71,6 +84,7 @@
            :vi-kill-last-word
            :vi-upcase
            :vi-downcase
+           :vi-swapcase
            :vi-undo
            :vi-redo
            :vi-record-macro
@@ -82,8 +96,10 @@
            :vi-search-next
            :vi-search-previous
            :vi-search-forward-symbol-at-point
+           :vi-search-backward-symbol-at-point
            :vi-goto-first-line
            :vi-goto-line
+           :vi-goto-column
            :vi-return
            :vi-find-char
            :vi-find-char-backward
@@ -178,32 +194,32 @@
     (bolp p)))
 
 (define-command vi-forward-word-begin (&optional (n 1)) ("p")
-  (let ((start-line (line-number-at-point (current-point)))
-        (origin (copy-point (current-point))))
-    (dotimes (i n)
-      (forward-word-begin #'word-char-type))
-    ;; In operator-pending mode, this motion behaves differently.
-    (when (operator-pending-mode-p)
-      (with-point ((p (current-point)))
-        ;; Go back to the end of the previous line when the END point is in the next line.
-        ;; For example, when the cursor is at [b],
-        ;;   foo [b]ar
-        ;;     baz
-        ;; 'dw' deletes only the 'bar', instead of deleting to the beginning of the next word.
-        (skip-whitespace-backward p t)
-        (when (and (point< origin p)
-                   (bolp p))
-          (line-offset p -1)
-          (line-end p)
-          (loop while (and (< start-line
-                              (line-number-at-point p))
-                           (on-only-space-line-p p))
-                do (line-offset p -1)
-                   (line-end p))
-          ;; Skip this line if the previous line is empty
-          (when (bolp p)
-            (character-offset p 1))
-          (move-point (current-point) p))))))
+  (let ((start-line (line-number-at-point (current-point))))
+    (with-point ((origin (current-point)))
+      (dotimes (i n)
+        (forward-word-begin #'word-char-type))
+      ;; In operator-pending mode, this motion behaves differently.
+      (when (operator-pending-mode-p)
+        (with-point ((p (current-point)))
+          ;; Go back to the end of the previous line when the END point is in the next line.
+          ;; For example, when the cursor is at [b],
+          ;;   foo [b]ar
+          ;;     baz
+          ;; 'dw' deletes only the 'bar', instead of deleting to the beginning of the next word.
+          (skip-whitespace-backward p t)
+          (when (and (point< origin p)
+                     (bolp p))
+            (line-offset p -1)
+            (line-end p)
+            (loop while (and (< start-line
+                                (line-number-at-point p))
+                             (on-only-space-line-p p))
+                  do (line-offset p -1)
+                     (line-end p))
+            ;; Skip this line if the previous line is empty
+            (when (bolp p)
+              (character-offset p 1))
+            (move-point (current-point) p)))))))
 
 (define-command vi-backward-word-begin (&optional (n 1)) ("p")
   (dotimes (i n)
@@ -228,9 +244,12 @@
     (forward-word-end #'broad-word-char-type)))
 
 (define-command vi-backward-word-end (&optional (n 1)) ("p")
-  (character-offset (current-point) -1)
-  (skip-chars-backward (current-point) #'blank-char-p)
-  (vi-backward-word-begin n))
+  (dotimes (i n)
+    (backward-word-end #'word-char-type)))
+
+(define-command vi-backward-word-end-broad (&optional (n 1)) ("p")
+  (dotimes (i n)
+    (backward-word-end #'broad-word-char-type)))
 
 (define-command vi-move-to-beginning-of-line () ()
   (with-point ((start (current-point)))
@@ -266,6 +285,49 @@
     (:type :line
      :jump t)
   (move-to-window-bottom))
+
+(define-command vi-scroll-line-to-center (&optional n) ("P")
+  "Scroll line number N (or the current line) to the center of the screen."
+  (scroll-line n :center))
+
+(define-command vi-scroll-line-to-center-back-to-indentation (&optional n) ("P")
+  "Scroll line number N (or the current line) to the center of the screen.
+Move the cursor to the first non-blank character of the line."
+  (scroll-line n :center)
+  (vi-back-to-indentation))
+
+(define-command vi-scroll-line-to-top (&optional n) ("P")
+  "Scroll line number N (or the current line) to the top of the screen."
+  (scroll-line n :top))
+
+(define-command vi-scroll-line-to-top-back-to-indentation (&optional n) ("P")
+  "Scroll line number N (or the current line) to the top of the screen.
+Move the cursor to the first non-blank character of the line."
+  (scroll-line n :top)
+  (vi-back-to-indentation))
+
+(define-command vi-scroll-line-to-bottom (&optional n) ("P")
+  "Scroll line number N (or the current line) to the bottom of the screen."
+  (scroll-line n :bottom))
+
+(define-command vi-scroll-line-to-bottom-back-to-indentation (&optional n) ("P")
+  "Scroll line number N (or the current line) to the bottom of the screen.
+Move the cursor to the first non-blank character of the line."
+  (scroll-line n :bottom)
+  (vi-back-to-indentation))
+
+(define-command vi-scroll-bottom-line-to-top (&optional n) ("P")
+  (unless n
+    (move-to-window-bottom-below))
+  (vi-scroll-line-to-top-back-to-indentation n))
+
+(define-command vi-scroll-top-line-to-bottom (&optional n) ("P")
+  (if n
+      (progn
+        (vi-scroll-line-to-bottom n)
+        (vi-move-to-window-top))
+      (move-to-window-top-above))
+  (vi-scroll-line-to-bottom-back-to-indentation nil))
 
 (define-command vi-back-to-indentation () ()
   (vi-move-to-beginning-of-line)
@@ -525,6 +587,22 @@
       (apply-visual-range #'downcase-region)
       (downcase-region start end)))
 
+(define-operator vi-swapcase (start end type) ("<R>")
+    (:move-point t)
+  (flet ((swapcase-region (start end)
+           (save-excursion
+             (with-point ((pt start :left-inserting))
+               (loop :while (and (point< pt end)
+                                 (not (end-buffer-p pt)))
+                     :do (let ((chr (character-at pt 0)))
+                           (delete-character pt)
+                           (insert-character pt (if (upper-case-p chr)
+                                                    (char-downcase chr)
+                                                    (char-upcase chr)))))))))
+    (if (eq type :block)
+        (apply-visual-range #'swapcase-region)
+        (swapcase-region start end))))
+
 (define-command vi-undo (&optional (n 1)) ("p")
   (undo n))
 
@@ -684,11 +762,33 @@
     (:forward (vi-search-repeat-backward n))
     (:backward (vi-search-repeat-forward n))))
 
-(define-command vi-search-forward-symbol-at-point () ()
+(define-command vi-search-forward-symbol-at-point (&optional (n 1)) ("p")
   (with-jumplist
     (lem/isearch:isearch-forward-symbol-at-point)
     (lem/isearch:isearch-finish)
-    (lem/isearch:isearch-next)))
+    (let ((wrapped nil))
+      (loop :repeat n
+            :unless (lem/isearch:isearch-next)
+            :do (move-point (current-point) (buffer-start-point (current-buffer)))
+                (lem/isearch:isearch-next)
+                (setq wrapped t))
+      (skip-chars-backward (current-point) #'syntax-symbol-char-p)
+      (when wrapped
+        (message "Search wrapped around from bottom to top")))))
+
+(define-command vi-search-backward-symbol-at-point (&optional (n 1)) ("p")
+  (with-jumplist
+    (lem/isearch:isearch-forward-symbol-at-point)
+    (lem/isearch:isearch-finish)
+    (lem/isearch:isearch-prev)
+    (let ((wrapped nil))
+      (loop :repeat n
+            :unless (lem/isearch:isearch-prev)
+            :do (move-point (current-point) (buffer-end-point (current-buffer)))
+                (lem/isearch:isearch-prev)
+                (setq wrapped t))
+      (when wrapped
+        (message "Search wrapped around from top to bottom")))))
 
 (define-motion vi-goto-first-line (&optional (n 1)) ("p")
     (:type :line
@@ -710,6 +810,11 @@
          (line-offset (current-point) -1)))
       (t (goto-line n)))
     (move-to-column (current-point) col)))
+
+(define-motion vi-goto-column (&optional (n 1)) ("p")
+    (:type :exclusive
+     :jump t)
+  (move-to-column (current-point) (1- n)))
 
 (define-command vi-return (&optional (n 1)) ("p")
   (vi-next-line n)

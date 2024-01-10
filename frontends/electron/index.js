@@ -3,7 +3,7 @@
 const electron = require("electron");
 const menu = require("./menu");
 
-require('@electron/remote/main').initialize();
+require("@electron/remote/main").initialize();
 
 let mainWindow;
 
@@ -17,9 +17,9 @@ electron.app.on("ready", function () {
     },
   });
 
-  require('@electron/remote/main').enable(mainWindow.webContents);
+  require("@electron/remote/main").enable(mainWindow.webContents);
 
-  mainWindow.once('ready-to-show', () => {
+  mainWindow.once("ready-to-show", () => {
     mainWindow.show();
     //mainWindow.webContents.openDevTools();
   });

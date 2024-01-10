@@ -145,6 +145,11 @@
                  :height height
                  :use-modeline-p use-modeline-p))
 
+(defun window-body-width (window)
+  "Return the width of the body of WINDOW.
+This is the content area in which the buffer is displayed, without any side margins."
+  (- (window-width window) (window-left-width window)))
+
 (defun clear-screens-of-window-list ()
   (flet ((clear-screen (window)
            (need-to-redraw window)

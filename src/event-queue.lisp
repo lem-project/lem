@@ -5,9 +5,6 @@
 (defun event-queue-length ()
   (len *editor-event-queue*))
 
-(defun dequeue-event (timeout)
-  (dequeue *editor-event-queue* :timeout timeout :timeout-value :timeout))
-
 (defun send-event (obj)
   (enqueue *editor-event-queue* obj))
 
@@ -18,7 +15,9 @@
 
 (defun receive-event (timeout)
   (loop
-    (let ((e (dequeue-event timeout)))
+    (let ((e (dequeue *editor-event-queue*
+                      :timeout timeout
+                      :timeout-value :timeout)))
       (cond ((null e)
              (return nil))
             ((eql e :timeout)

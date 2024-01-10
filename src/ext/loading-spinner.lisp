@@ -73,19 +73,20 @@
 
 (defmethod start-loading-spinner ((type (eql :modeline)) &key buffer loading-message)
   (check-type buffer buffer)
-  (unless (buffer-spinner buffer)
-    (let* ((spinner)
-           (timer (start-timer (make-timer (lambda () (update-spinner-frame spinner)))
-                               +loading-interval+
-                               :repeat t)))
-      (setf spinner
-            (make-instance 'modeline-spinner
-                           :timer timer
-                           :loading-message loading-message
-                           :buffer buffer))
-      (modeline-add-status-list spinner buffer)
-      (setf (buffer-spinner buffer) spinner)
-      spinner)))
+  (when (buffer-spinner buffer)
+    (stop-loading-spinner (buffer-spinner buffer)))
+  (let* ((spinner)
+         (timer (start-timer (make-timer (lambda () (update-spinner-frame spinner)))
+                             +loading-interval+
+                             :repeat t)))
+    (setf spinner
+          (make-instance 'modeline-spinner
+                         :timer timer
+                         :loading-message loading-message
+                         :buffer buffer))
+    (modeline-add-status-list spinner buffer)
+    (setf (buffer-spinner buffer) spinner)
+    spinner))
 
 (defmethod stop-loading-spinner ((spinner modeline-spinner))
   (let ((buffer (modeline-spinner-buffer spinner)))

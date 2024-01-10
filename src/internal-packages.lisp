@@ -29,6 +29,7 @@
         :lem/common/timer
         :lem/common/command
         :lem/common/color
+        :lem/common/queue
         :lem-core/display)
   (:use-reexport :lem-base)
   (:use-reexport :lem/common/color)

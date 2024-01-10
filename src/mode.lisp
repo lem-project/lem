@@ -104,10 +104,6 @@
 (defun current-global-mode ()
   *current-global-mode*)
 
-(defun current-global-mode-keyword-name ()
-  (alexandria:make-keyword
-   (mode-name (current-global-mode))))
-
 (defun all-active-modes (buffer)
   (mapcar #'ensure-mode-object
           (append (buffer-minor-modes buffer)

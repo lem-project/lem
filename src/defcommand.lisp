@@ -1,8 +1,7 @@
 (in-package :lem-core)
 
-
 (defun maybe-marked ()
-  (when (eql (current-global-mode-keyword-name) :|emacs|)
+  (when (string= (mode-name (current-global-mode)) "emacs")
     (check-marked)))
 
 (eval-when (:compile-toplevel :load-toplevel)
@@ -56,10 +55,8 @@
                                          :existing nil)))
                                 (#\r
                                  (push '(maybe-marked) pre-forms)
-                                 '(list (global-mode-region-beginning
-                                         (current-global-mode-keyword-name))
-                                   (global-mode-region-end
-                                    (current-global-mode-keyword-name))))))
+                                 '(list (lem-generics:global-mode-region-beginning (current-global-mode))
+                                   (lem-generics:global-mode-region-end (current-global-mode))))))
                              ((and (consp arg-descriptor)
                                    (eq :splice (first arg-descriptor)))
                               (assert (alexandria:length= arg-descriptor 2))

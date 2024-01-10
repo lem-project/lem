@@ -10,6 +10,11 @@
                 :normal)
   (:import-from :lem-vi-mode/modeline
                 :state-modeline-orange)
+  (:import-from :lem/language-mode
+                :set-region-point-global)
+  (:import-from :lem-generics
+                :global-mode-region-beginning
+                :global-mode-region-end)
   (:import-from :lem-base
                 :alive-point-p)
   (:import-from :alexandria
@@ -249,29 +254,24 @@
         (move-to-column (current-point) start-col))
       (vi-visual-swap-points)))
 
-(defmethod lem/language-mode:set-region-point ((start point) (end point) (global-mode (eql :|vi|)))
+(defmethod set-region-point-global ((start point) (end point)
+                                    (global-mode vi-mode))
   (declare (ignore global-mode))
   (when (visual-p)
     (let ((v-range (visual-range)))
       (move-point start (car v-range))
       (move-point end (cadr v-range)))))
 
+(defmethod global-mode-region-beginning ((global-mode vi-mode)
+                                         &optional (buffer (current-buffer)))
+  (declare (ignore buffer))
+  (if (visual-p)
+      (car (visual-range))
+      (editor-error "Not in visual mode")))
 
-(eval-when (:compile-toplevel :load-toplevel)
-  #+sbcl
-  (sb-ext:unlock-package :lem-base)
-
-  (defmethod lem-base::global-mode-region-beginning ((global-mode (eql :|vi|)) &optional (buffer (current-buffer)))
-    (declare (ignore buffer))
-    (if (visual-p)
-        (car (visual-range))
-        (editor-error "Not in visual mode")))
-
-  (defmethod lem-base::global-mode-region-end ((global-mode (eql :|vi|)) &optional (buffer (current-buffer)))
-    (declare (ignore buffer))
-    (if (visual-p)
-        (cadr (visual-range))
-        (editor-error "Not in visual mode")))
-
-  #+sbcl
-  (sb-ext:lock-package :lem-base))
+(defmethod global-mode-region-end ((global-mode vi-mode)
+                                   &optional (buffer (current-buffer)))
+  (declare (ignore buffer))
+  (if (visual-p)
+      (cadr (visual-range))
+      (editor-error "Not in visual mode")))

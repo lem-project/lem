@@ -35,7 +35,7 @@
     :reader url-link-url)))
 
 (define-minor-mode link-mode
-    (:name nil
+    (:name "link"
      :enable-hook 'enable
      :disable-hook 'disable))
 

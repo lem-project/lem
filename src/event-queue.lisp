@@ -2,14 +2,14 @@
 
 (defvar *editor-event-queue* (make-concurrent-queue))
 
-(defun event-queue-length (&optional (evq *editor-event-queue*))
-  (len evq))
+(defun event-queue-length ()
+  (len *editor-event-queue*))
 
-(defun dequeue-event (timeout &optional (evq *editor-event-queue*))
-  (dequeue evq :timeout timeout :timeout-value :timeout))
+(defun dequeue-event (timeout)
+  (dequeue *editor-event-queue* :timeout timeout :timeout-value :timeout))
 
-(defun send-event (obj &optional (evq *editor-event-queue*))
-  (enqueue evq obj))
+(defun send-event (obj)
+  (enqueue *editor-event-queue* obj))
 
 (defun send-abort-event (editor-thread force)
   (bt:interrupt-thread editor-thread

@@ -26,9 +26,6 @@
             ((eql e :resize)
              (when (>= 1 (event-queue-length))
                (update-on-display-resized)))
-            ((consp e)
-             (eval e)
-             (return t))
             ((or (functionp e) (symbolp e))
              (funcall e))
             (t

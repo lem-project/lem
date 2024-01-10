@@ -189,9 +189,7 @@
    :insert-string
    :delete-character
    :erase-buffer
-   :global-mode-region-beginning
    :region-beginning
-   :global-mode-region-end
    :region-end
    :map-region
    :points-to-string

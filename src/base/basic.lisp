@@ -257,20 +257,11 @@ The thrid argument PROP is a property to remove."
                      (count-characters (buffer-start-point buffer)
                                        (buffer-end-point buffer))))
 
-(defgeneric global-mode-region-beginning (global-mode &optional buffer))
-
-(defmethod global-mode-region-beginning ((global-mode (eql :|emacs|)) &optional (buffer (current-buffer)))
-  (region-beginning buffer))
 
 (defun region-beginning (&optional (buffer (current-buffer)))
   "Return the integer value of point or mark, whichever is smaller."
   (point-min (buffer-point buffer)
              (buffer-mark buffer)))
-
-(defgeneric global-mode-region-end (global-mode &optional buffer))
-
-(defmethod global-mode-region-end ((global-mode (eql :|emacs|)) &optional (buffer (current-buffer)))
-  (region-end buffer))
 
 (defun region-end (&optional (buffer (current-buffer)))
   "Return the integer value of point or mark, whichever is larger."

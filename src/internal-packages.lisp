@@ -23,6 +23,12 @@
    :void-object
    :text-object))
 
+(defpackage :lem-generics
+  (:use :cl :lem-base)
+  (:export
+   :global-mode-region-beginning
+   :global-mode-region-end))
+
 (uiop:define-package :lem-core
   (:use :cl
         :lem/common/killring

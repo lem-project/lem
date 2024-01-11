@@ -46,11 +46,16 @@
 
 (defun load-site-init (&key force)
   (let* ((asdf:*central-registry*
-           (union (mapcar #'pathname
-                          (mapcar #'directory-namestring
-                                  (directory
-                                   (merge-pathnames "**/*.asd"
-                                                    (lem-home)))))
+           (union (remove-duplicates
+                   (mapcar #'pathname
+                           (mapcar #'directory-namestring
+                                   (directory
+                                    (merge-pathnames
+                                     "**/*.asd"
+                                     (pathname (str:concat
+                                                (directory-namestring (lem-home))
+                                                "lisp"
+                                                (string  (uiop:directory-separator-for-host)))))))))
                   asdf:*central-registry*
                   :test #'equal))
          (system-name *site-init-name*)

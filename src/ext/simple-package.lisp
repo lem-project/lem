@@ -1,5 +1,9 @@
 (defpackage :lem/simple-package
-  (:use :cl :lem))
+  (:use :cl :lem)
+  (:export :*installed-packages*
+           :*packages-directory*
+           :lem-use-package
+           :load-packages))
 
 (in-package :lem/simple-package)
 
@@ -13,10 +17,11 @@
 
 (defstruct source name)
 
+(defstruct (local (:include source)))
+
 (defgeneric download-source (source output-location)
   (:documentation "It downloads the SOURCE to the desired location."))
 
-;; From porcelain.lisp
 (defvar *git-base-arglist* (list "git")
   "The git program, to be appended command-line options.")
 

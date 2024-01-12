@@ -7,9 +7,9 @@
 
 (in-package :lem/simple-package)
 
-(defparameter *installed-packages* nil)
+(defvar *installed-packages* nil)
 
-(defparameter *packages-directory*
+(defvar *packages-directory*
   (pathname (str:concat
              (directory-namestring (lem-home))
              "packages"
@@ -47,10 +47,9 @@
 
 (defstruct (quicklisp (:include source)))
 
-(eval-when (:compile-toplevel)
-  (defparameter *quicklisp-system-list*
-    (remove-duplicates
-     (mapcar #'ql-dist:release (ql:system-list)))))
+(defvar *quicklisp-system-list*
+  (remove-duplicates
+   (mapcar #'ql-dist:release (ql:system-list))))
 
 (defmethod download-source ((source quicklisp) (output-location String))
   (let* ((output-dir (str:concat

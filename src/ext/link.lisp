@@ -35,7 +35,8 @@
     :reader url-link-url)))
 
 (define-minor-mode link-mode
-    (:name "link"
+    (:name "Link"
+     :hide-from-modeline t
      :enable-hook 'enable
      :disable-hook 'disable))
 

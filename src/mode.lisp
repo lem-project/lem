@@ -28,7 +28,8 @@
   ((name :initarg :name :reader mode-name)
    (description :initarg :description :reader mode-description)
    (keymap :initarg :keymap :reader mode-keymap :writer set-mode-keymap)
-   (commands :initform '() :accessor mode-commands)))
+   (commands :initform '() :accessor mode-commands)
+   (hide-from-modeline :initarg :hide-from-modeline :reader mode-hide-from-modeline)))
 
 (defclass major-mode (mode)
   ((syntax-table :initarg :syntax-table :reader mode-syntax-table)
@@ -88,6 +89,10 @@
 (defmethod mode-hook-variable ((mode symbol))
   (assert (not (null mode)))
   (mode-hook-variable (get-mode-object mode)))
+
+(defmethod mode-hide-from-modeline ((mode symbol))
+  (assert (not (null mode)))
+  (mode-hide-from-modeline (get-mode-object mode)))
 
 (defun major-modes ()
   (mapcar #'mode-identifier-name (collect-modes #'major-mode-p)))
@@ -187,7 +192,13 @@
       (enable-minor-mode minor-mode)))
 
 (defmacro define-minor-mode (minor-mode
-                             (&key name description (keymap nil keymapp) global enable-hook disable-hook)
+                             (&key name
+                                   description
+                                   (keymap nil keymapp)
+                                   global
+                                   enable-hook
+                                   disable-hook
+                                   hide-from-modeline)
                              &body body)
   (let ((command-class-name (make-mode-command-class-name minor-mode)))
     `(progn
@@ -212,7 +223,8 @@
           :description ,description
           :keymap ,keymap
           :enable-hook ,enable-hook
-          :disable-hook ,disable-hook))
+          :disable-hook ,disable-hook
+          :hide-from-modeline ,hide-from-modeline))
        (register-mode ',minor-mode (make-instance ',minor-mode)))))
 
 ;;; global-mode

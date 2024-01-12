@@ -95,15 +95,33 @@
 
 (defun packages-list ()
   (remove-duplicates
-   (mapcar #'(lambda (d) (pathname (directory-namestring d)))
+   (mapcar (lambda (d) (pathname (directory-namestring d)))
            (directory (merge-pathnames "**/*.asd" *packages-directory*)))))
 
 (defun insert-package (package)
   (pushnew package *installed-packages*
-           :test #'(lambda (a b)
-                     (string=
-                      (simple-package-name a)
-                      (simple-package-name b)))))
+           :test (lambda (a b)
+                   (string=
+                    (simple-package-name a)
+                    (simple-package-name b)))))
+
+(defun define-source (source-list name)
+  (let ((s (getf source-list :type)))
+    (ecase s
+      (:git
+       (destructuring-bind (&key type url branch commit)
+           source-list
+         (declare (ignore type))
+         (make-git :name name
+                   :url url
+                   :branch branch
+                   :commit commit)))
+      (:quicklisp
+       (destructuring-bind (&key type)
+           source-list
+         (declare (ignore type))
+         (make-quicklisp :name name)))
+      (t (editor-error "Source ~a not available." s)))))
 
 ;; git source (list :type type :url url :branch branch :commit commit)
 (defmacro lem-use-package (name &key source config
@@ -111,31 +129,14 @@
                                  hooks force)
   (declare (ignore hooks bind after config ))
   (alexandria:with-gensyms (spackage rsource pdir)
-    `(labels ((dfsource (source-list)
-                (let ((s (getf source-list :type)))
-                  (ecase s
-                    (:git
-                     (destructuring-bind (&key type url branch commit)
-                         source-list
-                       (declare (ignore type))
-                       (make-git :name ,name
-                                 :url url
-                                 :branch branch
-                                 :commit commit)))
-                    (:quicklisp
-                     (destructuring-bind (&key type)
-                         source-list
-                       (declare (ignore type))
-                       (make-quicklisp :name ,name)))
-                    (t (editor-error "Source ~a not available." s))))))
-       (let* ((asdf:*central-registry*
+    `(let* ((asdf:*central-registry*
                 (union (packages-list)
                        asdf:*central-registry*
                        :test #'equal))
               (ql:*local-project-directories*
                 (nconc (list *packages-directory*)
                        ql:*local-project-directories*))
-              (,rsource (dfsource ,source))
+              (,rsource (define-source ,source ,name))
               (,pdir (merge-pathnames *packages-directory* ,name))
               (,spackage (make-instance 'simple-package
                                         :name ,name
@@ -150,7 +151,7 @@
          (insert-package ,spackage)
          (uiop:symbol-call :quicklisp :register-local-projects)
          (maybe-quickload (alexandria:make-keyword ,name)
-                          :silent t)))))
+                          :silent t))))
 
 ;(lem-use-package "versioned-objects"
 ;                 :source '(:type :git

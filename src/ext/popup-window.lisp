@@ -78,8 +78,8 @@
       (call-next-method)
     (list (+ x (gravity-offset-x gravity))
           (+ y (gravity-offset-y gravity))
-          width
-          height)))
+          (max width 1)
+          (max height 1))))
 
 (defmethod compute-popup-window-rectangle ((gravity gravity-center)
                                            &key width height &allow-other-keys)

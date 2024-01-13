@@ -10,11 +10,6 @@
                 :normal)
   (:import-from :lem-vi-mode/modeline
                 :state-modeline-orange)
-  (:import-from :lem/language-mode
-                :set-region-point-global)
-  (:import-from :lem-generics
-                :global-mode-region-beginning
-                :global-mode-region-end)
   (:import-from :lem-base
                 :alive-point-p)
   (:import-from :alexandria

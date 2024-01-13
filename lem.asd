@@ -74,7 +74,7 @@
                (:file "keymap")
                (:file "defcommand")
                (:file "fundamental-mode")
-               (:file "export-generics")
+               (:file "region")
                (:file "event-queue")
                (:file "interp")
                (:file "mouse")

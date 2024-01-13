@@ -38,8 +38,7 @@
    :display-xref-locations
    :display-xref-references
    :find-root-directory
-   :buffer-root-directory
-   :set-region-point-global)
+   :buffer-root-directory)
   #+sbcl
   (:lock t))
 (in-package :lem/language-mode)
@@ -153,19 +152,6 @@
   (if (commented-region-p)
       (uncomment-region)
       (comment-region)))
-
-(defgeneric set-region-point-global (start end global-mode))
-
-(defmethod set-region-point-global ((start point) (end point)
-                                    (global-mode lem-core::emacs-mode))
-  (declare (ignore global-mode))
-  (cond
-    ((buffer-mark-p (current-buffer))
-     (move-point start (cursor-region-beginning (current-point)))
-     (move-point end (cursor-region-end (current-point))))
-    (t
-     (line-start start)
-     (line-end end))))
 
 (defun commented-region-p ()
   (alexandria:when-let ((line-comment (variable-value 'line-comment :buffer)))

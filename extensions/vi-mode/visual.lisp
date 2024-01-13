@@ -246,8 +246,7 @@
         (move-to-column (current-point) start-col))
       (vi-visual-swap-points)))
 
-(defmethod set-region-point-global ((start point) (end point)
-                                    (global-mode vi-mode))
+(defmethod set-region-point-global ((global-mode vi-mode) (start point) (end point))
   (declare (ignore global-mode))
   (when (visual-p)
     (let ((v-range (visual-range)))

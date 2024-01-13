@@ -2,7 +2,7 @@
 
 (defgeneric global-mode-region-beginning (global-mode &optional buffer))
 (defgeneric global-mode-region-end (global-mode &optional buffer))
-(defgeneric set-region-point-global (start end global-mode))
+(defgeneric set-region-point-global (global-mode start end))
 
 (defmethod global-mode-region-beginning ((global-mode emacs-mode)
                                          &optional (buffer (current-buffer)))
@@ -12,8 +12,7 @@
                                    &optional (buffer (current-buffer)))
   (region-end buffer))
 
-(defmethod set-region-point-global ((start point) (end point)
-                                    (global-mode emacs-mode))
+(defmethod set-region-point-global ((global-mode emacs-mode) (start point) (end point))
   (declare (ignore global-mode))
   (cond
     ((buffer-mark-p (current-buffer))

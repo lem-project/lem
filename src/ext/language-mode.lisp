@@ -38,7 +38,8 @@
    :display-xref-locations
    :display-xref-references
    :find-root-directory
-   :buffer-root-directory)
+   :buffer-root-directory
+   :set-region-point-global)
   #+sbcl
   (:lock t))
 (in-package :lem/language-mode)
@@ -153,7 +154,11 @@
       (uncomment-region)
       (comment-region)))
 
-(defun set-region-point (start end)
+(defgeneric set-region-point-global (start end global-mode))
+
+(defmethod set-region-point-global ((start point) (end point)
+                                    (global-mode lem-core::emacs-mode))
+  (declare (ignore global-mode))
   (cond
     ((buffer-mark-p (current-buffer))
      (move-point start (cursor-region-beginning (current-point)))
@@ -166,7 +171,7 @@
   (alexandria:when-let ((line-comment (variable-value 'line-comment :buffer)))
     (with-point ((start (current-point))
                  (end (current-point)))
-      (set-region-point start end)
+      (set-region-point-global start end (lem-core::current-global-mode))
       (loop
         (skip-whitespace-forward start)
         (when (point>= start end)
@@ -183,7 +188,7 @@
       (when line-comment
         (with-point ((start (current-point) :right-inserting)
                      (end (current-point) :left-inserting))
-          (set-region-point start end)
+          (set-region-point-global start end (lem-core::current-global-mode))
           (skip-whitespace-forward start)
           (when (point>= start end)
             (insert-string (current-point) line-comment)
@@ -210,7 +215,7 @@
       (when line-comment
         (with-point ((start (current-point) :right-inserting)
                      (end (current-point) :right-inserting))
-          (set-region-point start end)
+          (set-region-point-global start end (lem-core::current-global-mode))
           (let ((p start))
             (loop
               (parse-partial-sexp p end nil t)

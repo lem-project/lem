@@ -257,6 +257,7 @@ The thrid argument PROP is a property to remove."
                      (count-characters (buffer-start-point buffer)
                                        (buffer-end-point buffer))))
 
+
 (defun region-beginning (&optional (buffer (current-buffer)))
   "Return the integer value of point or mark, whichever is smaller."
   (point-min (buffer-point buffer)

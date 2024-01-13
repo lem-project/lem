@@ -382,7 +382,8 @@
    :define-global-mode
    :change-global-mode-keymap
    :enable-minor-mode
-   :disable-minor-mode)
+   :disable-minor-mode
+   :current-global-mode)
   ;; keymap.lisp
   (:export
    :*keymaps*

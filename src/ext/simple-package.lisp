@@ -144,7 +144,7 @@
 ;; git source (list :type type :url url :branch branch :commit commit)
 (defmacro lem-use-package (name &key source after
                                  bind hooks force)
-  (declare (ignore hooks bind ))
+  (declare (ignore hooks bind after))
   (alexandria:with-gensyms (spackage rsource pdir)
     `(let* ((asdf:*central-registry*
                 (union (packages-list)

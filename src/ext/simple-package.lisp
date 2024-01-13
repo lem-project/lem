@@ -163,7 +163,7 @@
                    (not (uiop:directory-exists-p ,pdir)))
            (%download-package ,rsource ,name))
          (insert-package ,spackage)
-       (%register-maybe-quickload ,name))))
+       (and (%register-maybe-quickload ,name) t))))
 
 ;(lem-use-package "versioned-objects"
 ;                 :source '(:type :git
@@ -172,7 +172,8 @@
 
 ;(lem-use-package "fiveam" :source (:type :quicklisp))
 
-;; Package util commands
+;; Package util functions/commands
+
 
 (defun load-packages ()
   (let ((ql:*local-project-directories* (list *packages-directory*)))
@@ -188,17 +189,27 @@
                              :directory dpackage))
           do (maybe-quickload (alexandria:make-keyword spackage) :silent t))))
 
-(define-command sp-install-ql-package () ()
+(defun %select-ql-package ()
   (let* ((packages (mapcar #'ql-dist:project-name
-                           *quicklisp-system-list*))
-         (rpackage
-           (prompt-for-string "Select package: "
-                              :completion-function
-                              (lambda (string)
-                                (completion string packages)))))
+                           *quicklisp-system-list*)))
+    (prompt-for-string "Select package: "
+                       :completion-function
+                       (lambda (string)
+                         (completion string packages)))))
 
-    (lem-use-package rpackage :source '(:type :quicklisp))
-    (message "Package ~a installed!" rpackage)))
+(define-command sp-test-ql-package () ()
+  (alexandria:if-let ((lpackage (%select-ql-package)))
+    (progn (package-test
+            (make-instance 'simple-package
+                           :name lpackage
+                           :source (make-quicklisp :name lpackage))))
+    (editor-error "There was an error loading ~a!" lpackage)))
+
+(define-command sp-install-ql-package () ()
+  (let* ((lpackage (%select-ql-package)))
+
+    (lem-use-package lpackage :source '(:type :quicklisp))
+    (message "Package ~a installed!" lpackage)))
 
 (define-command sp-remove-package () ()
   (if *installed-packages*

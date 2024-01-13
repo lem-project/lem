@@ -205,7 +205,6 @@
    :point-bytes
    :move-to-bytes
    :move-to-line
-   :check-marked
    :set-current-mark
    :blank-line-p
    :skip-chars-forward

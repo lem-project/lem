@@ -555,9 +555,10 @@
    :load-theme)
   ;; region.lisp
   (:export
-   :global-mode-region-beginning
-   :global-mode-region-end
-   :set-region-point-global))
+   :check-marked-using-global-mode
+   :region-beginning-using-global-mode
+   :region-end-using-global-mode
+   :set-region-point-using-global-mode))
 #+sbcl
 (sb-ext:lock-package :lem-core)
 

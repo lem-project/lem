@@ -439,11 +439,6 @@ short to reach COLUMN, add spaces/tabs to get there."
                (line-offset point (- line-number cur-linum))
                (line-offset (buffer-end point) (- line-number nlines)))))))
 
-(defun check-marked ()
-  "`current-buffer`内でマークが置かれていなければ`editor-error`を起こします。"
-  (unless (buffer-mark (current-buffer))
-    (editor-error "Not mark in this buffer")))
-
 (defun set-current-mark (point)
   "`point`を現在のマークに設定します。"
   (let ((buffer (point-buffer point)))

@@ -55,8 +55,8 @@
                                          :existing nil)))
                                 (#\r
                                  (push '(maybe-marked) pre-forms)
-                                 '(list (global-mode-region-beginning (current-global-mode))
-                                   (global-mode-region-end (current-global-mode))))))
+                                 '(list (region-beginning-using-global-mode (current-global-mode))
+                                   (region-end-using-global-mode (current-global-mode))))))
                              ((and (consp arg-descriptor)
                                    (eq :splice (first arg-descriptor)))
                               (assert (alexandria:length= arg-descriptor 2))

@@ -1,18 +1,19 @@
 (in-package :lem-core)
 
-(defgeneric global-mode-region-beginning (global-mode &optional buffer))
-(defgeneric global-mode-region-end (global-mode &optional buffer))
-(defgeneric set-region-point-global (global-mode start end))
+(defgeneric check-marked-using-global-mode (global-mode buffer))
+(defgeneric region-beginning-using-global-mode (global-mode &optional buffer))
+(defgeneric region-end-using-global-mode (global-mode &optional buffer))
+(defgeneric set-region-point-using-global-mode (global-mode start end))
 
-(defmethod global-mode-region-beginning ((global-mode emacs-mode)
+(defmethod region-beginning-using-global-mode ((global-mode emacs-mode)
                                          &optional (buffer (current-buffer)))
   (region-beginning buffer))
 
-(defmethod global-mode-region-end ((global-mode emacs-mode)
+(defmethod region-end-using-global-mode ((global-mode emacs-mode)
                                    &optional (buffer (current-buffer)))
   (region-end buffer))
 
-(defmethod set-region-point-global ((global-mode emacs-mode) (start point) (end point))
+(defmethod set-region-point-using-global-mode ((global-mode emacs-mode) (start point) (end point))
   (declare (ignore global-mode))
   (cond
     ((buffer-mark-p (current-buffer))
@@ -21,3 +22,10 @@
     (t
      (line-start start)
      (line-end end))))
+
+(defmethod check-marked-using-global-mode ((global-mode emacs-mode) buffer)
+  (unless (buffer-mark buffer)
+    (editor-error "Not mark in this buffer")))
+
+(defun check-marked ()
+  (check-marked-using-global-mode (current-global-mode) (current-buffer)))

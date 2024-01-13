@@ -1,7 +1,8 @@
 (defpackage :lem/auto-save
   (:use :cl :lem)
   (:export :*make-backup-files*
-           :toggle-auto-save)
+           :toggle-auto-save
+           :auto-save-mode)
   #+sbcl
   (:lock t))
 (in-package :lem/auto-save)
@@ -57,16 +58,14 @@
                                                                (disable))
                                             :name "autosave")
                            (* interval 1000)
-                           :repeat t))))
-    (add-hook *input-hook* 'count-keys)))
+                           :repeat t)))))
+  (add-hook *input-hook* 'count-keys))
 
 (defun disable ()
   (when *timer*
     (stop-timer *timer*)
-    (setf *timer* nil)
-    (remove-hook *input-hook* 'count-keys)))
+    (setf *timer* nil))
+  (remove-hook *input-hook* 'count-keys))
 
 (define-command toggle-auto-save () ()
-  (if *timer*
-      (disable)
-      (enable)))
+  (auto-save-mode))

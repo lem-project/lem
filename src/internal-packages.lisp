@@ -558,7 +558,8 @@
    :check-marked-using-global-mode
    :region-beginning-using-global-mode
    :region-end-using-global-mode
-   :set-region-point-using-global-mode))
+   :set-region-point-using-global-mode
+   :check-marked))
 #+sbcl
 (sb-ext:lock-package :lem-core)
 

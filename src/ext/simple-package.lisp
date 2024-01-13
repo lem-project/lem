@@ -92,6 +92,16 @@
    (uiop:truename* (simple-package-directory package)) :validate t)
   (delete package *installed-packages*))
 
+(defgeneric package-test (package))
+
+(defmethod package-test ((package simple-package))
+  (let* ((*packages-directory* (uiop:temporary-directory))
+         (ql:*local-project-directories* (list *packages-directory*))
+         (name (simple-package-name package))
+         (source (simple-package-source package)))
+    (%download-package source name)
+    (%register-maybe-quickload (simple-package-name package))))
+
 (defun packages-list ()
   (remove-duplicates
    (mapcar (lambda (d) (pathname (directory-namestring d)))
@@ -122,11 +132,19 @@
          (make-quicklisp :name name)))
       (t (editor-error "Source ~a not available." s)))))
 
+(defun %register-maybe-quickload (name)
+  (uiop:symbol-call :quicklisp :register-local-projects)
+  (maybe-quickload (alexandria:make-keyword name) :silent t))
+
+(defun %download-package (source name)
+  (message "Downloading ~a..." name)
+  (download-source source name)
+  (message "Done downloading ~a!" name))
+
 ;; git source (list :type type :url url :branch branch :commit commit)
-(defmacro lem-use-package (name &key source config
-                                 after bind
-                                 hooks force)
-  (declare (ignore hooks bind after config ))
+(defmacro lem-use-package (name &key source after
+                                 bind hooks force)
+  (declare (ignore hooks bind ))
   (alexandria:with-gensyms (spackage rsource pdir)
     `(let* ((asdf:*central-registry*
                 (union (packages-list)
@@ -143,14 +161,9 @@
                                         :directory ,pdir)))
          (when (or ,force
                    (not (uiop:directory-exists-p ,pdir)))
-           (message "Downloading ~a..." ,name)
-           (download-source ,rsource ,name)
-           (message "Done downloading ~a!" ,name))
-
+           (%download-package ,rsource ,name))
          (insert-package ,spackage)
-         (uiop:symbol-call :quicklisp :register-local-projects)
-         (maybe-quickload (alexandria:make-keyword ,name)
-                          :silent t))))
+       (%register-maybe-quickload ,name))))
 
 ;(lem-use-package "versioned-objects"
 ;                 :source '(:type :git

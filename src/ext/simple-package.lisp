@@ -175,7 +175,7 @@
                              :directory dpackage))
           do (maybe-quickload (alexandria:make-keyword spackage) :silent t))))
 
-(define-command simple-package-install-ql-package () ()
+(define-command sp-install-ql-package () ()
   (let* ((packages (mapcar #'ql-dist:project-name
                            *quicklisp-system-list*))
          (rpackage
@@ -187,7 +187,7 @@
     (lem-use-package rpackage :source '(:type :quicklisp))
     (message "Package ~a installed!" rpackage)))
 
-(define-command simple-package-remove-package () ()
+(define-command sp-remove-package () ()
   (if *installed-packages*
       (let* ((packages (and *installed-packages*
                             (mapcar #'simple-package-name
@@ -204,3 +204,22 @@
         (message "Package remove from system!"))
 
       (message "No packages installed!")))
+
+
+(define-command sp-purge-packages () ()
+  (let* ((plist (packages-list))
+        (extra-packages
+          (set-difference
+           (mapcar (lambda (p)
+                     (first (last (pathname-directory p))))
+                   plist)
+           (mapcar #'simple-package-name *installed-packages*)
+           :test #'string=)))
+    (loop for e in extra-packages
+          for dir = (find e plist
+                          :key (lambda (p) (first (last (pathname-directory p))))
+                          :test #'string=)
+          do (and (uiop:directory-exists-p dir)
+              (uiop:delete-directory-tree
+                    (uiop:truename* dir)
+                    :validate t)))))

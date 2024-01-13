@@ -165,9 +165,17 @@
   (delete-leftside-window))
 
 (define-command filer () ()
+  "Open the filer tree view at the project root."
   (if (filer-active-p)
       (deactive-filer)
       (let ((directory (lem-core/commands/project:find-root (buffer-directory))))
+        (make-leftside-window (make-filer-buffer directory)))))
+
+(define-command filer-directory () ()
+  "Open the filer tree view at this directory."
+  (if (filer-active-p)
+      (deactive-filer)
+      (let ((directory (buffer-directory)))
         (make-leftside-window (make-filer-buffer directory)))))
 
 (define-command filer-select () ()

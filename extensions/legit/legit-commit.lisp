@@ -28,7 +28,7 @@ Future:
   (setf (variable-value 'enable-syntax-highlight) t))
 
 ;; User parameters.
-(defparameter *prompt-for-commit-abort-p* t
+(defparameter *prompt-to-abort-commit* t
   "If non t, abort the current commit message without asking for confirmation.")
 
 ;; Keys:
@@ -103,7 +103,7 @@ two
          (legit-status))))))
 
 (define-command commit-abort () ()
-  (when (or (not *prompt-for-commit-abort-p*)
+  (when (or (not *prompt-to-abort-commit*)
             (prompt-for-y-or-n-p "Abort commit?"))
     (lem-core/commands/window:previous-window)
     (kill-buffer "*legit-commit*")))

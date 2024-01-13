@@ -15,10 +15,11 @@
               `(asdf:defsystem ,*site-init-name*)))
     path))
 
+(defun raw-init-files ()
+  (directory (merge-pathnames "inits/*.lisp" (lem-home))))
+
 (defun site-init-list-inits ()
-  (loop for i in (sort (mapcar #'pathname-name
-                               (directory (merge-pathnames "inits/*.lisp"
-                                                           (lem-home))))
+  (loop for i in (sort (mapcar #'pathname-name (raw-init-files))
                        #'string<)
      collect (list :file (format nil "inits/~A" i))))
 
@@ -67,6 +68,11 @@
       (asdf:load-asd (site-init-path))
       (let ((*package* (find-package :lem-user)))
         (maybe-quickload system-name :silent t)))))
+
+(defun load-init-files ()
+  (let ((*package* (find-package :lem-user)))
+    (loop for file in (raw-init-files)
+          do (load file))))
 
 (define-command site-init-add-dependency (symbols)
     ((prompt-for-library "library: " :history-symbol 'load-library))

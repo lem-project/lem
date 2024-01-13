@@ -24,26 +24,19 @@
     (princ #\page s)
     (terpri s))
   (let ((column-width 16))
-    (labels ((create-describe-func (key-prefix)
-               (lambda (kseq command)
-                 (etypecase command
-                   (keymap
-                    (traverse-keymap
-                     command
-                     (create-describe-func (concatenate 'string key-prefix (keyseq-to-string kseq) " "))))
-                   (symbol
-                    (unless (equal "UNDEFINED-KEY" (symbol-name command))
-                      (format s "~va~(~a~)~%"
-                              column-width
-                              (concatenate 'string key-prefix (keyseq-to-string kseq))
-                              (symbol-name command))))))))
-      (loop :while keymap
-            :do (format s "~A (~(~A~))~%" name (keymap-name keymap))
-                (format s "~va~a~%" column-width "key" "binding")
-                (format s "~va~a~%" column-width "---" "-------")
-                (traverse-keymap keymap (create-describe-func ""))
-                (setf keymap (keymap-parent keymap))
-                (terpri s)))))
+    (loop :while keymap
+          :do (format s "~A (~(~A~))~%" name (keymap-name keymap))
+              (format s "~va~a~%" column-width "key" "binding")
+              (format s "~va~a~%" column-width "---" "-------")
+              (traverse-keymap keymap
+                               (lambda (kseq command)
+                                 (unless (equal "UNDEFINED-KEY" (symbol-name command))
+                                   (format s "~va~(~a~)~%"
+                                           column-width
+                                           (keyseq-to-string kseq)
+                                           (symbol-name command)))))
+              (setf keymap (keymap-parent keymap))
+              (terpri s))))
 
 (define-command describe-bindings () ()
   "Describe the bindings of the buffer's current major mode."

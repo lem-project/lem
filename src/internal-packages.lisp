@@ -382,7 +382,8 @@
    :define-global-mode
    :change-global-mode-keymap
    :enable-minor-mode
-   :disable-minor-mode)
+   :disable-minor-mode
+   :current-global-mode)
   ;; keymap.lisp
   (:export
    :*keymaps*
@@ -551,7 +552,13 @@
   (:export
    :color-theme-names
    :define-color-theme
-   :load-theme))
+   :load-theme)
+  ;; region.lisp
+  (:export
+   :check-marked-using-global-mode
+   :region-beginning-using-global-mode
+   :region-end-using-global-mode
+   :set-region-point-using-global-mode))
 #+sbcl
 (sb-ext:lock-package :lem-core)
 

@@ -257,6 +257,7 @@ The thrid argument PROP is a property to remove."
                      (count-characters (buffer-start-point buffer)
                                        (buffer-end-point buffer))))
 
+
 (defun region-beginning (&optional (buffer (current-buffer)))
   "Return the integer value of point or mark, whichever is smaller."
   (point-min (buffer-point buffer)
@@ -437,11 +438,6 @@ short to reach COLUMN, add spaces/tabs to get there."
            (if (< (- line-number cur-linum) (- nlines line-number))
                (line-offset point (- line-number cur-linum))
                (line-offset (buffer-end point) (- line-number nlines)))))))
-
-(defun check-marked ()
-  "`current-buffer`内でマークが置かれていなければ`editor-error`を起こします。"
-  (unless (buffer-mark (current-buffer))
-    (editor-error "Not mark in this buffer")))
 
 (defun set-current-mark (point)
   "`point`を現在のマークに設定します。"

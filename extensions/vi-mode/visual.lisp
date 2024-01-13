@@ -245,3 +245,27 @@
         (move-to-column *start-point* end-col)
         (move-to-column (current-point) start-col))
       (vi-visual-swap-points)))
+
+(defmethod check-marked-using-global-mode ((global-mode vi-mode) buffer)
+  nil)
+
+(defmethod set-region-point-using-global-mode ((global-mode vi-mode) (start point) (end point))
+  (declare (ignore global-mode))
+  (when (visual-p)
+    (let ((v-range (visual-range)))
+      (move-point start (car v-range))
+      (move-point end (cadr v-range)))))
+
+(defmethod region-beginning-using-global-mode ((global-mode vi-mode)
+                                         &optional (buffer (current-buffer)))
+  (declare (ignore buffer))
+  (if (visual-p)
+      (car (visual-range))
+      (editor-error "Not in visual mode")))
+
+(defmethod region-end-using-global-mode ((global-mode vi-mode)
+                                   &optional (buffer (current-buffer)))
+  (declare (ignore buffer))
+  (if (visual-p)
+      (cadr (visual-range))
+      (editor-error "Not in visual mode")))

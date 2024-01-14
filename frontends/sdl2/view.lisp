@@ -76,7 +76,7 @@
                  :width width
                  :height height
                  :use-modeline use-modeline
-                 :texture (display:create-view-texture display width height)))
+                 :texture (display:create-view-texture display (max width 1) (max height 1))))
 
 (defmethod delete-view ((view view))
   (when (view-texture view)
@@ -94,7 +94,7 @@
         (view-height view) height)
   (sdl2:destroy-texture (view-texture view))
   (setf (view-texture view)
-        (display:create-view-texture display width height)))
+        (display:create-view-texture display (max width 1) (max height 1))))
 
 (defmethod move-position ((view view) x y)
   (setf (view-x view) x

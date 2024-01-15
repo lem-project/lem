@@ -54,6 +54,7 @@
                (:file "macros")
                (:file "attribute")
                (:file "clipboard")
+               (:file "save-excursion")
                (:file "killring")
                (:file "file")
                (:file "frame")

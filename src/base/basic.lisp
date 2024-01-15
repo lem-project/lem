@@ -484,19 +484,6 @@ short to reach COLUMN, add spaces/tabs to get there."
 "
   (skip-chars-internal point test nil))
 
-(defun invoke-save-excursion (function)
-  (let ((point (copy-point (current-point) :right-inserting))
-        (mark (when (buffer-mark-p (current-buffer))
-                (copy-point (buffer-mark (current-buffer))
-                            :right-inserting))))
-    (unwind-protect (funcall function)
-      (setf (current-buffer) (point-buffer point))
-      (move-point (current-point) point)
-      (delete-point point)
-      (when mark
-        (set-current-mark mark)
-        (delete-point mark)))))
-
 (defun insert-buffer (point buffer)
   "`point`の位置に`buffer`内のテキストを挿入します。
 `insert-string`との違いは`buffer`内のテキストプロパティも反映することです。"

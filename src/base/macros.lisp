@@ -1,9 +1,5 @@
 (in-package :lem-base)
 
-(defmacro save-excursion (&body body)
-  "Saves the current `point` and `mark`, restores them after evaluation of `body` and returns the result of `body`."
-  `(invoke-save-excursion (lambda () ,@body)))
-
 (defmacro with-point (bindings &body body)
   "This macro creates each `point` to be used in `body` with `bindings`.
 When you exit `body`, it removes each `point` and returns the value of `body`.

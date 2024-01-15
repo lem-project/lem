@@ -61,7 +61,6 @@
    :tab-width)
   ;; macros.lisp
   (:export
-   :save-excursion
    :with-point
    :with-buffer-read-only
    :without-interrupts)

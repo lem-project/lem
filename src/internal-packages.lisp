@@ -49,6 +49,9 @@
   (:export
    :lem-git-revision
    :get-version-string)
+  ;; save-excursion.lisp
+  (:export
+   :save-excursion)
   ;; killring.lisp
   (:export
    :current-killring

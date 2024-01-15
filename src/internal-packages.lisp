@@ -227,6 +227,9 @@
    :prompt-for-directory
    :prompt-for-encodings
    :prompt-for-library)
+  ;; buffer.lisp
+  (:export
+   :kill-buffer-hook)
   ;; window-tree.lisp
   (:export
    :balance-windows)

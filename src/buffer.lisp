@@ -1,5 +1,7 @@
 (in-package :lem-core)
 
+(define-editor-variable kill-buffer-hook '())
+
 (defun strip-buffer-from-frame-windows (buffer frame)
   (dolist (window (get-buffer-windows buffer :frame frame :include-floating-windows t))
     (with-current-window window
@@ -10,4 +12,5 @@
     ((manager lem-base::buffer-list-manager)
      buffer)
   (dolist (frame (all-frames))
-    (strip-buffer-from-frame-windows buffer frame)))
+    (strip-buffer-from-frame-windows buffer frame))
+  (run-hooks (lem-base::make-per-buffer-hook :var 'kill-buffer-hook :buffer buffer) buffer))

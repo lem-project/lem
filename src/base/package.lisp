@@ -77,7 +77,6 @@
    :with-buffer-point
    :with-current-buffer)
   (:export
-   :kill-buffer-hook
    :buffer-list
    :any-modified-buffer-p
    :modified-buffers

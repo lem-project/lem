@@ -398,8 +398,6 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
 
 
 ;;;
-(define-editor-variable kill-buffer-hook '())
-
 (defun buffer-list ()
   "`buffer`のリストを返します。"
   (lem-base/buffer-list-manager::buffer-list-manager-buffers (buffer-list-manager)))
@@ -446,7 +444,6 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
                   (return sub-name)))))
 
 (defmethod delete-buffer-using-manager ((manager buffer-list-manager) buffer)
-  (run-hooks (make-per-buffer-hook :var 'kill-buffer-hook :buffer buffer) buffer)
   (buffer-free buffer)
   (set-buffer-list (delete buffer (buffer-list))))
 

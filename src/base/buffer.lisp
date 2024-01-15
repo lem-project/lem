@@ -451,8 +451,7 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   (set-buffer-list (delete buffer (buffer-list))))
 
 (defun delete-buffer (buffer)
-  "`buffer`をバッファのリストから消します。
-エディタ変数`kill-buffer-hook`がバッファが消される前に実行されます。"
+  "`buffer`をバッファのリストから消します。"
   (check-type buffer buffer)
   (delete-buffer-using-manager (buffer-list-manager) buffer))
 

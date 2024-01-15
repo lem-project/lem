@@ -68,6 +68,7 @@
                              (:file "floating-window")
                              (:file "header-window")
                              (:file "side-window")))
+               (:file "buffer")
                (:file "popup")
                (:file "modeline")
                (:file "command")

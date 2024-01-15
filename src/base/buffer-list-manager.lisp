@@ -1,4 +1,10 @@
-(in-package :lem-base)
+(defpackage :lem-base/buffer-list-manager
+  (:use :cl)
+  (:export
+   :delete-buffer-using-manager
+   :buffer-list-manager
+   :with-current-buffers))
+(in-package :lem-base/buffer-list-manager)
 
 (defgeneric delete-buffer-using-manager (buffer-list-manager buffer))
 

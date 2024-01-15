@@ -4,10 +4,10 @@
 
 (defun buffer-list ()
   "`buffer`のリストを返します。"
-  (buffer-list-manager-buffers (buffer-list-manager)))
+  (lem-base/buffer-list-manager::buffer-list-manager-buffers (buffer-list-manager)))
 
 (defun set-buffer-list (buffer-list)
-  (setf (buffer-list-manager-buffers (buffer-list-manager))
+  (setf (lem-base/buffer-list-manager::buffer-list-manager-buffers (buffer-list-manager))
         buffer-list))
 
 (defun add-buffer (buffer)

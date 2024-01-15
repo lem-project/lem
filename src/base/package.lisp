@@ -7,6 +7,7 @@
   (:use-reexport :lem-base/errors)
   (:use-reexport :lem-base/hooks)
   (:use-reexport :lem-base/file-utils)
+  (:use-reexport :lem-base/buffer-list-manager)
   ;; var.lisp
   (:export
    :editor-variable
@@ -81,11 +82,6 @@
    :*inhibit-modification-hooks*
    :before-change-functions
    :after-change-functions)
-  ;; buffer-list-manager.lisp
-  (:export
-   :delete-buffer-using-manager
-   :buffer-list-manager
-   :with-current-buffers)
   ;; buffers.lisp
   (:export
    :kill-buffer-hook

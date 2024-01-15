@@ -76,13 +76,6 @@
    :clear-buffer-variables
    :with-buffer-point
    :with-current-buffer)
-  ;; buffer-insert.lisp
-  (:export
-   :*inhibit-read-only*
-   :*inhibit-modification-hooks*
-   :before-change-functions
-   :after-change-functions)
-  ;; buffers.lisp
   (:export
    :kill-buffer-hook
    :buffer-list
@@ -97,6 +90,12 @@
    :unbury-buffer
    :bury-buffer
    :get-file-buffer)
+  ;; buffer-insert.lisp
+  (:export
+   :*inhibit-read-only*
+   :*inhibit-modification-hooks*
+   :before-change-functions
+   :after-change-functions)
   ;; point.lisp
   (:export
    :current-point

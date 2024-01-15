@@ -127,9 +127,6 @@
   (check-type buffer buffer)
   (setf *current-buffer* buffer))
 
-(defparameter *undo-modes* '(:edit :undo :redo))
-(defvar *undo-mode* :edit)
-
 (defun last-edit-history (buffer)
   (when (< 0 (fill-pointer (buffer-edit-history buffer)))
     (aref (buffer-edit-history buffer)
@@ -181,33 +178,6 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
 (defun buffer-modified-p (&optional (buffer (current-buffer)))
   "`buffer`が変更されていたらT、それ以外ならNILを返します。"
   (/= 0 (buffer-%modified-p buffer)))
-
-(defun buffer-enable-undo-p (&optional (buffer (current-buffer)))
-  "`buffer`でアンドゥが有効ならT、それ以外ならNILを返します。"
-  (buffer-%enable-undo-p buffer))
-
-(defun buffer-enable-undo (buffer)
-  "`buffer`のアンドゥを有効にします。"
-  (setf (buffer-%enable-undo-p buffer) t)
-  nil)
-
-(defun buffer-disable-undo (buffer)
-  "`buffer`のアンドゥを無効にしてアンドゥ用の情報を空にします。"
-  (setf (buffer-%enable-undo-p buffer) nil)
-  (setf (buffer-edit-history buffer) (make-array 0 :adjustable t :fill-pointer 0))
-  (setf (buffer-redo-stack buffer) nil)
-  nil)
-
-(defun buffer-enable-undo-boundary-p (&optional (buffer (current-buffer)))
-  (buffer-%enable-undo-boundary-p buffer))
-
-(defun buffer-enable-undo-boundary (buffer)
-  (setf (buffer-%enable-undo-boundary-p buffer) t)
-  nil)
-
-(defun buffer-disable-undo-boundary (buffer)
-  (setf (buffer-%enable-undo-boundary-p buffer) nil)
-  nil)
 
 (defmethod print-object ((buffer buffer) stream)
   (print-unreadable-object (buffer stream :identity t :type t)
@@ -276,31 +246,6 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   (when (buffer-read-only-p buffer)
     (error 'read-only-error)))
 
-(defun buffer-modify (buffer)
-  (ecase *undo-mode*
-    ((:edit :redo)
-     (incf (buffer-%modified-p buffer)))
-    ((:undo)
-     (decf (buffer-%modified-p buffer))))
-  (buffer-mark-cancel buffer))
-
-(defun push-undo-stack (buffer elt)
-  (vector-push-extend elt (buffer-edit-history buffer)))
-
-(defun push-redo-stack (buffer elt)
-  (push elt (buffer-redo-stack buffer)))
-
-(defun push-undo (buffer edit)
-  (when (buffer-enable-undo-p buffer)
-    (ecase *undo-mode*
-      (:edit
-       (push-undo-stack buffer edit)
-       (setf (buffer-redo-stack buffer) nil))
-      (:redo
-       (push-undo-stack buffer edit))
-      (:undo
-       (push-redo-stack buffer edit)))))
-
 (defun buffer-rename (buffer name)
   "`buffer`の名前を`name`に変更します。"
   (check-type buffer buffer)
@@ -308,55 +253,6 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   (when (get-buffer name)
     (editor-error "Buffer name `~A' is in use" name))
   (setf (buffer-%name buffer) name))
-
-(defun buffer-undo-1 (point)
-  (let* ((buffer (point-buffer point))
-         (edit-history (buffer-edit-history buffer))
-         (elt (and (< 0 (length edit-history)) (vector-pop edit-history))))
-    (when elt
-      (let ((*undo-mode* :undo))
-        (unless (eq elt :separator)
-          (apply-inverse-edit elt point))))))
-
-(defun buffer-undo (point)
-  (let ((buffer (point-buffer point)))
-    (push :separator (buffer-redo-stack buffer))
-    (when (eq :separator (last-edit-history buffer))
-      (vector-pop (buffer-edit-history buffer)))
-    (let ((result0 nil))
-      (loop :for result := (buffer-undo-1 point)
-            :while result
-            :do (setf result0 result))
-      (unless result0
-        (assert (eq :separator (car (buffer-redo-stack buffer))))
-        (pop (buffer-redo-stack buffer)))
-      result0)))
-
-(defun buffer-redo-1 (point)
-  (let* ((buffer (point-buffer point))
-         (elt (pop (buffer-redo-stack buffer))))
-    (when elt
-      (let ((*undo-mode* :redo))
-        (unless (eq elt :separator)
-          (apply-inverse-edit elt point))))))
-
-(defun buffer-redo (point)
-  (let ((buffer (point-buffer point)))
-    (vector-push-extend :separator (buffer-edit-history buffer))
-    (let ((result0 nil))
-      (loop :for result := (buffer-redo-1 point)
-            :while result
-            :do (setf result0 result))
-      (unless result0
-        (assert (eq :separator
-                    (last-edit-history buffer)))
-        (vector-pop (buffer-edit-history buffer)))
-      result0)))
-
-(defun buffer-undo-boundary (&optional (buffer (current-buffer)))
-  (when (buffer-enable-undo-boundary-p)
-    (unless (eq :separator (last-edit-history buffer))
-      (vector-push-extend :separator (buffer-edit-history buffer)))))
 
 (defun buffer-value (buffer name &optional default)
   "`buffer`のバッファ変数`name`に束縛されている値を返します。

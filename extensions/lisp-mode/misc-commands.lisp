@@ -66,3 +66,24 @@
                              (current-buffer)))
          (package (first (lem/detective:references-packages buffer-references))))
     (%send-test-suite package)))
+
+
+(defvar *quickdocs-url* "https://quickdocs.org/")
+
+(defvar *quickdocs-check-url* nil)
+
+(define-command lisp-quickdocs-at-point  (point) ((current-point))
+  (let* ((symbol (cl-ppcre:regex-replace-all
+                  ":|#"
+                  (symbol-string-at-point point) ""))
+         (url (format nil "~a~a" *quickdocs-url* symbol))
+         (status-response
+           (and *quickdocs-check-url*
+                (second (multiple-value-list (ignore-errors
+                                               (dexador:get url)))))))
+    (if (or (and (numberp status-response)
+                  (= status-response 200))
+            (not *quickdocs-check-url*))
+        (open-external-file url)
+        (message "The symbol ~a, doesn't correspond to a ASDF system on Quickdocs."
+                 symbol))))

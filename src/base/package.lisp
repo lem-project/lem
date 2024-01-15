@@ -1,5 +1,6 @@
 (uiop:define-package :lem-base
-  (:use :cl)
+  (:use :cl
+        :lem-base/line)
   (:use-reexport :lem-base/utils)
   (:use-reexport :lem-base/icon)
   (:use-reexport :lem-base/string-width-utils)

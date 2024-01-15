@@ -89,7 +89,7 @@
                                                 point))
            (tab-width (variable-value 'tab-width :default point)))
       (destructuring-bind (string . attributes)
-          (lem-base::line-string/attributes (lem-base::point-line point))
+          (lem-base/line::line-string/attributes (lem-base::point-line point))
         (loop :for overlay :in overlays
               :when (overlay-within-point-p overlay point)
               :do (cond ((typep overlay 'line-endings-overlay)

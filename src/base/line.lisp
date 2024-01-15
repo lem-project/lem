@@ -1,4 +1,40 @@
-(in-package :lem-base)
+(defpackage :lem-base/line
+  (:use :cl)
+  (:export :make-content
+           :content-string
+           :content-attributes
+           :line
+           :line-prev
+           :line-next
+           :line-str
+           :line-plist
+           :line-syntax-context
+           :line-points
+           :make-line
+           :make-empty-line
+           :line-alive-p
+           :line-char
+           :line-length
+           :remove-elements
+           :normalization-elements
+           :subseq-elements
+           :offset-elements
+           :put-elements
+           :merge-plist
+           :line-merge
+           :line-normalization-plist
+           :line-remove-property
+           :line-add-property
+           :line-clear-property
+           :line-search-property
+           :line-search-property-range
+           :line-property-insert-pos
+           :line-property-insert-newline
+           :line-property-delete-pos
+           :line-property-delete-line
+           :line-string/attributes
+           :line-free))
+(in-package :lem-base/line)
 
 (defstruct content
   string

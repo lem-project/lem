@@ -250,20 +250,20 @@ The thrid argument PROP is a property to remove."
     (let ((string (delete-char/point point n)))
       string)))
 
-(defun erase-buffer (&optional (buffer (current-buffer)))
-  "Delete the entire contents of the current buffer."
+(defun erase-buffer (buffer)
+  "Delete the entire contents of the buffer."
   (buffer-start (buffer-point buffer))
   (delete-char/point (buffer-point buffer)
                      (count-characters (buffer-start-point buffer)
                                        (buffer-end-point buffer))))
 
 
-(defun region-beginning (&optional (buffer (current-buffer)))
+(defun region-beginning (buffer)
   "Return the integer value of point or mark, whichever is smaller."
   (point-min (buffer-point buffer)
              (buffer-mark buffer)))
 
-(defun region-end (&optional (buffer (current-buffer)))
+(defun region-end (buffer)
   "Return the integer value of point or mark, whichever is larger."
   (point-max (buffer-point buffer)
              (buffer-mark buffer)))

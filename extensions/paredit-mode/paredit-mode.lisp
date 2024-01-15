@@ -492,8 +492,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 (defun %paredit-wrap (begin-char end-char)
   (if (buffer-mark-p (current-buffer))
-      (with-point ((begin (region-beginning))
-                   (end (region-end)))
+      (with-point ((begin (region-beginning (current-buffer)))
+                   (end (region-end (current-buffer))))
         (unless (or (in-string-or-comment-p begin)
                     (in-string-or-comment-p end))
           (cond ((point> begin end)

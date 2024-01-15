@@ -166,8 +166,8 @@
 (define-command lisp-eval-at-point () ()
   (check-connection)
   (cond ((buffer-mark-p (current-buffer))
-         (with-point ((start (region-beginning))
-                      (end (region-end)))
+         (with-point ((start (region-beginning (current-buffer)))
+                      (end (region-end (current-buffer))))
            (eval-region start end)))
         (t
          (eval-last-expression (current-point)))))

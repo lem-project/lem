@@ -1,52 +1,11 @@
-(defpackage :lem-base
+(uiop:define-package :lem-base
   (:use :cl)
-  #+sbcl
-  (:lock t)
-  ;; utils.lisp
-  (:export
-   :collect-subclasses
-   :utf8-bytes
-   :bests-if
-   :max-if
-   :min-if
-   :find-tree
-   :do-sequence
-   :if-push)
-  ;; icon.lisp
-  (:export :register-icon
-           :register-icon-ext
-           :icon-code-p
-           :icon-string
-           :icon-string-by-ext
-           :icon-value)
-  ;; string-width-utils.lisp
-  (:export :+default-tab-size+
-           :control-char
-           :wide-char-p
-           :char-width
-           :string-width
-           :wide-index)
-  ;; file-utils.lisp
-  (:export :expand-file-name
-           :tail-of-pathname
-           :directory-files
-           :list-directory
-           :file-size
-           :copy-file-or-directory
-           :virtual-probe-file
-           :with-open-virtual-file)
-  ;; errors.lisp
-  (:export :editor-condition
-           :directory-does-not-exist
-           :directory-does-not-exist-directory
-           :read-only-error
-           :editor-error
-           :scan-error
-           :editor-interrupt)
-  ;; hooks.lisp
-  (:export :run-hooks
-           :add-hook
-           :remove-hook)
+  (:use-reexport :lem-base/utils)
+  (:use-reexport :lem-base/icon)
+  (:use-reexport :lem-base/string-width-utils)
+  (:use-reexport :lem-base/errors)
+  (:use-reexport :lem-base/hooks)
+  (:use-reexport :lem-base/file-utils)
   ;; var.lisp
   (:export
    :editor-variable
@@ -333,3 +292,6 @@
    :indent-points
    :indent-buffer
    :insert-string-and-indent))
+
+#+sbcl
+(sb-ext:lock-package :lem-base)

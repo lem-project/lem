@@ -1,4 +1,7 @@
-(in-package :lem-base)
+(defpackage :lem-base/eastasian
+  (:use :cl)
+  (:export :eastasian-code-p))
+(in-package :lem-base/eastasian)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (defparameter *eastasian-full*

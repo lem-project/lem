@@ -1,4 +1,14 @@
-(in-package :lem-base)
+(defpackage :lem-base/file-utils
+  (:use :cl)
+  (:export :expand-file-name
+           :tail-of-pathname
+           :directory-files
+           :list-directory
+           :file-size
+           :copy-file-or-directory
+           :virtual-probe-file
+           :with-open-virtual-file))
+(in-package :lem-base/file-utils)
 
 (defun guess-host-name (filename)
   (declare (ignorable filename))

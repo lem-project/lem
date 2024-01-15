@@ -1,4 +1,15 @@
-(in-package :lem-base)
+(defpackage :lem-base/utils
+  (:use :cl)
+  (:export :ensure-class
+           :collect-subclasses
+           :utf8-bytes
+           :bests-if
+           :max-if
+           :min-if
+           :find-tree
+           :do-sequence
+           :if-push))
+(in-package :lem-base/utils)
 
 (defun ensure-class (class)
   (etypecase class

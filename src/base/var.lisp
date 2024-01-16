@@ -9,13 +9,13 @@
   change-value-hook)
 
 (setf (documentation 'editor-variable 'type)
-      "`editor-variable`はエディタ内で使われる変数です。  
+      "`editor-variable`はエディタ内で使われる変数です。
 バッファローカルな変数や大域的な値を管理するために使います。")
 
 (defmacro define-editor-variable (var &optional value documentation change-value-hook)
-  "エディタ変数`var`を定義します。  
-`value`はそのエディタ変数に束縛されている大域的な値です。  
-`documentation`はそのエディタ変数の文書文字列です。  
+  "エディタ変数`var`を定義します。
+`value`はそのエディタ変数に束縛されている大域的な値です。
+`documentation`はそのエディタ変数の文書文字列です。
 `change-value-hook`はそのエディタ変数の大域的な値が変更されるときに呼び出されるフック関数です。
 "
   (check-type var symbol)
@@ -44,62 +44,65 @@
   (unless (editor-variable-p (get symbol 'editor-variable))
     (editor-variable-error symbol)))
 
+(defmethod variable-value-aux ((var editor-variable) (kind (eql :default)) &optional (where nil wherep))
+  (let* ((buffer (if wherep
+                     (ensure-buffer where)
+                     (current-buffer)))
+         (default '#:default)
+         (value (buffer-value buffer
+                              (editor-variable-local-indicator var)
+                              default)))
+    (if (eq value default)
+        (editor-variable-value var)
+        value)))
+
+(defmethod variable-value-aux ((var editor-variable) (kind (eql :buffer)) &optional (where nil wherep))
+  (let ((buffer (if wherep
+                    (ensure-buffer where)
+                    (current-buffer))))
+    (buffer-value buffer
+                  (editor-variable-local-indicator var))))
+
+(defmethod variable-value-aux ((var editor-variable) (kind (eql :global)) &optional (where nil wherep))
+  (declare (ignore where wherep))
+  (editor-variable-value var))
+
 (defun variable-value (symbol &optional (kind :default) (where nil wherep))
-  "`symbol`のエディタ変数の値を返します。  
-`where`はバッファです、未指定なら`current-buffer`になります。  
-`kind`が`:default`の場合は`where`のバッファローカルなエディタ変数が束縛されていればそれを返し、  
-無ければ大域的なエディタ変数の値を返します。  
-`kind`が`:buffer`の場合は`where`のバッファローカルなエディタ変数が束縛されていればそれを返し、
-無ければNILを返します。  
-`kind`が`:global`の場合は大域的なエディタ変数を返します。
-"
   (let ((var (get symbol 'editor-variable)))
     (unless (editor-variable-p var)
       (editor-variable-error symbol))
-    (ecase kind
-      ((:default)
-       (let* ((buffer (if wherep
-                          (ensure-buffer where)
-                          (current-buffer)))
-              (default '#:default)
-              (value (buffer-value buffer
-                                   (editor-variable-local-indicator var)
-                                   default)))
-         (if (eq value default)
-             (editor-variable-value var)
-             value)))
-      ((:buffer)
-       (let ((buffer (if wherep
-                         (ensure-buffer where)
-                         (current-buffer))))
-         (buffer-value buffer
-                       (editor-variable-local-indicator var))))
-      ((:global)
-       (editor-variable-value var)))))
+    (if wherep
+        (variable-value-aux var kind where)
+        (variable-value-aux var kind))))
+
+(defun set-variable-value-aux-default (var value where wherep)
+  (let ((buffer (if wherep
+                    (ensure-buffer where)
+                    (current-buffer))))
+    (setf (buffer-value buffer
+                        (editor-variable-local-indicator var))
+          value)))
+
+(defmethod (setf variable-value-aux) (value (var editor-variable) (kind (eql :default)) &optional (where nil wherep))
+  (set-variable-value-aux-default var value where wherep))
+
+(defmethod (setf variable-value-aux) (value (var editor-variable) (kind (eql :buffer)) &optional (where nil wherep))
+  (set-variable-value-aux-default var value where wherep))
+
+(defmethod (setf variable-value-aux) (value (var editor-variable) (kind (eql :global)) &optional (where nil wherep))
+  (declare (ignore where wherep))
+  (let ((fn (editor-variable-change-value-hook var)))
+    (when fn
+      (funcall fn value)))
+  (setf (editor-variable-value var) value))
 
 (defun (setf variable-value) (value symbol &optional (kind :default) (where nil wherep))
-  "`symbol`のエディタ変数の値に`value`を束縛します。  
-`where`はバッファです、未指定なら`current-buffer`になります。  
-`kind`が`default`か`buffer`の場合は、`where`のバッファローカルなエディタ変数に`value`を束縛します。  
-`kind`が`global`の場合は、大域的なエディタ変数に`value`を束縛します。  
-エディタ変数に`change-value-hook`があれば値を束縛する前にその関数が`value`を引数にして呼び出されます。  
-"
   (let ((var (get symbol 'editor-variable)))
     (unless (editor-variable-p var)
       (editor-variable-error symbol))
-    (ecase kind
-      ((:default :buffer)
-       (let ((buffer (if wherep
-                         (ensure-buffer where)
-                         (current-buffer))))
-         (setf (buffer-value buffer
-                             (editor-variable-local-indicator var))
-               value)))
-      ((:global)
-       (let ((fn (editor-variable-change-value-hook var)))
-         (when fn
-           (funcall fn value)))
-       (setf (editor-variable-value var) value)))))
+    (if wherep
+        (setf (variable-value-aux var kind where) value)
+        (setf (variable-value-aux var kind) value))))
 
 (defun variable-documentation (symbol)
   "エディタ変数`symbol`の文書文字列を返します。"

@@ -44,13 +44,6 @@
   (unless (editor-variable-p (get symbol 'editor-variable))
     (editor-variable-error symbol)))
 
-(defun ensure-buffer (where)
-  (if (pointp where)
-      (point-buffer where)
-      (progn
-        (check-type where buffer)
-        where)))
-
 (defun variable-value (symbol &optional (kind :default) (where nil wherep))
   "`symbol`のエディタ変数の値を返します。  
 `where`はバッファです、未指定なら`current-buffer`になります。  

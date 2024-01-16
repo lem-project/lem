@@ -254,6 +254,13 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
     (editor-error "Buffer name `~A' is in use" name))
   (setf (buffer-%name buffer) name))
 
+(defun ensure-buffer (where)
+  (if (pointp where)
+      (point-buffer where)
+      (progn
+        (check-type where buffer)
+        where)))
+
 (defun buffer-value (buffer name &optional default)
   "`buffer`のバッファ変数`name`に束縛されている値を返します。
 `buffer`の型は`buffer`または`point`です。

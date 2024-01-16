@@ -58,7 +58,8 @@
    :variable-value
    :variable-documentation
    :find-editor-variable
-   :with-global-variable-value)
+   :with-global-variable-value
+   :make-per-buffer-hook)
   ;; editor-variables.lisp
   (:export
    :tab-width)
@@ -99,6 +100,8 @@
    :buffer-mark
    :buffer-point
    :buffer-nlines
+   :buffer-encoding
+   :buffer-last-write-date
    :buffer-enable-undo-p
    :buffer-enable-undo
    :buffer-disable-undo

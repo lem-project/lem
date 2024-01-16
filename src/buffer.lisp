@@ -13,4 +13,4 @@
      buffer)
   (dolist (frame (all-frames))
     (strip-buffer-from-frame-windows buffer frame))
-  (run-hooks (lem-base::make-per-buffer-hook :var 'kill-buffer-hook :buffer buffer) buffer))
+  (run-hooks (make-per-buffer-hook :var 'kill-buffer-hook :buffer buffer) buffer))

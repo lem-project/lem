@@ -99,7 +99,7 @@
                                           (declare (ignore e))
                                           (delete-buffer buffer))))
                          (insert-file-contents (buffer-start-point buffer) filename))))
-                 (setf (lem-base::buffer-encoding buffer) encoding)))
+                 (setf (buffer-encoding buffer) encoding)))
              (buffer-unmark buffer))
            (buffer-start (buffer-point buffer))
            (when enable-undo-p (buffer-enable-undo buffer))
@@ -113,11 +113,11 @@
                         (buffer-end-point buffer) filename))
 
 (defun run-before-save-hooks (buffer)
-  (run-hooks (lem-base::make-per-buffer-hook :var 'before-save-hook :buffer buffer)
+  (run-hooks (make-per-buffer-hook :var 'before-save-hook :buffer buffer)
              buffer))
 
 (defun run-after-save-hooks (buffer)
-  (run-hooks (lem-base::make-per-buffer-hook :var 'after-save-hook :buffer buffer)
+  (run-hooks (make-per-buffer-hook :var 'after-save-hook :buffer buffer)
              buffer))
 
 (defun call-with-write-hook (buffer function)
@@ -167,7 +167,7 @@
 
 (defun write-region-to-file (start end filename)
   (let* ((buffer (point-buffer start))
-         (encoding (lem-base::buffer-encoding buffer))
+         (encoding (buffer-encoding buffer))
          (use-internal (or (typep encoding 'lem-base/encodings::internal-encoding) (null encoding)))
          (check (lem-base/encodings::encoding-check encoding)))
     (when check
@@ -190,11 +190,11 @@
       (file-write-date (buffer-filename buffer))))
 
 (defun update-changed-disk-date (buffer)
-  (setf (lem-base::buffer-last-write-date buffer)
+  (setf (buffer-last-write-date buffer)
         (file-write-date* buffer)))
 
 (defun changed-disk-p (buffer)
   (and (buffer-filename buffer)
        (probe-file (buffer-filename buffer))
-       (not (eql (lem-base::buffer-last-write-date buffer)
+       (not (eql (buffer-last-write-date buffer)
                  (file-write-date* buffer)))))

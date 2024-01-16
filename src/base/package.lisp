@@ -1,3 +1,42 @@
+(defpackage :lem-base/indent
+  (:use :cl)
+  (:export
+   :back-to-indentation
+   :indent-tabs-mode
+   :calc-indent-function
+   :indent-when-yank
+   :indent-line
+   :indent-points
+   :indent-buffer
+   :insert-string-and-indent))
+
+(defpackage :lem-base/file
+  (:use :cl)
+  (:export
+   :*find-file-hook*
+   :before-save-hook
+   :after-save-hook
+   :*external-format-function*
+   :*find-directory-function*
+   :*default-external-format*
+   :encoding-read-error
+   :insert-file-contents
+   :find-file-buffer
+   :write-to-file
+   :write-region-to-file
+   :update-changed-disk-date
+   :changed-disk-p))
+
+(defpackage :lem-base/encodings
+  (:use :cl)
+  (:export
+   :encoding
+   :encoding-read
+   :encoding-write
+   :register-encoding
+   :encoding-end-of-line
+   :unregister-encoding))
+
 (uiop:define-package :lem-base
   (:use :cl
         :lem-base/line)
@@ -8,6 +47,9 @@
   (:use-reexport :lem-base/hooks)
   (:use-reexport :lem-base/file-utils)
   (:use-reexport :lem-base/buffer-list-manager)
+  (:use-reexport :lem-base/file)
+  (:use-reexport :lem-base/indent)
+  (:use-reexport :lem-base/encodings)
   ;; var.lisp
   (:export
    :editor-variable
@@ -253,40 +295,11 @@
    :make-tm-patterns
    :make-tm-name
    :add-tm-repository
-   :add-tm-pattern)
-  ;; encodings.lisp
-  (:export
-   :encoding
-   :encoding-read
-   :encoding-write
-   :register-encoding
-   :encoding-end-of-line
-   :unregister-encoding)
-  ;; file.lisp
-  (:export
-   :*find-file-hook*
-   :before-save-hook
-   :after-save-hook
-   :*external-format-function*
-   :*find-directory-function*
-   :*default-external-format*
-   :encoding-read-error
-   :insert-file-contents
-   :find-file-buffer
-   :write-to-file
-   :write-region-to-file
-   :update-changed-disk-date
-   :changed-disk-p)
-  ;; indent.lisp
-  (:export
-   :back-to-indentation
-   :indent-tabs-mode
-   :calc-indent-function
-   :indent-when-yank
-   :indent-line
-   :indent-points
-   :indent-buffer
-   :insert-string-and-indent))
+   :add-tm-pattern))
+
+(use-package :lem-base :lem-base/encodings)
+(use-package :lem-base :lem-base/indent)
+(use-package :lem-base :lem-base/file)
 
 #+sbcl
 (sb-ext:lock-package :lem-base)

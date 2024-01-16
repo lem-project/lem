@@ -1,4 +1,4 @@
-(in-package :lem-base)
+(in-package :lem-base/file)
 
 (defvar *find-file-hook* '())
 
@@ -52,7 +52,7 @@
           (funcall *external-format-function* filename))
         (setf external-format :utf-8)))
   (let* ((encoding (encoding external-format end-of-line))
-         (use-internal-p (typep encoding 'internal-encoding)))
+         (use-internal-p (typep encoding 'lem-base/encodings::internal-encoding)))
     (with-point ((point point :left-inserting))
       (with-open-virtual-file (stream filename
                                       :element-type (unless use-internal-p
@@ -63,9 +63,9 @@
             (%encoding-read encoding point stream filename)
             (encoding-read encoding
                            stream
-                           (encoding-read-detect-eol
+                           (lem-base/encodings::encoding-read-detect-eol
                             #'(lambda (c)
-                                (when c (insert-char/point point (code-char c)))))))))
+                                (when c (lem-base::insert-char/point point (code-char c)))))))))
     encoding))
 
 (defun find-file-buffer (filename &key temporary (enable-undo-p t) (syntax-table nil syntax-table-p))
@@ -99,7 +99,7 @@
                                           (declare (ignore e))
                                           (delete-buffer buffer))))
                          (insert-file-contents (buffer-start-point buffer) filename))))
-                 (setf (buffer-encoding buffer) encoding)))
+                 (setf (lem-base::buffer-encoding buffer) encoding)))
              (buffer-unmark buffer))
            (buffer-start (buffer-point buffer))
            (when enable-undo-p (buffer-enable-undo buffer))
@@ -113,11 +113,11 @@
                         (buffer-end-point buffer) filename))
 
 (defun run-before-save-hooks (buffer)
-  (run-hooks (make-per-buffer-hook :var 'before-save-hook :buffer buffer)
+  (run-hooks (lem-base::make-per-buffer-hook :var 'before-save-hook :buffer buffer)
              buffer))
 
 (defun run-after-save-hooks (buffer)
-  (run-hooks (make-per-buffer-hook :var 'after-save-hook :buffer buffer)
+  (run-hooks (lem-base::make-per-buffer-hook :var 'after-save-hook :buffer buffer)
              buffer))
 
 (defun call-with-write-hook (buffer function)
@@ -167,15 +167,15 @@
 
 (defun write-region-to-file (start end filename)
   (let* ((buffer (point-buffer start))
-         (encoding (buffer-encoding buffer))
-         (use-internal (or (typep encoding 'internal-encoding) (null encoding)))
-         (check (encoding-check encoding)))
+         (encoding (lem-base::buffer-encoding buffer))
+         (use-internal (or (typep encoding 'lem-base/encodings::internal-encoding) (null encoding)))
+         (check (lem-base/encodings::encoding-check encoding)))
     (when check
       (map-region start end check)) ;; throw condition?
     (with-open-virtual-file (out filename
                                  :element-type (unless use-internal '(unsigned-byte 8))
                                  :external-format (if (and use-internal encoding)
-                                                      (encoding-external-format encoding))
+                                                      (lem-base/encodings::encoding-external-format encoding))
                                  :direction :output)
       (map-region start end
                   (if use-internal
@@ -190,11 +190,11 @@
       (file-write-date (buffer-filename buffer))))
 
 (defun update-changed-disk-date (buffer)
-  (setf (buffer-last-write-date buffer)
+  (setf (lem-base::buffer-last-write-date buffer)
         (file-write-date* buffer)))
 
 (defun changed-disk-p (buffer)
   (and (buffer-filename buffer)
        (probe-file (buffer-filename buffer))
-       (not (eql (buffer-last-write-date buffer)
+       (not (eql (lem-base::buffer-last-write-date buffer)
                  (file-write-date* buffer)))))

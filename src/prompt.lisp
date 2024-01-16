@@ -153,7 +153,7 @@
     (maphash (lambda (x y)
                (declare (ignore y))
                (push (string-downcase x) encodings))
-             lem-base::*encoding-collections*)
+             lem-base/encodings::*encoding-collections*)
     (let ((name (prompt-for-string
                  (format nil "~A(~(~A~))" prompt lem-base::*default-external-format*)
                  :completion-function (lambda (str) (completion str encodings))

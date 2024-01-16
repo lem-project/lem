@@ -16,6 +16,7 @@
                (:file "file-utils")
                (:file "line")
                (:file "buffer-list-manager")
+
                (:file "package")
                (:file "buffer")
                (:file "var")
@@ -32,7 +33,8 @@
                (:file "syntax-scan")
                (:file "syntax-parser")
                (:file "tmlanguage")
+               (:file "check-corruption")
+
                (:file "encodings")
                (:file "file")
-               (:file "indent")
-               (:file "check-corruption")))
+               (:file "indent")))

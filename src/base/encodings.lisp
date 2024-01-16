@@ -1,6 +1,6 @@
-(in-package :lem-base)
+(in-package :lem-base/encodings)
 
-(defclass encoding () 
+(defclass encoding ()
   ((end-of-line
     :initarg :end-of-line
     :accessor encoding-end-of-line)))

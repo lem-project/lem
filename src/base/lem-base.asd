@@ -16,6 +16,7 @@
                (:file "file-utils")
                (:file "line")
                (:file "buffer-list-manager")
+               (:file "syntax-table")
 
                (:file "package")
                (:file "buffer")
@@ -27,7 +28,7 @@
                (:file "buffer-insert")
                (:file "point")
                (:file "basic")
-               (:file "syntax-table")
+               (:file "syntax-predicates")
                (:file "search")
                (:file "parse-partial-sexp")
                (:file "syntax-scan")

@@ -45,7 +45,8 @@
 
 (uiop:define-package :lem-base
   (:use :cl
-        :lem-base/line)
+        :lem-base/line
+        :lem-base/syntax-table)
   (:use-reexport :lem-base/utils)
   (:use-reexport :lem-base/icon)
   (:use-reexport :lem-base/string-width-utils)
@@ -219,7 +220,9 @@
   (:export
    :syntax-table
    :set-syntax-parser
-   :fundamental-syntax-table
+   :fundamental-syntax-table)
+  ;; syntax-predicates.lisp
+  (:export
    :current-syntax
    :with-current-syntax
    :make-syntax-table

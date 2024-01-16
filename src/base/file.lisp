@@ -64,8 +64,8 @@
             (encoding-read encoding
                            stream
                            (lem-base/encodings::encoding-read-detect-eol
-                            #'(lambda (c)
-                                (when c (lem-base::insert-char/point point (code-char c)))))))))
+                            (lambda (c)
+                              (when c (insert-character point (code-char c)))))))))
     encoding))
 
 (defun find-file-buffer (filename &key temporary (enable-undo-p t) (syntax-table nil syntax-table-p))

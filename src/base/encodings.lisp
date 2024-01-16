@@ -12,6 +12,14 @@
 
 (defvar *encoding-collections* (make-hash-table :test 'equal))
 
+(defun encodings ()
+  (let (encodings)
+    (maphash (lambda (x y)
+               (declare (ignore y))
+               (push (string-downcase x) encodings))
+             lem-base/encodings::*encoding-collections*)
+    encodings))
+
 (defun register-encoding (symbol)
   (assert (symbolp symbol))
   (let ((o (make-instance symbol)))

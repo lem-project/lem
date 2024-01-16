@@ -149,11 +149,7 @@
                          :history-symbol history-symbol))))
 
 (defun prompt-for-encodings (prompt &key history-symbol)
-  (let (encodings)
-    (maphash (lambda (x y)
-               (declare (ignore y))
-               (push (string-downcase x) encodings))
-             lem-base/encodings::*encoding-collections*)
+  (let ((encodings (encodings)))
     (let ((name (prompt-for-string
                  (format nil "~A(~(~A~))" prompt lem-base::*default-external-format*)
                  :completion-function (lambda (str) (completion str encodings))

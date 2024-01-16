@@ -10,8 +10,24 @@
    :indent-buffer
    :insert-string-and-indent))
 
+(defpackage :lem-base/encodings
+  (:use :cl)
+  (:export
+   :encoding
+   :internal-encoding
+   :encoding-external-format
+   :encodings
+   :encoding-read
+   :encoding-write
+   :register-encoding
+   :encoding-end-of-line
+   :unregister-encoding
+   :encoding-read-detect-eol
+   :encoding-check))
+
 (defpackage :lem-base/file
   (:use :cl)
+  (:local-nicknames (:encodings :lem-base/encodings))
   (:export
    :*find-file-hook*
    :before-save-hook
@@ -26,16 +42,6 @@
    :write-region-to-file
    :update-changed-disk-date
    :changed-disk-p))
-
-(defpackage :lem-base/encodings
-  (:use :cl)
-  (:export
-   :encoding
-   :encoding-read
-   :encoding-write
-   :register-encoding
-   :encoding-end-of-line
-   :unregister-encoding))
 
 (uiop:define-package :lem-base
   (:use :cl

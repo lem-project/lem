@@ -52,7 +52,7 @@
           (funcall *external-format-function* filename))
         (setf external-format :utf-8)))
   (let* ((encoding (encoding external-format end-of-line))
-         (use-internal-p (typep encoding 'lem-base/encodings::internal-encoding)))
+         (use-internal-p (typep encoding 'encodings:internal-encoding)))
     (with-point ((point point :left-inserting))
       (with-open-virtual-file (stream filename
                                       :element-type (unless use-internal-p
@@ -63,7 +63,7 @@
             (%encoding-read encoding point stream filename)
             (encoding-read encoding
                            stream
-                           (lem-base/encodings::encoding-read-detect-eol
+                           (encodings:encoding-read-detect-eol
                             (lambda (c)
                               (when c (insert-character point (code-char c)))))))))
     encoding))
@@ -168,14 +168,14 @@
 (defun write-region-to-file (start end filename)
   (let* ((buffer (point-buffer start))
          (encoding (buffer-encoding buffer))
-         (use-internal (or (typep encoding 'lem-base/encodings::internal-encoding) (null encoding)))
-         (check (lem-base/encodings::encoding-check encoding)))
+         (use-internal (or (typep encoding 'encodings:internal-encoding) (null encoding)))
+         (check (encodings:encoding-check encoding)))
     (when check
       (map-region start end check)) ;; throw condition?
     (with-open-virtual-file (out filename
                                  :element-type (unless use-internal '(unsigned-byte 8))
                                  :external-format (if (and use-internal encoding)
-                                                      (lem-base/encodings::encoding-external-format encoding))
+                                                      (encodings:encoding-external-format encoding))
                                  :direction :output)
       (map-region start end
                   (if use-internal

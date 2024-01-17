@@ -34,7 +34,6 @@
                (:file "apropos-mode")
                (:file "autodoc")
                (:file "paren-coloring")
-               (:file "misc-commands")
                (:file "defstruct-to-defclass")
                (:file "quickdocs")
                (:file "package-inferred-system")

@@ -11,7 +11,7 @@
 (defun send-abort-event (editor-thread force)
   (bt:interrupt-thread editor-thread
                        (lambda ()
-                         (lem-base::interrupt force))))
+                         (interrupt force))))
 
 (defun receive-event (timeout)
   (loop

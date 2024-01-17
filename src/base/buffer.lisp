@@ -298,6 +298,14 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   `(let ((*current-buffer* (get-buffer ,buffer-or-name)))
      ,@body))
 
+(defmacro with-buffer-read-only (buffer flag &body body)
+  (let ((gbuffer (gensym "BUFFER"))
+        (gtmp (gensym "GTMP")))
+    `(let* ((,gbuffer ,buffer)
+            (,gtmp (buffer-read-only-p ,gbuffer)))
+       (setf (buffer-read-only-p ,gbuffer) ,flag)
+       (unwind-protect (progn ,@body)
+         (setf (buffer-read-only-p ,gbuffer) ,gtmp)))))
 
 
 ;;;

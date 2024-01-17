@@ -57,24 +57,18 @@
   (:use-reexport :lem-base/file)
   (:use-reexport :lem-base/indent)
   (:use-reexport :lem-base/encodings)
-  ;; var.lisp
-  (:export
-   :editor-variable
-   :define-editor-variable
-   :clear-editor-local-variables
-   :variable-value
-   :variable-documentation
-   :find-editor-variable
-   :with-global-variable-value
-   :make-per-buffer-hook)
+  (:use-reexport :lem-base/var)
+  (:use-reexport :lem-base/interrupt)
   ;; editor-variables.lisp
   (:export
    :tab-width)
+  ;; var-buffer.lisp
+  (:export
+   :make-per-buffer-hook)
   ;; macros.lisp
   (:export
    :with-point
-   :with-buffer-read-only
-   :without-interrupts)
+   :with-buffer-read-only)
   ;; mark.lisp
   (:export
    :mark

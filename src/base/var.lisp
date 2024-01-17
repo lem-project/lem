@@ -1,4 +1,18 @@
-(in-package :lem-base)
+(defpackage :lem-base/var
+  (:use :cl)
+  (:export
+   :editor-variable
+   :editor-variable-value
+   :editor-variable-local-indicator
+   :define-editor-variable
+   :clear-editor-local-variables
+   :variable-value-aux
+   :variable-value
+   :variable-documentation
+   :find-editor-variable
+   :editor-variables
+   :with-global-variable-value))
+(in-package :lem-base/var)
 
 (defvar *editor-variables* '())
 
@@ -30,13 +44,6 @@
                                    :change-value-hook ,change-value-hook))
        t)))
 
-(defun clear-editor-local-variables (buffer)
-  "`buffer`の全てのバッファローカルなエディタ変数を未束縛にします。"
-  (dolist (symbol *editor-variables*)
-    (buffer-unbound buffer
-                    (editor-variable-local-indicator
-                     (get symbol 'editor-variable)))))
-
 (defun editor-variable-error (symbol)
   (error "~A is not editor variable" symbol))
 
@@ -44,24 +51,8 @@
   (unless (editor-variable-p (get symbol 'editor-variable))
     (editor-variable-error symbol)))
 
-(defmethod variable-value-aux ((var editor-variable) (kind (eql :default)) &optional (where nil wherep))
-  (let* ((buffer (if wherep
-                     (ensure-buffer where)
-                     (current-buffer)))
-         (default '#:default)
-         (value (buffer-value buffer
-                              (editor-variable-local-indicator var)
-                              default)))
-    (if (eq value default)
-        (editor-variable-value var)
-        value)))
-
-(defmethod variable-value-aux ((var editor-variable) (kind (eql :buffer)) &optional (where nil wherep))
-  (let ((buffer (if wherep
-                    (ensure-buffer where)
-                    (current-buffer))))
-    (buffer-value buffer
-                  (editor-variable-local-indicator var))))
+(defgeneric variable-value-aux (var kind &optional where))
+(defgeneric (setf variable-value-aux) (value var kind &optional where))
 
 (defmethod variable-value-aux ((var editor-variable) (kind (eql :global)) &optional (where nil wherep))
   (declare (ignore where wherep))
@@ -74,20 +65,6 @@
     (if wherep
         (variable-value-aux var kind where)
         (variable-value-aux var kind))))
-
-(defun set-variable-value-aux-default (var value where wherep)
-  (let ((buffer (if wherep
-                    (ensure-buffer where)
-                    (current-buffer))))
-    (setf (buffer-value buffer
-                        (editor-variable-local-indicator var))
-          value)))
-
-(defmethod (setf variable-value-aux) (value (var editor-variable) (kind (eql :default)) &optional (where nil wherep))
-  (set-variable-value-aux-default var value where wherep))
-
-(defmethod (setf variable-value-aux) (value (var editor-variable) (kind (eql :buffer)) &optional (where nil wherep))
-  (set-variable-value-aux-default var value where wherep))
 
 (defmethod (setf variable-value-aux) (value (var editor-variable) (kind (eql :global)) &optional (where nil wherep))
   (declare (ignore where wherep))
@@ -111,19 +88,11 @@
       (editor-variable-error symbol))
     (editor-variable-documentation var)))
 
+(defun editor-variables ()
+  *editor-variables*)
+
 (defun find-editor-variable (var)
-  (find var *editor-variables* :test 'string-equal))
-
-(defstruct per-buffer-hook
-  var
-  buffer
-  (global t))
-
-(defmethod run-hooks ((hook per-buffer-hook) &rest args)
-  (with-slots (var buffer global) hook
-    (apply #'run-hooks (variable-value var :buffer buffer) args)
-    (when global
-      (apply #'run-hooks (variable-value var :global) args))))
+  (find var (editor-variables) :test 'string-equal))
 
 
 ;; for test

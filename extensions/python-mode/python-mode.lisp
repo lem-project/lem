@@ -98,3 +98,4 @@
     (move-point point p)))
 
 (define-file-type ("py") python-mode)
+(define-program-name-with-mode ("python" "python2" "python3") python-mode)

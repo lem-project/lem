@@ -70,7 +70,10 @@
 
 (defvar *quickdocs-url* "https://quickdocs.org/")
 
-(defvar *quickdocs-check-url* nil)
+(defvar *quickdocs-check-url* nil
+  "Boolean variable, if true, the function `lisp-quickdocs-at-point' ensure
+that the reference exists in the webpage, adding consistency but more delay.
+By default, is set to nil so the execution is faster.")
 
 (define-command lisp-quickdocs-at-point  (point) ((current-point))
   (let* ((symbol (cl-ppcre:regex-replace-all

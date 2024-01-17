@@ -2,10 +2,6 @@
   (:use :cl :lem :lem-lisp-mode/internal))
 (in-package :lem-lisp-mode/misc-commands)
 
-(define-command lisp-defstruct-to-defclass () ()
-  (lem-lisp-syntax:defstruct-to-defclass (current-point)))
-
-
 (defparameter *run-test-function-name* "rove:run-test")
 (defparameter *run-suite-test-function-name* "rove:run-suite")
 

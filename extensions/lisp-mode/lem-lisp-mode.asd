@@ -35,6 +35,7 @@
                (:file "autodoc")
                (:file "paren-coloring")
                (:file "misc-commands")
+               (:file "quickdocs")
                (:file "package-inferred-system")
                (:file "organize-imports")
                (:file "connection-list")

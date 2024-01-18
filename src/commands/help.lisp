@@ -85,14 +85,24 @@
   "Show information about current major mode and enabled minor modes."
   (let* ((buffer (current-buffer))
          (major-mode (buffer-major-mode buffer))
-         (minor-modes (buffer-minor-modes buffer)))
+         (minor-modes (buffer-minor-modes buffer))
+         (global-minor-modes (loop :for mode :in (minor-modes)
+                                   :when (and (mode-active-p buffer mode)
+                                              (not (find mode minor-modes)))
+                                   :collect mode)))
     (with-pop-up-typeout-window (s (make-buffer "*modes*") :erase t)
       (format s "Major mode is: ~A~@[ – ~A~]~%"
               (mode-name major-mode)
               (mode-description major-mode))
       (when minor-modes
-        (format s "~2&Minor modes:~2%")
+        (format s "~2&Minor modes enabled in this buffer:~2%")
         (dolist (mode minor-modes)
+          (format s "* ~A~@[ – ~A~]~%"
+                  (mode-name mode)
+                  (mode-description mode))))
+      (when global-minor-modes
+        (format s "~2&Global minor modes:~2%")
+        (dolist (mode global-minor-modes)
           (format s "* ~A~@[ – ~A~]~%"
                   (mode-name mode)
                   (mode-description mode)))))))

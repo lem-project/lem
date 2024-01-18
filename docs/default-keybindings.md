@@ -168,8 +168,8 @@ With prefix argument INSERT, insert the directory of the active buffer at point.
 | [describe-key](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L12)      | C-x ?        | Tell what is the command associated to a keybinding.                         |
 | [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L41) |              | Describe the bindings of the buffer's current major mode.                    |
 | [list-modes](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L63)        |              | Output all available major and minor modes.                                  |
-| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L100)  |              | Find all symbols in the running Lisp image whose names match a given string. |
-| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L107)      |              | Display Lem's version.                                                       |
+| [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L110)  |              | Find all symbols in the running Lisp image whose names match a given string. |
+| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L117)      |              | Display Lem's version.                                                       |
 
 ## Font
 | Command                                                                                       | Key bindings | Documentation                                                        |

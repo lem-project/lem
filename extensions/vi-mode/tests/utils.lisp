@@ -199,8 +199,7 @@
           (parse-buffer-string content)
         (let ((point (buffer-point buffer)))
           (lem:insert-string point buffer-text)
-          (setf (lem-base::buffer-edit-history buffer)
-                (make-array 0 :adjustable t :fill-pointer 0))
+          (lem-base:clear-buffer-edit-history buffer)
           (when position
             (move-to-position point position))
           (when visual-regions
@@ -234,14 +233,14 @@
      ,@body))
 
 (defun call-with-current-buffer (buffer fn)
-  (lem-base::with-current-buffers ()
-    (let ((lem-base::*current-buffer* buffer)
-          (window (current-window)))
-      (lem-core::set-window-buffer buffer window)
-      (lem-core::set-window-view-point (copy-point (lem:buffer-point buffer))
-                                       window)
-      (lem-core::set-window-point (lem:buffer-point buffer) window)
-      (funcall fn))))
+  (lem:with-current-buffers ()
+    (lem:with-current-buffer buffer
+      (let ((window (lem:current-window)))
+        (lem-core::set-window-buffer buffer window)
+        (lem-core::set-window-view-point (lem:copy-point (lem:buffer-point buffer))
+                                         window)
+        (lem-core::set-window-point (lem:buffer-point buffer) window)
+        (funcall fn)))))
 
 (defmacro with-current-buffer ((buffer) &body body)
   `(call-with-current-buffer

@@ -93,7 +93,7 @@
   (with-point ((start (lem/listener-mode:input-start-point
                        (point-buffer point))))
     (let ((state (parse-partial-sexp start point)))
-      (and (not (member (lem-base::pps-state-type state)
+      (and (not (member (pps-state-type state)
                         '(:string :fence :block-string :block-comment)))
            (>= 0 (pps-state-paren-depth state))))))
 

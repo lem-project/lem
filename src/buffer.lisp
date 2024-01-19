@@ -9,7 +9,7 @@
                             (first (last (buffer-list))))))))
 
 (defmethod delete-buffer-using-manager :before
-    ((manager lem-base::buffer-list-manager)
+    ((manager buffer-list-manager)
      buffer)
   (dolist (frame (all-frames))
     (strip-buffer-from-frame-windows buffer frame))

@@ -8,7 +8,7 @@
 (defun process-each-cursors (function)
   (let ((buffer (current-buffer)))
     (dolist (point (sort (copy-list (buffer-fake-cursors buffer)) #'point<))
-      (lem-base::with-buffer-point (buffer point)
+      (with-buffer-point (buffer point)
         (with-current-killring (fake-cursor-killring point)
           (handler-case
               (save-continue-flags

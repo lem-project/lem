@@ -3256,4 +3256,4 @@
                                                (if (and (getf properties :v-adjust)
                                                         (= 0.0 (getf properties :v-adjust)))
                                                    0.3)))
-              (lem-base::register-icon-ext ext name))))
+              (lem-base:register-icon-ext ext name))))

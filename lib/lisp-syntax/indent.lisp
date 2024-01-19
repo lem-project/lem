@@ -426,7 +426,7 @@
        (not (eql (character-at p -2) #\#))))
 
 (defun vector-form-point-p (p)
-  (eql (character-at p -1) #\#))  
+  (eql (character-at p -1) #\#))
 
 (defun find-indent-method (name path)
   (flet ((f (method)
@@ -520,7 +520,7 @@
 
 (defun calc-indent (point)
   (line-start point)
-  (lem-base::with-point-syntax point
+  (lem-base:with-point-syntax point
     (let ((state (syntax-ppss point)))
       (cond
         ;; workaround: Do not treat #\page as whitespace only when indentation

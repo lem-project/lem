@@ -401,3 +401,7 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   (dolist (buffer (buffer-list))
     (when (uiop:pathname-equal filename (buffer-filename buffer))
       (return buffer))))
+
+(defun clear-buffer-edit-history (buffer)
+  (setf (buffer-edit-history buffer)
+        (make-array 0 :adjustable t :fill-pointer 0)))

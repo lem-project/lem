@@ -158,7 +158,7 @@
        (not (eql (character-at p -2) #\#))))
 
 (defun vector-form-point-p (p)
-  (eql (character-at p -1) #\#))  
+  (eql (character-at p -1) #\#))
 
 (defun find-indent-method (name path)
   (flet ((f (method)
@@ -250,7 +250,7 @@
 
 (defun calc-indent (point)
   (line-start point)
-  (lem-base::with-point-syntax point
+  (with-point-syntax point
     (let ((state (syntax-ppss point)))
       (cond
         ((pps-state-string-p state) nil)

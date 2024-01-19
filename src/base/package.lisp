@@ -45,8 +45,7 @@
 
 (uiop:define-package :lem-base
   (:use :cl
-        :lem-base/line
-        :lem-base/syntax-table)
+        :lem-base/line)
   (:use-reexport :lem-base/utils)
   (:use-reexport :lem-base/icon)
   (:use-reexport :lem-base/string-width-utils)
@@ -59,6 +58,7 @@
   (:use-reexport :lem-base/encodings)
   (:use-reexport :lem-base/var)
   (:use-reexport :lem-base/interrupt)
+  (:use-reexport :lem-base/syntax-table)
   ;; editor-variables.lisp
   (:export
    :tab-width)
@@ -81,6 +81,7 @@
    :fundamental-mode
    :primordial-buffer
    :current-buffer
+   :make-buffer-point
    :make-buffer
    :buffer
    :text-buffer
@@ -121,7 +122,11 @@
    :buffer-unbound
    :clear-buffer-variables
    :with-buffer-point
-   :with-current-buffer)
+   :with-current-buffer
+   :clear-buffer-edit-history
+   ;; TODO: delete ugly exports
+   :%buffer-clear-keep-binfo
+   :%buffer-keep-binfo)
   (:export
    :buffer-list
    :any-modified-buffer-p
@@ -160,7 +165,8 @@
    :point>=
    :point-closest
    :point-min
-   :point-max)
+   :point-max
+   :get-string-and-attributes-at-point)
   ;; basic.lisp
   (:export
    :first-line-p
@@ -219,6 +225,7 @@
   (:export
    :current-syntax
    :with-current-syntax
+   :with-point-syntax
    :make-syntax-table
    :syntax-word-char-p
    :syntax-space-char-p
@@ -243,6 +250,7 @@
    :match-string-at)
   ;; syntax-scan.lisp
   (:export
+   :syntax-escape-point-p ;TODO: delete ugly this export
    :skip-space-and-comment-forward
    :skip-space-and-comment-backward
    :form-offset

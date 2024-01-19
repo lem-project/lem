@@ -74,10 +74,8 @@
                             new-option))))
 
 (defun get-buffer-options (&optional (buffer (lem:current-buffer)))
-  (or (gethash "vi-mode-options"
-               (lem-base::buffer-variables buffer))
-      (setf (gethash "vi-mode-options"
-                     (lem-base::buffer-variables buffer))
+  (or (buffer-value buffer "vi-mode-options")
+      (setf (buffer-value buffer "vi-mode-options")
             (new-buffer-options))))
 
 (defun get-window-options (&optional (window (lem:current-window)))
@@ -352,22 +350,22 @@
 
 (defmethod rules-option-init-chars ((option-symbol (eql :iskeyword)) syntax-table)
   (declare (ignorable option-symbol))
-  (lem-base::syntax-table-symbol-chars syntax-table))
+  (syntax-table-symbol-chars syntax-table))
 
-(defmethod rules-option-init-chars ((option-symbol (eql :iskeyword)) 
+(defmethod rules-option-init-chars ((option-symbol (eql :iskeyword))
                                     (syntax-table (eql lem-lisp-syntax:*syntax-table*)))
   (declare (ignorable option-symbol))
-  (set-difference (lem-base::syntax-table-symbol-chars syntax-table)
+  (set-difference (syntax-table-symbol-chars syntax-table)
                   '(#\/ #\. #\: #\-)))
 
 (defmethod rules-option-init-chars ((option-symbol (eql :isseparator)) syntax-table)
   (declare (ignorable option-symbol))
-  (lem-base::syntax-table-space-chars syntax-table))
+  (syntax-table-space-chars syntax-table))
 
-(defmethod rules-option-init-chars ((option-symbol (eql :isseparator)) 
+(defmethod rules-option-init-chars ((option-symbol (eql :isseparator))
                                     (syntax-table (eql lem-lisp-syntax:*syntax-table*)))
   (declare (ignorable option-symbol))
-  (union (lem-base::syntax-table-space-chars syntax-table)
+  (union (syntax-table-space-chars syntax-table)
          '(#\( #\) #\")))
 
 (defmacro define-rules-option (name default &key (alias (subseq name 0 3)) doc)
@@ -392,7 +390,7 @@
                                   (if (char= c #\@)
                                       "@-@"
                                       (string c)))
-                                (rules-option-init-chars 
+                                (rules-option-init-chars
                                  (intern ,(string-upcase name) "KEYWORD")
                                  syntax-table))
                         (option-value option))
@@ -403,9 +401,9 @@
   Default: @,48-57,_,192-255
   Aliases: isk")
 
-(define-rules-option 
+(define-rules-option
     "isseparator"
-  (mapcar 'string (lem-base::syntax-table-space-chars (lem:fundamental-syntax-table)))
+  (mapcar 'string (syntax-table-space-chars (lem:fundamental-syntax-table)))
   :doc "Comma-separated string to specify the characters that should be recognized as a non broad word characters. (buffer local)
   Aliases: iss")
 

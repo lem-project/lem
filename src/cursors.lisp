@@ -8,7 +8,7 @@
    (yank-end :initform nil
              :accessor cursor-yank-end)))
 
-(defmethod lem-base::make-buffer-point (point)
+(defmethod make-buffer-point (point)
   (let ((cursor (make-instance 'cursor)))
     (copy-point-using-class cursor point :left-inserting)))
 

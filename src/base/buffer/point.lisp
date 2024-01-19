@@ -271,3 +271,7 @@ Example:
             `(unwind-protect (progn ,@body)
                ,@cleanups)
             `(progn ,@body)))))
+
+;; TODO: delete this ugly function
+(defun get-string-and-attributes-at-point (point)
+  (line-string/attributes (point-line point)))

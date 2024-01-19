@@ -14,7 +14,7 @@
 
 (defun get-closed-paren-list ()
   (mapcar #'cdr
-          (lem-base::syntax-table-paren-pairs (current-syntax))))
+          (lem-base:syntax-table-paren-pairs (current-syntax))))
 
 (define-command insert-closed-paren () ()
   (let ((c (insertion-key-p (last-read-key-sequence))))
@@ -28,7 +28,7 @@
                  (not (check-open-paren)))
         (unless (loop for closed-paren in (get-closed-paren-list)
                       do
-                      
+
                          (cancel-insert)
                          (insert-character (current-point) closed-paren)
                          (if (check-open-paren)

@@ -1,6 +1,7 @@
 (defpackage :lem-core/commands/buffer
   (:use :cl :lem-core)
   (:export :*read-only-function*
+           :indent-current-buffer
            :toggle-read-only
            :rename-buffer
            :unmark-buffer))
@@ -10,6 +11,10 @@
 
 (define-key *global-keymap* "C-x C-q" 'toggle-read-only)
 (define-key *global-keymap* "M-~" 'unmark-buffer)
+
+(define-command indent-current-buffer () ()
+  "Indent the current buffer."
+  (indent-buffer (current-buffer)))
 
 (define-command toggle-read-only () ()
   "Toggle the buffer read-only."

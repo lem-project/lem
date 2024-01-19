@@ -1,4 +1,4 @@
-(in-package :lem-base)
+(in-package :lem-base/buffer)
 
 (defmacro debug-assert (form &rest args)
   `(unless ,form

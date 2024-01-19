@@ -1,4 +1,4 @@
-(in-package :lem-base)
+(in-package :lem-base/buffer)
 
 (defclass mark ()
   ((point :initform nil

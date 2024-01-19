@@ -43,7 +43,7 @@
    :update-changed-disk-date
    :changed-disk-p))
 
-(uiop:define-package :lem-base
+(uiop:define-package :lem-base/buffer
   (:use :cl
         :lem-base/line)
   (:use-reexport :lem-base/utils)
@@ -312,9 +312,13 @@
    :add-tm-repository
    :add-tm-pattern))
 
-(use-package :lem-base :lem-base/encodings)
-(use-package :lem-base :lem-base/indent)
-(use-package :lem-base :lem-base/file)
+(uiop:define-package :lem-base
+  (:use :cl)
+  (:use-reexport :lem-base/buffer))
+
+(use-package :lem-base/buffer :lem-base/encodings)
+(use-package :lem-base/buffer :lem-base/indent)
+(use-package :lem-base/buffer :lem-base/file)
 
 #+sbcl
 (sb-ext:lock-package :lem-base)

@@ -1,4 +1,4 @@
-(in-package :lem-base)
+(in-package :lem-base/buffer)
 
 (flet ((%match (str1 str2 str1-pos)
          (let ((end1 (+ str1-pos (length str2))))

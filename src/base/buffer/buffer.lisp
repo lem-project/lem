@@ -1,4 +1,4 @@
-(in-package :lem-base)
+(in-package :lem-base/buffer)
 
 (defparameter +primordial-buffer-name+ "*tmp*")
 

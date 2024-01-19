@@ -1,4 +1,4 @@
-(in-package :lem-base)
+(in-package :lem-base/buffer)
 
 (defun make-edit (kind linum charpos value)
   (list kind linum charpos value))

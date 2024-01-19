@@ -1,4 +1,4 @@
-(in-package :lem-base)
+(in-package :lem-base/buffer)
 
 (defclass tmlanguage (syntax-parser)
   ((patterns

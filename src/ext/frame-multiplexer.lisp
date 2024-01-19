@@ -278,6 +278,8 @@
               (not (equal-tabs tabs (virtual-frame-last-displayed-tabs window))))
       (setf (virtual-frame-last-displayed-tabs window) tabs)
       (write-tabs-to-buffer window frames tabs))
+    (setf (virtual-frame-width window) (display-width))
+    (setf (virtual-frame-height window) (display-height))
     (call-next-method)))
 
 (defun frame-multiplexer-init ()

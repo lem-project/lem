@@ -154,6 +154,7 @@
    :copy-point-using-class
    :copy-point
    :delete-point
+   :alive-point-p
    :point-buffer
    :point-charpos
    :point-kind

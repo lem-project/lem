@@ -114,11 +114,12 @@ With prefix argument INSERT, insert the directory of the active buffer at point.
   - if *delete-last-buffer* is non nil, we will delete the last buffer. This would cause Lem to exit.                                                                                                                                                                                                                                             |
 
 ## Buffer
-| Command                                                                                       | Key bindings | Documentation                                 |
-|-----------------------------------------------------------------------------------------------|--------------|-----------------------------------------------|
-| [toggle-read-only](https://github.com/lem-project/lem/blob/main/src/commands/buffer.lisp#L14) | C-x C-q      | Toggle the buffer read-only.                  |
-| [rename-buffer](https://github.com/lem-project/lem/blob/main/src/commands/buffer.lisp#L22)    |              | Rename the buffer.                            |
-| [unmark-buffer](https://github.com/lem-project/lem/blob/main/src/commands/buffer.lisp#L26)    | M-~          | Remove the mark where the buffer was changed. |
+| Command                                                                                            | Key bindings | Documentation                                 |
+|----------------------------------------------------------------------------------------------------|--------------|-----------------------------------------------|
+| [indent-current-buffer](https://github.com/lem-project/lem/blob/main/src/commands/buffer.lisp#L15) |              | Indent the current buffer.                    |
+| [toggle-read-only](https://github.com/lem-project/lem/blob/main/src/commands/buffer.lisp#L19)      | C-x C-q      | Toggle the buffer read-only.                  |
+| [rename-buffer](https://github.com/lem-project/lem/blob/main/src/commands/buffer.lisp#L27)         |              | Rename the buffer.                            |
+| [unmark-buffer](https://github.com/lem-project/lem/blob/main/src/commands/buffer.lisp#L31)         | M-~          | Remove the mark where the buffer was changed. |
 
 ## Window
 | Command                                                                                                        | Key bindings   | Documentation                                                         |

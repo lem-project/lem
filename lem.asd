@@ -30,7 +30,7 @@
                "str"
                "dexador"
                "lem-base"
-               "lem-encodings"
+               ;; "lem-encodings"
 	       #+sbcl
 	       sb-concurrency
 	       "lem-mailbox")

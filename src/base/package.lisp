@@ -1,48 +1,3 @@
-(defpackage :lem-base/indent
-  (:use :cl)
-  (:export
-   :back-to-indentation
-   :indent-tabs-mode
-   :calc-indent-function
-   :indent-when-yank
-   :indent-line
-   :indent-points
-   :indent-buffer
-   :insert-string-and-indent))
-
-(defpackage :lem-base/encodings
-  (:use :cl)
-  (:export
-   :encoding
-   :internal-encoding
-   :encoding-external-format
-   :encodings
-   :encoding-read
-   :encoding-write
-   :register-encoding
-   :encoding-end-of-line
-   :unregister-encoding
-   :encoding-read-detect-eol
-   :encoding-check))
-
-(defpackage :lem-base/file
-  (:use :cl)
-  (:local-nicknames (:encodings :lem-base/encodings))
-  (:export
-   :*find-file-hook*
-   :before-save-hook
-   :after-save-hook
-   :*external-format-function*
-   :*find-directory-function*
-   :*default-external-format*
-   :encoding-read-error
-   :insert-file-contents
-   :find-file-buffer
-   :write-to-file
-   :write-region-to-file
-   :update-changed-disk-date
-   :changed-disk-p))
-
 (uiop:define-package :lem-base/buffer
   (:use :cl
         :lem-base/line)
@@ -53,9 +8,6 @@
   (:use-reexport :lem-base/hooks)
   (:use-reexport :lem-base/file-utils)
   (:use-reexport :lem-base/buffer-list-manager)
-  (:use-reexport :lem-base/file)
-  (:use-reexport :lem-base/indent)
-  (:use-reexport :lem-base/encodings)
   (:use-reexport :lem-base/var)
   (:use-reexport :lem-base/interrupt)
   (:use-reexport :lem-base/syntax-table)
@@ -312,13 +264,60 @@
    :add-tm-repository
    :add-tm-pattern))
 
+(defpackage :lem-base/indent
+  (:use :cl
+        :lem-base/buffer)
+  (:export
+   :back-to-indentation
+   :indent-tabs-mode
+   :calc-indent-function
+   :indent-when-yank
+   :indent-line
+   :indent-points
+   :indent-buffer
+   :insert-string-and-indent))
+
+(defpackage :lem-base/encodings
+  (:use :cl
+        :lem-base/buffer)
+  (:export
+   :encoding
+   :internal-encoding
+   :encoding-external-format
+   :encodings
+   :encoding-read
+   :encoding-write
+   :register-encoding
+   :encoding-end-of-line
+   :unregister-encoding
+   :encoding-read-detect-eol
+   :encoding-check))
+
+(defpackage :lem-base/file
+  (:use :cl
+        :lem-base/buffer)
+  (:local-nicknames (:encodings :lem-base/encodings))
+  (:export
+   :*find-file-hook*
+   :before-save-hook
+   :after-save-hook
+   :*external-format-function*
+   :*find-directory-function*
+   :*default-external-format*
+   :encoding-read-error
+   :insert-file-contents
+   :find-file-buffer
+   :write-to-file
+   :write-region-to-file
+   :update-changed-disk-date
+   :changed-disk-p))
+
 (uiop:define-package :lem-base
   (:use :cl)
+  (:use-reexport :lem-base/indent)
+  (:use-reexport :lem-base/encodings)
+  (:use-reexport :lem-base/file)
   (:use-reexport :lem-base/buffer))
-
-(use-package :lem-base/buffer :lem-base/encodings)
-(use-package :lem-base/buffer :lem-base/indent)
-(use-package :lem-base/buffer :lem-base/file)
 
 #+sbcl
 (sb-ext:lock-package :lem-base)

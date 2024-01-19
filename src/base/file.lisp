@@ -18,7 +18,7 @@
                (format s "Couldn't read this file: ~A" filename)))))
 
 (defun %encoding-read (encoding point stream stream-filename)
-  (let ((end-of-line (encoding-end-of-line encoding)))
+  (let ((end-of-line (encodings:encoding-end-of-line encoding)))
     (loop
       (multiple-value-bind (str eof-p)
           (handler-bind ((error (lambda (e)
@@ -51,7 +51,7 @@
         (multiple-value-setq (external-format end-of-line)
           (funcall *external-format-function* filename))
         (setf external-format :utf-8)))
-  (let* ((encoding (encoding external-format end-of-line))
+  (let* ((encoding (encodings:encoding external-format end-of-line))
          (use-internal-p (typep encoding 'encodings:internal-encoding)))
     (with-point ((point point :left-inserting))
       (with-open-virtual-file (stream filename
@@ -61,11 +61,11 @@
                                       :direction :input)
         (if use-internal-p
             (%encoding-read encoding point stream filename)
-            (encoding-read encoding
-                           stream
-                           (encodings:encoding-read-detect-eol
-                            (lambda (c)
-                              (when c (insert-character point (code-char c)))))))))
+            (encodings:encoding-read encoding
+                                     stream
+                                     (encodings:encoding-read-detect-eol
+                                      (lambda (c)
+                                        (when c (insert-character point (code-char c)))))))))
     encoding))
 
 (defun find-file-buffer (filename &key temporary (enable-undo-p t) (syntax-table nil syntax-table-p))
@@ -150,8 +150,8 @@
       (princ #\newline out))))
 
 (defun %%write-region-to-file (encoding out)
-  (let ((f (encoding-write encoding out))
-        (end-of-line (encoding-end-of-line encoding)))
+  (let ((f (encodings:encoding-write encoding out))
+        (end-of-line (encodings:encoding-end-of-line encoding)))
     (lambda (string eof-p)
       (loop :for c :across string
             :do (funcall f c))
@@ -180,7 +180,7 @@
       (map-region start end
                   (if use-internal
                       (%write-region-to-file (if encoding
-                                                 (encoding-end-of-line encoding)
+                                                 (encodings:encoding-end-of-line encoding)
                                                  :lf)
                                              out)
                       (%%write-region-to-file encoding out))))))

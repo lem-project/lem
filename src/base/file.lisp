@@ -18,7 +18,7 @@
                (format s "Couldn't read this file: ~A" filename)))))
 
 (defun %encoding-read (encoding point stream stream-filename)
-  (let ((end-of-line (encodings:encoding-end-of-line encoding)))
+  (let ((end-of-line (encoding-end-of-line encoding)))
     (loop
       (multiple-value-bind (str eof-p)
           (handler-bind ((error (lambda (e)
@@ -51,8 +51,8 @@
         (multiple-value-setq (external-format end-of-line)
           (funcall *external-format-function* filename))
         (setf external-format :utf-8)))
-  (let* ((encoding (encodings:encoding external-format end-of-line))
-         (use-internal-p (typep encoding 'encodings:internal-encoding)))
+  (let* ((encoding (encoding external-format end-of-line))
+         (use-internal-p (typep encoding 'internal-encoding)))
     (with-point ((point point :left-inserting))
       (with-open-virtual-file (stream filename
                                       :element-type (unless use-internal-p
@@ -61,9 +61,9 @@
                                       :direction :input)
         (if use-internal-p
             (%encoding-read encoding point stream filename)
-            (encodings:encoding-read encoding
+            (encoding-read encoding
                                      stream
-                                     (encodings:encoding-read-detect-eol
+                                     (encoding-read-detect-eol
                                       (lambda (c)
                                         (when c (insert-character point (code-char c)))))))))
     encoding))
@@ -150,8 +150,8 @@
       (princ #\newline out))))
 
 (defun %%write-region-to-file (encoding out)
-  (let ((f (encodings:encoding-write encoding out))
-        (end-of-line (encodings:encoding-end-of-line encoding)))
+  (let ((f (encoding-write encoding out))
+        (end-of-line (encoding-end-of-line encoding)))
     (lambda (string eof-p)
       (loop :for c :across string
             :do (funcall f c))
@@ -168,19 +168,19 @@
 (defun write-region-to-file (start end filename)
   (let* ((buffer (point-buffer start))
          (encoding (buffer-encoding buffer))
-         (use-internal (or (typep encoding 'encodings:internal-encoding) (null encoding)))
-         (check (encodings:encoding-check encoding)))
+         (use-internal (or (typep encoding 'internal-encoding) (null encoding)))
+         (check (encoding-check encoding)))
     (when check
       (map-region start end check)) ;; throw condition?
     (with-open-virtual-file (out filename
                                  :element-type (unless use-internal '(unsigned-byte 8))
                                  :external-format (if (and use-internal encoding)
-                                                      (encodings:encoding-external-format encoding))
+                                                      (encoding-external-format encoding))
                                  :direction :output)
       (map-region start end
                   (if use-internal
                       (%write-region-to-file (if encoding
-                                                 (encodings:encoding-end-of-line encoding)
+                                                 (encoding-end-of-line encoding)
                                                  :lf)
                                              out)
                       (%%write-region-to-file encoding out))))))

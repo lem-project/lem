@@ -267,8 +267,6 @@
    :add-tm-repository
    :add-tm-pattern))
 
-#+sbcl (sb-ext:lock-package :lem-base/buffer)
-
 (defpackage :lem-base/indent
   (:use :cl
         :lem-base/buffer)
@@ -281,8 +279,6 @@
    :indent-points
    :indent-buffer
    :insert-string-and-indent))
-
-#+sbcl (sb-ext:lock-package :lem-base/indent)
 
 (defpackage :lem-base/encodings
   (:use :cl
@@ -300,12 +296,10 @@
    :encoding-read-detect-eol
    :encoding-check))
 
-#+sbcl (sb-ext:lock-package :lem-base/encodings)
-
 (defpackage :lem-base/file
   (:use :cl
-        :lem-base/buffer)
-  (:local-nicknames (:encodings :lem-base/encodings))
+        :lem-base/buffer
+        :lem-base/encodings)
   (:export
    :*find-file-hook*
    :before-save-hook
@@ -321,8 +315,6 @@
    :update-changed-disk-date
    :changed-disk-p))
 
-#+sbcl (sb-ext:lock-package :lem-base/file)
-
 (uiop:define-package :lem-base
   (:use :cl)
   (:use-reexport :lem-base/indent)
@@ -330,4 +322,8 @@
   (:use-reexport :lem-base/file)
   (:use-reexport :lem-base/buffer))
 
+#+sbcl (sb-ext:lock-package :lem-base/buffer)
+#+sbcl (sb-ext:lock-package :lem-base/indent)
+#+sbcl (sb-ext:lock-package :lem-base/encodings)
+#+sbcl (sb-ext:lock-package :lem-base/file)
 #+sbcl (sb-ext:lock-package :lem-base)

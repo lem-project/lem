@@ -42,7 +42,7 @@
 | [entab-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L287)                 |                   | Replaces the indent of the current line from space to tab.                           |
 | [detab-line](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L293)                 |                   | Replaces the indent of the current line from tab to space.                           |
 | [delete-blank-lines](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L300)         | C-x C-o           | Delete blank lines before and after the cursor.                                      |
-| [just-one-space](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L324)             | M-Space           | Combines consecutive whitespace before and after the cursor into one.                |
+| [just-one-space](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L324)             | M-Space           |                                                                                      |
 | [delete-indentation](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L330)         | M-^               | Merge the current line with the previous line.                                       |
 | [transpose-characters](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L350)       | C-t               | Swaps the characters before and after the cursor.                                    |
 | [undo](https://github.com/lem-project/lem/blob/main/src/commands/edit.lisp#L367)                       | C-\               | Undo.                                                                                |

@@ -7,7 +7,8 @@
         :lem-lsp-base/converter
         :lem-lsp-base/yason-utils
         :lem-lsp-base/utils
-        :lem-lsp-mode/spec)
+        :lem-lsp-mode/spec
+        :lem/common/utils)
   (:shadow :execute-command)
   (:import-from :lem-language-client/request)
   (:import-from :lem/context-menu)

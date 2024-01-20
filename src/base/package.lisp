@@ -3,8 +3,8 @@
 
 (uiop:define-package :lem-base/buffer
   (:use :cl
-        :lem-base/line)
-  (:use-reexport :lem-base/utils)
+        :lem-base/line
+        :lem/common/utils)
   (:use-reexport :lem-base/icon)
   (:use-reexport :lem-base/string-width-utils)
   (:use-reexport :lem-base/errors)

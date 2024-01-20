@@ -1,21 +1,11 @@
-(defpackage :lem-base/utils
+(defpackage :lem/common/utils
   (:use :cl)
-  (:export :utf8-bytes
-           :bests-if
-           :max-if
+  (:export :max-if
            :min-if
            :find-tree
            :do-sequence
            :if-push))
-(in-package :lem-base/utils)
-
-(defun utf8-bytes (c)
-  (cond
-    ((<= c #x7f) 1)
-    ((<= #xc2 c #xdf) 2)
-    ((<= #xe0 c #xef) 3)
-    ((<= #xf0 c #xf4) 4)
-    (t 1)))
+(in-package :lem/common/utils)
 
 (defun bests-if (fn list test)
   (let ((best-value)

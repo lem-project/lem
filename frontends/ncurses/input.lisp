@@ -23,6 +23,14 @@
      (unwind-protect (progn ,@body)
        (charms/ll:wtimeout *padwin* -1))))
 
+(defun utf8-bytes (c)
+  (cond
+    ((<= c #x7f) 1)
+    ((<= #xc2 c #xdf) 2)
+    ((<= #xe0 c #xef) 3)
+    ((<= #xf0 c #xf4) 4)
+    (t 1)))
+
 (defun get-key (code)
   (let* ((char (let ((nbytes (utf8-bytes code)))
                  (if (= nbytes 1)

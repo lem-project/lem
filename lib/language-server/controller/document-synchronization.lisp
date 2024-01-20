@@ -29,7 +29,7 @@
                    (content-changes lsp:did-change-text-document-params-content-changes))
       params
     (let ((text-document (find-text-document text-document-identifier)))
-      (lem:do-sequence (content-change content-changes)
+      (lem/common/utils:do-sequence (content-change content-changes)
         (edit-text-document text-document content-change))))
   (values))
 

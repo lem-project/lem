@@ -45,11 +45,11 @@
                              (:file "timer")
                              (:file "command")
                              (:file "color")
-                             (:file "queue")))
+                             (:file "queue")
+                             (:file "utils")))
                (:module "base"
                 :serial t
-                :components ((:file "utils")
-                             (:file "icon")
+                :components ((:file "icon")
                              (:file "eastasian")
                              (:file "string-width-utils")
                              (:file "errors")

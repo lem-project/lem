@@ -30,6 +30,7 @@
         :lem/common/command
         :lem/common/color
         :lem/common/queue
+        :Lem/common/utils
         :lem-core/display)
   (:use-reexport :lem-base)
   (:use-reexport :lem/common/color)

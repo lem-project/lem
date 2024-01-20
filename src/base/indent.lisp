@@ -37,8 +37,8 @@
                  nil
                  (move-to-column point
                                  (max 0 (+ old-column
-                                           (- (string-width new-indent-string)
-                                              (string-width old-indent-string)))))))
+                                           (- (lem/common/character:string-width new-indent-string)
+                                              (lem/common/character:string-width old-indent-string)))))))
             ((< old-column column)
              (back-to-indentation point)))))
   t)

@@ -1,4 +1,4 @@
-(defpackage :lem-base/icon
+(defpackage :lem/common/character/icon
   (:use :cl)
   (:export :register-icon
            :register-icon-ext
@@ -6,7 +6,7 @@
            :icon-string
            :icon-string-by-ext
            :icon-value))
-(in-package :lem-base/icon)
+(in-package :lem/common/character/icon)
 
 (defvar *icon-name-table* (make-hash-table :test 'equal))
 (defvar *icon-code-table* (make-hash-table :test 'eql))

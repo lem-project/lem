@@ -48,13 +48,16 @@
                              (:file "queue")
                              (:file "hooks")
                              (:file "var")
-                             (:file "utils")))
+                             (:file "utils")
+                             (:module "character"
+                              :serial t
+                              :components ((:file "icon")
+                                           (:file "eastasian")
+                                           (:file "string-width-utils")
+                                           (:file "package")))))
                (:module "base"
                 :serial t
-                :components ((:file "icon")
-                             (:file "eastasian")
-                             (:file "string-width-utils")
-                             (:file "errors")
+                :components ((:file "errors")
                              (:file "file-utils")
                              (:file "line")
                              (:file "buffer-list-manager")

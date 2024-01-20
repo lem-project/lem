@@ -1,4 +1,4 @@
-(defpackage :lem-base/string-width-utils
+(defpackage :lem/common/character/string-width-utils
   (:use :cl)
   (:export :+default-tab-size+
            :control-char
@@ -6,7 +6,7 @@
            :char-width
            :string-width
            :wide-index))
-(in-package :lem-base/string-width-utils)
+(in-package :lem/common/character/string-width-utils)
 
 (defconstant +default-tab-size+ 8)
 
@@ -55,8 +55,8 @@
 (defun wide-char-p (char)
   (declare (character char))
   (or (char= char #\▼)
-      (lem-base/icon:icon-code-p (char-code char))
-      (lem-base/eastasian:eastasian-code-p (char-code char))
+      (lem/common/character/icon:icon-code-p (char-code char))
+      (lem/common/character/eastasian:eastasian-code-p (char-code char))
       (control-char char)))
 
 (defun char-width (char width &key (tab-size +default-tab-size+))

@@ -6,9 +6,8 @@
         :lem-base/line
         :lem/common/utils
         :lem/common/hooks
-        :lem/common/var)
-  (:use-reexport :lem-base/icon)
-  (:use-reexport :lem-base/string-width-utils)
+        :lem/common/var
+        :lem/common/character)
   (:use-reexport :lem-base/errors)
   (:use-reexport :lem-base/file-utils)
   (:use-reexport :lem-base/buffer-list-manager)

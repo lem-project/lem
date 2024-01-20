@@ -1,4 +1,4 @@
-(defpackage :lem-base/var
+(defpackage :lem/common/var
   (:use :cl)
   (:export
    :editor-variable
@@ -12,7 +12,7 @@
    :find-editor-variable
    :editor-variables
    :with-global-variable-value))
-(in-package :lem-base/var)
+(in-package :lem/common/var)
 
 (defvar *editor-variables* '())
 

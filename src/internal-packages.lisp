@@ -35,6 +35,7 @@
   (:use-reexport :lem-base)
   (:use-reexport :lem/common/color)
   (:use-reexport :lem/common/hooks)
+  (:use-reexport :lem/common/var)
   ;; reexport common/killring
   (:export
    :with-killring-context)

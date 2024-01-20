@@ -5,13 +5,13 @@
   (:use :cl
         :lem-base/line
         :lem/common/utils
-        :lem/common/hooks)
+        :lem/common/hooks
+        :lem/common/var)
   (:use-reexport :lem-base/icon)
   (:use-reexport :lem-base/string-width-utils)
   (:use-reexport :lem-base/errors)
   (:use-reexport :lem-base/file-utils)
   (:use-reexport :lem-base/buffer-list-manager)
-  (:use-reexport :lem-base/var)
   (:use-reexport :lem-base/interrupt)
   (:use-reexport :lem-base/syntax-table)
   ;; editor-variables.lisp
@@ -269,7 +269,8 @@
 
 (defpackage :lem-base/indent
   (:use :cl
-        :lem-base/buffer)
+        :lem-base/buffer
+        :lem/common/var)
   (:export
    :back-to-indentation
    :indent-tabs-mode
@@ -282,7 +283,8 @@
 
 (defpackage :lem-base/encodings
   (:use :cl
-        :lem-base/buffer)
+        :lem-base/buffer
+        :lem/common/var)
   (:export
    :encoding
    :internal-encoding
@@ -300,7 +302,8 @@
   (:use :cl
         :lem-base/buffer
         :lem-base/encodings
-	:lem/common/hooks)
+	:lem/common/hooks
+        :lem/common/var)
   (:export
    :*find-file-hook*
    :before-save-hook

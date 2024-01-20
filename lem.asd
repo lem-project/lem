@@ -47,6 +47,7 @@
                              (:file "color")
                              (:file "queue")
                              (:file "hooks")
+                             (:file "var")
                              (:file "utils")))
                (:module "base"
                 :serial t
@@ -58,7 +59,6 @@
                              (:file "line")
                              (:file "buffer-list-manager")
                              (:file "syntax-table")
-                             (:file "var")
                              (:file "interrupt")
                              (:file "package")
                              (:module "buffer"

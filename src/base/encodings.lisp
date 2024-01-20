@@ -17,7 +17,7 @@
     (maphash (lambda (x y)
                (declare (ignore y))
                (push (string-downcase x) encodings))
-             lem-base/encodings::*encoding-collections*)
+             *encoding-collections*)
     encodings))
 
 (defun register-encoding (symbol)

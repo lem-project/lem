@@ -127,7 +127,7 @@
                      (:control 'control-character-object)
                      (otherwise 'text-object))
                    :string (if (eq type :control)
-                               (lem-base:control-char (char string 0))
+                               (control-char (char string 0))
                                string)
                    :attribute attribute
                    :type type

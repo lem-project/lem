@@ -1,4 +1,4 @@
-(in-package :lem-base/file)
+(in-package :lem/buffer/file)
 
 (defvar *find-file-hook* '())
 

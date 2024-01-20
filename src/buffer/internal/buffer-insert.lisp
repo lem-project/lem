@@ -1,4 +1,4 @@
-(in-package :lem-base/buffer)
+(in-package :lem/buffer/internal)
 
 (defvar *inhibit-read-only* nil
   "Tなら`buffer`のread-onlyを無効にします。")

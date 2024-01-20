@@ -1,4 +1,4 @@
-(defpackage :lem-base/line
+(defpackage :lem/buffer/line
   (:use :cl)
   (:export :make-content
            :content-string
@@ -34,7 +34,7 @@
            :line-property-delete-line
            :line-string/attributes
            :line-free))
-(in-package :lem-base/line)
+(in-package :lem/buffer/line)
 
 (defstruct content
   string

@@ -1,4 +1,4 @@
-(in-package :lem-base/buffer)
+(in-package :lem/buffer/internal)
 
 (defparameter +primordial-buffer-name+ "*tmp*")
 
@@ -45,7 +45,7 @@
     :accessor buffer-syntax-table
     :type syntax-table)
    (major-mode
-    :initform 'lem-base/fundamental-mode:fundamental-mode
+    :initform 'lem/buffer/fundamental-mode:fundamental-mode
     :initarg :major-mode
     :accessor buffer-major-mode)
    (minor-modes
@@ -311,10 +311,10 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
 ;;;
 (defun buffer-list ()
   "`buffer`のリストを返します。"
-  (lem-base/buffer-list-manager::buffer-list-manager-buffers (buffer-list-manager)))
+  (lem/buffer/buffer-list-manager::buffer-list-manager-buffers (buffer-list-manager)))
 
 (defun set-buffer-list (buffer-list)
-  (setf (lem-base/buffer-list-manager::buffer-list-manager-buffers (buffer-list-manager))
+  (setf (lem/buffer/buffer-list-manager::buffer-list-manager-buffers (buffer-list-manager))
         buffer-list))
 
 (defun add-buffer (buffer)

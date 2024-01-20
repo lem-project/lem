@@ -1,5 +1,5 @@
 (uiop:define-package :lem-encodings/iso-8859-1
-  (:use :cl :lem-base))
+  (:use :cl :lem/buffer))
 (in-package :lem-encodings/iso-8859-1)
 
 (defclass iso-8859-1 (encoding) ())

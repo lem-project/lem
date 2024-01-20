@@ -1,5 +1,5 @@
 (uiop:define-package :lem-encodings/utf-16
-  (:use :lem-base :cl))
+  (:use :lem/buffer :cl))
 (in-package :lem-encodings/utf-16)
 
 (defclass utf-16 (encoding) ())

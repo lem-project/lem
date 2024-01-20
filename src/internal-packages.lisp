@@ -32,7 +32,7 @@
         :lem/common/queue
         :lem/common/utils
         :lem-core/display)
-  (:use-reexport :lem-base)
+  (:use-reexport :lem/buffer)
   (:use-reexport :lem/common/color)
   (:use-reexport :lem/common/hooks)
   (:use-reexport :lem/common/var)

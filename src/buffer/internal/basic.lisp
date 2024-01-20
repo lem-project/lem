@@ -1,4 +1,4 @@
-(in-package :lem-base/buffer)
+(in-package :lem/buffer/internal)
 
 (defun same-line-p (point1 point2)
   "Return t if POINT1 and POINT are on the same line."

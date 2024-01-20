@@ -1,4 +1,4 @@
-(in-package :lem-base/encodings)
+(in-package :lem/buffer/encodings)
 
 (defclass encoding ()
   ((end-of-line

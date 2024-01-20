@@ -55,7 +55,7 @@
                                            (:file "eastasian")
                                            (:file "string-width-utils")
                                            (:file "package")))))
-               (:module "base"
+               (:module "buffer"
                 :serial t
                 :components ((:file "errors")
                              (:file "file-utils")
@@ -64,7 +64,7 @@
                              (:file "syntax-table")
                              (:file "interrupt")
                              (:file "package")
-                             (:module "buffer"
+                             (:module "internal"
                               :serial t
                               :components ((:file "var")
                                            (:file "editor-variables")
@@ -108,7 +108,7 @@
                              (:file "floating-window")
                              (:file "header-window")
                              (:file "side-window")))
-               (:file "buffer")
+               (:file "buffer-ext") ; TODO
                (:file "popup")
                (:file "modeline")
                (:file "command")

@@ -1,8 +1,8 @@
-(defpackage :lem-base/interrupt
+(defpackage :lem/buffer/interrupt
   (:use :cl)
   (:export :without-interrupts
            :interrupt))
-(in-package :lem-base/interrupt)
+(in-package :lem/buffer/interrupt)
 
 (defvar *interrupts-enabled* t)
 (defvar *interrupted* nil)

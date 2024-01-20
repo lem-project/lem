@@ -1,4 +1,4 @@
-(in-package :lem-base/buffer)
+(in-package :lem/buffer/internal)
 
 (define-editor-variable before-syntax-scan-hook nil)
 (define-editor-variable after-syntax-scan-hook nil)

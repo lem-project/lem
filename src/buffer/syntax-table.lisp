@@ -1,4 +1,4 @@
-(defpackage :lem-base/syntax-table
+(defpackage :lem/buffer/syntax-table
   (:use :cl)
   (:export :make-syntax-table
            :syntax-table-space-chars
@@ -17,7 +17,7 @@
            :syntax-table-parser
            :set-syntax-parser
            :fundamental-syntax-table))
-(in-package :lem-base/syntax-table)
+(in-package :lem/buffer/syntax-table)
 
 (defstruct syntax-table
   (space-chars '(#\space #\tab #\newline))

@@ -1,5 +1,5 @@
 (uiop:define-package :lem-encodings/cp932
-  (:use :cl :lem-base)
+  (:use :cl :lem/buffer)
   (:import-from :lem-encodings/table))
 (in-package :lem-encodings/cp932)
 

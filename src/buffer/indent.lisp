@@ -1,4 +1,4 @@
-(in-package :lem-base/indent)
+(in-package :lem/buffer/indent)
 
 (define-editor-variable indent-tabs-mode nil)
 (define-editor-variable calc-indent-function 'calc-indent-default)

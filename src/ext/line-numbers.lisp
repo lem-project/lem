@@ -39,5 +39,5 @@
 (defmethod lem-core:compute-left-display-area-content ((mode line-numbers-mode) buffer point)
   (when (buffer-filename (point-buffer point))
     (let* ((string (format nil "~6D " (compute-line buffer point))))
-      (lem-base/line:make-content :string string
+      (lem/buffer/line:make-content :string string
                                   :attributes `((0 ,(length string) line-numbers-attribute))))))

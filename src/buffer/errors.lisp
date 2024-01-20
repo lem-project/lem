@@ -1,4 +1,4 @@
-(defpackage :lem-base/errors
+(defpackage :lem/buffer/errors
   (:use :cl)
   (:export :editor-condition
            :directory-does-not-exist
@@ -7,7 +7,7 @@
            :editor-error
            :scan-error
            :editor-interrupt))
-(in-package :lem-base/errors)
+(in-package :lem/buffer/errors)
 
 (define-condition editor-condition (simple-error)
   ())

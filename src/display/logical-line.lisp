@@ -42,10 +42,10 @@
 (defun overlay-attributes (under-attributes over-start over-end over-attribute)
   ;; under-attributes := ((start-charpos end-charpos attribute) ...)
   (let* ((over-attribute (ensure-attribute over-attribute))
-         (under-part-attributes (lem-base/line:subseq-elements under-attributes
+         (under-part-attributes (lem/buffer/line:subseq-elements under-attributes
                                                                over-start
                                                                over-end))
-         (merged-attributes (lem-base/line:remove-elements under-attributes
+         (merged-attributes (lem/buffer/line:remove-elements under-attributes
                                                            over-start
                                                            over-end)))
     (flet ((add-element (start end attribute)
@@ -70,7 +70,7 @@
                 :finally (add-element (+ over-start under-end-offset)
                                       over-end
                                       over-attribute))))
-    (lem-base/line:normalization-elements merged-attributes)))
+    (lem/buffer/line:normalization-elements merged-attributes)))
 
 (defun create-logical-line (point overlays active-modes)
   (flet ((overlay-start-charpos (overlay point)
@@ -134,7 +134,7 @@
         (let ((charpos (point-charpos point)))
           (when (< 0 charpos)
             (psetf string (subseq string charpos)
-                   attributes (lem-base/line:subseq-elements attributes charpos (length string)))))
+                   attributes (lem/buffer/line:subseq-elements attributes charpos (length string)))))
         (make-logical-line :string string
                            :attributes attributes
                            :left-content left-content

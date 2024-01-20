@@ -348,8 +348,8 @@
                    (alexandria:when-let (content (logical-line-left-content logical-line))
                      (mapcan #'create-drawing-object
                              (compute-items-from-string-and-attributes
-                              (lem-base/line:content-string content)
-                              (lem-base/line:content-attributes content))))))
+                              (lem/buffer/line:content-string content)
+                              (lem/buffer/line:content-attributes content))))))
             (setf left-side-width
                   (loop :for object :in left-side-objects
                         :sum (object-width object)))

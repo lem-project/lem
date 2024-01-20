@@ -1,18 +1,18 @@
-(defpackage :lem-base/fundamental-mode
+(defpackage :lem/buffer/fundamental-mode
   (:export :fundamental-mode))
 
-(uiop:define-package :lem-base/buffer
+(uiop:define-package :lem/buffer/internal
   (:use :cl
-        :lem-base/line
+        :lem/buffer/line
         :lem/common/utils
         :lem/common/hooks
         :lem/common/var
         :lem/common/character)
-  (:use-reexport :lem-base/errors)
-  (:use-reexport :lem-base/file-utils)
-  (:use-reexport :lem-base/buffer-list-manager)
-  (:use-reexport :lem-base/interrupt)
-  (:use-reexport :lem-base/syntax-table)
+  (:use-reexport :lem/buffer/errors)
+  (:use-reexport :lem/buffer/file-utils)
+  (:use-reexport :lem/buffer/buffer-list-manager)
+  (:use-reexport :lem/buffer/interrupt)
+  (:use-reexport :lem/buffer/syntax-table)
   ;; editor-variables.lisp
   (:export
    :tab-width)
@@ -266,9 +266,9 @@
    :add-tm-repository
    :add-tm-pattern))
 
-(defpackage :lem-base/indent
+(defpackage :lem/buffer/indent
   (:use :cl
-        :lem-base/buffer
+        :lem/buffer/internal
         :lem/common/var)
   (:export
    :back-to-indentation
@@ -280,9 +280,9 @@
    :indent-buffer
    :insert-string-and-indent))
 
-(defpackage :lem-base/encodings
+(defpackage :lem/buffer/encodings
   (:use :cl
-        :lem-base/buffer
+        :lem/buffer/internal
         :lem/common/var)
   (:export
    :encoding
@@ -297,10 +297,10 @@
    :encoding-read-detect-eol
    :encoding-check))
 
-(defpackage :lem-base/file
+(defpackage :lem/buffer/file
   (:use :cl
-        :lem-base/buffer
-        :lem-base/encodings
+        :lem/buffer/internal
+        :lem/buffer/encodings
 	:lem/common/hooks
         :lem/common/var)
   (:export
@@ -318,15 +318,15 @@
    :update-changed-disk-date
    :changed-disk-p))
 
-(uiop:define-package :lem-base
+(uiop:define-package :lem/buffer
   (:use :cl)
-  (:use-reexport :lem-base/indent)
-  (:use-reexport :lem-base/encodings)
-  (:use-reexport :lem-base/file)
-  (:use-reexport :lem-base/buffer))
+  (:use-reexport :lem/buffer/indent)
+  (:use-reexport :lem/buffer/encodings)
+  (:use-reexport :lem/buffer/file)
+  (:use-reexport :lem/buffer/internal))
 
-#+sbcl (sb-ext:lock-package :lem-base/buffer)
-#+sbcl (sb-ext:lock-package :lem-base/indent)
-#+sbcl (sb-ext:lock-package :lem-base/encodings)
-#+sbcl (sb-ext:lock-package :lem-base/file)
-#+sbcl (sb-ext:lock-package :lem-base)
+#+sbcl (sb-ext:lock-package :lem/buffer/internal)
+#+sbcl (sb-ext:lock-package :lem/buffer/indent)
+#+sbcl (sb-ext:lock-package :lem/buffer/encodings)
+#+sbcl (sb-ext:lock-package :lem/buffer/file)
+#+sbcl (sb-ext:lock-package :lem/buffer)

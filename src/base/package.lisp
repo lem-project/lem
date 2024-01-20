@@ -1,3 +1,6 @@
+(defpackage :lem-base/fundamental-mode
+  (:export :fundamental-mode))
+
 (uiop:define-package :lem-base/buffer
   (:use :cl
         :lem-base/line)
@@ -264,6 +267,8 @@
    :add-tm-repository
    :add-tm-pattern))
 
+#+sbcl (sb-ext:lock-package :lem-base/buffer)
+
 (defpackage :lem-base/indent
   (:use :cl
         :lem-base/buffer)
@@ -276,6 +281,8 @@
    :indent-points
    :indent-buffer
    :insert-string-and-indent))
+
+#+sbcl (sb-ext:lock-package :lem-base/indent)
 
 (defpackage :lem-base/encodings
   (:use :cl
@@ -292,6 +299,8 @@
    :unregister-encoding
    :encoding-read-detect-eol
    :encoding-check))
+
+#+sbcl (sb-ext:lock-package :lem-base/encodings)
 
 (defpackage :lem-base/file
   (:use :cl
@@ -312,6 +321,8 @@
    :update-changed-disk-date
    :changed-disk-p))
 
+#+sbcl (sb-ext:lock-package :lem-base/file)
+
 (uiop:define-package :lem-base
   (:use :cl)
   (:use-reexport :lem-base/indent)
@@ -319,5 +330,4 @@
   (:use-reexport :lem-base/file)
   (:use-reexport :lem-base/buffer))
 
-#+sbcl
-(sb-ext:lock-package :lem-base)
+#+sbcl (sb-ext:lock-package :lem-base)

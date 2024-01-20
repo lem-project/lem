@@ -45,7 +45,7 @@
     :accessor buffer-syntax-table
     :type syntax-table)
    (major-mode
-    :initform 'fundamental-mode
+    :initform 'lem-base/fundamental-mode:fundamental-mode
     :initarg :major-mode
     :accessor buffer-major-mode)
    (minor-modes

@@ -1,5 +1,5 @@
 (defpackage :lem-scheme-syntax.parse
-  (:use :cl :lem-base)
+  (:use :cl :lem)
   (:export :parse-for-swank-autodoc))
 (in-package :lem-scheme-syntax.parse)
 

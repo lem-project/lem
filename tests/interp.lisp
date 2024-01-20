@@ -15,7 +15,7 @@
 
 (deftest Execute-the-same-command-consecutively
   (lem-fake-interface:with-fake-interface ()
-    (lem-base:with-current-buffers ()
+    (lem:with-current-buffers ()
       (let ((*result* '()))
         (execute-testing-command 3 '$test-command-flag)
         (ok (equal '(nil t t) *result*))))))

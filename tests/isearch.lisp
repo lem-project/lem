@@ -1,6 +1,6 @@
 (defpackage :lem-tests/isearch
   (:use :cl :rove :lem)
-  (:import-from :lem-base
+  (:import-from :lem
                 :with-current-buffers))
 (in-package :lem-tests/isearch)
 

@@ -1,5 +1,5 @@
 (defpackage :lem-lisp-syntax.parse-for-autodoc
-  (:use :cl :lem-base)
+  (:use :cl :lem)
   (:export :parse-for-autodoc)
   #+sbcl
   (:lock t))

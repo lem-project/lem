@@ -85,7 +85,7 @@
            (line-end-overlay nil)
            (left-content
              (compute-left-display-area-content active-modes
-                                                (lem-base:point-buffer point)
+                                                (point-buffer point)
                                                 point))
            (tab-width (variable-value 'tab-width :default point)))
       (destructuring-bind (string . attributes)

@@ -10,7 +10,7 @@
                 :normal)
   (:import-from :lem-vi-mode/modeline
                 :state-modeline-orange)
-  (:import-from :lem-base
+  (:import-from :lem
                 :alive-point-p)
   (:import-from :alexandria
                 :last-elt)

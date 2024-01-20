@@ -1,5 +1,5 @@
 (defpackage :lem-lisp-syntax.enclosing
-  (:use :cl :lem-base)
+  (:use :cl :lem)
   (:export :search-local-definition)
   #+sbcl
   (:lock t))

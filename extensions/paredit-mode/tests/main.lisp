@@ -1,6 +1,6 @@
 (defpackage :lem-paredit-mode/tests/main
   (:use :cl :rove :lem :lem-paredit-mode)
-  (:import-from :lem-base
+  (:import-from :lem
                 :with-current-buffers))
 (in-package :lem-paredit-mode/tests/main)
 

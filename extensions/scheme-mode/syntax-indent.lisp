@@ -1,5 +1,5 @@
 (defpackage :lem-scheme-syntax.indent
-  (:use :cl :lem-base)
+  (:use :cl :lem)
   (:export :set-indentation
            :calc-indent))
 (in-package :lem-scheme-syntax.indent)

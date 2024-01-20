@@ -1,7 +1,7 @@
 (defpackage :lem-tests/lisp-syntax/defstruct-to-defclass
   (:use :cl
         :rove)
-  (:import-from :lem-base)
+  (:import-from :lem)
   (:import-from :lem-lisp-mode)
   (:import-from :lem-tests/utilities
                 :sample-file
@@ -32,37 +32,37 @@
 (in-package :lem-tests/lisp-syntax/defstruct-to-defclass)
 
 (defun expected-point-position-p (point line-number charpos)
-  (and (= line-number (lem-base:line-number-at-point point))
-       (= charpos (lem-base:point-charpos point))))
+  (and (= line-number (lem:line-number-at-point point))
+       (= charpos (lem:point-charpos point))))
 
 (defun form-string-at-point (point)
-  (lem-base:with-point ((start point)
+  (lem:with-point ((start point)
                         (end point))
-    (loop :while (lem-base:scan-lists start -1 1 t))
-    (loop :until (lem-base:blank-line-p end) :do (lem-base:line-offset end 1))
-    (lem-base:line-end end)
-    (lem-base:points-to-string start end)))
+    (loop :while (lem:scan-lists start -1 1 t))
+    (loop :until (lem:blank-line-p end) :do (lem:line-offset end 1))
+    (lem:line-end end)
+    (lem:points-to-string start end)))
 
 (defun search-input-defstruct (point n)
-  (lem-base:buffer-start point)
-  (lem-base:search-forward point ";;; input")
+  (lem:buffer-start point)
+  (lem:search-forward point ";;; input")
   (loop :repeat n
-        :do (lem-base:search-forward point "(defstruct"))
-  (lem-base:scan-lists point -1 1 t))
+        :do (lem:search-forward point "(defstruct"))
+  (lem:scan-lists point -1 1 t))
 
 (defun fetch-expected-form-string (buffer n)
-  (lem-base:with-point ((point (lem-base:buffer-point buffer)))
-    (lem-base:buffer-start point)
-    (lem-base:search-forward point ";;; output")
+  (lem:with-point ((point (lem:buffer-point buffer)))
+    (lem:buffer-start point)
+    (lem:search-forward point ";;; output")
     (loop :repeat n
-          :do (lem-base:search-forward point "(defclass"))
+          :do (lem:search-forward point "(defclass"))
     (form-string-at-point point)))
 
 (defun make-test-buffer ()
-  (let ((buffer (lem-base:find-file-buffer (sample-file "defstruct-to-defclass.lisp")
+  (let ((buffer (lem:find-file-buffer (sample-file "defstruct-to-defclass.lisp")
                                            :temporary t
                                            :syntax-table lem-lisp-syntax:*syntax-table*)))
-    (setf (lem-base:variable-value 'lem-base:calc-indent-function :buffer buffer)
+    (setf (lem:variable-value 'lem:calc-indent-function :buffer buffer)
           'lem-lisp-syntax:calc-indent)
     buffer))
 
@@ -115,7 +115,7 @@
   (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
     (testing "simple"
              (let* ((buffer (make-test-buffer))
-                    (point (lem-base:buffer-point buffer)))
+                    (point (lem:buffer-point buffer)))
                (search-input-defstruct point 1)
                (let ((info (analyze-defstruct point (make-struct-info))))
                  (ok (struct-info-p info))
@@ -142,7 +142,7 @@
                      (ok (expected-point-position-p (slot-description-point slot) 6 2)))))))
     (testing "complex slot-description"
              (let* ((buffer (make-test-buffer))
-                    (point (lem-base:buffer-point buffer)))
+                    (point (lem:buffer-point buffer)))
                (search-input-defstruct point 3)
                (let ((info (analyze-defstruct point (make-struct-info))))
                  (ok (struct-info-p info))
@@ -165,7 +165,7 @@
                             (if expected-initform-p
                                 (ok (equal expected-initform
                                            (read-from-string-with-package
-                                            (lem-base:points-to-string (slot-description-initial-value-start-point slot)
+                                            (lem:points-to-string (slot-description-initial-value-start-point slot)
                                                                        (slot-description-initial-value-end-point slot)))))
                                 (ok (and (null (slot-description-initial-value-start-point slot))
                                          (null (slot-description-initial-value-end-point slot)))))
@@ -174,7 +174,7 @@
                                          (null (slot-description-type-end-point slot))))
                                 (ok (equal expected-type
                                            (read-from-string-with-package
-                                            (lem-base:points-to-string (slot-description-type-start-point slot)
+                                            (lem:points-to-string (slot-description-type-start-point slot)
                                                                        (slot-description-type-end-point slot))))))
                             (if expected-read-only-p
                                 (ok (eq t (slot-description-read-only-p slot)))
@@ -269,7 +269,7 @@
                                     :expected-read-only-p t)))))))
     (testing "name-and-options"
              (let* ((buffer (make-test-buffer))
-                    (point (lem-base:buffer-point buffer)))
+                    (point (lem:buffer-point buffer)))
                (search-input-defstruct point 4)
                (let ((info (analyze-defstruct point (make-struct-info))))
                  (ok (struct-info-p info))
@@ -284,7 +284,7 @@
              (testing (format nil "case-~D" n)
                (let* ((buffer (make-test-buffer))
                       (expected-form-string (fetch-expected-form-string buffer n))
-                      (point (lem-base:buffer-point buffer)))
+                      (point (lem:buffer-point buffer)))
                  (search-input-defstruct point n)
                  (defstruct-to-defclass point)
                  (let ((actual (form-string-at-point point))

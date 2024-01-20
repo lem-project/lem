@@ -29,7 +29,7 @@
 
 (defun char-type (char)
   (let ((code (char-code char)))
-    (cond ((lem-base:control-char char)
+    (cond ((control-char char)
            :control)
           ((eql code #x1f4c1)
            :folder)

@@ -14,7 +14,7 @@
 
 (defun get-closed-paren-list ()
   (mapcar #'cdr
-          (lem-base:syntax-table-paren-pairs (current-syntax))))
+          (syntax-table-paren-pairs (current-syntax))))
 
 (define-command insert-closed-paren () ()
   (let ((c (insertion-key-p (last-read-key-sequence))))

@@ -1,6 +1,6 @@
 (defpackage :lem-tests/popup-window
   (:use :cl :lem :rove)
-  (:import-from :lem-base
+  (:import-from :lem
                 :with-current-buffers)
   (:import-from :lem-fake-interface
                 :fake-interface

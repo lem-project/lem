@@ -8,11 +8,11 @@
 (let* ((path (asdf:system-relative-pathname :lem-encodings "cp932.table"))
        (data (lem-encodings/table:read-table path)))
   (defvar *from* (loop with result = (make-hash-table)
-                       for line in data                       
+                       for line in data
                        do (setf (gethash (first line) result) (second line))
                        finally (return result)))
   (defvar *to* (loop with result = (make-hash-table)
-                     for line in data                       
+                     for line in data
                      do (setf (gethash (second line) result) (or (third line) (first line)))
                      finally (return result))))
 

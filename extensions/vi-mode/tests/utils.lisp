@@ -6,7 +6,6 @@
                 :form-description
                 :diag
                 :testing)
-  (:import-from :lem-base)
   (:import-from :lem-core
                 :*this-command-keys*
                 :*input-hook*)
@@ -199,7 +198,7 @@
           (parse-buffer-string content)
         (let ((point (buffer-point buffer)))
           (lem:insert-string point buffer-text)
-          (lem-base:clear-buffer-edit-history buffer)
+          (lem:clear-buffer-edit-history buffer)
           (when position
             (move-to-position point position))
           (when visual-regions

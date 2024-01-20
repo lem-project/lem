@@ -1,5 +1,5 @@
 (defpackage :lem-scheme-syntax.data
-  (:use :cl :lem-base)
+  (:use :cl :lem)
   (:export :get-scheme-completion-data
            :get-scheme-highlight-data
            :get-scheme-indentation-data))
@@ -166,4 +166,3 @@
                   (cons name indent)
                   (list name indent))))
           (remove-if-not #'fourth *scheme-data*)))
-

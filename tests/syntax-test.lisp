@@ -3,27 +3,27 @@
   (:import-from :lem-tests/utilities
                 :sample-file)
   (:import-from :lem-lisp-mode)
-  (:import-from :lem-base))
+  (:import-from :lem))
 (in-package :lem-tests/syntax-test)
 
 (deftest form-offset
   (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
     (testing "skip comment"
-      (let* ((buffer (lem-base:find-file-buffer (sample-file "syntax-sample.lisp")
+      (let* ((buffer (lem:find-file-buffer (sample-file "syntax-sample.lisp")
                                                 :temporary t
                                                 :enable-undo-p nil
                                                 :syntax-table lem-lisp-syntax:*syntax-table*))
-             (point (lem-base:buffer-point buffer)))
-        (lem-base:with-point ((point point))
-          (lem-base:buffer-start point)
-          (lem-base:form-offset point 1)
-          (lem-base:form-offset point -1)
-          (ok (lem-base:start-buffer-p point)))
-        (lem-base:with-point ((point point))
-          (lem-base:buffer-start point)
-          (lem-base:line-end point)
-          (lem-base:form-offset point 1)
-          (ok (equal (lem-base:symbol-string-at-point point) "bar")))))))
+             (point (lem:buffer-point buffer)))
+        (lem:with-point ((point point))
+          (lem:buffer-start point)
+          (lem:form-offset point 1)
+          (lem:form-offset point -1)
+          (ok (lem:start-buffer-p point)))
+        (lem:with-point ((point point))
+          (lem:buffer-start point)
+          (lem:line-end point)
+          (lem:form-offset point 1)
+          (ok (equal (lem:symbol-string-at-point point) "bar")))))))
 
 (defparameter +scan-lists-sample-text+
   (string-trim '(#\space #\newline) "
@@ -36,47 +36,47 @@
 (deftest scan-lists
   (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
     (testing "limit-point"
-      (let* ((buffer (lem-base:make-buffer nil
+      (let* ((buffer (lem:make-buffer nil
                                            :temporary t
                                            :enable-undo-p nil
                                            :syntax-table lem-lisp-syntax:*syntax-table*))
-             (point (lem-base:buffer-point buffer)))
-        (lem-base:insert-string point +scan-lists-sample-text+)
-        (lem-base:with-point ((point point)
+             (point (lem:buffer-point buffer)))
+        (lem:insert-string point +scan-lists-sample-text+)
+        (lem:with-point ((point point)
                               (limit-point point))
           (testing "forward"
-            (assert (lem-base:search-forward (lem-base:buffer-start limit-point) "c)"))
-            (lem-base:buffer-start point)
-            (ok (and (null (lem-base:scan-lists point 1 0 t limit-point))
-                     (lem-base:start-buffer-p point)))
-            (ok (and (eq point (lem-base:scan-lists point 1 0 t))
-                     (= 4 (lem-base:line-number-at-point point))
-                     (= 3 (lem-base:point-charpos point)))))
+            (assert (lem:search-forward (lem:buffer-start limit-point) "c)"))
+            (lem:buffer-start point)
+            (ok (and (null (lem:scan-lists point 1 0 t limit-point))
+                     (lem:start-buffer-p point)))
+            (ok (and (eq point (lem:scan-lists point 1 0 t))
+                     (= 4 (lem:line-number-at-point point))
+                     (= 3 (lem:point-charpos point)))))
           (testing "backward"
-            (lem-base:buffer-end point)
-            (assert (lem-base:search-forward (lem-base:buffer-start limit-point) "(b"))
-            (ok (and (null (lem-base:scan-lists point -1 0 t limit-point))
-                     (lem-base:end-buffer-p point)))
-            (ok (and (eq point (lem-base:scan-lists point -1 0 t))
-                     (lem-base:start-buffer-p point)))))))))
+            (lem:buffer-end point)
+            (assert (lem:search-forward (lem:buffer-start limit-point) "(b"))
+            (ok (and (null (lem:scan-lists point -1 0 t limit-point))
+                     (lem:end-buffer-p point)))
+            (ok (and (eq point (lem:scan-lists point -1 0 t))
+                     (lem:start-buffer-p point)))))))))
 
 (deftest contains-line-comment-character-in-block-comment-or-string
   (dolist (text (list (uiop:strcat #\" #\newline ";" #\")
                       (uiop:strcat "x" "#|" #\newline ";" "|#")))
-  
+
     ;; Arrange
     (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
-      (let* ((buffer (lem-base:make-buffer nil
+      (let* ((buffer (lem:make-buffer nil
                                            :temporary t
                                            :enable-undo-p nil
                                            :syntax-table lem-lisp-syntax:*syntax-table*))
-             (point (lem-base:buffer-point buffer)))
-        (lem-base:insert-string point text)
-        (lem-base:buffer-end point)
-      
+             (point (lem:buffer-point buffer)))
+        (lem:insert-string point text)
+        (lem:buffer-end point)
+
         ;; Act
-        (let ((got (lem-base:form-offset point -1)))
+        (let ((got (lem:form-offset point -1)))
           (ok (eq point got))
 
           ;; Assertion
-          (ok (lem-base:point= (lem-base:buffer-start-point buffer) point)))))))
+          (ok (lem:point= (lem:buffer-start-point buffer) point)))))))

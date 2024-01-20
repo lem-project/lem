@@ -151,10 +151,10 @@
 (defun prompt-for-encodings (prompt &key history-symbol)
   (let ((encodings (encodings)))
     (let ((name (prompt-for-string
-                 (format nil "~A(~(~A~))" prompt lem-base:*default-external-format*)
+                 (format nil "~A(~(~A~))" prompt *default-external-format*)
                  :completion-function (lambda (str) (completion str encodings))
                  :test-function (lambda (encoding) (or (equal encoding "")
                                                        (find encoding encodings :test #'string=)))
                  :history-symbol history-symbol)))
-      (cond ((equal name "") lem-base:*default-external-format*)
+      (cond ((equal name "") *default-external-format*)
             (t (read-from-string (format nil ":~A" name)))))))

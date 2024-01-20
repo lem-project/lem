@@ -22,7 +22,7 @@
                (:file "package")
                (:module "buffer"
                 :serial t
-                :components ((:file "var-buffer")
+                :components ((:file "var")
                              (:file "editor-variables")
                              (:file "buffer")
                              (:file "point")

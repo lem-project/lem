@@ -25,7 +25,6 @@ update:
 	qlot install
 
 lint:
-	.qlot/bin/sblint src/base/lem-base.asd
 	.qlot/bin/sblint lem.asd
 	.qlot/bin/sblint lib/lisp-syntax/lem-lisp-syntax.asd
 	.qlot/bin/sblint extensions/lisp-mode/lem-lisp-mode.asd

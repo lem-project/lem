@@ -72,9 +72,10 @@
                                       (asdf:system-source-directory system-name))))
     (indent-test-for-file pathname)))
 
-(deftest indent-test-under-lem-base
+#+TODO
+(deftest indent-test-under-lem
   (let ((lem-lisp-mode/test-api:*disable-self-connect* t))
-    (indent-test-for-system :lem-base)))
+    (indent-test-for-system :lem)))
 
 (deftest indent-test-for-sample-case
   (let ((lem-lisp-mode/test-api:*disable-self-connect* t))

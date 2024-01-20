@@ -16,7 +16,10 @@
 
 (defsystem "lem"
   :version "2.1.0"
-  :depends-on ("alexandria"
+  :depends-on ("iterate"
+               "closer-mop"
+               "trivia"
+               "alexandria"
                "trivial-gray-streams"
                "trivial-types"
                "cl-ppcre"
@@ -29,7 +32,6 @@
                "split-sequence"
                "str"
                "dexador"
-               "lem-base"
                ;; "lem-encodings"
 	       #+sbcl
 	       sb-concurrency
@@ -44,6 +46,41 @@
                              (:file "command")
                              (:file "color")
                              (:file "queue")))
+               (:module "base"
+                :serial t
+                :components ((:file "utils")
+                             (:file "icon")
+                             (:file "eastasian")
+                             (:file "string-width-utils")
+                             (:file "errors")
+                             (:file "hooks")
+                             (:file "file-utils")
+                             (:file "line")
+                             (:file "buffer-list-manager")
+                             (:file "syntax-table")
+                             (:file "var")
+                             (:file "interrupt")
+                             (:file "package")
+                             (:module "buffer"
+                              :serial t
+                              :components ((:file "var")
+                                           (:file "editor-variables")
+                                           (:file "buffer")
+                                           (:file "point")
+                                           (:file "edit")
+                                           (:file "mark")
+                                           (:file "buffer-insert")
+                                           (:file "basic")
+                                           (:file "syntax-predicates")
+                                           (:file "search")
+                                           (:file "parse-partial-sexp")
+                                           (:file "syntax-scan")
+                                           (:file "syntax-parser")
+                                           (:file "tmlanguage")
+                                           (:file "check-corruption")))
+                             (:file "encodings")
+                             (:file "file")
+                             (:file "indent")))
                (:file "internal-packages")
                (:file "quicklisp-utils")
                (:file "version")

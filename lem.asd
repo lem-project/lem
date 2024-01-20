@@ -46,6 +46,7 @@
                              (:file "command")
                              (:file "color")
                              (:file "queue")
+                             (:file "hooks")
                              (:file "utils")))
                (:module "base"
                 :serial t
@@ -53,7 +54,6 @@
                              (:file "eastasian")
                              (:file "string-width-utils")
                              (:file "errors")
-                             (:file "hooks")
                              (:file "file-utils")
                              (:file "line")
                              (:file "buffer-list-manager")

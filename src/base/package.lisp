@@ -4,11 +4,11 @@
 (uiop:define-package :lem-base/buffer
   (:use :cl
         :lem-base/line
-        :lem/common/utils)
+        :lem/common/utils
+        :lem/common/hooks)
   (:use-reexport :lem-base/icon)
   (:use-reexport :lem-base/string-width-utils)
   (:use-reexport :lem-base/errors)
-  (:use-reexport :lem-base/hooks)
   (:use-reexport :lem-base/file-utils)
   (:use-reexport :lem-base/buffer-list-manager)
   (:use-reexport :lem-base/var)
@@ -299,7 +299,8 @@
 (defpackage :lem-base/file
   (:use :cl
         :lem-base/buffer
-        :lem-base/encodings)
+        :lem-base/encodings
+	:lem/common/hooks)
   (:export
    :*find-file-hook*
    :before-save-hook

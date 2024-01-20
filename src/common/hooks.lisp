@@ -1,9 +1,9 @@
-(defpackage :lem-base/hooks
+(defpackage :lem/common/hooks
   (:use :cl)
   (:export :run-hooks
            :add-hook
            :remove-hook))
-(in-package :lem-base/hooks)
+(in-package :lem/common/hooks)
 
 (defgeneric run-hooks (hooks &rest args))
 

@@ -62,10 +62,10 @@
         (if use-internal-p
             (%encoding-read encoding point stream filename)
             (encoding-read encoding
-                                     stream
-                                     (encoding-read-detect-eol
-                                      (lambda (c)
-                                        (when c (insert-character point (code-char c)))))))))
+                           stream
+                           (encoding-read-detect-eol
+                            (lambda (c)
+                              (when c (insert-character point (code-char c)))))))))
     encoding))
 
 (defun find-file-buffer (filename &key temporary (enable-undo-p t) (syntax-table nil syntax-table-p))

@@ -791,11 +791,15 @@
 
 (defun light-color-p (color)
   "Return t if COLOR is light."
-  (< 50
-     (/ (max (color-red color)
-             (color-green color)
-             (color-blue color))
-        2.55)))
+  (let ((color (etypecase color
+                 (string (parse-color color))
+                 (color color))))
+    (check-type color color)
+    (< 50
+       (/ (max (color-red color)
+               (color-green color)
+               (color-blue color))
+          2.55))))
 
 (defun parse-color (string)
   "Convert COLOR string to a list of normalized RGB components."

@@ -21,7 +21,7 @@
          (when (and *interrupted* ,prev-enabled)
            (%without-interrupts
              (setf *interrupted* nil)
-             (error 'editor-interrupt)))))))
+             (error 'lem/buffer/errors:editor-interrupt)))))))
 
 ;; 別のスレッドから(bt:interrupt-thread thread #'interrupt)で使う関数
 (defun interrupt (&optional force)

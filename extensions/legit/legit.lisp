@@ -21,11 +21,13 @@ Done:
 - view changes diff
 - stage, unstage files
 - inside the diff, stage, unstage hunks
+- discard an unstaged file
 - commit (only a one-line message for now)
 - push, pull the remote branch
 - branch checkout, branch create&checkout
 - view commit at point
 - basic Fossil support (current branch, add change, commit)
+- basic Mercurial support
 - redact a proper commit text in its own buffer, not only a one liner.
 
 TODO:
@@ -39,11 +41,11 @@ Ongoing:
 Nice to have/todo next:
 
 - view log
-- other VCS support
 
 Next:
 
 - stage only selected region (more precise than hunks)
+- unstage/stage/discard multiple files
 - stashes
 - many, many more commands, settings and switches
 - mouse context menus
@@ -199,13 +201,25 @@ Next:
 
 ;; unstage
 (defun make-unstage-function (file &key already-unstaged)
-  (with-current-project ()
-    (if already-unstaged
-        (lambda ()
-          (message "Already unstaged"))
-        (lambda ()
-          (lem/porcelain:unstage file)
-          t))))
+  (lambda ()
+    (with-current-project ()
+      (if already-unstaged
+          (message "Already unstaged")
+          (lem/porcelain:unstage file)))))
+
+;; discard an unstaged change.
+(defun make-discard-file-function (file &key is-staged)
+  "Discard changes to an unstaged file.
+
+  If is-staged is not nil, then message the user that this file must be unstaged."
+  (lambda ()
+    (cond
+      (is-staged
+       (message "Unstage the file first"))
+      (t
+       (with-current-project ()
+         (when (prompt-for-y-or-n-p  (format nil "Discard unstaged changes in ~a?" file))
+           (lem/porcelain:discard-file file)))))))
 
 
 ;;;
@@ -440,7 +454,8 @@ Next:
                           (point :move-function (make-diff-function file)
                                  :visit-file-function (make-visit-file-function file)
                                  :stage-function (make-stage-function file)
-                                 :unstage-function (make-unstage-function file :already-unstaged t))
+                                 :unstage-function (make-unstage-function file :already-unstaged t)
+                                 :discard-file-function (make-discard-file-function file))
 
                         (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
                         ))
@@ -457,7 +472,8 @@ Next:
                           (point :move-function (make-diff-function file :cached t)
                                  :visit-file-function (make-visit-file-function file)
                                  :stage-function (make-stage-function file)
-                                 :unstage-function (make-unstage-function file))
+                                 :unstage-function (make-unstage-function file)
+                                 :discard-file-function (make-discard-file-function file :is-staged t))
 
                         (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
             (lem/peek-legit:collector-insert "<none>"))
@@ -590,6 +606,7 @@ Next:
     (format s "~%")
     (format s "Commands:~&")
     (format s "(s)tage and (u)nstage a file. Inside a diff, (s)tage or (u)nstage a hunk.~&")
+    (format s "(k) discard changes.~&")
     (format s "(c)ommit~&")
     (format s "(b)ranches-> checkout another (b)ranch.~&")
     (format s "          -> (c)reate.~&")

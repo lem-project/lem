@@ -1,10 +1,10 @@
 (defpackage #:lem-welcome 
   (:use :cl :lem)
-  (:export #:disable-welcome #:message-width #:message-content))
+  (:export #:enable-welcome #:message-width #:message-content))
 (in-package :lem-welcome)
 
 ;; opt out of welcome screen if you want to start into an empty tmp buffer
-(defvar disable-welcome nil)
+(defvar enable-welcome nil)
 
 ;; This parameter is to make sure the content is properly centered in the window
 (defparameter message-width 45)
@@ -39,7 +39,7 @@
                     .lOKx'                ")
 
 (defun display-welcome ()
-  (unless disable-welcome
+  (when enable-welcome
     ;; print the welcome message to the start buffer
     (with-open-stream (stream (make-buffer-output-stream (buffer-start-point (current-buffer))))
       (loop :with prefix := (/ (- (window-width (current-window)) message-width) 2)

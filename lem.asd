@@ -245,7 +245,8 @@
                #+sbcl
                "lem-elixir-mode"
                "lem-documentation-mode"
-               "lem-elisp-mode"))
+               "lem-elisp-mode"
+               "lem-color-preview"))
 
 (defsystem "lem/legit"
   :serial t

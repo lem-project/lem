@@ -27,8 +27,8 @@
 (defun interrupt (&optional force)
   (cond
     (force
-     (error 'editor-interrupt))
+     (error 'lem/buffer/errors:editor-interrupt))
     (*interrupts-enabled*
-     (error 'editor-interrupt))
+     (error 'lem/buffer/errors:editor-interrupt))
     (t
      (setf *interrupted* t))))

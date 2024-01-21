@@ -1,9 +1,9 @@
-
 (defsystem "lem-elixir-mode"
   :depends-on ("lem"
-               #+#.(cl:if (asdf:find-system :async-process cl:nil) '(and) '(or)) "lem-process")
+               #+ip-management
+               "ip-management")
   :serial t
   :components ((:file "elixir-mode")
 	       (:file "lsp-config")
-	       #+#.(cl:if (asdf:find-system :async-process cl:nil) '(and) '(or))
+               #+ip-management
                (:file "run-elixir")))

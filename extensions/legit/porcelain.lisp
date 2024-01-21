@@ -14,6 +14,7 @@
    :commit
    :components
    :current-branch
+   :discard-file
    :file-diff
    :latest-commits
    :pull
@@ -553,6 +554,19 @@ M	src/ext/porcelain.lisp
   (declare (ignorable file))
   ;; no index like git, we'd need to exclude files from the commit with -X ?
   (porcelain-error "no unstage support for Mercurial"))
+
+;; discard changes.
+(defun git-discard-file (file)
+  "Discard all the changes to this file.
+
+  This currently means: checkout this file."
+  (run-git (list "checkout" file)))
+
+(defun discard-file (file)
+  (case *vcs*
+    (:git (git-discard-file file))
+    (t
+     (porcelain-error "discard-file is not implemented for this VCS: ~a" *vcs*))))
 
 (defvar *verbose* nil)
 

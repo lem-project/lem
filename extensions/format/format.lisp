@@ -1,13 +1,13 @@
 (defpackage #:lem-format
   (:use :cl :lem)
-  (:export #:auto-format? 
+  (:export #:*auto-format?*
            #:register-formatter 
            #:register-formatters 
            #:format-buffer))
 (in-package :lem-format)
 
 ;; Set this to true to format on save.
-(defvar auto-format? nil)
+(defvar *auto-format?* nil)
 
 ;; Formatter methods for lem-format.  
 ;; You don't need to use this directly, the `register-formatter` will do it for you.
@@ -15,7 +15,7 @@
 
 (defmacro register-formatter (mode handler)
   "Register a formatter for a mode, handler takes buffer as argument."
-  `(defmethod lem-formatter ((mode (eql ,mode)) buffer)
+  `(defmethod lem-formatter ((mode (eql (quote ,mode))) buffer)
      (funcall ,handler buffer)))
 
 (defmacro register-formatters (&body bindings)
@@ -36,6 +36,6 @@
         (declare (ignore c))
         (unless buffer (message "No formatter for mode ~a" mode))))))
 
-;; When `auto-format?` is true, try to format a buffer when it is saved.
+;; When `*auto-format?*` is true, try to format a buffer when it is saved.
 (add-hook (variable-value 'after-save-hook :global t)
-          (lambda (buffer) (when auto-format? (format-buffer buffer))))
+          (lambda (buffer) (when *auto-format?* (format-buffer buffer))))

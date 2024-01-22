@@ -7,11 +7,11 @@ Formatting for JavaScript, JSON, C, Go, and Common Lisp are included as defaults
 ```lisp
 ;; register multiple formatters at once:
 (register-formatters
-  ('lem-go-mode:go-mode #'gofmt)
-  ('lem-c-mode:c-mode   #'clang-format))
+  (lem-go-mode:go-mode #'gofmt)
+  (lem-c-mode:c-mode   #'clang-format))
     
 ;; register a single formatter
-(register-formatter 'lem-c-mode #'clang-format)
+(register-formatter lem-c-mode #'clang-format)
 ```
 
 Handlers take a buffer to format as an argument.

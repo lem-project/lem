@@ -1,5 +1,6 @@
 (defpackage #:lem-format/defaults
-  (:use :cl :alexandria-2 :lem :lem-format))
+  (:use :cl :lem :lem-format)
+  (:import-from #:alexandria-2 #:curry #:line-up-last))
 (in-package :lem-format/defaults)
 
 (defun walk-to-root (path)
@@ -46,8 +47,8 @@
 
 ;; register default formatters, these may be overwritten.
 (register-formatters
-  ('lem-go-mode:go-mode     #'gofmt)
-  ('lem-c-mode:c-mode       #'clang-format)
-  ('lem-lisp-mode:lisp-mode #'indent-buffer)
-  ('lem-js-mode:js-mode     #'js-prettier)
-  ('lem-json-mode:json-mode #'js-prettier))
+  (lem-go-mode:go-mode     #'gofmt)
+  (lem-c-mode:c-mode       #'clang-format)
+  (lem-lisp-mode:lisp-mode #'indent-buffer)
+  (lem-js-mode:js-mode     #'js-prettier)
+  (lem-json-mode:json-mode #'js-prettier))

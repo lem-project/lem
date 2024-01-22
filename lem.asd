@@ -205,7 +205,6 @@
 (defsystem "lem/extensions"
   :depends-on (#+sbcl
                "lem-welcome"
-               "lem-format"
                "lem-lsp-mode"
                "lem-vi-mode"
                #+sbcl
@@ -248,7 +247,9 @@
                "lem-elixir-mode"
                "lem-documentation-mode"
                "lem-elisp-mode"
-               "lem-color-preview"))
+               "lem-color-preview"
+               "lem-format"
+               ))
 
 (defsystem "lem/legit"
   :serial t

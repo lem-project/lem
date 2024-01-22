@@ -17,7 +17,7 @@ Formatting for JavaScript, JSON, C, Go, and Common Lisp are included as defaults
 Handlers take a buffer to format as an argument.
     
 # Usage
-You can either enable auto-formatting with `(setf lem-format:auto-format? t)` or manually use `M-x format-buffer`.  If no formatter is registered for the major mode, an error message is displayed.
+You can either enable auto-formatting with `(setf lem-format:*auto-format* t)` or manually use `M-x format-buffer`.  If no formatter is registered for the major mode, an error message is displayed.
 
 # Default formatters
 Current formatters and their dependencies:

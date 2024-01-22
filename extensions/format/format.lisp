@@ -6,8 +6,11 @@
            #:format-buffer))
 (in-package :lem-format)
 
+;; Set this to true to format on save.
 (defvar auto-format? nil)
 
+;; Formatter methods for lem-format.  
+;; You don't need to use this directly, the `register-formatter` will do it for you.
 (defgeneric lem-formatter (mode buffer))
 
 (defmacro register-formatter (mode handler)
@@ -33,6 +36,6 @@
         (declare (ignore c))
         (message "No formatter for mode ~a" mode)))))
 
-;; when auto-format? is true, try to format a buffer when it is saved
- (add-hook (variable-value 'after-save-hook :global t)
+;; When `auto-format?` is true, try to format a buffer when it is saved.
+(add-hook (variable-value 'after-save-hook :global t)
           (lambda (buffer) (when auto-format? (format-buffer buffer))))

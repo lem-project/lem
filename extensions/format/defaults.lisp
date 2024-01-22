@@ -36,7 +36,8 @@
      :ignore-error-status t))
   (revert-buffer t))
 
+;; register default formatters, these may be overwritten.
 (register-formatters
   ('lem-go-mode:go-mode #'gofmt)
-  ('lem-c-mode:c-mode #'clang-format)
+  ('lem-c-mode:c-mode   #'clang-format)
   ('lem-lisp-mode:lisp-mode #'indent-buffer))

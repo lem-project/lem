@@ -248,8 +248,7 @@
                "lem-documentation-mode"
                "lem-elisp-mode"
                "lem-color-preview"
-               "lem-format"
-               ))
+               "lem-format"))
 
 (defsystem "lem/legit"
   :serial t

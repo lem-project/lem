@@ -1,5 +1,5 @@
 (defpackage #:lem-format/defaults
-  (:use :cl :lem :lem-format))
+  (:use :cl :alexandria-2 :lem :lem-format))
 (in-package :lem-format/defaults)
 
 (defun walk-to-root (path)
@@ -28,3 +28,15 @@
      :ignore-error-status t))
   (revert-buffer t))
 
+(defun gofmt (buf)
+  "Format a Go buffer with gofmt."
+  (let ((file (buffer-filename buf)))
+    (uiop:run-program 
+     (format nil "gofmt -w ~a" file)
+     :ignore-error-status t))
+  (revert-buffer t))
+
+(register-formatters
+  ('lem-go-mode:go-mode #'gofmt)
+  ('lem-c-mode:c-mode #'clang-format)
+  ('lem-lisp-mode:lisp-mode #'indent-buffer))

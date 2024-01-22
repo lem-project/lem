@@ -46,8 +46,8 @@
 
 ;; register default formatters, these may be overwritten.
 (register-formatters
-  ('lem-go-mode:go-mode #'gofmt)
-  ('lem-c-mode:c-mode   #'clang-format)
+  ('lem-go-mode:go-mode     #'gofmt)
+  ('lem-c-mode:c-mode       #'clang-format)
   ('lem-lisp-mode:lisp-mode #'indent-buffer)
-  ('lem-js-mode:js-mode #'js-prettier)
+  ('lem-js-mode:js-mode     #'js-prettier)
   ('lem-json-mode:json-mode #'js-prettier))

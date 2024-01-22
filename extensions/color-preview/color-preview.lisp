@@ -1,38 +1,73 @@
 (defpackage :lem-color-preview
-  (:use :cl :lem))
+  (:use :cl :lem)
+  (:export :invoke-color-picker))
 (in-package :lem-color-preview)
 
 (define-minor-mode color-preview
     (:name "Color Preview"
-     :hide-from-modeline t
-     :enable-hook 'enable
-     :disable-hook 'disable))
+     :hide-from-modeline t)
+  (scan-color-in-window (current-window)))
 
-(defun enable ()
-  (add-hook (variable-value 'after-syntax-scan-hook :buffer (current-buffer))
-            'scan-color-in-region))
+(defmethod invoke-color-picker (frontend callback))
 
-(defun disable ()
-  (remove-hook (variable-value 'after-syntax-scan-hook :buffer (current-buffer))
-               'scan-color-in-region))
+(defun click-callback (window point)
+  (with-point ((start (maybe-beginning-of-string point) :right-inserting))
+    (with-point ((end start :left-inserting))
+      (form-offset end 1)
+      (character-offset start 1)
+      (character-offset end -1)
+      (invoke-color-picker (implementation)
+                           (lambda (color)
+                             (when color
+                               (delete-between-points start end)
+                               (insert-string start
+                                              (format nil "#~2,'0X~2,'0X~2,'0X"
+                                                      (color-red color)
+                                                      (color-green color)
+                                                      (color-blue color)))
+                               (scan-color-in-window window)))))))
+
+(define-overlay-accessors color-ovelray
+  :clear-function clear-color-overlays
+  :add-function add-color-overlay)
+
+(defun scan-color-in-window (window)
+  (scan-color-in-region (line-start (copy-point (window-view-point window) :temporary))
+                        (or (line-offset (copy-point (window-view-point window) :temporary)
+                                         (window-height window))
+                            (buffer-end-point (window-buffer window)))))
 
 (defun scan-color-in-region (start end)
+  (clear-color-overlays (point-buffer start))
   (with-point ((point start))
     (loop :while (point< point end)
-          :do (cond ((syntax-string-quote-char-p (character-at point))
-                     (with-point ((string-start point))
-                       (unless (form-offset point 1)
-                         (return))
-                       (with-point ((string-end point))
-                         (character-offset string-end -1)
-                         (character-offset string-start 1)
-                         (let ((color (points-to-string string-start string-end)))
-                           (when (parse-color color)
-                             (character-offset string-end 1)
-                             (character-offset string-start -1)
-                             (put-text-property string-start
-                                                string-end
-                                                :attribute (make-attribute :background color
-                                                                           :foreground (if (light-color-p color) "#000000" "#ffffff"))))))))
-                    (t
-                     (character-offset point 1))))))
+          :do (cond
+                ((syntax-string-quote-char-p (character-at point))
+                 (with-point ((string-start point))
+                   (unless (form-offset point 1)
+                     (return))
+                   (with-point ((string-end point))
+                     (character-offset string-end -1)
+                     (character-offset string-start 1)
+                     (let ((color (points-to-string string-start string-end)))
+                       (when (parse-color color)
+                         (character-offset string-end 1)
+                         (character-offset string-start -1)
+                         (let ((attribute
+                                 (make-attribute :background color
+                                                 :foreground (if (light-color-p color)
+                                                                 "#000000"
+                                                                 "#ffffff"))))
+                           (add-color-overlay (point-buffer start)
+                                              (make-overlay string-start
+                                                            string-end
+                                                            attribute)))
+                         (lem-core::set-clickable string-start
+                                                  string-end
+                                                  'click-callback))))))
+                (t
+                 (character-offset point 1))))))
+
+(defmethod execute :after ((mode color-preview) command argument)
+  (let ((window (current-window)))
+    (scan-color-in-window window)))

@@ -23,7 +23,8 @@
                (:file "drawing")
                (:file "graphics")
                (:file "image-buffer")
-               (:file "tree")))
+               (:file "tree")
+               (:file "color-picker")))
 
 (defsystem "lem-sdl2/executable"
   :build-operation program-op

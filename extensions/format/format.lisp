@@ -34,7 +34,7 @@
     (handler-case (lem-formatter mode buf)
       (error (c) 
         (declare (ignore c))
-        (message "No formatter for mode ~a" mode)))))
+        (unless buffer (message "No formatter for mode ~a" mode))))))
 
 ;; When `auto-format?` is true, try to format a buffer when it is saved.
 (add-hook (variable-value 'after-save-hook :global t)

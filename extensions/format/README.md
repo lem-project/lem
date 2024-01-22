@@ -27,4 +27,4 @@ Current formatters and their dependencies:
 - Go:         gofmt
 - Lisp:       none
 
-The C formatter looks for the nearest `.clang-format` spec file walking up the file tree.  I keep Torvalds spec file at `~/.clang-format`, but a project-local one would be prioritized.
+The C formatter looks for the nearest `.clang-format` spec file walking up the file tree.  I keep Torvalds' spec file at `~/.clang-format`, but a project-local one would override that.

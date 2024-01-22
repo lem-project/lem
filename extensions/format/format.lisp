@@ -29,6 +29,7 @@
 
 (define-command format-buffer (&optional buffer) ()
   "Try to format a buffer."
+  (unless buffer (save-current-buffer))
   (let* ((buf (or buffer (current-buffer)))
          (mode (buffer-major-mode buf)))
     (handler-case (lem-formatter mode buf)

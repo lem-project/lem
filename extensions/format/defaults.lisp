@@ -36,8 +36,18 @@
      :ignore-error-status t))
   (revert-buffer t))
 
+(defun js-prettier (buf)
+  "Format a JavaScript buffer with prettier."
+  (let ((file (buffer-filename buf)))
+    (uiop:run-program 
+     (format nil "prettier -w ~a" file)
+     :ignore-error-status t))
+  (revert-buffer t))
+
 ;; register default formatters, these may be overwritten.
 (register-formatters
   ('lem-go-mode:go-mode #'gofmt)
   ('lem-c-mode:c-mode   #'clang-format)
-  ('lem-lisp-mode:lisp-mode #'indent-buffer))
+  ('lem-lisp-mode:lisp-mode #'indent-buffer)
+  ('lem-js-mode:js-mode #'js-prettier)
+  ('lem-json-mode:json-mode #'js-prettier))

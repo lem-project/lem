@@ -21,4 +21,4 @@ Handlers take a buffer to format as an argument.
 You can either enable auto-formatting with `(setf lem-format:auto-format? t)` or manually use `M-x format-buffer`.  If no formatter is registered for the major mode, an error message is displayed.
 
 # Default formatters
-Currently the Go and C formatters depend on having `gofmt` and `clang-format` installed respectively, for C you also need a `.clang-format` spec file somewhere above the working file in your file tree.
+Currently the Go and C formatters depend on having `gofmt` and `clang-format` installed respectively, for C you also need a `.clang-format` spec file somewhere above the working file in your file tree (I keep Torvalds spec file at `~/.clang-format`, but a project-local spec will be found first).

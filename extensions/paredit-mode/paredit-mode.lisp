@@ -78,7 +78,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (let ((len (length (line-string point))))
     (or (zerop len)
         (>= (point-charpos point)
-            (1- len)))))
+             (1- len)))))
 
 (defun integer-char-p (char)
   (< (char-code #\0) (char-code char) (char-code #\9)))
@@ -120,6 +120,14 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
       (sharp-literal-p #\- p)
       (sharp-n-literal-p #\A p)
       (sharp-n-literal-p #\= p)))
+
+(defun whitespace-p (char)
+  (find char str:*whitespaces*))
+
+(defun paredit-whitespace-prefix (point)
+  (ignore-errors
+    (let ((prefix (subseq (line-string point) 0 (point-column point))))
+      (not (find-if (lambda (char) (not (whitespace-p char))) (coerce prefix 'list))))))
 
 (define-command paredit-insert-paren () ()
   (let ((p (current-point)))

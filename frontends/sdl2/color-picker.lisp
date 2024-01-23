@@ -3,15 +3,15 @@
   (:export :make-color-picker-buffer))
 (in-package :lem-sdl2/color-picker)
 
+;;; color picker
+
 (defparameter +slider-height+ 500)
 (defparameter +square-x+ 0)
-(defparameter +square-y+ 60)
+(defparameter +square-y+ 0)
 (defparameter +square-size+ 500)
 (defparameter +slider-x+ 510)
-(defparameter +slider-y+ 60)
+(defparameter +slider-y+ 0)
 (defparameter +slider-width+ 50)
-(defparameter +color-text-x+ 0)
-(defparameter +color-text-y+ 0)
 
 (defclass color-picker-buffer (lem:text-buffer)
   ((slider-position
@@ -23,45 +23,48 @@
    (square-cursor-y
     :initform 0
     :accessor square-cursor-y)
-   (selected-color
+   (square-selected-color
     :initform nil
-    :accessor selected-color)
+    :accessor square-selected-color)
    (callback
     :accessor callback)))
 
+(defun compute-slider-current-colors (color i segmented num)
+  (let ((red (lem:color-red color))
+        (green (lem:color-green color))
+        (blue (lem:color-blue color)))
+    (setf blue (if (<= i segmented) (+ blue num) blue))
+    (setf red (if (and (>= i segmented) (< i (* 2 segmented))) (- red num) red))
+    (setf green (if (and (>= i (* 2 segmented)) (< i (* 3 segmented))) (+ green num) green))
+
+    (setf blue (if (and (>= i (* 3 segmented)) (< i (* 4 segmented))) (- blue num) blue))
+    (setf red (if (and (>= i (* 4 segmented)) (< i (* 5 segmented))) (+ red num) red))
+    (setf green (if (>= i (* 5 segmented)) (- green num) green))
+
+    (setf red (if (> red 255.0) 255 red))
+    (setf green (if (> green 255.0) 255 green))
+    (setf blue (if (> blue 255.0) 255 blue))
+
+    (setf red (if (< red 0) 0 red))
+    (setf green (if (< green 0) 0 green))
+    (setf blue (if (< blue 0) 0 blue))
+
+    (lem:make-color (round red)
+                    (round green)
+                    (round blue))))
+
 (defun render-vertical-slider (&key x y width height slider-position)
-  (let* ((red 255.0)
-         (green 0.0)
-         (blue 0.0)
+  (let* ((color (lem:make-color 255 0 0))
          (segmented (/ height 6))
          (num (/ 255 (/ height 6)))
-         selected-color)
+         (selected-color color))
     (loop :for i :from 0 :below height
-          :do (setf blue (if (<= i segmented) (+ blue num) blue))
-              (setf red (if (and (>= i segmented) (< i (* 2 segmented))) (- red num) red))
-              (setf green (if (and (>= i (* 2 segmented)) (< i (* 3 segmented))) (+ green num) green))
-
-              (setf blue (if (and (>= i (* 3 segmented)) (< i (* 4 segmented))) (- blue num) blue))
-              (setf red (if (and (>= i (* 4 segmented)) (< i (* 5 segmented))) (+ red num) red))
-              (setf green (if (>= i (* 5 segmented)) (- green num) green))
-
-              (setf red (if (> red 255.0) 255 red))
-              (setf green (if (> green 255.0) 255 green))
-              (setf blue (if (> blue 255.0) 255 blue))
-
-              (setf red (if (< red 0) 0 red))
-              (setf green (if (< green 0) 0 green))
-              (setf blue (if (< blue 0) 0 blue))
-
-              (let ((color (lem:make-color (round red)
-                                           (round green)
-                                           (round blue))))
-                (when (= i slider-position)
-                  (setf selected-color color))
-
-                (sdl2:with-rects ((rect x (+ y i) width 1))
-                  (lem-sdl2/display:set-render-color (lem-sdl2/display:current-display) color)
-                  (sdl2:render-fill-rect (lem-sdl2:current-renderer) rect))))
+          :do (setf color (compute-slider-current-colors color i segmented num))
+              (when (= i slider-position)
+                (setf selected-color color))
+              (sdl2:with-rects ((rect x (+ y i) width 1))
+                (lem-sdl2/display:set-render-color (lem-sdl2/display:current-display) color)
+                (sdl2:render-fill-rect (lem-sdl2:current-renderer) rect)))
 
     (sdl2:with-rects ((rect x (1- (+ slider-position y)) width 3))
       (lem-sdl2/display:set-render-color (lem-sdl2/display:current-display)
@@ -74,7 +77,7 @@
 
     selected-color))
 
-(defun render-square (&key red green blue x y size cursor-x cursor-y)
+(defun render-square (buffer &key red green blue x y size cursor-x cursor-y)
   (let* ((xdifference-red (- 255.0 red))
          (xdifference-green (- 255.0 green))
          (xdifference-blue (- 255.0 blue))
@@ -134,33 +137,29 @@
                                          (lem:make-color 255 255 255))
       (sdl2:render-fill-rect (lem-sdl2:current-renderer) rect))
 
-    selected-color))
-
-(defun render-color-text (x y color)
-  (sdl2:with-rects ((rect x y (+ +square-size+ 10 +slider-width+) 50))
-    (lem-sdl2/display:set-render-color (lem-sdl2/display:current-display) color)
-    (sdl2:render-fill-rect (lem-sdl2:current-renderer) rect)))
+    (setf (square-selected-color buffer) selected-color)))
 
 (defmethod lem-sdl2:render (texture window (buffer color-picker-buffer))
   (sdl2:set-render-target (lem-sdl2:current-renderer) texture)
   (lem-sdl2/display:set-render-color (lem-sdl2/display:current-display)
                                      (lem:make-color 100 100 100))
   (sdl2:render-fill-rect (lem-sdl2:current-renderer) nil)
-  (let ((color (render-vertical-slider :x +slider-x+
-                                       :y +slider-y+
-                                       :width +slider-width+
-                                       :height +slider-height+
-                                       :slider-position (slider-position buffer))))
-    (let ((color (render-square :red (lem:color-red color)
-                                :green (lem:color-green color)
-                                :blue (lem:color-blue color)
-                                :x +square-x+
-                                :y +square-y+
-                                :size +square-size+
-                                :cursor-x (square-cursor-x buffer)
-                                :cursor-y (square-cursor-y buffer))))
-      (setf (selected-color buffer) color)
-      (render-color-text +color-text-x+ +color-text-y+ color))))
+  (let ((slider-color
+          (render-vertical-slider :x +slider-x+
+                                  :y +slider-y+
+                                  :width +slider-width+
+                                  :height +slider-height+
+                                  :slider-position (slider-position buffer))))
+    (when slider-color
+      (render-square buffer
+                     :red (lem:color-red slider-color)
+                     :green (lem:color-green slider-color)
+                     :blue (lem:color-blue slider-color)
+                     :x +square-x+
+                     :y +square-y+
+                     :size +square-size+
+                     :cursor-x (square-cursor-x buffer)
+                     :cursor-y (square-cursor-y buffer)))))
 
 (defun handle-mouse-position (mouse-event window buffer)
   (multiple-value-bind (x y)
@@ -180,7 +179,8 @@
 
 (defmethod lem-core::handle-mouse-button-up ((buffer color-picker-buffer) mouse-event &key window)
   (declare (ignore window))
-  (funcall (callback buffer) (selected-color buffer)))
+  (when (callback buffer)
+    (funcall (callback buffer) (square-selected-color buffer))))
 
 (defmethod lem-core::handle-mouse-hover ((buffer color-picker-buffer) mouse-event &key window)
   (handle-mouse-position mouse-event window buffer))
@@ -203,8 +203,9 @@
     buffer))
 
 (defmethod lem-color-preview:invoke-color-picker ((frontend lem-sdl2/sdl2:sdl2) callback)
-  (setf (lem:current-window)
-        (lem:pop-to-buffer
-         (lem-sdl2/color-picker::make-color-picker-buffer
-          "*Color Picker*"
-          :callback callback))))
+  (let ((buffer (make-color-picker-buffer "*Color Picker*" :callback callback)))
+    (setf (lem:current-window)
+          (lem:pop-to-buffer buffer))))
+
+(lem:define-command test-color-picker () ()
+  (lem:pop-to-buffer (make-color-picker-buffer "*test*")))

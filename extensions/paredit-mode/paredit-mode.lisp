@@ -219,6 +219,12 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (eql (character-at p -1) #\")
              (eql (character-at p -1) #\|))
          (backward-char))
+        ;; go back line when point prefixed with whitespace
+        ((paredit-whitespace-prefix p)
+         (delete-trailing-whitespace)
+         (delete-previous-char (1+ (point-column p)))
+         (unless (eq #\) (character-at (current-point)))
+           (insert-string (current-point) " ")))
         (t
          (delete-previous-char))))
     (paredit-backward-delete (1- n))))

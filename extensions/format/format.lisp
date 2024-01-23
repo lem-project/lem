@@ -27,15 +27,20 @@
                  ,(second binding)))
              bindings)))
 
+(defun save-without-hooks (buffer)
+  "Bypass hooks to avoid infinite looping."
+  (lem/buffer/file::write-to-file-1 buffer (buffer-filename buffer)))
+
 (define-command format-buffer (&optional buffer) ()
   "Try to format a buffer."
-  (unless buffer (save-current-buffer))
   (let* ((buf (or buffer (current-buffer)))
          (mode (buffer-major-mode buf)))
+    (save-without-hooks buf)
     (handler-case (lem-formatter mode buf)
       (error (c) 
         (declare (ignore c))
-        (unless buffer (message "No formatter for mode ~a" mode))))))
+        (unless buffer (message "No formatter for mode ~a" mode))))
+    (save-without-hooks buf)))
 
 ;; When `*auto-format*` is true, try to format a buffer when it is saved.
 (add-hook (variable-value 'after-save-hook :global t)

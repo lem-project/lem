@@ -201,7 +201,10 @@
    :receive-mouse-wheel
    :set-hover-message
    :get-point-from-window-with-coordinates
-   :get-point-on-context-menu-open)
+   :get-point-on-context-menu-open
+   :handle-mouse-button-down
+   :handle-mouse-button-up
+   :handle-mouse-hover)
   ;; context-menu.lisp
   (:export
    :buffer-context-menu)

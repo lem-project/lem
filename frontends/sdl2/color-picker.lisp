@@ -263,14 +263,14 @@
                               y
                               (lem-core::mouse-event-button mouse-event))))
 
-(defmethod lem-core::handle-mouse-button-down ((buffer color-picker-buffer) mouse-event &key window)
+(defmethod lem:handle-mouse-button-down ((buffer color-picker-buffer) mouse-event &key window)
   (%handle-mouse-button-down mouse-event window buffer))
 
-(defmethod lem-core::handle-mouse-button-up ((buffer color-picker-buffer) mouse-event &key window)
+(defmethod lem:handle-mouse-button-up ((buffer color-picker-buffer) mouse-event &key window)
   (declare (ignore window))
   (handle-mouse-button-up (color-picker-buffer-color-picker buffer)))
 
-(defmethod lem-core::handle-mouse-hover ((buffer color-picker-buffer) mouse-event &key window)
+(defmethod lem:handle-mouse-hover ((buffer color-picker-buffer) mouse-event &key window)
   (when (eql :button-1 (lem-core::mouse-event-button mouse-event))
     (%handle-mouse-button-down mouse-event window buffer)))
 

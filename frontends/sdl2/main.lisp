@@ -210,7 +210,7 @@
                                         (#+(and linux sbcl)
                                          (sb-sys:interactive-interrupt
                                            (lambda (c)
-                                             (declare (ignare c))
+                                             (declare (ignore c))
                                              (invoke-restart 'sdl2::abort))))
                                       (progn
                                         (create-display #'thunk)

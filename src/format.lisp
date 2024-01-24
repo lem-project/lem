@@ -14,16 +14,16 @@
 
 (defmacro register-formatters (&body bindings)
   "Register multiple formatters at once."
-  `(progn ,@(mapcar 
+  `(progn ,@(mapcar
              (lambda (binding)
                `(register-formatter
-                 ,(first binding) 
+                 ,(first binding)
                  ,(second binding)))
              bindings)))
 
 (defun save-without-hooks (buffer)
   "Bypass hooks to avoid infinite looping."
-  (lem/buffer/file::write-to-file-1 buffer (buffer-filename buffer)))
+  (write-to-file-without-write-hook buffer (buffer-filename buffer)))
 
 (defun format-buffer (&key buffer auto)
   (let* ((buf (or buffer (current-buffer)))
@@ -45,6 +45,6 @@
 
 ;; When `*auto-format*` is true, try to format a buffer when it is saved.
 (add-hook (variable-value 'after-save-hook :global t)
-          (lambda (buffer) 
-            (when *auto-format* 
+          (lambda (buffer)
+            (when *auto-format*
               (format-buffer :buffer buffer :auto t))))

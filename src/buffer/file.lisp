@@ -108,7 +108,7 @@
            (run-hooks *find-file-hook* buffer)
            (values buffer t)))))
 
-(defun write-to-file-1 (buffer filename)
+(defun write-to-file-without-write-hook (buffer filename)
   (write-region-to-file (buffer-start-point buffer)
                         (buffer-end-point buffer) filename))
 
@@ -131,7 +131,7 @@
 
 (defun write-to-file (buffer filename)
   (with-write-hook buffer
-    (write-to-file-1 buffer filename)))
+    (write-to-file-without-write-hook buffer filename)))
 
 (defun %write-region-to-file (end-of-line out)
   (lambda (string eof-p)

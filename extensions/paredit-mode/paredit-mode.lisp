@@ -67,7 +67,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 (define-command paredit-backward (&optional (n 1)) ("p")
   (handler-case
       (backward-sexp n)
-    (error () 
+    (error ()
       (unless (start-buffer-p (current-point))
         (lem:backward-up-list (current-point))))))
 
@@ -125,6 +125,13 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (ignore-errors
     (let ((prefix (subseq (line-string point) 0 (point-column point))))
       (not (find-if (lambda (char) (not (syntax-space-char-p char))) (coerce prefix 'list))))))
+
+(defun forward-skip-whitespace (point)
+  "Move point to the next character that is not whitespace."
+  (loop :for p := (character-at point)
+        :while (syntax-space-char-p p)
+        :while (not (eq #\Newline p))
+        :do (character-offset point 1)))
 
 (define-command paredit-insert-newline () ()
   (insert-character (current-point) #\Newline)
@@ -220,8 +227,9 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (eql (character-at p -1) #\")
              (eql (character-at p -1) #\|))
          (backward-char))
-        ;; go back line when point prefixed with whitespace
+        ;; Go back line when point prefixed with whitespace
         ((whitespace-prefix-p p)
+         (forward-skip-whitespace p)
          (delete-trailing-whitespace)
          (delete-previous-char (1+ (point-column p)))
          (let* ((new-p (current-point))

@@ -124,7 +124,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 (defun whitespace-p (char)
   (find char str:*whitespaces*))
 
-(defun paredit-whitespace-prefix (point)
+(defun whitespace-prefix-p (point)
   (ignore-errors
     (let ((prefix (subseq (line-string point) 0 (point-column point))))
       (not (find-if (lambda (char) (not (whitespace-p char))) (coerce prefix 'list))))))
@@ -224,14 +224,14 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (eql (character-at p -1) #\|))
          (backward-char))
         ;; go back line when point prefixed with whitespace
-        ((paredit-whitespace-prefix p)
+        ((whitespace-prefix-p p)
          (delete-trailing-whitespace)
          (delete-previous-char (1+ (point-column p)))
          (let* ((new-p (current-point))
                 (c (character-at new-p)))
            (unless (or (whitespace-p c) (eq #\) c))
              (insert-character new-p #\ )))
-         (indent-buffer (current-buffer)))
+         (indent-current-buffer))
         (t
          (delete-previous-char))))
     (paredit-backward-delete (1- n))))

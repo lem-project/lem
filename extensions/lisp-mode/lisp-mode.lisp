@@ -26,7 +26,8 @@
      :description "Contains necessary functions to handle lisp code."
      :keymap *lisp-mode-keymap*
      :syntax-table lem-lisp-syntax:*syntax-table*
-     :mode-hook *lisp-mode-hook*)
+     :mode-hook *lisp-mode-hook*
+     :formatter #'indent-buffer)
   (modeline-add-status-list 'lisp-mode (current-buffer))
   (setf (variable-value 'beginning-of-defun-function) 'lisp-beginning-of-defun)
   (setf (variable-value 'end-of-defun-function) 'lisp-end-of-defun)
@@ -283,23 +284,23 @@
   (lem-lisp-syntax:calc-indent point))
 
 (defun call-with-remote-eval (form continuation
-                              &key (connection (current-connection))
-                                   (thread (current-swank-thread))
-                                   (package (current-package))
-                                   request-id)
+                               &key (connection (current-connection))
+                                    (thread (current-swank-thread))
+                                    (package (current-package))
+                                    request-id)
   (remote-eval connection
-               form
-               :continuation continuation
-               :thread thread
-               :package package
-               :request-id request-id))
+                form
+                :continuation continuation
+                :thread thread
+                :package package
+                :request-id request-id))
 
 (defmacro with-remote-eval ((form &rest args
-                                  &key connection
-                                       thread
-                                       package
-                                       request-id)
-                            continuation)
+                                   &key connection
+                                        thread
+                                        package
+                                        request-id)
+                             continuation)
   (declare (ignore connection thread package request-id))
   `(call-with-remote-eval ,form ,continuation ,@args))
 
@@ -567,10 +568,10 @@
     (highlight-notes notes)
     (cond ((and loadp fastfile successp)
            (lisp-eval-async `(micros:load-file ,(convert-local-to-remote-file fastfile))
-                            (lambda (result)
-                              (declare (ignore result))
-                              (uiop:delete-file-if-exists
-                               (convert-remote-to-local-file fastfile)))))
+                             (lambda (result)
+                               (declare (ignore result))
+                               (uiop:delete-file-if-exists
+                                (convert-remote-to-local-file fastfile)))))
           (fastfile
            (uiop:delete-file-if-exists
             (convert-remote-to-local-file fastfile))))))
@@ -578,30 +579,30 @@
 (defun show-compile-result (notes secs successp)
   (display-message (format nil "~{~A~^ ~}"
                            (remove-if #'null
-                                      (list (if successp
-                                                "Compilation finished"
-                                                "Compilation failed")
-                                            (unless notes
-                                              "(No warnings)")
-                                            (when secs
-                                              (format nil "[~,2f secs]" secs)))))))
+                                       (list (if successp
+                                                 "Compilation finished"
+                                                 "Compilation failed")
+                                             (unless notes
+                                               "(No warnings)")
+                                             (when secs
+                                               (format nil "[~,2f secs]" secs)))))))
 
 (defun make-highlight-overlay (pos buffer message source-context)
   (with-point ((point (buffer-point buffer)))
     (move-to-position point pos)
     (skip-chars-backward point #'syntax-symbol-char-p)
     (let ((overlay (make-overlay point
-                                 (or (form-offset (copy-point point :temporary) 1)
-                                     (buffer-end-point buffer))
-                                 'compiler-note-attribute))
+                                   (or (form-offset (copy-point point :temporary) 1)
+                                       (buffer-end-point buffer))
+                                   'compiler-note-attribute))
           (message (with-output-to-string (out)
                      (write-string message out)
                      (when source-context
                        (terpri out)
                        (write-string source-context out)))))
       (set-hover-message overlay
-                         message
-                         :style '(:gravity :mouse-cursor :offset-y 1))
+                          message
+                          :style '(:gravity :mouse-cursor :offset-y 1))
       (overlay-put overlay 'message message)
       overlay)))
 
@@ -644,18 +645,18 @@
 
 (defun move-to-next-compilation-notes (point)
   (alexandria:when-let ((overlay (loop :for overlay :in (buffer-compilation-notes-overlays
-                                                         (point-buffer point))
-                                       :when (point< point (overlay-start overlay))
-                                       :return overlay)))
+                                                           (point-buffer point))
+                                        :when (point< point (overlay-start overlay))
+                                        :return overlay)))
     (move-point point (overlay-start overlay))))
 
 (defun move-to-previous-compilation-notes (point)
   (alexandria:when-let ((overlay (loop :for last-overlay := nil :then overlay
-                                       :for overlay :in (buffer-compilation-notes-overlays
-                                                         (point-buffer point))
-                                       :when (point<= point (overlay-start overlay))
-                                       :return last-overlay
-                                       :finally (return last-overlay))))
+                                        :for overlay :in (buffer-compilation-notes-overlays
+                                                           (point-buffer point))
+                                        :when (point<= point (overlay-start overlay))
+                                        :return last-overlay
+                                        :finally (return last-overlay))))
     (move-point point (overlay-start overlay))))
 
 (defun remove-compilation-notes-overlay-in-the-changed-point (point arg)
@@ -702,7 +703,7 @@
   (let ((file (buffer-filename (current-buffer))))
     (run-hooks (variable-value 'load-file-functions) file)
     (lisp-eval-async `(micros:compile-file-for-emacs ,(convert-local-to-remote-file file) t)
-                     #'compilation-finished)))
+                      #'compilation-finished)))
 
 (define-command lisp-compile-region (start end) ("r")
   (check-connection)
@@ -713,11 +714,11 @@
                      ,(point-charpos (current-point))))))
     (run-hooks (variable-value 'before-compile-functions) start end)
     (lisp-eval-async `(micros:compile-string-for-emacs ,string
-                                                      ,(buffer-name (current-buffer))
-                                                      ',position
-                                                      ,(buffer-filename (current-buffer))
-                                                      nil)
-                     #'compilation-finished)))
+                                                        ,(buffer-name (current-buffer))
+                                                        ',position
+                                                        ,(buffer-filename (current-buffer))
+                                                        nil)
+                      #'compilation-finished)))
 
 (define-command lisp-compile-defun () ()
   (check-connection)
@@ -789,8 +790,8 @@
   (let* ((name (or (symbol-string-at-point point)
                    (prompt-for-symbol-name "Edit uses of: ")))
          (data (lisp-eval `(micros:xrefs '(:calls :macroexpands :binds
-                                          :references :sets :specializes)
-                                        ,name))))
+                                            :references :sets :specializes)
+                                          ,name))))
     (display-xref-references
      (loop
        :for (type . definitions) :in data
@@ -870,31 +871,31 @@
            (lambda () (loop
                         :named exit
                         :do
-                        (handler-case
-                            (loop
+                           (handler-case
+                               (loop
 
-                              ;; workaround for windows
-                              ;;  (sleep seems to be necessary to receive
-                              ;;   change-connection event immediately)
-                              #+(and sbcl win32)
-                              (sleep 0.001)
+                                 ;; workaround for windows
+                                 ;;  (sleep seems to be necessary to receive
+                                 ;;   change-connection event immediately)
+                                    #+(and sbcl win32)
+                                    (sleep 0.001)
 
-                              (unless (connected-p)
-                                (setf *wait-message-thread* nil)
-                                (return-from exit))
-                              (when (message-waiting-p (current-connection) :timeout 1)
-                                (let ((barrior t))
-                                  (send-event (lambda ()
-                                                (unwind-protect (progn (pull-events)
-                                                                       (redraw-display))
-                                                  (setq barrior nil))))
-                                  (loop
                                     (unless (connected-p)
-                                      (return))
-                                    (unless barrior
-                                      (return))
-                                    (sleep 0.1)))))
-                          (change-connection ()))))
+                                      (setf *wait-message-thread* nil)
+                                      (return-from exit))
+                                    (when (message-waiting-p (current-connection) :timeout 1)
+                                      (let ((barrior t))
+                                        (send-event (lambda ()
+                                                       (unwind-protect (progn (pull-events)
+                                                                              (redraw-display))
+                                                         (setq barrior nil))))
+                                        (loop
+                                          (unless (connected-p)
+                                            (return))
+                                          (unless barrior
+                                            (return))
+                                          (sleep 0.1)))))
+                             (change-connection ()))))
            :name "lisp-wait-message"))))
 
 (defun connected-slime-message (connection)
@@ -1155,8 +1156,8 @@
   (loop :with end-time := (+ (get-internal-real-time)
                              (* second internal-time-units-per-second))
         :for e := (receive-event (float
-                                  (/ (- end-time (get-internal-real-time))
-                                     internal-time-units-per-second)))
+                                    (/ (- end-time (get-internal-real-time))
+                                       internal-time-units-per-second)))
         :while (key-p e)))
 
 (define-command slime-restart () ()

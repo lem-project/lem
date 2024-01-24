@@ -8,8 +8,8 @@
 
 #|
 link :
-  https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide/Grammar_and_types
-  https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Lexical_grammar
+https://developer.mozilla.org/ja/docs/Web/JavaScript/Guide/Grammar_and_types
+https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Lexical_grammar
 
 |#
 (defvar *js-floating-point-literals* "\\b([+-]?[1-9]\\d*(.\\d)?([Ee][+-]?\\d+)?)\\b")
@@ -20,18 +20,18 @@ link :
 (defvar *js-undefined-literals* "(undefined)")
 
 (defvar *js-key-words* '("break" "case" "catch" "class" "const" "continue" "debugger" "default"
-                         "delete" "do" "else" "export" "extends" "finally" "for"
-                         "function"  "if" "import" "in" "instanceof"
-                         "let" "new" "return" "super"
-                         "switch" "this" "throw" "try" "typeof" "var" "void" "while"
-                         "with" "yield")) ;; TODO function* yeild*
+                          "delete" "do" "else" "export" "extends" "finally" "for"
+                          "function"  "if" "import" "in" "instanceof"
+                          "let" "new" "return" "super"
+                          "switch" "this" "throw" "try" "typeof" "var" "void" "while"
+                          "with" "yield")) ;; TODO function* yeild*
 (defvar *js-future-key-words* '("enum" "implements" "static" "public"
-                                "package" "interface" "protected" "private" "await"))
+                                 "package" "interface" "protected" "private" "await"))
 
 (defvar *js-white-space* (list (code-char #x9) (code-char #xb) (code-char #xc)
-                               (code-char #x20) (code-char #xa0))) ;;TODO
+                                (code-char #x20) (code-char #xa0))) ;;TODO
 (defvar *js-line-terminators* (list (code-char #x0a) (code-char #x0d)
-                                    (code-char #x2028) (code-char #x2029)))
+                                     (code-char #x2028) (code-char #x2029)))
 
 (defvar *js-callable-paren* "(\\(|\\))")
 (defvar *js-block-paren* "({|})")
@@ -39,7 +39,7 @@ link :
 
 (defvar *js-arithmetic-operators* '("+" "-" "*" "/" "%" "**" "++" "--"))
 (defvar *js-assignment-operators* '("=" "+=" "-=" "*=" "/=" "%=" "**=" "<<=" ">>=" ">>>="
-                                    "&=" "\\^=" "\\|="))
+                                     "&=" "\\^=" "\\|="))
 (defvar *js-bitwise-operators* '("&" "|" "^" "~" "<<" ">>" ">>>"))
 (defvar *js-comma-operators* '(","))
 (defvar *js-comparison-operators* '("==" "!=" "===" "!==" ">" ">=" "<" "<="))
@@ -49,16 +49,16 @@ link :
 (defvar *js-spaces* (append *js-white-space* *js-line-terminators*))
 
 (defvar *js-builtin-operators* (append *js-arithmetic-operators*
-                               *js-assignment-operators*
-                               *js-bitwise-operators*
-                               *js-comma-operators*
-                               *js-comparison-operators*
-                               *js-logical-operators*
-                               *js-other-symbols*))
+                                        *js-assignment-operators*
+                                        *js-bitwise-operators*
+                                        *js-comma-operators*
+                                        *js-comparison-operators*
+                                        *js-logical-operators*
+                                        *js-other-symbols*))
 
 (defun tokens (boundary strings)
   (let ((alternation
-         `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
+          `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
     (if boundary
         `(:sequence ,boundary ,alternation ,boundary)
         alternation)))
@@ -107,7 +107,8 @@ link :
     (:name "JavaScript"
      :keymap *js-mode-keymap*
      :syntax-table *js-syntax-table*
-     :mode-hook *js-mode-hook*)
+     :mode-hook *js-mode-hook*
+     :formatter 'prettier)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 2
@@ -183,14 +184,14 @@ link :
     (let ((tab-width (variable-value 'tab-width :default point))
           (column (length (get-line-indent prev-point)))
           (prev-state (with-point ((start prev-point))
-                        (line-start start)
-                        (parse-partial-sexp (copy-point start :temporary)
-                                            (line-end start))))
+                         (line-start start)
+                         (parse-partial-sexp (copy-point start :temporary)
+                                             (line-end start))))
           (indents 0))
 
       (incf indents (* (value-between (+ (pps-state-paren-depth prev-state)
-                                         (if (pps-state-paren-stack prev-state) 1 0))
-                                      0 1)
+                                          (if (pps-state-paren-stack prev-state) 1 0))
+                                       0 1)
                        tab-width))
 
       (with-point ((prev-start prev-point)
@@ -229,12 +230,11 @@ link :
     (move-point point p)))
 
 (defparameter *prettier-options*
-  (list "--single-quote" "true"
-        "--jsx-bracket-same-line" "true"))
+  (list "--single-quote" "true"))
 
-(define-command prettier () ()
+(defun prettier (buf)
   (filter-buffer (append '("prettier")
                          *prettier-options*
-                         (list (buffer-filename (current-buffer))))))
+                         (list (buffer-filename buf)))))
 
 (define-file-type ("js" "jsx") js-mode)

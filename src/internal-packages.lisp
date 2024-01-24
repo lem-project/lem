@@ -569,7 +569,13 @@
    :region-beginning-using-global-mode
    :region-end-using-global-mode
    :set-region-point-using-global-mode
-   :check-marked))
+   :check-marked)
+  ;; format.lisp
+  (:export
+   :*auto-format*
+   :register-formatter 
+   :register-formatters
+   :format-buffer))
 #+sbcl
 (sb-ext:lock-package :lem-core)
 

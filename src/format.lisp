@@ -28,10 +28,11 @@
 (defun format-buffer (&key buffer auto)
   (let* ((buf (or buffer (current-buffer)))
          (mode (buffer-major-mode buf)))
+    (message "mode: ~s" mode)
     ;; early return if no file
-    (if (buffer-filename buf)
-        (message "No file to format.")
-        (return-from format-buffer))
+    (unless (buffer-filename buf)
+      (message "No file to format.")
+      (return-from format-buffer))
     ;; save if not run by after-save-hook
     (unless auto (save-without-hooks buf))
     ;; try formatting

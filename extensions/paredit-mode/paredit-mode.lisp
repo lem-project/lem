@@ -67,7 +67,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 (define-command paredit-backward (&optional (n 1)) ("p")
   (handler-case
       (backward-sexp n)
-    (error ()
+    (error () 
       (unless (start-buffer-p (current-point))
         (lem:backward-up-list (current-point))))))
 
@@ -546,7 +546,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 (loop for (k . f) in '((forward-sexp . paredit-forward)
                        (backward-sexp . paredit-backward)
-                       ("Return" . paredit-insert-newline)
+                       ("C-Return" . paredit-insert-newline)
                        ("(" . paredit-insert-paren)
                        (")" . paredit-close-parenthesis)
                        ("\"" . paredit-insert-doublequote)

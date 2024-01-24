@@ -28,7 +28,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 (in-package :lem-paredit-mode)
 
 (define-minor-mode paredit-mode
-    (:name "paredit" 
+    (:name "paredit"
      :description "Helps to handle parentheses balanced in your Lisp code."
      :keymap *paredit-mode-keymap*))
 
@@ -124,7 +124,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 (defun whitespace-prefix-p (point)
   (ignore-errors
     (let ((prefix (subseq (line-string point) 0 (point-column point))))
-      (not (find-if (lambda (char) (not (syntax-space-char-p char))) prefix)))))
+      (not (find-if-not #'syntax-space-char-p prefix)))))
 
 (defun forward-skip-whitespace (point)
   "Move point to the next character that is not whitespace."

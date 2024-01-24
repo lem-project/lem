@@ -28,7 +28,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 (in-package :lem-paredit-mode)
 
 (define-minor-mode paredit-mode
-    (:name "paredit"
+    (:name "paredit" 
      :description "Helps to handle parentheses balanced in your Lisp code."
      :keymap *paredit-mode-keymap*))
 
@@ -224,7 +224,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
          (delete-trailing-whitespace)
          (delete-previous-char (1+ (point-column p)))
          (unless (eq #\) (character-at (current-point)))
-           (insert-string (current-point) " ")))
+           (insert-character (current-point) #\ )))
         (t
          (delete-previous-char))))
     (paredit-backward-delete (1- n))))

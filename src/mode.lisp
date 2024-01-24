@@ -141,7 +141,8 @@
                                    description
                                    keymap
                                    (syntax-table '(fundamental-syntax-table))
-                                   mode-hook)
+                                   mode-hook
+                                   formatter)
                              &body body)
   (let ((command-class-name (make-mode-command-class-name major-mode)))
     `(progn
@@ -167,7 +168,8 @@
           :keymap ,keymap
           :syntax-table ,syntax-table
           :hook-variable ',mode-hook))
-       (register-mode ',major-mode (make-instance ',major-mode)))))
+       (register-mode ',major-mode (make-instance ',major-mode))
+       (when ,formatter (register-formatter ,major-mode ,formatter)))))
 
 ;;; minor mode
 (defun enable-minor-mode (minor-mode)

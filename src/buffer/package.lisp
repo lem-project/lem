@@ -314,6 +314,7 @@
    :insert-file-contents
    :find-file-buffer
    :write-to-file
+   :write-to-file-without-write-hook
    :write-region-to-file
    :update-changed-disk-date
    :changed-disk-p))

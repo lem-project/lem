@@ -33,9 +33,9 @@
                "str"
                "dexador"
                ;; "lem-encodings"
-	       #+sbcl
-	       sb-concurrency
-	       "lem-mailbox")
+               #+sbcl
+               sb-concurrency
+               "lem-mailbox")
   :pathname "src"
   :serial t
   :components ((:module "common"
@@ -100,6 +100,7 @@
                (:file "frame")
                (:file "echo")
                (:file "prompt")
+               (:file "format")
                (:module "window"
                 :serial t
                 :components ((:file "window-tree")

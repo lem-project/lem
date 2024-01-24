@@ -10,9 +10,9 @@
 (defvar *js-null-literals* "(null)")
 
 (defvar *js-white-space* (list (code-char #x9) (code-char #xb) (code-char #xc)
-                               (code-char #x20) (code-char #xa0)))
+                                (code-char #x20) (code-char #xa0)))
 (defvar *js-line-terminators* (list (code-char #x0a) (code-char #x0d)
-                                    (code-char #x2028) (code-char #x2029)))
+                                     (code-char #x2028) (code-char #x2029)))
 
 (defvar *js-spaces* (append *js-white-space* *js-line-terminators*))
 
@@ -41,11 +41,20 @@
     (set-syntax-parser table tmlanguage)
     table))
 
+(defun js-prettier (buf)
+  "Format a JavaScript buffer with prettier."
+  (let ((file (buffer-filename buf)))
+    (uiop:run-program 
+     (format nil "prettier -w ~a" file)
+     :ignore-error-status t))
+  (revert-buffer t))
+
 (define-major-mode json-mode language-mode
     (:name "JSON"
      :keymap *json-mode-keymap*
      :syntax-table *json-syntax-table*
-     :mode-hook *json-mode-hook*)
+     :mode-hook *json-mode-hook*
+     :formatter #'js-prettier)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 2

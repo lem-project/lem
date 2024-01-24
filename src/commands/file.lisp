@@ -19,7 +19,8 @@
            :revert-buffer-function
            :change-directory
            :current-directory
-           :prompt-for-files-recursively))
+           :prompt-for-files-recursively
+           :format-current-buffer))
 (in-package :lem-core/commands/file)
 
 (define-key *global-keymap* "C-x C-f" 'find-file)
@@ -382,3 +383,7 @@ With prefix argument INSERT, insert the directory of the active buffer at point.
     (if insert
         (insert-string (current-point) dir)
         (message "Directory ~a" dir))))
+
+(define-command format-current-buffer () ()
+  "Try to format a buffer."
+  (format-buffer))

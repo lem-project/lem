@@ -1,10 +1,10 @@
-(defpackage :lem-c-mode.format 
+(defpackage :lem-c-mode/format
   (:use :cl :lem)
   (:import-from #:alexandria-2 #:curry #:line-up-last)
   (:export #:clang-format)
-  #+sbcl 
+  #+sbcl
   (:lock t))
-(in-package :lem-c-mode.format)
+(in-package :lem-c-mode/format)
 
 (defun walk-to-root (path)
   "Walk up the file tree collecting directories."

@@ -3,7 +3,7 @@
 ;; Set this to true to format on save.
 (defvar *auto-format* nil)
 
-;; Formatter methods for lem/format.  
+;; Formatter methods for lem/format.
 ;; You don't need to use this directly, the `register-formatter` will do it for you.
 (defgeneric formatter-impl (mode buffer))
 

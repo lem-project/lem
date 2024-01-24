@@ -46,7 +46,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                    (or (syntax-closed-paren-char-p (character-at point))
                        (syntax-space-char-p (character-at point))))
         do (character-offset point 1))
-  (unless skip-last-whitespaces
+  (unless skip-last-whitespaces 
     (skip-whitespace-backward point)))
 
 (defun move-to-string-start (point)
@@ -128,6 +128,10 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (ignore-errors
     (let ((prefix (subseq (line-string point) 0 (point-column point))))
       (not (find-if (lambda (char) (not (whitespace-p char))) (coerce prefix 'list))))))
+
+(define-command paredit-insert-newline () ()
+  (insert-character (current-point) #\Newline)
+  (indent-buffer (current-buffer)))
 
 (define-command paredit-insert-paren () ()
   (let ((p (current-point)))
@@ -545,6 +549,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 (loop for (k . f) in '((forward-sexp . paredit-forward)
                        (backward-sexp . paredit-backward)
+                       ("Return" . paredit-insert-newline)
                        ("(" . paredit-insert-paren)
                        (")" . paredit-close-parenthesis)
                        ("\"" . paredit-insert-doublequote)

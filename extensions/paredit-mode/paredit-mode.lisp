@@ -131,7 +131,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 (define-command paredit-insert-newline () ()
   (insert-character (current-point) #\Newline)
-  (indent-buffer (current-buffer)))
+  (indent-current-buffer))
 
 (define-command paredit-insert-paren () ()
   (let ((p (current-point)))
@@ -227,10 +227,10 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
         ((paredit-whitespace-prefix p)
          (delete-trailing-whitespace)
          (delete-previous-char (1+ (point-column p)))
-         (let* ((p (current-point))
-                (c (character-at p)))
-           (unless (or (whitespace-p c)) (eq #\) c)
-             (insert-character p #\ )))
+         (let* ((new-p (current-point))
+                (c (character-at new-p)))
+           (unless (or (whitespace-p c) (eq #\) c))
+             (insert-character new-p #\ )))
          (indent-buffer (current-buffer)))
         (t
          (delete-previous-char))))

@@ -121,13 +121,10 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
       (sharp-n-literal-p #\A p)
       (sharp-n-literal-p #\= p)))
 
-(defun whitespace-p (char)
-  (find char str:*whitespaces*))
-
 (defun whitespace-prefix-p (point)
   (ignore-errors
     (let ((prefix (subseq (line-string point) 0 (point-column point))))
-      (not (find-if (lambda (char) (not (whitespace-p char))) (coerce prefix 'list))))))
+      (not (find-if (lambda (char) (not (syntax-space-char-p char))) (coerce prefix 'list))))))
 
 (define-command paredit-insert-newline () ()
   (insert-character (current-point) #\Newline)
@@ -229,7 +226,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
          (delete-previous-char (1+ (point-column p)))
          (let* ((new-p (current-point))
                 (c (character-at new-p)))
-           (unless (or (whitespace-p c) (eq #\) c))
+           (unless (or (syntax-space-char-p c) (eq #\) c))
              (insert-character new-p #\ )))
          (indent-current-buffer))
         (t

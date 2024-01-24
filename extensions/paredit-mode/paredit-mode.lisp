@@ -46,7 +46,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                    (or (syntax-closed-paren-char-p (character-at point))
                        (syntax-space-char-p (character-at point))))
         do (character-offset point 1))
-  (unless skip-last-whitespaces 
+  (unless skip-last-whitespaces
     (skip-whitespace-backward point)))
 
 (defun move-to-string-start (point)

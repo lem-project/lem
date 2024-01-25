@@ -28,7 +28,6 @@
 (defun format-buffer (&key buffer auto)
   (let* ((buf (or buffer (current-buffer)))
          (mode (buffer-major-mode buf)))
-    (message "mode: ~s" mode)
     ;; early return if no file
     (unless (buffer-filename buf)
       (message "No file to format.")

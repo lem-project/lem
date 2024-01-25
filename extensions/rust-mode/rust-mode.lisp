@@ -5,10 +5,7 @@
            :rust-format-buffer))
 (in-package :lem-rust-mode)
 
-(defvar *rust-format-on-save* t)
 (defvar *rust-format-buffer* "rustfmt")
-
-(define-editor-variable rust-format-on-save t)
 
 (defun tokens (boundary strings)
   (let ((alternation
@@ -61,21 +58,21 @@
                                      ,(ppcre:parse-string "([^\\t <>()-]+)")
                                      :word-boundary)
                                    :captures (vector nil
-                                                     (make-tm-name 'syntax-keyword-attribute)
-                                                     (make-tm-name 'syntax-function-name-attribute)))
+                                                      (make-tm-name 'syntax-keyword-attribute)
+                                                      (make-tm-name 'syntax-function-name-attribute)))
                     (make-tm-match `(:sequence
                                      ,(ppcre:parse-string "([^A-Z:\\t <>()-]+)")
                                      "::"
                                      :word-boundary)
                                    :captures (vector nil
-                                                     (make-tm-name 'syntax-variable-attribute)
-                                                     nil))
+                                                      (make-tm-name 'syntax-variable-attribute)
+                                                      nil))
                     (make-tm-match `(:sequence
                                      :word-boundary
                                      ,(ppcre:parse-string "([^\\t <>()-]+)!"))
                                    :captures (vector nil
-                                                     (make-tm-name 'syntax-variable-attribute)
-                                                     nil))
+                                                      (make-tm-name 'syntax-variable-attribute)
+                                                      nil))
                     (make-tm-match
                      (tokens :word-boundary
                              '("u8" "i8"
@@ -134,7 +131,10 @@
     (:name "Rust"
      :keymap *rust-mode-keymap*
      :syntax-table *rust-syntax-table*
-     :mode-hook *rust-mode-hook*)
+     :mode-hook *rust-mode-hook*
+     :formatter (lambda (buffer)
+                  (declare (ignore buffer))
+                  (rust-format-buffer)))
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'calc-indent-function) 'calc-indent
         (variable-value 'indent-tabs-mode) nil
@@ -144,8 +144,7 @@
         (variable-value 'insertion-line-comment) "// "
         (variable-value 'tab-width :buffer) 4)
   (add-hook (variable-value 'before-save-hook :buffer) 'rust-before-save-hook)
-  (add-hook (variable-value 'after-save-hook :buffer) 'rust-after-save-hook)
-  (setf (variable-value 'rust-format-on-save :buffer) *rust-format-on-save*))
+  (add-hook (variable-value 'after-save-hook :buffer) 'rust-after-save-hook))
 
 (define-key *rust-mode-keymap* "C-c C-f" 'rust-format-buffer)
 (define-key *rust-mode-keymap* "M-C-q" 'indent-exp)
@@ -304,23 +303,12 @@
                    (return-from calc-indent indent)))))
          (calc-indent-region start point))))))
 
-(define-command rust-format-buffer () ()
+(defun rust-format-buffer (buffer)
+  (declare (ignore buffer))
   (when (zerop (nth-value 2
-                          (uiop:run-program (format nil "~A --version" *rust-format-buffer*)
-                                            :ignore-error-status t)))
+                           (uiop:run-program (format nil "~A --version" *rust-format-buffer*)
+                                             :ignore-error-status t)))
     (filter-buffer *rust-format-buffer*)
     (message "Formatted buffer with rustfmt.")))
-
-(defun rust-before-save-hook (buffer)
-  (declare (ignore buffer))
-  (when (variable-value 'rust-format-on-save :buffer)
-    (ignore-errors
-     (rust-format-buffer))))
-
-(defun rust-after-save-hook (buffer)
-  (declare (ignore buffer))
-  (when (variable-value 'rust-format-on-save :buffer)
-
-    ))
 
 (define-file-type ("rs") rust-mode)

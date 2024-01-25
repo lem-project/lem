@@ -385,5 +385,7 @@ With prefix argument INSERT, insert the directory of the active buffer at point.
         (message "Directory ~a" dir))))
 
 (define-command format-current-buffer () ()
-  "Try to format a buffer."
+  "Save changes and try to format the current buffer.
+
+Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode and json-mode with prettier, and lisp-mode. Additionally rust-mode uses rustfmt."
   (format-buffer))

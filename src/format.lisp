@@ -1,14 +1,14 @@
 (in-package :lem-core)
 
-;; Set this to true to format on save.
-(defvar *auto-format* nil)
+(defvar *auto-format* nil
+  "Set to true to format on save.")
 
 ;; Formatter methods for lem/format.
 ;; You don't need to use this directly, the `register-formatter` will do it for you.
 (defgeneric formatter-impl (mode buffer))
 
 (defmacro register-formatter (mode handler)
-  "Register a formatter for a mode, handler takes buffer as argument."
+  "Register a formatter for a mode. `handler' is a function that takes a buffer as argument."
   `(defmethod formatter-impl ((mode (eql (quote ,mode))) buffer)
      (funcall ,handler buffer)))
 
@@ -26,6 +26,9 @@
   (write-to-file-without-write-hook buffer (buffer-filename buffer)))
 
 (defun format-buffer (&key buffer auto)
+  "Write unsaved changes and format this buffer.
+
+See the interactive command `format-current-buffer'."
   (let* ((buf (or buffer (current-buffer)))
          (mode (buffer-major-mode buf)))
     ;; early return if no file

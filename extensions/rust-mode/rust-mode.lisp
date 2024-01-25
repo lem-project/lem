@@ -132,9 +132,7 @@
      :keymap *rust-mode-keymap*
      :syntax-table *rust-syntax-table*
      :mode-hook *rust-mode-hook*
-     :formatter (lambda (buffer)
-                  (declare (ignore buffer))
-                  (rust-format-buffer)))
+     :formatter 'rust-format-buffer)
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'calc-indent-function) 'calc-indent
         (variable-value 'indent-tabs-mode) nil
@@ -142,9 +140,7 @@
         (variable-value 'end-of-defun-function) 'end-of-defun
         (variable-value 'line-comment) "//"
         (variable-value 'insertion-line-comment) "// "
-        (variable-value 'tab-width :buffer) 4)
-  (add-hook (variable-value 'before-save-hook :buffer) 'rust-before-save-hook)
-  (add-hook (variable-value 'after-save-hook :buffer) 'rust-after-save-hook))
+        (variable-value 'tab-width :buffer) 4))
 
 (define-key *rust-mode-keymap* "C-c C-f" 'rust-format-buffer)
 (define-key *rust-mode-keymap* "M-C-q" 'indent-exp)

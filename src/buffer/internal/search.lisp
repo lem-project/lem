@@ -255,6 +255,9 @@
                  (search-backward-endp-function limit-point))))
 
 (defun looking-at (point regex)
+  "Look if the line content after POINT matches REGEX.
+
+Return multiple values: the matching string or nil, a vector of matching substrings."
   (let ((start (point-charpos point))
         (string (line-string point)))
     (multiple-value-bind (match-start match-end reg-starts reg-ends)

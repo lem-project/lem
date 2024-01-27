@@ -10,7 +10,10 @@
 (defgeneric handle-mouse-button-up (widget))
 
 (defclass widget ()
-  ((x :initarg :x
+  ((parent :initform nil
+           :initarg :parent
+           :reader widget-parent)
+   (x :initarg :x
       :initform (alexandria:required-argument :x)
       :reader widget-x)
    (y :initarg :y
@@ -21,7 +24,52 @@
           :reader widget-width)
    (height :initarg :height
            :initform (alexandria:required-argument :height)
-           :reader widget-height)))
+           :reader widget-height)
+   (texture :accessor widget-texture)
+   (modified :initform t
+             :reader widget-modified-p
+             :writer set-widget-modified)))
+
+(defmethod initialize-instance ((instance widget) &rest initargs)
+  (declare (ignore initargs))
+  (let ((instance (call-next-method)))
+    (sdl2:in-main-thread ()
+      (setf (widget-texture instance)
+            ;; TODO: sdl2:destroy-texture
+            (sdl2:create-texture (lem-sdl2:current-renderer)
+                                 sdl2-ffi:+sdl-pixelformat-rgba8888+
+                                 sdl2-ffi:+sdl-textureaccess-target+
+                                 (widget-width instance)
+                                 (widget-height instance))))
+    instance))
+
+(defmethod modify ((widget widget))
+  (when (widget-parent widget)
+    (modify (widget-parent widget)))
+  (set-widget-modified t widget))
+
+(defmethod render :around ((widget widget))
+  (cond ((widget-modified-p widget)
+         (set-widget-modified nil widget)
+         (let ((previous-target (sdl2-ffi.functions:sdl-get-render-target (lem-sdl2:current-renderer))))
+           (sdl2:set-render-target (lem-sdl2:current-renderer) (widget-texture widget))
+           (unwind-protect (call-next-method)
+             (sdl2:set-render-target (lem-sdl2:current-renderer) previous-target)
+             (sdl2:with-rects ((rect (widget-x widget)
+                                     (widget-y widget)
+                                     (widget-width widget)
+                                     (widget-height widget)))
+               (sdl2:render-copy (lem-sdl2:current-renderer)
+                                 (widget-texture widget)
+                                 :dest-rect rect)))))
+        (t
+         (sdl2:with-rects ((rect (widget-x widget)
+                                 (widget-y widget)
+                                 (widget-width widget)
+                                 (widget-height widget)))
+           (sdl2:render-copy (lem-sdl2:current-renderer)
+                             (widget-texture widget)
+                             :dest-rect rect)))))
 
 (defmethod handle-mouse-button-down :around ((widget widget) x y button)
   (when (and (<= (widget-x widget) x (+ (widget-x widget) (widget-width widget)))
@@ -39,18 +87,27 @@
 
 (defclass vertical-color-slider (widget)
   ((position :initform 0
-             :accessor vertical-color-slider-position)))
+             :accessor vertical-color-slider-position)
+   (selected-color :initform (lem:make-color 255 0 0)
+                   :accessor vertical-color-slider-selected-color)
+   (slide-callback :initarg :slide-callback
+                   :initform nil
+                   :reader vertical-color-slider-slide-callback)))
 
 (defmethod render ((widget vertical-color-slider))
-  (render-vertical-slider :x (widget-x widget)
-                          :y (widget-y widget)
-                          :width (widget-width widget)
-                          :height (widget-height widget)
-                          :slider-position (vertical-color-slider-position widget)))
+  (let ((color (render-vertical-slider :x 0
+                                       :y 0
+                                       :width (widget-width widget)
+                                       :height (widget-height widget)
+                                       :slider-position (vertical-color-slider-position widget))))
+    (setf (vertical-color-slider-selected-color widget) color)))
 
 (defmethod handle-mouse-button-down ((widget vertical-color-slider) x y button)
   (when (eql button :button-1)
-    (setf (vertical-color-slider-position widget) y)))
+    (modify widget)
+    (setf (vertical-color-slider-position widget) y)
+    (when (vertical-color-slider-slide-callback widget)
+      (funcall (vertical-color-slider-slide-callback widget) widget))))
 
 (defun compute-slider-current-colors (color i segmented num)
   (let ((red (lem:color-red color))
@@ -110,15 +167,17 @@
    (cursor-y :initform 0
              :accessor color-square-cursor-y)
    (selected-color :initform nil
-                   :accessor color-square-selected-color)))
+                   :accessor color-square-selected-color)
+   (texture :initform nil
+            :accessor color-square-texture)))
 
 (defmethod render ((widget color-square))
   (let ((selected-color
           (render-square :red (lem:color-red (color-square-base-color widget))
                          :green (lem:color-green (color-square-base-color widget))
                          :blue (lem:color-blue (color-square-base-color widget))
-                         :x (widget-x widget)
-                         :y (widget-y widget)
+                         :x 0
+                         :y 0
                          :size (widget-width widget)
                          :cursor-x (color-square-cursor-x widget)
                          :cursor-y (color-square-cursor-y widget))))
@@ -126,6 +185,7 @@
 
 (defmethod handle-mouse-button-down ((widget color-square) x y button)
   (when (eql button :button-1)
+    (modify widget)
     (setf (color-square-cursor-x widget) x
           (color-square-cursor-y widget) y)))
 
@@ -208,30 +268,36 @@
   (:default-initargs
    :x 0
    :y 0
-   :width 1000
-   :height 1000))
+   :width (+ +square-size+ 10 +slider-width+)
+   :height +square-size+))
 
 (defmethod initialize-instance ((instance color-picker) &rest initargs)
   (declare (ignore initargs))
-  (let ((instance (call-next-method)))
+  (let* ((instance (call-next-method))
+         (color-square (make-instance 'color-square
+                                      :parent instance
+                                      :x (+ (widget-x instance) +square-x+)
+                                      :y (+ (widget-y instance) +square-y+)
+                                      :width +square-size+
+                                      :height +square-size+)))
     (setf (color-picker-slider instance)
           (make-instance 'vertical-color-slider
+                         :parent instance
                          :x (+ (widget-x instance) +slider-x+)
                          :y (+ (widget-y instance) +slider-y+)
                          :width +slider-width+
-                         :height +slider-height+))
+                         :height +slider-height+
+                         :slide-callback (lambda (slider-widget)
+                                           (modify color-square)
+                                           (setf (color-square-base-color color-square)
+                                                 (vertical-color-slider-selected-color slider-widget)))))
     (setf (color-picker-square instance)
-          (make-instance 'color-square
-                         :x (+ (widget-x instance) +square-x+)
-                         :y (+ (widget-y instance) +square-y+)
-                         :width +square-size+
-                         :height +square-size+))
+          color-square)
     instance))
 
 (defmethod render ((widget color-picker))
-  (let ((color (render (color-picker-slider widget))))
-    (setf (color-square-base-color (color-picker-square widget)) color)
-    (render (color-picker-square widget))))
+  (render (color-picker-slider widget))
+  (render (color-picker-square widget)))
 
 (defmethod handle-mouse-button-down ((widget color-picker) x y button)
   (handle-mouse-button-down (color-picker-slider widget) x y button)

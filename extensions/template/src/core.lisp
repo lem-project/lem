@@ -54,9 +54,13 @@
 (defun insert-template (buffer)
   "Insert registered template into buffer."
   (when-let (file (find-match (buffer-filename buffer)))
-    (insert-string
-     (buffer-start-point buffer)
-     (render-file file `(:buffer ,buffer)))))
+    (handler-case
+        (insert-string
+         (buffer-start-point buffer)
+         (render-file file `(:buffer ,buffer)))
+      (error (c)
+        (declare (ignore c))
+        (message "Failed to render template: ~a" file)))))
 
 (defun new-file-p (buffer)
   "Buffer is a new file, and does not already exist on disk."

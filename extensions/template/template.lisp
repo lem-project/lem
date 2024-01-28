@@ -1,5 +1,4 @@
-(defpackage #:lem-template/core
-  (:nicknames :lem-template)
+(defpackage #:lem-template
   (:use :cl :lem)
   (:import-from #:alexandria-2 #:line-up-first #:when-let #:rcurry)
   (:export #:*templates*

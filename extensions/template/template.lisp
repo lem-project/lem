@@ -6,7 +6,7 @@
            #:register-template
            #:register-templates
            #:insert-template))
-(in-package :lem-template/core)
+(in-package :lem-template)
 
 (defvar *templates* nil
   "List of registered file templates.")

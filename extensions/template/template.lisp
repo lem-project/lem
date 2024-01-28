@@ -63,7 +63,8 @@
     (handler-case
         (insert-string
          (buffer-start-point buffer)
-         (render-file file `(:buffer ,buffer)))
+         (render-file file `(:buffer ,buffer
+                             :path ,(buffer-filename buffer))))
       (error (c)
         (declare (ignore c))
         (message "Failed to render template: ~a" file)))))

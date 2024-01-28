@@ -20,5 +20,7 @@ Assuming this file exists in `~/.config/lem/templates/asd.clt`, you can register
 ```lisp
 (lem-template:register-template
   :pattern ".*\.asd"
-  :template (merge-pathname "templates/asd.clt" (lem-home)))
+  :file (merge-pathnames "templates/asd.clt" (lem-home)))
 ```
+
+You can create any kind of template you want in the [cl-template](https://github.com/alpha123/cl-template) format, `buffer` is passed to the template and you can read it with `(@ buffer)`

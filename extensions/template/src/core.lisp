@@ -18,12 +18,17 @@
   pattern
   file)
 
-(defun empty-buffer-p (buffer)
-  (point= (buffer-start-point buffer)
-          (buffer-end-point buffer)))
+(defun remove-old-template (pattern)
+  "Get rid of old template for pattern when a new one is registered."
+  (setf *templates*
+        (remove-if
+         (lambda (tmpl)
+           (equal pattern (template-pattern tmpl)))
+         *templates*)))
 
 (defun register-template (&key pattern file)
   "Register a template used for filenames matching pattern."
+  (remove-old-template pattern)
   (setf *templates*
         (cons (make-template :pattern pattern :file file)
               *templates*)))

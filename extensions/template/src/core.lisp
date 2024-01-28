@@ -5,7 +5,8 @@
   (:export #:*templates*
            #:*auto-template*
            #:register-template
-           #:register-templates))
+           #:register-templates
+           #:insert-template))
 (in-package :lem-template/core)
 
 (defvar *templates* nil
@@ -57,7 +58,7 @@
   "Buffer is a new file, and does not already exist on disk."
   (not (uiop:file-exists-p (buffer-filename buffer))))
 
-(defun insert-template (buffer)
+(define-command insert-template (&optional (buffer (current-buffer))) ()
   "Insert registered template into buffer."
   (when-let (file (find-match (buffer-filename buffer)))
     (handler-case

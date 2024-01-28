@@ -22,16 +22,13 @@
   "Get rid of old template for pattern when a new one is registered."
   (setf *templates*
         (remove-if
-         (lambda (tmpl)
-           (equal pattern (template-pattern tmpl)))
+         (lambda (tmpl) (equal pattern (template-pattern tmpl)))
          *templates*)))
 
 (defun register-template (&key pattern file)
   "Register a template used for filenames matching pattern."
   (remove-old-template pattern)
-  (setf *templates*
-        (cons (make-template :pattern pattern :file file)
-              *templates*)))
+  (push (make-template :pattern pattern :file file) *templates*))
 
 (defmacro register-templates (&body templates)
   "Register multiple templates with `register-template`."
@@ -56,6 +53,10 @@
   (when-let ((tmpl (find-if (rcurry #'template-match-p buffer-filename) *templates*)))
     (template-file tmpl)))
 
+(defun new-file-p (buffer)
+  "Buffer is a new file, and does not already exist on disk."
+  (not (uiop:file-exists-p (buffer-filename buffer))))
+
 (defun insert-template (buffer)
   "Insert registered template into buffer."
   (when-let (file (find-match (buffer-filename buffer)))
@@ -66,10 +67,6 @@
       (error (c)
         (declare (ignore c))
         (message "Failed to render template: ~a" file)))))
-
-(defun new-file-p (buffer)
-  "Buffer is a new file, and does not already exist on disk."
-  (not (uiop:file-exists-p (buffer-filename buffer))))
 
 (add-hook *find-file-hook*
           (lambda (buffer)

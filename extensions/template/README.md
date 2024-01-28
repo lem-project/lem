@@ -19,8 +19,20 @@ Assuming this file exists in `~/.config/lem/templates/asd.clt`, you can register
 
 ```lisp
 (lem-template:register-template
-  :pattern ".*\.asd"
-  :file (merge-pathnames "templates/asd.clt" (lem-home)))
+ :pattern ".*\.asd"
+ :file (merge-pathnames "templates/asd.clt" (lem-home)))
 ```
 
 You can create any kind of template you want in the [cl-template](https://github.com/alpha123/cl-template) format, `buffer` is passed to the template and you can read it with `(@ buffer)`
+
+# Examples
+
+See [my templates](https://github.com/garlic0x1/.lem/templates/) for more examples, I used the plural `register-templates` to register them like this:
+
+```lisp
+(register-templates
+  (:pattern ".*\.asd"  :file (merge-pathnames "templates/asd.clt"      (lem-home)))
+  (:pattern ".*\.lisp" :file (merge-pathnames "templates/lisp.clt"     (lem-home)))
+  (:pattern ".*\.go"   :file (merge-pathnames "templates/go.clt"       (lem-home)))
+  (:pattern "Makefile" :file (merge-pathnames "templates/Makefile.clt" (lem-home))))
+```

@@ -311,7 +311,7 @@
                                (current-window)
                                (* argument +scroll-unit+)))
 
-(defmethod lem-core::handle-mouse-button-down ((buffer tree-view-buffer) mouse-event &key window)
+(defmethod lem:handle-mouse-button-down ((buffer tree-view-buffer) mouse-event &key window)
   (multiple-value-bind (x y)
       (lem-core::get-relative-mouse-coordinates-pixels mouse-event window)
     (let ((node (get-node-at-coordinates buffer x y)))
@@ -321,7 +321,7 @@
              (funcall (node-click-callback (text-node-node node))
                       (text-node-node node)))))))
 
-(defmethod lem-core::handle-mouse-hover ((buffer tree-view-buffer) mouse-event &key window)
+(defmethod lem:handle-mouse-hover ((buffer tree-view-buffer) mouse-event &key window)
   (multiple-value-bind (x y)
       (lem-core::get-relative-mouse-coordinates-pixels mouse-event window)
     (let ((node (get-node-at-coordinates buffer x y)))

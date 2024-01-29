@@ -57,7 +57,7 @@
   "Buffer is a new file, and does not already exist on disk."
   (not (uiop:file-exists-p (buffer-filename buffer))))
 
-(define-command insert-template (&optional (buffer (current-buffer))) ()
+(defun insert-template (buffer)
   "Insert registered template into buffer."
   (when-let (file (find-match (buffer-filename buffer)))
     (handler-case

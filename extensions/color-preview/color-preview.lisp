@@ -11,21 +11,28 @@
 (defmethod invoke-color-picker (frontend callback))
 
 (defun click-callback (window point)
-  (with-point ((start (maybe-beginning-of-string point) :right-inserting))
-    (with-point ((end start :left-inserting))
+  (with-point ((start (maybe-beginning-of-string point)))
+    (with-point ((end start))
       (form-offset end 1)
       (character-offset start 1)
       (character-offset end -1)
-      (invoke-color-picker (implementation)
-                           (lambda (color)
-                             (when color
-                               (delete-between-points start end)
-                               (insert-string start
-                                              (format nil "#~2,'0X~2,'0X~2,'0X"
-                                                      (color-red color)
-                                                      (color-green color)
-                                                      (color-blue color)))
-                               (scan-color-in-window window)))))))
+      (let ((start-pos (position-at-point start))
+            (end-pos (position-at-point end))
+            (buffer (point-buffer start)))
+        (invoke-color-picker (implementation)
+                             (lambda (color)
+                               (when color
+                                 (with-point ((start (buffer-point buffer))
+                                              (end (buffer-point buffer)))
+                                   (move-to-position start start-pos)
+                                   (move-to-position end end-pos)
+                                   (delete-between-points start end)
+                                   (insert-string start
+                                                  (format nil "#~2,'0X~2,'0X~2,'0X"
+                                                          (color-red color)
+                                                          (color-green color)
+                                                          (color-blue color)))
+                                   (scan-color-in-window window)))))))))
 
 (define-overlay-accessors color-ovelray
   :clear-function clear-color-overlays

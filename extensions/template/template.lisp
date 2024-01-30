@@ -15,7 +15,9 @@
   (:export #:*auto-template*
            #:register-template
            #:register-templates
-           #:insert-template))
+           #:insert-template
+           #:render-file
+           #:render-string))
 (in-package :lem-template)
 
 (defvar *patterns* nil
@@ -67,5 +69,5 @@
 
 (add-hook *find-file-hook*
           (lambda (buffer)
-            (when (and *auto-template* (new-file-p buffer))
+            (when (and *auto-template* (new-file-p buffer) (buffer-empty-p buffer))
               (insert-template buffer))))

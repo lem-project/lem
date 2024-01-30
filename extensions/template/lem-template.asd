@@ -5,4 +5,6 @@
   :components ((:file "utils")
                (:file "render")
                (:file "prompt")
-               (:file "template")))
+               (:file "template")
+               (:file "snippet")
+               (:file "package")))

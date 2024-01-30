@@ -1,4 +1,4 @@
-(defpackage #:lem-template
+(defpackage #:lem-template/template
   (:use :cl :lem)
   (:import-from #:lem-template/render
                 #:render-file)
@@ -15,10 +15,8 @@
   (:export #:*auto-template*
            #:register-template
            #:register-templates
-           #:insert-template
-           #:render-file
-           #:render-string))
-(in-package :lem-template)
+           #:insert-template))
+(in-package :lem-template/template)
 
 (defvar *tmpl-patterns* nil
   "List of registered file patterns.")
@@ -53,7 +51,7 @@
     (let ((tmpls (tmpl-pattern-templates p)))
       (if (= 1 (hash-table-count tmpls))
           (hash-table-first tmpls)
-          (prompt-hash-table "Template: " tmpls)))))
+          (prompt-hash-table "Template: " tmpls :with-none-option t)))))
 
 (defun insert-template (buffer)
   "Insert registered template into buffer."

@@ -62,7 +62,7 @@
          (render-file file `(:buffer ,buffer
                              :path ,(buffer-filename buffer))))
       (error (c)
-        (declare (ignore c))
+        (message "Error: ~a" c)
         (message "Failed to render template: ~a" file)))))
 
 (add-hook *find-file-hook*

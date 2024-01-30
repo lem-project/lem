@@ -1,5 +1,7 @@
 (defpackage #:lem-template
   (:use :cl :lem)
+  (:import-from #:lem-template/render
+                #:render-file)
   (:import-from #:lem-template/prompt
                 #:prompt-hash-table)
   (:import-from #:lem-template/utils
@@ -7,12 +9,10 @@
                 #:new-file-p
                 #:hash-table-first)
   (:import-from #:alexandria-2
-                #:line-up-first
                 #:when-let
                 #:rcurry
                 #:if-let)
-  (:export #:*patterns*
-           #:*auto-template*
+  (:export #:*auto-template*
            #:register-template
            #:register-templates
            #:insert-template))
@@ -39,17 +39,7 @@
 
 (defmacro register-templates (&body templates)
   "Register multiple templates with `register-template`."
-  `(progn
-     ,@(mapcar
-        (lambda (it) `(register-template ,@it))
-        templates)))
-
-(defun render-file (template-file &optional args)
-  "Render a cl-template file to a string."
-  (line-up-first
-   (uiop:read-file-string template-file)
-   (cl-template:compile-template)
-   (funcall args)))
+  `(progn ,@(mapcar (lambda (it) `(register-template ,@it)) templates)))
 
 (defun template-match-p (template filename)
   "Template pattern matches filename."

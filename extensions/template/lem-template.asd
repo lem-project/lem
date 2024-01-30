@@ -3,5 +3,6 @@
   :license "MIT"
   :depends-on (:cl-template)
   :components ((:file "utils")
+	       (:file "render")
                (:file "prompt")
                (:file "template")))

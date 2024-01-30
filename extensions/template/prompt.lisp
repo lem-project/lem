@@ -1,6 +1,6 @@
 (defpackage #:lem-template/prompt
   (:use :cl :lem)
-  (:import-from #:alexandria-2 #:curry #:hash-table-keys)
+  (:import-from #:alexandria-2 #:hash-table-keys)
   (:export #:prompt-hash-table))
 (in-package :lem-template/prompt)
 

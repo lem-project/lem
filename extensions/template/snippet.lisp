@@ -6,10 +6,14 @@
                 #:prompt-hash-table)
   (:import-from #:alexandria-2
                 #:if-let)
-  (:export #:register-snippet
+  (:export #:*format-after-snippet*
+           #:register-snippet
            #:register-snippets
            #:insert-snippet))
 (in-package :lem-template/snippet)
+
+(defvar *format-after-snippet* t
+  "When enabled, formats buffer after inserting snippet.")
 
 (defvar *mode-snippets* (make-hash-table)
   "Table mapping mode to another table of named snippets.")
@@ -34,9 +38,13 @@
          (mode (buffer-major-mode buffer)))
     (if-let ((snips (gethash mode *mode-snippets*)))
       (progn
+        ;; insert the snippet
         (insert-string point (render-string
                               (prompt-hash-table "Snippet: " snips)
                               `(:buffer ,buffer
                                 :path ,(buffer-filename buffer))))
-        (ignore-errors (lem:format-buffer :buffer buffer)))
+        ;; format the new snippet
+        (when *format-after-snippet*
+          (write-to-file-without-write-hook buffer (buffer-filename buffer))
+          (lem:format-buffer :buffer buffer :auto t)))
       (message "No snippets for mode ~a" mode))))

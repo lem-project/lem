@@ -1,34 +1,41 @@
 (defpackage #:lem-template
   (:use :cl :lem)
-  (:import-from #:alexandria-2 #:line-up-first #:when-let #:rcurry)
-  (:export #:*templates*
+  (:import-from #:lem-template/prompt
+                #:prompt-hash-table)
+  (:import-from #:lem-template/utils
+                #:buffer-empty-p
+                #:new-file-p
+                #:hash-table-first)
+  (:import-from #:alexandria-2
+                #:line-up-first
+                #:when-let
+                #:rcurry
+                #:if-let)
+  (:export #:*patterns*
            #:*auto-template*
            #:register-template
            #:register-templates
            #:insert-template))
 (in-package :lem-template)
 
-(defvar *templates* nil
-  "List of registered file templates.")
+(defvar *patterns* nil
+  "List of registered file patterns.")
 
 (defparameter *auto-template* t
   "Enable automatically populating new files with templates.")
 
-(defstruct template
+(defstruct pattern
   pattern
-  file)
+  templates)
 
-(defun remove-old-template (pattern)
-  "Get rid of old template for pattern when a new one is registered."
-  (setf *templates*
-        (remove-if
-         (lambda (tmpl) (equal pattern (template-pattern tmpl)))
-         *templates*)))
-
-(defun register-template (&key pattern file)
+(defun register-template (&key pattern file (name "default"))
   "Register a template used for filenames matching pattern."
-  (remove-old-template pattern)
-  (push (make-template :pattern pattern :file file) *templates*))
+  (if-let ((p (find-if (lambda (it) (equal pattern (pattern-pattern it))) *patterns*)))
+    (setf (gethash name (pattern-templates p)) file)
+    (progn (push (make-pattern :pattern pattern
+                               :templates (make-hash-table :test #'equal))
+                 *patterns*)
+           (register-template :pattern pattern :file file :name name))))
 
 (defmacro register-templates (&body templates)
   "Register multiple templates with `register-template`."
@@ -46,16 +53,15 @@
 
 (defun template-match-p (template filename)
   "Template pattern matches filename."
-  (cl-ppcre:scan (template-pattern template) filename))
+  (cl-ppcre:scan (pattern-pattern template) filename))
 
 (defun find-match (buffer-filename)
   "Find template where pattern matches filename."
-  (when-let ((tmpl (find-if (rcurry #'template-match-p buffer-filename) *templates*)))
-    (template-file tmpl)))
-
-(defun new-file-p (buffer)
-  "Buffer is a new file, and does not already exist on disk."
-  (not (uiop:file-exists-p (buffer-filename buffer))))
+  (when-let ((p (find-if (rcurry #'template-match-p buffer-filename) *patterns*)))
+    (let ((tmpls (pattern-templates p)))
+      (if (= 1 (hash-table-count tmpls))
+          (hash-table-first tmpls)
+          (prompt-hash-table "Template: " tmpls)))))
 
 (defun insert-template (buffer)
   "Insert registered template into buffer."

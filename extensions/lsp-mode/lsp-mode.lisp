@@ -360,6 +360,7 @@
                 (funcall continuation workspace))))
 
 (defun connect (client continuation)
+  (lem-lsp-base/yason-utils:update-jsonrpc-yason-parameters)
   (bt:make-thread
    (lambda ()
      (loop :with condition := nil

@@ -2,10 +2,10 @@
 
 (defun lem-home ()
   (let ((xdg-lem (uiop:xdg-config-home "lem/"))
-	(dot-lem (merge-pathnames ".lem/" (user-homedir-pathname))))
+        (dot-lem (merge-pathnames ".lem/" (user-homedir-pathname))))
     (or (uiop:getenv "LEM_HOME")
-	(and (probe-file dot-lem) dot-lem)
-	xdg-lem)))
+        (and (probe-file dot-lem) dot-lem)
+        xdg-lem)))
 
 (defun lem-logdir-pathname ()
   (merge-pathnames "logs/" (lem-home)))

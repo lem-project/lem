@@ -20,23 +20,23 @@
            #:render-string))
 (in-package :lem-template)
 
-(defvar *patterns* nil
+(defvar *tmpl-patterns* nil
   "List of registered file patterns.")
 
 (defparameter *auto-template* t
   "Enable automatically populating new files with templates.")
 
-(defstruct pattern
+(defstruct tmpl-pattern
   pattern
   templates)
 
 (defun register-template (&key pattern file (name "default"))
   "Register a template used for filenames matching pattern."
-  (if-let ((p (find-if (lambda (it) (equal pattern (pattern-pattern it))) *patterns*)))
-    (setf (gethash name (pattern-templates p)) file)
-    (progn (push (make-pattern :pattern pattern
-                               :templates (make-hash-table :test #'equal))
-                 *patterns*)
+  (if-let ((p (find-if (lambda (it) (equal pattern (tmpl-pattern-pattern it))) *tmpl-patterns*)))
+    (setf (gethash name (tmpl-pattern-templates p)) file)
+    (progn (push (make-tmpl-pattern :pattern pattern
+                                    :templates (make-hash-table :test #'equal))
+                 *tmpl-patterns*)
            (register-template :pattern pattern :file file :name name))))
 
 (defmacro register-templates (&body templates)
@@ -45,12 +45,12 @@
 
 (defun template-match-p (template filename)
   "Template pattern matches filename."
-  (cl-ppcre:scan (pattern-pattern template) filename))
+  (cl-ppcre:scan (tmpl-pattern-pattern template) filename))
 
 (defun find-match (buffer-filename)
   "Find template where pattern matches filename."
-  (when-let ((p (find-if (rcurry #'template-match-p buffer-filename) *patterns*)))
-    (let ((tmpls (pattern-templates p)))
+  (when-let ((p (find-if (rcurry #'template-match-p buffer-filename) *tmpl-patterns*)))
+    (let ((tmpls (tmpl-pattern-templates p)))
       (if (= 1 (hash-table-count tmpls))
           (hash-table-first tmpls)
           (prompt-hash-table "Template: " tmpls)))))

@@ -80,7 +80,8 @@
    :clear-buffer-edit-history
    ;; TODO: delete ugly exports
    :%buffer-clear-keep-binfo
-   :%buffer-keep-binfo)
+   :%buffer-keep-binfo
+   :buffer-empty-p)
   (:export
    :buffer-list
    :any-modified-buffer-p
@@ -301,7 +302,7 @@
   (:use :cl
         :lem/buffer/internal
         :lem/buffer/encodings
-	:lem/common/hooks
+        :lem/common/hooks
         :lem/common/var)
   (:export
    :*find-file-hook*

@@ -5,7 +5,6 @@
   (:import-from #:lem-template/prompt
                 #:prompt-hash-table)
   (:import-from #:lem-template/utils
-                #:buffer-empty-p
                 #:new-file-p
                 #:hash-table-first)
   (:import-from #:alexandria-2

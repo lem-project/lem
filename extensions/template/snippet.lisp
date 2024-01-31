@@ -46,5 +46,7 @@
         ;; format the new snippet
         (when *format-after-snippet*
           (write-to-file-without-write-hook buffer (buffer-filename buffer))
-          (lem:format-buffer :buffer buffer :auto t)))
+          (lem:format-buffer :buffer buffer :auto t))
+        ;; alert the user
+        (message "Snippet inserted."))
       (message "No snippets for mode ~a" mode))))

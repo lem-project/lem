@@ -142,9 +142,6 @@
   (self-insert n)
   (indent))
 
-(define-command gofmt () ()
-  (filter-buffer "gofmt"))
-
 (define-command godoc (command)
     ((prompt-for-string "godoc "))
   (let ((text

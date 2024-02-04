@@ -204,7 +204,8 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
 (defun init (args)
   (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
                  *original-home*)
-    (init-quicklisp (merge-pathnames "quicklisp/" (lem-home))))
+    (when (uiop:featurep :quicklisp)
+      (init-quicklisp (merge-pathnames "quicklisp/" (lem-home)))))
   (run-hooks *before-init-hook*)
   (unless (command-line-arguments-no-init-file args)
     (load-init-file))

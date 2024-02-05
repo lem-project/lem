@@ -256,12 +256,13 @@ Do you want to disable this message in the future?"
 
 (define-command lisp-macroexpand-in-place () ()
   (check-connection)
-  (lisp-eval-async `(micros:swank-macroexpand-1
-                      (lem-lisp-mode/internal::form-string-at-point))
-                    (lambda (string)
-                      (kill-sexp)
-                      (insert-string (current-point) string)
-                      (indent-buffer (current-buffer)))))
+  (lisp-eval-async
+   `(micros:swank-macroexpand-1
+     (lem-lisp-mode/internal::form-string-at-point))
+   (lambda (string)
+     (kill-sexp)
+     (insert-string (current-point) string)
+     (indent-buffer (current-buffer)))))
 
 (define-command lisp-macroexpand () ()
   (check-connection)

@@ -110,7 +110,11 @@
     (testing "left-bottom"
       (with-vi-buffer (#?"apple\nor[a]nge\ngrape\n")
         (cmd "<C-v>jh")
-        (ok (buf= #?"apple\no<ra>nge\ng<[r]a>pe\n"))))))
+        (ok (buf= #?"apple\no<ra>nge\ng<[r]a>pe\n"))))
+    (testing "delete"
+      (with-vi-buffer (#?"[a]pple\norange\ngrape\n")
+        (cmd "<C-v>llld")
+        (ok (buf= #?"[e]\norange\ngrape\n"))))))
 
 (deftest visual-swap-points
   (with-fake-interface ()

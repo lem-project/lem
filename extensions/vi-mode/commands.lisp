@@ -360,7 +360,9 @@ Move the cursor to the first non-blank character of the line."
   (when (point= start end)
     (return-from vi-delete))
   (let ((pos (point-charpos (current-point)))
-        (ends-with-newline (char= (character-at end -1) #\Newline)))
+        (ends-with-newline (char= (character-at end -1) #\Newline))
+        (column-start (point-column start))
+        (column-end (point-column end)))
     (delete-region start end :type type)
     (when (and (eq type :line)
                (not ends-with-newline)
@@ -375,8 +377,8 @@ Move the cursor to the first non-blank character of the line."
         (:block
          (move-to-line (current-point) (min (line-number-at-point start)
                                             (line-number-at-point end)))
-         (move-to-column (current-point) (min (point-column start)
-                                              (point-column end)))))
+         (move-to-column (current-point) (min column-start
+                                              column-end))))
       ;; After 'dw' or 'dW', move to the first non-blank char
       (when (and (this-motion-command)
                  (member (command-name (this-motion-command))

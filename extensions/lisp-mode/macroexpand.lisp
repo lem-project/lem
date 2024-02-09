@@ -146,7 +146,7 @@
     (backward-up-list point)
     (skip-chars-backward point #'syntax-expr-prefix-char-p))
   (values point
-          (form-offset (copy-point point :temporary) 1)))
+           (form-offset (copy-point point :temporary) 1)))
 
 (defmacro with-form-points ((start end point) &body body)
   (check-type start symbol)
@@ -223,8 +223,8 @@
              "Press \"q\" to undo.
 Do you want to disable this message in the future?"
              :gravity (make-instance 'lem/popup-window::gravity-cursor
-                                     :offset-x 1
-                                     :offset-y 1))
+                                      :offset-x 1
+                                      :offset-y 1))
         (lisp-macrostep-disable-help)))))
 
 (defun guard () (error 'read-only-error))
@@ -236,23 +236,33 @@ Do you want to disable this message in the future?"
          (orig-package-name (buffer-package (current-buffer) "CL-USER"))
          (p (and self (copy-point (current-point) :temporary))))
     (lisp-eval-async `(,expander ,(lem-lisp-mode/internal::form-string-at-point))
-                     (lambda (string)
-                       (let ((buffer (make-buffer "*lisp-macroexpand*")))
-                         (with-buffer-read-only buffer nil
-                           (unless self (erase-buffer buffer))
-                           (change-buffer-mode buffer 'lisp-mode)
-                           (setf (buffer-package buffer) orig-package-name)
-                           (when self
-                             (move-point (current-point) p)
-                             (kill-sexp))
-                           (insert-string (buffer-point buffer)
-                                          string)
-                           (indent-points (buffer-start-point buffer)
-                                          (buffer-end-point buffer))
-                           (with-pop-up-typeout-window (s buffer)
-                             (declare (ignore s)))
-                           (when self
-                             (move-point (buffer-point buffer) p))))))))
+                      (lambda (string)
+                        (let ((buffer (make-buffer "*lisp-macroexpand*")))
+                          (with-buffer-read-only buffer nil
+                            (unless self (erase-buffer buffer))
+                            (change-buffer-mode buffer 'lisp-mode)
+                            (setf (buffer-package buffer) orig-package-name)
+                            (when self
+                              (move-point (current-point) p)
+                              (kill-sexp))
+                            (insert-string (buffer-point buffer)
+                                           string)
+                            (indent-points (buffer-start-point buffer)
+                                           (buffer-end-point buffer))
+                            (with-pop-up-typeout-window (s buffer)
+                              (declare (ignore s)))
+                            (when self
+                              (move-point (buffer-point buffer) p))))))))
+
+(define-command lisp-macroexpand-in-place () ()
+  (check-connection)
+  (lisp-eval-async
+   `(micros:swank-macroexpand-1
+     (lem-lisp-mode/internal::form-string-at-point))
+   (lambda (string)
+     (kill-sexp)
+     (insert-string (current-point) string)
+     (indent-buffer (current-buffer)))))
 
 (define-command lisp-macroexpand () ()
   (check-connection)

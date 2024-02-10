@@ -213,8 +213,7 @@
 
 (defmethod lem-if:redraw-view-after ((jsonrpc jsonrpc) view)
   (log:info jsonrpc view)
-  (with-error-handler ()
-    (notify jsonrpc "touch" (hash "viewInfo" view))))
+  )
 
 (defmethod lem-if:will-update-display ((jsonrpc jsonrpc))
   (log:info jsonrpc)
@@ -229,7 +228,6 @@
       (notify jsonrpc
               "move-cursor"
               (hash "viewInfo" view "x" x "y" y)))
-    (notify jsonrpc "touch" nil)
     (notify jsonrpc "update-display" nil)))
 
 #+(or)

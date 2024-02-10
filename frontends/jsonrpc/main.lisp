@@ -190,8 +190,7 @@
 (defmethod lem-if:set-view-size ((jsonrpc jsonrpc) view width height)
   (log:info jsonrpc view width height)
   (with-error-handler ()
-    (setf (view-width view) width
-          (view-height view) height)
+    (resize-view view width height)
     (notify jsonrpc
             "resize-view"
             (hash "viewInfo" view

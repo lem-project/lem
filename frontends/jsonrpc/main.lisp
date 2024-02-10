@@ -30,7 +30,7 @@
    (foreground-color :accessor jsonrpc-foreground-color))
   (:default-initargs
    :name :jsonrpc
-   :redraw-after-modifying-floating-window nil
+   :redraw-after-modifying-floating-window t
    :window-left-margin 1))
 
 (defmethod resize-display ((jsonrpc jsonrpc) width height)
@@ -231,7 +231,8 @@
       (notify jsonrpc
               "move-cursor"
               (hash "viewInfo" view "x" x "y" y)))
-    (notify jsonrpc "touch" nil)))
+    (notify jsonrpc "touch" nil)
+    (notify jsonrpc "update-display" nil)))
 
 #+(or)
 (defmethod lem-if:display-popup-menu ((jsonrpc jsonrpc) items

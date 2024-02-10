@@ -344,13 +344,13 @@
 (defmethod draw-object (jsonrpc (object display:void-object) x y view)
   (values))
 
-(defvar *put-target* :window)
+(defvar *put-target* :edit-area)
 
 (defun put (jsonrpc view x y string attribute)
   (with-error-handler ()
     (notify jsonrpc
             (ecase *put-target*
-              (:window "put")
+              (:edit-area "put")
               (:modeline "modeline-put"))
             (hash "viewInfo" view
                   "x" x

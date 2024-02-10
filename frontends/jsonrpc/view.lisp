@@ -9,7 +9,8 @@
            :view-width
            :view-height
            :view-use-modeline
-           :view-kind))
+           :view-kind
+           :resize-view))
 (in-package :lem-jsonrpc/view)
 
 (defvar *view-id-counter* 0)
@@ -27,3 +28,8 @@
 (defun make-view (&rest args &key window x y width height use-modeline kind)
   (declare (ignore window x y width height use-modeline kind))
   (apply #'%make-view args))
+
+(defun resize-view (view width height)
+  (setf (view-width view) width
+        (view-height view) height)
+  (values))

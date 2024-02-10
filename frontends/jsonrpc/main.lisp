@@ -200,8 +200,7 @@
 (defmethod lem-if:set-view-pos ((jsonrpc jsonrpc) view x y)
   (log:info jsonrpc view x y)
   (with-error-handler ()
-    (setf (view-x view) x
-          (view-y view) y)
+    (move-view view x y)
     (notify jsonrpc
             "move-view"
             (hash "viewInfo" view

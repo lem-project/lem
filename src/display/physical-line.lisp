@@ -356,7 +356,8 @@
             (incf y (funcall redraw-fn window y logical-line left-side-objects left-side-width))
             (unless (< y height)
               (return-from outer)))))
-      (lem-if:clear-to-end-of-window (implementation) (window-view window) y)
+      (when (< y height)
+        (lem-if:clear-to-end-of-window (implementation) (window-view window) y))
       (setf (window-left-width window)
             (floor left-side-width (lem-if:get-char-width (implementation)))))))
 

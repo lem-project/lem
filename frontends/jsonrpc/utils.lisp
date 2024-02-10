@@ -3,6 +3,7 @@
   (:export :pdebug
            :hash
            :with-error-handler
+           :json-equal
            :pretty-json))
 (in-package :lem-jsonrpc/utils)
 
@@ -32,6 +33,10 @@
                                          (force-output stream))))))
          ,@body)
      (error ())))
+
+(defun json-equal (x y)
+  (string= (with-output-to-string (out) (yason:encode x out))
+           (with-output-to-string (out) (yason:encode y out))))
 
 (defun pretty-json (value)
   (with-output-to-string (out)

@@ -2,7 +2,8 @@
   (:use :cl
         :lem-jsonrpc/utils
         :lem-jsonrpc/view)
-  (:local-nicknames (:display :lem-core/display))
+  (:local-nicknames (:display :lem-core/display)
+                    (:queue :lem/common/queue))
   (:export :run-tcp-server
            :run-stdio-server
            :run-websocket-server
@@ -15,6 +16,10 @@
 (defvar *websocket-url*)
 
 (defvar *editor-thread*)
+
+(defvar *message-queue* (queue:make-queue))
+
+(defvar *last-bulk-argument* nil)
 
 (pushnew :lem-jsonrpc *features*)
 
@@ -45,6 +50,17 @@
                (jsonrpc/class:jsonrpc-transport (jsonrpc-server jsonrpc)))))
         (jsonrpc:notify (jsonrpc-server jsonrpc) method argument))
       (jsonrpc:broadcast (jsonrpc-server jsonrpc) method argument)))
+
+(defmethod notify* ((jsonrpc jsonrpc) method argument)
+  (queue:enqueue *message-queue* (hash "method" method "argument" argument)))
+
+(defmethod notify-all ((jsonrpc jsonrpc))
+  (let ((argument (coerce (loop :until (queue:empty-p *message-queue*)
+                                :collect (queue:dequeue *message-queue*))
+                          'vector)))
+    (unless (json-equal *last-bulk-argument* argument)
+      (setf *last-bulk-argument* argument)
+      (notify jsonrpc "bulk" argument))))
 
 (defun login (jsonrpc logged-in-callback)
   (lambda (params)
@@ -185,7 +201,7 @@
 (defmethod lem-if:clear ((jsonrpc jsonrpc) view)
   (log:info jsonrpc view)
   (with-error-handler ()
-    (notify jsonrpc "clear" (hash "viewInfo" view))))
+    (notify* jsonrpc "clear" (hash "viewInfo" view))))
 
 (defmethod lem-if:set-view-size ((jsonrpc jsonrpc) view width height)
   (log:info jsonrpc view width height)
@@ -194,8 +210,8 @@
     (notify jsonrpc
             "resize-view"
             (hash "viewInfo" view
-                    "width" width
-                    "height" height))))
+                  "width" width
+                  "height" height))))
 
 (defmethod lem-if:set-view-pos ((jsonrpc jsonrpc) view x y)
   (log:info jsonrpc view x y)
@@ -204,8 +220,8 @@
     (notify jsonrpc
             "move-view"
             (hash "viewInfo" view
-                    "x" x
-                    "y" y))))
+                  "x" x
+                  "y" y))))
 
 (defmethod lem-if:redraw-view-before ((jsonrpc jsonrpc) view)
   (log:info jsonrpc view)
@@ -228,16 +244,17 @@
       (notify jsonrpc
               "move-cursor"
               (hash "viewInfo" view "x" x "y" y)))
-    (notify jsonrpc "update-display" nil)))
+    (notify* jsonrpc "update-display" nil)
+    (notify-all jsonrpc)))
 
 #+(or)
 (defmethod lem-if:display-popup-menu ((jsonrpc jsonrpc) items
-                                       &key action-callback
-                                            print-spec
-                                            style
-                                            max-display-items))
+                                      &key action-callback
+                                           print-spec
+                                           style
+                                           max-display-items))
 #+(or)(defmethod lem-if:popup-menu-update
-    ((jsonrpc jsonrpc) popup-menu items &key print-spec max-display-items keep-focus))
+          ((jsonrpc jsonrpc) popup-menu items &key print-spec max-display-items keep-focus))
 #+(or)(defmethod lem-if:popup-menu-quit ((jsonrpc jsonrpc) popup-menu))
 #+(or)(defmethod lem-if:popup-menu-down ((jsonrpc jsonrpc) popup-menu))
 #+(or)(defmethod lem-if:popup-menu-up ((jsonrpc jsonrpc) popup-menu))
@@ -346,16 +363,16 @@
 
 (defun put (jsonrpc view x y string attribute)
   (with-error-handler ()
-    (notify jsonrpc
-            (ecase *put-target*
-              (:edit-area "put")
-              (:modeline "modeline-put"))
-            (hash "viewInfo" view
-                  "x" x
-                  "y" y
-                  "text" string
-                  "textWidth" (lem:string-width string)
-                  "attribute" (lem:ensure-attribute attribute nil)))))
+    (notify* jsonrpc
+             (ecase *put-target*
+               (:edit-area "put")
+               (:modeline "modeline-put"))
+             (hash "viewInfo" view
+                   "x" x
+                   "y" y
+                   "text" string
+                   "textWidth" (lem:string-width string)
+                   "attribute" (lem:ensure-attribute attribute nil)))))
 
 (defmethod draw-object (jsonrpc (object display:text-object) x y view)
   (let ((string (display:text-object-string object))
@@ -406,25 +423,25 @@
 
 (defmethod lem-if:render-line ((jsonrpc jsonrpc) view x y objects height)
   (with-error-handler ()
-    (notify jsonrpc
-            "clear-eol"
-            (hash "viewInfo" view
-                  "x" x
-                  "y" y))
+    (notify* jsonrpc
+             "clear-eol"
+             (hash "viewInfo" view
+                   "x" x
+                   "y" y))
     (render-line jsonrpc view x y objects)))
 
 (defmethod lem-if:render-line-on-modeline ((jsonrpc jsonrpc) view left-objects right-objects
                                            default-attribute height)
   (let ((*put-target* :modeline))
     (with-error-handler ()
-      (notify jsonrpc
-              "modeline-put"
-              (hash "viewInfo" view
-                    "x" 0
-                    "y" 0
-                    "text" (make-string (view-width view) :initial-element #\space)
-                    "textWidth" (view-width view)
-                    "attribute" default-attribute))
+      (notify* jsonrpc
+               "modeline-put"
+               (hash "viewInfo" view
+                     "x" 0
+                     "y" 0
+                     "text" (make-string (view-width view) :initial-element #\space)
+                     "textWidth" (view-width view)
+                     "attribute" default-attribute))
       (render-line jsonrpc view 0 0 left-objects)
       (render-line-from-behind jsonrpc view 0 right-objects))))
 
@@ -435,10 +452,11 @@
   1)
 
 (defmethod lem-if:clear-to-end-of-window ((jsonrpc jsonrpc) view y)
-  (notify jsonrpc "clear-eob"
-          (hash "viewInfo" view
-                "x" 0
-                "y" y)))
+  (notify* jsonrpc
+           "clear-eob"
+           (hash "viewInfo" view
+                 "x" 0
+                 "y" y)))
 
 
 ;;;

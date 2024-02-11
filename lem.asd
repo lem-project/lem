@@ -253,7 +253,7 @@
 
 (defsystem "lem/legit"
   :serial t
-  :depends-on ("lem")
+  :depends-on ("lem" "lem-patch-mode" "lem-yaml-mode" "lem-markdown-mode")
   :components ((:module "extensions/legit"
                 :components ((:file "porcelain")
                              (:file "peek-legit")

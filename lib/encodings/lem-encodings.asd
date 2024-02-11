@@ -1,5 +1,5 @@
 (defsystem "lem-encodings"
-  :depends-on ("lem-base")
+  :depends-on ("lem")
   :class :package-inferred-system
   :components ((:file "table")
                (:file "8bit")

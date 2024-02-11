@@ -59,7 +59,7 @@
                     (format nil "~D M-x " arg)
                     "M-x ")
                 :completion-function (lambda (str)
-                                       (sort 
+                                       (sort
                                         (if (find #\- str)
                                             (completion-hypheen str (all-command-names))
                                             (completion str (all-command-names)))
@@ -81,7 +81,7 @@
     ((prompt-for-library "load library: " :history-symbol 'load-library))
   "Load the Lisp library named NAME."
   (message "Loading ~A." name)
-  (cond ((ignore-errors (maybe-quickload (format nil "lem-~A" name) :silent t))
+  (cond ((ignore-errors (maybe-load-systems (format nil "lem-~A" name) :silent t))
          (message "Loaded ~A." name))
         (t (message "Can't find Library ~A." name))))
 

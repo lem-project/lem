@@ -26,7 +26,7 @@
                   (0
                    (when errorp
                      (error "Implementation does not exist.~
-                             (probably because you didn't quickload lem-ncurses)")))
+                             (probably because you didn't load the lem-ncurses system)")))
                   (1
                    (first classes))
                   (otherwise

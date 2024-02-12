@@ -260,7 +260,7 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
         (t
          (let ((implementation (get-default-implementation :errorp nil)))
            (unless implementation
-             (ql:quickload :lem-ncurses)
+             (maybe-load-systems :lem-ncurses)
              (setf implementation (get-default-implementation)))
            (invoke-frontend
             (lambda (&optional initialize finalize)

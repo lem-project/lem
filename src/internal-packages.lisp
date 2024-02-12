@@ -63,7 +63,7 @@
    :yank-from-clipboard-or-killring)
   ;; quicklisp-utils.lisp
   (:export
-   :maybe-quickload)
+   :maybe-load-systems)
   ;; config.lisp
   (:export
    :lem-home
@@ -576,7 +576,7 @@
   ;; format.lisp
   (:export
    :*auto-format*
-   :register-formatter 
+   :register-formatter
    :register-formatters
    :format-buffer))
 #+sbcl

@@ -35,3 +35,4 @@ build/*
 
 *.lx64fsl
 .qlot
+/systems/

@@ -7,6 +7,7 @@
   (unless (listp systems)
     (setf systems (list systems)))
   (handler-bind ((error (lambda (e)
+                          (declare (ignore e))
                           (unless error-on-failure-p
                             (return-from maybe-load-systems nil)))))
       (flet ((try-load-system (system)

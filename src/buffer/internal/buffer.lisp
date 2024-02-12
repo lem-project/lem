@@ -330,9 +330,9 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
 
 (defun modified-buffers ()
   (remove-if (lambda (buffer)
-                (not (and (buffer-filename buffer)
-                          (buffer-modified-p buffer))))
-              (buffer-list)))
+               (not (and (buffer-filename buffer)
+                         (buffer-modified-p buffer))))
+             (buffer-list)))
 
 (defun get-buffer (buffer-or-name)
   "`buffer-or-name`がバッファならそのまま返し、

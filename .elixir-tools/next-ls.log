@@ -1,0 +1,87 @@
+[22m
+04:28:52.733 [info] Loading 146 CA(s) from :otp store
+[0m[36m
+04:28:52.936 [debug] sent notification server -> client window/logMessage
+[0m[31m
+04:28:52.941 [error] LSP Exited.
+
+Last message received: handle_request %{"id" => "dvbuB2x32I2j", "jsonrpc" => "2.0", "method" => "initialize", "params" => %{"capabilities" => %{"textDocument" => %{"codeAction" => %{}, "completion" => %{"completionItem" => %{"snippetSupport" => nil}, "contextSupport" => true}, "definition" => %{"linkSupport" => nil}, "documentSymbol" => %{"hierarchicalDocumentSymbolSupport" => true}, "formatting" => %{}, "hover" => %{}, "implementation" => %{"linkSupport" => nil}, "onTypeFormatting" => %{}, "publishDiagnostics" => %{"relatedInformation" => true}, "rangeFormatting" => %{}, "references" => %{}, "rename" => %{}, "signatureHelp" => %{"contextSupport" => true, "signatureInformation" => %{"activeParameterSupport" => true, "documentationFormat" => ["plaintext", "markdown"], "parameterInformation" => %{"labelOffsetSupport" => true}}}, "synchronization" => %{"didSave" => true}, "typeDefinition" => %{"linkSupport" => nil}}, "workspace" => %{}}, "clientInfo" => %{"name" => "lem"}, "processId" => 54052, "rootUri" => "file:///home/garlic/elixir/hack/", "trace" => "off", "workspaceFolders" => nil}}
+
+** (MatchError) no match of right hand side value: {:error, %{"id" => "expected an integer"}}
+    (gen_lsp 0.7.1) lib/gen_lsp.ex:267: anonymous fn/6 in GenLSP.loop/3
+    (gen_lsp 0.7.1) lib/gen_lsp.ex:391: GenLSP.attempt/4
+    (stdlib 5.1.1) proc_lib.erl:241: :proc_lib.init_p_do_apply/3
+
+
+
+[0m[22m
+04:30:46.839 [info] Loading 146 CA(s) from :otp store
+[0m[36m
+04:30:47.426 [debug] sent notification server -> client window/logMessage
+[0m[31m
+04:30:47.428 [error] LSP Exited.
+
+Last message received: handle_request %{"id" => "dvbuB2x32I2j", "jsonrpc" => "2.0", "method" => "initialize", "params" => %{"capabilities" => %{"textDocument" => %{"codeAction" => %{}, "completion" => %{"completionItem" => %{"snippetSupport" => nil}, "contextSupport" => true}, "definition" => %{"linkSupport" => nil}, "documentSymbol" => %{"hierarchicalDocumentSymbolSupport" => true}, "formatting" => %{}, "hover" => %{}, "implementation" => %{"linkSupport" => nil}, "onTypeFormatting" => %{}, "publishDiagnostics" => %{"relatedInformation" => true}, "rangeFormatting" => %{}, "references" => %{}, "rename" => %{}, "signatureHelp" => %{"contextSupport" => true, "signatureInformation" => %{"activeParameterSupport" => true, "documentationFormat" => ["plaintext", "markdown"], "parameterInformation" => %{"labelOffsetSupport" => true}}}, "synchronization" => %{"didSave" => true}, "typeDefinition" => %{"linkSupport" => nil}}, "workspace" => %{}}, "clientInfo" => %{"name" => "lem"}, "processId" => 54132, "rootUri" => "file:///home/garlic/elixir/hack/", "trace" => "off", "workspaceFolders" => nil}}
+
+** (MatchError) no match of right hand side value: {:error, %{"id" => "expected an integer"}}
+    (gen_lsp 0.7.1) lib/gen_lsp.ex:267: anonymous fn/6 in GenLSP.loop/3
+    (gen_lsp 0.7.1) lib/gen_lsp.ex:391: GenLSP.attempt/4
+    (stdlib 5.1.1) proc_lib.erl:241: :proc_lib.init_p_do_apply/3
+
+
+
+[0m[22m
+04:31:12.517 [info] Loading 146 CA(s) from :otp store
+[0m[36m
+04:31:13.068 [debug] sent notification server -> client window/logMessage
+[0m[31m
+04:31:13.072 [error] LSP Exited.
+
+Last message received: handle_request %{"id" => "EasiKt8u7reH", "jsonrpc" => "2.0", "method" => "initialize", "params" => %{"capabilities" => %{"textDocument" => %{"codeAction" => %{}, "completion" => %{"completionItem" => %{"snippetSupport" => nil}, "contextSupport" => true}, "definition" => %{"linkSupport" => nil}, "documentSymbol" => %{"hierarchicalDocumentSymbolSupport" => true}, "formatting" => %{}, "hover" => %{}, "implementation" => %{"linkSupport" => nil}, "onTypeFormatting" => %{}, "publishDiagnostics" => %{"relatedInformation" => true}, "rangeFormatting" => %{}, "references" => %{}, "rename" => %{}, "signatureHelp" => %{"contextSupport" => true, "signatureInformation" => %{"activeParameterSupport" => true, "documentationFormat" => ["plaintext", "markdown"], "parameterInformation" => %{"labelOffsetSupport" => true}}}, "synchronization" => %{"didSave" => true}, "typeDefinition" => %{"linkSupport" => nil}}, "workspace" => %{}}, "clientInfo" => %{"name" => "lem"}, "processId" => 54132, "rootUri" => "file:///home/garlic/elixir/hack/", "trace" => "off", "workspaceFolders" => nil}}
+
+** (MatchError) no match of right hand side value: {:error, %{"id" => "expected an integer"}}
+    (gen_lsp 0.7.1) lib/gen_lsp.ex:267: anonymous fn/6 in GenLSP.loop/3
+    (gen_lsp 0.7.1) lib/gen_lsp.ex:391: GenLSP.attempt/4
+    (stdlib 5.1.1) proc_lib.erl:241: :proc_lib.init_p_do_apply/3
+
+
+
+[0m[22m
+04:35:11.521 [notice] SIGTERM received - shutting down
+
+[0m[22m
+04:35:11.522 [notice] SIGTERM received - shutting down
+
+[0m[22m
+04:36:41.331 [info] Loading 146 CA(s) from :otp store
+[0m[36m
+04:36:41.898 [debug] sent notification server -> client window/logMessage
+[0m[31m
+04:36:41.901 [error] LSP Exited.
+
+Last message received: handle_request %{"id" => "OdvbuB2x32I2", "jsonrpc" => "2.0", "method" => "initialize", "params" => %{"capabilities" => %{"textDocument" => %{"codeAction" => %{}, "completion" => %{"completionItem" => %{"snippetSupport" => nil}, "contextSupport" => true}, "definition" => %{"linkSupport" => nil}, "documentSymbol" => %{"hierarchicalDocumentSymbolSupport" => true}, "formatting" => %{}, "hover" => %{}, "implementation" => %{"linkSupport" => nil}, "onTypeFormatting" => %{}, "publishDiagnostics" => %{"relatedInformation" => true}, "rangeFormatting" => %{}, "references" => %{}, "rename" => %{}, "signatureHelp" => %{"contextSupport" => true, "signatureInformation" => %{"activeParameterSupport" => true, "documentationFormat" => ["plaintext", "markdown"], "parameterInformation" => %{"labelOffsetSupport" => true}}}, "synchronization" => %{"didSave" => true}, "typeDefinition" => %{"linkSupport" => nil}}, "workspace" => %{}}, "clientInfo" => %{"name" => "lem"}, "processId" => 54388, "rootUri" => "file:///home/garlic/elixir/hack/", "trace" => "off", "workspaceFolders" => nil}}
+
+** (MatchError) no match of right hand side value: {:error, %{"id" => "expected an integer"}}
+    (gen_lsp 0.7.1) lib/gen_lsp.ex:267: anonymous fn/6 in GenLSP.loop/3
+    (gen_lsp 0.7.1) lib/gen_lsp.ex:391: GenLSP.attempt/4
+    (stdlib 5.1.1) proc_lib.erl:241: :proc_lib.init_p_do_apply/3
+
+
+
+[0m[22m
+04:39:50.523 [info] Loading 146 CA(s) from :otp store
+[0m[36m
+04:39:51.020 [debug] sent notification server -> client window/logMessage
+[0m[31m
+04:39:51.023 [error] LSP Exited.
+
+Last message received: handle_request %{"id" => "jeasiKt8u7re", "jsonrpc" => "2.0", "method" => "initialize", "params" => %{"capabilities" => %{"textDocument" => %{"codeAction" => %{}, "completion" => %{"completionItem" => %{"snippetSupport" => nil}, "contextSupport" => true}, "definition" => %{"linkSupport" => nil}, "documentSymbol" => %{"hierarchicalDocumentSymbolSupport" => true}, "formatting" => %{}, "hover" => %{}, "implementation" => %{"linkSupport" => nil}, "onTypeFormatting" => %{}, "publishDiagnostics" => %{"relatedInformation" => true}, "rangeFormatting" => %{}, "references" => %{}, "rename" => %{}, "signatureHelp" => %{"contextSupport" => true, "signatureInformation" => %{"activeParameterSupport" => true, "documentationFormat" => ["plaintext", "markdown"], "parameterInformation" => %{"labelOffsetSupport" => true}}}, "synchronization" => %{"didSave" => true}, "typeDefinition" => %{"linkSupport" => nil}}, "workspace" => %{}}, "clientInfo" => %{"name" => "lem"}, "processId" => 54388, "rootUri" => "file:///home/garlic/elixir/hack/", "trace" => "off", "workspaceFolders" => nil}}
+
+** (MatchError) no match of right hand side value: {:error, %{"id" => "expected an integer"}}
+    (gen_lsp 0.7.1) lib/gen_lsp.ex:267: anonymous fn/6 in GenLSP.loop/3
+    (gen_lsp 0.7.1) lib/gen_lsp.ex:391: GenLSP.attempt/4
+    (stdlib 5.1.1) proc_lib.erl:241: :proc_lib.init_p_do_apply/3
+
+
+
+[0m

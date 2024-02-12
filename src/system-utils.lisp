@@ -6,7 +6,9 @@
  systems. Loader behavior is modified by VERBOSE and SILENT."
   (unless (listp systems)
     (setf systems (list systems)))
-  (handler-case
+  (handler-bind ((error (lambda (e)
+                          (unless error-on-failure-p
+                            (return-from maybe-load-systems nil)))))
       (flet ((try-load-system (system)
                (or
                 (when (find-package '#:OCICL-RUNTIME)
@@ -20,8 +22,4 @@
                 (when (find-package '#:ASDF)
                   (funcall (find-symbol "LOAD-SYSTEM" '#:ASDF) system))
                 (error "Unable to find any system-loading mechanism."))))
-        (mapcar #'try-load-system systems))
-    (error (e)
-      (if error-on-failure-p
-          (error e)
-          nil))))
+        (mapcar #'try-load-system systems))))

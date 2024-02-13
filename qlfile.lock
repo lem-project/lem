@@ -41,4 +41,4 @@
 ("jsonrpc" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/jsonrpc.git")
-  :version "git-035ba8a8f2e9b9968786ee56b59c7f8afbea9ca2"))
+  :version "git-f85982f45f9f5a41fdccff176995cd90634eeb92"))

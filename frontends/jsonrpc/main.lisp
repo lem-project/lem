@@ -241,9 +241,9 @@
     (let ((view (lem:window-view (lem:current-window)))
           (x (lem:last-print-cursor-x (lem:current-window)))
           (y (lem:last-print-cursor-y (lem:current-window))))
-      (notify jsonrpc
-              "move-cursor"
-              (hash "viewInfo" view "x" x "y" y)))
+      (notify* jsonrpc
+               "move-cursor"
+               (hash "viewInfo" view "x" x "y" y)))
     (notify* jsonrpc "update-display" nil)
     (notify-all jsonrpc)))
 

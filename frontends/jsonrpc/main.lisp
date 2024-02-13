@@ -524,7 +524,8 @@
 (defparameter +command-line-spec+
   ;; TODO: more helpful documentation
   '((("mode" #\m) :type string :optional t :documentation "\"tcp\", \"stdio\" or \"websocket\"")
-    (("port" #\p) :type integer :optional nil :documentation "port of \"tcp\" or \"websocket\"")))
+    (("port" #\p) :type integer :optional nil :documentation "port of \"tcp\" or \"websocket\"")
+    ("host" :type string :optional t)))
 
 (defun run-tcp-server (port)
   (let ((*mode* :tcp)
@@ -550,13 +551,13 @@
 (defun program (&optional (args (uiop:command-line-arguments)))
   (command-line-arguments:handle-command-line
    +command-line-spec+
-   (lambda (&key (mode "stdio") port)
+   (lambda (&key (mode "stdio") port (host "127.0.0.1"))
      (cond ((string= mode "tcp")
             (check-port-specified port)
             (run-tcp-server port))
            ((string= mode "websocket")
             (check-port-specified port)
-            (run-websocket-server :port port))
+            (run-websocket-server :port port :hostname host))
            ((string= mode "stdio")
             (run-stdio-server))
            (t

@@ -2,8 +2,6 @@ FROM docker.io/fukamachi/qlot
 
 COPY . .
 
-RUN qlot install
+RUN make jsonrpc
 
-EXPOSE 50000
-
-ENTRYPOINT qlot exec sbcl --eval '(ql:quickload :lem-jsonrpc)' --eval '(lem-jsonrpc:run-websocket-server :port 50000 :hostname "0.0.0.0")' --quit
+ENTRYPOINT /app/lem-jsonrpc --mode websocket --port 50000 --host 0.0.0.0

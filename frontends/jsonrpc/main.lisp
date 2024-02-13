@@ -23,9 +23,11 @@
 
 (pushnew :lem-jsonrpc *features*)
 
+(defclass server (jsonrpc:server) ())
+
 (defclass jsonrpc (lem:implementation)
   ((mode :accessor jsonrpc-mode)
-   (server :initform (jsonrpc:make-server)
+   (server :initform (make-instance 'server)
            :reader jsonrpc-server)
    (display-width :initform 80
                   :accessor jsonrpc-display-width)
@@ -37,6 +39,22 @@
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
    :window-left-margin 1))
+
+(defun notify-all-state ()
+  (notify (lem:implementation) "update-foreground" (lem-core::foreground-color))
+  (notify (lem:implementation) "update-background" (lem-core::background-color))
+  (dolist (window (append (lem::frame-header-windows (lem:current-frame))
+                          (lem:window-list)
+                          (lem::frame-floating-windows (lem:current-frame))))
+    (notify (lem:implementation) "make-view" (lem::window-view window)))
+  (lem:redraw-display :force t))
+
+(defmethod jsonrpc/class::on-adding-connection ((server server) connection)
+  (pdebug "Added ~A" connection)
+  (lem::send-event (lambda () (notify-all-state))))
+
+(defmethod jsonrpc/class::on-removing-connection ((server server) connection)
+  (pdebug "Removing ~A" connection))
 
 (defmethod resize-display ((jsonrpc jsonrpc) width height)
   (setf (jsonrpc-display-width jsonrpc) width

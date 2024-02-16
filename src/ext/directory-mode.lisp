@@ -62,6 +62,7 @@
 (define-key *directory-mode-keymap* "r" 'directory-mode-rename-file)
 (define-key *directory-mode-keymap* "s" 'directory-mode-sort-files)
 (define-key *directory-mode-keymap* "+" 'make-directory)
+(define-key *directory-mode-keymap* "k" 'directory-mode-kill-lines)
 
 (defun run-command (command)
   (when (consp command)
@@ -132,14 +133,18 @@
      (funcall function p)
      (unless (line-offset p 1) (return)))))
 
-(defun marked-files (p)
+
+(defun marked-lines (p)
   (with-point ((p p))
-    (let ((pathnames '()))
+    (let ((points '()))
       (iter-marks p
                   (lambda (p)
                     (when (get-mark p)
-                      (push (get-pathname p) pathnames))))
-      (nreverse pathnames))))
+                      (push (copy-point p :temporary) points))))
+      (nreverse points))))
+
+(defun marked-files (p)
+  (mapcar 'get-pathname (marked-lines p)))
 
 (defun filter-marks (p function)
   (iter-marks p
@@ -565,6 +570,18 @@
         (find-file-buffer (lem-core/commands/file::directory-for-file-or-lose (buffer-directory))))
        (let ((filename (file-namestring fullpath)))
          (search-filename-and-recenter (file-namestring filename)))))))
+
+(define-command directory-mode-kill-lines () ()
+  "Delete the marked lines from the directory-mode buffer.
+This does not delete the marked entries, but only remove them from the buffer."
+  (with-buffer-read-only (current-buffer) nil
+    (let ((*inhibit-read-only* t)
+          (marked-lines (marked-lines (current-point))))
+      (save-excursion
+        ;; Reverse the lines so killing is done from the end of the buffer
+        (loop :for marked-line :in (nreverse marked-lines)
+              :do (move-point (current-point) marked-line)
+                  (kill-whole-line))))))
 
 (setf *find-directory-function* 'directory-buffer)
 

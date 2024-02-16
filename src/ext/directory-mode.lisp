@@ -429,9 +429,11 @@
   (filter-marks (current-point) (constantly nil)))
 
 (define-command directory-mode-mark-regexp (regex) ("sRegex: ")
-  (filter-marks (current-point)
-                (lambda (p)
-                  (ppcre:scan regex (get-name p)))))
+  (let ((scanner (ppcre:create-scanner regex)))
+    (filter-marks (current-point)
+                  (lambda (p)
+                    (or (get-mark p)
+                        (ppcre:scan scanner (get-name p)))))))
 
 (defun query-replace-marked-files (query-function)
   (destructuring-bind (before after)

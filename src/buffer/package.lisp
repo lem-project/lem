@@ -110,6 +110,8 @@
    :delete-point
    :alive-point-p
    :point-buffer
+   :point-linum
+   :point-line
    :point-charpos
    :point-kind
    :point=
@@ -301,7 +303,7 @@
   (:use :cl
         :lem/buffer/internal
         :lem/buffer/encodings
-	:lem/common/hooks
+        :lem/common/hooks
         :lem/common/var)
   (:export
    :*find-file-hook*

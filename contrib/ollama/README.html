@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+
+<head>
+<title>README.html</title>
+<meta http-equiv="Content-Type" content="application/xhtml+xml;charset=utf-8"/>
+<link rel="stylesheet" type="text/css" media="all" href="https://cdn.jsdelivr.net/npm/github-markdown-css/github-markdown.min.css"  />
+<link rel="stylesheet" type="text/css" media="all" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/styles/github.min.css"  /><meta name='viewport' content='width=device-width, initial-scale=1, shrink-to-fit=no'><style> body { box-sizing: border-box; max-width: 740px; width: 100%; margin: 40px auto; padding: 0 10px; } </style><script id='MathJax-script' async src='https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js'></script><script src='https://cdn.jsdelivr.net/gh/highlightjs/cdn-release/build/highlight.min.js'></script><script>document.addEventListener('DOMContentLoaded', () => { document.body.classList.add('markdown-body'); document.querySelectorAll('pre[lang] > code').forEach((code) => { code.classList.add(code.parentElement.lang); }); document.querySelectorAll('pre > code').forEach((code) => { hljs.highlightBlock(code); }); });</script>
+</head>
+
+<body>
+
+marked(): highlight and langPrefix parameters are deprecated since version 5.0.0, should not be used and will be removed in the future. Instead use https://www.npmjs.com/package/marked-highlight.
+marked(): mangle parameter is deprecated since version 5.0.0, should not be used and will be removed in the future. Instead use https://www.npmjs.com/package/marked-mangle.
+marked(): headerIds and headerPrefix parameters are deprecated since version 5.0.0, should not be used and will be removed in the future. Instead use https://www.npmjs.com/package/marked-gfm-heading-id.
+<h1 id="lem-ollama">lem-ollama</h1>
+<p>A client for interacting with LLMs</p>
+<h2 id="setup">Setup</h2>
+<p>in <code>~/.config/lem/init.lisp</code></p>
+<p>If you aren&#39;t running Ollama on localhost, specify a server:</p>
+<pre><code class="language-lisp">(setf lem-ollama:*host* &quot;your.machine:1234&quot;)
+</code></pre>
+<p>You can also specify the model used:</p>
+<pre><code class="language-lisp">(setf lem-ollama:*model* &quot;llama2&quot;)
+</code></pre>
+<h2 id="run-ollama">run-ollama</h2>
+<p>Start an listener-mode buffer talking to the LLM.</p>
+<h2 id="ollama-prompt">ollama-prompt</h2>
+<p>Send a prompt and stream the response into a temp buffer.</p>
+<h2 id="ollama-close">ollama-close</h2>
+<p>Close the current response stream, bound to C-c C-c by default.</p>
+
+
+</body>
+</html>

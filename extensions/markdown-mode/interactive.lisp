@@ -1,6 +1,7 @@
 (defpackage :lem-markdown-mode/interactive
   (:use :cl :lem)
-  (:import-from #:alexandria :if-let :when-let :curry))
+  (:import-from #:alexandria :if-let :when-let :curry)
+  (:export :register-block-evaluator))
 (in-package :lem-markdown-mode/interactive)
 
 (defvar *block-evaluators* (make-hash-table :test #'equal)
@@ -41,7 +42,7 @@
       str)))
 
 (defun block-at-point (point)
-  "Ugly hack to get the string in a code block at point."
+  "Get the language of a code block and its contents."
   (search-backward-regexp point "```")
   (when-let ((lang (block-fence-lang (str:trim (line-string point)))))
     (search-forward point (format nil "~%"))
@@ -72,35 +73,29 @@
 
 (defun insert-eval-result (point result)
   "Insert results of evaluation in a code block."
-  (with-constant-position (point)
-    (block-at-point point)
-    (search-forward-regexp point "```")
-    (insert-string point (format nil "~%~%```result~%~a~%```" result)))
+  (block-at-point point)
+  (search-forward-regexp point "```")
+  (insert-string point (format nil "~%~%```result~%~a~%```" result))
   (message "Block evaluated."))
 
 (defun eval-block-internal (point handler)
   "Evaluate code block and apply handler to result."
-  (with-constant-position (point)
-    (multiple-value-bind (lang block) (block-at-point point)
-      (when lang
-        (if-let ((evaluator (gethash lang *block-evaluators*)))
-          (funcall evaluator block (curry handler point))
-          (message "No evaluator registered for ~a." lang))))))
+  (multiple-value-bind (lang block) (block-at-point point)
+    (when lang
+      (if-let ((evaluator (gethash lang *block-evaluators*)))
+        (funcall evaluator block (curry handler point))
+        (message "No evaluator registered for ~a." lang)))))
 
 (define-command eval-block () ()
   "Evaluate current markdown code block and display results in popup."
   (when-markdown-mode
-    (eval-block-internal
-     (copy-point (current-point))
-     #'pop-up-eval-result)))
+    (eval-block-internal (copy-point (current-point)) #'pop-up-eval-result)))
 
 (define-command eval-block-and-insert () ()
   "Evaluate current markdown code block and display results in popup."
   (when-markdown-mode
     (kill-block-eval-result)
-    (eval-block-internal
-     (copy-point (current-point))
-     #'insert-eval-result)))
+    (eval-block-internal (copy-point (current-point)) #'insert-eval-result)))
 
 ;;
 ;; Default evaluators:
@@ -116,8 +111,7 @@
   "Register evaluator for Lisp blocks."
   (lem-lisp-mode:check-connection)
   (lem-lisp-mode:lisp-eval-async
-   (read-from-string
-    (format nil "(progn ~a)" string))
+   (read-from-string (format nil "(progn ~a)" string))
    (lambda (result)
      (funcall callback result))))
 

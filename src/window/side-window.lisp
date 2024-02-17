@@ -38,3 +38,6 @@
                        (window-height window))
       (balance-windows)
       t)))
+
+(defun side-window-p (window)
+  (typep window 'side-window))

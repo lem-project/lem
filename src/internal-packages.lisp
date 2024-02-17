@@ -181,6 +181,7 @@
    :frame-floating-prompt-window
    :frame-prompt-window
    :frame-message-window
+   :frame-leftside-window
    :notify-frame-redisplay-required
    :map-frame
    :get-frame
@@ -333,6 +334,7 @@
   ;; side-window.lisp
   (:export
    :side-window
+   :side-window-p
    :make-leftside-window
    :delete-leftside-window)
   ;; popup.lisp

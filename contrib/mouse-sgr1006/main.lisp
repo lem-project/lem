@@ -27,6 +27,14 @@
   (lem:move-to-next-virtual-line (lem:current-point) y)
   (lem:move-to-virtual-line-column (lem:current-point) x))
 
+(defun all-window-list ()
+  "returns a list of all windows including side windows"
+  (let ((side-window (lem:frame-leftside-window (lem:current-frame)))
+        (window-list (lem:window-list)))
+    (if side-window
+        (cons side-window window-list)
+        window-list)))
+
 (defun parse-mouse-event (getch-fn)
   (let ((msg (loop :for c := (code-char (funcall getch-fn))
                    :with result
@@ -65,7 +73,8 @@
     ;; process mouse event
     (cond
       ;; button-1 down
-      ((and (not (lem:floating-window-p (lem:current-window)))
+      ((and (or (not (lem:floating-window-p (lem:current-window)))
+                (lem:side-window-p (lem:current-window)))
             (eql btype *mouse-button-1*)
             (eql bstate #\M))
        (or
@@ -105,7 +114,7 @@
                 (lem:redraw-display)
                 t)
                (t nil))))
-         (lem:window-list))))
+         (all-window-list))))
       ;; button-1 up
       ((and (eql btype *mouse-button-1*)
             (eql bstate #\m))
@@ -161,23 +170,23 @@
 (defun enable-hook ()
   (format lem-ncurses:*terminal-io-saved* "~A[?1000h~A[?1002h~A[?1006h~%" #\esc #\esc #\esc)
   (ignore-errors
-   (dolist (window (lem:window-list))
-     (lem:screen-clear (lem:window-screen window)))
-   (lem:redraw-display))
+    (dolist (window (lem:window-list))
+      (lem:screen-clear (lem:window-screen window)))
+    (lem:redraw-display))
   (lem:run-hooks *enable-hook*))
 
 (defun disable-hook ()
   (format lem-ncurses:*terminal-io-saved* "~A[?1006l~A[?1002l~A[?1000l~%" #\esc #\esc #\esc)
   (ignore-errors
-   (dolist (window (lem:window-list))
-     (lem:screen-clear (lem:window-screen window)))
-   (lem:redraw-display))
+    (dolist (window (lem:window-list))
+      (lem:screen-clear (lem:window-screen window)))
+    (lem:redraw-display))
   (run-hooks *disable-hook*))
 
 (define-minor-mode mouse-sgr-1006-mode
-  (:global t
-   :enable-hook #'enable-hook
-   :disable-hook #'disable-hook))
+    (:global t
+     :enable-hook #'enable-hook
+     :disable-hook #'disable-hook))
 
 (defun enable-mouse-sgr-1006-mode ()
   (mouse-sgr-1006-mode t))

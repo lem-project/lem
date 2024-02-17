@@ -1,4 +1,5 @@
-(defsystem "lem-markdown-mode"
+(asdf:defsystem "lem-markdown-mode"
   :depends-on ("lem")
   :serial t
-  :components ((:file "markdown-mode")))
+  :components ((:file "markdown-mode")
+               (:file "interactive")))

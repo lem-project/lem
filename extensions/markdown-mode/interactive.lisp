@@ -111,7 +111,7 @@
   "Register evaluator for Lisp blocks."
   (lem-lisp-mode:check-connection)
   (lem-lisp-mode:lisp-eval-async
-   (read-from-string (format nil "(progn ~a)" string))
+   `(eval (read-from-string ,(format nil "(progn ~a)" string)))
    (lambda (result)
      (funcall callback result))))
 

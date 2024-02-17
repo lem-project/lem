@@ -45,27 +45,29 @@
       (let ((end (current-point)))
         (values lang (points-to-string start end))))))
 
-(defun delete-old-result ()
+(define-command kill-block-eval-result () ()
   "Searches for a result block below the current code block, and kills it."
-  (with-constant-position
-    (search-forward-regexp (current-point) "```")
-    (line-offset (current-point) 2)
-    (when (equal "result" (block-fence-lang (line-string (current-point))))
-      (loop :while (not (equal "```" (line-string (current-point))))
-            :do (kill-whole-line)
-            :do (line-offset (current-point) 1))
-      (kill-whole-line)
-      (kill-whole-line))))
+  (when (with-constant-position (block-at-point (current-point)))
+    (with-constant-position
+      (search-forward-regexp (current-point) "```")
+      (line-offset (current-point) 2)
+      (when (equal "result" (block-fence-lang (line-string (current-point))))
+        (loop :while (not (equal "```" (line-string (current-point))))
+              :do (kill-whole-line)
+              :do (line-offset (current-point) 1))
+        (kill-whole-line)
+        (kill-whole-line)))))
 
 (defun pop-up-eval-result (result)
   "Display results of evaluation."
   (pop-up-buffer "*literate*" (format nil "~a" result)))
 
 (defun insert-eval-result (result)
-  (delete-old-result)
-  (search-forward-regexp (current-point) "```")
-  (insert-string (current-point)
-                 (format nil "~%~%```result~%~a~%```" result))
+  (with-constant-position
+    (kill-block-eval-result)
+    (search-forward-regexp (current-point) "```")
+    (insert-string (current-point)
+                   (format nil "~%~%```result~%~a~%```" result)))
   (redraw-display))
 
 (defun eval-block-internal (handler)

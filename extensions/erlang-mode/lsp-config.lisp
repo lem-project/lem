@@ -3,7 +3,7 @@
 
 (in-package :lem-erlang-mode/lsp-config)
 
-(defvar *lsp-erlang-elp-server-path* !
+(defvar *lsp-erlang-elp-server-path*
   (uiop:native-namestring "~/Applications/elp")) ; adapt to your own elp path
 
 (defvar *lsp-erlang-elp-log-path*

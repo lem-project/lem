@@ -45,18 +45,31 @@
       (let ((end (current-point)))
         (values lang (points-to-string start end))))))
 
-(defun handle-eval-result (result)
+(defun pop-up-eval-result (result)
   "Display results of evaluation."
   (pop-up-buffer "*literate*" (format nil "~a" result)))
 
-(define-command eval-block () ()
-  "Evaluate current markdown code block and display results in popup."
+(defun insert-eval-result (result)
+  (search-forward-regexp (current-point) "```")
+  (insert-string (current-point)
+                 (format nil "~%~%```result~%~a~%```" result))
+  (redraw-display))
+
+(defun eval-block-internal (handler)
   (with-constant-position
     (multiple-value-bind (lang block) (block-at-point (current-point))
       (when lang
         (if-let ((evaluator (gethash lang *block-evaluators*)))
-          (funcall evaluator block #'handle-eval-result)
+          (funcall evaluator block handler)
           (message "No evaluator registered for ~a" lang))))))
+
+(define-command eval-block () ()
+  "Evaluate current markdown code block and display results in popup."
+  (eval-block-internal #'pop-up-eval-result))
+
+(define-command eval-block-and-insert () ()
+  "Evaluate current markdown code block and display results in popup."
+  (eval-block-internal #'insert-eval-result))
 
 (register-block-evaluator "bash" (string callback)
   "Register evaluator for Bash blocks."
@@ -73,5 +86,6 @@
    (lambda (result)
      (funcall callback result))))
 
-(define-key lem-markdown-mode::*markdown-mode-keymap*
-  "C-c C-c" 'eval-block)
+(define-keys lem-markdown-mode::*markdown-mode-keymap*
+  ("C-c C-c" 'eval-block)
+  ("C-c C-e" 'eval-block-and-insert))

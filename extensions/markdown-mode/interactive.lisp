@@ -112,8 +112,7 @@
   (lem-lisp-mode:check-connection)
   (lem-lisp-mode:lisp-eval-async
    `(eval (read-from-string ,(format nil "(progn ~a)" string)))
-   (lambda (result)
-     (funcall callback result))))
+   callback))
 
 ;;
 ;; Keybindings

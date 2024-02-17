@@ -102,5 +102,6 @@
      (funcall callback result))))
 
 (define-keys lem-markdown-mode::*markdown-mode-keymap*
-  ("C-c C-c" 'eval-block)
-  ("C-c C-e" 'eval-block-and-insert))
+  ("C-c C-e" 'eval-block)
+  ("C-c C-c" 'eval-block-and-insert)
+  ("C-c C-d" 'kill-block-eval-result))

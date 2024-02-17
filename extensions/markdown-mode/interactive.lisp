@@ -76,12 +76,12 @@
     (block-at-point point)
     (search-forward-regexp point "```")
     (insert-string point (format nil "~%~%```result~%~a~%```" result)))
-  (redraw-display))
+  (message "Block evaluated."))
 
 (defun eval-block-internal (point handler)
   "Evaluate code block and apply handler to result."
   (with-constant-position (point)
-    (multiple-value-bind (lang block) (block-at-point (copy-point point))
+    (multiple-value-bind (lang block) (block-at-point point)
       (when lang
         (if-let ((evaluator (gethash lang *block-evaluators*)))
           (funcall evaluator block (curry handler point))

@@ -1,6 +1,6 @@
 (defpackage :lem-markdown-mode/interactive
   (:use :cl :lem)
-  (:import-from #:alexandria :if-let :when-let))
+  (:import-from #:alexandria :if-let :when-let :curry))
 (in-package :lem-markdown-mode/interactive)
 
 (defvar *block-evaluators* (make-hash-table :test #'equal)
@@ -67,18 +67,20 @@
           (kill-whole-line))))))
 
 (defun pop-up-eval-result (result)
-  "Display results of evaluation."
+  "Display results of evaluation in a popup buffer."
   (pop-up-buffer "*literate*" (format nil "~a" result)))
 
-(defun insert-eval-result (result)
+(defun insert-eval-result (point result)
+  "Insert results of evaluation in a code block."
   (with-constant-position
     (kill-block-eval-result)
-    (search-forward-regexp (current-point) "```")
-    (insert-string (current-point)
-                   (format nil "~%~%```result~%~a~%```" result)))
+    (block-at-point point)
+    (search-forward-regexp point "```")
+    (insert-string point (format nil "~%~%```result~%~a~%```" result)))
   (redraw-display))
 
 (defun eval-block-internal (handler)
+  "Evaluate code block and apply handler to result."
   (with-constant-position
     (multiple-value-bind (lang block) (block-at-point (current-point))
       (when lang
@@ -94,7 +96,11 @@
 (define-command eval-block-and-insert () ()
   "Evaluate current markdown code block and display results in popup."
   (when-markdown-mode
-    (eval-block-internal #'insert-eval-result)))
+    (eval-block-internal (curry #'insert-eval-result (current-point)))))
+
+;;
+;; Default evaluators:
+;;
 
 (register-block-evaluator "bash" (string callback)
   "Register evaluator for Bash blocks."
@@ -110,6 +116,10 @@
     (format nil "(progn ~a)" string))
    (lambda (result)
      (funcall callback result))))
+
+;;
+;; Keybindings
+;;
 
 (define-keys lem-markdown-mode::*markdown-mode-keymap*
   ("C-c C-e" 'eval-block)

@@ -19,6 +19,13 @@
      (prog1 ,@body
        (move-point (buffer-point buf) p))))
 
+(defmacro when-markdown-mode (&body body)
+  "Ensure the major mode is markdown-mode and alert the user if not."
+  `(if (eq 'lem-markdown-mode:markdown-mode
+           (buffer-major-mode (current-buffer)))
+       (progn ,@body)
+       (message "Not in markdown mode.")))
+
 (defun pop-up-buffer (name text)
   "Create a popup with name containing text."
   (let ((buffer (make-buffer name)))
@@ -47,16 +54,17 @@
 
 (define-command kill-block-eval-result () ()
   "Searches for a result block below the current code block, and kills it."
-  (when (with-constant-position (block-at-point (current-point)))
+  (when-markdown-mode
     (with-constant-position
-      (search-forward-regexp (current-point) "```")
-      (line-offset (current-point) 2)
-      (when (equal "result" (block-fence-lang (line-string (current-point))))
-        (loop :while (not (equal "```" (line-string (current-point))))
-              :do (kill-whole-line)
-              :do (line-offset (current-point) 1))
-        (kill-whole-line)
-        (kill-whole-line)))))
+      (when (block-at-point (current-point))
+        (search-forward-regexp (current-point) "```")
+        (line-offset (current-point) 2)
+        (when (equal "result" (block-fence-lang (line-string (current-point))))
+          (loop :while (not (equal "```" (line-string (current-point))))
+                :do (kill-whole-line)
+                :do (line-offset (current-point) 1))
+          (kill-whole-line)
+          (kill-whole-line))))))
 
 (defun pop-up-eval-result (result)
   "Display results of evaluation."
@@ -76,15 +84,17 @@
       (when lang
         (if-let ((evaluator (gethash lang *block-evaluators*)))
           (funcall evaluator block handler)
-          (message "No evaluator registered for ~a" lang))))))
+          (message "No evaluator registered for ~a." lang))))))
 
 (define-command eval-block () ()
   "Evaluate current markdown code block and display results in popup."
-  (eval-block-internal #'pop-up-eval-result))
+  (when-markdown-mode
+    (eval-block-internal #'pop-up-eval-result)))
 
 (define-command eval-block-and-insert () ()
   "Evaluate current markdown code block and display results in popup."
-  (eval-block-internal #'insert-eval-result))
+  (when-markdown-mode
+    (eval-block-internal #'insert-eval-result)))
 
 (register-block-evaluator "bash" (string callback)
   "Register evaluator for Bash blocks."

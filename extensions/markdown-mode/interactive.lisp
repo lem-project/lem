@@ -69,7 +69,7 @@
 (defun pop-up-eval-result (point result)
   "Display results of evaluation in a popup buffer."
   (declare (ignore point))
-  (pop-up-buffer "*literate*" (format nil "~a" result)))
+  (pop-up-buffer "*result*" (format nil "~a" result)))
 
 (defun insert-eval-result (point result)
   "Insert results of evaluation in a code block."

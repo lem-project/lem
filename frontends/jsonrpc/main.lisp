@@ -40,6 +40,14 @@
    :redraw-after-modifying-floating-window t
    :window-left-margin 1))
 
+(defun get-all-views ()
+  (coerce
+   (loop :for window :in (append (lem::frame-header-windows (lem:current-frame))
+                                 (lem:window-list)
+                                 (lem::frame-floating-windows (lem:current-frame)))
+         :collect (lem::window-view window))
+   'vector))
+
 (defun notify-all-state ()
   (notify (lem:implementation) "update-foreground" (lem-core::foreground-color))
   (notify (lem:implementation) "update-background" (lem-core::background-color))
@@ -51,7 +59,8 @@
 
 (defmethod jsonrpc/class::on-adding-connection ((server server) connection)
   (pdebug "Added ~A" connection)
-  (lem::send-event (lambda () (notify-all-state))))
+  ;; (lem::send-event (lambda () (notify-all-state)))
+  )
 
 (defmethod jsonrpc/class::on-removing-connection ((server server) connection)
   (pdebug "Removing ~A" connection))
@@ -96,7 +105,10 @@
         (funcall logged-in-callback)
         (hash "width" width
               "height" height
-              "userId" 0)))))
+              "userId" 0
+              "views" (get-all-views)
+              "foreground" (lem-core::foreground-color)
+              "background" (lem-core::background-color))))))
 
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
   (let ((ready nil))

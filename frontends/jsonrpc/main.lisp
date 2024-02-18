@@ -129,6 +129,11 @@
                     "input"
                     (lambda (args)
                       (input-callback jsonrpc args)))
+    (jsonrpc:expose (jsonrpc-server jsonrpc)
+                    "redraw"
+                    (lambda (args)
+                      (declare (ignore args))
+                      (lem:redraw-display :force t)))
 
     (lem:add-hook lem:*exit-editor-hook*
                   (lambda ()

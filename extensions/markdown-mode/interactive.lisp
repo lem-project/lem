@@ -4,6 +4,11 @@
   (:export :register-block-evaluator))
 (in-package :lem-markdown-mode/interactive)
 
+(define-keys lem-markdown-mode::*markdown-mode-keymap*
+  ("C-c C-e" 'eval-block)
+  ("C-c C-c" 'eval-block-and-insert)
+  ("C-c C-d" 'kill-block-eval-result))
+
 (defvar *block-evaluators* (make-hash-table :test #'equal)
   "Dispatch table for block evaluators per language.")
 
@@ -27,7 +32,7 @@
        (message "Not in markdown mode.")))
 
 (defun pop-up-buffer (name text)
-  "Create a popup with name containing text."
+  "Create a pop-up with name containing text."
   (let ((buffer (make-buffer name)))
     (erase-buffer buffer)
     (with-buffer-read-only buffer nil
@@ -67,7 +72,7 @@
           (kill-whole-line))))))
 
 (defun pop-up-eval-result (point result)
-  "Display results of evaluation in a popup buffer."
+  "Display results of evaluation in a pop-up buffer."
   (declare (ignore point))
   (pop-up-buffer "*result*" (format nil "~a" result)))
 
@@ -87,12 +92,12 @@
         (message "No evaluator registered for ~a." lang)))))
 
 (define-command eval-block () ()
-  "Evaluate current markdown code block and display results in popup."
+  "Evaluate current markdown code block and display results in pop-up."
   (when-markdown-mode
     (eval-block-internal (copy-point (current-point)) #'pop-up-eval-result)))
 
 (define-command eval-block-and-insert () ()
-  "Evaluate current markdown code block and display results in popup."
+  "Evaluate current markdown code block and display results in pop-up."
   (when-markdown-mode
     (kill-block-eval-result)
     (eval-block-internal (copy-point (current-point)) #'insert-eval-result)))
@@ -113,12 +118,3 @@
   (lem-lisp-mode:lisp-eval-async
    `(eval (read-from-string ,(format nil "(progn ~a)" string)))
    callback))
-
-;;
-;; Keybindings
-;;
-
-(define-keys lem-markdown-mode::*markdown-mode-keymap*
-  ("C-c C-e" 'eval-block)
-  ("C-c C-c" 'eval-block-and-insert)
-  ("C-c C-d" 'kill-block-eval-result))

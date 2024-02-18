@@ -41,7 +41,7 @@
    :window-left-margin 1))
 
 (defun get-all-views ()
-  (if (lem:current-frame)
+  (if (null (lem:current-frame))
       (vector)
       (coerce
        (loop :for window :in (append (lem::frame-header-windows (lem:current-frame))

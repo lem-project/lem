@@ -35,6 +35,14 @@
   (hash-table-p command))
 
 (defun define-key (keymap keyspec command-name)
+  "Bind a command COMMAND-NAME to a KEYSPEC in a KEYMAP.
+
+Global bindings use `*global-keymap*' as KEYMAP argument.
+
+If KEYSPEC argument is a `string', valid prefixes are:
+H (Hyper), S (Super), M (Meta), C (Ctrl), Shift
+
+Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
   (check-type keyspec (or symbol string))
   (check-type command-name (or symbol keymap))
   (typecase keyspec

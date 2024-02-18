@@ -5,9 +5,9 @@
 (in-package :lem-markdown-mode/interactive)
 
 (define-keys lem-markdown-mode::*markdown-mode-keymap*
-  ("C-c C-e" 'eval-block)
-  ("C-c C-c" 'eval-block-and-insert)
-  ("C-c C-d" 'kill-block-eval-result))
+  ("C-c C-e" 'markdown-eval-block)
+  ("C-c C-c" 'markdown-eval-block-and-insert)
+  ("C-c C-d" 'markdown-kill-block-result))
 
 (defvar *block-evaluators* (make-hash-table :test #'equal)
   "Dispatch table for block evaluators per language.")
@@ -57,7 +57,7 @@
       (let ((end point))
         (values lang (points-to-string start end))))))
 
-(define-command kill-block-eval-result (&optional (point (current-point))) ()
+(define-command markdown-kill-block-result (&optional (point (current-point))) ()
   "Searches for a result block below the current code block, and kills it."
   (when-markdown-mode
     (with-constant-position (point)
@@ -91,15 +91,15 @@
         (funcall evaluator block (curry handler point))
         (message "No evaluator registered for ~a." lang)))))
 
-(define-command eval-block () ()
+(define-command markdown-eval-block () ()
   "Evaluate current markdown code block and display results in pop-up."
   (when-markdown-mode
     (eval-block-internal (copy-point (current-point)) #'pop-up-eval-result)))
 
-(define-command eval-block-and-insert () ()
+(define-command markdown-eval-block-and-insert () ()
   "Evaluate current markdown code block and display results in pop-up."
   (when-markdown-mode
-    (kill-block-eval-result)
+    (markdown-kill-block-result)
     (eval-block-internal (copy-point (current-point)) #'insert-eval-result)))
 
 ;;

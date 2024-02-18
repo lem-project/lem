@@ -25,6 +25,8 @@
                  (make-attribute :foreground color-name :reverse t))
        '("black" "cyan" "yellow" "green" "red" "blue" "white" "magenta")))
 
+(defvar *tetris-buffer*)
+
 (defvar *tetrimino-table*
   #(#(0 0 0 0
       0 0 0 0
@@ -150,7 +152,7 @@
         (incf i)))))
 
 (defun draw ()
-  (erase-buffer)
+  (erase-buffer *tetris-buffer*)
   (draw-next)
   (draw-field)
   (draw-score))
@@ -295,16 +297,16 @@
            (tetris-move-down)))))
 
 (define-command tetris () ()
-  (let ((buffer (make-buffer "*tetris*")))
-    (switch-to-buffer buffer)
-    (tetris-mode)
-    (init-field)
-    (init-player)
-    (draw)
-    (setq *playing-p* t)
-    (setq *timer* (start-timer (make-timer (lambda () (update buffer))
-                                           :handle-function (lambda (condition)
-                                                              (pop-up-backtrace condition)
-                                                              (stop-timer *timer*)))
-                               1000
-                               :repeat t))))
+  (setf *tetris-buffer* (make-buffer "*tetris*"))
+  (switch-to-buffer *tetris-buffer*)
+  (tetris-mode)
+  (init-field)
+  (init-player)
+  (draw)
+  (setq *playing-p* t)
+  (setq *timer* (start-timer (make-timer (lambda () (update *tetris-buffer*))
+                                         :handle-function (lambda (condition)
+                                                            (pop-up-backtrace condition)
+                                                            (stop-timer *timer*)))
+                             1000
+                             :repeat t)))

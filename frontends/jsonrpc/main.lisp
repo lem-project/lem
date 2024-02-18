@@ -41,12 +41,14 @@
    :window-left-margin 1))
 
 (defun get-all-views ()
-  (coerce
-   (loop :for window :in (append (lem::frame-header-windows (lem:current-frame))
-                                 (lem:window-list)
-                                 (lem::frame-floating-windows (lem:current-frame)))
-         :collect (lem::window-view window))
-   'vector))
+  (if (lem:current-frame)
+      (vector)
+      (coerce
+       (loop :for window :in (append (lem::frame-header-windows (lem:current-frame))
+                                     (lem:window-list)
+                                     (lem::frame-floating-windows (lem:current-frame)))
+             :collect (lem::window-view window))
+       'vector)))
 
 (defun notify-all-state ()
   (notify (lem:implementation) "update-foreground" (lem-core::foreground-color))

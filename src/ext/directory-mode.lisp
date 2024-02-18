@@ -68,7 +68,7 @@
 (define-key *directory-mode-keymap* "r" 'directory-mode-rename-file)
 (define-key *directory-mode-keymap* "s" 'directory-mode-sort-files)
 (define-key *directory-mode-keymap* "+" 'make-directory)
-(define-key *directory-mode-keymap* "k" 'directory-mode-kill-lines)
+(define-key *directory-mode-keymap* "C-k" 'directory-mode-kill-lines)
 
 (defun run-command (command)
   (when (consp command)

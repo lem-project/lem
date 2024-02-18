@@ -103,12 +103,14 @@
         (alexandria:when-let (color (lem:parse-color foreground))
           (setf (jsonrpc-foreground-color jsonrpc) color))
         (funcall logged-in-callback)
-        (hash "width" width
-              "height" height
-              "userId" 0
-              "views" (get-all-views)
-              "foreground" (lem-core::foreground-color)
-              "background" (lem-core::background-color))))))
+        (let ((response (hash "width" width
+                              "height" height
+                              "userId" 0
+                              "views" (get-all-views)
+                              "foreground" (lem-core::foreground-color)
+                              "background" (lem-core::background-color))))
+          (pdebug "login response: ~A" response)
+          response)))))
 
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
   (let ((ready nil))

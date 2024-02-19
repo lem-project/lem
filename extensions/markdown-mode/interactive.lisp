@@ -22,7 +22,8 @@
   "This allows you to move around the point without worry."
   `(let ((tmp (copy-point ,point)))
      (prog1 (progn ,@body)
-       (move-point ,point tmp))))
+       (move-point ,point tmp)
+       (delete-point tmp))))
 
 (defmacro when-markdown-mode (&body body)
   "Ensure the major mode is markdown-mode and alert the user if not."
@@ -54,8 +55,9 @@
     (let ((start (copy-point point)))
       (search-forward-regexp point "```")
       (search-backward point (format nil "~%"))
-      (let ((end point))
-        (values lang (points-to-string start end))))))
+      (let ((string (points-to-string start point)))
+        (delete-point start)
+        (values lang string)))))
 
 (define-command markdown-kill-block-result (&optional (point (current-point))) ()
   "Searches for a result block below the current code block, and kills it."
@@ -73,15 +75,16 @@
 
 (defun pop-up-eval-result (point result)
   "Display results of evaluation in a pop-up buffer."
-  (declare (ignore point))
-  (pop-up-buffer "*result*" (format nil "~a" result)))
+  (pop-up-buffer "*result*" (format nil "~a" result))
+  (delete-point point))
 
 (defun insert-eval-result (point result)
   "Insert results of evaluation in a code block."
   (block-at-point point)
   (search-forward-regexp point "```")
   (insert-string point (format nil "~%~%```result~%~a~%```" result))
-  (message "Block evaluated."))
+  (message "Block evaluated.")
+  (delete-point point))
 
 (defun eval-block-internal (point handler)
   "Evaluate code block and apply handler to result."

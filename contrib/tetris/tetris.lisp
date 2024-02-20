@@ -300,6 +300,8 @@
   (setf *tetris-buffer* (make-buffer "*tetris*"))
   (switch-to-buffer *tetris-buffer*)
   (tetris-mode)
+  (add-hook (variable-value 'kill-buffer-hook :buffer *tetris-buffer*)
+            #'(lambda (buffer) (declare (ignore buffer)) (tetris-quit)))
   (init-field)
   (init-player)
   (draw)

@@ -76,46 +76,51 @@
 
 (defun pop-up-eval-result (point result)
   "Display results of evaluation in a pop-up buffer."
-  (pop-up-buffer "*result*" (format nil "~a" result))
-  (delete-point point))
+  (declare (ignore point))
+  (pop-up-buffer "*result*" (format nil "~a" result)))
 
 (defun insert-eval-result (point result)
   "Insert results of evaluation in a code block."
   (block-at-point point)
   (search-forward-regexp point "```")
   (insert-string point (format nil "~%~%```result~%~a~%```" result))
-  (message "Block evaluated.")
-  (delete-point point))
+  (message "Block evaluated."))
 
 (defun nop-eval-result (point result)
   "Clean up and do nothing with result."
-  (declare (ignore result))
-  (message "Block evaluated.")
-  (delete-point point))
+  (declare (ignore point result))
+  (message "Block evaluated."))
+
+(defun cleanup-after-handler (handler)
+  "Wrap handlers to delete the point when they are done."
+  (lambda (point result)
+    (funcall handler point result)
+    (delete-point point)))
 
 (defun eval-block-internal (point handler)
   "Evaluate code block and apply handler to result."
-  (multiple-value-bind (lang block) (block-at-point point)
-    (when lang
-      (if-let ((evaluator (gethash lang *block-evaluators*)))
-        (funcall evaluator block (curry handler point))
-        (message "No evaluator registered for ~a." lang)))))
+  (when-markdown-mode
+    (multiple-value-bind (lang block) (block-at-point point)
+      (when lang
+        (if-let ((evaluator (gethash lang *block-evaluators*)))
+          (funcall evaluator block (curry handler point))
+          (message "No evaluator registered for ~a." lang))))))
 
 (define-command markdown-eval-block () ()
   "Evaluate current markdown code block and display results in pop-up."
-  (when-markdown-mode
-    (eval-block-internal (copy-point (current-point)) #'pop-up-eval-result)))
+  (eval-block-internal (copy-point (current-point))
+                       (cleanup-after-handler #'pop-up-eval-result)))
 
 (define-command markdown-eval-block-nop () ()
   "Evaluate current markdown code block and do nothing with result."
-  (when-markdown-mode
-    (eval-block-internal (copy-point (current-point)) #'nop-eval-result)))
+  (eval-block-internal (copy-point (current-point))
+                       (cleanup-after-handler #'nop-eval-result)))
 
 (define-command markdown-eval-block-and-insert () ()
   "Evaluate current markdown code block and display results in pop-up."
-  (when-markdown-mode
-    (markdown-kill-block-result)
-    (eval-block-internal (copy-point (current-point)) #'insert-eval-result)))
+  (markdown-kill-block-result)
+  (eval-block-internal (copy-point (current-point))
+                       (cleanup-after-handler #'insert-eval-result)))
 
 ;;
 ;; Default evaluators:

@@ -88,7 +88,7 @@
   (delete-point point))
 
 (defun nop-eval-result (point result)
-  "Evaluate block and do nothing with result."
+  "Clean up and do nothing with result."
   (declare (ignore result))
   (message "Block evaluated.")
   (delete-point point))
@@ -107,7 +107,7 @@
     (eval-block-internal (copy-point (current-point)) #'pop-up-eval-result)))
 
 (define-command markdown-eval-block-nop () ()
-  "Evaluate current markdown code block and display results in pop-up."
+  "Evaluate current markdown code block and do nothing with result."
   (when-markdown-mode
     (eval-block-internal (copy-point (current-point)) #'nop-eval-result)))
 

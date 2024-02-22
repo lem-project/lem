@@ -1,6 +1,6 @@
 (defpackage :lem-markdown-mode/interactive
   (:use :cl :lem)
-  (:import-from #:alexandria :if-let :when-let :curry)
+  (:import-from #:alexandria :if-let :when-let)
   (:export :register-block-evaluator))
 (in-package :lem-markdown-mode/interactive)
 
@@ -91,9 +91,9 @@
   (declare (ignore point result))
   (message "Block evaluated."))
 
-(defun cleanup-after-handler (handler)
-  "Wrap handlers to delete the point when they are done."
-  (lambda (point result)
+(defun wrap-handler (handler point)
+  "Wrap handlers to capture and delete the point when they are done."
+  (lambda (result)
     (funcall handler point result)
     (delete-point point)))
 
@@ -103,24 +103,21 @@
     (multiple-value-bind (lang block) (block-at-point point)
       (when lang
         (if-let ((evaluator (gethash lang *block-evaluators*)))
-          (funcall evaluator block (curry handler point))
+          (funcall evaluator block (wrap-handler handler point))
           (message "No evaluator registered for ~a." lang))))))
 
 (define-command markdown-eval-block () ()
   "Evaluate current markdown code block and display results in pop-up."
-  (eval-block-internal (copy-point (current-point))
-                       (cleanup-after-handler #'pop-up-eval-result)))
+  (eval-block-internal (copy-point (current-point)) #'pop-up-eval-result))
 
 (define-command markdown-eval-block-nop () ()
   "Evaluate current markdown code block and do nothing with result."
-  (eval-block-internal (copy-point (current-point))
-                       (cleanup-after-handler #'nop-eval-result)))
+  (eval-block-internal (copy-point (current-point)) #'nop-eval-result))
 
 (define-command markdown-eval-block-and-insert () ()
   "Evaluate current markdown code block and display results in pop-up."
   (markdown-kill-block-result)
-  (eval-block-internal (copy-point (current-point))
-                       (cleanup-after-handler #'insert-eval-result)))
+  (eval-block-internal (copy-point (current-point)) #'insert-eval-result))
 
 ;;
 ;; Default evaluators:

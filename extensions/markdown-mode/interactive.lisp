@@ -6,6 +6,7 @@
 
 (define-keys lem-markdown-mode::*markdown-mode-keymap*
   ("C-c C-e" 'markdown-eval-block)
+  ("C-c C-r" 'markdown-eval-block-nop)
   ("C-c C-c" 'markdown-eval-block-and-insert)
   ("C-c C-d" 'markdown-kill-block-result))
 
@@ -86,6 +87,12 @@
   (message "Block evaluated.")
   (delete-point point))
 
+(defun nop-eval-result (point result)
+  "Evaluate block and do nothing with result."
+  (declare (ignore result))
+  (message "Block evaluated.")
+  (delete-point point))
+
 (defun eval-block-internal (point handler)
   "Evaluate code block and apply handler to result."
   (multiple-value-bind (lang block) (block-at-point point)
@@ -98,6 +105,11 @@
   "Evaluate current markdown code block and display results in pop-up."
   (when-markdown-mode
     (eval-block-internal (copy-point (current-point)) #'pop-up-eval-result)))
+
+(define-command markdown-eval-block-nop () ()
+  "Evaluate current markdown code block and display results in pop-up."
+  (when-markdown-mode
+    (eval-block-internal (copy-point (current-point)) #'nop-eval-result)))
 
 (define-command markdown-eval-block-and-insert () ()
   "Evaluate current markdown code block and display results in pop-up."

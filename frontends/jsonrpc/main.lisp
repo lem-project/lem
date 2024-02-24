@@ -212,60 +212,48 @@
                               :url *websocket-url*)))))
 
 (defmethod lem-if:get-background-color ((jsonrpc jsonrpc))
-  (log:info jsonrpc)
   (jsonrpc-background-color jsonrpc))
 
 (defmethod lem-if:get-foreground-color ((jsonrpc jsonrpc))
-  (log:info jsonrpc)
   (jsonrpc-foreground-color jsonrpc))
 
 (defmethod lem-if:update-foreground ((jsonrpc jsonrpc) color-name)
   (with-error-handler ()
-    (log:info jsonrpc color-name)
     (notify jsonrpc "update-foreground" color-name)))
 
 (defmethod lem-if:update-background ((jsonrpc jsonrpc) color-name)
   (with-error-handler ()
-    (log:info jsonrpc color-name)
     (notify jsonrpc "update-background" color-name)))
 
 (defmethod lem-if:update-cursor-shape ((jsonrpc jsonrpc) cursor-type)
-  (log:info jsonrpc cursor-type)
   ;; TODO
   )
 
 (defmethod lem-if:display-width ((jsonrpc jsonrpc))
   (with-error-handler ()
-    (log:info jsonrpc)
     (jsonrpc-display-width jsonrpc)))
 
 (defmethod lem-if:display-height ((jsonrpc jsonrpc))
   (with-error-handler ()
-    (log:info jsonrpc)
     (jsonrpc-display-height jsonrpc)))
 
 (defmethod lem-if:display-title ((jsonrpc jsonrpc))
-  (log:info jsonrpc)
   ;; TODO
   )
 
 (defmethod lem-if:set-display-title ((jsonrpc jsonrpc) title)
-  (log:info jsonrpc)
   ;; TODO
   )
 
 (defmethod lem-if:display-fullscreen-p ((jsonrpc jsonrpc))
-  (log:info jsonrpc)
   ;; TODO
   )
 
 (defmethod lem-if:set-display-fullscreen-p ((jsonrpc jsonrpc) fullscreen-p)
-  (log:info jsonrpc)
   ;; TODO
   )
 
 (defmethod lem-if:make-view ((jsonrpc jsonrpc) window x y width height use-modeline)
-  (log:info jsonrpc window x y width height use-modeline)
   (let ((view (make-view :window window
                          :x x
                          :y y
@@ -279,25 +267,20 @@
     view))
 
 (defmethod lem-if:view-width ((jsonrpc jsonrpc) view)
-  (log:info jsonrpc view)
   (view-width view))
 
 (defmethod lem-if:view-height ((jsonrpc jsonrpc) view)
-  (log:info jsonrpc view)
   (view-height view))
 
 (defmethod lem-if:delete-view ((jsonrpc jsonrpc) view)
-  (log:info jsonrpc view)
   (with-error-handler ()
     (notify jsonrpc "delete-view" (hash "viewInfo" view))))
 
 (defmethod lem-if:clear ((jsonrpc jsonrpc) view)
-  (log:info jsonrpc view)
   (with-error-handler ()
     (notify* jsonrpc "clear" (hash "viewInfo" view))))
 
 (defmethod lem-if:set-view-size ((jsonrpc jsonrpc) view width height)
-  (log:info jsonrpc view width height)
   (with-error-handler ()
     (resize-view view width height)
     (notify jsonrpc
@@ -307,7 +290,6 @@
                   "height" height))))
 
 (defmethod lem-if:set-view-pos ((jsonrpc jsonrpc) view x y)
-  (log:info jsonrpc view x y)
   (with-error-handler ()
     (move-view view x y)
     (notify jsonrpc
@@ -317,19 +299,15 @@
                   "y" y))))
 
 (defmethod lem-if:redraw-view-before ((jsonrpc jsonrpc) view)
-  (log:info jsonrpc view)
   )
 
 (defmethod lem-if:redraw-view-after ((jsonrpc jsonrpc) view)
-  (log:info jsonrpc view)
   )
 
 (defmethod lem-if:will-update-display ((jsonrpc jsonrpc))
-  (log:info jsonrpc)
   )
 
 (defmethod lem-if:update-display ((jsonrpc jsonrpc))
-  (log:info jsonrpc)
   (with-error-handler ()
     (let ((view (lem:window-view (lem:current-window)))
           (x (lem:last-print-cursor-x (lem:current-window)))
@@ -357,40 +335,33 @@
 #+(or)(defmethod lem-if:display-context-menu ((jsonrpc jsonrpc) context-menu style))
 
 (defmethod lem-if:clipboard-paste ((jsonrpc jsonrpc))
-  (log:info jsonrpc)
   ;; TODO
   )
 
 (defmethod lem-if:clipboard-copy ((jsonrpc jsonrpc) text)
-  (log:info jsonrpc text)
   ;; TODO
   )
 
 (defmethod lem-if:increase-font-size ((jsonrpc jsonrpc))
-  (log:info jsonrpc)
   ;; TODO
   )
 (defmethod lem-if:decrease-font-size ((jsonrpc jsonrpc))
-  (log:info jsonrpc)
   ;; TODO
   )
 
 (defmethod lem-if:resize-display-before ((jsonrpc jsonrpc))
-  (log:info jsonrpc))
+  )
 
 (defmethod lem-if:get-font-list ((jsonrpc jsonrpc))
-  (log:info jsonrpc))
+  )
 
 (defmethod lem-if:get-mouse-position ((jsonrpc jsonrpc))
-  (log:info jsonrpc)
   (values 0 0))
 
 (defmethod lem-if:get-char-width ((jsonrpc jsonrpc))
-  (log:info jsonrpc)
   ;; TODO
   1)
 (defmethod lem-if:get-char-height ((jsonrpc jsonrpc))
-  (log:info jsonrpc)
   ;; TODO
   1)
 

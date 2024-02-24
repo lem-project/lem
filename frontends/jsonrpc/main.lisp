@@ -23,6 +23,41 @@
 
 (pushnew :lem-jsonrpc *features*)
 
+(defclass permission ()
+  ((read :initarg :read
+         :reader permission-read
+         :type boolean)
+   (write :initarg :write
+          :reader permission-write
+          :type boolean)))
+
+(defclass user ()
+  ((id :initarg :id
+       :reader user-id)
+   (permission :initarg :permission
+               :reader user-permission
+               :type permission)
+   (connection :initarg :connection
+               :reader user-connection)))
+
+(defvar *user-table* (make-hash-table :test 'eq))
+
+(defun add-user (connection &key user-id permission)
+  (setf (gethash connection *user-table*)
+        (make-instance 'user
+                       :connection connection
+                       :id user-id
+                       :permission permission)))
+
+(defun get-user (connection)
+  (gethash connection *user-table*))
+
+(defun permitted-p (user permission-key)
+  (let ((permission (user-permission user)))
+    (ecase permission-key
+      (:write (permission-write permission))
+      (:read (permission-read permission)))))
+
 (defclass server (jsonrpc:server) ())
 
 (defclass jsonrpc (lem:implementation)
@@ -91,30 +126,49 @@
       (setf *last-bulk-argument* argument)
       (notify jsonrpc "bulk" argument))))
 
+(defun handle-login (jsonrpc logged-in-callback params)
+  (pdebug "ready: ~A ~A" jsonrpc/connection:*connection* (pretty-json params))
+  (with-error-handler ()
+    (let ((width (gethash "width" params))
+          (height (gethash "height" params))
+          (foreground (gethash "foreground" params))
+          (background (gethash "background" params))
+          (permission (gethash "permission" params))
+          (user-id (gethash "userId" params)))
+      (add-user jsonrpc/connection:*connection*
+                :user-id user-id
+                :permission (make-instance 'permission
+                                           :read (if permission
+                                                     (gethash "read" permission)
+                                                     t)
+                                           :write (if permission
+                                                      (gethash "write" permission)
+                                                      t)))
+      (resize-display jsonrpc width height)
+      (alexandria:when-let (color (lem:parse-color background))
+        (setf (jsonrpc-background-color jsonrpc) color))
+      (alexandria:when-let (color (lem:parse-color foreground))
+        (setf (jsonrpc-foreground-color jsonrpc) color))
+      (funcall logged-in-callback)
+      (let ((response (hash "userId" user-id
+                            "permission" permission
+                            "width" width
+                            "height" height
+                            "views" (get-all-views)
+                            "foreground" (lem-core::foreground-color)
+                            "background" (lem-core::background-color))))
+        (pdebug "login response: ~A" (pretty-json response))
+        response))))
+
 (defun login (jsonrpc logged-in-callback)
   (lambda (params)
-    (pdebug "ready: ~A" (pretty-json params))
-    (with-error-handler ()
-      (let ((width (gethash "width" params))
-            (height (gethash "height" params))
-            (foreground (gethash "foreground" params))
-            (background (gethash "background" params)))
-        (resize-display jsonrpc width height)
-        (alexandria:when-let (color (lem:parse-color background))
-          (setf (jsonrpc-background-color jsonrpc) color))
-        (alexandria:when-let (color (lem:parse-color foreground))
-          (setf (jsonrpc-foreground-color jsonrpc) color))
-        (funcall logged-in-callback)
-        (let ((response (hash "width" width
-                              "height" height
-                              "userId" 0
-                              "views" (get-all-views)
-                              "foreground" (lem-core::foreground-color)
-                              "background" (lem-core::background-color))))
-          (pdebug "login response: ~A" response)
-          response)))))
+    (handle-login jsonrpc logged-in-callback params)))
 
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
+  (when (uiop:getenv "MICROS_PORT")
+    (micros:create-server :dont-close t
+                          :port (parse-integer (uiop:getenv "MICROS_PORT"))
+                          :interface "0.0.0.0"))
   (let ((ready nil))
     (setf *editor-thread*
           (funcall function
@@ -525,34 +579,35 @@
                   :sym key)))
 
 (defun input-callback (jsonrpc args)
+  (pdebug "input: connection ~A" jsonrpc/connection:*connection*)
   (handler-case
-      (let ((kind (gethash "kind" args))
-            (value (gethash "value" args))
-            (user-id (gethash "userId" args)))
-        (declare (ignore user-id))
-        (cond ((= kind +abort+)
-               (lem:send-abort-event *editor-thread* nil))
-              ((= kind +keyevent+)
-               (when value
-                 (let ((key (convert-keyevent value)))
-                   (lem:send-event key))))
-              ((= kind +resize+)
-               (resize-display jsonrpc
-                               (gethash "width" value)
-                               (gethash "height" value))
-               (lem:send-event :resize))
-              ((= kind +command+)
-               (error "unimplemented"))
-              ((= kind +method+)
-               (let* ((method (gethash (gethash "method" value) *method-table*))
-                      (params (gethash "params" value))
-                      (args
-                        (loop :for k :being :the :hash-keys :in params :using (hash-value v)
-                              :collect (intern (string-upcase k) :keyword)
-                              :collect v)))
-                 (lem:send-event (lambda () (apply method args)))))
-              (t
-               (error "unexpected kind: ~D" kind))))
+      (let ((user (get-user jsonrpc/connection:*connection*)))
+        (when (permitted-p user :write)
+          (let ((kind (gethash "kind" args))
+                (value (gethash "value" args)))
+            (cond ((= kind +abort+)
+                   (lem:send-abort-event *editor-thread* nil))
+                  ((= kind +keyevent+)
+                   (when value
+                     (let ((key (convert-keyevent value)))
+                       (lem:send-event key))))
+                  ((= kind +resize+)
+                   (resize-display jsonrpc
+                                   (gethash "width" value)
+                                   (gethash "height" value))
+                   (lem:send-event :resize))
+                  ((= kind +command+)
+                   (error "unimplemented"))
+                  ((= kind +method+)
+                   (let* ((method (gethash (gethash "method" value) *method-table*))
+                          (params (gethash "params" value))
+                          (args
+                            (loop :for k :being :the :hash-keys :in params :using (hash-value v)
+                                  :collect (intern (string-upcase k) :keyword)
+                                  :collect v)))
+                     (lem:send-event (lambda () (apply method args)))))
+                  (t
+                   (error "unexpected kind: ~D" kind))))))
     (error (e)
       (pdebug "input-callback: ~A ~A" e
               (with-output-to-string (stream)

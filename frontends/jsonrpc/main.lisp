@@ -85,18 +85,8 @@
              :collect (lem::window-view window))
        'vector)))
 
-(defun notify-all-state ()
-  (notify (lem:implementation) "update-foreground" (lem-core::foreground-color))
-  (notify (lem:implementation) "update-background" (lem-core::background-color))
-  (dolist (window (append (lem::frame-header-windows (lem:current-frame))
-                          (lem:window-list)
-                          (lem::frame-floating-windows (lem:current-frame))))
-    (notify (lem:implementation) "make-view" (lem::window-view window)))
-  (lem:redraw-display :force t))
-
 (defmethod jsonrpc/class::on-adding-connection ((server server) connection)
   (pdebug "Added ~A" connection)
-  ;; (lem::send-event (lambda () (notify-all-state)))
   )
 
 (defmethod jsonrpc/class::on-removing-connection ((server server) connection)
@@ -107,7 +97,7 @@
         (jsonrpc-display-height jsonrpc) height))
 
 (defmethod notify ((jsonrpc jsonrpc) method argument)
-  (pdebug "notify: ~A ~A" method (pretty-json argument))
+  (pdebug "notify: ~A" method)
   (if (eq (jsonrpc-mode jsonrpc) :stdio)
       (let ((jsonrpc/connection:*connection*
               (jsonrpc/transport/interface:transport-connection
@@ -122,9 +112,12 @@
   (let ((argument (coerce (loop :until (queue:empty-p *message-queue*)
                                 :collect (queue:dequeue *message-queue*))
                           'vector)))
-    (unless (json-equal *last-bulk-argument* argument)
-      (setf *last-bulk-argument* argument)
-      (notify jsonrpc "bulk" argument))))
+    (cond #+(or)((json-equal *last-bulk-argument* argument)
+           (pdebug "skip notification")
+           nil)
+          (t
+           (setf *last-bulk-argument* argument)
+           (notify jsonrpc "bulk" argument)))))
 
 (defun handle-login (jsonrpc logged-in-callback params)
   (pdebug "ready: ~A ~A" jsonrpc/connection:*connection* (pretty-json params))
@@ -164,6 +157,10 @@
   (lambda (params)
     (handle-login jsonrpc logged-in-callback params)))
 
+(defun redraw (args)
+  (declare (ignore args))
+  (lem:send-event (lambda () (lem:redraw-display :force t))))
+
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
   (when (uiop:getenv "MICROS_PORT")
     (micros:create-server :dont-close t
@@ -185,9 +182,7 @@
                       (input-callback jsonrpc args)))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
                     "redraw"
-                    (lambda (args)
-                      (declare (ignore args))
-                      (lem:redraw-display :force t)))
+                    'redraw)
 
     (lem:add-hook lem:*exit-editor-hook*
                   (lambda ()

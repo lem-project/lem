@@ -156,10 +156,16 @@
     (handle-login jsonrpc logged-in-callback params)))
 
 (defun redraw (args)
-  (declare (ignore args))
-  (lem:send-event (lambda ()
-                    (lem-core::adjust-all-window-size)
-                    (lem:redraw-display :force t))))
+  (pdebug "redraw: ~A" (pretty-json args))
+  (with-error-handler ()
+    (let ((size (gethash "size" args)))
+      (when size
+        (let ((width (gethash "width" size))
+              (height (gethash "height" size)))
+          (resize-display (lem:implementation) width height)))
+      (lem:send-event (lambda ()
+                        (lem-core::adjust-all-window-size)
+                        (lem:redraw-display :force t))))))
 
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
   (when (uiop:getenv "MICROS_PORT")

@@ -158,7 +158,7 @@
 (defun redraw (args)
   (pdebug "redraw: ~A" (pretty-json args))
   (with-error-handler ()
-    (let ((size (gethash "size" args)))
+    (let ((size (and args (gethash "size" args))))
       (when size
         (let ((width (gethash "width" size))
               (height (gethash "height" size)))

@@ -162,7 +162,8 @@
       (when size
         (let ((width (gethash "width" size))
               (height (gethash "height" size)))
-          (resize-display (lem:implementation) width height)))
+          (resize-display (lem:implementation) width height)
+          (notify (lem:implementation) "resize-display" size)))
       (lem:send-event (lambda ()
                         (lem-core::adjust-all-window-size)
                         (lem:redraw-display :force t))))))

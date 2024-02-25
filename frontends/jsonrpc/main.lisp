@@ -122,32 +122,30 @@
 (defun handle-login (jsonrpc logged-in-callback params)
   (pdebug "ready: ~A ~A" jsonrpc/connection:*connection* (pretty-json params))
   (with-error-handler ()
-    (let ((width (gethash "width" params))
-          (height (gethash "height" params))
-          (foreground (gethash "foreground" params))
-          (background (gethash "background" params))
-          (permission (gethash "permission" params))
-          (user-id (gethash "userId" params)))
+    (let* ((size (gethash "size" params))
+           (foreground (gethash "foreground" params))
+           (background (gethash "background" params))
+           (permission (gethash "permission" params))
+           (permission-read (if permission (gethash "read" permission) t))
+           (permission-write (if permission (gethash "write" permission) t))
+           (user-id (gethash "userId" params)))
       (add-user jsonrpc/connection:*connection*
                 :user-id user-id
                 :permission (make-instance 'permission
-                                           :read (if permission
-                                                     (gethash "read" permission)
-                                                     t)
-                                           :write (if permission
-                                                      (gethash "write" permission)
-                                                      t)))
-      (resize-display jsonrpc width height)
-      (alexandria:when-let (color (lem:parse-color background))
-        (setf (jsonrpc-background-color jsonrpc) color))
-      (alexandria:when-let (color (lem:parse-color foreground))
-        (setf (jsonrpc-foreground-color jsonrpc) color))
+                                           :read permission-read
+                                           :write permission-write))
+      (when (and size permission-write)
+        (let ((width (gethash "width" size))
+              (height (gethash "height" size)))
+          (resize-display jsonrpc width height)))
+      (when (and background permission-write)
+        (alexandria:when-let (color (lem:parse-color background))
+          (setf (jsonrpc-background-color jsonrpc) color)))
+      (when (and foreground permission-write)
+        (alexandria:when-let (color (lem:parse-color foreground))
+          (setf (jsonrpc-foreground-color jsonrpc) color)))
       (funcall logged-in-callback)
-      (let ((response (hash "userId" user-id
-                            "permission" permission
-                            "width" width
-                            "height" height
-                            "views" (get-all-views)
+      (let ((response (hash "views" (get-all-views)
                             "foreground" (lem-core::foreground-color)
                             "background" (lem-core::background-color))))
         (pdebug "login response: ~A" (pretty-json response))
@@ -159,7 +157,9 @@
 
 (defun redraw (args)
   (declare (ignore args))
-  (lem:send-event (lambda () (lem:redraw-display :force t))))
+  (lem:send-event (lambda ()
+                    (lem-core::adjust-all-window-size)
+                    (lem:redraw-display :force t))))
 
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
   (when (uiop:getenv "MICROS_PORT")

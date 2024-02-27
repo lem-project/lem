@@ -113,8 +113,30 @@
         (ok (buf= #?"apple\no<ra>nge\ng<[r]a>pe\n"))))
     (testing "delete"
       (with-vi-buffer (#?"[a]pple\norange\ngrape\n")
-        (cmd "<C-v>llld")
-        (ok (buf= #?"[e]\norange\ngrape\n"))))))
+        (cmd "<C-v>jllld")
+        (ok (buf= #?"[e]\nge\ngrape\n"))))))
+
+(deftest visual-block-japanease
+  (with-fake-interface ()
+    (testing "右下"
+      (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+        (cmd "<C-v>jl")
+        (ok (buf= #?"あいうえお\nか<きく>けこ\nさ<し[す]>せそ\n"))))
+
+    (testing "右上"
+      (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+        (cmd "<C-v>kl")
+        (ok (buf= #?"あ<い[う]>えお\nか<きく>けこ\nさしすせそ\n"))))
+
+    (testing "左上"
+      (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+        (cmd "<C-v>kh")
+        (ok (buf= #?"<[あ]い>うえお\n<かき>くけこ\nさしすせそ\n"))))
+
+    (testing "左下"
+      (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+        (cmd "<C-v>jh")
+        (ok (buf= #?"あいうえお\n<かき>くけこ\n<[さ]し>すせそ\n"))))))
 
 (deftest visual-swap-points
   (with-fake-interface ()

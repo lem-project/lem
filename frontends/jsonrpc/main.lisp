@@ -52,6 +52,9 @@
 (defun get-user (connection)
   (gethash connection *user-table*))
 
+(defun exit-user (connection)
+  (remhash connection *user-table*))
+
 (defun permitted-p (user permission-key)
   (let ((permission (user-permission user)))
     (ecase permission-key
@@ -90,7 +93,8 @@
   )
 
 (defmethod jsonrpc/class::on-removing-connection ((server server) connection)
-  (pdebug "Removing ~A" connection))
+  (pdebug "Removing ~A" connection)
+  (exit-user connection))
 
 (defmethod resize-display ((jsonrpc jsonrpc) width height)
   (setf (jsonrpc-display-width jsonrpc) width
@@ -602,7 +606,7 @@
   "pong")
 
 (defmethod com.inuoe.jzon:coerced-fields ((user user))
-  `(("id" . ,(user-id user))))
+  `(("id" ,(user-id user))))
 
 (defun get-users (params)
   (declare (ignore params))

@@ -1,11 +1,14 @@
-FROM docker.io/fukamachi/qlot
+FROM alpine:latest
+
+WORKDIR /app
 
 COPY . .
 
-RUN apt-get update && apt-get install gcc libncurses-dev -y
+RUN apk add --no-cache curl bash build-base ncurses-dev sbcl git
 
-RUN qlot install
+RUN curl -L https://qlot.tech/installer | bash
 
-RUN qlot exec sbcl --noinform --load scripts/build-ncurses.lisp
+RUN qlot install && \
+    qlot exec sbcl --noinform --load scripts/build-ncurses.lisp
 
 ENTRYPOINT qlot exec sbcl --noinform --eval "(ql:quickload :lem-ncurses)" --eval "(lem:lem)" --quit

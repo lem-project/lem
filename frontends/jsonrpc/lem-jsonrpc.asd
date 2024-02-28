@@ -5,7 +5,9 @@
                "trivial-utf-8"
                "jsonrpc/transport/stdio"
                "jsonrpc/transport/websocket"
-               "command-line-arguments")
+               "command-line-arguments"
+               "ningle"
+               "com.inuoe.jzon")
   :serial t
   :components ((:file "jsonrpc-stdio-patch")
                (:file "utils")

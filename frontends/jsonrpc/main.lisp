@@ -173,6 +173,10 @@
     (micros:create-server :dont-close t
                           :port (parse-integer (uiop:getenv "MICROS_PORT"))
                           :interface "0.0.0.0"))
+
+  (when (uiop:getenv "LEM_JSONRPC_HTTP_PORT")
+    (run-http-server (parse-integer (uiop:getenv "LEM_JSONRPC_HTTP_PORT"))))
+
   (let ((ready nil))
     (setf *editor-thread*
           (funcall function
@@ -586,6 +590,32 @@
               (with-output-to-string (stream)
                 (let ((stream (yason:make-json-output-stream stream)))
                   (yason:encode args stream)))))))
+
+;;;
+(defvar *app* (make-instance 'ningle:app))
+
+(setf (ningle:route *app* "/ping" :method :GET) 'ping
+      (ningle:route *app* "/users" :method :GET) 'get-users)
+
+(defun ping (params)
+  (declare (ignore params))
+  "pong")
+
+(defmethod com.inuoe.jzon:coerced-fields ((user user))
+  `(("id" . ,(user-id user))))
+
+(defun get-users (params)
+  (declare (ignore params))
+  `(200 (:content-type "application/json")
+        ,(babel:string-to-octets
+          (com.inuoe.jzon:stringify
+           (coerce
+            (loop :for user :being :the :hash-value :in *user-table*
+                  :collect user)
+            'vector)))))
+
+(defun run-http-server (port)
+  (clack:clackup *app* :port port :address "0.0.0.0"))
 
 ;;;
 (defparameter +command-line-spec+

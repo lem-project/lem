@@ -92,11 +92,12 @@
        'vector)))
 
 (defmethod jsonrpc/class::on-adding-connection ((server server) connection)
-  (pdebug "Added ~A" connection)
-  )
+  (pdebug "Added ~A" connection))
 
 (defmethod jsonrpc/class::on-removing-connection ((server server) connection)
   (pdebug "Removing ~A" connection)
+  (let ((user (get-user connection)))
+    (notify (lem:implementation) "user-exit" (hash "userId" (user-id user))))
   (exit-user connection))
 
 (defmethod resize-display ((jsonrpc jsonrpc) width height)
@@ -154,6 +155,9 @@
         (alexandria:when-let (color (lem:parse-color foreground))
           (setf (jsonrpc-foreground-color jsonrpc) color)))
       (funcall logged-in-callback)
+
+      (notify jsonrpc "user-enter" (hash "userId" user-id))
+
       (let ((response (hash "views" (get-all-views)
                             "foreground" (lem-core::foreground-color)
                             "background" (lem-core::background-color))))

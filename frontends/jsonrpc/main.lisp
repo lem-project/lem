@@ -29,7 +29,10 @@
          :type boolean)
    (write :initarg :write
           :reader permission-write
-          :type boolean)))
+          :type boolean)
+   (resize-display :initarg :resize-display
+                       :reader permission-resize-display
+                       :type boolean)))
 
 (defclass user ()
   ((id :initarg :id
@@ -132,13 +135,15 @@
            (permission (gethash "permission" params))
            (permission-read (if permission (gethash "read" permission) t))
            (permission-write (if permission (gethash "write" permission) t))
+           (permission-resize-display (if permission (gethash "resizeDisplay" permission) nil))
            (user-id (gethash "userId" params)))
       (add-user jsonrpc/connection:*connection*
                 :user-id user-id
                 :permission (make-instance 'permission
                                            :read permission-read
-                                           :write permission-write))
-      (when (and size permission-write)
+                                           :write permission-write
+                                           :resize-display permission-resize-display))
+      (when (and permission-resize-display size)
         (let ((width (gethash "width" size))
               (height (gethash "height" size)))
           (resize-display jsonrpc width height)))

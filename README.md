@@ -25,8 +25,7 @@ Other Lem features include:
 
 With Docker (ncurses version):
 
-    $ docker build -t lem .
-    $ docker run --rm -it -v .:/shared lem
+    $ docker run --rm -it ghcr.io/lem-project/lem:latest
 
 ### Lem-ncurses
 - [GNU/Linux](https://lem-project.github.io/installation/ncurses/linux/)

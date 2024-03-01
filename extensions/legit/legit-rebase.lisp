@@ -69,7 +69,7 @@ and
   (kill-buffer "git-rebase-todo"))
 
 (define-command rebase-abort () ()
-  (run-function #'lem/porcelain::rebase-kill)
+  (run-function #'lem/porcelain::rebase-abort)
   (kill-buffer "git-rebase-todo"))
 
 (define-command rebase-abort-yes-or-no () ()

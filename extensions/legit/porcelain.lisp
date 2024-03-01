@@ -425,6 +425,30 @@ allows to learn about the file state: modified, deleted, ignored… "
     (t
      (git-current-branch))))
 
+(defun rebase-in-progress ()
+  "Return a plist if a rebase is in progress. Used for legit-status.
+
+  plist keys:
+
+  :status (boolean) -> T if a rebase is in progress
+  :head-name -> content from .git/rebase-merge/head-name, such as \"refs/heads/master\"
+  :head-short-name -> \"master\"
+  :onto -> content from .git/rebase-merge/onto, a commit id."
+  (case *vcs*
+    (:git
+     (when (uiop:directory-exists-p ".git/rebase-merge/")
+       (let ((head (str:trim (str:from-file ".git/rebase-merge/head-name")))
+             (onto (str:trim (str:from-file ".git/rebase-merge/onto"))))
+         (list :status t
+               :head-name head
+               :head-short-name (or (third (str:split "/" head))
+                                    head)
+               :onto onto
+               :onto-short-commit (str:shorten 8 onto :ellipsis "")))))
+    (t
+     (log:info "rebase not available for ~a" *vcs*)
+     (values))))
+
 ;;;
 ;;; Latest commits.
 ;;;

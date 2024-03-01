@@ -6,7 +6,7 @@ Done:
 - start a rebase process from the commit at point,
   - abort the ongoing rebase:
    - with C-c C-k in the interactive buffer buffer
-   - or M-x rebase-abort, which works when the rebase was started by another process.
+   - or "r a" (M-x rebase-abort), which works when the rebase was started by another process.
 - open a rebase buffer and press p, f… to pick, fixup… the commit at point.
 - validate it, stop it.
 
@@ -136,6 +136,7 @@ and
     (format s "(p)ick commit, (f)ixup... WARN: other commands like reword are not implemented.")
     (format s "~%")
     (format s "Validate: C-Return, C-c C-c~&")
+    (format s "Abort: C-c C-k~&")
     (format s "Stop and quit: Escape, M-q.~&")
     (format s "Navigate: C-n and C-p.~&")
     (format s "~%")

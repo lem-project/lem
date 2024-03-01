@@ -4,6 +4,9 @@
 Done:
 
 - start a rebase process from the commit at point,
+  - abort the ongoing rebase:
+   - with C-c C-k in the interactive buffer buffer
+   - or M-x rebase-abort, which works when the rebase was started by another process.
 - open a rebase buffer and press p, f… to pick, fixup… the commit at point.
 - validate it, stop it.
 
@@ -17,7 +20,7 @@ TODOs:
 
 - when (e)dit or (r)eword are used, we need to handle another operation.
 - show in legit-status when a rebase is in process.
-- add commands to continue or abort the rebase in process.
+- add commands to continue the rebase in process.
 
 and
 
@@ -69,13 +72,18 @@ and
   (kill-buffer "git-rebase-todo"))
 
 (define-command rebase-abort () ()
-  (run-function #'lem/porcelain::rebase-abort)
-  (kill-buffer "git-rebase-todo"))
+  (with-current-project ()
+    (run-function #'lem/porcelain::rebase-abort)
+    (when (get-buffer "git-rebase-todo")
+      (kill-buffer "git-rebase-todo"))
+    (message "rebase aborted.")))
 
 (define-command rebase-abort-yes-or-no () ()
   ;; TODO: prompt for confirmation.
-  (run-function #'lem/porcelain::rebase-kill)
-  (kill-buffer "git-rebase-todo"))
+  (with-current-project ()
+    (run-function #'lem/porcelain::rebase-kill)
+    (when (get-buffer "git-rebase-todo")
+      (kill-buffer "git-rebase-todo"))))
 
 (defun %rebase-change-command (command)
   "Insert this command (string, such as \"fixup\") at the beginning of this line."

@@ -773,17 +773,27 @@ I am stopping in case you still have something valuable there."))
                         :error-output :string
                         :ignore-error-status t)
     (declare (ignorable output))
+    (setf *rebase-pid* nil)
     (values (format nil "rebase finished.")
             error-output
             exit-code)))
 
 (defun rebase-abort ()
   (cond
+    ;; First, if we are running our rebase script, kill it.
+    ;; This makes git abort the rebase too.
+    ;; This is used by C-c C-k in the interactive rebase buffer.
     (*rebase-pid*
      ;; too fragile, be more defensive?
-     (uiop:run-program (list "kill" "-SIGKILL" *rebase-pid*))
+     (uiop:run-program (list "kill" "-SIGKILL" *rebase-pid*)
+                       :output :string
+                       :error-output :string)
      (values (format nil "Rebase stopped.")
              ""
              0))
+    ;; Check if a rebase was started by someone else and abort it.
+    ;; This is called from legit interace: "r" "a".
+    ((uiop:directory-exists-p ".git/rebase-merge/")
+     (run-git (list "rebase" "--abort")))
     (t
       (porcelain-error  "No git rebase in process? PID not found."))))

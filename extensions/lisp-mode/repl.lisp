@@ -538,7 +538,7 @@
 
 (define-repl-shortcut quickload ()
   (let ((system (prompt-for-system "Quickload System: ")))
-    (listener-eval (prin1-to-string `(ql:quickload ,system)))))
+    (listener-eval (prin1-to-string `(maybe-load-systems ,system)))))
 
 (define-repl-shortcut ls ()
   (insert-character (current-point) #\newline)

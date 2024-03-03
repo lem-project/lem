@@ -1,14 +1,14 @@
-(defpackage :lem-jsonrpc
+(defpackage :lem-rpc
   (:use :cl
-        :lem-jsonrpc/utils
-        :lem-jsonrpc/view)
+        :lem-rpc/utils
+        :lem-rpc/view)
   (:local-nicknames (:display :lem-core/display)
                     (:queue :lem/common/queue))
   (:export :run-tcp-server
            :run-stdio-server
            :run-websocket-server
            :program))
-(in-package :lem-jsonrpc)
+(in-package :lem-rpc)
 
 (defvar *mode*)
 (defvar *hostname*)
@@ -21,7 +21,7 @@
 
 (defvar *last-bulk-argument* nil)
 
-(pushnew :lem-jsonrpc *features*)
+(pushnew :lem-rpc *features*)
 
 (defclass permission ()
   ((read :initarg :read
@@ -673,6 +673,6 @@
            (t
             (command-line-arguments:show-option-help +command-line-spec+)
             (uiop:quit 1))))
-   :name "lem-jsonrpc"
+   :name "lem-rpc"
    :positional-arity 0
    :command-line args))

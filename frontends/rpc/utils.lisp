@@ -1,11 +1,11 @@
-(defpackage :lem-jsonrpc/utils
+(defpackage :lem-rpc/utils
   (:use :cl)
   (:export :pdebug
            :hash
            :with-error-handler
            :json-equal
            :pretty-json))
-(in-package :lem-jsonrpc/utils)
+(in-package :lem-rpc/utils)
 
 (defun pdebug (fmt &rest args)
   (let ((log-filename (merge-pathnames "logs/jsonrpc.log" (lem:lem-home))))

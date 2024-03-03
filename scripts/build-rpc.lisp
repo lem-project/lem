@@ -1,4 +1,4 @@
-(ql:quickload :lem-jsonrpc)
+(ql:quickload :lem-rpc)
 
 (ql:quickload :lem/legit)
 
@@ -6,6 +6,6 @@
 
 (lem:init-at-build-time)
 
-(sb-ext:save-lisp-and-die "lem-jsonrpc"
-                          :toplevel #'lem-jsonrpc:program
+(sb-ext:save-lisp-and-die "lem-rpc"
+                          :toplevel #'lem-rpc:program
                           :executable t)

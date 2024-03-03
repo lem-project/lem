@@ -1,4 +1,4 @@
-(defsystem "lem-jsonrpc"
+(defsystem "lem-rpc"
   :depends-on ("lem"
                "lem/extensions"
                "jsonrpc"
@@ -14,8 +14,8 @@
                (:file "view")
                (:file "main")))
 
-(defsystem "lem-jsonrpc/executable"
+(defsystem "lem-rpc/executable"
   :build-operation program-op
   :build-pathname "lem-rpc"
-  :entry-point "lem-jsonrpc:program"
-  :depends-on ("lem-jsonrpc"))
+  :entry-point "lem-rpc:program"
+  :depends-on ("lem-rpc"))

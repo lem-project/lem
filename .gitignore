@@ -28,7 +28,7 @@ GIT_IGNORE.*
 
 lem
 lem-ncurses
-lem-jsonrpc
+lem-rpc
 
 *.abcl
 build/*

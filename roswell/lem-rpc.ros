@@ -14,7 +14,7 @@ exec ros +Q -m lem-rpc -L sbcl-bin -- $0 "$@"
     (setf ql:*quicklisp-home*
           (merge-pathnames #P".qlot/"))
     (load (merge-pathnames #P".qlot/setup.lisp")))
-  (uiop:symbol-call :ql :quickload '(:lem-jsonrpc :lem-electron-backend :command-line-arguments) :silent t)
+  (uiop:symbol-call :ql :quickload '(:lem-rpc :lem-electron-backend :command-line-arguments) :silent t)
   (uiop:symbol-call :lem-core :load-site-init))
 
 (defpackage :ros.script.lem-rpc.3715592460
@@ -29,7 +29,7 @@ exec ros +Q -m lem-rpc -L sbcl-bin -- $0 "$@"
   (declare (ignorable argv))
   (destructuring-bind (&key (mode "stdio") port)
       (process-command-line-options +command-line-spec+ argv)
-    (let ((lem-jsonrpc::*mode* (if mode (intern (string-upcase mode) :keyword)))
-          (lem-jsonrpc::*port* port))
+    (let ((lem-rpc::*mode* (if mode (intern (string-upcase mode) :keyword)))
+          (lem-rpc::*port* port))
       (lem:lem))))
 ;;; vim: set ft=lisp lisp:

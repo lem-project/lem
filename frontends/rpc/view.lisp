@@ -1,4 +1,4 @@
-(defpackage :lem-jsonrpc/view
+(defpackage :lem-rpc/view
   (:use :cl)
   (:export :view
            :make-view
@@ -12,7 +12,7 @@
            :view-kind
            :move-view
            :resize-view))
-(in-package :lem-jsonrpc/view)
+(in-package :lem-rpc/view)
 
 (defvar *view-id-counter* 0)
 

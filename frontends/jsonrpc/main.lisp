@@ -85,10 +85,10 @@
   (if (null (lem:current-frame))
       (vector)
       (coerce
-       (loop :for window :in (append (lem::frame-header-windows (lem:current-frame))
+       (loop :for window :in (append (lem:frame-header-windows (lem:current-frame))
                                      (lem:window-list)
-                                     (lem::frame-floating-windows (lem:current-frame)))
-             :collect (lem::window-view window))
+                                     (lem:frame-floating-windows (lem:current-frame)))
+             :collect (lem:window-view window))
        'vector)))
 
 (defmethod jsonrpc/class::on-adding-connection ((server server) connection)

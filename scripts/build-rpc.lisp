@@ -7,5 +7,5 @@
 (lem:init-at-build-time)
 
 (sb-ext:save-lisp-and-die "lem-rpc"
-                          :toplevel #'lem-rpc:program
+                          :toplevel (find-symbol "PROGRAM" :lem-rpc)
                           :executable t)

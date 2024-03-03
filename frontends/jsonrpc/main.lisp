@@ -96,9 +96,10 @@
 
 (defmethod jsonrpc/class::on-removing-connection ((server server) connection)
   (pdebug "Removing ~A" connection)
-  (let ((user (get-user connection)))
-    (notify (lem:implementation) "user-exit" (hash "userId" (user-id user))))
-  (exit-user connection))
+  (with-error-handler ()
+    (let ((user (get-user connection)))
+      (notify (lem:implementation) "user-exit" (hash "userId" (user-id user))))
+    (exit-user connection)))
 
 (defmethod resize-display ((jsonrpc jsonrpc) width height)
   (setf (jsonrpc-display-width jsonrpc) width

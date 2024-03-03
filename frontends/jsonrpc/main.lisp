@@ -188,8 +188,7 @@
                           :port (parse-integer (uiop:getenv "MICROS_PORT"))
                           :interface "0.0.0.0"))
 
-  (when (uiop:getenv "LEM_JSONRPC_HTTP_PORT")
-    (run-http-server (parse-integer (uiop:getenv "LEM_JSONRPC_HTTP_PORT"))))
+  (run-http-server 50001)
 
   (let ((ready nil))
     (setf *editor-thread*

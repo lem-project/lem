@@ -7,12 +7,10 @@
            :pretty-json))
 (in-package :lem-jsonrpc/utils)
 
-(defvar *log-filename* (merge-pathnames "logs/jsonrpc.log" (lem:lem-home)))
-
 (defun pdebug (fmt &rest args)
-  (when *log-filename*
-    (ensure-directories-exist *log-filename*)
-    (with-open-file (out *log-filename*
+  (let ((log-filename (merge-pathnames "logs/jsonrpc.log" (lem:lem-home))))
+    (ensure-directories-exist log-filename)
+    (with-open-file (out log-filename
                          :direction :output
                          :if-exists :append
                          :if-does-not-exist :create)

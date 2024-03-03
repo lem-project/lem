@@ -158,7 +158,18 @@
       (testing "左下"
         (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
           (cmd "<C-v>hjx")
-          (ok (buf= #?"あいうえお\n[く]けこ\nすせそ\n")))))))
+          (ok (buf= #?"あいうえお\n[く]けこ\nすせそ\n")))))
+    
+    (testing "挿入"
+      (testing "右"
+        (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+          (cmd "<C-v>jlxlp")
+          (ok (buf= #?"あいうえお\nかけこ[き]く\nさせそしす\n"))))
+
+      (testing "左"
+        (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+          (cmd "<C-v>jlxhP")
+          (ok (buf= #?"あいうえお\n[き]くかけこ\nしすさせそ\n")))))))
 
 (deftest visual-swap-points
   (with-fake-interface ()

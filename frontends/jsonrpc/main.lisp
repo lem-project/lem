@@ -159,7 +159,7 @@
 
       (notify jsonrpc "user-enter" (hash "userId" user-id))
 
-      (let ((response (hash "views" (get-all-views)
+      (let ((response (hash "views" (with-error-handler () (get-all-views))
                             "foreground" (lem-core::foreground-color)
                             "background" (lem-core::background-color))))
         (pdebug "login response: ~A" (pretty-json response))

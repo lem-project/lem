@@ -187,7 +187,7 @@
            (region-string (start end end-col)
              (concatenate 'string
                           (points-to-string start end)
-                          (make-string (- end-col (point-charpos end))
+                          (make-string (- end-col (point-column end))
                                        :initial-element #\Space))))
     (destructuring-bind (start-line end-line)
         (sort (list (line-number-at-point start)

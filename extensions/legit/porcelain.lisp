@@ -663,11 +663,11 @@ M	src/ext/porcelain.lisp
       (uiop:symbol-call :lem :lem-home)
       (merge-pathnames ".lem/" (user-homedir-pathname))))
 
-(defun rebase-script ()
+(defun rebase-script-path ()
   (if (boundp '*rebase-script-path*)
     *rebase-script-path*
     (let* ((legit-path (merge-pathnames "legit/" (%maybe-lem-home)))
-           (script-path (uiop:merge-pathnames* "dumbrebaseeditor.sh" legit-path)))
+           (script-path (namestring (uiop:merge-pathnames* "dumbrebaseeditor.sh" legit-path))))
       (ensure-directories-exist legit-path)
       (unless (uiop:file-exists-p script-path)
         (str:to-file script-path *rebase-script-content*))
@@ -738,7 +738,7 @@ I am stopping in case you still have something valuable there."))
               1)))
 
   (let ((editor (uiop:getenv "EDITOR")))
-    (setf (uiop:getenv "EDITOR") *rebase-script-path*)
+    (setf (uiop:getenv "EDITOR") (rebase-script-path))
     (unwind-protect
          ;; xxx: get the error output, if any, to get explanations of failure.
          (let ((process (uiop:launch-program (list

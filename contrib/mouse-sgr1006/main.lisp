@@ -1,9 +1,12 @@
 (uiop/package:define-package :lem-mouse-sgr1006/main
   (:nicknames :lem-mouse-sgr1006) (:use :cl :lem)
-  (:shadow) (:export :parse-mouse-event) (:intern))
+  (:shadow) (:export :parse-mouse-event
+                     :*scroll-unfocused-window*)
+  (:intern))
 (in-package :lem-mouse-sgr1006/main)
 ;;;don't edit above
 (defparameter *message-on-mouse-event* nil)
+(defparameter *scroll-unfocused-window* nil)
 
 (defvar *dragging-window* ())
 (defvar *min-cols*  5)
@@ -34,6 +37,13 @@
     (if side-window
         (cons side-window window-list)
         window-list)))
+
+(defun find-window-containing-pos (x1 y1)
+  (or (find-if (lambda (o)
+                 (multiple-value-bind (x y w h) (get-window-rect o)
+                   (and (<= x x1 (+ x w)) (<= y y1 (+ y h)))))
+               (all-window-list))
+      (current-window)))
 
 (defun parse-mouse-event (getch-fn)
   (let ((msg (loop :for c := (code-char (funcall getch-fn))
@@ -152,13 +162,19 @@
       ;; wheel up
       ((and (eql btype *mouse-wheel-up*)
             (eql bstate #\M))
-       (lem:scroll-up *wheel-scroll-size*)
-       (lem:redraw-display))
+       (let ((target-window (if *scroll-unfocused-window*
+                                (find-window-containing-pos x1 y1)
+                                (current-window))))
+         (lem:scroll-up *wheel-scroll-size* target-window)
+         (lem:redraw-display)))
       ;; wheel down
       ((and (eql btype *mouse-wheel-down*)
             (eql bstate #\M))
-       (lem:scroll-down *wheel-scroll-size*)
-       (lem:redraw-display))
+       (let ((target-window (if *scroll-unfocused-window*
+                                (find-window-containing-pos x1 y1)
+                                (current-window))))
+         (lem:scroll-down *wheel-scroll-size* target-window)
+         (lem:redraw-display)))
       )
     (when *message-on-mouse-event*
       (lem:message "mouse:~s ~s ~s ~s" bstate btype x1 y1)

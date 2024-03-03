@@ -71,7 +71,7 @@
 
 (defmethod post-command-hook ((state visual))
   (clear-visual-overlays)
-  (if (not (eq (current-buffer) (point-buffer *start-point*)))
+  (if (not (eq (current-buffer) (point-buffer *start-point*))) 
       (vi-visual-end)
       (state-setup state)))
 
@@ -101,12 +101,12 @@
         ;; left-top or left-bottom
         ((< end-column start-column)
          (character-offset start 1)
-         (incf start-column))
+         (setf start-column (point-column start)))
         ;; right-top or right-bottom
         (t
          (unless (= end-column (length (line-string end)))
            (character-offset end 1))
-         (incf end-column)))
+         (setf end-column (point-column end))))
       (apply-region-lines start end
                           (lambda (p)
                             (with-point ((s p) (e p))

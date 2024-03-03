@@ -64,11 +64,9 @@
       (:write (permission-write permission))
       (:read (permission-read permission)))))
 
-(defclass server (jsonrpc:server) ())
-
 (defclass jsonrpc (lem:implementation)
   ((mode :accessor jsonrpc-mode)
-   (server :initform (make-instance 'server)
+   (server :initform (jsonrpc:make-server)
            :reader jsonrpc-server)
    (display-width :initform 80
                   :accessor jsonrpc-display-width)

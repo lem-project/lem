@@ -24,6 +24,6 @@ COPY . .
 RUN mkdir -p ~/.config/common-lisp/
 RUN echo "(:source-registry (:tree \"/work/\") :inherit-configuration)" > ~/.config/common-lisp/source-registry.conf
 
-RUN sbcl --load scripts/build-rpc.lisp
+RUN sbcl --disable-ldb --load scripts/build-rpc.lisp
 
 ENTRYPOINT ["/work/lem-rpc/docker/entrypoint.sh"]

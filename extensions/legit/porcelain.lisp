@@ -425,6 +425,30 @@ allows to learn about the file state: modified, deleted, ignored… "
     (t
      (git-current-branch))))
 
+(defun rebase-in-progress ()
+  "Return a plist if a rebase is in progress. Used for legit-status.
+
+  plist keys:
+
+  :status (boolean) -> T if a rebase is in progress
+  :head-name -> content from .git/rebase-merge/head-name, such as \"refs/heads/master\"
+  :head-short-name -> \"master\"
+  :onto -> content from .git/rebase-merge/onto, a commit id."
+  (case *vcs*
+    (:git
+     (when (uiop:directory-exists-p ".git/rebase-merge/")
+       (let ((head (str:trim (str:from-file ".git/rebase-merge/head-name")))
+             (onto (str:trim (str:from-file ".git/rebase-merge/onto"))))
+         (list :status t
+               :head-name head
+               :head-short-name (or (third (str:split "/" head))
+                                    head)
+               :onto onto
+               :onto-short-commit (str:shorten 8 onto :ellipsis "")))))
+    (t
+     (log:info "rebase not available for ~a" *vcs*)
+     (values))))
+
 ;;;
 ;;; Latest commits.
 ;;;
@@ -773,17 +797,27 @@ I am stopping in case you still have something valuable there."))
                         :error-output :string
                         :ignore-error-status t)
     (declare (ignorable output))
+    (setf *rebase-pid* nil)
     (values (format nil "rebase finished.")
             error-output
             exit-code)))
 
 (defun rebase-abort ()
   (cond
+    ;; First, if we are running our rebase script, kill it.
+    ;; This makes git abort the rebase too.
+    ;; This is used by C-c C-k in the interactive rebase buffer.
     (*rebase-pid*
      ;; too fragile, be more defensive?
-     (uiop:run-program (list "kill" "-SIGKILL" *rebase-pid*))
+     (uiop:run-program (list "kill" "-SIGKILL" *rebase-pid*)
+                       :output :string
+                       :error-output :string)
      (values (format nil "Rebase stopped.")
              ""
              0))
+    ;; Check if a rebase was started by someone else and abort it.
+    ;; This is called from legit interace: "r" "a".
+    ((uiop:directory-exists-p ".git/rebase-merge/")
+     (run-git (list "rebase" "--abort")))
     (t
       (porcelain-error  "No git rebase in process? PID not found."))))

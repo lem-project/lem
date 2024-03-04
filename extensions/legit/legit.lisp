@@ -26,6 +26,7 @@ Done:
 - push, pull the remote branch
 - branch checkout, branch create&checkout
 - view commit at point
+- rebase interactively (see legit-rebase)
 - basic Fossil support (current branch, add change, commit)
 - basic Mercurial support
 - redact a proper commit text in its own buffer, not only a one liner.
@@ -93,6 +94,7 @@ Next:
 ;; rebase
 ;;; interactive
 (define-key lem/peek-legit:*peek-legit-keymap* "r i" 'legit-rebase-interactive)
+(define-key lem/peek-legit:*peek-legit-keymap* "r a" 'rebase-abort)
 
 ;; redraw everything:
 (define-key lem/peek-legit:*peek-legit-keymap* "g" 'legit-status)
@@ -433,6 +435,15 @@ Next:
          :header t)
         (lem/peek-legit:collector-insert "")
 
+        ;; Is a git rebase in progress?
+        (let ((rebase-status (lem/porcelain::rebase-in-progress)))
+          (when (getf rebase-status :status)
+            (lem/peek-legit:collector-insert
+             (format nil "!rebase in progress: ~a onto ~a"
+                     (getf rebase-status :head-short-name)
+                     (getf rebase-status :onto-short-commit)))
+            (lem/peek-legit:collector-insert "")))
+
         ;; Untracked files.
         (lem/peek-legit:collector-insert "Untracked files:" :header t)
         (if untracked-files
@@ -612,8 +623,8 @@ Next:
     (format s "          -> (c)reate.~&")
     (format s "(F)etch, pull-> (p) from remote branch~&")
     (format s "(P)push      -> (p) to remote branch~&")
-    (format s "(r)ebase     -> (i)nteractively from commit at point~&")
-    (format s "(g): refresh~&")
+    (format s "(r)ebase     -> (i)nteractively from commit at point, (a)bort~&")
+    (format s "(g) -> refresh~&")
     (format s "~%")
     (format s "Navigate: n and p, C-n and C-p, M-n and M-p.~&")
     (format s "Change windows: Tab, C-x o, M-o~&")

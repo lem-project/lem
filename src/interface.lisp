@@ -20,7 +20,7 @@
     :initarg :window-left-margin
     :reader window-left-margin)))
 
-(defun get-default-implementation (&key (errorp t))
+(defun get-default-implementation (&key (errorp t) (implementation :ncurses))
   (let* ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))
          (class (case (length classes)
                   (0
@@ -31,7 +31,7 @@
                    (first classes))
                   (otherwise
                    (dolist (class classes (first classes))
-                     (when (string= :ncurses (class-name class))
+                     (when (string= implementation (class-name class))
                        (return class)))))))
     (when class
       (make-instance class))))

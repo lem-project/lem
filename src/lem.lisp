@@ -10,14 +10,15 @@
 (defvar *syntax-scan-window-recursive-p* nil)
 (defvar *help* "Usage: lem [ OPTION-OR-FILENAME ] ...
 Options:
-        -q, --no-init-file      do not load ~/.lem/init.lisp
-        --slime PORT            start slime on PORT
-        --eval EXPR             evaluate lisp expression EXPR
-        --debug                 enable debugger
-        --log-filename FILENAME file name of the log file
-        --kill                  immediately exit
-        -v, --version           print the version number and exit
-        -h, --help              display this help and exit"
+        -q, --no-init-file        do not load ~/.lem/init.lisp
+        --slime PORT              start slime on PORT
+        --eval EXPR               evaluate lisp expression EXPR
+        --debug                   enable debugger
+        --log-filename FILENAME   file name of the log file
+        -i, --interface INTERFACE interface to use, either sdl2 or ncurses
+        --kill                    immediately exit
+        -v, --version             print the version number and exit
+        -h, --help                display this help and exit"
 "Help output for cli")
 
 (defun syntax-scan-window (window)
@@ -89,7 +90,8 @@ Options:
   args
   (debug nil)
   (log-filename nil)
-  (no-init-file nil))
+  (no-init-file nil)
+  (interface nil))
 
 (defun parse-args (args)
   (let ((parsed-args
@@ -122,6 +124,12 @@ Options:
                                      (error "Please, specify a filename to log to."))
                                    (setf (command-line-arguments-log-filename parsed-args)
                                          filename)))
+                                ((member arg '("-i" "--interface") :test #'equal)
+                                 (let ((interface (pop args)))
+                                   (unless (and interface (/=  0 (array-total-size interface)))
+                                     (error "Please, specify an interface to use."))
+                                   (setf (command-line-arguments-interface parsed-args)
+                                         (intern (string-upcase interface) "KEYWORD"))))
                                 ((equal arg "--kill")
                                  `(uiop:quit))
                                 ((member arg '("-v" "--version") :test #'equal)
@@ -258,7 +266,9 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
   (cond (*in-the-editor*
          (apply-args args))
         (t
-         (let ((implementation (get-default-implementation :errorp nil)))
+         (let ((implementation (get-default-implementation
+                                  :errorp nil
+                                  :implementation (command-line-arguments-interface args))))
            (unless implementation
              (maybe-load-systems :lem-ncurses)
              (setf implementation (get-default-implementation)))

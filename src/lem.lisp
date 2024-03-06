@@ -126,7 +126,7 @@ Options:
                                          filename)))
                                 ((member arg '("-i" "--interface") :test #'equal)
                                  (let ((interface (pop args)))
-                                   (unless (and interface (/=  0 (array-total-size interface)))
+                                   (unless (and interface (plusp (length interface)))
                                      (error "Please, specify an interface to use."))
                                    (setf (command-line-arguments-interface parsed-args)
                                          (intern (string-upcase interface) "KEYWORD"))))

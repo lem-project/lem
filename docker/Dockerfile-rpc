@@ -24,6 +24,15 @@ COPY . .
 RUN mkdir -p ~/.config/common-lisp/
 RUN echo "(:source-registry (:tree \"/work/\") :inherit-configuration)" > ~/.config/common-lisp/source-registry.conf
 
-RUN sbcl --disable-ldb --load scripts/build-rpc.lisp
+RUN sbcl --dynamic-space-size 4GB --disable-ldb --load scripts/build-rpc.lisp
+
+
+RUN chmod 755 /work/lem-rpc/lem-rpc
+
+RUN adduser -D user
+USER user
+WORKDIR /home/user
+
+RUN sbcl --load /work/quicklisp.lisp --eval "(quicklisp-quickstart:install)" --eval "(ql-util:without-prompting (ql:add-to-init-file))"
 
 ENTRYPOINT ["/work/lem-rpc/docker/entrypoint.sh"]

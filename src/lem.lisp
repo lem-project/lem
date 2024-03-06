@@ -128,7 +128,7 @@ Options:
                                  (let ((interface (pop args)))
                                    (if (and interface (plusp (length interface)))
                                        (setf (command-line-arguments-interface parsed-args)
-                                             (intern (string-upcase interface) "KEYWORD"))
+                                             (alexandria:make-keyword (string-upcase interface)))
                                        (write-line "Please specify an interface to use."
                                                    *error-output*))))
                                 ((equal arg "--kill")

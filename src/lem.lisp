@@ -267,9 +267,14 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
   (cond (*in-the-editor*
          (apply-args args))
         (t
-         (let ((implementation (get-default-implementation
-                                  :errorp nil
-                                  :implementation (command-line-arguments-interface args))))
+         (let ((implementation
+                (get-default-implementation
+                 :errorp nil
+                 :implementation
+                 (or (command-line-arguments-interface args)
+                     (if (interactive-stream-p *standard-input*)
+                         :ncurses
+                         :sdl2)))))
            (unless implementation
              (maybe-load-systems :lem-ncurses)
              (setf implementation (get-default-implementation)))

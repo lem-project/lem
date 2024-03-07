@@ -182,6 +182,23 @@
                         (lem-core::adjust-all-window-size)
                         (lem:redraw-display :force t))))))
 
+(defun git-clone (args)
+  (pdebug "git clone: ~A" (pretty-json args))
+  (with-error-handler ()
+    (let* ((url (gethash "url" args))
+           (output (make-string-output-stream))
+           (status (nth-value 2 (uiop:run-program `("git" "clone" ,url)
+                                                  :directory (user-homedir-pathname)
+                                                  :error-output output
+                                                  :ignore-error-status t))))
+      (unwind-protect
+           (notify (lem:implementation)
+                   "finish-git-clone"
+                   (hash "url" url
+                         "success" (eql status 0)
+                         "errorMessage" (get-output-stream-string output)))
+        (close output)))))
+
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
   (when (uiop:getenv "MICROS_PORT")
     (micros:create-server :dont-close t
@@ -207,6 +224,9 @@
     (jsonrpc:expose (jsonrpc-server jsonrpc)
                     "redraw"
                     'redraw)
+    (jsonrpc:expose (jsonrpc-server jsonrpc)
+                    "git-clone"
+                    'git-clone)
 
     (lem:add-hook lem:*exit-editor-hook*
                   (lambda ()

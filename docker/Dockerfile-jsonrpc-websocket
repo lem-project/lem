@@ -1,7 +1,0 @@
-FROM docker.io/fukamachi/qlot
-
-COPY . .
-
-RUN make jsonrpc
-
-ENTRYPOINT /app/lem-jsonrpc --mode websocket --port 50000 --host 0.0.0.0

@@ -161,7 +161,9 @@
 
       (let ((response (hash "views" (with-error-handler () (get-all-views))
                             "foreground" (lem-core::foreground-color)
-                            "background" (lem-core::background-color))))
+                            "background" (lem-core::background-color)
+                            "size" (hash "width" (lem:display-width)
+                                         "height" (lem:display-height)))))
         (pdebug "login response: ~A" (pretty-json response))
         response))))
 

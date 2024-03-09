@@ -22,7 +22,7 @@
 (defmacro with-constant-position ((point) &body body)
   "This allows you to move around the point without worry."
   `(let ((tmp (copy-point ,point)))
-     (prog1 (progn ,@body)
+     (unwind-protect (progn ,@body)
        (move-point ,point tmp)
        (delete-point tmp))))
 
@@ -133,5 +133,6 @@
   "Register evaluator for Lisp blocks."
   (lem-lisp-mode:check-connection)
   (lem-lisp-mode:lisp-eval-async
-   `(eval (read-from-string ,(format nil "(progn ~a)" string)))
+   `(handler-case (eval (read-from-string (format nil "(progn ~a)" ,string)))
+      (error (c) (format nil "Error: ~a" c)))
    callback))

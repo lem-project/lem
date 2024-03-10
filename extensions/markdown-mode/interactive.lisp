@@ -133,6 +133,8 @@
   "Register evaluator for Lisp blocks."
   (lem-lisp-mode:check-connection)
   (lem-lisp-mode:lisp-eval-async
-   `(handler-case (eval (read-from-string (format nil "(progn ~a)" ,string)))
-      (error (c) (format nil "Error: ~a" c)))
+   (read-from-string (format nil "(progn ~a)" string))
    callback))
+
+;; `(handler-case (eval (read-from-string (format nil "(progn ~a)" ,string)))
+;;    (error (c) (format nil "Error: ~a" c)))

@@ -213,7 +213,8 @@
     (setf *editor-thread*
           (funcall function
                    (lambda ()
-                     (loop :until ready))))
+                     (loop :until ready)
+                     (notify jsonrpc "startup" nil))))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
                     "login"
                     (login jsonrpc

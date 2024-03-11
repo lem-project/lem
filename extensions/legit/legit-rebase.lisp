@@ -5,10 +5,14 @@ Done:
 
 - start a rebase process from the commit at point,
   - abort the ongoing rebase:
-   - with C-c C-k in the interactive buffer buffer
+   - with C-c C-k in the interactive buffer
    - or "r a" (M-x rebase-abort), which works when the rebase was started by another process.
+  - continue the ongoing rebase:
+   - with C-c C-c in the interactive buffer
+   - or "r c" (M-x rebase-continue)
 - open a rebase buffer and press p, f… to pick, fixup… the commit at point.
 - validate it, stop it.
+- show in legit-status when a rebase is in process.
 
 Nice to have:
 
@@ -19,8 +23,7 @@ Nice to have:
 TODOs:
 
 - when (e)dit or (r)eword are used, we need to handle another operation.
-- show in legit-status when a rebase is in process.
-- add commands to continue the rebase in process.
+- show rebase conflicts: when a rebase is interrupted with conflicts we don't see them in legit-status.
 
 and
 
@@ -67,10 +70,6 @@ and
 (define-key *legit-rebase-mode-keymap* "?" 'rebase-help)
 (define-key *legit-rebase-mode-keymap* "C-x ?" 'rebase-help)
 
-(define-command rebase-continue () ()
-  (run-function #'lem/porcelain::rebase-continue)
-  (kill-buffer "git-rebase-todo"))
-
 (define-command rebase-abort () ()
   (with-current-project ()
     (run-function #'lem/porcelain::rebase-abort)
@@ -78,10 +77,9 @@ and
       (kill-buffer "git-rebase-todo"))
     (message "rebase aborted.")))
 
-(define-command rebase-abort-yes-or-no () ()
-  ;; TODO: prompt for confirmation.
+(define-command rebase-continue () ()
   (with-current-project ()
-    (run-function #'lem/porcelain::rebase-kill)
+    (run-function #'lem/porcelain::rebase-continue)
     (when (get-buffer "git-rebase-todo")
       (kill-buffer "git-rebase-todo"))))
 

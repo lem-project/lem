@@ -19,6 +19,9 @@
    :latest-commits
    :pull
    :push
+   :rebase-abort
+   :rebase-continue
+   :rebase-skip
    :show-commit-diff
    :stage
    :unstage
@@ -791,8 +794,18 @@ I am stopping in case you still have something valuable there."))
       (setf (uiop:getenv "EDITOR") editor))))
 
 (defun rebase-continue ()
+  "Either send a continuation signal to the underlying git rebase process, for it to pick up our changes to the interactive rebase file,
+  either call git rebase --continue."
+  (case *vcs*
+    (:git (git-rebase-continue))
+    (t
+     (porcelain-error "Rebasing is not supported for ~a" *vcs*))))
+
+(defun %rebase-signal (&key (sig "-SIGTERM"))
+  "Send a kill signal to our rebase script: with -SIGTERM, git picks up our changes and continues the rebase process. This is called by a rebase continue command.
+  With -SIGKILL the process is stopped. This is called by rebase abort."
   (multiple-value-bind (output error-output exit-code)
-      (uiop:run-program (list "kill" "-SIGTERM" *rebase-pid*)
+      (uiop:run-program (list "kill" sig *rebase-pid*)
                         :output :string
                         :error-output :string
                         :ignore-error-status t)
@@ -802,22 +815,53 @@ I am stopping in case you still have something valuable there."))
             error-output
             exit-code)))
 
+(defun git-rebase-continue ()
+  (cond
+    ;; First, if we are running our rebase script, send a "continue" signal
+    ;; so that git continues the rebase.
+    ;; This is used by C-c C-c in the interactive rebase buffer.
+    (*rebase-pid*
+     (%rebase-signal))
+    ;; Check if a rebase was started by someone else and continue it.
+    ;; This is called from legit interace: "r" "c".
+    ((uiop:directory-exists-p ".git/rebase-merge/")
+     (run-git (list "rebase" "--continue")))
+    (t
+     (porcelain-error  "No git rebase in process?"))))
+
 (defun rebase-abort ()
+  (case *vcs*
+    (:git (git-rebase-abort))
+    (t
+     (porcelain-error "Rebasing is not supported for ~a" *vcs*))))
+
+(defun git-rebase-abort ()
   (cond
     ;; First, if we are running our rebase script, kill it.
     ;; This makes git abort the rebase too.
     ;; This is used by C-c C-k in the interactive rebase buffer.
     (*rebase-pid*
-     ;; too fragile, be more defensive?
-     (uiop:run-program (list "kill" "-SIGKILL" *rebase-pid*)
-                       :output :string
-                       :error-output :string)
-     (values (format nil "Rebase stopped.")
-             ""
-             0))
+     (%rebase-signal :sig "-SIGKILL"))
     ;; Check if a rebase was started by someone else and abort it.
-    ;; This is called from legit interace: "r" "a".
+    ;; This is called from legit interface: "r" "a".
     ((uiop:directory-exists-p ".git/rebase-merge/")
      (run-git (list "rebase" "--abort")))
+    (t
+      (porcelain-error  "No git rebase in process? PID not found."))))
+
+(defun rebase-skip ()
+  (case *vcs*
+    (:git (git-rebase-skip))
+    (t
+     (porcelain-error "Rebasing is not supported for ~a" *vcs*))))
+
+(defun git-rebase-skip ()
+  (cond
+    (*rebase-pid*
+     (porcelain-error "The rebase process you started from Lem is still running. Please continue or abort it (or kill job ~a)" *rebase-pid*))
+    ;; Check if a rebase was started by someone else and abort it.
+    ;; This is called from legit interface: "r" "s".
+    ((uiop:directory-exists-p ".git/rebase-merge/")
+     (run-git (list "rebase" "--skip")))
     (t
       (porcelain-error  "No git rebase in process? PID not found."))))

@@ -37,7 +37,7 @@ TODO:
 
 Ongoing:
 
-- interactive rebase (POC working for Unix)
+- interactive rebase (POC working for Unix). See more in legit-rebase.lisp
 
 Nice to have/todo next:
 
@@ -95,6 +95,8 @@ Next:
 ;;; interactive
 (define-key lem/peek-legit:*peek-legit-keymap* "r i" 'legit-rebase-interactive)
 (define-key lem/peek-legit:*peek-legit-keymap* "r a" 'rebase-abort)
+(define-key lem/peek-legit:*peek-legit-keymap* "r c" 'rebase-continue)
+(define-key lem/peek-legit:*peek-legit-keymap* "r s" 'rebase-skip)
 
 ;; redraw everything:
 (define-key lem/peek-legit:*peek-legit-keymap* "g" 'legit-status)

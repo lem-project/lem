@@ -96,6 +96,7 @@ Next:
 (define-key lem/peek-legit:*peek-legit-keymap* "r i" 'legit-rebase-interactive)
 (define-key lem/peek-legit:*peek-legit-keymap* "r a" 'rebase-abort)
 (define-key lem/peek-legit:*peek-legit-keymap* "r c" 'rebase-continue)
+(define-key lem/peek-legit:*peek-legit-keymap* "r s" 'rebase-skip)
 
 ;; redraw everything:
 (define-key lem/peek-legit:*peek-legit-keymap* "g" 'legit-status)

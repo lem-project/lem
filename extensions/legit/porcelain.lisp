@@ -19,6 +19,9 @@
    :latest-commits
    :pull
    :push
+   :rebase-abort
+   :rebase-continue
+   :rebase-skip
    :show-commit-diff
    :stage
    :unstage
@@ -827,6 +830,12 @@ I am stopping in case you still have something valuable there."))
      (porcelain-error  "No git rebase in process?"))))
 
 (defun rebase-abort ()
+  (case *vcs*
+    (:git (git-rebase-abort))
+    (t
+     (porcelain-error "Rebasing is not supported for ~a" *vcs*))))
+
+(defun git-rebase-abort ()
   (cond
     ;; First, if we are running our rebase script, kill it.
     ;; This makes git abort the rebase too.
@@ -834,8 +843,25 @@ I am stopping in case you still have something valuable there."))
     (*rebase-pid*
      (%rebase-signal :sig "-SIGKILL"))
     ;; Check if a rebase was started by someone else and abort it.
-    ;; This is called from legit interace: "r" "a".
+    ;; This is called from legit interface: "r" "a".
     ((uiop:directory-exists-p ".git/rebase-merge/")
      (run-git (list "rebase" "--abort")))
+    (t
+      (porcelain-error  "No git rebase in process? PID not found."))))
+
+(defun rebase-skip ()
+  (case *vcs*
+    (:git (git-rebase-skip))
+    (t
+     (porcelain-error "Rebasing is not supported for ~a" *vcs*))))
+
+(defun git-rebase-skip ()
+  (cond
+    (*rebase-pid*
+     (porcelain-error "The rebase process you started from Lem is still running. Please continue or abort it (or kill job ~a)" *rebase-pid*))
+    ;; Check if a rebase was started by someone else and abort it.
+    ;; This is called from legit interface: "r" "s".
+    ((uiop:directory-exists-p ".git/rebase-merge/")
+     (run-git (list "rebase" "--skip")))
     (t
       (porcelain-error  "No git rebase in process? PID not found."))))

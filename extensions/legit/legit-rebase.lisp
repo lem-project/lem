@@ -10,6 +10,7 @@ Done:
   - continue the ongoing rebase:
    - with C-c C-c in the interactive buffer
    - or "r c" (M-x rebase-continue)
+  - skip it with "r s"
 - open a rebase buffer and press p, f… to pick, fixup… the commit at point.
 - validate it, stop it.
 - show in legit-status when a rebase is in process.
@@ -72,14 +73,20 @@ and
 
 (define-command rebase-abort () ()
   (with-current-project ()
-    (run-function #'lem/porcelain::rebase-abort)
+    (run-function #'lem/porcelain:rebase-abort)
     (when (get-buffer "git-rebase-todo")
       (kill-buffer "git-rebase-todo"))
     (message "rebase aborted.")))
 
 (define-command rebase-continue () ()
   (with-current-project ()
-    (run-function #'lem/porcelain::rebase-continue)
+    (run-function #'lem/porcelain:rebase-continue)
+    (when (get-buffer "git-rebase-todo")
+      (kill-buffer "git-rebase-todo"))))
+
+(define-command rebase-skip () ()
+  (with-current-project ()
+    (run-function #'lem/porcelain:rebase-skip)
     (when (get-buffer "git-rebase-todo")
       (kill-buffer "git-rebase-todo"))))
 

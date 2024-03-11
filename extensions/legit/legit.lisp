@@ -22,34 +22,17 @@ Done:
 - stage, unstage files
 - inside the diff, stage, unstage hunks
 - discard an unstaged file
-- commit (only a one-line message for now)
+- commit, redact a commit text in its dedicated buffer
 - push, pull the remote branch
 - branch checkout, branch create&checkout
 - view commit at point
 - rebase interactively (see legit-rebase)
 - basic Fossil support (current branch, add change, commit)
 - basic Mercurial support
-- redact a proper commit text in its own buffer, not only a one liner.
-
-TODO:
-
-- show renamed files
 
 Ongoing:
 
 - interactive rebase (POC working for Unix). See more in legit-rebase.lisp
-
-Nice to have/todo next:
-
-- view log
-
-Next:
-
-- stage only selected region (more precise than hunks)
-- unstage/stage/discard multiple files
-- stashes
-- many, many more commands, settings and switches
-- mouse context menus
 
 ### See also
 

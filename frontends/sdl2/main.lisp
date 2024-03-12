@@ -205,17 +205,18 @@
                      (if (lem:config :darwin-use-native-fullscreen) 1 0))
       ;; sdl2 should not install any signal handlers, since the lisp runtime already does so
       (sdl2:set-hint :no-signal-handlers 1)
-      (sdl2:make-this-thread-main (lambda ()
-                                    (handler-bind
-                                        (#+(and linux sbcl)
-                                         (sb-sys:interactive-interrupt
-                                           (lambda (c)
-                                             (declare (ignore c))
-                                             (invoke-restart 'sdl2::abort))))
-                                      (progn
-                                        (create-display #'thunk)
-                                        (when (sbcl-on-darwin-p)
-                                          (cffi:foreign-funcall "_exit")))))))))
+      (tmt:with-body-in-main-thread ()
+        (sdl2:make-this-thread-main (lambda ()
+                                      (handler-bind
+                                          (#+(and linux sbcl)
+                                              (sb-sys:interactive-interrupt
+                                               (lambda (c)
+                                                 (declare (ignore c))
+                                                 (invoke-restart 'sdl2::abort))))
+                                        (progn
+                                          (create-display #'thunk)
+                                          (when (sbcl-on-darwin-p)
+                                            (cffi:foreign-funcall "_exit"))))))))))
 
 (defmethod lem-if:get-background-color ((implementation sdl2))
   (with-debug ("lem-if:get-background-color")

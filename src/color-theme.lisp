@@ -72,7 +72,9 @@
                  ((:foreground)
                   (apply #'set-foreground args))
                  ((:background)
-                  (apply #'set-background args))
+                  (destructuring-bind (color) args
+                    (when color
+                      (set-background color))))
                  ((:inactive-window-background)
                   (setf (inactive-window-background-color) (first args)))
                  (otherwise

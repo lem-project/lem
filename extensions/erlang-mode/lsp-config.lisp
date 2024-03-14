@@ -4,7 +4,8 @@
 (in-package :lem-erlang-mode/lsp-config)
 
 (defvar *lsp-erlang-elp-server-path*
-  (uiop:native-namestring "~/Applications/elp")) ; adapt to your own elp path
+  (uiop:native-namestring "/usr/local/bin/elp")
+   "Adapt to your system's ELP path.")
 
 (defvar *lsp-erlang-elp-log-path*
   (uiop:native-namestring "~/tmp/elp.log"))

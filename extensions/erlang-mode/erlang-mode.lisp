@@ -9,9 +9,6 @@
 
 (in-package :lem-erlang-mode)
 
-(defvar *current-theme* "emacs-light")
-
-
 ; Defvars are taken from Erlang OTP's "erlang.el"
 ; to follow official naming.
 ; (https://github.com/erlang/otp/tree/master/lib/tools/emacs)

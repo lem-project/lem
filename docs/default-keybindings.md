@@ -173,7 +173,7 @@ Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode a
 | [describe-bindings](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L41) |              | Describe the bindings of the buffer's current major mode.                    |
 | [list-modes](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L63)        |              | Output all available major and minor modes.                                  |
 | [apropos-command](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L110)  |              | Find all symbols in the running Lisp image whose names match a given string. |
-| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L117)      |              | Display Lem's version.                                                       |
+| [lem-version](https://github.com/lem-project/lem/blob/main/src/commands/help.lisp#L121)      |              | Display Lem's version.                                                       |
 
 ## Font
 | Command                                                                                       | Key bindings | Documentation                                                        |

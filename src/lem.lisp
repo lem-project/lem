@@ -16,11 +16,6 @@ Options:
         --debug                   enable debugger
         --log-filename FILENAME   file name of the log file
         --kill                    immediately exit
-        --gui                     to use any available GUI interface
-        --nogui                   to use any available terminal interface
-        --ncurses                 to use ncurses terminal interface
-        --sdl2                    to use SDL2 GUI interface
-        --sdl                     to use any available SDL GUI interface
         -i, --interface INTERFACE interface to use, either sdl2 or ncurses
         -v, --version             print the version number and exit
         -h, --help                display this help and exit"
@@ -129,16 +124,6 @@ Options:
                                      (error "Please, specify a filename to log to."))
                                    (setf (command-line-arguments-log-filename parsed-args)
                                          filename)))
-                                ((equal arg "--ncurses")
-                                 (setf (command-line-arguments-interface parsed-args) :ncurses))
-                                ((equal arg "--sdl2")
-                                 (setf (command-line-arguments-interface parsed-args) :sdl2))
-                                ((equal arg "--sdl")
-                                 (setf (command-line-arguments-interface parsed-args) :sdl2))
-                                ((equal arg "--gui")
-                                 (setf (command-line-arguments-interface parsed-args) :sdl2))
-                                ((equal arg "--nogui")
-                                 (setf (command-line-arguments-interface parsed-args) :ncurses))
                                 ((member arg '("-i" "--interface") :test #'equal)
                                  (let ((interface (pop args)))
                                    (if (and interface (plusp (length interface)))

@@ -15,10 +15,11 @@
               `(asdf:defsystem ,*site-init-name*)))
     path))
 
+(defun raw-init-files ()
+  (directory (merge-pathnames "inits/*.lisp" (lem-home))))
+
 (defun site-init-list-inits ()
-  (loop for i in (sort (mapcar #'pathname-name
-                               (directory (merge-pathnames "inits/*.lisp"
-                                                           (lem-home))))
+  (loop for i in (sort (mapcar #'pathname-name (raw-init-files))
                        #'string<)
      collect (list :file (format nil "inits/~A" i))))
 
@@ -46,11 +47,16 @@
 
 (defun load-site-init (&key force)
   (let* ((asdf:*central-registry*
-           (union (mapcar #'pathname
-                          (mapcar #'directory-namestring
-                                  (directory
-                                   (merge-pathnames "**/*.asd"
-                                                    (lem-home)))))
+           (union (remove-duplicates
+                   (mapcar #'pathname
+                           (mapcar #'directory-namestring
+                                   (directory
+                                    (merge-pathnames
+                                     "**/*.asd"
+                                     (pathname (str:concat
+                                                (directory-namestring (lem-home))
+                                                "lisp"
+                                                (string  (uiop:directory-separator-for-host)))))))))
                   asdf:*central-registry*
                   :test #'equal))
          (system-name *site-init-name*)
@@ -62,6 +68,11 @@
       (asdf:load-asd (site-init-path))
       (let ((*package* (find-package :lem-user)))
         (maybe-load-systems system-name :silent t)))))
+
+(defun load-init-files ()
+  (let ((*package* (find-package :lem-user)))
+    (loop for file in (raw-init-files)
+          do (load file))))
 
 (define-command site-init-add-dependency (symbols)
     ((prompt-for-library "library: " :history-symbol 'load-library))

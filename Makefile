@@ -8,10 +8,6 @@ sdl2:
 	qlot install
 	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2.lisp
 
-rpc:
-	qlot install
-	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-rpc.lisp
-
 sdl2-ncurses:
 	qlot install
 	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2-ncurses.lisp

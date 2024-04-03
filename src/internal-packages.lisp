@@ -258,6 +258,7 @@
    :window-x
    :window-y
    :window-width
+   :window-left-width
    :window-height
    :window-buffer
    :window-screen

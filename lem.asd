@@ -15,7 +15,7 @@
     (set (intern (string :*local-project-directories*) :ql) local-project-dir)))
 
 (defsystem "lem"
-  :version "2.1.0"
+  :version "2.2.0"
   :depends-on ("iterate"
                "closer-mop"
                "trivia"

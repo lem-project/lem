@@ -413,15 +413,18 @@
         (pos 0))
     (loop
       (multiple-value-bind (start end reg-starts reg-ends)
-          (ppcre:scan "\\e\\[([^m]*)m" string :start pos)
-        (unless (and start end reg-starts reg-ends) (return))
+          (ppcre:scan "[\\x07-\\x0d]|\\e(?:[^\\[]|(?:\\[(.*?)([\\x40-\\x7e])))" string :start pos)
+        (unless start (return))
         (unless (= pos start)
           (push (subseq string pos start) acc))
-        (push (raw-seq-to-attribute
-               (subseq string
-                       (aref reg-starts 0)
-                       (aref reg-ends 0)))
-              acc)
+        (alexandria:when-let* ((final-ref (aref reg-starts 1))
+                               (final (elt string final-ref)))
+          (when (char= #\m final)
+            (push (raw-seq-to-attribute
+                   (subseq string
+                           (aref reg-starts 0)
+                           (aref reg-ends 0)))
+                  acc)))
         (setf pos end)))
     (push (subseq string pos) acc)
     (nreverse acc)))

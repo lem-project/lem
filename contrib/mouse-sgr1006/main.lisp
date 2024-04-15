@@ -28,7 +28,8 @@
 (defun move-to-cursor (window x y)
   (lem:move-point (lem:current-point) (lem:window-view-point window))
   (lem:move-to-next-virtual-line (lem:current-point) y)
-  (lem:move-to-virtual-line-column (lem:current-point) x))
+  (lem:move-to-virtual-line-column (lem:current-point)
+                                   (- x (lem:window-left-width window))))
 
 (defun all-window-list ()
   "returns a list of all windows including side windows"

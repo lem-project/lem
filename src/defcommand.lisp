@@ -92,6 +92,34 @@
   (add-command command-name command))
 
 (defmacro define-command (name-and-options params (&rest arg-descriptors) &body body)
+  "Define an interactive command that is callable with M-x.
+
+Example:
+
+(define-command write-hello () ()
+  (insert-string (current-point) \"hello\"))
+
+A command can accept an universal argument. Use the \"p\" descriptor and add a parameter.
+
+Example:
+
+(define-command write-hellos (n) (\"p\")
+  (dotimes (i n)
+    (insert-string (current-point) \"hello \")))
+
+and call it with C-u 3 M-x write-hellos RET.
+
+With \"p\" the argument defaults to 1. \"P\" is similar and defaults to nil.
+
+Other argument descriptors are available:
+
+   s -> prompt for a string. Use \"sMy prompt: \" to give a custom prompt.
+   n -> prompt for an integer.
+   b -> prompt for a buffer, defaults to the current-buffer's name.
+   B -> prompt for buffer, defaults to the other buffer's name.
+   f -> prompt for a file, defaults to the buffer directory.
+   F -> prompt for a file, defaults to the buffer directory, must not be existing.
+   r -> operate on the region. Needs two arguments, the `start` and `end` positions of the region."
   (destructuring-bind (name . options) (uiop:ensure-list name-and-options)
     (let ((advice-classes (alexandria:assoc-value options :advice-classes))
           (class-name (alexandria:if-let (elt (assoc :class options))

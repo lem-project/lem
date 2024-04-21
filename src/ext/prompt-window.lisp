@@ -5,7 +5,8 @@
   #+sbcl
   (:lock t)
   (:export :prompt-attribute
-           :*prompt-completion-window-shape*))
+           :*prompt-completion-window-shape*
+           :current-prompt-window))
 (in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)

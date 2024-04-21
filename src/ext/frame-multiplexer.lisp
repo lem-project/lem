@@ -293,9 +293,11 @@
 (defun enabled-frame-multiplexer-p ()
   (variable-value 'frame-multiplexer :global))
 
-(defun check-frame-multiplexer-enabled ()
+(defun check-frame-multiplexer-usable ()
   (unless (enabled-frame-multiplexer-p)
-    (editor-error "frame-multiplexer-mode is not enabled")))
+    (editor-error "frame-multiplexer-mode is not enabled"))
+  (when (lem/prompt-window:current-prompt-window)
+    (editor-error "prompt window is active")))
 
 (defun frame-multiplexer-on ()
   (unless (enabled-frame-multiplexer-p)
@@ -317,7 +319,7 @@
   "Normalize the IDs of all the frames.
 Assigns a smaller ID to a frame, if there is a smaller unused ID.
 This does not change the order of the frames."
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*)))
     (flet ((next-free (start)
              (loop :for x :upfrom start :below (length (virtual-frame-id/frame-table vf))
@@ -333,7 +335,7 @@ This does not change the order of the frames."
                 (setq free-index (next-free (1+ free-index)))))))
 
 (define-command frame-multiplexer-create-with-new-buffer-list () ()
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (id (find-unused-frame-id vf)))
     (when (null id)
@@ -345,7 +347,7 @@ This does not change the order of the frames."
 (define-command frame-multiplexer-delete (&optional id) ("P")
   "Delete the current frame.
 With prefix argument ID, delete the frame with the given ID."
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (num (num-frames vf)))
     (when (= num 1)
@@ -362,7 +364,7 @@ With prefix argument ID, delete the frame with the given ID."
 (define-command frame-multiplexer-prev (&optional (n 1)) ("p")
   "Switch to the Nth previous frame.
 The prefix argument N defaults to 1."
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (frame (virtual-frame-current vf)))
     (loop :repeat n
@@ -374,7 +376,7 @@ The prefix argument N defaults to 1."
 (define-command frame-multiplexer-next (&optional (n 1)) ("p")
   "Switch to the Nth next frame.
 The prefix argument N defaults to 1."
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (frame (virtual-frame-current vf)))
     (loop :repeat n
@@ -388,7 +390,7 @@ The prefix argument N defaults to 1."
 The prefix argument ID defaults to 1."
   ;; TODO: It would be great to enhance this by showing a prompt
   ;; and asking for the frame name (or buffer of the frame, if it has no name)
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (entry (aref (virtual-frame-id/frame-table vf) id)))
     (if entry
@@ -398,7 +400,7 @@ The prefix argument ID defaults to 1."
 (define-command frame-multiplexer-recent (&optional (n 1)) ("p")
   "Switch to the Nth most recent frame selected.
 The prefix argument N defaults to 1."
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (unless (or (ring-empty-p *recent-list*)
               (>= 0 n))
     (let* ((vf (gethash (implementation) *virtual-frame-map*))
@@ -419,7 +421,7 @@ The prefix argument N defaults to 1."
 (define-command frame-mulitplexer-rename (name &optional id) ("sNew name: " "P")
   "Rename the current frame to NAME.
 With prefix argument ID, rename the frame with the given ID."
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (entry (if (null id)
                     (find-frame-table-entry vf (virtual-frame-current vf))

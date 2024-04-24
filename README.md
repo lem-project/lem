@@ -4,6 +4,7 @@
 
 ![Build Status](https://github.com/lem-project/lem/workflows/CI/badge.svg)
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
+[![GitHub Sponsors](https://img.shields.io/badge/-Sponsor-fafbfc?logo=GitHub-Sponsors)](https://github.com/sponsors/cxxxr)
 
 After installing lem, you can start developing in Common Lisp at once.
 

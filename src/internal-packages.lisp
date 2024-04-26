@@ -1,6 +1,8 @@
 (defpackage :lem-core/display
   (:use)
   (:export
+   :wrap-line-character
+   :wrap-line-attribute
    :control-character-object
    :emoji-object
    :eol-cursor-object
@@ -545,6 +547,8 @@
    :highlight-line)
   ;; display/base.lisp
   (:export
+   :wrap-line-character
+   :wrap-line-attribute
    :inactive-window-background-color
    :redraw-buffer
    :compute-left-display-area-content)

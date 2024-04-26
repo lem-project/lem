@@ -55,10 +55,10 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
   (values))
 
 (defmacro define-keys (keymap &body bindings)
-  `(progn ,@(mapcar 
+  `(progn ,@(mapcar
              (lambda (binding)
                `(define-key ,keymap
-                  ,(first binding) 
+                  ,(first binding)
                   ,(second binding)))
              bindings)))
 

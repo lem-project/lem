@@ -178,8 +178,7 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
 
 (defun lookup-keybind (key)
   (let (cmd)
-    (loop :with buffer := (current-buffer)
-          :for keymap :in (all-keymaps)
+    (loop :for keymap :in (all-keymaps)
           :do (setf cmd (keymap-find-keybind keymap key cmd)))
     cmd))
 

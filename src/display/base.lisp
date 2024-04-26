@@ -1,5 +1,8 @@
 (in-package :lem-core)
 
+(define-editor-variable wrap-line-character #\\)
+(define-editor-variable wrap-line-attribute nil)
+
 (defvar *inactive-window-background-color* nil)
 
 (defun inactive-window-background-color ()

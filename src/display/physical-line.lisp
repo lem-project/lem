@@ -180,7 +180,7 @@
                          attribute
                          (char-type character)))
 
-(defun separate-objects-by-width (objects view-width)
+(defun separate-objects-by-width (objects view-width buffer)
   (flet ((explode-object (text-object)
            (check-type text-object text-object)
            (let* ((string (text-object-string text-object))
@@ -192,25 +192,28 @@
                    :collect (make-object-with-type
                              part-string
                              (text-object-attribute text-object) char-type)))))
-    (loop
-      :until (null objects)
-      :collect (loop :with total-width := 0
-                     :and physical-line-objects := '()
-                     :for object := (pop objects)
-                     :while object
-                     :do (cond ((and (typep object 'text-object)
-                                     (<= view-width (+ total-width (object-width object))))
-                                (cond ((< 1 (length (text-object-string object)))
-                                       (setf objects (nconc (explode-object object) objects)))
-                                      (t
-                                       (push object objects)
-                                       (push (make-letter-object #\\ nil)
-                                             physical-line-objects)
-                                       (return (nreverse physical-line-objects)))))
-                               (t
-                                (incf total-width (object-width object))
-                                (push object physical-line-objects)))
-                     :finally (return (nreverse physical-line-objects))))))
+    (let ((wrap-line-character (variable-value 'wrap-line-character :default buffer))
+          (wrap-line-attribute (variable-value 'wrap-line-attribute :default buffer)))
+      (loop
+        :until (null objects)
+        :collect (loop :with total-width := 0
+                       :and physical-line-objects := '()
+                       :for object := (pop objects)
+                       :while object
+                       :do (cond ((and (typep object 'text-object)
+                                       (<= view-width (+ total-width (object-width object))))
+                                  (cond ((< 1 (length (text-object-string object)))
+                                         (setf objects (nconc (explode-object object) objects)))
+                                        (t
+                                         (push object objects)
+                                         (push (make-letter-object wrap-line-character
+                                                                   wrap-line-attribute)
+                                               physical-line-objects)
+                                         (return (nreverse physical-line-objects)))))
+                                 (t
+                                  (incf total-width (object-width object))
+                                  (push object physical-line-objects)))
+                       :finally (return (nreverse physical-line-objects)))))))
 
 (defun render-line (view x y objects height)
   (lem-if:render-line (implementation) view x y objects height))
@@ -260,7 +263,8 @@
                                      :sum (length (text-object-string obj))))
          (objects-per-physical-line
            (separate-objects-by-width (create-drawing-objects logical-line)
-                                      (- (window-view-width window) left-side-width)))
+                                      (- (window-view-width window) left-side-width)
+                                      (window-buffer window)))
          (empty-left-side-object (if (< 0 left-side-width)
                                      (list (make-object-with-type
                                             (make-string left-side-characters :initial-element #\space)

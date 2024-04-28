@@ -99,3 +99,15 @@
                     (if not-lastp
                         (write-line string out)
                         (write-string string out))))))))
+
+(defclass other-user-cursor (point)
+  ((client-id :initarg :client-id)
+   (color :initarg :color
+          :reader other-user-cursor-color)))
+
+(defun make-other-user-cursor (point client-id client-color)
+  (let ((cursor (make-instance 'other-user-cursor
+                               :client-id client-id
+                               :color client-color)))
+    (copy-point-using-class cursor point :left-inserting)
+    cursor))

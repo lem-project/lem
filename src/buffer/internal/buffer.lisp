@@ -88,7 +88,10 @@
     :accessor buffer-encoding)
    (last-write-date
     :initform nil
-    :accessor buffer-last-write-date)))
+    :accessor buffer-last-write-date)
+   (user-cursors
+    :initform (make-hash-table :test 'equal)
+    :reader buffer-user-cursors)))
 
 (defclass text-buffer (buffer)
   ())

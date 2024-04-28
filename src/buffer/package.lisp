@@ -80,7 +80,8 @@
    :clear-buffer-edit-history
    ;; TODO: delete ugly exports
    :%buffer-clear-keep-binfo
-   :%buffer-keep-binfo)
+   :%buffer-keep-binfo
+   :buffer-user-cursors)
   (:export
    :buffer-list
    :any-modified-buffer-p

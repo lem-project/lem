@@ -268,12 +268,20 @@
                  overlays))
       (if-push (make-temporary-highlight-line-overlay buffer)
                overlays))
-    (if (and (eq window (current-window))
-             (not (window-cursor-invisible-p window)))
-        (append overlays
-                (mapcar #'make-cursor-overlay*
-                        (buffer-cursors (window-buffer window))))
-        overlays)))
+    (when (and (eq window (current-window))
+               (not (window-cursor-invisible-p window)))
+      (setf overlays
+            (append overlays
+                    (mapcar #'make-cursor-overlay*
+                            (buffer-cursors buffer)))))
+    (maphash (lambda (user cursor)
+               (declare (ignore user))
+               (push (make-other-user-cursor-overlay
+                      cursor
+                      (make-attribute :background (other-user-cursor-color cursor)))
+                     overlays))
+             (buffer-user-cursors buffer))
+    overlays))
 
 (defun call-do-logical-line (window function)
   (with-point ((point (window-view-point window)))

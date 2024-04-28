@@ -265,6 +265,24 @@
                (:module "scripts"
                 :components ((:static-file "dumbrebaseeditor.sh")))))
 
+(defsystem "lem/co-editing/common"
+  :serial t
+  :depends-on ("lem" "frugal-uuid" "jsonrpc")
+  :pathname "co-editing"
+  :components ((:file "utils")))
+
+(defsystem "lem/co-editing/client"
+  :serial t
+  :depends-on ("lem/co-editing/common")
+  :pathname "co-editing"
+  :components ((:file "client")))
+
+(defsystem "lem/co-editing/server"
+  :serial t
+  :depends-on ("lem/co-editing/common")
+  :pathname "co-editing"
+  :components ((:file "server")))
+
 (defsystem "lem/executable"
   :build-operation program-op
   :build-pathname "lem"

@@ -41,4 +41,8 @@
 ("jsonrpc" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/jsonrpc.git")
-  :version "git-bb3a536beb22112e544321dc7f3a8822413f9bac"))
+  :version "git-f85982f45f9f5a41fdccff176995cd90634eeb92"))
+("cl-frugal-uuid" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/ak-coram/cl-frugal-uuid")
+  :version "git-2f52699168e35e61d190f4c0a2495f23cae57b95"))

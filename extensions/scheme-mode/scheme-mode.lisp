@@ -1,7 +1,7 @@
 (in-package :lem-scheme-mode)
 
 (define-major-mode scheme-mode language-mode
-    (:name "scheme"
+    (:name "Scheme"
      :keymap *scheme-mode-keymap*
      :syntax-table lem-scheme-syntax:*syntax-table*
      :mode-hook *scheme-mode-hook*)
@@ -205,4 +205,4 @@
        (enable-commands  cmds-2 cmds-backup-table))))
   (add-hook *after-init-hook* 'disable-scheme-slime-commands))
 
-(define-file-type ("scm" "sld" "rkt") scheme-mode)
+(define-file-type ("scm" "sld" "rkt" "ss") scheme-mode)

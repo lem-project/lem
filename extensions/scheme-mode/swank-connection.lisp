@@ -329,6 +329,10 @@
         (interactive-eval string)
         ))))
 
+(define-command scheme-eval-buffer (&optional (buffer (current-buffer))) ()
+  (check-connection)
+  (interactive-eval (format nil "(begin ~a)" (buffer-text buffer))))
+
 (defun get-operator-name ()
   (with-point ((point (current-point)))
     (scan-lists point -1 1)

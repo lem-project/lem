@@ -361,7 +361,7 @@
        ;(repl-buffer-width)
        )
     (error () (scheme-slime-quit)
-              (editor-error "No connection for repl. (eval failed)"))))
+      (editor-error "No connection for repl. (eval failed)"))))
 
 (defun repl-read-string (thread tag)
   (unless (repl-buffer) (start-scheme-repl))

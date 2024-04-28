@@ -1,7 +1,7 @@
 (in-package :lem-scheme-mode)
 
 (define-major-mode scheme-repl-mode scheme-mode
-    (:name "scheme-repl"
+    (:name "Scheme REPL"
      :keymap *scheme-repl-mode-keymap*)
   (cond
     ((or (eq (scheme-repl-type :kind :current) :scheme-process)

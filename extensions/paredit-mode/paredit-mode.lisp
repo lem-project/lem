@@ -100,10 +100,10 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            (eql (character-at p -1) #\#)))))
 
 (defparameter *non-space-following-chars*
-  '(#\Space #\( #\' #\` #\,))
+  '(#\Space #\( #\' #\` #\, #\[ #\{))
 
 (defparameter *non-space-preceding-chars*
-  '(#\Space #\)))
+  '(#\Space #\) #\] #\}))
 
 (defun non-space-following-context-p (&optional (p (current-point)))
   (or (bolp p)
@@ -133,8 +133,10 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            (insert-character p open)
            (insert-character p close)
            (unless (or (eolp p)
-                       (eql (character-at p) #\Space)
-                       (eql (character-at p) close))
+                       (find (character-at p) *non-space-preceding-chars*)
+                       ;; (eql (character-at p) #\Space)
+                       ;; (eql (character-at p) close)
+                       )
              (insert-character p #\Space)
              (character-offset p -1))
            (character-offset p -1)))))
@@ -228,6 +230,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (backward-char)))
         ;; Should not delete #\) nor #\" nor #\|
         ((or (eql (character-at p -1) #\))
+             (eql (character-at p -1) #\])
+             (eql (character-at p -1) #\})
              (eql (character-at p -1) #\")
              (eql (character-at p -1) #\|))
          (backward-char))
@@ -266,6 +270,20 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (progn (delete-next-char)
                     (delete-previous-char))
              (forward-char)))
+        ;; The next char is #\}
+        ((eql (character-at p) #\})
+         (if (and (eql (character-at p -1) #\{)
+                  (not (syntax-escape-point-p p -1)))
+             (progn (delete-next-char)
+                    (delete-previous-char))
+             (forward-char)))
+        ;; The next char is #\]
+        ((eql (character-at p) #\])
+         (if (and (eql (character-at p -1) #\[)
+                  (not (syntax-escape-point-p p -1)))
+             (progn (delete-next-char)
+                    (delete-previous-char))
+             (forward-char)))
         ;; The next char is #\|
         ((eql (character-at p) #\|)
          (if (and (eql (character-at p -1) #\|)
@@ -275,6 +293,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (forward-char)))
         ;; Should not delete #\( nor #\" nor #\|
         ((or (eql (character-at p) #\()
+             (eql (character-at p) #\])
+             (eql (character-at p) #\})
              (eql (character-at p) #\")
              (eql (character-at p) #\|))
          (forward-char))
@@ -285,6 +305,8 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 (defun paredit-close-pair (c)
   (with-point ((p (current-point)))
     (cond ((in-string-or-comment-p p)
+           (insert-character p c))
+          ((syntax-escape-point-p p 0)
            (insert-character p c))
           ((char= c (character-at p))
            (if (syntax-escape-point-p p 0)

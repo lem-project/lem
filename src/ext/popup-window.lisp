@@ -21,6 +21,7 @@
    (offset-y :initarg :offset-y :accessor gravity-offset-y :initform 0)))
 (defclass gravity-center (gravity) ())
 (defclass gravity-top-display (gravity) ())
+(defclass gravity-bottom-display (gravity) ())
 (defclass gravity-top (gravity) ())
 (defclass gravity-topright (gravity) ())
 (defclass gravity-cursor (gravity) ())
@@ -28,6 +29,7 @@
 (defclass gravity-mouse-cursor (gravity) ())
 (defclass gravity-vertically-adjacent-window (gravity) ())
 (defclass gravity-horizontally-adjacent-window (gravity) ())
+(defclass gravity-horizontally-above-window (gravity) ())
 
 (defclass popup-window (floating-window)
   ((gravity
@@ -55,13 +57,15 @@
       (ecase gravity
         (:center (make-instance 'gravity-center))
         (:top-display (make-instance 'gravity-top-display))
+        (:bottom-display (make-instance 'gravity-bottom-display))
         (:top (make-instance 'gravity-top))
         (:topright (make-instance 'gravity-topright))
         (:cursor (make-instance 'gravity-cursor))
         (:follow-cursor (make-instance 'gravity-follow-cursor))
         (:mouse-cursor (make-instance 'gravity-mouse-cursor))
         (:vertically-adjacent-window (make-instance 'gravity-vertically-adjacent-window))
-        (:horizontally-adjacent-window (make-instance 'gravity-horizontally-adjacent-window)))))
+        (:horizontally-adjacent-window (make-instance 'gravity-horizontally-adjacent-window))
+        (:horizontally-above-window (make-instance 'gravity-horizontally-above-window)))))
 
 (defmethod adjust-for-redrawing ((gravity gravity-follow-cursor) popup-window)
   (destructuring-bind (x y width height)
@@ -138,12 +142,20 @@
       (lem-if:get-mouse-position (lem:implementation))
     (list x y width height)))
 
-(defmethod compute-popup-window-rectangle ((gravity gravity-top-display) &key source-window width height
-                                                                         &allow-other-keys)
-  (declare (ignore source-window))
+(defmethod compute-popup-window-rectangle ((gravity gravity-top-display)
+                                           &key width height
+                                           &allow-other-keys)
   (let* ((x (- (floor (display-width) 2)
                (floor width 2)))
          (y 1))
+    (list x y (1- width) height)))
+
+(defmethod compute-popup-window-rectangle ((gravity gravity-bottom-display)
+                                           &key width height
+                                           &allow-other-keys)
+  (let* ((x (- (floor (display-width) 2)
+               (floor width 2)))
+         (y (- (display-height) height)))
     (list x y (1- width) height)))
 
 (defmethod compute-popup-window-rectangle ((gravity gravity-top) &key source-window width height
@@ -197,6 +209,21 @@
   (let ((x (- (window-x source-window) border-size))
         (y (+ (window-y source-window)
               (window-height source-window)
+              border-size)))
+    ;; workaround: cases that extend beyond the screen
+    (when (< (display-height) (+ y height))
+      (setf height (- (display-height) y 1)))
+    (list x
+          y
+          (max width (window-width source-window))
+          height)))
+
+(defmethod compute-popup-window-rectangle ((gravity gravity-horizontally-above-window)
+                                           &key source-window width height border-size
+                                           &allow-other-keys)
+  (let ((x (- (window-x source-window) border-size))
+        (y (- (window-y source-window)
+              height
               border-size)))
     ;; workaround: cases that extend beyond the screen
     (when (< (display-height) (+ y height))

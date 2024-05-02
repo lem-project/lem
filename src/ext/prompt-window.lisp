@@ -131,6 +131,7 @@
       (error 'execute-condition :input input))))
 
 (defvar *prompt-completion-window-shape* :drop-curtain)
+(defvar *prompt-completion-window-gravity* :horizontally-adjacent-window)
 
 (define-command prompt-completion () ()
   (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
@@ -151,7 +152,7 @@
                            (lem/completion-mode:completion-item
                             item))
                    :collect :it))))
-       :style `(:gravity :horizontally-adjacent-window
+       :style `(:gravity ,*prompt-completion-window-gravity*
                 :offset-y -1
                 :shape ,*prompt-completion-window-shape*)))))
 

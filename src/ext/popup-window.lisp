@@ -20,6 +20,7 @@
   ((offset-x :initarg :offset-x :accessor gravity-offset-x :initform 0)
    (offset-y :initarg :offset-y :accessor gravity-offset-y :initform 0)))
 (defclass gravity-center (gravity) ())
+(defclass gravity-top-display (gravity) ())
 (defclass gravity-top (gravity) ())
 (defclass gravity-topright (gravity) ())
 (defclass gravity-cursor (gravity) ())
@@ -53,13 +54,15 @@
       gravity
       (ecase gravity
         (:center (make-instance 'gravity-center))
+        (:top-display (make-instance 'gravity-top-display))
         (:top (make-instance 'gravity-top))
         (:topright (make-instance 'gravity-topright))
         (:cursor (make-instance 'gravity-cursor))
         (:follow-cursor (make-instance 'gravity-follow-cursor))
         (:mouse-cursor (make-instance 'gravity-mouse-cursor))
         (:vertically-adjacent-window (make-instance 'gravity-vertically-adjacent-window))
-        (:horizontally-adjacent-window (make-instance 'gravity-horizontally-adjacent-window)))))
+        (:horizontally-adjacent-window (make-instance 'gravity-horizontally-adjacent-window))))
+  )
 
 (defmethod adjust-for-redrawing ((gravity gravity-follow-cursor) popup-window)
   (destructuring-bind (x y width height)
@@ -70,8 +73,8 @@
                                       :border-size (floating-window-border popup-window))
     (lem-core::window-set-size popup-window width height)
     (lem-core::window-set-pos popup-window
-                                  (+ x (floating-window-border popup-window))
-                                  (+ y (floating-window-border popup-window)))))
+                              (+ x (floating-window-border popup-window))
+                              (+ y (floating-window-border popup-window)))))
 
 (defmethod compute-popup-window-rectangle :around ((gravity gravity) &key &allow-other-keys)
   (destructuring-bind (x y width height)
@@ -135,6 +138,14 @@
   (multiple-value-bind (x y)
       (lem-if:get-mouse-position (lem:implementation))
     (list x y width height)))
+
+(defmethod compute-popup-window-rectangle ((gravity gravity-top-display) &key source-window width height
+                                                                         &allow-other-keys)
+  (declare (ignore source-window))
+  (let* ((x (- (floor (display-width) 2)
+               (floor width 2)))
+         (y 1))
+    (list x y (1- width) height)))
 
 (defmethod compute-popup-window-rectangle ((gravity gravity-top) &key source-window width height
                                                                  &allow-other-keys)
@@ -303,6 +314,6 @@
                                         :border-size border-size)
       (lem-core::window-set-size destination-window w h)
       (lem-core::window-set-pos destination-window
-                                    (+ x border-size)
-                                    (+ y border-size))
+                                (+ x border-size)
+                                (+ y border-size))
       destination-window)))

@@ -13,6 +13,7 @@
 (defconstant +min-width+   10)
 (defconstant +min-height+  1)
 
+(defvar *fill-width* nil)
 (defvar *history-table* (make-hash-table))
 
 (defvar *special-paths*
@@ -166,7 +167,9 @@
         (replace-if-history-exists #'lem/common/history:restore-edit-string))))
 
 (defun min-width ()
-  +min-width+)
+  (if *fill-width*
+      (1- (display-width))
+      +min-width+))
 
 (defun compute-window-rectangle (buffer &key gravity source-window)
   (destructuring-bind (width height) (lem/popup-window::compute-buffer-size buffer)
@@ -369,7 +372,7 @@
                                              :existing-test-function test-function
                                              :caller-of-prompt-window (current-window)
                                              :history (get-history history-symbol)
-                                             :gravity (or gravity :center)
+                                             :gravity (or gravity lem-core::*default-prompt-gravity*)
                                              :use-border use-border)
                   :syntax-table syntax-table
                   :body-function #'prompt-for-line-command-loop

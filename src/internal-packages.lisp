@@ -221,6 +221,7 @@
   ;; prompt.lisp
   (:export
    :*prompt-activate-hook*
+   :*prompt-after-activate-hook*
    :*prompt-deactivate-hook*
    :*prompt-buffer-completion-function*
    :*prompt-file-completion-function*

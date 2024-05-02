@@ -317,6 +317,7 @@
                             (lambda ()
                               (when (typep (this-command) 'lem:editable-advice)
                                 (funcall edit-callback (get-input-string))))))
+                (run-hooks *prompt-after-activate-hook*)
                 (with-special-keymap (special-keymap)
                   (if syntax-table
                       (with-current-syntax syntax-table
@@ -352,15 +353,15 @@
     (command-loop)))
 
 (defmethod lem-core::%prompt-for-line (prompt-string
-                                           &key initial-value
-                                                completion-function
-                                                test-function
-                                                history-symbol
-                                                (syntax-table (current-syntax))
-                                                gravity
-                                                edit-callback
-                                                special-keymap
-                                                (use-border t))
+                                       &key initial-value
+                                            completion-function
+                                            test-function
+                                            history-symbol
+                                            (syntax-table (current-syntax))
+                                            gravity
+                                            edit-callback
+                                            special-keymap
+                                            (use-border t))
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string initial-value
                   :parameters (make-instance 'prompt-parameters
@@ -384,12 +385,12 @@
 (defun normalize-path-marker (path marker replace)
   (let ((split (str:split marker path)))
     (if (= 1 (length split))
-        path 
+        path
         (concatenate 'string replace (car (last split))))))
 
 (defun normalize-path-input (path)
   (reduce (lambda (ag pair) (normalize-path-marker ag (car pair) (cdr pair)))
-          *special-paths* 
+          *special-paths*
           :initial-value path))
 
 

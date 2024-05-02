@@ -61,8 +61,7 @@
         (:follow-cursor (make-instance 'gravity-follow-cursor))
         (:mouse-cursor (make-instance 'gravity-mouse-cursor))
         (:vertically-adjacent-window (make-instance 'gravity-vertically-adjacent-window))
-        (:horizontally-adjacent-window (make-instance 'gravity-horizontally-adjacent-window))))
-  )
+        (:horizontally-adjacent-window (make-instance 'gravity-horizontally-adjacent-window)))))
 
 (defmethod adjust-for-redrawing ((gravity gravity-follow-cursor) popup-window)
   (destructuring-bind (x y width height)

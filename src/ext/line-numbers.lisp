@@ -8,7 +8,10 @@
   (:lock t))
 (in-package :lem/line-numbers)
 
-(defparameter *relative-line* nil)
+(defparameter *relative-line* nil
+  "Set to t to show relative line numbers by default. Also use a prefix argument to `toggle-line-numbers'.")
+
+(defvar *previous-relative-line* nil)
 
 (defvar *initialized* nil)
 (defvar *line-number-format* nil)
@@ -22,10 +25,20 @@
 
 (define-minor-mode line-numbers-mode
     (:name "Line numbers"
-     :global t))
+     :global t
+     :disable-hook 'disable-hook))
 
-(define-command toggle-line-numbers () ()
+(define-command toggle-line-numbers (&optional relative) ("P")
+  "Toggle the display of line numbers.
+
+With a positive universal argument, use relative line numbers. Also obey the global variale `*relative-line*'."
+  (setf *previous-relative-line* *relative-line*
+        *relative-line* (or *relative-line*
+                            (and relative (plusp relative))))
   (line-numbers-mode))
+
+(defun disable-hook ()
+  (setf *relative-line* *previous-relative-line*))
 
 (defun compute-line (buffer point)
   (if *relative-line*

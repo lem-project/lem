@@ -3,6 +3,7 @@
 (defparameter *default-prompt-gravity* :center)
 
 (defvar *prompt-activate-hook* '())
+(defvar *prompt-after-activate-hook* '())
 (defvar *prompt-deactivate-hook* '())
 
 (defvar *prompt-buffer-completion-function* nil)

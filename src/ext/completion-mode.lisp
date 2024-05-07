@@ -186,6 +186,7 @@
              (completion-end)))))
 
 (define-command completion-delete-previous-char (n) ("p")
+  (message "back")
   (delete-previous-char n)
   (continue-completion *completion-context*))
 
@@ -265,10 +266,10 @@
 
 (define-command completion-narrowing-down-or-next-line () ()
   (or (narrowing-down *completion-context* (context-last-items *completion-context*))
-      (ignore-errors
-        (if *completion-reverse*
-            (completion-previous-line)
-            (completion-next-line)))))
+      ;; (ignore-errors)
+      (if *completion-reverse*
+          (completion-previous-line)
+          (completion-next-line))))
 
 (defun limitation-items (items)
   (let ((result (if (and *limit-number-of-items*

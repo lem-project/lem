@@ -15,6 +15,7 @@
 (defparameter *limit-number-of-items* 100)
 
 (defvar *completion-context* nil)
+(defvar *completion-reverse* nil)
 
 (defclass completion-context ()
   ((spec
@@ -264,13 +265,19 @@
 
 (define-command completion-narrowing-down-or-next-line () ()
   (or (narrowing-down *completion-context* (context-last-items *completion-context*))
-      (completion-next-line)))
+      (ignore-errors
+        (if *completion-reverse*
+            (completion-previous-line)
+            (completion-next-line)))))
 
 (defun limitation-items (items)
-  (if (and *limit-number-of-items*
-           (< *limit-number-of-items* (length items)))
-      (subseq items 0 *limit-number-of-items*)
-      items))
+  (let ((result (if (and *limit-number-of-items*
+                         (< *limit-number-of-items* (length items)))
+                    (subseq items 0 *limit-number-of-items*)
+                    items)))
+    (if *completion-reverse*
+        (reverse result)
+        result)))
 
 (defun compute-completion-items (context then)
   (flet ((update-items-and-then (items)
@@ -297,6 +304,8 @@
     (completion-mode t)
     (unless (spec-async-p (context-spec context))
       (narrowing-down context items))
+    (when *completion-reverse*
+      (completion-end-of-buffer))
     (call-focus-action)))
 
 (defun continue-completion (context)
@@ -310,7 +319,9 @@
               (popup-menu-update (context-popup-menu *completion-context*)
                                  items
                                  :print-spec (make-print-spec items))
-              (call-focus-action)))))))
+              (call-focus-action))))))
+  (when *completion-reverse*
+    (ignore-errors (completion-end-of-buffer))))
 
 (defun run-completion (completion-spec &key style)
   (let* ((spec (ensure-completion-spec completion-spec))

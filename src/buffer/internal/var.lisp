@@ -12,7 +12,7 @@
       (apply #'run-hooks (variable-value var :global) args))))
 
 (defun clear-editor-local-variables (buffer)
-  "`buffer`の全てのバッファローカルなエディタ変数を未束縛にします。"
+  "Unbind all buffer-local editor variables in `buffer`"
   (dolist (symbol (editor-variables))
     (buffer-unbound buffer
                     (editor-variable-local-indicator

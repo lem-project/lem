@@ -1,10 +1,10 @@
 (in-package :lem/buffer/internal)
 
 (defvar *inhibit-read-only* nil
-  "Tなら`buffer`のread-onlyを無効にします。")
+  "If T, disables read-only for `buffer`.")
 
 (defvar *inhibit-modification-hooks* nil
-  "Tなら`before-change-functions`と`after-change-functions`が実行されません。")
+  "If T, prevents `before-change-functions` and `after-change-functions` from being called.")
 
 (define-editor-variable before-change-functions '())
 (define-editor-variable after-change-functions '())
@@ -306,16 +306,16 @@
 (defvar *undo-mode* :edit)
 
 (defun buffer-enable-undo-p (&optional (buffer (current-buffer)))
-  "`buffer`でアンドゥが有効ならT、それ以外ならNILを返します。"
+  "Returns T if undo is enabled for `buffer`, otherwise returns NIL."
   (buffer-%enable-undo-p buffer))
 
 (defun buffer-enable-undo (buffer)
-  "`buffer`のアンドゥを有効にします。"
+  "Enables undo for `buffer`."
   (setf (buffer-%enable-undo-p buffer) t)
   nil)
 
 (defun buffer-disable-undo (buffer)
-  "`buffer`のアンドゥを無効にしてアンドゥ用の情報を空にします。"
+  "Disables undo for `buffer` and remove all undo information."
   (setf (buffer-%enable-undo-p buffer) nil)
   (setf (buffer-edit-history buffer) (make-array 0 :adjustable t :fill-pointer 0))
   (setf (buffer-redo-stack buffer) nil)

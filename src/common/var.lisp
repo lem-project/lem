@@ -23,15 +23,14 @@
   change-value-hook)
 
 (setf (documentation 'editor-variable 'type)
-      "`editor-variable`はエディタ内で使われる変数です。
-バッファローカルな変数や大域的な値を管理するために使います。")
+      "`editor-variable` is a variable used within the editor.
+Used to manage local variables and global values.")
 
 (defmacro define-editor-variable (var &optional value documentation change-value-hook)
-  "エディタ変数`var`を定義します。
-`value`はそのエディタ変数に束縛されている大域的な値です。
-`documentation`はそのエディタ変数の文書文字列です。
-`change-value-hook`はそのエディタ変数の大域的な値が変更されるときに呼び出されるフック関数です。
-"
+  "Define editor-variable `var`
+`value` is the global value of the variable.
+`documentation` is the doc-string of the Variable
+`change-value-hook` is a hook function called when the global value changes"
   (check-type var symbol)
   `(eval-when (:compile-toplevel :load-toplevel :execute)
      (unless (get ',var 'editor-variable)
@@ -82,7 +81,7 @@
         (setf (variable-value-aux var kind) value))))
 
 (defun variable-documentation (symbol)
-  "エディタ変数`symbol`の文書文字列を返します。"
+  "Returns the doc-string of the editor variable `symbol`."
   (let ((var (get symbol 'editor-variable)))
     (unless (editor-variable-p var)
       (editor-variable-error symbol))

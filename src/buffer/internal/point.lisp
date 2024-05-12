@@ -46,7 +46,7 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
             (line-str (point-line object)))))
 
 (defun pointp (x)
-  "`x`が`point`ならT、それ以外ならNILを返します。"
+  "Returns T if `x` is a `point`, otherwise returns NIL."
   (typep x 'point))
 
 (defun initialize-point-slot-values
@@ -91,16 +91,16 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
   point)
 
 (defun copy-point (point &optional kind)
-  "`point`のコピーを作って返します。
-`kind`は`:temporary`、`:left-inserting`または `right-inserting`です。
-省略された場合は`point`と同じ値です。"
+  "Make and return a copy of `point`
+`kind` is `:temporary`, `:left-inserting` or `:right-inserting`.
+If omitted, is copied from `point`."
   (copy-point-using-class (make-instance 'point)
                           point
                           (or kind (point-kind point))))
 
 (defun delete-point (point)
-  "`point`を削除します。
-`point-kind`が:temporaryの場合はこの関数を使う必要はありません。"
+  "Delete `point`.
+If `point-kind` is `:temporary` this is unnecessary."
   (unless (point-temporary-p point)
     (setf (line-points (point-line point))
           (delete point (line-points (point-line point))))

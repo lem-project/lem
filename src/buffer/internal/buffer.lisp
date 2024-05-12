@@ -105,10 +105,13 @@
   "set default buffer encoding to utf-8"
   (setf (buffer-encoding buffer) (encoding :utf-8 :lf)))
 
-(setf (documentation 'buffer-point 'function) "`buffer`の現在の`point`を返します。")
-(setf (documentation 'buffer-mark 'function) "`buffer`の現在のマークの`point`を返します。")
-(setf (documentation 'buffer-start-point 'function) "`buffer`の最初の位置の`point`を返します。")
-(setf (documentation 'buffer-end-point 'function) "`buffer`の最後の位置の`point`を返します。")
+(setf (documentation 'buffer-point 'function) "Returns the current `point` of `buffer`.")
+(setf (documentation 'buffer-mark 'function)
+      "Returns the `point` of the current mark in the `buffer`")
+(setf (documentation 'buffer-start-point 'function)
+      "Returns the `point` at the start of the `buffer`.")
+(setf (documentation 'buffer-end-point 'function)
+      "Returns the `point` at the end of the `buffer`.")
 
 (defvar *current-buffer*)
 

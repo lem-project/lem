@@ -55,13 +55,15 @@ The `changed-value-hook` is only called on a global change.")
     (editor-variable-error symbol)))
 
 (defgeneric variable-value-aux (var kind &optional where)
-  "Generic funtion to get the value of the editor-variable `var`.
-Can be specialized for differend `kind`s.")
-(defgeneric (setf variable-value-aux) (value var kind &optional where))
+  (:documentation
+   "Generic funtion to get the value of the editor-variable `var`.
+Can be specialized for differend `kind`s."))
+(defgeneric (setf variable-value-aux) (value var kind &optional where)
+  (:documentation
+   "Generic function to set the value of the editor-variable `var`.
+Can be specialized for differend `kind`s."))
 
 (defmethod variable-value-aux ((var editor-variable) (kind (eql :global)) &optional (where nil wherep))
-  "Generic function to get the value of the editor-variable `var`.
-Can be specialized for differend `kind`s."
   (declare (ignore where wherep))
   (editor-variable-value var))
 
@@ -76,8 +78,6 @@ See `variable-value-aux`."
         (variable-value-aux var kind))))
 
 (defmethod (setf variable-value-aux) (value (var editor-variable) (kind (eql :global)) &optional (where nil wherep))
-  "Generic function to set the value of the editor-variable `var`.
-Can be specialized for differend `kind`s."
   (declare (ignore where wherep))
   (let ((fn (editor-variable-change-value-hook var)))
     (when fn

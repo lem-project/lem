@@ -18,7 +18,7 @@
                     (editor-variable-local-indicator
                      (get symbol 'editor-variable)))))
 
-(defmethod variable-value-aux ((var editor-variable) (kind (eql :default)) &optional (where nil wherep))
+(defmethod variable-value-aux ((var editor-variable) (scope (eql :default)) &optional (where nil wherep))
   (let* ((buffer (if wherep
                      (ensure-buffer where)
                      (current-buffer)))
@@ -30,7 +30,7 @@
         (editor-variable-value var)
         value)))
 
-(defmethod variable-value-aux ((var editor-variable) (kind (eql :buffer)) &optional (where nil wherep))
+(defmethod variable-value-aux ((var editor-variable) (scope (eql :buffer)) &optional (where nil wherep))
   (let ((buffer (if wherep
                     (ensure-buffer where)
                     (current-buffer))))
@@ -46,9 +46,9 @@
           value)))
 
 (defmethod (setf variable-value-aux)
-    (value (var editor-variable) (kind (eql :buffer)) &optional (where nil wherep))
+    (value (var editor-variable) (scope (eql :buffer)) &optional (where nil wherep))
   (set-variable-value-aux-default var value where wherep))
 
 (defmethod (setf variable-value-aux)
-    (value (var editor-variable) (kind (eql :default)) &optional (where nil wherep))
+    (value (var editor-variable) (scope (eql :default)) &optional (where nil wherep))
   (set-variable-value-aux-default var value where wherep))

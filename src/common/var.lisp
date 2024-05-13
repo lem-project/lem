@@ -24,7 +24,10 @@
 
 (setf (documentation 'editor-variable 'type)
       "`editor-variable` is a variable used within the editor.
-Used to manage local variables and global values.")
+It is used to manage variables with both local and global values.
+The scope of the local variable is decided by the optional `kind`
+Parameter to `variable-value`.
+The `changed-value-hook` is only called on a global change.")
 
 (defmacro define-editor-variable (var &optional value documentation change-value-hook)
   "Define editor-variable `var`
@@ -47,17 +50,24 @@ Used to manage local variables and global values.")
   (error "~A is not editor variable" symbol))
 
 (defun check-editor-variable (symbol)
+  "Errors if `symbol` is not an editor-variable."
   (unless (editor-variable-p (get symbol 'editor-variable))
     (editor-variable-error symbol)))
 
-(defgeneric variable-value-aux (var kind &optional where))
+(defgeneric variable-value-aux (var kind &optional where)
+  "Generic funtion to get the value of the editor-variable `var`.
+Can be specialized for differend `kind`s.")
 (defgeneric (setf variable-value-aux) (value var kind &optional where))
 
 (defmethod variable-value-aux ((var editor-variable) (kind (eql :global)) &optional (where nil wherep))
+  "Generic function to get the value of the editor-variable `var`.
+Can be specialized for differend `kind`s."
   (declare (ignore where wherep))
   (editor-variable-value var))
 
 (defun variable-value (symbol &optional (kind :default) (where nil wherep))
+  "Get the value of the editor-variable `symbol`.
+See `variable-value-aux`."
   (let ((var (get symbol 'editor-variable)))
     (unless (editor-variable-p var)
       (editor-variable-error symbol))
@@ -66,6 +76,8 @@ Used to manage local variables and global values.")
         (variable-value-aux var kind))))
 
 (defmethod (setf variable-value-aux) (value (var editor-variable) (kind (eql :global)) &optional (where nil wherep))
+  "Generic function to set the value of the editor-variable `var`.
+Can be specialized for differend `kind`s."
   (declare (ignore where wherep))
   (let ((fn (editor-variable-change-value-hook var)))
     (when fn
@@ -73,6 +85,8 @@ Used to manage local variables and global values.")
   (setf (editor-variable-value var) value))
 
 (defun (setf variable-value) (value symbol &optional (kind :default) (where nil wherep))
+  "Set the value of the editor-variable `symbol`.
+See `setf variable-value-aux`."
   (let ((var (get symbol 'editor-variable)))
     (unless (editor-variable-p var)
       (editor-variable-error symbol))
@@ -88,9 +102,11 @@ Used to manage local variables and global values.")
     (editor-variable-documentation var)))
 
 (defun editor-variables ()
+  "Returns a list of all defined editor-variables."
   *editor-variables*)
 
 (defun find-editor-variable (var)
+  "Find the editor-variable with name `var`."
   (find var (editor-variables) :test 'string-equal))
 
 

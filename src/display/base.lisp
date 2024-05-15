@@ -17,8 +17,8 @@
   (:method (mode buffer point) nil))
 
 (defvar *in-redraw-display* nil
-  "この変数がTの場合、redraw-display関数で画面を描画中であることを表します。
-再帰的なredraw-displayの呼び出しを防ぐために用います。")
+  "T if the screen is currently being redrawn by `redraw-display`.
+Used to prevent recursive `redraw-display` calls.")
 
 (defgeneric window-redraw (window force)
   (:method (window force)

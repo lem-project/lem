@@ -704,7 +704,7 @@
          (file (buffer-filename buffer)))
     (run-hooks (variable-value 'load-file-functions) file)
     (if (str:starts-with-p "#!" (buffer-text buffer))
-        (let ((real-start (copy-point (buffer-start-point buffer))))
+        (let ((real-start (copy-point (buffer-start-point buffer) :temporary)))
           (move-to-line real-start 2)
           (lisp-compile-region real-start (buffer-end-point buffer)))
         (lisp-eval-async `(micros:compile-file-for-emacs ,(convert-local-to-remote-file file) t)

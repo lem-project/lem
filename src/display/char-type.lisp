@@ -45,5 +45,7 @@
            :latin)
           ((emoji-char-code-p code)
            :emoji)
+          ((icon-code-p code)
+           :latin)
           (t
            :cjk))))

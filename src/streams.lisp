@@ -219,12 +219,13 @@
         (function
          (funcall destination string))
         (null
-         (show-message string))))))
+         (message "~A" string))))))
 
 (defmethod trivial-gray-streams:stream-write-char ((stream editor-output-stream) character)
-  (with-slots (pool column) stream
-    (when (char= character #\newline)
-      (editor-output-stream-flush stream))
+  (with-slots (destination pool column) stream
+    (unless (eq destination nil)
+      (when (char= character #\newline)
+        (editor-output-stream-flush stream)))
     (write-char character pool)
     (setf column (char-width character column))
     character))

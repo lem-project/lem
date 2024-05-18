@@ -188,6 +188,7 @@ Parses length information to determine how many characters to read."
   (remote-eval connection `(micros:connection-info))
 
   (loop :for message := (read-message connection)
+        :repeat 1000 ;; avoid infinite loop just in case
         :do (log:debug "Received" message)
             (when (eq (first message) :return)
               (let* ((info message)

@@ -306,9 +306,9 @@
               (buffer-start point)))))
 
 (defun see-repl-writing (buffer)
-  (buffer-end (buffer-point buffer))
-  (dolist (window (get-buffer-windows buffer))
-    (window-see window)))
+  (when (end-buffer-p (buffer-point buffer))
+    (dolist (window (get-buffer-windows buffer))
+      (window-see window))))
 
 (defun call-with-repl-point (function)
   (let* ((buffer (ensure-repl-buffer-exist))

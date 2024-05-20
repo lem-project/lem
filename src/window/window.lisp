@@ -97,6 +97,9 @@
    (view
     :initarg :view
     :accessor window-view)
+   (deleted
+    :initform nil
+    :accessor window-deleted-p)
    (parameters
     :initform nil
     :accessor window-parameters)))
@@ -242,10 +245,12 @@ This is the content area in which the buffer is displayed, without any side marg
   (lem-if:delete-view (implementation) (window-view window)))
 
 (defun delete-window (window)
-  (notify-frame-redisplay-required (current-frame))
-  (%delete-window window)
-  (run-hooks (window-delete-hook window))
-  (%free-window window)
+  (unless (window-deleted-p window)
+    (setf (window-deleted-p window) t)
+    (notify-frame-redisplay-required (current-frame))
+    (%delete-window window)
+    (run-hooks (window-delete-hook window))
+    (%free-window window))
   t)
 
 (defun setup-frame-windows (frame buffer)

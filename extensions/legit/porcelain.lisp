@@ -357,17 +357,20 @@ allows to learn about the file state: modified, deleted, ignored… "
 ;;;
 ;;; Show commits.
 ;;;
-(defun git-show-commit-diff (ref)
-  (run-git (list "show" ref)))
+(defun git-show-commit-diff (ref &key ignore-all-space)
+  (let ((options '()))
+    (when ignore-all-space
+      (cl:push "-w" options))
+    (run-git `("show" ,@options ,ref))))
 
 (defun hg-show-commit-diff (ref)
   (run-hg (list "log" "-r" ref "-p")))
 
-(defun show-commit-diff (ref)
+(defun show-commit-diff (ref &key ignore-all-space)
   (case *vcs*
     (:fossil nil)
     (:hg (hg-show-commit-diff ref))
-    (t (git-show-commit-diff ref))))
+    (t (git-show-commit-diff ref :ignore-all-space ignore-all-space))))
 
 ;; commit
 (defun git-commit (message)

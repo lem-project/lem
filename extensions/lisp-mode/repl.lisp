@@ -305,11 +305,18 @@
             (let ((point (copy-point (buffer-point buffer) :left-inserting)))
               (buffer-start point)))))
 
+(defun see-repl-writing (buffer)
+  (buffer-end (buffer-point buffer))
+  (dolist (window (get-buffer-windows buffer))
+    (window-see window)))
+
 (defun call-with-repl-point (function)
   (let* ((buffer (ensure-repl-buffer-exist))
          (point (repl-buffer-write-point buffer)))
     (cond (*repl-evaluating*
-           (buffer-end point))
+           (buffer-end point)
+           (unless (eq (current-buffer) buffer)
+             (see-repl-writing buffer)))
           (t
            (when (point<= (lem/listener-mode:input-start-point buffer) point)
              (move-point point (lem/listener-mode:input-start-point buffer))

@@ -18,7 +18,8 @@
   (:import-from :lem-vi-mode/commands/utils
                 :visual-region)
   (:import-from :lem/common/killring
-                :peek-killring-item)
+                :peek-killring-item
+                :rotate-killring)
   (:import-from :lem-vi-mode/window
                 :move-to-window-top
                 :move-to-window-middle
@@ -505,9 +506,11 @@ Move the cursor to the first non-blank character of the line."
     (cond
       ((visual-p)
        (let ((visual-line (visual-line-p)))
-         (multiple-value-bind (beg end type)
-             (visual-region)
-           (vi-delete beg end type))
+         (lem-core::with-enable-clipboard nil
+           (multiple-value-bind (beg end type)
+               (visual-region)
+             (vi-delete beg end type))
+           (rotate-killring (current-killring)))
          (when (and (not visual-line)
                     (eq type :line))
            (insert-character (current-point) #\Newline))))
@@ -526,9 +529,11 @@ Move the cursor to the first non-blank character of the line."
       (vi-yank-from-clipboard-or-killring)
     (cond
       ((visual-p)
-       (multiple-value-bind (beg end type)
-           (visual-region)
-         (vi-delete beg end type))
+       (lem-core::with-enable-clipboard nil
+         (multiple-value-bind (beg end type)
+             (visual-region)
+           (vi-delete beg end type))
+         (rotate-killring (current-killring)))
        (when (eq type :line)
          (insert-character (current-point) #\Newline)))
       (t

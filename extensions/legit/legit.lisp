@@ -46,7 +46,9 @@ Ongoing:
 (defvar *legit-verbose* nil
   "If non nil, print some logs on standard output (terminal) and create the hunk patch file on disk at (lem home)/lem-hunk-latest.patch.")
 
-(defvar *ignore-all-space* t)
+(defvar *ignore-all-space* nil "If non t, show all spaces in a diff. Spaces are ignored by default.
+
+Currently Git-only. Concretely, this calls Git with the -w option.")
 
 ;; Supercharge patch-mode with our keys.
 (define-major-mode legit-diff-mode lem-patch-mode:patch-mode

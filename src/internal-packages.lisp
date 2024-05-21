@@ -573,7 +573,12 @@
   (:export
    :color-theme-names
    :define-color-theme
-   :load-theme)
+   :load-theme
+   :current-theme
+   :find-color-theme
+   :color-theme
+   :color-theme-specs
+   :color-theme-parent)
   ;; region.lisp
   (:export
    :check-marked-using-global-mode

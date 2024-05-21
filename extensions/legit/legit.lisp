@@ -2,7 +2,8 @@
   (:use :cl
    :lem)
   (:export :legit-status
-           :*prompt-for-commit-abort-p*)
+           :*prompt-for-commit-abort-p*
+           :*ignore-all-space*)
   (:documentation "Display version control data of the current project in an interactive two-panes window.
 
   This package in particular defines the right window of the legit interface and the user-level commands.
@@ -44,6 +45,10 @@ Ongoing:
 
 (defvar *legit-verbose* nil
   "If non nil, print some logs on standard output (terminal) and create the hunk patch file on disk at (lem home)/lem-hunk-latest.patch.")
+
+(defvar *ignore-all-space* nil "If non t, show all spaces in a diff. Spaces are ignored by default.
+
+Currently Git-only. Concretely, this calls Git with the -w option.")
 
 ;; Supercharge patch-mode with our keys.
 (define-major-mode legit-diff-mode lem-patch-mode:patch-mode
@@ -177,7 +182,7 @@ Ongoing:
 (defun make-show-commit-function (ref)
   (lambda ()
     (with-current-project ()
-      (show-diff (lem/porcelain:show-commit-diff ref)))))
+      (show-diff (lem/porcelain:show-commit-diff ref :ignore-all-space *ignore-all-space*)))))
 
 ;; stage
 (defun make-stage-function (file)

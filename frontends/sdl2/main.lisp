@@ -103,7 +103,7 @@
      (setf (display:display-focus-p display) nil))))
 
 (defun on-filedrop (file)
-  (lem:find-file file))
+  (lem:send-event (lambda () (lem:find-file file))))
 
 (defun event-loop (display)
   (sdl2:with-event-loop (:method :wait)
@@ -406,8 +406,8 @@
   (display:with-display (display)
     (display:with-renderer (display)
       (let ((font-config (display:display-font-config display)))
-        (display:change-font 
-         display 
+        (display:change-font
+         display
          (change-size font-config size))))))
 
 (defmethod lem-if:resize-display-before ((implementation sdl2))

@@ -7,6 +7,8 @@
            :region-completion))
 (in-package :lem-lisp-mode/completion)
 
+(defvar *documentation-popup-gravity* :vertically-adjacent-window-dynamic)
+
 (defun make-completions-form-string (string package-name)
   (format nil
           "(micros/lsp-api:completions ~S ~S)"
@@ -32,7 +34,7 @@
      :focus-action (lambda (context)
                      (unless (alexandria:emptyp documentation)
                        (lem:show-message (lem/markdown-buffer:markdown-buffer documentation)
-                                         :style '(:gravity :vertically-adjacent-window-dynamic
+                                         :style `(:gravity ,*documentation-popup-gravity*
                                                   :offset-y -1
                                                   :offset-x 1)
                                          :source-window (lem/popup-menu::popup-menu-window

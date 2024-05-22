@@ -32,7 +32,7 @@
      :focus-action (lambda (context)
                      (unless (alexandria:emptyp documentation)
                        (lem:show-message (lem/markdown-buffer:markdown-buffer documentation)
-                                         :style '(:gravity :vertically-adjacent-window
+                                         :style '(:gravity :vertically-adjacent-window-dynamic
                                                   :offset-y -1
                                                   :offset-x 1)
                                          :source-window (lem/popup-menu::popup-menu-window

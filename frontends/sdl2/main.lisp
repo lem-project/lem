@@ -102,6 +102,9 @@
     (sdl2-ffi:+sdl-windowevent-focus-lost+
      (setf (display:display-focus-p display) nil))))
 
+(defun on-filedrop (file)
+  (lem:find-file file))
+
 (defun event-loop (display)
   (sdl2:with-event-loop (:method :wait)
     (:quit ()
@@ -124,6 +127,8 @@
      (on-mouse-motion display x y state))
     (:mousewheel (:x x :y y :which which :direction direction)
      (on-mouse-wheel display x y which direction))
+    (:dropfile (:file file)
+     (on-filedrop file))
     (:windowevent (:event event)
      (on-windowevent display event))))
 

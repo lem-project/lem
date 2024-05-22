@@ -98,18 +98,21 @@
     (when save-theme
       (setf (config :color-theme) (current-theme)))))
 
+(defun get-color-theme-color (color-theme key)
+  (second (assoc key (color-theme-specs color-theme))))
+
 (defun background-color ()
   (when (current-theme)
-    (second (assoc :background (color-theme-specs (find-color-theme (current-theme)))))))
+    (get-color-theme-color (find-color-theme (current-theme)) :background)))
 
 (defun foreground-color ()
   (when (current-theme)
-    (second (assoc :foreground (color-theme-specs (find-color-theme (current-theme)))))))
+    (get-color-theme-color (find-color-theme (current-theme)) :foreground)))
 
 (defun base-color (name)
   (check-type name base-color)
   (when (current-theme)
-    (second (assoc name (color-theme-specs (find-color-theme (current-theme)))))))
+    (get-color-theme-color (find-color-theme (current-theme)) name)))
 
 (defun maybe-base-color (name)
   (if (typep name 'base-color)
@@ -137,15 +140,15 @@
       (erase-buffer buffer)
       (dolist (name (all-color-themes))
         (let ((theme (find-color-theme name)))
-          (if (eq :dark (second (assoc :display-background-mode (color-theme-specs theme))))
+          (if (eq :dark (get-color-theme-color theme :display-background-mode))
               (push (cons name theme) dark-themes)
               (push (cons name theme) light-themes))))
       (loop :for (name . theme) :in (append dark-themes light-themes)
             :do (insert-string
                  point name
                  :attribute (make-attribute
-                             :foreground (second (assoc :foreground (color-theme-specs theme)))
-                             :background (second (assoc :background (color-theme-specs theme))))
+                             :foreground (get-color-theme-color theme :foreground)
+                             :background (get-color-theme-color theme :background))
                  'theme name)
                 (insert-character point #\newline)))
     (buffer-start point)

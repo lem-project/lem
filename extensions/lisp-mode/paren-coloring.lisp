@@ -20,14 +20,14 @@
 (defun rainbow-color (index)
   (let ((color-theme (find-color-theme (current-theme))))
     (if color-theme
-        (second (assoc (ecase index
-                         (0 :base08)
-                         (1 :base09)
-                         (2 :base0a)
-                         (3 :base0b)
-                         (4 :base0c)
-                         (5 :base0d))
-                       (color-theme-specs color-theme)))
+        (get-color-theme-color color-theme
+                               (ecase index
+                                 (0 :base08)
+                                 (1 :base09)
+                                 (2 :base0a)
+                                 (3 :base0b)
+                                 (4 :base0c)
+                                 (5 :base0d)))
         (aref *default-rainbow-colors* index))))
 
 (define-attribute color-1

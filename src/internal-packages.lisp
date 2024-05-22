@@ -577,8 +577,7 @@
    :current-theme
    :find-color-theme
    :color-theme
-   :color-theme-specs
-   :color-theme-parent)
+   :get-color-theme-color)
   ;; region.lisp
   (:export
    :check-marked-using-global-mode

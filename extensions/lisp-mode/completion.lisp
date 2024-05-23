@@ -8,6 +8,10 @@
 (in-package :lem-lisp-mode/completion)
 
 (defvar *documentation-popup-gravity* :vertically-adjacent-window-dynamic)
+(setf (documentation '*documentation-popup-gravity* 'variable)
+      (format nil "Set the gravity (position) of the documentation popup. Possibilities are:~%~s"
+              (handler-case (lem/popup-window::ensure-gravity nil)
+                (condition (arg) (cdr (type-error-expected-type arg))))))
 
 (defun make-completions-form-string (string package-name)
   (format nil

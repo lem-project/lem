@@ -148,7 +148,8 @@
                   (cond
                     (replace-all-in-line
                      (lem:line-start start)
-                     (lem:line-end end)
+                     (unless (lem:start-line-p end)
+                       (lem:line-end end))
                      (rep start end nil))
                     (t
                      (lem:move-point (lem:current-point) start)

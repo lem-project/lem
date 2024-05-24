@@ -4,14 +4,16 @@
            :eval-completions
            :make-completion-items
            :symbol-completion
-           :region-completion))
+           :region-completion
+           :*documentation-popup-gravity*))
 (in-package :lem-lisp-mode/completion)
 
-(defvar *documentation-popup-gravity* :vertically-adjacent-window-dynamic)
-(setf (documentation '*documentation-popup-gravity* 'variable)
-      (format nil "Set the gravity (position) of the documentation popup.~%Possibilities are:~%~s"
-              (handler-case (lem/popup-window::ensure-gravity nil)
-                (type-error (arg) (cdr (type-error-expected-type arg))))))
+(defvar *documentation-popup-gravity* :vertically-adjacent-window-dynamic
+  "The `gravity` (anchor position) used for documentation popup windows.
+To prevent the window from going off screen the default choice tries to place
+the window to the left of the completion window, unless the space is insuficient.
+Common coices are :VERTICALLY-ADJACENT-WINDOW, :VERTICALLY-ADJACENT-WINDOW-DYNAMIC,
+:HORIZONTALLY-ADJACENT-WINDOW, :HORIZONTALLY-ABOVE-WINDOW :CURSOR, :TOP or :BOTTOM.")
 
 (defun make-completions-form-string (string package-name)
   (format nil

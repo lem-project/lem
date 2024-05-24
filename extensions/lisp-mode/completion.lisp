@@ -11,7 +11,7 @@
 (defvar *documentation-popup-gravity* :vertically-adjacent-window-dynamic
   "The `gravity` (anchor position) used for documentation popup windows.
 To prevent the window from going off screen the default choice tries to place
-the window to the left of the completion window, unless the space is insuficient.
+the window to the right of the completion window, unless the space is insuficient.
 Common coices are :VERTICALLY-ADJACENT-WINDOW, :VERTICALLY-ADJACENT-WINDOW-DYNAMIC,
 :HORIZONTALLY-ADJACENT-WINDOW, :HORIZONTALLY-ABOVE-WINDOW :CURSOR, :TOP or :BOTTOM.")
 

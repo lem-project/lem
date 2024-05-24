@@ -15,58 +15,61 @@ Descriptors (old char in parenthesis):
 :file (f) -> prompt for a file, defaults to the buffer directory
 :new-file (F) -> prompt for a file, defaults to the buffer directory, must not be existing
 :region (r) -> operate on the region.
-:splice -> splice in your own code returning a list of values"
+:splice -> splice in your own code returning a value or list of values"
     (let* ((pre-forms '())
            (forms
-             (mapcar (lambda (arg-descriptor)
-                       (setf arg-descriptor (cond ((and (stringp arg-descriptor)
-                                                        (< 0 (length arg-descriptor)))
-                                                   (list (ecase (char arg-descriptor 0)
-                                                           (#\p :universal) (#\P :universal-nil)
-                                                           (#\s :string) (#\n :number)
-                                                           (#\b :buffer) (#\B :other-buffer)
-                                                           (#\f :file) (#\F :new-file)
-                                                           (#\r :region))
-                                                         (subseq arg-descriptor 1)))
-                                                  ((symbolp arg-descriptor)
-                                                   (list arg-descriptor))
-                                                  (t arg-descriptor)))
-                       (if (consp arg-descriptor)
-                           (ecase (first arg-descriptor)
-                             (:splice 
-                              (assert (alexandria:length= arg-descriptor 2))
-                              (second arg-descriptor))
-                             ((:universal :universal-1) `(list (or ,universal-argument 1)))
-                             (:universal-nil `(list ,universal-argument))
-                             (:string `(list (prompt-for-string ,(second arg-descriptor))))
-                             ((:num :number)
-                              `(list (prompt-for-integer ,(second arg-descriptor))))
-                             (:buffer
-                              `(list (prompt-for-buffer ,(second arg-descriptor)
-                                                        :default (buffer-name (current-buffer))
-                                                        :existing t)))
-                             (:other-buffer
-                              `(list (prompt-for-buffer ,(second arg-descriptor)
-                                                        :default (buffer-name (other-buffer))
-                                                        :existing nil)))
-                             (:file
-                              `(list (prompt-for-file
-                                      ,(second arg-descriptor)
-                                      :directory (buffer-directory)
-                                      :default nil
-                                      :existing t)))
-                             (:new-file
-                              `(list (prompt-for-file
-                                      ,(second arg-descriptor)
-                                      :directory (buffer-directory)
-                                      :default nil
-                                      :existing nil)))
-                             (:region
-                              (push '(check-marked) pre-forms)
-                              '(list (region-beginning-using-global-mode (current-global-mode))
-                                (region-end-using-global-mode (current-global-mode)))))
-                           `(multiple-value-list ,arg-descriptor)))
-                     arg-descriptors)))
+             (mapcar
+              (lambda (arg-descriptor)
+                (setf arg-descriptor (cond ((and (stringp arg-descriptor)
+                                                 (< 0 (length arg-descriptor)))
+                                            (list (ecase (char arg-descriptor 0)
+                                                    (#\p :universal) (#\P :universal-nil)
+                                                    (#\s :string) (#\n :number)
+                                                    (#\b :buffer) (#\B :other-buffer)
+                                                    (#\f :file) (#\F :new-file)
+                                                    (#\r :region))
+                                                  (subseq arg-descriptor 1)))
+                                           ((symbolp arg-descriptor)
+                                            (list arg-descriptor))
+                                           (t arg-descriptor)))
+                (or (and (consp arg-descriptor)
+                         (case (first arg-descriptor)
+                           (:splice 
+                            (assert (alexandria:length= arg-descriptor 2))
+                            (second arg-descriptor))
+                           ((:universal :universal-1) `(list (or ,universal-argument 1)))
+                           (:universal-nil `(list ,universal-argument))
+                           (:string `(list (prompt-for-string ,(second arg-descriptor))))
+                           ((:num :number)
+                            `(list (prompt-for-integer ,(second arg-descriptor))))
+                           (:buffer
+                            `(list (prompt-for-buffer
+                                    ,(second arg-descriptor)
+                                    :default (buffer-name (current-buffer))
+                                    :existing t)))
+                           (:other-buffer
+                            `(list (prompt-for-buffer ,(second arg-descriptor)
+                                                      :default (buffer-name (other-buffer))
+                                                      :existing nil)))
+                           (:file
+                            `(list (prompt-for-file
+                                    ,(second arg-descriptor)
+                                    :directory (buffer-directory)
+                                    :default nil
+                                    :existing t)))
+                           (:new-file
+                            `(list (prompt-for-file
+                                    ,(second arg-descriptor)
+                                    :directory (buffer-directory)
+                                    :default nil
+                                    :existing nil)))
+                           (:region
+                            (push '(check-marked) pre-forms)
+                            '(list (region-beginning-using-global-mode
+                                    (current-global-mode))
+                              (region-end-using-global-mode (current-global-mode))))))
+                    `(multiple-value-list ,arg-descriptor)))
+              arg-descriptors)))
       (if (null pre-forms)
           `(append ,@forms)
           `(progn
@@ -154,10 +157,12 @@ Other argument descriptors are available (old-style char in parenthesis):
                                           #-sbcl nil)
 
            (defun ,name ,params
-             ,(format nil "Underlying function for the `~a` command.
+             ,(format nil "~a~%Underlying function for the `~a` command.
 If you call it directly instead of using `call-command`:
   - *this-command* will not be bound
   - the execute-hook will not be called"
+                      (when (and (stringp (car body)) (< 1 (length body)))
+                        (pop body))
                       name)
              ,@body)
 

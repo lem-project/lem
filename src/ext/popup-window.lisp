@@ -28,6 +28,7 @@
 (defclass gravity-follow-cursor (gravity-cursor) ())
 (defclass gravity-mouse-cursor (gravity) ())
 (defclass gravity-vertically-adjacent-window (gravity) ())
+(defclass gravity-vertically-adjacent-window-dynamic (gravity) ())
 (defclass gravity-horizontally-adjacent-window (gravity) ())
 (defclass gravity-horizontally-above-window (gravity) ())
 
@@ -64,6 +65,7 @@
         (:follow-cursor (make-instance 'gravity-follow-cursor))
         (:mouse-cursor (make-instance 'gravity-mouse-cursor))
         (:vertically-adjacent-window (make-instance 'gravity-vertically-adjacent-window))
+        (:vertically-adjacent-window-dynamic (make-instance 'gravity-vertically-adjacent-window-dynamic))
         (:horizontally-adjacent-window (make-instance 'gravity-horizontally-adjacent-window))
         (:horizontally-above-window (make-instance 'gravity-horizontally-above-window)))))
 
@@ -201,6 +203,19 @@
   (let ((x (+ (window-x source-window)
               (window-width source-window)))
         (y (window-y source-window)))
+    (list x y width height)))
+
+(defmethod compute-popup-window-rectangle ((gravity gravity-vertically-adjacent-window-dynamic)
+                                           &key source-window width height #+(or)border-size
+                                           &allow-other-keys)
+  (let ((x (+ (window-x source-window) (window-width source-window)))
+        (y (window-y source-window)))
+    (when (>= (+ x width) (display-width))
+      (setf (gravity-offset-x gravity) (- (gravity-offset-x gravity))
+            x (max 0 (- (window-x source-window) width 1))))
+    (when (>= (+ y height) (display-height))
+      (setf (gravity-offset-y gravity) 0
+            y (max 0 (- (display-height) height 2))))
     (list x y width height)))
 
 (defmethod compute-popup-window-rectangle ((gravity gravity-horizontally-adjacent-window)

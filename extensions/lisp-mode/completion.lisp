@@ -4,8 +4,16 @@
            :eval-completions
            :make-completion-items
            :symbol-completion
-           :region-completion))
+           :region-completion
+           :*documentation-popup-gravity*))
 (in-package :lem-lisp-mode/completion)
+
+(defvar *documentation-popup-gravity* :vertically-adjacent-window-dynamic
+  "The `gravity` (anchor position) used for documentation popup windows.
+To prevent the window from going off screen the default choice tries to place
+the window to the right of the completion window, unless the space is insuficient.
+Common coices are :VERTICALLY-ADJACENT-WINDOW, :VERTICALLY-ADJACENT-WINDOW-DYNAMIC,
+:HORIZONTALLY-ADJACENT-WINDOW, :HORIZONTALLY-ABOVE-WINDOW :CURSOR, :TOP or :BOTTOM.")
 
 (defun make-completions-form-string (string package-name)
   (format nil
@@ -32,7 +40,7 @@
      :focus-action (lambda (context)
                      (unless (alexandria:emptyp documentation)
                        (lem:show-message (lem/markdown-buffer:markdown-buffer documentation)
-                                         :style '(:gravity :vertically-adjacent-window
+                                         :style `(:gravity ,*documentation-popup-gravity*
                                                   :offset-y -1
                                                   :offset-x 1)
                                          :source-window (lem/popup-menu::popup-menu-window

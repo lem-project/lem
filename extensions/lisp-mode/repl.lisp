@@ -314,13 +314,13 @@
   (let* ((buffer (ensure-repl-buffer-exist))
          (point (repl-buffer-write-point buffer)))
     (cond (*repl-evaluating*
-           (buffer-end point)
-           (unless (eq (current-buffer) buffer)
-             (see-repl-writing buffer)))
+           (buffer-end point))
           (t
            (when (point<= (lem/listener-mode:input-start-point buffer) point)
              (move-point point (lem/listener-mode:input-start-point buffer))
              (previous-single-property-change point :field))))
+    (unless (eq (current-buffer) buffer)
+      (see-repl-writing buffer))
     (with-buffer-read-only buffer nil
       (let ((*inhibit-read-only* t))
         (funcall function point)))))

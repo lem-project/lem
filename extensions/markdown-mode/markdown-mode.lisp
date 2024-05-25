@@ -6,26 +6,11 @@
            :markdown-mode))
 (in-package :lem-markdown-mode)
 
-(defun make-tmlanguage-markdown ()
-  (let* ((patterns (make-tm-patterns
-                    (make-tm-match "^#.*$" :name 'syntax-constant-attribute)
-                    (make-tm-match "^>.*$" :name 'syntax-string-attribute)
-                    (make-tm-region '(:sequence "```")
-                                    '(:sequence "```")
-                                    :name 'syntax-string-attribute
-                                    :patterns (make-tm-patterns (make-tm-match "\\\\.")))
-                    (make-tm-match "([-*_] ?)([-*_] ?)([-*_] ?)+"
-                                   :name 'syntax-comment-attribute)
-                    (make-tm-match "^ *([*+\\-]|([0-9]+\\.)) +"
-                                   :name 'syntax-keyword-attribute))))
-    (make-tmlanguage :patterns patterns)))
-
 (defvar *markdown-syntax-table*
   (let ((table (make-syntax-table
                 :space-chars '(#\space #\tab #\newline)
-                :string-quote-chars '(#\`)))
-        (tmlanguage (make-tmlanguage-markdown)))
-    (set-syntax-parser table tmlanguage)
+                :string-quote-chars '(#\`))))
+    (set-syntax-parser table (lem-markdown-mode/syntax-parser:make-syntax-parser))
     table))
 
 (define-major-mode markdown-mode language-mode

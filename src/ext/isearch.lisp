@@ -449,10 +449,10 @@
         (unless (funcall search-fn point string)
           (return nil))))))
 
-(define-command isearch-next-highlight (n) ("p")
+(define-command isearch-next-highlight (n) (:universal)
   (search-next-matched (current-point) n))
 
-(define-command isearch-prev-highlight (n) ("p")
+(define-command isearch-prev-highlight (n) (:universal)
   (isearch-next-highlight (- n)))
 
 (define-command isearch-toggle-highlighting () ()

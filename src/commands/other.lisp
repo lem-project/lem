@@ -52,7 +52,7 @@
   (lem-core/commands/file:save-some-buffers t)
   (exit-editor))
 
-(define-command execute-command (arg) ("P")
+(define-command execute-command (arg) (:universal-nil)
   "Read a command name, then read the ARG and call the command."
   (let* ((name (prompt-for-string
                 (if arg

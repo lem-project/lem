@@ -24,7 +24,7 @@
     (funcall *read-only-function*
              (buffer-read-only-p (current-buffer)))))
 
-(define-command rename-buffer (name) ("sRename buffer: ")
+(define-command rename-buffer (name) ((:string "Rename buffer: "))
   "Rename the buffer."
   (buffer-rename (current-buffer) name))
 

@@ -28,7 +28,7 @@
      :global t
      :disable-hook 'disable-hook))
 
-(define-command toggle-line-numbers (&optional relative) ("P")
+(define-command toggle-line-numbers (&optional relative) (:universal-nil)
   "Toggle the display of line numbers.
 
 With a positive universal argument, use relative line numbers. Also obey the global variale `*relative-line*'."

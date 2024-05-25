@@ -22,6 +22,7 @@ Descriptors (old char in parenthesis):
               (lambda (arg-descriptor)
                 (setf arg-descriptor (cond ((and (stringp arg-descriptor)
                                                  (< 0 (length arg-descriptor)))
+                                            (break "Deprecated expression (~A) is used for arg-descriptor" arg-descriptor)
                                             (list (ecase (char arg-descriptor 0)
                                                     (#\p :universal) (#\P :universal-nil)
                                                     (#\s :string) (#\n :number)

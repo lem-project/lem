@@ -61,35 +61,35 @@
            (move-to-beginning-of-buffer)
            (error 'beginning-of-buffer :point (current-point))))))
 
-(define-command (next-line (:advice-classes movable-advice)) (&optional n) ("p")
+(define-command (next-line (:advice-classes movable-advice)) (&optional n) (:universal)
   "Move the cursor to next line."
   (next-line-aux n
                  #'point-virtual-line-column
                  #'move-to-next-virtual-line
                  #'move-to-virtual-line-column))
 
-(define-command (next-logical-line (:advice-classes movable-advice)) (&optional n) ("p")
+(define-command (next-logical-line (:advice-classes movable-advice)) (&optional n) (:universal)
   "Move the cursor to the next logical line."
   (next-line-aux n
                  #'point-column
                  #'line-offset
                  #'move-to-column))
 
-(define-command (previous-line (:advice-classes movable-advice)) (&optional (n 1)) ("p")
+(define-command (previous-line (:advice-classes movable-advice)) (&optional (n 1)) (:universal)
   "Move the cursor to the previous line."
   (next-line (- n)))
 
-(define-command (previous-logical-line (:advice-classes movable-advice)) (&optional (n 1)) ("p")
+(define-command (previous-logical-line (:advice-classes movable-advice)) (&optional (n 1)) (:universal)
   "Move the cursor to the previous logical line."
   (next-logical-line (- n)))
 
 (define-command (forward-char (:advice-classes movable-advice))
-    (&optional (n 1)) ("p")
+    (&optional (n 1)) (:universal)
   "Move the cursor to the next character."
   (or (character-offset (current-point) n)
       (error 'end-of-buffer :point (current-point))))
 
-(define-command (backward-char (:advice-classes movable-advice)) (&optional (n 1)) ("p")
+(define-command (backward-char (:advice-classes movable-advice)) (&optional (n 1)) (:universal)
   "Move the cursor to the previous character."
   (or (character-offset (current-point) (- n))
       (error 'beginning-of-buffer :point (current-point))))
@@ -134,7 +134,7 @@
   "Move the cursor to the end of the logical line."
   (line-end (current-point)))
 
-(define-command (next-page (:advice-classes movable-advice)) (&optional n) ("P")
+(define-command (next-page (:advice-classes movable-advice)) (&optional n) (:universal-nil)
   "Move the cursor to the next page by one page."
   (if n
       (scroll (current-window) n)
@@ -142,7 +142,7 @@
         (next-line (1- (window-height (current-window))))
         (window-recenter (current-window)))))
 
-(define-command (previous-page (:advice-classes movable-advice)) (&optional n) ("P")
+(define-command (previous-page (:advice-classes movable-advice)) (&optional n) (:universal-nil)
   "Move the cursor to the previous page by one page."
   (if n
       (scroll (current-window) (- n))
@@ -150,7 +150,7 @@
         (previous-line (1- (window-height (current-window))))
         (window-recenter (current-window)))))
 
-(define-command (next-page-char (:advice-classes movable-advice)) (&optional (n 1)) ("p")
+(define-command (next-page-char (:advice-classes movable-advice)) (&optional (n 1)) (:universal)
   "Move the cursor to the next page character (^L)."
   (let ((point (current-point)))
     (dotimes (_ (abs n))
@@ -160,11 +160,11 @@
         (when (eql #\page (character-at point 0))
           (return))))))
 
-(define-command (previous-page-char (:advice-classes movable-advice)) (&optional (n 1)) ("p")
+(define-command (previous-page-char (:advice-classes movable-advice)) (&optional (n 1)) (:universal)
   "Move the cursor to the previous page character (^L)."
   (next-page-char (- n)))
 
-(define-command (goto-line (:advice-classes jump-cursor-advice)) (n) ("nLine to GOTO: ")
+(define-command (goto-line (:advice-classes jump-cursor-advice)) (n) ((:number "Line to GOTO: "))
   "Move the cursor to the specified line number."
   (cond ((< n 1)
          (setf n 1))

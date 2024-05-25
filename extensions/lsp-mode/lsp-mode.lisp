@@ -1714,7 +1714,7 @@
            :range (points-to-lsp-range start end)
            :options (make-formatting-options buffer))))))))
 
-(define-command lsp-document-range-format (start end) ("r")
+(define-command lsp-document-range-format (start end) (:region)
   (check-connection)
   (text-document/range-formatting start end))
 
@@ -1767,7 +1767,7 @@
                             (make-text-document-position-arguments point))))))
         (apply-workspace-edit response)))))
 
-(define-command lsp-rename (new-name) ("sNew name: ")
+(define-command lsp-rename (new-name) ((:string "New name: "))
   (check-connection)
   (text-document/rename (current-point) new-name))
 

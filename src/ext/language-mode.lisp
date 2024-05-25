@@ -98,19 +98,19 @@
   (alexandria:when-let ((fn (variable-value 'beginning-of-defun-function :buffer)))
     (when fn (funcall fn (current-point) n))))
 
-(define-command (beginning-of-defun (:advice-classes movable-advice)) (n) ("p")
+(define-command (beginning-of-defun (:advice-classes movable-advice)) (n) (:universal)
   (if (minusp n)
       (end-of-defun (- n))
       (beginning-of-defun-1 n)))
 
-(define-command (end-of-defun (:advice-classes movable-advice)) (n) ("p")
+(define-command (end-of-defun (:advice-classes movable-advice)) (n) (:universal)
   (if (minusp n)
       (beginning-of-defun (- n))
       (alexandria:if-let ((fn (variable-value 'end-of-defun-function :buffer)))
         (funcall fn (current-point) n)
         (beginning-of-defun-1 (- n)))))
 
-(define-command (indent (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+(define-command (indent (:advice-classes editable-advice)) (&optional (n 1)) (:universal)
   (if (variable-value 'calc-indent-function)
       (indent-line (current-point))
       (self-insert n)))
@@ -122,12 +122,12 @@
     (line-end end)
     (delete-between-points start end)))
 
-(define-command (newline-and-indent (:advice-classes editable-advice)) (n) ("p")
+(define-command (newline-and-indent (:advice-classes editable-advice)) (n) (:universal)
   (trim-eol (current-point))
   (insert-character (current-point) #\newline n)
   (indent-line (current-point)))
 
-(define-command indent-region (start end) ("r")
+(define-command indent-region (start end) (:region)
   (indent-points start end))
 
 (defmethod execute :around (mode

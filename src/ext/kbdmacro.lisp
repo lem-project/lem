@@ -29,7 +29,7 @@
          (setq *last-macro-chars* (stop-record-key)))))
 
 (define-key *global-keymap* "C-x e" 'kbdmacro-execute)
-(define-command kbdmacro-execute (n) ("p")
+(define-command kbdmacro-execute (n) (:universal)
   (cond ((key-recording-p)
          (editor-error "Macro already active"))
         (*macro-running-p*
@@ -43,7 +43,7 @@
                      (execute-key-sequence *last-macro-chars*)
                    (editor-condition () (return))))))))
 
-(define-command apply-macro-to-region-lines (start-point end-point) ("r")
+(define-command apply-macro-to-region-lines (start-point end-point) (:region)
   (with-point ((next-line-point start-point :left-inserting)
                (end-point end-point :right-inserting))
     (loop :while (point< next-line-point end-point)

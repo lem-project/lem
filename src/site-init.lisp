@@ -77,7 +77,7 @@
                  (setf (site-init) site-init)
                  (message "~A" depends-on)))
 
-(define-command site-init-remove-dependency (symbols) ("sPackage:")
+(define-command site-init-remove-dependency (symbols) ((:string "Package:"))
   "Remove system name from site-init depends-on"
   ;;TBD prepare prompt-site-init-depends-on like function
   (loop :with site-init := (site-init)

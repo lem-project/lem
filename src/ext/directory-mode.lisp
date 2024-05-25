@@ -414,10 +414,10 @@
                                      (switch-to-window
                                            (pop-to-buffer buffer))))))
 
-(define-command directory-mode-next-line (p) ("p")
+(define-command directory-mode-next-line (p) (:universal)
   (line-offset (current-point) p))
 
-(define-command directory-mode-previous-line (p) ("p")
+(define-command directory-mode-previous-line (p) (:universal)
   (line-offset (current-point) (- p)))
 
 (define-command directory-mode-mark-and-next-line () ()
@@ -439,7 +439,7 @@
 (define-command directory-mode-unmark-all () ()
   (filter-marks (current-point) (constantly nil)))
 
-(define-command directory-mode-mark-regexp (regex &optional arg) ("sRegex: " "P")
+(define-command directory-mode-mark-regexp (regex &optional arg) ((:string "Regex: ") :universal-nil)
   "Mark all files matching the regular expression REGEX.
 With prefix argument ARG, unmark all those files."
   (let ((scanner (ppcre:create-scanner regex)))
@@ -449,7 +449,7 @@ With prefix argument ARG, unmark all those files."
                         (not arg)
                         (get-mark p))))))
 
-(define-command directory-mode-mark-directories (&optional arg) ("P")
+(define-command directory-mode-mark-directories (&optional arg) (:universal-nil)
   "Mark all directories in the current buffer except '..'.
 With prefix argument ARG, unmark all those directories."
   (filter-marks (current-point)
@@ -460,7 +460,7 @@ With prefix argument ARG, unmark all those directories."
                       (not arg)
                       (get-mark p)))))
 
-(define-command directory-mode-mark-links (&optional arg) ("P")
+(define-command directory-mode-mark-links (&optional arg) (:universal-nil)
   "Mark all symbolic links in the current buffer.
 With prefix argument ARG, unmark all those links."
   (filter-marks (current-point)
@@ -471,7 +471,7 @@ With prefix argument ARG, unmark all those links."
                       (not arg)
                       (get-mark p)))))
 
-(define-command directory-mode-mark-suffix (suffix &optional arg) ("sSuffix: " "P")
+(define-command directory-mode-mark-suffix (suffix &optional arg) ((:string "Suffix: ") :universal-nil)
   "Mark all files with the given SUFFIX.
 The provided SUFFIX is a string, and not a file extenion, meaning every file with
 a name ending in SUFFIX will be marked.
@@ -485,7 +485,7 @@ With prefix argument ARG, unmark all those files."
                         (not arg)
                         (get-mark p))))))
 
-(define-command directory-mode-mark-extension (extension &optional arg) ("sExtension: " "P")
+(define-command directory-mode-mark-extension (extension &optional arg) ((:string "Extension: ") :universal-nil)
   "Mark all files with the given EXTENSION.
 A '.' is prepended to the EXTENSION if not present.
 With prefix argument ARG, unmark all those files."
@@ -495,7 +495,7 @@ With prefix argument ARG, unmark all those files."
     (setf extension (concatenate 'string "." extension)))
   (directory-mode-mark-suffix extension arg))
 
-(define-command directory-mode-next-mark (n) ("p")
+(define-command directory-mode-next-mark (n) (:universal)
   "Move to the next Nth marked entry."
   (cond ((= 0 n)
          nil)
@@ -511,7 +511,7 @@ With prefix argument ARG, unmark all those files."
                    (move-to-file-position (current-point)))
                  (editor-error "No next mark"))))))
 
-(define-command directory-mode-previous-mark (n) ("p")
+(define-command directory-mode-previous-mark (n) (:universal)
   "Move to the previous Nth marked entry."
   (cond ((= 0 n) nil)
         ((< n 0) (directory-mode-next-mark (- n)))
@@ -644,7 +644,7 @@ With prefix argument ARG, unmark all those files."
     (when (and path (str:non-blank-string-p (file-namestring path)))
       (search-filename-and-recenter (file-namestring path)))))
 
-(define-command make-directory (filename) ("FMake directory: ")
+(define-command make-directory (filename) ((:new-file "Make directory: "))
   (setf filename (uiop:ensure-directory-pathname filename))
   (ensure-directories-exist filename)
   (update-all))

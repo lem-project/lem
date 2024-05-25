@@ -405,7 +405,7 @@
   (check-connection)
   (autodoc (lambda (buffer) (message-buffer buffer))))
 
-(define-command scheme-insert-space-and-autodoc (n) ("p")
+(define-command scheme-insert-space-and-autodoc (n) (:universal)
   (loop :repeat n :do (insert-character (current-point) #\space))
   (when (and (eq *use-scheme-autodoc* t)
              (connected-p))
@@ -508,7 +508,7 @@
     (scheme-eval-async `(swank:compile-file-for-emacs ,(write-string file) t)
                        #'compilation-finished)))
 
-(define-command scheme-compile-region (start end) ("r")
+(define-command scheme-compile-region (start end) (:region)
   (check-connection)
   (let ((string (points-to-string start end))
         (position `((:position ,(position-at-point start))

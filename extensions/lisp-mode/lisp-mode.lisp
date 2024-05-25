@@ -710,7 +710,7 @@
         (lisp-eval-async `(micros:compile-file-for-emacs ,(convert-local-to-remote-file file) t)
                          #'compilation-finished))))
 
-(define-command lisp-compile-region (start end) ("r")
+(define-command lisp-compile-region (start end) (:region)
   (check-connection)
   (let ((string (points-to-string start end))
         (position `((:position ,(position-at-point start))
@@ -1123,7 +1123,7 @@
                    (stop-loading-spinner spinner)))
           (setf timer (start-timer (make-timer #'interval) 500 :repeat t)))))))
 
-(define-command slime (&optional ask-command) ("P")
+(define-command slime (&optional ask-command) (:universal-nil)
   (let ((command (if ask-command
                      (prompt-for-lisp-command)
                      (lem-lisp-mode/implementation:default-command))))

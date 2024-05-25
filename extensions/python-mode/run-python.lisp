@@ -73,7 +73,7 @@
                                    :name "run-python"
                                    :output-callback 'output-callback))))
 
-(define-command python-eval-region (start end) ("r")
+(define-command python-eval-region (start end) (:region)
   (unless (alive-process-p)
     (editor-error "Python process doesn't exist."))
   (lem-process:process-send-input *process* (points-to-string start end)))

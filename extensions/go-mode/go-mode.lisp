@@ -138,7 +138,7 @@
                  (decf indent tab-width)))
              indent)))))
 
-(define-command go-electric-close (n) ("p")
+(define-command go-electric-close (n) (:universal)
   (self-insert n)
   (indent))
 

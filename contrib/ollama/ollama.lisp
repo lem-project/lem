@@ -69,7 +69,7 @@
   (ignore-errors (bt2:join-thread *handler*))
   (when close-hook (funcall close-hook)))
 
-(define-command ollama-prompt (prompt) ("sPrompt: ")
+(define-command ollama-prompt (prompt) ((:string "Prompt: "))
   "prompt ollama, and stream the response to a temp buffer"
   (let ((buf (make-buffer "*ollama*" :temporary t)))
     (unless (eq (buffer-major-mode buf) 'ollama-mode)

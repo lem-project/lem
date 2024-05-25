@@ -206,7 +206,7 @@
     `(progn
        ,@(when keymapp
            `((defvar ,keymap (make-keymap :name ',keymap))))
-       (define-command (,minor-mode (:class ,command-class-name)) (&optional (arg nil arg-p)) ("p")
+       (define-command (,minor-mode (:class ,command-class-name)) (&optional (arg nil arg-p)) (:universal)
          (cond ((not arg-p)
                 (toggle-minor-mode ',minor-mode))
                ((eq arg t)

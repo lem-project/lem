@@ -25,7 +25,7 @@
 (define-key *global-keymap* "C-M-t" 'transpose-sexps)
 (define-key *global-keymap* "C-M-y" 'kill-around-form)
 
-(define-command (forward-sexp (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+(define-command (forward-sexp (:advice-classes movable-advice)) (&optional (n 1) no-errors) (:universal)
   "Move the cursor to the forward expression."
   (with-point ((prev (current-point)))
     (let ((point (form-offset (current-point) n)))
@@ -36,23 +36,23 @@
                 nil
                 (scan-error)))))))
 
-(define-command (backward-sexp (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+(define-command (backward-sexp (:advice-classes movable-advice)) (&optional (n 1) no-errors) (:universal)
   "Move the cursor to the backward expression."
   (forward-sexp (- n) no-errors))
 
-(define-command (forward-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+(define-command (forward-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) (:universal)
   "Move the cursor to the forward list."
   (scan-lists (current-point) n 0 no-errors))
 
-(define-command (backward-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+(define-command (backward-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) (:universal)
   "Move the cursor to the backward list."
   (scan-lists (current-point) (- n) 0 no-errors))
 
-(define-command (down-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+(define-command (down-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) (:universal)
   "Move the cursor to the inner expression."
   (scan-lists (current-point) n -1 no-errors))
 
-(define-command (up-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) ("p")
+(define-command (up-list (:advice-classes movable-advice)) (&optional (n 1) no-errors) (:universal)
   "Move the cursor to the outer expression."
   (or (maybe-beginning-of-string (current-point))
       (scan-lists (current-point) (- n) 1 no-errors)))
@@ -67,7 +67,7 @@
        (form-offset (current-point) 1)
        (set-cursor-mark (current-point) (current-point))))))
 
-(define-command (kill-sexp (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+(define-command (kill-sexp (:advice-classes editable-advice)) (&optional (n 1)) (:universal)
   "Kill the forward expression as a region."
   (dotimes (_ n t)
     (let ((end (form-offset (copy-point (current-point) :temporary) 1)))

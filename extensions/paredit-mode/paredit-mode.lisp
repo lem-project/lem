@@ -57,14 +57,14 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (loop while (in-string-p point)
         do (character-offset point 1)))
 
-(define-command paredit-forward (&optional (n 1)) ("p")
+(define-command paredit-forward (&optional (n 1)) (:universal)
   (handler-case
       (forward-sexp n)
     (error ()
       (unless (end-buffer-p (current-point))
         (lem:forward-up-list (current-point))))))
 
-(define-command paredit-backward (&optional (n 1)) ("p")
+(define-command paredit-backward (&optional (n 1)) (:universal)
   (handler-case
       (backward-sexp n)
     (error ()
@@ -177,7 +177,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
     (insert-character p #\| 2)
     (character-offset p -1)))
 
-(define-command paredit-backward-delete (&optional (n 1)) ("p")
+(define-command paredit-backward-delete (&optional (n 1)) (:universal)
   (when (< 0 n)
     (let ((p (current-point)))
       (cond
@@ -235,7 +235,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
          (delete-previous-char))))
     (paredit-backward-delete (1- n))))
 
-(define-command paredit-forward-delete (&optional (n 1)) ("p")
+(define-command paredit-forward-delete (&optional (n 1)) (:universal)
   (when (< 0 n)
     (let ((p (current-point)))
       (cond

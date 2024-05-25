@@ -344,7 +344,7 @@ This does not change the order of the frames."
       (allocate-frame vf frame)
       (switch-current-frame vf frame))))
 
-(define-command frame-multiplexer-delete (&optional id) ("P")
+(define-command frame-multiplexer-delete (&optional id) (:universal-nil)
   "Delete the current frame.
 With prefix argument ID, delete the frame with the given ID."
   (check-frame-multiplexer-usable)
@@ -361,7 +361,7 @@ With prefix argument ID, delete the frame with the given ID."
         (switch-current-frame vf (search-previous-frame vf frame-now)))
       (free-frame vf frame-now))))
 
-(define-command frame-multiplexer-prev (&optional (n 1)) ("p")
+(define-command frame-multiplexer-prev (&optional (n 1)) (:universal)
   "Switch to the Nth previous frame.
 The prefix argument N defaults to 1."
   (check-frame-multiplexer-usable)
@@ -373,7 +373,7 @@ The prefix argument N defaults to 1."
     (when frame
       (switch-current-frame vf frame))))
 
-(define-command frame-multiplexer-next (&optional (n 1)) ("p")
+(define-command frame-multiplexer-next (&optional (n 1)) (:universal)
   "Switch to the Nth next frame.
 The prefix argument N defaults to 1."
   (check-frame-multiplexer-usable)
@@ -385,7 +385,7 @@ The prefix argument N defaults to 1."
     (when frame
       (switch-current-frame vf frame))))
 
-(define-command frame-multiplexer-switch (&optional (id 1)) ("p")
+(define-command frame-multiplexer-switch (&optional (id 1)) (:universal)
   "Switch to the frame with ID.
 The prefix argument ID defaults to 1."
   ;; TODO: It would be great to enhance this by showing a prompt
@@ -397,7 +397,7 @@ The prefix argument ID defaults to 1."
         (switch-current-frame vf (frame-table-entry-frame entry))
         (editor-error "No frame with ID ~a" id))))
 
-(define-command frame-multiplexer-recent (&optional (n 1)) ("p")
+(define-command frame-multiplexer-recent (&optional (n 1)) (:universal)
   "Switch to the Nth most recent frame selected.
 The prefix argument N defaults to 1."
   (check-frame-multiplexer-usable)
@@ -418,7 +418,7 @@ The prefix argument N defaults to 1."
           (let ((entry (aref (virtual-frame-id/frame-table vf) recent-frame-id)))
             (switch-current-frame vf (frame-table-entry-frame entry)))))))
 
-(define-command frame-mulitplexer-rename (name &optional id) ("sNew name: " "P")
+(define-command frame-mulitplexer-rename (name &optional id) ((:string "New name: ") :universal-nil)
   "Rename the current frame to NAME.
 With prefix argument ID, rename the frame with the given ID."
   (check-frame-multiplexer-usable)

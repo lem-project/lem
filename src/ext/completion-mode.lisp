@@ -185,11 +185,11 @@
           (t (unread-key-sequence (last-read-key-sequence))
              (completion-end)))))
 
-(define-command completion-delete-previous-char (n) ("p")
+(define-command completion-delete-previous-char (n) (:universal)
   (delete-previous-char n)
   (continue-completion *completion-context*))
 
-(define-command completion-backward-delete-word (n) ("p")
+(define-command completion-backward-delete-word (n) (:universal)
   (backward-delete-word n)
   (continue-completion *completion-context*))
 

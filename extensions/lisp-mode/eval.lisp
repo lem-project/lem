@@ -233,7 +233,7 @@
       (eval-print string)
       (move-point (current-point) end))))
 
-(define-command lisp-eval-region (start end) ("r")
+(define-command lisp-eval-region (start end) (:region)
   "Execute the region as Lisp code."
   (check-connection)
   (eval-with-transcript

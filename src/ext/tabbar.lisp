@@ -111,7 +111,7 @@
 ;(define-key *global-keymap* "Shift-PageDown" 'tabbar-next)
 ;(define-key *global-keymap* "Shift-PageUp" 'tabbar-prev)
 
-(define-command tabbar-next (n) ("p")
+(define-command tabbar-next (n) (:universal)
   (let ((p (buffer-point (tabbar-buffer *tabbar*))))
     (dotimes (_ n)
       (forward-button p))
@@ -121,7 +121,7 @@
         (character-offset p -1)
         (button-action button)))))
 
-(define-command tabbar-prev (n) ("p")
+(define-command tabbar-prev (n) (:universal)
   (let ((p (buffer-point (tabbar-buffer *tabbar*))))
     (dotimes (_ n)
       (backward-button p))

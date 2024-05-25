@@ -129,7 +129,7 @@
         (find-root (parent-directory pathname) :recurse recurse :recursing t)
         pathname)))))
 
-(define-command project-find-file (arg) ("p")
+(define-command project-find-file (arg) (:universal)
   "Open a file, from the list of all files in this project."
   ;; ARG is currently not used, use it when needed.
   (declare (ignorable arg))
@@ -153,7 +153,7 @@
          (root (or project-root cwd)))
     (message "Current project root: ~a" root)))
 
-(define-command project-root-directory (arg) ("p")
+(define-command project-root-directory (arg) (:universal)
   "Open this project's root directory."
   (declare (ignorable arg))
   (let* ((cwd (buffer-directory))

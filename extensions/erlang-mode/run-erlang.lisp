@@ -73,7 +73,7 @@
                                    :name "run-erlang"
                                    :output-callback 'output-callback))))
 
-(define-command erlang-eval-region (start end) ("r")
+(define-command erlang-eval-region (start end) (:region)
   (unless (alive-process-p)
     (editor-error "Erlang process doesn't exist."))
   (lem-process:process-send-input *process* (points-to-string start end)))

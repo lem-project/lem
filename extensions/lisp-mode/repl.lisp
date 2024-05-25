@@ -268,7 +268,7 @@
   (insert-string (current-point) string)
   (lem/listener-mode:listener-return))
 
-(define-command start-lisp-repl (&optional (use-this-window nil)) ("P")
+(define-command start-lisp-repl (&optional (use-this-window nil)) (:universal-nil)
   (check-connection)
   (flet ((switch (buffer split-window-p)
            (if split-window-p
@@ -491,7 +491,7 @@
                  :history-symbol 'mh-lisp-repl-shortcuts)
                 *lisp-repl-shortcuts* :test #'equal))))
 
-(define-command lisp-repl-shortcut (n) ("p")
+(define-command lisp-repl-shortcut (n) (:universal)
   (with-point ((point (current-point)))
     (if (point>= (lem/listener-mode:input-start-point (current-buffer)) point)
         (let ((fun (prompt-for-shortcuts)))

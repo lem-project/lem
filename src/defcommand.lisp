@@ -40,7 +40,7 @@ Descriptors (old char in parenthesis):
                            ((:universal :universal-1) `(list (or ,universal-argument 1)))
                            (:universal-nil `(list ,universal-argument))
                            (:string `(list (prompt-for-string ,(second arg-descriptor))))
-                           ((:num :number)
+                           (:number
                             `(list (prompt-for-integer ,(second arg-descriptor))))
                            (:buffer
                             `(list (prompt-for-buffer

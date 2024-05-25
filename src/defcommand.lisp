@@ -157,13 +157,9 @@ Other argument descriptors are available (old-style char in parenthesis):
                                           #-sbcl nil)
 
            (defun ,name ,params
-             ,(format nil "~a~%Underlying function for the `~a` command.
-If you call it directly instead of using `call-command`:
-  - *this-command* will not be bound
-  - the execute-hook will not be called"
-                      (when (and (stringp (car body)) (< 1 (length body)))
-                        (pop body))
-                      name)
+             ;; If you call it directly instead of using `call-command`:
+             ;;   - *this-command* will not be bound
+             ;;   - the execute-hook will not be called
              ,@body)
 
            (register-command-class ',name ',class-name)

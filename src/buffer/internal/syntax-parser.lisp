@@ -20,14 +20,15 @@
 
 (defvar *recursive-syntax-scan* nil)
 
-(defun syntax-scan-region (start end &key (syntax-table nil))
+(defun syntax-scan-region (start end &key (syntax-table nil) (recursive-check t))
   (flet ((enable-syntax-table-p (syntax-table)
            (when (and syntax-table
                       (syntax-table-parser syntax-table))
              syntax-table)))
     (assert (eq (point-buffer start)
                 (point-buffer end)))
-    (unless *recursive-syntax-scan*
+    (unless (and *recursive-syntax-scan*
+                 recursive-check)
       (let ((*recursive-syntax-scan* t))
         (run-hooks (make-per-buffer-hook :var 'before-syntax-scan-hook :buffer start)
                    start end)

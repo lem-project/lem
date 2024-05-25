@@ -20,7 +20,6 @@
     (put-text-property start end :attribute attribute)))
 
 (defun scan-code-block (point end)
-  (log:info point end)
   (let* ((groups (nth-value 1 (looking-at point "^```(.*)")))
          (language-name (and groups (elt groups 0)))
          (syntax-table (get-syntax-table-by-mode-name language-name)))
@@ -30,8 +29,7 @@
             :until (looking-at point "^```")
             :while (line-offset point 1))
       (if syntax-table
-          (let ((lem/buffer/internal::*recursive-syntax-scan* nil))
-            (syntax-scan-region start point :syntax-table syntax-table))
+          (syntax-scan-region start point :syntax-table syntax-table :recursive-check nil)
           (put-text-property start point :attribute 'syntax-string-attribute)))))
 
 (defun scan-region (start end)

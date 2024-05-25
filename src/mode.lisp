@@ -300,3 +300,8 @@
              instance))
           (t
            (cdr (buffer-active-modes-class-cache buffer))))))
+
+(defun get-syntax-table-by-mode-name (mode-name)
+  (alexandria:when-let* ((mode (find-mode mode-name))
+                         (syntax-table (mode-syntax-table mode)))
+    syntax-table))

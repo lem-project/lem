@@ -403,7 +403,12 @@
    :enable-minor-mode
    :disable-minor-mode
    :current-global-mode
-   :get-syntax-table-by-mode-name)
+   :get-syntax-table-by-mode-name
+   :set-region-major-mode
+   :clear-region-major-mode
+   :major-mode-at-point
+   :current-major-mode-at-point
+   :with-major-mode)
   ;; keymap.lisp
   (:export
    :*keymaps*

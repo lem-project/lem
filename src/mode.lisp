@@ -305,3 +305,29 @@
   (alexandria:when-let* ((mode (find-mode mode-name))
                          (syntax-table (mode-syntax-table mode)))
     syntax-table))
+
+;;;
+(defun clear-region-major-mode (start end)
+  (remove-text-property start end :mode))
+
+(defun set-region-major-mode (start end mode)
+  (put-text-property start end :mode mode))
+
+(defun major-mode-at-point (point)
+  (text-property-at point :mode))
+
+(defun current-major-mode-at-point (point)
+  (or (major-mode-at-point point)
+      (buffer-major-mode (point-buffer point))))
+
+(defun call-with-major-mode (buffer mode function)
+  (let ((previous-mode (buffer-major-mode buffer)))
+    (cond ((eq previous-mode mode)
+           (funcall function))
+          (t
+           (change-buffer-mode buffer mode)
+           (unwind-protect (funcall function)
+             (change-buffer-mode buffer previous-mode))))))
+
+(defmacro with-major-mode (mode &body body)
+  `(call-with-major-mode (current-buffer) ,mode (lambda () ,@body)))

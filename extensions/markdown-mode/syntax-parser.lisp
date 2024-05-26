@@ -1,7 +1,9 @@
 (defpackage :lem-markdown-mode/syntax-parser
   (:use :cl :lem)
   (:export :make-syntax-parser
-           :scan-buffer))
+           :scan-buffer
+           :search-backward-code-block-start
+           :search-forward-code-block-end))
 (in-package :lem-markdown-mode/syntax-parser)
 
 (defclass syntax-parser () ())
@@ -19,20 +21,33 @@
     (line-end end)
     (put-text-property start end :attribute attribute)))
 
+(defun start-code-block-line-p (point)
+  (ppcre:scan "^```" (line-string point)))
+
+(defun end-code-block-line-p (point)
+  (ppcre:scan "^```$" (line-string point)))
+
 (defun scan-code-block (point end)
   (let* ((groups (nth-value 1 (looking-at point "^```(.*)")))
          (language-name (and groups (elt groups 0)))
-         (syntax-table (get-syntax-table-by-mode-name language-name)))
+         (mode (find-mode language-name))
+         (syntax-table (when mode (mode-syntax-table mode))))
     (line-offset point 1)
     (with-point ((start point))
       (loop :while (point< point end)
-            :until (looking-at point "^```")
+            :until (end-code-block-line-p point)
             :while (line-offset point 1))
-      (if syntax-table
-          (syntax-scan-region start point :syntax-table syntax-table :recursive-check nil)
-          (put-text-property start point :attribute 'syntax-string-attribute)))))
+      (cond (syntax-table
+             (set-region-major-mode start point mode)
+             (syntax-scan-region start
+                                 point
+                                 :syntax-table syntax-table
+                                 :recursive-check nil))
+            (t
+             (put-text-property start point :attribute 'syntax-string-attribute))))))
 
 (defun scan-region (start end)
+  (clear-region-major-mode start end)
   (with-point ((point start))
     (loop :while (point< point end)
           :do (cond ((looking-at point "^#")
@@ -52,6 +67,20 @@
                        (skip-chars-forward end #'digit-char-p)
                        (character-offset end 1)
                        (put-text-property start end :attribute 'syntax-keyword-attribute)))
-                    ((looking-at point "^```")
+                    ((start-code-block-line-p point)
                      (scan-code-block point end)))
           :while (line-offset point 1))))
+
+(defun search-backward-code-block-start (point)
+  (with-point ((point point))
+    (loop
+      :do (when (start-code-block-line-p point)
+            (return point))
+      :while (line-offset point -1))))
+
+(defun search-forward-code-block-end (point)
+  (with-point ((point point))
+    (loop
+      :do (when (end-code-block-line-p point)
+            (return point))
+      :while (line-offset point 1))))

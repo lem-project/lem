@@ -31,6 +31,10 @@
           (column (point-column point)))
       (+ column (- tab-width (rem column tab-width))))))
 
+(defmethod execute :around ((mode markdown-mode) command argument)
+  (with-major-mode (current-major-mode-at-point (current-point))
+    (call-next-method)))
+
 (define-command markdown-insert-link () ()
   (let ((url (prompt-for-string "URL: "
                                 :history-symbol 'mh-markdown-url))

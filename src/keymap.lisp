@@ -169,6 +169,9 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
   (let* ((keymaps (compute-keymaps (current-global-mode)))
          (keymaps
            (append keymaps
+                   (alexandria:when-let* ((mode (major-mode-at-point (current-point)))
+                                          (keymap (mode-keymap mode)))
+                     (list keymap))
                    (loop :for mode :in (all-active-modes (current-buffer))
                          :when (mode-keymap mode)
                          :collect :it))))

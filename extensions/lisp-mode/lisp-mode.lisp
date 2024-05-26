@@ -246,7 +246,9 @@
 (defun buffer-package (buffer &optional default)
   (let ((package-name (buffer-value buffer "package" default)))
     (typecase package-name
-      (null default)
+      (null (alexandria:if-let (package-name (scan-current-package (buffer-point buffer)))
+              (string-upcase package-name)
+              default))
       ((or symbol string)
        (string-upcase package-name))
       ((cons (or symbol string))

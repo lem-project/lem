@@ -293,3 +293,13 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
               (lem))
           t)
       sb-ext:*ed-functions*)
+
+
+(add-hook *after-init-hook*
+          (lambda ()
+            (when *editor-warnings*
+              (let ((buffer (make-buffer "*EDITOR WARNINGS*")))
+                (dolist (warning *editor-warnings*)
+                  (insert-string (buffer-point buffer) warning)
+                  (insert-character (buffer-point buffer) #\newline))
+                (pop-to-buffer buffer)))))

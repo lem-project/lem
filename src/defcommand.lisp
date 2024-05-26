@@ -1,6 +1,12 @@
 (in-package :lem-core)
 
+(defvar *editor-warnings* '())
+
 (eval-when (:compile-toplevel :load-toplevel)
+  (defun editor-warning (fmt &rest args)
+    (push (apply #'format nil fmt args) *editor-warnings*)
+    (values))
+
   (defun parse-arg-descriptors (arg-descriptors universal-argument)
     "Parse arg descriptors given to define-command.
 
@@ -22,7 +28,7 @@ Descriptors (old char in parenthesis):
               (lambda (arg-descriptor)
                 (setf arg-descriptor (cond ((and (stringp arg-descriptor)
                                                  (< 0 (length arg-descriptor)))
-                                            (break "Deprecated expression (~A) is used for arg-descriptor" arg-descriptor)
+                                            (editor-warning "define-command: Deprecated expression (~A) is used for arg-descriptor" arg-descriptor)
                                             (list (ecase (char arg-descriptor 0)
                                                     (#\p :universal) (#\P :universal-nil)
                                                     (#\s :string) (#\n :number)
@@ -35,7 +41,7 @@ Descriptors (old char in parenthesis):
                                            (t arg-descriptor)))
                 (or (and (consp arg-descriptor)
                          (case (first arg-descriptor)
-                           (:splice 
+                           (:splice
                             (assert (alexandria:length= arg-descriptor 2))
                             (second arg-descriptor))
                            ((:universal :universal-1) `(list (or ,universal-argument 1)))

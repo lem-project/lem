@@ -402,7 +402,8 @@
    :change-global-mode-keymap
    :enable-minor-mode
    :disable-minor-mode
-   :current-global-mode)
+   :current-global-mode
+   :get-syntax-table-by-mode-name)
   ;; keymap.lisp
   (:export
    :*keymaps*

@@ -21,6 +21,9 @@
 (defun (setf current-connection) (connection)
   (setf *connection* connection))
 
+(set-syntax-parser lem-lisp-syntax:*syntax-table*
+                   (make-tmlanguage-lisp))
+
 (define-major-mode lisp-mode language-mode
     (:name "Lisp"
      :description "Contains necessary functions to handle lisp code."
@@ -66,8 +69,6 @@
                        (lem/detective:make-capture-regex
                         :regex "^\\(deftest "
                         :function #'lem-lisp-mode/detective:capture-reference)))
-  (set-syntax-parser lem-lisp-syntax:*syntax-table*
-                     (make-tmlanguage-lisp))
   (unless (connected-p) (self-connect))
 
   (setf (buffer-context-menu (current-buffer))

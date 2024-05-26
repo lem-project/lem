@@ -22,7 +22,6 @@ Descriptors (old char in parenthesis):
               (lambda (arg-descriptor)
                 (setf arg-descriptor (cond ((and (stringp arg-descriptor)
                                                  (< 0 (length arg-descriptor)))
-                                            (break "Deprecated expression (~A) is used for arg-descriptor" arg-descriptor)
                                             (list (ecase (char arg-descriptor 0)
                                                     (#\p :universal) (#\P :universal-nil)
                                                     (#\s :string) (#\n :number)
@@ -81,6 +80,11 @@ Descriptors (old char in parenthesis):
     (defun gen-defcommand-body (fn-name
                                 universal-argument
                                 arg-descriptors)
+      (mapc (lambda (desc)
+              (when (stringp desc)
+                (message "WARN: Deprecated expression ~S is used for arg-descriptor in ~A"
+                         desc fn-name)))
+            arg-descriptors)
       `(block ,fn-name
          (destructuring-bind (&rest ,arguments)
              ,(parse-arg-descriptors arg-descriptors universal-argument)

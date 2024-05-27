@@ -237,4 +237,4 @@ https://developer.mozilla.org/ja/docs/Web/JavaScript/Reference/Lexical_grammar
                          *prettier-options*
                          (list (buffer-filename buf)))))
 
-(define-file-type ("js" "jsx") js-mode)
+(define-file-type ("js" "jsx" "mjs") js-mode)

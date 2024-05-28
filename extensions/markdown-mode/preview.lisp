@@ -76,7 +76,12 @@
       (dolist (client (trivial-ws:clients server))
         (handler-case (trivial-ws:send client html)
           (error (e)
-            (log:error e)))))))
+            (log:error e)))))
+    (start-timer (make-idle-timer (lambda ()
+                                    (when (eq buffer (current-buffer))
+                                      (refresh buffer)))
+                                  :name "markdown-preview")
+                 100)))
 
 (defmethod lem-markdown-mode::on-save (buffer)
   (refresh buffer))

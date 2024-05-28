@@ -37,7 +37,7 @@
 (defun scan-code-block (point end)
   (let* ((groups (nth-value 1 (looking-at point "^```(.*)")))
          (language-name (and groups (elt groups 0)))
-         (mode (find-mode language-name))
+         (mode (lem-markdown-mode/languages:find-mode-by-language-name language-name))
          (syntax-table (when mode (mode-syntax-table mode))))
     (line-offset point 1)
     (with-point ((start point))

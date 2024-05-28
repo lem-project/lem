@@ -21,9 +21,14 @@
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 4
-        (variable-value 'calc-indent-function) 'markdown-calc-indent))
+        (variable-value 'calc-indent-function) 'markdown-calc-indent)
+  (add-hook (variable-value 'after-save-hook :buffer (current-buffer)) 'on-save)
+  (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer)) 'on-kill))
 
 (define-key *markdown-mode-keymap* "C-c C-l" 'markdown-insert-link)
+
+(defmethod on-save (buffer))
+(defmethod on-kill (buffer))
 
 (defun markdown-calc-indent (point)
   (with-point ((point point))

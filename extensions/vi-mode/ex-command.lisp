@@ -53,6 +53,14 @@
   (when (lem:buffer-modified-p (lem:current-buffer))
     (ex-write range filename t)))
 
+(define-ex-command "^bn$" (range argument)
+    (declare (ignore range argument))
+    (lem:next-buffer))
+
+(define-ex-command "^bp$" (range argument)
+    (declare (ignore range argument))
+    (lem:previous-buffer))
+
 (define-ex-command "^wq$" (range filename)
   (ex-write-quit range filename nil t))
 

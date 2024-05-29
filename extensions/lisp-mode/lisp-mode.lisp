@@ -1067,6 +1067,7 @@
             (lem-process:run-process (uiop:split-string command)
                                      :directory directory
                                      :output-callback #'output-callback)))
+      (lem-process:process-send-input process (format nil "(require :asdf)~%"))
       process)))
 
 (defun send-swank-create-server (process port)

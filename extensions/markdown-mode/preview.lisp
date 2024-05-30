@@ -1,6 +1,12 @@
 (defpackage :lem-markdown-mode/preview
   (:use #:cl
-        #:lem))
+        #:lem)
+  (:documentation "Live rendering of markdown documents to a browser.
+
+This package defines the command M-x markdown-preview that opens a browser window, connects to it via a websocket, and renders and updates the markdown in the browser at each file save.
+
+The WS connection is closed when the markdown file is closed."))
+
 (in-package :lem-markdown-mode/preview)
 
 (defclass server (trivial-ws:server)
@@ -87,4 +93,7 @@
     (trivial-ws:stop handler)))
 
 (define-command markdown-preview () ()
+  "Render the markdown of the current buffer to a browser window. The preview is refreshed when the file is saved.
+
+The connection is closed when the file is closed."
   (generate-html-and-preview (current-buffer)))

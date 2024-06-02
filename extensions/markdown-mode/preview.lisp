@@ -78,10 +78,10 @@
           (error (e)
             (log:error e)))))))
 
-(defmethod lem-markdown-mode::on-save (buffer)
+(defmethod lem-markdown-mode/internal:on-save (buffer)
   (refresh buffer))
 
-(defmethod lem-markdown-mode::on-kill (buffer)
+(defmethod lem-markdown-mode/internal:on-kill (buffer)
   (alexandria:when-let* ((server (buffer-server buffer))
                          (handler (server-handler server)))
     (trivial-ws:stop handler)))

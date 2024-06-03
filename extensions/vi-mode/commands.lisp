@@ -701,7 +701,8 @@ Move the cursor to the first non-blank character of the line."
            (new-line-pos (ceiling (* (/ n 100.0) buffer-size) 1)))
        (progn
          (goto-line new-line-pos)
-         (vi-move-to-beginning-of-line))))
+         (vi-move-to-beginning-of-line)
+         (skip-whitespace-forward (current-point) t))))
     ;; Move to matching paren
    (t
      (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))

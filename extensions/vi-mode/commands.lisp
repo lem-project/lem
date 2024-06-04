@@ -91,7 +91,7 @@
            :vi-record-macro
            :vi-execute-macro
            :vi-execute-last-recorded-macro
-           :vi-move-to-matching-paren
+           :vi-move-to-matching-item
            :vi-search-forward
            :vi-search-backward
            :vi-search-next
@@ -691,12 +691,23 @@ Move the cursor to the first non-blank character of the line."
   (when (syntax-closed-paren-char-p (character-at point))
     (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t)))
 
-(define-motion vi-move-to-matching-paren () ()
+(define-motion vi-move-to-matching-item (&optional n) (:universal-nil)
     (:type :inclusive
      :jump t)
-  (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))
+  (cond
+    ;; Move to line that represents n% of the buffer
+    (n 
+     (let* ((buffer-size (line-number-at-point (buffer-end-point (current-buffer))))
+           (new-line-pos (ceiling (* (/ n 100.0) buffer-size) 1)))
+       (progn
+         (goto-line new-line-pos)
+         (vi-move-to-beginning-of-line)
+         (skip-whitespace-forward (current-point) t))))
+    ;; Move to matching paren
+   (t
+     (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))
                                (vi-forward-matching-paren (current-window) (current-point)))))
-    (move-point (current-point) p)))
+    (move-point (current-point) p)))))
 
 (let ((old-forward-matching-paren)
       (old-backward-matching-paren))

@@ -219,7 +219,6 @@
                "lem-html-mode"
                "lem-python-mode"
                "lem-posix-shell-mode"
-               "lem-markdown-mode"
                "lem-js-mode"
                "lem-typescript-mode"
                "lem-json-mode"
@@ -250,6 +249,7 @@
                "lem-erlang-mode"
                "lem-documentation-mode"
                "lem-elisp-mode"
+               "lem-markdown-mode"
                "lem-color-preview"))
 
 (defsystem "lem/legit"

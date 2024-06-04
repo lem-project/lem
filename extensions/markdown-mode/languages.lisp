@@ -6,6 +6,7 @@
 (defparameter *language-mode-pairs*
   `(("common-lisp" . lem-lisp-mode:lisp-mode)
     ("lisp" . lem-lisp-mode:lisp-mode)
+    ("emacs-lisp" . lem-elisp-mode:elisp-mode)
     ("shell" . lem-posix-shell-mode:posix-shell-mode)))
 
 (defun find-mode-by-language-name (language-name)

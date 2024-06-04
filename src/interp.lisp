@@ -105,7 +105,9 @@
                  (unless (string= "" message)
                    (message "~A" message))))
               (otherwise
-               (message "~A" c))))
+               (let ((message (princ-to-string c)))
+                 (unless (equal "" message)
+                   (message "~A" message))))))
           (lem-restart:call-function (fn)
             (funcall fn)))))))
 

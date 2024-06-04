@@ -28,7 +28,7 @@
 
 (define-command keyboard-quit () ()
   "Signal a `quit` condition."
-  (error 'editor-abort))
+  (error 'editor-abort :message nil))
 
 (define-command escape () ()
   "Signal a `quit` condition silently."

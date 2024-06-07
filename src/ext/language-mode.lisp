@@ -15,6 +15,7 @@
    :language-mode-tag
    :buffer-language-mode
    :completion-spec
+   :complete-symbol
    :indent-size
    :root-uri-patterns
    :detective-search

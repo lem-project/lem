@@ -94,6 +94,7 @@
 (define-key *lisp-mode-keymap* "C-c g" 'lisp-interrupt)
 (define-key *lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
 (define-key *lisp-mode-keymap* "Return" 'newline-and-indent)
+(define-key *lisp-mode-keymap* "C-c C-j" 'lisp-eval-expression-in-repl)
 
 (defmethod convert-modeline-element ((element (eql 'lisp-mode)) window)
   (format nil "  ~A~A" (buffer-package (window-buffer window) "CL-USER")
@@ -736,6 +737,16 @@
                  (end point))
       (scan-lists end 1 0)
       (lisp-compile-region start end))))
+
+(define-command lisp-eval-expression-in-repl () ()
+  (check-connection)
+  (with-point ((point (current-point)))
+    (top-of-defun-with-annotation point)
+    (with-point ((start point)
+                 (end point))
+      (scan-lists end 1 0)
+      (send-string-to-listener (points-to-string start end)
+                               (buffer-package (current-buffer))))))
 
 (defun form-string-at-point ()
   (with-point ((point (current-point)))

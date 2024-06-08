@@ -178,7 +178,9 @@
 (defgeneric open-link (link))
 
 (defmethod open-link ((link file-link))
-  (find-file (pathname (file-link-file link))))
+  (find-file (pathname (file-link-file link)))
+  (move-to-line (current-point) (file-link-line-number link))
+  (line-offset (current-point) 0 (1- (file-link-charpos link))))
 
 (defmethod open-link ((link url-link))
   (open-external-file (url-link-url link)))

@@ -9,6 +9,7 @@
    :listener-start
    :change-input-start-point
    :refresh-prompt
+   :clear-listener-using-mode
    :clear-listener
    ;; editor variables
    :listener-prompt-attribute
@@ -190,10 +191,14 @@
     (when win
       (replace-textarea (current-buffer) str))))
 
-(defun clear-listener (buffer)
+(defmethod clear-listener-using-mode (mode buffer)
   (let ((*inhibit-read-only* t))
     (erase-buffer buffer))
   (refresh-prompt buffer))
+
+(defun clear-listener (buffer)
+  (clear-listener-using-mode (lem-core::get-active-modes-class-instance (current-buffer))
+                             buffer))
 
 (define-command listener-clear-buffer () ()
   (clear-listener (current-buffer)))

@@ -5,7 +5,8 @@
   (:lock t))
 (in-package :lem-shell-mode)
 
-(defvar *default-shell-command* nil "Set if you do want to use non default shell. '(\"/usr/local/bin/bash\")")
+(defvar *default-shell-command* nil
+  "Set if you do want to use non default shell. '(\"/usr/local/bin/bash\")")
 
 (defun shell-command ()
   (or *default-shell-command*
@@ -40,6 +41,17 @@
         'execute-input
         (variable-value 'lem/listener-mode:listener-prompt-attribute :buffer buffer)
         nil))
+
+(defmethod lem/listener-mode:clear-listener-using-mode ((mode run-shell-mode) buffer)
+  ;; FIXME: It is assumed that PS1 is a single line.
+  (with-point ((end (buffer-end-point buffer)))
+    (skip-whitespace-backward end)
+    (line-start end)
+    (unless (= 1 (line-number-at-point end))
+      (let ((*inhibit-read-only* t))
+        (delete-between-points (buffer-start-point buffer)
+                               end))))
+  (lem/listener-mode:refresh-prompt buffer nil))
 
 (defun execute-input (point string)
   (setf string (concatenate 'string string (string #\newline)))
@@ -89,7 +101,6 @@
       ;; TODO: lisp-modeに依存するのはおかしいので汎用的なパッケージを用意する
       (lem-lisp-mode/internal::insert-escape-sequence-string point string)
       (lem/link::scan-link start point :set-attribute-function 'set-link-attribute))
-    ;; (insert-string point string)
     (lem/listener-mode:refresh-prompt buffer nil)))
 
 (defmethod execute ((mode run-shell-mode) (command lem/listener-mode:listener-return) argument)

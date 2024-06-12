@@ -44,7 +44,7 @@
                        #'test-without-separator)
                    elements)))
 
-(defun completion-hypheen (name elements &key key)
+(defun completion-hyphen (name elements &key key)
   (completion name elements :test #'completion-test :separator "-" :key key))
 
 (defun completion-file (str directory &key (ignore-case *file-completion-ignore-case*) directory-only)

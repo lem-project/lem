@@ -613,7 +613,7 @@
     (when result
       (destructuring-bind (completions timeout-p) result
         (declare (ignore timeout-p))
-        (completion-hypheen str (mapcar (if fuzzy #'first #'identity) completions))))))
+        (completion-hyphen str (mapcar (if fuzzy #'first #'identity) completions))))))
 
 (defun prompt-for-symbol-name (prompt &optional (initial ""))
   (let ((package (current-package)))

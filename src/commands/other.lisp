@@ -61,7 +61,7 @@
                 :completion-function (lambda (str)
                                        (sort
                                         (if (find #\- str)
-                                            (completion-hypheen str (all-command-names))
+                                            (completion-hyphen str (all-command-names))
                                             (completion str (all-command-names)))
                                         #'string-lessp))
                 :test-function 'exist-command-p

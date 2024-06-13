@@ -698,21 +698,21 @@ Move the cursor to the first non-blank character of the line."
 
 (define-motion vi-move-to-matching-item (&optional n) (:universal-nil)
     (:type :inclusive
-     :jump t)
+     :jump t
+     :default-n-arg nil)
   (cond
-    ;; Move to line that represents n% of the buffer
+    ;; Argument n supplied (e.g. 10%) - move to line that represents n% of the buffer
     (n 
      (let* ((buffer-size (line-number-at-point (buffer-end-point (current-buffer))))
-           (new-line-pos (ceiling (* (/ n 100.0) buffer-size) 1)))
-       (progn
-         (goto-line new-line-pos)
-         (vi-move-to-beginning-of-line)
-         (skip-whitespace-forward (current-point) t))))
-    ;; Move to matching paren
-   (t
+            (new-line-pos (ceiling (* buffer-size n) 100)))
+       (goto-line new-line-pos)
+       (vi-move-to-beginning-of-line)
+       (skip-whitespace-forward (current-point) t)))
+    ;; No argument - move to matching paren
+    (t
      (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))
-                               (vi-forward-matching-paren (current-window) (current-point)))))
-    (move-point (current-point) p)))))
+                                  (vi-forward-matching-paren  (current-window) (current-point)))))
+       (move-point (current-point) p)))))
 
 (let ((old-forward-matching-paren)
       (old-backward-matching-paren))

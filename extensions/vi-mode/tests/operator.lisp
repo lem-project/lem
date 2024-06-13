@@ -112,7 +112,14 @@
         (ok (buf= #?"abcd\n[]"))))
     (testing "dc"
       (with-vi-buffer ("[a]bc")
-        (ok (signals (cmd "dc") 'editor-abort))))))
+        (ok (signals (cmd "dc") 'editor-abort))))
+    (testing "d%"
+      (with-vi-buffer ("abc[(]123)def\n")
+        (cmd "d%")
+        (ok (buf= #?"abc[d]ef\n")))
+      (with-vi-buffer ("abc(123[)]def\n")
+        (cmd "d%")
+        (ok (buf= #?"abc[d]ef\n"))))))
 
 (deftest vi-change
   (with-fake-interface ()
@@ -179,7 +186,11 @@
         (ok (buf= #?"a[b]cd\nefgh\n")))
       (with-vi-buffer (#?"abcd\nef[g]h\n")
         (cmd "<C-v>khy")
-        (ok (buf= #?"a[b]cd\nefgh\n"))))))
+        (ok (buf= #?"a[b]cd\nefgh\n")))
+      (with-vi-buffer (#?"abc[(]123)def\n")
+        (cmd "y%")
+        (ok (buf= #?"abc[(]123)def\n"))
+        (ok (string= (last-kill) "(123)"))))))
 
 (deftest vi-yank-line
   (with-fake-interface ()

@@ -114,10 +114,10 @@
       (with-vi-buffer ("[a]bc")
         (ok (signals (cmd "dc") 'editor-abort))))
     (testing "d%"
-      (with-vi-buffer ("abc[(]123)def\n")
+      (with-vi-buffer (#?"abc[(]123)def\n")
         (cmd "d%")
         (ok (buf= #?"abc[d]ef\n")))
-      (with-vi-buffer ("abc(123[)]def\n")
+      (with-vi-buffer (#?"abc(123[)]def\n")
         (cmd "d%")
         (ok (buf= #?"abc[d]ef\n"))))))
 

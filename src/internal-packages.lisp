@@ -504,7 +504,7 @@
    :*file-completion-ignore-case*
    :completion
    :completion-test
-   :completion-hypheen
+   :completion-hyphen
    :completion-file
    :completion-strings
    :completion-buffer)

@@ -38,8 +38,6 @@
      :keymap *directory-mode-keymap*)
   (setf (variable-value 'highlight-line :buffer (current-buffer)) nil))
 
-(define-key *global-keymap* "C-x C-j" 'find-file-directory)
-
 (define-key *directory-mode-keymap* "q" 'quit-active-window)
 (define-key *directory-mode-keymap* "M-q" 'quit-active-window)
 (define-key *directory-mode-keymap* "g" 'directory-mode-update-buffer)
@@ -69,6 +67,8 @@
 (define-key *directory-mode-keymap* "s" 'directory-mode-sort-files)
 (define-key *directory-mode-keymap* "+" 'make-directory)
 (define-key *directory-mode-keymap* "C-k" 'directory-mode-kill-lines)
+
+(define-key *global-keymap* "C-x C-j" 'directory-mode-jump)
 
 (defun run-command (command)
   (when (consp command)
@@ -678,3 +678,10 @@ This does not delete the marked entries, but only remove them from the buffer."
 (defmethod execute :after ((mode directory-mode) command argument)
   (when (mode-active-p (current-buffer) 'directory-mode)
     (update-line (current-point))))
+
+(define-command directory-mode-jump () ()
+  "Jump to containing or parent directory."
+  (if (mode-active-p (current-buffer) 'directory-mode)
+      (directory-mode-up-directory)
+      (find-file (buffer-directory))))
+

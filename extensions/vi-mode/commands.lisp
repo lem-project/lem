@@ -359,9 +359,11 @@ Move the cursor to the first non-blank character of the line."
 (define-operator vi-delete (start end type) ("<R>")
     (:move-point nil)
   (when (point= start end)
-    ;; When deleting an empty line, move 'end' to delete trailing newlines, but
-    ;; return when the buffer is empty.
-    (if (character-at end -1)
+    ;; 'dd' on the empty line at the end of a buffer deletes trailing newlines,
+    ;; but only if the buffer is not empty (i.e. cursor is not at the start of buffer)
+    (if (and (eq 'vi-delete (command-name (this-command)))
+             (not (this-motion-command))
+             (not (start-buffer-p end)))
         (character-offset end -1)
         (return-from vi-delete)))
   (let ((pos (point-charpos (current-point)))

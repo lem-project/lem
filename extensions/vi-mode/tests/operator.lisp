@@ -25,6 +25,8 @@
       (cmd "2dd")
       (ok (buf= #?"ghi\n[]")))
     (with-vi-buffer (#?"abc\n[]")
+      (cmd "dw")
+      (ok (buf= #?"abc\n[]"))
       (cmd "dd")
       (ok (buf= #?"[a]bc")))
     (with-vi-buffer (#?"[a]bc\ndef\nghi\njkl\n")

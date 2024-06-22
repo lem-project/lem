@@ -15,27 +15,40 @@
         (enable)
         (disable))))
 
+(defvar *default-rainbow-colors* #("red" "blue" "green" "sienna4" "dark cyan" "orange"))
+
+(defun rainbow-color (index)
+  (let ((color-theme (find-color-theme (current-theme))))
+    (if color-theme
+        (get-color-theme-color color-theme
+                               (ecase index
+                                 (0 :base08)
+                                 (1 :base09)
+                                 (2 :base0a)
+                                 (3 :base0b)
+                                 (4 :base0c)
+                                 (5 :base0d)))
+        (aref *default-rainbow-colors* index))))
+
 (define-attribute color-1
-   (t :foreground "red"))
+  (t :foreground (rainbow-color 0)))
 
 (define-attribute color-2
-  (:dark :foreground "royalblue")
-  (:light :foreground "blue"))
+  (t :foreground (rainbow-color 1)))
 
 (define-attribute color-3
-  (:dark :foreground "green")
-  (:light :foreground "dark green"))
+  (t :foreground (rainbow-color 2)))
 
 (define-attribute color-4
-  (t :foreground "sienna4"))
+  (t :foreground (rainbow-color 3)))
 
 (define-attribute color-5
-  (t :foreground "dark cyan"))
+  (t :foreground (rainbow-color 4)))
 
 (define-attribute color-6
-  (t :foreground "orange"))
+  (t :foreground (rainbow-color 5)))
 
-(defvar *rainbow-colors* #(color-1 color-2 color-3 color-4 color-5 color-6))
+(defparameter *rainbow-colors* #(color-1 color-2 color-3 color-4 color-5 color-6))
 
 (defvar *paren-attribute* (make-attribute :foreground "dim gray"))
 

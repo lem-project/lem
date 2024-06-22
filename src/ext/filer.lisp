@@ -2,9 +2,6 @@
   (:use :cl :lem))
 (in-package :lem/filer)
 
-(defparameter *right-pointing-triangle* (uiop:strcat (string (code-char #x25B8)) " "))
-(defparameter *down-pointing-triangle* (uiop:strcat (string (code-char #x25BE)) " "))
-
 (define-attribute triangle-attribute
   (t :bold t :foreground :base0D))
 
@@ -112,9 +109,11 @@
 
 (defmethod render-item (point (item directory-item) depth)
   (insert-string point
-                 (if (directory-item-open-p item)
-                     *down-pointing-triangle*
-                     *right-pointing-triangle*)
+                 (uiop:strcat 
+                  (if (directory-item-open-p item)
+                      (icon-string "down-pointing-triangle")
+                      (icon-string "right-pointing-triangle"))
+                  " ")
                  :attribute 'triangle-attribute)
   (insert-item point item)
   (dolist (item (directory-item-children item))
@@ -166,9 +165,17 @@
   (delete-leftside-window))
 
 (define-command filer () ()
+  "Open the filer tree view at the project root."
   (if (filer-active-p)
       (deactive-filer)
       (let ((directory (lem-core/commands/project:find-root (buffer-directory))))
+        (make-leftside-window (make-filer-buffer directory)))))
+
+(define-command filer-directory () ()
+  "Open the filer tree view at this directory."
+  (if (filer-active-p)
+      (deactive-filer)
+      (let ((directory (buffer-directory)))
         (make-leftside-window (make-filer-buffer directory)))))
 
 (define-command filer-select () ()

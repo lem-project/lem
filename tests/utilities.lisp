@@ -29,7 +29,7 @@
                           (write-string (cl-ansi-text:cyan (format nil "-~A~%" line2)) out)))))))))
 
 (defmacro with-testing-buffer ((buffer make-buffer-form) &body body)
-  `(lem-base::with-current-buffers ()
+  `(lem:with-current-buffers ()
      (let ((,buffer ,make-buffer-form))
        (setf (lem:current-buffer) ,buffer)
        ,@body)))

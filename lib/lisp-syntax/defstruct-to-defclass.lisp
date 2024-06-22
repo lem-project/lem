@@ -1,5 +1,5 @@
 (defpackage :lem-lisp-syntax.defstruct-to-defclass
-  (:use :cl :lem-base)
+  (:use :cl :lem)
   (:export :defstruct-to-defclass)
   #+sbcl
   (:lock t))

@@ -18,7 +18,9 @@
            :revert-buffer
            :revert-buffer-function
            :change-directory
-           :prompt-for-files-recursively))
+           :current-directory
+           :prompt-for-files-recursively
+           :format-current-buffer))
 (in-package :lem-core/commands/file)
 
 (define-key *global-keymap* "C-x C-f" 'find-file)
@@ -62,7 +64,7 @@
 
 (defvar *find-file-executor* (make-instance 'find-file-executor))
 
-(define-command find-file (arg) ("p")
+(define-command find-file (arg) (:universal)
   "Open the file."
   (let ((*default-external-format* *default-external-format*))
     (let ((filename
@@ -82,7 +84,8 @@
                     :directory (buffer-directory)
                     :default nil
                     :existing nil))
-                  ((pathnamep arg)
+                  ((or (pathnamep arg)
+                       (uiop:absolute-pathname-p arg))
                    (namestring arg)))))
       (let (buffer)
         (dolist (pathname (expand-files* filename))
@@ -204,7 +207,7 @@
        :completion-function (lambda (x) (completion-strings x candidates))
        :test-function (lambda (name) (member name candidates :test #'string=))))))
 
-(define-command find-file-recursively (arg) ("p")
+(define-command find-file-recursively (arg) (:universal)
   "Open a file, from the list of all files present under the buffer's directory, recursively."
   ;; ARG is currently not used, use it when needed.
   (declare (ignorable arg))
@@ -220,7 +223,7 @@
             (switch-to-buffer buffer t nil)))))))
 
 
-(define-command read-file (filename) ("FRead File: ")
+(define-command read-file (filename) ((:new-file "Read File: "))
   "Open the file as a read-only."
   (when (pathnamep filename)
     (setf filename (namestring filename)))
@@ -258,13 +261,13 @@
      (editor-error "No file name"))
     (t nil)))
 
-(define-command save-current-buffer (&optional force-p) ("P")
+(define-command save-current-buffer (&optional force-p) (:universal-nil)
   "Saves the current buffer text to a file"
   (let ((buffer (current-buffer)))
     (alexandria:when-let (filename (save-buffer buffer force-p))
       (message "Wrote ~A" filename))))
 
-(define-command write-file (filename) ("FWrite File: ")
+(define-command write-file (filename) ((:new-file "Write File: "))
   "Saves the text in the current buffer to the specified file"
   (let* ((old (buffer-name))
          (new (file-namestring filename))
@@ -273,7 +276,7 @@
                                                 (buffer-list))
                        :test #'equal)
                  (not (prompt-for-y-or-n-p (format nil
-                                                   "~a is opend, overwrite it?"
+                                                   "~a is opened, overwrite it?"
                                                    expand-file-name))))
       (directory-for-file-or-lose filename)
       (unless (string= old new)
@@ -286,20 +289,20 @@
       (save-current-buffer t))))
 
 (define-command write-region-file (start end filename)
-    ("r" "FWrite Region To File: ")
+    (:region (:new-file "Write Region To File: "))
   "Saves the region of text to the specified file"
   (setf filename (expand-file-name filename))
   (add-newline-at-eof (point-buffer start))
   (write-region-to-file start end filename)
   (message "Wrote ~A" filename))
 
-(define-command insert-file (filename) ("fInsert file: ")
+(define-command insert-file (filename) ((:file "Insert file: "))
   "Inserts the contents of the file into the current buffer."
   (insert-file-contents (current-point)
                         (expand-file-name filename))
   t)
 
-(define-command save-some-buffers (&optional save-silently-p) ("P")
+(define-command save-some-buffers (&optional save-silently-p) (:universal-nil)
   "Save some files in the open buffer."
   (let ((prev-buffer (current-buffer)))
     (dolist (buffer (buffer-list))
@@ -331,7 +334,7 @@
       (move-to-column point column)
       t)))
 
-(define-command revert-buffer (does-not-ask-p) ("P")
+(define-command revert-buffer (does-not-ask-p) (:universal-nil)
   "Restores the buffer. Normally this command will cause the contents of the file to be reflected in the buffer."
   (let ((ask (not does-not-ask-p))
         (buffer (current-buffer)))
@@ -372,3 +375,17 @@
     (uiop:chdir directory)
     (setf *default-pathname-defaults* (uiop:getcwd)))
   t)
+
+(define-command current-directory (&optional insert) (:universal-nil)
+  "Display the directory of the active buffer.
+With prefix argument INSERT, insert the directory of the active buffer at point."
+  (let ((dir (buffer-directory)))
+    (if insert
+        (insert-string (current-point) dir)
+        (message "Directory ~a" dir))))
+
+(define-command format-current-buffer () ()
+  "Save changes and try to format the current buffer.
+
+Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode and json-mode with prettier, and lisp-mode. Additionally rust-mode uses rustfmt."
+  (format-buffer))

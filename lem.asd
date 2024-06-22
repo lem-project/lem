@@ -15,8 +15,11 @@
     (set (intern (string :*local-project-directories*) :ql) local-project-dir)))
 
 (defsystem "lem"
-  :version "2.1.0"
-  :depends-on ("alexandria"
+  :version "2.2.0"
+  :depends-on ("iterate"
+               "closer-mop"
+               "trivia"
+               "alexandria"
                "trivial-gray-streams"
                "trivial-types"
                "cl-ppcre"
@@ -29,11 +32,10 @@
                "split-sequence"
                "str"
                "dexador"
-               "lem-base"
-               "lem-encodings"
-	       #+sbcl
-	       sb-concurrency
-	       "lem-mailbox")
+               ;; "lem-encodings"
+               #+sbcl
+               sb-concurrency
+               "lem-mailbox")
   :pathname "src"
   :serial t
   :components ((:module "common"
@@ -41,31 +43,81 @@
                              (:file "killring")
                              (:file "history")
                              (:file "timer")
-                             (:file "command")))
+                             (:file "command")
+                             (:file "color")
+                             (:file "queue")
+                             (:file "hooks")
+                             (:file "var")
+                             (:file "utils")
+                             (:module "character"
+                              :serial t
+                              :components ((:file "icon")
+                                           (:file "eastasian")
+                                           (:file "string-width-utils")
+                                           (:file "package")))))
+               (:module "buffer"
+                :serial t
+                :components ((:file "errors")
+                             (:file "file-utils")
+                             (:file "line")
+                             (:file "buffer-list-manager")
+                             (:file "syntax-table")
+                             (:file "interrupt")
+                             (:file "package")
+                             (:module "internal"
+                              :serial t
+                              :components ((:file "var")
+                                           (:file "editor-variables")
+                                           (:file "buffer")
+                                           (:file "point")
+                                           (:file "edit")
+                                           (:file "mark")
+                                           (:file "buffer-insert")
+                                           (:file "basic")
+                                           (:file "syntax-predicates")
+                                           (:file "search")
+                                           (:file "parse-partial-sexp")
+                                           (:file "syntax-scan")
+                                           (:file "syntax-parser")
+                                           (:file "tmlanguage")
+                                           (:file "check-corruption")))
+                             (:file "encodings")
+                             (:file "file")
+                             (:file "indent")))
                (:file "internal-packages")
-               (:file "quicklisp-utils")
+               (:file "system-utils")
                (:file "version")
                (:file "config")
                (:file "errors")
                (:file "system")
                (:file "key")
                (:file "macros")
-               (:file "color")
                (:file "attribute")
                (:file "clipboard")
+               (:file "save-excursion")
                (:file "killring")
                (:file "file")
                (:file "frame")
                (:file "echo")
                (:file "prompt")
-               (:file "window-tree")
-               (:file "window")
+               (:file "format")
+               (:module "window"
+                :serial t
+                :components ((:file "window-tree")
+                             (:file "window")
+                             (:file "virtual-line")
+                             (:file "floating-window")
+                             (:file "header-window")
+                             (:file "side-window")))
+               (:file "buffer-ext") ; TODO
                (:file "popup")
                (:file "modeline")
                (:file "command")
-               (:file "defcommand")
                (:file "mode")
                (:file "keymap")
+               (:file "defcommand")
+               (:file "fundamental-mode")
+               (:file "region")
                (:file "event-queue")
                (:file "interp")
                (:file "mouse")
@@ -73,7 +125,6 @@
                (:file "input")
                (:file "overlay")
                (:file "streams")
-               (:file "fundamental-mode")
                (:file "completion")
                (:file "typeout")
                (:file "cursors")
@@ -154,6 +205,7 @@
 
 (defsystem "lem/extensions"
   :depends-on (#+sbcl
+               "lem-welcome"
                "lem-lsp-mode"
                "lem-vi-mode"
                #+sbcl
@@ -167,8 +219,8 @@
                "lem-html-mode"
                "lem-python-mode"
                "lem-posix-shell-mode"
-               "lem-markdown-mode"
                "lem-js-mode"
+               "lem-typescript-mode"
                "lem-json-mode"
                "lem-css-mode"
                "lem-rust-mode"
@@ -194,13 +246,16 @@
                "lem-base16-themes"
                #+sbcl
                "lem-elixir-mode"
+               "lem-erlang-mode"
                "lem-documentation-mode"
                "lem-elisp-mode"
+               "lem-markdown-mode"
+               "lem-color-preview"
                "lem-lua-mode"))
 
 (defsystem "lem/legit"
   :serial t
-  :depends-on ("lem")
+  :depends-on ("lem" "lem-patch-mode" "lem-yaml-mode" "lem-markdown-mode")
   :components ((:module "extensions/legit"
                 :components ((:file "porcelain")
                              (:file "peek-legit")

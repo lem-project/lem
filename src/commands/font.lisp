@@ -14,3 +14,7 @@
 (define-command font-size-decrease () ()
   "Make the font smaller (this currently only works with SDL2 frontend)"
   (lem-if:decrease-font-size (implementation)))
+
+(define-command font-size-set (size) ((:number "Size: "))
+  "Set the font size to an integer (this currently only works with SDL2 frontend)"
+  (lem-if:set-font-size (implementation) size))

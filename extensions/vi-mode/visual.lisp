@@ -10,7 +10,7 @@
                 :normal)
   (:import-from :lem-vi-mode/modeline
                 :state-modeline-orange)
-  (:import-from :lem-base
+  (:import-from :lem
                 :alive-point-p)
   (:import-from :alexandria
                 :last-elt)
@@ -71,7 +71,7 @@
 
 (defmethod post-command-hook ((state visual))
   (clear-visual-overlays)
-  (if (not (eq (current-buffer) (point-buffer *start-point*)))
+  (if (not (eq (current-buffer) (point-buffer *start-point*))) 
       (vi-visual-end)
       (state-setup state)))
 
@@ -101,12 +101,12 @@
         ;; left-top or left-bottom
         ((< end-column start-column)
          (character-offset start 1)
-         (incf start-column))
+         (setf start-column (point-column start)))
         ;; right-top or right-bottom
         (t
          (unless (= end-column (length (line-string end)))
            (character-offset end 1))
-         (incf end-column)))
+         (setf end-column (point-column end))))
       (apply-region-lines start end
                           (lambda (p)
                             (with-point ((s p) (e p))
@@ -155,21 +155,18 @@
   (typep (current-main-state) 'visual-block))
 
 (defun visual-range ()
-  (cond
-    ((visual-char-p)
-     (with-point ((start *start-point*)
-                  (end (current-point)))
+  (with-point ((start *start-point*)
+               (end (current-point)))
+    (cond
+      ((visual-char-p)
        (cond ((point<= start end)
               (character-offset end 1))
              ((point< end start)
               (character-offset start 1)))
-       (list start end)))
-    ((visual-block-p)
-     (list (copy-point *start-point*)
-           (copy-point (current-point))))
-    (t
-     (with-point ((start *start-point*)
-                  (end (current-point)))
+       (list start end))
+      ((visual-block-p)
+       (list start end))
+      (t
        (when (point< end start)
          (rotatef start end))
        (line-start start)
@@ -248,3 +245,27 @@
         (move-to-column *start-point* end-col)
         (move-to-column (current-point) start-col))
       (vi-visual-swap-points)))
+
+(defmethod check-marked-using-global-mode ((global-mode vi-mode) buffer)
+  nil)
+
+(defmethod set-region-point-using-global-mode ((global-mode vi-mode) (start point) (end point))
+  (declare (ignore global-mode))
+  (when (visual-p)
+    (let ((v-range (visual-range)))
+      (move-point start (car v-range))
+      (move-point end (cadr v-range)))))
+
+(defmethod region-beginning-using-global-mode ((global-mode vi-mode)
+                                         &optional (buffer (current-buffer)))
+  (declare (ignore buffer))
+  (if (visual-p)
+      (car (visual-range))
+      (editor-error "Not in visual mode")))
+
+(defmethod region-end-using-global-mode ((global-mode vi-mode)
+                                   &optional (buffer (current-buffer)))
+  (declare (ignore buffer))
+  (if (visual-p)
+      (cadr (visual-range))
+      (editor-error "Not in visual mode")))

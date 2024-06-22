@@ -7,7 +7,8 @@
         :lem-lsp-base/converter
         :lem-lsp-base/yason-utils
         :lem-lsp-base/utils
-        :lem-lsp-mode/spec)
+        :lem-lsp-mode/spec
+        :lem/common/utils)
   (:shadow :execute-command)
   (:import-from :lem-language-client/request)
   (:import-from :lem/context-menu)
@@ -359,6 +360,7 @@
                 (funcall continuation workspace))))
 
 (defun connect (client continuation)
+  (lem-lsp-base/yason-utils:update-jsonrpc-yason-parameters)
   (bt:make-thread
    (lambda ()
      (loop :with condition := nil
@@ -740,7 +742,7 @@
     (setf (buffer-diagnostic-idle-timer buffer)
           (start-timer (make-idle-timer 'popup-diagnostic :name "lsp-diagnostic")
                        200
-                       t))))
+                       :repeat t))))
 
 (defun popup-diagnostic ()
   (dolist (overlay (buffer-diagnostic-overlays (current-buffer)))
@@ -1236,7 +1238,7 @@
 ;;; document highlights
 
 (define-attribute document-highlight-text-attribute
-  (t :background :base0A))
+  (t :background :base02))
 
 (defun provide-document-highlight-p (workspace)
   (handler-case (lsp:server-capabilities-document-highlight-provider
@@ -1323,7 +1325,7 @@
           (start-timer (make-idle-timer #'document-highlight-calls-timer
                                         :name "lsp-document-highlight")
                        200
-                       t))))
+                       :repeat t))))
 
 (defmethod execute :after ((mode lsp-mode) command argument)
   (clear-document-highlight-overlays-if-required))
@@ -1712,7 +1714,7 @@
            :range (points-to-lsp-range start end)
            :options (make-formatting-options buffer))))))))
 
-(define-command lsp-document-range-format (start end) ("r")
+(define-command lsp-document-range-format (start end) (:region)
   (check-connection)
   (text-document/range-formatting start end))
 
@@ -1765,7 +1767,7 @@
                             (make-text-document-position-arguments point))))))
         (apply-workspace-edit response)))))
 
-(define-command lsp-rename (new-name) ("sNew name: ")
+(define-command lsp-rename (new-name) ((:string "New name: "))
   (check-connection)
   (text-document/rename (current-point) new-name))
 

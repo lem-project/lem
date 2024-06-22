@@ -43,6 +43,7 @@ Notes:
 ;; Some are defined on legit.lisp for this keymap too.
 (define-key *peek-legit-keymap* "s" 'peek-legit-stage-file)
 (define-key *peek-legit-keymap* "u" 'peek-legit-unstage-file)
+(define-key *peek-legit-keymap* "k" 'peek-legit-discard-file)
 
 ;; quit
 (define-key *peek-legit-keymap* "Return" 'peek-legit-select)
@@ -127,6 +128,12 @@ Notes:
     (put-text-property start end :unstage-marker t))
   (put-text-property start end :unstage-function function))
 
+(defun set-discard-file-function (start end function)
+  (with-point ((end start))
+    (character-offset end 1)
+    (put-text-property start end :discard-file-marker t))
+  (put-text-property start end :discard-file-function function))
+
 (defun get-move-function (point)
   (with-point ((point point))
     (line-start point)
@@ -146,6 +153,11 @@ Notes:
   (with-point ((point point))
     (line-start point)
     (text-property-at point :unstage-function)))
+
+(defun get-discard-file-function (point)
+  (with-point ((point point))
+    (line-start point)
+    (text-property-at point :discard-file-function)))
 
 (defun start-move-point (point)
   (buffer-start point)
@@ -248,7 +260,8 @@ Notes:
                                    move-function
                                    visit-file-function
                                    stage-function
-                                   unstage-function)
+                                   unstage-function
+                                   discard-file-function)
   (let ((point (buffer-point (collector-buffer *collector*))))
     (with-point ((start point))
       (funcall insert-function point)
@@ -257,18 +270,21 @@ Notes:
       (set-move-function start point move-function)
       (set-visit-file-function start point visit-file-function)
       (set-stage-function start point stage-function)
-      (set-unstage-function start point unstage-function))
+      (set-unstage-function start point unstage-function)
+      (set-discard-file-function start point discard-file-function))
     (incf (collector-count *collector*))))
 
 (defmacro with-appending-source ((point &key move-function
                                              visit-file-function
                                              stage-function
-                                             unstage-function) &body body)
+                                             unstage-function
+                                             discard-file-function) &body body)
   `(call-with-appending-source (lambda (,point) ,@body)
                                ,move-function
                                ,visit-file-function
                                ,stage-function
-                               ,unstage-function))
+                               ,unstage-function
+                               ,discard-file-function))
 
 (defun collector-insert (s &key (newline t) header)
   (let ((point (buffer-point (collector-buffer *collector*))))
@@ -354,6 +370,14 @@ Notes:
   (alexandria:when-let* ((unstage (get-unstage-function (buffer-point (window-buffer *peek-window*))))
                          (point (funcall unstage)))
     ;; Update the buffer, to see that a staged file goes to the staged section.
+    ;; This calls git again and refreshes everything.
+    (uiop:symbol-call :lem/legit :legit-status)
+                        point))
+(define-command peek-legit-discard-file () ()
+  "Discard the changes in this file. The file should not be stage."
+  (alexandria:when-let* ((fn (get-discard-file-function (buffer-point (window-buffer *peek-window*))))
+                         (point (funcall fn)))
+    ;; Update the buffer.
     ;; This calls git again and refreshes everything.
     (uiop:symbol-call :lem/legit :legit-status)
     point))

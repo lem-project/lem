@@ -73,7 +73,7 @@
            (setf *show-paren-timer*
                  (start-timer (make-idle-timer 'update-show-paren :name "show paren timer")
                               1
-                              t))
+                              :repeat t))
            t)
           (t
            (when *show-paren-timer*

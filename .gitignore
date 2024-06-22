@@ -28,10 +28,11 @@ GIT_IGNORE.*
 
 lem
 lem-ncurses
-
+lem-rpc
 
 *.abcl
 build/*
 
 *.lx64fsl
 .qlot
+/systems/

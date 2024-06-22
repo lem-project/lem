@@ -20,13 +20,17 @@
   ((offset-x :initarg :offset-x :accessor gravity-offset-x :initform 0)
    (offset-y :initarg :offset-y :accessor gravity-offset-y :initform 0)))
 (defclass gravity-center (gravity) ())
+(defclass gravity-top-display (gravity) ())
+(defclass gravity-bottom-display (gravity) ())
 (defclass gravity-top (gravity) ())
 (defclass gravity-topright (gravity) ())
 (defclass gravity-cursor (gravity) ())
 (defclass gravity-follow-cursor (gravity-cursor) ())
 (defclass gravity-mouse-cursor (gravity) ())
 (defclass gravity-vertically-adjacent-window (gravity) ())
+(defclass gravity-vertically-adjacent-window-dynamic (gravity) ())
 (defclass gravity-horizontally-adjacent-window (gravity) ())
+(defclass gravity-horizontally-above-window (gravity) ())
 
 (defclass popup-window (floating-window)
   ((gravity
@@ -53,13 +57,17 @@
       gravity
       (ecase gravity
         (:center (make-instance 'gravity-center))
+        (:top-display (make-instance 'gravity-top-display))
+        (:bottom-display (make-instance 'gravity-bottom-display))
         (:top (make-instance 'gravity-top))
         (:topright (make-instance 'gravity-topright))
         (:cursor (make-instance 'gravity-cursor))
         (:follow-cursor (make-instance 'gravity-follow-cursor))
         (:mouse-cursor (make-instance 'gravity-mouse-cursor))
         (:vertically-adjacent-window (make-instance 'gravity-vertically-adjacent-window))
-        (:horizontally-adjacent-window (make-instance 'gravity-horizontally-adjacent-window)))))
+        (:vertically-adjacent-window-dynamic (make-instance 'gravity-vertically-adjacent-window-dynamic))
+        (:horizontally-adjacent-window (make-instance 'gravity-horizontally-adjacent-window))
+        (:horizontally-above-window (make-instance 'gravity-horizontally-above-window)))))
 
 (defmethod adjust-for-redrawing ((gravity gravity-follow-cursor) popup-window)
   (destructuring-bind (x y width height)
@@ -70,16 +78,16 @@
                                       :border-size (floating-window-border popup-window))
     (lem-core::window-set-size popup-window width height)
     (lem-core::window-set-pos popup-window
-                                  (+ x (floating-window-border popup-window))
-                                  (+ y (floating-window-border popup-window)))))
+                              (+ x (floating-window-border popup-window))
+                              (+ y (floating-window-border popup-window)))))
 
 (defmethod compute-popup-window-rectangle :around ((gravity gravity) &key &allow-other-keys)
   (destructuring-bind (x y width height)
       (call-next-method)
     (list (+ x (gravity-offset-x gravity))
           (+ y (gravity-offset-y gravity))
-          width
-          height)))
+          (max width 1)
+          (max height 1))))
 
 (defmethod compute-popup-window-rectangle ((gravity gravity-center)
                                            &key width height &allow-other-keys)
@@ -136,6 +144,22 @@
       (lem-if:get-mouse-position (lem:implementation))
     (list x y width height)))
 
+(defmethod compute-popup-window-rectangle ((gravity gravity-top-display)
+                                           &key width height
+                                           &allow-other-keys)
+  (let* ((x (- (floor (display-width) 2)
+               (floor width 2)))
+         (y 1))
+    (list x y (1- width) height)))
+
+(defmethod compute-popup-window-rectangle ((gravity gravity-bottom-display)
+                                           &key width height
+                                           &allow-other-keys)
+  (let* ((x (- (floor (display-width) 2)
+               (floor width 2)))
+         (y (- (display-height) height)))
+    (list x y (1- width) height)))
+
 (defmethod compute-popup-window-rectangle ((gravity gravity-top) &key source-window width height
                                                                  &allow-other-keys)
   (let* ((x (- (floor (display-width) 2)
@@ -181,12 +205,40 @@
         (y (window-y source-window)))
     (list x y width height)))
 
+(defmethod compute-popup-window-rectangle ((gravity gravity-vertically-adjacent-window-dynamic)
+                                           &key source-window width height #+(or)border-size
+                                           &allow-other-keys)
+  (let ((x (+ (window-x source-window) (window-width source-window)))
+        (y (window-y source-window)))
+    (when (>= (+ x width) (display-width))
+      (setf (gravity-offset-x gravity) (- (gravity-offset-x gravity))
+            x (max 0 (- (window-x source-window) width 1))))
+    (when (>= (+ y height) (display-height))
+      (setf (gravity-offset-y gravity) 0
+            y (max 0 (- (display-height) height 2))))
+    (list x y width height)))
+
 (defmethod compute-popup-window-rectangle ((gravity gravity-horizontally-adjacent-window)
                                            &key source-window width height border-size
                                            &allow-other-keys)
   (let ((x (- (window-x source-window) border-size))
         (y (+ (window-y source-window)
               (window-height source-window)
+              border-size)))
+    ;; workaround: cases that extend beyond the screen
+    (when (< (display-height) (+ y height))
+      (setf height (- (display-height) y 1)))
+    (list x
+          y
+          (max width (window-width source-window))
+          height)))
+
+(defmethod compute-popup-window-rectangle ((gravity gravity-horizontally-above-window)
+                                           &key source-window width height border-size
+                                           &allow-other-keys)
+  (let ((x (- (window-x source-window) border-size))
+        (y (- (window-y source-window)
+              height
               border-size)))
     ;; workaround: cases that extend beyond the screen
     (when (< (display-height) (+ y height))
@@ -303,6 +355,6 @@
                                         :border-size border-size)
       (lem-core::window-set-size destination-window w h)
       (lem-core::window-set-pos destination-window
-                                    (+ x border-size)
-                                    (+ y border-size))
+                                (+ x border-size)
+                                (+ y border-size))
       destination-window)))

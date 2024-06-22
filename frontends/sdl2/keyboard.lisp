@@ -93,7 +93,7 @@
 (defparameter *modifier-code-table*
   `((:shift ,sdl2-ffi:+kmod-lshift+ ,sdl2-ffi:+kmod-rshift+)
     (:ctrl ,sdl2-ffi:+kmod-lctrl+ ,sdl2-ffi:+kmod-rctrl+)
-    (:meta ,sdl2-ffi:+kmod-lalt+)
+    (:meta ,sdl2-ffi:+kmod-lalt+ ,sdl2-ffi:+kmod-ralt+)
     (:super ,sdl2-ffi:+kmod-lgui+ ,sdl2-ffi:+kmod-rgui+)))
 
 (defun mod-p (mod mod-type)
@@ -131,6 +131,26 @@
   (not (modifier-ctrl modifier)))
 
 (defmethod handle-text-input ((platform lem-sdl2/platform:linux) text)
+  (handle-text-input-unix text))
+
+(defmethod handle-key-down ((platform lem-sdl2/platform:linux) key-event)
+  (handle-key-down-unix key-event))
+
+(defmethod handle-key-up ((platform lem-sdl2/platform:linux) key-event)
+  (handle-key-up-unix key-event))
+
+;; freebsd
+(defmethod handle-text-input ((platform lem-sdl2/platform:freebsd) text)
+  (handle-text-input-unix text))
+
+(defmethod handle-key-down ((platform lem-sdl2/platform:freebsd) key-event)
+  (handle-key-down-unix key-event))
+
+(defmethod handle-key-up ((platform lem-sdl2/platform:freebsd) key-event)
+  (handle-key-up-unix key-event))
+
+;; shared freebsd, linux
+(defun handle-text-input-unix (text)
   (when (modifier-is-accept-text-input-p *modifier*)
     (loop :for c :across text
           :do (multiple-value-bind (sym text-input-p) (convert-to-sym (char-code c))
@@ -142,7 +162,7 @@
                   (when text-input-p
                     (send-key-event key)))))))
 
-(defmethod handle-key-down ((platform lem-sdl2/platform:linux) key-event)
+(defun handle-key-down-unix (key-event)
   (let ((modifier (key-event-modifier key-event))
         (code (key-event-code key-event)))
     (update-modifier *modifier* modifier)
@@ -158,7 +178,7 @@
                                                 :sym sym)))
           (send-key-event key))))))
 
-(defmethod handle-key-up ((platform lem-sdl2/platform:linux) key-event)
+(defun handle-key-up-unix (key-event)
   (update-modifier *modifier* (key-event-modifier key-event)))
 
 ;;

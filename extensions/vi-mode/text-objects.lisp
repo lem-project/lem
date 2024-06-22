@@ -13,7 +13,8 @@
                 :visual-range
                 :vi-visual-char)
   (:import-from :lem-vi-mode/word
-                :word-char-type)
+                :word-char-type
+                :broad-word-char-type)
   (:export :text-object
            :function-text-object
            :surrounded-text-object
@@ -22,6 +23,7 @@
            :inner-range-of
 
            :word-object
+           :broad-word-object
            :paren-object
            :double-quoted-object))
 (in-package :lem-vi-mode/text-objects)
@@ -347,6 +349,21 @@
     (vi-visual-char)))
 
 (defmethod inner-range-of :before ((object word-object) (state visual) count)
+  (unless (visual-char-p)
+    (vi-visual-char)))
+
+;;
+;; broad-word-object
+
+(defclass broad-word-object (function-text-object) ()
+  (:default-initargs
+   :function #'broad-word-char-type))
+
+(defmethod a-range-of :before ((object broad-word-object) (state visual) count)
+  (unless (visual-char-p)
+    (vi-visual-char)))
+
+(defmethod inner-range-of :before ((object broad-word-object) (state visual) count)
   (unless (visual-char-p)
     (vi-visual-char)))
 

@@ -166,8 +166,8 @@
 (define-command lisp-eval-at-point () ()
   (check-connection)
   (cond ((buffer-mark-p (current-buffer))
-         (with-point ((start (region-beginning))
-                      (end (region-end)))
+         (with-point ((start (region-beginning (current-buffer)))
+                      (end (region-end (current-buffer))))
            (eval-region start end)))
         (t
          (eval-last-expression (current-point)))))
@@ -233,7 +233,7 @@
       (eval-print string)
       (move-point (current-point) end))))
 
-(define-command lisp-eval-region (start end) ("r")
+(define-command lisp-eval-region (start end) (:region)
   "Execute the region as Lisp code."
   (check-connection)
   (eval-with-transcript

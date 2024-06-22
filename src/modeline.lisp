@@ -62,7 +62,7 @@
 (defun modeline-write-info (window)
   (let ((buffer (window-buffer window)))
     (cond ((buffer-read-only-p buffer)
-           " 🔒 ")
+           (format nil " ~a " (icon-string "lock")))
           ((buffer-modified-p buffer)
            " * ")
           (t
@@ -86,7 +86,8 @@
   (values (with-output-to-string (out)
             (dolist (mode (append (buffer-minor-modes (window-buffer window))
                                   (active-global-minor-modes)))
-              (when (mode-name mode)
+              (when (and (mode-name mode)
+                         (not (mode-hide-from-modeline mode)))
                 (princ (mode-name mode) out)
                 (princ " " out))))
           (if (eq (current-window) window)

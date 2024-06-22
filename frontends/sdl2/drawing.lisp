@@ -197,7 +197,9 @@
                     (+ x
                        (* (line-end-object-offset drawing-object)
                           (display:display-char-width display)))
-                    bottom-y))
+                    bottom-y
+                    display
+                    view))
 
 (defmethod draw-object ((drawing-object image-object) x bottom-y display view)
   (let* ((surface-width (object-width drawing-object display))
@@ -234,7 +236,7 @@
 
 (defmethod lem-if:render-line ((implementation lem-sdl2/sdl2:sdl2) view x y objects height)
   (display:with-display (display)
-    (fill-to-end-of-line display view 0 y height)
+    (fill-to-end-of-line display view x y height)
     (redraw-physical-line display view x y objects height)))
 
 (defmethod lem-if:render-line-on-modeline ((implementation lem-sdl2/sdl2:sdl2)

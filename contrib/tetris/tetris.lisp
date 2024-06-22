@@ -25,6 +25,8 @@
                  (make-attribute :foreground color-name :reverse t))
        '("black" "cyan" "yellow" "green" "red" "blue" "white" "magenta")))
 
+(defvar *tetris-buffer*)
+
 (defvar *tetrimino-table*
   #(#(0 0 0 0
       0 0 0 0
@@ -150,7 +152,7 @@
         (incf i)))))
 
 (defun draw ()
-  (erase-buffer)
+  (erase-buffer *tetris-buffer*)
   (draw-next)
   (draw-field)
   (draw-score))
@@ -216,8 +218,8 @@
         (when (< 0 (- (floor *delete-nlines* 4)
                       (floor prev-nlines 4)))
           (incf *level*)
-          (when (< 100 (timer-ms *timer*))
-            (decf (timer-ms *timer*) 100)))))))
+          (when (< 100 (lem/common/timer:timer-ms *timer*))
+            (decf (lem/common/timer:timer-ms *timer*) 100)))))))
 
 (defun gameover-p ()
   (loop :for x :from 1 :below (1- +field-width+) :do
@@ -295,16 +297,18 @@
            (tetris-move-down)))))
 
 (define-command tetris () ()
-  (let ((buffer (make-buffer "*tetris*")))
-    (switch-to-buffer buffer)
-    (tetris-mode)
-    (init-field)
-    (init-player)
-    (draw)
-    (setq *playing-p* t)
-    (setq *timer* (start-timer (make-timer (lambda () (update buffer))
-                                           :handle-function (lambda (condition)
-                                                              (pop-up-backtrace condition)
-                                                              (stop-timer *timer*)))
-                               1000
-                               t))))
+  (setf *tetris-buffer* (make-buffer "*tetris*"))
+  (switch-to-buffer *tetris-buffer*)
+  (tetris-mode)
+  (add-hook (variable-value 'kill-buffer-hook :buffer *tetris-buffer*)
+            #'(lambda (buffer) (declare (ignore buffer)) (tetris-quit)))
+  (init-field)
+  (init-player)
+  (draw)
+  (setq *playing-p* t)
+  (setq *timer* (start-timer (make-timer (lambda () (update *tetris-buffer*))
+                                         :handle-function (lambda (condition)
+                                                            (pop-up-backtrace condition)
+                                                            (stop-timer *timer*)))
+                             1000
+                             :repeat t)))

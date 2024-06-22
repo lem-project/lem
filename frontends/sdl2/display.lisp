@@ -36,7 +36,8 @@
            :display-height
            :adapt-high-dpi-font-size
            :change-font
-           :with-renderer))
+           :with-renderer
+           :with-display-render-target))
 (in-package :lem-sdl2/display)
 
 (defvar *display*)
@@ -112,6 +113,15 @@
 
 (defmacro with-renderer ((display) &body body)
   `(call-with-renderer ,display (lambda () ,@body)))
+
+(defun call-with-display-render-target (display texture function)
+  (let ((previous (sdl2::sdl-get-render-target (display-renderer display))))
+    (sdl2:set-render-target (display-renderer display) texture)
+    (unwind-protect (funcall function)
+      (sdl2:set-render-target (display-renderer display) previous))))
+
+(defmacro with-display-render-target ((display texture) &body body)
+  `(call-with-display-render-target ,display ,texture (lambda () ,@body)))
 
 (defmethod clear ((display display))
   (sdl2:set-render-target (display-renderer display) (display-texture display))

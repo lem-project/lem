@@ -1,16 +1,16 @@
 (uiop:define-package :lem-encodings/8bit
-  (:use :cl :lem-base :lem-encodings/table))
+  (:use :cl :lem :lem-encodings/table))
 (in-package :lem-encodings/8bit)
 
 (defmacro def-8bit-encoding (name)
   `(let* ((path (asdf:system-relative-pathname :lem-encodings ,(format nil "~(~A~).table" name)))
           (data (lem-encodings/table:read-table path))
           (from (loop with result = (make-array 256)
-                       for line in data                       
+                       for line in data
                        do (setf (svref result (first line)) (second line))
                        finally (return result)))
           (to (loop with result = (make-hash-table)
-                    for line in data                       
+                    for line in data
                     do (setf (gethash (second line) result) (or (third line) (first line)))
                     finally (return result))))
      (setf data nil)

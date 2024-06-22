@@ -8,7 +8,8 @@
                "lem-lisp-syntax"
                "lem"
                "lem-process"
-               "lem-socket-utils")
+               "lem-socket-utils"
+               "lem-lsp-mode")
   :serial t
   :components ((:file "test-api")
                (:file "exporter")
@@ -34,7 +35,8 @@
                (:file "apropos-mode")
                (:file "autodoc")
                (:file "paren-coloring")
-               (:file "misc-commands")
+               (:file "defstruct-to-defclass")
+               (:file "quickdocs")
                (:file "package-inferred-system")
                (:file "organize-imports")
                (:file "connection-list")
@@ -43,6 +45,8 @@
                (:file "class-browser")
                (:file "macroexpand")
                (:file "test-runner")
+               (:file "utopian")
+               (:file "highlight")
                (:file "package")))
 
 (defsystem "lem-lisp-mode/v2"

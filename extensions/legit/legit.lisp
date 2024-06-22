@@ -1,7 +1,9 @@
 (defpackage :lem/legit
   (:use :cl
    :lem)
-  (:export :legit-status)
+  (:export :legit-status
+           :*prompt-for-commit-abort-p*
+           :*ignore-all-space*)
   (:documentation "Display version control data of the current project in an interactive two-panes window.
 
   This package in particular defines the right window of the legit interface and the user-level commands.
@@ -11,7 +13,7 @@
 (in-package :lem/legit)
 
 #|
-An interactive interface to Git.
+An interactive interface to Git, with preliminary support for other version-control systems (Fossil, Mercurial).
 
 Done:
 
@@ -20,32 +22,18 @@ Done:
 - view changes diff
 - stage, unstage files
 - inside the diff, stage, unstage hunks
-- commit (only a one-line message for now)
+- discard an unstaged file
+- commit, redact a commit text in its dedicated buffer
 - push, pull the remote branch
 - branch checkout, branch create&checkout
 - view commit at point
+- rebase interactively (see legit-rebase)
 - basic Fossil support (current branch, add change, commit)
-- redact a proper commit text in its own buffer, not only a one liner.
-
-TODO:
-
-- show renamed files
+- basic Mercurial support
 
 Ongoing:
 
-- interactive rebase (POC working for Unix)
-
-Nice to have/todo next:
-
-- view log
-- other VCS support
-
-Next:
-
-- stage only selected region (more precise than hunks)
-- stashes
-- many, many more commands, settings and switches
-- mouse context menus
+- interactive rebase (POC working for Unix). See more in legit-rebase.lisp
 
 ### See also
 
@@ -57,6 +45,10 @@ Next:
 
 (defvar *legit-verbose* nil
   "If non nil, print some logs on standard output (terminal) and create the hunk patch file on disk at (lem home)/lem-hunk-latest.patch.")
+
+(defvar *ignore-all-space* nil "If non t, show all spaces in a diff. Spaces are ignored by default.
+
+Currently Git-only. Concretely, this calls Git with the -w option.")
 
 ;; Supercharge patch-mode with our keys.
 (define-major-mode legit-diff-mode lem-patch-mode:patch-mode
@@ -90,6 +82,9 @@ Next:
 ;; rebase
 ;;; interactive
 (define-key lem/peek-legit:*peek-legit-keymap* "r i" 'legit-rebase-interactive)
+(define-key lem/peek-legit:*peek-legit-keymap* "r a" 'rebase-abort)
+(define-key lem/peek-legit:*peek-legit-keymap* "r c" 'rebase-continue)
+(define-key lem/peek-legit:*peek-legit-keymap* "r s" 'rebase-skip)
 
 ;; redraw everything:
 (define-key lem/peek-legit:*peek-legit-keymap* "g" 'legit-status)
@@ -121,22 +116,34 @@ Next:
 (defun last-character (s)
   (subseq s (- (length s) 2) (- (length s) 1)))
 
+(defun call-with-porcelain-error (function)
+  (handler-bind ((lem/porcelain:porcelain-error
+                   (lambda (c)
+                     (lem:editor-error (slot-value c 'lem/porcelain::message)))))
+      (funcall function)))
+
+(defmacro with-porcelain-error (&body body)
+  "Handle porcelain errors and turn them into a lem:editor-error."
+  ;; This helps avoiding tight coupling.
+  `(call-with-porcelain-error (lambda () ,@body)))
+
 (defun call-with-current-project (function)
-  (let ((root (lem-core/commands/project:find-root (buffer-directory))))
-        (uiop:with-current-directory (root)
-          (multiple-value-bind (root vcs)
-              (lem/porcelain:vcs-project-p)
-            (if root
-                (let ((lem/porcelain:*vcs* vcs))
-                  (progn
-                    (funcall function)))
-                (message "Not inside a version-controlled project?"))))))
+  (with-porcelain-error ()
+    (let ((root (lem-core/commands/project:find-root (buffer-directory))))
+      (uiop:with-current-directory (root)
+        (multiple-value-bind (root vcs)
+            (lem/porcelain:vcs-project-p)
+          (if root
+              (let ((lem/porcelain:*vcs* vcs))
+                (progn
+                  (funcall function)))
+              (message "Not inside a version-controlled project?")))))))
 
 (defmacro with-current-project (&body body)
   "Execute body with the current working directory changed to the project's root,
   find and set the VCS system for this operation.
 
-  If no Git directory (or .fossil file) are found, message the user."
+  If no Git directory (or other supported VCS system) are found, message the user."
   `(call-with-current-project (lambda () ,@body)))
 
 
@@ -175,7 +182,7 @@ Next:
 (defun make-show-commit-function (ref)
   (lambda ()
     (with-current-project ()
-      (show-diff (lem/porcelain:show-commit-diff ref)))))
+      (show-diff (lem/porcelain:show-commit-diff ref :ignore-all-space *ignore-all-space*)))))
 
 ;; stage
 (defun make-stage-function (file)
@@ -186,13 +193,25 @@ Next:
 
 ;; unstage
 (defun make-unstage-function (file &key already-unstaged)
-  (with-current-project ()
-    (if already-unstaged
-        (lambda ()
-          (message "Already unstaged"))
-        (lambda ()
-          (lem/porcelain:unstage file)
-          t))))
+  (lambda ()
+    (with-current-project ()
+      (if already-unstaged
+          (message "Already unstaged")
+          (lem/porcelain:unstage file)))))
+
+;; discard an unstaged change.
+(defun make-discard-file-function (file &key is-staged)
+  "Discard changes to an unstaged file.
+
+  If is-staged is not nil, then message the user that this file must be unstaged."
+  (lambda ()
+    (cond
+      (is-staged
+       (message "Unstage the file first"))
+      (t
+       (with-current-project ()
+         (when (prompt-for-y-or-n-p  (format nil "Discard unstaged changes in ~a?" file))
+           (lem/porcelain:discard-file file)))))))
 
 
 ;;;
@@ -406,6 +425,15 @@ Next:
          :header t)
         (lem/peek-legit:collector-insert "")
 
+        ;; Is a git rebase in progress?
+        (let ((rebase-status (lem/porcelain::rebase-in-progress)))
+          (when (getf rebase-status :status)
+            (lem/peek-legit:collector-insert
+             (format nil "!rebase in progress: ~a onto ~a"
+                     (getf rebase-status :head-short-name)
+                     (getf rebase-status :onto-short-commit)))
+            (lem/peek-legit:collector-insert "")))
+
         ;; Untracked files.
         (lem/peek-legit:collector-insert "Untracked files:" :header t)
         (if untracked-files
@@ -427,7 +455,8 @@ Next:
                           (point :move-function (make-diff-function file)
                                  :visit-file-function (make-visit-file-function file)
                                  :stage-function (make-stage-function file)
-                                 :unstage-function (make-unstage-function file :already-unstaged t))
+                                 :unstage-function (make-unstage-function file :already-unstaged t)
+                                 :discard-file-function (make-discard-file-function file))
 
                         (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
                         ))
@@ -444,7 +473,8 @@ Next:
                           (point :move-function (make-diff-function file :cached t)
                                  :visit-file-function (make-visit-file-function file)
                                  :stage-function (make-stage-function file)
-                                 :unstage-function (make-unstage-function file))
+                                 :unstage-function (make-unstage-function file)
+                                 :discard-file-function (make-discard-file-function file :is-staged t))
 
                         (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
             (lem/peek-legit:collector-insert "<none>"))
@@ -577,13 +607,14 @@ Next:
     (format s "~%")
     (format s "Commands:~&")
     (format s "(s)tage and (u)nstage a file. Inside a diff, (s)tage or (u)nstage a hunk.~&")
+    (format s "(k) discard changes.~&")
     (format s "(c)ommit~&")
     (format s "(b)ranches-> checkout another (b)ranch.~&")
     (format s "          -> (c)reate.~&")
     (format s "(F)etch, pull-> (p) from remote branch~&")
     (format s "(P)push      -> (p) to remote branch~&")
-    (format s "(r)ebase     -> (i)nteractively from commit at point~&")
-    (format s "(g): refresh~&")
+    (format s "(r)ebase     -> (i)nteractively from commit at point, (a)bort~&")
+    (format s "(g) -> refresh~&")
     (format s "~%")
     (format s "Navigate: n and p, C-n and C-p, M-n and M-p.~&")
     (format s "Change windows: Tab, C-x o, M-o~&")

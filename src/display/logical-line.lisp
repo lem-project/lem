@@ -42,12 +42,12 @@
 (defun overlay-attributes (under-attributes over-start over-end over-attribute)
   ;; under-attributes := ((start-charpos end-charpos attribute) ...)
   (let* ((over-attribute (ensure-attribute over-attribute))
-         (under-part-attributes (lem-base::subseq-elements under-attributes
+         (under-part-attributes (lem/buffer/line:subseq-elements under-attributes
+                                                               over-start
+                                                               over-end))
+         (merged-attributes (lem/buffer/line:remove-elements under-attributes
                                                            over-start
-                                                           over-end))
-         (merged-attributes (lem-base::remove-elements under-attributes
-                                                       over-start
-                                                       over-end)))
+                                                           over-end)))
     (flet ((add-element (start end attribute)
              (when (< start end)
                (push (list start end (ensure-attribute attribute))
@@ -70,7 +70,7 @@
                 :finally (add-element (+ over-start under-end-offset)
                                       over-end
                                       over-attribute))))
-    (lem-base::normalization-elements merged-attributes)))
+    (lem/buffer/line:normalization-elements merged-attributes)))
 
 (defun create-logical-line (point overlays active-modes)
   (flet ((overlay-start-charpos (overlay point)
@@ -85,15 +85,16 @@
            (line-end-overlay nil)
            (left-content
              (compute-left-display-area-content active-modes
-                                                (lem-base:point-buffer point)
+                                                (point-buffer point)
                                                 point))
            (tab-width (variable-value 'tab-width :default point)))
       (destructuring-bind (string . attributes)
-          (lem-base::line-string/attributes (lem-base::point-line point))
+          (get-string-and-attributes-at-point point)
         (loop :for overlay :in overlays
               :when (overlay-within-point-p overlay point)
               :do (cond ((typep overlay 'line-endings-overlay)
-                         (setf line-end-overlay overlay))
+                         (when (same-line-p (overlay-end overlay) point)
+                           (setf line-end-overlay overlay)))
                         ((typep overlay 'line-overlay)
                          (let ((attribute (overlay-attribute overlay)))
                            (setf attributes
@@ -133,7 +134,7 @@
         (let ((charpos (point-charpos point)))
           (when (< 0 charpos)
             (psetf string (subseq string charpos)
-                   attributes (lem-base::subseq-elements attributes charpos (length string)))))
+                   attributes (lem/buffer/line:subseq-elements attributes charpos (length string)))))
         (make-logical-line :string string
                            :attributes attributes
                            :left-content left-content

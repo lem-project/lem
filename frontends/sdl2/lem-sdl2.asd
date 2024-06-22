@@ -3,7 +3,8 @@
                "sdl2-ttf"
                "sdl2-image"
                "lem"
-               "lem/extensions")
+               "lem/extensions"
+               "trivial-main-thread")
   :serial t
   :components ((:file "wm")
                (:file "resource")
@@ -23,7 +24,8 @@
                (:file "drawing")
                (:file "graphics")
                (:file "image-buffer")
-               (:file "tree")))
+               (:file "tree")
+               (:file "color-picker")))
 
 (defsystem "lem-sdl2/executable"
   :build-operation program-op

@@ -127,46 +127,51 @@
         :maximize (+ (text-node-y object)
                      (text-node-height object))))
 
+(defun load-font ()
+  (sdl2-ttf:open-font
+   (lem-sdl2/resource:get-resource-pathname
+    "resources/fonts/NotoSansMono-Regular.ttf")
+   (lem-sdl2/font:font-config-size
+    (lem-sdl2/display:display-font-config
+     (lem-sdl2/display:current-display)))))
+
 (defun draw (buffer node)
   (let ((drawables '())
-        (font (sdl2-ttf:open-font
-               (lem-sdl2/resource:get-resource-pathname
-                "resources/fonts/NotoSansMono-Regular.ttf")
-               (lem-sdl2/font:font-config-size (lem-sdl2/display::display-font-config lem-sdl2/display::*display*)))))
+        (font (load-font)))
     (labels ((recursive (node current-x)
-               (let ((y (round (* (tree-view-buffer-margin-y buffer) (node-y node)))))
-                 (let* ((surface (sdl2-ttf:render-utf8-blended font
-                                                               (princ-to-string (node-name node))
-                                                               255
-                                                               255
-                                                               255
-                                                               0))
-                        (node-width (sdl2:surface-width surface))
-                        (node-height (sdl2:surface-height surface)))
-                   (push (make-instance 'text-node
-                                        :surface surface
-                                        :x current-x
-                                        :y y
-                                        :width node-width
-                                        :height node-height
-                                        :node node)
-                         drawables)
-                   (dolist (child (node-children node))
-                     (multiple-value-bind (child-x child-y child-width child-height)
-                         (recursive child (+ (tree-view-buffer-margin-x buffer)
-                                             (+ current-x node-width)))
-                       (declare (ignore child-width))
-                       (push (make-instance 'line-edge
-                                            :color (lem:make-color 255 255 255)
-                                            :x0 (+ current-x (sdl2:surface-width surface))
-                                            :y0 (+ y (round (sdl2:surface-height surface) 2))
-                                            :x1 child-x
-                                            :y1 (+ child-y (round child-height 2)))
-                             drawables)))
-                   (values current-x
-                           y
-                           (sdl2:surface-width surface)
-                           (sdl2:surface-height surface))))))
+               (let* ((y (round (* (tree-view-buffer-margin-y buffer) (node-y node))))
+                      (surface (sdl2-ttf:render-utf8-blended font
+                                                             (princ-to-string (node-name node))
+                                                             255
+                                                             255
+                                                             255
+                                                             0))
+                      (node-width (sdl2:surface-width surface))
+                      (node-height (sdl2:surface-height surface)))
+                 (push (make-instance 'text-node
+                                      :surface surface
+                                      :x current-x
+                                      :y y
+                                      :width node-width
+                                      :height node-height
+                                      :node node)
+                       drawables)
+                 (dolist (child (node-children node))
+                   (multiple-value-bind (child-x child-y child-width child-height)
+                       (recursive child (+ (tree-view-buffer-margin-x buffer)
+                                           (+ current-x node-width)))
+                     (declare (ignore child-width))
+                     (push (make-instance 'line-edge
+                                          :color (lem:make-color 255 255 255)
+                                          :x0 (+ current-x (sdl2:surface-width surface))
+                                          :y0 (+ y (round (sdl2:surface-height surface) 2))
+                                          :x1 child-x
+                                          :y1 (+ child-y (round child-height 2)))
+                           drawables)))
+                 (values current-x
+                         y
+                         (sdl2:surface-width surface)
+                         (sdl2:surface-height surface)))))
       (recursive node 0)
       (setf (tree-view-buffer-drawables buffer) drawables)
       (setf (tree-view-buffer-width buffer) (compute-width drawables))
@@ -204,7 +209,8 @@
         (start-y (tree-view-buffer-scroll-y buffer))
         (end (tree-view-display-end buffer)))
     (unless (or (< y1 start-y) (< end y0))
-      (lem-sdl2/display::set-render-color lem-sdl2/display::*display* (line-edge-color line-edge))
+      (lem-sdl2/display:set-render-color (lem-sdl2/display:current-display)
+                                         (line-edge-color line-edge))
       (sdl2:render-draw-line (lem-sdl2:current-renderer)
                              (- (line-edge-x0 line-edge)
                                 start-x)
@@ -250,12 +256,12 @@
 (define-key *tree-view-keymap* 'move-to-end-of-buffer 'tree-view-scroll-bottom)
 (define-key *tree-view-keymap* 'move-to-beginning-of-buffer 'tree-view-scroll-top)
 
-(define-command tree-view-scroll-right (n) ("p")
+(define-command tree-view-scroll-right (n) (:universal)
   (tree-view-scroll-horizontally (current-buffer)
                                  (current-window)
                                  (* n +scroll-unit+)))
 
-(define-command tree-view-scroll-left (n) ("p")
+(define-command tree-view-scroll-left (n) (:universal)
   (tree-view-scroll-horizontally (current-buffer)
                                  (current-window)
                                  (* (- n) +scroll-unit+)))
@@ -263,25 +269,24 @@
 (define-command tree-view-scroll-horizontally-start () ()
   (tree-view-scroll-horizontally-first (current-buffer)))
 
-(define-command tree-view-scroll-down (n) ("p")
+(define-command tree-view-scroll-down (n) (:universal)
   (tree-view-scroll-vertically (current-buffer)
                                (current-window)
                                (* n +scroll-unit+)))
 
-(define-command tree-view-scroll-up (n) ("p")
+(define-command tree-view-scroll-up (n) (:universal)
   (tree-view-scroll-vertically (current-buffer)
                                (current-window)
                                (* (- n) +scroll-unit+)))
 
+(defun scroll-page-unit ()
+  (floor (lem-sdl2/display:display-height (lem-sdl2/display:current-display)) 1.1))
+
 (define-command tree-view-scroll-pagedown () ()
-  (tree-view-scroll-vertically (current-buffer)
-                               (current-window)
-                               (floor (lem-sdl2/display::display-height lem-sdl2/display::*display*) 1.1)))
+  (tree-view-scroll-vertically (current-buffer) (current-window) (scroll-page-unit)))
 
 (define-command tree-view-scroll-pageup () ()
-  (tree-view-scroll-vertically (current-buffer)
-                               (current-window)
-                               (- (floor (lem-sdl2/display::display-height lem-sdl2/display::*display*) 1.1))))
+  (tree-view-scroll-vertically (current-buffer) (current-window) (- (scroll-page-unit))))
 
 (define-command tree-view-scroll-bottom () ()
   (tree-view-scroll-vertically (current-buffer)
@@ -295,8 +300,9 @@
 
 (defmethod lem-sdl2:render (texture window (buffer tree-view-buffer))
   (sdl2:set-render-target (lem-sdl2:current-renderer) texture)
-  (lem-sdl2/display::set-render-color lem-sdl2/display::*display*
-                                      (lem-sdl2/display::display-background-color lem-sdl2/display::*display*))
+  (lem-sdl2/display:set-render-color (lem-sdl2/display:current-display)
+                                     (lem-sdl2/display:display-background-color
+                                      (lem-sdl2/display:current-display)))
   (sdl2:render-fill-rect (lem-sdl2:current-renderer) nil)
   (render-all buffer))
 
@@ -305,7 +311,7 @@
                                (current-window)
                                (* argument +scroll-unit+)))
 
-(defmethod lem-core::handle-mouse-button-down ((buffer tree-view-buffer) mouse-event &key window)
+(defmethod lem:handle-mouse-button-down ((buffer tree-view-buffer) mouse-event &key window)
   (multiple-value-bind (x y)
       (lem-core::get-relative-mouse-coordinates-pixels mouse-event window)
     (let ((node (get-node-at-coordinates buffer x y)))
@@ -315,7 +321,7 @@
              (funcall (node-click-callback (text-node-node node))
                       (text-node-node node)))))))
 
-(defmethod lem-core::handle-mouse-hover ((buffer tree-view-buffer) mouse-event &key window)
+(defmethod lem:handle-mouse-hover ((buffer tree-view-buffer) mouse-event &key window)
   (multiple-value-bind (x y)
       (lem-core::get-relative-mouse-coordinates-pixels mouse-event window)
     (let ((node (get-node-at-coordinates buffer x y)))
@@ -344,11 +350,13 @@
                  :name (first tree)
                  :value (first tree)
                  :click-callback (lambda (node)
-                                   (log:info (node-value node))
-                                   (alexandria:when-let (window (find-tree-view-window buffer-name))
+                                   (alexandria:when-let
+                                       (window (find-tree-view-window buffer-name))
                                      (setf (current-window) window)
                                      (lem-lisp-mode:lisp-inspect
-                                      (format nil "(micros:find-class-from-string ~S)" (node-value node))
+                                      (format nil
+                                              "(micros:find-class-from-string ~S)"
+                                              (node-value node))
                                       :self-evaluation nil
                                       :focus t)))
                  :children (mapcar (lambda (node)
@@ -357,7 +365,10 @@
 
 (defmethod lem-lisp-mode/class-browser:display-class-inheritance-tree (buffer-name class-name)
   (let ((tree (lem-lisp-mode:lisp-eval-from-string
-               (format nil "(micros:compute-class-inheritance-tree ~S ~S)" class-name (lem-lisp-mode:current-package)))))
+               (format nil
+                       "(micros:compute-class-inheritance-tree ~S ~S)"
+                       class-name
+                       (lem-lisp-mode:current-package)))))
     (unless tree
       (editor-error "There is no class named ~:@(~A~)" class-name))
     (pop-to-buffer (draw-tree buffer-name (make-class-tree tree buffer-name)))))

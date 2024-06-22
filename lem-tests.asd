@@ -1,6 +1,5 @@
 (defsystem "lem-tests"
-  :depends-on ("lem-base"
-               "lem"
+  :depends-on ("lem"
                "lem-fake-interface"
                "lem-lisp-syntax"
                "lem-lisp-mode"

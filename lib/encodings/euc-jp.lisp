@@ -1,5 +1,5 @@
 (uiop:define-package :lem-encodings/euc-jp
-  (:use :cl :lem-base))
+  (:use :cl :lem/buffer))
 (in-package :lem-encodings/euc-jp)
 
 (defun e+ (c) (+ #xe000 c))
@@ -7,11 +7,11 @@
 (let* ((path (asdf:system-relative-pathname :lem-encodings "euc-jp.table"))
        (data (lem-encodings/table:read-table path)))
   (defvar *from* (loop with result = (make-hash-table)
-                       for line in data                       
+                       for line in data
                        do (setf (gethash (first line) result) (second line))
                        finally (return result)))
   (defvar *to* (loop with result = (make-hash-table)
-                     for line in data                       
+                     for line in data
                      do (setf (gethash (second line) result) (or (third line) (first line)))
                      finally (return result))))
 
@@ -61,7 +61,7 @@
                                             (t (ecommit 1st)
                                                (ecommit c)))
                                       (setf 1st 0)))
-                                   (t (ecommit 1st) 
+                                   (t (ecommit 1st)
                                       (setf 1st 0)
                                       #1#)))))
             (when (< end buffer-size)

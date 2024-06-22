@@ -31,7 +31,8 @@
     (:name "Go"
      :keymap *go-mode-keymap*
      :syntax-table *go-syntax-table*
-     :mode-hook *go-mode-hook*)
+     :mode-hook *go-mode-hook*
+     :formatter 'gofmt)
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'go-calc-indent)
   (setf (variable-value 'indent-tabs-mode) t)
@@ -137,12 +138,9 @@
                  (decf indent tab-width)))
              indent)))))
 
-(define-command go-electric-close (n) ("p")
+(define-command go-electric-close (n) (:universal)
   (self-insert n)
   (indent))
-
-(define-command gofmt () ()
-  (filter-buffer "gofmt"))
 
 (define-command godoc (command)
     ((prompt-for-string "godoc "))
@@ -325,3 +323,11 @@
 
 (defun go-idle-function ()
   (goflymake-message))
+
+(defun gofmt (buf)
+  "Format a Go buffer with gofmt."
+  (let ((file (buffer-filename buf)))
+    (uiop:run-program
+     (format nil "gofmt -w ~a" file)
+     :ignore-error-status t))
+  (revert-buffer t))

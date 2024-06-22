@@ -110,7 +110,66 @@
     (testing "left-bottom"
       (with-vi-buffer (#?"apple\nor[a]nge\ngrape\n")
         (cmd "<C-v>jh")
-        (ok (buf= #?"apple\no<ra>nge\ng<[r]a>pe\n"))))))
+        (ok (buf= #?"apple\no<ra>nge\ng<[r]a>pe\n"))))
+    (testing "delete"
+      (with-vi-buffer (#?"[a]pple\norange\ngrape\n")
+        (cmd "<C-v>jllld")
+        (ok (buf= #?"[e]\nge\ngrape\n"))))))
+
+(deftest visual-block-japanease
+  (with-fake-interface ()
+    (testing "移動"
+      (testing "右下"
+        (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+          (cmd "<C-v>jl")
+          (ok (buf= #?"あいうえお\nか<きく>けこ\nさ<し[す]>せそ\n"))))
+
+      (testing "右上"
+        (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+          (cmd "<C-v>kl")
+          (ok (buf= #?"あ<い[う]>えお\nか<きく>けこ\nさしすせそ\n"))))
+
+      (testing "左上"
+        (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+          (cmd "<C-v>kh")
+          (ok (buf= #?"<[あ]い>うえお\n<かき>くけこ\nさしすせそ\n"))))
+
+      (testing "左下"
+        (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+          (cmd "<C-v>jh")
+          (ok (buf= #?"あいうえお\n<かき>くけこ\n<[さ]し>すせそ\n")))))
+    
+    (testing "削除"
+      (testing "右下"
+        (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+          (cmd "<C-v>jlx")
+          (ok (buf= #?"あいうえお\nか[け]こ\nさせそ\n"))))
+      
+      (testing "右上"
+        (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+          (cmd "<C-v>lkx")
+          (ok (buf= #?"あ[え]お\nかけこ\nさしすせそ\n"))))
+      
+      (testing "左上"
+        (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+          (cmd "<C-v>hkx")
+          (ok (buf= #?"[う]えお\nくけこ\nさしすせそ\n"))))
+      
+      (testing "左下"
+        (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+          (cmd "<C-v>hjx")
+          (ok (buf= #?"あいうえお\n[く]けこ\nすせそ\n")))))
+    
+    (testing "挿入"
+      (testing "右"
+        (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+          (cmd "<C-v>jlxlp")
+          (ok (buf= #?"あいうえお\nかけこ[き]く\nさせそしす\n"))))
+
+      (testing "左"
+        (with-vi-buffer (#?"あいうえお\nか[き]くけこ\nさしすせそ\n")
+          (cmd "<C-v>jlxhP")
+          (ok (buf= #?"あいうえお\n[き]くかけこ\nしすさせそ\n")))))))
 
 (deftest visual-swap-points
   (with-fake-interface ()

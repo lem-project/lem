@@ -49,8 +49,7 @@
     (let ((mailbox (lem-mailbox::make-mailbox)))
       (start-timer
        (make-timer (lambda () (lem-mailbox::send-message mailbox t)))
-       2
-       nil)
+       2)
       (ok (lem-mailbox::receive-message mailbox :timeout 0.01))
       (let ((timeout (not (lem-mailbox::receive-message mailbox :timeout 0.01))))
 	(ok timeout)))
@@ -58,7 +57,7 @@
     (let* ((mailbox (lem-mailbox::make-mailbox))
 	   (timer (make-timer (lambda ()
 				(lem-mailbox::send-message mailbox t)))))
-      (start-timer timer 2 t)
+      (start-timer timer 2 :repeat t)
       (loop :repeat 2
             :do (multiple-value-bind (value received)
                     (lem-mailbox::receive-message mailbox :timeout 0.01)

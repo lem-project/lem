@@ -1,5 +1,5 @@
 (defpackage :lem-scheme-syntax.misc
-  (:use :cl :lem-base)
+  (:use :cl :lem)
   (:export
    :beginning-of-defun
    :top-of-defun))

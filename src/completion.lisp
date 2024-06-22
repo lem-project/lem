@@ -44,7 +44,7 @@
                        #'test-without-separator)
                    elements)))
 
-(defun completion-hypheen (name elements &key key)
+(defun completion-hyphen (name elements &key key)
   (completion name elements :test #'completion-test :separator "-" :key key))
 
 (defun completion-file (str directory &key (ignore-case *file-completion-ignore-case*) directory-only)
@@ -72,8 +72,8 @@
                                       (enough-namestring path input-directory))))))
       strings)))
 
-(defun completion-strings (str strings)
-  (completion str strings :test #'fuzzy-match-p))
+(defun completion-strings (str strings &key key)
+  (completion str strings :test #'fuzzy-match-p :key key))
 
 (defun completion-buffer (str &optional (buffer-list (buffer-list)))
   (let ((candidates1

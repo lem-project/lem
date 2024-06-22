@@ -62,7 +62,7 @@
   (mapc #'delete-drawable (drawables target))
   (values))
 
-(defmethod lem-sdl2::render (texture window buffer)
+(defmethod lem-sdl2:render (texture window buffer)
   (dolist (drawable (window-drawables window))
     (funcall (drawable-draw-function drawable)))
   (dolist (drawable (buffer-drawables buffer))

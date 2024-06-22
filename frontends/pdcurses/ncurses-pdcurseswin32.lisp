@@ -355,8 +355,8 @@
   (let* ((foreground (attribute-foreground attribute))
          (background (attribute-background attribute))
          (bits (logior (if (or cursorp (lem:attribute-reverse attribute))
-                           (lem.term:get-color-pair background foreground)
-                           (lem.term:get-color-pair foreground background))
+                           (lem-ncurses/term:get-color-pair background foreground)
+                           (lem-ncurses/term:get-color-pair foreground background))
                        0
                        (if (lem:attribute-bold attribute)
                            charms/ll:PDC_A_BOLD

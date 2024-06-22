@@ -49,12 +49,18 @@
 (define-key *directory-mode-keymap* "o" 'directory-mode-find-file-next-window)
 (define-key *directory-mode-keymap* "n" 'directory-mode-next-line)
 (define-key *directory-mode-keymap* "p" 'directory-mode-previous-line)
+(define-key *directory-mode-keymap* "M-}" 'directory-mode-next-mark)
+(define-key *directory-mode-keymap* "M-{" 'directory-mode-previous-mark)
 (define-key *directory-mode-keymap* "m" 'directory-mode-mark-and-next-line)
 (define-key *directory-mode-keymap* "u" 'directory-mode-unmark-and-next-line)
 (define-key *directory-mode-keymap* "U" 'directory-mode-unmark-and-previous-line)
 (define-key *directory-mode-keymap* "t" 'directory-mode-toggle-marks)
 (define-key *directory-mode-keymap* "* !" 'directory-mode-unmark-all)
 (define-key *directory-mode-keymap* "* %" 'directory-mode-mark-regexp)
+(define-key *directory-mode-keymap* "* /" 'directory-mode-mark-directories)
+(define-key *directory-mode-keymap* "* @" 'directory-mode-mark-links)
+(define-key *directory-mode-keymap* "* C-n" 'directory-mode-next-mark)
+(define-key *directory-mode-keymap* "* C-p" 'directory-mode-previous-mark)
 (define-key *directory-mode-keymap* "Q" 'directory-mode-query-replace)
 (define-key *directory-mode-keymap* "D" 'directory-mode-delete-files)
 (define-key *directory-mode-keymap* "C" 'directory-mode-copy-files)
@@ -62,6 +68,7 @@
 (define-key *directory-mode-keymap* "r" 'directory-mode-rename-file)
 (define-key *directory-mode-keymap* "s" 'directory-mode-sort-files)
 (define-key *directory-mode-keymap* "+" 'make-directory)
+(define-key *directory-mode-keymap* "C-k" 'directory-mode-kill-lines)
 
 (defun run-command (command)
   (when (consp command)
@@ -132,14 +139,18 @@
      (funcall function p)
      (unless (line-offset p 1) (return)))))
 
-(defun marked-files (p)
+
+(defun marked-lines (p)
   (with-point ((p p))
-    (let ((pathnames '()))
+    (let ((points '()))
       (iter-marks p
                   (lambda (p)
                     (when (get-mark p)
-                      (push (get-pathname p) pathnames))))
-      (nreverse pathnames))))
+                      (push (copy-point p :temporary) points))))
+      (nreverse points))))
+
+(defun marked-files (p)
+  (mapcar 'get-pathname (marked-lines p)))
 
 (defun filter-marks (p function)
   (iter-marks p
@@ -403,10 +414,10 @@
                                      (switch-to-window
                                            (pop-to-buffer buffer))))))
 
-(define-command directory-mode-next-line (p) ("p")
+(define-command directory-mode-next-line (p) (:universal)
   (line-offset (current-point) p))
 
-(define-command directory-mode-previous-line (p) ("p")
+(define-command directory-mode-previous-line (p) (:universal)
   (line-offset (current-point) (- p)))
 
 (define-command directory-mode-mark-and-next-line () ()
@@ -428,10 +439,94 @@
 (define-command directory-mode-unmark-all () ()
   (filter-marks (current-point) (constantly nil)))
 
-(define-command directory-mode-mark-regexp (regex) ("sRegex: ")
+(define-command directory-mode-mark-regexp (regex &optional arg) ((:string "Regex: ") :universal-nil)
+  "Mark all files matching the regular expression REGEX.
+With prefix argument ARG, unmark all those files."
+  (let ((scanner (ppcre:create-scanner regex)))
+    (filter-marks (current-point)
+                  (lambda (p)
+                    (if (ppcre:scan scanner (get-name p))
+                        (not arg)
+                        (get-mark p))))))
+
+(define-command directory-mode-mark-directories (&optional arg) (:universal-nil)
+  "Mark all directories in the current buffer except '..'.
+With prefix argument ARG, unmark all those directories."
   (filter-marks (current-point)
                 (lambda (p)
-                  (ppcre:scan regex (get-name p)))))
+                  (line-start p)
+                  (move-to-file-position p)
+                  (if (eq 'directory-attribute (text-property-at p :attribute))
+                      (not arg)
+                      (get-mark p)))))
+
+(define-command directory-mode-mark-links (&optional arg) (:universal-nil)
+  "Mark all symbolic links in the current buffer.
+With prefix argument ARG, unmark all those links."
+  (filter-marks (current-point)
+                (lambda (p)
+                  (line-start p)
+                  (move-to-file-position p)
+                  (if (eq 'link-attribute (text-property-at p :attribute))
+                      (not arg)
+                      (get-mark p)))))
+
+(define-command directory-mode-mark-suffix (suffix &optional arg) ((:string "Suffix: ") :universal-nil)
+  "Mark all files with the given SUFFIX.
+The provided SUFFIX is a string, and not a file extenion, meaning every file with
+a name ending in SUFFIX will be marked.
+With prefix argument ARG, unmark all those files."
+  (filter-marks (current-point)
+                (lambda (p)
+                  (let ((name (get-name p)))
+                    ;; Use < so exact matches are not marked
+                    (if (and (< (length suffix) (length name))
+                             (string= name suffix :start1 (- (length name) (length suffix))))
+                        (not arg)
+                        (get-mark p))))))
+
+(define-command directory-mode-mark-extension (extension &optional arg) ((:string "Extension: ") :universal-nil)
+  "Mark all files with the given EXTENSION.
+A '.' is prepended to the EXTENSION if not present.
+With prefix argument ARG, unmark all those files."
+  ;; Support empty extension, which will mark all files ending with a '.'.
+  (when (or (= 0 (length extension))
+            (char/= (aref extension 0) #\.))
+    (setf extension (concatenate 'string "." extension)))
+  (directory-mode-mark-suffix extension arg))
+
+(define-command directory-mode-next-mark (n) (:universal)
+  "Move to the next Nth marked entry."
+  (cond ((= 0 n)
+         nil)
+        ((< n 0)
+         (directory-mode-previous-mark (- n)))
+        (t (let* ((all-marks (delete-if (lambda (p)
+                                          (point< p (current-point)))
+                                        (marked-lines (current-point))))
+                  (result (nth (- n 1) all-marks)))
+             (if result
+                 (progn
+                   (move-point (current-point) result)
+                   (move-to-file-position (current-point)))
+                 (editor-error "No next mark"))))))
+
+(define-command directory-mode-previous-mark (n) (:universal)
+  "Move to the previous Nth marked entry."
+  (cond ((= 0 n) nil)
+        ((< n 0) (directory-mode-next-mark (- n)))
+        (t (with-point ((point (current-point)))
+             (line-start point)
+             (let* ((all-marks (delete-if (lambda (p)
+                                            (point>= p point))
+                                          (marked-lines point)))
+                    (result (last all-marks n)))
+               (if (and result
+                        (= n (length result)))
+                   (progn
+                     (move-point (current-point) (car result))
+                     (move-to-file-position (current-point)))
+                   (editor-error "No previous mark")))))))
 
 (defun query-replace-marked-files (query-function)
   (destructuring-bind (before after)
@@ -549,7 +644,7 @@
     (when (and path (str:non-blank-string-p (file-namestring path)))
       (search-filename-and-recenter (file-namestring path)))))
 
-(define-command make-directory (filename) ("FMake directory: ")
+(define-command make-directory (filename) ((:new-file "Make directory: "))
   (setf filename (uiop:ensure-directory-pathname filename))
   (ensure-directories-exist filename)
   (update-all))
@@ -565,6 +660,18 @@
         (find-file-buffer (lem-core/commands/file::directory-for-file-or-lose (buffer-directory))))
        (let ((filename (file-namestring fullpath)))
          (search-filename-and-recenter (file-namestring filename)))))))
+
+(define-command directory-mode-kill-lines () ()
+  "Delete the marked lines from the directory-mode buffer.
+This does not delete the marked entries, but only remove them from the buffer."
+  (with-buffer-read-only (current-buffer) nil
+    (let ((*inhibit-read-only* t)
+          (marked-lines (marked-lines (current-point))))
+      (save-excursion
+        ;; Reverse the lines so killing is done from the end of the buffer
+        (loop :for marked-line :in (nreverse marked-lines)
+              :do (move-point (current-point) marked-line)
+                  (kill-whole-line))))))
 
 (setf *find-directory-function* 'directory-buffer)
 

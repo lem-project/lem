@@ -1,10 +1,18 @@
 (defpackage :lem/frame-multiplexer
-  (:use :cl :lem :lem/button)
-  (:export :frame-multiplexer-next
+  (:use :cl
+        :lem
+        :lem/button
+        :lem/common/ring)
+  (:export :*keymap*
+           :frame-multiplexer-next
            :frame-multiplexer-prev
+           :frame-multiplexer-switch
            :frame-multiplexer-create-with-new-buffer-list
            :frame-multiplexer-delete
-           :toggle-frame-multiplexer)
+           :frame-multiplexer-recent
+           :frame-mulitplexer-rename
+           :toggle-frame-multiplexer
+           :frame-multiplexer-normalize-ids)
   #+sbcl
   (:lock t))
 (in-package :lem/frame-multiplexer)
@@ -13,6 +21,7 @@
 (defconstant +max-width-of-each-frame-name+ 20)
 
 (defvar *virtual-frame-map* (make-hash-table))
+(defvar *recent-list* nil)
 
 (define-attribute frame-multiplexer-active-frame-name-attribute
   (t :foreground "white" :background "CornflowerBlue" :bold t))
@@ -29,19 +38,39 @@
         (frame-multiplexer-on)
         (frame-multiplexer-off))))
 
+(defvar *keymap*
+  (make-keymap :name '*frame-multiplexer-keymap*)
+  "Keymap for commands related to the frame-multiplexer.")
+
+(define-key *keymap* "c" 'frame-multiplexer-create-with-new-buffer-list)
+(define-key *keymap* "d" 'frame-multiplexer-delete)
+(define-key *keymap* "p" 'frame-multiplexer-prev)
+(define-key *keymap* "n" 'frame-multiplexer-next)
+(define-key *keymap* "r" 'frame-mulitplexer-rename)
+(define-key *global-keymap* "C-z" *keymap*)
+
 (defstruct tab
   focus-p
   number
   buffer-name)
 
+(defstruct frame-table-entry
+  frame
+  name)
+
 (defun make-tabs (virtual-frame frames)
   (loop :for frame :in frames
+        :for id := (find-frame-id virtual-frame frame)
+        :for entry := (aref (virtual-frame-id/frame-table virtual-frame) id)
         :collect (make-tab
                   :focus-p (eq frame
                                (virtual-frame-current virtual-frame))
-                  :number (find-frame-id virtual-frame frame)
+                  :number id
                   :buffer-name (let* ((buffer (window-buffer (frame-current-window frame)))
-                                      (name (buffer-name buffer)))
+                                      (name (if (and (frame-table-entry-name entry)
+                                                     (< 0 (length (frame-table-entry-name entry))))
+                                                (frame-table-entry-name entry)
+                                                (buffer-name buffer))))
                                  (if (>= (length name) +max-width-of-each-frame-name+)
                                      (format nil "~a..."
                                              (subseq name 0 +max-width-of-each-frame-name+))
@@ -95,7 +124,7 @@
   (declare (type frame frame))
   (let* ((buffer (make-buffer "*frame-multiplexer*" :enable-undo-p nil :temporary t))
          (id/frame-table (make-array +max-number-of-frames+ :initial-element nil)))
-    (setf (aref id/frame-table 0) frame)
+    (setf (aref id/frame-table 0) (make-frame-table-entry :frame frame :name nil))
     (setf (variable-value 'line-wrap :buffer buffer) nil)
     (make-instance 'virtual-frame
                    :impl impl
@@ -106,7 +135,9 @@
                    :current frame)))
 
 (defun switch-current-frame (virtual-frame frame)
-
+  ;; record in the recent list
+  (when *recent-list*
+    (ring-push *recent-list* (find-frame-id virtual-frame (virtual-frame-current virtual-frame))))
   ;; save buffer-point to window-point
   (move-point (lem-core::%window-point (current-window))
               (lem-core::window-buffer-point (current-window)))
@@ -120,14 +151,18 @@
 
   ;; restore buffer-point from window-point
   (move-point (lem-core::window-buffer-point (current-window))
-              (lem-core::%window-point (current-window)))
-  )
+              (lem-core::%window-point (current-window))))
 
 (defun find-unused-frame-id (virtual-frame)
   (position-if #'null (virtual-frame-id/frame-table virtual-frame)))
 
 (defun find-frame-id (virtual-frame frame)
-  (position frame (virtual-frame-id/frame-table virtual-frame)))
+  (position-if (lambda (entry) (and entry (eq frame (frame-table-entry-frame entry))))
+               (virtual-frame-id/frame-table virtual-frame)))
+
+(defun find-frame-table-entry (virtual-frame frame)
+  (find-if (lambda (entry) (and entry (eq frame (frame-table-entry-frame entry))))
+           (virtual-frame-id/frame-table virtual-frame)))
 
 (defun num-frames (virtual-frame)
   (count-if-not #'null (virtual-frame-id/frame-table virtual-frame)))
@@ -142,7 +177,7 @@
     ;; 元のフレームの*tmp*バッファを新しい方のフレームから参照することになってしまう
     (setup-frame frame (primordial-buffer))
     (setf (aref (virtual-frame-id/frame-table virtual-frame) id)
-          frame)))
+          (make-frame-table-entry :frame frame :name nil))))
 
 (defun free-frame (virtual-frame frame)
   (declare (type frame frame))
@@ -153,7 +188,9 @@
           nil)))
 
 (defun get-frame-from-id (virtual-frame id)
-  (aref (virtual-frame-id/frame-table virtual-frame) id))
+  (let ((entry (aref (virtual-frame-id/frame-table virtual-frame) id)))
+    (when entry
+      (frame-table-entry-frame entry))))
 
 (defun linear-search-frame (virtual-frame frame dir wrap)
   (let ((id (find-frame-id virtual-frame frame)))
@@ -185,8 +222,11 @@
                                n)))))
 
 (defun virtual-frame-frames (virtual-frame)
-  (coerce (remove-if #'null (virtual-frame-id/frame-table virtual-frame))
-          'list))
+  (map 'list (lambda (entry) (frame-table-entry-frame entry))
+       (remove-if #'null (virtual-frame-id/frame-table virtual-frame))))
+
+(defun virtual-frame-entries (virtual-frame)
+  (coerce (remove-if #'null (virtual-frame-id/frame-table virtual-frame)) 'list))
 
 (defun insert-tab-content (point tab action)
   (insert-string point " " :attribute 'frame-multiplexer-background-attribute)
@@ -238,6 +278,8 @@
               (not (equal-tabs tabs (virtual-frame-last-displayed-tabs window))))
       (setf (virtual-frame-last-displayed-tabs window) tabs)
       (write-tabs-to-buffer window frames tabs))
+    (setf (virtual-frame-width window) (display-width))
+    (setf (virtual-frame-height window) (display-height))
     (call-next-method)))
 
 (defun frame-multiplexer-init ()
@@ -251,9 +293,11 @@
 (defun enabled-frame-multiplexer-p ()
   (variable-value 'frame-multiplexer :global))
 
-(defun check-frame-multiplexer-enabled ()
+(defun check-frame-multiplexer-usable ()
   (unless (enabled-frame-multiplexer-p)
-    (editor-error "frame-multiplexer-mode is not enabled")))
+    (editor-error "frame-multiplexer-mode is not enabled"))
+  (when (lem/prompt-window:current-prompt-window)
+    (editor-error "prompt window is active")))
 
 (defun frame-multiplexer-on ()
   (unless (enabled-frame-multiplexer-p)
@@ -271,9 +315,27 @@
   (setf (variable-value 'frame-multiplexer :global)
         (not (variable-value 'frame-multiplexer :global))))
 
-(define-key *global-keymap* "C-z c" 'frame-multiplexer-create-with-new-buffer-list)
+(define-command frame-multiplexer-normalize-ids () ()
+  "Normalize the IDs of all the frames.
+Assigns a smaller ID to a frame, if there is a smaller unused ID.
+This does not change the order of the frames."
+  (check-frame-multiplexer-usable)
+  (let* ((vf (gethash (implementation) *virtual-frame-map*)))
+    (flet ((next-free (start)
+             (loop :for x :upfrom start :below (length (virtual-frame-id/frame-table vf))
+                   :when (null (aref (virtual-frame-id/frame-table vf) x))
+                   :return x)))
+      (loop :with free-index := (next-free 0)
+            :for index :upfrom (1+ free-index) :below (length (virtual-frame-id/frame-table vf))
+            :while free-index
+            :when (aref (virtual-frame-id/frame-table vf) index)
+            :do (setf (aref (virtual-frame-id/frame-table vf) free-index)
+                      (aref (virtual-frame-id/frame-table vf) index))
+                (setf (aref (virtual-frame-id/frame-table vf) index) nil)
+                (setq free-index (next-free (1+ free-index)))))))
+
 (define-command frame-multiplexer-create-with-new-buffer-list () ()
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (id (find-unused-frame-id vf)))
     (when (null id)
@@ -282,39 +344,99 @@
       (allocate-frame vf frame)
       (switch-current-frame vf frame))))
 
-(define-key *global-keymap* "C-z d" 'frame-multiplexer-delete)
-(define-command frame-multiplexer-delete () ()
-  (check-frame-multiplexer-enabled)
+(define-command frame-multiplexer-delete (&optional id) (:universal-nil)
+  "Delete the current frame.
+With prefix argument ID, delete the frame with the given ID."
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (num (num-frames vf)))
     (when (= num 1)
-      (editor-error "cannot delete this virtual frame"))
-    (let* ((frame-now  (virtual-frame-current vf))
-           (frame-prev (search-previous-frame vf frame-now)))
-      (switch-current-frame vf frame-prev)
+      (editor-error "Can not delete the last virtual frame"))
+    (when (and id (null (aref (virtual-frame-id/frame-table vf) id)))
+      (editor-error "No frame with ID ~a" id))
+    (let ((frame-now  (if id
+                          (frame-table-entry-frame (aref (virtual-frame-id/frame-table vf) id))
+                          (virtual-frame-current vf))))
+      (when (eq frame-now (virtual-frame-current vf))
+        (switch-current-frame vf (search-previous-frame vf frame-now)))
       (free-frame vf frame-now))))
 
-(define-key *global-keymap* "C-z p" 'frame-multiplexer-prev)
-(define-command frame-multiplexer-prev () ()
-  (check-frame-multiplexer-enabled)
+(define-command frame-multiplexer-prev (&optional (n 1)) (:universal)
+  "Switch to the Nth previous frame.
+The prefix argument N defaults to 1."
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
-         (frame (search-previous-frame vf (virtual-frame-current vf))))
+         (frame (virtual-frame-current vf)))
+    (loop :repeat n
+          :while frame
+          :do (setq frame (search-previous-frame vf frame)))
     (when frame
       (switch-current-frame vf frame))))
 
-(define-key *global-keymap* "C-z n" 'frame-multiplexer-next)
-(define-command frame-multiplexer-next () ()
-  (check-frame-multiplexer-enabled)
+(define-command frame-multiplexer-next (&optional (n 1)) (:universal)
+  "Switch to the Nth next frame.
+The prefix argument N defaults to 1."
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
-         (frame (search-next-frame vf (virtual-frame-current vf))))
+         (frame (virtual-frame-current vf)))
+    (loop :repeat n
+          :while frame
+          :do (setq frame (search-next-frame vf frame)))
     (when frame
       (switch-current-frame vf frame))))
+
+(define-command frame-multiplexer-switch (&optional (id 1)) (:universal)
+  "Switch to the frame with ID.
+The prefix argument ID defaults to 1."
+  ;; TODO: It would be great to enhance this by showing a prompt
+  ;; and asking for the frame name (or buffer of the frame, if it has no name)
+  (check-frame-multiplexer-usable)
+  (let* ((vf (gethash (implementation) *virtual-frame-map*))
+         (entry (aref (virtual-frame-id/frame-table vf) id)))
+    (if entry
+        (switch-current-frame vf (frame-table-entry-frame entry))
+        (editor-error "No frame with ID ~a" id))))
+
+(define-command frame-multiplexer-recent (&optional (n 1)) (:universal)
+  "Switch to the Nth most recent frame selected.
+The prefix argument N defaults to 1."
+  (check-frame-multiplexer-usable)
+  (unless (or (ring-empty-p *recent-list*)
+              (>= 0 n))
+    (let* ((vf (gethash (implementation) *virtual-frame-map*))
+           ;; Loop over the ring and skip IDs which are no longer valid.
+           (recent-frame-id (loop :with valid-count := 0
+                                  :for ref-n :upfrom 0
+                                  :when (>= ref-n (ring-length *recent-list*))
+                                    :return nil
+                                  :when (aref (virtual-frame-id/frame-table vf) (ring-ref *recent-list* ref-n))
+                                    :do (incf valid-count)
+                                  :when (= valid-count n)
+                                    :return (ring-ref *recent-list* ref-n))))
+      (if (null recent-frame-id)
+          (editor-error "No more recent frames")
+          (let ((entry (aref (virtual-frame-id/frame-table vf) recent-frame-id)))
+            (switch-current-frame vf (frame-table-entry-frame entry)))))))
+
+(define-command frame-mulitplexer-rename (name &optional id) ((:string "New name: ") :universal-nil)
+  "Rename the current frame to NAME.
+With prefix argument ID, rename the frame with the given ID."
+  (check-frame-multiplexer-usable)
+  (let* ((vf (gethash (implementation) *virtual-frame-map*))
+         (entry (if (null id)
+                    (find-frame-table-entry vf (virtual-frame-current vf))
+                    (aref (virtual-frame-id/frame-table vf) id))))
+    (if entry
+        (setf (frame-table-entry-name entry) name)
+        (editor-error "No frame with ID ~a" id))))
 
 (defun enable-frame-multiplexer ()
-  (setf (variable-value 'frame-multiplexer :global) t))
+  (setf (variable-value 'frame-multiplexer :global) t)
+  (setq *recent-list* (make-ring 100)))
 
 (defun disable-frame-multiplexer ()
-  (setf (variable-value 'frame-multiplexer :global) nil))
+  (setf (variable-value 'frame-multiplexer :global) nil)
+  (setq *recent-list* nil))
 
 (add-hook *after-init-hook* 'enable-frame-multiplexer)
 (add-hook *exit-editor-hook* 'disable-frame-multiplexer)

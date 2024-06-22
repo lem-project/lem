@@ -8,7 +8,7 @@
    (yank-end :initform nil
              :accessor cursor-yank-end)))
 
-(defmethod lem-base::make-buffer-point (point)
+(defmethod make-buffer-point (point)
   (let ((cursor (make-instance 'cursor)))
     (copy-point-using-class cursor point :left-inserting)))
 
@@ -89,11 +89,13 @@
 
 (defun merge-cursor-killrings (buffer)
   (with-output-to-string (out)
-    (dolist (cursor (buffer-cursors buffer))
-      (let ((killring (cursor-killring cursor)))
-        (multiple-value-bind (string options)
-            (peek-killring-item killring 0)
-          (declare (ignore options))
-          ;; TODO: consider options
-          (when string
-            (write-line string out)))))))
+    (loop :for (cursor . not-lastp) :on (buffer-cursors buffer)
+          :do (let ((killring (cursor-killring cursor)))
+                (multiple-value-bind (string options)
+                    (peek-killring-item killring 0)
+                  (declare (ignore options))
+                  ;; TODO: consider options
+                  (when string
+                    (if not-lastp
+                        (write-line string out)
+                        (write-string string out))))))))

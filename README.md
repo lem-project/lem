@@ -1,9 +1,10 @@
 # Lem is the editor/IDE well-tuned for Common Lisp.
 
-![](https://github.com/Shinmera/lem-icon/blob/gh-pages/icon-blue.svg)
+![](https://raw.githubusercontent.com/Shinmera/lem-icon/gh-pages/icon-blue.svg)
 
 ![Build Status](https://github.com/lem-project/lem/workflows/CI/badge.svg)
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
+[![GitHub Sponsors](https://img.shields.io/badge/-Sponsor-fafbfc?logo=GitHub-Sponsors)](https://github.com/sponsors/cxxxr)
 
 After installing lem, you can start developing in Common Lisp at once.
 
@@ -21,108 +22,27 @@ Other Lem features include:
 - tetris
 - and more…
 
-# Download
-
-**Lem 2.1 was released!**
-
-See our [Lem 2.1 realease](https://github.com/lem-project/lem/releases/tag/v2.1.0) to
-download binaries for Windows, MacOS and Linux.
-
-On mac, you need to run `xattr -d com.apple.quarantine /Applications/lem.app`.  
-See https://github.com/lem-project/lem/issues/635
-
-![SDL2](screenshots/sdl2.png)
-
-# If the installation fails
-Please refer to the following issue
-https://github.com/lem-project/lem/issues/628
-
-## Screenshot
-![Terminal](screenshots/terminal.png)　　
-
-## Requirement
-- ncurses
-- sbcl
-- qlot
-- SDL2 (optional)
-
-## Platform
-- Linux
-- MacOS
-- [Windows](https://github.com/lem-project/lem/wiki/Windows-Platform)
-
 ## Install
 
-### Requirement
+With Docker (ncurses version):
 
-#### sbcl
-#### qlot
+    $ docker run --rm -it ghcr.io/lem-project/lem:latest
 
-See https://github.com/fukamachi/qlot#installation
+### Lem-ncurses
+- [GNU/Linux](https://lem-project.github.io/installation/ncurses/linux/)
+- [MacOS](https://lem-project.github.io/installation/ncurses/macos/)
+- [Windows](https://lem-project.github.io/installation/ncurses/windows/)
 
-```
-curl -L https://qlot.tech/installer | bash
-```
-
-## build
-
-```
-make
-```
-### SDL2
-Dependent packages must be installed.  
-See https://github.com/lem-project/lem/blob/main/frontends/sdl2/README.md
-
-```
-make sdl2
-```
-
-## update
-```
-make update
-```
-
-## Usage
-
-```
-$ lem <filename.lisp>
-```
-
-You can watch the screencast on Youtube.
-
-[Screencast](https://youtu.be/YkSJ3p7Z9H0)
+### Lem-sdl2
+- [GNU/Linux](https://lem-project.github.io//installation/sdl2/linux/)
+- [MacOS](https://lem-project.github.io//installation/sdl2/macos/)
+- [Windows](https://lem-project.github.io//installation/sdl2/windows/)
 
 
-You can start "lem" using the following command.
-```
-$ qlot exec sbcl
-* (ql:quickload :lem-ncurses)
-* (lem:lem)
-```
+## Screenshots
+![Terminal](screenshots/terminal.png)　　
 
-## Configuration
-
-Lem loads `~/.lem/init.lisp` when starting up.
-
-You can see an example [here](https://github.com/Fedreg/.lem/blob/master/init.lisp)
-
-fukamachi also published his init files on GitHub.
-https://github.com/fukamachi/.lem
-
-## Extensions and modes
-
-* [Pareto](https://github.com/40ants/lem-pareto) - A mode, complement to the Paredit. Makes Lisp code editing even more efficient!
-
-## How to develop lisp
-See https://lem-project.github.io/lem-page/usage/common_lisp/
-
-## How to hack on lem itself
-See https://github.com/lem-project/lem/wiki/How-to-hack-on-lem-itself
-
-If you have a questions, join [the Discord](https://discord.gg/NHzqbw4zVR).
-
-## How to contribute to lem
-See https://lem-project.github.io/lem-page/development/how-to-contribute-to-lem/
+![Sdl2](screenshots/sdl2.png)　　
 
 ## Contributors
 

@@ -1,5 +1,5 @@
 (defpackage :lem-lisp-syntax.syntax-table
-  (:use :cl :lem-base)
+  (:use :cl :lem)
   (:export :*syntax-table*)
   #+sbcl
   (:lock t))
@@ -11,13 +11,13 @@
                       (or (alphanumericp c2)
                           (member c2 '(#\+ #\-))))
              (funcall step-fn)))))
-  
+
   (defun skip-expr-prefix-forward (point)
     (f (character-at point 0)
        (character-at point 1)
        (lambda ()
          (character-offset point 2))))
-  
+
   (defun skip-expr-prefix-backward (point)
     (f (character-at point -2)
        (character-at point -1)

@@ -48,7 +48,7 @@
                 (or package
                     (current-package))))
 
-(define-command lisp-apropos (&optional arg) ("P")
+(define-command lisp-apropos (&optional arg) (:universal-nil)
   (check-connection)
   (let ((string)
         (only-external-p t)
@@ -70,7 +70,7 @@
   (lisp-apropos-internal (prompt-for-string "lisp Apropos: ")
                          nil nil nil))
 
-(define-command lisp-apropos-package (internal) ("P")
+(define-command lisp-apropos-package (internal) (:universal-nil)
   (check-connection)
   (let ((package (read-package-name)))
     (lisp-apropos-internal ""
@@ -111,3 +111,12 @@
                                                     (completion-symbol-for-search-symbol
                                                      query)))))
     (display-xref-locations (find-definitions-by-name name))))
+
+(define-command lisp-search-asdf-definition () ()
+  (check-connection)
+  (let* ((system (read-asdf-system-name))
+         (file (read-from-string
+                (cadr (lisp-eval
+                       `(micros:eval-and-grab-output
+                         ,(format nil "(asdf:system-source-file \"~a\")" system)))))))
+    (find-file file)))

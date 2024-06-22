@@ -13,21 +13,21 @@
 
 (cl-package-locks:lock-package :lem-lsp-mode/request)
 
-(defvar *log-pathname* (merge-pathnames "language-client.log" (lem:lem-logdir-pathname)))
 (defvar *log-enable* t)
 (defvar *log-mutex* (bt:make-lock))
 
 (defun do-log (string &rest args)
   (when *log-enable*
     (bt:with-lock-held (*log-mutex*)
-      (ensure-directories-exist *log-pathname*)
-      (with-open-file (out *log-pathname*
-                           :direction :output
-                           :if-exists :append
-                           :if-does-not-exist :create)
-        (fresh-line out)
-        (apply #'format out string args)
-        (terpri out)))))
+      (let ((log-pathname (merge-pathnames "language-client.log" (lem:lem-logdir-pathname))))
+        (ensure-directories-exist log-pathname)
+        (with-open-file (out log-pathname
+                             :direction :output
+                             :if-exists :append
+                             :if-does-not-exist :create)
+          (fresh-line out)
+          (apply #'format out string args)
+          (terpri out))))))
 
 (defun pretty-json (params)
   (with-output-to-string (stream)

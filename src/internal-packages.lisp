@@ -1,6 +1,8 @@
 (defpackage :lem-core/display
   (:use)
   (:export
+   :wrap-line-character
+   :wrap-line-attribute
    :control-character-object
    :emoji-object
    :eol-cursor-object
@@ -28,8 +30,15 @@
         :lem/common/killring
         :lem/common/timer
         :lem/common/command
+        :lem/common/color
+        :lem/common/queue
+        :lem/common/utils
         :lem-core/display)
-  (:use-reexport :lem-base)
+  (:use-reexport :lem/buffer)
+  (:use-reexport :lem/common/color)
+  (:use-reexport :lem/common/hooks)
+  (:use-reexport :lem/common/var)
+  (:use-reexport :lem/common/character)
   ;; reexport common/killring
   (:export
    :with-killring-context)
@@ -46,6 +55,9 @@
   (:export
    :lem-git-revision
    :get-version-string)
+  ;; save-excursion.lisp
+  (:export
+   :save-excursion)
   ;; killring.lisp
   (:export
    :current-killring
@@ -53,7 +65,7 @@
    :yank-from-clipboard-or-killring)
   ;; quicklisp-utils.lisp
   (:export
-   :maybe-quickload)
+   :maybe-load-systems)
   ;; config.lisp
   (:export
    :lem-home
@@ -95,15 +107,6 @@
    :with-pop-up-typeout-window
    :define-buffer-accessor
    :define-overlay-accessors)
-  ;; color.lisp
-  (:export
-   :make-color
-   :color-red
-   :color-green
-   :color-blue
-   :parse-color
-   :rgb-to-hsv
-   :hsv-to-rgb)
   ;; attribute.lisp
   (:export
    :make-attribute
@@ -180,6 +183,7 @@
    :frame-floating-prompt-window
    :frame-prompt-window
    :frame-message-window
+   :frame-leftside-window
    :notify-frame-redisplay-required
    :map-frame
    :get-frame
@@ -200,7 +204,10 @@
    :receive-mouse-wheel
    :set-hover-message
    :get-point-from-window-with-coordinates
-   :get-point-on-context-menu-open)
+   :get-point-on-context-menu-open
+   :handle-mouse-button-down
+   :handle-mouse-button-up
+   :handle-mouse-hover)
   ;; context-menu.lisp
   (:export
    :buffer-context-menu)
@@ -214,6 +221,7 @@
   ;; prompt.lisp
   (:export
    :*prompt-activate-hook*
+   :*prompt-after-activate-hook*
    :*prompt-deactivate-hook*
    :*prompt-buffer-completion-function*
    :*prompt-file-completion-function*
@@ -230,6 +238,9 @@
    :prompt-for-directory
    :prompt-for-encodings
    :prompt-for-library)
+  ;; buffer.lisp
+  (:export
+   :kill-buffer-hook)
   ;; window-tree.lisp
   (:export
    :balance-windows)
@@ -250,12 +261,14 @@
    :window-x
    :window-y
    :window-width
+   :window-left-width
    :window-height
    :window-buffer
    :window-screen
    :window-view
    :window-point
    :window-cursor-invisible-p
+   :set-last-print-cursor
    :last-print-cursor-x
    :last-print-cursor-y
    :window-parameter
@@ -269,16 +282,6 @@
    :compute-window-list
    :one-window-p
    :deleted-window-p
-   :window-recenter
-   :window-scroll
-   :window-cursor-x
-   :window-cursor-y
-   :backward-line-wrap
-   :forward-line-wrap
-   :move-to-next-virtual-line
-   :move-to-previous-virtual-line
-   :point-virtual-line-column
-   :move-to-virtual-line-column
    :window-see
    :split-window-vertically
    :split-window-horizontally
@@ -301,10 +304,6 @@
    :floating-window-border-shape
    :floating-window-focusable-p
    :floating-window-p
-   :side-window
-   :make-leftside-window
-   :delete-leftside-window
-   :header-window
    :update-on-display-resized
    :covered-with-floating-window-p
    :redraw-display
@@ -321,6 +320,27 @@
    :grow-window-width
    :shrink-window-width
    :window-offset-view)
+  ;; virtual-line
+  (:export
+   :window-recenter
+   :window-cursor-x
+   :window-cursor-y
+   :backward-line-wrap
+   :forward-line-wrap
+   :move-to-next-virtual-line
+   :move-to-previous-virtual-line
+   :point-virtual-line-column
+   :move-to-virtual-line-column
+   :window-scroll)
+  ;; header-window.lisp
+  (:export
+   :header-window)
+  ;; side-window.lisp
+  (:export
+   :side-window
+   :side-window-p
+   :make-leftside-window
+   :delete-leftside-window)
   ;; popup.lisp
   (:export
    :*default-popup-message-timeout*
@@ -381,7 +401,14 @@
    :define-global-mode
    :change-global-mode-keymap
    :enable-minor-mode
-   :disable-minor-mode)
+   :disable-minor-mode
+   :current-global-mode
+   :get-syntax-table-by-mode-name
+   :set-region-major-mode
+   :clear-region-major-mode
+   :major-mode-at-point
+   :current-major-mode-at-point
+   :with-major-mode)
   ;; keymap.lisp
   (:export
    :*keymaps*
@@ -392,6 +419,7 @@
    :make-keymap
    :*global-keymap*
    :define-key
+   :define-keys
    :keyseq-to-string
    :find-keybind
    :insertion-key-p
@@ -476,7 +504,7 @@
    :*file-completion-ignore-case*
    :completion
    :completion-test
-   :completion-hypheen
+   :completion-hyphen
    :completion-file
    :completion-strings
    :completion-buffer)
@@ -526,6 +554,8 @@
    :highlight-line)
   ;; display/base.lisp
   (:export
+   :wrap-line-character
+   :wrap-line-attribute
    :inactive-window-background-color
    :redraw-buffer
    :compute-left-display-area-content)
@@ -549,9 +579,32 @@
   (:export
    :color-theme-names
    :define-color-theme
-   :load-theme))
+   :load-theme
+   :current-theme
+   :find-color-theme
+   :color-theme
+   :get-color-theme-color)
+  ;; region.lisp
+  (:export
+   :check-marked-using-global-mode
+   :region-beginning-using-global-mode
+   :region-end-using-global-mode
+   :set-region-point-using-global-mode
+   :check-marked)
+  ;; format.lisp
+  (:export
+   :*auto-format*
+   :register-formatter
+   :register-formatters
+   :format-buffer))
 #+sbcl
 (sb-ext:lock-package :lem-core)
+
+(defpackage :lem-core/popup-message-interface
+  (:use :cl)
+  (:export :*popup-messenger*
+           :display-popup-message
+           :delete-popup-message))
 
 (defpackage :lem-restart
   (:use)
@@ -588,7 +641,6 @@
    :redraw-view-after
    :will-update-display
    :update-display
-   :set-first-view
    :display-popup-menu
    :popup-menu-update
    :popup-menu-quit
@@ -597,13 +649,12 @@
    :popup-menu-first
    :popup-menu-last
    :popup-menu-select
-   :display-popup-message
-   :delete-popup-message
    :display-context-menu
    :clipboard-paste
    :clipboard-copy
    :increase-font-size
    :decrease-font-size
+   :set-font-size
    :resize-display-before
    :get-font-list
    :get-mouse-position

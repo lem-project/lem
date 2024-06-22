@@ -28,7 +28,8 @@
   ((name :initarg :name :reader mode-name)
    (description :initarg :description :reader mode-description)
    (keymap :initarg :keymap :reader mode-keymap :writer set-mode-keymap)
-   (commands :initform '() :accessor mode-commands)))
+   (commands :initform '() :accessor mode-commands)
+   (hide-from-modeline :initarg :hide-from-modeline :reader mode-hide-from-modeline)))
 
 (defclass major-mode (mode)
   ((syntax-table :initarg :syntax-table :reader mode-syntax-table)
@@ -89,6 +90,10 @@
   (assert (not (null mode)))
   (mode-hook-variable (get-mode-object mode)))
 
+(defmethod mode-hide-from-modeline ((mode symbol))
+  (assert (not (null mode)))
+  (mode-hide-from-modeline (get-mode-object mode)))
+
 (defun major-modes ()
   (mapcar #'mode-identifier-name (collect-modes #'major-mode-p)))
 
@@ -136,7 +141,8 @@
                                    description
                                    keymap
                                    (syntax-table '(fundamental-syntax-table))
-                                   mode-hook)
+                                   mode-hook
+                                   formatter)
                              &body body)
   (let ((command-class-name (make-mode-command-class-name major-mode)))
     `(progn
@@ -162,7 +168,8 @@
           :keymap ,keymap
           :syntax-table ,syntax-table
           :hook-variable ',mode-hook))
-       (register-mode ',major-mode (make-instance ',major-mode)))))
+       (register-mode ',major-mode (make-instance ',major-mode))
+       (when ,formatter (register-formatter ,major-mode ,formatter)))))
 
 ;;; minor mode
 (defun enable-minor-mode (minor-mode)
@@ -187,13 +194,19 @@
       (enable-minor-mode minor-mode)))
 
 (defmacro define-minor-mode (minor-mode
-                             (&key name description (keymap nil keymapp) global enable-hook disable-hook)
+                             (&key name
+                                   description
+                                   (keymap nil keymapp)
+                                   global
+                                   enable-hook
+                                   disable-hook
+                                   hide-from-modeline)
                              &body body)
   (let ((command-class-name (make-mode-command-class-name minor-mode)))
     `(progn
        ,@(when keymapp
            `((defvar ,keymap (make-keymap :name ',keymap))))
-       (define-command (,minor-mode (:class ,command-class-name)) (&optional (arg nil arg-p)) ("p")
+       (define-command (,minor-mode (:class ,command-class-name)) (&optional (arg nil arg-p)) (:universal)
          (cond ((not arg-p)
                 (toggle-minor-mode ',minor-mode))
                ((eq arg t)
@@ -212,7 +225,8 @@
           :description ,description
           :keymap ,keymap
           :enable-hook ,enable-hook
-          :disable-hook ,disable-hook))
+          :disable-hook ,disable-hook
+          :hide-from-modeline ,hide-from-modeline))
        (register-mode ',minor-mode (make-instance ',minor-mode)))))
 
 ;;; global-mode
@@ -286,3 +300,34 @@
              instance))
           (t
            (cdr (buffer-active-modes-class-cache buffer))))))
+
+(defun get-syntax-table-by-mode-name (mode-name)
+  (alexandria:when-let* ((mode (find-mode mode-name))
+                         (syntax-table (mode-syntax-table mode)))
+    syntax-table))
+
+;;;
+(defun clear-region-major-mode (start end)
+  (remove-text-property start end :mode))
+
+(defun set-region-major-mode (start end mode)
+  (put-text-property start end :mode mode))
+
+(defun major-mode-at-point (point)
+  (text-property-at point :mode))
+
+(defun current-major-mode-at-point (point)
+  (or (major-mode-at-point point)
+      (buffer-major-mode (point-buffer point))))
+
+(defun call-with-major-mode (buffer mode function)
+  (let ((previous-mode (buffer-major-mode buffer)))
+    (cond ((eq previous-mode mode)
+           (funcall function))
+          (t
+           (change-buffer-mode buffer mode)
+           (unwind-protect (funcall function)
+             (change-buffer-mode buffer previous-mode))))))
+
+(defmacro with-major-mode (mode &body body)
+  `(call-with-major-mode (current-buffer) ,mode (lambda () ,@body)))

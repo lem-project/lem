@@ -3,11 +3,16 @@
         :lem)
   (:import-from :lem-vi-mode/options
                 :option-value)
+  (:import-from :lem-vi-mode/utils
+                :save-column)
   (:import-from :lem-core
                 :window-height-without-modeline)
   (:export :move-to-window-top
            :move-to-window-middle
            :move-to-window-bottom
+           :move-to-window-bottom-below
+           :move-to-window-top-above
+           :scroll-line
            :adjust-window-scroll))
 (in-package :lem-vi-mode/window)
 
@@ -22,7 +27,7 @@
   (window-view-point window))
 
 (defun window-end-point (&optional (window (current-window)))
-  (let ((point (copy-point (window-start-point window))))
+  (let ((point (copy-point (window-start-point window) :temporary)))
     (move-to-next-virtual-line point (1- (window-height* window)) window)
     point))
 
@@ -54,6 +59,36 @@
     (move-point (current-point) (window-end-point window))
     (when (window-has-following-lines-p window)
       (previous-line (scroll-offset)))))
+
+(defun move-to-window-bottom-below ()
+  (let ((window (current-window)))
+    (move-point (current-point) (window-end-point window))
+    (when (window-has-following-lines-p window)
+      (next-line 1))))
+
+(defun move-to-window-top-above ()
+  (let ((window (current-window)))
+    (move-point (current-point) (window-start-point window))
+    (when (window-has-leading-lines-p window)
+      (previous-line 1))))
+
+(defun scroll-line (line-number scroll-position)
+  "Scroll the line LINE-NUMBER to SCROLL-POSITION of the screen.
+If LINE-NUMBER is NIL, scroll the current line.
+SCROLL-POSITION can be one of :TOP :CENTER :BOTTOM.
+The SCROLL-POSITION is influenced by the scrolloff option."
+  (clear-screens-of-window-list)
+  (when line-number
+    (save-column
+     (goto-line line-number)))
+  (let* ((window (current-window))
+         (scrolloff (scroll-offset window)))
+    (case scroll-position
+      (:top (window-recenter window :line scrolloff :from-bottom nil))
+      (:center (window-recenter window :line nil :from-bottom nil))
+      (:bottom (window-recenter window :line scrolloff :from-bottom t))))
+  (redraw-display)
+  t)
 
 (defun adjust-window-scroll ()
   (let* ((window (current-window))

@@ -102,6 +102,9 @@
     (sdl2-ffi:+sdl-windowevent-focus-lost+
      (setf (display:display-focus-p display) nil))))
 
+(defun on-filedrop (file)
+  (lem:send-event (lambda () (lem:find-file file))))
+
 (defun event-loop (display)
   (sdl2:with-event-loop (:method :wait)
     (:quit ()
@@ -124,6 +127,8 @@
      (on-mouse-motion display x y state))
     (:mousewheel (:x x :y y :which which :direction direction)
      (on-mouse-wheel display x y which direction))
+    (:dropfile (:file file)
+     (on-filedrop file))
     (:windowevent (:event event)
      (on-windowevent display event))))
 
@@ -203,10 +208,20 @@
                      ;; because it's easy enough to change it via a user's
                      ;; config
                      (if (lem:config :darwin-use-native-fullscreen) 1 0))
-      (sdl2:make-this-thread-main (lambda ()
-                                    (create-display #'thunk)
-                                    (when (sbcl-on-darwin-p)
-                                      (cffi:foreign-funcall "_exit")))))))
+      ;; sdl2 should not install any signal handlers, since the lisp runtime already does so
+      (sdl2:set-hint :no-signal-handlers 1)
+      (tmt:with-body-in-main-thread ()
+        (sdl2:make-this-thread-main (lambda ()
+                                      (handler-bind
+                                          (#+(and linux sbcl)
+                                              (sb-sys:interactive-interrupt
+                                               (lambda (c)
+                                                 (declare (ignore c))
+                                                 (invoke-restart 'sdl2::abort))))
+                                        (progn
+                                          (create-display #'thunk)
+                                          (when (sbcl-on-darwin-p)
+                                            (cffi:foreign-funcall "_exit"))))))))))
 
 (defmethod lem-if:get-background-color ((implementation sdl2))
   (with-debug ("lem-if:get-background-color")
@@ -386,6 +401,14 @@
           (display:change-font display
                                (change-size font-config
                                             (- (font-config-size font-config) ratio))))))))
+
+(defmethod lem-if:set-font-size ((implementation sdl2) size)
+  (display:with-display (display)
+    (display:with-renderer (display)
+      (let ((font-config (display:display-font-config display)))
+        (display:change-font
+         display
+         (change-size font-config size))))))
 
 (defmethod lem-if:resize-display-before ((implementation sdl2))
   (with-debug ("resize-display-before")

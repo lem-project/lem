@@ -262,13 +262,15 @@
                                          string
                                          (string #\newline))))))
 
-(defun send-string-to-listener (string)
-  (lisp-switch-to-repl-buffer)
-  (buffer-end (current-point))
-  (insert-string (current-point) string)
-  (lem/listener-mode:listener-return))
+(defun send-string-to-listener (string &optional package-name)
+  (with-current-window (current-window)
+    (lisp-switch-to-repl-buffer)
+    (buffer-end (current-point))
+    (when package-name (lisp-set-package package-name))
+    (insert-string (current-point) string)
+    (lem/listener-mode:listener-return)))
 
-(define-command start-lisp-repl (&optional (use-this-window nil)) ("P")
+(define-command start-lisp-repl (&optional (use-this-window nil)) (:universal-nil)
   (check-connection)
   (flet ((switch (buffer split-window-p)
            (if split-window-p
@@ -305,6 +307,11 @@
             (let ((point (copy-point (buffer-point buffer) :left-inserting)))
               (buffer-start point)))))
 
+(defun see-repl-writing (buffer)
+  (when (end-buffer-p (buffer-point buffer))
+    (dolist (window (get-buffer-windows buffer))
+      (window-see window))))
+
 (defun call-with-repl-point (function)
   (let* ((buffer (ensure-repl-buffer-exist))
          (point (repl-buffer-write-point buffer)))
@@ -314,6 +321,8 @@
            (when (point<= (lem/listener-mode:input-start-point buffer) point)
              (move-point point (lem/listener-mode:input-start-point buffer))
              (previous-single-property-change point :field))))
+    (unless (eq (current-buffer) buffer)
+      (see-repl-writing buffer))
     (with-buffer-read-only buffer nil
       (let ((*inhibit-read-only* t))
         (funcall function point)))))
@@ -413,15 +422,21 @@
         (pos 0))
     (loop
       (multiple-value-bind (start end reg-starts reg-ends)
-          (ppcre:scan "\\e\\[([^m]*)m" string :start pos)
-        (unless (and start end reg-starts reg-ends) (return))
+          (ppcre:scan "[\\x07-\\x0d]|\\e(?:[^\\[]|(?:\\[(.*?)([\\x40-\\x7e])))" string :start pos)
+        (unless start (return))
         (unless (= pos start)
           (push (subseq string pos start) acc))
-        (push (raw-seq-to-attribute
-               (subseq string
-                       (aref reg-starts 0)
-                       (aref reg-ends 0)))
-              acc)
+        (when (equal (string #\newline)
+                     (subseq string start end))
+          (push (string #\newline) acc))
+        (alexandria:when-let* ((final-ref (aref reg-starts 1))
+                               (final (elt string final-ref)))
+          (when (char= #\m final)
+            (push (raw-seq-to-attribute
+                   (subseq string
+                           (aref reg-starts 0)
+                           (aref reg-ends 0)))
+                  acc)))
         (setf pos end)))
     (push (subseq string pos) acc)
     (nreverse acc)))
@@ -443,12 +458,12 @@
 
 (define-command backward-prompt () ()
   (when (equal (current-buffer) (repl-buffer))
-    (move-to-previous-virtual-line (current-point))
+    (line-start (current-point))
     (lem:previous-single-property-change (lem:current-point) :field)))
 
 (define-command forward-prompt () ()
   (when (equal (current-buffer) (repl-buffer))
-    (move-to-next-virtual-line (current-point))
+    (line-end (current-point))
     (lem:next-single-property-change (lem:current-point) :field)
     (lem:next-single-property-change (lem:current-point) :field)))
 
@@ -478,7 +493,7 @@
                  :history-symbol 'mh-lisp-repl-shortcuts)
                 *lisp-repl-shortcuts* :test #'equal))))
 
-(define-command lisp-repl-shortcut (n) ("p")
+(define-command lisp-repl-shortcut (n) (:universal)
   (with-point ((point (current-point)))
     (if (point>= (lem/listener-mode:input-start-point (current-buffer)) point)
         (let ((fun (prompt-for-shortcuts)))
@@ -538,7 +553,7 @@
 
 (define-repl-shortcut quickload ()
   (let ((system (prompt-for-system "Quickload System: ")))
-    (listener-eval (prin1-to-string `(ql:quickload ,system)))))
+    (listener-eval (prin1-to-string `(maybe-load-systems ,system)))))
 
 (define-repl-shortcut ls ()
   (insert-character (current-point) #\newline)

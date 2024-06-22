@@ -28,7 +28,7 @@
 
 (define-command keyboard-quit () ()
   "Signal a `quit` condition."
-  (error 'editor-abort))
+  (error 'editor-abort :message nil))
 
 (define-command escape () ()
   "Signal a `quit` condition silently."
@@ -52,16 +52,16 @@
   (lem-core/commands/file:save-some-buffers t)
   (exit-editor))
 
-(define-command execute-command (arg) ("P")
+(define-command execute-command (arg) (:universal-nil)
   "Read a command name, then read the ARG and call the command."
   (let* ((name (prompt-for-string
                 (if arg
                     (format nil "~D M-x " arg)
                     "M-x ")
                 :completion-function (lambda (str)
-                                       (sort 
+                                       (sort
                                         (if (find #\- str)
-                                            (completion-hypheen str (all-command-names))
+                                            (completion-hyphen str (all-command-names))
                                             (completion str (all-command-names)))
                                         #'string-lessp))
                 :test-function 'exist-command-p
@@ -81,7 +81,7 @@
     ((prompt-for-library "load library: " :history-symbol 'load-library))
   "Load the Lisp library named NAME."
   (message "Loading ~A." name)
-  (cond ((ignore-errors (maybe-quickload (format nil "lem-~A" name) :silent t))
+  (cond ((ignore-errors (maybe-load-systems (format nil "lem-~A" name) :silent t))
          (message "Loaded ~A." name))
         (t (message "Can't find Library ~A." name))))
 

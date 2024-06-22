@@ -96,3 +96,24 @@
                     'change-grep-buffer)))
     (setf *last-query* query
           *last-directory* directory)))
+
+(define-command grep-help () ()
+  "Show grep help."
+  (with-pop-up-typeout-window (s (make-buffer "*Help*") :erase t)
+    (format s "grep command (M-x grep)~&")
+    (format s "~%")
+    (format s "The left window shows grep results, the right window shows a result in its source file.~&")
+    (format s "~%")
+    (format s "Available keybindings:~&")
+    (format s "- up/down arrows or C-p/C-n: go to the previous/next line~&")
+    (format s "- C-x o or M-o: go to the other window~&")
+    (format s "- Enter: visit the file of the result at point~&")
+    (format s "- Escape or C-x 0: quit~&")
+    (format s "- C-x ?: bring this help~&")
+    (format s "~%")
+    (format s "The results buffer on the left is editable. Any change is written to file and is reflected immediately on the right.~&")
+    (format s "You can use editing tools such as M-x query-replace in the results buffer.~&")
+    (format s "~%")))
+
+;; TODO: Prepare keymap for grep-mode
+(define-key lem/peek-source::*peek-source-keymap* "C-x ?" 'grep-help)  ;; originally bound to describe-key.

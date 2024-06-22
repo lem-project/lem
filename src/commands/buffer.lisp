@@ -1,6 +1,7 @@
 (defpackage :lem-core/commands/buffer
   (:use :cl :lem-core)
   (:export :*read-only-function*
+           :indent-current-buffer
            :toggle-read-only
            :rename-buffer
            :unmark-buffer))
@@ -11,6 +12,10 @@
 (define-key *global-keymap* "C-x C-q" 'toggle-read-only)
 (define-key *global-keymap* "M-~" 'unmark-buffer)
 
+(define-command indent-current-buffer () ()
+  "Indent the current buffer."
+  (indent-buffer (current-buffer)))
+
 (define-command toggle-read-only () ()
   "Toggle the buffer read-only."
   (setf (buffer-read-only-p (current-buffer))
@@ -19,7 +24,7 @@
     (funcall *read-only-function*
              (buffer-read-only-p (current-buffer)))))
 
-(define-command rename-buffer (name) ("sRename buffer: ")
+(define-command rename-buffer (name) ((:string "Rename buffer: "))
   "Rename the buffer."
   (buffer-rename (current-buffer) name))
 

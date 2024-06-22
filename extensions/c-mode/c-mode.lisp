@@ -26,7 +26,8 @@
     (:name "C"
      :keymap *c-mode-keymap*
      :syntax-table *c-syntax-table*
-     :mode-hook *c-mode-hook*)
+     :mode-hook *c-mode-hook*
+     :formatter #'lem-c-mode/format:clang-format)
   (setf (variable-value 'enable-syntax-highlight) t)
   (setf (variable-value 'calc-indent-function) 'calc-indent)
   (setf (variable-value 'indent-tabs-mode) nil)
@@ -207,8 +208,8 @@
      (with-point ((p point))
        (back-to-indentation p)
        (if (in-string-or-comment-p p)
-         (point-column p)
-         (calc-indent p))))
+           (point-column p)
+           (calc-indent p))))
     ((with-point ((p point))
        (when (maybe-beginning-of-comment p)
          (if (eql #\* (character-at (back-to-indentation point)))
@@ -219,9 +220,9 @@
        (line-offset start -1)
        (c-beginning-of-defun start 1)
        (let ((*indent-line-function*
-              (lambda (p indent)
-                (when (same-line-p point p)
-                  (return-from calc-indent indent)))))
+               (lambda (p indent)
+                 (when (same-line-p point p)
+                   (return-from calc-indent indent)))))
          (calc-indent-region start point))))))
 
 (defun count-offset (string)

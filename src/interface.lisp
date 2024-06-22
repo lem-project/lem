@@ -14,20 +14,24 @@
    (support-floating-window
     :initform t
     :initarg :support-floating-window
-    :reader support-floating-window)))
+    :reader support-floating-window)
+   (window-left-margin
+    :initform 1
+    :initarg :window-left-margin
+    :reader window-left-margin)))
 
-(defun get-default-implementation (&key (errorp t))
+(defun get-default-implementation (&key (errorp t) (implementation :ncurses))
   (let* ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))
          (class (case (length classes)
                   (0
                    (when errorp
                      (error "Implementation does not exist.~
-                             (probably because you didn't quickload lem-ncurses)")))
+                             (probably because you didn't load the lem-ncurses system)")))
                   (1
                    (first classes))
                   (otherwise
                    (dolist (class classes (first classes))
-                     (when (string= :ncurses (class-name class))
+                     (when (string= implementation (class-name class))
                        (return class)))))))
     (when class
       (make-instance class))))
@@ -62,9 +66,6 @@
   (:method (implementation)))
 (defgeneric lem-if:update-display (implementation))
 
-(defgeneric lem-if:set-first-view (implementation view)
-  (:method (implementation view)))
-
 (defgeneric lem-if:display-popup-menu (implementation items
                                        &key action-callback
                                             print-spec
@@ -78,12 +79,6 @@
 (defgeneric lem-if:popup-menu-first (implementation popup-menu))
 (defgeneric lem-if:popup-menu-last (implementation popup-menu))
 (defgeneric lem-if:popup-menu-select (implementation popup-menu))
-(defgeneric lem-if:display-popup-message
-    (implementation buffer-or-string &key timeout
-                                          destination-window
-                                          source-window
-                                          style))
-(defgeneric lem-if:delete-popup-message (implementation popup-message))
 (defgeneric lem-if:display-context-menu (implementation context-menu style)
   (:method (implementation context-menu style)))
 
@@ -96,6 +91,8 @@
   (:method (implementation)))
 (defgeneric lem-if:decrease-font-size (implementation)
   (:method (implementation)))
+(defgeneric lem-if:set-font-size (implementation size)
+  (:method (implementation size)))
 
 (defgeneric lem-if:resize-display-before (implementation)
   (:method (implementation)))
@@ -115,7 +112,7 @@
                                             default-attribute height))
 (defgeneric lem-if:object-width (implementation drawing-object))
 (defgeneric lem-if:object-height (implementation drawing-object))
-(defgeneric lem-if:clear-to-end-of-window (implementation window y))
+(defgeneric lem-if:clear-to-end-of-window (implementation view y))
 
 (defvar *display-background-mode* nil)
 
@@ -123,7 +120,11 @@
   *implementation*)
 
 (defmacro with-implementation (implementation &body body)
-  `(let ((*implementation* ,implementation))
+  `(let* ((*implementation* ,implementation)
+          (bt:*default-special-bindings*
+            (acons '*implementation*
+                   *implementation*
+                   bt:*default-special-bindings*)))
      ,@body))
 
 (defun display-background-mode ()

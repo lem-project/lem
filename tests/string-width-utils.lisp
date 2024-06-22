@@ -1,6 +1,6 @@
 (defpackage :lem-tests/string-width-utils
   (:use :cl :rove)
-  (:import-from :lem-base
+  (:import-from :lem
                 :control-char
                 :wide-char-p
                 :char-width

@@ -35,8 +35,16 @@
   (hash-table-p command))
 
 (defun define-key (keymap keyspec command-name)
+  "Bind a command COMMAND-NAME to a KEYSPEC in a KEYMAP.
+
+Global bindings use `*global-keymap*' as KEYMAP argument.
+
+If KEYSPEC argument is a `string', valid prefixes are:
+H (Hyper), S (Super), M (Meta), C (Ctrl), Shift
+
+Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
   (check-type keyspec (or symbol string))
-  (check-type command-name symbol)
+  (check-type command-name (or symbol keymap))
   (typecase keyspec
     (symbol
      (setf (gethash keyspec (keymap-function-table keymap))
@@ -45,6 +53,14 @@
      (let ((keys (parse-keyspec keyspec)))
        (define-key-internal keymap keys command-name))))
   (values))
+
+(defmacro define-keys (keymap &body bindings)
+  `(progn ,@(mapcar
+             (lambda (binding)
+               `(define-key ,keymap
+                  ,(first binding)
+                  ,(second binding)))
+             bindings)))
 
 (defun define-key-internal (keymap keys symbol)
   (loop :with table := (keymap-table keymap)
@@ -100,9 +116,11 @@
 (defun traverse-keymap (keymap fun)
   (labels ((f (table prefix)
              (maphash (lambda (k v)
-                        (if (prefix-command-p v)
-                            (f v (cons k prefix))
-                            (funcall fun (reverse (cons k prefix)) v)))
+                        (cond ((prefix-command-p v)
+                               (f v (cons k prefix)))
+                              ((keymap-p v)
+                               (f (keymap-table v) (cons k prefix)))
+                              (t (funcall fun (reverse (cons k prefix)) v))))
                       table)))
     (f (keymap-table keymap) nil)))
 
@@ -111,9 +129,11 @@
     (let ((table (keymap-table keymap)))
       (labels ((f (k)
                  (let ((cmd (gethash k table)))
-                   (if (prefix-command-p cmd)
-                       (setf table cmd)
-                       cmd))))
+                   (cond ((prefix-command-p cmd)
+                          (setf table cmd))
+                         ((keymap-p cmd)
+                          (setf table (keymap-table cmd)))
+                         (t cmd)))))
         (let ((parent (keymap-parent keymap)))
           (when parent
             (setf cmd (keymap-find-keybind parent key cmd))))
@@ -149,6 +169,9 @@
   (let* ((keymaps (compute-keymaps (current-global-mode)))
          (keymaps
            (append keymaps
+                   (alexandria:when-let* ((mode (major-mode-at-point (current-point)))
+                                          (keymap (mode-keymap mode)))
+                     (list keymap))
                    (loop :for mode :in (all-active-modes (current-buffer))
                          :when (mode-keymap mode)
                          :collect :it))))
@@ -158,8 +181,7 @@
 
 (defun lookup-keybind (key)
   (let (cmd)
-    (loop :with buffer := (current-buffer)
-          :for keymap :in (all-keymaps)
+    (loop :for keymap :in (all-keymaps)
           :do (setf cmd (keymap-find-keybind keymap key cmd)))
     cmd))
 

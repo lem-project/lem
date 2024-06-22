@@ -3,6 +3,7 @@
   (:export :platform
            :linux
            :mac
+           :freebsd
            :windows
            :get-platform))
 (in-package :lem-sdl2/platform)
@@ -11,6 +12,7 @@
 (defclass linux (platform) ())
 (defclass windows (platform) ())
 (defclass mac (platform) ())
+(defclass freebsd (platform) ())
 
 (defvar *platform* nil)
 
@@ -23,6 +25,8 @@
                  (make-instance 'linux))
                 ("Mac OS X"
                  (make-instance 'mac))
+                ("FreeBSD"
+                 (make-instance 'freebsd))
                 ("Windows"
                  (make-instance 'windows))
                 (otherwise

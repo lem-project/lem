@@ -3,6 +3,7 @@
 (defparameter *default-prompt-gravity* :center)
 
 (defvar *prompt-activate-hook* '())
+(defvar *prompt-after-activate-hook* '())
 (defvar *prompt-deactivate-hook* '())
 
 (defvar *prompt-buffer-completion-function* nil)
@@ -120,7 +121,7 @@
                               directory :directory-only t)))
                  :test-function (and existing #'virtual-probe-file)
                  :history-symbol 'prompt-for-directory
-                 (alexandria:remove-from-plist args :directory default existing))))
+                 (alexandria:remove-from-plist args :directory :default :existing))))
     (if (string= result "")
         default
         result)))
@@ -149,16 +150,12 @@
                          :history-symbol history-symbol))))
 
 (defun prompt-for-encodings (prompt &key history-symbol)
-  (let (encodings)
-    (maphash (lambda (x y)
-               (declare (ignore y))
-               (push (string-downcase x) encodings))
-             lem-base::*encoding-collections*)
+  (let ((encodings (encodings)))
     (let ((name (prompt-for-string
-                 (format nil "~A(~(~A~))" prompt lem-base::*default-external-format*)
+                 (format nil "~A(~(~A~))" prompt *default-external-format*)
                  :completion-function (lambda (str) (completion str encodings))
                  :test-function (lambda (encoding) (or (equal encoding "")
                                                        (find encoding encodings :test #'string=)))
                  :history-symbol history-symbol)))
-      (cond ((equal name "") lem-base::*default-external-format*)
+      (cond ((equal name "") *default-external-format*)
             (t (read-from-string (format nil ":~A" name)))))))

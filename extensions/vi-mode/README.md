@@ -38,3 +38,10 @@ Here's a list of all options currently implemented:
 * `number`: Boolean to show the line number.
   * Default: `nil` (don't show)
   * Aliases: `nu`
+
+## Unittests
+
+```
+qlot install
+.qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd
+```

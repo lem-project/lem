@@ -79,15 +79,15 @@
                              (lambda (c) (eql type (word-type c))))))
           :finally (return point))))
 
-(define-command (forward-word (:advice-classes movable-advice)) (n) ("p")
+(define-command (forward-word (:advice-classes movable-advice)) (n) (:universal)
   "Move to cursor to next word."
   (word-offset (current-point) n))
 
-(define-command (previous-word (:advice-classes movable-advice)) (n) ("p")
+(define-command (previous-word (:advice-classes movable-advice)) (n) (:universal)
   "Move to cursor to previous word"
   (word-offset (current-point) (- n)))
 
-(define-command (delete-word (:advice-classes editable-advice)) (n) ("p")
+(define-command (delete-word (:advice-classes editable-advice)) (n) (:universal)
   "Delete the next word."
   (with-point ((point (current-point) :right-inserting))
     (let ((start (current-point))
@@ -101,7 +101,7 @@
             (t
              (kill-region end start))))))
 
-(define-command (backward-delete-word (:advice-classes editable-advice)) (n) ("p")
+(define-command (backward-delete-word (:advice-classes editable-advice)) (n) (:universal)
   "Delete the previous word."
   (with-killring-context (:before-inserting t)
     (delete-word (- n))))
@@ -132,11 +132,11 @@
                    #'char-upcase
                    #'identity))
 
-(define-command downcase-region (start end) ("r")
+(define-command downcase-region (start end) (:region)
   "Replaces the selected region with a downcase."
   (case-region-aux start end #'char-downcase #'identity))
 
-(define-command uppercase-region (start end) ("r")
+(define-command uppercase-region (start end) (:region)
   "Replaces the selected region with a uppercase."
   (case-region-aux start end #'char-upcase #'identity))
 
@@ -157,19 +157,19 @@
                          replace-char-p)
         (move-point point end)))))
 
-(define-command (capitalize-word (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+(define-command (capitalize-word (:advice-classes editable-advice)) (&optional (n 1)) (:universal)
   "Replace the following word with capital-case."
   (case-word-aux (current-point) n #'alphanumericp #'char-upcase #'char-downcase))
 
-(define-command (lowercase-word (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+(define-command (lowercase-word (:advice-classes editable-advice)) (&optional (n 1)) (:universal)
   "Replace the following word with lowercase."
   (case-word-aux (current-point) n #'alphanumericp #'char-downcase #'char-downcase))
 
-(define-command (uppercase-word (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+(define-command (uppercase-word (:advice-classes editable-advice)) (&optional (n 1)) (:universal)
   "Replace the following word with uppercase."
   (case-word-aux (current-point) n #'alphanumericp #'char-upcase #'char-upcase))
 
-(define-command (forward-paragraph (:advice-classes movable-advice)) (&optional (n 1)) ("p")
+(define-command (forward-paragraph (:advice-classes movable-advice)) (&optional (n 1)) (:universal)
   "Move cursor to forward paragraph."
   (let ((point (current-point))
         (dir (if (plusp n) 1 -1)))
@@ -182,11 +182,11 @@
                   (when (plusp dir) (buffer-end point))
                   (return-from forward-paragraph))))))
 
-(define-command (backward-paragraph (:advice-classes movable-advice)) (&optional (n 1)) ("p")
+(define-command (backward-paragraph (:advice-classes movable-advice)) (&optional (n 1)) (:universal)
   "Move cursor to backward paragraph."
   (forward-paragraph (- n)))
 
-(define-command (kill-paragraph (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+(define-command (kill-paragraph (:advice-classes editable-advice)) (&optional (n 1)) (:universal)
   "Kill the forward paragraph."
   (dotimes (_ n t)
     (with-point ((start (current-point) :right-inserting))

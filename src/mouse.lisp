@@ -129,6 +129,9 @@
     (:button-4
      (buffer-undo (current-point)))))
 
+(defmethod handle-mouse-button-up (buffer mouse-event &key window)
+  (declare (ignore window)))
+
 (defmethod handle-mouse-event ((mouse-event mouse-button-down))
   (multiple-value-bind (kind first-window second-window)
       (focus-separator-position (current-frame)
@@ -173,11 +176,13 @@
 
 (defmethod handle-mouse-event ((mouse-event mouse-button-up))
   (setf *last-dragged-separator* nil)
-  (let ((window (focus-window-position (current-frame)
-                                       (mouse-event-x mouse-event)
-                                       (mouse-event-y mouse-event))))
-    (cond (window
-           (setf (window-last-mouse-button-down-point window) nil)))))
+  (alexandria:when-let ((window (focus-window-position (current-frame)
+                                                       (mouse-event-x mouse-event)
+                                                       (mouse-event-y mouse-event))))
+    (setf (window-last-mouse-button-down-point window) nil)
+    (handle-mouse-button-up (window-buffer window)
+                            mouse-event
+                            :window window)))
 
 (defun find-overlay-that-can-hover (point)
   (dolist (overlay (point-overlays point))

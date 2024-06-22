@@ -1,5 +1,5 @@
 (defpackage :lem-scheme-syntax.data
-  (:use :cl :lem-base)
+  (:use :cl :lem)
   (:export :get-scheme-completion-data
            :get-scheme-highlight-data
            :get-scheme-indentation-data))
@@ -44,6 +44,7 @@
     ;; == part 1 ==
     ("begin"                          t   t   0)
     ("case"                           t   t   (4 &rest (&whole 2 &rest 1)))
+    ("def"                            t   t   1)
     ("define"                         t   t   1)
     ("define-library"                 t   t   1)
     ("define-record-type"             t   t   3)
@@ -166,4 +167,3 @@
                   (cons name indent)
                   (list name indent))))
           (remove-if-not #'fourth *scheme-data*)))
-

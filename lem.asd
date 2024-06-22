@@ -195,7 +195,8 @@
                #+sbcl
                "lem-elixir-mode"
                "lem-documentation-mode"
-               "lem-elisp-mode"))
+               "lem-elisp-mode"
+               "lem-lua-mode"))
 
 (defsystem "lem/legit"
   :serial t

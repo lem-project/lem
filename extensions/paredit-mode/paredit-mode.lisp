@@ -11,9 +11,13 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            :paredit-insert-paren
            :paredit-insert-doublequote
            :paredit-insert-vertical-line
+           :paredit-insert-bracket
+           :paredit-insert-brace
            :paredit-backward-delete
            :paredit-forward-delete
            :paredit-close-parenthesis
+           :paredit-close-bracket
+           :paredit-close-brace
            :paredit-kill
            :paredit-slurp
            :paredit-barf

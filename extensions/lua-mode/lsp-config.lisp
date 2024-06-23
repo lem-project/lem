@@ -8,5 +8,5 @@
   ;; I have no idea what a correct file may identify a root of a Lua project
   :root-uri-patterns '(".git")
   :command '("lua-language-server")
-  :readme-url "https://github.com/elixir-lsp/elixir-ls"
+  :readme-url "https://github.com/luals/lua-language-server"
   :connection-mode :stdio)

@@ -596,7 +596,11 @@
    :*auto-format*
    :register-formatter
    :register-formatters
-   :format-buffer))
+   :format-buffer)
+  ;; site-init.lisp
+  (:export
+   :*inits-directory-name*
+   :load-site-init))
 #+sbcl
 (sb-ext:lock-package :lem-core)
 

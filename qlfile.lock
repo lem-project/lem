@@ -42,3 +42,7 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/jsonrpc.git")
   :version "git-bb3a536beb22112e544321dc7f3a8822413f9bac"))
+("lem-extension-manager" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/lem-extension-manager.git")
+  :version "git-34da6ca70ae10511481fae7fe10dc524e0257b37"))

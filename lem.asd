@@ -35,7 +35,8 @@
                ;; "lem-encodings"
                #+sbcl
                sb-concurrency
-               "lem-mailbox")
+               "lem-mailbox"
+               "lem-extension-manager")
   :pathname "src"
   :serial t
   :components ((:module "common"

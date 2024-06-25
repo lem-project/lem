@@ -251,7 +251,8 @@
                "lem-elisp-mode"
                "lem-markdown-mode"
                "lem-color-preview"
-               "lem-lua-mode"))
+               "lem-lua-mode"
+               "lem-terminal"))
 
 (defsystem "lem/legit"
   :serial t

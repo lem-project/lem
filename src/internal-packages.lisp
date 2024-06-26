@@ -379,7 +379,8 @@
    :all-command-names)
   ;; defcommand.lisp
   (:export
-   :define-command)
+   :define-command
+   :lambda-command)
   ;; mode.lisp
   (:export
    :ensure-mode-object

@@ -202,7 +202,8 @@
                              (:file "filer")
                              (:file "deepl")
                              (:file "themes")
-                             (:file "detective")))))
+                             (:file "detective")
+                             (:file "extension-commands")))))
 
 (defsystem "lem/extensions"
   :depends-on (#+sbcl

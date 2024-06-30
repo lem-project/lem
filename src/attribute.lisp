@@ -46,11 +46,11 @@
 
 (defun make-attribute (&key foreground background reverse bold underline plist)
   (make-instance 'attribute
-                 :foreground (or (maybe-base-color foreground) nil)
-                 :background (or (maybe-base-color background) nil)
+                 :foreground (or (ensure-color foreground) nil)
+                 :background (or (ensure-color background) nil)
                  :reverse reverse
                  :bold bold
-                 :underline (or (maybe-base-color underline) underline)
+                 :underline (or (ensure-color underline) underline)
                  :plist plist))
 
 (defun ensure-attribute (x &optional (errorp t))

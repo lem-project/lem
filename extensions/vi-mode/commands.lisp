@@ -91,7 +91,7 @@
            :vi-record-macro
            :vi-execute-macro
            :vi-execute-last-recorded-macro
-           :vi-move-to-matching-paren
+           :vi-move-to-matching-item
            :vi-search-forward
            :vi-search-backward
            :vi-search-next
@@ -359,9 +359,16 @@ Move the cursor to the first non-blank character of the line."
 (define-operator vi-delete (start end type) ("<R>")
     (:move-point nil)
   (when (point= start end)
-    (return-from vi-delete))
+    ;; 'dd' on the empty line at the end of a buffer deletes trailing newlines,
+    ;; but only if the buffer is not empty (i.e. cursor is not at the start of buffer)
+    (if (and (eq 'vi-delete (command-name (this-command)))
+             (not (this-motion-command))
+             (not (start-buffer-p end)))
+        (character-offset end -1)
+        (return-from vi-delete)))
   (let ((pos (point-charpos (current-point)))
-        (ends-with-newline (char= (character-at end -1) #\Newline))
+        (ends-with-newline (and (character-at end -1)
+                                (char= (character-at end -1) #\Newline)))
         (column-start (point-column start))
         (column-end (point-column end)))
     (delete-region start end :type type)
@@ -691,12 +698,23 @@ Move the cursor to the first non-blank character of the line."
   (when (syntax-closed-paren-char-p (character-at point))
     (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t)))
 
-(define-motion vi-move-to-matching-paren () ()
+(define-motion vi-move-to-matching-item (&optional n) (:universal-nil)
     (:type :inclusive
-     :jump t)
-  (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))
-                               (vi-forward-matching-paren (current-window) (current-point)))))
-    (move-point (current-point) p)))
+     :jump t
+     :default-n-arg nil)
+  (cond
+    ;; Argument n supplied (e.g. 10%) - move to line that represents n% of the buffer
+    (n 
+     (let* ((buffer-size (line-number-at-point (buffer-end-point (current-buffer))))
+            (new-line-pos (ceiling (* buffer-size n) 100)))
+       (goto-line new-line-pos)
+       (vi-move-to-beginning-of-line)
+       (skip-whitespace-forward (current-point) t)))
+    ;; No argument - move to matching paren
+    (t
+     (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))
+                                  (vi-forward-matching-paren  (current-window) (current-point)))))
+       (move-point (current-point) p)))))
 
 (let ((old-forward-matching-paren)
       (old-backward-matching-paren))

@@ -99,13 +99,9 @@
       (editor-condition (c)
         (restart-case (error c)
           (lem-restart:message ()
-            (typecase c
-              (editor-abort
-               (let ((message (princ-to-string c)))
-                 (unless (string= "" message)
-                   (message "~A" message))))
-              (otherwise
-               (message "~A" c))))
+            (let ((message (princ-to-string c)))
+              (unless (equal "" message)
+                (message "~A" message))))
           (lem-restart:call-function (fn)
             (funcall fn)))))))
 

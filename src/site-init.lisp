@@ -2,6 +2,7 @@
 
 (defvar *site-init-name* "lem-site-init")
 (defvar *site-init-comment ";; don't edit !!!")
+(defvar *inits-directory-name* "lisp")
 
 (defun site-init-path ()
   (let ((path (merge-pathnames (format nil "~A.asd"
@@ -15,12 +16,12 @@
               `(asdf:defsystem ,*site-init-name*)))
     path))
 
+(defun raw-init-files ()
+  (directory (merge-pathnames "inits/*.lisp" (lem-home))))
+
 (defun site-init-list-inits ()
-  (loop for i in (sort (mapcar #'pathname-name
-                               (directory (merge-pathnames "inits/*.lisp"
-                                                           (lem-home))))
-                       #'string<)
-     collect (list :file (format nil "inits/~A" i))))
+  (loop for i in (sort (mapcar #'pathname-name (raw-init-files)) #'string<)
+        collect (list :file (format nil "inits/~A" i))))
 
 (defun site-init ()
   (with-open-file (i (site-init-path))
@@ -46,11 +47,16 @@
 
 (defun load-site-init (&key force)
   (let* ((asdf:*central-registry*
-           (union (mapcar #'pathname
-                          (mapcar #'directory-namestring
-                                  (directory
-                                   (merge-pathnames "**/*.asd"
-                                                    (lem-home)))))
+           (union (remove-duplicates
+                   (mapcar #'pathname
+                           (mapcar #'directory-namestring
+                                   (directory
+                                    (merge-pathnames
+                                     "**/*.asd"
+                                     (pathname (str:concat
+                                                (directory-namestring (lem-home))
+                                                *inits-directory-name*
+                                                (string  (uiop:directory-separator-for-host)))))))))
                   asdf:*central-registry*
                   :test #'equal))
          (system-name *site-init-name*)

@@ -11,6 +11,7 @@
            :with-appending-source
            :with-collecting-sources
            :with-insert
+           :peek-legit-discard-file
            :peek-legit-next-header
            :peek-legit-next
            :peek-legit-select

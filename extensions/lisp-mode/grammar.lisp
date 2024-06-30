@@ -136,6 +136,17 @@
                              (make-tm-match
                               `(:sequence
                                 "("
+                                (:group :case-insensitive-p
+                                 (:register (:sequence "def" symbol)))
+                                (:alternation (:greedy-repetition 1 nil :whitespace-char-class)
+                                 :end-anchor)
+                                (:greedy-repetition 0 1 (:register symbol)))
+                              :captures (vector nil
+                                                (make-tm-name 'syntax-keyword-attribute)
+                                                (make-tm-name 'syntax-function-name-attribute)))
+                             (make-tm-match
+                              `(:sequence
+                                "("
                                 ,(wrap-symbol-names
                                   "defvar" "defparameter" "defconstant"
                                   "define-symbol-macro")

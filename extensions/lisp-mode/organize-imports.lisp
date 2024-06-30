@@ -125,3 +125,6 @@
 
 (define-command lisp-organize-imports (buffer) ((current-buffer))
   (remove-unused-import buffer))
+
+;; TODO:
+;; - exportするシンボルはimport-fromから除外してはならない

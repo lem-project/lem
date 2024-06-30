@@ -6,7 +6,8 @@
                "trivial-ws"
                "trivial-open-browser")
   :serial t
-  :components ((:file "languages")
+  :components ((:file "internal")
+               (:file "languages")
                (:file "syntax-parser")
                (:file "markdown-mode")
                (:file "preview")))

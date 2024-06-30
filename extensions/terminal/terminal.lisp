@@ -21,7 +21,9 @@
   *terminals*)
 
 (defclass terminal ()
-  ((id :initarg :id
+  ((timer :initarg :timer
+          :accessor terminal-timer)
+   (id :initarg :id
        :reader terminal-id)
    (viscus :initarg :viscus
            :reader terminal-viscus)
@@ -48,7 +50,16 @@
                           :viscus (ffi::terminal-new id rows cols)
                           :buffer buffer
                           :rows rows
-                          :cols cols)))
+                          :cols cols))
+         (timer
+           (make-idle-timer (lambda ()
+                              (ignore-errors
+                                (with-error-handler ()
+                                  (update terminal)
+                                  (render terminal))))
+                            :name (format nil "Terminal ~D" id))))
+    (setf (terminal-timer terminal) timer)
+    (start-timer timer 100 :repeat t)
     (push terminal *terminals*)
     terminal))
 
@@ -133,12 +144,14 @@
 (defmethod input-character ((terminal terminal) character)
   (ffi::terminal-input-char (terminal-viscus terminal)
                             (char-code character)
-                            0))
+                            0)
+  (run-update-timer terminal))
 
 (defmethod input-key ((terminal terminal) key)
   (ffi::terminal-input-key (terminal-viscus terminal)
                            key
-                           0))
+                           0)
+  (run-update-timer terminal))
 
 ;;; callbacks
 (defun damage (rect id)
@@ -174,3 +187,18 @@
                     :resize 'resize
                     :sb-pushline 'sb-pushline
                     :sb-popline 'sb-popline)
+
+;;; timer
+(defun call-with-error-handler (function)
+  (handler-bind ((error (lambda (c)
+                          (message "~A"
+                                   (with-output-to-string (out)
+                                     (uiop:println c out)
+                                     (uiop:print-backtrace :condition c :stream out))))))
+    (funcall function)))
+
+(defmacro with-error-handler (() &body body)
+  `(call-with-error-handler (lambda () ,@body)))
+
+(defun run-update-timer (terminal)
+  (start-timer (terminal-timer terminal) 0))

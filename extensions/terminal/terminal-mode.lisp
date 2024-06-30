@@ -18,40 +18,11 @@
 (defun (setf buffer-terminal) (terminal buffer)
   (setf (buffer-value buffer 'terminal) terminal))
 
-(defun buffer-timer (buffer)
-  (buffer-value buffer 'timer))
-
-(defun (setf buffer-timer) (timer buffer)
-  (setf (buffer-value buffer 'timer) timer))
-
-(defun call-with-error-handler (function)
-  (handler-bind ((error (lambda (c)
-                          (message "~A"
-                                   (with-output-to-string (out)
-                                     (uiop:println c out)
-                                     (uiop:print-backtrace :condition c :stream out))))))
-    (funcall function)))
-
-(defmacro with-error-handler (() &body body)
-  `(call-with-error-handler (lambda () ,@body)))
-
-(defvar *timer*
-  (make-idle-timer (lambda ()
-                     (dolist (terminal (terminal:terminals))
-                       (when (eq (current-buffer) (terminal::terminal-buffer terminal))
-                         (ignore-errors
-                           (with-error-handler ()
-                             (terminal:update terminal)
-                             (terminal:render terminal))))))
-                   :name "Terminal"))
-
 (defun make-terminal-buffer (buffer-name)
   (let* ((buffer (make-buffer buffer-name))
          (terminal (terminal:create :cols 80 :rows 24 :buffer buffer)))
     (change-buffer-mode buffer 'terminal-mode)
     (setf (buffer-terminal buffer) terminal)
-    (setf (buffer-timer buffer) *timer*)
-    (start-timer *timer* 10 :repeat t)
 
     (add-hook (variable-value 'kill-buffer-hook :buffer buffer) 'on-kill-buffer)
 
@@ -60,10 +31,7 @@
 (defun on-kill-buffer (buffer)
   (let ((terminal (buffer-terminal buffer)))
     (when terminal
-      (terminal:destroy terminal)))
-  (let ((timer (buffer-timer buffer)))
-    (when timer
-      (stop-timer timer))))
+      (terminal:destroy terminal))))
 
 (define-command terminal () ()
   (let ((buffer (make-terminal-buffer "*terminal*")))

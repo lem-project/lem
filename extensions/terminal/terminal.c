@@ -196,7 +196,7 @@ void terminal_input_key(struct terminal *terminal, VTermKey key,
   vterm_keyboard_key(terminal->vterm, key, mod);
 }
 
-void terminal_process_input_nonblock(struct terminal *terminal)
+bool terminal_process_input_nonblock(struct terminal *terminal)
 {
   int fd = terminal->fd;
   fd_set readfds;
@@ -208,8 +208,10 @@ void terminal_process_input_nonblock(struct terminal *terminal)
     ssize_t size = read(fd, buf, sizeof(buf));
     if (size > 0) {
       vterm_input_write(terminal->vterm, buf, size);
+      return true;
     }
   }
+  return false;
 }
 
 void terminal_process_input(struct terminal *terminal)

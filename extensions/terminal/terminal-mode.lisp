@@ -35,21 +35,23 @@
 (defmacro with-error-handler (() &body body)
   `(call-with-error-handler (lambda () ,@body)))
 
+(defvar *timer*
+  (make-idle-timer (lambda ()
+                     (dolist (terminal (terminal:terminals))
+                       (when (eq (current-buffer) (terminal::terminal-buffer terminal))
+                         (ignore-errors
+                           (with-error-handler ()
+                             (terminal:update terminal)
+                             (terminal:render terminal))))))
+                   :name "Terminal"))
+
 (defun make-terminal-buffer (buffer-name)
   (let* ((buffer (make-buffer buffer-name))
          (terminal (terminal:create :cols 80 :rows 24 :buffer buffer)))
     (change-buffer-mode buffer 'terminal-mode)
     (setf (buffer-terminal buffer) terminal)
-
-    (let ((timer
-            (make-idle-timer (lambda ()
-                               (ignore-errors
-                                 (with-error-handler ()
-                                   (terminal:update terminal)
-                                   (terminal:render terminal))))
-                             :name "Terminal")))
-      (setf (buffer-timer buffer) timer)
-      (start-timer timer 100 :repeat t))
+    (setf (buffer-timer buffer) *timer*)
+    (start-timer *timer* 10 :repeat t)
 
     (add-hook (variable-value 'kill-buffer-hook :buffer buffer) 'on-kill-buffer)
 

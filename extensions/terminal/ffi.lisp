@@ -49,9 +49,31 @@
 (defconstant VTERM_KEY_MAX 530)
 (defconstant VTERM_N_KEYS 530)
 
-(cffi:defcfun ("terminal_new" terminal-new) :pointer
+(cffi:defcfun ("terminal_new" %terminal-new) :pointer
+  (id :int)
   (rows :int)
-  (cols :int))
+  (cols :int)
+  (cb_damage :pointer)
+  (cb_moverect :pointer)
+  (cb_movecursor :pointer)
+  (cb_settermprop :pointer)
+  (cb_bell :pointer)
+  (cb_resize :pointer)
+  (cb_sb_pushline :pointer)
+  (cb_sb_popline :pointer))
+
+(defun terminal-new (id rows cols)
+  (%terminal-new id
+                 rows
+                 cols
+                 (cffi:callback cb-damage)
+                 (cffi:callback cb-moverect)
+                 (cffi:callback cb-movecursor)
+                 (cffi:callback cb-settermprop)
+                 (cffi:callback cb-bell)
+                 (cffi:callback cb-resize)
+                 (cffi:callback cb-sb-pushline)
+                 (cffi:callback cb-sb-popline)))
 
 (cffi:defcfun ("terminal_delete" terminal-delete) :void
   (terminal :pointer))
@@ -142,3 +164,99 @@
 
 (cffi:defcfun ("terminal_cursor_col" terminal-cursor-col) :int
   (terminal :pointer))
+
+(cffi:defcstruct vterm-rect
+  (start-row :int)
+  (start-col :int)
+  (end-row :int)
+  (end-col :int))
+
+(cffi:defcstruct vterm-pos
+  (row :int)
+  (col :int))
+
+(cffi:defcenum vterm-prop
+  (:VTERM_PROP_CURSORVISIBLE 1) ; bool
+  :VTERM_PROP_CURSORBLINK       ; bool
+  :VTERM_PROP_ALTSCREEN         ; bool
+  :VTERM_PROP_TITLE             ; string
+  :VTERM_PROP_ICONNAME          ; string
+  :VTERM_PROP_REVERSE           ; bool
+  :VTERM_PROP_CURSORSHAPE       ; number
+  :VTERM_PROP_MOUSE             ; number
+  :VTERM_PROP_FOCUSREPORT       ; bool
+  )
+
+(defvar *damage-callback* nil)
+(defvar *moverect-callback* nil)
+(defvar *movecursor-callback* nil)
+(defvar *settermprop-callback* nil)
+(defvar *bell-callback* nil)
+(defvar *resize-callback* nil)
+(defvar *sb-pushline-callback* nil)
+(defvar *sb-popline-callback* nil)
+
+(defun set-callbacks (&key damage
+                           moverect
+                           movecursor
+                           settermprop
+                           bell
+                           resize
+                           sb-pushline
+                           sb-popline)
+  (setf *damage-callback* damage
+        *moverect-callback* moverect
+        *movecursor-callback* movecursor
+        *settermprop-callback* settermprop
+        *bell-callback* bell
+        *resize-callback* resize
+        *sb-pushline-callback* sb-pushline
+        *sb-popline-callback* sb-popline)
+  (values))
+
+(cffi:defcallback cb-damage :int ((rect (:pointer (:struct vterm-rect))) (id :int))
+  (when *damage-callback*
+    (funcall *damage-callback* rect id))
+  0)
+
+(cffi:defcallback cb-moverect :int ((dest (:pointer (:struct vterm-rect)))
+                                    (src (:pointer (:struct vterm-rect)))
+                                    (id :int))
+  (when *moverect-callback*
+    (funcall *moverect-callback* dest src id))
+  0)
+
+(cffi:defcallback cb-movecursor :int ((pos (:pointer (:struct vterm-pos)))
+                                      (oldpos (:pointer (:struct vterm-pos)))
+                                      (visible :int)
+                                      (id :int))
+  (when *movecursor-callback*
+    (funcall *movecursor-callback* pos oldpos visible id))
+  0)
+
+(cffi:defcallback cb-settermprop :int ((prop vterm-prop)
+                                       (val :pointer)
+                                       (id :int))
+  (when *settermprop-callback*
+    (funcall *settermprop-callback* prop val id))
+  0)
+
+(cffi:defcallback cb-bell :int ((id :int))
+  (when *bell-callback*
+    (funcall *bell-callback* id))
+  0)
+
+(cffi:defcallback cb-resize :int ((rows :int) (cols :int) (id :int))
+  (when *resize-callback*
+    (funcall *resize-callback* rows cols id))
+  0)
+
+(cffi:defcallback cb-sb-pushline :int ((cols :int) (cells :pointer) (id :int))
+  (when *sb-pushline-callback*
+    (funcall *sb-pushline-callback* cols cells id))
+  0)
+
+(cffi:defcallback cb-sb-popline :int ((cols :int) (cells :pointer) (id :int))
+  (when *sb-popline-callback*
+    (funcall *sb-popline-callback* cols cells id))
+  0)

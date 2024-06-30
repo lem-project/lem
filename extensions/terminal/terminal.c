@@ -36,55 +36,85 @@ static run_shell_result run_shell(int rows, int cols, const char *program)
 
 ///
 struct terminal {
+  int id;
   VTerm *vterm;
   VTermScreen *screen;
   int fd;
   VTermScreenCell lastCell;
   VTermPos cursorPos;
   int cursorVisible;
+
+  int (*cb_damage)(VTermRect *rect, int id);
+  int (*cb_moverect)(VTermRect *dest, VTermRect *src, int id);
+  int (*cb_movecursor)(VTermPos *pos, VTermPos *oldpos, int visible, int id);
+  int (*cb_settermprop)(VTermProp prop, VTermValue *val, int id);
+  int (*cb_bell)(int id);
+  int (*cb_resize)(int rows, int cols, int id);
+  int (*cb_sb_pushline)(int cols, const VTermScreenCell *cells, int id);
+  int (*cb_sb_popline)(int cols, VTermScreenCell *cells, int id);
+  int (*cb_sb_clear)(int id); // TODO
 };
 
-static int cb_damage(VTermRect rect, void *terminal)
+static int cb_damage(VTermRect rect, void *user)
 {
+  struct terminal *terminal = ((struct terminal *)user);
+  terminal->cb_damage(&rect, terminal->id);
   return 0;
 }
 
-static int cb_moverect(VTermRect dest, VTermRect src, void *terminal)
+static int cb_moverect(VTermRect dest, VTermRect src, void *user)
 {
+  struct terminal *terminal = ((struct terminal *)user);
+  terminal->cb_moverect(&dest, &src, terminal->id);
   return 0;
 }
 
 static int cb_movecursor(VTermPos pos, VTermPos oldpos, int visible,
-			 void *terminal)
+			 void *user)
 {
-  ((struct terminal *) terminal)->cursorPos = pos;
-  ((struct terminal *) terminal)->cursorVisible = visible;
+  struct terminal *terminal = ((struct terminal *)user);
+
+  // TODO
+  terminal->cursorPos = pos;
+  terminal->cursorVisible = visible;
+
+  terminal->cb_movecursor(&pos, &oldpos, visible, terminal->id);
   return 0;
 }
 
-static int cb_settermprop(VTermProp prop, VTermValue *val, void *terminal)
+static int cb_settermprop(VTermProp prop, VTermValue *val, void *user)
 {
+  struct terminal *terminal = ((struct terminal *)user);
+  terminal->cb_settermprop(prop, val, terminal->id);
   return 0;
 }
 
-static int cb_bell(void *terminal)
+static int cb_bell(void *user)
 {
+  struct terminal *terminal = ((struct terminal *)user);
+  terminal->cb_bell(terminal->id);
   return 0;
 }
 
-static int cb_resize(int rows, int cols, void *terminal)
+static int cb_resize(int rows, int cols, void *user)
 {
+  struct terminal *terminal = ((struct terminal *)user);
+  terminal->cb_resize(rows, cols, terminal->id);
   return 0;
 }
 
 static int cb_sb_pushline(int cols, const VTermScreenCell *cells,
-			  void *terminal)
+			  void *user)
 {
+  struct terminal *terminal = ((struct terminal *)user);
+  terminal->cb_sb_pushline(cols, cells, terminal->id);
   return 0;
 }
 
-static int cb_sb_popline(int cols, VTermScreenCell *cells, void *terminal)
+static int cb_sb_popline(int cols, VTermScreenCell *cells, void *user)
 {
+  struct terminal *terminal = ((struct terminal *)user);
+  terminal->cb_sb_popline(cols, cells, terminal->id);
   return 0;
 }
 
@@ -105,7 +135,17 @@ VTermScreenCallbacks screen_callbacks = {
   cb_sb_popline,
 };
 
-struct terminal *terminal_new(int rows, int cols)
+struct terminal *terminal_new(int id,
+                              int rows,
+                              int cols,
+			      void *cb_damage,
+			      void *cb_moverect,
+			      void *cb_movecursor,
+			      void *cb_settermprop,
+			      void *cb_bell,
+			      void *cb_resize,
+			      void *cb_sb_pushline,
+                              void *cb_sb_popline)
 {
   run_shell_result result = run_shell(rows, cols, getenv("SHELL"));
 
@@ -118,9 +158,19 @@ struct terminal *terminal_new(int rows, int cols)
   if (terminal == NULL) {
     return NULL;
   }
+  terminal->id = id;
   terminal->screen = screen;
   terminal->vterm = vterm;
   terminal->fd = result.fd;
+
+  terminal->cb_damage = cb_damage;
+  terminal->cb_moverect = cb_moverect;
+  terminal->cb_movecursor = cb_movecursor;
+  terminal->cb_settermprop = cb_settermprop;
+  terminal->cb_bell = cb_bell;
+  terminal->cb_resize = cb_resize;
+  terminal->cb_sb_pushline = cb_sb_pushline;
+  terminal->cb_sb_popline = cb_sb_popline;
 
   vterm_output_set_callback(vterm, output_callback, (void *) terminal);
   vterm_screen_set_callbacks(screen, &screen_callbacks, terminal);

@@ -1,7 +1,8 @@
 (defpackage :lem-terminal/terminal
   (:use :cl :lem)
   (:local-nicknames (:ffi :lem-terminal/ffi))
-  (:export :create
+  (:export :terminals
+           :create
            :destroy
            :clear
            :render
@@ -15,6 +16,9 @@
 (defun generate-terminal-id () (incf *terminal-id-counter*))
 
 (defvar *terminals* '())
+
+(defun terminals ()
+  *terminals*)
 
 (defclass terminal ()
   ((id :initarg :id
@@ -71,11 +75,13 @@
                     :background background)))
 
 (defun get-cell-character (viscus)
-  (let* ((chars (ffi::terminal-last-cell-chars viscus))
-         (char (code-char (cffi:mem-ref chars :int 0))))
-    char))
+  (let ((chars (ffi::terminal-last-cell-chars viscus)))
+    (when chars
+      (let ((char (ignore-errors (code-char (cffi:mem-ref chars :uint32 0)))))
+        char))))
 
 (defstruct cell
+  width
   character
   attribute)
 
@@ -88,11 +94,12 @@
           :do (loop :for col :from 0 :below cols
                     :do (ffi::terminal-query-cell viscus col row)
                         (let ((char (get-cell-character viscus))
+                              (width (ffi::terminal-last-cell-width viscus))
                               (attribute (get-cell-attribute viscus)))
                           (setf (aref display row col)
-                                (if (char= char #\Nul)
-                                    (make-cell :character #\space :attribute attribute)
-                                    (make-cell :character char :attribute attribute))))))
+                                (if (eql char #\Nul)
+                                    (make-cell :width width :character #\space :attribute attribute)
+                                    (make-cell :width width :character char :attribute attribute))))))
     display))
 
 (defun %render (buffer display rows cols cursor-row cursor-col)
@@ -102,9 +109,10 @@
       (loop :for row :from 0 :below rows
             :do (loop :for col :from 0 :below cols
                       :do (let ((cell (aref display row col)))
-                            (insert-string point
-                                           (string (cell-character cell))
-                                           :attribute (cell-attribute cell))))
+                            (when (cell-character cell)
+                              (insert-string point
+                                             (string (cell-character cell))
+                                             :attribute (cell-attribute cell)))))
                 (insert-character point #\newline))
       (move-to-line point (1+ cursor-row))
       (line-offset point 0 cursor-col))))
@@ -134,10 +142,8 @@
 
 ;;; callbacks
 (defun damage (rect id)
-  (declare (ignore rect))
-  (let ((terminal (find-terminal-by-id id)))
-    (when terminal
-      )))
+  (declare (ignore rect id))
+  )
 
 (defun moverect (dest src id)
   (declare (ignore dest src id)))

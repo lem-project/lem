@@ -125,16 +125,16 @@
       (ffi::terminal-process-input (terminal-viscus terminal))
       (ffi::terminal-process-input-nonblock (terminal-viscus terminal))))
 
-(defmethod input-character ((terminal terminal) character)
+(defmethod input-character ((terminal terminal) character &key (mod 0))
   (ffi::terminal-input-char (terminal-viscus terminal)
                             (char-code character)
-                            0)
+                            mod)
   (run-update-timer terminal))
 
-(defmethod input-key ((terminal terminal) key)
+(defmethod input-key ((terminal terminal) key &key (mod 0))
   (ffi::terminal-input-key (terminal-viscus terminal)
                            key
-                           0)
+                           mod)
   (run-update-timer terminal))
 
 ;;; callbacks

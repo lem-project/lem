@@ -49,6 +49,11 @@
 (defconstant VTERM_KEY_MAX 530)
 (defconstant VTERM_N_KEYS 530)
 
+(defconstant VTERM_MOD_NONE #x00)
+(defconstant VTERM_MOD_SHIFT #x01)
+(defconstant VTERM_MOD_ALT #x02)
+(defconstant VTERM_MOD_CTRL #x04)
+
 (cffi:defcfun ("terminal_new" %terminal-new) :pointer
   (id :int)
   (rows :int)

@@ -34,7 +34,9 @@
     (when meta (write-string "M-" stream))
     (when ctrl (write-string "C-" stream))
     (when shift (write-string "Shift-" stream))
-    (write-string sym stream)))
+    (if (string= sym " ")
+        (write-string "Space" stream)
+        (write-string sym stream))))
 
 (defvar *key-constructor-cache* (make-hash-table :test 'equal))
 

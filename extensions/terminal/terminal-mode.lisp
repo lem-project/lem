@@ -47,8 +47,8 @@
 (defun (setf buffer-terminal) (terminal buffer)
   (setf (buffer-value buffer 'terminal) terminal))
 
-(defun make-terminal-buffer (buffer-name)
-  (let* ((buffer (make-buffer buffer-name))
+(defun make-terminal-buffer ()
+  (let* ((buffer (make-buffer (unique-buffer-name "*Terminal*")))
          (terminal (terminal:create :cols 80 :rows 24 :buffer buffer)))
     (setf (buffer-terminal buffer) terminal)
     (change-buffer-mode buffer 'terminal-mode)
@@ -61,7 +61,7 @@
       (terminal:destroy terminal))))
 
 (define-command terminal () ()
-  (let ((buffer (make-terminal-buffer "*terminal*")))
+  (let ((buffer (make-terminal-buffer)))
     (pop-to-buffer buffer)))
 
 (defun get-current-terminal ()

@@ -91,50 +91,34 @@
       (let ((char (ignore-errors (code-char (cffi:mem-ref chars :uint32 0)))))
         char))))
 
-(defstruct cell
-  width
-  character
-  attribute)
-
-(defmethod retrieve-display ((terminal terminal))
+(defmethod render ((terminal terminal))
   (let* ((viscus (terminal-viscus terminal))
          (rows (terminal-rows terminal))
          (cols (terminal-cols terminal))
-         (display (make-array (list rows cols))))
-    (loop :for row :from 0 :below rows
-          :do (loop :for col :from 0 :below cols
-                    :do (ffi::terminal-query-cell viscus col row)
-                        (let ((char (get-cell-character viscus))
-                              (width (ffi::terminal-last-cell-width viscus))
-                              (attribute (get-cell-attribute viscus)))
-                          (setf (aref display row col)
-                                (if (eql char #\Nul)
-                                    (make-cell :width width :character #\space :attribute attribute)
-                                    (make-cell :width width :character char :attribute attribute))))))
-    display))
-
-(defun %render (buffer display rows cols cursor-row cursor-col)
-  (let ((point (buffer-point buffer)))
+         (buffer (terminal-buffer terminal))
+         (point (buffer-point buffer)))
     (with-buffer-read-only buffer nil
       (erase-buffer buffer)
       (loop :for row :from 0 :below rows
-            :do (loop :for col :from 0 :below cols
-                      :do (let ((cell (aref display row col)))
-                            (when (cell-character cell)
-                              (insert-string point
-                                             (string (cell-character cell))
-                                             :attribute (cell-attribute cell)))))
-                (insert-character point #\newline))
-      (move-to-line point (1+ cursor-row))
-      (line-offset point 0 cursor-col))))
-
-(defmethod render ((terminal terminal))
-  (%render (terminal-buffer terminal)
-           (retrieve-display terminal)
-           (terminal-rows terminal)
-           (terminal-cols terminal)
-           (ffi::terminal-cursor-row (terminal-viscus terminal))
-           (ffi::terminal-cursor-col (terminal-viscus terminal))))
+            :do (loop :with previous-attribute := nil
+                      :and string := ""
+                      :for col :from 0 :below cols
+                      :do (ffi::terminal-query-cell viscus col row)
+                          (let ((char (get-cell-character viscus))
+                                (attribute (get-cell-attribute viscus)))
+                            (when char
+                              (unless (attribute-equal attribute previous-attribute)
+                                (insert-string point string :attribute previous-attribute)
+                                (setf previous-attribute attribute)
+                                (setf string ""))
+                              (setf string
+                                    (concatenate 'string
+                                                 string
+                                                 (string (if (eql char #\Nul) #\Space char))))))
+                      :finally (insert-string point string :attribute previous-attribute))
+                (insert-character point #\newline)))
+    (move-to-line point (1+ (ffi::terminal-cursor-row viscus)))
+    (move-to-column point (ffi::terminal-cursor-col viscus))))
 
 (defmethod update ((terminal terminal) &key with-block)
   (if with-block

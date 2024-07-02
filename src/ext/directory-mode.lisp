@@ -401,12 +401,12 @@
     (search-filename-and-recenter
      (concatenate
       'string
-      (elt
+      (car
        (reverse
         (split-sequence:split-sequence
          (uiop:directory-separator-for-host)
-         dir))
-       1)
+         dir
+         :remove-empty-subseqs t)))
       (string (uiop:directory-separator-for-host))))))
 
 (define-command directory-mode-find-file () ()

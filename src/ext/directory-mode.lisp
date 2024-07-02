@@ -653,6 +653,8 @@ With prefix argument ARG, unmark all those files."
   "Open this file's directory and place point on the filename."
   (let ((fullpath (buffer-filename)))
     (cond
+      ((mode-active-p (current-buffer) 'directory-mode)
+       (directory-mode-up-directory))
       ((null fullpath)
        (message "No file at point"))
       (t
@@ -678,3 +680,5 @@ This does not delete the marked entries, but only remove them from the buffer."
 (defmethod execute :after ((mode directory-mode) command argument)
   (when (mode-active-p (current-buffer) 'directory-mode)
     (update-line (current-point))))
+
+

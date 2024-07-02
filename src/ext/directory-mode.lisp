@@ -395,10 +395,19 @@
   (update (current-buffer)))
 
 (define-command directory-mode-up-directory () ()
-  (switch-to-buffer
-   (directory-buffer
-    (uiop:pathname-parent-directory-pathname
-     (buffer-directory)))))
+  (let ((dir (buffer-directory)))
+    (switch-to-buffer
+     (directory-buffer (uiop:pathname-parent-directory-pathname (buffer-directory))))
+    (search-filename-and-recenter
+     (concatenate
+      'string
+      (elt
+       (reverse
+        (split-sequence:split-sequence
+         (uiop:directory-separator-for-host)
+         dir))
+       1)
+      (string (uiop:directory-separator-for-host))))))
 
 (define-command directory-mode-find-file () ()
   (process-current-line-pathname 'find-file))

@@ -61,8 +61,9 @@
       (terminal:destroy terminal))))
 
 (define-command terminal () ()
-  (let ((buffer (make-terminal-buffer)))
-    (pop-to-buffer buffer)))
+  (let* ((buffer (make-terminal-buffer))
+         (window (pop-to-buffer buffer)))
+    (resize-terminal (buffer-terminal buffer) window)))
 
 (defun get-current-terminal ()
   (let ((terminal (buffer-terminal (current-buffer))))
@@ -160,18 +161,19 @@
     (otherwise
      (terminal-input))))
 
+(defun resize-terminal (terminal window)
+  (terminal:resize terminal
+                   :rows (1- (window-height window))
+                   :cols (1- (window-width window))))
+
 (define-command terminal-resize () ()
   (let ((terminal (get-current-terminal))
         (window (current-window)))
-    (terminal:resize terminal
-                     :rows (1- (window-height window))
-                     :cols (1- (window-width window)))))
+    (resize-terminal terminal window)))
 
 (defun on-window-size-change (window)
   (alexandria:when-let (terminal (buffer-terminal (window-buffer window)))
-    (terminal:resize terminal
-                     :rows (1- (window-height window))
-                     :cols (1- (window-width window)))))
+    (resize-terminal terminal window)))
 
 (add-hook *window-size-change-functions*
           'on-window-size-change)

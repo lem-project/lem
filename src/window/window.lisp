@@ -456,7 +456,8 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                         (window-view window)
                         width
                         (- height
-                           (if (window-use-modeline-p window) 1 0))))
+                           (if (window-use-modeline-p window) 1 0)))
+  (run-hooks *window-size-change-functions* window))
 
 (defun window-move (window dx dy)
   (window-set-pos window

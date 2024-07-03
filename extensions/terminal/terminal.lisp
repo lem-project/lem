@@ -56,7 +56,7 @@
            (make-idle-timer (lambda ()
                               (ignore-errors
                                 (with-error-handler ()
-                                  (update terminal)
+                                  (process-input terminal)
                                   (render terminal))))
                             :name (format nil "Terminal ~D" id))))
     (setf (terminal-timer terminal) timer)
@@ -121,7 +121,7 @@
     (move-to-line point (1+ (ffi::terminal-cursor-row viscus)))
     (move-to-column point (ffi::terminal-cursor-col viscus))))
 
-(defmethod update ((terminal terminal) &key with-block)
+(defmethod process-input ((terminal terminal) &key with-block)
   (if with-block
       (ffi::terminal-process-input (terminal-viscus terminal))
       (ffi::terminal-process-input-nonblock (terminal-viscus terminal))))

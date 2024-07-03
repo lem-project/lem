@@ -234,6 +234,12 @@ VTermScreenCell *terminal_query_cell(struct terminal *terminal, int x,
   VTermPos pos = { row: y, col:x };
   VTermScreenCell cell;
   vterm_screen_get_cell(terminal->screen, pos, &cell);
+  if (VTERM_COLOR_IS_INDEXED(&cell.fg)) {
+    vterm_screen_convert_color_to_rgb(terminal->screen, &cell.fg);
+  }
+  if (VTERM_COLOR_IS_INDEXED(&cell.bg)) {
+    vterm_screen_convert_color_to_rgb(terminal->screen, &cell.bg);
+  }
   terminal->lastCell = cell;
   return &terminal->lastCell;
 }

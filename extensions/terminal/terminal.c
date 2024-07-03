@@ -8,6 +8,7 @@
 #include <unistd.h>
 #include <sys/select.h>
 #include <vterm.h>
+#include <signal.h>
 
 ///
 typedef struct {
@@ -40,6 +41,7 @@ struct terminal {
   VTerm *vterm;
   VTermScreen *screen;
   int fd;
+  int pid;
   VTermScreenCell lastCell;
   VTermPos cursorPos;
   int cursorVisible;
@@ -162,6 +164,7 @@ struct terminal *terminal_new(int id,
   terminal->screen = screen;
   terminal->vterm = vterm;
   terminal->fd = result.fd;
+  terminal->pid = result.pid;
 
   terminal->cb_damage = cb_damage;
   terminal->cb_moverect = cb_moverect;
@@ -182,6 +185,7 @@ struct terminal *terminal_new(int id,
 void terminal_delete(struct terminal *terminal)
 {
   vterm_free(terminal->vterm);
+  free(terminal);
 }
 
 void terminal_input_char(struct terminal *terminal, uint32_t c,
@@ -342,6 +346,17 @@ int terminal_cursor_row(struct terminal *terminal)
 int terminal_cursor_col(struct terminal *terminal)
 {
   return terminal->cursorPos.col;
+}
+
+void terminal_resize(struct terminal *terminal, int rows, int cols)
+{
+  vterm_set_size(terminal->vterm, rows, cols);
+  vterm_screen_flush_damage(terminal->screen);
+
+  struct winsize win = { 0 };
+  win.ws_row = rows;
+  win.ws_col = cols;
+  ioctl(terminal->fd, TIOCSWINSZ, &win);
 }
 
 #if 0

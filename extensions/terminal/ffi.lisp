@@ -170,6 +170,11 @@
 (cffi:defcfun ("terminal_cursor_col" terminal-cursor-col) :int
   (terminal :pointer))
 
+(cffi:defcfun ("terminal_resize" terminal-resize) :void
+  (terminal :pointer)
+  (rows :int)
+  (cols :int))
+
 (cffi:defcstruct vterm-rect
   (start-row :int)
   (start-col :int)

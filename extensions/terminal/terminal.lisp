@@ -8,7 +8,8 @@
            :render
            :update
            :input-character
-           :input-key))
+           :input-key
+           :resize))
 (in-package :lem-terminal/terminal)
 
 (defvar *terminal-id-counter* 0)
@@ -137,40 +138,47 @@
                            mod)
   (run-update-timer terminal))
 
+(defmethod resize ((terminal terminal)
+                   &key (rows (alexandria:required-argument :rows))
+                        (cols (alexandria:required-argument :cols)))
+  (ffi::terminal-resize (terminal-viscus terminal) rows cols))
+
 ;;; callbacks
-(defun damage (rect id)
+(defun cb-damage (rect id)
   (declare (ignore rect id))
   )
 
-(defun moverect (dest src id)
+(defun cb-moverect (dest src id)
   (declare (ignore dest src id)))
 
-(defun movecursor (pos oldpos visible id)
+(defun cb-movecursor (pos oldpos visible id)
   (declare (ignore pos oldpos visible id)))
 
-(defun settermprop (prop val id)
+(defun cb-settermprop (prop val id)
   (declare (ignore prop val id)))
 
-(defun bell (id)
+(defun cb-bell (id)
   (declare (ignore id)))
 
-(defun resize (rows cols id)
-  (declare (ignore rows cols id)))
+(defun cb-resize (rows cols id)
+  (let ((terminal (find-terminal-by-id id)))
+    (setf (terminal-rows terminal) rows
+          (terminal-cols terminal) cols)))
 
-(defun sb-pushline (cols cells id)
+(defun cb-sb-pushline (cols cells id)
   (declare (ignore cols cells id)))
 
-(defun sb-popline (cols cells id)
+(defun cb-sb-popline (cols cells id)
   (declare (ignore cols cells id)))
 
-(ffi::set-callbacks :damage 'damage
-                    :moverect 'moverect
-                    :movecursor 'movecursor
-                    :settermprop 'settermprop
-                    :bell 'bell
-                    :resize 'resize
-                    :sb-pushline 'sb-pushline
-                    :sb-popline 'sb-popline)
+(ffi::set-callbacks :damage 'cb-damage
+                    :moverect 'cb-moverect
+                    :movecursor 'cb-movecursor
+                    :settermprop 'cb-settermprop
+                    :bell 'cb-bell
+                    :resize 'cb-resize
+                    :sb-pushline 'cb-sb-pushline
+                    :sb-popline 'cb-sb-popline)
 
 ;;; timer
 (defun call-with-error-handler (function)

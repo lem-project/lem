@@ -153,7 +153,25 @@
          delete-active-window
          select-buffer
          kill-buffer
-         find-file)
+         find-file
+         execute-command
+         terminal-resize)
      (call-next-method))
     (otherwise
      (terminal-input))))
+
+(define-command terminal-resize () ()
+  (let ((terminal (get-current-terminal))
+        (window (current-window)))
+    (terminal:resize terminal
+                     :rows (1- (window-height window))
+                     :cols (1- (window-width window)))))
+
+(defun on-window-size-change (window)
+  (alexandria:when-let (terminal (buffer-terminal (window-buffer window)))
+    (terminal:resize terminal
+                     :rows (1- (window-height window))
+                     :cols (1- (window-width window)))))
+
+(add-hook *window-size-change-functions*
+          'on-window-size-change)

@@ -138,10 +138,17 @@
                            mod)
   (run-update-timer terminal))
 
+(defun same-size-p (terminal rows cols)
+  (and (= (terminal-rows terminal) rows)
+       (= (terminal-cols terminal) cols)))
+
 (defmethod resize ((terminal terminal)
                    &key (rows (alexandria:required-argument :rows))
                         (cols (alexandria:required-argument :cols)))
-  (ffi::terminal-resize (terminal-viscus terminal) rows cols))
+  (unless (same-size-p terminal rows cols)
+    (setf (terminal-rows terminal) rows
+          (terminal-cols terminal) cols)
+    (ffi::terminal-resize (terminal-viscus terminal) rows cols)))
 
 ;;; callbacks
 (defun cb-damage (rect id)

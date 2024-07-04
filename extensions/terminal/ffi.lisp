@@ -93,6 +93,9 @@
   (key :int)
   (mod :int))
 
+(cffi:defcfun ("terminal_process_input_wait" terminal-process-input-wait) :void
+  (terminal :pointer))
+
 (cffi:defcfun ("terminal_process_input_nonblock" terminal-process-input-nonblock) :bool
   (terminal :pointer))
 

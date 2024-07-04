@@ -206,6 +206,15 @@ void terminal_input_key(struct terminal *terminal, VTermKey key,
   vterm_keyboard_key(terminal->vterm, key, mod);
 }
 
+void terminal_process_input_wait(struct terminal *terminal)
+{
+  int fd = terminal->fd;
+  fd_set readfds;
+  FD_ZERO(&readfds);
+  FD_SET(fd, &readfds);
+  select(fd + 1, &readfds, NULL, NULL, NULL);
+}
+
 bool terminal_process_input_nonblock(struct terminal *terminal)
 {
   int fd = terminal->fd;

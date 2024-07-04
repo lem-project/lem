@@ -22,12 +22,12 @@
   *terminals*)
 
 (defclass terminal ()
-  ((timer :initarg :timer
-          :accessor terminal-timer)
-   (id :initarg :id
+  ((id :initarg :id
        :reader terminal-id)
    (viscus :initarg :viscus
            :reader terminal-viscus)
+   (thread :initarg :thread
+           :accessor terminal-thread)
    (buffer :initarg :buffer
            :reader terminal-buffer)
    (rows :initarg :rows
@@ -41,6 +41,11 @@
 (defun remove-terminal (terminal)
   (alexandria:deletef *terminals* terminal))
 
+(defun update (terminal)
+  (process-input terminal)
+  (render terminal)
+  (redraw-display))
+
 (defun create (&key (rows (alexandria:required-argument :rows))
                     (cols (alexandria:required-argument :cols))
                     (buffer (alexandria:required-argument :buffer)))
@@ -51,20 +56,25 @@
                           :viscus (ffi::terminal-new id rows cols)
                           :buffer buffer
                           :rows rows
-                          :cols cols))
-         (timer
-           (make-idle-timer (lambda ()
-                              (ignore-errors
-                                (with-error-handler ()
-                                  (process-input terminal)
-                                  (render terminal))))
-                            :name (format nil "Terminal ~D" id))))
-    (setf (terminal-timer terminal) timer)
-    (start-timer timer 100 :repeat t)
+                          :cols cols)))
+    (let ((queue (lem/common/queue:make-concurrent-queue)))
+      (setf (terminal-thread terminal)
+            (bt2:make-thread
+             (lambda ()
+               (loop
+                 (ffi::terminal-process-input-wait (terminal-viscus terminal))
+                 (send-event
+                  (lambda ()
+                    ;; XXX: If this place is executed at the time the terminal is deleted, an error will occur.
+                    (ignore-errors (update terminal))
+                    (lem/common/queue:enqueue queue 1)))
+                 (lem/common/queue:dequeue queue)))
+             :name (format nil "Terminal ~D" id))))
     (push terminal *terminals*)
     terminal))
 
 (defmethod destroy ((terminal terminal))
+  (bt2:destroy-thread (terminal-thread terminal))
   (remove-terminal terminal)
   (ffi::terminal-delete (terminal-viscus terminal)))
 
@@ -121,22 +131,18 @@
     (move-to-line point (1+ (ffi::terminal-cursor-row viscus)))
     (move-to-column point (ffi::terminal-cursor-col viscus))))
 
-(defmethod process-input ((terminal terminal) &key with-block)
-  (if with-block
-      (ffi::terminal-process-input (terminal-viscus terminal))
-      (ffi::terminal-process-input-nonblock (terminal-viscus terminal))))
+(defmethod process-input ((terminal terminal))
+  (ffi::terminal-process-input-nonblock (terminal-viscus terminal)))
 
 (defmethod input-character ((terminal terminal) character &key (mod 0))
   (ffi::terminal-input-char (terminal-viscus terminal)
                             (char-code character)
-                            mod)
-  (run-update-timer terminal))
+                            mod))
 
 (defmethod input-key ((terminal terminal) key &key (mod 0))
   (ffi::terminal-input-key (terminal-viscus terminal)
                            key
-                           mod)
-  (run-update-timer terminal))
+                           mod))
 
 (defun same-size-p (terminal rows cols)
   (and (= (terminal-rows terminal) rows)
@@ -186,18 +192,3 @@
                     :resize 'cb-resize
                     :sb-pushline 'cb-sb-pushline
                     :sb-popline 'cb-sb-popline)
-
-;;; timer
-(defun call-with-error-handler (function)
-  (handler-bind ((error (lambda (c)
-                          (message "~A"
-                                   (with-output-to-string (out)
-                                     (uiop:println c out)
-                                     (uiop:print-backtrace :condition c :stream out))))))
-    (funcall function)))
-
-(defmacro with-error-handler (() &body body)
-  `(call-with-error-handler (lambda () ,@body)))
-
-(defun run-update-timer (terminal)
-  (start-timer (terminal-timer terminal) 0))

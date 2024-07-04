@@ -43,8 +43,9 @@
 
 (defun update (terminal)
   (process-input terminal)
-  (render terminal)
-  (redraw-display))
+  (when (= 0 (event-queue-length))
+    (render terminal)
+    (redraw-display)))
 
 (defun create (&key (rows (alexandria:required-argument :rows))
                     (cols (alexandria:required-argument :cols))

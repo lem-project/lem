@@ -1,14 +1,20 @@
-// gcc terminal.c /usr/lib/x86_64-linux-gnu/libvterm.so
 // gcc terminal.c /usr/lib/x86_64-linux-gnu/libvterm.so -o terminal.so -shared -fPIC
+// gcc terminal.c -I/opt/homebrew/include -L/opt/homebrew/lib -lvterm -o terminal.so -shared -fPIC
 
 #include <stdio.h>
-#include <pty.h>
 #include <assert.h>
 #include <string.h>
 #include <unistd.h>
 #include <sys/select.h>
 #include <vterm.h>
 #include <signal.h>
+
+#ifdef __APPLE__
+  #include <util.h>
+  #include <sys/ioctl.h>
+#else
+  #include <pty.h>
+#endif
 
 ///
 typedef struct {

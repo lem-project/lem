@@ -2,7 +2,11 @@
   (:use :cl))
 (in-package :lem-terminal/ffi)
 
-(pushnew (asdf:system-source-directory :lem-terminal)
+(pushnew (asdf:system-relative-pathname
+          :lem-terminal (format nil
+                                "~(lib/~A/~A/~)"
+                                (uiop:operating-system)
+                                (uiop:architecture)))
          cffi:*foreign-library-directories*
          :test #'uiop:pathname-equal)
 

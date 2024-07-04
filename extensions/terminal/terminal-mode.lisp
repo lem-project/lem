@@ -8,7 +8,8 @@
     (:name "Terminal"
      :keymap *terminal-mode-keymap*)
   (setf (buffer-read-only-p (current-buffer)) t)
-  (setf (variable-value 'highlight-line :buffer (current-buffer)) nil))
+  (setf (variable-value 'highlight-line :buffer (current-buffer)) nil)
+  (setf (variable-value 'line-wrap :buffer (current-buffer)) nil))
 
 (define-key *terminal-mode-keymap* 'self-insert 'terminal-input)
 (define-key *terminal-mode-keymap* 'undefined-key 'terminal-input)

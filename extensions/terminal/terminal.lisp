@@ -2,6 +2,7 @@
   (:use :cl :lem)
   (:local-nicknames (:ffi :lem-terminal/ffi))
   (:export :terminals
+           :terminal-buffer
            :create
            :destroy
            :clear

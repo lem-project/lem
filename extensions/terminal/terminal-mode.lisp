@@ -61,10 +61,16 @@
     (when terminal
       (terminal:destroy terminal))))
 
+(defun find-terminal-buffer ()
+  (alexandria:when-let (terminal (first (terminal:terminals)))
+    (terminal::terminal-buffer terminal)))
+
 (define-command terminal () ()
-  (let* ((buffer (make-terminal-buffer))
-         (window (pop-to-buffer buffer)))
-    (resize-terminal (buffer-terminal buffer) window)))
+  (alexandria:if-let (buffer (find-terminal-buffer))
+    (setf (current-window) (pop-to-buffer buffer))
+    (let* ((buffer (make-terminal-buffer))
+           (window (pop-to-buffer buffer)))
+      (resize-terminal (buffer-terminal buffer) window))))
 
 (defun get-current-terminal ()
   (let ((terminal (buffer-terminal (current-buffer))))

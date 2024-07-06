@@ -14,34 +14,6 @@
 (define-key *terminal-mode-keymap* 'self-insert 'terminal-input)
 (define-key *terminal-mode-keymap* 'undefined-key 'terminal-input)
 
-#+(or)
-(loop :for code :from 1 :to 255
-      :when (graphic-char-p (code-char code))
-      :do (define-key *terminal-mode-keymap*
-            (princ-to-string (make-key :sym (string (code-char code))))
-            'terminal-input)
-          (define-key *terminal-mode-keymap*
-            (princ-to-string (make-key :sym (string (code-char code)) :ctrl t))
-            'terminal-input)
-          (define-key *terminal-mode-keymap*
-            (princ-to-string (make-key :sym (string (code-char code)) :meta t))
-            'terminal-input)
-          (define-key *terminal-mode-keymap*
-            (princ-to-string (make-key :sym (string (code-char code)) :shift t))
-            'terminal-input)
-          (define-key *terminal-mode-keymap*
-            (princ-to-string (make-key :sym (string (code-char code)) :ctrl t :meta t))
-            'terminal-input)
-          (define-key *terminal-mode-keymap*
-            (princ-to-string (make-key :sym (string (code-char code)) :ctrl t :shift t))
-            'terminal-input)
-          (define-key *terminal-mode-keymap*
-            (princ-to-string (make-key :sym (string (code-char code)) :meta t :shift t))
-            'terminal-input)
-          (define-key *terminal-mode-keymap*
-            (princ-to-string (make-key :sym (string (code-char code)) :ctrl t :meta t :shift t))
-            'terminal-input))
-
 (defun buffer-terminal (buffer)
   (buffer-value buffer 'terminal))
 

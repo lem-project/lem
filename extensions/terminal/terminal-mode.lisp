@@ -55,9 +55,7 @@
       (resize-terminal (buffer-terminal buffer) window))))
 
 (defun get-current-terminal ()
-  (let ((terminal (buffer-terminal (current-buffer))))
-    (assert terminal)
-    terminal))
+  (buffer-terminal (current-buffer)))
 
 (define-command terminal-input () ()
   (let ((terminal (get-current-terminal))
@@ -133,8 +131,13 @@
 (define-terminal-key-command terminal-key-f11 "F11" (+ 11 ffi::vterm_key_function_0))
 (define-terminal-key-command terminal-key-f12 "F12" (+ 12 ffi::vterm_key_function_0))
 
+(defun adjust-current-point ()
+  (alexandria:if-let ((terminal (get-current-terminal)))
+    (terminal:adjust-point terminal)))
+
 (define-command terminal-copy-mode-off () ()
-  (terminal-mode))
+  (terminal-mode)
+  (adjust-current-point))
 
 (defmethod execute ((mode terminal-mode) command argment)
   (if (string= "TERMINAL-COPY-MODE" (lem:command-name command))

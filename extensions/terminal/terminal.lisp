@@ -11,7 +11,8 @@
            :update
            :input-character
            :input-key
-           :resize))
+           :resize
+           :adjust-point))
 (in-package :lem-terminal/terminal)
 
 ;;; id generator
@@ -148,6 +149,13 @@
                                                  (string (if (eql char #\Nul) #\Space char))))))
                       :finally (insert-string point string :attribute previous-attribute))
                 (insert-character point #\newline)))
+    (move-to-line point (1+ (ffi::terminal-cursor-row viscus)))
+    (move-to-column point (ffi::terminal-cursor-col viscus))))
+
+(defmethod adjust-point ((terminal terminal))
+  (let* ((buffer (terminal-buffer terminal))
+         (point (buffer-point buffer))
+         (viscus (terminal-viscus terminal)))
     (move-to-line point (1+ (ffi::terminal-cursor-row viscus)))
     (move-to-column point (ffi::terminal-cursor-col viscus))))
 

@@ -10,6 +10,7 @@
   (setf (buffer-read-only-p (current-buffer)) t)
   (setf (variable-value 'highlight-line :buffer (current-buffer)) nil)
   (setf (variable-value 'line-wrap :buffer (current-buffer)) nil)
+  (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer)) 'on-kill-buffer)
   (alexandria:when-let (terminal (get-current-terminal))
     (terminal:copy-mode-off terminal)))
 
@@ -19,6 +20,7 @@
   (setf (buffer-read-only-p (current-buffer)) t)
   (setf (variable-value 'highlight-line :buffer (current-buffer)) nil)
   (setf (variable-value 'line-wrap :buffer (current-buffer)) nil)
+  (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer)) 'on-kill-buffer)
   (alexandria:when-let (terminal (get-current-terminal))
     (terminal:copy-mode-on terminal)))
 
@@ -38,7 +40,6 @@
          (terminal (terminal:create :cols 80 :rows 24 :buffer buffer)))
     (setf (buffer-terminal buffer) terminal)
     (change-buffer-mode buffer 'terminal-mode)
-    (add-hook (variable-value 'kill-buffer-hook :buffer buffer) 'on-kill-buffer)
     buffer))
 
 (defun on-kill-buffer (buffer)

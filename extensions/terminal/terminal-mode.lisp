@@ -4,6 +4,21 @@
   (:local-nicknames (:terminal :lem-terminal/terminal)))
 (in-package :lem-terminal/terminal-mode)
 
+;; FIXME: Think of a better name
+(defvar *bypass-commands*
+  '(next-window
+    previous-window
+    split-active-window-vertically
+    split-active-window-horizontally
+    delete-other-windows
+    delete-active-window
+    select-buffer
+    kill-buffer
+    find-file
+    execute-command
+    terminal-resize
+    terminal-copy-mode-on))
+
 (define-major-mode terminal-mode ()
     (:name "Terminal"
      :keymap *terminal-mode-keymap*)
@@ -145,22 +160,9 @@
   (adjust-current-point))
 
 (defmethod execute ((mode terminal-mode) command argment)
-  (typecase command
-    ((or next-window
-         previous-window
-         split-active-window-vertically
-         split-active-window-horizontally
-         delete-other-windows
-         delete-active-window
-         select-buffer
-         kill-buffer
-         find-file
-         execute-command
-         terminal-resize
-         terminal-copy-mode-on)
-     (call-next-method))
-    (otherwise
-     (terminal-input))))
+  (if (member command *bypass-commands* :test #'typep)
+      (call-next-method)
+      (terminal-input)))
 
 (defun resize-terminal (terminal window)
   (terminal:resize terminal

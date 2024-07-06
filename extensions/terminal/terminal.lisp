@@ -1,8 +1,7 @@
-(defpackage :lem-terminal/terminal
+(uiop:define-package :lem-terminal/terminal
   (:use :cl :lem)
   (:local-nicknames (:ffi :lem-terminal/ffi))
-  (:export :terminals
-           :terminal-buffer
+  (:export :find-terminal-buffer
            :create
            :destroy
            :copy-mode-on
@@ -15,15 +14,29 @@
            :resize))
 (in-package :lem-terminal/terminal)
 
+;;; id generator
 (defvar *terminal-id-counter* 0)
 
-(defun generate-terminal-id () (incf *terminal-id-counter*))
+(defun generate-terminal-id ()
+  (incf *terminal-id-counter*))
 
+;;; terminals
 (defvar *terminals* '())
 
-(defun terminals ()
-  *terminals*)
+(defun add-terminal (terminal)
+  (push terminal *terminals*))
 
+(defun find-terminal-by-id (id)
+  (find id *terminals* :key #'terminal-id))
+
+(defun remove-terminal (terminal)
+  (alexandria:deletef *terminals* terminal))
+
+(defun find-terminal-buffer ()
+  (alexandria:when-let (terminal (first *terminals*))
+    (terminal-buffer terminal)))
+
+;;; terminal
 (defclass terminal ()
   ((id :initarg :id
        :reader terminal-id)
@@ -39,12 +52,6 @@
          :accessor terminal-cols)
    (copy-mode :initform nil
               :accessor terminal-copy-mode)))
-
-(defun find-terminal-by-id (id)
-  (find id *terminals* :key #'terminal-id))
-
-(defun remove-terminal (terminal)
-  (alexandria:deletef *terminals* terminal))
 
 (defun update (terminal)
   (process-input terminal)
@@ -77,7 +84,7 @@
                     (lem/common/queue:enqueue queue 1)))
                  (lem/common/queue:dequeue queue)))
              :name (format nil "Terminal ~D" id))))
-    (push terminal *terminals*)
+    (add-terminal terminal)
     terminal))
 
 (defmethod destroy ((terminal terminal))
@@ -171,8 +178,7 @@
 
 ;;; callbacks
 (defun cb-damage (rect id)
-  (declare (ignore rect id))
-  )
+  (declare (ignore rect id)))
 
 (defun cb-moverect (dest src id)
   (declare (ignore dest src id)))

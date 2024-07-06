@@ -24,8 +24,8 @@
 
 (define-key *terminal-mode-keymap* 'self-insert 'terminal-input)
 (define-key *terminal-mode-keymap* 'undefined-key 'terminal-input)
-(define-key *terminal-mode-keymap* "C-x \\" 'terminal-copy-mode)
-(define-key *terminal-copy-mode-keymap* "C-x \\" 'terminal-copy-mode-off)
+(define-key *terminal-mode-keymap* "C-x [" 'terminal-copy-mode)
+(define-key *terminal-copy-mode-keymap* "Escape" 'terminal-copy-mode-off)
 
 (defun buffer-terminal (buffer)
   (buffer-value buffer 'terminal))

@@ -252,7 +252,8 @@
                "lem-markdown-mode"
                "lem-color-preview"
                "lem-lua-mode"
-               "lem-terminal"))
+               #+(or)"lem-terminal" ; experimental
+               ))
 
 (defsystem "lem/legit"
   :serial t

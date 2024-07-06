@@ -28,7 +28,7 @@
 
 (define-key *terminal-mode-keymap* 'self-insert 'terminal-input)
 (define-key *terminal-mode-keymap* 'undefined-key 'terminal-input)
-(define-key *terminal-mode-keymap* "C-x [" 'terminal-copy-mode)
+(define-key *terminal-mode-keymap* "C-x [" 'terminal-copy-mode-on)
 (define-key *terminal-copy-mode-keymap* "Escape" 'terminal-copy-mode-off)
 
 (defun buffer-terminal (buffer)
@@ -137,28 +137,30 @@
   (alexandria:if-let ((terminal (get-current-terminal)))
     (terminal:adjust-point terminal)))
 
+(define-command terminal-copy-mode-on () ()
+  (terminal-copy-mode))
+
 (define-command terminal-copy-mode-off () ()
   (terminal-mode)
   (adjust-current-point))
 
 (defmethod execute ((mode terminal-mode) command argment)
-  (if (string= "TERMINAL-COPY-MODE" (lem:command-name command))
-      (call-next-method)
-      (typecase command
-        ((or next-window
-             previous-window
-             split-active-window-vertically
-             split-active-window-horizontally
-             delete-other-windows
-             delete-active-window
-             select-buffer
-             kill-buffer
-             find-file
-             execute-command
-             terminal-resize)
-         (call-next-method))
-        (otherwise
-         (terminal-input)))))
+  (typecase command
+    ((or next-window
+         previous-window
+         split-active-window-vertically
+         split-active-window-horizontally
+         delete-other-windows
+         delete-active-window
+         select-buffer
+         kill-buffer
+         find-file
+         execute-command
+         terminal-resize
+         terminal-copy-mode-on)
+     (call-next-method))
+    (otherwise
+     (terminal-input))))
 
 (defun resize-terminal (terminal window)
   (terminal:resize terminal

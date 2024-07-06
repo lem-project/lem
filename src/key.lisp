@@ -1,7 +1,7 @@
 (in-package :lem-core)
 
 (defvar *named-key-syms*
-  '("Backspace" "Delete" "Down" "End" "Escape" "F0" "F1" "F10" "F11" "F12" "F2" "F3" "F4" "F5" "F6" "F7" "F8" "F9"
+  '("Backspace" "Insert" "Delete" "Down" "End" "Escape" "F0" "F1" "F10" "F11" "F12" "F2" "F3" "F4" "F5" "F6" "F7" "F8" "F9"
     "Home" "Left" "NopKey" "PageDown" "PageUp" "Return" "Right" "Space" "Tab" "Up"))
 
 (defun named-key-sym-p (key-sym)
@@ -34,7 +34,9 @@
     (when meta (write-string "M-" stream))
     (when ctrl (write-string "C-" stream))
     (when shift (write-string "Shift-" stream))
-    (write-string sym stream)))
+    (if (string= sym " ")
+        (write-string "Space" stream)
+        (write-string sym stream))))
 
 (defvar *key-constructor-cache* (make-hash-table :test 'equal))
 

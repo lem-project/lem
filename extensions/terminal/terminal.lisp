@@ -5,6 +5,8 @@
            :terminal-buffer
            :create
            :destroy
+           :copy-mode-on
+           :copy-mode-off
            :clear
            :render
            :update
@@ -34,7 +36,9 @@
    (rows :initarg :rows
          :accessor terminal-rows)
    (cols :initarg :cols
-         :accessor terminal-cols)))
+         :accessor terminal-cols)
+   (copy-mode :initform nil
+              :accessor terminal-copy-mode)))
 
 (defun find-terminal-by-id (id)
   (find id *terminals* :key #'terminal-id))
@@ -44,7 +48,8 @@
 
 (defun update (terminal)
   (process-input terminal)
-  (when (= 0 (event-queue-length))
+  (when (and (= 0 (event-queue-length))
+             (not (terminal-copy-mode terminal)))
     (render terminal)
     (redraw-display)))
 
@@ -79,6 +84,12 @@
   (bt2:destroy-thread (terminal-thread terminal))
   (remove-terminal terminal)
   (ffi::terminal-delete (terminal-viscus terminal)))
+
+(defmethod copy-mode-on ((terminal terminal))
+  (setf (terminal-copy-mode terminal) t))
+
+(defmethod copy-mode-off ((terminal terminal))
+  (setf (terminal-copy-mode terminal) nil))
 
 (defun get-foreground-color (viscus)
   (let ((r (ffi::terminal-last-cell-fg-red viscus))

@@ -9,10 +9,23 @@
      :keymap *terminal-mode-keymap*)
   (setf (buffer-read-only-p (current-buffer)) t)
   (setf (variable-value 'highlight-line :buffer (current-buffer)) nil)
-  (setf (variable-value 'line-wrap :buffer (current-buffer)) nil))
+  (setf (variable-value 'line-wrap :buffer (current-buffer)) nil)
+  (alexandria:when-let (terminal (get-current-terminal))
+    (terminal:copy-mode-off terminal)))
+
+(define-major-mode terminal-copy-mode ()
+    (:name "Terminal (Copy)"
+     :keymap *terminal-copy-mode-keymap*)
+  (setf (buffer-read-only-p (current-buffer)) t)
+  (setf (variable-value 'highlight-line :buffer (current-buffer)) nil)
+  (setf (variable-value 'line-wrap :buffer (current-buffer)) nil)
+  (alexandria:when-let (terminal (get-current-terminal))
+    (terminal:copy-mode-on terminal)))
 
 (define-key *terminal-mode-keymap* 'self-insert 'terminal-input)
 (define-key *terminal-mode-keymap* 'undefined-key 'terminal-input)
+(define-key *terminal-mode-keymap* "C-x \\" 'terminal-copy-mode)
+(define-key *terminal-copy-mode-keymap* "C-x \\" 'terminal-copy-mode-off)
 
 (defun buffer-terminal (buffer)
   (buffer-value buffer 'terminal))
@@ -123,22 +136,27 @@
 (define-terminal-key-command terminal-key-f11 "F11" (+ 11 ffi::vterm_key_function_0))
 (define-terminal-key-command terminal-key-f12 "F12" (+ 12 ffi::vterm_key_function_0))
 
+(define-command terminal-copy-mode-off () ()
+  (terminal-mode))
+
 (defmethod execute ((mode terminal-mode) command argment)
-  (typecase command
-    ((or next-window
-         previous-window
-         split-active-window-vertically
-         split-active-window-horizontally
-         delete-other-windows
-         delete-active-window
-         select-buffer
-         kill-buffer
-         find-file
-         execute-command
-         terminal-resize)
-     (call-next-method))
-    (otherwise
-     (terminal-input))))
+  (if (string= "TERMINAL-COPY-MODE" (lem:command-name command))
+      (call-next-method)
+      (typecase command
+        ((or next-window
+             previous-window
+             split-active-window-vertically
+             split-active-window-horizontally
+             delete-other-windows
+             delete-active-window
+             select-buffer
+             kill-buffer
+             find-file
+             execute-command
+             terminal-resize)
+         (call-next-method))
+        (otherwise
+         (terminal-input)))))
 
 (defun resize-terminal (terminal window)
   (terminal:resize terminal

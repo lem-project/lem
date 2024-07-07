@@ -113,9 +113,15 @@
 
 (defun get-cell-attribute (viscus)
   (let ((foreground (get-foreground-color viscus))
-        (background (get-background-color viscus)))
+        (background (get-background-color viscus))
+        (reverse (= 1 (ffi::terminal-last-cell-attrs-reverse viscus)))
+        (underline (= 1 (ffi::terminal-last-cell-attrs-underline viscus)))
+        (bold (= 1 (ffi::terminal-last-cell-attrs-bold viscus))))
     (make-attribute :foreground foreground
-                    :background background)))
+                    :background background
+                    :reverse reverse
+                    :bold bold
+                    :underline underline)))
 
 (defun get-cell-character (viscus)
   (let ((chars (ffi::terminal-last-cell-chars viscus)))

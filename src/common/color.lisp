@@ -5,6 +5,7 @@
            :color-red
            :color-blue
            :color-green
+           :color-equal
            :light-color-p
            :parse-color
            :rgb-to-hsv
@@ -788,6 +789,11 @@
     (gethash (string-downcase color-name) color-names)))
 
 (defstruct (color (:constructor make-color (red green blue))) red green blue)
+
+(defun color-equal (color1 color2)
+  (and (= (color-red color1) (color-red color2))
+       (= (color-green color1) (color-green color2))
+       (= (color-blue color1) (color-blue color2))))
 
 (defun light-color-p (color)
   "Return t if COLOR is light."

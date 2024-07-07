@@ -111,14 +111,19 @@
         (b (ffi::terminal-last-cell-bg-blue viscus)))
     (make-color r g b)))
 
+(defun fix-blue-color (color)
+  (if (lem/common/color::color-equal color (make-color 0 0 #xe0))
+      (parse-color "#3465A4")
+      color))
+
 (defun get-cell-attribute (viscus)
   (let ((foreground (get-foreground-color viscus))
         (background (get-background-color viscus))
         (reverse (= 1 (ffi::terminal-last-cell-attrs-reverse viscus)))
         (underline (= 1 (ffi::terminal-last-cell-attrs-underline viscus)))
         (bold (= 1 (ffi::terminal-last-cell-attrs-bold viscus))))
-    (make-attribute :foreground foreground
-                    :background background
+    (make-attribute :foreground (fix-blue-color foreground)
+                    :background (fix-blue-color background)
                     :reverse reverse
                     :bold bold
                     :underline underline)))

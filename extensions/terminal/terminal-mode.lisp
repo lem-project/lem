@@ -68,7 +68,8 @@
 (defun create-terminal ()
   (let* ((buffer (make-terminal-buffer))
          (window (pop-to-buffer buffer)))
-    (resize-terminal (buffer-terminal buffer) window)))
+    (resize-terminal (buffer-terminal buffer) window)
+    (setf (current-window) window)))
 
 (define-command terminal (always-create-terminal-p) (:universal-nil)
   (if always-create-terminal-p

@@ -43,6 +43,7 @@
 
 (define-key *terminal-mode-keymap* 'self-insert 'terminal-input)
 (define-key *terminal-mode-keymap* 'undefined-key 'terminal-input)
+(define-key *terminal-mode-keymap* "C-h" 'terminal-input)
 (define-key *terminal-mode-keymap* "C-x [" 'terminal-copy-mode-on)
 (define-key *terminal-copy-mode-keymap* "Escape" 'terminal-copy-mode-off)
 
@@ -121,7 +122,7 @@
 (defmacro define-terminal-key-command (name keyspec vterm-key)
   (alexandria:with-unique-names (terminal)
     `(progn
-       (define-key *terminal-mode-keymap* ,keyspec ',name )
+       (define-key *terminal-mode-keymap* ,keyspec ',name)
        (define-command ,name () ()
          (let ((,terminal (get-current-terminal)))
            (terminal:input-key ,terminal ,vterm-key))))))

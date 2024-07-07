@@ -64,12 +64,17 @@
     (when terminal
       (terminal:destroy terminal))))
 
-(define-command terminal () ()
-  (alexandria:if-let (buffer (terminal:find-terminal-buffer))
-    (setf (current-window) (pop-to-buffer buffer))
-    (let* ((buffer (make-terminal-buffer))
-           (window (pop-to-buffer buffer)))
-      (resize-terminal (buffer-terminal buffer) window))))
+(defun create-terminal ()
+  (let* ((buffer (make-terminal-buffer))
+         (window (pop-to-buffer buffer)))
+    (resize-terminal (buffer-terminal buffer) window)))
+
+(define-command terminal (always-create-terminal-p) (:universal-nil)
+  (if always-create-terminal-p
+      (create-terminal)
+      (alexandria:if-let (buffer (terminal:find-terminal-buffer))
+        (setf (current-window) (pop-to-buffer buffer))
+        (create-terminal))))
 
 (defun get-current-terminal ()
   (buffer-terminal (current-buffer)))

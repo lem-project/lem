@@ -499,7 +499,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                       (format nil "~10a ~a" 
                                               (case type
                                                 (:modified "modified")
-                                                (:added "new file")
+                                                (:added "created")
                                                 (:deleted "deleted")
                                                 (t ""))
                                               file)

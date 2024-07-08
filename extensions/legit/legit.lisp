@@ -168,10 +168,22 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (setf (buffer-read-only-p buffer) t)
     (move-to-line (buffer-point buffer) 1)))
 
-(defun make-diff-function (file  &key cached)
+(defun make-diff-function (file &key cached type)
   (lambda ()
     (with-current-project ()
-      (show-diff (lem/porcelain:file-diff file :cached cached)))))
+      (cond
+        ((eq type :deleted)
+         (show-diff (format nil "File ~A has been deleted." file)))
+        ((and (not cached) (not type))
+         (if (uiop:file-exists-p file)
+             (show-diff (format nil "=== Untracked file: ~A ===~%~%~A"
+                                file
+                                (uiop:read-file-string file)))
+             (show-diff (format nil "File ~A does not exist." file))))
+        (t
+         (show-diff (lem/porcelain:file-diff file :cached cached)))))))
+
+
 
 (defun make-visit-file-function (file)
   ;; note: the lambda inside the loop is not enough, it captures the last loop value.
@@ -454,7 +466,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                   for file = (getf file-info :file)
                   for type = (getf file-info :type)
                   do (lem/peek-legit:with-appending-source
-                         (point :move-function (make-diff-function file)
+                         (point :move-function (make-diff-function file :type type)
                                 :visit-file-function (make-visit-file-function file)
                                 :stage-function (make-stage-function file)
                                 :unstage-function (make-unstage-function file :already-unstaged t)
@@ -478,7 +490,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                   for file = (getf file-info :file)
                   for type = (getf file-info :type)
                   do (lem/peek-legit:with-appending-source
-                         (point :move-function (make-diff-function file :cached t)
+                         (point :move-function (make-diff-function file :cached t :type type)
                                 :visit-file-function (make-visit-file-function file)
                                 :stage-function (make-stage-function file)
                                 :unstage-function (make-unstage-function file)

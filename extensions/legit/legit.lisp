@@ -435,7 +435,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
             (lem/peek-legit:collector-insert "")))
 
         ;; Untracked files.
-        (lem/peek-legit:collector-insert "Untracked files:" :header t)
+        (lem/peek-legit:collector-insert (format nil "Untracked files (~a):" (length untracked-files)) :header t)
         (if untracked-files
             (loop :for file :in untracked-files
                   :do (lem/peek-legit:with-appending-source
@@ -446,37 +446,53 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                         (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
             (lem/peek-legit:collector-insert "<none>"))
 
+        ;; Unstaged changes
         (lem/peek-legit:collector-insert "")
-        ;; Unstaged changes.
-        (lem/peek-legit:collector-insert "Unstaged changes:" :header t)
+        (lem/peek-legit:collector-insert (format nil "Unstaged changes (~a):" (length unstaged-files)) :header t)
         (if unstaged-files
-            (loop :for file :in unstaged-files
-                  :do (lem/peek-legit:with-appending-source
-                          (point :move-function (make-diff-function file)
-                                 :visit-file-function (make-visit-file-function file)
-                                 :stage-function (make-stage-function file)
-                                 :unstage-function (make-unstage-function file :already-unstaged t)
-                                 :discard-file-function (make-discard-file-function file))
-
-                        (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)
-                        ))
+            (loop for file-info in unstaged-files
+                  for file = (getf file-info :file)
+                  for type = (getf file-info :type)
+                  do (lem/peek-legit:with-appending-source
+                         (point :move-function (make-diff-function file)
+                                :visit-file-function (make-visit-file-function file)
+                                :stage-function (make-stage-function file)
+                                :unstage-function (make-unstage-function file :already-unstaged t)
+                                :discard-file-function (make-discard-file-function file))
+                       (insert-string point 
+                                      (format nil "~10a ~a" 
+                                              (case type
+                                                (:modified "modified")
+                                                (:deleted "deleted")
+                                                (t ""))
+                                              file)
+                                      :attribute 'lem/peek-legit:filename-attribute 
+                                      :read-only t)))
             (lem/peek-legit:collector-insert "<none>"))
 
+        ;; Staged changes
         (lem/peek-legit:collector-insert "")
-        (lem/peek-legit:collector-insert "Staged changes:" :header t)
-
-        ;; Stages files.
+        (lem/peek-legit:collector-insert (format nil "Staged changes (~a):" (length staged-files)) :header t)
         (if staged-files
-            (loop :for file :in staged-files
-                  :for i := 0 :then (incf i)
-                  :do (lem/peek-legit:with-appending-source
-                          (point :move-function (make-diff-function file :cached t)
-                                 :visit-file-function (make-visit-file-function file)
-                                 :stage-function (make-stage-function file)
-                                 :unstage-function (make-unstage-function file)
-                                 :discard-file-function (make-discard-file-function file :is-staged t))
-
-                        (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
+            (loop for file-info in staged-files
+                  for file = (getf file-info :file)
+                  for type = (getf file-info :type)
+                  do (lem/peek-legit:with-appending-source
+                         (point :move-function (make-diff-function file :cached t)
+                                :visit-file-function (make-visit-file-function file)
+                                :stage-function (make-stage-function file)
+                                :unstage-function (make-unstage-function file)
+                                :discard-file-function (make-discard-file-function file :is-staged t))
+                       (insert-string point 
+                                      (format nil "~10a ~a" 
+                                              (case type
+                                                (:modified "modified")
+                                                (:added "new file")
+                                                (:deleted "deleted")
+                                                (t ""))
+                                              file)
+                                      :attribute 'lem/peek-legit:filename-attribute 
+                                      :read-only t)))
             (lem/peek-legit:collector-insert "<none>"))
 
         ;; Latest commits.

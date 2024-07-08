@@ -218,11 +218,11 @@ allows to learn about the file state: modified, deleted, ignored… "
     (:hg (hg-porcelain))
     (t (porcelain-error "VCS not supported: ~a" *vcs*))))
 
-(defun git-components()
+(defun git-components ()
   "Return 3 values:
   - untracked files
   - modified and unstaged files
-  - modified and stages files.
+  - modified and staged files
 
    Git manual:
 
@@ -242,16 +242,19 @@ allows to learn about the file state: modified, deleted, ignored… "
        •   U = updated but unmerged"
   (loop for line in (str:lines (porcelain))
         for file = (subseq line 3)
+        for status = (subseq line 0 2)
         unless (str:blankp line)
-          if (equal (elt line 0) #\M)
-            collect file into modified-staged-files
-        if (equal (elt line 0) #\A)
-          ;; Here we don't differentiate between modified and newly added.
-          ;; We could do better.
-          collect file into modified-staged-files
-        if (equal (elt line 1) #\M)
-          collect file into modified-unstaged-files
-        if (str:starts-with-p "??" line)
+          if (equal (elt status 0) #\M)
+            collect (list :file file :type :modified) into modified-staged-files
+        if (equal (elt status 0) #\A)
+          collect (list :file file :type :added) into modified-staged-files
+        if (equal (elt status 0) #\D)
+          collect (list :file file :type :deleted) into modified-staged-files
+        if (equal (elt status 1) #\M)
+          collect (list :file file :type :modified) into modified-unstaged-files
+        if (equal (elt status 1) #\D)
+          collect (list :file file :type :deleted) into modified-unstaged-files
+        if (str:starts-with-p "??" status)
           collect file into untracked-files
         finally (return (values untracked-files
                                 modified-unstaged-files

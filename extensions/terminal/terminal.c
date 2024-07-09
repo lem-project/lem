@@ -1,5 +1,5 @@
-// gcc terminal.c /usr/lib/x86_64-linux-gnu/libvterm.so -o terminal.so -shared -fPIC
-// gcc terminal.c -I/opt/homebrew/include -L/opt/homebrew/lib -lvterm -o terminal.so -shared -fPIC
+// linux check Dockerfile or Dockerfile.musl
+// osx   gcc terminal.c -I/opt/homebrew/include -L/opt/homebrew/lib -lvterm -o terminal.so -shared -fPIC
 
 #include <stdio.h>
 #include <assert.h>

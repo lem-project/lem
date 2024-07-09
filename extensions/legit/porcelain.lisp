@@ -43,9 +43,7 @@ Supported version control systems:
 - Fossil: preliminary support
 - Mercurial: preliminary support
 
-TODOs:
-
-- show missing files.
+TODOs: 
 
 Mercurial:
 

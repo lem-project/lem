@@ -280,24 +280,26 @@ allows to learn about the file state: modified, deleted, ignored… "
         unless (str:blankp line)
           ;; Modified
           if (equal (elt line 0) #\M)
-            collect file into modified-staged-files
+            collect (list :file file :type :modified) into modified-staged-files
         ;; Added
         if (equal (elt line 0) #\A)
-          ;; is that enough?
-          collect file into modified-staged-files
-        ;; Modified
-        if (equal (elt line 1) #\X)  ;?
-          collect file into modified-unstaged-files
+          collect (list :file file :type :added) into modified-staged-files
+        ;; Removed
+        if (equal (elt line 0) #\R)
+          collect (list :file file :type :deleted) into modified-staged-files
+        ;; Modified (unstaged)
+        if (or (equal (elt line 1) #\M) (equal (elt line 1) #\X))
+          collect (list :file file :type :modified) into modified-unstaged-files
         ;; Untracked
         if (str:starts-with-p "?" line)
           collect file into untracked-files
         ;; Missing (deleted)
         if (str:starts-with-p "!" line)
-          collect file into missing-files
+          collect (list :file file :type :deleted) into modified-unstaged-files
         finally (return (values untracked-files
                                 modified-unstaged-files
-                                modified-staged-files
-                                missing-files))))
+                                modified-staged-files))))
+
 (defun fossil-components ()
   "Return values:
   - untracked files (todo)
@@ -308,12 +310,16 @@ allows to learn about the file state: modified, deleted, ignored… "
         for status = (first parts)
         for file = (second parts)
         if (equal "ADDED" status)
-          collect file into added-files
+          collect (list :file file :type :added) into modified-staged-files
         if (equal "EDITED" status)
-          collect file into edited-files
-        finally (return (values nil
-                                added-files
-                                edited-files))))
+          collect (list :file file :type :modified) into modified-staged-files
+        if (equal "DELETED" status)
+          collect (list :file file :type :deleted) into modified-staged-files
+        if (equal "UNKNOWN" status)
+          collect file into untracked-files
+        finally (return (values untracked-files
+                                nil
+                                modified-staged-files))))
 
 (defun components ()
   (case *vcs*

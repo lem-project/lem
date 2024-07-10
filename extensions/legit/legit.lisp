@@ -628,41 +628,66 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-command legit-commits-log () ()
   "List commits on a new buffer."
   (with-current-project ()
-    (let ((commits (lem/porcelain:commits-log)))
-      ;; Display this on a new buffer.
-      (lem/peek-legit:with-collecting-sources (collector :buffer :commits-log :read-only nil)
-        (if commits
-            (progn
-              (lem/peek-legit:collector-insert (format nil "Last ~a commits:" (length commits))
-                                               :header t)
-              ;; (this loop copied from legit-status showing the latest commits)
-              (loop for commit in commits
-                    for line = nil
-                    for hash = nil
-                    for message = nil
-                    if (consp commit)
-                      do (setf line (getf commit :line))
-                         (setf hash (getf commit :hash))
-                         (setf message (getf commit :message))
-                    else
-                      do (setf line commit)
+    (display-commits-log 0)))
 
-                    do (lem/peek-legit:with-appending-source
-                           (point :move-function (make-show-commit-function hash)
-                                  :visit-file-function (lambda ())
-                                  :stage-function (lambda () )
-                                  :unstage-function (lambda () ))
-                         (with-point ((start point))
-                           (when hash
-                             (insert-string point hash :attribute 'lem/peek-legit:filename-attribute :read-only t))
-                           (if message
-                               (insert-string point message)
-                               (insert-string point line))
+(defun display-commits-log (offset)
+  (let* ((window-height (window-height (current-window)))
+         (commits-per-page (max 1 (- window-height 1)))
+         (commits (lem/porcelain:commits-log :offset offset
+                                             :limit commits-per-page)))
+    (lem/peek-legit:with-collecting-sources (collector :buffer :commits-log :read-only nil)
+      (lem/peek-legit:collector-insert 
+       (format nil "Commits (~A):" offset)
+       :header t)
+      (if commits
+          (progn
+            (loop for commit in commits
+                  for line = nil
+                  for hash = nil
+                  for message = nil
+                  if (consp commit)
+                  do (setf line (getf commit :line)
+                           hash (getf commit :hash)
+                           message (getf commit :message))
+                  else
+                  do (setf line commit)
+                  do (lem/peek-legit:with-appending-source
+                         (point :move-function (make-show-commit-function hash)
+                                :visit-file-function (lambda ())
+                                :stage-function (lambda () )
+                                :unstage-function (lambda () ))
+                       (with-point ((start point))
+                         (when hash
+                           (insert-string point hash :attribute 'lem/peek-legit:filename-attribute :read-only t))
+                         (if message
+                             (insert-string point message)
+                             (insert-string point line))
+                         (when hash
+                           (put-text-property start point :commit-hash hash)))))
+            (setf (buffer-value (lem/peek-legit:collector-buffer collector) 'commits-offset) offset))
+          (lem/peek-legit:collector-insert "<no commits>")))))
 
-                           ;; Save the hash on this line for later use.
-                           (when hash
-                             (put-text-property start point :commit-hash hash))))))
-              (lem/peek-legit:collector-insert "<no commits>"))))))
+(define-command legit-commits-log-next-page () ()
+  (with-current-project ()
+    (let* ((buffer (current-buffer))
+           (window-height (window-height (current-window)))
+           (commits-per-page (max 1 (- window-height 1)))
+           (current-offset (or (buffer-value buffer 'commits-offset) 0))
+           (new-offset (+ current-offset commits-per-page))
+           (commits (lem/porcelain:commits-log :offset new-offset
+                                               :limit commits-per-page)))
+      (if commits
+          (display-commits-log new-offset)
+          (message "No more commits to display.")))))
+
+(define-command legit-commits-log-previous-page () ()
+  (with-current-project ()
+    (let* ((buffer (current-buffer))
+           (window-height (window-height (current-window)))
+           (commits-per-page (max 1 (- window-height 1)))
+           (current-offset (or (buffer-value buffer 'commits-offset) 0))
+           (new-offset (max 0 (- current-offset commits-per-page))))
+      (display-commits-log new-offset))))
 
 (define-command legit-quit () ()
   "Quit"

@@ -564,9 +564,19 @@ summary:     test
    If a limit is not provided, it returns all commits after the offset."
   (case *vcs*
     (:fossil
-     (subseq (fossil-latest-commits) offset (when limit (+ offset limit))))
+     (let* ((commits (fossil-latest-commits))
+            (total-commits (length commits))
+            (end (when limit (min total-commits (+ offset limit)))))
+       (if (>= offset total-commits)
+           nil
+           (subseq commits offset end))))
     (:hg
-     (subseq (hg-latest-commits) offset (when limit (+ offset limit))))
+     (let* ((commits (hg-latest-commits))
+            (total-commits (length commits))
+            (end (when limit (min total-commits (+ offset limit)))))
+       (if (>= offset total-commits)
+           nil
+           (subseq commits offset end))))
     (:git
      (git-latest-commits :n limit 
                          :hash-length hash-length 

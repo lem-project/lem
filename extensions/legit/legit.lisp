@@ -79,6 +79,10 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-key lem/peek-legit:*peek-legit-keymap* "F p" 'legit-pull)
 (define-key *legit-diff-mode-keymap* "F p" 'legit-pull)
 
+;; commits log
+(define-key lem/peek-legit:*peek-legit-keymap* "l l" 'legit-commits-log)
+(define-key *legit-diff-mode-keymap* "l l" 'legit-commits-log)
+
 ;; rebase
 ;;; interactive
 (define-key lem/peek-legit:*peek-legit-keymap* "r i" 'legit-rebase-interactive)
@@ -471,14 +475,14 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                 :stage-function (make-stage-function file)
                                 :unstage-function (make-unstage-function file :already-unstaged t)
                                 :discard-file-function (make-discard-file-function file))
-                       (insert-string point 
-                                      (format nil "~10a ~a" 
+                       (insert-string point
+                                      (format nil "~10a ~a"
                                               (case type
                                                 (:modified "modified")
                                                 (:deleted "deleted")
                                                 (t ""))
                                               file)
-                                      :attribute 'lem/peek-legit:filename-attribute 
+                                      :attribute 'lem/peek-legit:filename-attribute
                                       :read-only t)))
             (lem/peek-legit:collector-insert "<none>"))
 
@@ -495,15 +499,15 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                 :stage-function (make-stage-function file)
                                 :unstage-function (make-unstage-function file)
                                 :discard-file-function (make-discard-file-function file :is-staged t))
-                       (insert-string point 
-                                      (format nil "~10a ~a" 
+                       (insert-string point
+                                      (format nil "~10a ~a"
                                               (case type
                                                 (:modified "modified")
                                                 (:added "created")
                                                 (:deleted "deleted")
                                                 (t ""))
                                               file)
-                                      :attribute 'lem/peek-legit:filename-attribute 
+                                      :attribute 'lem/peek-legit:filename-attribute
                                       :read-only t)))
             (lem/peek-legit:collector-insert "<none>"))
 
@@ -620,6 +624,45 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-command legit-previous-header () ()
   "Move point to the previous header of this VCS window."
   (lem/peek-legit:peek-legit-previous-header))
+
+(define-command legit-commits-log () ()
+  "List commits on a new buffer."
+  (with-current-project ()
+    (let ((commits (lem/porcelain:commits-log)))
+      ;; Display this on a new buffer.
+      (lem/peek-legit:with-collecting-sources (collector :buffer :commits-log :read-only nil)
+        (if commits
+            (progn
+              (lem/peek-legit:collector-insert (format nil "Last ~a commits:" (length commits))
+                                               :header t)
+              ;; (this loop copied from legit-status showing the latest commits)
+              (loop for commit in commits
+                    for line = nil
+                    for hash = nil
+                    for message = nil
+                    if (consp commit)
+                      do (setf line (getf commit :line))
+                         (setf hash (getf commit :hash))
+                         (setf message (getf commit :message))
+                    else
+                      do (setf line commit)
+
+                    do (lem/peek-legit:with-appending-source
+                           (point :move-function (make-show-commit-function hash)
+                                  :visit-file-function (lambda ())
+                                  :stage-function (lambda () )
+                                  :unstage-function (lambda () ))
+                         (with-point ((start point))
+                           (when hash
+                             (insert-string point hash :attribute 'lem/peek-legit:filename-attribute :read-only t))
+                           (if message
+                               (insert-string point message)
+                               (insert-string point line))
+
+                           ;; Save the hash on this line for later use.
+                           (when hash
+                             (put-text-property start point :commit-hash hash))))))
+              (lem/peek-legit:collector-insert "<no commits>"))))))
 
 (define-command legit-quit () ()
   "Quit"

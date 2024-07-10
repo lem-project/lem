@@ -81,6 +81,8 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 ;; commits log
 (define-key lem/peek-legit:*peek-legit-keymap* "l l" 'legit-commits-log)
+(define-key lem/peek-legit:*peek-legit-keymap* "f" 'legit-commits-log-next-page)
+(define-key lem/peek-legit:*peek-legit-keymap* "b" 'legit-commits-log-previous-page)
 (define-key *legit-diff-mode-keymap* "l l" 'legit-commits-log)
 
 ;; rebase

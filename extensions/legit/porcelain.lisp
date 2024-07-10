@@ -474,8 +474,13 @@ allows to learn about the file state: modified, deleted, ignored… "
     (str:lines
      (run-git (list "log" "--pretty=oneline" "-n" (princ-to-string n))))))
 
-(defun git-latest-commits (&key (n *nb-latest-commits*) (hash-length 8))
-  (let ((lines (%git-list-latest-commits n)))
+(defun git-latest-commits (&key (n *nb-commits-log*) (hash-length 8) (offset 0))
+  (let* ((n-arg (when n (list "-n" (princ-to-string n))))
+         (lines (str:lines
+                 (run-git (append (list "log" 
+                                        "--pretty=oneline" 
+                                        "--skip" (princ-to-string offset))
+                                  n-arg)))))
     (loop for line in lines
           for space-position = (position #\space line)
           for small-hash = (subseq line 0 hash-length)
@@ -554,16 +559,18 @@ summary:     test
     (t
      (git-latest-commits :n n :hash-length hash-length))))
 
-;; commits log. Very similar to latest-commits, take a bigger nb of commits.
-(defun commits-log (&key (n *nb-commits-log*) (hash-length 8))
-  "Return a list of commits, like `latest-commits'."
+(defun commits-log (&key (offset 0) limit (hash-length 8))
+  "Return a list of commits starting from the given offset.
+   If a limit is not provided, it returns all commits after the offset."
   (case *vcs*
     (:fossil
-     (fossil-latest-commits :n n))
+     (subseq (fossil-latest-commits) offset (when limit (+ offset limit))))
     (:hg
-     (hg-latest-commits :n n))
+     (subseq (hg-latest-commits) offset (when limit (+ offset limit))))
     (:git
-     (git-latest-commits :n n :hash-length hash-length))
+     (git-latest-commits :n limit 
+                         :hash-length hash-length 
+                         :offset offset))
     (t
      (porcelain-error "Unknown VCS: ~a" *vcs*))))
 

@@ -48,7 +48,7 @@
     (micros:create-server :port port)))
 
 (defun start-language-server (port)
-  (bt:make-thread (lambda ()
+  (bt2:make-thread (lambda ()
                     (lem-language-server:start-tcp-server port))))
 
 (defmethod lem-lsp-mode::run-server ((spec lisp-spec))

@@ -31,14 +31,13 @@
         (multiple-value-bind (root vcs)
             (lem/porcelain:vcs-project-p)
           (if root
-              (let ((lem/porcelain:*vcs* vcs))
                 (progn
-                  (funcall function)))
+                  (funcall function vcs))
               (lem:message "Not inside a version-controlled project?")))))))
 
-(defmacro with-current-project (&body body)
+(defmacro with-current-project ((vcs-bind) &body body)
   "Execute body with the current working directory changed to the project's root,
-  find and set the VCS system for this operation.
+  find and `vcs-bind` as the VCS
 
   If no Git directory (or other supported VCS system) are found, message the user."
-  `(call-with-current-project (lambda () ,@body)))
+  `(call-with-current-project (lambda (,vcs-bind) ,@body)))

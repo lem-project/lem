@@ -92,9 +92,9 @@ two
       ((str:blankp cleaned-message)
        (message "No commit message, do nothing."))
       (t
-       (with-current-project ()
+       (with-current-project (vcs)
          (run-function (lambda ()
-                         (lem/porcelain::commit cleaned-message))
+                         (lem/porcelain::commit vcs cleaned-message))
                        :message "commited")
          (kill-buffer "*legit-commit*")
          ;; come back on the status on  the left:

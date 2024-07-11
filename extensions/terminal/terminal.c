@@ -146,6 +146,7 @@ VTermScreenCallbacks screen_callbacks = {
 struct terminal *terminal_new(int id,
                               int rows,
                               int cols,
+                              const char *program,
 			      void *cb_damage,
 			      void *cb_moverect,
 			      void *cb_movecursor,
@@ -155,7 +156,7 @@ struct terminal *terminal_new(int id,
 			      void *cb_sb_pushline,
                               void *cb_sb_popline)
 {
-  run_shell_result result = run_shell(rows, cols, getenv("SHELL"));
+  run_shell_result result = run_shell(rows, cols, program);
 
   VTerm *vterm = vterm_new(rows, cols);
   vterm_set_utf8(vterm, 1);

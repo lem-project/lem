@@ -62,6 +62,7 @@
   (id :int)
   (rows :int)
   (cols :int)
+  (program :string)
   (cb_damage :pointer)
   (cb_moverect :pointer)
   (cb_movecursor :pointer)
@@ -75,6 +76,7 @@
   (%terminal-new id
                  rows
                  cols
+                 (or (uiop:getenv "SHELL") "/bin/bash")
                  (cffi:callback cb-damage)
                  (cffi:callback cb-moverect)
                  (cffi:callback cb-movecursor)

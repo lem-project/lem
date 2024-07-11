@@ -1,7 +1,6 @@
 (defpackage :lem-lsp-base/yason-utils
   (:use :cl)
   (:export :with-yason-bindings
-           :update-jsonrpc-yason-parameters
            :parse-json))
 (in-package :lem-lsp-base/yason-utils)
 
@@ -21,10 +20,6 @@
     (progv (mapcar #'car *yason-bindings*)
         (mapcar #'cdr *yason-bindings*)
       (funcall function))))
-
-(defun update-jsonrpc-yason-parameters ()
-  (setf jsonrpc/yason:*parse-json-null-as-keyword* t
-        jsonrpc/yason:*parse-json-arrays-as-vectors* t))
 
 (defun parse-json (input)
   (with-yason-bindings ()

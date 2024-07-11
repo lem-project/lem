@@ -86,8 +86,9 @@
          (extend-to-eol-object-color drawing-object-2)))
 
 (defmethod drawing-object-equal ((drawing-object-1 line-end-object) (drawing-object-2 line-end-object))
-  (equal (line-end-object-offset drawing-object-1)
-         (line-end-object-offset drawing-object-2)))
+  (and (call-next-method)
+       (equal (line-end-object-offset drawing-object-1)
+              (line-end-object-offset drawing-object-2))))
 
 (defmethod drawing-object-equal ((drawing-object-1 image-object) (drawing-object-2 image-object))
   nil)

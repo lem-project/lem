@@ -737,13 +737,13 @@
 (defvar *wait-message-thread* nil)
 
 (defun notify-change-connection-to-wait-message-thread ()
-  (bt:interrupt-thread *wait-message-thread*
+  (bt2:interrupt-thread *wait-message-thread*
                        (lambda () (error 'change-connection))))
 
 (defun start-thread ()
   (unless *wait-message-thread*
     (setf *wait-message-thread*
-          (bt:make-thread
+          (bt2:make-thread
            (lambda () (loop
                         :named exit
                         :do
@@ -975,7 +975,7 @@
     (write-line "(loop (sleep most-positive-fixnum))" out)))
 
 (defun run-swank-server (command port &key (directory (buffer-directory)))
-  (bt:make-thread
+  (bt2:make-thread
    (lambda ()
      (with-input-from-string
          (input (initialize-forms-string port))
@@ -1023,7 +1023,7 @@
 
     (let ((thread (run-swank-server command port :directory directory)))
       (sleep 0.5)
-      (unless (bt:thread-alive-p thread)
+      (unless (bt2:thread-alive-p thread)
         (editor-error "Scheme swank server start error")))
 
     (let ((successp)

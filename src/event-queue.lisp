@@ -9,7 +9,7 @@
   (enqueue *editor-event-queue* obj))
 
 (defun send-abort-event (editor-thread force)
-  (bt:interrupt-thread editor-thread
+  (bt2:interrupt-thread editor-thread
                        (lambda ()
                          (interrupt force))))
 

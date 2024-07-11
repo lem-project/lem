@@ -1,7 +1,5 @@
 (defpackage :lem-lsp-base/yason-utils
   (:use :cl)
-  (:import-from :bordeaux-threads
-                :*default-special-bindings*)
   (:export :with-yason-bindings
            :update-jsonrpc-yason-parameters
            :parse-json))
@@ -15,9 +13,9 @@
   `(call-with-yason-bindings (lambda () ,@body)))
 
 (defun call-with-yason-bindings (function)
-  (let ((*default-special-bindings*
+  (let ((bt2:*default-special-bindings*
           (append *yason-bindings*
-                  *default-special-bindings*)))
+                  bt2:*default-special-bindings*)))
     (progv (mapcar #'car *yason-bindings*)
         (mapcar #'cdr *yason-bindings*)
       (funcall function))))

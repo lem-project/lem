@@ -7,7 +7,9 @@
 
 (defparameter *yason-bindings*
   '((yason:*parse-json-null-as-keyword* . t)
-    (yason:*parse-json-arrays-as-vectors* . t)))
+    (yason:*parse-json-arrays-as-vectors* . t)
+    (jsonrpc/yason:*parse-json-null-as-keyword* . t)
+    (jsonrpc/yason:*parse-json-arrays-as-vectors* . t)))
 
 (defmacro with-yason-bindings (() &body body)
   `(call-with-yason-bindings (lambda () ,@body)))

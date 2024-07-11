@@ -5,7 +5,6 @@
   (:import-from :trivial-types
                 :proper-list)
   (:export
-   :*vcs*
    :porcelain-error
    :apply-patch
    :branches
@@ -33,7 +32,6 @@
   (:documentation "Functions to run VCS operations: get the list of changes, of untracked files, commit, push… Git support is the main goal, a simple layer is used with other VCS systems (Fossil, Mercurial).
 
 On interactive commands, Legit will check what VCS is in use in the current project.
-When used programmatically, bind the `lem/porcelain:*vcs*` variable in your caller. See `lem/porcelain:with-current-project`.
 
 When multiple VCS are used at the same time in a project, Git takes
 precedence by default. See `lem/porcelain:*vcs-existence-order*`."))
@@ -87,11 +85,6 @@ Mercurial:
 
 (defvar *diff-context-lines* 4
   "How many lines of context before/after the first committed line")
-
-(defvar *vcs* nil
-  "git, fossil? For current project. Bind this in the caller.
-
-  For instance, see the lem/porcelain:with-current-project macro that lexically binds *vcs* for an operation.")
 
 (define-condition porcelain-condition (simple-error)
   ())
@@ -216,16 +209,15 @@ allows to learn about the file state: modified, deleted, ignored… "
        (values out error)))))
 
 ;; Dispatching on the right VCS:
-;; *vcs* is bound in the caller (in lem/porcelain:with-current-project).
-(defun porcelain ()
-  "Dispatch on the current `*vcs*` and get current changes (added, modified files…)."
-  (case *vcs*
+(defun porcelain (vcs)
+  "Dispatch on `vcs` and get current changes (added, modified files…)."
+  (case vcs
     (:git (git-porcelain))
     (:fossil (fossil-porcelain))
     (:hg (hg-porcelain))
-    (t (porcelain-error "VCS not supported: ~a" *vcs*))))
+    (t (porcelain-error "VCS not supported: ~a" vcs))))
 
-(defun git-components ()
+(defun git-components (vcs)
   "Return 3 values:
   - untracked files
   - modified and unstaged files
@@ -247,7 +239,7 @@ allows to learn about the file state: modified, deleted, ignored… "
        •   R = renamed
        •   C = copied
        •   U = updated but unmerged"
-  (loop for line in (str:lines (porcelain))
+  (loop for line in (str:lines (porcelain vcs))
         for file = (subseq line 3)
         for status = (subseq line 0 2)
         unless (str:blankp line)
@@ -328,12 +320,12 @@ allows to learn about the file state: modified, deleted, ignored… "
                                 nil
                                 modified-staged-files))))
 
-(defun components ()
-  (case *vcs*
-    (:git (git-components))
+(defun components (vcs)
+  (case vcs
+    (:git (git-components vcs))
     (:fossil (fossil-components))
     (:hg (hg-components))
-    (t (porcelain-error "VCS not supported: ~a" *vcs*))))
+    (t (porcelain-error "VCS not supported: ~a" vcs))))
 
 
 ;;;
@@ -363,8 +355,8 @@ allows to learn about the file state: modified, deleted, ignored… "
   (declare (ignorable cached))
   (run-fossil (list "diff" file)))
 
-(defun file-diff (file &key cached)
-  (case *vcs*
+(defun file-diff (vcs file &key cached)
+  (case vcs
     (:fossil
      (fossil-file-diff file))
     (:hg
@@ -385,8 +377,8 @@ allows to learn about the file state: modified, deleted, ignored… "
 (defun hg-show-commit-diff (ref)
   (run-hg (list "log" "-r" ref "-p")))
 
-(defun show-commit-diff (ref &key ignore-all-space)
-  (case *vcs*
+(defun show-commit-diff (vcs ref &key ignore-all-space)
+  (case vcs
     (:fossil nil)
     (:hg (hg-show-commit-diff ref))
     (t (git-show-commit-diff ref :ignore-all-space ignore-all-space))))
@@ -401,8 +393,8 @@ allows to learn about the file state: modified, deleted, ignored… "
 (defun fossil-commit (message)
   (run-fossil (list "commit" "-m" message)))
 
-(defun commit (message)
-  (case *vcs*
+(defun commit (vcs message)
+  (case vcs
     (:fossil (fossil-commit message))
     (:hg (hg-commit message))
     (t (git-commit message))))
@@ -440,9 +432,9 @@ allows to learn about the file state: modified, deleted, ignored… "
   (str:trim
    (subseq (run-fossil "branch") 2)))
 
-(defun current-branch ()
+(defun current-branch (vcs)
   "Return the current branch name."
-  (case *vcs*
+  (case vcs
     (:fossil
      (fossil-current-branch))
     (:hg
@@ -450,7 +442,7 @@ allows to learn about the file state: modified, deleted, ignored… "
     (t
      (git-current-branch))))
 
-(defun rebase-in-progress ()
+(defun rebase-in-progress (vcs)
   "Return a plist if a rebase is in progress. Used for legit-status.
 
   plist keys:
@@ -459,7 +451,7 @@ allows to learn about the file state: modified, deleted, ignored… "
   :head-name -> content from .git/rebase-merge/head-name, such as \"refs/heads/master\"
   :head-short-name -> \"master\"
   :onto -> content from .git/rebase-merge/onto, a commit id."
-  (case *vcs*
+  (case vcs
     (:git
      (when (uiop:directory-exists-p ".git/rebase-merge/")
        (let ((head (str:trim (str:from-file ".git/rebase-merge/head-name")))
@@ -471,7 +463,7 @@ allows to learn about the file state: modified, deleted, ignored… "
                :onto onto
                :onto-short-commit (str:shorten 8 onto :ellipsis "")))))
     (t
-     (log:info "rebase not available for ~a" *vcs*)
+     (log:info "rebase not available for ~a" vcs)
      (values))))
 
 ;;;
@@ -556,10 +548,10 @@ summary:     test
   ;; return bare result.
   (str:lines (run-fossil "timeline")))
 
-(defun latest-commits (&key (n *nb-latest-commits*) (hash-length 8))
+(defun latest-commits (vcs &key (n *nb-latest-commits*) (hash-length 8))
   "Return a list of strings or plists.
   The plist has a :hash and a :message, or simply a :line."
-  (case *vcs*
+  (case vcs
     (:fossil
      (fossil-latest-commits))
     (:hg
@@ -567,10 +559,10 @@ summary:     test
     (t
      (git-latest-commits :n n :hash-length hash-length))))
 
-(defun commits-log (&key (offset 0) limit (hash-length 8))
+(defun commits-log (vcs &key (offset 0) limit (hash-length 8))
   "Return a list of commits starting from the given offset.
    If a limit is not provided, it returns all commits after the offset."
-  (case *vcs*
+  (case vcs
     (:fossil
      (fossil-commits-log :offset offset :limit limit :hash-length hash-length))
     (:hg
@@ -578,7 +570,7 @@ summary:     test
     (:git
      (git-commits-log :offset offset :limit limit :hash-length hash-length))
     (t
-     (porcelain-error "Unknown VCS: ~a" *vcs*))))
+     (porcelain-error "Unknown VCS: ~a" vcs))))
 
 (defun git-commits-log (&key (offset 0) limit (hash-length 8))
   (git-latest-commits :n limit
@@ -604,9 +596,9 @@ summary:     test
         nil
         (subseq commits offset end))))
 
-(defun commit-count ()
+(defun commit-count (vcs)
   "Get the total number of commits in the current branch."
-  (case *vcs*
+  (case vcs
     (:git
      (parse-integer
       (str:trim (run-git '("rev-list" "--count" "HEAD")))))
@@ -616,7 +608,7 @@ summary:     test
     (:fossil
      (fossil-commit-count))
     (t
-     (porcelain-error "commit-count not implemented for VCS: ~a" *vcs*))))
+     (porcelain-error "commit-count not implemented for VCS: ~a" vcs))))
 
 (defun %not-fossil-commit-line (line)
   (str:starts-with-p "+++ no more data" line))
@@ -639,20 +631,20 @@ summary:     test
 (defun fossil-stage (file)
   (run-fossil (list "add" file)))
 
-(defun stage (file)
-  (case *vcs*
+(defun stage (vcs file)
+  (case vcs
     (:fossil (fossil-stage file))
     (:hg (hg-stage file))
     (t (git-stage file))))
 
-(defun unstage (file)
+(defun unstage (vcs file)
   "Unstage changes to this file.
   The reverse of \"add\"."
-  (case *vcs*
+  (case vcs
     (:git (git-unstage file))
     (:hg (hg-unstage file))
     (:fossil (porcelain-error "unstage not implemented for Fossil."))
-    (t (porcelain-error "VCS not supported: ~a" *vcs*))))
+    (t (porcelain-error "VCS not supported: ~a" vcs))))
 
 (defun git-unstage (file)
   "Unstage changes to a file."
@@ -678,11 +670,11 @@ M	src/ext/porcelain.lisp
   This currently means: checkout this file."
   (run-git (list "checkout" file)))
 
-(defun discard-file (file)
-  (case *vcs*
+(defun discard-file (vcs file)
+  (case vcs
     (:git (git-discard-file file))
     (t
-     (porcelain-error "discard-file is not implemented for this VCS: ~a" *vcs*))))
+     (porcelain-error "discard-file is not implemented for this VCS: ~a" vcs))))
 
 (defvar *verbose* nil)
 
@@ -724,10 +716,10 @@ M	src/ext/porcelain.lisp
   ;; mmh… it wants a binary patch.
   (values nil "fossil patch is not supported." 1))
 
-(defun apply-patch (diff &key reverse)
+(defun apply-patch (vcs diff &key reverse)
   "Apply a patch from this diff.
   diff: string."
-  (case *vcs*
+  (case vcs
     (:fossil (fossil-apply-patch diff :reverse reverse))
     (:hg (porcelain-error "applying patch not yet implemented for Mercurial"))
     (t (git-apply-patch diff :reverse reverse))))
@@ -818,12 +810,12 @@ M	src/ext/porcelain.lisp
     ;; We use small hashes, so don't use equal.
     (str:starts-with-p hash root)))
 
-(defun rebase-interactively (&key from)
-  (case *vcs*
+(defun rebase-interactively (vcs &key from)
+  (case vcs
     (:git (git-rebase-interactively :from from))
     (:hg (porcelain-error "Interactive rebase not implemented for Mercurial"))
     (:fossil (porcelain-error "No interactive rebase for Fossil."))
-    (t (porcelain-error "Interactive rebase not available for this VCS: ~a" *vcs*))))
+    (t (porcelain-error "Interactive rebase not available for this VCS: ~a" vcs))))
 
 (defun git-rebase-interactively (&key from)
   "Start a rebase session.
@@ -882,13 +874,13 @@ I am stopping in case you still have something valuable there."))
                (porcelain-error "git rebase process didn't start properly. Aborting.")))
       (setf (uiop:getenv "EDITOR") editor))))
 
-(defun rebase-continue ()
+(defun rebase-continue (vcs)
   "Either send a continuation signal to the underlying git rebase process, for it to pick up our changes to the interactive rebase file,
   either call git rebase --continue."
-  (case *vcs*
+  (case vcs
     (:git (git-rebase-continue))
     (t
-     (porcelain-error "Rebasing is not supported for ~a" *vcs*))))
+     (porcelain-error "Rebasing is not supported for ~a" vcs))))
 
 (defun %rebase-signal (&key (sig "-SIGTERM"))
   "Send a kill signal to our rebase script: with -SIGTERM, git picks up our changes and continues the rebase process. This is called by a rebase continue command.
@@ -918,11 +910,11 @@ I am stopping in case you still have something valuable there."))
     (t
      (porcelain-error  "No git rebase in process?"))))
 
-(defun rebase-abort ()
-  (case *vcs*
+(defun rebase-abort (vcs)
+  (case vcs
     (:git (git-rebase-abort))
     (t
-     (porcelain-error "Rebasing is not supported for ~a" *vcs*))))
+     (porcelain-error "Rebasing is not supported for ~a" vcs))))
 
 (defun git-rebase-abort ()
   (cond
@@ -938,11 +930,11 @@ I am stopping in case you still have something valuable there."))
     (t
       (porcelain-error  "No git rebase in process? PID not found."))))
 
-(defun rebase-skip ()
-  (case *vcs*
+(defun rebase-skip (vcs)
+  (case vcs
     (:git (git-rebase-skip))
     (t
-     (porcelain-error "Rebasing is not supported for ~a" *vcs*))))
+     (porcelain-error "Rebasing is not supported for ~a" vcs))))
 
 (defun git-rebase-skip ()
   (cond

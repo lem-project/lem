@@ -15,7 +15,7 @@ sdl2-ncurses:
 install:
 	qlot install
 	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2-ncurses.lisp
-	sudo install -m 755 lem /usr/bin/
+	sudo install -m 755 lem /usr/local/bin/
 	sudo install -m 644 scripts/install/lem.svg /usr/share/icons/hicolor/scalable/apps/
 	sudo gtk-update-icon-cache /usr/share/icons/hicolor
 	sudo desktop-file-install --dir=/usr/share/applications scripts/install/lem.desktop

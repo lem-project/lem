@@ -95,6 +95,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-key lem/peek-legit:*peek-legit-keymap* "M-n" 'legit-next-header)
 (define-key lem/peek-legit:*peek-legit-keymap* "M-p" 'legit-previous-header)
 (define-key *legit-diff-mode-keymap* "Tab" 'next-window)
+(define-key *legit-diff-mode-keymap* "Return" 'legit-jump-to-hunk)
 
 ;; help
 (define-key lem/peek-legit:*peek-legit-keymap* "?" 'legit-help)
@@ -379,6 +380,29 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
       (if (equal start (buffer-start start?))
           point
           start))))
+
+(define-command legit-jump-to-hunk () ()
+  "Jump to the corresponding line in the source file for the current hunk."
+  (let* ((hunk-text (%current-hunk))
+         (lines (str:lines hunk-text))
+         (file-line (find-if (lambda (line) (str:starts-with? "+++ b/" line)) lines))
+         (hunk-header (find-if (lambda (line) (str:starts-with? "@@ " line)) lines)))
+    (if (and file-line hunk-header)
+        (let* ((relative-file (subseq file-line 6))  ; Remove "+++ b/" prefix
+               (line-info (cl-ppcre:register-groups-bind (nil start-line)
+                              ("@@ -(\\d+),\\d+ \\+(\\d+)" hunk-header)
+                            (list start-line)))
+               (target-line (when (and line-info (car line-info))
+                              (+ 
+                               (parse-integer (car line-info) :junk-allowed t) 
+                               lem/porcelain:*diff-context-lines*))))
+          (if target-line
+              (with-current-project ()
+                (let ((absolute-file (merge-pathnames relative-file (uiop:getcwd))))
+                  (lem/peek-legit:quit)
+                  (find-file (namestring absolute-file))
+                  (goto-line target-line)))))
+        (message "Could not parse hunk information"))))
 
 (defparameter *commit-buffer-message*
   "~%# Please enter the commit message for your changes.~%~

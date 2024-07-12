@@ -26,6 +26,7 @@
    :stage
    :unstage
    :vcs-project-p
+   :*diff-context-lines*
    )
   (:documentation "Functions to run VCS operations: get the list of changes, of untracked files, commit, push… Git support is the main goal, a simple layer is used with other VCS systems (Fossil, Mercurial).
 
@@ -78,6 +79,9 @@ Mercurial:
   Will be surrounded by the git binary and the file path.
 
   For staged files, --cached is added by the command.")
+
+(defvar *diff-context-lines* 4
+  "How many lines of context before/after the first committed line")
 
 (defvar *vcs* nil
   "git, fossil? For current project. Bind this in the caller.
@@ -336,6 +340,7 @@ allows to learn about the file state: modified, deleted, ignored… "
   (run-git
    (concatenate 'list
                 *file-diff-args*
+                (list (format nil "-U~D" *diff-context-lines*))
                 (if cached '("--cached"))
                 (list file))))
 

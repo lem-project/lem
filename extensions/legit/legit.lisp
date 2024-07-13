@@ -30,6 +30,7 @@ Done:
 - rebase interactively (see legit-rebase)
 - basic Fossil support (current branch, add change, commit)
 - basic Mercurial support
+- show the commits log, with pagination
 
 Ongoing:
 
@@ -78,6 +79,14 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 ;; pull
 (define-key lem/peek-legit:*peek-legit-keymap* "F p" 'legit-pull)
 (define-key *legit-diff-mode-keymap* "F p" 'legit-pull)
+
+;; commits log
+(define-key lem/peek-legit:*peek-legit-keymap* "l l" 'legit-commits-log)
+(define-key lem/peek-legit:*peek-legit-keymap* "f" 'legit-commits-log-next-page)
+(define-key lem/peek-legit:*peek-legit-keymap* "b" 'legit-commits-log-previous-page)
+(define-key lem/peek-legit:*peek-legit-keymap* "F" 'legit-commits-log-last-page)
+(define-key lem/peek-legit:*peek-legit-keymap* "B" 'legit-commits-log-first-page)
+(define-key *legit-diff-mode-keymap* "l l" 'legit-commits-log)
 
 ;; rebase
 ;;; interactive
@@ -471,14 +480,14 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                 :stage-function (make-stage-function file)
                                 :unstage-function (make-unstage-function file :already-unstaged t)
                                 :discard-file-function (make-discard-file-function file))
-                       (insert-string point 
-                                      (format nil "~10a ~a" 
+                       (insert-string point
+                                      (format nil "~10a ~a"
                                               (case type
                                                 (:modified "modified")
                                                 (:deleted "deleted")
                                                 (t ""))
                                               file)
-                                      :attribute 'lem/peek-legit:filename-attribute 
+                                      :attribute 'lem/peek-legit:filename-attribute
                                       :read-only t)))
             (lem/peek-legit:collector-insert "<none>"))
 
@@ -495,15 +504,15 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                 :stage-function (make-stage-function file)
                                 :unstage-function (make-unstage-function file)
                                 :discard-file-function (make-discard-file-function file :is-staged t))
-                       (insert-string point 
-                                      (format nil "~10a ~a" 
+                       (insert-string point
+                                      (format nil "~10a ~a"
                                               (case type
                                                 (:modified "modified")
                                                 (:added "created")
                                                 (:deleted "deleted")
                                                 (t ""))
                                               file)
-                                      :attribute 'lem/peek-legit:filename-attribute 
+                                      :attribute 'lem/peek-legit:filename-attribute
                                       :read-only t)))
             (lem/peek-legit:collector-insert "<none>"))
 
@@ -620,6 +629,81 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-command legit-previous-header () ()
   "Move point to the previous header of this VCS window."
   (lem/peek-legit:peek-legit-previous-header))
+
+(define-command legit-commits-log () ()
+  "List commits on a new buffer."
+  (with-current-project ()
+    (display-commits-log 0)))
+
+(defun display-commits-log (offset)
+  "Display the commit lines on a dedicated legit buffer."
+  (let* ((commits (lem/porcelain:commits-log :offset offset :limit lem/porcelain:*commits-log-page-size*)))
+    (lem/peek-legit:with-collecting-sources (collector :buffer :commits-log :read-only nil)
+      (lem/peek-legit:collector-insert
+       (format nil "Commits (~A):" offset)
+       :header t)
+      (if commits
+          (progn
+            (loop for commit in commits
+                  for line = nil
+                  for hash = nil
+                  for message = nil
+                  if (consp commit)
+                  do (setf line (getf commit :line)
+                           hash (getf commit :hash)
+                           message (getf commit :message))
+                  else
+                  do (setf line commit)
+                  do (lem/peek-legit:with-appending-source
+                         (point :move-function (make-show-commit-function hash)
+                                :visit-file-function (lambda ())
+                                :stage-function (lambda () )
+                                :unstage-function (lambda () ))
+                       (with-point ((start point))
+                         (when hash
+                           (insert-string point hash :attribute 'lem/peek-legit:filename-attribute :read-only t))
+                         (if message
+                             (insert-string point message)
+                             (insert-string point line))
+                         (when hash
+                           (put-text-property start point :commit-hash hash)))))
+            (setf (buffer-value (lem/peek-legit:collector-buffer collector) 'commits-offset) offset))
+          (lem/peek-legit:collector-insert "<no commits>")))))
+
+(define-command legit-commits-log-next-page () ()
+  "Show the next page of the commits log."
+  (with-current-project ()
+    (let* ((buffer (current-buffer))
+           (window-height (window-height (current-window)))
+           (current-offset (or (buffer-value buffer 'commits-offset) 0))
+           (new-offset (+ current-offset lem/porcelain:*commits-log-page-size*))
+           (commits (lem/porcelain:commits-log :offset new-offset
+                                               :limit lem/porcelain:*commits-log-page-size*)))
+      (if commits
+          (display-commits-log new-offset)
+          (message "No more commits to display.")))))
+
+(define-command legit-commits-log-previous-page () ()
+  "Show the previous page of the commits log."
+  (with-current-project ()
+    (let* ((buffer (current-buffer))
+           (window-height (window-height (current-window)))
+           (current-offset (or (buffer-value buffer 'commits-offset) 0))
+           (new-offset (max 0 (- current-offset lem/porcelain:*commits-log-page-size*))))
+      (display-commits-log new-offset))))
+
+(define-command legit-commits-log-first-page () ()
+  "Go to the first page of the commit log."
+  (with-current-project ()
+    (display-commits-log 0)))
+
+(define-command legit-commits-log-last-page () ()
+  "Go to the last page of the commit log."
+  (with-current-project ()
+    (let* ((commits-per-page lem/porcelain:*commits-log-page-size*)
+           (last-page-offset (* (floor (/ (1- (lem/porcelain:commit-count)) commits-per-page))
+                                commits-per-page)))
+      (display-commits-log last-page-offset))))
 
 (define-command legit-quit () ()
   "Quit"

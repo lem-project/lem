@@ -1,5 +1,5 @@
 
-(defpackage :lem/porcelain
+(uiop:define-package :lem/porcelain
   (:use :cl)
   (:shadow :push)
   (:import-from :trivial-types
@@ -26,7 +26,9 @@
    :stage
    :unstage
    :vcs-project-p
-   )
+   :commits-log
+   :*commits-log-page-size*
+   :commit-count)
   (:documentation "Functions to run VCS operations: get the list of changes, of untracked files, commit, push… Git support is the main goal, a simple layer is used with other VCS systems (Fossil, Mercurial).
 
 On interactive commands, Legit will check what VCS is in use in the current project.
@@ -43,7 +45,7 @@ Supported version control systems:
 - Fossil: preliminary support
 - Mercurial: preliminary support
 
-TODOs: 
+TODOs:
 
 Mercurial:
 
@@ -66,6 +68,9 @@ Mercurial:
 ;;; Global variables, for all VCS.
 (defvar *nb-latest-commits* 10
   "Number of commits to show in the status.")
+
+(defvar *commits-log-page-size* 200
+  "Number of commits to show in the commits log.")
 
 (defvar *branch-sort-by* "-creatordate"
   "When listing branches, sort by this field name.
@@ -470,8 +475,13 @@ allows to learn about the file state: modified, deleted, ignored… "
     (str:lines
      (run-git (list "log" "--pretty=oneline" "-n" (princ-to-string n))))))
 
-(defun git-latest-commits (&key (hash-length 8))
-  (let ((lines (%git-list-latest-commits)))
+(defun git-latest-commits (&key (n *commits-log-page-size*) (hash-length 8) (offset 0))
+  (let* ((n-arg (when n (list "-n" (princ-to-string n))))
+         (lines (str:lines
+                 (run-git (append (list "log"
+                                        "--pretty=oneline"
+                                        "--skip" (princ-to-string offset))
+                                  n-arg)))))
     (loop for line in lines
           for space-position = (position #\space line)
           for small-hash = (subseq line 0 hash-length)
@@ -480,8 +490,8 @@ allows to learn about the file state: modified, deleted, ignored… "
                         :message message
                         :hash small-hash))))
 
-(defun hg-latest-commits (&key (hash-length 8))
-  (declare (ignorable hash-length))
+(defun hg-latest-commits (&key (n *nb-latest-commits*) (hash-length 8))
+  (declare (ignorable n hash-length))
   (let ((out (run-hg "log")))
     ;; Split by paragraph.
         #| $ hg log
@@ -539,7 +549,7 @@ summary:     test
   ;; return bare result.
   (str:lines (run-fossil "timeline")))
 
-(defun latest-commits (&key (hash-length 8))
+(defun latest-commits (&key (n *nb-latest-commits*) (hash-length 8))
   "Return a list of strings or plists.
   The plist has a :hash and a :message, or simply a :line."
   (case *vcs*
@@ -548,7 +558,69 @@ summary:     test
     (:hg
      (hg-latest-commits))
     (t
-     (git-latest-commits :hash-length hash-length))))
+     (git-latest-commits :n n :hash-length hash-length))))
+
+(defun commits-log (&key (offset 0) limit (hash-length 8))
+  "Return a list of commits starting from the given offset.
+   If a limit is not provided, it returns all commits after the offset."
+  (case *vcs*
+    (:fossil
+     (fossil-commits-log :offset offset :limit limit :hash-length hash-length))
+    (:hg
+     (hg-commits-log :offset offset :limit limit :hash-length hash-length))
+    (:git
+     (git-commits-log :offset offset :limit limit :hash-length hash-length))
+    (t
+     (porcelain-error "Unknown VCS: ~a" *vcs*))))
+
+(defun git-commits-log (&key (offset 0) limit (hash-length 8))
+  (git-latest-commits :n limit
+                      :hash-length hash-length
+                      :offset offset))
+
+(defun hg-commits-log (&key (offset 0) limit (hash-length 8))
+  (declare (ignorable hash-length))
+  (let* ((commits (hg-latest-commits))
+         (total-commits (length commits))
+         (end (when limit
+                (min total-commits (+ offset limit)))))
+    (if (>= offset total-commits)
+        nil
+        (subseq commits offset end))))
+
+(defun fossil-commits-log (&key (offset 0) limit (hash-length 8))
+  (declare (ignorable hash-length))
+  (let* ((commits (fossil-latest-commits))
+         (total-commits (length commits))
+         (end (when limit (min total-commits (+ offset limit)))))
+    (if (>= offset total-commits)
+        nil
+        (subseq commits offset end))))
+
+(defun commit-count ()
+  "Get the total number of commits in the current branch."
+  (case *vcs*
+    (:git
+     (parse-integer
+      (str:trim (run-git '("rev-list" "--count" "HEAD")))))
+    (:hg
+     (parse-integer
+      (str:trim (run-hg '("id" "--num" "--rev" "tip")))))
+    (:fossil
+     (length))
+    (t
+     (porcelain-error "commit-count not implemented for VCS: ~a" *vcs*))))
+
+(defun %not-fossil-commit-line (line)
+  (str:starts-with-p "+++ no more data" line))
+
+(defun fossil-commit-count ()
+  ;; Not really tested in Lem.
+  (length
+   ;; Does the timeline command always end with "+++ no more data (1) +++" ?
+   (remove-if #'%not-fossil-commit-line
+              (str:lines
+               (run-fossil (list "timeline" "--oneline"))))))
 
 ;; stage, add files.
 (defun git-stage (file)

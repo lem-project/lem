@@ -30,6 +30,7 @@ Done:
 - rebase interactively (see legit-rebase)
 - basic Fossil support (current branch, add change, commit)
 - basic Mercurial support
+- show the commits log, with pagination
 
 Ongoing:
 
@@ -635,9 +636,10 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (display-commits-log 0)))
 
 (defun display-commits-log (offset)
-  (let* ((commits (lem/porcelain:commits-log :offset offset :limit lem/porcelain:*nb-commits-log*)))
+  "Display the commit lines on a dedicated legit buffer."
+  (let* ((commits (lem/porcelain:commits-log :offset offset :limit lem/porcelain:*commits-log-page-size*)))
     (lem/peek-legit:with-collecting-sources (collector :buffer :commits-log :read-only nil)
-      (lem/peek-legit:collector-insert 
+      (lem/peek-legit:collector-insert
        (format nil "Commits (~A):" offset)
        :header t)
       (if commits
@@ -669,23 +671,25 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
           (lem/peek-legit:collector-insert "<no commits>")))))
 
 (define-command legit-commits-log-next-page () ()
+  "Show the next page of the commits log."
   (with-current-project ()
     (let* ((buffer (current-buffer))
            (window-height (window-height (current-window)))
            (current-offset (or (buffer-value buffer 'commits-offset) 0))
-           (new-offset (+ current-offset lem/porcelain:*nb-commits-log*))
+           (new-offset (+ current-offset lem/porcelain:*commits-log-page-size*))
            (commits (lem/porcelain:commits-log :offset new-offset
-                                               :limit lem/porcelain:*nb-commits-log*)))
+                                               :limit lem/porcelain:*commits-log-page-size*)))
       (if commits
           (display-commits-log new-offset)
           (message "No more commits to display.")))))
 
 (define-command legit-commits-log-previous-page () ()
+  "Show the previous page of the commits log."
   (with-current-project ()
     (let* ((buffer (current-buffer))
            (window-height (window-height (current-window)))
            (current-offset (or (buffer-value buffer 'commits-offset) 0))
-           (new-offset (max 0 (- current-offset lem/porcelain:*nb-commits-log*))))
+           (new-offset (max 0 (- current-offset lem/porcelain:*commits-log-page-size*))))
       (display-commits-log new-offset))))
 
 (define-command legit-commits-log-first-page () ()
@@ -696,8 +700,8 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-command legit-commits-log-last-page () ()
   "Go to the last page of the commit log."
   (with-current-project ()
-    (let* ((commits-per-page lem/porcelain:*nb-commits-log*)
-           (last-page-offset (* (floor (/ (1- (lem/porcelain:commit-count)) commits-per-page)) 
+    (let* ((commits-per-page lem/porcelain:*commits-log-page-size*)
+           (last-page-offset (* (floor (/ (1- (lem/porcelain:commit-count)) commits-per-page))
                                 commits-per-page)))
       (display-commits-log last-page-offset))))
 

@@ -27,7 +27,7 @@
    :unstage
    :vcs-project-p
    :commits-log
-   :*nb-commits-log*
+   :*commits-log-page-size*
    :commit-count)
   (:documentation "Functions to run VCS operations: get the list of changes, of untracked files, commit, push… Git support is the main goal, a simple layer is used with other VCS systems (Fossil, Mercurial).
 
@@ -69,7 +69,7 @@ Mercurial:
 (defvar *nb-latest-commits* 10
   "Number of commits to show in the status.")
 
-(defvar *nb-commits-log* 200
+(defvar *commits-log-page-size* 200
   "Number of commits to show in the commits log.")
 
 (defvar *branch-sort-by* "-creatordate"
@@ -475,11 +475,11 @@ allows to learn about the file state: modified, deleted, ignored… "
     (str:lines
      (run-git (list "log" "--pretty=oneline" "-n" (princ-to-string n))))))
 
-(defun git-latest-commits (&key (n *nb-commits-log*) (hash-length 8) (offset 0))
+(defun git-latest-commits (&key (n *commits-log-page-size*) (hash-length 8) (offset 0))
   (let* ((n-arg (when n (list "-n" (princ-to-string n))))
          (lines (str:lines
-                 (run-git (append (list "log" 
-                                        "--pretty=oneline" 
+                 (run-git (append (list "log"
+                                        "--pretty=oneline"
                                         "--skip" (princ-to-string offset))
                                   n-arg)))))
     (loop for line in lines
@@ -579,8 +579,8 @@ summary:     test
            nil
            (subseq commits offset end))))
     (:git
-     (git-latest-commits :n limit 
-                         :hash-length hash-length 
+     (git-latest-commits :n limit
+                         :hash-length hash-length
                          :offset offset))
     (t
      (porcelain-error "Unknown VCS: ~a" *vcs*))))

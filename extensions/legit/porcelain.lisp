@@ -27,7 +27,8 @@
    :unstage
    :vcs-project-p
    :commits-log
-   :*nb-commits-log*)
+   :*nb-commits-log*
+   :commit-count)
   (:documentation "Functions to run VCS operations: get the list of changes, of untracked files, commit, push… Git support is the main goal, a simple layer is used with other VCS systems (Fossil, Mercurial).
 
 On interactive commands, Legit will check what VCS is in use in the current project.
@@ -583,6 +584,20 @@ summary:     test
                          :offset offset))
     (t
      (porcelain-error "Unknown VCS: ~a" *vcs*))))
+
+(defun commit-count ()
+  "Get the total number of commits in the current branch."
+  (case *vcs*
+    (:hg
+     (parse-integer
+      (string-trim '(#\Space #\Newline)
+                   (run-hg '("id" "--num" "--rev" "tip")))))
+    (:git
+     (parse-integer
+      (string-trim '(#\Space #\Newline)
+                   (run-git '("rev-list" "--count" "HEAD")))))
+    (t
+     (porcelain-error "commit-count not implemented for VCS: ~a" *vcs*))))
 
 ;; stage, add files.
 (defun git-stage (file)

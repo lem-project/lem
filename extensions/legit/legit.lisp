@@ -696,9 +696,8 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-command legit-commits-log-last-page () ()
   "Go to the last page of the commit log."
   (with-current-project ()
-    (let* ((total-commits (length (lem/porcelain:commits-log)))
-           (commits-per-page lem/porcelain:*nb-commits-log*)
-           (last-page-offset (* (floor (/ (1- total-commits) commits-per-page)) 
+    (let* ((commits-per-page lem/porcelain:*nb-commits-log*)
+           (last-page-offset (* (floor (/ (1- (lem/porcelain:commit-count)) commits-per-page)) 
                                 commits-per-page)))
       (display-commits-log last-page-offset))))
 

@@ -8,7 +8,6 @@
                "lem-lisp-syntax"
                "lem"
                "lem-process"
-               "lem-socket-utils"
                "lem-lsp-mode")
   :serial t
   :components ((:file "test-api")

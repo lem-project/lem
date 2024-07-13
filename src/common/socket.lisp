@@ -1,11 +1,11 @@
-(defpackage :lem-socket-utils
+(defpackage :lem/common/socket
   (:use :cl)
   (:import-from :usocket)
   (:export :port-available-p
            :random-available-port)
   #+sbcl
   (:lock t))
-(in-package :lem-socket-utils)
+(in-package :lem/common/socket)
 
 (defconstant +private-port-min+ 49152)
 (defconstant +private-port-max+ 65535)

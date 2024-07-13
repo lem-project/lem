@@ -216,7 +216,7 @@
 
 (defun self-connect ()
   (unless lem-lisp-mode/test-api:*disable-self-connect*
-    (let ((port (lem-socket-utils:random-available-port)))
+    (let ((port (lem/common/socket:random-available-port)))
       (log:debug "Starting internal SWANK and connecting to it" micros:*communication-style*)
       (let ((micros::*swank-debug-p* nil))
         (micros:create-server :port port :style :spawn))
@@ -1096,7 +1096,7 @@
    (format nil "(micros:create-server :port ~D :dont-close t)~%" port)))
 
 (defun run-slime (command &key (directory (buffer-directory)))
-  (let* ((port (lem-socket-utils:random-available-port))
+  (let* ((port (lem/common/socket:random-available-port))
          (process (run-lisp :command command :directory directory :port port)))
     (send-swank-create-server process port)
     (start-lisp-repl)

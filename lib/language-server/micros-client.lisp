@@ -1,7 +1,7 @@
 (defpackage :lem-language-server/micros-client
   (:nicknames :micros/client)
   (:use :cl)
-  (:import-from :lem-socket-utils
+  (:import-from :lem/common/socket
                 :random-available-port)
   (:export :*write-string-function*
            :connection-port

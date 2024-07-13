@@ -12,7 +12,6 @@
                "micros"
                "lem"
                "lem-lisp-syntax"
-               "lem-socket-utils"
                "lem-lsp-base")
   :serial t
   :components ((:file "micros-client")

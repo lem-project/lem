@@ -4,7 +4,9 @@
            :indent-current-buffer
            :toggle-read-only
            :rename-buffer
-           :unmark-buffer))
+           :unmark-buffer)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/buffer)
 
 (defvar *read-only-function* nil)

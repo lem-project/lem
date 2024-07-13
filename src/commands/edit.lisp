@@ -32,7 +32,9 @@
            :transpose-characters
            :undo
            :redo
-           :delete-trailing-whitespace))
+           :delete-trailing-whitespace)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/edit)
 
 (setf (keymap-undef-hook *global-keymap*) 'self-insert)

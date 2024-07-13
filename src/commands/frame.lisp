@@ -1,6 +1,8 @@
 (defpackage :lem-core/commands/frame
   (:use :cl :lem-core)
-  (:export :toggle-frame-fullscreen))
+  (:export :toggle-frame-fullscreen)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/frame)
 
 (define-command toggle-frame-fullscreen () ()

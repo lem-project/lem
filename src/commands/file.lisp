@@ -20,7 +20,9 @@
            :change-directory
            :current-directory
            :prompt-for-files-recursively
-           :format-current-buffer))
+           :format-current-buffer)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/file)
 
 (define-key *global-keymap* "C-x C-f" 'find-file)

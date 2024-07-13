@@ -1,7 +1,9 @@
 (defpackage :lem-core/commands/process
   (:use :cl :lem-core)
   (:export :filter-buffer
-           :pipe-command))
+           :pipe-command)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/process)
 
 (define-key *global-keymap* "C-x #" 'filter-buffer)

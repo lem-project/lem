@@ -10,6 +10,8 @@
            :project-root-directory
            :project-root
            :project-kill-buffers)
+  #+sbcl
+  (:lock t)
   (:documentation "Defines utilities to find a project root directory and related user-facing commands: project-find-file, project-kill-buffers, project-switch etc."))
 
 (in-package :lem-core/commands/project)

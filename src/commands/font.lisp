@@ -1,7 +1,9 @@
 (defpackage :lem-core/commands/font
   (:use :cl :lem-core)
   (:export :font-size-increase
-           :font-size-decrease))
+           :font-size-decrease)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/font)
 
 (define-key *global-keymap* "C-+" 'font-size-increase)

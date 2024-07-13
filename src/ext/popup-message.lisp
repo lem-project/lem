@@ -25,7 +25,7 @@
   (let ((buffer (etypecase buffer-or-string
                   (string (make-popup-buffer buffer-or-string))
                   (buffer buffer-or-string))))
-    (destructuring-bind (width height)
+    (multiple-value-bind (width height)
         (lem/popup-window::compute-buffer-size buffer)
       (delete-popup-message destination-window)
       (let ((window (lem/popup-window::make-popup-window

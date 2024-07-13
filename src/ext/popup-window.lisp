@@ -257,8 +257,8 @@
   (buffer-nlines buffer))
 
 (defun compute-buffer-size (buffer)
-  (list (compute-buffer-width buffer)
-        (compute-buffer-height buffer)))
+  (values (compute-buffer-width buffer)
+          (compute-buffer-height buffer)))
 
 (defmethod window-redraw ((popup-window popup-window) force)
   (adjust-for-redrawing (popup-window-gravity popup-window) popup-window)

@@ -13,7 +13,8 @@
 (cffi:define-foreign-library terminal
   (:unix "terminal.so"))
 
-(cffi:use-foreign-library terminal)
+(ignore-errors
+  (cffi:use-foreign-library terminal))
 
 (defconstant VTERM_KEY_NONE 0)
 (defconstant VTERM_KEY_ENTER 1)

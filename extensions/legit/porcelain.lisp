@@ -565,35 +565,49 @@ summary:     test
    If a limit is not provided, it returns all commits after the offset."
   (case *vcs*
     (:fossil
-     (let* ((commits (fossil-latest-commits))
-            (total-commits (length commits))
-            (end (when limit (min total-commits (+ offset limit)))))
-       (if (>= offset total-commits)
-           nil
-           (subseq commits offset end))))
+     (fossil-commits-log :offset offset :limit limit :hash-length hash-length))
     (:hg
-     (let* ((commits (hg-latest-commits))
-            (total-commits (length commits))
-            (end (when limit (min total-commits (+ offset limit)))))
-       (if (>= offset total-commits)
-           nil
-           (subseq commits offset end))))
+     (hg-commits-log :offset offset :limit limit :hash-length hash-length))
     (:git
-     (git-latest-commits :n limit
-                         :hash-length hash-length
-                         :offset offset))
+     (git-commits-log :offset offset :limit limit :hash-length hash-length))
     (t
      (porcelain-error "Unknown VCS: ~a" *vcs*))))
+
+(defun git-commits-log (&key (offset 0) limit (hash-length 8))
+  (git-latest-commits :n limit
+                      :hash-length hash-length
+                      :offset offset))
+
+(defun hg-commits-log (&key (offset 0) limit (hash-length 8))
+  (declare (ignorable hash-length))
+  (let* ((commits (hg-latest-commits))
+         (total-commits (length commits))
+         (end (when limit
+                (min total-commits (+ offset limit)))))
+    (if (>= offset total-commits)
+        nil
+        (subseq commits offset end))))
+
+(defun fossil-commits-log (&key (offset 0) limit (hash-length 8))
+  (declare (ignorable hash-length))
+  (let* ((commits (fossil-latest-commits))
+         (total-commits (length commits))
+         (end (when limit (min total-commits (+ offset limit)))))
+    (if (>= offset total-commits)
+        nil
+        (subseq commits offset end))))
 
 (defun commit-count ()
   "Get the total number of commits in the current branch."
   (case *vcs*
-    (:hg
-     (parse-integer
-      (str:trim (run-hg '("id" "--num" "--rev" "tip")))))
     (:git
      (parse-integer
       (str:trim (run-git '("rev-list" "--count" "HEAD")))))
+    (:hg
+     (parse-integer
+      (str:trim (run-hg '("id" "--num" "--rev" "tip")))))
+    (:fossil
+     (length))
     (t
      (porcelain-error "commit-count not implemented for VCS: ~a" *vcs*))))
 

@@ -1,5 +1,5 @@
 
-(defpackage :lem/porcelain
+(uiop:define-package :lem/porcelain
   (:use :cl)
   (:shadow :push)
   (:import-from :trivial-types

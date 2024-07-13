@@ -347,10 +347,12 @@ allows to learn about the file state: modified, deleted, ignored… "
 (defun hg-file-diff (file &key cached)
   "Show the diff of staged files (and only them)."
   (when cached
-      (run-hg (list "diff" file))
-      ;; files not staged can't be diffed.
-      ;; We could read and display their full content anyways?
-      ))
+    (run-hg (list "diff"
+                  (format nil "-U~D" *diff-context-lines*)
+                  file))
+    ;; files not staged can't be diffed.
+    ;; We could read and display their full content anyways?
+    ))
 
 (defun fossil-file-diff (file &key cached)
   (declare (ignorable cached))

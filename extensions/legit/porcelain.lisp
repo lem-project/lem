@@ -611,6 +611,17 @@ summary:     test
     (t
      (porcelain-error "commit-count not implemented for VCS: ~a" *vcs*))))
 
+(defun %not-fossil-commit-line (line)
+  (str:starts-with-p "+++ no more data" line))
+
+(defun fossil-commit-count ()
+  ;; Not really tested in Lem.
+  (length
+   ;; Does the timeline command always end with "+++ no more data (1) +++" ?
+   (remove-if #'%not-fossil-commit-line
+              (str:lines
+               (run-fossil (list "timeline" "--oneline"))))))
+
 ;; stage, add files.
 (defun git-stage (file)
   (run-git (list "add" file)))

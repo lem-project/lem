@@ -48,6 +48,7 @@
                              (:file "queue")
                              (:file "hooks")
                              (:file "var")
+                             (:file "socket")
                              (:file "utils")
                              (:module "character"
                               :serial t
@@ -252,8 +253,7 @@
                "lem-markdown-mode"
                "lem-color-preview"
                "lem-lua-mode"
-               #+(or)"lem-terminal" ; experimental
-               ))
+               "lem-terminal"))
 
 (defsystem "lem/legit"
   :serial t

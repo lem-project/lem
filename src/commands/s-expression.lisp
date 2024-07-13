@@ -10,7 +10,9 @@
            :up-list
            :mark-sexp
            :kill-sexp
-           :transpose-sexps))
+           :transpose-sexps)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/s-expression)
 
 (define-key *global-keymap* "C-M-f" 'forward-sexp)

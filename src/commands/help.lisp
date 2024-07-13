@@ -4,7 +4,9 @@
            :describe-bindings
            :apropos-command
            :lem-version
-           :list-modes))
+           :list-modes)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/help)
 
 (define-key *global-keymap* "C-x ?" 'describe-key)

@@ -9,7 +9,7 @@
   (:import-from :lem-vi-mode/options
                 :execute-set-command)
   (:import-from :lem-vi-mode/utils
-                :change-directory
+                :change-directory*
                 :expand-filename-modifiers))
 (in-package :lem-vi-mode/ex-command)
 
@@ -236,7 +236,7 @@
 
 (define-ex-command "^cd$" (range new-directory)
   (declare (ignore range))
-  (let ((new-directory (change-directory (expand-filename-modifiers new-directory))))
+  (let ((new-directory (change-directory* (expand-filename-modifiers new-directory))))
     (lem:message "~A" new-directory)))
 
 (define-ex-command "^noh(?:lsearch)?$" (range argument)

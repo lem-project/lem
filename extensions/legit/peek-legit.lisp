@@ -234,16 +234,29 @@ Notes:
     (start-move-point (buffer-point (collector-buffer collector)))
     (show-matched-line)))
 
-(defun make-peek-legit-buffer ()
-  (let ((buffer (make-buffer "*peek-legit*"
+(defun make-peek-legit-buffer (&key (name "*peek-legit*"))
+  "Get or create a buffer of name NAME. By default, use a `*peek-legit*' buffer.
+  This is where we will display legit information (status…)."
+  (let ((buffer (make-buffer name
                              :temporary t
                              :enable-undo-p t
                              :directory (uiop:getcwd))))
     (setf (variable-value 'line-wrap :buffer buffer) nil)
     buffer))
 
-(defun call-with-collecting-sources (function &key read-only)
-  (let* ((*collector* (make-instance 'collector :buffer (make-peek-legit-buffer)))
+(defun call-with-collecting-sources (function &key read-only buffer )
+  "Initialize variables to display things on a legit buffer.
+
+  BUFFER: either :status or :commits-log.
+  READ-ONLY: boolean."
+  (let* ((*collector* (make-instance 'collector
+                                     :buffer
+                                     (make-peek-legit-buffer
+                                      :name
+                                      (case buffer
+                                        (:status "*peek-legit*")
+                                        (:commits-log "*legit-commits-log*")
+                                        (t (error "Unknown buffer name to display legit data: ~a" buffer))))))
          (point (buffer-point (collector-buffer *collector*))))
     (declare (ignorable point))
     (funcall function *collector*)
@@ -251,10 +264,11 @@ Notes:
       (setf (buffer-read-only-p (collector-buffer *collector*)) t))
       (display *collector*)))
 
-(defmacro with-collecting-sources ((collector &key (read-only t)) &body body)
+(defmacro with-collecting-sources ((collector &key (buffer :status) (read-only t)) &body body)
   `(call-with-collecting-sources (lambda (,collector)
                                    (declare (ignorable ,collector))
                                    ,@body)
+                                 :buffer ,buffer
                                  :read-only ,read-only))
 
 (defun call-with-appending-source (insert-function

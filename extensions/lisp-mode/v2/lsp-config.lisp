@@ -48,14 +48,14 @@
     (micros:create-server :port port)))
 
 (defun start-language-server (port)
-  (bt:make-thread (lambda ()
+  (bt2:make-thread (lambda ()
                     (lem-language-server:start-tcp-server port))))
 
 (defmethod lem-lsp-mode::run-server ((spec lisp-spec))
   (if (not *self-connection*)
       (call-next-method)
-      (let* ((lsp-port (lem-socket-utils:random-available-port))
-             (micros-port (lem-socket-utils:random-available-port lsp-port)))
+      (let* ((lsp-port (lem/common/socket:random-available-port))
+             (micros-port (lem/common/socket:random-available-port lsp-port)))
         (start-language-server lsp-port)
         (start-micros-server micros-port)
         (make-instance 'lem-lsp-mode/client:tcp-client :port lsp-port))))

@@ -16,7 +16,9 @@
            :previous-page
            :next-page-char
            :previous-page-char
-           :goto-line))
+           :goto-line)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/move)
 
 (define-key *global-keymap* "C-n" 'next-line)

@@ -20,7 +20,9 @@
            :change-directory
            :current-directory
            :prompt-for-files-recursively
-           :format-current-buffer))
+           :format-current-buffer)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/file)
 
 (define-key *global-keymap* "C-x C-f" 'find-file)
@@ -176,15 +178,15 @@
   If finding files times out, such as in a HOME directory, stop the operation.
 
   Return a list of files or signal a FALLBACK-TO-FIND-FILE simple condition."
-  (let ((thread (bt:make-thread
+  (let ((thread (bt2:make-thread
                  (lambda ()
                    (get-files-recursively find-program))
                  :name "Lem get-files-recursively")))
     (handler-case
-        (bt:with-timeout (timeout)
-          (bt:join-thread thread))
-      (bt:timeout ()
-        (bt:destroy-thread thread)
+        (bt2:with-timeout (timeout)
+          (bt2:join-thread thread))
+      (bt2:timeout ()
+        (bt2:destroy-thread thread)
         (signal 'fallback-to-find-file)))))
 
 (defun prompt-for-files-recursively ()

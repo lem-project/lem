@@ -3,6 +3,8 @@
         :alexandria
         :lem
         :lem-lisp-mode/internal)
+  (:export :lisp-macrostep-expand
+           :lisp-macroexpand-all)
   #+sbcl
   (:lock t))
 (in-package :lem-lisp-mode/macroexpand)

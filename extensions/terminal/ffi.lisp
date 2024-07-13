@@ -13,7 +13,8 @@
 (cffi:define-foreign-library terminal
   (:unix "terminal.so"))
 
-(cffi:use-foreign-library terminal)
+(ignore-errors
+  (cffi:use-foreign-library terminal))
 
 (defconstant VTERM_KEY_NONE 0)
 (defconstant VTERM_KEY_ENTER 1)
@@ -62,6 +63,7 @@
   (id :int)
   (rows :int)
   (cols :int)
+  (program :string)
   (cb_damage :pointer)
   (cb_moverect :pointer)
   (cb_movecursor :pointer)
@@ -75,6 +77,7 @@
   (%terminal-new id
                  rows
                  cols
+                 (or (uiop:getenv "SHELL") "/bin/bash")
                  (cffi:callback cb-damage)
                  (cffi:callback cb-moverect)
                  (cffi:callback cb-movecursor)

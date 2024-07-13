@@ -270,7 +270,7 @@
   (let ((n (skip-chars-backward point #'syntax-space-char-p)))
     (delete-character point n)))
 
-(defun just-one-space (point)
+(defun just-one-space* (point)
   (assert (eq (point-kind point) :left-inserting))
   (delete-forward-whitespaces point)
   (insert-character point #\space)
@@ -334,7 +334,7 @@
                    (t
                     (insert-character point #\newline)
                     (emit-initarg slot-info)
-                    (just-one-space point)
+                    (just-one-space* point)
                     (emit-initform t)))
              (delete-forward-whitespaces point)
              (insert-character point #\newline)

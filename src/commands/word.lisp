@@ -14,7 +14,9 @@
            :forward-paragraph
            :backward-paragraph
            :kill-paragraph
-           :count-words))
+           :count-words)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/word)
 
 (define-key *global-keymap* "M-f" 'forward-word)

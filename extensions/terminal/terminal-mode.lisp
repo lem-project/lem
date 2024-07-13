@@ -17,7 +17,9 @@
     find-file
     execute-command
     terminal-resize
-    terminal-copy-mode-on))
+    terminal-copy-mode-on
+    lem-core::<mouse-motion-event>
+    lem-core::<mouse-event>))
 
 (define-major-mode terminal-mode ()
     (:name "Terminal"

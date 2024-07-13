@@ -100,6 +100,8 @@
    :lisp-apropos-package
    ;; message.lisp
    :display-message
+   ;; package.lisp
+   :lisp-listen-in-current-package 
    ;;
    :self-connection
    :self-connection-p

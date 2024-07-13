@@ -83,6 +83,8 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-key lem/peek-legit:*peek-legit-keymap* "l l" 'legit-commits-log)
 (define-key lem/peek-legit:*peek-legit-keymap* "f" 'legit-commits-log-next-page)
 (define-key lem/peek-legit:*peek-legit-keymap* "b" 'legit-commits-log-previous-page)
+(define-key lem/peek-legit:*peek-legit-keymap* "F" 'legit-commits-log-last-page)
+(define-key lem/peek-legit:*peek-legit-keymap* "B" 'legit-commits-log-first-page)
 (define-key *legit-diff-mode-keymap* "l l" 'legit-commits-log)
 
 ;; rebase
@@ -685,6 +687,20 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
            (current-offset (or (buffer-value buffer 'commits-offset) 0))
            (new-offset (max 0 (- current-offset lem/porcelain:*nb-commits-log*))))
       (display-commits-log new-offset))))
+
+(define-command legit-commits-log-first-page () ()
+  "Go to the first page of the commit log."
+  (with-current-project ()
+    (display-commits-log 0)))
+
+(define-command legit-commits-log-last-page () ()
+  "Go to the last page of the commit log."
+  (with-current-project ()
+    (let* ((total-commits (length (lem/porcelain:commits-log)))
+           (commits-per-page lem/porcelain:*nb-commits-log*)
+           (last-page-offset (* (floor (/ (1- total-commits) commits-per-page)) 
+                                commits-per-page)))
+      (display-commits-log last-page-offset))))
 
 (define-command legit-quit () ()
   "Quit"

@@ -590,12 +590,10 @@ summary:     test
   (case *vcs*
     (:hg
      (parse-integer
-      (string-trim '(#\Space #\Newline)
-                   (run-hg '("id" "--num" "--rev" "tip")))))
+      (str:trim (run-hg '("id" "--num" "--rev" "tip")))))
     (:git
      (parse-integer
-      (string-trim '(#\Space #\Newline)
-                   (run-git '("rev-list" "--count" "HEAD")))))
+      (str:trim (run-git '("rev-list" "--count" "HEAD")))))
     (t
      (porcelain-error "commit-count not implemented for VCS: ~a" *vcs*))))
 

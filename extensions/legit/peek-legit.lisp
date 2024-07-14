@@ -213,7 +213,7 @@ Notes:
                                        :use-border t)))
     (list peek-window source-window)))
 
-(defun display (collector)
+(defun display (collector &key (minor-mode 'peek-legit-mode))
   (when (boundp '*peek-window*)
     (delete-window *peek-window*))
   (when (boundp '*source-window*)
@@ -229,7 +229,10 @@ Notes:
     (setf *source-window* source-window)
 
     (setf (current-window) peek-window)
-    (peek-legit-mode t)
+
+    (funcall minor-mode t)
+    ;; aka:
+    ;; (peek-legit-mode t)
 
     (start-move-point (buffer-point (collector-buffer collector)))
     (show-matched-line)))
@@ -244,11 +247,16 @@ Notes:
     (setf (variable-value 'line-wrap :buffer buffer) nil)
     buffer))
 
-(defun call-with-collecting-sources (function &key read-only buffer )
+(defun call-with-collecting-sources (function &key read-only buffer (minor-mode 'peek-legit-mode))
   "Initialize variables to display things on a legit buffer.
 
   BUFFER: either :status or :commits-log.
-  READ-ONLY: boolean."
+  READ-ONLY: boolean.
+  MINOR-MODE: the minor mode to activate after we displayed things in the buffer. Defaults to the main peek-legit-mode. The mode is activated with:
+
+    (peek-legit-mode t)
+  or
+    (funcall minor-mode t)"
   (let* ((*collector* (make-instance 'collector
                                      :buffer
                                      (make-peek-legit-buffer
@@ -262,13 +270,20 @@ Notes:
     (funcall function *collector*)
     (when read-only
       (setf (buffer-read-only-p (collector-buffer *collector*)) t))
-      (display *collector*)))
+      (display *collector* :minor-mode minor-mode)))
 
-(defmacro with-collecting-sources ((collector &key (buffer :status) (read-only t)) &body body)
+(defmacro with-collecting-sources ((collector &key (buffer :status)
+                                                (read-only t)
+                                                (minor-mode 'peek-legit-mode))
+                                   &body body)
+  "Top-level macro that prepares a buffer to print stuff on and activates a minor-mode.
+
+  Then see `with-appending-source' and `collector-insert'."
   `(call-with-collecting-sources (lambda (,collector)
                                    (declare (ignorable ,collector))
                                    ,@body)
                                  :buffer ,buffer
+                                 :minor-mode ,minor-mode
                                  :read-only ,read-only))
 
 (defun call-with-appending-source (insert-function
@@ -294,6 +309,7 @@ Notes:
                                              stage-function
                                              unstage-function
                                              discard-file-function) &body body)
+  "Macro to use inside `with-collecting-sources' to print stuff."
   `(call-with-appending-source (lambda (,point) ,@body)
                                ,move-function
                                ,visit-file-function

@@ -9,7 +9,10 @@
            :project-find-file
            :project-root-directory
            :project-root
-           :project-kill-buffers)
+           :project-kill-buffers
+           :project-switch
+           :project-save
+           :project-unsave)
   #+sbcl
   (:lock t)
   (:documentation "Defines utilities to find a project root directory and related user-facing commands: project-find-file, project-kill-buffers, project-switch etc."))

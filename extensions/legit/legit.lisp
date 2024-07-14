@@ -185,15 +185,31 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         ((eq type :deleted)
          (show-diff (format nil "File ~A has been deleted." file)))
         ((and (not cached) (not type))
-         (if (uiop:file-exists-p file)
-             (show-diff (format nil "=== Untracked file: ~A ===~%~%~A"
-                                file
-                                (uiop:read-file-string file)))
-             (show-diff (format nil "File ~A does not exist." file))))
+         (cond
+           ((uiop:file-exists-p file)
+            (handler-case
+                (show-diff (format nil "=== Untracked file: ~A ===~%~%~A"
+                                   file
+                                   (uiop:read-file-string file)))
+              (error ()
+                (show-diff (format nil "=== Untracked file: ~A ===~%~%Unable to read file contents. It may be a binary file."
+                                   file)))))
+           ((uiop:directory-exists-p file)
+            (let* ((absolute-file (uiop:ensure-absolute-pathname file (uiop:getcwd)))
+                   (contents (append (uiop:directory-files absolute-file)
+                                     (uiop:subdirectories absolute-file)))
+                   (relative-paths (mapcar (lambda (path)
+                                             (format nil "~A~A"
+                                                     file
+                                                     (enough-namestring path absolute-file)))
+                                           contents)))
+              (show-diff (format nil "=== Untracked directory: ~A ===~%~%~{~A~%~}"
+                                 absolute-file
+                                 relative-paths))))
+           (t
+            (show-diff (format nil "~A does not exist." file)))))
         (t
          (show-diff (lem/porcelain:file-diff file :cached cached)))))))
-
-
 
 (defun make-visit-file-function (file)
   ;; note: the lambda inside the loop is not enough, it captures the last loop value.

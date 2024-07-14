@@ -58,6 +58,11 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
      :keymap *legit-diff-mode-keymap*)
   (setf (variable-value 'enable-syntax-highlight) t))
 
+(define-minor-mode legit-commits-log-mode
+    (:name "Log"
+     :keymap *legit-commits-log-keymap*)
+  (setf (not-switchable-buffer-p (current-buffer)) t))
+
 ;; git commands.
 ;; Some are defined on peek-legit too.
 (define-key *global-keymap* "C-x g" 'legit-status)
@@ -82,11 +87,16 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 ;; commits log
 (define-key lem/peek-legit:*peek-legit-keymap* "l l" 'legit-commits-log)
-(define-key lem/peek-legit:*peek-legit-keymap* "f" 'legit-commits-log-next-page)
-(define-key lem/peek-legit:*peek-legit-keymap* "b" 'legit-commits-log-previous-page)
-(define-key lem/peek-legit:*peek-legit-keymap* "F" 'legit-commits-log-last-page)
-(define-key lem/peek-legit:*peek-legit-keymap* "B" 'legit-commits-log-first-page)
+(define-key lem/peek-legit:*peek-legit-keymap* "l F" 'legit-commits-log-last-page)
 (define-key *legit-diff-mode-keymap* "l l" 'legit-commits-log)
+
+;; only in commits log view
+(define-key *legit-commits-log-keymap* "f" 'legit-commits-log-next-page)
+(define-key *legit-commits-log-keymap* "b" 'legit-commits-log-previous-page)
+(define-key *legit-commits-log-keymap* "F" 'legit-commits-log-last-page)
+(define-key *legit-commits-log-keymap* "B" 'legit-commits-log-first-page)
+(define-key *legit-commits-log-keymap* "q" 'legit-status)  ;; could we save and re-display
+                                                           ;; the status buffer?
 
 ;; rebase
 ;;; interactive
@@ -488,7 +498,10 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (lem/porcelain:components)
 
       ;; big try! It works \o/
-      (lem/peek-legit:with-collecting-sources (collector :read-only nil)
+      (lem/peek-legit:with-collecting-sources (collector :read-only nil
+                                                         :minor-mode 'lem/peek-legit::peek-legit-mode)
+        ;; (if we don't specify the minor-mode, the macro arguments's default value will not be found)
+        ;;
         ;; Header: current branch.
         (lem/peek-legit:collector-insert
          (format nil "Branch: ~a" (lem/porcelain:current-branch))
@@ -687,7 +700,9 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (defun display-commits-log (offset)
   "Display the commit lines on a dedicated legit buffer."
   (let* ((commits (lem/porcelain:commits-log :offset offset :limit lem/porcelain:*commits-log-page-size*)))
-    (lem/peek-legit:with-collecting-sources (collector :buffer :commits-log :read-only nil)
+    (lem/peek-legit:with-collecting-sources (collector :buffer :commits-log
+                                                       :minor-mode 'legit-commits-log-mode
+                                                       :read-only nil)
       (lem/peek-legit:collector-insert
        (format nil "Commits (~A):" offset)
        :header t)
@@ -772,6 +787,8 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (format s "(c)ommit~&")
     (format s "(b)ranches-> checkout another (b)ranch.~&")
     (format s "          -> (c)reate.~&")
+    (format s "(l)og-> (l) commits log~&")
+    (format s "     -> (F) first commits~&")
     (format s "(F)etch, pull-> (p) from remote branch~&")
     (format s "(P)push      -> (p) to remote branch~&")
     (format s "(r)ebase     -> (i)nteractively from commit at point, (a)bort~&")

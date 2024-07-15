@@ -26,6 +26,7 @@
    :stage
    :unstage
    :vcs-project-p
+   :*diff-context-lines*
    :commits-log
    :*commits-log-page-size*
    :commit-count)
@@ -83,6 +84,9 @@ Mercurial:
   Will be surrounded by the git binary and the file path.
 
   For staged files, --cached is added by the command.")
+
+(defvar *diff-context-lines* 4
+  "How many lines of context before/after the first committed line")
 
 (defvar *vcs* nil
   "git, fossil? For current project. Bind this in the caller.
@@ -341,16 +345,19 @@ allows to learn about the file state: modified, deleted, ignored… "
   (run-git
    (concatenate 'list
                 *file-diff-args*
+                (list (format nil "-U~D" *diff-context-lines*))
                 (if cached '("--cached"))
                 (list file))))
 
 (defun hg-file-diff (file &key cached)
   "Show the diff of staged files (and only them)."
   (when cached
-      (run-hg (list "diff" file))
-      ;; files not staged can't be diffed.
-      ;; We could read and display their full content anyways?
-      ))
+    (run-hg (list "diff"
+                  (format nil "-U~D" *diff-context-lines*)
+                  file))
+    ;; files not staged can't be diffed.
+    ;; We could read and display their full content anyways?
+    ))
 
 (defun fossil-file-diff (file &key cached)
   (declare (ignorable cached))
@@ -607,7 +614,7 @@ summary:     test
      (parse-integer
       (str:trim (run-hg '("id" "--num" "--rev" "tip")))))
     (:fossil
-     (length))
+     (fossil-commit-count))
     (t
      (porcelain-error "commit-count not implemented for VCS: ~a" *vcs*))))
 

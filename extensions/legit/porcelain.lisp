@@ -614,7 +614,7 @@ summary:     test
      (parse-integer
       (str:trim (run-hg '("id" "--num" "--rev" "tip")))))
     (:fossil
-     (length))
+     (fossil-commit-count))
     (t
      (porcelain-error "commit-count not implemented for VCS: ~a" *vcs*))))
 

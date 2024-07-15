@@ -349,17 +349,14 @@ Notes:
 
 
 (define-command peek-legit-select () ()
-  (alexandria:when-let ((file (get-matched-file)))
+  (alexandria:when-let ((path (get-matched-file)))
     (quit)
-    (alexandria:if-let
-        ((buffer (or (and (uiop:file-exists-p file)
-                          (find-file-buffer file))
-                     (find-file-buffer
-                      (merge-pathnames
-                       (lem-core/commands/project:find-root (buffer-filename))
-                       file)))))
-      (switch-to-buffer buffer)
-      (editor-error "File ~a doesn't exist." file))))
+    (uiop:symbol-call :lem/legit :call-with-current-project
+                      (lambda () (let ((full-path (merge-pathnames path (uiop:getcwd))))
+                                   (if (or (uiop:file-exists-p full-path)
+                                           (uiop:directory-exists-p full-path))
+                                       (find-file (namestring full-path))
+                                       (editor-error "Path ~a doesn't exist." full-path)))))))
 
 (define-command peek-legit-next () ()
   (next-move-point (current-point)))

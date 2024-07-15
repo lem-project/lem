@@ -139,17 +139,6 @@
 (defmethod handle-key-up ((platform lem-sdl2/platform:linux) key-event)
   (handle-key-up-unix key-event))
 
-;; freebsd
-(defmethod handle-text-input ((platform lem-sdl2/platform:freebsd) text)
-  (handle-text-input-unix text))
-
-(defmethod handle-key-down ((platform lem-sdl2/platform:freebsd) key-event)
-  (handle-key-down-unix key-event))
-
-(defmethod handle-key-up ((platform lem-sdl2/platform:freebsd) key-event)
-  (handle-key-up-unix key-event))
-
-;; shared freebsd, linux
 (defun handle-text-input-unix (text)
   (when (modifier-is-accept-text-input-p *modifier*)
     (loop :for c :across text

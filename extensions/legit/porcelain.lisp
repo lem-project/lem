@@ -764,7 +764,7 @@ M	src/ext/porcelain.lisp
 (defparameter *rebase-script-content*
   #+(or lem-ncurses lem-sdl2)
   (str:from-file
-   (asdf:system-relative-pathname (asdf:find-system "lem")
+   (asdf:system-relative-pathname (asdf:find-system "lem-legit")
                                   "scripts/dumbrebaseeditor.sh"))
   #-(or lem-ncurses lem-sdl2)
   ""

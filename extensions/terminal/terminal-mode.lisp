@@ -179,8 +179,8 @@
                    :cols (window-width window)))
 
 (define-command terminal-resize () ()
-  (let ((terminal (get-current-terminal))
-        (window (current-window)))
+  (alexandria:when-let ((terminal (get-current-terminal))
+                        (window (current-window)))
     (resize-terminal terminal window)))
 
 (defun on-window-size-change (window)
@@ -189,3 +189,6 @@
 
 (add-hook *window-size-change-functions*
           'on-window-size-change)
+
+(add-hook *post-command-hook*
+          'terminal-resize)

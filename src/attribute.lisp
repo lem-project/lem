@@ -177,8 +177,8 @@
      ',name))
 
 (define-attribute cursor
-  (:light :foreground "white" :background "black")
-  (:dark :foreground "black" :background "white"))
+  (:light :background "black")
+  (:dark :background "white"))
 
 (define-attribute fake-cursor
   (:light :foreground "white" :background "blue")

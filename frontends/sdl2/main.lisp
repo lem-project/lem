@@ -245,6 +245,11 @@
       (setf (display:display-background-color display)
             (lem:parse-color color)))))
 
+(defmethod lem-if:update-cursor-shape ((implementation sdl2) cursor-type)
+  (with-debug ("lem-if:update-cursor-type")
+    (display:with-display (display)
+      (setf (display:display-cursor-type display) cursor-type))))
+
 (defmethod lem-if:display-width ((implementation sdl2))
   (with-debug ("lem-if:display-width")
     (display:with-display (display)

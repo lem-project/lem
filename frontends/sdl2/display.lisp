@@ -7,6 +7,7 @@
   (:export :with-display
            :display
            :current-display
+           :display-cursor-type
            :display-latin-font
            :display-cjk-normal-font
            :display-redraw-at-least-once-p
@@ -57,6 +58,9 @@
 (defclass display ()
   ((mutex :initform (bt2:make-lock :name "lem-sdl2 display mutex")
           :reader display-mutex)
+   (cursor-type :initform :box
+                :accessor display-cursor-type
+                :type lem:cursor-type)
    (font-config :initarg :font-config
                 :accessor display-font-config)
    (font :initarg :font

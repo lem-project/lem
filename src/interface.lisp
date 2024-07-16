@@ -38,6 +38,9 @@
 
 (defvar lem-if:*background-color-of-drawing-window* nil)
 
+(deftype cursor-type ()
+  '(member :box :bar :underline))
+
 (defgeneric lem-if:invoke (implementation function))
 (defgeneric lem-if:get-background-color (implementation))
 (defgeneric lem-if:get-foreground-color (implementation))

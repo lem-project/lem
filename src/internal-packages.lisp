@@ -575,7 +575,8 @@
    :attribute-foreground-color
    :attribute-background-color
    :attribute-foreground-with-reverse
-   :attribute-background-with-reverse)
+   :attribute-background-with-reverse
+   :cursor-type)
   ;; color-theme.lisp
   (:export
    :color-theme-names

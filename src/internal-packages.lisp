@@ -7,6 +7,7 @@
    :emoji-object
    :eol-cursor-object
    :eol-cursor-object-color
+   :eol-cursor-object-true-cursor-p
    :extend-to-eol-object
    :extend-to-eol-object-color
    :folder-object

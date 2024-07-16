@@ -25,14 +25,14 @@
     (print-string scrwin x y string attribute)))
 
 (defmethod draw-object ((object eol-cursor-object) x y view scrwin)
-  (lem-ncurses/view:set-last-print-cursor view x y)
+  (when (eol-cursor-object-true-cursor-p object)
+    (lem-ncurses/view:set-last-print-cursor view x y))
   (print-string
    scrwin
    x
    y
    " "
-   (lem:make-attribute :foreground
-                       (lem:color-to-hex-string (eol-cursor-object-color object)))))
+   (lem:make-attribute :background (lem:color-to-hex-string (eol-cursor-object-color object)))))
 
 (defmethod draw-object ((object extend-to-eol-object) x y view scrwin)
   (let ((width (lem-if:view-width (lem:implementation) view)))

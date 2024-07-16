@@ -176,7 +176,7 @@
 (defun resize-terminal (terminal window)
   (terminal:resize terminal
                    :rows (1- (window-height window))
-                   :cols (1- (window-width window))))
+                   :cols (window-width window)))
 
 (define-command terminal-resize () ()
   (let ((terminal (get-current-terminal))

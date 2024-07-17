@@ -3,8 +3,7 @@
    :lem)
   (:export :legit-status
            :*prompt-for-commit-abort-p*
-           :*ignore-all-space*
-           :call-with-current-project)
+           :*ignore-all-space*)
   (:documentation "Display version control data of the current project in an interactive two-panes window.
 
   This package in particular defines the right window of the legit interface and the user-level commands.
@@ -139,37 +138,6 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (defun last-character (s)
   (subseq s (- (length s) 2) (- (length s) 1)))
 
-(defun call-with-porcelain-error (function)
-  (handler-bind ((lem/porcelain:porcelain-error
-                   (lambda (c)
-                     (lem:editor-error (slot-value c 'lem/porcelain::message)))))
-      (funcall function)))
-
-(defmacro with-porcelain-error (&body body)
-  "Handle porcelain errors and turn them into a lem:editor-error."
-  ;; This helps avoiding tight coupling.
-  `(call-with-porcelain-error (lambda () ,@body)))
-
-(defun call-with-current-project (function)
-  (with-porcelain-error ()
-    (let ((root (lem-core/commands/project:find-root (buffer-directory))))
-      (uiop:with-current-directory (root)
-        (multiple-value-bind (root vcs)
-            (lem/porcelain:vcs-project-p)
-          (if root
-              (let ((lem/porcelain:*vcs* vcs))
-                (progn
-                  (funcall function)))
-              (message "Not inside a version-controlled project?")))))))
-
-(defmacro with-current-project (&body body)
-  "Execute body with the current working directory changed to the project's root,
-  find and set the VCS system for this operation.
-
-  If no Git directory (or other supported VCS system) are found, message the user."
-  `(call-with-current-project (lambda () ,@body)))
-
-
 ;;; Git commands
 ;;; that operate on files.
 ;;;
@@ -193,7 +161,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (defun make-diff-function (file &key cached type)
   (lambda ()
-    (with-current-project ()
+    (lem/porcelain:with-current-project ()
       (cond
         ((eq type :deleted)
          (show-diff (format nil "File ~A has been deleted." file)))
@@ -232,20 +200,20 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 ;; show commit.
 (defun make-show-commit-function (ref)
   (lambda ()
-    (with-current-project ()
+    (lem/porcelain:with-current-project ()
       (show-diff (lem/porcelain:show-commit-diff ref :ignore-all-space *ignore-all-space*)))))
 
 ;; stage
 (defun make-stage-function (file)
   (lambda ()
-    (with-current-project ()
+    (lem/porcelain:with-current-project ()
       (lem/porcelain:stage file)
       t)))
 
 ;; unstage
 (defun make-unstage-function (file &key already-unstaged)
   (lambda ()
-    (with-current-project ()
+    (lem/porcelain:with-current-project ()
       (if already-unstaged
           (message "Already unstaged")
           (lem/porcelain:unstage file)))))
@@ -260,7 +228,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
       (is-staged
        (message "Unstage the file first"))
       (t
-       (with-current-project ()
+       (lem/porcelain:with-current-project ()
          (when (prompt-for-y-or-n-p  (format nil "Discard unstaged changes in ~a?" file))
            (lem/porcelain:discard-file file)))))))
 
@@ -371,7 +339,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
    - error output (string)
    - exit code (integer)
 
-  Use with-current-project in the caller too.
+  Use lem/porcelain:with-current-project in the caller too.
   Typicaly used to run an external process in the context of a diff buffer command."
   (multiple-value-bind (output error-output exit-code)
       (funcall fn)
@@ -385,13 +353,13 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
          (pop-up-message error-output))))))
 
 (define-command legit-stage-hunk () ()
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
     (run-function (lambda ()
                     (lem/porcelain:apply-patch (%current-hunk)))
                   :message "Staged hunk")))
 
 (define-command legit-unstage-hunk () ()
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
     (run-function (lambda ()
                     (lem/porcelain:apply-patch (%current-hunk) :reverse t))
                   :message "Unstaged hunk")))
@@ -443,7 +411,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                    (parse-integer start-line :junk-allowed t) 
                                    lem/porcelain:*diff-context-lines*))))
               (if (and relative-file target-line)
-                  (with-current-project ()
+                  (lem/porcelain:with-current-project ()
                     (let ((absolute-file (merge-pathnames relative-file (uiop:getcwd))))
                       (lem/peek-legit:quit)
                       (find-file (namestring absolute-file))
@@ -496,7 +464,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-status () ()
   "Show changes and untracked files."
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
     (multiple-value-bind (untracked-files unstaged-files staged-files)
         (lem/porcelain:components)
 
@@ -631,7 +599,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-branch-checkout () ()
   "Choose a branch to checkout."
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
     (let ((branch (prompt-for-branch))
           (current-branch (lem/porcelain:current-branch)))
       (when (equal branch current-branch)
@@ -645,7 +613,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-branch-create () ()
   "Create and checkout a new branch."
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
     (let ((new (prompt-for-string "New branch name: "
                                   :history-symbol '*new-branch-name-history*))
           (base (prompt-for-branch :prompt "Base branch: " :initial-value "")))
@@ -657,19 +625,19 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-pull () ()
   "Pull changes, update HEAD."
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
     (run-function #'lem/porcelain:pull)))
 
 (define-command legit-push () ()
   "Push changes to the current remote."
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
     (run-function #'lem/porcelain:push)))
 
 (define-command legit-rebase-interactive () ()
   "Rebase interactively, from the commit the point is on.
 
   Austostash pending changes, to enable the rebase and find the changes back afterwards."
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
 
     ;; Find the commit hash the point is on: mandatory.
     (let ((commit-hash (text-property-at (current-point) :commit-hash)))
@@ -697,7 +665,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-commits-log () ()
   "List commits on a new buffer."
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
     (display-commits-log 0)))
 
 (defun display-commits-log (offset)
@@ -739,7 +707,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-commits-log-next-page () ()
   "Show the next page of the commits log."
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
     (let* ((buffer (current-buffer))
            (window-height (window-height (current-window)))
            (current-offset (or (buffer-value buffer 'commits-offset) 0))
@@ -752,7 +720,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-commits-log-previous-page () ()
   "Show the previous page of the commits log."
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
     (let* ((buffer (current-buffer))
            (window-height (window-height (current-window)))
            (current-offset (or (buffer-value buffer 'commits-offset) 0))
@@ -761,12 +729,12 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-commits-log-first-page () ()
   "Go to the first page of the commit log."
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
     (display-commits-log 0)))
 
 (define-command legit-commits-log-last-page () ()
   "Go to the last page of the commit log."
-  (with-current-project ()
+  (lem/porcelain:with-current-project ()
     (let* ((commits-per-page lem/porcelain:*commits-log-page-size*)
            (last-page-offset (* (floor (/ (1- (lem/porcelain:commit-count)) commits-per-page))
                                 commits-per-page)))

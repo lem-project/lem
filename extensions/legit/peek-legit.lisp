@@ -367,12 +367,12 @@ Notes:
 (define-command peek-legit-select () ()
   (alexandria:when-let ((path (get-matched-file)))
     (quit)
-    (uiop:symbol-call :lem/legit :call-with-current-project
-                      (lambda () (let ((full-path (merge-pathnames path (uiop:getcwd))))
-                                   (if (or (uiop:file-exists-p full-path)
-                                           (uiop:directory-exists-p full-path))
-                                       (find-file (namestring full-path))
-                                       (editor-error "Path ~a doesn't exist." full-path)))))))
+    (lem/porcelain:with-current-project ()
+      (let ((full-path (merge-pathnames path (uiop:getcwd))))
+        (if (or (uiop:file-exists-p full-path)
+                (uiop:directory-exists-p full-path))
+            (find-file (namestring full-path))
+            (editor-error "Path ~a doesn't exist." full-path))))))
 
 (define-command peek-legit-next () ()
   (next-move-point (current-point)))

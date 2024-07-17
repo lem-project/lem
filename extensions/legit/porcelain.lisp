@@ -29,11 +29,12 @@
    :*diff-context-lines*
    :commits-log
    :*commits-log-page-size*
-   :commit-count)
+   :commit-count
+   :with-current-project)
   (:documentation "Functions to run VCS operations: get the list of changes, of untracked files, commit, push… Git support is the main goal, a simple layer is used with other VCS systems (Fossil, Mercurial).
 
 On interactive commands, Legit will check what VCS is in use in the current project.
-When used programmatically, bind the `lem/porcelain:*vcs*` variable in your caller. See `lem/legit:with-current-project`.
+When used programmatically, bind the `lem/porcelain:*vcs*` variable in your caller. See `lem/porcelain:with-current-project`.
 
 When multiple VCS are used at the same time in a project, Git takes
 precedence by default. See `lem/porcelain:*vcs-existence-order*`."))
@@ -91,7 +92,7 @@ Mercurial:
 (defvar *vcs* nil
   "git, fossil? For current project. Bind this in the caller.
 
-  For instance, see the legit::with-current-project macro that lexically binds *vcs* for an operation.")
+  For instance, see the lem/porcelain:with-current-project macro that lexically binds *vcs* for an operation.")
 
 (define-condition porcelain-condition (simple-error)
   ())
@@ -109,9 +110,39 @@ Mercurial:
 (defun porcelain-error (message &rest args)
   (error 'porcelain-error :message (apply #'format nil message args)))
 
+(defun call-with-porcelain-error (function)
+  (handler-bind ((porcelain-error
+                   (lambda (c)
+                     (lem:editor-error (slot-value c 'message)))))
+    (funcall function)))
+
+(defmacro with-porcelain-error (&body body)
+  "Handle porcelain errors and turn them into a lem:editor-error."
+  ;; This helps avoiding tight coupling.
+  `(call-with-porcelain-error (lambda () ,@body)))
+
+(defun call-with-current-project (function)
+  (with-porcelain-error ()
+    (let ((root (lem-core/commands/project:find-root (lem:buffer-directory))))
+      (uiop:with-current-directory (root)
+        (multiple-value-bind (root vcs)
+            (lem/porcelain:vcs-project-p)
+          (if root
+              (let ((lem/porcelain:*vcs* vcs))
+                (progn
+                  (funcall function)))
+              (message "Not inside a version-controlled project?")))))))
+
+(defmacro with-current-project (&body body)
+  "Execute body with the current working directory changed to the project's root,
+  find and set the VCS system for this operation.
+
+  If no Git directory (or other supported VCS system) are found, message the user."
+  `(call-with-current-project (lambda () ,@body)))
+
 
 (defun git-project-p ()
-  "Return t if we find a .git/ directory in the current directory (which should be the project root. Use `lem/legit::with-current-project`)."
+  "Return t if we find a .git/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`)."
   (values (uiop:directory-exists-p ".git")
           :git))
 
@@ -127,7 +158,7 @@ Mercurial:
              return (values file :fossil)))))
 
 (defun hg-project-p ()
-  "Return t if we find a .hg/ directory in the current directory (which should be the project root. Use `lem/legit::with-current-project`)."
+  "Return t if we find a .hg/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`)."
   (values (uiop:directory-exists-p ".hg")
           :hg))
 
@@ -216,7 +247,7 @@ allows to learn about the file state: modified, deleted, ignored… "
        (values out error)))))
 
 ;; Dispatching on the right VCS:
-;; *vcs* is bound in the caller (in legit::with-current-project).
+;; *vcs* is bound in the caller (in lem/porcelain:with-current-project).
 (defun porcelain ()
   "Dispatch on the current `*vcs*` and get current changes (added, modified files…)."
   (case *vcs*

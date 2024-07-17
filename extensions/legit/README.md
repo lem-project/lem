@@ -199,7 +199,7 @@ For example:
 
 ~~~lisp
 (defun hg-project-p ()
-  "Return t if we find a .hg/ directory in the current directory (which should be the project root. Use `lem/legit::with-current-project`)."
+  "Return t if we find a .hg/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`)."
   (values (uiop:directory-exists-p ".hg")
           :hg))
 ~~~

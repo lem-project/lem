@@ -92,7 +92,7 @@ two
       ((str:blankp cleaned-message)
        (message "No commit message, do nothing."))
       (t
-       (with-current-project ()
+       (lem/porcelain:with-current-project ()
          (run-function (lambda ()
                          (lem/porcelain::commit cleaned-message))
                        :message "commited")

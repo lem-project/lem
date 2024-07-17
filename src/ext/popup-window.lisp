@@ -353,8 +353,6 @@
                                         :width width
                                         :height height
                                         :border-size border-size)
+      (declare (ignore x y))
       (lem-core::window-set-size destination-window w h)
-      (lem-core::window-set-pos destination-window
-                                (+ x border-size)
-                                (+ y border-size))
       destination-window)))

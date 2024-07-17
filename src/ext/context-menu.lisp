@@ -43,6 +43,7 @@ It is intended for use in dynamically computing menu items."))
 
 (defmethod activate ((context-menu context-menu))
   (when (context-menu-compute-items-function context-menu)
+    (setf (lem/multi-column-list::multi-column-list-search-string context-menu) "")
     (setf (lem/multi-column-list::multi-column-list-items context-menu)
           (funcall (context-menu-compute-items-function context-menu)))))
 

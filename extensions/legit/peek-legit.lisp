@@ -1,38 +1,19 @@
-(defpackage :lem/peek-legit
-  (:use :cl :lem)
-  (:export :*peek-legit-keymap*
-           :collector-buffer
-           :collector-insert
-           :filename-attribute
-           :get-move-function
-           :highlight-matched-line
-           :position-attribute
-           :show-matched-line
-           :with-appending-source
-           :with-collecting-sources
-           :with-insert
-           :peek-legit-discard-file
-           :peek-legit-next-header
-           :peek-legit-next
-           :peek-legit-select
-           :peek-legit-previous-header
-           :peek-legit-previous
-           :peek-legit-stage-file
-           :peek-legit-unstage-file
-           :quit)
-  (:documentation "Defines the left window of the legit interface.
-
-   Writes on the window the VCS components that are sent by the :legit package: untracked files, changes, staged changes, latest commits… They are displayed with custom attributes (read-only colors…) and text properties (on this line, the function to call on Enter is this lambda function…).
-   Cursor mouvements and keybindings send changes to the right window."))
-
 #|
+peek-legit defines the left window of the legit interface.
+
+It writes on the window the VCS components: untracked files, changes, staged changes, latest commits… They are displayed with custom attributes (read-only colors…) and text properties (on this line, the function to call on Enter is this lambda function…).
+
+Cursor mouvements and keybindings send changes to the right window.
+
+
 Notes:
 
 - if names don't conflict, use a :keyword for text properties, not a 'symbol (:commit-hash vs 'commit-hash). Keywords are easier to manipulate from another source file (no home package).
+- the dichotomoy peek-legit / legit originally follows grep-mode.
 
 |#
 
-(in-package :lem/peek-legit)
+(in-package :lem/legit)
 
 
 (define-minor-mode peek-legit-mode
@@ -366,8 +347,8 @@ Notes:
 
 (define-command peek-legit-select () ()
   (alexandria:when-let ((path (get-matched-file)))
-    (quit)
-    (lem/porcelain:with-current-project ()
+    (%legit-quit)
+    (with-current-project ()
       (let ((full-path (merge-pathnames path (uiop:getcwd))))
         (if (or (uiop:file-exists-p full-path)
                 (uiop:directory-exists-p full-path))
@@ -410,7 +391,7 @@ Notes:
     (uiop:symbol-call :lem/legit :legit-status)
     point))
 
-(defun quit ()
+(defun %legit-quit ()
   "Delete the two side windows."
   (setf (current-window) *parent-window*)
   (start-timer

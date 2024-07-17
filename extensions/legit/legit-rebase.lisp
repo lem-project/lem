@@ -72,20 +72,20 @@ and
 (define-key *legit-rebase-mode-keymap* "C-x ?" 'rebase-help)
 
 (define-command rebase-abort () ()
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (run-function #'lem/porcelain:rebase-abort)
     (when (get-buffer "git-rebase-todo")
       (kill-buffer "git-rebase-todo"))
     (message "rebase aborted.")))
 
 (define-command rebase-continue () ()
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (run-function #'lem/porcelain:rebase-continue)
     (when (get-buffer "git-rebase-todo")
       (kill-buffer "git-rebase-todo"))))
 
 (define-command rebase-skip () ()
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (run-function #'lem/porcelain:rebase-skip)
     (when (get-buffer "git-rebase-todo")
       (kill-buffer "git-rebase-todo"))))

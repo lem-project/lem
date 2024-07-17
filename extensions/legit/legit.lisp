@@ -1,19 +1,15 @@
-(defpackage :lem/legit
-  (:use :cl
-   :lem)
-  (:export :legit-status
-           :*prompt-for-commit-abort-p*
-           :*ignore-all-space*)
-  (:documentation "Display version control data of the current project in an interactive two-panes window.
-
-  This package in particular defines the right window of the legit interface and the user-level commands.
-
-  Gets VCS data by calling lem/porcelain and asking lem/peek-legit to display data on the left window."))
 
 (in-package :lem/legit)
 
 #|
-An interactive interface to Git, with preliminary support for other version-control systems (Fossil, Mercurial).
+Legit: an interactive interface to Git, with preliminary support for other version-control systems (Fossil, Mercurial).
+
+We display version control data of the current project in an interactive two-panes window.
+
+This file in particular defines the right window of the legit interface and the user-level commands.
+
+It gets VCS data by calling lem/porcelain and asking functions on peek-legit.lisp to display data on the left window.
+
 
 Done:
 
@@ -72,22 +68,22 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-key *legit-diff-mode-keymap* "p" 'legit-goto-previous-hunk)
 
 (define-key *legit-diff-mode-keymap* "c" 'legit-commit)
-(define-key lem/peek-legit:*peek-legit-keymap* "c" 'legit-commit)
+(define-key *peek-legit-keymap* "c" 'legit-commit)
 
-(define-key lem/peek-legit:*peek-legit-keymap* "b b" 'legit-branch-checkout)
+(define-key *peek-legit-keymap* "b b" 'legit-branch-checkout)
 (define-key *legit-diff-mode-keymap* "b b" 'legit-branch-checkout)
-(define-key lem/peek-legit:*peek-legit-keymap* "b c" 'legit-branch-create)
+(define-key *peek-legit-keymap* "b c" 'legit-branch-create)
 (define-key *legit-diff-mode-keymap* "b c" 'legit-branch-create)
 ;; push
 (define-key *legit-diff-mode-keymap* "P p" 'legit-push)
-(define-key lem/peek-legit:*peek-legit-keymap* "P p" 'legit-push)
+(define-key *peek-legit-keymap* "P p" 'legit-push)
 ;; pull
-(define-key lem/peek-legit:*peek-legit-keymap* "F p" 'legit-pull)
+(define-key *peek-legit-keymap* "F p" 'legit-pull)
 (define-key *legit-diff-mode-keymap* "F p" 'legit-pull)
 
 ;; commits log
-(define-key lem/peek-legit:*peek-legit-keymap* "l l" 'legit-commits-log)
-(define-key lem/peek-legit:*peek-legit-keymap* "l F" 'legit-commits-log-last-page)
+(define-key *peek-legit-keymap* "l l" 'legit-commits-log)
+(define-key *peek-legit-keymap* "l F" 'legit-commits-log-last-page)
 (define-key *legit-diff-mode-keymap* "l l" 'legit-commits-log)
 
 ;; only in commits log view
@@ -102,34 +98,34 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 ;; rebase
 ;;; interactive
-(define-key lem/peek-legit:*peek-legit-keymap* "r i" 'legit-rebase-interactive)
-(define-key lem/peek-legit:*peek-legit-keymap* "r a" 'rebase-abort)
-(define-key lem/peek-legit:*peek-legit-keymap* "r c" 'rebase-continue)
-(define-key lem/peek-legit:*peek-legit-keymap* "r s" 'rebase-skip)
+(define-key *peek-legit-keymap* "r i" 'legit-rebase-interactive)
+(define-key *peek-legit-keymap* "r a" 'rebase-abort)
+(define-key *peek-legit-keymap* "r c" 'rebase-continue)
+(define-key *peek-legit-keymap* "r s" 'rebase-skip)
 
 ;; redraw everything:
-(define-key lem/peek-legit:*peek-legit-keymap* "g" 'legit-status)
+(define-key *peek-legit-keymap* "g" 'legit-status)
 
 ;; navigation
 (define-key *legit-diff-mode-keymap* "C-n" 'next-line)
 (define-key *legit-diff-mode-keymap* "C-p" 'previous-line)
-(define-key lem/peek-legit:*peek-legit-keymap* "M-n" 'legit-next-header)
-(define-key lem/peek-legit:*peek-legit-keymap* "M-p" 'legit-previous-header)
+(define-key *peek-legit-keymap* "M-n" 'legit-next-header)
+(define-key *peek-legit-keymap* "M-p" 'legit-previous-header)
 (define-key *legit-diff-mode-keymap* "Tab" 'next-window)
 (define-key *legit-diff-mode-keymap* "Return" 'legit-jump-to-hunk)
 
 ;; help
-(define-key lem/peek-legit:*peek-legit-keymap* "?" 'legit-help)
-(define-key lem/peek-legit:*peek-legit-keymap* "C-x ?" 'legit-help)
+(define-key *peek-legit-keymap* "?" 'legit-help)
+(define-key *peek-legit-keymap* "C-x ?" 'legit-help)
 ;; quit
 (define-key *legit-diff-mode-keymap* "q" 'legit-quit)
-(define-key lem/peek-legit:*peek-legit-keymap* "q" 'legit-quit)
+(define-key *peek-legit-keymap* "q" 'legit-quit)
 (define-key *legit-diff-mode-keymap* "M-q" 'legit-quit)
-(define-key lem/peek-legit:*peek-legit-keymap* "M-q" 'legit-quit)
+(define-key *peek-legit-keymap* "M-q" 'legit-quit)
 (define-key *legit-diff-mode-keymap* "Escape" 'legit-quit)
-(define-key lem/peek-legit:*peek-legit-keymap* "Escape" 'legit-quit)
+(define-key *peek-legit-keymap* "Escape" 'legit-quit)
 (define-key *legit-diff-mode-keymap* "C-c C-k" 'legit-quit)
-(define-key lem/peek-legit:*peek-legit-keymap* "C-c C-k" 'legit-quit)
+(define-key *peek-legit-keymap* "C-c C-k" 'legit-quit)
 
 (defun pop-up-message (message)
   (with-pop-up-typeout-window (s (make-buffer "*legit status*") :erase t)
@@ -161,7 +157,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (defun make-diff-function (file &key cached type)
   (lambda ()
-    (lem/porcelain:with-current-project ()
+    (with-current-project ()
       (cond
         ((eq type :deleted)
          (show-diff (format nil "File ~A has been deleted." file)))
@@ -200,20 +196,20 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 ;; show commit.
 (defun make-show-commit-function (ref)
   (lambda ()
-    (lem/porcelain:with-current-project ()
+    (with-current-project ()
       (show-diff (lem/porcelain:show-commit-diff ref :ignore-all-space *ignore-all-space*)))))
 
 ;; stage
 (defun make-stage-function (file)
   (lambda ()
-    (lem/porcelain:with-current-project ()
+    (with-current-project ()
       (lem/porcelain:stage file)
       t)))
 
 ;; unstage
 (defun make-unstage-function (file &key already-unstaged)
   (lambda ()
-    (lem/porcelain:with-current-project ()
+    (with-current-project ()
       (if already-unstaged
           (message "Already unstaged")
           (lem/porcelain:unstage file)))))
@@ -228,7 +224,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
       (is-staged
        (message "Unstage the file first"))
       (t
-       (lem/porcelain:with-current-project ()
+       (with-current-project ()
          (when (prompt-for-y-or-n-p  (format nil "Discard unstaged changes in ~a?" file))
            (lem/porcelain:discard-file file)))))))
 
@@ -339,7 +335,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
    - error output (string)
    - exit code (integer)
 
-  Use lem/porcelain:with-current-project in the caller too.
+  Use with-current-project in the caller too.
   Typicaly used to run an external process in the context of a diff buffer command."
   (multiple-value-bind (output error-output exit-code)
       (funcall fn)
@@ -353,13 +349,13 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
          (pop-up-message error-output))))))
 
 (define-command legit-stage-hunk () ()
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (run-function (lambda ()
                     (lem/porcelain:apply-patch (%current-hunk)))
                   :message "Staged hunk")))
 
 (define-command legit-unstage-hunk () ()
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (run-function (lambda ()
                     (lem/porcelain:apply-patch (%current-hunk) :reverse t))
                   :message "Unstaged hunk")))
@@ -400,20 +396,20 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (if (and file-line hunk-header)
             (let* ((relative-file (if (str:starts-with-p "diff --git" first-line)
                                       (subseq file-line 6)  ; Remove "+++ b/" prefix for Git
-                                      (cl-ppcre:register-groups-bind (file-path) 
-                                          ("\\+\\+\\+ b/([^\\t]+)" file-line) 
+                                      (cl-ppcre:register-groups-bind (file-path)
+                                          ("\\+\\+\\+ b/([^\\t]+)" file-line)
                                         file-path)))  ; For Mercurial (also has datetime)
                    (start-line (cl-ppcre:register-groups-bind (nil line)
                                    ("@@ -(\\d+),\\d+ \\+(\\d+)" hunk-header)
                                  line))
                    (target-line (when start-line
-                                  (+ 
-                                   (parse-integer start-line :junk-allowed t) 
+                                  (+
+                                   (parse-integer start-line :junk-allowed t)
                                    lem/porcelain:*diff-context-lines*))))
               (if (and relative-file target-line)
-                  (lem/porcelain:with-current-project ()
+                  (with-current-project ()
                     (let ((absolute-file (merge-pathnames relative-file (uiop:getcwd))))
-                      (lem/peek-legit:quit)
+                      (%legit-quit)
                       (find-file (namestring absolute-file))
                       (goto-line target-line)))
                   (message "Could not determine file or line number")))
@@ -464,50 +460,50 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-status () ()
   "Show changes and untracked files."
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (multiple-value-bind (untracked-files unstaged-files staged-files)
         (lem/porcelain:components)
 
       ;; big try! It works \o/
-      (lem/peek-legit:with-collecting-sources (collector :read-only nil
-                                                         :minor-mode 'lem/peek-legit::peek-legit-mode)
+      (with-collecting-sources (collector :read-only nil
+                                          :minor-mode 'peek-legit-mode)
         ;; (if we don't specify the minor-mode, the macro arguments's default value will not be found)
         ;;
         ;; Header: current branch.
-        (lem/peek-legit:collector-insert
+        (collector-insert
          (format nil "Branch: ~a" (lem/porcelain:current-branch))
          :header t)
-        (lem/peek-legit:collector-insert "")
+        (collector-insert "")
 
         ;; Is a git rebase in progress?
         (let ((rebase-status (lem/porcelain::rebase-in-progress)))
           (when (getf rebase-status :status)
-            (lem/peek-legit:collector-insert
+            (collector-insert
              (format nil "!rebase in progress: ~a onto ~a"
                      (getf rebase-status :head-short-name)
                      (getf rebase-status :onto-short-commit)))
-            (lem/peek-legit:collector-insert "")))
+            (collector-insert "")))
 
         ;; Untracked files.
-        (lem/peek-legit:collector-insert (format nil "Untracked files (~a):" (length untracked-files)) :header t)
+        (collector-insert (format nil "Untracked files (~a):" (length untracked-files)) :header t)
         (if untracked-files
             (loop :for file :in untracked-files
-                  :do (lem/peek-legit:with-appending-source
+                  :do (with-appending-source
                           (point :move-function (make-diff-function file)
                                  :visit-file-function (make-visit-file-function file)
                                  :stage-function (make-stage-function file)
                                  :unstage-function (lambda () (message "File is not tracked, can't be unstaged.")))
-                        (insert-string point file :attribute 'lem/peek-legit:filename-attribute :read-only t)))
-            (lem/peek-legit:collector-insert "<none>"))
+                        (insert-string point file :attribute 'filename-attribute :read-only t)))
+            (collector-insert "<none>"))
 
         ;; Unstaged changes
-        (lem/peek-legit:collector-insert "")
-        (lem/peek-legit:collector-insert (format nil "Unstaged changes (~a):" (length unstaged-files)) :header t)
+        (collector-insert "")
+        (collector-insert (format nil "Unstaged changes (~a):" (length unstaged-files)) :header t)
         (if unstaged-files
             (loop for file-info in unstaged-files
                   for file = (getf file-info :file)
                   for type = (getf file-info :type)
-                  do (lem/peek-legit:with-appending-source
+                  do (with-appending-source
                          (point :move-function (make-diff-function file :type type)
                                 :visit-file-function (make-visit-file-function file)
                                 :stage-function (make-stage-function file)
@@ -520,18 +516,18 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                                 (:deleted "deleted")
                                                 (t ""))
                                               file)
-                                      :attribute 'lem/peek-legit:filename-attribute
+                                      :attribute 'filename-attribute
                                       :read-only t)))
-            (lem/peek-legit:collector-insert "<none>"))
+            (collector-insert "<none>"))
 
         ;; Staged changes
-        (lem/peek-legit:collector-insert "")
-        (lem/peek-legit:collector-insert (format nil "Staged changes (~a):" (length staged-files)) :header t)
+        (collector-insert "")
+        (collector-insert (format nil "Staged changes (~a):" (length staged-files)) :header t)
         (if staged-files
             (loop for file-info in staged-files
                   for file = (getf file-info :file)
                   for type = (getf file-info :type)
-                  do (lem/peek-legit:with-appending-source
+                  do (with-appending-source
                          (point :move-function (make-diff-function file :cached t :type type)
                                 :visit-file-function (make-visit-file-function file)
                                 :stage-function (make-stage-function file)
@@ -545,13 +541,13 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                                 (:deleted "deleted")
                                                 (t ""))
                                               file)
-                                      :attribute 'lem/peek-legit:filename-attribute
+                                      :attribute 'filename-attribute
                                       :read-only t)))
-            (lem/peek-legit:collector-insert "<none>"))
+            (collector-insert "<none>"))
 
         ;; Latest commits.
-        (lem/peek-legit:collector-insert "")
-        (lem/peek-legit:collector-insert "Latest commits:" :header t)
+        (collector-insert "")
+        (collector-insert "Latest commits:" :header t)
         (let ((latest-commits (lem/porcelain:latest-commits)))
           (if latest-commits
               (loop for commit in latest-commits
@@ -565,14 +561,14 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                     else
                       do (setf line commit)
 
-                    do (lem/peek-legit:with-appending-source
+                    do (with-appending-source
                            (point :move-function (make-show-commit-function hash)
                                   :visit-file-function (lambda ())
                                   :stage-function (lambda () )
                                   :unstage-function (lambda () ))
                          (with-point ((start point))
                            (when hash
-                             (insert-string point hash :attribute 'lem/peek-legit:filename-attribute :read-only t))
+                             (insert-string point hash :attribute 'filename-attribute :read-only t))
                            (if message
                                (insert-string point message)
                                (insert-string point line))
@@ -580,9 +576,9 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                            ;; Save the hash on this line for later use.
                            (when hash
                              (put-text-property start point :commit-hash hash)))))
-              (lem/peek-legit:collector-insert "<none>")))
+              (collector-insert "<none>")))
 
-        (add-hook (variable-value 'after-change-functions :buffer (lem/peek-legit:collector-buffer collector))
+        (add-hook (variable-value 'after-change-functions :buffer (collector-buffer collector))
                   'change-grep-buffer)))))
 
 (defun prompt-for-branch (&key prompt initial-value)
@@ -599,7 +595,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-branch-checkout () ()
   "Choose a branch to checkout."
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (let ((branch (prompt-for-branch))
           (current-branch (lem/porcelain:current-branch)))
       (when (equal branch current-branch)
@@ -613,7 +609,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-branch-create () ()
   "Create and checkout a new branch."
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (let ((new (prompt-for-string "New branch name: "
                                   :history-symbol '*new-branch-name-history*))
           (base (prompt-for-branch :prompt "Base branch: " :initial-value "")))
@@ -625,19 +621,19 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-pull () ()
   "Pull changes, update HEAD."
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (run-function #'lem/porcelain:pull)))
 
 (define-command legit-push () ()
   "Push changes to the current remote."
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (run-function #'lem/porcelain:push)))
 
 (define-command legit-rebase-interactive () ()
   "Rebase interactively, from the commit the point is on.
 
   Austostash pending changes, to enable the rebase and find the changes back afterwards."
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
 
     ;; Find the commit hash the point is on: mandatory.
     (let ((commit-hash (text-property-at (current-point) :commit-hash)))
@@ -651,30 +647,30 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
       (let ((buffer (find-file-buffer ".git/rebase-merge/git-rebase-todo")))
         (when buffer
-          (lem/peek-legit::quit)
+          (%legit-quit)
           (switch-to-buffer buffer)
           (change-buffer-mode buffer 'legit-rebase-mode))))))
 
 (define-command legit-next-header () ()
   "Move point to the next header of this VCS window."
-  (lem/peek-legit:peek-legit-next-header))
+  (peek-legit-next-header))
 
 (define-command legit-previous-header () ()
   "Move point to the previous header of this VCS window."
-  (lem/peek-legit:peek-legit-previous-header))
+  (peek-legit-previous-header))
 
 (define-command legit-commits-log () ()
   "List commits on a new buffer."
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (display-commits-log 0)))
 
 (defun display-commits-log (offset)
   "Display the commit lines on a dedicated legit buffer."
   (let* ((commits (lem/porcelain:commits-log :offset offset :limit lem/porcelain:*commits-log-page-size*)))
-    (lem/peek-legit:with-collecting-sources (collector :buffer :commits-log
+    (with-collecting-sources (collector :buffer :commits-log
                                                        :minor-mode 'legit-commits-log-mode
                                                        :read-only nil)
-      (lem/peek-legit:collector-insert
+      (collector-insert
        (format nil "Commits (~A):" offset)
        :header t)
       (if commits
@@ -689,25 +685,25 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                            message (getf commit :message))
                   else
                   do (setf line commit)
-                  do (lem/peek-legit:with-appending-source
+                  do (with-appending-source
                          (point :move-function (make-show-commit-function hash)
                                 :visit-file-function (lambda ())
                                 :stage-function (lambda () )
                                 :unstage-function (lambda () ))
                        (with-point ((start point))
                          (when hash
-                           (insert-string point hash :attribute 'lem/peek-legit:filename-attribute :read-only t))
+                           (insert-string point hash :attribute 'filename-attribute :read-only t))
                          (if message
                              (insert-string point message)
                              (insert-string point line))
                          (when hash
                            (put-text-property start point :commit-hash hash)))))
-            (setf (buffer-value (lem/peek-legit:collector-buffer collector) 'commits-offset) offset))
-          (lem/peek-legit:collector-insert "<no commits>")))))
+            (setf (buffer-value (collector-buffer collector) 'commits-offset) offset))
+          (collector-insert "<no commits>")))))
 
 (define-command legit-commits-log-next-page () ()
   "Show the next page of the commits log."
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (let* ((buffer (current-buffer))
            (window-height (window-height (current-window)))
            (current-offset (or (buffer-value buffer 'commits-offset) 0))
@@ -720,7 +716,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-commits-log-previous-page () ()
   "Show the previous page of the commits log."
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (let* ((buffer (current-buffer))
            (window-height (window-height (current-window)))
            (current-offset (or (buffer-value buffer 'commits-offset) 0))
@@ -729,12 +725,12 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-commits-log-first-page () ()
   "Go to the first page of the commit log."
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (display-commits-log 0)))
 
 (define-command legit-commits-log-last-page () ()
   "Go to the last page of the commit log."
-  (lem/porcelain:with-current-project ()
+  (with-current-project ()
     (let* ((commits-per-page lem/porcelain:*commits-log-page-size*)
            (last-page-offset (* (floor (/ (1- (lem/porcelain:commit-count)) commits-per-page))
                                 commits-per-page)))
@@ -742,7 +738,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-quit () ()
   "Quit"
-  (lem/peek-legit:quit)
+  (%legit-quit)
   (ignore-errors
    (delete-buffer (get-buffer "*legit-diff*"))
    (delete-buffer (get-buffer "*legit-help*"))))

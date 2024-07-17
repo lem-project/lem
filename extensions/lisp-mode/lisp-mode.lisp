@@ -248,7 +248,7 @@
 (defun buffer-package (buffer &optional default)
   (let ((package-name (buffer-value buffer "package" default)))
     (typecase package-name
-      (null (alexandria:if-let (package-name (scan-current-package (buffer-point buffer)))
+      (null (alexandria:if-let (package-name (guess-current-position-package (buffer-point buffer)))
               (string-upcase package-name)
               default))
       ((or symbol string)
@@ -514,7 +514,7 @@
 (defun self-current-package ()
   (or (find (or *current-package*
                 (buffer-package (current-buffer))
-                (scan-current-package (current-point)))
+                (guess-current-position-package (current-point)))
             (list-all-packages)
             :test 'equalp
             :key 'package-name)
@@ -1196,7 +1196,7 @@
   (when start-repl (start-lisp-repl)))
 
 
-(defun scan-current-package (point)
+(defun guess-current-position-package (point)
   (with-point ((p point))
     (loop
       (ppcre:register-groups-bind (package-name)
@@ -1207,7 +1207,7 @@
         (return)))))
 
 (defun update-buffer-package ()
-  (let ((package (scan-current-package (current-point))))
+  (let ((package (guess-current-position-package (current-point))))
     (when package
       (lisp-set-package package))))
 

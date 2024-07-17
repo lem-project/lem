@@ -705,7 +705,6 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
   "Show the next page of the commits log."
   (with-current-project ()
     (let* ((buffer (current-buffer))
-           (window-height (window-height (current-window)))
            (current-offset (or (buffer-value buffer 'commits-offset) 0))
            (new-offset (+ current-offset lem/porcelain:*commits-log-page-size*))
            (commits (lem/porcelain:commits-log :offset new-offset
@@ -718,7 +717,6 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
   "Show the previous page of the commits log."
   (with-current-project ()
     (let* ((buffer (current-buffer))
-           (window-height (window-height (current-window)))
            (current-offset (or (buffer-value buffer 'commits-offset) 0))
            (new-offset (max 0 (- current-offset lem/porcelain:*commits-log-page-size*))))
       (display-commits-log new-offset))))

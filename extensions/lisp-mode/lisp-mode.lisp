@@ -1204,7 +1204,9 @@
            (string-downcase (line-string p)))
         (return package-name))
       (unless (line-offset p -1)
-        (return)))))
+        (if (equal "asd" (pathname-type (buffer-filename (point-buffer point))))
+            (return "ASDF-USER")
+            (return))))))
 
 (defun update-buffer-package ()
   (let ((package (guess-current-position-package (current-point))))

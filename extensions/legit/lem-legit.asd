@@ -1,6 +1,3 @@
-
-(in-package :asdf-user)
-
 (defsystem "lem-legit"
   :serial t
   :depends-on ("lem" "lem-patch-mode" "lem-yaml-mode" "lem-markdown-mode")

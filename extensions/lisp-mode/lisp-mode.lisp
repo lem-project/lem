@@ -1196,6 +1196,10 @@
   (when start-repl (start-lisp-repl)))
 
 
+(defun buffer-pathname-type (buffer)
+  (alexandria:when-let (pathname (buffer-filename buffer))
+    (pathname-type pathname)))
+
 (defun guess-current-position-package (point)
   (with-point ((p point))
     (loop
@@ -1204,7 +1208,7 @@
            (string-downcase (line-string p)))
         (return package-name))
       (unless (line-offset p -1)
-        (if (equal "asd" (pathname-type (buffer-filename (point-buffer point))))
+        (if (equal "asd" (buffer-pathname-type (point-buffer point)))
             (return "ASDF-USER")
             (return))))))
 

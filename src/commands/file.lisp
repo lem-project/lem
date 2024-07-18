@@ -94,7 +94,7 @@
           (setf buffer (execute-find-file *find-file-executor*
                                           (get-file-mode pathname)
                                           pathname)))
-        (when buffer
+        (when (bufferp buffer)
           (switch-to-buffer buffer t nil))))))
 
 (defmethod execute-find-file :before (executor mode pathname)

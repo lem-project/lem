@@ -353,6 +353,10 @@
                                         :width width
                                         :height height
                                         :border-size border-size)
-      (declare (ignore x y))
+      ;; XXX: workaround for context-menu
+      (unless (typep gravity 'gravity-cursor)
+        (lem-core::window-set-pos destination-window
+                                  (+ x border-size)
+                                  (+ y border-size)))
       (lem-core::window-set-size destination-window w h)
       destination-window)))

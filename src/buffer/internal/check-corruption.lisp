@@ -1,8 +1,11 @@
 (in-package :lem/buffer/internal)
 
+(define-condition corruption-warning (simple-warning) ())
+
 (defmacro debug-assert (form &rest args)
   `(unless ,form
-     (log:error "assertion failed" ,form ,@args)))
+     (log:error "assertion failed" ,form ,@args)
+     (warn 'corruption-warning)))
 
 (defun check-line-corruption (line line-number buffer)
   (check-type line line)

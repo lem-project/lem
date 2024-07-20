@@ -10,25 +10,26 @@
 (define-editor-variable after-change-functions '())
 
 (defun check-read-only-at-point (point n)
-  (unless *inhibit-read-only*
-    (loop :for line := (point-line point) :then (line-next line)
-          :for charpos := (point-charpos point) :then 0
-          :do (unless line
-                (return))
-              (when (line-search-property-range line :read-only charpos (+ charpos n))
-                (error 'read-only-error))
-              (when (>= 0 (decf n (1+ (- (line-length line) charpos))))
-                (return)))))
+  (loop :for line := (point-line point) :then (line-next line)
+        :for charpos := (point-charpos point) :then 0
+        :do (unless line
+              (return))
+            (when (line-search-property-range line :read-only charpos (+ charpos n))
+              (error 'read-only-error))
+            (when (>= 0 (decf n (1+ (- (line-length line) charpos))))
+              (return))))
 
-(defun call-with-modify-buffer (buffer function)
+(defun call-with-modify-buffer (point n function)
   (without-interrupts
-    (unless *inhibit-read-only*
-      (check-read-only-buffer buffer))
-    (prog1 (funcall function)
-      (buffer-modify buffer))))
+    (let ((buffer (point-buffer point)))
+      (unless *inhibit-read-only*
+        (check-read-only-buffer buffer)
+        (check-read-only-at-point point n))
+      (prog1 (funcall function)
+        (buffer-modify buffer)))))
 
-(defmacro with-modify-buffer (buffer &body body)
-  `(call-with-modify-buffer ,buffer (lambda () ,@body)))
+(defmacro with-modify-buffer ((point n) &body body)
+  `(call-with-modify-buffer ,point ,n (lambda () ,@body)))
 
 (defun line-next-n (line n)
   (loop :repeat n
@@ -102,8 +103,7 @@
 
 (defgeneric insert-char/point (point char)
   (:method (point char)
-    (with-modify-buffer (point-buffer point)
-      (check-read-only-at-point point 0)
+    (with-modify-buffer (point 0)
       (cond
         ((char= char #\newline)
          (%insert-newline/point (point-buffer point)
@@ -133,8 +133,7 @@
 (defgeneric insert-string/point (point string)
   (:method (point string)
     (let ((buffer (point-buffer point)))
-      (with-modify-buffer buffer
-        (check-read-only-at-point point 0)
+      (with-modify-buffer (point 0)
         (loop :with start := 0
               :for pos := (position #\newline string :start start)
               :for line := (point-line point) :then (line-next line)
@@ -195,8 +194,7 @@
 (defgeneric delete-char/point (point n)
   (:method (point n)
     (declare (special n))
-    (with-modify-buffer (point-buffer point)
-      (check-read-only-at-point point n)
+    (with-modify-buffer (point n)
       (with-output-to-string (killring-stream)
         (declare (special killring-stream))
         (let ((charpos (point-charpos point))

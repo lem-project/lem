@@ -233,10 +233,13 @@
     (run-hooks (make-per-buffer-hook :var 'after-change-functions :buffer buffer)
                start end old-len)))
 
+(defun need-to-call-after-change-functions-p ()
+  (and (not *inhibit-modification-hooks*)
+       (or (variable-value 'after-change-functions)
+           (variable-value 'after-change-functions :global))))
+
 (defun insert/after-change-function (point arg call-next-method)
-  (if (and (not *inhibit-modification-hooks*)
-           (or (variable-value 'after-change-functions)
-               (variable-value 'after-change-functions :global)))
+  (if (need-to-call-after-change-functions-p)
       (with-point ((start point))
         (prog1 (funcall call-next-method)
           (with-point ((end start))
@@ -245,9 +248,7 @@
       (funcall call-next-method)))
 
 (defun delete/after-change-function (point call-next-method)
-  (if (and (not *inhibit-modification-hooks*)
-           (or (variable-value 'after-change-functions)
-               (variable-value 'after-change-functions :global)))
+  (if (need-to-call-after-change-functions-p)
       (let ((string (funcall call-next-method)))
         (with-point ((start point)
                      (end point))

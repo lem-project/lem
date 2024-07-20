@@ -9,24 +9,16 @@
 (define-editor-variable before-change-functions '())
 (define-editor-variable after-change-functions '())
 
-(defun step-on-read-only (point n)
-  (loop :for line := (point-line point) :then (line-next line)
-        :for charpos := (point-charpos point) :then 0
-        :do (unless line
-              (return nil))
-            (when (line-search-property-range line :read-only charpos (+ charpos n))
-              (return t))
-            (when (>= 0 (decf n (1+ (- (line-length line) charpos))))
-              (return nil))))
-
 (defun check-read-only-at-point (point n)
   (unless *inhibit-read-only*
-    (let ((line (point-line point))
-          (charpos (point-charpos point)))
-      (when (if (eql n 0)
-                (line-search-property line :read-only charpos)
-                (step-on-read-only point n))
-        (error 'read-only-error)))))
+    (loop :for line := (point-line point) :then (line-next line)
+          :for charpos := (point-charpos point) :then 0
+          :do (unless line
+                (return))
+              (when (line-search-property-range line :read-only charpos (+ charpos n))
+                (error 'read-only-error))
+              (when (>= 0 (decf n (1+ (- (line-length line) charpos))))
+                (return)))))
 
 (defun call-with-modify-buffer (buffer function)
   (without-interrupts

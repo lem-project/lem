@@ -28,13 +28,15 @@
                 (step-on-read-only point n))
         (error 'read-only-error)))))
 
+(defun call-with-modify-buffer (buffer function)
+  (without-interrupts
+    (unless *inhibit-read-only*
+      (check-read-only-buffer buffer))
+    (prog1 (funcall function)
+      (buffer-modify buffer))))
+
 (defmacro with-modify-buffer (buffer &body body)
-  (alexandria:once-only (buffer)
-    `(without-interrupts
-       (unless *inhibit-read-only*
-         (check-read-only-buffer ,buffer))
-       (prog1 (progn ,@body)
-         (buffer-modify ,buffer)))))
+  `(call-with-modify-buffer ,buffer (lambda () ,@body)))
 
 (defun line-next-n (line n)
   (loop :repeat n

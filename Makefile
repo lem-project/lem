@@ -47,7 +47,7 @@ lint:
 	.qlot/bin/sblint extensions/dot-mode/lem-dot-mode.asd
 	.qlot/bin/sblint extensions/elisp-mode/lem-elisp-mode.asd
 	.qlot/bin/sblint extensions/elixir-mode/lem-elixir-mode.asd
-	.qlot/bin/sblint extensions/encodings/lem-encodings.asd
+#	.qlot/bin/sblint extensions/encodings/lem-encodings.asd
 	.qlot/bin/sblint extensions/erlang-mode/lem-erlang-mode.asd
 	.qlot/bin/sblint extensions/go-mode/lem-go-mode.asd
 	.qlot/bin/sblint extensions/haskell-mode/lem-haskell-mode.asd

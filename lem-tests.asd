@@ -8,6 +8,8 @@
                "rove")
   :pathname "tests"
   :components ((:file "utilities")
+               (:module "buffer"
+                :components ((:file "internal")))
                (:module "common"
                 :components ((:file "ring")
                              (:file "killring")

@@ -73,6 +73,7 @@
                                            (:file "point")
                                            (:file "edit")
                                            (:file "mark")
+                                           (:file "undo")
                                            (:file "buffer-insert")
                                            (:file "basic")
                                            (:file "syntax-predicates")

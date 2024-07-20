@@ -12,6 +12,7 @@
            :line-points
            :make-line
            :make-empty-line
+           :line-free
            :line-alive-p
            :line-char
            :line-length
@@ -29,11 +30,10 @@
            :line-search-property
            :line-search-property-range
            :line-property-insert-pos
-           :line-property-insert-newline
            :line-property-delete-pos
            :line-property-delete-line
            :line-string/attributes
-           :line-free))
+           :insert-newline))
 (in-package :lem/buffer/line)
 
 (defstruct content
@@ -66,6 +66,18 @@
 
 (defun make-empty-line ()
   (make-line nil nil ""))
+
+(defun line-free (line)
+  (when (line-prev line)
+    (setf (line-next (line-prev line))
+          (line-next line)))
+  (when (line-next line)
+    (setf (line-prev (line-next line))
+          (line-prev line)))
+  (setf (line-prev line) nil
+        (line-next line) nil
+        (line-str line) nil
+        (line-points line) nil))
 
 (defun line-alive-p (line)
   (not (null (line-str line))))
@@ -276,14 +288,9 @@
                 :finally (return attributes))
           (getf (line-plist line) :attribute))))
 
-(defun line-free (line)
-  (when (line-prev line)
-    (setf (line-next (line-prev line))
-          (line-next line)))
-  (when (line-next line)
-    (setf (line-prev (line-next line))
-          (line-prev line)))
-  (setf (line-prev line) nil
-        (line-next line) nil
-        (line-str line) nil
-        (line-points line) nil))
+(defun insert-newline (line position)
+  (let ((before-string (subseq (line-str line) 0 position))
+        (after-string (subseq (line-str line) position)))
+    (setf (line-str line) before-string)
+    (let ((next (make-line line (line-next line) after-string)))
+      (line-property-insert-newline line next position))))

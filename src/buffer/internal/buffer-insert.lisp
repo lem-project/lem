@@ -9,32 +9,27 @@
 (define-editor-variable before-change-functions '())
 (define-editor-variable after-change-functions '())
 
-(defun step-on-read-only (point n)
+(defun check-read-only-at-point (point n)
   (loop :for line := (point-line point) :then (line-next line)
         :for charpos := (point-charpos point) :then 0
         :do (unless line
-              (return nil))
+              (return))
             (when (line-search-property-range line :read-only charpos (+ charpos n))
-              (return t))
+              (error 'read-only-error))
             (when (>= 0 (decf n (1+ (- (line-length line) charpos))))
-              (return nil))))
+              (return))))
 
-(defun check-read-only-at-point (point n)
-  (unless *inhibit-read-only*
-    (let ((line (point-line point))
-          (charpos (point-charpos point)))
-      (when (if (eql n 0)
-                (line-search-property line :read-only charpos)
-                (step-on-read-only point n))
-        (error 'read-only-error)))))
+(defun call-with-modify-buffer (point n function)
+  (without-interrupts
+    (let ((buffer (point-buffer point)))
+      (unless *inhibit-read-only*
+        (check-read-only-buffer buffer)
+        (check-read-only-at-point point n))
+      (prog1 (funcall function)
+        (buffer-modify buffer)))))
 
-(defmacro with-modify-buffer (buffer &body body)
-  (alexandria:once-only (buffer)
-    `(without-interrupts
-       (unless *inhibit-read-only*
-         (check-read-only-buffer ,buffer))
-       (prog1 (progn ,@body)
-         (buffer-modify ,buffer)))))
+(defmacro with-modify-buffer ((point n) &body body)
+  `(call-with-modify-buffer ,point ,n (lambda () ,@body)))
 
 (defun line-next-n (line n)
   (loop :repeat n
@@ -102,18 +97,13 @@
                       (decf (point-linum p) offset-line)))))))))
 
 (defun %insert-newline/point (buffer line charpos)
-  (make-line line
-             (line-next line)
-             (subseq (line-str line) charpos))
-  (line-property-insert-newline line (line-next line) charpos)
+  (lem/buffer/line:insert-newline line charpos)
   (incf (buffer-nlines buffer))
-  (setf (line-str line)
-        (subseq (line-str line) 0 charpos)))
+  (values))
 
 (defgeneric insert-char/point (point char)
   (:method (point char)
-    (with-modify-buffer (point-buffer point)
-      (check-read-only-at-point point 0)
+    (with-modify-buffer (point 0)
       (cond
         ((char= char #\newline)
          (%insert-newline/point (point-buffer point)
@@ -143,8 +133,7 @@
 (defgeneric insert-string/point (point string)
   (:method (point string)
     (let ((buffer (point-buffer point)))
-      (with-modify-buffer buffer
-        (check-read-only-at-point point 0)
+      (with-modify-buffer (point 0)
         (loop :with start := 0
               :for pos := (position #\newline string :start start)
               :for line := (point-line point) :then (line-next line)
@@ -164,8 +153,7 @@
                            (setf start (1+ pos))))))))
     string))
 
-(defun %delete-line-between/point (point start end line)
-  (declare (special killring-stream))
+(defun %delete-line-between/point (point start end line killring-stream)
   (line-property-delete-pos (point-line point)
                             (point-charpos point)
                             (- end start))
@@ -177,231 +165,124 @@
                      (subseq (line-str line) 0 start)
                      (subseq (line-str line) end))))
 
-(defun %delete-line-eol/point (point start line)
-  (declare (special killring-stream))
+(defun %delete-line-eol/point (point start line killring-stream)
   (line-property-delete-line (point-line point) (point-charpos point))
   (write-string (line-str line) killring-stream :start start)
   (setf (line-str line)
         (subseq (line-str line) 0 start)))
 
-(defun %delete-line/point (point start line)
-  (declare (special killring-stream buffer n))
+(defun %delete-line/point (point start line killring-stream remaining-deletions)
   (line-property-delete-line (point-line point) (point-charpos point))
   (line-merge (point-line point) (line-next (point-line point)) start)
   (write-string (line-str line) killring-stream :start start)
   (write-char #\newline killring-stream)
-  (decf n (1+ (- (line-length line) start)))
-  (decf (buffer-nlines buffer))
+  (decf remaining-deletions (1+ (- (line-length line) start)))
+  (decf (buffer-nlines (point-buffer point)))
   (setf (line-str line)
         (concatenate 'string
                      (subseq (line-str line) 0 start)
                      (line-str (line-next line))))
-  (line-free (line-next line)))
+  (line-free (line-next line))
+  remaining-deletions)
 
-;;TODO: ABCL complains about n that is not bound
-#+abcl
-(defparameter n nil)
-
-(defgeneric delete-char/point (point n)
-  (:method (point n)
-    (declare (special n))
-    (with-modify-buffer (point-buffer point)
-      (check-read-only-at-point point n)
+(defgeneric delete-char/point (point remaining-deletions)
+  (:method (point remaining-deletions)
+    (with-modify-buffer (point remaining-deletions)
       (with-output-to-string (killring-stream)
-        (declare (special killring-stream))
         (let ((charpos (point-charpos point))
-              (buffer (point-buffer point))
               (line (point-line point))
               (offset-line 0))
-          (declare (special buffer))
-          (loop :while (plusp n)
-                :for eolp := (> n (- (line-length line) charpos))
+          (loop :while (plusp remaining-deletions)
+                :for eolp := (> remaining-deletions (- (line-length line) charpos))
                 :do (cond
                       ((not eolp)
-                       (%delete-line-between/point point charpos (+ charpos n) line)
-                       (shift-markers point offset-line (- n))
+                       (%delete-line-between/point point
+                                                   charpos
+                                                   (+ charpos remaining-deletions)
+                                                   line
+                                                   killring-stream)
+                       (shift-markers point
+                                      offset-line
+                                      (- remaining-deletions))
                        (return))
                       ((null (line-next line))
-                       (%delete-line-eol/point point charpos line)
+                       (%delete-line-eol/point point charpos line killring-stream)
                        (shift-markers point offset-line (- charpos (line-length line)))
                        (return))
                       (t
-                       (%delete-line/point point charpos line)))
+                       (setf remaining-deletions
+                             (%delete-line/point point
+                                                 charpos
+                                                 line
+                                                 killring-stream
+                                                 remaining-deletions))))
                     (decf offset-line)
                 :finally (shift-markers point offset-line 0)))))))
 
 
-(declaim (inline call-before-change-functions
-                 call-after-change-functions))
-
-(defun call-before-change-functions (buffer start arg)
+(defun call-before-change-functions (point arg)
   (unless *inhibit-modification-hooks*
-    (run-hooks (make-per-buffer-hook :var 'before-change-functions :buffer buffer)
-               start arg)))
+    (run-hooks (make-per-buffer-hook :var 'before-change-functions :buffer (point-buffer point))
+               point arg)))
 
 (defun call-after-change-functions (buffer start end old-len)
   (unless *inhibit-modification-hooks*
     (run-hooks (make-per-buffer-hook :var 'after-change-functions :buffer buffer)
                start end old-len)))
 
-(defmacro insert/after-change-function (point arg)
-  `(if (and (not *inhibit-modification-hooks*)
-            (or (variable-value 'after-change-functions)
-                (variable-value 'after-change-functions :global)))
-       (with-point ((start ,point))
-         (prog1 (call-next-method)
-           (with-point ((end start))
-             (character-offset end ,arg)
-             (call-after-change-functions (point-buffer ,point) start end 0))))
-       (call-next-method)))
+(defun need-to-call-after-change-functions-p ()
+  (and (not *inhibit-modification-hooks*)
+       (or (variable-value 'after-change-functions)
+           (variable-value 'after-change-functions :global))))
 
-(defmacro delete/after-change-function (point)
-  `(if (and (not *inhibit-modification-hooks*)
-            (or (variable-value 'after-change-functions)
-                (variable-value 'after-change-functions :global)))
-       (let ((string (call-next-method)))
-         (with-point ((start ,point)
-                      (end ,point))
-           (call-after-change-functions (point-buffer ,point) start end (length string)))
-         string)
-       (call-next-method)))
+(defun insert/after-change-function (point arg call-next-method)
+  (if (need-to-call-after-change-functions-p)
+      (with-point ((start point))
+        (prog1 (funcall call-next-method)
+          (with-point ((end start))
+            (character-offset end arg)
+            (call-after-change-functions (point-buffer point) start end 0))))
+      (funcall call-next-method)))
+
+(defun delete/after-change-function (point call-next-method)
+  (if (need-to-call-after-change-functions-p)
+      (let ((string (funcall call-next-method)))
+        (with-point ((start point)
+                     (end point))
+          (call-after-change-functions (point-buffer point) start end (length string)))
+        string)
+      (funcall call-next-method)))
 
 (defmethod insert-char/point :around (point char)
-  (call-before-change-functions (point-buffer point) point char)
+  (call-before-change-functions point char)
   (if (not (buffer-enable-undo-p (point-buffer point)))
-      (insert/after-change-function point 1)
+      (insert/after-change-function point 1 #'call-next-method)
       (let ((linum (line-number-at-point point))
             (charpos (point-charpos point)))
-        (prog1 (insert/after-change-function point 1)
+        (prog1 (insert/after-change-function point 1 #'call-next-method)
           (without-interrupts
             (push-undo (point-buffer point)
                        (make-edit :insert-char linum charpos char)))))))
 
 (defmethod insert-string/point :around (point string)
-  (call-before-change-functions (point-buffer point) point string)
+  (call-before-change-functions point string)
   (if (not (buffer-enable-undo-p (point-buffer point)))
-      (insert/after-change-function point (length string))
+      (insert/after-change-function point (length string) #'call-next-method)
       (let ((linum (line-number-at-point point))
             (charpos (point-charpos point)))
-        (prog1 (insert/after-change-function point (length string))
+        (prog1 (insert/after-change-function point (length string) #'call-next-method)
           (without-interrupts
             (push-undo (point-buffer point)
                        (make-edit :insert-string linum charpos string)))))))
 
-(defmethod delete-char/point :around (point n)
-  (call-before-change-functions (point-buffer point) point n)
+(defmethod delete-char/point :around (point remaining-deletions)
+  (call-before-change-functions point remaining-deletions)
   (if (not (buffer-enable-undo-p (point-buffer point)))
-      (delete/after-change-function point)
+      (delete/after-change-function point #'call-next-method)
       (let ((linum (line-number-at-point point))
             (charpos (point-charpos point))
-            (string (delete/after-change-function point)))
+            (string (delete/after-change-function point #'call-next-method)))
         (without-interrupts
           (push-undo (point-buffer point)
                      (make-edit :delete-char linum charpos string)))
         string)))
-
-
-;;; undo/redo
-(defparameter *undo-modes* '(:edit :undo :redo))
-(defvar *undo-mode* :edit)
-
-(defun buffer-enable-undo-p (&optional (buffer (current-buffer)))
-  "Returns T if undo is enabled for `buffer`, otherwise returns NIL."
-  (buffer-%enable-undo-p buffer))
-
-(defun buffer-enable-undo (buffer)
-  "Enables undo for `buffer`."
-  (setf (buffer-%enable-undo-p buffer) t)
-  nil)
-
-(defun buffer-disable-undo (buffer)
-  "Disables undo for `buffer` and remove all undo information."
-  (setf (buffer-%enable-undo-p buffer) nil)
-  (setf (buffer-edit-history buffer) (make-array 0 :adjustable t :fill-pointer 0))
-  (setf (buffer-redo-stack buffer) nil)
-  nil)
-
-(defun buffer-enable-undo-boundary-p (&optional (buffer (current-buffer)))
-  (buffer-%enable-undo-boundary-p buffer))
-
-(defun buffer-enable-undo-boundary (buffer)
-  (setf (buffer-%enable-undo-boundary-p buffer) t)
-  nil)
-
-(defun buffer-disable-undo-boundary (buffer)
-  (setf (buffer-%enable-undo-boundary-p buffer) nil)
-  nil)
-
-(defun buffer-modify (buffer)
-  (ecase *undo-mode*
-    ((:edit :redo)
-     (incf (buffer-%modified-p buffer)))
-    ((:undo)
-     (decf (buffer-%modified-p buffer))))
-  (buffer-mark-cancel buffer))
-
-(defun push-undo-stack (buffer elt)
-  (vector-push-extend elt (buffer-edit-history buffer)))
-
-(defun push-redo-stack (buffer elt)
-  (push elt (buffer-redo-stack buffer)))
-
-(defun push-undo (buffer edit)
-  (when (buffer-enable-undo-p buffer)
-    (ecase *undo-mode*
-      (:edit
-       (push-undo-stack buffer edit)
-       (setf (buffer-redo-stack buffer) nil))
-      (:redo
-       (push-undo-stack buffer edit))
-      (:undo
-       (push-redo-stack buffer edit)))))
-
-(defun buffer-undo-1 (point)
-  (let* ((buffer (point-buffer point))
-         (edit-history (buffer-edit-history buffer))
-         (elt (and (< 0 (length edit-history)) (vector-pop edit-history))))
-    (when elt
-      (let ((*undo-mode* :undo))
-        (unless (eq elt :separator)
-          (apply-inverse-edit elt point))))))
-
-(defun buffer-undo (point)
-  (let ((buffer (point-buffer point)))
-    (push :separator (buffer-redo-stack buffer))
-    (when (eq :separator (last-edit-history buffer))
-      (vector-pop (buffer-edit-history buffer)))
-    (let ((result0 nil))
-      (loop :for result := (buffer-undo-1 point)
-            :while result
-            :do (setf result0 result))
-      (unless result0
-        (assert (eq :separator (car (buffer-redo-stack buffer))))
-        (pop (buffer-redo-stack buffer)))
-      result0)))
-
-(defun buffer-redo-1 (point)
-  (let* ((buffer (point-buffer point))
-         (elt (pop (buffer-redo-stack buffer))))
-    (when elt
-      (let ((*undo-mode* :redo))
-        (unless (eq elt :separator)
-          (apply-inverse-edit elt point))))))
-
-(defun buffer-redo (point)
-  (let ((buffer (point-buffer point)))
-    (vector-push-extend :separator (buffer-edit-history buffer))
-    (let ((result0 nil))
-      (loop :for result := (buffer-redo-1 point)
-            :while result
-            :do (setf result0 result))
-      (unless result0
-        (assert (eq :separator
-                    (last-edit-history buffer)))
-        (vector-pop (buffer-edit-history buffer)))
-      result0)))
-
-(defun buffer-undo-boundary (&optional (buffer (current-buffer)))
-  (when (buffer-enable-undo-boundary-p)
-    (unless (eq :separator (last-edit-history buffer))
-      (vector-push-extend :separator (buffer-edit-history buffer)))))

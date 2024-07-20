@@ -264,7 +264,12 @@
    :make-tm-patterns
    :make-tm-name
    :add-tm-repository
-   :add-tm-pattern))
+   :add-tm-pattern)
+  ;; check-corruption.lisp
+  (:export
+   :corruption-warning
+   :check-all-buffers-corruption
+   :check-buffer-corruption))
 
 (defpackage :lem/buffer/indent
   (:use :cl

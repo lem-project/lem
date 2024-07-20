@@ -77,6 +77,7 @@
                                            (connection-implementation-version c)
                                            (connection-command c)))
                   :select-callback (lambda (menu c)
+                                     (declare (ignore menu))
                                      (change-current-connection c)))))
 
 (defun check-connection ()

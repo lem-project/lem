@@ -153,8 +153,7 @@
                            (setf start (1+ pos))))))))
     string))
 
-(defun %delete-line-between/point (point start end line)
-  (declare (special killring-stream))
+(defun %delete-line-between/point (point start end line killring-stream)
   (line-property-delete-pos (point-line point)
                             (point-charpos point)
                             (- end start))
@@ -166,55 +165,57 @@
                      (subseq (line-str line) 0 start)
                      (subseq (line-str line) end))))
 
-(defun %delete-line-eol/point (point start line)
-  (declare (special killring-stream))
+(defun %delete-line-eol/point (point start line killring-stream)
   (line-property-delete-line (point-line point) (point-charpos point))
   (write-string (line-str line) killring-stream :start start)
   (setf (line-str line)
         (subseq (line-str line) 0 start)))
 
-(defun %delete-line/point (point start line)
-  (declare (special killring-stream buffer n))
+(defun %delete-line/point (point start line killring-stream remaining-deletions)
   (line-property-delete-line (point-line point) (point-charpos point))
   (line-merge (point-line point) (line-next (point-line point)) start)
   (write-string (line-str line) killring-stream :start start)
   (write-char #\newline killring-stream)
-  (decf n (1+ (- (line-length line) start)))
-  (decf (buffer-nlines buffer))
+  (decf remaining-deletions (1+ (- (line-length line) start)))
+  (decf (buffer-nlines (point-buffer point)))
   (setf (line-str line)
         (concatenate 'string
                      (subseq (line-str line) 0 start)
                      (line-str (line-next line))))
-  (line-free (line-next line)))
+  (line-free (line-next line))
+  remaining-deletions)
 
-;;TODO: ABCL complains about n that is not bound
-#+abcl
-(defparameter n nil)
-
-(defgeneric delete-char/point (point n)
-  (:method (point n)
-    (declare (special n))
-    (with-modify-buffer (point n)
+(defgeneric delete-char/point (point remaining-deletions)
+  (:method (point remaining-deletions)
+    (with-modify-buffer (point remaining-deletions)
       (with-output-to-string (killring-stream)
-        (declare (special killring-stream))
         (let ((charpos (point-charpos point))
-              (buffer (point-buffer point))
               (line (point-line point))
               (offset-line 0))
-          (declare (special buffer))
-          (loop :while (plusp n)
-                :for eolp := (> n (- (line-length line) charpos))
+          (loop :while (plusp remaining-deletions)
+                :for eolp := (> remaining-deletions (- (line-length line) charpos))
                 :do (cond
                       ((not eolp)
-                       (%delete-line-between/point point charpos (+ charpos n) line)
-                       (shift-markers point offset-line (- n))
+                       (%delete-line-between/point point
+                                                   charpos
+                                                   (+ charpos remaining-deletions)
+                                                   line
+                                                   killring-stream)
+                       (shift-markers point
+                                      offset-line
+                                      (- remaining-deletions))
                        (return))
                       ((null (line-next line))
-                       (%delete-line-eol/point point charpos line)
+                       (%delete-line-eol/point point charpos line killring-stream)
                        (shift-markers point offset-line (- charpos (line-length line)))
                        (return))
                       (t
-                       (%delete-line/point point charpos line)))
+                       (setf remaining-deletions
+                             (%delete-line/point point
+                                                 charpos
+                                                 line
+                                                 killring-stream
+                                                 remaining-deletions))))
                     (decf offset-line)
                 :finally (shift-markers point offset-line 0)))))))
 
@@ -276,8 +277,8 @@
             (push-undo (point-buffer point)
                        (make-edit :insert-string linum charpos string)))))))
 
-(defmethod delete-char/point :around (point n)
-  (call-before-change-functions (point-buffer point) point n)
+(defmethod delete-char/point :around (point remaining-deletions)
+  (call-before-change-functions (point-buffer point) point remaining-deletions)
   (if (not (buffer-enable-undo-p (point-buffer point)))
       (delete/after-change-function point)
       (let ((linum (line-number-at-point point))

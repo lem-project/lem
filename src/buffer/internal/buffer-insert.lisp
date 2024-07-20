@@ -220,13 +220,10 @@
                 :finally (shift-markers point offset-line 0)))))))
 
 
-(declaim (inline call-before-change-functions
-                 call-after-change-functions))
-
-(defun call-before-change-functions (buffer start arg)
+(defun call-before-change-functions (point arg)
   (unless *inhibit-modification-hooks*
-    (run-hooks (make-per-buffer-hook :var 'before-change-functions :buffer buffer)
-               start arg)))
+    (run-hooks (make-per-buffer-hook :var 'before-change-functions :buffer (point-buffer point))
+               point arg)))
 
 (defun call-after-change-functions (buffer start end old-len)
   (unless *inhibit-modification-hooks*
@@ -257,7 +254,7 @@
       (funcall call-next-method)))
 
 (defmethod insert-char/point :around (point char)
-  (call-before-change-functions (point-buffer point) point char)
+  (call-before-change-functions point char)
   (if (not (buffer-enable-undo-p (point-buffer point)))
       (insert/after-change-function point 1 #'call-next-method)
       (let ((linum (line-number-at-point point))
@@ -268,7 +265,7 @@
                        (make-edit :insert-char linum charpos char)))))))
 
 (defmethod insert-string/point :around (point string)
-  (call-before-change-functions (point-buffer point) point string)
+  (call-before-change-functions point string)
   (if (not (buffer-enable-undo-p (point-buffer point)))
       (insert/after-change-function point (length string) #'call-next-method)
       (let ((linum (line-number-at-point point))
@@ -279,7 +276,7 @@
                        (make-edit :insert-string linum charpos string)))))))
 
 (defmethod delete-char/point :around (point remaining-deletions)
-  (call-before-change-functions (point-buffer point) point remaining-deletions)
+  (call-before-change-functions point remaining-deletions)
   (if (not (buffer-enable-undo-p (point-buffer point)))
       (delete/after-change-function point #'call-next-method)
       (let ((linum (line-number-at-point point))

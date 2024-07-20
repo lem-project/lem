@@ -352,13 +352,16 @@
       "universaltime_to_posixtime"
       "unique_integer"
       "yield"))
-    
+
 (defun tokens (boundary strings)
   (let ((alternation
           `(:alternation ,@(sort (copy-list strings) #'> :key #'length))))
     (if boundary
         `(:sequence ,boundary ,alternation ,boundary)
         alternation)))
+
+(defun word-length-sort (&rest words)
+  (sort (copy-list words) #'> :key #'length))
 
 (defun wrap-symbol-names (&rest names)
   `(:sequence
@@ -386,10 +389,10 @@
                     (make-tm-match "[\\b]*[\?]+[\\w]+\\b"
                                       :name 'syntax-constant-attribute)
                     (make-tm-line-comment-region "%")
-                    (make-tm-string-region "\"")  
+                    (make-tm-string-region "\"")
                     (make-tm-string-region "'")
                     (make-tm-string-region "\"\"\"")
-                    (make-tm-match (tokens :word-boundary 
+                    (make-tm-match (tokens :word-boundary
                                            (append *erlang-boolean-literals*
                                                    *erlang-null-literal*))
                                    :name 'syntax-constant-attribute)
@@ -397,11 +400,11 @@
                                    :name 'syntax-keyword-attribute)
                     (make-tm-match
                     `(:sequence
-                      "-" ,(lem-lisp-mode/grammar::wrap-symbol-names 
+                      "-" ,(lem-lisp-mode/grammar::wrap-symbol-names
                       "module" "behaviour" "behavior" "export" "export_type" "define" "record" "type" "include" "include_lib" "spec"))
                     :captures (vector nil (make-tm-name 'syntax-keyword-attribute)))
                     (make-tm-match "^[\n]*[a-z_]+"
-                          :name 'syntax-function-name-attribute)                    
+                          :name 'syntax-function-name-attribute)
                     (make-tm-match (tokens :word-boundary (append '("when") *erlang-guards*))
                                     :name 'syntax-guard-attribute)
                     (make-tm-match (tokens :word-boundary *erlang-int-bifs*)
@@ -445,7 +448,7 @@
 
 (defun beginning-of-defun (point n)
   (loop :with regex = "^[a-z_\-]+\([A-Za-z\s\S_]*\)\s*->"
-        :repeat n 
+        :repeat n
         :do (search-backward-regexp point regex)))
 
 (defun end-of-defun (point n)

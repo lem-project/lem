@@ -48,3 +48,17 @@ qrstuvwxyz"
                  (:KEY3 ((1 10 300)))
                  NIL)
                (collect-line-plist buffer)))))
+
+(deftest undo-redo
+  (let* ((buffer (lem:make-buffer "test" :temporary t))
+         (point (lem:buffer-point buffer)))
+    (lem:insert-string point "Hello")
+    (lem:buffer-undo-boundary buffer)
+    (lem:insert-string point " World")
+    (lem:buffer-undo-boundary buffer)
+    (lem:buffer-undo point)
+    (ok (equal "Hello" (lem:buffer-text buffer)))
+    (lem:buffer-redo point)
+    (ok (equal "Hello World" (lem:buffer-text buffer)))
+
+    (check-corruption buffer)))

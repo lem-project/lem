@@ -1,36 +1,46 @@
 (in-package :lem/buffer/internal)
 
-(defun make-edit (kind linum charpos value)
-  (list kind linum charpos value))
+(deftype edit-kind ()
+  '(member :insert-string :delete-string))
 
-(defun %apply-edit (point kind linum charpos value)
-  (ecase kind
-    ((:insert-char)
-     (move-to-line point linum)
-     (line-offset point 0 charpos)
-     (insert-char/point point value))
+(defstruct (edit (:constructor make-edit (kind linum charpos string)))
+  (kind (alexandria:required-argument :kind)
+        :type edit-kind
+        :read-only t)
+  (linum (alexandria:required-argument :linum)
+         :type (integer 1 *)
+         :read-only t)
+  (charpos (alexandria:required-argument :linum)
+           :type (integer 0 *)
+           :read-only t)
+  (string (alexandria:required-argument :string)
+          :type string
+          :read-only t))
+
+(defun apply-edit (point edit)
+  (ecase (edit-kind edit)
     ((:insert-string)
-     (move-to-line point linum)
-     (line-offset point 0 charpos)
+     (move-to-line point (edit-linum edit))
+     (line-offset point 0 (edit-charpos edit))
      (with-point ((p point))
-       (insert-string/point point value)
+       (insert-string/point point (edit-string edit))
        (move-point point p)))
-    ((:delete-char)
-     (move-to-line point linum)
-     (line-offset point 0 charpos)
-     (delete-char/point point value))))
+    ((:delete-string)
+     (move-to-line point (edit-linum edit))
+     (line-offset point 0 (edit-charpos edit))
+     (delete-char/point point (length (edit-string edit))))))
 
-(defun apply-inverse-edit (edit point)
-  (destructuring-bind (kind linum charpos value) edit
-    (ecase kind
-      ((:insert-char)
-       (%apply-edit point :delete-char linum charpos 1))
-      ((:insert-string)
-       (%apply-edit point :delete-char linum charpos (length value)))
-      ((:delete-char)
-       (let ((charp (= 1 (length value))))
-         (%apply-edit point
-                      (if charp :insert-char :insert-string)
-                      linum
-                      charpos
-                      (if charp (aref value 0) value)))))))
+(defun apply-inverse-edit (point edit)
+  (ecase (edit-kind edit)
+    ((:insert-string)
+     (apply-edit point
+                 (make-edit :delete-string
+                            (edit-linum edit)
+                            (edit-charpos edit)
+                            (edit-string edit))))
+    ((:delete-string)
+     (apply-edit point
+                 (make-edit :insert-string
+                            (edit-linum edit)
+                            (edit-charpos edit)
+                            (edit-string edit))))))

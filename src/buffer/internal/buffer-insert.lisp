@@ -262,7 +262,7 @@
         (prog1 (insert/after-change-function point 1 #'call-next-method)
           (without-interrupts
             (push-undo (point-buffer point)
-                       (make-edit :insert-char linum charpos char)))))))
+                       (make-edit :insert-string linum charpos (string char))))))))
 
 (defmethod insert-string/point :around (point string)
   (call-before-change-functions point string)
@@ -284,5 +284,5 @@
             (string (delete/after-change-function point #'call-next-method)))
         (without-interrupts
           (push-undo (point-buffer point)
-                     (make-edit :delete-char linum charpos string)))
+                     (make-edit :delete-string linum charpos string)))
         string)))

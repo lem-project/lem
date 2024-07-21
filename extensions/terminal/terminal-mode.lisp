@@ -19,7 +19,8 @@
     terminal-resize
     terminal-copy-mode-on
     lem-core::<mouse-motion-event>
-    lem-core::<mouse-event>))
+    lem-core::<mouse-event>
+    lem/frame-multiplexer:frame-multiplexer-advice))
 
 (define-major-mode terminal-mode ()
     (:name "Terminal"

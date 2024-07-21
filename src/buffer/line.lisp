@@ -40,13 +40,31 @@
   string
   attributes)
 
-(defstruct (line (:constructor %make-line))
-  prev
-  next
-  str
-  plist
-  syntax-context
-  points)
+(defclass line ()
+  ((prev
+    :initarg :prev
+    :initform nil
+    :accessor line-prev)
+   (next
+    :initarg :next
+    :initform nil
+    :accessor line-next)
+   (str
+    :initarg :str
+    :initform nil
+    :accessor line-str)
+   (plist
+    :initarg :plist
+    :initform nil
+    :accessor line-plist)
+   (syntax-context
+    :initarg :syntax-context
+    :initform nil
+    :accessor line-syntax-context)
+   (points
+    :initarg :points
+    :initform nil
+    :accessor line-points)))
 
 (defmethod print-object ((object line) stream)
   (print-unreadable-object (object stream :identity t :type t)
@@ -55,9 +73,10 @@
             (line-plist object))))
 
 (defun make-line (prev next str)
-  (let ((line (%make-line :next next
-                          :prev prev
-                          :str str)))
+  (let ((line (make-instance 'line
+                             :next next
+                             :prev prev
+                             :str str)))
     (when next
       (setf (line-prev next) line))
     (when prev

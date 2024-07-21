@@ -222,7 +222,7 @@ If the scan does not stop to the first position of the buffer, or if 'limit-poin
 
 (defun insert-character (point char &optional (n 1))
   "Insert the character 'char' into 'point' 'n' times."
-  (loop :repeat n :do (insert-char/point point char))
+  (insert-string/point point (str:repeat n (string char)))
   t)
 
 (defun insert-string (point string &rest plist)

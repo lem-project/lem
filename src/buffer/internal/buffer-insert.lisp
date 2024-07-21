@@ -101,27 +101,6 @@
   (incf (buffer-nlines buffer))
   (values))
 
-(defgeneric insert-char/point (point char)
-  (:method (point char)
-    (with-modify-buffer (point 0)
-      (cond
-        ((char= char #\newline)
-         (%insert-newline/point (point-buffer point)
-                                (point-line point)
-                                (point-charpos point))
-         (shift-markers point 1 0))
-        (t
-         (let ((line (point-line point))
-               (charpos (point-charpos point)))
-           (line-property-insert-pos line charpos 1)
-           (shift-markers point 0 1)
-           (setf (line-str line)
-                 (concatenate 'string
-                              (subseq (line-str line) 0 charpos)
-                              (string char)
-                              (subseq (line-str line) charpos))))))
-      char)))
-
 (defun %insert-line-string/point (line charpos string)
   (line-property-insert-pos line charpos (length string))
   (setf (line-str line)
@@ -252,17 +231,6 @@
           (call-after-change-functions (point-buffer point) start end (length string)))
         string)
       (funcall call-next-method)))
-
-(defmethod insert-char/point :around (point char)
-  (call-before-change-functions point char)
-  (if (not (buffer-enable-undo-p (point-buffer point)))
-      (insert/after-change-function point 1 #'call-next-method)
-      (let ((linum (line-number-at-point point))
-            (charpos (point-charpos point)))
-        (prog1 (insert/after-change-function point 1 #'call-next-method)
-          (without-interrupts
-            (push-undo (point-buffer point)
-                       (make-edit :insert-string linum charpos (string char))))))))
 
 (defmethod insert-string/point :around (point string)
   (call-before-change-functions point string)

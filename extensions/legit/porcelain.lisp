@@ -411,31 +411,25 @@ allows to learn about the file state: modified, deleted, ignored… "
 (defun fossil-branches (&key &allow-other-keys)
   (porcelain-error "not implemented"))
 
-(defun git-current-branch ()
+
+(defgeneric current-branch (vcs)
+  (:documentation "Return the current branch name (string)."))
+
+(defmethod current-branch ((vcs vcs-git))
   (let ((branches (git-list-branches :sort-by "-creatordate")))
     (loop for branch in branches
           if (str:starts-with-p "*" branch)
             return (subseq branch 2))))
 
-(defun hg-current-branch ()
+(defmethod current-branch ((vcs vcs-hg))
   "Return the current branch name."
   (str:trim
    (run-hg "branch")))
 
-(defun fossil-current-branch ()
+(defmethod current-branch ((vcs vcs-fossil))
   ;; strip out "* " from "* trunk"
   (str:trim
    (subseq (run-fossil "branch") 2)))
-
-(defun current-branch (vcs)
-  "Return the current branch name."
-  (case vcs
-    (:fossil
-     (fossil-current-branch))
-    (:hg
-     (hg-current-branch))
-    (t
-     (git-current-branch))))
 
 (defun rebase-in-progress (vcs)
   "Return a plist if a rebase is in progress. Used for legit-status.

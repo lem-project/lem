@@ -194,29 +194,6 @@ Mercurial:
 allows to learn about the file state: modified, deleted, ignored… "
   (run-git (list "status" "--porcelain=v1")))
 
-(defun hg-porcelain ()
-  "Return changes."
-  (run-hg "status"))
-
-(defun fossil-porcelain ()
-  "Get changes."
-  (multiple-value-bind (out error code)
-      (run-fossil "changes")
-    (cond
-      ((not (zerop code))
-       (porcelain-error (str:join #\newline (list out error))))
-      (t
-       (values out error)))))
-
-;; Dispatching on the right VCS:
-(defun porcelain (vcs)
-  "Dispatch on `vcs` and get current changes (added, modified files…)."
-  (case vcs
-    (:git (git-porcelain))
-    (:fossil (fossil-porcelain))
-    (:hg (hg-porcelain))
-    (t (porcelain-error "VCS not supported: ~a" vcs))))
-
 (defun git-components (vcs)
   "Return 3 values:
   - untracked files
@@ -239,7 +216,7 @@ allows to learn about the file state: modified, deleted, ignored… "
        •   R = renamed
        •   C = copied
        •   U = updated but unmerged"
-  (loop for line in (str:lines (porcelain vcs))
+  (loop for line in (str:lines (git-porcelain))
         for file = (subseq line 3)
         for status = (subseq line 0 2)
         unless (str:blankp line)
@@ -258,6 +235,10 @@ allows to learn about the file state: modified, deleted, ignored… "
         finally (return (values untracked-files
                                 modified-unstaged-files
                                 modified-staged-files))))
+
+(defun hg-porcelain ()
+  "Return changes."
+  (run-hg "status"))
 
 (defun hg-components ()
   "Return 3 values:
@@ -298,6 +279,16 @@ allows to learn about the file state: modified, deleted, ignored… "
         finally (return (values untracked-files
                                 modified-unstaged-files
                                 modified-staged-files))))
+
+(defun fossil-porcelain ()
+  "Get changes."
+  (multiple-value-bind (out error code)
+      (run-fossil "changes")
+    (cond
+      ((not (zerop code))
+       (porcelain-error (str:join #\newline (list out error))))
+      (t
+       (values out error)))))
 
 (defun fossil-components ()
   "Return values:

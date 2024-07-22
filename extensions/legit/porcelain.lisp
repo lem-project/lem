@@ -382,20 +382,17 @@ allows to learn about the file state: modified, deleted, ignored… "
     (t (git-show-commit-diff ref :ignore-all-space ignore-all-space))))
 
 ;; commit
-(defun git-commit (message)
+(defgeneric commit (vcs message)
+  (:documentation "Performs a commit operation: `message` must be a string."))
+
+(defmethod commit ((vcs vcs-git) message)
   (run-git (list "commit" "-m" message)))
 
-(defun hg-commit (message)
-   (run-hg (list "commit" "-m" message)))
+(defmethod commit ((vcs vcs-hg) message)
+  (run-hg (list "commit" "-m" message)))
 
-(defun fossil-commit (message)
+(defmethod commit ((vcs vcs-fossil) message)
   (run-fossil (list "commit" "-m" message)))
-
-(defun commit (vcs message)
-  (case vcs
-    (:fossil (fossil-commit message))
-    (:hg (hg-commit message))
-    (t (git-commit message))))
 
 ;; branches
 (defun git-list-branches (&key (sort-by *branch-sort-by*))

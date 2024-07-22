@@ -143,7 +143,7 @@ Return NIL if the buffer is out of range."
 
 (defun line-string (point)
   "Return the string at POINT."
-  (line:line-str (point-line point)))
+  (line:line-string (point-line point)))
 
 (defun text-property-at (point prop &optional (offset 0))
   "Return the property of 'prop' at the offset position from 'point' to 'offset'."
@@ -292,7 +292,7 @@ Return NIL if the end of the buffer has been reached before deleting 'n' charact
   (%map-region start end
                (lambda (line start end)
                  (funcall function
-                          (subseq (line:line-str line) start end)
+                          (line:line-substring line :start start :end end)
                           (not (null end))))))
 
 (defun points-to-string (start-point end-point)
@@ -493,7 +493,7 @@ If 'test' is a function, it takes one of the characters before its position as i
 The difference from 'insert-string' is that the text properties in 'buffer' are also reflected."
   (loop :for line := (point-line (buffer-start-point buffer)) :then (line:line-next line)
         :while line
-        :do (insert-string point (line:line-str line))
+        :do (insert-string point (line:line-string line))
             (setf (line:line-plist (point-line point)) (line:line-plist line))
             (insert-character point #\newline)))
 

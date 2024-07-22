@@ -43,7 +43,7 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
     (format stream "(~D, ~D) ~S"
             (point-linum object)
             (point-charpos object)
-            (line:line-str (point-line object)))))
+            (line:line-string (point-line object)))))
 
 (defun pointp (x)
   "Returns T if `x` is a `point`, otherwise returns NIL."

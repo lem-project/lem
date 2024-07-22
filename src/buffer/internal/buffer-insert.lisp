@@ -96,19 +96,6 @@
                      (t
                       (decf (point-linum p) offset-line)))))))))
 
-(defun %insert-newline/point (buffer line charpos)
-  (lem/buffer/line:insert-newline line charpos)
-  (incf (buffer-nlines buffer))
-  (values))
-
-(defun %insert-line-string/point (line charpos string)
-  (line:line-property-insert-pos line charpos (length string))
-  (setf (line:line-str line)
-        (concatenate 'string
-                     (subseq (line:line-str line) 0 charpos)
-                     string
-                     (subseq (line:line-str line) charpos))))
-
 (defgeneric insert-string/point (point string)
   (:method (point string)
     (let ((buffer (point-buffer point)))
@@ -120,15 +107,14 @@
               :for offset-line :from 0
               :do (cond ((null pos)
                          (let ((substr (if (= start 0) string (subseq string start))))
-                           (%insert-line-string/point line charpos substr)
+                           (line:insert-string line substr charpos)
                            (shift-markers point offset-line (length substr)))
                          (return))
                         (t
                          (let ((substr (subseq string start pos)))
-                           (%insert-line-string/point line charpos substr)
-                           (%insert-newline/point buffer
-                                                  line
-                                                  (+ charpos (length substr)))
+                           (line:insert-string line substr charpos)
+                           (line:insert-newline line (+ charpos (length substr)))
+                           (incf (buffer-nlines buffer))
                            (setf start (1+ pos))))))))
     string))
 
@@ -136,32 +122,20 @@
   (line:line-property-delete-pos (point-line point)
                             (point-charpos point)
                             (- end start))
-  (write-string (line:line-str line) killring-stream
-                :start start
-                :end end)
-  (setf (line:line-str line)
-        (concatenate 'string
-                     (subseq (line:line-str line) 0 start)
-                     (subseq (line:line-str line) end))))
+  (write-string (line:line-substring line :start start :end end) killring-stream)
+  (line:delete-region line :start start :end end))
 
 (defun %delete-line-eol/point (point start line killring-stream)
   (line:line-property-delete-line (point-line point) (point-charpos point))
-  (write-string (line:line-str line) killring-stream :start start)
-  (setf (line:line-str line)
-        (subseq (line:line-str line) 0 start)))
+  (write-string (line:line-substring line :start start) killring-stream)
+  (line:delete-region line :start start))
 
 (defun %delete-line/point (point start line killring-stream remaining-deletions)
   (line:line-property-delete-line (point-line point) (point-charpos point))
-  (line:line-merge (point-line point) (line:line-next (point-line point)) start)
-  (write-string (line:line-str line) killring-stream :start start)
-  (write-char #\newline killring-stream)
+  (write-line (line:line-substring line :start start) killring-stream)
   (decf remaining-deletions (1+ (- (line:line-length line) start)))
   (decf (buffer-nlines (point-buffer point)))
-  (setf (line:line-str line)
-        (concatenate 'string
-                     (subseq (line:line-str line) 0 start)
-                     (line:line-str (line:line-next line))))
-  (line:line-free (line:line-next line))
+  (line:merge-with-next-line (point-line point) :start start)
   remaining-deletions)
 
 (defgeneric delete-char/point (point remaining-deletions)

@@ -6,7 +6,7 @@
            :line
            :line-previous
            :line-next
-           :line-str
+           :line-string
            :line-plist
            :line-syntax-context
            :line-points
@@ -33,7 +33,11 @@
            :line-property-delete-pos
            :line-property-delete-line
            :line-string/attributes
-           :insert-newline))
+           :line-substring
+           :insert-string
+           :insert-newline
+           :delete-region
+           :merge-with-next-line))
 (in-package :lem/buffer/line)
 
 (defstruct content
@@ -52,7 +56,7 @@
    (str
     :initarg :str
     :initform nil
-    :accessor line-str)
+    :accessor line-string)
    (plist
     :initarg :plist
     :initform nil
@@ -69,7 +73,7 @@
 (defmethod print-object ((object line) stream)
   (print-unreadable-object (object stream :identity t :type t)
     (format stream "string: ~S, plist: ~S"
-            (line-str object)
+            (line-string object)
             (line-plist object))))
 
 (defun make-line (previous next str)
@@ -95,19 +99,19 @@
           (line-previous line)))
   (setf (line-previous line) nil
         (line-next line) nil
-        (line-str line) nil
+        (line-string line) nil
         (line-points line) nil))
 
 (defun line-alive-p (line)
-  (not (null (line-str line))))
+  (not (null (line-string line))))
 
 (defun line-char (line i)
   (if (= i (line-length line))
       #\newline
-      (char (line-str line) i)))
+      (char (line-string line) i)))
 
 (defun line-length (line)
-  (length (line-str line)))
+  (length (line-string line)))
 
 (defun remove-elements (elements start end)
   (iter:iter (iter:for (start1 end1 value1) iter:in elements)
@@ -299,7 +303,7 @@
                         ))))
 
 (defun line-string/attributes (line)
-  (cons (line-str line)
+  (cons (line-string line)
         (alexandria:if-let (sticky-attribute (getf (line-plist line) :sticky-attribute))
           (loop :with attributes := (getf (line-plist line) :attribute)
                 :for (start end value contp) :in sticky-attribute
@@ -307,9 +311,38 @@
                 :finally (return attributes))
           (getf (line-plist line) :attribute))))
 
+(defun line-substring (line &key (start 0) end)
+  (cond ((and (= start 0) (or (null end) (= end (line-length line))))
+         (line-string line))
+        (t
+         (subseq (line-string line) start end))))
+
+(defun insert-string (line string index)
+  (line-property-insert-pos line index (length string))
+  (setf (line-string line)
+        (concatenate 'string
+                     (line-substring line :start 0 :end index)
+                     string
+                     (line-substring line :start index))))
+
 (defun insert-newline (line position)
-  (let ((before-string (subseq (line-str line) 0 position))
-        (after-string (subseq (line-str line) position)))
-    (setf (line-str line) before-string)
+  (let ((before-string (line-substring line :start 0 :end position))
+        (after-string (line-substring line :start position)))
+    (setf (line-string line) before-string)
     (let ((next (make-line line (line-next line) after-string)))
       (line-property-insert-newline line next position))))
+
+(defun delete-region (line &key start end)
+  (setf (line-string line)
+        (concatenate 'string
+                     (line-substring line :start 0 :end start)
+                     (line-substring line :start (or end (line-length line))))))
+
+(defun merge-with-next-line (line &key (start 0))
+  (assert (line-next line))
+  (line-merge line (line-next line) start)
+  (setf (line-string line)
+        (concatenate 'string
+                     (line-substring line :start 0 :end start)
+                     (line-string (line-next line))))
+  (line-free (line-next line)))

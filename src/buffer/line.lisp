@@ -4,7 +4,7 @@
            :content-string
            :content-attributes
            :line
-           :line-prev
+           :line-previous
            :line-next
            :line-str
            :line-plist
@@ -41,10 +41,10 @@
   attributes)
 
 (defclass line ()
-  ((prev
-    :initarg :prev
+  ((previous
+    :initarg :previous
     :initform nil
-    :accessor line-prev)
+    :accessor line-previous)
    (next
     :initarg :next
     :initform nil
@@ -72,28 +72,28 @@
             (line-str object)
             (line-plist object))))
 
-(defun make-line (prev next str)
+(defun make-line (previous next str)
   (let ((line (make-instance 'line
                              :next next
-                             :prev prev
+                             :previous previous
                              :str str)))
     (when next
-      (setf (line-prev next) line))
-    (when prev
-      (setf (line-next prev) line))
+      (setf (line-previous next) line))
+    (when previous
+      (setf (line-next previous) line))
     line))
 
 (defun make-empty-line ()
   (make-line nil nil ""))
 
 (defun line-free (line)
-  (when (line-prev line)
-    (setf (line-next (line-prev line))
+  (when (line-previous line)
+    (setf (line-next (line-previous line))
           (line-next line)))
   (when (line-next line)
-    (setf (line-prev (line-next line))
-          (line-prev line)))
-  (setf (line-prev line) nil
+    (setf (line-previous (line-next line))
+          (line-previous line)))
+  (setf (line-previous line) nil
         (line-next line) nil
         (line-str line) nil
         (line-points line) nil))

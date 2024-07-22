@@ -10,12 +10,12 @@
 (defun check-line-corruption (line line-number buffer)
   (check-type line line)
   (check-type buffer buffer)
-  (when (line-prev line)
-    (debug-assert (eq line (line-next (line-prev line)))
+  (when (line-previous line)
+    (debug-assert (eq line (line-next (line-previous line)))
                   "line.prev.next is not line"
                   line))
   (when (line-next line)
-    (debug-assert (eq line (line-prev (line-next line)))
+    (debug-assert (eq line (line-previous (line-next line)))
                   "line.next.prev is not line"
                   line))
   (dolist (point (line-points line))
@@ -53,7 +53,7 @@
 (defun check-buffer-corruption (buffer)
   (check-type buffer buffer)
   (let ((first-line (point-line (buffer-start-point buffer))))
-    (debug-assert (null (line-prev first-line)))
+    (debug-assert (null (line-previous first-line)))
     (let ((last-line (check-lines-corruption first-line buffer)))
       (debug-assert (null (line-next last-line)))
       (debug-assert (eq last-line

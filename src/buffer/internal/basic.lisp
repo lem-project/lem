@@ -84,7 +84,7 @@ If there is no line at the 'n' destination, the position of 'point' is left as i
          (return point))))
     ((minusp n)
      (do ((i n (1+ i))
-          (line (point-line point) (line-prev line)))
+          (line (point-line point) (line-previous line)))
          ((null line) nil)
        (when (zerop i)
          (%move-to-position point (+ (point-linum point) n)
@@ -112,7 +112,7 @@ If there is no line at the 'n' destination, the position of 'point' is left as i
              (decf n (1+ w)))))
         (t
          (setf n (- n))
-         (do* ((line (point-line point) (line-prev line))
+         (do* ((line (point-line point) (line-previous line))
                (linum (point-linum point) (1- linum))
                (charpos (point-charpos point) (and line (line-length line))))
              ((null line) nil)
@@ -382,7 +382,7 @@ short to reach COLUMN, add spaces/tabs to get there."
 (defun position-at-point (point)
   "Return the offset of 'point' from the beginning of the buffer."
   (let ((offset (point-charpos point)))
-    (do ((line (line-prev (point-line point)) (line-prev line)))
+    (do ((line (line-previous (point-line point)) (line-previous line)))
         ((null line) (1+ offset))
       (incf offset (1+ (line-length line))))))
 

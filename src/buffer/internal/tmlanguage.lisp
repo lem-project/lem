@@ -382,7 +382,7 @@
 
 (defun tm-continue-prev-line (point)
   (let* ((line (point-line point))
-         (prev (line-prev line))
+         (prev (line-previous line))
          (context (and prev (get-syntax-context prev)))
          (rule (alexandria:ensure-car context)))
     (cond ((null rule)

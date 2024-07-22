@@ -1,7 +1,7 @@
 
 (defpackage :lem/legit
   (:use :cl
-   :lem)
+        :lem)
   (:export :legit-status
            :*prompt-for-commit-abort-p*
            :*ignore-all-space*)
@@ -28,12 +28,9 @@
   (with-porcelain-error ()
     (let ((root (lem-core/commands/project:find-root (lem:buffer-directory))))
       (uiop:with-current-directory (root)
-        (multiple-value-bind (root vcs)
-            (lem/porcelain:vcs-project-p)
-          (if root
-                (progn
-                  (funcall function vcs))
-              (lem:message "Not inside a version-controlled project?")))))))
+        (alexandria:if-let (vcs (lem/porcelain:vcs-project-p))
+          (funcall function vcs)
+          (lem:message "Not inside a version-controlled project?"))))))
 
 (defmacro with-current-project ((vcs-bind) &body body)
   "Execute body with the current working directory changed to the project's root,

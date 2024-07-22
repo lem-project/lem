@@ -102,27 +102,36 @@ Mercurial:
 (defun porcelain-error (message &rest args)
   (error 'porcelain-error :message (apply #'format nil message args)))
 
-
+;; VCS implementation for git
+(defstruct vcs-git)
+
+;; VCS implementation for fossil
+(defstruct vcs-fossil)
+
+;; VCS implementation for hg
+(defstruct vcs-hg)
+
 (defun git-project-p ()
-  "Return t if we find a .git/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`)."
-  (values (uiop:directory-exists-p ".git")
-          :git))
+  "When we find a .git/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`),
+  return a VCS object representing the repo: otherwise, return nil"
+  (when (uiop:directory-exists-p ".git")
+    (make-instance 'vcs-git)))
 
 (defun fossil-project-p ()
   "Return t if we either find a .fslckout file in the current directory (should be the project root) or a file with a .fossil extension."
   (cond
     ((uiop:file-exists-p ".fslckout")
-     (values ".fslckout" :fossil))
+     (make-instance 'vcs-fossil))
     (t
      ;; Maybe do we need "fossil open" here.
      (loop for file in (uiop:directory-files "./")
            if (equal "fossil" (pathname-type file))
-             return (values file :fossil)))))
+           return (make-instance 'vcs-fossil)))))
 
 (defun hg-project-p ()
   "Return t if we find a .hg/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`)."
-  (values (uiop:directory-exists-p ".hg")
-          :hg))
+  (when (uiop:directory-exists-p ".hg")
+    (make-instance 'vcs-hg)))
 
 (defvar *vcs-existence-order*
   '(
@@ -132,16 +141,14 @@ Mercurial:
     ))
 
 (defun vcs-project-p ()
-  "Is this project under a known version control system?
-  Return two values: the current directory (pathname), which is then considered the project root, and the VCS found (:git, :fossil or :hg)."
+  "When this project is under a known version control system, returns a VCS object for the project.
+   Otherwise, returns nil."
   ;; This doesn't return the 2 values :(
   ;; (or (fossil-project-p)
   ;;     (git-project-p))
   (loop for fn in *vcs-existence-order*
-        do (multiple-value-bind (root vcs)
-               (funcall fn)
-             (if root
-                 (return (values root vcs))))))
+        do (alexandria:if-let (vcs (funcall fn))
+             (return vcs))))
 
 (defun run-git (arglist)
   "Run the git command with these options (list).

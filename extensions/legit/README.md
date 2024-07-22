@@ -205,11 +205,7 @@ For example:
 ~~~
 
 
-Variables and parameters in the `lem/legit` package. They might not be exported.
-
-- `*legit-verbose*`: If non nil, print some logs on standard output (terminal) and create the hunk patch file on disk at (lem-home)/lem-hunk-latest.patch.
-
-=> to help debugging
+Variables and parameters for customization are defined in the `lem/legit` package. They might not be exported.
 
 see sources in `/extensions/legit/`
 

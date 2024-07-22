@@ -40,9 +40,6 @@ Ongoing:
 
 |#
 
-(defvar *legit-verbose* nil
-  "If non nil, print some logs on standard output (terminal) and create the hunk patch file on disk at (lem home)/lem-hunk-latest.patch.")
-
 (defvar *ignore-all-space* nil "If non t, show all spaces in a diff. Spaces are ignored by default.
 
 Currently Git-only. Concretely, this calls Git with the -w option.")

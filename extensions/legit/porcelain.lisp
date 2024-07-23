@@ -585,20 +585,17 @@ summary:     test
   (fossil-commit-count))
 
 ;; stage, add files.
-(defun git-stage (file)
+(defgeneric stage (vcs file)
+  (:documentation "Stage changes to a file(TODO document type)"))
+
+(defmethod stage ((vcs vcs-git) file)
   (run-git (list "add" file)))
 
-(defun hg-stage (file)
+(defmethod stage ((vcs vcs-hg) file)
   (run-hg (list "add" file)))
 
-(defun fossil-stage (file)
+(defmethod stage ((vcs vcs-fossil) file)
   (run-fossil (list "add" file)))
-
-(defun stage (vcs file)
-  (case vcs
-    (:fossil (fossil-stage file))
-    (:hg (hg-stage file))
-    (t (git-stage file))))
 
 (defun unstage (vcs file)
   "Unstage changes to this file.

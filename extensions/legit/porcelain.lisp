@@ -103,13 +103,13 @@ Mercurial:
   (error 'porcelain-error :message (apply #'format nil message args)))
 
 ;; VCS implementation for git
-(defstruct vcs-git)
+(defclass vcs-git () ())
 
 ;; VCS implementation for fossil
-(defstruct vcs-fossil)
+(defclass vcs-fossil () ())
 
 ;; VCS implementation for hg
-(defstruct vcs-hg)
+(defclass vcs-hg () ())
 
 (defun git-project-p ()
   "When we find a .git/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`),

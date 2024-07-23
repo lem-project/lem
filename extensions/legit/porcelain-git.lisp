@@ -26,13 +26,12 @@
 
   For staged files, --cached is added by the command.")
 
-(defvar *rebase-pid* nil
-  "PID file for the git rebase in process.")
-;; With this approach, only 1 rebase per Lem process.
 (defvar *verbose* nil)
 
 ;; VCS implementation for git
-(defclass vcs-git () ())
+(defclass vcs-git () 
+  ((rebase-pid :type (or nil string)
+               :accessor rebase-pid)))
 
 (defun git-project-p ()
   "When we find a .git/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`),
@@ -338,7 +337,7 @@ I am stopping in case you still have something valuable there."))
            (if (uiop:process-alive-p process)
                (let* ((output (read-line (uiop:process-info-output process)))
                       (pidtxt (str:trim (second (str:split ":" output)))))
-                 (setf *rebase-pid* pidtxt)
+                 (setf (rebase-pid vcs) pidtxt)
                  (format t "The git interactive rebase is started on pid ~a. Edit the rebase file and validate." pidtxt)
                  (values (format nil "rebase started")
                          nil
@@ -346,16 +345,17 @@ I am stopping in case you still have something valuable there."))
                (porcelain-error "git rebase process didn't start properly. Aborting.")))
       (setf (uiop:getenv "EDITOR") editor))))
 
-(defun %rebase-signal (&key (sig "-SIGTERM"))
+(defun %rebase-signal (vcs &key (sig "-SIGTERM"))
+  (declare (type vcs-git vcs))
   "Send a kill signal to our rebase script: with -SIGTERM, git picks up our changes and continues the rebase process. This is called by a rebase continue command.
   With -SIGKILL the process is stopped. This is called by rebase abort."
   (multiple-value-bind (output error-output exit-code)
-      (uiop:run-program (list "kill" sig *rebase-pid*)
+      (uiop:run-program (list "kill" sig (rebase-pid vcs))
                         :output :string
                         :error-output :string
                         :ignore-error-status t)
     (declare (ignorable output))
-    (setf *rebase-pid* nil)
+    (setf (rebase-pid vcs) nil)
     (values (format nil "rebase finished.")
             error-output
             exit-code)))
@@ -365,8 +365,8 @@ I am stopping in case you still have something valuable there."))
     ;; First, if we are running our rebase script, send a "continue" signal
     ;; so that git continues the rebase.
     ;; This is used by C-c C-c in the interactive rebase buffer.
-    (*rebase-pid*
-     (%rebase-signal))
+    ((rebase-pid vcs)
+     (%rebase-signal vcs))
     ;; Check if a rebase was started by someone else and continue it.
     ;; This is called from legit interace: "r" "c".
     ((uiop:directory-exists-p ".git/rebase-merge/")
@@ -378,8 +378,8 @@ I am stopping in case you still have something valuable there."))
     ;; First, if we are running our rebase script, kill it.
     ;; This makes git abort the rebase too.
     ;; This is used by C-c C-k in the interactive rebase buffer.
-    (*rebase-pid*
-     (%rebase-signal :sig "-SIGKILL"))
+    ((rebase-pid vcs)
+     (%rebase-signal vcs :sig "-SIGKILL"))
     ;; Check if a rebase was started by someone else and abort it.
     ;; This is called from legit interface: "r" "a".
     ((uiop:directory-exists-p ".git/rebase-merge/")
@@ -389,8 +389,8 @@ I am stopping in case you still have something valuable there."))
 
 (defmethod rebase-skip ((vcs vcs-git))
   (cond
-    (*rebase-pid*
-     (porcelain-error "The rebase process you started from Lem is still running. Please continue or abort it (or kill job ~a)" *rebase-pid*))
+    ((rebase-pid vcs)
+     (porcelain-error "The rebase process you started from Lem is still running. Please continue or abort it (or kill job ~a)" (rebase-pid vcs)))
     ;; Check if a rebase was started by someone else and abort it.
     ;; This is called from legit interface: "r" "s".
     ((uiop:directory-exists-p ".git/rebase-merge/")

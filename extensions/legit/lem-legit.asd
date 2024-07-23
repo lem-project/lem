@@ -3,6 +3,7 @@
   :depends-on ("lem" "lem-patch-mode" "lem-yaml-mode" "lem-markdown-mode")
   :components ((:module "./"
                 :components ((:file "porcelain")
+                             (:file "porcelain-git")
                              (:file "legit-common")
                              (:file "peek-legit")
                              (:file "legit")

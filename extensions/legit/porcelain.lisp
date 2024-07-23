@@ -449,12 +449,16 @@ allows to learn about the file state: modified, deleted, ignored… "
 ;;;
 ;;; Latest commits.
 ;;;
+(defgeneric latest-commits (vcs &key n hash-length offset)
+  (:documentation "Return a list of strings or plists.
+  The plist has a :hash and a :message, or simply a :line."))
+
 (defun %git-list-latest-commits (&optional (n *nb-latest-commits*))
   (when (plusp n)
     (str:lines
      (run-git (list "log" "--pretty=oneline" "-n" (princ-to-string n))))))
 
-(defun git-latest-commits (&key (n *commits-log-page-size*) (hash-length 8) (offset 0))
+(defmethod latest-commits ((vcs vcs-git) &key (n *commits-log-page-size*) (hash-length 8) (offset 0))
   (let* ((n-arg (when n (list "-n" (princ-to-string n))))
          (lines (str:lines
                  (run-git (append (list "log"
@@ -469,8 +473,8 @@ allows to learn about the file state: modified, deleted, ignored… "
                         :message message
                         :hash small-hash))))
 
-(defun hg-latest-commits (&key (n *nb-latest-commits*) (hash-length 8))
-  (declare (ignorable n hash-length))
+(defmethod latest-commits ((vcs vcs-hg) &key (n *nb-latest-commits*) (hash-length 8) (offset 0))
+  (declare (ignorable n hash-length offset))
   (let ((out (run-hg "log")))
     ;; Split by paragraph.
         #| $ hg log
@@ -524,9 +528,8 @@ summary:     test
                 finally (return entry)))))
 
 
-(defun fossil-latest-commits (&key (n *nb-latest-commits*) (hash-length 8))
-  (declare (ignore n)
-           (ignore hash-length))
+(defmethod latest-commits ((vcs vcs-fossil) &key (n *nb-latest-commits*) (hash-length 8) (offset 0))
+  (declare (ignorable n hash-length offset))
   ;; return bare result.
   (str:lines (run-fossil "timeline")))
 
@@ -536,13 +539,13 @@ summary:     test
    If a limit is not provided, it returns all commits after the offset."))
 
 (defmethod commits-log ((vcs vcs-git) &key (offset 0) limit (hash-length 8))
-  (git-latest-commits :n limit
-                      :hash-length hash-length
-                      :offset offset))
+  (latest-commits vcs :n limit
+                  :hash-length hash-length
+                  :offset offset))
 
 (defmethod commits-log ((vcs vcs-hg) &key (offset 0) limit (hash-length 8))
   (declare (ignorable hash-length))
-  (let* ((commits (hg-latest-commits))
+  (let* ((commits (latest-commits vcs))
          (total-commits (length commits))
          (end (when limit
                 (min total-commits (+ offset limit)))))
@@ -552,7 +555,7 @@ summary:     test
 
 (defmethod commits-log ((vcs vcs-fossil) &key (offset 0) limit (hash-length 8))
   (declare (ignorable hash-length))
-  (let* ((commits (fossil-latest-commits))
+  (let* ((commits (latest-commits vcs))
          (total-commits (length commits))
          (end (when limit (min total-commits (+ offset limit)))))
     (if (>= offset total-commits)

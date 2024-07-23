@@ -118,26 +118,6 @@
                            (setf start (1+ pos))))))))
     string))
 
-(defun %delete-line-between/point (point start end line killring-stream)
-  (line:line-property-delete-pos (point-line point)
-                            (point-charpos point)
-                            (- end start))
-  (write-string (line:line-substring line :start start :end end) killring-stream)
-  (line:delete-region line :start start :end end))
-
-(defun %delete-line-eol/point (point start line killring-stream)
-  (line:line-property-delete-line (point-line point) (point-charpos point))
-  (write-string (line:line-substring line :start start) killring-stream)
-  (line:delete-region line :start start))
-
-(defun %delete-line/point (point start line killring-stream remaining-deletions)
-  (line:line-property-delete-line (point-line point) (point-charpos point))
-  (write-line (line:line-substring line :start start) killring-stream)
-  (decf remaining-deletions (1+ (- (line:line-length line) start)))
-  (decf (buffer-nlines (point-buffer point)))
-  (line:merge-with-next-line (point-line point) :start start)
-  remaining-deletions)
-
 (defgeneric delete-char/point (point remaining-deletions)
   (:method (point remaining-deletions)
     (with-modify-buffer (point remaining-deletions)
@@ -149,26 +129,23 @@
                 :for eolp := (> remaining-deletions (- (line:line-length line) charpos))
                 :do (cond
                       ((not eolp)
-                       (%delete-line-between/point point
-                                                   charpos
-                                                   (+ charpos remaining-deletions)
-                                                   line
-                                                   killring-stream)
+                       (let ((end (+ charpos remaining-deletions)))
+                         (write-string (line:line-substring line :start charpos :end end) killring-stream)
+                         (line:delete-region line :start charpos :end end))
                        (shift-markers point
                                       offset-line
                                       (- remaining-deletions))
                        (return))
                       ((null (line:line-next line))
-                       (%delete-line-eol/point point charpos line killring-stream)
+                       (write-string (line:line-substring line :start charpos) killring-stream)
+                       (line:delete-region line :start charpos)
                        (shift-markers point offset-line (- charpos (line:line-length line)))
                        (return))
                       (t
-                       (setf remaining-deletions
-                             (%delete-line/point point
-                                                 charpos
-                                                 line
-                                                 killring-stream
-                                                 remaining-deletions))))
+                       (decf (buffer-nlines (point-buffer point)))
+                       (decf remaining-deletions (1+ (- (line:line-length line) charpos)))
+                       (write-line (line:line-substring line :start charpos) killring-stream)
+                       (line:merge-with-next-line line :start charpos)))
                     (decf offset-line)
                 :finally (shift-markers point offset-line 0)))))))
 

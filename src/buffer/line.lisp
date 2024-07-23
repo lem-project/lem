@@ -30,8 +30,7 @@
            :line-search-property
            :line-search-property-range
            :line-property-insert-pos
-           :line-property-delete-pos
-           :line-property-delete-line
+           :line-delete-property-region
            :line-string/attributes
            :line-substring
            :insert-string
@@ -53,10 +52,11 @@
     :initarg :next
     :initform nil
     :accessor line-next)
-   (str
-    :initarg :str
+   (string
+    :initarg :string
     :initform nil
-    :accessor line-string)
+    :reader line-string
+    :writer set-line-string)
    (plist
     :initarg :plist
     :initform nil
@@ -76,11 +76,11 @@
             (line-string object)
             (line-plist object))))
 
-(defun make-line (previous next str)
+(defun make-line (previous next string)
   (let ((line (make-instance 'line
                              :next next
                              :previous previous
-                             :str str)))
+                             :string string)))
     (when next
       (setf (line-previous next) line))
     (when previous
@@ -97,10 +97,10 @@
   (when (line-next line)
     (setf (line-previous (line-next line))
           (line-previous line)))
-  (setf (line-previous line) nil
-        (line-next line) nil
-        (line-string line) nil
-        (line-points line) nil))
+  (setf (line-previous line) nil)
+  (setf (line-next line) nil)
+  (setf (line-points line) nil)
+  (set-line-string nil line))
 
 (defun line-alive-p (line)
   (not (null (line-string line))))
@@ -265,42 +265,33 @@
                   (setf (getf new-plist (car plist-rest)) new-values))))
     (setf (line-plist next-line) new-plist)))
 
-(defun line-property-delete-pos (line pos n)
+(defun line-delete-property-region (line start &optional end)
+  (unless end (setf end (line-length line)))
+  (assert (<= start end))
   (loop :for plist-rest :on (line-plist line) :by #'cddr
         :do (setf (cadr plist-rest)
                   (loop :for elt :in (cadr plist-rest)
-                        :for (start end value) := elt
+                        :for (start1 end1 value) := elt
 
-                        :if (<= pos start end (+ pos n -1))
+                        :if (<= start start1 end1 (1- end))
                         :do (progn)
 
-                        :else :if (<= pos (+ pos n) start)
-                        :collect (list (- start n) (- end n) value)
+                        :else :if (<= start end start1)
+                        :collect (list (- start1 (- end start))
+                                       (- end1 (- end start))
+                                       value)
 
-                        :else :if (< pos start (+ pos n))
-                        :collect (list pos (- end n) value)
+                        :else :if (< start start1 end)
+                        :collect (list start (- end1 (- end start)) value)
 
-                        :else :if (<= start pos (+ pos n) end)
-                        :collect (list start (- end n) value)
+                        :else :if (<= start1 start end end1)
+                        :collect (list start1 (- end1 (- end start)) value)
 
-                        :else :if (<= start pos end (+ pos n))
-                        :collect (list start pos value)
+                        :else :if (<= start1 start end1 end)
+                        :collect (list start1 start value)
 
                         :else
                         :collect elt))))
-
-(defun line-property-delete-line (line pos)
-  (loop :for plist-rest :on (line-plist line) :by #'cddr
-        :do (setf (cadr plist-rest)
-                  (loop :for elt :in (cadr plist-rest)
-                        :for (start end value) := elt
-                        :if (<= pos start)
-                        :do (progn)
-                        :else :if (<= pos end)
-                        :collect (list start pos value)
-                        :else
-                        :collect elt
-                        ))))
 
 (defun line-string/attributes (line)
   (cons (line-string line)
@@ -319,30 +310,32 @@
 
 (defun insert-string (line string index)
   (line-property-insert-pos line index (length string))
-  (setf (line-string line)
-        (concatenate 'string
-                     (line-substring line :start 0 :end index)
-                     string
-                     (line-substring line :start index))))
+  (set-line-string (concatenate 'string
+                                (line-substring line :start 0 :end index)
+                                string
+                                (line-substring line :start index))
+                   line))
 
 (defun insert-newline (line position)
   (let ((before-string (line-substring line :start 0 :end position))
         (after-string (line-substring line :start position)))
-    (setf (line-string line) before-string)
+    (set-line-string before-string line)
     (let ((next (make-line line (line-next line) after-string)))
       (line-property-insert-newline line next position))))
 
 (defun delete-region (line &key start end)
-  (setf (line-string line)
-        (concatenate 'string
-                     (line-substring line :start 0 :end start)
-                     (line-substring line :start (or end (line-length line))))))
+  (line-delete-property-region line start end)
+  (set-line-string (concatenate 'string
+                                (line-substring line :start 0 :end start)
+                                (line-substring line :start (or end (line-length line))))
+                   line))
 
 (defun merge-with-next-line (line &key (start 0))
   (assert (line-next line))
+  (line-delete-property-region line start)
   (line-merge line (line-next line) start)
-  (setf (line-string line)
-        (concatenate 'string
-                     (line-substring line :start 0 :end start)
-                     (line-string (line-next line))))
+  (set-line-string (concatenate 'string
+                                (line-substring line :start 0 :end start)
+                                (line-string (line-next line)))
+                   line)
   (line-free (line-next line)))

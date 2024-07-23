@@ -24,7 +24,6 @@
    :show-commit-diff
    :stage
    :unstage
-   :vcs-project-p
    :*diff-context-lines*
    :commits-log
    :*commits-log-page-size*
@@ -78,23 +77,6 @@ Mercurial:
 
 (defun porcelain-error (message &rest args)
   (error 'porcelain-error :message (apply #'format nil message args)))
-
-(defvar *vcs-existence-order*
-  '(
-    git-project-p
-    fossil-project-p
-    hg-project-p
-    ))
-
-(defun vcs-project-p ()
-  "When this project is under a known version control system, returns a VCS object for the project.
-   Otherwise, returns nil."
-  ;; This doesn't return the 2 values :(
-  ;; (or (fossil-project-p)
-  ;;     (git-project-p))
-  (loop for fn in *vcs-existence-order*
-        do (alexandria:if-let (vcs (funcall fn))
-             (return vcs))))
 
 ;;;
 ;;; Getting changes.

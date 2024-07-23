@@ -24,11 +24,26 @@
   ;; Doing this helps avoiding tight coupling between the porcelain package and Lem.
   `(call-with-porcelain-error (lambda () ,@body)))
 
+(defvar *vcs-existence-order*
+  (list #'lem/porcelain-git:git-project-p
+        #'lem/porcelain-fossil:fossil-project-p
+        #'lem/porcelain-hg:hg-project-p))
+
+(defun vcs-project-p ()
+  "When this project is under a known version control system, returns a VCS object for the project.
+   Otherwise, returns nil."
+  ;; This doesn't return the 2 values :(
+  ;; (or (fossil-project-p)
+  ;;     (git-project-p))
+  (loop for fn in *vcs-existence-order*
+        do (alexandria:if-let (vcs (funcall fn))
+             (return vcs))))
+
 (defun call-with-current-project (function)
   (with-porcelain-error ()
     (let ((root (lem-core/commands/project:find-root (lem:buffer-directory))))
       (uiop:with-current-directory (root)
-        (alexandria:if-let (vcs (lem/porcelain:vcs-project-p))
+        (alexandria:if-let (vcs (vcs-project-p))
           (funcall function vcs)
           (lem:message "Not inside a version-controlled project?"))))))
 

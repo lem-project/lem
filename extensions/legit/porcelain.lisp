@@ -323,7 +323,10 @@ allows to learn about the file state: modified, deleted, ignored… "
 ;;;
 ;;; diff
 ;;;
-(defun git-file-diff (file &key cached)
+(defgeneric file-diff (vcs file &key cached)
+  (:documentation "TODO Document: presumably, returns the string form of the diff"))
+
+(defmethod file-diff ((vcs vcs-git) file &key cached)
   ;; --cached is a synonym for --staged.
   ;; So it is set only for staged files. From git-components: the 3rd value, modified and staged files.
   (run-git
@@ -333,7 +336,7 @@ allows to learn about the file state: modified, deleted, ignored… "
                 (if cached '("--cached"))
                 (list file))))
 
-(defun hg-file-diff (file &key cached)
+(defmethod file-diff ((vcs vcs-hg) file &key cached)
   "Show the diff of staged files (and only them)."
   (when cached
     (run-hg (list "diff"
@@ -343,20 +346,10 @@ allows to learn about the file state: modified, deleted, ignored… "
     ;; We could read and display their full content anyways?
     ))
 
-(defun fossil-file-diff (file &key cached)
+(defmethod file-diff ((vcs vcs-fossil) file &key cached)
   (declare (ignorable cached))
   (run-fossil (list "diff" file)))
 
-(defun file-diff (vcs file &key cached)
-  (case vcs
-    (:fossil
-     (fossil-file-diff file))
-    (:hg
-     (hg-file-diff file :cached cached))
-    (t
-     (git-file-diff file :cached cached))))
-
-
 ;;;
 ;;; Show commits.
 ;;;

@@ -629,7 +629,12 @@ M	src/ext/porcelain.lisp
 
 (defvar *verbose* nil)
 
-(defun git-apply-patch (diff &key reverse)
+(defgeneric apply-patch (vcs diff &key reverse)
+  (:documentation 
+   "Apply a patch from this diff.
+  diff: string."))
+
+(defmethod apply-patch ((vcs vcs-git) diff &key reverse)
   "Apply a patch file.
   This is used to stage hunks of files."
   (when *verbose*
@@ -661,19 +666,15 @@ M	src/ext/porcelain.lisp
         (arglist (list ".lem-hunk.patch")))
     (run-git (concatenate 'list base maybe arglist))))
 
-(defun fossil-apply-patch (diff &key reverse)
+(defmethod apply-patch ((vcs vcs-hg) diff &key reverse)
+  (declare (ignorable diff reverse))
+  (porcelain-error "applying patch not yet implemented for Mercurial"))
+
+(defmethod apply-patch ((vcs vcs-fossil) diff &key reverse)
   "Needs fossil at least > 2.10. Version 2.22 works."
   (declare (ignorable diff reverse))
   ;; mmh… it wants a binary patch.
   (values nil "fossil patch is not supported." 1))
-
-(defun apply-patch (vcs diff &key reverse)
-  "Apply a patch from this diff.
-  diff: string."
-  (case vcs
-    (:fossil (fossil-apply-patch diff :reverse reverse))
-    (:hg (porcelain-error "applying patch not yet implemented for Mercurial"))
-    (t (git-apply-patch diff :reverse reverse))))
 
 (defun checkout (branch)
   (run-git (list "checkout" branch)))

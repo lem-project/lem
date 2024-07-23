@@ -186,17 +186,7 @@ If a project is managed by more than one VCS, `legit` takes the first VCS define
     ))
 ~~~
 
-where these symbols are functions with no arguments that return two values: a truthy value if the current project is considered a Git/Fossil/Mercurial project, and a keyword representing the VCS: `:git`, `:fossil`, `:hg`.
-
-For example:
-
-~~~lisp
-(defun hg-project-p ()
-  "Return t if we find a .hg/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`)."
-  (values (uiop:directory-exists-p ".hg")
-          :hg))
-~~~
-
+where these symbols are functions with no arguments that return one value: a truthy "handle" object if the current project is considered a Git/Fossil/Mercurial project.
 
 Variables and parameters for customization are defined in the `lem/legit` package. They might not be exported.
 

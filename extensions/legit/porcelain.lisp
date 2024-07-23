@@ -558,19 +558,17 @@ summary:     test
         nil
         (subseq commits offset end))))
 
-(defun commit-count (vcs)
-  "Get the total number of commits in the current branch."
-  (case vcs
-    (:git
-     (parse-integer
-      (str:trim (run-git '("rev-list" "--count" "HEAD")))))
-    (:hg
-     (parse-integer
-      (str:trim (run-hg '("id" "--num" "--rev" "tip")))))
-    (:fossil
-     (fossil-commit-count))
-    (t
-     (porcelain-error "commit-count not implemented for VCS: ~a" vcs))))
+(defgeneric commit-count (vcs)
+  (:documentation 
+   "Returns: integer representing number of commits in the current branch."))
+
+(defmethod commit-count ((vcs vcs-git))
+  (parse-integer
+   (str:trim (run-git '("rev-list" "--count" "HEAD")))))
+
+(defmethod commit-count ((vcs vcs-hg))
+  (parse-integer
+   (str:trim (run-hg '("id" "--num" "--rev" "tip")))))
 
 (defun %not-fossil-commit-line (line)
   (str:starts-with-p "+++ no more data" line))
@@ -582,6 +580,9 @@ summary:     test
    (remove-if #'%not-fossil-commit-line
               (str:lines
                (run-fossil (list "timeline" "--oneline"))))))
+
+(defmethod commit-count ((vcs vcs-fossil))
+  (fossil-commit-count))
 
 ;; stage, add files.
 (defun git-stage (file)

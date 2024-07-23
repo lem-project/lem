@@ -21,6 +21,7 @@
    :rebase-abort
    :rebase-continue
    :rebase-skip
+   :rebase-in-progress
    :show-commit-diff
    :stage
    :unstage

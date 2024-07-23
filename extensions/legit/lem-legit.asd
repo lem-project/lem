@@ -4,6 +4,7 @@
   :components ((:module "./"
                 :components ((:file "porcelain")
                              (:file "porcelain-git")
+                             (:file "porcelain-hg")
                              (:file "legit-common")
                              (:file "peek-legit")
                              (:file "legit")

@@ -597,16 +597,13 @@ summary:     test
 (defmethod stage ((vcs vcs-fossil) file)
   (run-fossil (list "add" file)))
 
-(defun unstage (vcs file)
-  "Unstage changes to this file.
-  The reverse of \"add\"."
-  (case vcs
-    (:git (git-unstage file))
-    (:hg (hg-unstage file))
-    (:fossil (porcelain-error "unstage not implemented for Fossil."))
-    (t (porcelain-error "VCS not supported: ~a" vcs))))
+(defgeneric unstage (vcs file)
+  (:documentation 
+   "Unstage changes to this file. The reverse of \"add\"."))
+(defmethod unstage (vcs file)
+  (porcelain-error "VCS does not support or legit does not implement unstage: ~a" vcs))
 
-(defun git-unstage (file)
+(defmethod unstage ((vcs vcs-git) file)
   "Unstage changes to a file."
   (run-git (list "reset" "HEAD" "--" file)))
 #|
@@ -617,11 +614,6 @@ M	src/ext/peek-legit.lisp
 M	src/ext/porcelain.lisp
 ""
 |#
-
-(defun hg-unstage (file)
-  (declare (ignorable file))
-  ;; no index like git, we'd need to exclude files from the commit with -X ?
-  (porcelain-error "no unstage support for Mercurial"))
 
 ;; discard changes.
 (defun git-discard-file (file)

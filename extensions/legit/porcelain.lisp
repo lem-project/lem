@@ -523,40 +523,23 @@ summary:     test
                 finally (return entry)))))
 
 
-(defun fossil-latest-commits (&key &allow-other-keys)
+(defun fossil-latest-commits (&key (n *nb-latest-commits*) (hash-length 8))
+  (declare (ignore n)
+           (ignore hash-length))
   ;; return bare result.
   (str:lines (run-fossil "timeline")))
 
-(defun latest-commits (vcs &key (n *nb-latest-commits*) (hash-length 8))
-  "Return a list of strings or plists.
-  The plist has a :hash and a :message, or simply a :line."
-  (case vcs
-    (:fossil
-     (fossil-latest-commits))
-    (:hg
-     (hg-latest-commits))
-    (t
-     (git-latest-commits :n n :hash-length hash-length))))
+(defgeneric commits-log (vcs &key offset limit hash-length)
+  (:documentation
+   "Return a list of commits starting from the given offset.
+   If a limit is not provided, it returns all commits after the offset."))
 
-(defun commits-log (vcs &key (offset 0) limit (hash-length 8))
-  "Return a list of commits starting from the given offset.
-   If a limit is not provided, it returns all commits after the offset."
-  (case vcs
-    (:fossil
-     (fossil-commits-log :offset offset :limit limit :hash-length hash-length))
-    (:hg
-     (hg-commits-log :offset offset :limit limit :hash-length hash-length))
-    (:git
-     (git-commits-log :offset offset :limit limit :hash-length hash-length))
-    (t
-     (porcelain-error "Unknown VCS: ~a" vcs))))
-
-(defun git-commits-log (&key (offset 0) limit (hash-length 8))
+(defmethod commits-log ((vcs vcs-git) &key (offset 0) limit (hash-length 8))
   (git-latest-commits :n limit
                       :hash-length hash-length
                       :offset offset))
 
-(defun hg-commits-log (&key (offset 0) limit (hash-length 8))
+(defmethod commits-log ((vcs vcs-hg) &key (offset 0) limit (hash-length 8))
   (declare (ignorable hash-length))
   (let* ((commits (hg-latest-commits))
          (total-commits (length commits))
@@ -566,7 +549,7 @@ summary:     test
         nil
         (subseq commits offset end))))
 
-(defun fossil-commits-log (&key (offset 0) limit (hash-length 8))
+(defmethod commits-log ((vcs vcs-fossil) &key (offset 0) limit (hash-length 8))
   (declare (ignorable hash-length))
   (let* ((commits (fossil-latest-commits))
          (total-commits (length commits))

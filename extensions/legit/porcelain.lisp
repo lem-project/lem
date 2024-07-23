@@ -616,17 +616,16 @@ M	src/ext/porcelain.lisp
 |#
 
 ;; discard changes.
-(defun git-discard-file (file)
+(defgeneric discard-file (vcs file)
+  (:documentation "Discard all changes to this file"))
+(defmethod discard-file (vcs file)
+  (porcelain-error "discard-file is not implemented for this VCS: ~a" vcs))
+
+(defmethod discard-file ((vcs vcs-git) file)
   "Discard all the changes to this file.
 
   This currently means: checkout this file."
   (run-git (list "checkout" file)))
-
-(defun discard-file (vcs file)
-  (case vcs
-    (:git (git-discard-file file))
-    (t
-     (porcelain-error "discard-file is not implemented for this VCS: ~a" vcs))))
 
 (defvar *verbose* nil)
 

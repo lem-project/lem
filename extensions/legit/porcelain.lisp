@@ -827,13 +827,12 @@ I am stopping in case you still have something valuable there."))
                (porcelain-error "git rebase process didn't start properly. Aborting.")))
       (setf (uiop:getenv "EDITOR") editor))))
 
-(defun rebase-continue (vcs)
-  "Either send a continuation signal to the underlying git rebase process, for it to pick up our changes to the interactive rebase file,
-  either call git rebase --continue."
-  (case vcs
-    (:git (git-rebase-continue))
-    (t
-     (porcelain-error "Rebasing is not supported for ~a" vcs))))
+(defgeneric rebase-continue (vcs)
+  (:documentation
+   "Either send a continuation signal to the underlying git rebase process, for it to pick up our changes to the interactive rebase file,
+  either call git rebase --continue."))
+(defmethod rebase-continue (vcs)
+  (porcelain-error "Rebasing is not supported for ~a" vcs))
 
 (defun %rebase-signal (&key (sig "-SIGTERM"))
   "Send a kill signal to our rebase script: with -SIGTERM, git picks up our changes and continues the rebase process. This is called by a rebase continue command.
@@ -849,7 +848,7 @@ I am stopping in case you still have something valuable there."))
             error-output
             exit-code)))
 
-(defun git-rebase-continue ()
+(defmethod rebase-continue ((vcs vcs-git))
   (cond
     ;; First, if we are running our rebase script, send a "continue" signal
     ;; so that git continues the rebase.
@@ -863,13 +862,11 @@ I am stopping in case you still have something valuable there."))
     (t
      (porcelain-error  "No git rebase in process?"))))
 
-(defun rebase-abort (vcs)
-  (case vcs
-    (:git (git-rebase-abort))
-    (t
-     (porcelain-error "Rebasing is not supported for ~a" vcs))))
+(defgeneric rebase-abort (vcs))
+(defmethod rebase-abort (vcs)
+  (porcelain-error "Rebasing is not supported for ~a" vcs))
 
-(defun git-rebase-abort ()
+(defmethod rebase-abort ((vcs vcs-git))
   (cond
     ;; First, if we are running our rebase script, kill it.
     ;; This makes git abort the rebase too.
@@ -883,13 +880,11 @@ I am stopping in case you still have something valuable there."))
     (t
       (porcelain-error  "No git rebase in process? PID not found."))))
 
-(defun rebase-skip (vcs)
-  (case vcs
-    (:git (git-rebase-skip))
-    (t
-     (porcelain-error "Rebasing is not supported for ~a" vcs))))
+(defgeneric rebase-skip (vcs))
+(defmethod rebase-skip (vcs)
+  (porcelain-error "Rebasing is not supported for ~a" vcs))
 
-(defun git-rebase-skip ()
+(defmethod rebase-skip ((vcs vcs-git))
   (cond
     (*rebase-pid*
      (porcelain-error "The rebase process you started from Lem is still running. Please continue or abort it (or kill job ~a)" *rebase-pid*))

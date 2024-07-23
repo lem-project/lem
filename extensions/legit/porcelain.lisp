@@ -763,14 +763,9 @@ M	src/ext/porcelain.lisp
     ;; We use small hashes, so don't use equal.
     (str:starts-with-p hash root)))
 
-(defun rebase-interactively (vcs &key from)
-  (case vcs
-    (:git (git-rebase-interactively :from from))
-    (:hg (porcelain-error "Interactive rebase not implemented for Mercurial"))
-    (:fossil (porcelain-error "No interactive rebase for Fossil."))
-    (t (porcelain-error "Interactive rebase not available for this VCS: ~a" vcs))))
+(defgeneric rebase-interactively (vcs &key from))
 
-(defun git-rebase-interactively (&key from)
+(defmethod rebase-interactively ((vcs vcs-git) &key from)
   "Start a rebase session.
 
   Then edit the git rebase file and validate the rebase with `rebase-continue`
@@ -793,7 +788,7 @@ and run me again.
 I am stopping in case you still have something valuable there."))
 
   (unless from
-    (return-from git-rebase-interactively
+    (return-from rebase-interactively
       (values "Git rebase is missing the commit to rebase from. We are too shy to rebase everything from the root commit yet. Aborting"
               nil
               1)))
@@ -826,6 +821,14 @@ I am stopping in case you still have something valuable there."))
                          0))
                (porcelain-error "git rebase process didn't start properly. Aborting.")))
       (setf (uiop:getenv "EDITOR") editor))))
+
+(defmethod rebase-interactively ((vcs vcs-hg) &key from)
+  (declare (ignore from))
+  (porcelain-error "Interactive rebase not implemented for Mercurial"))
+
+(defmethod rebase-interactively ((vcs vcs-fossil) &key from)
+  (declare (ignore from))
+  (porcelain-error "No interactive rebase for Fossil."))
 
 (defgeneric rebase-continue (vcs)
   (:documentation

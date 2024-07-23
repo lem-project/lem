@@ -195,13 +195,15 @@ Mercurial:
 ;;;
 ;;; Getting changes.
 ;;;
+(defgeneric components (vcs)
+  (:documentation "Returns three values: TODO document what these are"))
 
 (defun git-porcelain ()
   "Return the git status: for each file in the project, the `git status --porcelain` command
 allows to learn about the file state: modified, deleted, ignored… "
   (run-git (list "status" "--porcelain=v1")))
 
-(defun git-components (vcs)
+(defmethod components ((vcs vcs-git))
   "Return 3 values:
   - untracked files
   - modified and unstaged files
@@ -247,7 +249,7 @@ allows to learn about the file state: modified, deleted, ignored… "
   "Return changes."
   (run-hg "status"))
 
-(defun hg-components ()
+(defmethod components ((vcs vcs-hg))
   "Return 3 values:
   - untracked files
   - modified and unstaged files
@@ -297,7 +299,7 @@ allows to learn about the file state: modified, deleted, ignored… "
       (t
        (values out error)))))
 
-(defun fossil-components ()
+(defmethod components ((vcs vcs-fossil))
   "Return values:
   - untracked files (todo)
   - list of ADDED files
@@ -318,14 +320,6 @@ allows to learn about the file state: modified, deleted, ignored… "
                                 nil
                                 modified-staged-files))))
 
-(defun components (vcs)
-  (case vcs
-    (:git (git-components vcs))
-    (:fossil (fossil-components))
-    (:hg (hg-components))
-    (t (porcelain-error "VCS not supported: ~a" vcs))))
-
-
 ;;;
 ;;; diff
 ;;;

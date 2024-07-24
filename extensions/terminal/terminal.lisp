@@ -1,6 +1,7 @@
 (uiop:define-package :lem-terminal/terminal
   (:use :cl :lem)
-  (:local-nicknames (:ffi :lem-terminal/ffi))
+  (:local-nicknames (:ffi :lem-terminal/ffi)
+                    (:queue :lem/common/queue))
   (:export :find-terminal-buffer
            :create
            :destroy
@@ -72,7 +73,7 @@
                           :buffer buffer
                           :rows rows
                           :cols cols)))
-    (let ((queue (lem/common/queue:make-concurrent-queue)))
+    (let ((queue (queue:make-concurrent-queue)))
       (setf (terminal-thread terminal)
             (bt2:make-thread
              (lambda ()
@@ -82,8 +83,8 @@
                   (lambda ()
                     ;; XXX: If this place is executed at the time the terminal is deleted, an error will occur.
                     (ignore-errors (update terminal))
-                    (lem/common/queue:enqueue queue 1)))
-                 (lem/common/queue:dequeue queue)))
+                    (queue:enqueue queue 1)))
+                 (queue:dequeue queue)))
              :name (format nil "Terminal ~D" id))))
     (add-terminal terminal)
     terminal))

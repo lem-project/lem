@@ -57,7 +57,7 @@
   (setf (buffer-value buffer 'terminal) terminal))
 
 (defun make-terminal-buffer ()
-  (let* ((buffer (make-buffer (unique-buffer-name "*Terminal*")))
+  (let* ((buffer (make-buffer (unique-buffer-name "*Terminal*") :enable-undo-p nil))
          (terminal (terminal:create :cols 80 :rows 24 :buffer buffer)))
     (setf (buffer-terminal buffer) terminal)
     (change-buffer-mode buffer 'terminal-mode)

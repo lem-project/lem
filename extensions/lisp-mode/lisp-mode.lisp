@@ -473,14 +473,19 @@
 (define-command lisp-listen-in-current-package () ()
   (check-connection)
   (alexandria:when-let ((repl-buffer (repl-buffer))
-                        (package (buffer-package (current-buffer))))
+                        (package (buffer-package (current-buffer)))
+                        (original-buffer (current-buffer)))
     (save-excursion
-      (setf (current-buffer) repl-buffer)
-      (destructuring-bind (name prompt-string)
-          (lisp-eval `(micros:set-package ,package))
-        (new-package name prompt-string)))
-    (start-lisp-repl)
-    (buffer-end (buffer-point repl-buffer))))
+      (cond ((find-package package)
+             (setf (current-buffer) repl-buffer)
+             (destructuring-bind (name prompt-string)
+                 (lisp-eval `(micros:set-package ,package))
+               (new-package name prompt-string))
+             (start-lisp-repl)
+             (buffer-end (buffer-point repl-buffer)))
+            (t
+             (message "Package ~A not found" package)
+             (setf (current-buffer) original-buffer))))))
 
 (define-command lisp-current-directory () ()
   (message "Current directory: ~a"

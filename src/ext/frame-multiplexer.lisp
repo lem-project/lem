@@ -11,7 +11,7 @@
            :frame-multiplexer-create-with-new-buffer-list
            :frame-multiplexer-delete
            :frame-multiplexer-recent
-           :frame-mulitplexer-rename
+           :frame-multiplexer-rename
            :toggle-frame-multiplexer
            :frame-multiplexer-normalize-ids)
   #+sbcl
@@ -47,7 +47,7 @@
 (define-key *keymap* "d" 'frame-multiplexer-delete)
 (define-key *keymap* "p" 'frame-multiplexer-prev)
 (define-key *keymap* "n" 'frame-multiplexer-next)
-(define-key *keymap* "r" 'frame-mulitplexer-rename)
+(define-key *keymap* "r" 'frame-multiplexer-rename)
 (define-key *global-keymap* "C-z" *keymap*)
 
 (defstruct tab
@@ -431,7 +431,7 @@ The prefix argument N defaults to 1."
           (let ((entry (aref (virtual-frame-id/frame-table vf) recent-frame-id)))
             (switch-current-frame vf (frame-table-entry-frame entry)))))))
 
-(define-command (frame-mulitplexer-rename (:advice-classes frame-multiplexer-advice))
+(define-command (frame-multiplexer-rename (:advice-classes frame-multiplexer-advice))
     (name &optional id) ((:string "New name: ") :universal-nil)
   "Rename the current frame to NAME.
 With prefix argument ID, rename the frame with the given ID."

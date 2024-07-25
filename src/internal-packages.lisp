@@ -366,6 +366,17 @@
    :modeline-mode-names
    :modeline-position
    :modeline-posline
+   :modeline-name-attribute
+   :modeline-major-mode-attribute
+   :inactive-modeline-major-mode-attribute
+   :modeline-minor-modes-attribute
+   :inactive-modeline-minor-modes-attribute
+   :modeline-position-attribute
+   :inactive-modeline-position-attribute
+   :modeline-posline-attribute
+   :inactive-modeline-position-attribute
+   :inactive-modeline-name-attribute
+   :inactive-modeline-posline-attribute
    :convert-modeline-element)
   ;; command.lisp
   (:export

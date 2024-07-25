@@ -255,7 +255,8 @@
                "lem-color-preview"
                "lem-lua-mode"
                "lem-terminal"
-               "lem-legit"))
+               "lem-legit"
+               "lem-dashboard"))
 
 (defsystem "lem/executable"
   :build-operation program-op

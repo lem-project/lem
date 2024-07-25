@@ -476,11 +476,12 @@
                         (package (buffer-package (current-buffer)))
                         (original-buffer (current-buffer)))
     (save-excursion
-      (cond ((lisp-eval `(not (null (cl:find-package package))))
-             (setf (current-buffer) repl-buffer)
-             (destructuring-bind (name prompt-string)
-                 (lisp-eval `(micros:set-package ,package))
-               (new-package name prompt-string))
+      (cond ((lisp-eval `(not (null (cl:find-package ,package))))
+             (save-excursion
+               (setf (current-buffer) repl-buffer)
+               (destructuring-bind (name prompt-string)
+                   (lisp-eval `(micros:set-package ,package))
+                 (new-package name prompt-string)))
              (start-lisp-repl)
              (buffer-end (buffer-point repl-buffer)))
             (t

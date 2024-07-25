@@ -6,6 +6,12 @@
   (:export :paren-coloring
            :*paren-attribute*
            :*rainbow*
+           :paren-color-1
+           :paren-color-2
+           :paren-color-3
+           :paren-color-4
+           :paren-color-5
+           :paren-color-6
            :toggle-paren-coloring))
 (in-package :lem-lisp-mode/paren-coloring)
 
@@ -15,40 +21,25 @@
         (enable)
         (disable))))
 
-(defvar *default-rainbow-colors* #("red" "blue" "green" "sienna4" "dark cyan" "orange"))
+(define-attribute paren-color-1
+  (t :foreground "red"))
 
-(defun rainbow-color (index)
-  (let ((color-theme (find-color-theme (current-theme))))
-    (if color-theme
-        (get-color-theme-color color-theme
-                               (ecase index
-                                 (0 :base08)
-                                 (1 :base09)
-                                 (2 :base0a)
-                                 (3 :base0b)
-                                 (4 :base0c)
-                                 (5 :base0d)))
-        (aref *default-rainbow-colors* index))))
+(define-attribute paren-color-2
+  (t :foreground "blue"))
 
-(define-attribute color-1
-  (t :foreground (rainbow-color 0)))
+(define-attribute paren-color-3
+  (t :foreground "green"))
 
-(define-attribute color-2
-  (t :foreground (rainbow-color 1)))
+(define-attribute paren-color-4
+  (t :foreground "sienna4"))
 
-(define-attribute color-3
-  (t :foreground (rainbow-color 2)))
+(define-attribute paren-color-5
+  (t :foreground "dark cyan"))
 
-(define-attribute color-4
-  (t :foreground (rainbow-color 3)))
+(define-attribute paren-color-6
+  (t :foreground "orange"))
 
-(define-attribute color-5
-  (t :foreground (rainbow-color 4)))
-
-(define-attribute color-6
-  (t :foreground (rainbow-color 5)))
-
-(defparameter *rainbow-colors* #(color-1 color-2 color-3 color-4 color-5 color-6))
+(defparameter *rainbow-colors* #(paren-color-1 paren-color-2 paren-color-3 paren-color-4 paren-color-5 paren-color-6))
 
 (defvar *paren-attribute* (make-attribute :foreground "dim gray"))
 

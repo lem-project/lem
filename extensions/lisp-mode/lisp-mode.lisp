@@ -95,6 +95,7 @@
 (define-key *lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
 (define-key *lisp-mode-keymap* "Return" 'newline-and-indent)
 (define-key *lisp-mode-keymap* "C-c C-j" 'lisp-eval-expression-in-repl)
+(define-key *lisp-mode-keymap* "C-c ~" 'lisp-listen-in-current-package)
 
 (defmethod convert-modeline-element ((element (eql 'lisp-mode)) window)
   (format nil "  ~A~A" (buffer-package (window-buffer window) "CL-USER")
@@ -472,14 +473,19 @@
 (define-command lisp-listen-in-current-package () ()
   (check-connection)
   (alexandria:when-let ((repl-buffer (repl-buffer))
-                        (package (buffer-package (current-buffer))))
+                        (package (buffer-package (current-buffer)))
+                        (original-buffer (current-buffer)))
     (save-excursion
-      (setf (current-buffer) repl-buffer)
-      (destructuring-bind (name prompt-string)
-          (lisp-eval `(micros:set-package ,package))
-        (new-package name prompt-string)))
-    (start-lisp-repl)
-    (buffer-end (buffer-point repl-buffer))))
+      (cond ((lisp-eval `(not (null (cl:find-package package))))
+             (setf (current-buffer) repl-buffer)
+             (destructuring-bind (name prompt-string)
+                 (lisp-eval `(micros:set-package ,package))
+               (new-package name prompt-string))
+             (start-lisp-repl)
+             (buffer-end (buffer-point repl-buffer)))
+            (t
+             (message "Package ~A not found" package)
+             (setf (current-buffer) original-buffer))))))
 
 (define-command lisp-current-directory () ()
   (message "Current directory: ~a"

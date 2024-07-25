@@ -95,7 +95,7 @@
 (define-key *lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
 (define-key *lisp-mode-keymap* "Return" 'newline-and-indent)
 (define-key *lisp-mode-keymap* "C-c C-j" 'lisp-eval-expression-in-repl)
-(define-key *lisp-mode-keymap* "C-c ~" 'lisp-sync-package)
+(define-key *lisp-mode-keymap* "C-c ~" 'lisp-listen-in-current-package)
 
 (defmethod convert-modeline-element ((element (eql 'lisp-mode)) window)
   (format nil "  ~A~A" (buffer-package (window-buffer window) "CL-USER")
@@ -748,16 +748,6 @@
       (scan-lists end 1 0)
       (send-string-to-listener (points-to-string start end)
                                (buffer-package (current-buffer))))))
-
-(define-command lisp-sync-package () ()
-  (check-connection)
-  (let ((package (buffer-package (current-buffer) "CL-USER")))
-    (if (find-package package)
-        (with-current-buffer (repl-buffer)
-          (with-current-window (get-repl-window)
-            (lisp-set-package package)
-            (move-to-end-of-buffer)))
-        (message "Cannot find package ~A" package))))
 
 (defun form-string-at-point ()
   (with-point ((point (current-point)))

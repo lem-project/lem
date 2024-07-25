@@ -476,7 +476,7 @@
                         (package (buffer-package (current-buffer)))
                         (original-buffer (current-buffer)))
     (save-excursion
-      (cond ((find-package package)
+      (cond ((lisp-eval `(not (null (find-package package))))
              (setf (current-buffer) repl-buffer)
              (destructuring-bind (name prompt-string)
                  (lisp-eval `(micros:set-package ,package))

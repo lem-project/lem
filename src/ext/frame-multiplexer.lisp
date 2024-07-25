@@ -4,6 +4,9 @@
         :lem/button
         :lem/common/ring)
   (:export :*keymap*
+           :frame-multiplexer-active-frame-name-attribute
+           :frame-multiplexer-frame-name-attribute
+           :frame-multiplexer-background-attribute
            :frame-multiplexer-advice
            :frame-multiplexer-next
            :frame-multiplexer-prev
@@ -33,17 +36,20 @@
 (define-attribute frame-multiplexer-background-attribute
   (t :foreground "white" :background "#262626"))
 
-(add-hook lem-core:*theme-load-hook* 
-          (lambda (theme)            
+(add-hook lem-core:*theme-load-hook*
+          (lambda (theme)
             (let ((lighter-background (get-color-theme-color theme :base01))
                   (dark-foreground (get-color-theme-color theme :base04))
                   (selected-background (get-color-theme-color theme :base0A)))
-              (set-attribute 'frame-multiplexer-active-frame-name-attribute 
-                             :foreground lighter-background :background selected-background :bold t)
-              (set-attribute 'frame-multiplexer-frame-name-attribute 
-                             :foreground lighter-background :background dark-foreground :bold t)
-              (set-attribute 'frame-multiplexer-background-attribute
-                             :foreground selected-background :background lighter-background))))
+              (unless (get-color-theme-color theme 'frame-multiplexer-active-frame-name-attribute)
+                (set-attribute 'frame-multiplexer-active-frame-name-attribute
+                               :foreground lighter-background :background selected-background :bold t))
+              (unless (get-color-theme-color theme 'frame-multiplexer-frame-name-attribute)
+                (set-attribute 'frame-multiplexer-frame-name-attribute
+                               :foreground lighter-background :background dark-foreground :bold t))
+              (unless (get-color-theme-color theme 'frame-multiplexer-background-attribute)
+                (set-attribute 'frame-multiplexer-background-attribute
+                               :foreground selected-background :background lighter-background)))))
 
 (define-editor-variable frame-multiplexer nil ""
   (lambda (value)

@@ -33,3 +33,46 @@
   (syntax-function-name-attribute :foreground "LightSkyBlue")
   (syntax-variable-attribute :foreground "LightGoldenrod")
   (syntax-type-attribute :foreground "PaleGreen"))
+
+;; decaf base
+(lem-core:define-color-theme "lem-default"
+    nil
+  (:display-background-mode :dark)
+  (:foreground "#cccccc")
+  (:background "#2d2d2d")
+  (:inactive-window-background "#2d2d2d")
+  (lem-core:region :foreground nil :background "#515151")
+  (lem-core:syntax-warning-attribute :foreground "#ff7f7b")
+  (lem/buffer/internal:syntax-string-attribute :foreground "#beda78")
+  (lem/buffer/internal:syntax-comment-attribute :foreground "#777777")
+  (lem/buffer/internal:syntax-keyword-attribute :foreground "#efb3f7")
+  (lem/buffer/internal:syntax-constant-attribute :foreground "#ffbf70")
+  (lem/buffer/internal:syntax-function-name-attribute :foreground "#90bee1")
+  (lem/buffer/internal:syntax-variable-attribute :foreground "#ff7f7b")
+  (lem/buffer/internal:syntax-type-attribute :foreground "#ffd67c")
+  (lem-core:syntax-builtin-attribute :foreground "#bed6ff")
+  (:base00 "#2d2d2d")
+  (:base01 "#393939")
+  (:base02 "#515151")
+  (:base03 "#777777")
+  (:base04 "#b4b7b4")
+  (:base05 "#cccccc")
+  (:base06 "#e0e0e0")
+  (:base07 "#ffffff")
+  (:base08 "#ff7f7b")
+  (:base09 "#ffbf70")
+  (:base0a "#ffd67c")
+  (:base0b "#beda78")
+  (:base0c "#bed6ff")
+  (:base0d "#90bee1")
+  (:base0e "#efb3f7")
+  (:base0f "#ff93b3")
+
+  (lem/frame-multiplexer:frame-multiplexer-active-frame-name-attribute
+   :foreground "white" :background "CornflowerBlue" :bold t)
+
+  (lem/frame-multiplexer:frame-multiplexer-frame-name-attribute
+   :foreground "black" :background "dark gray" :bold t)
+
+  (lem/frame-multiplexer:frame-multiplexer-background-attribute
+   :foreground "white" :background "#262626"))

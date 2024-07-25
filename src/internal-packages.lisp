@@ -583,6 +583,7 @@
    :define-color-theme
    :load-theme
    :current-theme
+   :*theme-load-hook*
    :find-color-theme
    :color-theme
    :get-color-theme-color)

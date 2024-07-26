@@ -582,7 +582,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (defun prompt-for-branch (vcs &key prompt initial-value)
   ;; only call from a command.
   (let* ((current-branch (or initial-value (lem/porcelain:current-branch vcs)))
-         (candidates (lem/porcelain:branches)))
+         (candidates (lem/porcelain:branches vcs)))
     (if candidates
         (prompt-for-string (or prompt "Branch: ")
                            :initial-value current-branch
@@ -601,7 +601,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (return-from legit-branch-checkout))
       (when branch
         (run-function (lambda ()
-                        (lem/porcelain:checkout branch))
+                        (lem/porcelain:checkout vcs branch))
                       :message (format nil "Checked out ~a" branch))
         (legit-status)))))
 
@@ -613,21 +613,19 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
           (base (prompt-for-branch vcs :prompt "Base branch: " :initial-value "")))
       (when (and new base)
         (run-function (lambda ()
-                        (lem/porcelain:checkout-create new base))
+                        (lem/porcelain:checkout-create vcs new base))
                       :message (format nil "Created ~a" new))
         (legit-status)))))
 
 (define-command legit-pull () ()
   "Pull changes, update HEAD."
   (with-current-project (vcs)
-    (declare (ignore vcs))
-    (run-function #'lem/porcelain:pull)))
+    (run-function (lambda () (lem/porcelain:pull vcs)))))
 
 (define-command legit-push () ()
   "Push changes to the current remote."
   (with-current-project (vcs)
-    (declare (ignore vcs))
-    (run-function #'lem/porcelain:push)))
+    (run-function (lambda () (lem/porcelain:push vcs)))))
 
 (define-command legit-rebase-interactive () ()
   "Rebase interactively, from the commit the point is on.

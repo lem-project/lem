@@ -101,6 +101,9 @@ allows to learn about the file state: modified, deleted, ignored… "
                                 modified-unstaged-files
                                 modified-staged-files))))
 
+(defmethod checkout ((vcs vcs-git) branch)
+  (run-git (list "checkout" branch)))
+
 (defmethod file-diff ((vcs vcs-git) file &key cached)
   ;; --cached is a synonym for --staged.
   ;; So it is set only for staged files. From git-components: the 3rd value, modified and staged files.
@@ -132,6 +135,16 @@ allows to learn about the file state: modified, deleted, ignored… "
 (defmethod branches ((vcs vcs-git) &key (sort-by *branch-sort-by*))
   (loop for branch in (git-list-branches :sort-by sort-by)
         collect (subseq branch 2 (length branch))))
+
+(defmethod checkout-create ((vcs vcs-git) new start)
+  (run-git (list "checkout" "-b" new start)))
+
+(defmethod pull ((vcs vcs-git))
+  ;; xxx: recurse submodules, etc.
+  (run-git (list "pull" "HEAD")))
+
+(defmethod push ((vcs vcs-git))
+  (run-git (list "push")))
 
 (defmethod current-branch ((vcs vcs-git))
   (let ((branches (git-list-branches :sort-by "-creatordate")))

@@ -169,20 +169,29 @@ M	src/ext/porcelain.lisp
    "Apply a patch from this diff.
   diff: string."))
 
-(defun checkout (branch)
-  (run-git (list "checkout" branch)))
+(defgeneric checkout (vcs branch)
+  (:documentation "Checkouts out branch (str) in vcs"))
+(defmethod checkout (vcs branch)
+  (declare (ignorable vcs branch))
+  (porcelain-error "Checkout not implemented for vcs ~a" vcs))
 
-(defun checkout-create (new start)
-  (run-git (list "checkout" "-b" new start)))
+(defgeneric checkout-create (vcs new start)
+  (:documentation "Checkouts out branch (str) in vcs, creating it at HEAD if it does not exit"))
+(defmethod checkout-create (vcs new start)
+  (declare (ignorable vcs new start))
+  (porcelain-error "Checkout-create not implemented for vcs ~a" vcs))
 
-(defun pull ()
-  ;; xxx: recurse submodules, etc.
-  (run-git (list "pull" "HEAD")))
+(defgeneric pull (vcs)
+  (:documentation "Pulls remotes"))
+(defmethod pull (vcs)
+  (declare (ignorable vcs))
+  (porcelain-error "Pull not implemented for vcs ~a" vcs))
 
-(defun push (&rest args)
-  (when args
-    (porcelain-error "Our git push command doesn't accept args. Did you mean cl:push ?!!"))
-  (run-git (list "push")))
+(defgeneric push (vcs)
+  (:documentation "Pushes to remotes"))
+(defmethod push (vcs)
+  (declare (ignorable vcs))
+  (porcelain-error "Push not implemented for vcs ~a" vcs))
 
 ;; Interactive rebase
 (defgeneric rebase-interactively (vcs &key from))

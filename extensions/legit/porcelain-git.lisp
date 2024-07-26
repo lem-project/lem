@@ -129,6 +129,10 @@ allows to learn about the file state: modified, deleted, ignored… "
                   "--no-color"
                   (format nil "--sort=~a" sort-by)))))
 
+(defmethod branches ((vcs vcs-git) &key (sort-by *branch-sort-by*))
+  (loop for branch in (git-list-branches :sort-by sort-by)
+        collect (subseq branch 2 (length branch))))
+
 (defmethod current-branch ((vcs vcs-git))
   (let ((branches (git-list-branches :sort-by "-creatordate")))
     (loop for branch in branches

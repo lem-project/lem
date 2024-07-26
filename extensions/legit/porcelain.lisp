@@ -101,9 +101,11 @@ Mercurial:
   (:documentation "Performs a commit operation: `message` must be a string."))
 
 ;; branches
-(defun branches (&key (sort-by *branch-sort-by*))
-  (loop for branch in (git-list-branches :sort-by sort-by)
-        collect (subseq branch 2 (length branch))))
+(defgeneric branches (vcs &key sort-by)
+  (:documentation "Returns a list[str] of branches in the repository"))
+(defmethod branches (vcs &key sort-by)
+  (declare (ignorable vcs sort-by))
+  (porcelain-error "Method branches not supported for vcs ~a" vcs))
 
 (defgeneric current-branch (vcs)
   (:documentation "Return the current branch name (string)."))

@@ -62,7 +62,7 @@
     (when elt
       (let ((*undo-mode* :undo))
         (unless (eq elt :separator)
-          (apply-inverse-edit elt point))))))
+          (apply-inverse-edit point elt))))))
 
 (defun buffer-undo (point)
   (let ((buffer (point-buffer point)))
@@ -84,7 +84,7 @@
     (when elt
       (let ((*undo-mode* :redo))
         (unless (eq elt :separator)
-          (apply-inverse-edit elt point))))))
+          (apply-inverse-edit point elt))))))
 
 (defun buffer-redo (point)
   (let ((buffer (point-buffer point)))

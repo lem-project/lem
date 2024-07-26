@@ -3,11 +3,11 @@
 
 (uiop:define-package :lem/buffer/internal
   (:use :cl
-        :lem/buffer/line
         :lem/common/utils
         :lem/common/hooks
         :lem/common/var
         :lem/common/character)
+  (:local-nicknames (:line :lem/buffer/line))
   (:use-reexport :lem/buffer/errors)
   (:use-reexport :lem/buffer/file-utils)
   (:use-reexport :lem/buffer/buffer-list-manager)

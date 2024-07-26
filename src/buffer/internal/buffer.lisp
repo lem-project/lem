@@ -164,7 +164,7 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
                                :%enable-undo-p enable-undo-p
                                :temporary temporary
                                :syntax-table syntax-table)))
-    (let* ((temp-point (make-point buffer 1 (make-empty-line) 0 :kind :temporary))
+    (let* ((temp-point (make-point buffer 1 (line:make-empty-line) 0 :kind :temporary))
            (start-point (make-buffer-start-point temp-point))
            (end-point (make-buffer-end-point temp-point))
            (point (make-buffer-point temp-point)))

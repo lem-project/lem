@@ -589,7 +589,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                            :history-symbol '*legit-branches-history*
                            :completion-function (lambda (x) (completion-strings x candidates))
                            :test-function (lambda (name) (member name candidates :test #'string=)))
-        (message "No branches. Not inside a git project?"))))
+        (message "No branches"))))
 
 (define-command legit-branch-checkout () ()
   "Choose a branch to checkout."

@@ -46,12 +46,18 @@
       (insert-character point #\Newline))))
 
 (defun insert-recent-projects (point)
-  (insert-string point (create-centered-string "Recent Projects" (window-width (current-window))))
-  (insert-character point #\Newline)
-  (insert-character point #\Newline)
-  (loop for project in *recent-projects*
-        for i from 1
-        do (insert-string point (format nil "  ~2D. ~A~%" i project))))
+  (let* ((width (window-width (current-window)))
+         (title "Recent Projects")
+         (title-line (create-centered-string title width)))
+    (insert-string point title-line)
+    (insert-character point #\Newline)
+    (insert-character point #\Newline)
+    (let* ((longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) *recent-projects*))
+           (max-length (length longest-project))
+           (left-padding (floor (- width max-length) 2)))
+      (loop for project in *recent-projects*
+            do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
+               (insert-string point (format nil "~A~%" project))))))
 
 (defun create-dashboard-buffer ()
   (make-buffer *dashboard-buffer-name*

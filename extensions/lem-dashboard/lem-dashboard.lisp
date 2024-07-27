@@ -5,7 +5,6 @@
 (in-package :lem-dashboard)
 
 (defvar *dashboard-buffer-name* "*dashboard*")
-(defvar *recent-projects* '())
 
 (defun create-centered-string (str width)
   (let* ((padding (max 0 (floor (- width (length str)) 2)))
@@ -52,10 +51,11 @@
     (insert-string point title-line)
     (insert-character point #\Newline)
     (insert-character point #\Newline)
-    (let* ((longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) *recent-projects*))
+    (let* ((longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b))
+                                    (lem-core/commands/project:saved-projects)))
            (max-length (length longest-project))
            (left-padding (floor (- width max-length) 2)))
-      (loop for project in *recent-projects*
+      (loop for project in (lem-core/commands/project:saved-projects)
             do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
                (insert-string point (format nil "~A~%" project))))))
 
@@ -79,10 +79,7 @@
       (insert-splash-screen point)
       (insert-character point #\Newline)
       (insert-character point #\Newline)
-      (let ((*recent-projects* '("/path/to/project1"
-                                 "/path/to/project2"
-                                 "/path/to/project3")))
-        (insert-recent-projects point)))
+      (insert-recent-projects point))
     (buffer-start (buffer-point buffer))
     (setf (buffer-read-only-p buffer) t)
     (change-buffer-mode buffer 'dashboard-mode)))

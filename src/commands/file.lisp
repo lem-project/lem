@@ -23,7 +23,9 @@
            :format-current-buffer
            :file-history
            :find-history-file
-           :*file-history-limit*)
+           :*file-history-limit*
+           :get-file-mode
+           :format-current-buffer)
   #+sbcl
   (:lock t))
 (in-package :lem-core/commands/file)

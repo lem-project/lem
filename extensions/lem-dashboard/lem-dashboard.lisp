@@ -46,7 +46,7 @@
 
 (defun insert-recent-projects (point)
   (let* ((width (window-width (current-window)))
-         (title "Recent Projects")
+         (title "Recent Projects (r)")
          (title-line (create-centered-string title width)))
     (insert-string point title-line)
     (insert-character point #\Newline)
@@ -86,7 +86,8 @@
   (let ((point (buffer-point (current-buffer))))
     (buffer-start point)
     (search-forward-regexp point "Recent Projects")
-    (line-offset point 2)))
+    (line-offset point 2)
+    (move-to-beginning-of-line)))
 
 (define-command open-selected-project () () 
   (let* ((point (buffer-point (current-buffer)))
@@ -96,11 +97,14 @@
       (uiop:with-current-directory (project-path))
       (let ((filename (prompt-for-files-recursively)))
         (alexandria:when-let (buffer (execute-find-file *find-file-executor*
-                                                        (lem-core/commands/file::get-file-mode filename)
+                                                        (lem-core/commands/file:get-file-mode filename)
                                                         filename))
           (when buffer
             (switch-to-buffer buffer t nil))))
       (delete-buffer (get-buffer *dashboard-buffer-name*)))))
 
-(define-key *dashboard-mode-keymap* "p" 'move-to-recent-projects)
+
+(define-key *dashboard-mode-keymap* "r" 'move-to-recent-projects)
 (define-key *dashboard-mode-keymap* "Return" 'open-selected-project)
+(define-key *dashboard-mode-keymap* "n" 'next-line)
+(define-key *dashboard-mode-keymap* "p" 'previous-line)

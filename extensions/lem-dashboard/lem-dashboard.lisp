@@ -68,8 +68,6 @@
     (:name "Dashboard"
      :keymap *dashboard-mode-keymap*))
 
-(define-key *dashboard-mode-keymap* "p" 'move-to-recent-projects)
-
 (define-command show-dashboard () ()
   (let ((buffer (create-dashboard-buffer)))
     (switch-to-buffer buffer)
@@ -89,3 +87,20 @@
     (buffer-start point)
     (search-forward-regexp point "Recent Projects")
     (line-offset point 2)))
+
+(define-command open-selected-project () () 
+  (let* ((point (buffer-point (current-buffer)))
+         (line (line-string point))
+         (project-path (string-trim '(#\Space #\Tab) line)))
+    (when (uiop:directory-exists-p project-path)
+      (uiop:with-current-directory (project-path))
+      (let ((filename (prompt-for-files-recursively)))
+        (alexandria:when-let (buffer (execute-find-file *find-file-executor*
+                                                        (lem-core/commands/file::get-file-mode filename)
+                                                        filename))
+          (when buffer
+            (switch-to-buffer buffer t nil))))
+      (delete-buffer (get-buffer *dashboard-buffer-name*)))))
+
+(define-key *dashboard-mode-keymap* "p" 'move-to-recent-projects)
+(define-key *dashboard-mode-keymap* "Return" 'open-selected-project)

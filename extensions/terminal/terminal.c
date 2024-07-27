@@ -22,7 +22,7 @@ typedef struct {
   int fd;
 } run_shell_result;
 
-static run_shell_result run_shell(int rows, int cols, const char *program)
+static run_shell_result run_shell(int rows, int cols, const char *program, char* const argv[])
 {
   int fd;
   struct winsize win = { rows, cols, 0, 0 };
@@ -30,10 +30,6 @@ static run_shell_result run_shell(int rows, int cols, const char *program)
   assert(pid >= 0);
   if (pid == 0) {
     setenv("TERM", "xterm-256color", 1);
-    char **argv = malloc(sizeof(char *) * 2);
-    assert(argv != NULL);
-    argv[0] = strdup(program);
-    argv[1] = NULL;
     assert(execvp(program, argv) >= 0);
   }
 
@@ -147,6 +143,7 @@ struct terminal *terminal_new(int id,
                               int rows,
                               int cols,
                               const char *program,
+                              char* const argv[],
 			      void *cb_damage,
 			      void *cb_moverect,
 			      void *cb_movecursor,
@@ -156,7 +153,7 @@ struct terminal *terminal_new(int id,
 			      void *cb_sb_pushline,
                               void *cb_sb_popline)
 {
-  run_shell_result result = run_shell(rows, cols, program);
+  run_shell_result result = run_shell(rows, cols, program, argv);
 
   VTerm *vterm = vterm_new(rows, cols);
   vterm_set_utf8(vterm, 1);

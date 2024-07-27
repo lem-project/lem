@@ -64,12 +64,16 @@
 
 (defun create (&key (rows (alexandria:required-argument :rows))
                     (cols (alexandria:required-argument :cols))
-                    (buffer (alexandria:required-argument :buffer)))
+                    (buffer (alexandria:required-argument :buffer))
+                    (directory (alexandria:required-argument :directory)))
+  (declare (type (string) directory)
+           (type (integer) rows)
+           (type (integer) cols))
   (let* ((id (generate-terminal-id))
          (terminal
            (make-instance 'terminal
                           :id id
-                          :viscus (ffi::terminal-new id rows cols)
+                          :viscus (ffi::terminal-new directory id rows cols)
                           :buffer buffer
                           :rows rows
                           :cols cols)))

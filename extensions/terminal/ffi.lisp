@@ -59,11 +59,31 @@
 (defconstant VTERM_MOD_ALT #x02)
 (defconstant VTERM_MOD_CTRL #x04)
 
+;; Define a type corresponding to char*[], where the array is null-terminated
+(cffi:define-foreign-type string-of-strings ()
+  ()
+  (:actual-type :pointer))
+(cffi:define-parse-method string-of-strings ()
+  (make-instance 'string-of-strings))
+;; It's inefficient to store the array of string pointers in both the second return
+;; value of translate-to-foreign and (necessarily) foreign memory- but I can't get
+;; the "efficient" way to work.
+;; Also this likely isn't performance sensitive. Like at all.
+(defmethod cffi:translate-to-foreign (val (type string-of-strings))
+  (let ((string-pointers (map 'vector  (lambda (str) (cffi:foreign-string-alloc str)) val)))
+    (values (cffi:foreign-alloc :pointer :null-terminated-p t :initial-contents string-pointers)
+            string-pointers)))
+(defmethod cffi:free-translated-object (pointer (type string-of-strings) string-pointers)
+  (map nil (lambda (p) (cffi:foreign-string-free p))
+       string-pointers)
+  (cffi:foreign-free pointer))
+
 (cffi:defcfun ("terminal_new" %terminal-new) :pointer
   (id :int)
   (rows :int)
   (cols :int)
   (program :string)
+  (argv (string-of-strings))
   (cb_damage :pointer)
   (cb_moverect :pointer)
   (cb_movecursor :pointer)
@@ -73,19 +93,22 @@
   (cb_sb_pushline :pointer)
   (cb_sb_popline :pointer))
 
-(defun terminal-new (id rows cols)
-  (%terminal-new id
-                 rows
-                 cols
-                 (or (uiop:getenv "SHELL") "/bin/bash")
-                 (cffi:callback cb-damage)
-                 (cffi:callback cb-moverect)
-                 (cffi:callback cb-movecursor)
-                 (cffi:callback cb-settermprop)
-                 (cffi:callback cb-bell)
-                 (cffi:callback cb-resize)
-                 (cffi:callback cb-sb-pushline)
-                 (cffi:callback cb-sb-popline)))
+(defun terminal-new (directory id rows cols)
+  (let* ((shell (or (uiop:getenv "SHELL") "/bin/bash"))
+         (argv (list shell "-c" (concatenate 'string "cd " directory "; " shell))))
+    (%terminal-new id
+                   rows
+                   cols
+                   shell
+                   argv
+                   (cffi:callback cb-damage)
+                   (cffi:callback cb-moverect)
+                   (cffi:callback cb-movecursor)
+                   (cffi:callback cb-settermprop)
+                   (cffi:callback cb-bell)
+                   (cffi:callback cb-resize)
+                   (cffi:callback cb-sb-pushline)
+                   (cffi:callback cb-sb-popline))))
 
 (cffi:defcfun ("terminal_delete" terminal-delete) :void
   (terminal :pointer))

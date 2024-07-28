@@ -16,8 +16,6 @@
 
 (defvar *color-themes* (make-hash-table :test 'equal))
 
-(defvar *theme-load-hook* nil)
-
 (defun find-color-theme (name)
  "Takes the name of an existing color theme and returns a color-theme hashtable"
   (gethash name *color-themes*))
@@ -95,7 +93,6 @@
       (editor-error "undefined color theme: ~A" name))
     (apply-theme theme)
     (message nil)
-    (run-hooks *theme-load-hook* theme)
     (redraw-display :force t)
     (setf (current-theme) name)
     (when save-theme

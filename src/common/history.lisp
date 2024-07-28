@@ -20,7 +20,8 @@
   pathname
   data
   index
-  edit-string)
+  edit-string
+  limit)
 
 (defun history-data-list (history)
   "Return the history data as a list (and not a vector)."
@@ -31,7 +32,7 @@
   (and (not (equal input last-input))
        (not (equal input ""))))
 
-(defun make-history (&key pathname)
+(defun make-history (&key pathname (limit nil))
   (let* ((initial-contents
            (when (and pathname (uiop:file-exists-p pathname))
              (uiop:read-file-form pathname)))
@@ -39,7 +40,8 @@
     (%make-history
      :pathname pathname
      :data (make-array num-contents :fill-pointer num-contents :adjustable t :initial-contents initial-contents)
-     :index num-contents)))
+     :index num-contents
+     :limit limit)))
 
 (defun save-file (history)
   (when (history-pathname history)
@@ -59,19 +61,26 @@
   "Add this input to the history.
 
   Don't add the same input as the previous one.
-  If allow-duplicates is non t, don't add duplicates at all."
-  (cond
-    ((not allow-duplicates)
-     (when (not (find input (history-data history) :test test))
-       (vector-push-extend input (history-data history))))
-    ((require-additions-to-history-p input
-                                     (last-history history))
-     (vector-push-extend input (history-data history)))
-    (t
-     nil))
-
-  (setf (history-index history)
-        (length (history-data history)))
+  If allow-duplicates is non t, don't add duplicates at all.
+  If limit is set, overwrite oldest entry when reached."
+  (when (or allow-duplicates
+            (not (find input (history-data history) :test test)))
+    (when (require-additions-to-history-p input (last-history history))
+      (let ((limit (history-limit history)))
+        (cond
+          ((and limit (>= (length (history-data history)) limit))
+           ;; Shift by 1, overwriting the oldest
+           (replace (history-data history)
+                    (history-data history)
+                    :start1 0 
+                    :start2 1
+                    :end2 limit)
+           (setf (aref (history-data history) (1- limit)) input))
+          (t
+           ;; Add new element normally
+           (vector-push-extend input (history-data history)))))
+      (setf (history-index history)
+            (length (history-data history)))))
   input)
 
 (defun remove-history (history input)

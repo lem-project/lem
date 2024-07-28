@@ -56,9 +56,11 @@
 (defun (setf buffer-terminal) (terminal buffer)
   (setf (buffer-value buffer 'terminal) terminal))
 
-(defun make-terminal-buffer ()
+(defun make-terminal-buffer (buffer-directory)
+  (declare (type (string) buffer-directory))
   (let* ((buffer (make-buffer (unique-buffer-name "*Terminal*") :enable-undo-p nil))
-         (terminal (terminal:create :cols 80 :rows 24 :buffer buffer)))
+         (terminal (terminal:create :cols 80 :rows 24 :buffer buffer
+                                    :directory buffer-directory)))
     (setf (buffer-terminal buffer) terminal)
     (change-buffer-mode buffer 'terminal-mode)
     buffer))
@@ -68,18 +70,21 @@
     (when terminal
       (terminal:destroy terminal))))
 
-(defun create-terminal ()
-  (let* ((buffer (make-terminal-buffer))
+(defun create-terminal (buffer-directory)
+  (declare (type (string) buffer-directory))
+  (let* ((buffer (make-terminal-buffer buffer-directory))
          (window (pop-to-buffer buffer)))
     (resize-terminal (buffer-terminal buffer) window)
     (setf (current-window) window)))
 
 (define-command terminal (always-create-terminal-p) (:universal-nil)
-  (if always-create-terminal-p
-      (create-terminal)
-      (alexandria:if-let (buffer (terminal:find-terminal-buffer))
-        (setf (current-window) (pop-to-buffer buffer))
-        (create-terminal))))
+  (labels ((new-terminal ()
+             (create-terminal (buffer-directory (current-buffer)))))
+    (if always-create-terminal-p
+        (new-terminal)
+        (alexandria:if-let (buffer (terminal:find-terminal-buffer))
+          (setf (current-window) (pop-to-buffer buffer))
+          (new-terminal)))))
 
 (defun get-current-terminal ()
   (buffer-terminal (current-buffer)))

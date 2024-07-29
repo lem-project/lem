@@ -178,7 +178,7 @@
       (f plist2))
     new-plist))
 
-(defun line-merge (curr-line next-line pos)
+(defun line-merge-plist (curr-line next-line pos)
   (setf (line-plist curr-line)
         (merge-plist
          (line-plist curr-line)
@@ -333,7 +333,7 @@
 (defun merge-with-next-line (line &key (start 0))
   (assert (line-next line))
   (line-delete-property-region line start)
-  (line-merge line (line-next line) start)
+  (line-merge-plist line (line-next line) start)
   (set-line-string (concatenate 'string
                                 (line-substring line :start 0 :end start)
                                 (line-string (line-next line)))

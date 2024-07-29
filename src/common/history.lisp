@@ -32,7 +32,7 @@
   (and (not (equal input last-input))
        (not (equal input ""))))
 
-(defun make-history (&key pathname (limit nil))
+(defun make-history (&key pathname limit)
   (let* ((initial-contents
            (when (and pathname (uiop:file-exists-p pathname))
              (uiop:read-file-form pathname)))

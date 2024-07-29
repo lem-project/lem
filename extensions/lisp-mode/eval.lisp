@@ -83,8 +83,8 @@
       (multiple-value-bind (r g b)
           (hsv-to-rgb h
                       s
-                      (+ v 5))
-        (format nil "#~X~X~X" r g b)))))
+                      (+ v (if (< v 50) 5 -5)))
+        (format nil "#~2,'0X~2,'0X~2,'0X" r g b)))))
 
 (defun display-evaluated-message
     (start

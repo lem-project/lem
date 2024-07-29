@@ -22,7 +22,8 @@
            :prompt-for-files-recursively
            :format-current-buffer
            :file-history
-           :find-history-file)
+           :find-history-file
+           :*file-history-limit*)
   #+sbcl
   (:lock t))
 (in-package :lem-core/commands/file)
@@ -396,13 +397,15 @@ Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode a
   (format-buffer))
 
 (defvar *files-history*)
-
+(defvar *file-history-limit* 10
+  "The maximum number of files to keep in the file history.")
+  
 (defun file-history ()
   "Return or create the files' history struct.
   The history file is saved on (lem-home)/history/files"
   (unless (boundp '*files-history*)
     (let* ((pathname (merge-pathnames "history/files" (lem-home)))
-           (history (lem/common/history:make-history :pathname pathname :limit 10)))
+           (history (lem/common/history:make-history :pathname pathname :limit *file-history-limit*)))
       (setf *files-history* history)))
   *files-history*)
 

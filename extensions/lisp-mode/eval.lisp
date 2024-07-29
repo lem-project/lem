@@ -84,7 +84,7 @@
           (hsv-to-rgb h
                       s
                       (+ v (if (< v 50) 5 -5)))
-        (format nil "#~2,'0X~2,'0X~2,'0X" r g b)))))
+        (color-to-hex-string (make-color r g b))))))
 
 (defun display-evaluated-message
     (start

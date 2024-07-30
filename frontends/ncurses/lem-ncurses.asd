@@ -3,7 +3,7 @@
                "cl-charms"
                "cl-setlocale"
                "lem"
-               "lem/extensions")
+               #-lispworks "lem/extensions")
   :serial t
   :components (#+win32(:file "cl-charms-pdcurseswin32")
                (:file "config")

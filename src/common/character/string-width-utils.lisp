@@ -45,8 +45,9 @@
     (setf (gethash (code-char 31) table) "^_")
     (setf (gethash (code-char 127) table) "^?")
     (loop :for i :from 0 :to #xff
-          :do (setf (gethash (code-char (+ #xe000 i)) table)
-                    (format nil "\\~D" i)))
+          :do (ignore-errors
+                (setf (gethash (code-char (+ #xe000 i)) table)
+                      (format nil "\\~D" i))))
     table))
 
 (defun control-char (char)
@@ -54,7 +55,7 @@
 
 (defun wide-char-p (char)
   (declare (character char))
-  (or (char= char #\▼)
+  (or 
       (lem/common/character/icon:icon-code-p (char-code char))
       (lem/common/character/eastasian:eastasian-code-p (char-code char))
       (control-char char)))

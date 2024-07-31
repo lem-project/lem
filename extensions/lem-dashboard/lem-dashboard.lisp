@@ -55,7 +55,9 @@
                                     (lem-core/commands/project:saved-projects)))
            (max-length (length longest-project))
            (left-padding (floor (- width max-length) 2)))
-      (loop for project in (lem-core/commands/project:saved-projects)
+      (loop for project in (subseq (lem-core/commands/project:saved-projects) 
+                                   0 
+                                   (min 5 (length (lem-core/commands/project:saved-projects))))
             do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
                (insert-string point (format nil "~A~%" project))))))
 

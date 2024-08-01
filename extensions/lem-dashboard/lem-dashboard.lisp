@@ -1,6 +1,8 @@
-(defpackage #:lem-dashboard
+(defpackage :lem-dashboard
   (:use :cl :lem)
-  (:export #:show-dashboard))
+  (:export :show-dashboard
+           :*dashboard-project-count*
+           :*dashboard-file-count*))
 
 (in-package :lem-dashboard)
 
@@ -44,6 +46,8 @@
       (insert-string point (create-centered-string line width))
       (insert-character point #\Newline))))
 
+(defvar *dashboard-project-count* 5)
+
 (defun insert-recent-projects (point)
   (let* ((width (window-width (current-window)))
          (title "Recent Projects (r)")
@@ -57,9 +61,11 @@
            (left-padding (floor (- width max-length) 2)))
       (loop for project in (subseq (lem-core/commands/project:saved-projects) 
                                    0 
-                                   (min 5 (length (lem-core/commands/project:saved-projects))))
+                                   (min *dashboard-project-count* (length (lem-core/commands/project:saved-projects))))
             do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
                (insert-string point (format nil "~A~%" project))))))
+
+(defvar *dashboard-file-count* 5)
 
 (defun insert-recent-files (point)
   (let* ((width (window-width (current-window)))
@@ -72,7 +78,7 @@
     (let* ((longest-file (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) recent-files))
            (max-length (length longest-file))
            (left-padding (floor (- width max-length) 2)))
-      (loop for file in (subseq recent-files 0 (min 5 (length recent-files)))
+      (loop for file in (subseq recent-files 0 (min *dashboard-file-count* (length recent-files)))
             do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
                (insert-string point (format nil "~A~%" file))))))
 
@@ -138,8 +144,7 @@
       (find-file file-path))))
 
 (defun in-recent-files-section-p (point)
-  (let* ((buffer (point-buffer point))
-         (current-line (line-number-at-point point))
+  (let* ((current-line (line-number-at-point point))
          (files-section-start nil)
          (temp-point (copy-point point :temporary)))
     (buffer-start temp-point)

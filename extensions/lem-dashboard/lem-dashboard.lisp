@@ -16,8 +16,9 @@
 (defun insert-splash-screen (point)
   (let ((width (window-width (current-window)))
         (splash-text '("
-
- Welcome to Lem!
+ -----------------------
+ [   Welcome to Lem!   ]
+ -----------------------
                 
                 ,:coodddddoc.             
            ',;cldddddddddddddolc.         
@@ -50,7 +51,7 @@
 
 (defun insert-recent-projects (point)
   (let* ((width (window-width (current-window)))
-         (title "Recent Projects (r)")
+         (title (format nil "~A Recent Projects (r)" (icon-string "folder")))
          (title-line (create-centered-string title width)))
     (insert-string point title-line)
     (insert-character point #\Newline)
@@ -69,7 +70,7 @@
 
 (defun insert-recent-files (point)
   (let* ((width (window-width (current-window)))
-         (title "Recent Files (f)")
+         (title (format nil "~A Recent Files (f)" (icon-string "file-text")))
          (title-line (create-centered-string title width))
          (recent-files (lem/common/history:history-data-list (lem-core/commands/file:file-history))))
     (insert-string point title-line)
@@ -81,6 +82,12 @@
       (loop for file in (subseq recent-files 0 (min *dashboard-file-count* (length recent-files)))
             do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
                (insert-string point (format nil "~A~%" file))))))
+
+(defun insert-scratch-shortcuts (point)
+  (let* ((width (window-width (current-window)))
+         (scratch-text (format nil "~A New Lisp Scratch Buffer (l)" (icon-string "lisp")))
+         (centered-text (create-centered-string scratch-text width)))
+    (insert-string point centered-text)))
 
 (defun create-dashboard-buffer ()
   (make-buffer *dashboard-buffer-name*
@@ -103,7 +110,11 @@
       (insert-recent-projects point)
       (insert-character point #\Newline)
       (insert-character point #\Newline)
-      (insert-recent-files point))
+      (insert-recent-files point)
+      (insert-character point #\Newline)
+      (insert-character point #\Newline)
+      (insert-character point #\Newline)
+      (insert-scratch-shortcuts point))
     (buffer-start (buffer-point buffer))
     (setf (buffer-read-only-p buffer) t)
     (change-buffer-mode buffer 'dashboard-mode)))
@@ -162,6 +173,8 @@
 
 (define-key *dashboard-mode-keymap* "r" 'move-to-recent-projects)
 (define-key *dashboard-mode-keymap* "f" 'move-to-recent-files)
+(define-key *dashboard-mode-keymap* "l" 'lem-lisp-mode/internal::lisp-scratch)
+(define-key *dashboard-mode-keymap* "q" 'lem-lisp-mode/internal::lisp-scratch)
 (define-key *dashboard-mode-keymap* "n" 'next-line)
 (define-key *dashboard-mode-keymap* "p" 'previous-line)
 (define-key *dashboard-mode-keymap* "Return" 'open-selected-item)

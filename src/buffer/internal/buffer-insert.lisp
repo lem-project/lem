@@ -130,7 +130,8 @@
                 :do (cond
                       ((not eolp)
                        (let ((end (+ charpos remaining-deletions)))
-                         (write-string (line:line-substring line :start charpos :end end) killring-stream)
+                         (write-string (line:line-substring line :start charpos :end end)
+                                       killring-stream)
                          (line:delete-region line :start charpos :end end))
                        (shift-markers point
                                       offset-line

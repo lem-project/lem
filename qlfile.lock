@@ -46,3 +46,7 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/Shinmera/dissect.git")
   :version "git-a70cabcd748cf7c041196efd711e2dcca2bbbb2c"))
+("3bmd" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/3b/3bmd.git")
+  :version "git-0a54e65e13f2eb174d47d3d2d21ae46ff29c547d"))

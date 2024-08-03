@@ -16,22 +16,9 @@ at your own risk.
 
 However it should run a few operations smoothly.
 
-
-## Load
-
-`legit` is built into Lem but it isn't loaded by default. To load it, open a Lisp REPL (`M-x start-lisp-repl`) or evaluate Lisp code (`M-:`) and type:
-
-    (ql:quickload "lem/legit")
-
-Now you can start it with `C-x g` or `M-x legit-status`.
-
-![](lem-status.png)
-
-## Help
-
-Press `?` or `C-x ?` to call `legit-help`.
-
 ## M-x legit-status
+
+Bound to `C-x g` by default.
 
 The status windows show us, on the left:
 
@@ -45,6 +32,12 @@ It also warns us if a rebase is in process.
 and the window on the right shows us the file diffs or the commits' content.
 
 Refresh the status content with `g`.
+
+![](lem-status.png)
+
+## Help
+
+Press `?` or `C-x ?` to call `legit-help`.
 
 ## Navigation
 

@@ -233,7 +233,72 @@
 (define-attribute syntax-builtin-attribute
   (t :foreground "#FF87FF"))
 
-
+(define-attribute document-header1-attribute
+  (:light :foreground "#000000" :bold t)
+  (:dark :foreground "#FFFFFF" :bold t))
+
+(define-attribute document-header2-attribute
+  (:light :foreground "#005A9C" :bold t)
+  (:dark :foreground "#87CEFA" :bold t))
+
+(define-attribute document-header3-attribute
+  (:light :foreground "#0000FF" :bold t)
+  (:dark :foreground "#ADD8E6" :bold t))
+
+(define-attribute document-header4-attribute
+  (:light :foreground "#8B008B" :bold t)
+  (:dark :foreground "#DDA0DD" :bold t))
+
+(define-attribute document-header5-attribute
+  (:light :foreground "#A0522D" :bold t)
+  (:dark :foreground "#F4A460" :bold t))
+
+(define-attribute document-header6-attribute
+  (:light :foreground "#2E8B57" :bold t)
+  (:dark :foreground "#98FB98" :bold t))
+
+(define-attribute document-bold-attribute
+  (t :bold t))
+
+(define-attribute document-italic-attribute
+  (:light :foreground "#8B4513")
+  (:dark :foreground "#DEB887"))
+
+(define-attribute document-underline-attribute
+  (t :underline t))
+
+(define-attribute document-link-attribute
+  (:light :foreground "#0000EE" :underline t)
+  (:dark :foreground "#87CEFA" :underline t))
+
+(define-attribute document-list-attribute
+  (:light :foreground "#8B4513")
+  (:dark :foreground "#DEB887"))
+
+(define-attribute document-code-block-attribute
+  (:light :background "#F0F0F0" :foreground "#000000")
+  (:dark :background "#2F4F4F" :foreground "#E0FFFF"))
+
+(define-attribute document-inline-code-attribute
+  (:light :background "#F0F0F0" :foreground "#8B008B")
+  (:dark :background "#2F4F4F" :foreground "#FF69B4"))
+
+(define-attribute document-blockquote-attribute
+  (:light :foreground "#696969")
+  (:dark :foreground "#D3D3D3"))
+
+(define-attribute document-table-attribute
+  (:light :foreground "#000000" :background "#E6E6FA")
+  (:dark :foreground "#FFFFFF" :background "#4B0082"))
+
+(define-attribute document-task-list-attribute
+  (:light :foreground "#228B22")
+  (:dark :foreground "#98FB98"))
+
+(define-attribute document-metadata-attribute
+  (:light :foreground "#4682B4")
+  (:dark :foreground "#87CEEB"))
+
 (defun attribute-value* (attribute key)
   (let ((attribute (ensure-attribute attribute nil)))
     (when attribute

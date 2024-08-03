@@ -145,6 +145,23 @@
    :syntax-variable-attribute
    :syntax-type-attribute
    :syntax-builtin-attribute
+   :document-header1-attribute
+   :document-header2-attribute
+   :document-header3-attribute
+   :document-header4-attribute
+   :document-header5-attribute
+   :document-header6-attribute
+   :document-bold-attribute
+   :document-italic-attribute
+   :document-underline-attribute
+   :document-link-attribute
+   :document-list-attribute
+   :document-code-block-attribute
+   :document-inline-code-attribute
+   :document-blockquote-attribute
+   :document-table-attribute
+   :document-task-list-attribute
+   :document-metadata-attribute
    :completion-attribute
    :non-focus-completion-attribute
    :attribute-image

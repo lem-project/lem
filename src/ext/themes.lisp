@@ -70,9 +70,25 @@
 
   (lem/frame-multiplexer:frame-multiplexer-active-frame-name-attribute
    :foreground "white" :background "CornflowerBlue" :bold t)
-
   (lem/frame-multiplexer:frame-multiplexer-frame-name-attribute
    :foreground "black" :background "dark gray" :bold t)
-
   (lem/frame-multiplexer:frame-multiplexer-background-attribute
-   :foreground "white" :background "#262626"))
+   :foreground "white" :background "#262626")
+  
+  (document-header1-attribute :foreground "#ffffff" :bold t)
+  (document-header2-attribute :foreground "#90bee1" :bold t)
+  (document-header3-attribute :foreground "#bed6ff" :bold t)
+  (document-header4-attribute :foreground "#efb3f7" :bold t)
+  (document-header5-attribute :foreground "#ffbf70" :bold t)
+  (document-header6-attribute :foreground "#beda78" :bold t)
+  (document-bold-attribute :bold t)
+  (document-italic-attribute :foreground "#ffbf70")
+  (document-underline-attribute :underline t)
+  (document-link-attribute :foreground "#90bee1" :underline t)
+  (document-list-attribute :foreground "#ffbf70")
+  (document-code-block-attribute :background "#393939" :foreground "#e0e0e0")
+  (document-inline-code-attribute :background "#393939" :foreground "#ff93b3")
+  (document-blockquote-attribute :foreground "#b4b7b4")
+  (document-table-attribute :foreground "#ffffff" :background "#515151")
+  (document-task-list-attribute :foreground "#beda78")
+  (document-metadata-attribute :foreground "#90bee1"))

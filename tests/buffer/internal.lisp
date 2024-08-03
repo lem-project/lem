@@ -62,3 +62,20 @@ qrstuvwxyz"
     (ok (equal "Hello World" (lem:buffer-text buffer)))
 
     (check-corruption buffer)))
+
+(deftest |`buffer-end-point` points to the end of the buffer|
+  ;; Arrange
+  (let* ((buffer (lem:make-buffer "test" :temporary t))
+         (point (lem:buffer-point buffer)))
+    (lem:insert-string point "aaaaaaaaaa")
+
+    ;; Act
+    (lem:move-to-line point 1)
+    (lem:move-to-column point 5)
+    (lem:delete-character point 10)
+
+    ;; Assertion
+    (let ((end-point (lem:buffer-end-point buffer)))
+      (ok (= 5 (lem:point-charpos end-point)))
+      (ok (= 1 (lem:line-number-at-point point))))
+    (check-corruption buffer)))

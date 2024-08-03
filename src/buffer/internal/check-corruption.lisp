@@ -67,7 +67,12 @@
   (dolist (point (buffer-points buffer))
     (debug-assert (point<= (buffer-start-point buffer)
                            point
-                           (buffer-end-point buffer)))))
+                           (buffer-end-point buffer))))
+  (let ((end-point (buffer-end-point buffer)))
+    (debug-assert (= (buffer-nlines buffer)
+                     (line-number-at-point end-point)))
+    (debug-assert (= (lem/buffer/line:line-length (point-line end-point))
+                     (point-charpos end-point)))))
 
 (defun check-all-buffers-corruption ()
   (dolist (buffer (buffer-list))

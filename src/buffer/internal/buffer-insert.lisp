@@ -133,14 +133,13 @@
                          (write-string (line:line-substring line :start charpos :end end)
                                        killring-stream)
                          (line:delete-region line :start charpos :end end))
-                       (shift-markers point
-                                      offset-line
-                                      (- remaining-deletions))
+                       (shift-markers point offset-line (- remaining-deletions))
                        (return))
                       ((null (line:line-next line))
-                       (write-string (line:line-substring line :start charpos) killring-stream)
-                       (line:delete-region line :start charpos)
-                       (shift-markers point offset-line (- charpos (line:line-length line)))
+                       (let ((offset (- charpos (line:line-length line))))
+                         (write-string (line:line-substring line :start charpos) killring-stream)
+                         (line:delete-region line :start charpos)
+                         (shift-markers point offset-line offset))
                        (return))
                       (t
                        (decf (buffer-nlines (point-buffer point)))

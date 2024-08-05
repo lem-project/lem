@@ -28,6 +28,8 @@
               :while pos))))
 
 (defun completion (name elements &key (test #'search) separator key rank)
+  "Perform completion on ELEMENTS matching NAME. Returns matching elements, 
+   optionally sorted by RANK function."
   (labels ((apply-key (elt) (if key (funcall key elt) elt))
            (test-with-separator (elt)
              (let* ((elt (apply-key elt))
@@ -48,18 +50,22 @@
           (sort filtered-elements #'< :key (lambda (elt) (funcall rank name (apply-key elt))))
           filtered-elements))))
 
-(defun file-completion-rank (name elt)
+(defun string-completion-rank (name elt)
   (cond
-    ((string= name elt) 0)  ; Exact match
-    ((str:starts-with-p name elt) (length name))  ; Prefix match
-    ((search name elt) 2)  ; Substring match anywhere
-    (t (length elt))))  ; Fuzzy match, rank by length
+    ; Exact match
+    ((string= name elt) 0)
+    ; Prefix match
+    ((str:starts-with-p name elt) (length name))
+    ; Substring match anywhere
+    ((search name elt) 2)
+    ; Fuzzy match, rank by length
+    (t (length elt))))
 
 (defun completion-strings (str strings &key key)
   (completion str strings 
               :test #'fuzzy-match-p
               :key key
-              :rank #'file-completion-rank))
+              :rank #'string-completion-rank))
 
 (defun completion-hyphen (name elements &key key)
   (completion name elements :test #'completion-test :separator "-" :key key))

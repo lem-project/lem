@@ -536,6 +536,7 @@
    :completion-hyphen
    :completion-file
    :completion-strings
+   :completion-files
    :completion-buffer)
   ;; cursors.lisp
   (:export

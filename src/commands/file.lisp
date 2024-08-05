@@ -210,7 +210,7 @@
     (let ((candidates (get-files-recursively-with-timeout (find-program))))
       (prompt-for-string
        "File: "
-       :completion-function (lambda (x) (completion-strings x candidates))
+       :completion-function (lambda (x) (completion-files x candidates))
        :test-function (lambda (name) (member name candidates :test #'string=))))))
 
 (define-command find-file-recursively (arg) (:universal)

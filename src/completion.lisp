@@ -27,7 +27,7 @@
               :when pos :collect (string (char string pos))
               :while pos))))
 
-(defun completion (name elements &key (test #'search) separator key)
+(defun completion (name elements &key (test #'search) separator key rank)
   (labels ((apply-key (elt) (if key (funcall key elt) elt))
            (test-with-separator (elt)
              (let* ((elt (apply-key elt))
@@ -39,10 +39,27 @@
                           :always (funcall test p1 p2)))))
            (test-without-separator (elt)
              (funcall test name (apply-key elt))))
-    (remove-if-not (if separator
-                       #'test-with-separator
-                       #'test-without-separator)
-                   elements)))
+    (let ((filtered-elements
+            (remove-if-not (if separator
+                               #'test-with-separator
+                               #'test-without-separator)
+                           elements)))
+      (if rank
+          (sort filtered-elements #'< :key (lambda (elt) (funcall rank name (apply-key elt))))
+          filtered-elements))))
+
+(defun file-completion-rank (name elt)
+  (cond
+    ((string= name elt) 0)  ; Exact match
+    ((str:starts-with-p name elt) (length name))  ; Prefix match
+    ((search name elt) 2)  ; Substring match anywhere
+    (t (length elt))))  ; Fuzzy match, rank by length
+
+(defun completion-strings (str strings &key key)
+  (completion str strings 
+              :test #'fuzzy-match-p
+              :key key
+              :rank #'file-completion-rank))
 
 (defun completion-hyphen (name elements &key key)
   (completion name elements :test #'completion-test :separator "-" :key key))
@@ -71,10 +88,7 @@
                              :key #'(lambda (path)
                                       (enough-namestring path input-directory))))))
       strings)))
-
-(defun completion-strings (str strings &key key)
-  (completion str strings :test #'fuzzy-match-p :key key))
-
+          
 (defun completion-buffer (str &optional (buffer-list (buffer-list)))
   (let ((candidates1
           (completion str buffer-list

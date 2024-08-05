@@ -169,7 +169,9 @@
    :attribute-height
    :attribute-font
    :cursor-attribute-p
-   :set-cursor-attribute)
+   :set-cursor-attribute
+   :display-dark-p
+   :display-light-p)
   ;; clipboard.lisp
   (:export
    :wsl-p
@@ -604,7 +606,8 @@
    :attribute-background-color
    :attribute-foreground-with-reverse
    :attribute-background-with-reverse
-   :cursor-type)
+   :cursor-type
+   :display-background-mode)
   ;; color-theme.lisp
   (:export
    :color-theme-names
@@ -613,7 +616,9 @@
    :current-theme
    :find-color-theme
    :color-theme
-   :get-color-theme-color)
+   :get-color-theme-color
+   :foreground-color
+   :background-color)
   ;; region.lisp
   (:export
    :check-marked-using-global-mode

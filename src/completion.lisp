@@ -61,6 +61,12 @@
     ; Fuzzy match, rank by length
     (t (length elt))))
 
+(defun completion-strings (str strings &key key)
+  (completion str strings 
+              :test #'fuzzy-match-p
+              :key key
+              :rank #'string-completion-rank))
+
 (defun file-completion-rank (name elt)
   (let ((file-name (file-namestring elt)))
     (cond
@@ -77,11 +83,11 @@
       ; Fuzzy match, rank by length
       (t (length elt)))))
 
-(defun completion-strings (str strings &key key files)
+(defun completion-files (str strings &key key)
   (completion str strings 
               :test #'fuzzy-match-p
               :key key
-              :rank (if files #'file-completion-rank #'string-completion-rank)))
+              :rank #'file-completion-rank))
 
 (defun completion-hyphen (name elements &key key)
   (completion name elements :test #'completion-test :separator "-" :key key))

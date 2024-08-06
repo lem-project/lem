@@ -110,13 +110,19 @@
                    (character-offset (copy-point point) start)
                    (character-offset (copy-point point) end)
                    :attribute 'document-underline-attribute))
-                ;; Inline Code
+                ;; Code
                 (ppcre:do-matches (start end "`([^`]+)`" line)
                   (print (format nil "Inline code detected: ~A" (subseq line start end)))
                   (put-text-property 
                    (character-offset (copy-point point) start)
                    (character-offset (copy-point point) end)
-                   :attribute 'document-inline-code-attribute)))
+                   :attribute 'document-inline-code-attribute))
+                ;; Links
+                (ppcre:do-matches (start end "\\[([^\\]]+)\\]\\(([^)]+)\\)" line)
+                  (put-text-property 
+                   (character-offset (copy-point point) start)
+                   (character-offset (copy-point point) end)
+                   :attribute 'document-link-attribute)))
           ; Exit if we can't move forward
           :do (unless (line-offset point 1)
                 (return)))))  

@@ -71,12 +71,20 @@
                                                    (6 'document-header6-attribute))))))
                   ((str:starts-with-p ">" line)
                    (put-line-attribute point 'document-blockquote-attribute))
-                  ((or (str:starts-with-p "- " line)
-                       (str:starts-with-p "* " line)
-                       (str:starts-with-p "+ " line))
-                   (put-line-attribute point 'document-list-attribute))
+                  ;; Unordered list items
+                  ((ppcre:scan "^\\s*[-*+]\\s" line)
+                   (ppcre:do-matches (start end "^(\\s*[-*+])\\s" line)
+                     (put-text-property 
+                      (character-offset (copy-point point) start)
+                      (character-offset (copy-point point) end)
+                      :attribute 'document-list-attribute)))
+                  ;; Ordered list items
                   ((ppcre:scan "^\\s*\\d+\\.\\s" line)
-                   (put-line-attribute point 'document-list-attribute))
+                   (ppcre:do-matches (start end "^(\\s*\\d+\\.)\\s" line)
+                     (put-text-property 
+                      (character-offset (copy-point point) start)
+                      (character-offset (copy-point point) end)
+                      :attribute 'document-list-attribute)))
                   ((start-code-block-line-p point)
                    (scan-code-block point end))
                   ((or (str:starts-with-p "- [ ]" line)
@@ -112,7 +120,6 @@
                    :attribute 'document-underline-attribute))
                 ;; Code
                 (ppcre:do-matches (start end "`([^`]+)`" line)
-                  (print (format nil "Inline code detected: ~A" (subseq line start end)))
                   (put-text-property 
                    (character-offset (copy-point point) start)
                    (character-offset (copy-point point) end)

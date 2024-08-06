@@ -771,7 +771,8 @@
 144 238 144  LightGreen
 ")
 
-(defvar *color-names* (make-hash-table :test 'equal))
+;; Size includes aliases
+(defvar *color-names* (make-hash-table :size 848 :test 'equal))
 
 (defun parse-rgb-txt ()
   (alexandria:alist-hash-table

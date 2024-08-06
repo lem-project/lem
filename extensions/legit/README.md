@@ -16,22 +16,9 @@ at your own risk.
 
 However it should run a few operations smoothly.
 
-
-## Load
-
-`legit` is built into Lem but it isn't loaded by default. To load it, open a Lisp REPL (`M-x start-lisp-repl`) or evaluate Lisp code (`M-:`) and type:
-
-    (ql:quickload "lem/legit")
-
-Now you can start it with `C-x g` or `M-x legit-status`.
-
-![](lem-status.png)
-
-## Help
-
-Press `?` or `C-x ?` to call `legit-help`.
-
 ## M-x legit-status
+
+Bound to `C-x g` by default.
 
 The status windows show us, on the left:
 
@@ -45,6 +32,12 @@ It also warns us if a rebase is in process.
 and the window on the right shows us the file diffs or the commits' content.
 
 Refresh the status content with `g`.
+
+![](lem-status.png)
+
+## Help
+
+Press `?` or `C-x ?` to call `legit-help`.
 
 ## Navigation
 
@@ -193,21 +186,11 @@ If a project is managed by more than one VCS, `legit` takes the first VCS define
     ))
 ~~~
 
-where these symbols are functions with no arguments that return two values: a truthy value if the current project is considered a Git/Fossil/Mercurial project, and a keyword representing the VCS: `:git`, `:fossil`, `:hg`.
-
-For example:
-
-~~~lisp
-(defun hg-project-p ()
-  "Return t if we find a .hg/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`)."
-  (values (uiop:directory-exists-p ".hg")
-          :hg))
-~~~
-
+where these symbols are functions with no arguments that return one value: a truthy "handle" object if the current project is considered a Git/Fossil/Mercurial project.
 
 Variables and parameters in the `lem/legit` package. They might not be exported.
 
-- `*legit-verbose*`: If non nil, print some logs on standard output (terminal) and create the hunk patch file on disk at (lem-home)/lem-hunk-latest.patch.
+- None
 
 => to help debugging
 

@@ -1,5 +1,8 @@
 (in-package :lem/buffer/internal)
 
+(deftype point-kind ()
+  '(member :temporary :left-inserting :right-inserting))
+
 (defclass point ()
   ((buffer
     :reader point-buffer
@@ -15,7 +18,7 @@
     :type fixnum)
    (kind
     :reader point-kind
-    :type (member :temporary :left-inserting :right-inserting)))
+    :type point-kind))
   (:documentation
    "`point` is an object that points to the position of the text in the buffer.
 It has a `buffer` slot, a `line` number, and `charpos` is an offset from the beginning of the line, starting at zero.
@@ -68,7 +71,7 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
     (push point (buffer-points (point-buffer point)))))
 
 (defun make-point (buffer linum line charpos &key (kind :right-inserting))
-  (check-type kind (member :temporary :left-inserting :right-inserting))
+  (check-type kind point-kind)
   (let ((point (make-instance 'point)))
     (initialize-point-slot-values point
                                   :buffer buffer
@@ -80,7 +83,7 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
     point))
 
 (defmethod copy-point-using-class ((point point) from-point kind)
-  (check-type kind (member :temporary :left-inserting :right-inserting))
+  (check-type kind point-kind)
   (initialize-point-slot-values point
                                 :buffer (point-buffer from-point)
                                 :linum (point-linum from-point)

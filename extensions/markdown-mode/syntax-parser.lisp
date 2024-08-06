@@ -57,26 +57,63 @@
   (clear-region-major-mode start end)
   (with-point ((point start))
     (loop :while (point< point end)
-          :do (cond ((looking-at point "^#")
-                     (put-line-attribute point 'document-header1-attribute))
-                    ((looking-at point "^>")
-                     (put-line-attribute point 'document-blockquote-attribute))
-                    ((looking-at point "^\\s*[-*+]")
-                     (back-to-indentation point)
-                     (with-point ((start point)
-                                  (end point))
-                       (character-offset end 1)
-                       (put-text-property start end :attribute 'document-list-attribute)))
-                    ((looking-at point "^\\s*(?:\\d)+\\.\\s")
-                     (back-to-indentation point)
-                     (with-point ((start point)
-                                  (end point))
-                       (skip-chars-forward end #'digit-char-p)
-                       (character-offset end 1)
-                       (put-text-property start end :attribute 'document-list-attribute)))
-                    ((start-code-block-line-p point)
-                     (scan-code-block point end)))
-          :while (line-offset point 1))))
+          :do (let ((line (line-string point)))
+                (cond
+                  ((str:starts-with-p "#" line)
+                   (let ((level (position #\Space line)))
+                     (when level
+                       (put-line-attribute point (case level
+                                                   (1 'document-header1-attribute)
+                                                   (2 'document-header2-attribute)
+                                                   (3 'document-header3-attribute)
+                                                   (4 'document-header4-attribute)
+                                                   (5 'document-header5-attribute)
+                                                   (6 'document-header6-attribute))))))
+                  ((str:starts-with-p ">" line)
+                   (put-line-attribute point 'document-blockquote-attribute))
+                  ((or (str:starts-with-p "- " line)
+                       (str:starts-with-p "* " line)
+                       (str:starts-with-p "+ " line))
+                   (put-line-attribute point 'document-list-attribute))
+                  ((ppcre:scan "^\\s*\\d+\\.\\s" line)
+                   (put-line-attribute point 'document-list-attribute))
+                  ((start-code-block-line-p point)
+                   (scan-code-block point end))
+                  ((or (str:starts-with-p "- [ ]" line)
+                       (str:starts-with-p "- [x]" line)
+                       (str:starts-with-p "- [X]" line))
+                   (put-line-attribute point 'document-task-list-attribute))
+                  ((str:starts-with-p "---" line)
+                   (put-line-attribute point 'document-metadata-attribute))
+                  ((str:starts-with-p "|" line)
+                   (put-line-attribute point 'document-table-attribute)))
+
+                ;; Inline matches
+                ;; Bold
+                (ppcre:do-matches (start end "\\*\\*(.*?)\\*\\*" line)
+                  (put-text-property 
+                   (character-offset (copy-point point) start)
+                   (character-offset (copy-point point) end)
+                   :attribute 'document-bold-attribute))
+                ;; Italic
+                (ppcre:do-matches (start end "\\*(.*?)\\*" line)
+                  (let ((bold-start (character-offset (copy-point point) start))
+                        (bold-end (character-offset (copy-point point) end)))
+                    (unless (text-property-at bold-start :attribute)
+                      (put-text-property 
+                       bold-start
+                       bold-end
+                       :attribute 'document-italic-attribute))))
+                ;; Underline
+                (ppcre:do-matches (start end "__(.*?)__" line)
+                  (put-text-property 
+                   (character-offset (copy-point point) start)
+                   (character-offset (copy-point point) end)
+                   :attribute 'document-underline-attribute)))
+          ; Exit if we can't move forward
+          :do (unless (line-offset point 1)
+                (return)))))  
+
 
 (defun search-backward-code-block-start (point)
   (with-point ((point point))

@@ -1,5 +1,54 @@
 # Hello
 
+## Test
+
+### Subheader
+
+#### Deeper header
+
+##### Even deeper
+
+###### Deepest header
+
+This is a paragraph with **bold text**, *italic text*, and __underlined text__. 
+
+Here is some `inline code` and a [link](https://example.com).
+
+> This is a blockquote.
+> More blockquote text.
+> > Nested blockquote text.
+
+Lists:
+
+- foo
+- bar
+- baz
+
+* hoge
+* piyo
+
++ hoge
++ piyo
+
+1. one
+2. two
+3. three
+
+Task list example:
+
+- [ ] Incomplete task
+- [x] Completed task
+- [ ] Another task to do
+
+Table:
+
+| Header 1 | Header 2 | Header 3 |
+|----------|----------|----------|
+| Row 1, Col 1 | Row 1, Col 2 | Row 1, Col 3 |
+| Row 2, Col 1 | Row 2, Col 2 | Row 2, Col 3 |
+
+Code:
+
 ```lisp
 (defpackage :foo
   (:use :cl))
@@ -17,20 +66,22 @@ int main(void) {
 }
 ```
 
-## Test
+```python
+def greet(name):
+    print(f"Hello, {name}!")
 
-this is test
+greet("World")
+```
 
-- foo
-- bar
-- baz
+Inline formatting combinations: 
+- **Bold and *italic* text**
+- *Italic and `inline code`*
+- [A link with **bold** text](https://example.com)
 
-* hoge
-* piyo
+---
 
-+ hoge
-+ piyo
+Metadata:
 
-1. one
-2. two
-3. three
+Title: Expanded Comprehensive Markdown Test File
+Author: AI Assistant
+Date: 2024-08-05

@@ -771,22 +771,37 @@
 144 238 144  LightGreen
 ")
 
-(let ((color-names
-        (flet ((parse (text)
-                 (with-input-from-string (stream text)
-                   (loop :for line := (read-line stream nil)
-                         :while line
-                         :for elt := (ppcre:register-groups-bind (r g b name)
-                                         ("^\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+([a-zA-Z0-9 ]+)" line)
-                                       (cons (string-downcase name)
-                                             (list (and r (parse-integer r))
-                                                   (and g (parse-integer g))
-                                                   (and b (parse-integer b)))))
-                         :if elt
-                         :collect elt))))
-          (alexandria:alist-hash-table (parse *rgb.txt*) :test 'equal))))
-  (defun get-rgb-from-color-name (color-name)
-    (gethash (string-downcase color-name) color-names)))
+(defvar *color-names* (make-hash-table :test 'equal))
+
+(defun parse-rgb-txt ()
+  (alexandria:alist-hash-table
+   (with-input-from-string (stream *rgb.txt*)
+     (loop :for line := (read-line stream nil)
+           :while line
+           :for elt := (ppcre:register-groups-bind (r g b name)
+                           ("^\\s*(\\d+)\\s+(\\d+)\\s+(\\d+)\\s+([a-zA-Z0-9 ]+)" line)
+                         (cons (string-downcase name)
+                               (list (and r (parse-integer r))
+                                     (and g (parse-integer g))
+                                     (and b (parse-integer b)))))
+           :if elt
+           :collect elt))
+   :test 'equal))
+
+;; Lisp-style color names with a dash instead of space
+(defun add-lisp-color-alias (name value)
+  (when (> (length (ppcre:split "\\s+" name)) 1)
+    (let ((new-name (ppcre:regex-replace-all "\\s+" name "-")))
+      (setf (gethash new-name *color-names*) value))))
+
+(defun add-lisp-color-aliases ()
+  (maphash #'add-lisp-color-alias *color-names*))
+
+(defun get-rgb-from-color-name (color-name)
+  (when (equal (hash-table-count *color-names*) 0)
+    (setf *color-names* (parse-rgb-txt))
+    (add-lisp-color-aliases))
+  (gethash (string-downcase color-name) *color-names*))
 
 (defstruct (color (:constructor make-color (red green blue))) red green blue)
 

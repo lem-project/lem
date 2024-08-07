@@ -56,8 +56,8 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
     (point &key (buffer (alexandria:required-argument :buffer))
                 (linum (alexandria:required-argument :linum))
                 (line (alexandria:required-argument :line))
-                (charpos (alexandria:required-argument :line))
-                (kind (alexandria:required-argument :line)))
+                (charpos (alexandria:required-argument :charpos))
+                (kind (alexandria:required-argument :kind)))
   (setf (slot-value point 'buffer) buffer
         (slot-value point 'linum) linum
         (slot-value point 'line) line

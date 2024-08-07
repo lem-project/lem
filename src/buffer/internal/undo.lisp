@@ -30,6 +30,11 @@
   (setf (buffer-%enable-undo-boundary-p buffer) nil)
   nil)
 
+(defun buffer-undo-boundary (&optional (buffer (current-buffer)))
+  (when (buffer-enable-undo-boundary-p)
+    (unless (eq :separator (last-edit-history buffer))
+      (vector-push-extend :separator (buffer-edit-history buffer)))))
+
 (defun buffer-modify (buffer)
   (ecase *undo-mode*
     ((:edit :redo)
@@ -98,8 +103,3 @@
                     (last-edit-history buffer)))
         (vector-pop (buffer-edit-history buffer)))
       result0)))
-
-(defun buffer-undo-boundary (&optional (buffer (current-buffer)))
-  (when (buffer-enable-undo-boundary-p)
-    (unless (eq :separator (last-edit-history buffer))
-      (vector-push-extend :separator (buffer-edit-history buffer)))))

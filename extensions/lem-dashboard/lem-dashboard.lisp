@@ -44,16 +44,16 @@
                 ...';ckKKKKKK0            
                     .lOKx'                ")))
     (dolist (line (str:lines (car splash-text)))
-      (insert-string point (create-centered-string line width))
+      (insert-string point (create-centered-string line width) :attribute 'document-metadata-attribute)
       (insert-character point #\Newline))))
 
 (defvar *dashboard-project-count* 5)
 
 (defun insert-recent-projects (point)
   (let* ((width (window-width (current-window)))
-         (title (format nil "~A Recent Projects (r)" (icon-string "folder")))
+         (title (format nil "~A Recent Projects (r)" (icon-string "package")))
          (title-line (create-centered-string title width)))
-    (insert-string point title-line)
+    (insert-string point title-line :attribute 'document-header1-attribute)
     (insert-character point #\Newline)
     (insert-character point #\Newline)
     (let* ((longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b))
@@ -73,7 +73,7 @@
          (title (format nil "~A Recent Files (f)" (icon-string "file-text")))
          (title-line (create-centered-string title width))
          (recent-files (lem/common/history:history-data-list (lem-core/commands/file:file-history))))
-    (insert-string point title-line)
+    (insert-string point title-line :attribute 'document-header1-attribute)
     (insert-character point #\Newline)
     (insert-character point #\Newline)
     (let* ((longest-file (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) recent-files))
@@ -87,7 +87,8 @@
   (let* ((width (window-width (current-window)))
          (scratch-text (format nil "~A New Lisp Scratch Buffer (l)" (icon-string "lisp")))
          (centered-text (create-centered-string scratch-text width)))
-    (insert-string point centered-text)))
+    (insert-string point (create-centered-string (format nil "   -------~%~%") width))
+    (insert-string point centered-text :attribute 'document-header1-attribute)))
 
 (defun create-dashboard-buffer ()
   (make-buffer *dashboard-buffer-name*

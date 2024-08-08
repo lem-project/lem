@@ -8,8 +8,7 @@
         :type edit-kind
         :read-only t)
   (position (alexandria:required-argument :position)
-            :type (integer 0 *)
-            :read-only t)
+            :type (integer 0 *))
   (string (alexandria:required-argument :string)
           :type string
           :read-only t))
@@ -37,3 +36,15 @@
                  (make-edit :insert-string
                             (edit-position edit)
                             (edit-string edit))))))
+
+(defun compute-edit-offset (dest src)
+  (ecase (edit-kind src)
+    ((:insert-string)
+     (when (<= (edit-position src) (edit-position dest))
+       (incf (edit-position dest) (length (edit-string src)))))
+    ((:delete-string)
+     (when (< (edit-position src)
+              (edit-position dest))
+       (decf (edit-position dest) (length (edit-string src)))
+       (when (< (edit-position dest) (edit-position src))
+         (setf (edit-position dest) (edit-position src)))))))

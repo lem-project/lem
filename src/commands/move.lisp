@@ -10,6 +10,7 @@
            :move-to-end-of-buffer
            :move-to-beginning-of-line
            :move-to-beginning-of-logical-line
+           :move-back-to-indentation
            :move-to-end-of-line
            :move-to-end-of-logical-line
            :next-page
@@ -35,6 +36,7 @@
 (define-key *global-keymap* "C-End" 'move-to-end-of-buffer)
 (define-key *global-keymap* "C-a" 'move-to-beginning-of-line)
 (define-key *global-keymap* "Home" 'move-to-beginning-of-line)
+(define-key *global-keymap* "M-m" 'move-back-to-indentation)
 (define-key *global-keymap* "C-e" 'move-to-end-of-line)
 (define-key *global-keymap* "End" 'move-to-end-of-line)
 (define-key *global-keymap* "C-v" 'next-page)
@@ -125,6 +127,10 @@
 (define-command (move-to-beginning-of-logical-line (:advice-classes movable-advice)) () ()
   "Move the cursor to the beginning of the logical line."
   (line-start (current-point)))
+
+(define-command (move-back-to-indentation (:advice-classes movable-advice)) () ()
+  "Move to first non-whitespace character of current line."
+  (back-to-indentation (current-point)))
 
 (define-command (move-to-end-of-line (:advice-classes movable-advice)) () ()
   "Move the cursor to the end of the line."

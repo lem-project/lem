@@ -19,6 +19,7 @@
  -----------------------
  [   Welcome to Lem!   ]
  -----------------------
+
                 
                 ,:coodddddoc.             
            ',;cldddddddddddddolc.         
@@ -83,12 +84,33 @@
             do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
                (insert-string point (format nil "~A~%" file))))))
 
-(defun insert-scratch-shortcuts (point)
+(define-command open-lem-docs () ()
+  (open-external-file "https://lem-project.github.io/usage/usage/"))
+
+(define-command open-lem-github () ()
+  (open-external-file "https://github.com/lem-project/lem"))
+
+(defun insert-misc-shortcuts (point)
   (let* ((width (window-width (current-window)))
          (scratch-text (format nil "~A New Lisp Scratch Buffer (l)" (icon-string "lisp")))
-         (centered-text (create-centered-string scratch-text width)))
+         (getting-started-text (format nil "~A Getting Started (s)" (icon-string "markdown")))
+         (github-text (format nil "~A GitHub (g)" (icon-string "file-text"))))
     (insert-string point (create-centered-string (format nil "   -------~%~%") width))
-    (insert-string point centered-text :attribute 'document-header1-attribute)))
+    (lem/button:insert-button point 
+                              (create-centered-string scratch-text width)
+                              #'lem-lisp-mode/internal::lisp-scratch
+                              :attribute 'document-header2-attribute)
+    (insert-character point #\Newline)
+    (insert-character point #\Newline)
+    (lem/button:insert-button point 
+                              (create-centered-string getting-started-text width)
+                              #'open-lem-docs
+                              :attribute 'document-header3-attribute)
+    (insert-character point #\Newline)
+    (lem/button:insert-button point 
+                              (create-centered-string github-text width)
+                              #'open-lem-github
+                              :attribute 'document-header3-attribute)))
 
 (defun create-dashboard-buffer ()
   (make-buffer *dashboard-buffer-name*
@@ -115,7 +137,7 @@
       (insert-character point #\Newline)
       (insert-character point #\Newline)
       (insert-character point #\Newline)
-      (insert-scratch-shortcuts point))
+      (insert-misc-shortcuts point))
     (buffer-start (buffer-point buffer))
     (setf (buffer-read-only-p buffer) t)
     (change-buffer-mode buffer 'dashboard-mode)))
@@ -176,6 +198,8 @@
 (define-key *dashboard-mode-keymap* "f" 'move-to-recent-files)
 (define-key *dashboard-mode-keymap* "l" 'lem-lisp-mode/internal::lisp-scratch)
 (define-key *dashboard-mode-keymap* "q" 'lem-lisp-mode/internal::lisp-scratch)
+(define-key *dashboard-mode-keymap* "s" 'open-lem-docs)
+(define-key *dashboard-mode-keymap* "g" 'open-lem-github)
 (define-key *dashboard-mode-keymap* "n" 'next-line)
 (define-key *dashboard-mode-keymap* "p" 'previous-line)
 (define-key *dashboard-mode-keymap* "Return" 'open-selected-item)

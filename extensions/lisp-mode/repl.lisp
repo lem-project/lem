@@ -148,6 +148,7 @@
     buffer))
 
 (defun repl-set-prompt (point)
+  (update-repl-buffer-write-point point)
   (insert-string point
                  (format nil "~A> " (connection-prompt-string *connection*)))
   point)
@@ -270,16 +271,43 @@
     (insert-string (current-point) string)
     (lem/listener-mode:listener-return)))
 
-(define-command start-lisp-repl (&optional (use-this-window nil)) (:universal-nil)
-  (check-connection)
+(defparameter *welcome-text*
+  ";; Welcome to the REPL!
+;;
+;; The current REPL is running in the same process as the editor.
+;; If you don't need to hack the editor,
+;; please start a new process with `M-x slime`.
+
+")
+
+(defun insert-repl-header (buffer self-connection)
+  (when self-connection
+    (insert-string (buffer-point buffer)
+                   *welcome-text*)
+    (update-repl-buffer-write-point (buffer-end-point buffer))))
+
+(defun make-repl-buffer (self-connection)
+  (or (get-buffer "*lisp-repl*")
+      (let ((buffer (make-buffer "*lisp-repl*")))
+        (insert-repl-header buffer self-connection)
+        buffer)))
+
+(defun start-lisp-repl-internal (&key use-this-window new-process)
   (flet ((switch (buffer split-window-p)
            (if split-window-p
                (switch-to-window (pop-to-buffer buffer))
                (switch-to-buffer buffer))))
-    (lem/listener-mode:listener-start
-     "*lisp-repl*"
-     'lisp-repl-mode
-     :switch-to-buffer-function (alexandria:rcurry #'switch (not use-this-window)))))
+    (let ((buffer (make-repl-buffer (if new-process
+                                        nil
+                                        (self-connected-p)))))
+      (lem/listener-mode:listener-start
+       buffer
+       'lisp-repl-mode
+       :switch-to-buffer-function (alexandria:rcurry #'switch (not use-this-window))))))
+
+(define-command start-lisp-repl (&optional (use-this-window nil)) (:universal-nil)
+  (check-connection)
+  (start-lisp-repl-internal :use-this-window use-this-window))
 
 (define-command lisp-switch-to-repl-buffer () ()
   (let ((buffer (repl-buffer)))
@@ -307,6 +335,10 @@
             (let ((point (copy-point (buffer-point buffer) :left-inserting)))
               (buffer-start point)))))
 
+(defun update-repl-buffer-write-point (point)
+  (move-point (repl-buffer-write-point (point-buffer point))
+              point))
+
 (defun see-repl-writing (buffer)
   (when (end-buffer-p (buffer-point buffer))
     (dolist (window (get-buffer-windows buffer))
@@ -330,9 +362,11 @@
 (defmacro with-repl-point ((point) &body body)
   `(call-with-repl-point (lambda (,point) ,@body)))
 
-(defun write-string-to-repl (string)
+(defun write-string-to-repl (string &key attribute)
   (with-repl-point (point)
-    (insert-escape-sequence-string point string)
+    (if attribute
+        (insert-string point string attribute)
+        (insert-escape-sequence-string point string))
     (when (text-property-at point :field)
       (insert-character point #\newline)
       (character-offset point -1))))

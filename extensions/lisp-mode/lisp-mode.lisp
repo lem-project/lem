@@ -190,15 +190,16 @@
     (abort-all (current-connection) "change connection")
     (notify-change-connection-to-wait-message-thread))
   (setf (current-connection) connection)
-  (write-string-to-repl
-   (if (self-connection-p connection)
-       (format nil
-               "~%; changed connection (self connection)")
-       (format nil
-               "~%; changed connection (~A ~A)"
-               (connection-implementation-name connection)
-               (connection-implementation-version connection)))
-   :attribute 'syntax-comment-attribute))
+  (when (repl-buffer)
+    (write-string-to-repl
+     (if (self-connection-p connection)
+         (format nil
+                 "~%; changed connection (self connection)")
+         (format nil
+                 "~%; changed connection (~A ~A)"
+                 (connection-implementation-name connection)
+                 (connection-implementation-version connection)))
+     :attribute 'syntax-comment-attribute)))
 
 (defmethod switch-connection ((connection connection))
   (change-current-connection connection))

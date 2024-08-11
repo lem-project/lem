@@ -283,7 +283,8 @@
 (defun insert-repl-header (buffer self-connection)
   (when self-connection
     (insert-string (buffer-point buffer)
-                   *welcome-text*)
+                   *welcome-text*
+                   :sticky-attribute 'syntax-comment-attribute)
     (update-repl-buffer-write-point (buffer-end-point buffer))))
 
 (defun make-repl-buffer (self-connection)
@@ -347,17 +348,18 @@
 (defun call-with-repl-point (function)
   (let* ((buffer (ensure-repl-buffer-exist))
          (point (repl-buffer-write-point buffer)))
-    (cond (*repl-evaluating*
-           (buffer-end point))
-          (t
-           (when (point<= (lem/listener-mode:input-start-point buffer) point)
-             (move-point point (lem/listener-mode:input-start-point buffer))
-             (previous-single-property-change point :field))))
-    (unless (eq (current-buffer) buffer)
-      (see-repl-writing buffer))
-    (with-buffer-read-only buffer nil
-      (let ((*inhibit-read-only* t))
-        (funcall function point)))))
+    (when (lem/listener-mode:input-start-point buffer)
+      (cond (*repl-evaluating*
+             (buffer-end point))
+            (t
+             (when (point<= (lem/listener-mode:input-start-point buffer) point)
+               (move-point point (lem/listener-mode:input-start-point buffer))
+               (previous-single-property-change point :field))))
+      (unless (eq (current-buffer) buffer)
+        (see-repl-writing buffer))
+      (with-buffer-read-only buffer nil
+        (let ((*inhibit-read-only* t))
+          (funcall function point))))))
 
 (defmacro with-repl-point ((point) &body body)
   `(call-with-repl-point (lambda (,point) ,@body)))

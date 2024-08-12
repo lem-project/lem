@@ -2,7 +2,8 @@
   (:use :cl :lem)
   (:export :show-dashboard
            :*dashboard-project-count*
-           :*dashboard-file-count*))
+           :*dashboard-file-count*
+           :*dashboard-footer-messages*))
 
 (in-package :lem-dashboard)
 
@@ -19,7 +20,6 @@
  -----------------------
  [   Welcome to Lem!   ]
  -----------------------
-
                 
                 ,:coodddddoc.             
            ',;cldddddddddddddolc.         
@@ -117,6 +117,17 @@
                               #'open-lem-github
                               :attribute 'document-header3-attribute)))
 
+(defvar *dashboard-footer-messages* '("Happy Coding!"
+                                      "ほげ"
+                                      "<M-x> load-library <RET> tetris"
+                                      "Lem Editor Modules? Lisp EMacs? Lem's Not Emacs?"))
+
+(defun insert-dashboard-footer-message (point)
+  (let ((width (window-width (current-window)))
+        (working-dir (format nil "> ~A" (nth (random (length *dashboard-footer-messages*)) *dashboard-footer-messages*))))
+    (insert-string point (create-centered-string working-dir width) :attribute 'document-blockquote-attribute)
+    (insert-character point #\Newline)))
+
 (defun create-dashboard-buffer ()
   (make-buffer *dashboard-buffer-name*
                :enable-undo-p nil
@@ -134,17 +145,16 @@
     (let ((point (buffer-point buffer)))
       (insert-splash-screen point)
       (insert-character point #\Newline)
-      (insert-character point #\Newline)
       (insert-working-dir point)
-      (insert-character point #\Newline)
       (insert-character point #\Newline)
       (insert-recent-projects point)
       (insert-character point #\Newline)
-      (insert-character point #\Newline)
       (insert-recent-files point)
       (insert-character point #\Newline)
+      (insert-misc-shortcuts point)
       (insert-character point #\Newline)
-      (insert-misc-shortcuts point))
+      (insert-character point #\Newline)
+      (insert-dashboard-footer-message point))
     (buffer-start (buffer-point buffer))
     (setf (buffer-read-only-p buffer) t)
     (change-buffer-mode buffer 'dashboard-mode)))

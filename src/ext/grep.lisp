@@ -97,6 +97,14 @@
     (setf *last-query* query
           *last-directory* directory)))
 
+(define-command project-grep () ()
+  "Run grep at the project root directory."
+  (let* ((cwd (buffer-directory))
+         (project-root (lem-core/commands/project:find-root cwd))
+         (root (or project-root cwd))
+         (query (prompt-for-string "" :initial-value *last-query* :history-symbol 'grep)))
+    (grep query root)))
+
 (define-command grep-help () ()
   "Show grep help."
   (with-pop-up-typeout-window (s (make-buffer "*Help*") :erase t)
@@ -117,3 +125,5 @@
 
 ;; TODO: Prepare keymap for grep-mode
 (define-key lem/peek-source::*peek-source-keymap* "C-x ?" 'grep-help)  ;; originally bound to describe-key.
+(define-key *global-keymap* "C-x p g" 'project-grep)
+

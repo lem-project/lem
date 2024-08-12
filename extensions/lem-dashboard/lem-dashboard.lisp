@@ -130,7 +130,7 @@
          (scratch-text (format nil "~A New Lisp Scratch Buffer (l)" (icon-string "lisp"))))
     (lem/button:insert-button point 
                               (create-centered-string scratch-text width)
-                              #'lem-lisp-mode/internal::lisp-scratch
+                              #'lem-lisp-mode/internal:lisp-scratch
                               :attribute 'document-header2-attribute)
     (insert-character point #\Newline)))
 
@@ -247,7 +247,7 @@
 
 (define-key *dashboard-mode-keymap* "r" 'move-to-recent-projects)
 (define-key *dashboard-mode-keymap* "f" 'move-to-recent-files)
-(define-key *dashboard-mode-keymap* "l" 'lem-lisp-mode/internal::lisp-scratch)
+(define-key *dashboard-mode-keymap* "l" 'lem-lisp-mode/internal:lisp-scratch)
 (define-key *dashboard-mode-keymap* "s" 'open-lem-docs)
 (define-key *dashboard-mode-keymap* "g" 'open-lem-github)
 (define-key *dashboard-mode-keymap* "n" 'next-line)

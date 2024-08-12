@@ -48,6 +48,12 @@
       (insert-string point (create-centered-string line width) :attribute 'document-metadata-attribute)
       (insert-character point #\Newline))))
 
+(defun insert-working-dir (point)
+  (let ((width (window-width (current-window)))
+        (working-dir (format nil "> ~A" (buffer-directory))))
+    (insert-string point (create-centered-string working-dir width) :attribute 'document-header4-attribute)
+    (insert-character point #\Newline)))
+
 (defvar *dashboard-project-count* 5)
 
 (defun insert-recent-projects (point)
@@ -129,11 +135,13 @@
       (insert-splash-screen point)
       (insert-character point #\Newline)
       (insert-character point #\Newline)
+      (insert-working-dir point)
+      (insert-character point #\Newline)
+      (insert-character point #\Newline)
       (insert-recent-projects point)
       (insert-character point #\Newline)
       (insert-character point #\Newline)
       (insert-recent-files point)
-      (insert-character point #\Newline)
       (insert-character point #\Newline)
       (insert-character point #\Newline)
       (insert-misc-shortcuts point))

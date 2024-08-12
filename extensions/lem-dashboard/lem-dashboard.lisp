@@ -209,4 +209,6 @@
 (define-key *dashboard-mode-keymap* "g" 'open-lem-github)
 (define-key *dashboard-mode-keymap* "n" 'next-line)
 (define-key *dashboard-mode-keymap* "p" 'previous-line)
+(define-key *dashboard-mode-keymap* "j" 'next-line)
+(define-key *dashboard-mode-keymap* "k" 'previous-line)
 (define-key *dashboard-mode-keymap* "Return" 'open-selected-item)

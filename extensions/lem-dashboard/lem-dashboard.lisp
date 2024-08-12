@@ -95,7 +95,6 @@
          (scratch-text (format nil "~A New Lisp Scratch Buffer (l)" (icon-string "lisp")))
          (getting-started-text (format nil "~A Getting Started (s)" (icon-string "markdown")))
          (github-text (format nil "~A GitHub (g)" (icon-string "file-text"))))
-    (insert-string point (create-centered-string (format nil "   -------~%~%") width))
     (lem/button:insert-button point 
                               (create-centered-string scratch-text width)
                               #'lem-lisp-mode/internal::lisp-scratch

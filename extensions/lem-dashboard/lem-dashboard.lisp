@@ -3,20 +3,16 @@
   (:export :open-dashboard
            :*dashboard-project-count*
            :*dashboard-file-count*
-           :*dashboard-footer-messages*))
+           :*dashboard-footer-messages*
+           :*dashboard-splash-texts*
+           :*dashboard-layout*))
 
 (in-package :lem-dashboard)
 
 (defvar *dashboard-buffer-name* "*dashboard*")
 
-(defun create-centered-string (str width)
-  (let* ((padding (max 0 (floor (- width (length str)) 2)))
-         (spaces (make-string padding :initial-element #\Space)))
-    (concatenate 'string spaces str)))
-
-(defun insert-splash-screen (point)
-  (let ((width (window-width (current-window)))
-        (splash-text '("
+(defvar *dashboard-splash-texts* 
+  '("
  -----------------------
  [   Welcome to Lem!   ]
  -----------------------
@@ -43,8 +39,45 @@
          .........,lkKKKKKKK0.            
            ...........;xKKKKK0            
                 ...';ckKKKKKK0            
-                    .lOKx'                ")))
-    (dolist (line (str:lines (car splash-text)))
+                    .lOKx'                ")
+  "List of splash texts for the dashboard; will be randomly chosen.")
+
+(defvar *dashboard-layout* 
+  '((:splash 1)
+    (:working-dir 1)
+    (:recent-projects 1)
+    (:recent-files 1)
+    (:new-buffer 1)
+    (:getting-started 0)
+    (:github 2)
+    (:footer-messages 0))
+  "List of features to display on the dashboard with the number of newlines after each.")
+
+(defvar *dashboard-project-count* 5
+  "Number of recent projects to display.")
+
+(defvar *dashboard-file-count* 5
+  "Number of recent files to display.")
+
+(defvar *dashboard-footer-messages* '("Happy Coding!"
+                                      "ほげほげ"
+                                      "<M-x> load-library <RET> tetris"
+                                      "Lem Editor Modules? Lisp EMacs? Lem's Not Emacs?")
+  "List of random messages to display in the footer.")
+
+(defvar *current-footer-message* nil)
+(defvar *current-splash-text* nil)
+
+(defun create-centered-string (str width)
+  (let* ((padding (max 0 (floor (- width (length str)) 2)))
+         (spaces (make-string padding :initial-element #\Space)))
+    (concatenate 'string spaces str)))
+
+(defun insert-splash-screen (point)
+  (let ((width (window-width (current-window))))
+    (unless *current-splash-text*
+      (setf *current-splash-text* (nth (random (length *dashboard-splash-texts*)) *dashboard-splash-texts*)))
+    (dolist (line (str:lines *current-splash-text*))
       (insert-string point (create-centered-string line width) :attribute 'document-metadata-attribute)
       (insert-character point #\Newline))))
 
@@ -53,8 +86,6 @@
         (working-dir (format nil "> ~A" (buffer-directory))))
     (insert-string point (create-centered-string working-dir width) :attribute 'document-header4-attribute)
     (insert-character point #\Newline)))
-
-(defvar *dashboard-project-count* 5)
 
 (defun insert-recent-projects (point)
   (let* ((width (window-width (current-window)))
@@ -72,8 +103,6 @@
                                    (min *dashboard-project-count* (length (lem-core/commands/project:saved-projects))))
             do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
                (insert-string point (format nil "~A~%" project))))))
-
-(defvar *dashboard-file-count* 5)
 
 (defun insert-recent-files (point)
   (let* ((width (window-width (current-window)))
@@ -96,33 +125,32 @@
 (define-command open-lem-github () ()
   (open-external-file "https://github.com/lem-project/lem"))
 
-(defun insert-misc-shortcuts (point)
+(defun insert-new-buffer-shortcut (point)
   (let* ((width (window-width (current-window)))
-         (scratch-text (format nil "~A New Lisp Scratch Buffer (l)" (icon-string "lisp")))
-         (getting-started-text (format nil "~A Getting Started (s)" (icon-string "markdown")))
-         (github-text (format nil "~A GitHub (g)" (icon-string "file-text"))))
+         (scratch-text (format nil "~A New Lisp Scratch Buffer (l)" (icon-string "lisp"))))
     (lem/button:insert-button point 
                               (create-centered-string scratch-text width)
                               #'lem-lisp-mode/internal::lisp-scratch
                               :attribute 'document-header2-attribute)
-    (insert-character point #\Newline)
-    (insert-character point #\Newline)
+    (insert-character point #\Newline)))
+
+(defun insert-getting-started-shortcut (point)
+  (let* ((width (window-width (current-window)))
+         (getting-started-text (format nil "~A Getting Started (s)" (icon-string "markdown"))))
     (lem/button:insert-button point 
                               (create-centered-string getting-started-text width)
                               #'open-lem-docs
                               :attribute 'document-header3-attribute)
-    (insert-character point #\Newline)
+    (insert-character point #\Newline)))
+
+(defun insert-github-shortcut (point)
+  (let* ((width (window-width (current-window)))
+         (github-text (format nil "~A GitHub (g)" (icon-string "file-text"))))
     (lem/button:insert-button point 
                               (create-centered-string github-text width)
                               #'open-lem-github
-                              :attribute 'document-header3-attribute)))
-
-(defvar *dashboard-footer-messages* '("Happy Coding!"
-                                      "ほげほげ"
-                                      "<M-x> load-library <RET> tetris"
-                                      "Lem Editor Modules? Lisp EMacs? Lem's Not Emacs?"))
-
-(defvar *current-footer-message* nil)
+                              :attribute 'document-header3-attribute)
+    (insert-character point #\Newline)))
 
 (defun insert-dashboard-footer-message (point)
   (let* ((width (window-width (current-window)))
@@ -148,19 +176,19 @@
     (setf (buffer-read-only-p buffer) nil)
     (erase-buffer buffer)
     (let ((point (buffer-point buffer)))
-      (insert-splash-screen point)
-      (insert-character point #\Newline)
-      (insert-working-dir point)
-      (insert-character point #\Newline)
-      (insert-recent-projects point)
-      (insert-character point #\Newline)
-      (insert-recent-files point)
-      (insert-character point #\Newline)
-      (insert-misc-shortcuts point)
-      (insert-character point #\Newline)
-      (insert-character point #\Newline)
-      (insert-character point #\Newline)
-      (insert-dashboard-footer-message point))
+      (dolist (feature-and-newlines *dashboard-layout*)
+        (destructuring-bind (feature newlines) feature-and-newlines
+          (case feature
+            (:splash (insert-splash-screen point))
+            (:working-dir (insert-working-dir point))
+            (:recent-projects (insert-recent-projects point))
+            (:recent-files (insert-recent-files point))
+            (:new-buffer (insert-new-buffer-shortcut point))
+            (:getting-started (insert-getting-started-shortcut point))
+            (:github (insert-github-shortcut point))
+            (:footer-messages (insert-dashboard-footer-message point)))
+          (dotimes (i newlines)
+            (insert-character point #\Newline)))))
     (buffer-start (buffer-point buffer))
     (setf (buffer-read-only-p buffer) t)
     (change-buffer-mode buffer 'dashboard-mode)))

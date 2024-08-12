@@ -108,7 +108,7 @@
   (let* ((width (window-width (current-window)))
          (title (format nil "~A Recent Files (f)" (icon-string "file-text")))
          (title-line (create-centered-string title width))
-         (recent-files (lem/common/history:history-data-list (lem-core/commands/file:file-history))))
+         (recent-files (reverse (lem/common/history:history-data-list (lem-core/commands/file:file-history)))))
     (insert-string point title-line :attribute 'document-header1-attribute)
     (insert-character point #\Newline)
     (insert-character point #\Newline)

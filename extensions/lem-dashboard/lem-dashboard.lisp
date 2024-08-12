@@ -1,6 +1,7 @@
 (defpackage :lem-dashboard
   (:use :cl :lem)
   (:export :open-dashboard
+           :*dashboard-enable*
            :*dashboard-project-count*
            :*dashboard-file-count*
            :*dashboard-footer-messages*
@@ -170,28 +171,31 @@
     (:name "Dashboard"
      :keymap *dashboard-mode-keymap*))
 
+(defvar *dashboard-enable* t)
+
 (define-command open-dashboard () ()
-  (let ((buffer (create-dashboard-buffer)))
-    (switch-to-buffer buffer)
-    (setf (buffer-read-only-p buffer) nil)
-    (erase-buffer buffer)
-    (let ((point (buffer-point buffer)))
-      (dolist (feature-and-newlines *dashboard-layout*)
-        (destructuring-bind (feature newlines) feature-and-newlines
-          (case feature
-            (:splash (insert-splash-screen point))
-            (:working-dir (insert-working-dir point))
-            (:recent-projects (insert-recent-projects point))
-            (:recent-files (insert-recent-files point))
-            (:new-buffer (insert-new-buffer-shortcut point))
-            (:getting-started (insert-getting-started-shortcut point))
-            (:github (insert-github-shortcut point))
-            (:footer-messages (insert-dashboard-footer-message point)))
-          (dotimes (i newlines)
-            (insert-character point #\Newline)))))
-    (buffer-start (buffer-point buffer))
-    (setf (buffer-read-only-p buffer) t)
-    (change-buffer-mode buffer 'dashboard-mode)))
+  (when *dashboard-enable*
+    (let ((buffer (create-dashboard-buffer)))
+      (switch-to-buffer buffer)
+      (setf (buffer-read-only-p buffer) nil)
+      (erase-buffer buffer)
+      (let ((point (buffer-point buffer)))
+        (dolist (feature-and-newlines *dashboard-layout*)
+          (destructuring-bind (feature newlines) feature-and-newlines
+            (case feature
+              (:splash (insert-splash-screen point))
+              (:working-dir (insert-working-dir point))
+              (:recent-projects (insert-recent-projects point))
+              (:recent-files (insert-recent-files point))
+              (:new-buffer (insert-new-buffer-shortcut point))
+              (:getting-started (insert-getting-started-shortcut point))
+              (:github (insert-github-shortcut point))
+              (:footer-messages (insert-dashboard-footer-message point)))
+            (dotimes (i newlines)
+              (insert-character point #\Newline)))))
+      (buffer-start (buffer-point buffer))
+      (setf (buffer-read-only-p buffer) t)
+      (change-buffer-mode buffer 'dashboard-mode))))
 
 (define-command move-to-recent-projects () ()
   (let ((point (buffer-point (current-buffer))))

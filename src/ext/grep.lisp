@@ -67,7 +67,7 @@
         (buffer-undo-boundary (point-buffer start)))))
   (lem/peek-source:show-matched-line))
 
-(defvar *last-query* "git grep -nH ")
+(defvar *last-query* "git grep -nHI ")
 (defvar *last-directory* nil)
 
 (define-command grep (query &optional (directory (buffer-directory)))

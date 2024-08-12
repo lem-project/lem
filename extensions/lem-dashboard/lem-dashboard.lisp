@@ -1,6 +1,6 @@
 (defpackage :lem-dashboard
   (:use :cl :lem)
-  (:export :show-dashboard
+  (:export :open-dashboard
            :*dashboard-project-count*
            :*dashboard-file-count*
            :*dashboard-footer-messages*))
@@ -118,26 +118,31 @@
                               :attribute 'document-header3-attribute)))
 
 (defvar *dashboard-footer-messages* '("Happy Coding!"
-                                      "ほげ"
+                                      "ほげほげ"
                                       "<M-x> load-library <RET> tetris"
                                       "Lem Editor Modules? Lisp EMacs? Lem's Not Emacs?"))
 
+(defvar *current-footer-message* nil)
+
 (defun insert-dashboard-footer-message (point)
-  (let ((width (window-width (current-window)))
-        (working-dir (format nil "> ~A" (nth (random (length *dashboard-footer-messages*)) *dashboard-footer-messages*))))
-    (insert-string point (create-centered-string working-dir width) :attribute 'document-blockquote-attribute)
+  (let* ((width (window-width (current-window)))
+         (message (or *current-footer-message*
+                      (setf *current-footer-message* 
+                            (nth (random (length *dashboard-footer-messages*)) *dashboard-footer-messages*)))))
+    (insert-string point (create-centered-string (format nil "> ~A" message) width) :attribute 'document-blockquote-attribute)
     (insert-character point #\Newline)))
 
 (defun create-dashboard-buffer ()
-  (make-buffer *dashboard-buffer-name*
-               :enable-undo-p nil
-               :read-only-p t))
+  (or (get-buffer *dashboard-buffer-name*)
+      (make-buffer *dashboard-buffer-name*
+                   :enable-undo-p nil
+                   :read-only-p t)))
 
 (define-major-mode dashboard-mode ()
     (:name "Dashboard"
      :keymap *dashboard-mode-keymap*))
 
-(define-command show-dashboard () ()
+(define-command open-dashboard () ()
   (let ((buffer (create-dashboard-buffer)))
     (switch-to-buffer buffer)
     (setf (buffer-read-only-p buffer) nil)
@@ -152,6 +157,7 @@
       (insert-recent-files point)
       (insert-character point #\Newline)
       (insert-misc-shortcuts point)
+      (insert-character point #\Newline)
       (insert-character point #\Newline)
       (insert-character point #\Newline)
       (insert-dashboard-footer-message point))
@@ -214,7 +220,6 @@
 (define-key *dashboard-mode-keymap* "r" 'move-to-recent-projects)
 (define-key *dashboard-mode-keymap* "f" 'move-to-recent-files)
 (define-key *dashboard-mode-keymap* "l" 'lem-lisp-mode/internal::lisp-scratch)
-(define-key *dashboard-mode-keymap* "q" 'lem-lisp-mode/internal::lisp-scratch)
 (define-key *dashboard-mode-keymap* "s" 'open-lem-docs)
 (define-key *dashboard-mode-keymap* "g" 'open-lem-github)
 (define-key *dashboard-mode-keymap* "n" 'next-line)
@@ -222,3 +227,10 @@
 (define-key *dashboard-mode-keymap* "j" 'next-line)
 (define-key *dashboard-mode-keymap* "k" 'previous-line)
 (define-key *dashboard-mode-keymap* "Return" 'open-selected-item)
+
+(defun handle-resize (window) 
+  (when (string= (buffer-name) *dashboard-buffer-name*)
+    (open-dashboard)))
+
+(add-hook *after-init-hook* #'open-dashboard)
+(add-hook *window-size-change-functions* #'handle-resize)

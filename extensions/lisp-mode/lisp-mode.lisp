@@ -189,17 +189,7 @@
   (when (current-connection)
     (abort-all (current-connection) "change connection")
     (notify-change-connection-to-wait-message-thread))
-  (setf (current-connection) connection)
-  (when (repl-buffer)
-    (write-string-to-repl
-     (if (self-connection-p connection)
-         (format nil
-                 "~%; changed connection (self connection)")
-         (format nil
-                 "~%; changed connection (~A ~A)"
-                 (connection-implementation-name connection)
-                 (connection-implementation-version connection)))
-     :attribute 'syntax-comment-attribute)))
+  (setf (current-connection) connection))
 
 (defmethod switch-connection ((connection connection))
   (change-current-connection connection))
@@ -964,6 +954,29 @@
     (when start-repl (start-lisp-repl))
     (connected-slime-message connection)))
 
+#+sbcl
+(define-command slime-connect-unix (socket-path &optional (start-repl t))
+    ((:splice
+      (list (prompt-for-string "Hostname: " :initial-value  "/tmp/micros.sock"))))
+  (let ((connection  (progn
+                       (log:debug "Connecting to SWANK using UNIX socket")
+                       (let* ((sock (make-instance 'sb-bsd-sockets:local-socket :type :stream))
+                              (_ (sb-bsd-sockets:socket-connect sock socket-path))
+                              (stream (sb-bsd-sockets:socket-make-stream sock :element-type '(unsigned-byte 8) :input t :output t))
+                              (socket (usocket::make-stream-socket :socket sock :stream stream))
+                              (connection (make-instance 'connection
+                                                         :hostname socket-path
+                                                         :port 0
+                                                         :socket socket)))
+                         (declare (ignore _))
+                         (lem-lisp-mode/swank-protocol::setup connection)
+                         connection))))
+    (add-and-change-connection connection)
+    (start-thread)
+    (when start-repl (start-lisp-repl))
+    (connected-slime-message connection)))
+
+
 (defun pull-events ()
   (when (connected-p)
     (handler-case (loop :while (message-waiting-p (current-connection))
@@ -1116,7 +1129,7 @@
   (let* ((port (lem/common/socket:random-available-port))
          (process (run-lisp :command command :directory directory :port port)))
     (send-swank-create-server process port)
-    (start-lisp-repl-internal :new-process t)
+    (start-lisp-repl)
     (let ((spinner
             (start-loading-spinner :modeline
                                    :buffer (repl-buffer)

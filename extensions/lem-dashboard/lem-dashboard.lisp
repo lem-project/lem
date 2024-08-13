@@ -2,18 +2,151 @@
   (:use :cl :lem)
   (:export :open-dashboard
            :*dashboard-enable*
+           :*dashboard-layout*
            :*dashboard-project-count*
            :*dashboard-file-count*
-           :*dashboard-footer-messages*
-           :*dashboard-splash-texts*
-           :*dashboard-layout*))
+           :*dashboard-footer-messages*))
 
 (in-package :lem-dashboard)
 
 (defvar *dashboard-buffer-name* "*dashboard*")
+(defvar *dashboard-enable* t)
 
-(defvar *dashboard-splash-texts* 
-  '("
+(defvar *dashboard-project-count* 5
+  "Number of recent projects to display.")
+
+(defvar *dashboard-file-count* 5
+  "Number of recent files to display.")
+
+(defvar *dashboard-footer-messages* '("Happy Coding!"
+                                      "ほげほげ"
+                                      "<M-x> load-library <RET> tetris"
+                                      "Lem Editor Modules? Lisp EMacs? Lem's Not Emacs?")
+  "List of random messages to display in the footer.")
+
+(defclass dashboard-item ()
+  ((item-attribute :initarg :item-attribute :accessor item-attribute :initform 'document-text-attribute)
+   (vertical-padding :initarg :vertical-padding :accessor vertical-padding :initform 1)
+   (keybind :initarg :keybind :accessor keybind :initform nil)
+   (keybind-command :initarg :keybind-command :accessor keybind-command :initform nil)
+   (action :initarg :action :accessor action :initform nil))
+  (:documentation "Base class for all dashboard items."))
+
+(defgeneric draw-dashboard-item (item point)
+  (:documentation "Called to draw the dashboard item.")
+  (:method :after ((item dashboard-item) point)
+    (dotimes (i (vertical-padding item))
+      (insert-character point #\Newline))))
+
+(defclass dashboard-splash (dashboard-item)
+  ((splash-texts :initarg :splash-texts :accessor splash-texts 
+                 :initform '("Welcome!")))
+  (:documentation "Randomly displays one of SPLASH-TEXTS"))
+
+(defmethod draw-dashboard-item ((item dashboard-splash) point)
+  (let ((width (window-width (current-window)))
+        (splash-text (nth (random (length (splash-texts item))) (splash-texts item))))
+    (dolist (line (str:lines splash-text))
+      (insert-string point (create-centered-string line width) :attribute (item-attribute item))
+      (insert-character point #\Newline))))
+
+(defclass dashboard-url (dashboard-item)
+  ((url :initarg :url :accessor url)
+   (display-text :initarg :display-text :accessor display-text))
+  (:documentation "Creates link/button with DISPLAY-TEXT that opens URL externally"))
+
+(defmethod initialize-instance :after ((item dashboard-url) &key)
+  (setf (action item) (lambda () (open-external-file (url item)))))
+
+(defmethod draw-dashboard-item ((item dashboard-url) point)
+  (let ((width (window-width (current-window))))
+    (lem/button:insert-button point 
+                              (create-centered-string (display-text item) width)
+                              (lambda () (open-external-file (url item)))
+                              :attribute (item-attribute item))))
+
+(defclass dashboard-footer-message (dashboard-item)
+  ((messages :initarg :messages :accessor messages :initform *dashboard-footer-messages*))
+  (:documentation "Randomly displays one of the passed-in MESSAGES"))
+
+(defmethod draw-dashboard-item ((item dashboard-footer-message) point)
+  (let* ((width (window-width (current-window)))
+         (message (nth (random (length (messages item))) (messages item))))
+    (insert-string point (create-centered-string (format nil "> ~A" message) width) :attribute (item-attribute item))))
+
+(defclass dashboard-command (dashboard-item)
+  ((command :initarg :command :accessor command)
+   (display-text :initarg :display-text :accessor display-text))
+  (:documentation "Creates a link/button with DISPLAY-TEXT that executes COMMAND"))
+
+(defmethod initialize-instance :after ((item dashboard-command) &key)
+  (setf (action item) (command item)))
+
+(defmethod draw-dashboard-item ((item dashboard-command) point)
+  (let ((width (window-width (current-window))))
+    (lem/button:insert-button point 
+                              (create-centered-string (display-text item) width)
+                              (command item)
+                              :attribute (item-attribute item))))
+
+(defclass dashboard-recent-projects (dashboard-item)
+  ((project-count :initarg :project-count :accessor project-count :initform *dashboard-project-count*))
+  (:documentation "Displays a list of recent projects, limited to the last PROJECT-COUNT"))
+
+(define-command move-to-recent-projects () ()
+  (let ((point (buffer-point (current-buffer))))
+    (buffer-start point)
+    (search-forward-regexp point "Recent Projects")
+    (line-offset point 2)
+    (move-to-beginning-of-line)))
+
+(defmethod draw-dashboard-item ((item dashboard-recent-projects) point)
+  (let* ((width (window-width (current-window)))
+         (title (format nil "~A Recent Projects (r)" (icon-string "package")))
+         (title-line (create-centered-string title width)))
+    (insert-string point title-line :attribute 'document-header1-attribute)
+    (insert-character point #\Newline)
+    (insert-character point #\Newline)
+    (let* ((projects (reverse (lem-core/commands/project:saved-projects)))
+           (longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) projects))
+           (max-length (length longest-project))
+           (left-padding (floor (- width max-length) 2)))
+      (loop for project in (subseq projects 0 (min (project-count item) (length projects)))
+            do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
+               (insert-string point (format nil "~A~%" project))))))
+
+(defclass dashboard-recent-files (dashboard-item)
+  ((file-count :initarg :file-count :accessor file-count :initform *dashboard-file-count*))
+  (:documentation "Displays a list of recent files, limited to the last FILE-COUNT"))
+
+(define-command move-to-recent-files () ()
+  (let ((point (buffer-point (current-buffer))))
+    (buffer-start point)
+    (search-forward-regexp point "Recent Files")
+    (line-offset point 2)
+    (move-to-beginning-of-line)))
+
+(defmethod draw-dashboard-item ((item dashboard-recent-files) point)
+  (let* ((width (window-width (current-window)))
+         (title (format nil "~A Recent Files (f)" (icon-string "file-text")))
+         (title-line (create-centered-string title width))
+         (recent-files (reverse (lem/common/history:history-data-list (lem-core/commands/file:file-history)))))
+    (insert-string point title-line :attribute 'document-header1-attribute)
+    (insert-character point #\Newline)
+    (insert-character point #\Newline)
+    (let* ((longest-file (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) recent-files))
+           (max-length (length longest-file))
+           (left-padding (floor (- width max-length) 2)))
+      (loop for file in (subseq recent-files 0 (min (file-count item) (length recent-files)))
+            do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
+               (insert-string point (format nil "~A~%" file))))))
+
+(defvar *dashboard-layout* nil
+  "List of dashboard-item instances; will be drawn in order.")
+
+(setf *dashboard-layout* (list (make-instance 'dashboard-splash 
+                                              :item-attribute 'document-metadata-attribute
+                                              :splash-texts '("
  -----------------------
  [   Welcome to Lem!   ]
  -----------------------
@@ -40,85 +173,49 @@
          .........,lkKKKKKKK0.            
            ...........;xKKKKK0            
                 ...';ckKKKKKK0            
-                    .lOKx'                ")
-  "List of splash texts for the dashboard; will be randomly chosen.")
-
-(defvar *dashboard-layout* 
-  '((:splash 1)
-    (:working-dir 1)
-    (:recent-projects 1)
-    (:recent-files 1)
-    (:new-buffer 1)
-    (:getting-started 0)
-    (:github 2)
-    (:footer-messages 0))
-  "List of features to display on the dashboard with the number of newlines after each.")
-
-(defvar *dashboard-project-count* 5
-  "Number of recent projects to display.")
-
-(defvar *dashboard-file-count* 5
-  "Number of recent files to display.")
-
-(defvar *dashboard-footer-messages* '("Happy Coding!"
-                                      "ほげほげ"
-                                      "<M-x> load-library <RET> tetris"
-                                      "Lem Editor Modules? Lisp EMacs? Lem's Not Emacs?")
-  "List of random messages to display in the footer.")
-
-(defvar *current-footer-message* nil)
-(defvar *current-splash-text* nil)
-
-(defun create-centered-string (str width)
-  (let* ((padding (max 0 (floor (- width (length str)) 2)))
-         (spaces (make-string padding :initial-element #\Space)))
-    (concatenate 'string spaces str)))
-
-(defun insert-splash-screen (point)
-  (let ((width (window-width (current-window))))
-    (unless *current-splash-text*
-      (setf *current-splash-text* (nth (random (length *dashboard-splash-texts*)) *dashboard-splash-texts*)))
-    (dolist (line (str:lines *current-splash-text*))
-      (insert-string point (create-centered-string line width) :attribute 'document-metadata-attribute)
-      (insert-character point #\Newline))))
-
-(defun insert-working-dir (point)
-  (let ((width (window-width (current-window)))
-        (working-dir (format nil "> ~A" (buffer-directory))))
-    (insert-string point (create-centered-string working-dir width) :attribute 'document-header4-attribute)
-    (insert-character point #\Newline)))
-
-(defun insert-recent-projects (point)
-  (let* ((width (window-width (current-window)))
-         (title (format nil "~A Recent Projects (r)" (icon-string "package")))
-         (title-line (create-centered-string title width)))
-    (insert-string point title-line :attribute 'document-header1-attribute)
-    (insert-character point #\Newline)
-    (insert-character point #\Newline)
-    (let* ((longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b))
-                                    (lem-core/commands/project:saved-projects)))
-           (max-length (length longest-project))
-           (left-padding (floor (- width max-length) 2)))
-      (loop for project in (subseq (lem-core/commands/project:saved-projects) 
-                                   0 
-                                   (min *dashboard-project-count* (length (lem-core/commands/project:saved-projects))))
-            do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
-               (insert-string point (format nil "~A~%" project))))))
-
-(defun insert-recent-files (point)
-  (let* ((width (window-width (current-window)))
-         (title (format nil "~A Recent Files (f)" (icon-string "file-text")))
-         (title-line (create-centered-string title width))
-         (recent-files (reverse (lem/common/history:history-data-list (lem-core/commands/file:file-history)))))
-    (insert-string point title-line :attribute 'document-header1-attribute)
-    (insert-character point #\Newline)
-    (insert-character point #\Newline)
-    (let* ((longest-file (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) recent-files))
-           (max-length (length longest-file))
-           (left-padding (floor (- width max-length) 2)))
-      (loop for file in (subseq recent-files 0 (min *dashboard-file-count* (length recent-files)))
-            do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
-               (insert-string point (format nil "~A~%" file))))))
+                    .lOKx'                "))
+                               (make-instance 'dashboard-recent-projects 
+                                              :project-count *dashboard-project-count* 
+                                              :vertical-padding 2
+                                              :keybind "r"
+                                              :keybind-command 'move-to-recent-projects
+                                              :action (lambda () 
+                                                        (let ((project (line-string (current-point))))
+                                                          (when project                                                           
+                                                            (lem-core/commands/project:project-find-file project)))))
+                               (make-instance 'dashboard-recent-files 
+                                              :file-count *dashboard-file-count* 
+                                              :vertical-padding 2
+                                              :keybind "f"
+                                              :keybind-command 'move-to-recent-files
+                                              :action (lambda ()
+                                                        (let ((file (string-trim '(#\Space #\Tab) 
+                                                                                      (line-string (current-point)))))
+                                                          (when file
+                                                            (find-file file)))))
+                               (make-instance 'dashboard-command 
+                                              :display-text "New Lisp Scratch Buffer (l)" 
+                                              :command #'lem-lisp-mode/internal:lisp-scratch 
+                                              :item-attribute 'document-header2-attribute
+                                              :keybind "l"
+                                              :keybind-command 'lem-lisp-mode/internal:lisp-scratch
+                                              :vertical-padding 2)
+                               (make-instance 'dashboard-url 
+                                              :display-text "Getting Started (s)" 
+                                              :url "https://lem-project.github.io/usage/usage/"
+                                              :item-attribute 'document-header3-attribute
+                                              :keybind "s"
+                                              :keybind-command 'open-lem-docs)
+                               (make-instance 'dashboard-url 
+                                              :display-text "GitHub (g)" 
+                                              :url "https://github.com/lem-project/lem"
+                                              :item-attribute 'document-header3-attribute
+                                              :keybind "g"
+                                              :keybind-command 'open-lem-github
+                                              :vertical-padding 2)
+                               (make-instance 'dashboard-footer-message 
+                                              :item-attribute 'document-blockquote-attribute
+                                              :messages *dashboard-footer-messages*)))
 
 (define-command open-lem-docs () ()
   (open-external-file "https://lem-project.github.io/usage/usage/"))
@@ -126,143 +223,73 @@
 (define-command open-lem-github () ()
   (open-external-file "https://github.com/lem-project/lem"))
 
-(defun insert-new-buffer-shortcut (point)
-  (let* ((width (window-width (current-window)))
-         (scratch-text (format nil "~A New Lisp Scratch Buffer (l)" (icon-string "lisp"))))
-    (lem/button:insert-button point 
-                              (create-centered-string scratch-text width)
-                              #'lem-lisp-mode/internal:lisp-scratch
-                              :attribute 'document-header2-attribute)
-    (insert-character point #\Newline)))
-
-(defun insert-getting-started-shortcut (point)
-  (let* ((width (window-width (current-window)))
-         (getting-started-text (format nil "~A Getting Started (s)" (icon-string "markdown"))))
-    (lem/button:insert-button point 
-                              (create-centered-string getting-started-text width)
-                              #'open-lem-docs
-                              :attribute 'document-header3-attribute)
-    (insert-character point #\Newline)))
-
-(defun insert-github-shortcut (point)
-  (let* ((width (window-width (current-window)))
-         (github-text (format nil "~A GitHub (g)" (icon-string "file-text"))))
-    (lem/button:insert-button point 
-                              (create-centered-string github-text width)
-                              #'open-lem-github
-                              :attribute 'document-header3-attribute)
-    (insert-character point #\Newline)))
-
-(defun insert-dashboard-footer-message (point)
-  (let* ((width (window-width (current-window)))
-         (message (or *current-footer-message*
-                      (setf *current-footer-message* 
-                            (nth (random (length *dashboard-footer-messages*)) *dashboard-footer-messages*)))))
-    (insert-string point (create-centered-string (format nil "> ~A" message) width) :attribute 'document-blockquote-attribute)
-    (insert-character point #\Newline)))
-
-(defun create-dashboard-buffer ()
-  (or (get-buffer *dashboard-buffer-name*)
-      (make-buffer *dashboard-buffer-name*
-                   :enable-undo-p nil
-                   :read-only-p t)))
+(defvar *dashboard-mode-keymap* (make-keymap :name '*dashboard-mode-keymap*
+                                             :parent *global-keymap*))
 
 (define-major-mode dashboard-mode ()
     (:name "Dashboard"
      :keymap *dashboard-mode-keymap*))
 
-(defvar *dashboard-enable* t)
+(defun create-dashboard-buffer ()
+  "Creates the dashboard buffer."
+  (or (get-buffer *dashboard-buffer-name*)
+      (make-buffer *dashboard-buffer-name*
+                   :enable-undo-p nil
+                   :read-only-p t)))
+
+(define-command dashboard-open-selected-item () ()
+  "Execute action on selected dashboard item."
+  (let* ((point (current-point))
+         (item (text-property-at point :dashboard-item)))
+    (when (and item (action item))
+      (funcall (action item)))))
+
+(defmethod draw-dashboard-item :around ((item dashboard-item) point)
+  "Inserts a :dashboard-item text property in between the starting and ending POINT."
+  (let ((start (copy-point point :temporary)))
+    (call-next-method)
+    (let ((end (copy-point point :temporary)))
+      (put-text-property start end :dashboard-item item)
+      (delete-point start)
+      (delete-point end))))
 
 (define-command open-dashboard () ()
+  "Opens the dashboard, overwriting any existing one"
   (when *dashboard-enable*
+    (setup-dashboard-keymap)
     (let ((buffer (create-dashboard-buffer)))
       (switch-to-buffer buffer)
       (setf (buffer-read-only-p buffer) nil)
       (erase-buffer buffer)
       (let ((point (buffer-point buffer)))
-        (dolist (feature-and-newlines *dashboard-layout*)
-          (destructuring-bind (feature newlines) feature-and-newlines
-            (case feature
-              (:splash (insert-splash-screen point))
-              (:working-dir (insert-working-dir point))
-              (:recent-projects (insert-recent-projects point))
-              (:recent-files (insert-recent-files point))
-              (:new-buffer (insert-new-buffer-shortcut point))
-              (:getting-started (insert-getting-started-shortcut point))
-              (:github (insert-github-shortcut point))
-              (:footer-messages (insert-dashboard-footer-message point)))
-            (dotimes (i newlines)
-              (insert-character point #\Newline)))))
+        (dolist (item *dashboard-layout*)
+          (draw-dashboard-item item point)))
       (buffer-start (buffer-point buffer))
       (setf (buffer-read-only-p buffer) t)
       (change-buffer-mode buffer 'dashboard-mode))))
 
-(define-command move-to-recent-projects () ()
-  (let ((point (buffer-point (current-buffer))))
-    (buffer-start point)
-    (search-forward-regexp point "Recent Projects")
-    (line-offset point 2)
-    (move-to-beginning-of-line)))
+(defun setup-dashboard-keymap ()
+  ;; Add standard navigation keys
+  (define-key *dashboard-mode-keymap* "n" 'next-line)
+  (define-key *dashboard-mode-keymap* "p" 'previous-line)
+  (define-key *dashboard-mode-keymap* "j" 'next-line)
+  (define-key *dashboard-mode-keymap* "k" 'previous-line)
+  (define-key *dashboard-mode-keymap* "Return" 'dashboard-open-selected-item)
+  
+  ;; Add custom keybinds from the layout
+  (dolist (item *dashboard-layout*)
+    (when (and (keybind item) (keybind-command item))
+      (define-key *dashboard-mode-keymap* (keybind item) (keybind-command item)))))
 
-(define-command move-to-recent-files () ()
-  (let ((point (buffer-point (current-buffer))))
-    (buffer-start point)
-    (search-forward-regexp point "Recent Files")
-    (line-offset point 2)
-    (move-to-beginning-of-line)))
-
-(define-command open-selected-project () () 
-  (let* ((point (buffer-point (current-buffer)))
-         (line (line-string point))
-         (project-path (string-trim '(#\Space #\Tab) line)))
-    (when (uiop:directory-exists-p project-path)
-      (uiop:with-current-directory (project-path))
-      (let ((filename (prompt-for-files-recursively)))
-        (alexandria:when-let (buffer (execute-find-file *find-file-executor*
-                                                        (lem-core/commands/file:get-file-mode filename)
-                                                        filename))
-          (when buffer
-            (switch-to-buffer buffer t nil))))
-      (delete-buffer (get-buffer *dashboard-buffer-name*)))))
-
-(define-command open-selected-file () () 
-  (let* ((point (buffer-point (current-buffer)))
-         (line (line-string point))
-         (file-path (string-trim '(#\Space #\Tab) line)))
-    (when (uiop:file-exists-p file-path)
-      (find-file file-path))))
-
-(defun in-recent-files-section-p (point)
-  (let* ((current-line (line-number-at-point point))
-         (files-section-start nil)
-         (temp-point (copy-point point :temporary)))
-    (buffer-start temp-point)
-    (when (search-forward-regexp temp-point "Recent Files")
-      (setf files-section-start (+ (line-number-at-point temp-point) 2)))
-    (delete-point temp-point)
-    (when files-section-start
-      (>= current-line files-section-start))))
-
-(define-command open-selected-item () ()
-  (let ((point (buffer-point (current-buffer))))
-    (if (in-recent-files-section-p point)
-        (open-selected-file)
-        (open-selected-project))))
-
-(define-key *dashboard-mode-keymap* "r" 'move-to-recent-projects)
-(define-key *dashboard-mode-keymap* "f" 'move-to-recent-files)
-(define-key *dashboard-mode-keymap* "l" 'lem-lisp-mode/internal:lisp-scratch)
-(define-key *dashboard-mode-keymap* "s" 'open-lem-docs)
-(define-key *dashboard-mode-keymap* "g" 'open-lem-github)
-(define-key *dashboard-mode-keymap* "n" 'next-line)
-(define-key *dashboard-mode-keymap* "p" 'previous-line)
-(define-key *dashboard-mode-keymap* "j" 'next-line)
-(define-key *dashboard-mode-keymap* "k" 'previous-line)
-(define-key *dashboard-mode-keymap* "Return" 'open-selected-item)
+(defun create-centered-string (str width)
+  "Creates a 'centered' string by padding with space to fill WIDTH halfway."
+  (let* ((padding (max 0 (floor (- width (length str)) 2)))
+         (spaces (make-string padding :initial-element #\Space)))
+    (concatenate 'string spaces str)))
 
 (defun handle-resize (window) 
-  (when (string= (buffer-name) *dashboard-buffer-name*)
+  (when (string= (buffer-name (window-buffer window)) *dashboard-buffer-name*)
     (open-dashboard)))
 
-(add-hook *after-init-hook* #'open-dashboard)
-(add-hook *window-size-change-functions* #'handle-resize)
+(add-hook *after-init-hook* 'open-dashboard)
+(add-hook *window-size-change-functions* 'handle-resize)

@@ -40,13 +40,17 @@
 
 (defclass dashboard-splash (dashboard-item)
   ((splash-texts :initarg :splash-texts :accessor splash-texts 
-                 :initform '("Welcome!")))
+                 :initform '("Welcome!"))
+   (selected-splash :initarg :selected-splash :accessor selected-splash
+                    :initform nil))
   (:documentation "Randomly displays one of SPLASH-TEXTS"))
 
 (defmethod draw-dashboard-item ((item dashboard-splash) point)
-  (let ((width (window-width (current-window)))
-        (splash-text (nth (random (length (splash-texts item))) (splash-texts item))))
-    (dolist (line (str:lines splash-text))
+  (let ((width (window-width (current-window))))
+    (unless (selected-splash item)
+      (setf (selected-splash item) 
+            (nth (random (length (splash-texts item))) (splash-texts item))))
+    (dolist (line (str:lines (selected-splash item)))
       (insert-string point (create-centered-string line width) :attribute (item-attribute item))
       (insert-character point #\Newline))))
 
@@ -66,13 +70,19 @@
                               :attribute (item-attribute item))))
 
 (defclass dashboard-footer-message (dashboard-item)
-  ((messages :initarg :messages :accessor messages :initform *dashboard-footer-messages*))
+  ((messages :initarg :messages :accessor messages :initform *dashboard-footer-messages*)
+   (selected-message :initarg :selected-message :accessor selected-message
+                     :initform nil))
   (:documentation "Randomly displays one of the passed-in MESSAGES"))
 
 (defmethod draw-dashboard-item ((item dashboard-footer-message) point)
-  (let* ((width (window-width (current-window)))
-         (message (nth (random (length (messages item))) (messages item))))
-    (insert-string point (create-centered-string (format nil "> ~A" message) width) :attribute (item-attribute item))))
+  (let* ((width (window-width (current-window))))
+    (unless (selected-message item)
+      (setf (selected-message item) 
+            (nth (random (length (messages item))) (messages item))))
+    (insert-string point 
+                   (create-centered-string (format nil "> ~A" (selected-message item)) width) 
+                   :attribute (item-attribute item))))
 
 (defclass dashboard-command (dashboard-item)
   ((command :initarg :command :accessor command)

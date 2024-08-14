@@ -57,30 +57,45 @@
     (aref (history-data history)
           (1- (length (history-data history))))))
 
-(defun add-history (history input &key (allow-duplicates t) (test #'equal))
-  "Add this input to the history.
+(defun add-history (history input &key (allow-duplicates t) (test #'equal) move-to-top)
+  "Add this INPUT to the HISTORY.
 
-  Don't add the same input as the previous one.
-  If allow-duplicates is non t, don't add duplicates at all.
-  If limit is set, overwrite oldest entry when reached."
-  (when (or allow-duplicates
-            (not (find input (history-data history) :test test)))
-    (when (require-additions-to-history-p input (last-history history))
-      (let ((limit (history-limit history)))
-        (cond
-          ((and limit (>= (length (history-data history)) limit))
-           ;; Shift by 1, overwriting the oldest
-           (replace (history-data history)
-                    (history-data history)
-                    :start1 0 
-                    :start2 1
-                    :end2 limit)
-           (setf (aref (history-data history) (1- limit)) input))
-          (t
-           ;; Add new element normally
-           (vector-push-extend input (history-data history)))))
-      (setf (history-index history)
-            (length (history-data history)))))
+  Doesn't add the same INPUT as the previous one.
+  If ALLOW-DUPLICATES is non T, don't add duplicates at all.
+  If LIMIT is set, overwrite oldest entry when reached.
+  If MOVE-TO-TOP is T, move the entry to the top of the stack if it already exists."
+  (let ((existing-position (position input (history-data history) :test test)))
+    (cond
+      ((and existing-position move-to-top)
+       (let ((item (aref (history-data history) existing-position)))
+         ;; Remove the item from its current position
+         (replace (history-data history)
+                  (history-data history)
+                  :start1 existing-position
+                  :start2 (1+ existing-position))
+         (decf (fill-pointer (history-data history)))
+         ;; Add the item to the top
+         (vector-push-extend item (history-data history))))
+      ((and (not existing-position)
+            (require-additions-to-history-p input (last-history history)))
+       (let ((limit (history-limit history)))
+         (cond
+           ((and limit (>= (length (history-data history)) limit))
+            ;; Shift by 1, overwriting the oldest
+            (replace (history-data history)
+                     (history-data history)
+                     :start1 0 
+                     :start2 1
+                     :end2 limit)
+            (setf (aref (history-data history) (1- limit)) input))
+           (t
+            ;; Add new element normally
+            (vector-push-extend input (history-data history))))))
+      (allow-duplicates
+       ;; If duplicates are allowed, add the input
+       (vector-push-extend input (history-data history))))
+    (setf (history-index history)
+          (length (history-data history))))
   input)
 
 (defun remove-history (history input)

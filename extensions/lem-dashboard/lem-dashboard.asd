@@ -1,4 +1,5 @@
 (defsystem "lem-dashboard"
   :depends-on (:lem)
   :serial t
-  :components ((:file "lem-dashboard")))
+  :components ((:file "lem-dashboard")
+               (:file "default-dashboard")))

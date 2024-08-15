@@ -26,7 +26,7 @@
     :documentation "Attribute to use when drawing this item.")
    (vertical-padding 
     :initarg :vertical-padding 
-    :accessor vertical-padding 
+    :accessor vertical-padding
     :initform 1
     :documentation "The amount of vertical padding (lines) to apply after the item.")
    (keybind 
@@ -74,7 +74,8 @@
   (:documentation "Creates link/button with DISPLAY-TEXT that opens URL externally."))
 
 (defmethod initialize-instance :after ((item dashboard-url) &key)
-  (setf (action item) (lambda () (open-external-file (url item)))))
+  (unless (action item)
+    (setf (action item) (lambda () (open-external-file (url item))))))
 
 (defmethod draw-dashboard-item ((item dashboard-url) point)
   (let ((width (window-width (current-window))))
@@ -130,6 +131,14 @@
   ((project-count :initarg :project-count :accessor project-count :initform *dashboard-project-count*))
   (:documentation "Displays a list of recent projects, limited to the last PROJECT-COUNT."))
 
+(defmethod initialize-instance :after ((item dashboard-recent-projects) &key)
+  (unless (action item)
+  (setf (action item)
+        (lambda ()
+          (let ((project (string-trim '(#\Space #\Tab) (line-string (current-point)))))
+            (when project
+              (lem-core/commands/project:project-find-file project)))))))
+
 (define-command move-to-recent-projects () ()
   (let ((point (buffer-point (current-buffer))))
     (buffer-start point)
@@ -155,6 +164,14 @@
 (defclass dashboard-recent-files (dashboard-item)
   ((file-count :initarg :file-count :accessor file-count :initform *dashboard-file-count*))
   (:documentation "Displays a list of recent files, limited to the last FILE-COUNT."))
+
+(defmethod initialize-instance :after ((item dashboard-recent-files) &key)
+  (unless (action item)
+  (setf (action item)
+        (lambda ()
+          (let ((file (string-trim '(#\Space #\Tab) (line-string (current-point)))))
+            (when file
+              (find-file file)))))))
 
 (define-command move-to-recent-files () ()
   (let ((point (buffer-point (current-buffer))))

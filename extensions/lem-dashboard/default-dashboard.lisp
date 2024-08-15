@@ -58,21 +58,12 @@
                                     :project-count *dashboard-project-count* 
                                     :vertical-padding 1
                                     :keybind "r"
-                                    :keybind-command 'move-to-recent-projects
-                                    :action (lambda () 
-                                              (let ((project (line-string (current-point))))
-                                                (when project                                                           
-                                                  (lem-core/commands/project:project-find-file project)))))
-                    (make-instance 'dashboard-recent-files 
+                                    :keybind-command 'move-to-recent-projects)
+                     (make-instance 'dashboard-recent-files 
                                     :file-count *dashboard-file-count* 
                                     :vertical-padding 1
                                     :keybind "f"
-                                    :keybind-command 'move-to-recent-files
-                                    :action (lambda ()
-                                              (let ((file (string-trim '(#\Space #\Tab) 
-                                                                       (line-string (current-point)))))
-                                                (when file
-                                                  (find-file file)))))
+                                    :keybind-command 'move-to-recent-files)
                      (make-instance 'dashboard-command
                                     :display-text " New Lisp Scratch Buffer (l)"
                                     :command #'lem-lisp-mode/internal:lisp-scratch 

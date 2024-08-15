@@ -63,7 +63,7 @@
                                               (let ((project (line-string (current-point))))
                                                 (when project                                                           
                                                   (lem-core/commands/project:project-find-file project)))))
-                     (make-instance 'dashboard-recent-files 
+                    (make-instance 'dashboard-recent-files 
                                     :file-count *dashboard-file-count* 
                                     :vertical-padding 1
                                     :keybind "f"
@@ -74,20 +74,20 @@
                                                 (when file
                                                   (find-file file)))))
                      (make-instance 'dashboard-command
-                                    :display-text (format nil "~A New Lisp Scratch Buffer (l)" (icon-string "lisp"))
+                                    :display-text " New Lisp Scratch Buffer (l)"
                                     :command #'lem-lisp-mode/internal:lisp-scratch 
                                     :item-attribute 'document-header2-attribute
                                     :keybind "l"
                                     :keybind-command 'lem-lisp-mode/internal:lisp-scratch
                                     :vertical-padding 2)
                      (make-instance 'dashboard-url 
-                                    :display-text (format nil "~A Getting Started (s)" (icon-string "markdown"))
+                                    :display-text " Getting Started (s)"
                                     :url "https://lem-project.github.io/usage/usage/"
                                     :item-attribute 'document-header3-attribute
                                     :keybind "s"
                                     :keybind-command 'open-lem-docs)
                      (make-instance 'dashboard-url
-                                    :display-text (format nil "~A GitHub (g)" (icon-string "file-text"))
+                                    :display-text " GitHub (g)"
                                     :url "https://github.com/lem-project/lem"
                                     :item-attribute 'document-header3-attribute
                                     :keybind "g"

@@ -3,9 +3,8 @@
   (:export :open-dashboard
            :*dashboard-enable*
            :set-dashboard
-           :*dashboard-project-count*
-           :*dashboard-file-count*
-           :*dashboard-footer-messages*))
+           :set-default-dashboard
+           :create-centered-string))
 
 (in-package :lem-dashboard)
 
@@ -24,7 +23,7 @@
     :accessor item-attribute 
     :initform 'document-text-attribute
     :documentation "Attribute to use when drawing this item.")
-   (vertical-padding 
+   (vertical-padding
     :initarg :vertical-padding 
     :accessor vertical-padding
     :initform 1

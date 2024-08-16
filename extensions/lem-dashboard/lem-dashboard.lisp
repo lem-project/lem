@@ -23,11 +23,16 @@
     :accessor item-attribute 
     :initform 'document-text-attribute
     :documentation "Attribute to use when drawing this item.")
-   (vertical-padding
-    :initarg :vertical-padding 
-    :accessor vertical-padding
+   (top-margin
+    :initarg :top-margin 
+    :accessor top-margin
+    :initform 0
+    :documentation "The amount of vertical space (lines) to apply before the item.")
+   (bottom-margin
+    :initarg :bottom-margin 
+    :accessor bottom-margin
     :initform 1
-    :documentation "The amount of vertical padding (lines) to apply after the item.")
+    :documentation "The amount of vertical space (lines) to apply after the item.")
    (keybind 
     :initarg :keybind 
     :accessor keybind 
@@ -47,8 +52,11 @@
 
 (defgeneric draw-dashboard-item (item point)
   (:documentation "Called to draw the dashboard item.")
+  (:method :before ((item dashboard-item) point)
+    (dotimes (i (top-margin item))
+      (insert-character point #\Newline)))
   (:method :after ((item dashboard-item) point)
-    (dotimes (i (vertical-padding item))
+    (dotimes (i (bottom-margin item))
       (insert-character point #\Newline))))
 
 (defclass dashboard-splash (dashboard-item)

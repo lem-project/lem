@@ -58,12 +58,12 @@
                 (make-instance 'dashboard-working-dir)
                 (make-instance 'dashboard-recent-projects 
                                :project-count project-count
-                               :vertical-padding 1
+                               :bottom-margin 1
                                :keybind "r"
                                :keybind-command 'move-to-recent-projects)
                 (make-instance 'dashboard-recent-files 
                                :file-count file-count
-                               :vertical-padding 1
+                               :bottom-margin 1
                                :keybind "f"
                                :keybind-command 'move-to-recent-files)
                 (make-instance 'dashboard-command
@@ -72,7 +72,7 @@
                                :item-attribute 'document-header2-attribute
                                :keybind "l"
                                :keybind-command 'lem-lisp-mode/internal:lisp-scratch
-                               :vertical-padding 2))))
+                               :bottom-margin 2))))
     
     (unless hide-links
       (setf dashboard-items
@@ -89,7 +89,7 @@
                                          :item-attribute 'document-header3-attribute
                                          :keybind "g"
                                          :keybind-command 'open-lem-github
-                                         :vertical-padding 2)))))
+                                         :bottom-margin 2)))))
     
     (setf dashboard-items
           (append dashboard-items

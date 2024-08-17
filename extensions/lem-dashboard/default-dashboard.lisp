@@ -68,7 +68,7 @@
                                :keybind-command 'move-to-recent-files)
                 (make-instance 'dashboard-command
                                :display-text " New Lisp Scratch Buffer (l)"
-                               :command 'lem-lisp-mode/internal:lisp-scratch 
+                               :keybind-command 'lem-lisp-mode/internal:lisp-scratch 
                                :item-attribute 'document-header2-attribute
                                :keybind "l"
                                :bottom-margin 2))))

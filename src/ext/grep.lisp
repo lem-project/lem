@@ -1,7 +1,10 @@
 (defpackage :lem/grep
   (:use :cl
         :lem)
-  (:export :grep)
+  (:export
+   :grep
+   :*grep-command*
+   :*grep-args*)
   #+sbcl
   (:lock t))
 (in-package :lem/grep)
@@ -67,7 +70,9 @@
         (buffer-undo-boundary (point-buffer start)))))
   (lem/peek-source:show-matched-line))
 
-(defvar *last-query* "git grep -nHI ")
+(defvar *grep-command* "git grep")
+(defvar *grep-args* "-nHI")
+(defvar *last-query* (str:concat *grep-command* " " *grep-args* " "))
 (defvar *last-directory* nil)
 
 (define-command grep (query &optional (directory (buffer-directory)))

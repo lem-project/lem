@@ -11,9 +11,9 @@
 (defvar *dashboard-buffer-name* "*dashboard*")
 (defvar *dashboard-enable* t)
 
-(defun create-centered-string (str width)
-  "Creates a 'centered' string by padding with space to fill WIDTH halfway."
-  (let* ((padding (max 0 (floor (- width (length str)) 2)))
+(defun create-centered-string (str)
+  "Creates a 'centered' string by padding with space to fill the screen width halfway."
+  (let* ((padding (max 0 (floor (- (window-width (current-window)) (length str)) 2)))
          (spaces (make-string padding :initial-element #\Space)))
     (concatenate 'string spaces str)))
 
@@ -67,13 +67,12 @@
   (:documentation "Randomly displays one of SPLASH-TEXTS"))
 
 (defmethod draw-dashboard-item ((item dashboard-splash) point)
-  (let ((width (window-width (current-window))))
-    (unless (selected-splash item)
-      (setf (selected-splash item) 
-            (nth (random (length (splash-texts item))) (splash-texts item))))
-    (dolist (line (str:lines (selected-splash item)))
-      (insert-string point (create-centered-string line width) :attribute (item-attribute item))
-      (insert-character point #\Newline))))
+  (unless (selected-splash item)
+    (setf (selected-splash item) 
+          (nth (random (length (splash-texts item))) (splash-texts item))))
+  (dolist (line (str:lines (selected-splash item)))
+    (insert-string point (create-centered-string line) :attribute (item-attribute item))
+    (insert-character point #\Newline)))
 
 (defclass dashboard-url (dashboard-item)
   ((url :initarg :url :accessor url)
@@ -85,20 +84,18 @@
     (setf (action item) (lambda () (open-external-file (url item))))))
 
 (defmethod draw-dashboard-item ((item dashboard-url) point)
-  (let ((width (window-width (current-window))))
-    (lem/button:insert-button point 
-                              (create-centered-string (display-text item) width)
-                              (lambda () (open-external-file (url item)))
-                              :attribute (item-attribute item))))
+  (lem/button:insert-button point 
+                            (create-centered-string (display-text item))
+                            (lambda () (open-external-file (url item)))
+                            :attribute (item-attribute item)))
 
 (defclass dashboard-working-dir (dashboard-item)
   ()
   (:documentation "Prints current working directory"))
 
 (defmethod draw-dashboard-item ((item dashboard-working-dir) point)
-  (let ((width (window-width (current-window)))
-        (working-dir (format nil "> ~A" (buffer-directory))))
-    (insert-string point (create-centered-string working-dir width) :attribute 'document-header4-attribute)
+  (let ((working-dir (format nil "> ~A" (buffer-directory))))
+    (insert-string point (create-centered-string working-dir) :attribute 'document-header4-attribute)
     (insert-character point #\Newline)))
 
 (defclass dashboard-footer-message (dashboard-item)
@@ -108,13 +105,12 @@
   (:documentation "Randomly displays one of the passed-in MESSAGES"))
 
 (defmethod draw-dashboard-item ((item dashboard-footer-message) point)
-  (let* ((width (window-width (current-window))))
-    (unless (selected-message item)
-      (setf (selected-message item) 
-            (nth (random (length (messages item))) (messages item))))
-    (insert-string point 
-                   (create-centered-string (format nil "> ~A" (selected-message item)) width) 
-                   :attribute (item-attribute item))))
+  (unless (selected-message item)
+    (setf (selected-message item) 
+          (nth (random (length (messages item))) (messages item))))
+  (insert-string point 
+                 (create-centered-string (format nil "> ~A" (selected-message item))) 
+                 :attribute (item-attribute item)))
 
 (defclass dashboard-command (dashboard-item)
   ((command :initarg :command :accessor command)
@@ -128,11 +124,10 @@
     (setf (action item) (command item))))
 
 (defmethod draw-dashboard-item ((item dashboard-command) point)
-  (let ((width (window-width (current-window))))
-    (lem/button:insert-button point 
-                              (create-centered-string (display-text item) width)
-                              (command item)
-                              :attribute (item-attribute item))))
+  (lem/button:insert-button point 
+                            (create-centered-string (display-text item))
+                            (command item)
+                            :attribute (item-attribute item)))
 
 (defclass dashboard-recent-projects (dashboard-item)
   ((project-count :initarg :project-count :accessor project-count :initform *dashboard-project-count*))
@@ -140,11 +135,11 @@
 
 (defmethod initialize-instance :after ((item dashboard-recent-projects) &key)
   (unless (action item)
-  (setf (action item)
-        (lambda ()
-          (let ((project (string-trim '(#\Space #\Tab) (line-string (current-point)))))
-            (when project
-              (lem-core/commands/project:project-find-file project)))))))
+    (setf (action item)
+          (lambda ()
+            (let ((project (string-trim '(#\Space #\Tab) (line-string (current-point)))))
+              (when project
+                (lem-core/commands/project:project-find-file project)))))))
 
 (define-command move-to-recent-projects () ()
   (let ((point (buffer-point (current-buffer))))
@@ -154,16 +149,15 @@
     (move-to-beginning-of-line)))
 
 (defmethod draw-dashboard-item ((item dashboard-recent-projects) point)
-  (let* ((width (window-width (current-window)))
-         (title (format nil "~A Recent Projects (r)" (icon-string "package")))
-         (title-line (create-centered-string title width)))
+  (let* ((title (format nil "~A Recent Projects (r)" (icon-string "package")))
+         (title-line (create-centered-string title)))
     (insert-string point title-line :attribute 'document-header1-attribute)
     (insert-character point #\Newline)
     (insert-character point #\Newline)
     (let* ((projects (reverse (lem-core/commands/project:saved-projects)))
            (longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) projects))
            (max-length (length longest-project))
-           (left-padding (floor (- width max-length) 2)))
+           (left-padding (floor (- (window-width (current-window)) max-length) 2)))
       (loop for project in (subseq projects 0 (min (project-count item) (length projects)))
             do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
                (insert-string point (format nil "~A~%" project))))))
@@ -174,11 +168,11 @@
 
 (defmethod initialize-instance :after ((item dashboard-recent-files) &key)
   (unless (action item)
-  (setf (action item)
-        (lambda ()
-          (let ((file (string-trim '(#\Space #\Tab) (line-string (current-point)))))
-            (when file
-              (find-file file)))))))
+    (setf (action item)
+          (lambda ()
+            (let ((file (string-trim '(#\Space #\Tab) (line-string (current-point)))))
+              (when file
+                (find-file file)))))))
 
 (define-command move-to-recent-files () ()
   (let ((point (buffer-point (current-buffer))))
@@ -188,16 +182,15 @@
     (move-to-beginning-of-line)))
 
 (defmethod draw-dashboard-item ((item dashboard-recent-files) point)
-  (let* ((width (window-width (current-window)))
-         (title (format nil "~A Recent Files (f)" (icon-string "file-text")))
-         (title-line (create-centered-string title width))
+  (let* ((title (format nil "~A Recent Files (f)" (icon-string "file-text")))
+         (title-line (create-centered-string title))
          (recent-files (reverse (lem/common/history:history-data-list (lem-core/commands/file:file-history)))))
     (insert-string point title-line :attribute 'document-header1-attribute)
     (insert-character point #\Newline)
     (insert-character point #\Newline)
     (let* ((longest-file (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) recent-files))
            (max-length (length longest-file))
-           (left-padding (floor (- width max-length) 2)))
+           (left-padding (floor (- (window-width (current-window)) max-length) 2)))
       (loop for file in (subseq recent-files 0 (min (file-count item) (length recent-files)))
             do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
                (insert-string point (format nil "~A~%" file))))))

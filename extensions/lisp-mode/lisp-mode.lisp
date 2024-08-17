@@ -189,7 +189,17 @@
   (when (current-connection)
     (abort-all (current-connection) "change connection")
     (notify-change-connection-to-wait-message-thread))
-  (setf (current-connection) connection))
+  (setf (current-connection) connection)
+  (when (repl-buffer)
+    (write-string-to-repl
+     (if (self-connection-p connection)
+         (format nil
+                 "~%; changed connection (self connection)")
+         (format nil
+                 "~%; changed connection (~A ~A)"
+                 (connection-implementation-name connection)
+                 (connection-implementation-version connection)))
+     :attribute 'syntax-comment-attribute)))
 
 (defmethod switch-connection ((connection connection))
   (change-current-connection connection))
@@ -1106,7 +1116,7 @@
   (let* ((port (lem/common/socket:random-available-port))
          (process (run-lisp :command command :directory directory :port port)))
     (send-swank-create-server process port)
-    (start-lisp-repl)
+    (start-lisp-repl-internal :new-process t)
     (let ((spinner
             (start-loading-spinner :modeline
                                    :buffer (repl-buffer)

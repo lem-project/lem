@@ -2,6 +2,7 @@
   (:use :cl :lem)
   (:export :*relative-line*
            :line-numbers-attribute
+           :active-line-number-attribute
            :line-numbers
            :toggle-line-numbers)
   #+sbcl
@@ -17,7 +18,10 @@
 (defvar *line-number-format* nil)
 
 (define-attribute line-numbers-attribute
-  (t :foreground :base07 :background :base01))
+    (t :foreground :base07 :background :base01))
+
+(define-attribute active-line-number-attribute
+    (t :foreground :base07 :background :base01))
 
 (define-editor-variable line-numbers nil ""
   (lambda (value)
@@ -51,6 +55,10 @@ With a positive universal argument, use relative line numbers. Also obey the glo
 
 (defmethod lem-core:compute-left-display-area-content ((mode line-numbers-mode) buffer point)
   (when (buffer-filename (point-buffer point))
-    (let* ((string (format nil "~6D " (compute-line buffer point))))
+    (let* ((string (format nil "~6D " (compute-line buffer point)))
+           (attribute (if (eq (compute-line buffer point)
+                              (compute-line buffer (buffer-point buffer)))
+                          `((0 ,(length string) active-line-number-attribute))
+                          `((0 ,(length string) line-numbers-attribute)))))
       (lem/buffer/line:make-content :string string
-                                  :attributes `((0 ,(length string) line-numbers-attribute))))))
+                                    :attributes attribute))))

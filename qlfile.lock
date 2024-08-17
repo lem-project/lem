@@ -1,11 +1,11 @@
 ("quicklisp" .
  (:class qlot/source/dist:source-dist
-  :initargs (:distribution "http://beta.quicklisp.org/dist/quicklisp.txt" :%version :latest)
-  :version "2023-06-18"))
+  :initargs (:distribution "https://beta.quicklisp.org/dist/quicklisp.txt" :%version :latest)
+  :version "2023-10-21"))
 ("micros" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/micros.git")
-  :version "git-994d4d67467ec1b6eddacad9dba385b42101679e"))
+  :version "git-9fc7f1e5b0dbf1b9218a3f0aca7ed46e90aa86fd"))
 ("lem-mailbox" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-mailbox.git")
@@ -13,7 +13,7 @@
 ("lem-base16-themes" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-base16-themes.git")
-  :version "git-07dacae6c1807beaeffc730063b54487d5c82eb0"))
+  :version "git-e09618e2f3a4ba9977167d3ea90123ecabd884ab"))
 ("async-process" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/async-process.git")
@@ -25,7 +25,7 @@
 ("rove" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/fukamachi/rove.git")
-  :version "git-f168cd177b5f83f171dd970dc1a9abb6eb43f044"))
+  :version "git-cacea7331c10fe9d8398d104b2dfd579bf7ea353"))
 ("cl-sdl2" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2.git")
@@ -41,4 +41,12 @@
 ("jsonrpc" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/jsonrpc.git")
-  :version "git-bb3a536beb22112e544321dc7f3a8822413f9bac"))
+  :version "git-62e25f0e0059e57e6ab4abe677e466a76052c439"))
+("dissect" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/Shinmera/dissect.git")
+  :version "git-a70cabcd748cf7c041196efd711e2dcca2bbbb2c"))
+("3bmd" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/3b/3bmd.git")
+  :version "git-0a54e65e13f2eb174d47d3d2d21ae46ff29c547d"))

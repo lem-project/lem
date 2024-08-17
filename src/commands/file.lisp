@@ -210,7 +210,7 @@
     (let ((candidates (get-files-recursively-with-timeout (find-program))))
       (prompt-for-string
        "File: "
-       :completion-function (lambda (x) (completion-strings x candidates))
+       :completion-function (lambda (x) (completion-files x candidates))
        :test-function (lambda (name) (member name candidates :test #'string=))))))
 
 (define-command find-file-recursively (arg) (:universal)
@@ -415,7 +415,8 @@ Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode a
     (when filename
       (lem/common/history:add-history (file-history) 
                                       (namestring filename)
-                                      :allow-duplicates nil)
+                                      :allow-duplicates nil
+                                      :move-to-top t)
       (lem/common/history:save-file (file-history)))))
 
 (add-hook *find-file-hook* 'add-to-file-history)

@@ -145,6 +145,23 @@
    :syntax-variable-attribute
    :syntax-type-attribute
    :syntax-builtin-attribute
+   :document-header1-attribute
+   :document-header2-attribute
+   :document-header3-attribute
+   :document-header4-attribute
+   :document-header5-attribute
+   :document-header6-attribute
+   :document-bold-attribute
+   :document-italic-attribute
+   :document-underline-attribute
+   :document-link-attribute
+   :document-list-attribute
+   :document-code-block-attribute
+   :document-inline-code-attribute
+   :document-blockquote-attribute
+   :document-table-attribute
+   :document-task-list-attribute
+   :document-metadata-attribute
    :completion-attribute
    :non-focus-completion-attribute
    :attribute-image
@@ -152,7 +169,9 @@
    :attribute-height
    :attribute-font
    :cursor-attribute-p
-   :set-cursor-attribute)
+   :set-cursor-attribute
+   :display-dark-p
+   :display-light-p)
   ;; clipboard.lisp
   (:export
    :wsl-p
@@ -519,6 +538,7 @@
    :completion-hyphen
    :completion-file
    :completion-strings
+   :completion-files
    :completion-buffer)
   ;; cursors.lisp
   (:export
@@ -587,7 +607,8 @@
    :attribute-background-color
    :attribute-foreground-with-reverse
    :attribute-background-with-reverse
-   :cursor-type)
+   :cursor-type
+   :display-background-mode)
   ;; color-theme.lisp
   (:export
    :color-theme-names
@@ -596,7 +617,9 @@
    :current-theme
    :find-color-theme
    :color-theme
-   :get-color-theme-color)
+   :get-color-theme-color
+   :foreground-color
+   :background-color)
   ;; region.lisp
   (:export
    :check-marked-using-global-mode

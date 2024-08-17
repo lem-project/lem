@@ -81,6 +81,9 @@
    ;; TODO: delete ugly exports
    :%buffer-clear-keep-binfo
    :%buffer-keep-binfo)
+  ;; undo.lisp
+  (:export
+   :with-inhibit-undo)
   (:export
    :buffer-list
    :any-modified-buffer-p

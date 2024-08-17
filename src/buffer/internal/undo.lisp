@@ -3,9 +3,18 @@
 (defparameter *undo-modes* '(:edit :undo :redo))
 (defvar *undo-mode* :edit)
 
+(defvar *inhibit-undo* nil)
+
+(defun inhibit-undo-p ()
+  *inhibit-undo*)
+
+(defmacro with-inhibit-undo (() &body body)
+  `(let ((*inhibit-undo* t))
+     ,@body))
+
 (defun buffer-enable-undo-p (&optional (buffer (current-buffer)))
   "Returns T if undo is enabled for `buffer`, otherwise returns NIL."
-  (buffer-%enable-undo-p buffer))
+  (and (buffer-%enable-undo-p buffer) (not *inhibit-undo*)))
 
 (defun buffer-enable-undo (buffer)
   "Enables undo for `buffer`."
@@ -29,6 +38,11 @@
 (defun buffer-disable-undo-boundary (buffer)
   (setf (buffer-%enable-undo-boundary-p buffer) nil)
   nil)
+
+(defun buffer-undo-boundary (&optional (buffer (current-buffer)))
+  (when (buffer-enable-undo-boundary-p)
+    (unless (eq :separator (last-edit-history buffer))
+      (vector-push-extend :separator (buffer-edit-history buffer)))))
 
 (defun buffer-modify (buffer)
   (ecase *undo-mode*
@@ -99,7 +113,10 @@
         (vector-pop (buffer-edit-history buffer)))
       result0)))
 
-(defun buffer-undo-boundary (&optional (buffer (current-buffer)))
-  (when (buffer-enable-undo-boundary-p)
-    (unless (eq :separator (last-edit-history buffer))
-      (vector-push-extend :separator (buffer-edit-history buffer)))))
+(defun recompute-undo-position-offset (buffer edit)
+  (loop :for edit-1 :across (buffer-edit-history buffer)
+        :do (unless (eq edit-1 :separator)
+              (compute-edit-offset edit-1 edit)))
+  (loop :for edit-1 :in (buffer-redo-stack buffer)
+        :do (unless (eq edit-1 :separator)
+              (compute-edit-offset edit-1 edit))))

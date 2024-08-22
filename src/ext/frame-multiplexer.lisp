@@ -47,6 +47,7 @@
   "Keymap for commands related to the frame-multiplexer.")
 
 (define-key *keymap* "c" 'frame-multiplexer-create-with-new-buffer-list)
+(define-key *keymap* "C" 'frame-multiplexer-create-with-previous-buffer)
 (define-key *keymap* "d" 'frame-multiplexer-delete)
 (define-key *keymap* "p" 'frame-multiplexer-prev)
 (define-key *keymap* "n" 'frame-multiplexer-next)
@@ -354,6 +355,23 @@ This does not change the order of the frames."
     (let ((frame (make-frame (current-frame))))
       (allocate-frame vf frame)
       (switch-current-frame vf frame))))
+
+(define-command (frame-multiplexer-create-with-previous-buffer
+                 (:advice-classes frame-multiplexer-advice))
+    ()
+    ()
+  "Create a new frame with the previously opened buffer."
+  (check-frame-multiplexer-usable)
+  (let* ((vf (gethash (implementation) *virtual-frame-map*))
+         (id (find-unused-frame-id vf)))
+    (when (null id)
+      (editor-error "It's full of frames in virtual frame"))
+    (let* ((prev-buffer (current-buffer))
+           (new-frame (make-frame (current-frame))))
+      (allocate-frame vf new-frame)
+      (switch-current-frame vf new-frame)
+      (when prev-buffer
+        (switch-to-buffer prev-buffer)))))
 
 (define-command (frame-multiplexer-delete (:advice-classes frame-multiplexer-advice))
     (&optional id) (:universal-nil)

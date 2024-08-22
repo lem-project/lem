@@ -121,7 +121,7 @@ If there is no line at the 'n' destination, the position of 'point' is left as i
            (decf n (1+ charpos))))))
 
 (defun character-offset (point n)
-  "If 'point' is a positive number, move it later. If it is a negative number, move it forward. Return the moved 'point'.
+  "If 'n' is a positive number, move it forward. If it is a negative number, move it backward. Return the moved 'point'.
 If the 'n' character is beyond the buffer, the position of 'point' is left as it is and NIL is returned."
   (%character-offset point n
                      (lambda (linum line charpos)

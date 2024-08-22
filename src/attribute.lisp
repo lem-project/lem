@@ -320,5 +320,5 @@
   (and (attribute-p attribute)
        (attribute-value attribute :cursor)))
 
-(defun set-cursor-attribute (attribute)
-  (setf (attribute-value attribute :cursor) t))
+(defun set-cursor-attribute (attribute &key (value t))
+  (setf (attribute-value attribute :cursor) value))

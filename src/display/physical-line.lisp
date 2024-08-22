@@ -35,6 +35,8 @@
 (defclass eol-cursor-object (drawing-object)
   ((color :initarg :color
           :reader eol-cursor-object-color)
+   (attribute :initarg :attribute
+              :reader eol-cursor-object-attribute)
    (true-cursor-p :initarg :true-cursor-p
                   :initform nil
                   :reader eol-cursor-object-true-cursor-p)))
@@ -141,6 +143,7 @@
 (defun create-drawing-object (item)
   (cond ((and *line-wrap* (typep item 'eol-cursor-item))
          (list (make-instance 'eol-cursor-object
+                              :attribute (eol-cursor-item-attribute item)
                               :color (parse-color
                                       (attribute-background
                                        (eol-cursor-item-attribute item)))

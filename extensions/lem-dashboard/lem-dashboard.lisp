@@ -1,7 +1,10 @@
 (defpackage :lem-dashboard
   (:use :cl :lem)
   (:export :open-dashboard
+           :*dashboard-mode-keymap*
            :*dashboard-enable*
+           :move-to-recent-projects
+           :move-to-recent-files
            :set-dashboard
            :set-default-dashboard
            :create-centered-string))
@@ -33,16 +36,6 @@
     :accessor bottom-margin
     :initform 1
     :documentation "The amount of vertical space (lines) to apply after the item.")
-   (keybind 
-    :initarg :keybind 
-    :accessor keybind 
-    :initform nil
-    :documentation "The key binding associated with this item, if any.")
-   (keybind-command 
-    :initarg :keybind-command 
-    :accessor keybind-command 
-    :initform nil
-    :documentation "The command to be executed when the keybind is activated.")
    (action 
     :initarg :action 
     :accessor action 
@@ -115,22 +108,10 @@
           (redraw-dashboard)
           (switch-to-buffer (get-buffer *dashboard-buffer-name*))))))
 
-(defun setup-dashboard-keymap ()
-  "Set dashboard keymap"
-  (define-key *dashboard-mode-keymap* "n" 'next-line)
-  (define-key *dashboard-mode-keymap* "p" 'previous-line)
-  (define-key *dashboard-mode-keymap* "j" 'next-line)
-  (define-key *dashboard-mode-keymap* "k" 'previous-line)
-  (define-key *dashboard-mode-keymap* "Return" 'dashboard-open-selected-item)
-  (dolist (item *dashboard-layout*)
-    (when (and (keybind item) (keybind-command item))
-      (define-key *dashboard-mode-keymap* (keybind item) (keybind-command item)))))
-
 (defun set-dashboard (dashboard-items)
   "Sets the new dashboard layout to DASHBOARD-ITEMS list and applies new keymap."
   (when dashboard-items
     (setf *dashboard-layout* dashboard-items)
-    (setup-dashboard-keymap)
     (when (get-buffer *dashboard-buffer-name*)
       (redraw-dashboard))))
 
@@ -138,6 +119,12 @@
   "Handle resizing; in this case, redraw the dashboard to keep it centered."
   (when (string= (buffer-name (window-buffer window)) *dashboard-buffer-name*)
     (redraw-dashboard)))
+
+(define-key *dashboard-mode-keymap* "n" 'next-line)
+(define-key *dashboard-mode-keymap* "p" 'previous-line)
+(define-key *dashboard-mode-keymap* "j" 'next-line)
+(define-key *dashboard-mode-keymap* "k" 'previous-line)
+(define-key *dashboard-mode-keymap* "Return" 'dashboard-open-selected-item)
 
 (add-hook *after-init-hook* 'open-dashboard)
 (add-hook *window-size-change-functions* 'handle-resize)

@@ -58,43 +58,38 @@
                 (make-instance 'dashboard-working-dir)
                 (make-instance 'dashboard-recent-projects 
                                :project-count project-count
-                               :bottom-margin 1
-                               :keybind "r"
-                               :keybind-command 'move-to-recent-projects)
+                               :bottom-margin 1)
                 (make-instance 'dashboard-recent-files 
                                :file-count file-count
-                               :bottom-margin 1
-                               :keybind "f"
-                               :keybind-command 'move-to-recent-files)
+                               :bottom-margin 1)
                 (make-instance 'dashboard-command
                                :display-text " New Lisp Scratch Buffer (l)"
-                               :keybind-command 'lem-lisp-mode/internal:lisp-scratch 
                                :item-attribute 'document-header2-attribute
-                               :keybind "l"
                                :bottom-margin 2))))
-    
     (unless hide-links
       (setf dashboard-items
             (append dashboard-items
                     (list (make-instance 'dashboard-url 
                                          :display-text " Getting Started (s)"
                                          :url "https://lem-project.github.io/usage/usage/"
-                                         :item-attribute 'document-header3-attribute
-                                         :keybind "s"
-                                         :keybind-command 'open-lem-docs)
+                                         :item-attribute 'document-header3-attribute)
                           (make-instance 'dashboard-url
                                          :display-text " GitHub (g)"
                                          :url "https://github.com/lem-project/lem"
                                          :item-attribute 'document-header3-attribute
-                                         :keybind "g"
-                                         :keybind-command 'open-lem-github
-                                         :bottom-margin 2)))))
+                                         :bottom-margin 2))))
+      (define-key *dashboard-mode-keymap* "s" 'open-lem-docs)
+      (define-key *dashboard-mode-keymap* "g" 'open-lem-github))
     
     (setf dashboard-items
           (append dashboard-items
                   (list (make-instance 'dashboard-footer-message 
                                        :item-attribute 'document-blockquote-attribute
                                        :messages footer-messages))))
+
+    (define-key *dashboard-mode-keymap* "r" 'move-to-recent-projects)
+    (define-key *dashboard-mode-keymap* "f" 'move-to-recent-files)
+    (define-key *dashboard-mode-keymap* "l" 'lem-lisp-mode/internal:lisp-scratch)
     
     (set-dashboard dashboard-items)))
 

@@ -89,7 +89,7 @@
   (:default-initargs
    :item-attribute 'document-text-attribute
    :action (lambda ()
-             (let ((project (string-trim '(#\Space #\Tab) (line-string (current-point)))))
+             (let ((project (str:trim (line-string (current-point)))))
                (when project
                  (lem-core/commands/project:project-find-file project))))))
 
@@ -121,7 +121,7 @@
   (:default-initargs
    :item-attribute 'document-text-attribute
    :action (lambda ()
-             (let ((file (string-trim '(#\Space #\Tab) (line-string (current-point)))))
+             (let ((file (str:trim (line-string (current-point)))))
                (when file
                  (find-file file))))))
 
@@ -143,5 +143,5 @@
            (max-length (length longest-file))
            (left-padding (floor (- (window-width (current-window)) max-length) 2)))
       (loop for file in (subseq recent-files 0 (min (file-count item) (length recent-files)))
-            do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
+            do (insert-string point (str:fit left-padding " "))
                (insert-string point (format nil "~A~%" file))))))

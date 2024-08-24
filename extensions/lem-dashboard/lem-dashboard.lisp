@@ -13,6 +13,9 @@
 
 (defvar *dashboard-buffer-name* "*dashboard*")
 (defvar *dashboard-enable* t)
+(defvar *dashboard-mode-keymap* (make-keymap :name '*dashboard-mode-keymap* :parent *global-keymap*))
+(defvar *dashboard-layout* nil
+  "List of dashboard-item instances; will be drawn in order.")
 
 (defun create-centered-string (str)
   "Creates a 'centered' string by padding with space to fill the screen width halfway."
@@ -67,11 +70,6 @@
       (put-text-property start end :dashboard-item item)
       (delete-point start)
       (delete-point end))))
-
-(defvar *dashboard-layout* nil
-  "List of dashboard-item instances; will be drawn in order.")
-
-(defvar *dashboard-mode-keymap* (make-keymap :name '*dashboard-mode-keymap* :parent *global-keymap*))
 
 (define-major-mode dashboard-mode ()
     (:name "Dashboard"

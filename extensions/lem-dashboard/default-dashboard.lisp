@@ -63,18 +63,18 @@
                                :file-count file-count
                                :bottom-margin 1)
                 (make-instance 'dashboard-command
-                               :display-text " New Lisp Scratch Buffer (l)"
+                               :display-text " New Lisp Scratch Buffer (l)"
                                :item-attribute 'document-header2-attribute
                                :bottom-margin 2))))
     (unless hide-links
       (setf dashboard-items
             (append dashboard-items
                     (list (make-instance 'dashboard-url 
-                                         :display-text " Getting Started (s)"
+                                         :display-text " Getting Started (s)"
                                          :url "https://lem-project.github.io/usage/usage/"
                                          :item-attribute 'document-header3-attribute)
                           (make-instance 'dashboard-url
-                                         :display-text " GitHub (g)"
+                                         :display-text " GitHub (g)"
                                          :url "https://github.com/lem-project/lem"
                                          :item-attribute 'document-header3-attribute
                                          :bottom-margin 2))))

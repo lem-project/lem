@@ -126,5 +126,5 @@
 (define-key *dashboard-mode-keymap* "k" 'previous-line)
 (define-key *dashboard-mode-keymap* "Return" 'dashboard-open-selected-item)
 
-(add-hook *after-init-hook* 'open-dashboard)
+(setf lem:*splash-function* #'open-dashboard)
 (add-hook *window-size-change-functions* 'handle-resize)

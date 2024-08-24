@@ -4,7 +4,7 @@ Thanks for contributing to Lem! Here are some guidelines that we follow in the c
 In general, we follow the Google guide: https://google.github.io/styleguide/lispguide.xml
 
 
-## Alexandria and other util libraries
+## Alexandria and other utility libraries
 
 Lem depends on `alexandria`, so you can use `if-let`, `when-let` and similar functions.
 
@@ -47,6 +47,11 @@ or at least, open an issue about it so we don't forget to do it, thank you.
 
 Don't signal an `error` but an `editor-error`. This one is displayed nicely to the user.
 
+## File layout
+
+Variables and parameters (`defvar`, `defparameter`) should be grouped
+and appear near the top of the file, before conditions, classes and
+functions.
 
 ## Git and pull requests
 

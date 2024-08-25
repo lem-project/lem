@@ -74,20 +74,18 @@
                                          :display-text " GitHub (g)"
                                          :url "https://github.com/lem-project/lem"
                                          :item-attribute 'document-header3-attribute
-                                         :bottom-margin 2))))
-      (define-key *dashboard-mode-keymap* "s" 'open-lem-docs)
-      (define-key *dashboard-mode-keymap* "g" 'open-lem-github))
-    
+                                         :bottom-margin 2)))))
     (setf dashboard-items
           (append dashboard-items
                   (list (make-instance 'dashboard-footer-message 
                                        :item-attribute 'document-blockquote-attribute
                                        :messages footer-messages))))
-
-    (define-key *dashboard-mode-keymap* "r" 'dashboard-move-to-recent-projects)
-    (define-key *dashboard-mode-keymap* "f" 'dashboard-move-to-recent-files)
-    (define-key *dashboard-mode-keymap* "l" 'lem-lisp-mode/internal:lisp-scratch)
-    
     (set-dashboard dashboard-items)))
+
+(define-key *dashboard-mode-keymap* "s" 'open-lem-docs)
+(define-key *dashboard-mode-keymap* "g" 'open-lem-github)
+(define-key *dashboard-mode-keymap* "r" 'dashboard-move-to-recent-projects)
+(define-key *dashboard-mode-keymap* "f" 'dashboard-move-to-recent-files)
+(define-key *dashboard-mode-keymap* "l" 'lem-lisp-mode/internal:lisp-scratch)
 
 (set-default-dashboard)

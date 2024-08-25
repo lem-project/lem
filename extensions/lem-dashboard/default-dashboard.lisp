@@ -15,29 +15,25 @@
  [   Welcome to Lem!   ]
  -----------------------
                 
-                ,:coodddddoc.             
-           ',;cldddddddddddddolc.         
-        .,';oddddddddddddddddddddo:       
-      ''.,loollooodddddddddddddddddo:     
-    .'.............';:lddddddddddddddo'   
-   '.................   ,ddddddddddddddc  
-  '..................    .Oxddddddddddddc 
- ....................''''oK0xdddddddddddd,
-................,ldOKKKKKKKK0xdddxx:,,''',
-..............ckKKKKKKKKKKKKK0kO0KKo.     
-............'kKKKKKKKKKKKKKKKKKKKKKKKKo   
-...........'xdl:;;:O000:                  
-.................'k0000:                  
- ...............'k000000                  
- ...............xKKKKKKKk                 
-  .............'KKKKKKKKKO'               
-   ............,KKKKKKKKKKKko.     .      
-    ............xKKKKKKKKKKKKK0OkO;       
-      ...........dKKKKKKKKKKKKK;          
-         .........,lkKKKKKKK0.            
-           ...........;xKKKKK0            
-                ...';ckKKKKKK0            
-                    .lOKx'                "))
+            #*++======              
+        %#*===============          
+      %%*===================        
+    %%%%%%%%%%%*+============       
+   %%%%%%%%%%%%%   +===========     
+  %%%%%%%%%%%%%%    -===========    
+ %%%%%%%%%%%%%#*+=-:::==========    
+%%%%%%%%%%%%=:::::::::-==-:%    *   
+%%%%%%%%%%*::::::::::::::::::==:    
+%%%%%%%%%*-+*##-:::::::::::::       
+%%%%%%%%%%%%%#-----                 
+%%%%%%%%%%%%%=:::::                 
+ %%%%%%%%%%%*:::::::                
+  %%%%%%%%%%=:::::::::              
+   %%%%%%%%%*:::::::::::::::        
+    %%%%%%%%%*::::::::::::          
+      %%%%%%%%%#-::::::             
+        %%%%%%%%%*-:::::            
+            #+=-::::::::            "))
 
 (define-command open-lem-docs () ()
   (open-external-file "https://lem-project.github.io/usage/usage/"))

@@ -3,11 +3,15 @@
   (:export :open-dashboard
            :*dashboard-mode-keymap*
            :*dashboard-enable*
-           :move-to-recent-projects
-           :move-to-recent-files
+           :dashboard-move-to-recent-projects
+           :dashboard-move-to-recent-files
            :set-dashboard
            :set-default-dashboard
-           :create-centered-string))
+           :create-centered-string)
+  (:local-nicknames (:button :lem/button)
+                    (:history :lem/common/history)
+                    (:project :lem-core/commands/project)
+                    (:file :lem-core/commands/file)))
 
 (in-package :lem-dashboard)
 
@@ -87,15 +91,14 @@
   (let* ((buffer (create-dashboard-buffer))
          (old-line (line-number-at-point (buffer-point buffer)))
          (old-column (point-column (buffer-point buffer))))
-    (setf (buffer-read-only-p buffer) nil)
-    (erase-buffer buffer)
-    (let ((point (buffer-point buffer)))
-      (dolist (item *dashboard-layout*)
-        (draw-dashboard-item item point)))
-    (setf (buffer-read-only-p buffer) t)
-    (change-buffer-mode buffer 'dashboard-mode)
-    (move-to-line (buffer-point buffer) old-line)
-    (move-to-column (buffer-point buffer) old-column)))
+    (with-buffer-read-only buffer nil
+      (erase-buffer buffer)
+      (let ((point (buffer-point buffer)))
+        (dolist (item *dashboard-layout*)
+          (draw-dashboard-item item point)))
+      (change-buffer-mode buffer 'dashboard-mode)
+      (move-to-line (buffer-point buffer) old-line)
+      (move-to-column (buffer-point buffer) old-column))))
 
 (define-command open-dashboard () ()
   "Opens the dashboard if it doesn't exist, or switches to it if it does."

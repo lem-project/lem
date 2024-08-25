@@ -27,11 +27,11 @@
    :item-attribute 'document-text-attribute))
 
 (defmethod initialize-instance :after ((item dashboard-url) &key)
-  (with-slots (keybind-command action) item
-    (setf action (lambda () (funcall keybind-command)))))
+  (with-slots (url action) item
+    (setf action (lambda () (open-external-file url)))))
 
 (defmethod draw-dashboard-item ((item dashboard-url) point)
-  (lem/button:insert-button point 
+  (button:insert-button point 
                             (create-centered-string (display-text item))
                             (lambda () (open-external-file (url item)))
                             :attribute (item-attribute item)))
@@ -67,19 +67,20 @@
 
 ;; Command
 (defclass dashboard-command (dashboard-item)
-  ((display-text :initarg :display-text :accessor display-text))
-  (:documentation "Creates a link/button with DISPLAY-TEXT that executes the keybind-command.")
+  ((display-text :initarg :display-text :accessor display-text)
+   (action-command :initarg :action-command :accessor action-command))
+  (:documentation "Creates a link/button with DISPLAY-TEXT that executes ACTION-COMMAND when clicked.")
   (:default-initargs
    :item-attribute 'document-text-attribute))
 
 (defmethod initialize-instance :after ((item dashboard-command) &key)
-  (with-slots (keybind-command action) item
-    (setf action (lambda () (funcall keybind-command)))))
+  (with-slots (action-command action) item
+    (setf action (lambda () (funcall action-command)))))
 
 (defmethod draw-dashboard-item ((item dashboard-command) point)
-  (lem/button:insert-button point 
+  (button:insert-button point 
                             (create-centered-string (display-text item))
-                            (lambda () (funcall (keybind-command item) item))
+                            (lambda () (funcall (action-command item)))
                             :attribute (item-attribute item)))
 
 ;; Recent projects
@@ -91,9 +92,9 @@
    :action (lambda ()
              (let ((project (str:trim (line-string (current-point)))))
                (when project
-                 (lem-core/commands/project:project-find-file project))))))
+                 (project:project-find-file project))))))
 
-(define-command move-to-recent-projects () ()
+(define-command dashboard-move-to-recent-projects () ()
   (let ((point (buffer-point (current-buffer))))
     (buffer-start point)
     (search-forward-regexp point "Recent Projects")
@@ -106,13 +107,15 @@
     (insert-string point title-line :attribute 'document-header1-attribute)
     (insert-character point #\Newline)
     (insert-character point #\Newline)
-    (let* ((projects (reverse (lem-core/commands/project:saved-projects)))
-           (longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) projects))
-           (max-length (length longest-project))
-           (left-padding (floor (- (window-width (current-window)) max-length) 2)))
-      (loop for project in (subseq projects 0 (min (project-count item) (length projects)))
-            do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
-               (insert-string point (format nil "~A~%" project))))))
+    (let* ((projects (reverse (project:saved-projects)))
+           (display-projects (subseq projects 0 (min (project-count item) (length projects)))))
+      (when display-projects
+          (let* ((longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) display-projects))
+                 (max-length (length longest-project))
+                 (left-padding (floor (- (window-width (current-window)) max-length) 2)))
+            (loop for project in display-projects
+                  do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
+                     (insert-string point (format nil "~A~%" project))))))))
 
 ;; Recent files
 (defclass dashboard-recent-files (dashboard-item)
@@ -125,7 +128,7 @@
                (when file
                  (find-file file))))))
 
-(define-command move-to-recent-files () ()
+(define-command dashboard-move-to-recent-files () ()
   (let ((point (buffer-point (current-buffer))))
     (buffer-start point)
     (search-forward-regexp point "Recent Files")
@@ -135,13 +138,15 @@
 (defmethod draw-dashboard-item ((item dashboard-recent-files) point)
   (let* ((title (format nil "~A Recent Files (f)" (icon-string "file-text")))
          (title-line (create-centered-string title))
-         (recent-files (reverse (lem/common/history:history-data-list (lem-core/commands/file:file-history)))))
+         (recent-files (reverse (history:history-data-list (file:file-history)))))
     (insert-string point title-line :attribute 'document-header1-attribute)
     (insert-character point #\Newline)
     (insert-character point #\Newline)
-    (let* ((longest-file (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) recent-files))
-           (max-length (length longest-file))
-           (left-padding (floor (- (window-width (current-window)) max-length) 2)))
-      (loop for file in (subseq recent-files 0 (min (file-count item) (length recent-files)))
-            do (insert-string point (str:fit left-padding " "))
-               (insert-string point (format nil "~A~%" file))))))
+    (let ((display-files (subseq recent-files 0 (min (file-count item) (length recent-files)))))
+      (when display-files
+          (let* ((longest-file (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) display-files))
+                 (max-length (length longest-file))
+                 (left-padding (floor (- (window-width (current-window)) max-length) 2)))
+            (loop for file in display-files
+                  do (insert-string point (str:fit left-padding " "))
+                     (insert-string point (format nil "~A~%" file))))))))

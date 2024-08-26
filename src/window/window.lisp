@@ -15,6 +15,7 @@
 (defvar *last-focused-window* nil)
 
 (defvar *switch-to-buffer-hook* '())
+(defvar *switch-to-window-hook* '())
 
 (defgeneric %delete-window (window))
 (defgeneric window-parent (window)
@@ -216,6 +217,7 @@ This is the content area in which the buffer is displayed, without any side marg
 (defun switch-to-window (new-window)
   (unless (eq (current-window) new-window)
     (run-hooks (window-leave-hook (current-window)) (current-window))
+    (run-hooks *switch-to-window-hook* (current-window) new-window)
     (setf *last-focused-window* (current-window)))
   (setf (current-window) new-window))
 

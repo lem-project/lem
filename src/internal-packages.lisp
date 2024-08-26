@@ -274,6 +274,7 @@
    :*window-size-change-functions*
    :*window-show-buffer-functions*
    :*switch-to-buffer-hook*
+   :*switch-to-window-hook*
    :window-parent
    :scroll
    :window-view-point

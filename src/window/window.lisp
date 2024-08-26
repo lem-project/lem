@@ -14,6 +14,8 @@
 
 (defvar *last-focused-window* nil)
 
+(defvar *switch-to-buffer-hook* '())
+
 (defgeneric %delete-window (window))
 (defgeneric window-parent (window)
   (:method (window)
@@ -829,6 +831,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (when (or (not-switchable-buffer-p (window-buffer (current-window)))
             (not-switchable-buffer-p buffer))
     (editor-error "This buffer is not switchable"))
+  (run-hooks *switch-to-buffer-hook* buffer)
   (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)
   (%switch-to-buffer buffer record move-prev-point))
 

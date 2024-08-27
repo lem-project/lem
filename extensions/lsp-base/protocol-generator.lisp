@@ -167,7 +167,9 @@
         (eswitch (kind :test #'string=)
           ("base"
            (assert (member name '("URI" "DocumentUri" "string" "integer") :test #'string=))
-           (symbolize name))
+           (if (equal name "DocumentUri")
+               'lsp-document-uri
+               (symbolize name)))
           ("reference"
            (symbolize name))))
       (parse-reference-type hash)))

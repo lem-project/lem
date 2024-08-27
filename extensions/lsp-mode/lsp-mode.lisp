@@ -487,13 +487,16 @@
 (defmethod apply-document-change ((document-change lsp:delete-file))
   (error "deleteFile is not yet supported"))
 
+(defun apply-change (uri text-edits)
+  (let ((buffer (find-buffer-from-uri uri)))
+    (apply-text-edits buffer text-edits)))
+
 (defun apply-workspace-edit (workspace-edit)
   (labels ((apply-document-changes (document-changes)
              (do-sequence (document-change document-changes)
                (apply-document-change document-change)))
            (apply-changes (changes)
-             (declare (ignore changes))
-             (error "Not yet implemented")))
+             (maphash #'apply-change changes)))
     (if-let ((document-changes (handler-case
                                    (lsp:workspace-edit-document-changes workspace-edit)
                                  (unbound-slot () nil))))

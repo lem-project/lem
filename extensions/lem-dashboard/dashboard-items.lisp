@@ -85,14 +85,15 @@
 
 ;; Recent projects
 (defclass dashboard-recent-projects (dashboard-item)
-  ((project-count :initarg :project-count :accessor project-count :initform *dashboard-project-count*))
+  ((project-count :initarg :project-count :accessor project-count :initform 5))
   (:documentation "Displays a list of recent projects, limited to the last PROJECT-COUNT.")
   (:default-initargs
    :item-attribute 'document-text-attribute
    :action (lambda ()
              (let ((project (str:trim (line-string (current-point)))))
                (when project
-                 (project:project-find-file project))))))
+                 (uiop:with-current-directory (project)
+                   (project:project-find-file project)))))))
 
 (define-command dashboard-move-to-recent-projects () ()
   (let ((point (buffer-point (current-buffer))))
@@ -119,7 +120,7 @@
 
 ;; Recent files
 (defclass dashboard-recent-files (dashboard-item)
-  ((file-count :initarg :file-count :accessor file-count :initform *dashboard-file-count*))
+  ((file-count :initarg :file-count :accessor file-count :initform 5))
   (:documentation "Displays a list of recent files, limited to the last FILE-COUNT.")
   (:default-initargs
    :item-attribute 'document-text-attribute

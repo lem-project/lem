@@ -203,7 +203,11 @@
                              (:file "filer")
                              (:file "deepl")
                              (:file "themes")
-                             (:file "detective")))))
+                             (:file "detective")))
+               
+               (:module "ui"
+                :serial t
+                :components ((:file "theme-list")))))
 
 (defsystem "lem/extensions"
   :depends-on (#+sbcl

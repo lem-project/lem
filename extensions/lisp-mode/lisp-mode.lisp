@@ -283,7 +283,7 @@
 (defun (setf buffer-thread-id) (value buffer)
   (setf (buffer-value buffer 'thread) value))
 
-(defun current-swank-thread ()
+(defun current-micros-thread ()
   (or (buffer-thread-id (current-buffer))
       t))
 
@@ -300,7 +300,7 @@
 
 (defun call-with-remote-eval (form continuation
                               &key (connection (current-connection))
-                                   (thread (current-swank-thread))
+                                   (thread (current-micros-thread))
                                    (package (current-package))
                                    request-id)
   (remote-eval connection
@@ -321,7 +321,7 @@
 
 (defun lisp-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym))
-        (thread-id (current-swank-thread)))
+        (thread-id (current-micros-thread)))
     (catch tag
       (funcall emacs-rex-fun
                (current-connection)
@@ -513,7 +513,7 @@
 (define-command lisp-interrupt () ()
   (send-message-string
    (current-connection)
-   (format nil "(:emacs-interrupt ~A)" (current-swank-thread))))
+   (format nil "(:emacs-interrupt ~A)" (current-micros-thread))))
 
 (defun prompt-for-sexp (string &optional initial)
   (prompt-for-string string
@@ -865,7 +865,7 @@
                                       end))))
                          ((:abort condition)
                           (editor-error "abort ~A" condition))))
-       :thread (current-swank-thread)
+       :thread (current-micros-thread)
        :package (current-package)))))
 
 (defun describe-symbol (symbol-name)

@@ -11,9 +11,9 @@
                (make-instance 'side-window
                               :buffer buffer
                               :x 0
-                              :y 1
+                              :y (topleft-window-y (current-frame))
                               :width width
-                              :height (display-height)
+                              :height (max-window-height (current-frame))
                               :use-modeline-p nil
                               :background-color nil
                               :border 0))

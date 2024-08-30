@@ -158,8 +158,9 @@
        :label "Export symbol"
        :callback (lambda (&rest args)
                    (declare (ignore args))
-                   (lem-lisp-mode/exporter:lisp-add-export
-                    (symbol-string-at-point point)))))))
+                   (uiop:symbol-call :lem-lisp-mode/exporter
+                                     lisp-add-export
+                                     (symbol-string-at-point point)))))))
 
 (defun context-menu-browse-class-as-tree ()
   (let ((point (point-over-symbol-with-menu-opened-p)))

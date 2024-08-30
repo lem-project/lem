@@ -1077,7 +1077,7 @@
     command))
 
 (defun lisp-process-buffer-name (port)
-  (format nil "*Run Lisp swank/~D*" port))
+  (format nil "*Run Lisp/~D*" port))
 
 (defun get-lisp-process-buffer (port)
   (get-buffer (lisp-process-buffer-name port)))

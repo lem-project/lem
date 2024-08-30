@@ -293,7 +293,7 @@
 (define-message (:inspect what thread tag)
   (let ((hook (when (and thread tag)
                 (alexandria:curry (lambda (sexp)
-                                    (lem-lisp-mode/swank-protocol:send-message-string
+                                    (lem-lisp-mode/micros-protocol:send-message-string
                                      (current-connection)
                                      sexp))
                                   `(:emacs-return ,thread ,tag nil)))))

@@ -13,7 +13,7 @@
   :components ((:file "test-api")
                (:file "exporter")
                (:file "errors")
-               (:file "swank-protocol")
+               (:file "micros-protocol")
                (:file "connections")
                (:file "message-dispatcher")
                (:file "ui-mode")

@@ -1170,7 +1170,7 @@
            (lem-process:delete-process (connection-process connection))
            t)
     (remove-and-change-connection connection)
-    (usocket:socket-close (lem-lisp-mode/swank-protocol::connection-socket connection))))
+    (usocket:socket-close (lem-lisp-mode/micros-protocol::connection-socket connection))))
 
 (define-command slime-quit () ()
   (when (self-connection-p (current-connection))
@@ -1287,7 +1287,7 @@
       (progn
         (sleep 0.5)
         (dolist (c conn-list)
-          (let* ((s  (lem-lisp-mode/swank-protocol::connection-socket c))
+          (let* ((s  (lem-lisp-mode/micros-protocol::connection-socket c))
                  (fd (sb-bsd-sockets::socket-file-descriptor (usocket:socket s))))
             (ignore-errors
               ;;(usocket:socket-shutdown s :IO)

@@ -6,13 +6,13 @@
         :lem/button
         :lem/loading-spinner
         :lem-lisp-mode/errors
-        :lem-lisp-mode/swank-protocol
+        :lem-lisp-mode/micros-protocol
         :lem-lisp-mode/connections
         :lem-lisp-mode/message-dispatcher
         :lem-lisp-mode/ui-mode
         :lem-lisp-mode/grammar)
   (:export
-   ;; reexport swank-protocol.lisp
+   ;; reexport micros-protocol.lisp
    :connection-value)
   (:export
    ;; lisp-ui-mode.lisp

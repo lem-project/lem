@@ -1,4 +1,4 @@
-(defpackage :lem-lisp-mode/swank-protocol
+(defpackage :lem-lisp-mode/micros-protocol
   (:use :cl :lem-lisp-mode/errors)
   (:import-from :trivial-types
                 :association-list
@@ -37,7 +37,7 @@
            :connection-swank-version
            :connection-value)
   (:documentation "Low-level implementation of a client for the Swank protocol."))
-(in-package :lem-lisp-mode/swank-protocol)
+(in-package :lem-lisp-mode/micros-protocol)
 
 (defmacro with-swank-syntax (() &body body)
   `(with-standard-io-syntax

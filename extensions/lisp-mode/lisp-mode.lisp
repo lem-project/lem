@@ -1098,7 +1098,7 @@
       (lem-process:process-send-input process (format nil "(require :asdf)~%"))
       process)))
 
-(defun send-swank-create-server (process port)
+(defun send-micros-create-server (process port)
   (let ((file (asdf:system-source-file (asdf:find-system :micros))))
     (lem-process:process-send-input
      process
@@ -1115,7 +1115,7 @@
 (defun run-slime (command &key (directory (buffer-directory)))
   (let* ((port (lem/common/socket:random-available-port))
          (process (run-lisp :command command :directory directory :port port)))
-    (send-swank-create-server process port)
+    (send-micros-create-server process port)
     (start-lisp-repl-internal :new-process t)
     (let ((spinner
             (start-loading-spinner :modeline

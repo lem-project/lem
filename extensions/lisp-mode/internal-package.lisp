@@ -68,7 +68,7 @@
    :show-description
    :lisp-eval-describe
    :lisp-describe-symbol
-   :connect-to-swank
+   :connect-to-micros
    :slime-connect
    :show-source-location
    :source-location-to-xref-location
@@ -102,7 +102,7 @@
    ;; message.lisp
    :display-message
    ;; package.lisp
-   :lisp-listen-in-current-package 
+   :lisp-listen-in-current-package
    ;;
    :self-connection
    :self-connection-p

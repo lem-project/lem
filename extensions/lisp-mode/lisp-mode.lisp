@@ -231,7 +231,7 @@
       (log:debug "Starting internal SWANK and connecting to it" micros:*communication-style*)
       (let ((micros::*swank-debug-p* nil))
         (micros:create-server :port port :style :spawn))
-      (connect-to-swank *localhost* port)
+      (connect-to-micros *localhost* port)
       (update-buffer-package)
 
       ;; XXX:
@@ -942,7 +942,7 @@
    :timeout 1
    :style '(:gravity :center)))
 
-(defun connect-to-swank (hostname port)
+(defun connect-to-micros (hostname port)
   (let ((connection
           (handler-case (if (eq hostname *localhost*)
                             (or (ignore-errors (new-connection "127.0.0.1" port))
@@ -960,7 +960,7 @@
             (parse-integer
              (prompt-for-string "Port: "
                                 :initial-value (princ-to-string *default-port*))))))
-  (let ((connection (connect-to-swank hostname port)))
+  (let ((connection (connect-to-micros hostname port)))
     (when start-repl (start-lisp-repl))
     (connected-slime-message connection)))
 
@@ -1125,7 +1125,7 @@
             (retry-count 0))
         (labels ((interval ()
                    (handler-case
-                       (let ((conn (connect-to-swank *localhost* port)))
+                       (let ((conn (connect-to-micros *localhost* port)))
                          (setf (connection-command conn) command)
                          (setf (connection-process conn) process)
                          (setf (connection-process-directory conn) directory)

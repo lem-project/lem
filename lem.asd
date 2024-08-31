@@ -133,6 +133,7 @@
                (:file "command-advices")
                (:file "interface")
                (:file "highlight-line")
+               (:file "html-buffer")
                (:file "site-init")
                (:file "lem")
 
@@ -204,7 +205,7 @@
                              (:file "deepl")
                              (:file "themes")
                              (:file "detective")))
-               
+
                (:module "ui"
                 :serial t
                 :components ((:file "theme-list")))))

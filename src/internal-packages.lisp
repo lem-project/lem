@@ -636,6 +636,11 @@
    :register-formatter
    :register-formatters
    :format-buffer)
+  ;; html-buffer.lisp
+  (:export
+   :html-buffer
+   :html-buffer-html
+   :make-html-buffer)
   ;; site-init.lisp
   (:export
    :*inits-directory-name*

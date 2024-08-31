@@ -1,13 +1,15 @@
-(defpackage :lem-markdown-mode/preview
-  (:use #:cl
-        #:lem)
+(defpackage :lem-markdown-mode/preview/external-browser
+  (:use :cl
+        :lem)
+  (:import-from :lem-markdown-mode/preview/preview
+                :render)
   (:documentation "Live rendering of markdown documents to a browser.
 
 This package defines the command M-x markdown-preview that opens a browser window, connects to it via a websocket, and renders and updates the markdown in the browser at each file save.
 
 The WS connection is closed when the markdown file is closed."))
 
-(in-package :lem-markdown-mode/preview)
+(in-package :lem-markdown-mode/preview/external-browser)
 
 (defclass server (trivial-ws:server)
   ((handler :initform nil
@@ -30,13 +32,8 @@ The WS connection is closed when the markdown file is closed."))
 
 (defvar *template*
   (lisp-preprocessor:compile-template
-   (asdf:system-relative-pathname :lem-markdown-mode "index.html")
+   (asdf:system-relative-pathname :lem-markdown-mode "preview/external-browser-preview.html")
    :arguments '($websocket-url $body)))
-
-(defun render (string)
-  (let ((3bmd-code-blocks:*code-blocks* t))
-    (with-output-to-string (stream)
-      (3bmd:parse-string-and-print-to-stream string stream))))
 
 (defun generate-html (buffer websocket-port)
   (uiop:with-temporary-file (:stream out
@@ -84,15 +81,18 @@ The WS connection is closed when the markdown file is closed."))
           (error (e)
             (log:error e)))))))
 
-(defmethod lem-markdown-mode/internal:on-save (buffer)
+(defmethod lem-markdown-mode/internal:on-save (buffer (view-type (eql :external-browser)))
   (refresh buffer))
 
-(defmethod lem-markdown-mode/internal:on-kill (buffer)
+(defmethod lem-markdown-mode/internal:on-kill (buffer (view-type (eql :external-browser)))
   (alexandria:when-let* ((server (buffer-server buffer))
                          (handler (server-handler server)))
     (trivial-ws:stop handler)))
 
-(define-command markdown-preview () ()
+(defmethod lem-markdown-mode/internal:on-change (buffer (view-type (eql :external-browser)))
+  )
+
+(defmethod lem-markdown-mode/internal:preview (buffer (view-type (eql :external-browser)))
   "Render the markdown of the current buffer to a browser window. The preview is refreshed when the file is saved.
 
 The connection is closed when the file is closed."

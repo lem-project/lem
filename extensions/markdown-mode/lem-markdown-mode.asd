@@ -14,4 +14,8 @@
                (:file "languages")
                (:file "syntax-parser")
                (:file "markdown-mode")
-               (:file "preview")))
+               (:module "preview"
+                :serial t
+                :components ((:file "preview")
+                             (:file "external-browser")
+                             (:file "html-buffer")))))

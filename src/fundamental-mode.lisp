@@ -1,7 +1,8 @@
 (in-package :lem-core)
 
 (define-major-mode lem/buffer/fundamental-mode:fundamental-mode nil
-    (:name "Fundamental"))
+    (:name "Fundamental"
+     :require-final-newline nil))
 
 (defvar *global-keymap* (make-keymap :name '*global-keymap*))
 

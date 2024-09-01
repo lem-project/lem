@@ -117,6 +117,10 @@
 (defgeneric lem-if:object-height (implementation drawing-object))
 (defgeneric lem-if:clear-to-end-of-window (implementation view y))
 
+(defgeneric lem-if:js-eval (implementation view code)
+  (:method (implementation view code)
+   (error "unimplemented")))
+
 (defvar *display-background-mode* nil)
 
 (defun implementation ()

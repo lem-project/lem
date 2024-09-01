@@ -640,7 +640,8 @@
   (:export
    :html-buffer
    :html-buffer-html
-   :make-html-buffer)
+   :make-html-buffer
+   :js-eval)
   ;; site-init.lisp
   (:export
    :*inits-directory-name*
@@ -709,6 +710,7 @@
    :get-char-width
    :get-char-height
    :clear-to-end-of-window
+   :js-eval
    :render-line
    :render-line-on-modeline
    :object-width

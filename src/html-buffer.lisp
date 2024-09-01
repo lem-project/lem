@@ -2,7 +2,7 @@
 
 (defclass html-buffer (text-buffer)
   ((html :initarg :html
-         :reader html-buffer-html)))
+         :accessor html-buffer-html)))
 
 (defun make-html-buffer (buffer-name html)
   (let ((buffer (make-buffer buffer-name)))

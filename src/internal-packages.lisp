@@ -424,6 +424,7 @@
    :mode-syntax-table
    :mode-hook
    :mode-hook-variable
+   :mode-require-final-newline
    :mode-active-p
    :major-modes
    :minor-modes

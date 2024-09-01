@@ -33,7 +33,8 @@
 
 (defclass major-mode (mode)
   ((syntax-table :initarg :syntax-table :reader mode-syntax-table)
-   (hook-variable :initarg :hook-variable :reader mode-hook-variable)))
+   (hook-variable :initarg :hook-variable :reader mode-hook-variable)
+   (require-final-newline :initarg :require-final-newline :reader mode-require-final-newline)))
 
 (defclass minor-mode (mode)
   ((enable-hook :initarg :enable-hook :reader mode-enable-hook)
@@ -94,6 +95,24 @@
   (assert (not (null mode)))
   (mode-hide-from-modeline (get-mode-object mode)))
 
+(defmethod mode-require-final-newline ((mode symbol))
+  (assert (not (null mode)))
+  (mode-require-final-newline (get-mode-object mode)))
+
+(defun ensure-buffer-ends-with-newline (buffer)
+  (with-point ((p (buffer-point buffer)))
+    (buffer-end p)
+    (unless (start-line-p p)
+      (insert-character p #\Newline))))
+
+(defun handle-after-save-hook (buffer)
+  (let* ((major-mode (buffer-major-mode buffer))
+         (require-final-newline (mode-require-final-newline major-mode)))
+    (when require-final-newline
+      (ensure-buffer-ends-with-newline buffer))))
+
+(add-hook (variable-value 'after-save-hook :global t) 'handle-after-save-hook)
+
 (defun major-modes ()
   (mapcar #'mode-identifier-name (collect-modes #'major-mode-p)))
 
@@ -142,7 +161,8 @@
                                    keymap
                                    (syntax-table '(fundamental-syntax-table))
                                    mode-hook
-                                   formatter)
+                                   formatter
+                                   (require-final-newline t))
                              &body body)
   (let ((command-class-name (make-mode-command-class-name major-mode)))
     `(progn
@@ -167,10 +187,11 @@
           :description ,description
           :keymap ,keymap
           :syntax-table ,syntax-table
-          :hook-variable ',mode-hook))
+          :hook-variable ',mode-hook
+          :require-final-newline ,require-final-newline))
        (register-mode ',major-mode (make-instance ',major-mode))
        (when ,formatter (register-formatter ,major-mode ,formatter)))))
-
+ 
 ;;; minor mode
 (defun enable-minor-mode (minor-mode)
   (if (global-minor-mode-p minor-mode)

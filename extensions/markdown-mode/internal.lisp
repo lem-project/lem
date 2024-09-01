@@ -10,7 +10,7 @@
            :preview-default))
 (in-package :lem-markdown-mode/internal)
 
-(defparameter *view-type* :html-buffer)
+(defparameter *view-type* :external-browser)
 
 (defgeneric on-save (buffer view-type))
 (defgeneric on-kill (buffer view-type))

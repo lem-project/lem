@@ -20,7 +20,8 @@
     (pop-to-buffer html-buffer)))
 
 (defmethod lem-markdown-mode/internal:on-save (buffer (view-type (eql :html-buffer)))
-  (lem-markdown-mode/internal:preview buffer :html-buffer))
+  (when (get-buffer (preview-buffer-name buffer))
+    (lem-markdown-mode/internal:preview buffer :html-buffer)))
 
 (defmethod lem-markdown-mode/internal:on-kill (buffer (view-type (eql :html-buffer)))
   )

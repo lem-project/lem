@@ -16,7 +16,7 @@
 
                (:file "rpc")
                (:file "reader")
-               (:file "micros-protocol")
+               (:file "connection")
 
                (:file "connections")
                (:file "message-dispatcher")

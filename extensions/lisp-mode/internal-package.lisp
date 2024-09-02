@@ -6,7 +6,7 @@
         :lem/button
         :lem/loading-spinner
         :lem-lisp-mode/errors
-        :lem-lisp-mode/micros-protocol
+        :lem-lisp-mode/connection
         :lem-lisp-mode/connections
         :lem-lisp-mode/message-dispatcher
         :lem-lisp-mode/ui-mode

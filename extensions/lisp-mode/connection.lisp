@@ -1,4 +1,4 @@
-(uiop:define-package :lem-lisp-mode/micros-protocol
+(uiop:define-package :lem-lisp-mode/connection
   (:use :cl
         :lem-lisp-mode/errors)
   (:import-from :trivial-types
@@ -42,7 +42,7 @@
            :connection-swank-version
            :connection-value)
   (:documentation "Low-level implementation of a client for the Swank protocol."))
-(in-package :lem-lisp-mode/micros-protocol)
+(in-package :lem-lisp-mode/connection)
 
 (defmacro with-swank-syntax (() &body body)
   `(with-standard-io-syntax

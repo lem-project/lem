@@ -143,7 +143,7 @@
   (remove-eval-result-overlay-between start end)
   (let ((spinner (lem/loading-spinner:start-loading-spinner :region :start start :end end))
         (string (points-to-string start end))
-        (request-id (lem-lisp-mode/micros-protocol::new-request-id (current-connection))))
+        (request-id (lem-lisp-mode/connection::new-request-id (current-connection))))
     (setf (spinner-eval-request-id spinner) request-id)
     (lem-lisp-mode/internal::with-remote-eval
         (`(micros/pretty-eval:pretty-eval ,string) :request-id request-id)
@@ -175,7 +175,7 @@
 (define-command lisp-eval-interrupt-at-point () ()
   (dolist (spinner (lem/loading-spinner:get-line-spinners (current-point)))
     (let ((request-id (spinner-eval-request-id spinner)))
-      (lem-lisp-mode/micros-protocol::send-message (current-connection)
+      (lem-lisp-mode/connection::send-message (current-connection)
                                                   `(:interrupt-thread ,request-id)))))
 
 (defun get-evaluation-value-id-at-point (point)

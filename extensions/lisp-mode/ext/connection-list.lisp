@@ -1,7 +1,7 @@
 (defpackage :lem-lisp-mode/connection-list
   (:use :cl
         :lem
-        :lem-lisp-mode/micros-protocol
+        :lem-lisp-mode/connection
         :lem-lisp-mode/internal)
   (:export :lisp-connection-list))
 (in-package :lem-lisp-mode/connection-list)

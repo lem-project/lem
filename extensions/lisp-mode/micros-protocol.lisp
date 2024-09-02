@@ -1,8 +1,14 @@
-(defpackage :lem-lisp-mode/micros-protocol
-  (:use :cl :lem-lisp-mode/errors)
+(uiop:define-package :lem-lisp-mode/micros-protocol
+  (:use :cl
+        :lem-lisp-mode/errors)
   (:import-from :trivial-types
                 :association-list
                 :proper-list)
+  (:import-from :lem-lisp-mode/rpc
+                :write-message-to-stream
+                :read-message-from-stream)
+  (:import-from :lem-lisp-mode/reader
+                :read-from-string*)
   (:export :connection
            :connection-hostname
            :connection-port
@@ -45,41 +51,6 @@
            (*print-case* :downcase)
            (*print-readably* nil))
        ,@body)))
-
-;;; Encoding and decoding messages
-
-(defun encode-integer (integer)
-  "Encode an integer to a 0-padded 16-bit hexadecimal string."
-  (babel:string-to-octets (format nil "~6,'0,X" integer)))
-
-(defun decode-integer (string)
-  "Decode a string representing a 0-padded 16-bit hex string to an integer."
-  (parse-integer string :radix 16))
-
-;; Writing and reading messages to/from streams
-
-(defun write-message-to-stream (stream message)
-  "Write a string to a stream, prefixing it with length information for Swank."
-  (let* ((octets (babel:string-to-octets message))
-         (length-octets (encode-integer (length octets)))
-         (msg (make-array (+ (length length-octets)
-                             (length octets))
-                          :element-type '(unsigned-byte 8))))
-    (replace msg length-octets)
-    (replace msg octets :start1 (length length-octets))
-    (write-sequence msg stream)))
-
-(defun read-message-from-stream (stream)
-  "Read a string from a string.
-
-Parses length information to determine how many characters to read."
-  (let ((length-buffer (make-array 6 :element-type '(unsigned-byte 8))))
-    (when (/= 6 (read-sequence length-buffer stream))
-      (error 'disconnected))
-    (let* ((length (decode-integer (babel:octets-to-string length-buffer)))
-           (buffer (make-array length :element-type '(unsigned-byte 8))))
-      (read-sequence buffer stream)
-      (babel:octets-to-string buffer))))
 
 ;;; Data
 
@@ -346,55 +317,6 @@ to check if input is available."
                            :thread ":repl-thread"))
 
 ;;; Reading/parsing messages
-
-(defun read-atom (in)
-  (let ((token
-          (coerce (loop :for c := (peek-char nil in nil)
-                        :until (or (null c) (member c '(#\( #\) #\space #\newline #\tab)))
-                        :collect c
-                        :do (read-char in))
-                  'string)))
-    (handler-case (values (read-from-string token) nil)
-      (error ()
-        (ppcre:register-groups-bind (prefix name) ("(.*?)::?(.*)" token)
-          (values (intern (string-upcase (string-left-trim ":" name))
-                          :keyword)
-                  (when prefix
-                    (read-from-string prefix))))))))
-
-(defun read-list (in)
-  (read-char in)
-  (loop :until (eql (peek-char t in) #\))
-        :collect (read-ahead in)
-        :finally (read-char in)))
-
-(defun read-sharp (in)
-  (read-char in)
-  (case (peek-char nil in)
-    ((#\()
-     (let ((list (read-list in)))
-       (make-array (length list) :initial-contents list)))
-    ((#\\)
-     (read-char in)
-     (read-char in))
-    (otherwise
-     (unread-char #\# in))))
-
-(defun read-ahead (in)
-  (let ((c (peek-char t in)))
-    (case c
-      ((#\()
-       (read-list in))
-      ((#\")
-       (read in))
-      ((#\#)
-       (read-sharp in))
-      (otherwise
-       (read-atom in)))))
-
-(defun read-from-string* (string)
-  (with-input-from-string (in string)
-    (read-ahead in)))
 
 (defun read-message (connection)
   "Read an arbitrary message from a connection."

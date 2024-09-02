@@ -13,7 +13,11 @@
   :components ((:file "test-api")
                (:file "errors")
                (:file "ui-mode")
+
+               (:file "rpc")
+               (:file "reader")
                (:file "micros-protocol")
+
                (:file "connections")
                (:file "message-dispatcher")
                (:file "grammar")

@@ -102,7 +102,8 @@
           (if (current-connection)
               (format nil " ~A:~A"
                       (connection-implementation-name (current-connection))
-                      (or (self-connection-p (current-connection))
+                      (if (self-connection-p (current-connection))
+                          "SELF"
                           (connection-pid (current-connection))))
               "")))
 
@@ -247,8 +248,7 @@
        (integerp (self-connected-port))
        (member (connection-hostname connection) '("127.0.0.1" "localhost") :test 'equal)
        (ignore-errors (equal (connection-pid connection) (micros/backend:getpid)))
-       (= (connection-port connection) (self-connected-port))
-       :self))
+       (= (connection-port connection) (self-connected-port))))
 
 (defun self-connection ()
   (find-if #'self-connection-p (connection-list)))

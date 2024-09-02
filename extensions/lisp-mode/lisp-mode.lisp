@@ -972,16 +972,6 @@
       (disconnected ()
         (remove-and-change-connection (current-connection))))))
 
-(defvar *event-hooks* '())
-
-(defun dispatch-message (message)
-  (log-message (prin1-to-string message))
-  (dolist (e *event-hooks*)
-    (when (funcall e message)
-      (return-from dispatch-message)))
-  (alexandria:when-let (dispatcher (get-message-dispatcher (first message)))
-    (funcall dispatcher message)))
-
 (defun read-from-minibuffer (thread tag prompt initial-value)
   (let ((input (prompt-for-sexp prompt initial-value)))
     (dispatch-message `(:emacs-return ,thread ,tag ,input))))

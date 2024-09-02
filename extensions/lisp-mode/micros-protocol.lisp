@@ -21,7 +21,6 @@
            :connection-process-directory
            :connection-plist)
   (:export :new-connection
-           :log-message
            :read-message-string
            :send-message-string
            :send-message
@@ -196,12 +195,6 @@
   ;; Read all the other messages, dumping them
   (read-all-messages connection)
   (log:debug "Setup is done now"))
-
-(defvar *event-log* '())
-
-(defun log-message (string)
-  "Log a message."
-  (push string *event-log*))
 
 (defun read-message-string (connection)
   "Read a message string from a Swank connection.

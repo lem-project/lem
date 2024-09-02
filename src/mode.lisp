@@ -99,19 +99,15 @@
   (assert (not (null mode)))
   (mode-require-final-newline (get-mode-object mode)))
 
-(defun ensure-buffer-ends-with-newline (buffer)
-  (with-point ((p (buffer-point buffer)))
-    (buffer-end p)
-    (unless (start-line-p p)
-      (insert-character p #\Newline))))
+(defun ensure-final-newline (buffer)
+  "Inserts newline at the end of BUFFER if its major mode requires it."
+  (when (mode-require-final-newline (buffer-major-mode buffer))
+    (with-point ((p (buffer-point buffer)))
+      (buffer-end p)
+      (unless (start-line-p p)
+        (insert-character p #\Newline)))))
 
-(defun handle-after-save-hook (buffer)
-  (let* ((major-mode (buffer-major-mode buffer))
-         (require-final-newline (mode-require-final-newline major-mode)))
-    (when require-final-newline
-      (ensure-buffer-ends-with-newline buffer))))
-
-(add-hook (variable-value 'after-save-hook :global t) 'handle-after-save-hook)
+(add-hook (variable-value 'after-save-hook :global t) 'ensure-final-newline)
 
 (defun major-modes ()
   (mapcar #'mode-identifier-name (collect-modes #'major-mode-p)))

@@ -6,6 +6,7 @@
            :*delete-last-buffer*
            :root-p
            :find-root
+           :saved-projects
            :project-find-file
            :project-root-directory
            :project-root

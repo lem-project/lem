@@ -243,13 +243,6 @@
 
       (setf *self-connected-port* port))))
 
-(defun self-connection-p (connection)
-  (and (typep connection 'connection)
-       (integerp (self-connected-port))
-       (member (connection-hostname connection) '("127.0.0.1" "localhost") :test 'equal)
-       (ignore-errors (equal (connection-pid connection) (micros/backend:getpid)))
-       (= (connection-port connection) (self-connected-port))))
-
 (defun self-connection ()
   (find-if #'self-connection-p (connection-list)))
 

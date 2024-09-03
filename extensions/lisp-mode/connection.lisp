@@ -19,7 +19,8 @@
            :connection-command
            :connection-process
            :connection-process-directory
-           :connection-plist)
+           :connection-plist
+           :self-connection-p)
   (:export :new-connection
            :read-message-string
            :send-message-string
@@ -40,8 +41,7 @@
            :connection-machine-type
            :connection-machine-version
            :connection-swank-version
-           :connection-value)
-  (:documentation "Low-level implementation of a client for the Swank protocol."))
+           :connection-value))
 (in-package :lem-lisp-mode/connection)
 
 (defmacro with-swank-syntax (() &body body)
@@ -51,10 +51,12 @@
            (*print-readably* nil))
        ,@body)))
 
-;;; Data
-
 (defclass connection ()
-  ((hostname
+  ((self-process
+    :initform nil
+    :writer set-self-process
+    :reader self-connection-p)
+   (hostname
     :reader connection-hostname
     :initarg :hostname
     :type string
@@ -135,6 +137,12 @@
                                     :port port
                                     :socket socket)))
     (setup connection)
+
+    (when (and (member (connection-hostname connection) '("127.0.0.1" "localhost") :test 'equal)
+               (equal (connection-pid connection)
+                      (micros/backend:getpid)))
+      (set-self-process t connection))
+
     connection))
 
 (defun read-return-message (connection &key (timeout 5))

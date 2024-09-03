@@ -41,6 +41,7 @@
    :with-remote-eval
    :lisp-eval-from-string
    :lisp-eval
+   :lisp-scratch
    :lisp-eval-async
    :eval-with-transcript
    :re-eval-defvar

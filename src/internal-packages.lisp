@@ -641,6 +641,8 @@
    :html-buffer
    :html-buffer-html
    :make-html-buffer
+   :html-buffer-updated-p
+   :invalidate-html-buffer-updated
    :js-eval)
   ;; site-init.lisp
   (:export

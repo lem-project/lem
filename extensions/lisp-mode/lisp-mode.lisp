@@ -13,14 +13,6 @@
 (defparameter *default-port* 4005)
 (defparameter *localhost* "127.0.0.1")
 
-(defvar *connection* nil)
-
-(defun current-connection ()
-  *connection*)
-
-(defun (setf current-connection) (connection)
-  (setf *connection* connection))
-
 (set-syntax-parser lem-lisp-syntax:*syntax-table*
                    (make-tmlanguage-lisp))
 

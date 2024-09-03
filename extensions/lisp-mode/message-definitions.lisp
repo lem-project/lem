@@ -4,7 +4,7 @@
   (declare (ignore target))
   (write-string-to-repl string)
   (when thread
-    (send-message *connection* `(:write-done ,thread))))
+    (send-message (current-connection) `(:write-done ,thread))))
 
 (define-message (:write-object string id type)
   (write-object-to-repl string id type))
@@ -19,7 +19,7 @@
   (new-package name prompt-string))
 
 (define-message (:return value id)
-  (finish-evaluated *connection* value id))
+  (finish-evaluated (current-connection) value id))
 
 (define-message (:read-from-minibuffer thread tag prompt initial-value)
   (read-from-minibuffer thread tag prompt initial-value))
@@ -29,14 +29,14 @@
 
 (define-message (:emacs-return-string thread tag string)
   (send-message-string
-   *connection*
+   (current-connection)
    (format nil "(:emacs-return-string ~A ~A ~S)"
            thread
            tag
            string)))
 
 (define-message (:new-features features)
-  (setf (connection-features *connection*)
+  (setf (connection-features (current-connection))
         features))
 
 (define-message (:indentation-update info)
@@ -55,7 +55,7 @@
 
 (define-message (:emacs-return thread tag value)
   (send-message-string
-   *connection*
+   (current-connection)
    (format nil "(:emacs-return ~A ~A ~S)" thread tag value)))
 
 (define-message (:debug-condition thread message)
@@ -64,5 +64,5 @@
 
 (define-message (:ping thread tag)
   (send-message-string
-   *connection*
+   (current-connection)
    (format nil "(:emacs-pong ~A ~A)" thread tag)))

@@ -9,6 +9,7 @@
                 :read-message-from-stream)
   (:import-from :lem-lisp-mode/reader
                 :read-from-string*)
+  (:export :current-connection)
   (:export :connection
            :connection-hostname
            :connection-port
@@ -50,6 +51,14 @@
            (*print-case* :downcase)
            (*print-readably* nil))
        ,@body)))
+
+(defvar *connection* nil)
+
+(defun current-connection ()
+  *connection*)
+
+(defun (setf current-connection) (connection)
+  (setf *connection* connection))
 
 (defclass connection ()
   ((self-process

@@ -60,12 +60,12 @@
 (defun (setf current-connection) (connection)
   (setf *connection* connection))
 
-(defclass connection ()
-  ((self-process
-    :initform nil
-    :writer set-self-process
-    :reader self-connection-p)
-   (hostname
+(defgeneric self-connection-p (connection))
+
+(defclass <connection> () ())
+
+(defclass connection (<connection>)
+  ((hostname
     :reader connection-hostname
     :initarg :hostname
     :type string
@@ -130,6 +130,9 @@
    (plist :initform nil :accessor connection-plist))
   (:documentation "A connection to a remote Lisp."))
 
+(defmethod self-connection-p ((connection <connection>))
+  nil)
+
 (defmethod connection-value ((connection connection) key)
   (getf (connection-plist connection) key))
 
@@ -150,7 +153,7 @@
     (when (and (member (connection-hostname connection) '("127.0.0.1" "localhost") :test 'equal)
                (equal (connection-pid connection)
                       (micros/backend:getpid)))
-      (set-self-process t connection))
+      (change-class connection 'self-connection))
 
     connection))
 
@@ -336,3 +339,12 @@ to check if input is available."
 (defun read-all-messages (connection)
   (loop while (message-waiting-p connection) collecting
     (read-message connection)))
+
+
+;;; self connection
+
+(defclass self-connection (connection)
+  ())
+
+(defmethod self-connection-p ((connection self-connection))
+  t)

@@ -160,7 +160,7 @@
        :callback (lambda (&rest args)
                    (declare (ignore args))
                    (uiop:symbol-call :lem-lisp-mode/exporter
-                                     lisp-add-export
+                                     :lisp-add-export
                                      (symbol-string-at-point point)))))))
 
 (defun context-menu-browse-class-as-tree ()

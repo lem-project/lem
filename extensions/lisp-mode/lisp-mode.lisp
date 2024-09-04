@@ -334,28 +334,30 @@
 
 (defun lisp-eval-async (form &optional cont (package (current-package)))
   (let ((buffer (current-buffer)))
-    (with-remote-eval (form :package package)
-      (lambda (value)
-        (alexandria:destructuring-ecase value
-          ((:ok result)
-           (when cont
-             (let ((prev (current-buffer)))
-               (setf (current-buffer) buffer)
-               (funcall cont result)
-               (unless (eq (current-buffer)
-                           (window-buffer (current-window)))
-                 (setf (current-buffer) prev)))))
-          ((:abort condition)
-           (display-message "Evaluation aborted on ~A." condition)))))))
+    (with-broadcast-connections (connection)
+      (with-remote-eval (form :package package :connection connection)
+        (lambda (value)
+          (alexandria:destructuring-ecase value
+            ((:ok result)
+             (when cont
+               (let ((prev (current-buffer)))
+                 (setf (current-buffer) buffer)
+                 (funcall cont result)
+                 (unless (eq (current-buffer)
+                             (window-buffer (current-window)))
+                   (setf (current-buffer) prev)))))
+            ((:abort condition)
+             (display-message "Evaluation aborted on ~A." condition))))))))
 
 (defun eval-with-transcript (form &key (package (current-package)))
-  (with-remote-eval (form :package package)
-    (lambda (value)
-      (alexandria:destructuring-ecase value
-        ((:ok x)
-         (display-message "~A" x))
-        ((:abort condition)
-         (display-message "Evaluation aborted on ~A." condition))))))
+  (with-broadcast-connections (connection)
+    (with-remote-eval (form :package package :connection connection)
+      (lambda (value)
+        (alexandria:destructuring-ecase value
+          ((:ok x)
+           (display-message "~A" x))
+          ((:abort condition)
+           (display-message "Evaluation aborted on ~A." condition)))))))
 
 (defun re-eval-defvar (string)
   (eval-with-transcript `(micros:re-evaluate-defvar ,string)))
@@ -497,9 +499,10 @@
      (micros/backend:filename-to-pathname ,directory))))
 
 (define-command lisp-interrupt () ()
-  (send-message-string
-   (current-connection)
-   (format nil "(:emacs-interrupt ~A)" (current-micros-thread))))
+  (with-broadcast-connections (connection)
+    (send-message-string
+     connection
+     (format nil "(:emacs-interrupt ~A)" (current-micros-thread)))))
 
 (defun prompt-for-sexp (string &optional initial)
   (prompt-for-string string
@@ -886,6 +889,11 @@
   (bt2:interrupt-thread *wait-message-thread*
                        (lambda () (error 'change-connection))))
 
+(defun message-waiting-some-connections-p (&key (timeout 0))
+  (with-broadcast-connections (connection)
+    (when (message-waiting-p connection :timeout timeout)
+      (return-from message-waiting-some-connections-p t))))
+
 (defun start-thread ()
   (unless *wait-message-thread*
     (setf *wait-message-thread*
@@ -905,7 +913,7 @@
                                     (unless (connected-p)
                                       (setf *wait-message-thread* nil)
                                       (return-from exit))
-                                    (when (message-waiting-p (current-connection) :timeout 1)
+                                    (when (message-waiting-some-connections-p :timeout 1)
                                       (let ((barrior t))
                                         (send-event (lambda ()
                                                       (unwind-protect (progn (pull-events)
@@ -957,10 +965,11 @@
 
 (defun pull-events ()
   (when (connected-p)
-    (handler-case (loop :while (message-waiting-p (current-connection))
-                        :do (dispatch-message (read-message (current-connection))))
-      (disconnected ()
-        (remove-and-change-connection (current-connection))))))
+    (with-broadcast-connections (connection)
+      (handler-case (loop :while (message-waiting-p connection)
+                          :do (dispatch-message (read-message connection)))
+        (disconnected ()
+          (remove-and-change-connection connection))))))
 
 (defun read-from-minibuffer (thread tag prompt initial-value)
   (let ((input (prompt-for-sexp prompt initial-value)))

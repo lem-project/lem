@@ -10,6 +10,8 @@
   (:import-from :lem-lisp-mode/reader
                 :read-from-string*)
   (:export :current-connection)
+  (:export :*broadcast*
+           :with-broadcast-connections)
   (:export :connection
            :connection-hostname
            :connection-port
@@ -345,3 +347,18 @@ to check if input is available."
 
 (defmethod self-connection-p ((connection self-connection))
   t)
+
+;;; broadcast
+
+(defvar *broadcast* t)
+
+(defun call-with-broadcast-connections (function)
+  (if (or (self-connection-p (current-connection))
+          (not *broadcast*))
+      (funcall function (current-connection))
+      (dolist (connection (lem-lisp-mode/connections:connection-list))
+        (unless (self-connection-p connection)
+          (funcall function connection)))))
+
+(defmacro with-broadcast-connections ((connection) &body body)
+  `(call-with-broadcast-connections (lambda (,connection) ,@body)))

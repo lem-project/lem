@@ -4,7 +4,8 @@
   (declare (ignore target))
   (write-string-to-repl string)
   (when thread
-    (send-message (current-connection) `(:write-done ,thread))))
+    (with-broadcast-connections (connection)
+      (send-message connection `(:write-done ,thread)))))
 
 (define-message (:write-object string id type)
   (write-object-to-repl string id type))
@@ -19,7 +20,8 @@
   (new-package name prompt-string))
 
 (define-message (:return value id)
-  (finish-evaluated (current-connection) value id))
+  (with-broadcast-connections (connection)
+    (finish-evaluated connection value id)))
 
 (define-message (:read-from-minibuffer thread tag prompt initial-value)
   (read-from-minibuffer thread tag prompt initial-value))
@@ -28,16 +30,18 @@
   (dispatch-message `(:emacs-return ,thread ,tag ,(prompt-for-y-or-n-p question))))
 
 (define-message (:emacs-return-string thread tag string)
-  (send-message-string
-   (current-connection)
-   (format nil "(:emacs-return-string ~A ~A ~S)"
-           thread
-           tag
-           string)))
+  (with-broadcast-connections (connection)
+    (send-message-string
+     connection
+     (format nil "(:emacs-return-string ~A ~A ~S)"
+             thread
+             tag
+             string))))
 
 (define-message (:new-features features)
-  (setf (connection-features (current-connection))
-        features))
+  (with-broadcast-connections (connection)
+    (setf (connection-features connection)
+          features)))
 
 (define-message (:indentation-update info)
   (indentation-update info))
@@ -54,15 +58,17 @@
     (dispatch-message `(:emacs-return ,thread ,tag ,result))))
 
 (define-message (:emacs-return thread tag value)
-  (send-message-string
-   (current-connection)
-   (format nil "(:emacs-return ~A ~A ~S)" thread tag value)))
+  (with-broadcast-connections (connection)
+    (send-message-string
+     connection
+     (format nil "(:emacs-return ~A ~A ~S)" thread tag value))))
 
 (define-message (:debug-condition thread message)
   (assert thread)
   (display-message "~A" message))
 
 (define-message (:ping thread tag)
-  (send-message-string
-   (current-connection)
-   (format nil "(:emacs-pong ~A ~A)" thread tag)))
+  (with-broadcast-connections (connection)
+    (send-message-string
+     connection
+     (format nil "(:emacs-pong ~A ~A)" thread tag))))

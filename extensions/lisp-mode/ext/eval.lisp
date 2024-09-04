@@ -143,7 +143,7 @@
   (remove-eval-result-overlay-between start end)
   (let ((spinner (lem/loading-spinner:start-loading-spinner :region :start start :end end))
         (string (points-to-string start end))
-        (request-id (lem-lisp-mode/connection::new-request-id (current-connection))))
+        (request-id (lem-lisp-mode/connection::new-request-id)))
     (setf (spinner-eval-request-id spinner) request-id)
     (lem-lisp-mode/internal::with-remote-eval
         (`(micros/pretty-eval:pretty-eval ,string) :request-id request-id)

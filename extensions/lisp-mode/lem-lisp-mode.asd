@@ -16,9 +16,9 @@
 
                (:file "rpc")
                (:file "reader")
+               (:file "connections")
                (:file "connection")
 
-               (:file "connections")
                (:file "message-dispatcher")
                (:file "grammar")
                (:file "implementation")

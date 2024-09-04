@@ -13,7 +13,6 @@
   (:export :connection
            :connection-hostname
            :connection-port
-           :connection-request-count
            :connection-package
            :connection-prompt-string
            :connection-features
@@ -80,11 +79,6 @@
     :initarg :socket
     :type usocket:stream-usocket
     :documentation "The usocket socket.")
-   (request-count
-    :accessor connection-request-count
-    :initform 0
-    :type integer
-    :documentation "A number that is increased and sent along with every request.")
    (package
     :accessor connection-package
     :initform "COMMON-LISP-USER"
@@ -271,8 +265,10 @@ to check if input is available."
 
 ;;; Sending messages
 
-(defun new-request-id (connection)
-  (incf (connection-request-count connection)))
+(defvar *request-id-counter* 0)
+
+(defun new-request-id ()
+  (incf *request-id-counter*))
 
 (defun remote-eval-from-string (connection
                                 string
@@ -280,7 +276,7 @@ to check if input is available."
                                      thread
                                      package
                                      request-id)
-  (let* ((request-id (or request-id (new-request-id connection)))
+  (let* ((request-id (or request-id (new-request-id)))
          (msg (format nil
                       "(:emacs-rex ~A ~S ~A ~A)"
                       string

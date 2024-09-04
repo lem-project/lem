@@ -950,6 +950,11 @@
     (when start-repl (start-lisp-repl))
     (connected-slime-message connection)))
 
+(defun connect-to-multiple-servers (host-and-ports)
+  (dolist (host-and-port host-and-ports)
+    (destructuring-bind (&key host port) host-and-port
+      (connect-to-micros host port))))
+
 (defun pull-events ()
   (when (connected-p)
     (handler-case (loop :while (message-waiting-p (current-connection))

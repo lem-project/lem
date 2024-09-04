@@ -69,6 +69,7 @@
    :lisp-eval-describe
    :lisp-describe-symbol
    :connect-to-micros
+   :connect-to-multiple-servers
    :slime-connect
    :show-source-location
    :source-location-to-xref-location

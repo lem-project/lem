@@ -26,6 +26,7 @@
            :send-message-string
            :send-message
            :message-waiting-p
+           :new-request-id
            :remote-eval-from-string
            :remote-eval
            :finish-evaluated

@@ -40,7 +40,7 @@
                     :error-output :string
                     :ignore-error-status t))
 
-(defun fossil-porcelain ()
+(defun porcelain ()
   "Get changes."
   (multiple-value-bind (out error code)
       (run-fossil "changes")
@@ -55,7 +55,7 @@
   - untracked files (todo)
   - list of ADDED files
   - modified files"
-  (loop for line in (str:lines (fossil-porcelain))
+  (loop for line in (str:lines (porcelain))
         for parts = (str:words line)
         for status = (first parts)
         for file = (second parts)

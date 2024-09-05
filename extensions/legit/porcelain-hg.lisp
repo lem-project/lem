@@ -36,7 +36,7 @@
                     :error-output :string
                     :ignore-error-status t))
 
-(defun hg-porcelain ()
+(defun porcelain ()
   "Return changes."
   (run-hg "status"))
 
@@ -55,7 +55,7 @@
   ;;    ? = not tracked
   ;;    I = ignored (=> not shown without -A)
   ;;      = origin of the previous file (with --copies)
-  (loop for line in (str:lines (hg-porcelain))
+  (loop for line in (str:lines (porcelain))
         for file = (subseq line 2)  ;; a slight difference than with git.
         unless (str:blankp line)
         ;; Modified

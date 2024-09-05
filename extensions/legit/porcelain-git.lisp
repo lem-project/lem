@@ -54,7 +54,7 @@
                     :error-output :string
                     :ignore-error-status t))
 
-(defun git-porcelain ()
+(defun porcelain ()
   "Return the git status: for each file in the project, the `git status --porcelain` command
 allows to learn about the file state: modified, deleted, ignored… "
   (run-git (list "status" "--porcelain=v1")))
@@ -81,7 +81,7 @@ allows to learn about the file state: modified, deleted, ignored… "
        •   R = renamed
        •   C = copied
        •   U = updated but unmerged"
-  (loop for line in (str:lines (git-porcelain))
+  (loop for line in (str:lines (porcelain))
         for file = (subseq line 3)
         for status = (subseq line 0 2)
         unless (str:blankp line)

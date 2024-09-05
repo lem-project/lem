@@ -1,7 +1,6 @@
 (uiop:define-package :lem
   (:use :cl)
   (:use-reexport :lem-core)
-  (:use-reexport :lem-core/commands/multiple-cursors)
   (:use-reexport :lem-core/commands/move)
   (:use-reexport :lem-core/commands/edit)
   (:use-reexport :lem-core/commands/mark)

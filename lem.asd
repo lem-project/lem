@@ -150,7 +150,6 @@
                              (:file "project" :depends-on ("file"))
                              (:file "buffer")
                              (:file "window" :depends-on ("move"))
-                             (:file "multiple-cursors")
                              (:file "process")
                              (:file "help")
                              (:file "font")
@@ -261,7 +260,8 @@
                "lem-lua-mode"
                "lem-terminal"
                "lem-legit"
-               "lem-dashboard"))
+               "lem-dashboard"
+               "lem-multiple-cursors"))
 
 (defsystem "lem/executable"
   :build-operation program-op

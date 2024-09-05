@@ -29,7 +29,7 @@
 (defvar *verbose* nil)
 
 ;; VCS implementation for git
-(defclass vcs-git () 
+(defclass vcs-git (lem/porcelain:vcs-generic) 
   ((rebase-pid :type (or nil string)
                :accessor rebase-pid)))
 

@@ -29,7 +29,8 @@
    :commits-log
    :*commits-log-page-size*
    :commit-count
-   :*nb-latest-commits*)
+   :*nb-latest-commits*
+   :vcs-generic)
   (:documentation "Functions to run VCS operations: get the list of changes, of untracked files, commit, push… Git support is the main goal, a simple layer is used with other VCS systems (Fossil, Mercurial).
 
 On interactive commands, Legit will check what VCS is in use in the current project.
@@ -79,11 +80,16 @@ Mercurial:
 (defun porcelain-error (message &rest args)
   (error 'porcelain-error :message (apply #'format nil message args)))
 
+(defclass vcs-generic () ())
+
 ;;;
 ;;; Getting changes.
 ;;;
 (defgeneric components (vcs)
-  (:documentation "Returns three values: TODO document what these are")
+  (:documentation "Returns three values, each a List[string]
+- Untracked files
+- Modified and unstaged files
+- Modified and staged files")
   (:method (vcs)
     (porcelain-error "lem/porcelain:components not implemented for vcs ~a" vcs)))
 
@@ -91,7 +97,6 @@ Mercurial:
 ;;; diff
 ;;;
 (defgeneric file-diff (vcs file &key cached)
-  (:documentation "TODO Document: presumably, returns the string form of the diff")
   (:method (vcs file &key cached)
     (declare (ignorable file cached))
     (porcelain-error "lem/porcelain:file-diff not implemented for vcs ~a" vcs)))

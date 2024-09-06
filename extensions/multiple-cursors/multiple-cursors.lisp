@@ -58,12 +58,12 @@
 
   (dolist (point (buffer-cursors (current-buffer)))
     (with-point ((point point))
-      (when (search-next-matched point 1)
-        (setf cursor (make-fake-cursor point))
-        (setf (point-charpos point) (- (point-charpos point) (- (point-charpos end) (point-charpos start))))
-        (set-cursor-mark cursor point))))
-  (isearch-abort)
-  )
+      (if (search-next-matched point 1)
+          (progn (setf cursor (make-fake-cursor point))
+                 (setf (point-charpos point) (- (point-charpos point) (- (point-charpos end) (point-charpos start))))
+                 (set-cursor-mark cursor point))
+          (message "No more matches"))))
+  (isearch-abort))
 
 (defun garbage-collection-cursors ()
   (clear-duplicate-cursors (current-buffer)))

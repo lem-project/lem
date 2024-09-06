@@ -22,13 +22,21 @@
   "Duplicates the cursor above the currently existing cursors."
   (add-cursor-to-line-with-offset -1))
 
-(define-command mark-next-like-this (start end) (:region)
+(define-command mark-next-like-this () ()
   ""
-  (mark-like-this-direction start end #'search-forward))
+  (if (buffer-mark (current-buffer))
+      (mark-like-this-direction (region-beginning-using-global-mode (current-global-mode))
+                                (region-end-using-global-mode (current-global-mode))
+                                #'search-forward)
+      (add-cursors-to-next-line)))
 
 (define-command mark-previous-like-this (start end) (:region)
   ""
-  (mark-like-this-direction start end  #'search-backward))
+  (if (buffer-mark (current-buffer))
+      (mark-like-this-direction (region-beginning-using-global-mode (current-global-mode))
+                                (region-end-using-global-mode (current-global-mode))
+                                #'search-backward)
+      (add-cursors-to-previous-line)))
 
 (defun add-cursor-to-line-with-offset (offset)
   (let ((cursors (buffer-cursors (current-buffer))))

@@ -189,6 +189,11 @@
                         (window (current-window)))
     (resize-terminal terminal window)))
 
+(defmethod lem-core:paste-using-mode ((mode terminal-mode) string)
+  (let ((terminal (get-current-terminal)))
+    (loop :for c :across string
+          :do (terminal:input-character terminal c))))
+
 (defun on-window-size-change (window)
   (alexandria:when-let (terminal (buffer-terminal (window-buffer window)))
     (resize-terminal terminal window)))

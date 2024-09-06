@@ -44,6 +44,20 @@
       "hierarchicalDocumentSymbolSupport":true
     },
     "codeAction":{
+        "codeActionLiteralSupport": {
+          "codeActionKind": {
+            "valueSet": [
+              "",
+              "quickfix",
+              "refactor",
+              "refactor.extract",
+              "refactor.inline",
+              "refactor.rewrite",
+              "source",
+              "source.organizeImports"
+            ]
+          }
+        }
     },
     "formatting":{
     },

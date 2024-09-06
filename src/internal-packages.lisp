@@ -442,7 +442,8 @@
    :clear-region-major-mode
    :major-mode-at-point
    :current-major-mode-at-point
-   :with-major-mode)
+   :with-major-mode
+   :paste-using-mode)
   ;; keymap.lisp
   (:export
    :*keymaps*

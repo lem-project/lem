@@ -24,7 +24,7 @@
 
 (define-command mark-next-like-this () ()
   ""
-  (if (buffer-mark (current-buffer))
+  (if (buffer-mark-p (current-buffer))
       (mark-like-this-direction (region-beginning-using-global-mode (current-global-mode))
                                 (region-end-using-global-mode (current-global-mode))
                                 #'search-forward)
@@ -32,7 +32,7 @@
 
 (define-command mark-previous-like-this (start end) (:region)
   ""
-  (if (buffer-mark (current-buffer))
+  (if (buffer-mark-p (current-buffer))
       (mark-like-this-direction (region-beginning-using-global-mode (current-global-mode))
                                 (region-end-using-global-mode (current-global-mode))
                                 #'search-backward)

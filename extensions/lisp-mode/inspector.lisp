@@ -60,7 +60,7 @@
 (define-key *lisp-inspector-keymap* "M-q" 'lisp-inspector-quit)
 (define-key *lisp-inspector-keymap* "M-Return" 'lisp-inspector-copy-down-to-repl)
 
-(define-command lisp-inspect (string &key (self-evaluation t) (focus nil))
+(define-command lisp-inspect (string &key (self-evaluation t) (focus t))
     ((or (symbol-string-at-point (current-point))
          (prompt-for-sexp "Inspect value (evaluated): ")))
   (lisp-eval-async (if self-evaluation

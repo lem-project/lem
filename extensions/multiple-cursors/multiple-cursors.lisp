@@ -80,6 +80,7 @@
   (clear-duplicate-cursors (current-buffer)))
 
 (add-hook *post-command-hook* 'garbage-collection-cursors)
+(add-hook *pre-command-hook* 'garbage-collection-cursors)
 
 (defun clear-cursors-when-aborted ()
   (let ((string (merge-cursor-killrings (current-buffer))))

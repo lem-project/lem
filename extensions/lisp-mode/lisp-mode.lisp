@@ -964,6 +964,29 @@
     (when start-repl (start-lisp-repl))
     (connected-slime-message connection)))
 
+#+sbcl
+(define-command slime-connect-unix (socket-path &optional (start-repl t))
+    ((:splice
+      (list (prompt-for-string "Hostname: " :initial-value  "/tmp/micros.sock"))))
+  (let ((connection  (progn
+                       (log:debug "Connecting to SWANK using UNIX socket")
+                       (let* ((sock (make-instance 'sb-bsd-sockets:local-socket :type :stream))
+                              (_ (sb-bsd-sockets:socket-connect sock socket-path))
+                              (stream (sb-bsd-sockets:socket-make-stream sock :element-type '(unsigned-byte 8) :input t :output t))
+                              (socket (usocket::make-stream-socket :socket sock :stream stream))
+                              (connection (make-instance 'connection
+                                                         :hostname socket-path
+                                                         :port 0
+                                                         :socket socket)))
+                         (declare (ignore _))
+                         (lem-lisp-mode/swank-protocol::setup connection)
+                         connection))))
+    (add-and-change-connection connection)
+    (start-thread)
+    (when start-repl (start-lisp-repl))
+    (connected-slime-message connection)))
+
+
 (defun pull-events ()
   (when (connected-p)
     (handler-case (loop :while (message-waiting-p (current-connection))

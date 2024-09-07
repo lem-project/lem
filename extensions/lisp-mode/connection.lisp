@@ -350,7 +350,7 @@ to check if input is available."
 
 ;;; broadcast
 
-(defvar *broadcast* t)
+(defvar *broadcast* nil)
 
 (defun call-with-broadcast-connections (function)
   (if (or (self-connection-p (current-connection))

@@ -1,7 +1,8 @@
 (defpackage :lem-lisp-mode/message-dispatcher
   (:use :cl)
   (:export :get-message-dispatcher
-           :define-message))
+           :define-message
+           :dispatch-message))
 (in-package :lem-lisp-mode/message-dispatcher)
 
 (defvar *message-dispatcher* (make-hash-table :test 'eq))
@@ -18,3 +19,19 @@
              ,@body))
          (setf (gethash ,name *message-dispatcher*)
                ',fn-name)))))
+
+(defvar *event-log* '())
+
+(defun log-message (string)
+  "Log a message."
+  (push string *event-log*))
+
+(defvar *event-hooks* '())
+
+(defun dispatch-message (message)
+  (log-message (prin1-to-string message))
+  (dolist (e *event-hooks*)
+    (when (funcall e message)
+      (return-from dispatch-message)))
+  (alexandria:when-let (dispatcher (get-message-dispatcher (first message)))
+    (funcall dispatcher message)))

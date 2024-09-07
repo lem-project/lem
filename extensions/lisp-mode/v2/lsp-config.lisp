@@ -37,7 +37,7 @@
       (let ((connection (lem-lisp-mode:self-connection)))
         (setf (connection-workspace connection) workspace))
       (let* ((swank-port (gethash "swankPort" (lem-lsp-mode::workspace-server-info workspace)))
-             (connection (lem-lisp-mode:connect-to-swank "127.0.0.1" swank-port)))
+             (connection (lem-lisp-mode:connect-to-micros "127.0.0.1" swank-port)))
         (setf (connection-workspace connection) workspace))))
 
 (defun start-micros-server (port)

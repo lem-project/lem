@@ -51,7 +51,7 @@
 
 (defun clear-duplicate-cursors (buffer)
   (loop :for (cursor next-cursor) :on (buffer-cursors buffer)
-        :when (and next-cursor (same-line-p cursor next-cursor))
+        :when (and next-cursor (and (same-line-p cursor next-cursor) (eq (point-charpos cursor) (point-charpos next-cursor))))
         :do (delete-fake-cursor
              (if (eq cursor (buffer-point buffer))
                  next-cursor

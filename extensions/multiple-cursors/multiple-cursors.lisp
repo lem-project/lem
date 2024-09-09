@@ -6,7 +6,11 @@
                 :isearch-abort
                 :make-add-char-callback)
   (:import-from :lem/buffer/internal
-                :point-linum)
+                :point-linum
+                :point-line
+                :point-change-line)
+  (:import-from :lem/buffer/line
+                :line-previous)
   (:export :add-cursors-to-next-line
            :add-cursors-to-previous-line
            :mark-next-like-this)
@@ -70,7 +74,8 @@
       (if (search-next-matched point 1)
           (progn
             (setf cursor (make-fake-cursor point))
-            (setf (point-linum point) (- (point-linum point) (- (point-linum end) (point-linum start))))
+            (dotimes (_ (- (point-linum end) (point-linum start)))
+              (point-change-line point (- (point-linum point) 1) (line-previous (point-line point))))
             (setf (point-charpos point) (- (point-charpos point) (- (point-charpos end) (point-charpos start))))
             (set-cursor-mark cursor point))
           (message "No more matches"))))

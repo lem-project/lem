@@ -36,7 +36,7 @@
                                 #'search-forward)
       (add-cursors-to-next-line)))
 
-(define-command mark-previous-like-this (start end) (:region)
+(define-command mark-previous-like-this () ()
   ""
   (if (buffer-mark-p (current-buffer))
       (mark-like-this-direction (region-beginning-using-global-mode (current-global-mode))

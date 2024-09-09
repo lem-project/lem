@@ -121,7 +121,7 @@
       (buffer-package (current-buffer))
       (connection-package *connection*)))
 
-(defun current-swank-thread ()
+(defun current-micros-thread ()
   (or (buffer-value (current-buffer) 'thread)
       t))
 
@@ -145,7 +145,7 @@
 
 (defun scheme-rex (form &key
                         continuation
-                        (thread (current-swank-thread))
+                        (thread (current-micros-thread))
                         (package (current-package)))
   (emacs-rex *connection*
              form
@@ -155,7 +155,7 @@
 
 (defun scheme-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym))
-        (thread-id (current-swank-thread)))
+        (thread-id (current-micros-thread)))
     (catch tag
       (funcall emacs-rex-fun
                *connection*
@@ -197,7 +197,7 @@
                                    (unless *suppress-error-disp*
                                      (message "Evaluation aborted on ~A." condition))))
                                 (setf *suppress-error-disp* nil))
-                :thread (current-swank-thread)
+                :thread (current-micros-thread)
                 :package package)))
 
 (defun eval-with-transcript (form)
@@ -299,7 +299,7 @@
   (check-connection)
   (send-message-string
    *connection*
-   (format nil "(:emacs-interrupt ~A)" (current-swank-thread))))
+   (format nil "(:emacs-interrupt ~A)" (current-micros-thread))))
 
 (defun prompt-for-sexp (string &optional initial)
   (prompt-for-string string

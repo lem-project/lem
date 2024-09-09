@@ -115,7 +115,7 @@
   (setf (buffer-value (repl-buffer) 'read-string-tag-stack) val))
 
 (define-command lisp-repl-interrupt () ()
-  (send-message-string *connection*
+  (send-message-string (current-connection)
                        (format nil "(:emacs-interrupt ~(~S~))"
                                (or (car (read-string-thread-stack))
                                    :repl-thread))))
@@ -150,7 +150,7 @@
 (defun repl-set-prompt (point)
   (update-repl-buffer-write-point point)
   (insert-string point
-                 (format nil "~A> " (connection-prompt-string *connection*)))
+                 (format nil "~A> " (connection-prompt-string (current-connection))))
   point)
 
 (defun repl-paren-correspond-p (point)
@@ -223,7 +223,7 @@
                                         :buffer (repl-buffer)
                                         :loading-message "Evaluating...")))
     (request-listener-eval
-     *connection*
+     (current-connection)
      string
      (lambda (value)
        (declare (ignore value))
@@ -553,7 +553,7 @@
          (defun ,name ,lambda-list ,@body))))
 
 (define-repl-shortcut sayonara ()
-  (if (self-connection-p *connection*)
+  (if (self-connection-p (current-connection))
       (message "Can't say sayonara because it's self connection.")
       (interactive-eval "(micros:quit-lisp)")))
 

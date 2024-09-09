@@ -1,25 +1,34 @@
-(defpackage :lem-lisp-mode/swank-protocol
-  (:use :cl :lem-lisp-mode/errors)
+(uiop:define-package :lem-lisp-mode/connection
+  (:use :cl
+        :lem-lisp-mode/errors)
   (:import-from :trivial-types
                 :association-list
                 :proper-list)
+  (:import-from :lem-lisp-mode/rpc
+                :write-message-to-stream
+                :read-message-from-stream)
+  (:import-from :lem-lisp-mode/reader
+                :read-from-string*)
+  (:export :current-connection)
+  (:export :*broadcast*
+           :with-broadcast-connections)
   (:export :connection
            :connection-hostname
            :connection-port
-           :connection-request-count
            :connection-package
            :connection-prompt-string
            :connection-features
            :connection-command
            :connection-process
            :connection-process-directory
-           :connection-plist)
+           :connection-plist
+           :self-connection-p)
   (:export :new-connection
-           :log-message
            :read-message-string
            :send-message-string
            :send-message
            :message-waiting-p
+           :new-request-id
            :remote-eval-from-string
            :remote-eval
            :finish-evaluated
@@ -35,9 +44,8 @@
            :connection-machine-type
            :connection-machine-version
            :connection-swank-version
-           :connection-value)
-  (:documentation "Low-level implementation of a client for the Swank protocol."))
-(in-package :lem-lisp-mode/swank-protocol)
+           :connection-value))
+(in-package :lem-lisp-mode/connection)
 
 (defmacro with-swank-syntax (() &body body)
   `(with-standard-io-syntax
@@ -46,44 +54,19 @@
            (*print-readably* nil))
        ,@body)))
 
-;;; Encoding and decoding messages
+(defvar *connection* nil)
 
-(defun encode-integer (integer)
-  "Encode an integer to a 0-padded 16-bit hexadecimal string."
-  (babel:string-to-octets (format nil "~6,'0,X" integer)))
+(defun current-connection ()
+  *connection*)
 
-(defun decode-integer (string)
-  "Decode a string representing a 0-padded 16-bit hex string to an integer."
-  (parse-integer string :radix 16))
+(defun (setf current-connection) (connection)
+  (setf *connection* connection))
 
-;; Writing and reading messages to/from streams
+(defgeneric self-connection-p (connection))
 
-(defun write-message-to-stream (stream message)
-  "Write a string to a stream, prefixing it with length information for Swank."
-  (let* ((octets (babel:string-to-octets message))
-         (length-octets (encode-integer (length octets)))
-         (msg (make-array (+ (length length-octets)
-                             (length octets))
-                          :element-type '(unsigned-byte 8))))
-    (replace msg length-octets)
-    (replace msg octets :start1 (length length-octets))
-    (write-sequence msg stream)))
+(defclass <connection> () ())
 
-(defun read-message-from-stream (stream)
-  "Read a string from a string.
-
-Parses length information to determine how many characters to read."
-  (let ((length-buffer (make-array 6 :element-type '(unsigned-byte 8))))
-    (when (/= 6 (read-sequence length-buffer stream))
-      (error 'disconnected))
-    (let* ((length (decode-integer (babel:octets-to-string length-buffer)))
-           (buffer (make-array length :element-type '(unsigned-byte 8))))
-      (read-sequence buffer stream)
-      (babel:octets-to-string buffer))))
-
-;;; Data
-
-(defclass connection ()
+(defclass connection (<connection>)
   ((hostname
     :reader connection-hostname
     :initarg :hostname
@@ -99,11 +82,6 @@ Parses length information to determine how many characters to read."
     :initarg :socket
     :type usocket:stream-usocket
     :documentation "The usocket socket.")
-   (request-count
-    :accessor connection-request-count
-    :initform 0
-    :type integer
-    :documentation "A number that is increased and sent along with every request.")
    (package
     :accessor connection-package
     :initform "COMMON-LISP-USER"
@@ -149,6 +127,9 @@ Parses length information to determine how many characters to read."
    (plist :initform nil :accessor connection-plist))
   (:documentation "A connection to a remote Lisp."))
 
+(defmethod self-connection-p ((connection <connection>))
+  nil)
+
 (defmethod connection-value ((connection connection) key)
   (getf (connection-plist connection) key))
 
@@ -165,6 +146,12 @@ Parses length information to determine how many characters to read."
                                     :port port
                                     :socket socket)))
     (setup connection)
+
+    (when (and (member (connection-hostname connection) '("127.0.0.1" "localhost") :test 'equal)
+               (equal (connection-pid connection)
+                      (micros/backend:getpid)))
+      (change-class connection 'self-connection))
+
     connection))
 
 (defun read-return-message (connection &key (timeout 5))
@@ -226,12 +213,6 @@ Parses length information to determine how many characters to read."
   (read-all-messages connection)
   (log:debug "Setup is done now"))
 
-(defvar *event-log* '())
-
-(defun log-message (string)
-  "Log a message."
-  (push string *event-log*))
-
 (defun read-message-string (connection)
   "Read a message string from a Swank connection.
 
@@ -287,8 +268,10 @@ to check if input is available."
 
 ;;; Sending messages
 
-(defun new-request-id (connection)
-  (incf (connection-request-count connection)))
+(defvar *request-id-counter* 0)
+
+(defun new-request-id ()
+  (incf *request-id-counter*))
 
 (defun remote-eval-from-string (connection
                                 string
@@ -296,7 +279,7 @@ to check if input is available."
                                      thread
                                      package
                                      request-id)
-  (let* ((request-id (or request-id (new-request-id connection)))
+  (let* ((request-id (or request-id (new-request-id)))
          (msg (format nil
                       "(:emacs-rex ~A ~S ~A ~A)"
                       string
@@ -347,55 +330,6 @@ to check if input is available."
 
 ;;; Reading/parsing messages
 
-(defun read-atom (in)
-  (let ((token
-          (coerce (loop :for c := (peek-char nil in nil)
-                        :until (or (null c) (member c '(#\( #\) #\space #\newline #\tab)))
-                        :collect c
-                        :do (read-char in))
-                  'string)))
-    (handler-case (values (read-from-string token) nil)
-      (error ()
-        (ppcre:register-groups-bind (prefix name) ("(.*?)::?(.*)" token)
-          (values (intern (string-upcase (string-left-trim ":" name))
-                          :keyword)
-                  (when prefix
-                    (read-from-string prefix))))))))
-
-(defun read-list (in)
-  (read-char in)
-  (loop :until (eql (peek-char t in) #\))
-        :collect (read-ahead in)
-        :finally (read-char in)))
-
-(defun read-sharp (in)
-  (read-char in)
-  (case (peek-char nil in)
-    ((#\()
-     (let ((list (read-list in)))
-       (make-array (length list) :initial-contents list)))
-    ((#\\)
-     (read-char in)
-     (read-char in))
-    (otherwise
-     (unread-char #\# in))))
-
-(defun read-ahead (in)
-  (let ((c (peek-char t in)))
-    (case c
-      ((#\()
-       (read-list in))
-      ((#\")
-       (read in))
-      ((#\#)
-       (read-sharp in))
-      (otherwise
-       (read-atom in)))))
-
-(defun read-from-string* (string)
-  (with-input-from-string (in string)
-    (read-ahead in)))
-
 (defun read-message (connection)
   "Read an arbitrary message from a connection."
   (with-swank-syntax ()
@@ -404,3 +338,27 @@ to check if input is available."
 (defun read-all-messages (connection)
   (loop while (message-waiting-p connection) collecting
     (read-message connection)))
+
+
+;;; self connection
+
+(defclass self-connection (connection)
+  ())
+
+(defmethod self-connection-p ((connection self-connection))
+  t)
+
+;;; broadcast
+
+(defvar *broadcast* nil)
+
+(defun call-with-broadcast-connections (function)
+  (if (or (self-connection-p (current-connection))
+          (not *broadcast*))
+      (funcall function (current-connection))
+      (dolist (connection (lem-lisp-mode/connections:connection-list))
+        (unless (self-connection-p connection)
+          (funcall function connection)))))
+
+(defmacro with-broadcast-connections ((connection) &body body)
+  `(call-with-broadcast-connections (lambda (,connection) ,@body)))

@@ -3,6 +3,10 @@
   (:import-from :lem-lisp-mode/inspector
                 :lisp-inspect
                 :open-inspector)
+  (:import-from :lem-lisp-mode/connection
+                :new-request-id
+                :send-message
+                :with-broadcast-connections)
   (:export :redisplay-evaluated-message))
 (in-package :lem-lisp-mode/eval)
 
@@ -75,7 +79,7 @@
 
 ;; copied from src/display.lisp, TODO: extract this utils
 (defun compute-evaluated-background-color ()
-  (let ((color (parse-color (lem-core::background-color))))
+  (let ((color (parse-color (background-color))))
     (multiple-value-bind (h s v)
         (rgb-to-hsv (color-red color)
                     (color-green color)
@@ -143,19 +147,22 @@
   (remove-eval-result-overlay-between start end)
   (let ((spinner (lem/loading-spinner:start-loading-spinner :region :start start :end end))
         (string (points-to-string start end))
-        (request-id (lem-lisp-mode/swank-protocol::new-request-id (current-connection))))
+        (request-id (new-request-id)))
     (setf (spinner-eval-request-id spinner) request-id)
-    (lem-lisp-mode/internal::with-remote-eval
-        (`(micros/pretty-eval:pretty-eval ,string) :request-id request-id)
-      (lambda (value)
-        (alexandria:destructuring-ecase value
-          ((:ok result)
-           (destructuring-bind (&key value id) result
+    (with-broadcast-connections (connection)
+      (lem-lisp-mode/internal:with-remote-eval
+          (`(micros/pretty-eval:pretty-eval ,string)
+           :request-id request-id
+           :connection connection)
+        (lambda (value)
+          (alexandria:destructuring-ecase value
+            ((:ok result)
+             (destructuring-bind (&key value id) result
+               (lem/loading-spinner:stop-loading-spinner spinner)
+               (display-spinner-message spinner value nil id)))
+            ((:abort condition)
              (lem/loading-spinner:stop-loading-spinner spinner)
-             (display-spinner-message spinner value nil id)))
-          ((:abort condition)
-           (lem/loading-spinner:stop-loading-spinner spinner)
-           (display-spinner-message spinner condition t)))))))
+             (display-spinner-message spinner condition t))))))))
 
 (defun eval-last-expression (point)
   (with-point ((start point)
@@ -175,8 +182,9 @@
 (define-command lisp-eval-interrupt-at-point () ()
   (dolist (spinner (lem/loading-spinner:get-line-spinners (current-point)))
     (let ((request-id (spinner-eval-request-id spinner)))
-      (lem-lisp-mode/swank-protocol::send-message (current-connection)
-                                                  `(:interrupt-thread ,request-id)))))
+      (with-broadcast-connections (connection)
+        (send-message connection
+                      `(:interrupt-thread ,request-id))))))
 
 (defun get-evaluation-value-id-at-point (point)
   (alexandria:when-let* ((overlay (find-overlay point))

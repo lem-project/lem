@@ -60,7 +60,7 @@
 (define-key *lisp-inspector-keymap* "M-q" 'lisp-inspector-quit)
 (define-key *lisp-inspector-keymap* "M-Return" 'lisp-inspector-copy-down-to-repl)
 
-(define-command lisp-inspect (string &key (self-evaluation t) (focus nil))
+(define-command lisp-inspect (string &key (self-evaluation nil) (focus t))
     ((or (symbol-string-at-point (current-point))
          (prompt-for-sexp "Inspect value (evaluated): ")))
   (lisp-eval-async (if self-evaluation
@@ -293,7 +293,7 @@
 (define-message (:inspect what thread tag)
   (let ((hook (when (and thread tag)
                 (alexandria:curry (lambda (sexp)
-                                    (lem-lisp-mode/swank-protocol:send-message-string
+                                    (lem-lisp-mode/connection:send-message-string
                                      (current-connection)
                                      sexp))
                                   `(:emacs-return ,thread ,tag nil)))))

@@ -21,6 +21,7 @@
    :push
    :rebase-abort
    :rebase-continue
+   :rebase-interactively
    :rebase-skip
    :rebase-in-progress
    :show-commit-diff

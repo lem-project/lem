@@ -10,7 +10,8 @@
                 :point-line
                 :point-change-line)
   (:import-from :lem/buffer/line
-                :line-previous)
+                :line-previous
+                :line-next)
   (:export :add-cursors-to-next-line
            :add-cursors-to-previous-line
            :mark-next-like-this)
@@ -31,16 +32,14 @@
 (define-command mark-next-like-this () ()
   ""
   (if (buffer-mark-p (current-buffer))
-      (mark-like-this-direction (region-beginning-using-global-mode (current-global-mode))
-                                (region-end-using-global-mode (current-global-mode))
+      (mark-like-this-direction (region-beginning (current-buffer)) (region-end (current-buffer))
                                 #'search-forward)
       (add-cursors-to-next-line)))
 
 (define-command mark-previous-like-this () ()
   ""
   (if (buffer-mark-p (current-buffer))
-      (mark-like-this-direction (region-beginning-using-global-mode (current-global-mode))
-                                (region-end-using-global-mode (current-global-mode))
+      (mark-like-this-direction (region-beginning (current-buffer)) (region-end (current-buffer))
                                 #'search-backward)
       (add-cursors-to-previous-line)))
 
@@ -75,7 +74,9 @@
           (progn
             (setf cursor (make-fake-cursor point))
             (dotimes (_ (- (point-linum end) (point-linum start)))
-              (point-change-line point (- (point-linum point) 1) (line-previous (point-line point))))
+              (if (equal direction #'search-forward)
+                  (point-change-line point (- (point-linum point) 1) (line-previous (point-line point)))
+                  (point-change-line point (+ (point-linum point) 1) (line-next (point-line point)))))
             (setf (point-charpos point) (- (point-charpos point) (- (point-charpos end) (point-charpos start))))
             (set-cursor-mark cursor point))
           (message "No more matches"))))

@@ -6,6 +6,7 @@
                 :proper-list)
   (:export
    :porcelain-error
+   :message
    :apply-patch
    :branches
    :checkout

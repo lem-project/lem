@@ -16,7 +16,7 @@
 (defun call-with-porcelain-error (function)
   (handler-bind ((lem/porcelain:porcelain-error
                    (lambda (c)
-                     (lem:editor-error (slot-value c 'message)))))
+                     (lem:editor-error (slot-value c 'lem/porcelain:message)))))
     (funcall function)))
 
 (defmacro with-porcelain-error (&body body)

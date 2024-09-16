@@ -459,7 +459,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 
 (define-command legit-status () ()
-  "Show changes and untracked files."
+  "Show changes, untracked files and latest commits in an interactive window."
   (with-current-project ()
     (multiple-value-bind (untracked-files unstaged-files staged-files)
         (lem/porcelain:components)
@@ -580,6 +580,12 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
         (add-hook (variable-value 'after-change-functions :buffer (collector-buffer collector))
                   'change-grep-buffer)))))
+
+(define-command legit () ()
+  "Show changes, untracked files and latest commits in an interactive window.
+
+  Calls M-x legit-status."
+  (legit-status))
 
 (defun prompt-for-branch (&key prompt initial-value)
   ;; only call from a command.

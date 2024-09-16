@@ -16,6 +16,33 @@ For instance, we won't use `alexandria-2:line-up-first`.
 
 Try to not use `alexandria:curry` and prefer higher-order functions.
 
+## Dynamic bindings, functional style
+
+Avoid dynamic symbol calls (`uiop:symbol-call`) but rething your architecture instead.
+
+Use `defvar` and `defparameter` for user-facing variables, but avoid
+using them as global variables that store state and that are used from
+functions to functions. Have a more functional style, give explicit
+arguments to functions.
+
+Example:
+
+```lisp
+;; avoid this
+(defvar *var* 1)
+(defun foo ()
+   *var*)
+(let ((*var* 2))
+    (foo))
+```
+
+instead, have `foo` take one argument.
+
+
+## Don't ignore compiler warnings
+
+Please take attention to compiler warnings.
+
 
 ## Deprecation warnings
 
@@ -45,13 +72,17 @@ or at least, open an issue about it so we don't forget to do it, thank you.
 
 ## Errors in Lem
 
-Don't signal an `error` but an `editor-error`. This one is displayed nicely to the user.
+`error` is for internal errors, and `editor-error` is displayed nicely to the user.
 
 ## File layout
 
 Variables and parameters (`defvar`, `defparameter`) should be grouped
 and appear near the top of the file, before conditions, classes and
 functions.
+
+### Major and minor modes keybindings layout
+
+Lem modes should define all their keybindings at the top of the file.
 
 ## Git and pull requests
 
@@ -60,6 +91,7 @@ Please rebase and squash small commits together (you can do this with lem/legit 
 When your changes are about a mode or a feature, we like the commit message to say it upfront, for example:
 
     legit: add k to discard changes of unstaged files
+
 
 ## Loop
 
@@ -75,10 +107,6 @@ Don't write long macros, use the "call-with-" pattern.
 
 Don't define lists with backquote and comma, use the `list` constructor.
 
-
-## Major and minor modes
-
-Lem modes should define all their keybindings at the top of the file.
 
 ## User-visible variables names
 

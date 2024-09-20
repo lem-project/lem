@@ -59,15 +59,16 @@
   (declare (ignore end old-len))
   (let ((string (get-content-string start))
         (move (lem/peek-source:get-move-function start)))
-    (with-point ((point (funcall move)))
-      (with-point ((start point)
-                   (end point))
-        (line-start start)
-        (line-end end)
-        (buffer-undo-boundary (point-buffer start))
-        (delete-between-points start end)
-        (insert-string start string)
-        (buffer-undo-boundary (point-buffer start)))))
+    (when move
+      (with-point ((point (funcall move)))
+        (with-point ((start point)
+                     (end point))
+          (line-start start)
+          (line-end end)
+          (buffer-undo-boundary (point-buffer start))
+          (delete-between-points start end)
+          (insert-string start string)
+          (buffer-undo-boundary (point-buffer start))))))
   (lem/peek-source:show-matched-line))
 
 (defvar *grep-command* "git grep")
@@ -131,4 +132,3 @@
 ;; TODO: Prepare keymap for grep-mode
 (define-key lem/peek-source::*peek-source-keymap* "C-x ?" 'grep-help)  ;; originally bound to describe-key.
 (define-key *global-keymap* "C-x p g" 'project-grep)
-

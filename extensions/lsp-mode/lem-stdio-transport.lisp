@@ -12,7 +12,15 @@
 
 (defclass lem-stdio-transport (transport)
   ((process :initarg :process
-            :reader lem-stdio-transport-process)))
+            :reader lem-stdio-transport-process)
+   (stream :accessor lem-stdio-transport-stream)))
+
+(defmethod initialize-instance ((instance lem-stdio-transport) &rest initargs)
+  (declare (ignore initargs))
+  (let ((instance (call-next-method)))
+    (setf (lem-stdio-transport-stream instance)
+          (make-input-stream (lem-stdio-transport-process instance)))
+    instance))
 
 (defmethod start-client ((transport lem-stdio-transport))
   (let ((connection (make-instance 'connection
@@ -32,33 +40,34 @@
 
 (defmethod send-message-using-transport ((transport lem-stdio-transport) connection message)
   (let* ((json (with-output-to-string (s)
-                 (yason:encode message s))))
+                 (yason:encode message s)))
+         (body (format nil
+                       "Content-Length: ~A~C~C~:*~:*~C~C~A"
+                       (babel:string-size-in-octets json)
+                       #\Return
+                       #\Newline
+                       json)))
     (async-process:process-send-input
      (lem-stdio-transport-process transport)
-     (format nil
-             "Content-Length: ~A~C~C~:*~:*~C~C~A"
-             (babel:string-size-in-octets json)
-             #\Return
-             #\Newline
-             json))))
+     body)))
 
 (defmethod receive-message-using-transport ((transport lem-stdio-transport) connection)
-  (let ((stream (make-input-stream (lem-stdio-transport-process transport))))
-    (let* ((headers (handler-case (read-headers stream)
-                      (error ()
-                        ;; プロセスを終了したときにread-headersでエラーが出るのでここでハンドリングする
-                        (return-from receive-message-using-transport nil))))
-           (length (ignore-errors (parse-integer (gethash "content-length" headers)))))
-      (when length
-        (let ((body
-                (with-output-to-string (out)
-                  (loop
-                    :for c := (read-char stream)
-                    :do (write-char c out)
-                        (decf length (babel:string-size-in-octets (string c)))
-                        (when (<= length 0)
-                          (return))))))
-          (jsonrpc:parse-message body))))))
+  (let* ((stream (lem-stdio-transport-stream transport))
+         (headers (handler-case (read-headers stream)
+                    (error ()
+                      ;; プロセスを終了したときにread-headersでエラーが出るのでここでハンドリングする
+                      (return-from receive-message-using-transport nil))))
+         (length (ignore-errors (parse-integer (gethash "content-length" headers)))))
+    (when length
+      (let ((body
+              (with-output-to-string (out)
+                (loop
+                  :for c := (read-char stream)
+                  :do (write-char c out)
+                      (decf length (babel:string-size-in-octets (string c)))
+                      (when (<= length 0)
+                        (return))))))
+        (jsonrpc:parse-message body)))))
 
 (defun read-headers (stream)
   ;; copied from jsonrpc/transport/stdio::read-headers

@@ -48,6 +48,7 @@
 (defmethod stream-listen ((stream input-stream))
   t)
 
+#+(or)
 (defmethod stream-read-line ((stream input-stream))
   (receive-output-if-necessary stream)
   (let ((pos (position #\newline

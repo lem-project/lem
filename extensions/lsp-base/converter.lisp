@@ -13,9 +13,10 @@
    (value :initarg :value)
    (type :initarg :type)))
 
-(defun assert-type (value type &optional context)
+(defun assert-type (value type)
   (unless (typep value type)
-    (error 'json-type-error :value value :type type :context context))
+    (log:warn "type mismatch: expected: ~A actual: ~A" type value)
+    (error 'json-type-error :value value :type type))
   (values))
 
 (defun exist-key-p (hash-table key)
@@ -126,7 +127,7 @@
              (cond (expanded
                     (convert-from-json value type))
                    (t
-                    (assert-type value type)
+                    ;; (assert-type value type)
                     value))))))))
 
 (defmethod convert-to-json ((object protocol-object))

@@ -59,15 +59,7 @@
                       (return-from receive-message-using-transport nil))))
          (length (ignore-errors (parse-integer (gethash "content-length" headers)))))
     (when length
-      (let ((body
-              (with-output-to-string (out)
-                (loop
-                  :for c := (read-char stream)
-                  :do (write-char c out)
-                      (decf length (babel:string-size-in-octets (string c)))
-                      (when (<= length 0)
-                        (return))))))
-        (jsonrpc:parse-message body)))))
+      (jsonrpc:parse-message stream))))
 
 (defun read-headers (stream)
   ;; copied from jsonrpc/transport/stdio::read-headers

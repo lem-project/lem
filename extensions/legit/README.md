@@ -193,7 +193,7 @@ see sources in `/extensions/legit/`
 
 ## Implementation details
 
-Repository data is retrieved with calls to the VCS binary. We have a POC to read some data directly from the Git objects (and improve efficiency).
+Repository data is retrieved with calls to the VCS binary, but currently only 2 or 3 calls are made for a legit status window, so it works fine with big repositories. We have a POC to read some data directly from the Git objects (and improve efficiency).
 
 The interactive rebase currently uses a Unix-only shell script.
 

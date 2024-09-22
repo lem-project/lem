@@ -73,7 +73,7 @@
 
 (defmethod components ((vcs vcs-fossil))
   "Return values:
-  - untracked files (todo)
+  - untracked files
   - list of ADDED files
   - modified files"
   (loop for line in (str:lines (porcelain))

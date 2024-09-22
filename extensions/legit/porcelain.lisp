@@ -179,7 +179,7 @@ Mercurial:
 
 ;; stage, add files.
 (defgeneric stage (vcs file)
-  (:documentation "Stage changes to a file(TODO document type)")
+  (:documentation "Stage changes to a file.")
   (:method (vcs file)
     (declare (ignorable file))
     (porcelain-error "lem/porcelain:stage not implemented for vcs ~a" (vcs-name vcs))))

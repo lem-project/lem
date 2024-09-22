@@ -175,7 +175,7 @@ allows to learn about the file state: modified, deleted, ignored… "
           if (str:starts-with-p "*" branch)
           return (subseq branch 2))))
 
-(defmethod rebase-in-progress ((vcs vcs-git))
+(defmethod rebase-in-progress-p ((vcs vcs-git))
   (when (uiop:directory-exists-p ".git/rebase-merge/")
     (let ((head (str:trim (str:from-file ".git/rebase-merge/head-name")))
           (onto (str:trim (str:from-file ".git/rebase-merge/onto"))))

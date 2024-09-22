@@ -23,7 +23,7 @@
    :rebase-continue
    :rebase-interactively
    :rebase-skip
-   :rebase-in-progress
+   :rebase-in-progress-p
    :show-commit-diff
    :stage
    :unstage
@@ -144,18 +144,20 @@ Mercurial:
   (:method (vcs)
     (porcelain-error "lem/porcelain:current-branch not implemented for vcs ~a" (vcs-name vcs))))
 
-(defgeneric rebase-in-progress (vcs)
+(defgeneric rebase-in-progress-p (vcs)
   (:documentation
    "Return a plist if a rebase is in progress. Used for legit-status.
 
-  plist keys:
+   Ignore this check for all VCSs that don't support rebases and return no values.
+
+   Return: a plist, with keys:
 
   :status (boolean) -> T if a rebase is in progress
   :head-name -> content from .git/rebase-merge/head-name, such as \"refs/heads/master\"
   :head-short-name -> \"master\"
   :onto -> content from .git/rebase-merge/onto, a commit id.")
   (:method (vcs)
-    (porcelain-error "lem/porcelain:rebase-in-progress not implemented for vcs ~a" (vcs-name vcs))))
+    (values)))
 
 ;;;
 ;;; Latest commits.

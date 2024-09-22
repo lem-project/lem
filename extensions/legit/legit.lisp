@@ -474,7 +474,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (collector-insert "")
 
         ;; Is a git rebase in progress?
-        (let ((rebase-status (lem/porcelain::rebase-in-progress vcs)))
+        (let ((rebase-status (lem/porcelain::rebase-in-progress-p vcs)))
           (when (getf rebase-status :status)
             (collector-insert
              (format nil "!rebase in progress: ~a onto ~a"

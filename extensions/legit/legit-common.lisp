@@ -25,9 +25,9 @@
   `(call-with-porcelain-error (lambda () ,@body)))
 
 (defvar *vcs-existence-order*
-  (list #'lem/porcelain-git:git-project-p
-        #'lem/porcelain-fossil:fossil-project-p
-        #'lem/porcelain-hg:hg-project-p))
+  (list #'lem/porcelain/git:git-project-p
+        #'lem/porcelain/fossil:fossil-project-p
+        #'lem/porcelain/hg:hg-project-p))
 
 (defun vcs-project-p ()
   "When this project is under a known version control system, returns a VCS object for the project.

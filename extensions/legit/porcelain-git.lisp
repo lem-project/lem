@@ -1,14 +1,15 @@
-(uiop:define-package :lem/porcelain-git
+(uiop:define-package :lem/porcelain/git
   (:use :cl :lem/porcelain)
   (:shadow :push)
   (:import-from :trivial-types
                 :proper-list)
   (:import-from :lem/porcelain
+                :vcs-project
                 :porcelain-error)
   (:export :git-project-p)
   (:documentation "Implements the porcelain interface for git-based repos."))
 
-(in-package :lem/porcelain-git)
+(in-package :lem/porcelain/git)
 
 (declaim (type (proper-list string) *git-base-arglist*))
 (defvar *git-base-arglist* (list "git")
@@ -29,7 +30,7 @@
 (defvar *verbose* nil)
 
 ;; VCS implementation for git
-(defclass vcs-git (lem/porcelain:vcs-project)
+(defclass vcs-git (vcs-project)
   ((rebase-pid :initform nil
                :accessor rebase-pid
                :type (or null string)

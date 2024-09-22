@@ -1,21 +1,22 @@
-(uiop:define-package :lem/porcelain-fossil
+(uiop:define-package :lem/porcelain/fossil
   (:use :cl :lem/porcelain)
   (:shadow :push)
   (:import-from :trivial-types
                 :proper-list)
   (:import-from :lem/porcelain
+                :vcs-project
                 :porcelain-error)
   (:export :fossil-project-p)
   (:documentation "Implements the porcelain interface for fossil-based repos."))
 
-(in-package :lem/porcelain-fossil)
+(in-package :lem/porcelain/fossil)
 
 (declaim (type (proper-list string) *fossil-base-args*))
 (defvar *fossil-base-args* (list "fossil")
   "The fossil program, to be appended command-line options.")
 
 ;; VCS implementation for fossil
-(defclass vcs-fossil (lem/porcelain:vcs-project)
+(defclass vcs-fossil (vcs-project)
   ()
   (:default-initargs
    :name "fossil"))

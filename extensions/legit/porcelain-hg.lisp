@@ -1,21 +1,22 @@
-(uiop:define-package :lem/porcelain-hg
+(uiop:define-package :lem/porcelain/hg
   (:use :cl :lem/porcelain)
   (:shadow :push)
   (:import-from :trivial-types
                 :proper-list)
   (:import-from :lem/porcelain
+                :vcs-project
                 :porcelain-error)
   (:export :hg-project-p)
   (:documentation "Implements the porcelain interface for hg-based repos."))
 
-(in-package :lem/porcelain-hg)
+(in-package :lem/porcelain/hg)
 
 (declaim (type (proper-list string) *hg-base-arglist*))
 (defvar *hg-base-arglist* (list "hg")
   "The mercurial program (hg), to be appended command-line options.")
 
 ;; VCS implementation for hg
-(defclass vcs-hg (lem/porcelain:vcs-project)
+(defclass vcs-hg (vcs-project)
   ()
   (:default-initargs
    :name "mercurial"))

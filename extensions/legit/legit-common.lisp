@@ -36,16 +36,18 @@
   ;; (or (fossil-project-p)
   ;;     (git-project-p))
   (loop for fn in *vcs-existence-order*
-        do (alexandria:if-let (vcs (funcall fn))
-             (return vcs))))
+        for vcs = (funcall fn)
+        if vcs
+          return vcs))
 
 (defun call-with-current-project (function)
   (with-porcelain-error ()
     (let ((root (lem-core/commands/project:find-root (lem:buffer-directory))))
       (uiop:with-current-directory (root)
-        (alexandria:if-let (vcs (vcs-project-p))
-          (funcall function vcs)
-          (lem:message "Not inside a version-controlled project?"))))))
+        (let ((vcs (vcs-project-p)))
+          (if vcs
+              (funcall function vcs)
+              (lem:message "Not inside a version-controlled project?")))))))
 
 (defmacro with-current-project ((vcs-bind) &body body)
   "Execute body with the current working directory changed to the project's root,

@@ -30,8 +30,10 @@
 
 ;; VCS implementation for git
 (defclass vcs-git (lem/porcelain:vcs-project)
-  ((rebase-pid :type (or nil string)
-               :accessor rebase-pid))
+  ((rebase-pid :initform nil
+               :accessor rebase-pid
+               :type (or null string)
+               :documentation "When a rebase is started, save its PID."))
   (:default-initargs
    :name "git"))
 

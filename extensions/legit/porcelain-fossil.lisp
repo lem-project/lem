@@ -1,11 +1,10 @@
 (uiop:define-package :lem/porcelain/fossil
-  (:use :cl :lem/porcelain)
+    (:use :cl
+    ;; we import all the classes and methods defined in the main porcelain:
+     :lem/porcelain)
   (:shadow :push)
   (:import-from :trivial-types
                 :proper-list)
-  (:import-from :lem/porcelain
-                :vcs-project
-                :porcelain-error)
   (:export :fossil-project-p)
   (:documentation "Implements the porcelain interface for fossil-based repos."))
 

@@ -1,11 +1,9 @@
 (uiop:define-package :lem/porcelain/hg
-  (:use :cl :lem/porcelain)
+    (:use :cl
+     :lem/porcelain)
   (:shadow :push)
   (:import-from :trivial-types
                 :proper-list)
-  (:import-from :lem/porcelain
-                :vcs-project
-                :porcelain-error)
   (:export :hg-project-p)
   (:documentation "Implements the porcelain interface for hg-based repos."))
 

@@ -1,6 +1,7 @@
 
 (uiop:define-package :lem/porcelain
   (:use :cl)
+  ;; beware, we shadow cl:push to have a "push" method:
   (:shadow :push)
   (:import-from :trivial-types
                 :proper-list)

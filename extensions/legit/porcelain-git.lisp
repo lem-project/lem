@@ -1,11 +1,11 @@
 (uiop:define-package :lem/porcelain/git
-  (:use :cl :lem/porcelain)
+  (:use :cl
+    ;; let's import all the classes and methods defined in the main porcelain:
+    :lem/porcelain)
+  ;; beware, we still shadow cl:push to have a "push" method:
   (:shadow :push)
   (:import-from :trivial-types
                 :proper-list)
-  (:import-from :lem/porcelain
-                :vcs-project
-                :porcelain-error)
   (:export :git-project-p)
   (:documentation "Implements the porcelain interface for git-based repos."))
 

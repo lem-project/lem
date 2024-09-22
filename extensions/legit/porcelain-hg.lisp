@@ -15,7 +15,10 @@
   "The mercurial program (hg), to be appended command-line options.")
 
 ;; VCS implementation for hg
-(defclass vcs-hg (lem/porcelain:vcs-project) ())
+(defclass vcs-hg (lem/porcelain:vcs-project)
+  ()
+  (:default-initargs
+   :name "mercurial"))
 
 (defun hg-project-p ()
   "Return t if we find a .hg/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`)."
@@ -181,4 +184,3 @@
 (defmethod rebase-interactively ((vcs vcs-hg) &key from)
   (declare (ignore from))
   (porcelain-error "Interactive rebase not implemented for Mercurial"))
-

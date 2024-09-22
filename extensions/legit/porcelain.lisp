@@ -83,7 +83,20 @@ Mercurial:
   (error 'porcelain-error :message (apply #'format nil message args)))
 
 (defclass vcs-project ()
-  ())
+  ((name :initform ""
+         :initarg :name
+         :accessor vcs-name
+         :documentation "VCS name: git, fossil, mercurial, etc."))
+  (:documentation "Base class to represent version-controlled projects.
+
+  A vcs-project object must be unique per project (as its root directory, as the CWD). See `vcs-project-p'.
+
+  Each VCS subclass can add slots to store project-specific variables. For example, for git, we must store the ongoing rebase PID."))
+
+(defmethod print-object ((vcs vcs-project) stream)
+  (print-unreadable-object (vcs stream :type t :identity t)
+    (format stream "VCS: ~s" (vcs-name vcs))))
+
 
 ;;;
 ;;; Getting changes.
@@ -94,7 +107,7 @@ Mercurial:
 - Modified and unstaged files
 - Modified and staged files")
   (:method (vcs)
-    (porcelain-error "lem/porcelain:components not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:components not implemented for vcs ~a" (vcs-name vcs))))
 
 ;;;
 ;;; diff
@@ -102,7 +115,7 @@ Mercurial:
 (defgeneric file-diff (vcs file &key cached)
   (:method (vcs file &key cached)
     (declare (ignorable file cached))
-    (porcelain-error "lem/porcelain:file-diff not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:file-diff not implemented for vcs ~a" (vcs-name vcs))))
 
 ;;;
 ;;; Show commits.
@@ -110,29 +123,29 @@ Mercurial:
 (defgeneric show-commit-diff (vcs ref &key ignore-all-space)
   (:method (vcs ref &key ignore-all-space)
     (declare (ignorable ref ignore-all-space))
-    (porcelain-error "lem/porcelain:show-commit-diff not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:show-commit-diff not implemented for vcs ~a" (vcs-name vcs))))
 
 ;; commit
 (defgeneric commit (vcs message)
   (:documentation "Performs a commit operation: `message` must be a string.")
   (:method (vcs message)
     (declare (ignorable message))
-    (porcelain-error "lem/porcelain:commit not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:commit not implemented for vcs ~a" (vcs-name vcs))))
 
 ;; branches
 (defgeneric branches (vcs &key sort-by)
   (:documentation "Returns a list[str] of branches in the repository")
   (:method (vcs &key sort-by)
     (declare (ignorable vcs sort-by))
-    (porcelain-error "Method branches not supported for vcs ~a" vcs)))
+    (porcelain-error "Method branches not supported for vcs ~a" (vcs-name vcs))))
 
 (defgeneric current-branch (vcs)
   (:documentation "Return the current branch name (string).")
   (:method (vcs)
-    (porcelain-error "lem/porcelain:current-branch not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:current-branch not implemented for vcs ~a" (vcs-name vcs))))
 
 (defgeneric rebase-in-progress (vcs)
-  (:documentation 
+  (:documentation
    "Return a plist if a rebase is in progress. Used for legit-status.
 
   plist keys:
@@ -142,7 +155,7 @@ Mercurial:
   :head-short-name -> \"master\"
   :onto -> content from .git/rebase-merge/onto, a commit id.")
   (:method (vcs)
-    (porcelain-error "lem/porcelain:rebase-in-progress not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:rebase-in-progress not implemented for vcs ~a" (vcs-name vcs))))
 
 ;;;
 ;;; Latest commits.
@@ -157,24 +170,24 @@ Mercurial:
    If a limit is not provided, it returns all commits after the offset."))
 
 (defgeneric commit-count (vcs)
-  (:documentation 
+  (:documentation
    "Returns: integer representing number of commits in the current branch.")
   (:method (vcs)
-    (porcelain-error "lem/porcelain:commit-count not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:commit-count not implemented for vcs ~a" (vcs-name vcs))))
 
 ;; stage, add files.
 (defgeneric stage (vcs file)
   (:documentation "Stage changes to a file(TODO document type)")
   (:method (vcs file)
     (declare (ignorable file))
-    (porcelain-error "lem/porcelain:stage not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:stage not implemented for vcs ~a" (vcs-name vcs))))
 
 (defgeneric unstage (vcs file)
-  (:documentation 
+  (:documentation
    "Unstage changes to this file. The reverse of \"add\".")
   (:method (vcs file)
     (declare (ignorable file))
-    (porcelain-error "VCS does not support or legit does not implement unstage: ~a" vcs)))
+    (porcelain-error "VCS does not support or legit does not implement unstage: ~a" (vcs-name vcs))))
 #|
 Interestingly, this returns the list of unstaged changes:
 "Unstaged changes after reset:
@@ -189,55 +202,55 @@ M	src/ext/porcelain.lisp
   (:documentation "Discard all changes to this file")
   (:method (vcs file)
     (declare (ignorable file))
-    (porcelain-error "discard-file is not implemented for this VCS: ~a" vcs)))
+    (porcelain-error "discard-file is not implemented for this VCS: ~a" (vcs-name vcs))))
 
 (defgeneric apply-patch (vcs diff &key reverse)
-  (:documentation 
+  (:documentation
    "Apply a patch from this diff.
   diff: string.")
   (:method (vcs diff &key reverse)
     (declare (ignorable diff reverse))
-    (porcelain-error "lem/porcelain:apply-patch not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:apply-patch not implemented for vcs ~a" (vcs-name vcs))))
 
 (defgeneric checkout (vcs branch)
   (:documentation "Checkouts out branch (str) in vcs")
   (:method (vcs branch)
     (declare (ignorable branch))
-    (porcelain-error "lem/porcelain:checkout not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:checkout not implemented for vcs ~a" (vcs-name vcs))))
 
 (defgeneric checkout-create (vcs new start)
   (:documentation "Checkouts out branch (str) in vcs, creating it at HEAD if it does not exit")
   (:method (vcs new start)
     (declare (ignorable vcs new start))
-    (porcelain-error "lem/porcelain:checkout-create not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:checkout-create not implemented for vcs ~a" (vcs-name vcs))))
 
 (defgeneric pull (vcs)
   (:documentation "Pulls remotes")
   (:method (vcs)
-    (porcelain-error "lem/porcelain:pull not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:pull not implemented for vcs ~a" (vcs-name vcs))))
 
 (defgeneric push (vcs)
   (:documentation "Pushes to remotes")
   (:method (vcs)
-    (porcelain-error "lem/porcelain:push not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:push not implemented for vcs ~a" (vcs-name vcs))))
 
 ;; Interactive rebase
 (defgeneric rebase-interactively (vcs &key from)
   (:method (vcs &key from)
     (declare (ignorable from))
-    (porcelain-error "lem/porcelain:rebase-interactively not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:rebase-interactively not implemented for vcs ~a" (vcs-name vcs))))
 
 (defgeneric rebase-continue (vcs)
   (:documentation
    "Either send a continuation signal to the underlying git rebase process, for it to pick up our changes to the interactive rebase file,
   either call git rebase --continue.")
   (:method (vcs)
-    (porcelain-error "lem/porcelain:rebase-continue not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:rebase-continue not implemented for vcs ~a" (vcs-name vcs))))
 
 (defgeneric rebase-abort (vcs)
   (:method (vcs)
-    (porcelain-error "lem/porcelain:rebase-abort not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:rebase-abort not implemented for vcs ~a" (vcs-name vcs))))
 
 (defgeneric rebase-skip (vcs)
   (:method (vcs)
-    (porcelain-error "lem/porcelain:rebase-skip not implemented for vcs ~a" vcs)))
+    (porcelain-error "lem/porcelain:rebase-skip not implemented for vcs ~a" (vcs-name vcs))))

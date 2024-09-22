@@ -15,7 +15,10 @@
   "The fossil program, to be appended command-line options.")
 
 ;; VCS implementation for fossil
-(defclass vcs-fossil (lem/porcelain:vcs-project) ())
+(defclass vcs-fossil (lem/porcelain:vcs-project)
+  ()
+  (:default-initargs
+   :name "fossil"))
 
 (defun fossil-project-p ()
   "Return t if we either find a .fslckout file in the current directory (should be the project root) or a file with a .fossil extension."
@@ -134,4 +137,3 @@
 (defmethod rebase-interactively ((vcs vcs-fossil) &key from)
   (declare (ignore from))
   (porcelain-error "No interactive rebase for Fossil."))
-

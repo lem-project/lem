@@ -31,7 +31,9 @@
 ;; VCS implementation for git
 (defclass vcs-git (lem/porcelain:vcs-project)
   ((rebase-pid :type (or nil string)
-               :accessor rebase-pid)))
+               :accessor rebase-pid))
+  (:default-initargs
+   :name "git"))
 
 (defun git-project-p ()
   "When we find a .git/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`),

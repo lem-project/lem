@@ -262,7 +262,8 @@
                "lem-lua-mode"
                "lem-terminal"
                "lem-legit"
-               "lem-dashboard"))
+               "lem-dashboard"
+               "lem-copilot"))
 
 (defsystem "lem/executable"
   :build-operation program-op

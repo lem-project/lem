@@ -21,6 +21,23 @@
   (:default-initargs
    :name "fossil"))
 
+(defvar *projects-mapping* (make-hash-table :test #'equal)
+  "Map a VCS project root to its VCS object.
+
+  We need a single VCS object to retain data.
+
+  Note: no special data is saved for Fossil projects yet.")
+
+(defun get-or-create-project ()
+  "If a vcs-fossil object exists for the current project root (as of
+  the CWD, set by `with-current-project', return it. Otherwise, create a
+  new `vcs-fossil' object instance."
+  (let* ((root (uiop:getcwd)) ;; CWD set by with-current-project.
+         (existing (gethash root *projects-mapping*)))
+    (or existing
+        (setf (gethash root *projects-mapping*)
+              (make-instance 'vcs-fossil)))))
+
 (defun fossil-project-p ()
   "Return t if we either find a .fslckout file in the current directory (should be the project root) or a file with a .fossil extension."
   (cond
@@ -30,7 +47,7 @@
      ;; Maybe do we need "fossil open" here.
      (loop for file in (uiop:directory-files "./")
            if (equal "fossil" (pathname-type file))
-           return (make-instance 'vcs-fossil)))))
+           return (get-or-create-project)))))
 
 (defun run-fossil (arglist)
   "Run the fossil command with these options.

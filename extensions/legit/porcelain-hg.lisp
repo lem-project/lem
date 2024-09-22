@@ -15,6 +15,23 @@
 (defvar *hg-base-arglist* (list "hg")
   "The mercurial program (hg), to be appended command-line options.")
 
+(defvar *projects-mapping* (make-hash-table :test #'equal)
+  "Map a VCS project root to its VCS object.
+
+  We need a single VCS object to retain data.
+
+  Note: no special data is saved for Mercurial projects yet.")
+
+(defun get-or-create-project ()
+  "If a VCS object exists for the current project root (as of
+  the CWD, set by `with-current-project', return it. Otherwise, create a
+  new `vcs-hg' object instance."
+  (let* ((root (uiop:getcwd)) ;; CWD set by with-current-project.
+         (existing (gethash root *projects-mapping*)))
+    (or existing
+        (setf (gethash root *projects-mapping*)
+              (make-instance 'vcs-hg)))))
+
 ;; VCS implementation for hg
 (defclass vcs-hg (vcs-project)
   ()
@@ -24,7 +41,7 @@
 (defun hg-project-p ()
   "Return t if we find a .hg/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`)."
   (when (uiop:directory-exists-p ".hg")
-    (make-instance 'vcs-hg)))
+    (get-or-create-project)))
 
 (defun run-hg (arglist)
   "Run the mercurial command with these options (list).

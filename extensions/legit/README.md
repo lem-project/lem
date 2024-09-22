@@ -175,18 +175,16 @@ Same with `*fossil-base-args*` and `*hg-base-arglist*`.
 - `*branch-sort-by*`: when listing branches, sort by this field name. Prefix with "-" to sort in descending order. Defaults to "-creatordate", to list the latest used branches first.
 - `*file-diff-args*`: defaults to `(list "diff" "--no-color")`. Arguments to display the file diffs. Will be surrounded by the git binary and the file path. For staged files, --cached is added by the command.
 
-If a project is managed by more than one VCS, `legit` takes the first VCS defined in `*vcs-existence-order*`:
+If a project is managed by more than one VCS, `legit` takes the first VCS defined in `lem/legit:*vcs-existence-order*`. You can change it like so:
 
 ~~~lisp
-(defvar *vcs-existence-order*
-  '(
-    git-project-p
-    fossil-project-p
-    hg-project-p
-    ))
+(setf lem/legit:*vcs-existence-order* '(:git :fossil :hg))
 ~~~
 
-where these symbols are functions with no arguments that return one value: a truthy "handle" object if the current project is considered a Git/Fossil/Mercurial project.
+You could also use a function to decide of your own order. It would
+take no arguments and it must return one value: an instance of the VCS
+object, such as `lem/porcelain/git::vcs-git`, if the current project is considered a
+Git/Fossil/Mercurial project, and nil otherwise.
 
 Variables and parameters for customization are defined in the `lem/legit` package. They might not be exported.
 

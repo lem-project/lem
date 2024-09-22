@@ -255,20 +255,21 @@
 
 ;;; complete
 (defun show-completion (display-text)
-  (unwind-protect
-       (progn
-         (buffer-undo-boundary (current-buffer))
-         (save-excursion
-           (insert-string (current-point)
-                          display-text
-                          :attribute (make-attribute :foreground "dim gray")))
-         (loop :for v := (sit-for 10)
-               :while (eq v :timeout)
-               :finally (if (equal (princ-to-string v) "Tab")
-                            (return-from show-completion t)
-                            (error 'editor-abort :message nil))))
-    (buffer-undo (current-point))
-    nil))
+  (let ((lem-lsp-mode:*inhibit-highlight-diagnotics* t))
+    (unwind-protect
+         (progn
+           (buffer-undo-boundary (current-buffer))
+           (save-excursion
+             (insert-string (current-point)
+                            display-text
+                            :attribute (make-attribute :foreground "dim gray")))
+           (loop :for v := (sit-for 10)
+                 :while (eq v :timeout)
+                 :finally (if (equal (princ-to-string v) "Tab")
+                              (return-from show-completion t)
+                              (error 'editor-abort :message nil))))
+      (buffer-undo (current-point))
+      nil)))
 
 (defun replace-with-completion (point completion)
   (let* ((range (gethash "range" completion)))

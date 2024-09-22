@@ -18,7 +18,8 @@
   (:local-nicknames (:context-menu :lem/context-menu))
   (:local-nicknames (:spinner :lem/loading-spinner))
   (:local-nicknames (:language-mode :lem/language-mode))
-  (:export :get-buffer-from-text-document-identifier
+  (:export :*inhibit-highlight-diagnotics*
+           :get-buffer-from-text-document-identifier
            :spec-initialization-options
            :register-lsp-method
            :define-language-spec))
@@ -755,10 +756,14 @@
         (display-message (diagnostic-message (overlay-diagnostic overlay))))
       (return))))
 
+(defvar *inhibit-highlight-diagnotics* nil)
+
 (defun text-document/publish-diagnostics (params)
   (request::do-request-log "textDocument/publishDiagnostics" params :from :server)
   (let ((params (convert-from-json params 'lsp:publish-diagnostics-params)))
-    (send-event (lambda () (highlight-diagnostics params)))))
+    (send-event (lambda ()
+                  (unless *inhibit-highlight-diagnotics*
+                    (highlight-diagnostics params))))))
 
 (define-command lsp-document-diagnostics () ()
   (when-let ((diagnostics (buffer-diagnostics (current-buffer))))

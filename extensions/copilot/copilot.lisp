@@ -287,8 +287,10 @@
       (replace-with-completion (current-point) completion))))
 
 (defun compute-relative-path (buffer)
-  (enough-namestring (buffer-filename buffer)
-                     (lem-core/commands/project:find-root (buffer-filename buffer))))
+  (if (buffer-filename buffer)
+      (enough-namestring (buffer-filename buffer)
+                         (lem-core/commands/project:find-root (buffer-filename buffer)))
+      ""))
 
 (defun get-completions (point)
   (let ((buffer (point-buffer point)))

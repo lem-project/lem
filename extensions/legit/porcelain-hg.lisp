@@ -15,7 +15,7 @@
   "The mercurial program (hg), to be appended command-line options.")
 
 ;; VCS implementation for hg
-(defclass vcs-hg (lem/porcelain:vcs-generic) ())
+(defclass vcs-hg (lem/porcelain:vcs-project) ())
 
 (defun hg-project-p ()
   "Return t if we find a .hg/ directory in the current directory (which should be the project root. Use `lem/porcelain:with-current-project`)."

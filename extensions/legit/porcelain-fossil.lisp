@@ -15,7 +15,7 @@
   "The fossil program, to be appended command-line options.")
 
 ;; VCS implementation for fossil
-(defclass vcs-fossil (lem/porcelain:vcs-generic) ())
+(defclass vcs-fossil (lem/porcelain:vcs-project) ())
 
 (defun fossil-project-p ()
   "Return t if we either find a .fslckout file in the current directory (should be the project root) or a file with a .fossil extension."

@@ -32,7 +32,7 @@
    :*commits-log-page-size*
    :commit-count
    :*nb-latest-commits*
-   :vcs-generic)
+   :vcs-project)
   (:documentation "Functions to run VCS operations: get the list of changes, of untracked files, commit, push… Git support is the main goal, a simple layer is used with other VCS systems (Fossil, Mercurial).
 
 On interactive commands, Legit will check what VCS is in use in the current project.
@@ -82,7 +82,8 @@ Mercurial:
 (defun porcelain-error (message &rest args)
   (error 'porcelain-error :message (apply #'format nil message args)))
 
-(defclass vcs-generic () ())
+(defclass vcs-project ()
+  ())
 
 ;;;
 ;;; Getting changes.

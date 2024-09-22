@@ -122,6 +122,10 @@
   (str:trim
    (run-hg "branch")))
 
+(defmethod branches ((vcs vcs-hg) &key sort-by)
+  (declare (ignore sort-by))
+  (porcelain-error "not implemented"))
+
 (defmethod latest-commits ((vcs vcs-hg) &key (n lem/porcelain:*nb-latest-commits*) (hash-length 8) (offset 0))
   (declare (ignorable n hash-length offset))
   (let ((out (run-hg "log")))

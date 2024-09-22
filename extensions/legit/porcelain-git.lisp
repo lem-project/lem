@@ -146,7 +146,7 @@ allows to learn about the file state: modified, deleted, ignored… "
 (defmethod commit ((vcs vcs-git) message)
   (run-git (list "commit" "-m" message)))
 
-(defun git-list-branches (&key (sort-by *branch-sort-by*))
+(defun list-branches (&key (sort-by *branch-sort-by*))
   "Return: list of branches, raw output.
   Each element starts with two meaningful characters, such as \"* \" for the current branch."
   (str:lines
@@ -156,7 +156,7 @@ allows to learn about the file state: modified, deleted, ignored… "
                   (format nil "--sort=~a" sort-by)))))
 
 (defmethod branches ((vcs vcs-git) &key (sort-by *branch-sort-by*))
-  (loop for branch in (git-list-branches :sort-by sort-by)
+  (loop for branch in (list-branches :sort-by sort-by)
         collect (subseq branch 2 (length branch))))
 
 (defmethod checkout-create ((vcs vcs-git) new start)
@@ -170,7 +170,7 @@ allows to learn about the file state: modified, deleted, ignored… "
   (run-git (list "push")))
 
 (defmethod current-branch ((vcs vcs-git))
-  (let ((branches (git-list-branches :sort-by "-creatordate")))
+  (let ((branches (list-branches :sort-by "-creatordate")))
     (loop for branch in branches
           if (str:starts-with-p "*" branch)
           return (subseq branch 2))))

@@ -106,7 +106,8 @@
 (defmethod commit ((vcs vcs-fossil) message)
   (run-fossil (list "commit" "-m" message)))
 
-(defun fossil-branches (&key &allow-other-keys)
+(defmethod branches ((vcs vcs-fossil) &key sort-by)
+  (declare (ignore sort-by))
   (porcelain-error "not implemented"))
 
 (defmethod current-branch ((vcs vcs-fossil))

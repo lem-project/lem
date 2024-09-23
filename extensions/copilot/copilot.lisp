@@ -292,23 +292,27 @@
                          (lem-core/commands/project:find-root (buffer-filename buffer)))
       ""))
 
+(defun make-doc (point)
+  (let ((buffer (point-buffer point)))
+    (copilot:hash "version" (buffer-version buffer)
+                  "source" (buffer-text buffer)
+                  "tabSize" (variable-value 'tab-width :default point)
+                  "indentSize" 4
+                  "insertSpaces" (if (variable-value 'indent-tabs-mode :default point)
+                                     'yason:true
+                                     'yason:false)
+                  "path" (buffer-filename buffer)
+                  "uri" (buffer-uri buffer)
+                  "relativePath" (compute-relative-path buffer)
+                  "languageId" (buffer-language-id buffer)
+                  "position" (point-to-lsp-position point))))
+
 (defun get-completions (point)
   (let ((buffer (point-buffer point)))
     (setf (buffer-last-version buffer) (buffer-version buffer))
     (copilot:get-completions
      (agent)
-     :doc (copilot:hash "version" (buffer-version buffer)
-                        "source" (buffer-text buffer)
-                        "tabSize" (variable-value 'tab-width :default point)
-                        "indentSize" 4
-                        "insertSpaces" (if (variable-value 'indent-tabs-mode :default point)
-                                            'yason:true
-                                            'yason:false)
-                        "path" (buffer-filename buffer)
-                        "uri" (buffer-uri buffer)
-                        "relativePath" (compute-relative-path buffer)
-                        "languageId" (buffer-language-id buffer)
-                        "position" (point-to-lsp-position point))
+     :doc (make-doc point)
      :callback (lambda (response)
                  (send-event (lambda ()
                                (defparameter $get-completions-response response)

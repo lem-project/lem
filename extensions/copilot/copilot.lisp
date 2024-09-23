@@ -336,6 +336,8 @@
     (assert (equal (gethash "text" response)
                    (buffer-text (current-buffer))))))
 
+
+;;;
 (defun enable-copilot-mode ()
   (when (enable-copilot-p)
     (copilot-mode t)))

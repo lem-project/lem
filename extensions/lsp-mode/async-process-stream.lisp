@@ -11,23 +11,20 @@
                   :accessor input-stream-buffer-string)
    (position :initform 0
              :accessor input-stream-position)
-   (logging-output :initform nil
-                   :initarg :logging-output
-                   :reader input-stream-logging-output-p)
-   (output-log :initform ""
-	       :accessor input-stream-output-log)))
+   (logger :initform nil
+           :initarg :logger
+           :reader input-stream-logger)))
 
-(defun make-input-stream (process &key logging-output)
-  (make-instance 'input-stream :process process :logging-output logging-output))
+(defun make-input-stream (process &key logger)
+  (make-instance 'input-stream :process process :logger logger))
 
 (defun receive-output-if-necessary (stream)
   (when (<= (length (input-stream-buffer-string stream))
             (input-stream-position stream))
     (let ((output (async-process:process-receive-output (input-stream-process stream))))
       (setf (input-stream-buffer-string stream) output)
-      (when (input-stream-logging-output-p stream)
-        (setf (input-stream-output-log stream)
-              (concatenate 'string (input-stream-output-log stream)  output))))
+      (when (input-stream-logger stream)
+        (funcall (input-stream-logger stream) output)))
     (setf (input-stream-position stream)
           0)))
 

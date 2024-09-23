@@ -23,6 +23,10 @@
 (in-package :lem-copilot/internal)
 
 (defparameter *logging-output* t)
+(defparameter *logging-request* nil)
+
+(defvar *logs* (lem/common/ring:make-ring 1000))
+(defvar *log-lock* (bt2:make-lock :name "copilot log lock"))
 
 (defgeneric copilot-root ())
 
@@ -37,12 +41,23 @@
   (with-output-to-string (stream)
     (yason:encode params (yason:make-json-output-stream stream))))
 
+(defun do-log (output)
+  (bt2:with-lock-held (*log-lock*)
+    (lem/common/ring:ring-push *logs* output)))
+
 (defun debug-log (type method params)
-  (with-open-file (out "/tmp/lem-copilot.log"
-                       :direction :output
-                       :if-exists :append
-                       :if-does-not-exist :create)
-    (format out "~A ~A ~A~%" type method (pretty-json params))))
+  (when *logging-request*
+    (do-log (format nil "~A ~A ~A~%" type method (pretty-json params)))))
+
+(defun logger (output)
+  (when (search "MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 change listeners added to [EventEmitter]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit" output)
+    (defparameter $ t))
+  (do-log output))
+
+(defun write-log (stream)
+  (loop :for i :downfrom (1- (lem/common/ring:ring-length *logs*)) :to 0
+        :for log := (lem/common/ring:ring-ref *logs* i)
+        :do (write-line log stream)))
 
 (defstruct agent
   client
@@ -53,7 +68,9 @@
   (let* ((process
            (async-process:create-process
             (list "node" (namestring (copilot-path)) "--stdio")))
-         (stream (lem-lsp-mode/async-process-stream:make-input-stream process :logging-output *logging-output*))
+         (stream (lem-lsp-mode/async-process-stream:make-input-stream
+                  process
+                  :logger (when *logging-output* 'logger)))
          (client (jsonrpc:make-client)))
     (make-agent :client client
                 :process process

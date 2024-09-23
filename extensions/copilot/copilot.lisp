@@ -405,19 +405,6 @@
   )
 
 
-;;; test
-(define-command test/copilot-document () ()
-  (let ((response (copilot::request (agent)
-                                    "testing/getDocument"
-                                    (copilot:hash "uri" (buffer-uri (current-buffer))))))
-    (show-message (copilot:pretty-json response))
-    (assert (equal (gethash "text" response)
-                   (buffer-text (current-buffer))))))
-
-(defun copilot-log ()
-  (lem-lsp-mode/async-process-stream::input-stream-output-log (copilot::agent-stream (agent))))
-
-
 ;;;
 (defun enable-copilot-mode ()
   (when (enable-copilot-p)
@@ -448,3 +435,30 @@
 (define-language lem-typescript-mode:typescript-mode (:language-id "typescript"))
 (define-language lem-xml-mode:xml-mode (:language-id "xml"))
 (define-language lem-yaml-mode:yaml-mode (:language-id "yaml"))
+
+
+;;; test
+(define-command test/copilot-document () ()
+  (let ((response (copilot::request (agent)
+                                    "testing/getDocument"
+                                    (copilot:hash "uri" (buffer-uri (current-buffer))))))
+    (show-message (copilot:pretty-json response))
+    (assert (equal (gethash "text" response)
+                   (buffer-text (current-buffer))))))
+
+(define-command test/copilot-log () ()
+  (let* ((buffer (make-buffer "*copilot-log*" :enable-undo-p nil)))
+    (erase-buffer buffer)
+    (with-open-stream (stream (make-buffer-output-stream (buffer-point buffer)))
+      (copilot::write-log stream))
+    (pop-to-buffer buffer)))
+
+#|
+## BUGS
+After using it for a while, copilot-server will output the following
+After that, the completion results will no longer be output.
+
+(node:215872) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 change listeners added to [EventEmitter]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+
+Same issue: https://github.com/copilot-emacs/copilot.el/issues/282
+|#

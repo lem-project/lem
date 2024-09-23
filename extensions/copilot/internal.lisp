@@ -133,9 +133,7 @@
           "textDocument/didFocus"
           (hash "textDocument" (hash "uri" uri))))
 
-(defun get-completions (agent &key doc
-                                   callback
-                                   error-callback)
+(defun get-completions (agent &key doc callback error-callback)
   (request-async agent
                  "getCompletions"
                  (hash "doc" doc)

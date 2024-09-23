@@ -6,6 +6,8 @@
 (define-attribute copilot-suggestion-attribute
   (t :foreground "dark gray"))
 
+(define-condition already-sign-in (editor-error) ())
+
 (defmethod copilot:copilot-root ()
   (merge-pathnames "copilot/" (lem-home)))
 
@@ -51,6 +53,14 @@
 (defun installed-copilot-server-p ()
   (uiop:file-exists-p (copilot:copilot-path)))
 
+(define-command copilot-restart () ()
+  (async-process:delete-process (lem-copilot/internal::agent-process lem-copilot::*agent*))
+  (setf *agent* nil)
+  (handler-case (copilot-login) (already-sign-in ()))
+  (dolist (buffer (remove-if-not #'copilot-mode-p (buffer-list)))
+    (setf (buffer-version buffer) 0)
+    (notify-text-document/did-open buffer)))
+
 
 ;;; login
 (defun make-verification-buffer (user-code verification-uri)
@@ -94,7 +104,7 @@
          (verification-uri (gethash "verificationUri" response))
          (user (gethash "user" response)))
     (when (equal status "AlreadySignedIn")
-      (editor-error "Already sign in as ~A" user))
+      (error 'already-sign-in :message (format nil "Already sign in as ~A" user)))
     (copy-to-clipboard user-code)
     (start-login user-code verification-uri)
     (open-external-file verification-uri)
@@ -197,7 +207,7 @@
   (unless (installed-copilot-server-p)
     (copilot-install-server))
   (unless *agent*
-    (handler-case (copilot-login) (editor-error ())))
+    (handler-case (copilot-login) (already-sign-in ())))
   (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer)) 'on-kill-buffer)
   (add-hook (variable-value 'before-change-functions :buffer (current-buffer)) 'on-before-change)
   (add-hook *window-show-buffer-functions* 'on-window-show-buffer)

@@ -2,6 +2,7 @@
   (:use :cl)
   (:export :copilot-root
            :copilot-path
+           :copilot-dead
            :hash
            :pretty-json
            :run-agent
@@ -29,6 +30,7 @@
 (defvar *log-lock* (bt2:make-lock :name "copilot log lock"))
 
 (defgeneric copilot-root ())
+(defgeneric copilot-dead ())
 
 (defun copilot-path ()
   (merge-pathnames "lib/node_modules/copilot-node-server/copilot/dist/agent.js"
@@ -51,7 +53,7 @@
 
 (defun logger (output)
   (when (search "MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 change listeners added to [EventEmitter]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit" output)
-    (defparameter $ t))
+    (copilot-dead))
   (do-log output))
 
 (defun write-log (stream)

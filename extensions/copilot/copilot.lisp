@@ -59,7 +59,12 @@
   (handler-case (copilot-login) (already-sign-in ()))
   (dolist (buffer (remove-if-not #'copilot-mode-p (buffer-list)))
     (setf (buffer-version buffer) 0)
-    (notify-text-document/did-open buffer)))
+    (notify-text-document/did-open buffer))
+  (message "copilot restarted"))
+
+(defmethod copilot:copilot-dead ()
+  (message "copilot has died, so a replacement will be prepared")
+  (copilot-restart))
 
 
 ;;; login

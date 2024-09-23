@@ -199,7 +199,6 @@
   (add-hook (variable-value 'before-change-functions :buffer (current-buffer)) 'on-before-change)
   (add-hook *window-show-buffer-functions* 'on-window-show-buffer)
   (add-hook *switch-to-window-hook* 'on-switch-to-window)
-  (add-hook *post-command-hook* 'on-post-command)
   (notify-text-document/did-open (current-buffer)))
 
 (defun copilot-mode-off ()
@@ -232,9 +231,9 @@
 (defun on-before-change (point arg)
   (let ((buffer (point-buffer point)))
     (when (copilot-mode-p buffer)
-      (notify-text-document/did-change buffer
-                                       (vector (before-change-arg-to-content-change point
-                                                                                    arg))))))
+      (notify-text-document/did-change
+       buffer
+       (vector (before-change-arg-to-content-change point arg))))))
 
 (defun on-window-show-buffer (window)
   (let ((buffer (window-buffer window)))
@@ -247,10 +246,8 @@
     (when (copilot-mode-p buffer)
       (notify-text-document/did-focus buffer))))
 
-(defun on-post-command ()
-  (when (and (copilot-mode-p (current-buffer))
-             (buffer-update-version-p (current-buffer)))
-    (copilot-complete)))
+(defmethod execute :after ((mode copilot-mode) (command self-insert) argument)
+  (copilot-complete))
 
 
 ;;; complete

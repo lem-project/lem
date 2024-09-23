@@ -16,7 +16,9 @@
            :text-document/did-change
            :text-document/did-focus
            :get-completions
-           :notify-shown))
+           :notify-shown
+           :notify-accepted
+           :notify-rejected))
 (in-package :lem-copilot/internal)
 
 (defgeneric copilot-root ())
@@ -142,3 +144,9 @@
 
 (defun notify-shown (agent uuid)
   (request-async agent "notifyShown" (hash "uuid" uuid)))
+
+(defun notify-accepted (agent uuid)
+  (request-async agent "notifyAccepted" (hash "uuid" uuid)))
+
+(defun notify-rejected (agent uuid)
+  (request-async agent "notifyRejected" (hash "uuid" uuid)))

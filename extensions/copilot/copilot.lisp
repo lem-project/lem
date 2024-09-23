@@ -264,9 +264,8 @@
                  :while (eq v :timeout)
                  :finally (if (equal (princ-to-string v) "Tab")
                               (return-from show-completion t)
-                              (error 'editor-abort :message nil))))
-      (buffer-undo (current-point))
-      nil)))
+                              (return-from show-completion nil))))
+      (buffer-undo (current-point)))))
 
 (defun replace-with-completion (point completion)
   (let* ((range (gethash "range" completion)))
@@ -280,8 +279,12 @@
 (defun show-and-apply-completion (completions)
   (let ((completion (first completions)))
     (copilot:notify-shown (agent) (gethash "uuid" completion))
-    (when (show-completion (gethash "displayText" completion))
-      (replace-with-completion (current-point) completion))))
+    (cond ((show-completion (gethash "displayText" completion))
+           (copilot:notify-accepted (agent) (gethash "uuid" completion))
+           (replace-with-completion (current-point) completion))
+          (t
+           (copilot:notify-rejected (agent) (gethash "uuid" completion))
+           (error 'editor-abort :message nil)))))
 
 (defun compute-relative-path (buffer)
   (if (buffer-filename buffer)

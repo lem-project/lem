@@ -119,12 +119,12 @@
            "signInInitiate"
            (hash)))
 
-(defun sign-in-confirm (agent user-code &key callback error-callback)
+(defun sign-in-confirm (agent user-code &key callback)
   (request-async agent
                  "signInConfirm"
                  (hash "userCode" user-code)
                  :callback callback
-                 :error-callback error-callback))
+                 :error-callback #'default-error-callback))
 
 (defun check-status (agent)
   (request agent
@@ -156,12 +156,12 @@
           "textDocument/didFocus"
           (hash "textDocument" (hash "uri" uri))))
 
-(defun get-completions (agent &key doc callback error-callback)
+(defun get-completions (agent &key doc callback)
   (request-async agent
                  "getCompletions"
                  (hash "doc" doc)
                  :callback callback
-                 :error-callback error-callback))
+                 :error-callback #'default-error-callback))
 
 (defun notify-shown (agent uuid)
   (request-async agent "notifyShown" (hash "uuid" uuid)))

@@ -259,13 +259,13 @@
   (copilot-complete))
 
 
+;;; complete
 (defvar *copilot-completion-keymap* (make-keymap :name "Copilot Completion"))
 
 (define-key *copilot-completion-keymap* "Tab" 'copilot-accept-suggestion)
 (define-key *copilot-completion-keymap* "M-n" 'copilot-next-suggestion)
 (define-key *copilot-completion-keymap* "M-p" 'copilot-previous-suggestion)
 
-;;; complete
 (defun check-completions (completions)
   (when (= 1 (length completions))
     (editor-error "No more completions")))
@@ -413,6 +413,9 @@
     (show-message (copilot:pretty-json response))
     (assert (equal (gethash "text" response)
                    (buffer-text (current-buffer))))))
+
+(defun copilot-log ()
+  (lem-lsp-mode/async-process-stream::input-stream-output-log (copilot::agent-stream (agent))))
 
 
 ;;;

@@ -22,6 +22,8 @@
            :get-completions-cycling))
 (in-package :lem-copilot/internal)
 
+(defparameter *logging-output* t)
+
 (defgeneric copilot-root ())
 
 (defun copilot-path ()
@@ -51,7 +53,7 @@
   (let* ((process
            (async-process:create-process
             (list "node" (namestring (copilot-path)) "--stdio")))
-         (stream (lem-lsp-mode/async-process-stream:make-input-stream process))
+         (stream (lem-lsp-mode/async-process-stream:make-input-stream process :logging-output *logging-output*))
          (client (jsonrpc:make-client)))
     (make-agent :client client
                 :process process
@@ -60,7 +62,8 @@
 (defun connect (agent)
   (jsonrpc/client:client-connect-using-class (agent-client agent)
                                              'lem-lsp-mode/lem-stdio-transport:lem-stdio-transport
-                                             :process (agent-process agent)))
+                                             :process (agent-process agent)
+                                             :stream (agent-stream agent)))
 
 (defun request (agent method params)
   (debug-log :request method params)

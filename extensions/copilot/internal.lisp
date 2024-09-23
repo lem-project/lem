@@ -150,10 +150,16 @@
   (request-async agent "notifyShown" (hash "uuid" uuid)))
 
 (defun notify-accepted (agent uuid)
-  (request-async agent "notifyAccepted" (hash "uuid" uuid)))
+  (request-async agent
+                 "notifyAccepted"
+                 (hash "uuid" uuid)
+                 :error-callback #'default-error-callback))
 
 (defun notify-rejected (agent uuid)
-  (request-async agent "notifyRejected" (hash "uuid" uuid)))
+  (request-async agent
+                 "notifyRejected"
+                 (hash "uuids" (vector uuid))
+                 :error-callback #'default-error-callback))
 
 (defun get-completions-cycling (agent &key doc callback error-callback)
   (request-async agent
@@ -161,3 +167,6 @@
                  (hash "doc" doc)
                  :callback callback
                  :error-callback error-callback))
+
+(defun default-error-callback (&rest args)
+  (lem:send-event (lambda () (error "~A" args))))

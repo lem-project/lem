@@ -3,6 +3,9 @@
   (:local-nicknames (:copilot :lem-copilot/internal)))
 (in-package :lem-copilot)
 
+(define-attribute copilot-suggestion-attribute
+  (t :foreground "dark gray"))
+
 (defmethod copilot:copilot-root ()
   (merge-pathnames "copilot/" (lem-home)))
 
@@ -151,6 +154,12 @@
   (not (equal (buffer-version buffer)
               (buffer-last-version buffer))))
 
+(defun buffer-completions-cache (buffer)
+  (buffer-value buffer 'completions-cache))
+
+(defun (setf buffer-completions-cache) (completions-cache buffer)
+  (setf (buffer-value buffer 'completions-cache) completions-cache))
+
 (defun point-to-lsp-position (point)
   (copilot:hash "line" (1- (line-number-at-point point))
                 "character" (point-charpos point)))
@@ -250,22 +259,52 @@
   (copilot-complete))
 
 
+(defvar *copilot-completion-keymap* (make-keymap :name "Copilot Completion"))
+
+(define-key *copilot-completion-keymap* "Tab" 'copilot-accept-suggestion)
+(define-key *copilot-completion-keymap* "M-n" 'copilot-next-suggestion)
+(define-key *copilot-completion-keymap* "M-p" 'copilot-previous-suggestion)
+
 ;;; complete
-(defun show-completion (display-text)
-  (let ((lem-lsp-mode:*inhibit-highlight-diagnotics* t))
-    (unwind-protect
-         (progn
-           (buffer-undo-boundary (current-buffer))
-           (save-excursion
-             (insert-string (current-point)
-                            display-text
-                            :attribute (make-attribute :foreground "dim gray")))
-           (loop :for v := (sit-for 10)
-                 :while (eq v :timeout)
-                 :finally (if (equal (princ-to-string v) "Tab")
-                              (return-from show-completion t)
-                              (return-from show-completion nil))))
-      (buffer-undo (current-point)))))
+(defun check-completions (completions)
+  (when (= 1 (length completions))
+    (editor-error "No more completions")))
+
+(defun show-next-completion (completions &key (index 0))
+  (check-completions completions)
+  (show-and-apply-completion
+   completions
+   :index index
+   :next (lambda ()
+           (show-next-completion completions
+                                 :index (mod (1+ index) (length completions))))))
+
+(defun show-previous-completion (completions &key (index 0))
+  (check-completions completions)
+  (show-and-apply-completion
+   completions
+   :index index
+   :next (lambda ()
+           (show-previous-completion completions
+                                     :index (mod (1- index) (length completions))))))
+
+(defun cycle-completion (next-or-previous-function)
+  (alexandria:if-let (response (buffer-completions-cache (current-buffer)))
+    (funcall next-or-previous-function (gethash "completions" response))
+    (copilot:get-completions-cycling
+     (agent)
+     :doc (make-doc (current-point))
+     :callback (lambda (response)
+                 (send-event (lambda ()
+                               (defparameter $last-completions-cycling response)
+                               (setf (buffer-completions-cache (current-buffer)) response)
+                               (funcall next-or-previous-function (gethash "completions" response) :index 1)))))))
+
+(defun next-completion ()
+  (cycle-completion #'show-next-completion))
+
+(defun previous-completion ()
+  (cycle-completion #'show-previous-completion))
 
 (defun replace-with-completion (point completion)
   (let* ((range (gethash "range" completion)))
@@ -276,15 +315,41 @@
       (delete-between-points start end)
       (insert-string start (gethash "text" completion)))))
 
-(defun show-and-apply-completion (completions)
-  (let ((completion (first completions)))
+(defun show-completion (display-text)
+  (lem-lsp-mode::reset-buffer-diagnostic (current-buffer))
+  (unwind-protect
+       (progn
+         (buffer-undo-boundary (current-buffer))
+         (save-excursion
+           (insert-string (current-point)
+                          display-text
+                          :attribute 'copilot-suggestion-attribute))
+         (loop :for v := (sit-for 10)
+               :while (eq v :timeout)
+               :finally (return-from show-completion v)))
+    (buffer-undo (current-point))))
+
+(defun find-copilot-completion-command (key)
+  (keymap-find-keybind *copilot-completion-keymap* key nil))
+
+(defun show-and-apply-completion (completions &key (index 0) (next #'next-completion) (previous #'previous-completion))
+  (let ((completion (elt completions index)))
     (copilot:notify-shown (agent) (gethash "uuid" completion))
-    (cond ((show-completion (gethash "displayText" completion))
-           (copilot:notify-accepted (agent) (gethash "uuid" completion))
-           (replace-with-completion (current-point) completion))
-          (t
-           (copilot:notify-rejected (agent) (gethash "uuid" completion))
-           (error 'editor-abort :message nil)))))
+    (let ((key (show-completion (gethash "displayText" completion))))
+      (case (find-copilot-completion-command key)
+        (copilot-accept-suggestion
+         (read-key)
+         (copilot:notify-accepted (agent) (gethash "uuid" completion))
+         (replace-with-completion (current-point) completion))
+        (copilot-next-suggestion
+         (read-key)
+         (funcall next))
+        (copilot-previous-suggestion
+         (read-key)
+         (funcall previous))
+        (otherwise
+         (copilot:notify-rejected (agent) (gethash "uuid" completion))
+         (error 'editor-abort :message nil))))))
 
 (defun compute-relative-path (buffer)
   (if (buffer-filename buffer)
@@ -309,7 +374,8 @@
 
 (defun get-completions (point)
   (let ((buffer (point-buffer point)))
-    (setf (buffer-last-version buffer) (buffer-version buffer))
+    (setf (buffer-completions-cache buffer) nil
+          (buffer-last-version buffer) (buffer-version buffer))
     (copilot:get-completions
      (agent)
      :doc (make-doc point)
@@ -325,6 +391,18 @@
 
 (define-command copilot-complete () ()
   (get-completions (current-point)))
+
+(define-command copilot-accept-suggestion () ()
+  ;; dummy command
+  )
+
+(define-command copilot-next-suggestion () ()
+  ;; dummy command
+  )
+
+(define-command copilot-previous-suggestion () ()
+  ;; dummy command
+  )
 
 
 ;;; test

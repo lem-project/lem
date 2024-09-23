@@ -18,7 +18,8 @@
            :get-completions
            :notify-shown
            :notify-accepted
-           :notify-rejected))
+           :notify-rejected
+           :get-completions-cycling))
 (in-package :lem-copilot/internal)
 
 (defgeneric copilot-root ())
@@ -150,3 +151,10 @@
 
 (defun notify-rejected (agent uuid)
   (request-async agent "notifyRejected" (hash "uuid" uuid)))
+
+(defun get-completions-cycling (agent &key doc callback error-callback)
+  (request-async agent
+                 "getCompletionsCycling"
+                 (hash "doc" doc)
+                 :callback callback
+                 :error-callback error-callback))

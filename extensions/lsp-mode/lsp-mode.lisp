@@ -729,7 +729,8 @@
                                      (unbound-slot ()
                                        'diagnostic-error-attribute)
                                      (:no-error (severity)
-                                       (diagnostic-severity-attribute severity))))))
+                                       (diagnostic-severity-attribute severity)))
+                                   :end-point-kind :right-inserting)))
         (overlay-put overlay
                      'diagnostic
                      (make-diagnostic :buffer buffer
@@ -756,14 +757,11 @@
         (display-message (diagnostic-message (overlay-diagnostic overlay))))
       (return))))
 
-(defvar *inhibit-highlight-diagnotics* nil)
-
 (defun text-document/publish-diagnostics (params)
   (request::do-request-log "textDocument/publishDiagnostics" params :from :server)
   (let ((params (convert-from-json params 'lsp:publish-diagnostics-params)))
     (send-event (lambda ()
-                  (unless *inhibit-highlight-diagnotics*
-                    (highlight-diagnostics params))))))
+                  (highlight-diagnostics params)))))
 
 (define-command lsp-document-diagnostics () ()
   (when-let ((diagnostics (buffer-diagnostics (current-buffer))))

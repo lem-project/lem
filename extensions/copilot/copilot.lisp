@@ -17,6 +17,7 @@
   (let ((agent (copilot:run-agent)))
     (copilot:connect agent)
     (copilot:initialize agent)
+    (copilot:initialized agent)
     (copilot:set-editor-info agent)
     agent))
 
@@ -39,7 +40,7 @@
                         "--prefix"
                         (namestring (copilot:copilot-root))
                         "install"
-                        "copilot-node-server@1.27.0")))
+                        "copilot-node-server@1.40.0")))
     (erase-buffer buffer)
     (pop-to-buffer buffer)
     (with-point ((point (buffer-point buffer) :left-inserting))
@@ -53,13 +54,16 @@
 (defun installed-copilot-server-p ()
   (uiop:file-exists-p (copilot:copilot-path)))
 
+(defun reset-buffers ()
+  (dolist (buffer (remove-if-not #'copilot-mode-p (buffer-list)))
+    (setf (buffer-version buffer) 0)
+    (notify-text-document/did-open buffer)))
+
 (define-command copilot-restart () ()
   (async-process:delete-process (lem-copilot/internal::agent-process lem-copilot::*agent*))
   (setf *agent* nil)
   (handler-case (copilot-login) (already-sign-in ()))
-  (dolist (buffer (remove-if-not #'copilot-mode-p (buffer-list)))
-    (setf (buffer-version buffer) 0)
-    (notify-text-document/did-open buffer))
+  (reset-buffers)
   (message "copilot restarted"))
 
 (defmethod copilot:copilot-dead ()
@@ -210,7 +214,8 @@
 
 (defun copilot-mode-on ()
   (unless (installed-copilot-server-p)
-    (copilot-install-server))
+    (copilot-install-server)
+    (reset-buffers))
   (unless *agent*
     (handler-case (copilot-login) (already-sign-in ())))
   (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer)) 'on-kill-buffer)
@@ -412,7 +417,8 @@
 
 ;;;
 (defun enable-copilot-mode ()
-  (when (enable-copilot-p)
+  (when (and (enable-copilot-p)
+             (not (buffer-temporary-p (current-buffer))))
     (copilot-mode t)))
 
 (defmacro define-language (mode (&key (language-id (alexandria:required-argument :language-id))))

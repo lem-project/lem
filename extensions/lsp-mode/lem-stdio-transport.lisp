@@ -13,13 +13,16 @@
 (defclass lem-stdio-transport (transport)
   ((process :initarg :process
             :reader lem-stdio-transport-process)
-   (stream :accessor lem-stdio-transport-stream)))
+   (stream :initarg :stream
+           :initform nil
+           :accessor lem-stdio-transport-stream)))
 
 (defmethod initialize-instance ((instance lem-stdio-transport) &rest initargs)
   (declare (ignore initargs))
   (let ((instance (call-next-method)))
-    (setf (lem-stdio-transport-stream instance)
-          (make-input-stream (lem-stdio-transport-process instance)))
+    (unless (lem-stdio-transport-stream instance)
+      (setf (lem-stdio-transport-stream instance)
+            (make-input-stream (lem-stdio-transport-process instance))))
     instance))
 
 (defmethod start-client ((transport lem-stdio-transport))

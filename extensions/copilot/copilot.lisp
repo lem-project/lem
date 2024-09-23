@@ -3,6 +3,11 @@
   (:local-nicknames (:copilot :lem-copilot/internal)))
 (in-package :lem-copilot)
 
+(define-attribute copilot-suggestion-attribute
+  (t :foreground "dark gray"))
+
+(define-condition already-sign-in (editor-error) ())
+
 (defmethod copilot:copilot-root ()
   (merge-pathnames "copilot/" (lem-home)))
 
@@ -48,6 +53,19 @@
 (defun installed-copilot-server-p ()
   (uiop:file-exists-p (copilot:copilot-path)))
 
+(define-command copilot-restart () ()
+  (async-process:delete-process (lem-copilot/internal::agent-process lem-copilot::*agent*))
+  (setf *agent* nil)
+  (handler-case (copilot-login) (already-sign-in ()))
+  (dolist (buffer (remove-if-not #'copilot-mode-p (buffer-list)))
+    (setf (buffer-version buffer) 0)
+    (notify-text-document/did-open buffer))
+  (message "copilot restarted"))
+
+(defmethod copilot:copilot-dead ()
+  (message "copilot has died, so a replacement will be prepared")
+  (copilot-restart))
+
 
 ;;; login
 (defun make-verification-buffer (user-code verification-uri)
@@ -91,7 +109,7 @@
          (verification-uri (gethash "verificationUri" response))
          (user (gethash "user" response)))
     (when (equal status "AlreadySignedIn")
-      (editor-error "Already sign in as ~A" user))
+      (error 'already-sign-in :message (format nil "Already sign in as ~A" user)))
     (copy-to-clipboard user-code)
     (start-login user-code verification-uri)
     (open-external-file verification-uri)
@@ -107,13 +125,7 @@
                                                :style '(:gravity :center))
                                  (delete-login-message)
                                  (setf finished t)
-                                 (redraw-display))))
-       :error-callback (lambda (response)
-                         (send-event (lambda ()
-                                       (setf finished t)
-                                       (show-message (copilot:pretty-json response)
-                                                     :style '(:gravity :center))
-                                       (redraw-display)))))
+                                 (redraw-display)))))
       (handler-bind ((editor-abort (lambda (c)
                                      (declare (ignore c))
                                      (delete-login-message))))
@@ -150,6 +162,12 @@
 (defun buffer-update-version-p (buffer)
   (not (equal (buffer-version buffer)
               (buffer-last-version buffer))))
+
+(defun buffer-completions-cache (buffer)
+  (buffer-value buffer 'completions-cache))
+
+(defun (setf buffer-completions-cache) (completions-cache buffer)
+  (setf (buffer-value buffer 'completions-cache) completions-cache))
 
 (defun point-to-lsp-position (point)
   (copilot:hash "line" (1- (line-number-at-point point))
@@ -194,12 +212,11 @@
   (unless (installed-copilot-server-p)
     (copilot-install-server))
   (unless *agent*
-    (handler-case (copilot-login) (editor-error ())))
+    (handler-case (copilot-login) (already-sign-in ())))
   (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer)) 'on-kill-buffer)
   (add-hook (variable-value 'before-change-functions :buffer (current-buffer)) 'on-before-change)
   (add-hook *window-show-buffer-functions* 'on-window-show-buffer)
   (add-hook *switch-to-window-hook* 'on-switch-to-window)
-  (add-hook *post-command-hook* 'on-post-command)
   (notify-text-document/did-open (current-buffer)))
 
 (defun copilot-mode-off ()
@@ -232,9 +249,9 @@
 (defun on-before-change (point arg)
   (let ((buffer (point-buffer point)))
     (when (copilot-mode-p buffer)
-      (notify-text-document/did-change buffer
-                                       (vector (before-change-arg-to-content-change point
-                                                                                    arg))))))
+      (notify-text-document/did-change
+       buffer
+       (vector (before-change-arg-to-content-change point arg))))))
 
 (defun on-window-show-buffer (window)
   (let ((buffer (window-buffer window)))
@@ -247,29 +264,56 @@
     (when (copilot-mode-p buffer)
       (notify-text-document/did-focus buffer))))
 
-(defun on-post-command ()
-  (when (and (copilot-mode-p (current-buffer))
-             (buffer-update-version-p (current-buffer)))
-    (copilot-complete)))
+(defmethod execute :after ((mode copilot-mode) (command self-insert) argument)
+  (copilot-complete))
 
 
 ;;; complete
-(defun show-completion (display-text)
-  (let ((lem-lsp-mode:*inhibit-highlight-diagnotics* t))
-    (unwind-protect
-         (progn
-           (buffer-undo-boundary (current-buffer))
-           (save-excursion
-             (insert-string (current-point)
-                            display-text
-                            :attribute (make-attribute :foreground "dim gray")))
-           (loop :for v := (sit-for 10)
-                 :while (eq v :timeout)
-                 :finally (if (equal (princ-to-string v) "Tab")
-                              (return-from show-completion t)
-                              (error 'editor-abort :message nil))))
-      (buffer-undo (current-point))
-      nil)))
+(defvar *copilot-completion-keymap* (make-keymap :name "Copilot Completion"))
+
+(define-key *copilot-completion-keymap* "Tab" 'copilot-accept-suggestion)
+(define-key *copilot-completion-keymap* "M-n" 'copilot-next-suggestion)
+(define-key *copilot-completion-keymap* "M-p" 'copilot-previous-suggestion)
+
+(defun check-completions (completions)
+  (when (= 1 (length completions))
+    (editor-error "No more completions")))
+
+(defun show-next-completion (completions &key (index 0))
+  (check-completions completions)
+  (show-and-apply-completion
+   completions
+   :index index
+   :next (lambda ()
+           (show-next-completion completions
+                                 :index (mod (1+ index) (length completions))))))
+
+(defun show-previous-completion (completions &key (index 0))
+  (check-completions completions)
+  (show-and-apply-completion
+   completions
+   :index index
+   :next (lambda ()
+           (show-previous-completion completions
+                                     :index (mod (1- index) (length completions))))))
+
+(defun cycle-completion (next-or-previous-function)
+  (alexandria:if-let (response (buffer-completions-cache (current-buffer)))
+    (funcall next-or-previous-function (gethash "completions" response))
+    (copilot:get-completions-cycling
+     (agent)
+     :doc (make-doc (current-point))
+     :callback (lambda (response)
+                 (send-event (lambda ()
+                               (defparameter $last-completions-cycling response)
+                               (setf (buffer-completions-cache (current-buffer)) response)
+                               (funcall next-or-previous-function (gethash "completions" response) :index 1)))))))
+
+(defun next-completion ()
+  (cycle-completion #'show-next-completion))
+
+(defun previous-completion ()
+  (cycle-completion #'show-previous-completion))
 
 (defun replace-with-completion (point completion)
   (let* ((range (gethash "range" completion)))
@@ -280,11 +324,41 @@
       (delete-between-points start end)
       (insert-string start (gethash "text" completion)))))
 
-(defun show-and-apply-completion (completions)
-  (let ((completion (first completions)))
+(defun show-completion (display-text)
+  (lem-lsp-mode::reset-buffer-diagnostic (current-buffer))
+  (unwind-protect
+       (progn
+         (buffer-undo-boundary (current-buffer))
+         (save-excursion
+           (insert-string (current-point)
+                          display-text
+                          :attribute 'copilot-suggestion-attribute))
+         (loop :for v := (sit-for 10)
+               :while (eq v :timeout)
+               :finally (return-from show-completion v)))
+    (buffer-undo (current-point))))
+
+(defun find-copilot-completion-command (key)
+  (keymap-find-keybind *copilot-completion-keymap* key nil))
+
+(defun show-and-apply-completion (completions &key (index 0) (next #'next-completion) (previous #'previous-completion))
+  (let ((completion (elt completions index)))
     (copilot:notify-shown (agent) (gethash "uuid" completion))
-    (when (show-completion (gethash "displayText" completion))
-      (replace-with-completion (current-point) completion))))
+    (let ((key (show-completion (gethash "displayText" completion))))
+      (case (find-copilot-completion-command key)
+        (copilot-accept-suggestion
+         (read-key)
+         (copilot:notify-accepted (agent) (gethash "uuid" completion))
+         (replace-with-completion (current-point) completion))
+        (copilot-next-suggestion
+         (read-key)
+         (funcall next))
+        (copilot-previous-suggestion
+         (read-key)
+         (funcall previous))
+        (otherwise
+         (copilot:notify-rejected (agent) (gethash "uuid" completion))
+         (error 'editor-abort :message nil))))))
 
 (defun compute-relative-path (buffer)
   (if (buffer-filename buffer)
@@ -292,46 +366,52 @@
                          (lem-core/commands/project:find-root (buffer-filename buffer)))
       ""))
 
+(defun make-doc (point)
+  (let ((buffer (point-buffer point)))
+    (copilot:hash "version" (buffer-version buffer)
+                  "source" (buffer-text buffer)
+                  "tabSize" (variable-value 'tab-width :default point)
+                  "indentSize" 4
+                  "insertSpaces" (if (variable-value 'indent-tabs-mode :default point)
+                                     'yason:true
+                                     'yason:false)
+                  "path" (buffer-filename buffer)
+                  "uri" (buffer-uri buffer)
+                  "relativePath" (compute-relative-path buffer)
+                  "languageId" (buffer-language-id buffer)
+                  "position" (point-to-lsp-position point))))
+
 (defun get-completions (point)
   (let ((buffer (point-buffer point)))
-    (setf (buffer-last-version buffer) (buffer-version buffer))
+    (setf (buffer-completions-cache buffer) nil
+          (buffer-last-version buffer) (buffer-version buffer))
     (copilot:get-completions
      (agent)
-     :doc (copilot:hash "version" (buffer-version buffer)
-                        "source" (buffer-text buffer)
-                        "tabSize" (variable-value 'tab-width :default point)
-                        "indentSize" 4
-                        "insertSpaces" (if (variable-value 'indent-tabs-mode :default point)
-                                            'yason:true
-                                            'yason:false)
-                        "path" (buffer-filename buffer)
-                        "uri" (buffer-uri buffer)
-                        "relativePath" (compute-relative-path buffer)
-                        "languageId" (buffer-language-id buffer)
-                        "position" (point-to-lsp-position point))
+     :doc (make-doc point)
      :callback (lambda (response)
                  (send-event (lambda ()
                                (defparameter $get-completions-response response)
                                (alexandria:when-let (completions (gethash "completions" response))
                                  (show-and-apply-completion completions)
-                                 (redraw-display)))))
-     :error-callback (lambda (response)
-                       (send-event (lambda ()
-                                     (show-message (copilot:pretty-json response))))))))
+                                 (redraw-display))))))))
 
 (define-command copilot-complete () ()
   (get-completions (current-point)))
 
-
-;;; test
-(define-command test/copilot-document () ()
-  (let ((response (copilot::request (agent)
-                                    "testing/getDocument"
-                                    (copilot:hash "uri" (buffer-uri (current-buffer))))))
-    (show-message (copilot:pretty-json response))
-    (assert (equal (gethash "text" response)
-                   (buffer-text (current-buffer))))))
+(define-command copilot-accept-suggestion () ()
+  ;; dummy command
+  )
 
+(define-command copilot-next-suggestion () ()
+  ;; dummy command
+  )
+
+(define-command copilot-previous-suggestion () ()
+  ;; dummy command
+  )
+
+
+;;;
 (defun enable-copilot-mode ()
   (when (enable-copilot-p)
     (copilot-mode t)))
@@ -361,3 +441,30 @@
 (define-language lem-typescript-mode:typescript-mode (:language-id "typescript"))
 (define-language lem-xml-mode:xml-mode (:language-id "xml"))
 (define-language lem-yaml-mode:yaml-mode (:language-id "yaml"))
+
+
+;;; test
+(define-command test/copilot-document () ()
+  (let ((response (copilot::request (agent)
+                                    "testing/getDocument"
+                                    (copilot:hash "uri" (buffer-uri (current-buffer))))))
+    (show-message (copilot:pretty-json response))
+    (assert (equal (gethash "text" response)
+                   (buffer-text (current-buffer))))))
+
+(define-command test/copilot-log () ()
+  (let* ((buffer (make-buffer "*copilot-log*" :enable-undo-p nil)))
+    (erase-buffer buffer)
+    (with-open-stream (stream (make-buffer-output-stream (buffer-point buffer)))
+      (copilot::write-log stream))
+    (pop-to-buffer buffer)))
+
+#|
+## BUGS
+After using it for a while, copilot-server will output the following
+After that, the completion results will no longer be output.
+
+(node:215872) MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 change listeners added to [EventEmitter]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit
+
+Same issue: https://github.com/copilot-emacs/copilot.el/issues/282
+|#

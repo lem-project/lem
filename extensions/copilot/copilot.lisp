@@ -305,9 +305,9 @@
      :doc (make-doc (current-point))
      :callback (lambda (response)
                  (send-event (lambda ()
-                               (defparameter $last-completions-cycling response)
                                (setf (buffer-completions-cache (current-buffer)) response)
-                               (funcall next-or-previous-function (gethash "completions" response) :index 1)))))))
+                               (funcall next-or-previous-function
+                                        (gethash "completions" response) :index 1)))))))
 
 (defun next-completion ()
   (cycle-completion #'show-next-completion))
@@ -390,7 +390,6 @@
      :doc (make-doc point)
      :callback (lambda (response)
                  (send-event (lambda ()
-                               (defparameter $get-completions-response response)
                                (alexandria:when-let (completions (gethash "completions" response))
                                  (show-and-apply-completion completions)
                                  (redraw-display))))))))

@@ -105,6 +105,8 @@
     (setf *login-message* nil)))
 
 (define-command copilot-login () ()
+  (unless (installed-copilot-server-p)
+    (copilot-install-server))
   (setf *agent* nil)
   (let* ((agent (agent))
          (response (copilot:sign-in-initiate agent))

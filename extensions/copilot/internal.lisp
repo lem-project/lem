@@ -8,7 +8,6 @@
            :run-agent
            :connect
            :initialize
-           :initialized
            :set-editor-info
            :sign-in-initiate
            :sign-in-confirm
@@ -34,7 +33,7 @@
 (defgeneric copilot-dead ())
 
 (defun copilot-path ()
-  (merge-pathnames "lib/node_modules/copilot-node-server/copilot/dist/language-server.js"
+  (merge-pathnames "lib/node_modules/copilot-node-server/copilot/dist/agent.js"
                    (copilot-root)))
 
 (defun hash (&rest args)
@@ -107,9 +106,6 @@
            (hash "capabilities"
                  (hash "workspace"
                        (hash "workspaceFolders" t)))))
-
-(defun initialized (agent)
-  (notify agent "initialized" (hash)))
 
 (defun set-editor-info (agent)
   (request agent
@@ -192,4 +188,4 @@
                  :error-callback error-callback))
 
 (defun default-error-callback (&rest args)
-  (lem:send-event (lambda () (lem:message "~A" args))))
+  (lem:send-event (lambda () (error "~A" args))))

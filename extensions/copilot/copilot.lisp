@@ -17,7 +17,6 @@
   (let ((agent (copilot:run-agent)))
     (copilot:connect agent)
     (copilot:initialize agent)
-    (copilot:initialized agent)
     (copilot:set-editor-info agent)
     agent))
 
@@ -40,7 +39,7 @@
                         "--prefix"
                         (namestring (copilot:copilot-root))
                         "install"
-                        "copilot-node-server@1.40.0")))
+                        "copilot-node-server@1.27.0")))
     (erase-buffer buffer)
     (pop-to-buffer buffer)
     (with-point ((point (buffer-point buffer) :left-inserting))
@@ -54,16 +53,13 @@
 (defun installed-copilot-server-p ()
   (uiop:file-exists-p (copilot:copilot-path)))
 
-(defun reset-buffers ()
-  (dolist (buffer (remove-if-not #'copilot-mode-p (buffer-list)))
-    (setf (buffer-version buffer) 0)
-    (notify-text-document/did-open buffer)))
-
 (define-command copilot-restart () ()
   (async-process:delete-process (lem-copilot/internal::agent-process lem-copilot::*agent*))
   (setf *agent* nil)
   (handler-case (copilot-login) (already-sign-in ()))
-  (reset-buffers)
+  (dolist (buffer (remove-if-not #'copilot-mode-p (buffer-list)))
+    (setf (buffer-version buffer) 0)
+    (notify-text-document/did-open buffer))
   (message "copilot restarted"))
 
 (defmethod copilot:copilot-dead ()
@@ -216,8 +212,7 @@
 
 (defun copilot-mode-on ()
   (unless (installed-copilot-server-p)
-    (copilot-install-server)
-    (reset-buffers))
+    (copilot-install-server))
   (unless *agent*
     (handler-case (copilot-login) (already-sign-in ())))
   (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer)) 'on-kill-buffer)
@@ -312,9 +307,9 @@
      :doc (make-doc (current-point))
      :callback (lambda (response)
                  (send-event (lambda ()
+                               (defparameter $last-completions-cycling response)
                                (setf (buffer-completions-cache (current-buffer)) response)
-                               (funcall next-or-previous-function
-                                        (gethash "completions" response) :index 1)))))))
+                               (funcall next-or-previous-function (gethash "completions" response) :index 1)))))))
 
 (defun next-completion ()
   (cycle-completion #'show-next-completion))
@@ -397,6 +392,7 @@
      :doc (make-doc point)
      :callback (lambda (response)
                  (send-event (lambda ()
+                               (defparameter $get-completions-response response)
                                (alexandria:when-let (completions (gethash "completions" response))
                                  (show-and-apply-completion completions)
                                  (redraw-display))))))))
@@ -419,8 +415,7 @@
 
 ;;;
 (defun enable-copilot-mode ()
-  (when (and (enable-copilot-p)
-             (not (buffer-temporary-p (current-buffer))))
+  (when (enable-copilot-p)
     (copilot-mode t)))
 
 (defmacro define-language (mode (&key (language-id (alexandria:required-argument :language-id))))

@@ -53,7 +53,7 @@
     (do-log (format nil "~A ~A ~A~%" type method (pretty-json params)))))
 
 (defun logger (output)
-  (when (search "MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 change listeners added to [EventEmitter]. MaxListeners is 10. Use emitter.setMaxListeners() to increase limit" output)
+  (when (search "MaxListenersExceededWarning: Possible EventEmitter memory leak detected. 11 change listeners added to [EventEmitter]." output)
     (copilot-dead))
   (do-log output))
 

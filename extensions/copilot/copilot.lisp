@@ -448,6 +448,7 @@
 (define-language lem-typescript-mode:typescript-mode (:language-id "typescript"))
 (define-language lem-xml-mode:xml-mode (:language-id "xml"))
 (define-language lem-yaml-mode:yaml-mode (:language-id "yaml"))
+(define-language lem-swift-mode:swift-mode (:language-id "swift"))
 
 
 ;;; test

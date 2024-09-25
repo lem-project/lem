@@ -5,7 +5,11 @@
   (:export :legit-status
            :*prompt-for-commit-abort-p*
            :*ignore-all-space*
-           :*vcs-existence-order*)
+           :*vcs-existence-order*
+	   :*peek-legit-keymap*
+           :peek-legit-discard-file
+           :peek-legit-previous
+           :peek-legit-next)
   (:documentation "Display version control data of the current project in an interactive two-panes window.
 
   This package in particular defines the right window of the legit interface and the user-level commands.

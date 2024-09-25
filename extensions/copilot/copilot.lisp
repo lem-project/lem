@@ -67,7 +67,11 @@
   (message "copilot restarted"))
 
 (defmethod copilot:copilot-dead ()
-  (message "copilot has died, so a replacement will be prepared")
+  #+(or)
+  (display-popup-message (format nil "Copilot has issued a warning. ~%If it does not work properly, please execute `M-x copilot-restart`.")
+                         :style '(:gravity :top)
+                         :timeout 10)
+  #+(or)
   (copilot-restart))
 
 
@@ -224,6 +228,7 @@
   (add-hook (variable-value 'before-change-functions :buffer (current-buffer)) 'on-before-change)
   (add-hook *window-show-buffer-functions* 'on-window-show-buffer)
   (add-hook *switch-to-window-hook* 'on-switch-to-window)
+  (add-hook *post-command-hook* 'on-post-command)
   (notify-text-document/did-open (current-buffer)))
 
 (defun copilot-mode-off ()
@@ -239,6 +244,9 @@
   (when (copilot-mode-p buffer)
     (notify-text-document/did-close buffer)))
 
+(defun on-post-command ()
+  (notify-rejected))
+
 (defun before-change-arg-to-content-change (point arg)
   (etypecase arg
     (string
@@ -253,9 +261,12 @@
                                            "end" (point-to-lsp-position end))
                      "text" "")))))
 
+(defvar *inhibit-did-change-notification* nil)
+
 (defun on-before-change (point arg)
   (let ((buffer (point-buffer point)))
-    (when (copilot-mode-p buffer)
+    (when (and (copilot-mode-p buffer)
+               (not *inhibit-did-change-notification*))
       (notify-text-document/did-change
        buffer
        (vector (before-change-arg-to-content-change point arg))))))
@@ -271,11 +282,22 @@
     (when (copilot-mode-p buffer)
       (notify-text-document/did-focus buffer))))
 
+(defvar *delay-complete* 100)
+(defvar *complete-timer* nil)
+
 (defmethod execute :after ((mode copilot-mode) (command self-insert) argument)
-  (copilot-complete))
+  (cond (*delay-complete*
+         (if *complete-timer*
+             (stop-timer *complete-timer*)
+             (setf *complete-timer* (make-idle-timer 'copilot-complete :name "Copilot Complete")))
+         (start-timer *complete-timer* *delay-complete* :repeat nil))
+        (t
+         (copilot-complete))))
 
 
 ;;; complete
+(defvar *completion* nil)
+
 (defvar *copilot-completion-keymap* (make-keymap :name "Copilot Completion"))
 
 (define-key *copilot-completion-keymap* "Tab" 'copilot-accept-suggestion)
@@ -332,24 +354,26 @@
       (insert-string start (gethash "text" completion)))))
 
 (defun show-completion (display-text)
-  (lem-lsp-mode::reset-buffer-diagnostic (current-buffer))
-  (unwind-protect
-       (progn
-         (buffer-undo-boundary (current-buffer))
-         (save-excursion
-           (insert-string (current-point)
-                          display-text
-                          :attribute 'copilot-suggestion-attribute))
-         (loop :for v := (sit-for 10)
-               :while (eq v :timeout)
-               :finally (return-from show-completion v)))
-    (buffer-undo (current-point))))
+  (let ((*inhibit-did-change-notification* t))
+    (lem-lsp-mode::reset-buffer-diagnostic (current-buffer))
+    (unwind-protect
+         (progn
+           (buffer-undo-boundary (current-buffer))
+           (save-excursion
+             (insert-string (current-point)
+                            display-text
+                            :attribute 'copilot-suggestion-attribute))
+           (loop :for v := (sit-for 10)
+                 :while (eq v :timeout)
+                 :finally (return-from show-completion v)))
+      (buffer-undo (current-point)))))
 
 (defun find-copilot-completion-command (key)
   (keymap-find-keybind *copilot-completion-keymap* key nil))
 
 (defun show-and-apply-completion (completions &key (index 0) (next #'next-completion) (previous #'previous-completion))
   (let ((completion (elt completions index)))
+    (setf *completion* completion)
     (copilot:notify-shown (agent) (gethash "uuid" completion))
     (let ((key (show-completion (gethash "displayText" completion))))
       (case (find-copilot-completion-command key)
@@ -364,7 +388,6 @@
          (read-key)
          (funcall previous))
         (otherwise
-         (copilot:notify-rejected (agent) (gethash "uuid" completion))
          (error 'editor-abort :message nil))))))
 
 (defun compute-relative-path (buffer)
@@ -400,6 +423,11 @@
                                (alexandria:when-let (completions (gethash "completions" response))
                                  (show-and-apply-completion completions)
                                  (redraw-display))))))))
+
+(defun notify-rejected ()
+  (when *completion*
+    (copilot:notify-rejected (agent) (gethash "uuid" *completion*))
+    (setf *completion* nil)))
 
 (define-command copilot-complete () ()
   (get-completions (current-point)))

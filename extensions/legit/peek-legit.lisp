@@ -373,7 +373,7 @@ Notes:
                          (point (funcall stage)))
     ;; Update the buffer, to see that a staged file goes to the staged section.
     ;; This calls git again and refreshes everything.
-    (uiop:symbol-call :lem/legit :legit-status)
+    (lem/legit:legit-status)
     point))
 
 (define-command peek-legit-unstage-file () ()
@@ -381,15 +381,16 @@ Notes:
                          (point (funcall unstage)))
     ;; Update the buffer, to see that a staged file goes to the staged section.
     ;; This calls git again and refreshes everything.
-    (uiop:symbol-call :lem/legit :legit-status)
-                        point))
+    (lem/legit:legit-status)
+    point))
+
 (define-command peek-legit-discard-file () ()
   "Discard the changes in this file. The file should not be stage."
   (alexandria:when-let* ((fn (get-discard-file-function (buffer-point (window-buffer *peek-window*))))
                          (point (funcall fn)))
     ;; Update the buffer.
     ;; This calls git again and refreshes everything.
-    (uiop:symbol-call :lem/legit :legit-status)
+    (lem/legit:legit-status)
     point))
 
 (defun %legit-quit ()

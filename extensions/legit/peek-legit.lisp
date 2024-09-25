@@ -334,6 +334,12 @@ Notes:
         (window-see (current-window))))))
 
 (defmethod execute :after ((mode peek-legit-mode) command argument)
+  "After a command is run in this mode, apply an effect.
+
+  In the case of `peek-legit-mode', it is run after `peek-legit-next',
+  in order to show the file content on the right window.
+
+  The method is to subclass for all legit modes."
   (when (eq (current-window) *peek-window*)
     (show-matched-line)))
 
@@ -357,6 +363,9 @@ Notes:
             (editor-error "Path ~a doesn't exist." full-path))))))
 
 (define-command peek-legit-next () ()
+  "Find the next line with a :move-marker text property.
+
+  After finding it, our :after method of `execute' is run, to apply an effect, showing the new diff on the right."
   (next-move-point (current-point)))
 
 (define-command peek-legit-next-header () ()

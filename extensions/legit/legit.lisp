@@ -84,6 +84,9 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-key *legit-diff-mode-keymap* "l l" 'legit-commits-log)
 
 ;; only in commits log view
+(define-key *legit-commits-log-keymap* "n" 'peek-legit-next)
+(define-key *legit-commits-log-keymap* "p" 'peek-legit-previous)
+
 (define-key *legit-commits-log-keymap* "f" 'legit-commits-log-next-page)
 (define-key *legit-commits-log-keymap* "b" 'legit-commits-log-previous-page)
 (define-key *legit-commits-log-keymap* "F" 'legit-commits-log-last-page)
@@ -123,6 +126,12 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-key *peek-legit-keymap* "Escape" 'legit-quit)
 (define-key *legit-diff-mode-keymap* "C-c C-k" 'legit-quit)
 (define-key *peek-legit-keymap* "C-c C-k" 'legit-quit)
+
+
+(defmethod execute :after ((mode legit-commits-log-mode) command argument)
+  "After moving around the commit lines with n and p, show the commit diff on the right window."
+  (when (eq (current-window) *peek-window*)
+    (show-matched-line)))
 
 (defun pop-up-message (message)
   (with-pop-up-typeout-window (s (make-buffer "*legit status*") :erase t)
@@ -711,7 +720,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (let* ((buffer (current-buffer))
            (current-offset (or (buffer-value buffer 'commits-offset) 0))
            (new-offset (+ current-offset lem/porcelain:*commits-log-page-size*))
-           (commits (lem/porcelain:commits-log vcs 
+           (commits (lem/porcelain:commits-log vcs
                                                :offset new-offset
                                                :limit lem/porcelain:*commits-log-page-size*)))
       (if commits

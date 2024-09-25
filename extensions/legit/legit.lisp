@@ -40,9 +40,6 @@ Ongoing:
 
 |#
 
-(defvar *legit-verbose* nil
-  "If non nil, print some logs on standard output (terminal) and create the hunk patch file on disk at (lem home)/lem-hunk-latest.patch.")
-
 (defvar *ignore-all-space* nil "If non t, show all spaces in a diff. Spaces are ignored by default.
 
 Currently Git-only. Concretely, this calls Git with the -w option.")
@@ -157,7 +154,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (defun make-diff-function (file &key cached type)
   (lambda ()
-    (with-current-project ()
+    (with-current-project (vcs)
       (cond
         ((eq type :deleted)
          (show-diff (format nil "File ~A has been deleted." file)))
@@ -186,7 +183,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
            (t
             (show-diff (format nil "~A does not exist." file)))))
         (t
-         (show-diff (lem/porcelain:file-diff file :cached cached)))))))
+         (show-diff (lem/porcelain:file-diff vcs file :cached cached)))))))
 
 (defun make-visit-file-function (file)
   ;; note: the lambda inside the loop is not enough, it captures the last loop value.
@@ -196,23 +193,23 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 ;; show commit.
 (defun make-show-commit-function (ref)
   (lambda ()
-    (with-current-project ()
-      (show-diff (lem/porcelain:show-commit-diff ref :ignore-all-space *ignore-all-space*)))))
+    (with-current-project (vcs)
+      (show-diff (lem/porcelain:show-commit-diff vcs ref :ignore-all-space *ignore-all-space*)))))
 
 ;; stage
 (defun make-stage-function (file)
   (lambda ()
-    (with-current-project ()
-      (lem/porcelain:stage file)
+    (with-current-project (vcs)
+      (lem/porcelain:stage vcs file)
       t)))
 
 ;; unstage
 (defun make-unstage-function (file &key already-unstaged)
   (lambda ()
-    (with-current-project ()
+    (with-current-project (vcs)
       (if already-unstaged
           (message "Already unstaged")
-          (lem/porcelain:unstage file)))))
+          (lem/porcelain:unstage vcs file)))))
 
 ;; discard an unstaged change.
 (defun make-discard-file-function (file &key is-staged)
@@ -224,9 +221,9 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
       (is-staged
        (message "Unstage the file first"))
       (t
-       (with-current-project ()
+       (with-current-project (vcs)
          (when (prompt-for-y-or-n-p  (format nil "Discard unstaged changes in ~a?" file))
-           (lem/porcelain:discard-file file)))))))
+           (lem/porcelain:discard-file vcs file)))))))
 
 
 ;;;
@@ -349,15 +346,15 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
          (pop-up-message error-output))))))
 
 (define-command legit-stage-hunk () ()
-  (with-current-project ()
+  (with-current-project (vcs)
     (run-function (lambda ()
-                    (lem/porcelain:apply-patch (%current-hunk)))
+                    (lem/porcelain:apply-patch vcs (%current-hunk)))
                   :message "Staged hunk")))
 
 (define-command legit-unstage-hunk () ()
-  (with-current-project ()
+  (with-current-project (vcs)
     (run-function (lambda ()
-                    (lem/porcelain:apply-patch (%current-hunk) :reverse t))
+                    (lem/porcelain:apply-patch vcs (%current-hunk) :reverse t))
                   :message "Unstaged hunk")))
 
 (define-command legit-goto-next-hunk () ()
@@ -407,7 +404,8 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                    (parse-integer start-line :junk-allowed t)
                                    lem/porcelain:*diff-context-lines*))))
               (if (and relative-file target-line)
-                  (with-current-project ()
+                  (with-current-project (vcs)
+                    (declare (ignore vcs))
                     (let ((absolute-file (merge-pathnames relative-file (uiop:getcwd))))
                       (%legit-quit)
                       (find-file (namestring absolute-file))
@@ -460,9 +458,9 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-status () ()
   "Show changes, untracked files and latest commits in an interactive window."
-  (with-current-project ()
+  (with-current-project (vcs)
     (multiple-value-bind (untracked-files unstaged-files staged-files)
-        (lem/porcelain:components)
+        (lem/porcelain:components vcs)
 
       ;; big try! It works \o/
       (with-collecting-sources (collector :read-only nil
@@ -471,12 +469,12 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         ;;
         ;; Header: current branch.
         (collector-insert
-         (format nil "Branch: ~a" (lem/porcelain:current-branch))
+         (format nil "Branch: ~a" (lem/porcelain:current-branch vcs))
          :header t)
         (collector-insert "")
 
         ;; Is a git rebase in progress?
-        (let ((rebase-status (lem/porcelain::rebase-in-progress)))
+        (let ((rebase-status (lem/porcelain::rebase-in-progress-p vcs)))
           (when (getf rebase-status :status)
             (collector-insert
              (format nil "!rebase in progress: ~a onto ~a"
@@ -548,7 +546,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         ;; Latest commits.
         (collector-insert "")
         (collector-insert "Latest commits:" :header t)
-        (let ((latest-commits (lem/porcelain:latest-commits)))
+        (let ((latest-commits (lem/porcelain:latest-commits vcs)))
           (if latest-commits
               (loop for commit in latest-commits
                     for line = nil
@@ -587,59 +585,59 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
   Calls M-x legit-status."
   (legit-status))
 
-(defun prompt-for-branch (&key prompt initial-value)
+(defun prompt-for-branch (vcs &key prompt initial-value)
   ;; only call from a command.
-  (let* ((current-branch (or initial-value (lem/porcelain:current-branch)))
-         (candidates (lem/porcelain:branches)))
+  (let* ((current-branch (or initial-value (lem/porcelain:current-branch vcs)))
+         (candidates (lem/porcelain:branches vcs)))
     (if candidates
         (prompt-for-string (or prompt "Branch: ")
                            :initial-value current-branch
                            :history-symbol '*legit-branches-history*
                            :completion-function (lambda (x) (completion-strings x candidates))
                            :test-function (lambda (name) (member name candidates :test #'string=)))
-        (message "No branches. Not inside a git project?"))))
+        (message "No branches"))))
 
 (define-command legit-branch-checkout () ()
   "Choose a branch to checkout."
-  (with-current-project ()
-    (let ((branch (prompt-for-branch))
-          (current-branch (lem/porcelain:current-branch)))
+  (with-current-project (vcs)
+    (let ((branch (prompt-for-branch vcs))
+          (current-branch (lem/porcelain:current-branch vcs)))
       (when (equal branch current-branch)
         (show-message (format nil "Already on ~a" branch) :timeout 3)
         (return-from legit-branch-checkout))
       (when branch
         (run-function (lambda ()
-                        (lem/porcelain:checkout branch))
+                        (lem/porcelain:checkout vcs branch))
                       :message (format nil "Checked out ~a" branch))
         (legit-status)))))
 
 (define-command legit-branch-create () ()
   "Create and checkout a new branch."
-  (with-current-project ()
+  (with-current-project (vcs)
     (let ((new (prompt-for-string "New branch name: "
                                   :history-symbol '*new-branch-name-history*))
-          (base (prompt-for-branch :prompt "Base branch: " :initial-value "")))
+          (base (prompt-for-branch vcs :prompt "Base branch: " :initial-value "")))
       (when (and new base)
         (run-function (lambda ()
-                        (lem/porcelain:checkout-create new base))
+                        (lem/porcelain:checkout-create vcs new base))
                       :message (format nil "Created ~a" new))
         (legit-status)))))
 
 (define-command legit-pull () ()
   "Pull changes, update HEAD."
-  (with-current-project ()
-    (run-function #'lem/porcelain:pull)))
+  (with-current-project (vcs)
+    (run-function (lambda () (lem/porcelain:pull vcs)))))
 
 (define-command legit-push () ()
   "Push changes to the current remote."
-  (with-current-project ()
-    (run-function #'lem/porcelain:push)))
+  (with-current-project (vcs)
+    (run-function (lambda () (lem/porcelain:push vcs)))))
 
 (define-command legit-rebase-interactive () ()
   "Rebase interactively, from the commit the point is on.
 
   Austostash pending changes, to enable the rebase and find the changes back afterwards."
-  (with-current-project ()
+  (with-current-project (vcs)
 
     ;; Find the commit hash the point is on: mandatory.
     (let ((commit-hash (text-property-at (current-point) :commit-hash)))
@@ -649,7 +647,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (return-from legit-rebase-interactive))
 
       (run-function (lambda ()
-                      (lem/porcelain::rebase-interactively :from commit-hash)))
+                      (lem/porcelain::rebase-interactively vcs :from commit-hash)))
 
       (let ((buffer (find-file-buffer ".git/rebase-merge/git-rebase-todo")))
         (when buffer
@@ -667,12 +665,12 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-commits-log () ()
   "List commits on a new buffer."
-  (with-current-project ()
-    (display-commits-log 0)))
+  (with-current-project (vcs)
+    (display-commits-log vcs 0)))
 
-(defun display-commits-log (offset)
+(defun display-commits-log (vcs offset)
   "Display the commit lines on a dedicated legit buffer."
-  (let* ((commits (lem/porcelain:commits-log :offset offset :limit lem/porcelain:*commits-log-page-size*)))
+  (let* ((commits (lem/porcelain:commits-log vcs :offset offset :limit lem/porcelain:*commits-log-page-size*)))
     (with-collecting-sources (collector :buffer :commits-log
                                                        :minor-mode 'legit-commits-log-mode
                                                        :read-only nil)
@@ -709,36 +707,37 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 (define-command legit-commits-log-next-page () ()
   "Show the next page of the commits log."
-  (with-current-project ()
+  (with-current-project (vcs)
     (let* ((buffer (current-buffer))
            (current-offset (or (buffer-value buffer 'commits-offset) 0))
            (new-offset (+ current-offset lem/porcelain:*commits-log-page-size*))
-           (commits (lem/porcelain:commits-log :offset new-offset
+           (commits (lem/porcelain:commits-log vcs 
+                                               :offset new-offset
                                                :limit lem/porcelain:*commits-log-page-size*)))
       (if commits
-          (display-commits-log new-offset)
+          (display-commits-log vcs new-offset)
           (message "No more commits to display.")))))
 
 (define-command legit-commits-log-previous-page () ()
   "Show the previous page of the commits log."
-  (with-current-project ()
+  (with-current-project (vcs)
     (let* ((buffer (current-buffer))
            (current-offset (or (buffer-value buffer 'commits-offset) 0))
            (new-offset (max 0 (- current-offset lem/porcelain:*commits-log-page-size*))))
-      (display-commits-log new-offset))))
+      (display-commits-log vcs new-offset))))
 
 (define-command legit-commits-log-first-page () ()
   "Go to the first page of the commit log."
-  (with-current-project ()
-    (display-commits-log 0)))
+  (with-current-project (vcs)
+    (display-commits-log vcs 0)))
 
 (define-command legit-commits-log-last-page () ()
   "Go to the last page of the commit log."
-  (with-current-project ()
+  (with-current-project (vcs)
     (let* ((commits-per-page lem/porcelain:*commits-log-page-size*)
-           (last-page-offset (* (floor (/ (1- (lem/porcelain:commit-count)) commits-per-page))
+           (last-page-offset (* (floor (/ (1- (lem/porcelain:commit-count vcs)) commits-per-page))
                                 commits-per-page)))
-      (display-commits-log last-page-offset))))
+      (display-commits-log vcs last-page-offset))))
 
 (define-command legit-quit () ()
   "Quit"

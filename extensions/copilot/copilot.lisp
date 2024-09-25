@@ -375,7 +375,9 @@
 (defun find-copilot-completion-command (key)
   (keymap-find-keybind *copilot-completion-keymap* key nil))
 
-(defun show-and-apply-completion (completions &key (index 0) (next #'next-completion) (previous #'previous-completion))
+(defun show-and-apply-completion (completions &key (index 0)
+                                                   (next #'next-completion)
+                                                   (previous #'previous-completion))
   (let ((completion (elt completions index)))
     (setf *completion* completion)
     (copilot:notify-shown (agent) (gethash "uuid" completion))

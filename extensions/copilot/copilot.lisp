@@ -67,8 +67,12 @@
   (message "copilot restarted"))
 
 (defmethod copilot:copilot-dead ()
-  #+(or)
-  (display-popup-message (format nil "Copilot has issued a warning. ~%If it does not work properly, please execute `M-x copilot-restart`.")
+  (display-popup-message (format nil
+                                 "~{~A~^~%~}"
+                                 '("Copilot has issued a warning. "
+                                   "If it does not work properly, please execute `M-x copilot-restart`."
+                                   ""
+                                   "To view the copilot log, execute `M-x test/copilot-log`."))
                          :style '(:gravity :top)
                          :timeout 10)
   #+(or)

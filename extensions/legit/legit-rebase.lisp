@@ -41,17 +41,17 @@ and
   (setf (variable-value 'enable-syntax-highlight) t))
 
 ;; Use commits with a keypress:
-(define-key *legit-rebase-mode-keymap* "p" 'rebase-pick)
-(define-key *legit-rebase-mode-keymap* "r" 'rebase-reword)
-(define-key *legit-rebase-mode-keymap* "e" 'rebase-edit)
-(define-key *legit-rebase-mode-keymap* "s" 'rebase-squash)
-(define-key *legit-rebase-mode-keymap* "f" 'rebase-fixup)
-(define-key *legit-rebase-mode-keymap* "x" 'rebase-exec)
-(define-key *legit-rebase-mode-keymap* "b" 'rebase-break)
-(define-key *legit-rebase-mode-keymap* "d" 'rebase-drop)
-(define-key *legit-rebase-mode-keymap* "l" 'rebase-label)
-(define-key *legit-rebase-mode-keymap* "t" 'rebase-reset)
-(define-key *legit-rebase-mode-keymap* "m" 'rebase-merge)
+(define-key *legit-rebase-mode-keymap* "p" 'rebase-mark-line-pick)
+(define-key *legit-rebase-mode-keymap* "r" 'rebase-mark-line-reword)
+(define-key *legit-rebase-mode-keymap* "e" 'rebase-mark-line-edit)
+(define-key *legit-rebase-mode-keymap* "s" 'rebase-mark-line-squash)
+(define-key *legit-rebase-mode-keymap* "f" 'rebase-mark-line-fixup)
+(define-key *legit-rebase-mode-keymap* "x" 'rebase-mark-line-exec)
+(define-key *legit-rebase-mode-keymap* "b" 'rebase-mark-line-break)
+(define-key *legit-rebase-mode-keymap* "d" 'rebase-mark-line-drop)
+(define-key *legit-rebase-mode-keymap* "l" 'rebase-mark-line-label)
+(define-key *legit-rebase-mode-keymap* "t" 'rebase-mark-line-reset)
+(define-key *legit-rebase-mode-keymap* "m" 'rebase-mark-line-merge)
 
 ;; Validate, abort.
 (define-key *legit-rebase-mode-keymap* "C-c C-c" 'rebase-continue)
@@ -99,37 +99,37 @@ and
     (save-buffer (current-buffer)))
   (move-to-next-virtual-line (current-point)))
 
-(define-command rebase-pick () ()
+(define-command rebase-mark-line-pick () ()
   (%rebase-change-command "pick"))
 
-(define-command rebase-reword () ()
+(define-command rebase-mark-line-reword () ()
   (%rebase-change-command "reword"))
 
-(define-command rebase-edit () ()
+(define-command rebase-mark-line-edit () ()
   (%rebase-change-command "edit"))
 
-(define-command rebase-squash () ()
+(define-command rebase-mark-line-squash () ()
   (%rebase-change-command "squash"))
 
-(define-command rebase-fixup () ()
+(define-command rebase-mark-line-fixup () ()
   (%rebase-change-command "fixup"))
 
-(define-command rebase-exec () ()
+(define-command rebase-mark-line-exec () ()
   (%rebase-change-command "exec"))
 
-(define-command rebase-break () ()
+(define-command rebase-mark-line-break () ()
   (%rebase-change-command "break"))
 
-(define-command rebase-drop () ()
+(define-command rebase-mark-line-drop () ()
   (%rebase-change-command "drop"))
 
-(define-command rebase-label () ()
+(define-command rebase-mark-line-label () ()
   (%rebase-change-command "label"))
 
-(define-command rebase-reset () ()
+(define-command rebase-mark-line-reset () ()
   (%rebase-change-command "reset"))
 
-(define-command rebase-merge () ()
+(define-command rebase-mark-line-merge () ()
   (%rebase-change-command "merge"))
 
 (define-command rebase-help () ()

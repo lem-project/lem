@@ -40,19 +40,37 @@
 
 (add-hook *exit-editor-hook* 'kill-process)
 
-(defun setup-client ()
-  (let ((client (client:run-client :process (run-process))))
-    (client:connect client)
-    (client:initialize client)
-    (client:initialized client)
-    (client:set-editor-info client)
-    (setf *client* client)))
-
 (defun enable-copilot-p ()
   (config :copilot))
 
 (defun enable-copilot ()
   (setf (config :copilot) t))
+
+
+(defun initialize (client then)
+  (client:initialize client
+                     :callback (lambda (response)
+                                 (send-event (lambda ()
+                                               (funcall then response))))))
+
+(defun set-editor-info (client then)
+  (client:set-editor-info client
+                          :callback (lambda (response)
+                                      (send-event (lambda ()
+                                                    (funcall then response))))))
+
+(defun setup-client-async (then)
+  (let ((client (client:run-client :process (run-process))))
+    (client:connect client)
+    (initialize client
+                (lambda (response)
+                  (declare (ignore response))
+                  (client:initialized client)
+                  (set-editor-info client
+                                   (lambda (response)
+                                     (declare (ignore response))
+                                     (setf *client* client)
+                                     (funcall then)))))))
 
 
 (define-command copilot-install-server () ()
@@ -110,37 +128,38 @@
 (define-command copilot-login () ()
   (unless (installed-copilot-server-p)
     (copilot-install-server))
-  (let* ((client (setup-client))
-         (response (client:sign-in-initiate client))
-         (status (gethash "status" response))
-         (user-code (gethash "userCode" response))
-         (verification-uri (gethash "verificationUri" response))
-         (user (gethash "user" response)))
-    (when (equal status "AlreadySignedIn")
-      (error 'already-sign-in :message (format nil "Already sign in as ~A" user)))
-    (copy-to-clipboard user-code)
-    (start-login user-code verification-uri)
-    (open-external-file verification-uri)
-    (redraw-display)
-    (let ((finished nil))
-      (client:sign-in-confirm
-       client
-       user-code
-       :callback (lambda (response)
-                   (send-event (lambda ()
-                                 (assert (equal "OK" (gethash "status" response)))
-                                 (show-message (format nil "Authenticated as ~A" (gethash "user" response))
-                                               :style '(:gravity :center))
-                                 (delete-login-message)
-                                 (setf finished t)
-                                 (redraw-display)))))
-      (handler-bind ((editor-abort (lambda (c)
-                                     (declare (ignore c))
-                                     (delete-login-message))))
+  (setup-client-async
+   (lambda ()
+     (let* ((response (client:sign-in-initiate *client*))
+            (status (gethash "status" response))
+            (user-code (gethash "userCode" response))
+            (verification-uri (gethash "verificationUri" response))
+            (user (gethash "user" response)))
+       (when (equal status "AlreadySignedIn")
+         (error 'already-sign-in :message (format nil "Already sign in as ~A" user)))
+       (copy-to-clipboard user-code)
+       (start-login user-code verification-uri)
+       (open-external-file verification-uri)
+       (redraw-display)
+       (let ((finished nil))
+         (client:sign-in-confirm
+          (client)
+          user-code
+          :callback (lambda (response)
+                      (send-event (lambda ()
+                                    (assert (equal "OK" (gethash "status" response)))
+                                    (show-message (format nil "Authenticated as ~A" (gethash "user" response))
+                                                  :style '(:gravity :center))
+                                    (delete-login-message)
+                                    (setf finished t)
+                                    (redraw-display)))))
+         (handler-bind ((editor-abort (lambda (c)
+                                        (declare (ignore c))
+                                        (delete-login-message))))
 
-        (loop :until finished
-              :do (sit-for 1)))
-      (enable-copilot))))
+           (loop :until finished
+                 :do (sit-for 1)))
+         (enable-copilot))))))
 
 
 ;;; utils
@@ -230,14 +249,16 @@
   (unless (installed-copilot-server-p)
     (copilot-install-server)
     (reset-buffers))
-  (unless (client)
-    (handler-case (copilot-login) (already-sign-in ())))
-  (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer)) 'on-kill-buffer)
-  (add-hook (variable-value 'before-change-functions :buffer (current-buffer)) 'on-before-change)
-  (add-hook *window-show-buffer-functions* 'on-window-show-buffer)
-  (add-hook *switch-to-window-hook* 'on-switch-to-window)
-  (add-hook *post-command-hook* 'on-post-command)
-  (notify-text-document/did-open (current-buffer)))
+  (flet ((fn ()
+           (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer)) 'on-kill-buffer)
+           (add-hook (variable-value 'before-change-functions :buffer (current-buffer)) 'on-before-change)
+           (add-hook *window-show-buffer-functions* 'on-window-show-buffer)
+           (add-hook *switch-to-window-hook* 'on-switch-to-window)
+           (add-hook *post-command-hook* 'on-post-command)
+           (notify-text-document/did-open (current-buffer))))
+    (if (client)
+        (fn)
+        (setup-client-async #'fn))))
 
 (defun copilot-mode-off ()
   (remove-hook (variable-value 'kill-buffer-hook :buffer (current-buffer)) 'on-kill-buffer)
@@ -297,9 +318,12 @@
 
 (define-command copilot-restart () ()
   (async-process:delete-process (client:client-process (client)))
-  (handler-case (copilot-login) (already-sign-in ()))
-  (reset-buffers)
-  (message "copilot restarted"))
+  (setup-client-async (lambda ()
+                        (reset-buffers)
+                        (show-message "copilot restarted"
+                                      :style '(:gravity :center)
+                                      :timeout 3)
+                        (redraw-display))))
 
 (defvar *delay-complete* 100)
 (defvar *complete-timer* nil)

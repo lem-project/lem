@@ -18,6 +18,9 @@
 
 (defun setup-agent ()
   (let ((agent (copilot:run-agent)))
+    (add-hook *exit-editor-hook*
+              (lambda ()
+                (async-process:delete-process (copilot::agent-process agent))))
     (copilot:connect agent)
     (copilot:initialize agent)
     (copilot:initialized agent)

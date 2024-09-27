@@ -21,7 +21,12 @@
            :notify-shown
            :notify-accepted
            :notify-rejected
-           :get-completions-cycling))
+           :get-completions-cycling
+           :+trigger-kind.invoked+
+           :+trigger-kind.trigger-character+
+           :text-document/inline-completion
+           :text-document/did-show-completion
+           :$/cancel-request))
 (in-package :lem-copilot/internal)
 
 (defparameter *logging-output* t)
@@ -106,7 +111,8 @@
            "initialize"
            (hash "capabilities"
                  (hash "workspace"
-                       (hash "workspaceFolders" t)))))
+                       (hash "workspaceFolders" t
+                             "editorConfiguration" (hash "enableAutoCompletions" t))))))
 
 (defun initialized (agent)
   (notify agent "initialized" (hash)))
@@ -190,6 +196,38 @@
                  (hash "doc" doc)
                  :callback callback
                  :error-callback error-callback))
+
+(defparameter +trigger-kind.invoked+ 1)
+(defparameter +trigger-kind.trigger-character+ 1)
+
+(defun text-document/inline-completion
+    (agent &key callback
+                error-callback
+                uri
+                position
+                insert-spaces
+                tab-size
+                (trigger-kind +trigger-kind.trigger-character+))
+  (request-async agent
+                 "textDocument/inlineCompletion"
+                 (hash "textDocument" (hash "uri" uri)
+                       "position" position
+                       "formattingOptions" (hash "insertSpaces" insert-spaces
+                                                 "tabSize" tab-size)
+                       "context" (hash "triggerKind" trigger-kind))
+                 :callback callback
+                 :error-callback (when error-callback (lambda (&rest args)
+                                                        (apply error-callback args)))))
+
+(defun text-document/did-show-completion (agent item)
+  (notify agent
+	  "textDocument/didShowCompletion"
+	  (hash "item" item)))
+
+(defun $/cancel-request (agent id)
+  (notify agent
+	  "$/cancelRequest"
+	  (hash "id" id)))
 
 (defun default-error-callback (&rest args)
   (lem:send-event (lambda () (lem:message "~A" args))))

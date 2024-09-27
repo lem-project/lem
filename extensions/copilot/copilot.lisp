@@ -12,8 +12,6 @@
 (define-attribute cycling-attribute
   (t :foreground "green"))
 
-(define-condition already-sign-in (editor-error) ())
-
 (defvar *client* nil)
 
 (defun client ()
@@ -45,121 +43,6 @@
 
 (defun enable-copilot ()
   (setf (config :copilot) t))
-
-
-(defun initialize (client then)
-  (client:initialize client
-                     :callback (lambda (response)
-                                 (send-event (lambda ()
-                                               (funcall then response))))))
-
-(defun set-editor-info (client then)
-  (client:set-editor-info client
-                          :callback (lambda (response)
-                                      (send-event (lambda ()
-                                                    (funcall then response))))))
-
-(defun setup-client-async (then)
-  (let ((client (client:run-client :process (run-process))))
-    (client:connect client)
-    (initialize client
-                (lambda (response)
-                  (declare (ignore response))
-                  (client:initialized client)
-                  (set-editor-info client
-                                   (lambda (response)
-                                     (declare (ignore response))
-                                     (setf *client* client)
-                                     (funcall then)))))))
-
-
-(define-command copilot-install-server () ()
-  (let* ((buffer (make-buffer "*copilot-install-server*"))
-         (command (list "npm"
-                        "-g"
-                        "--prefix"
-                        (namestring (copilot-root))
-                        "install"
-                        "copilot-node-server@1.40.0")))
-    (erase-buffer buffer)
-    (pop-to-buffer buffer)
-    (with-point ((point (buffer-point buffer) :left-inserting))
-      (with-open-stream (output (make-editor-output-stream point))
-        (format output "~{~A ~}~%" command)
-        (redraw-display)
-        (uiop:run-program command
-                          :output output
-                          :error-output output)))))
-
-
-;;; login
-(defun make-verification-buffer (user-code verification-uri)
-  (let* ((buffer (make-buffer "*GitHub Copilot Verification*" :temporary t))
-         (point (buffer-point buffer)))
-    (setf (variable-value 'line-wrap :buffer buffer) nil)
-    (erase-buffer buffer)
-    (insert-string point
-                   (format nil
-                           "Code: ~A (Copied to clipboard) ~%please paste it into your browser.~%~A~2%"
-                           user-code
-                           verification-uri))
-    (insert-string point "Authenticate... (Close this window with Escape or C-g.)")
-    (buffer-start point)
-    buffer))
-
-(defvar *login-message* nil)
-
-(defun start-login (user-code verification-uri)
-  (setf *login-message* (display-popup-message
-                         (make-verification-buffer user-code verification-uri)
-                         :style '(:gravity :center)
-                         :timeout nil))
-  (add-hook *editor-abort-hook* 'abort-login))
-
-(defun abort-login ()
-  (delete-login-message)
-  (remove-hook *editor-abort-hook* 'abort-login))
-
-(defun delete-login-message ()
-  (when *login-message*
-    (delete-popup-message *login-message*)
-    (setf *login-message* nil)))
-
-(define-command copilot-login () ()
-  (unless (installed-copilot-server-p)
-    (copilot-install-server))
-  (setup-client-async
-   (lambda ()
-     (let* ((response (client:sign-in-initiate *client*))
-            (status (gethash "status" response))
-            (user-code (gethash "userCode" response))
-            (verification-uri (gethash "verificationUri" response))
-            (user (gethash "user" response)))
-       (when (equal status "AlreadySignedIn")
-         (error 'already-sign-in :message (format nil "Already sign in as ~A" user)))
-       (copy-to-clipboard user-code)
-       (start-login user-code verification-uri)
-       (open-external-file verification-uri)
-       (redraw-display)
-       (let ((finished nil))
-         (client:sign-in-confirm
-          (client)
-          user-code
-          :callback (lambda (response)
-                      (send-event (lambda ()
-                                    (assert (equal "OK" (gethash "status" response)))
-                                    (show-message (format nil "Authenticated as ~A" (gethash "user" response))
-                                                  :style '(:gravity :center))
-                                    (delete-login-message)
-                                    (setf finished t)
-                                    (redraw-display)))))
-         (handler-bind ((editor-abort (lambda (c)
-                                        (declare (ignore c))
-                                        (delete-login-message))))
-
-           (loop :until finished
-                 :do (sit-for 1)))
-         (enable-copilot))))))
 
 
 ;;; utils
@@ -234,6 +117,18 @@
                                       :version version
                                       :content-changes content-changes)))
 
+(defun initialize (client then)
+  (client:initialize client
+                     :callback (lambda (response)
+                                 (send-event (lambda ()
+                                               (funcall then response))))))
+
+(defun set-editor-info (client then)
+  (client:set-editor-info client
+                          :callback (lambda (response)
+                                      (send-event (lambda ()
+                                                    (funcall then response))))))
+
 
 ;;; copilot-mode
 (define-minor-mode copilot-mode
@@ -244,6 +139,19 @@
 
 (define-key *copilot-mode-keymap* "M-n" 'copilot-next-suggestion)
 (define-key *copilot-mode-keymap* "M-p" 'copilot-previous-suggestion)
+
+(defun setup-client-async (then)
+  (let ((client (client:run-client :process (run-process))))
+    (client:connect client)
+    (initialize client
+                (lambda (response)
+                  (declare (ignore response))
+                  (client:initialized client)
+                  (set-editor-info client
+                                   (lambda (response)
+                                     (declare (ignore response))
+                                     (setf *client* client)
+                                     (funcall then)))))))
 
 (defun copilot-mode-on ()
   (unless (installed-copilot-server-p)
@@ -324,18 +232,6 @@
                                       :style '(:gravity :center)
                                       :timeout 3)
                         (redraw-display))))
-
-(defvar *delay-complete* 100)
-(defvar *complete-timer* nil)
-
-(defmethod execute :after ((mode copilot-mode) (command self-insert) argument)
-  (cond (*delay-complete*
-         (if *complete-timer*
-             (stop-timer *complete-timer*)
-             (setf *complete-timer* (make-idle-timer 'copilot-complete :name "Copilot Complete")))
-         (start-timer *complete-timer* *delay-complete* :repeat nil))
-        (t
-         (copilot-complete))))
 
 
 ;;; complete
@@ -513,53 +409,14 @@
   ;; dummy command
   )
 
-
-;;;
-(defun enable-copilot-mode ()
-  (when (and (enable-copilot-p)
-             (not (buffer-temporary-p (current-buffer))))
-    (copilot-mode t)))
+(defparameter *delay-complete* 1)
+(defvar *complete-timer* nil)
 
-(defmacro define-language (mode (&key (language-id (alexandria:required-argument :language-id))))
-  `(progn
-     (add-hook ,(mode-hook-variable mode) 'enable-copilot-mode)
-     (register-language-id ',mode ,language-id)))
-
-(define-language lem-js-mode:js-mode (:language-id "javascript"))
-(define-language lem-rust-mode:rust-mode (:language-id "rust"))
-(define-language lem-go-mode:go-mode (:language-id "go"))
-(define-language lem-lisp-mode:lisp-mode (:language-id "lisp"))
-(define-language lem-markdown-mode:markdown-mode (:language-id "markdown"))
-(define-language lem-c-mode:c-mode (:language-id "c"))
-(define-language lem-css-mode:css-mode (:language-id "css"))
-(define-language lem-dart-mode:dart-mode (:language-id "dart"))
-(define-language lem-json-mode:json-mode (:language-id "json"))
-(define-language lem-lua-mode:lua-mode (:language-id "lua"))
-(define-language lem-nim-mode:nim-mode (:language-id "nim"))
-(define-language lem-ocaml-mode:ocaml-mode (:language-id "ocaml"))
-(define-language lem-python-mode:python-mode (:language-id "python"))
-(define-language lem-scala-mode:scala-mode (:language-id "scala"))
-(define-language lem-scheme-mode:scheme-mode (:language-id "scheme"))
-(define-language lem-sql-mode:sql-mode (:language-id "sql"))
-(define-language lem-terraform-mode:terraform-mode (:language-id "hcl"))
-(define-language lem-typescript-mode:typescript-mode (:language-id "typescript"))
-(define-language lem-xml-mode:xml-mode (:language-id "xml"))
-(define-language lem-yaml-mode:yaml-mode (:language-id "yaml"))
-(define-language lem-swift-mode:swift-mode (:language-id "swift"))
-
-
-;;; test
-(define-command test/copilot-document () ()
-  (let ((response (client:request (client)
-                                  "testing/getDocument"
-                                  (hash "uri" (buffer-uri (current-buffer))))))
-    (show-message (pretty-json response))
-    (assert (equal (gethash "text" response)
-                   (buffer-text (current-buffer))))))
-
-(define-command test/copilot-log () ()
-  (let* ((buffer (make-buffer "*copilot-log*" :enable-undo-p nil)))
-    (erase-buffer buffer)
-    (with-open-stream (stream (make-buffer-output-stream (buffer-point buffer)))
-      (logger:write-log stream))
-    (pop-to-buffer buffer)))
+(defmethod execute :after ((mode copilot-mode) (command self-insert) argument)
+  (cond (*delay-complete*
+         (if *complete-timer*
+             (stop-timer *complete-timer*)
+             (setf *complete-timer* (make-idle-timer 'copilot-complete :name "Copilot Complete")))
+         (start-timer *complete-timer* *delay-complete* :repeat nil))
+        (t
+         (copilot-complete))))

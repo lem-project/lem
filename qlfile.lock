@@ -10,10 +10,6 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-mailbox.git")
   :version "git-12d629541da440fadf771b0225a051ae65fa342a"))
-("lem-base16-themes" .
- (:class qlot/source/git:source-git
-  :initargs (:remote-url "https://github.com/lem-project/lem-base16-themes.git")
-  :version "git-e09618e2f3a4ba9977167d3ea90123ecabd884ab"))
 ("async-process" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/async-process.git")

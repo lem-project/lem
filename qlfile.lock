@@ -13,7 +13,7 @@
 ("async-process" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/async-process.git")
-  :version "git-4523298828191e0107cb58fa7e15c4e9f6a1af47"))
+  :version "git-8067007e283745b94a36a51320b41b65ac296e24"))
 ("sblint" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/sblint.git")

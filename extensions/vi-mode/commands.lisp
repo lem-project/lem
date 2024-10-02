@@ -65,6 +65,8 @@
            :vi-scroll-line-to-bottom-back-to-indentation
            :vi-scroll-bottom-line-to-top
            :vi-scroll-top-line-to-bottom
+           :vi-scroll-down
+           :vi-scroll-up
            :vi-back-to-indentation
            :vi-indent
            :vi-substitute
@@ -187,6 +189,22 @@
 (define-motion vi-previous-display-line (&optional (n 1)) (:universal)
     (:type :line)
   (previous-line n))
+
+(define-motion vi-scroll-down (&optional (n nil)) (:universal)
+    (:type :inclusive :default-n-arg nil)
+  ;; Somehow n is still 1 by default...
+  (when (eql n 1)
+    (setf n (floor (window-height (current-window)) 2)))
+  (next-line n)
+  (scroll-down n))
+
+(define-motion vi-scroll-up (&optional (n nil)) (:universal)
+    (:default-n-arg nil)
+  ;; Somehow n is still 1 by default...
+  (when (eql n 1)
+    (setf n (floor (window-height (current-window)) 2)))
+  (previous-line n)
+  (scroll-up n))
 
 (defun on-only-space-line-p (point)
   (with-point ((p point))

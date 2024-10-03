@@ -32,14 +32,14 @@
 (define-command mark-next-like-this () ()
   ""
   (if (buffer-mark-p (current-buffer))
-      (mark-like-this-direction (region-beginning (current-buffer)) (region-end (current-buffer))
+      (mark-like-this-direction (buffer-mark (current-buffer)) (buffer-point (current-buffer))
                                 #'search-forward)
       (add-cursors-to-next-line)))
 
 (define-command mark-previous-like-this () ()
   ""
   (if (buffer-mark-p (current-buffer))
-      (mark-like-this-direction (region-beginning (current-buffer)) (region-end (current-buffer))
+      (mark-like-this-direction (buffer-mark (current-buffer)) (buffer-point (current-buffer))
                                 #'search-backward)
       (add-cursors-to-previous-line)))
 
@@ -72,6 +72,7 @@
     (with-point ((point point))
       (if (search-next-matched point 1)
           (progn
+            (setf (point-charpos point) (point-charpos end))
             (setf cursor (make-fake-cursor point))
             (dotimes (_ (- (point-linum end) (point-linum start)))
               (if (equal direction #'search-forward)

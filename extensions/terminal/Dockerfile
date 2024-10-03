@@ -11,4 +11,4 @@ RUN cd /tmp \
  && export CFLAGS="$CFLAGS -fPIC" make \
  && make install clean \
  && rm -rf /tmp/libvterm-0.3.3
-#docker build . -t libvterm && docker run -v $PWD:/build --rm libvterm /bin/bash -c "cd /build/;gcc terminal.c -Wl,-Bstatic -lvterm -Wl,-Bdynamic -o terminal.so -shared -fPIC"
+#docker build . -t libvterm && docker run -v $PWD:/build --rm libvterm /bin/bash -c "cd /build/;gcc terminal.c -Wl,-Bstatic -lvterm -Wl,-Bdynamic -o terminal.so -shared -fPIC -lutil"

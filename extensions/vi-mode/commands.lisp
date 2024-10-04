@@ -65,6 +65,8 @@
            :vi-scroll-line-to-bottom-back-to-indentation
            :vi-scroll-bottom-line-to-top
            :vi-scroll-top-line-to-bottom
+           :vi-scroll-down
+           :vi-scroll-up
            :vi-back-to-indentation
            :vi-indent
            :vi-substitute
@@ -187,6 +189,20 @@
 (define-motion vi-previous-display-line (&optional (n 1)) (:universal)
     (:type :line)
   (previous-line n))
+
+(define-motion vi-scroll-down (&optional (n nil)) (:universal-nil)
+    (:type :inclusive :default-n-arg nil)
+  (unless n
+    (setf n (floor (window-height (current-window)) 2)))
+  (next-line n)
+  (scroll-down n))
+
+(define-motion vi-scroll-up (&optional (n nil)) (:universal-nil)
+    (:default-n-arg nil)
+  (unless n
+    (setf n (floor (window-height (current-window)) 2)))
+  (previous-line n)
+  (scroll-up n))
 
 (defun on-only-space-line-p (point)
   (with-point ((p point))
@@ -689,14 +705,23 @@ Move the cursor to the first non-blank character of the line."
 (defun vi-forward-matching-paren (window point &optional (offset -1))
   (declare (ignore window))
   (with-point ((point point))
+    (loop :until (or (syntax-open-paren-char-p (character-at point))
+                     (syntax-closed-paren-char-p (character-at point))
+                     (= (point-charpos point) (length (line-string point))))
+          :do (incf (point-charpos point)))
     (when (syntax-open-paren-char-p (character-at point))
       (when (scan-lists point 1 0 t)
         (character-offset point offset)))))
 
 (defun vi-backward-matching-paren (window point &optional (offset -1))
   (declare (ignore window offset))
-  (when (syntax-closed-paren-char-p (character-at point))
-    (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t)))
+  (with-point ((point point))
+    (loop :until (or (syntax-open-paren-char-p (character-at point))
+                     (syntax-closed-paren-char-p (character-at point))
+                     (= (point-charpos point) (length (line-string point))))
+          :do (incf (point-charpos point)))
+    (when (syntax-closed-paren-char-p (character-at point))
+      (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t))))
 
 (define-motion vi-move-to-matching-item (&optional n) (:universal-nil)
     (:type :inclusive

@@ -190,18 +190,16 @@
     (:type :line)
   (previous-line n))
 
-(define-motion vi-scroll-down (&optional (n nil)) (:universal)
+(define-motion vi-scroll-down (&optional (n nil)) (:universal-nil)
     (:type :inclusive :default-n-arg nil)
-  ;; Somehow n is still 1 by default...
-  (when (eql n 1)
+  (unless n
     (setf n (floor (window-height (current-window)) 2)))
   (next-line n)
   (scroll-down n))
 
-(define-motion vi-scroll-up (&optional (n nil)) (:universal)
+(define-motion vi-scroll-up (&optional (n nil)) (:universal-nil)
     (:default-n-arg nil)
-  ;; Somehow n is still 1 by default...
-  (when (eql n 1)
+  (unless n
     (setf n (floor (window-height (current-window)) 2)))
   (previous-line n)
   (scroll-up n))

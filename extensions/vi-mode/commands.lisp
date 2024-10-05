@@ -702,13 +702,19 @@ Move the cursor to the first non-blank character of the line."
     (editor-error "No keyboard macro is recorded yet"))
   (vi-execute-macro n *last-recorded-macro*))
 
-(defun vi-forward-matching-paren (window point &optional (offset -1))
-  (declare (ignore window))
+(defun find-next-paren (point)
+  "Returns the point either on the following opening/closing paren/bracket/brace
+on the same line or at eol if there are none."
   (with-point ((point point))
     (loop :until (or (syntax-open-paren-char-p (character-at point))
                      (syntax-closed-paren-char-p (character-at point))
-                     (= (point-charpos point) (length (line-string point))))
-          :do (incf (point-charpos point)))
+                     (end-line-p point))
+          :do (character-offset point 1))
+    point))
+
+(defun vi-forward-matching-paren (window point &optional (offset -1))
+  (declare (ignore window))
+  (with-point ((point point))
     (when (syntax-open-paren-char-p (character-at point))
       (when (scan-lists point 1 0 t)
         (character-offset point offset)))))
@@ -716,10 +722,6 @@ Move the cursor to the first non-blank character of the line."
 (defun vi-backward-matching-paren (window point &optional (offset -1))
   (declare (ignore window offset))
   (with-point ((point point))
-    (loop :until (or (syntax-open-paren-char-p (character-at point))
-                     (syntax-closed-paren-char-p (character-at point))
-                     (= (point-charpos point) (length (line-string point))))
-          :do (incf (point-charpos point)))
     (when (syntax-closed-paren-char-p (character-at point))
       (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t))))
 
@@ -737,8 +739,9 @@ Move the cursor to the first non-blank character of the line."
        (skip-whitespace-forward (current-point) t)))
     ;; No argument - move to matching paren
     (t
-     (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))
-                                  (vi-forward-matching-paren  (current-window) (current-point)))))
+     (alexandria:when-let* ((paren-point (find-next-paren (current-point)))
+                            (p (or (vi-backward-matching-paren (current-window) paren-point)
+                                   (vi-forward-matching-paren  (current-window) paren-point))))
        (move-point (current-point) p)))))
 
 (let ((old-forward-matching-paren)

@@ -146,3 +146,26 @@
          (variable (find-variable (read-from-string variable-name)))
          (value (prompt-for-type-instance (variable-type variable) "Value: ")))
       (setf (symbol-value (variable-name variable)) value)))
+
+(define-command customize-group () ()
+  (let* ((group-names (mapcar
+                       (alexandria:compose #'prin1-to-string #'group-name)
+                       (alexandria:hash-table-values *custom-groups*)))
+         (group-name 
+           (prompt-for-string "Customize group: "
+                              :test-function (lambda (str) (< 0 (length str)))
+                              :completion-function (lambda (string)
+                                                     (completion string group-names))))
+         (group (find-group (read-from-string group-name)))
+         (var-names (mapcar
+                     (alexandria:compose #'prin1-to-string #'variable-name)
+                     (group-variables group)))
+         (variable-name 
+           (prompt-for-string (format nil "Customize variable in ~a: " group-name)
+                              :test-function (lambda (str) (< 0 (length str)))
+                              :completion-function (lambda (string)
+                                                     (completion string var-names))))
+         (variable (find-variable (read-from-string variable-name)))
+         (value (prompt-for-type-instance (variable-type variable) "Value: ")))
+    (setf (symbol-value (variable-name variable)) value)))         
+         

@@ -133,3 +133,16 @@
     (apply #'%prompt-for-type-instance 
            type-discriminator type-arguments prompt
            args)))
+
+(define-command customize-variable () ()
+  (let* ((var-names (mapcar
+                     (alexandria:compose #'prin1-to-string #'variable-name)
+                     (alexandria:hash-table-values *custom-vars*)))
+         (variable-name 
+           (prompt-for-string "Customize variable: "
+                               :test-function (lambda (str) (< 0 (length str)))
+                               :completion-function (lambda (string)
+                                                      (completion string var-names))))
+         (variable (find-variable (read-from-string variable-name)))
+         (value (prompt-for-type-instance (variable-type variable) "Value: ")))
+      (setf (symbol-value (variable-name variable)) value)))

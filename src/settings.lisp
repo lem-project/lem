@@ -1,7 +1,7 @@
 ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Customization.html
 
 (defpackage :lem/settings
-  (:use :cl)
+  (:use :cl :lem-core)
   (:export #:customize-variable
            #:customize-group
            #:defcustom
@@ -110,18 +110,6 @@
       (when error-p
         (error "Custom group not found: ~s" name))))
 
-(defun prompt-for-type-instance (type-spec prompt &rest args)
-  "Prompt for an instance of TYPE-SPEC using PROMPT."
-  (let ((type-discriminator (if (listp type-spec)
-                                (car type-spec)
-                                type-spec))
-        (type-arguments (if (listp type-spec)
-                            (cdr type-spec)
-                            nil)))
-    (apply #'%prompt-for-type-instance 
-           type-discriminator type-arguments prompt
-           args)))
-
 (defgeneric %prompt-for-type-instance (type-discriminator type-arguments prompt &rest args))
 
 (defmethod %prompt-for-type-instance ((type (eql 'string)) type-args prompt &rest args)
@@ -134,3 +122,14 @@
   (declare (ignore args))
   (lem-core::prompt-for-y-or-n-p prompt))
 
+(defun prompt-for-type-instance (type-spec prompt &rest args)
+  "Prompt for an instance of TYPE-SPEC using PROMPT."
+  (let ((type-discriminator (if (listp type-spec)
+                                (car type-spec)
+                                type-spec))
+        (type-arguments (if (listp type-spec)
+                            (cdr type-spec)
+                            nil)))
+    (apply #'%prompt-for-type-instance 
+           type-discriminator type-arguments prompt
+           args)))

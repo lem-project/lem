@@ -28,13 +28,16 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            :paredit-wrap-round
            :paredit-meta-doublequote
            :paredit-vertical-line-wrap
-           :*paredit-mode-keymap*))
+           :*paredit-mode-keymap*
+           :*remove-whitespace*))
 (in-package :lem-paredit-mode)
 
 (define-minor-mode paredit-mode
     (:name "paredit"
      :description "Helps to handle parentheses balanced in your Lisp code."
      :keymap *paredit-mode-keymap*))
+
+(defvar *remove-whitespace* nil "Aggressively remove whitespace on some actions")
 
 (defun move-to-word-end (q)
   (loop while (not (syntax-space-char-p (character-at q)))
@@ -309,12 +312,11 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
           ((syntax-escape-point-p p 0)
            (insert-character p c))
           ((char= c (character-at p))
-           (if (syntax-escape-point-p p 0)
-               (insert-character p c)
-               (with-point ((from p))
-                 (skip-whitespace-backward from)
-                 (delete-between-points from p)
-                 (forward-char))))
+           (when *remove-whitespace*
+             (with-point ((from p))
+               (skip-whitespace-backward from)
+               (delete-between-points from p)))
+           (forward-char))
           ((ignore-errors (or (scan-lists p 1 1)) t)
            (with-point ((new-p p))
              (character-offset new-p -1)
@@ -402,7 +404,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
          (move-point (current-point) origin)
          (indent-points origin yank-point)))
       (t
-       (let ((remove-whitespace (is-inside-empty-parens origin)))
+       (let ((remove-whitespace (and *remove-whitespace* (is-inside-empty-parens origin))))
          (scan-lists kill-point 1 1)
          (character-offset kill-point -1)
          (%skip-closed-parens-and-whitespaces-forward kill-point nil)

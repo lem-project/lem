@@ -206,6 +206,9 @@
          (value (prompt-for-type-instance (variable-type variable) "Value: ")))
     (set-variable-value variable value)))
 
+(define-command apropos-custom-variable (pattern) (:universal-nil)
+  (error "TODO"))
+
 (defun open-customize-variable-buffer (variable)
   (let ((buf (make-buffer (format nil "*Customize variable: ~a*" (variable-name variable)))))
     (with-current-buffer buf

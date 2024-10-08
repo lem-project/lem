@@ -37,6 +37,11 @@
           :type symbol
           :initform (error "Provide the group for the variable")
           :documentation "The group the variable belongs to")
+   (setter :initarg :setter
+           :accessor variable-setter
+           :type (or symbol function null)
+           :initform nil
+           :documentation "A function designator used for setting the value of the variable")
    (documentation :initarg :documentation
                   :accessor documentation-of
                   :type (or string null)
@@ -110,6 +115,17 @@
       (when error-p
         (error "Custom group not found: ~s" name))))
 
+(defun get-variable-value (var)
+  (symbol-value (variable-name var)))
+
+(defun set-variable-value (var value)
+  (if (variable-setter var)
+      (funcall (variable-setter var) value var)
+      (setf (symbol-value (variable-name var)) value)))
+
+(defun reset-variable-value (var)
+  (set-variable-value var (variable-default var)))
+
 (defgeneric %prompt-for-type-instance (type-discriminator type-arguments prompt &rest args))
 
 (defmethod %prompt-for-type-instance ((type (eql 'string)) type-args prompt &rest args)
@@ -134,18 +150,27 @@
            type-discriminator type-arguments prompt
            args)))
 
+(defun prompt-for-variable (prompt &optional var-names)
+  (let*
+      ((actual-var-names (or var-names
+                             (mapcar
+                              (alexandria:compose #'prin1-to-string #'variable-name)
+                              (alexandria:hash-table-values *custom-vars*))))
+       (variable-name 
+         (prompt-for-string prompt
+                            :test-function (lambda (str) (< 0 (length str)))
+                            :completion-function (lambda (string)
+                                                   (completion string actual-var-names)))))
+    (find-variable (read-from-string variable-name))))
+
+(define-command reset-variable () ()
+  (let ((variable (prompt-for-variable "Reset variable: ")))
+    (reset-variable-value variable)))
+
 (define-command customize-variable () ()
-  (let* ((var-names (mapcar
-                     (alexandria:compose #'prin1-to-string #'variable-name)
-                     (alexandria:hash-table-values *custom-vars*)))
-         (variable-name 
-           (prompt-for-string "Customize variable: "
-                               :test-function (lambda (str) (< 0 (length str)))
-                               :completion-function (lambda (string)
-                                                      (completion string var-names))))
-         (variable (find-variable (read-from-string variable-name)))
+  (let* ((variable (prompt-for-variable "Customize variable: "))
          (value (prompt-for-type-instance (variable-type variable) "Value: ")))
-      (setf (symbol-value (variable-name variable)) value)))
+      (set-variable-value variable value)))
 
 (define-command customize-group () ()
   (let* ((group-names (mapcar
@@ -157,15 +182,9 @@
                               :completion-function (lambda (string)
                                                      (completion string group-names))))
          (group (find-group (read-from-string group-name)))
-         (var-names (mapcar
-                     (alexandria:compose #'prin1-to-string #'variable-name)
-                     (group-variables group)))
-         (variable-name 
-           (prompt-for-string (format nil "Customize variable in ~a: " group-name)
-                              :test-function (lambda (str) (< 0 (length str)))
-                              :completion-function (lambda (string)
-                                                     (completion string var-names))))
-         (variable (find-variable (read-from-string variable-name)))
+         (variable (prompt-for-variable (format nil "Customize variable in ~a: " group-name)
+                                        (mapcar
+                                         (alexandria:compose #'prin1-to-string #'variable-name)
+                                         (group-variables group))))
          (value (prompt-for-type-instance (variable-type variable) "Value: ")))
-    (setf (symbol-value (variable-name variable)) value)))         
-         
+    (set-variable-value variable value)))

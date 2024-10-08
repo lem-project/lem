@@ -2,6 +2,10 @@
 
 (defpackage :lem/settings
   (:use :cl :lem-core)
+  (:import-from :lem/button
+                :button-at
+                :button-action
+                :forward-button)
   (:export #:customize-variable
            #:customize-group
            #:defcustom
@@ -219,65 +223,93 @@
 (define-command apropos-custom-variable (pattern) (:universal-nil)
   (error "TODO"))
 
+(defun make-settings-buffer (name &rest args)
+  (let ((buffer (apply #'make-buffer name args)))
+    (change-buffer-mode buffer 'settings-mode)
+    buffer))
+
 (defun open-customize-variable-buffer (variable)
-  (let ((buf (make-buffer (format nil "*Customize variable: ~a*" (variable-name variable)))))
+  (let ((buf (make-settings-buffer (format nil "*Customize variable: ~a*" (variable-name variable)))))
     (with-current-buffer buf
-      (with-open-stream (stream (make-buffer-output-stream
-                                 (buffer-end-point buf)))
-        (write-string "Customize: " stream)
-        (insert-string (current-point) (prin1-to-string (variable-name variable)) :attribute 'document-header1-attribute)
-        (terpri stream)
-        (insert-string (current-point) "Value: " :attribute 'settings-label-attribute)
-        (insert-string (current-point) (prin1-to-string (get-variable-value variable)) :attribute 'settings-value-attribute)
-        (write-string " " stream)
-        (lem/button:insert-button 
-         (current-point) "[Set]"
-         (lambda ()
-           (customize-variable variable))
-         :attribute 'settings-action-attribute)
-        (write-string " " stream)
-        (lem/button:insert-button 
-         (current-point) "[Reset]"
-         (lambda ()
-           (customize-variable variable))
-         :attribute 'settings-action-attribute)
-        (terpri stream)
-        (terpri stream)
-        (insert-string (current-point) (documentation-of variable)
-                       :attribute 'settings-docs-attribute)
+      (with-buffer-read-only buf nil 
+        (with-open-stream (stream (make-buffer-output-stream
+                                   (buffer-end-point buf)))
+          (write-string "Customize: " stream)
+          (insert-string (current-point) (prin1-to-string (variable-name variable)) :attribute 'document-header1-attribute)
+          (terpri stream)
+          (insert-string (current-point) "Value: " :attribute 'settings-label-attribute)
+          (insert-string (current-point) (prin1-to-string (get-variable-value variable)) :attribute 'settings-value-attribute)
+          (write-string " " stream)
+          (lem/button:insert-button 
+           (current-point) "[Set]"
+           (lambda ()
+             (customize-variable variable))
+           :attribute 'settings-action-attribute)
+          (write-string " " stream)
+          (lem/button:insert-button 
+           (current-point) "[Reset]"
+           (lambda ()
+             (customize-variable variable))
+           :attribute 'settings-action-attribute)
+          (terpri stream)
+          (terpri stream)
+          (insert-string (current-point) (documentation-of variable)
+                         :attribute 'settings-docs-attribute)
         
-        (setf (lem-core::buffer-read-only-p buf) t)
-        ;;(lem-core:switch-to-buffer buf)
-        (lem-core:pop-to-buffer buf)
-        ;;(lem-core:change-buffer-mode )
-        ))))
+          (setf (lem-core::buffer-read-only-p buf) t)
+          ;;(lem-core:switch-to-buffer buf)
+          (lem-core:pop-to-buffer buf)
+          ;;(lem-core:change-buffer-mode )
+          )))))
 
 (defun open-customize-group-buffer (group)
-  (let ((buf (make-buffer (format nil "*Customize group: ~a*" (group-name group)))))
+  (let ((buf (make-settings-buffer (format nil "*Customize group: ~a*" (group-name group)))))
     (with-current-buffer buf
-      (with-open-stream (stream (make-buffer-output-stream
-                                 (buffer-end-point buf)))
-        (write-string "Customize group: " stream)
-        (prin1 (group-name group) stream)
-        (terpri stream) (terpri stream)
-        (write-string (documentation-of group) stream)
-        (terpri stream) 
-        (dolist (var (group-variables group))
-          (terpri stream)
-          (prin1 (variable-name var) stream)
-          (write-string " - " stream)
-          (write-string (documentation-of var) stream))
-
-        (when (subgroups group)
+      (with-buffer-read-only buf nil 
+        (with-open-stream (stream (make-buffer-output-stream
+                                   (buffer-end-point buf)))
+          (write-string "Customize group: " stream)
+          (prin1 (group-name group) stream)
           (terpri stream) (terpri stream)
-          (write-string "Subgroups:" stream)
-          (terpri stream)
-          (dolist (subgroup (subgroups group))
+          (write-string (documentation-of group) stream)
+          (terpri stream) 
+          (dolist (var (group-variables group))
             (terpri stream)
-            (write-string (string (group-name subgroup)) stream)))           
+            (prin1 (variable-name var) stream)
+            (write-string " - " stream)
+            (write-string (documentation-of var) stream))
+
+          (when (subgroups group)
+            (terpri stream) (terpri stream)
+            (write-string "Subgroups:" stream)
+            (terpri stream)
+            (dolist (subgroup (subgroups group))
+              (terpri stream)
+              (write-string (string (group-name subgroup)) stream)))           
                 
-        (setf (lem-core::buffer-read-only-p buf) t)
-        ;;(lem-core:switch-to-buffer buf)
-        (lem-core:pop-to-buffer buf)
-        ;;(lem-core:change-buffer-mode )
-        ))))
+          (setf (lem-core::buffer-read-only-p buf) t)
+          ;;(lem-core:switch-to-buffer buf)
+          (lem-core:pop-to-buffer buf)
+          ;;(lem-core:change-buffer-mode )
+          )))))
+
+(define-major-mode settings-mode nil
+    (:name "settings"
+     :keymap *settings-keymap*)
+  (setf (buffer-read-only-p (current-buffer)) t))
+
+(define-key *settings-keymap* "Return" 'settings-default-action)
+(define-key *settings-keymap* "Tab" 'settings-forward-button)
+(define-key *settings-keymap* "q" 'quit-active-window)
+(define-key *settings-keymap* "M-q" 'quit-active-window)
+
+(define-command settings-default-action () ()
+  (let ((button (button-at (current-point))))
+    (when button (button-action button))))
+
+(define-command settings-forward-button () ()
+  (let ((p (current-point)))
+    (or (forward-button p)
+        (progn
+          (buffer-start p)
+          (forward-button p)))))

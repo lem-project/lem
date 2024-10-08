@@ -235,3 +235,25 @@
         (lem-core:pop-to-buffer buf)
         ;;(lem-core:change-buffer-mode )
         ))))
+
+(defun open-customize-group-buffer (group)
+  (let ((buf (make-buffer (format nil "*Customize group: ~a*" (group-name group)))))
+    (with-current-buffer buf
+      (with-open-stream (stream (make-buffer-output-stream
+                                 (buffer-end-point buf)))
+        (write-string "Customize group: " stream)
+        (prin1 (group-name group) stream)
+        (terpri stream) (terpri stream)
+        (write-string (documentation-of group) stream)
+        (terpri stream) 
+        (dolist (var (group-variables group))
+          (terpri stream)
+          (prin1 (variable-name var) stream)
+          (write-string " - " stream)
+          (write-string (documentation-of var) stream))
+                
+        (setf (lem-core::buffer-read-only-p buf) t)
+        ;;(lem-core:switch-to-buffer buf)
+        (lem-core:pop-to-buffer buf)
+        ;;(lem-core:change-buffer-mode )
+        ))))

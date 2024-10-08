@@ -12,6 +12,16 @@
 
 (in-package :lem/settings)
 
+(define-attribute settings-label-attribute)
+
+(define-attribute settings-value-attribute
+  (t :foreground :base0D :bold t))
+
+(define-attribute settings-action-attribute
+  (:dark :foreground :base09 :bold t))
+
+(define-attribute settings-docs-attribute)
+
 (defvar *custom-vars* (make-hash-table)
   "map of customization variables.")
 
@@ -215,23 +225,26 @@
       (with-open-stream (stream (make-buffer-output-stream
                                  (buffer-end-point buf)))
         (write-string "Customize: " stream)
-        (prin1 (variable-name variable) stream)
+        (insert-string (current-point) (prin1-to-string (variable-name variable)) :attribute 'document-header1-attribute)
         (terpri stream)
-        (write-string "Value: " stream)
-        (prin1 (get-variable-value variable) stream)
+        (insert-string (current-point) "Value: " :attribute 'settings-label-attribute)
+        (insert-string (current-point) (prin1-to-string (get-variable-value variable)) :attribute 'settings-value-attribute)
         (write-string " " stream)
         (lem/button:insert-button 
          (current-point) "[Set]"
          (lambda ()
-           (customize-variable variable)))
+           (customize-variable variable))
+         :attribute 'settings-action-attribute)
         (write-string " " stream)
         (lem/button:insert-button 
          (current-point) "[Reset]"
          (lambda ()
-           (customize-variable variable)))
+           (customize-variable variable))
+         :attribute 'settings-action-attribute)
         (terpri stream)
         (terpri stream)
-        (write-string (documentation-of variable) stream)
+        (insert-string (current-point) (documentation-of variable)
+                       :attribute 'settings-docs-attribute)
         
         (setf (lem-core::buffer-read-only-p buf) t)
         ;;(lem-core:switch-to-buffer buf)

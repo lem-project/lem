@@ -115,13 +115,24 @@
       (when error-p
         (error "Custom group not found: ~s" name))))
 
+(defun ensure-variable (variable-or-symbol)
+  (etypecase variable-or-symbol
+    (custom-variable variable-or-symbol)
+    (symbol (find-variable variable-or-symbol))))
+
+(defun ensure-group (group-or-symbol)
+  (etypecase group-or-symbol
+    (custom-group group-or-symbol)
+    (symbol (find-group group-or-symbol))))
+
 (defun get-variable-value (var)
-  (symbol-value (variable-name var)))
+  (symbol-value (variable-name (ensure-variable var))))
 
 (defun set-variable-value (var value)
-  (if (variable-setter var)
-      (funcall (variable-setter var) value var)
-      (setf (symbol-value (variable-name var)) value)))
+  (alexandria:if-let (setter (variable-setter (ensure-variable var)))
+    (if setter
+        (funcall setter value var)
+        (setf (symbol-value (variable-name (ensure-variable var))) value))))
 
 (defun reset-variable-value (var)
   (set-variable-value var (variable-default var)))
@@ -167,24 +178,60 @@
   (let ((variable (prompt-for-variable "Reset variable: ")))
     (reset-variable-value variable)))
 
-(define-command customize-variable () ()
-  (let* ((variable (prompt-for-variable "Customize variable: "))
+(define-command customize-variable (var-designator) (:universal-nil)
+  (let* ((variable (or (and var-designator (ensure-variable var-designator))
+                       (prompt-for-variable "Customize variable: ")))
          (value (prompt-for-type-instance (variable-type variable) "Value: ")))
       (set-variable-value variable value)))
 
-(define-command customize-group () ()
-  (let* ((group-names (mapcar
-                       (alexandria:compose #'prin1-to-string #'group-name)
-                       (alexandria:hash-table-values *custom-groups*)))
+(defun prompt-for-group (prompt &optional group-names)
+  (let* ((actual-group-names (or group-names
+                                 (mapcar
+                                  (alexandria:compose #'prin1-to-string #'group-name)
+                                  (alexandria:hash-table-values *custom-groups*))))
          (group-name 
            (prompt-for-string "Customize group: "
                               :test-function (lambda (str) (< 0 (length str)))
                               :completion-function (lambda (string)
-                                                     (completion string group-names))))
-         (group (find-group (read-from-string group-name)))
-         (variable (prompt-for-variable (format nil "Customize variable in ~a: " group-name)
+                                                     (completion string actual-group-names)))))
+    (find-group (read-from-string group-name))))
+         
+(define-command customize-group (group-designator) (:universal-nil)
+  (let* ((group (or (and group-designator (ensure-group group-designator))
+                    (prompt-for-group "Customize group: ")))
+         (variable (prompt-for-variable (format nil "Customize variable in ~a: " (group-name group))
                                         (mapcar
                                          (alexandria:compose #'prin1-to-string #'variable-name)
                                          (group-variables group))))
          (value (prompt-for-type-instance (variable-type variable) "Value: ")))
     (set-variable-value variable value)))
+
+(defun open-customize-variable-buffer (variable)
+  (let ((buf (make-buffer (format nil "*Customize variable: ~a*" (variable-name variable)))))
+    (with-current-buffer buf
+      (with-open-stream (stream (make-buffer-output-stream
+                                 (buffer-end-point buf)))
+        (write-string "Customize: " stream)
+        (prin1 (variable-name variable) stream)
+        (terpri stream)
+        (write-string "Value: " stream)
+        (prin1 (get-variable-value variable) stream)
+        (write-string " " stream)
+        (lem/button:insert-button 
+         (current-point) "[Set]"
+         (lambda ()
+           (customize-variable variable)))
+        (write-string " " stream)
+        (lem/button:insert-button 
+         (current-point) "[Reset]"
+         (lambda ()
+           (customize-variable variable)))
+        (terpri stream)
+        (terpri stream)
+        (write-string (documentation-of variable) stream)
+        
+        (setf (lem-core::buffer-read-only-p buf) t)
+        ;;(lem-core:switch-to-buffer buf)
+        (lem-core:pop-to-buffer buf)
+        ;;(lem-core:change-buffer-mode )
+        ))))

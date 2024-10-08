@@ -105,13 +105,13 @@
                             :documentation ,doc))
        (gethash ',symbol *custom-vars*))))
 
-(defmacro defgroup (symbol members doc &rest args)
+(defmacro defgroup (symbol members doc &key group)
   `(progn
      (setf (gethash ',symbol *custom-groups*)
            (make-instance 'custom-group
                           :name ',symbol
                           :documentation ,doc
-                          ,@args))
+                          :group ',group))
      ,@(loop for member in members
              collect `(defcustom ,@member))))
 

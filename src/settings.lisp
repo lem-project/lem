@@ -254,6 +254,14 @@
           (prin1 (variable-name var) stream)
           (write-string " - " stream)
           (write-string (documentation-of var) stream))
+
+        (when (subgroups group)
+          (terpri stream) (terpri stream)
+          (write-string "Subgroups:" stream)
+          (terpri stream)
+          (dolist (subgroup (subgroups group))
+            (terpri stream)
+            (write-string (string (group-name subgroup)) stream)))           
                 
         (setf (lem-core::buffer-read-only-p buf) t)
         ;;(lem-core:switch-to-buffer buf)

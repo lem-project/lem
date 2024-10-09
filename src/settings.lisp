@@ -243,6 +243,14 @@
           (get-variable-value variable))
     (message "~s saved" (variable-name variable))))
 
+(define-command load-variable (var-designator) (:universal-nil)
+  (let* ((variable (or (and var-designator (ensure-variable var-designator))
+                      (prompt-for-variable "Load variable: ")))
+         (not-saved (gensym))
+         (value (config (variable-name variable) not-saved)))
+    (unless (eq value not-saved)
+      (set-variable-value variable value))))
+
 (define-command customize-variable (var-designator) (:universal-nil)
   (let* ((variable (or (and var-designator (ensure-variable var-designator))
                        (prompt-for-variable "Customize variable: ")))
@@ -260,7 +268,7 @@
                                     (lambda ()
                                       (customize-group (group-of variable)))
                                     :attribute 'document-link-attribute)
-                     (terpri stream)
+                     (terpri stream) (terpri stream)
                      (insert-string (current-point) "Value: " :attribute 'settings-label-attribute)
                      (insert-button (current-point) 
                                     (prin1-to-string (get-variable-value variable))

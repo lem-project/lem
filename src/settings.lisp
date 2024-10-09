@@ -352,11 +352,6 @@
                 
     (switch-to-buffer buf)))
 
-(lem/settings:defgroup lem
-  ()
-  "Top-level Lem settings."
-  )
-
 (define-command customize () ()
   (customize-group 'lem))
 
@@ -388,3 +383,61 @@
 
 ;; Load the value of saved variables after initialization
 (lem/common/hooks:add-hook lem-core:*after-init-hook* #'load-variables)
+
+;; Lift existing defvar in Lem modules, to custom-variables
+(defun customize-defvar (name group &key type documentation)
+  (let ((vartype (or type (type-of (symbol-value name)))))
+    (unless (typep (symbol-value name) type)
+      (error "~a value (~s) is not of type ~a" name (symbol-value name) type))
+    (setf (gethash name *custom-vars*)
+          (make-instance 'custom-variable
+                         :name name
+                         :type vartype
+                         :group group
+                         :default (symbol-value name)
+                         :documentation (or documentation (documentation name 'variable))))))
+
+(defgroup lem
+  ()
+  "Top-level Lem settings."
+  )
+
+(defgroup files
+  ()
+  "Files settings."
+  :group lem)
+
+(customize-defvar 'lem-core/commands/file::*find-program-timeout*
+                  'files
+                  :type 'integer)
+
+(defgroup gui
+  ()
+  "GUI settings."
+  :group lem)
+
+(customize-defvar 'lem/popup-window::*extra-right-margin* 
+                  'gui
+                  :type 'integer :documentation "Extra right margin for popup windows.")
+(customize-defvar 'lem/popup-window::*extra-width-margin* 
+                  'gui
+                  :type 'integer :documentation "Extra width margin for popup windows.")
+(customize-defvar 'lem/prompt-window::*prompt-completion-window-shape* 'gui
+                  :type '(member nil :drop-curtain)
+                  :documentation "Shape of prompt completion windows.")
+(customize-defvar 'lem/prompt-window::*prompt-completion-window-gravity* 'gui
+                  :type '(member :center :top-display :bottom-display :top
+                          :topright :cursor :follow-cursor :mouse-cursor
+                          :vertically-adjacent-window
+                          :vertically-adjacent-window-dynamic
+                          :horizontally-adjacent-window
+                          :horizontally-above-window))
+(defgroup grep
+  ()
+  "Grep settings"
+  :group lem)
+
+(customize-defvar 'lem/grep:*grep-command* 'grep
+                  :type 'string :documentation "Grep command")
+(customize-defvar 'lem/grep:*grep-args* 'grep
+                  :type 'string :documentation "Grep arguments")

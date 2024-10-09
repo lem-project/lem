@@ -159,6 +159,8 @@
 
 (defun set-variable-value (var-designator value)
   (let ((var (ensure-variable var-designator)))
+    (unless (typep value (variable-type var))
+      (error "~s is not of type ~s" value (variable-type var)))
     (alexandria:if-let (setter (variable-setter var))
       (funcall setter value var)
       (setf (symbol-value (variable-name var)) value))))
@@ -184,6 +186,30 @@
 (defmethod %prompt-for-type-instance ((type (eql 'boolean)) type-args prompt &rest args)
   (declare (ignore args))
   (prompt-for-y-or-n-p prompt))
+
+(defmethod %prompt-for-type-instance ((type t) type-args prompt &rest args)
+  ;; When TYPE is not recognized, prompt for a string, evaluate it, and use the result
+  (declare (ignore args))
+  (let* ((source (lem-lisp-mode/internal:prompt-for-sexp (concatenate 'string prompt "(evaluated) ")))
+         (value (lem-lisp-mode/internal:lisp-eval-from-string 
+                 source
+                 ;; fixme: use current variable name package
+                 (LEM-LISP-MODE/INTERNAL:CURRENT-PACKAGE)))
+         (type-spec (if (null type-args)
+                        type
+                        (cons type type-args))))
+    (unless (typep value type-spec)
+      (error "~s is not of type ~s" value type-spec))
+    value))
+
+(defmethod %prompt-for-type-instance ((type (eql 'member)) type-args prompt &rest args)
+  (let ((members-strs (mapcar #'prin1-to-string type-args)))
+    (let ((selection
+            (prompt-for-string prompt
+                               :test-function (lambda (str) (< 0 (length str)))
+                               :completion-function (lambda (string)
+                                                      (completion string members-strs)))))
+      (read-from-string selection))))
 
 (defun prompt-for-type-instance (type-spec prompt &rest args)
   "Prompt for an instance of TYPE-SPEC using PROMPT."
@@ -254,14 +280,14 @@
 
 (define-command save-variable (var-designator) (:universal-nil)
   (let ((variable (or (and var-designator (ensure-variable var-designator))
-                       (prompt-for-variable "Save variable: "))))
+                      (prompt-for-variable "Save variable: "))))
     (setf (config (variable-name variable))
           (get-variable-value variable))
     (message "~s saved" (variable-name variable))))
 
 (define-command load-variable (var-designator) (:universal-nil)
   (let* ((variable (or (and var-designator (ensure-variable var-designator))
-                      (prompt-for-variable "Load variable: ")))
+                       (prompt-for-variable "Load variable: ")))
          (not-saved (gensym))
          (value (config (variable-name variable) not-saved)))
     (unless (eq value not-saved)

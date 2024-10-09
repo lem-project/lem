@@ -159,14 +159,14 @@
 (defgeneric %prompt-for-type-instance (type-discriminator type-arguments prompt &rest args))
 
 (defmethod %prompt-for-type-instance ((type (eql 'string)) type-args prompt &rest args)
-  (lem-core::prompt-for-string prompt :initial-value (getf args :initial-value)))
+  (prompt-for-string prompt :initial-value (getf args :initial-value)))
 
 (defmethod %prompt-for-type-instance ((type (eql 'integer)) type-args prompt &rest args)
-  (lem-core::prompt-for-integer prompt :initial-value (getf args :initial-value)))
+  (prompt-for-integer prompt :initial-value (getf args :initial-value)))
 
 (defmethod %prompt-for-type-instance ((type (eql 'boolean)) type-args prompt &rest args)
   (declare (ignore args))
-  (lem-core::prompt-for-y-or-n-p prompt))
+  (prompt-for-y-or-n-p prompt))
 
 (defun prompt-for-type-instance (type-spec prompt &rest args)
   "Prompt for an instance of TYPE-SPEC using PROMPT."
@@ -268,7 +268,7 @@
           (insert-string (current-point) (documentation-of variable)
                          :attribute 'settings-docs-attribute)
         
-          (lem-core:switch-to-buffer buf))))))
+          (switch-to-buffer buf))))))
 
 (defun open-customize-group-buffer (group)
   (let ((buf (make-settings-buffer (format nil "*Customize group: ~a*" (group-name group)))))
@@ -295,7 +295,7 @@
               (terpri stream)
               (write-string (string (group-name subgroup)) stream)))           
                 
-          (lem-core:switch-to-buffer buf)
+          (switch-to-buffer buf)
           )))))
 
 (define-major-mode settings-mode nil

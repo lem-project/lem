@@ -15,8 +15,6 @@
                 :button-action
                 :forward-button
                 :insert-button)
-  (:import-from :lem-core/commands/window
-                :quit-active-window)
   (:export #:customize
            #:customize-variable
            #:customize-group
@@ -415,10 +413,13 @@
      :keymap *customize-keymap*)
   (setf (buffer-read-only-p (current-buffer)) t))
 
+(define-command kill-current-buffer () ()
+  (LEM-CORE/COMMANDS/WINDOW:KILL-BUFFER (current-buffer)))
+
 (define-key *customize-keymap* "Return" 'customize-default-action)
 (define-key *customize-keymap* "Tab" 'customize-forward-button)
-(define-key *customize-keymap* "q" 'quit-active-window)
-(define-key *customize-keymap* "M-q" 'quit-active-window)
+(define-key *customize-keymap* "q" 'kill-current-buffer)
+(define-key *customize-keymap* "M-q" 'kill-current-buffer)
 
 (define-command customize-default-action () ()
   (let ((button (button-at (current-point))))

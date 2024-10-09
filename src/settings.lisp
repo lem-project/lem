@@ -236,6 +236,13 @@
     (change-buffer-mode buffer 'settings-mode)
     buffer))
 
+(define-command save-variable (var-designator) (:universal-nil)
+  (let ((variable (or (and var-designator (ensure-variable var-designator))
+                       (prompt-for-variable "Save variable: "))))
+    (setf (config (variable-name variable))
+          (get-variable-value variable))
+    (message "~s saved" (variable-name variable))))
+
 (define-command customize-variable (var-designator) (:universal-nil)
   (let* ((variable (or (and var-designator (ensure-variable var-designator))
                        (prompt-for-variable "Customize variable: ")))
@@ -272,6 +279,12 @@
                       (lambda ()
                         (reset-variable variable)
                         (render-buffer))
+                      :attribute 'settings-action-attribute)
+                     (write-string " " stream)
+                     (lem/button:insert-button 
+                      (current-point) "[Save]"
+                      (lambda ()
+                        (save-variable variable))
                       :attribute 'settings-action-attribute)
                      (terpri stream)
                      (terpri stream)

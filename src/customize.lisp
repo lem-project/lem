@@ -203,6 +203,7 @@
     value))
 
 (defmethod %prompt-for-type-instance ((type (eql 'member)) type-args prompt &rest args)
+  (declare (ignore args))
   (let ((members-strs (mapcar #'prin1-to-string type-args)))
     (let ((selection
             (prompt-for-string prompt
@@ -254,7 +255,7 @@
                                   (alexandria:compose #'prin1-to-string #'group-name)
                                   (alexandria:hash-table-values *custom-groups*))))
          (group-name 
-           (prompt-for-string "Customize group: "
+           (prompt-for-string prompt
                               :test-function (lambda (str) (< 0 (length str)))
                               :completion-function (lambda (string)
                                                      (completion string actual-group-names)))))
@@ -271,6 +272,7 @@
     (set-variable-value variable value)))
 
 (define-command apropos-custom-variable (pattern) (:universal-nil)
+  (declare (ignore pattern))
   (error "TODO"))
 
 (defun make-customize-buffer (name &rest args)
@@ -304,7 +306,11 @@
                    (with-open-stream (stream (make-buffer-output-stream
                                               (buffer-end-point buf)))
                      (write-string "Customize: " stream)
-                     (insert-string (current-point) (prin1-to-string (variable-name variable)) :attribute 'document-header1-attribute)
+                     (insert-button (current-point) 
+                                    (prin1-to-string (variable-name variable))
+                                    (lambda ()
+                                      (lem-lisp-mode/inspector:lisp-inspect (prin1-to-string (variable-name variable)) :self-evaluation t))
+                                    :attribute 'document-header1-attribute)
                      (write-string " in: " stream)
                      (insert-button (current-point) (string (group-name (group-of variable)))
                                     (lambda ()
@@ -471,7 +477,7 @@
                           :vertically-adjacent-window-dynamic
                           :horizontally-adjacent-window
                           :horizontally-above-window)
-                  :documentation )
+                  :documentation "Window gravity for prompt completion.")
 (defgroup grep
   ()
   "Grep settings."

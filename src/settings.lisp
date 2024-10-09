@@ -325,6 +325,14 @@
                 
     (switch-to-buffer buf)))
 
+(lem/settings:defgroup lem
+  ()
+  "Top-level Lem settings."
+  )
+
+(define-command customize () ()
+  (customize-group 'lem))
+
 (define-major-mode settings-mode nil
     (:name "settings"
      :keymap *settings-keymap*)

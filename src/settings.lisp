@@ -7,6 +7,8 @@
                 :button-action
                 :forward-button
                 :insert-button)
+  (:import-from :lem-core/commands/window
+                :quit-active-window)
   (:export #:customize-variable
            #:customize-group
            #:defcustom
@@ -145,11 +147,11 @@
 (defun get-variable-value (var)
   (symbol-value (variable-name (ensure-variable var))))
 
-(defun set-variable-value (var value)
-  (alexandria:if-let (setter (variable-setter (ensure-variable var)))
-    (if setter
-        (funcall setter value var)
-        (setf (symbol-value (variable-name (ensure-variable var))) value))))
+(defun set-variable-value (var-designator value)
+  (let ((var (ensure-variable var-designator)))
+    (alexandria:if-let (setter (variable-setter var))
+      (funcall setter value var)
+      (setf (symbol-value (variable-name var)) value))))
 
 (defun reset-variable-value (var)
   (set-variable-value var (variable-default var)))
@@ -191,11 +193,12 @@
                                                    (completion string actual-var-names)))))
     (find-variable (read-from-string variable-name))))
 
-(define-command reset-variable () ()
-  (let ((variable (prompt-for-variable "Reset variable: ")))
+(define-command reset-variable (var-designator) (:universal-nil)
+  (let ((variable (or (and var-designator (ensure-variable var-designator))
+                      (prompt-for-variable "Reset variable: "))))
     (reset-variable-value variable)))
 
-(define-command customize-variable (var-designator) (:universal-nil)
+(define-command set-variable (var-designator) (:universal-nil)
   (let* ((variable (or (and var-designator (ensure-variable var-designator))
                        (prompt-for-variable "Customize variable: ")))
          (value (prompt-for-type-instance (variable-type variable) "Value: ")))
@@ -213,7 +216,7 @@
                                                      (completion string actual-group-names)))))
     (find-group (read-from-string group-name))))
          
-(define-command customize-group (group-designator) (:universal-nil)
+(define-command customize-group-with-menu (group-designator) (:universal-nil)
   (let* ((group (or (and group-designator (ensure-group group-designator))
                     (prompt-for-group "Customize group: ")))
          (variable (prompt-for-variable (format nil "Customize variable in ~a: " (group-name group))
@@ -231,8 +234,10 @@
     (change-buffer-mode buffer 'settings-mode)
     buffer))
 
-(defun open-customize-variable-buffer (variable)
-  (let ((buf (make-settings-buffer (format nil "*Customize variable: ~a*" (variable-name variable)))))
+(define-command customize-variable (var-designator) (:universal-nil)
+  (let* ((variable (or (and var-designator (ensure-variable var-designator))
+                       (prompt-for-variable "Customize variable: ")))
+         (buf (make-settings-buffer (format nil "*Customize variable: ~a*" (variable-name variable)))))
     (with-current-buffer buf
       (with-buffer-read-only buf nil 
         (with-open-stream (stream (make-buffer-output-stream
@@ -250,13 +255,13 @@
           (write-string " " stream)
           (insert-button (current-point) "[Set]"
                          (lambda ()
-                           (customize-variable variable))
+                           (set-variable variable))
                          :attribute 'settings-action-attribute)
           (write-string " " stream)
           (lem/button:insert-button 
            (current-point) "[Reset]"
            (lambda ()
-             (customize-variable variable))
+             (reset-variable variable))
            :attribute 'settings-action-attribute)
           (terpri stream)
           (terpri stream)

@@ -1,6 +1,6 @@
 ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Customization.html
 
-(defpackage :lem/settings
+(defpackage :lem/customize
   (:use :cl :lem-core)
   (:import-from :lem/button
                 :button-at
@@ -17,17 +17,17 @@
            #:find-variable
            #:find-group))
 
-(in-package :lem/settings)
+(in-package :lem/customize)
 
-(define-attribute settings-label-attribute)
+(define-attribute customize-label-attribute)
 
-(define-attribute settings-value-attribute
+(define-attribute customize-value-attribute
   (t :foreground :base0D :bold t))
 
-(define-attribute settings-action-attribute
+(define-attribute customize-action-attribute
   (:dark :foreground :base09 :bold t))
 
-(define-attribute settings-docs-attribute)
+(define-attribute customize-docs-attribute)
 
 (defvar *custom-vars* (make-hash-table)
   "map of customization variables.")
@@ -237,9 +237,9 @@
 (define-command apropos-custom-variable (pattern) (:universal-nil)
   (error "TODO"))
 
-(defun make-settings-buffer (name &rest args)
+(defun make-customize-buffer (name &rest args)
   (let ((buffer (apply #'make-buffer name args)))
-    (change-buffer-mode buffer 'settings-mode)
+    (change-buffer-mode buffer 'customize-mode)
     buffer))
 
 (define-command save-variable (var-designator) (:universal-nil)
@@ -260,7 +260,7 @@
 (define-command customize-variable (var-designator) (:universal-nil)
   (let* ((variable (or (and var-designator (ensure-variable var-designator))
                        (prompt-for-variable "Customize variable: ")))
-         (buf (make-settings-buffer (format nil "*Customize variable: ~a*" (variable-name variable)))))
+         (buf (make-customize-buffer (format nil "*Customize variable: ~a*" (variable-name variable)))))
     (labels ((render-buffer ()
                (with-buffer-read-only buf nil 
                  (erase-buffer buf)
@@ -275,42 +275,42 @@
                                       (customize-group (group-of variable)))
                                     :attribute 'document-link-attribute)
                      (terpri stream) (terpri stream)
-                     (insert-string (current-point) "Value: " :attribute 'settings-label-attribute)
+                     (insert-string (current-point) "Value: " :attribute 'customize-label-attribute)
                      (insert-button (current-point) 
                                     (prin1-to-string (get-variable-value variable))
                                     (lambda ()
                                       (lem-lisp-mode/inspector:lisp-inspect (prin1-to-string (variable-name variable))))
-                                    :attribute 'settings-value-attribute)
+                                    :attribute 'customize-value-attribute)
                      (write-string " " stream)
                      (insert-button (current-point) "[Set]"
                                     (lambda ()
                                       (set-variable variable)
                                       (render-buffer))
-                                    :attribute 'settings-action-attribute)
+                                    :attribute 'customize-action-attribute)
                      (write-string " " stream)
                      (lem/button:insert-button 
                       (current-point) "[Reset]"
                       (lambda ()
                         (reset-variable variable)
                         (render-buffer))
-                      :attribute 'settings-action-attribute)
+                      :attribute 'customize-action-attribute)
                      (write-string " " stream)
                      (lem/button:insert-button 
                       (current-point) "[Save]"
                       (lambda ()
                         (save-variable variable))
-                      :attribute 'settings-action-attribute)
+                      :attribute 'customize-action-attribute)
                      (terpri stream)
                      (terpri stream)
                      (insert-string (current-point) (documentation-of variable)
-                                    :attribute 'settings-docs-attribute))))))
+                                    :attribute 'customize-docs-attribute))))))
       (render-buffer)
       (switch-to-buffer buf))))
 
 (define-command customize-group (group-designator) (:universal-nil)
   (let* ((group (or (and group-designator (ensure-group group-designator))
                     (prompt-for-group "Customize group: ")))
-         (buf (make-settings-buffer (format nil "*Customize group: ~a*" (group-name group)))))
+         (buf (make-customize-buffer (format nil "*Customize group: ~a*" (group-name group)))))
     (with-current-buffer buf
       (with-buffer-read-only buf nil
         (erase-buffer buf)
@@ -355,21 +355,21 @@
 (define-command customize () ()
   (customize-group 'lem))
 
-(define-major-mode settings-mode nil
-    (:name "settings"
-     :keymap *settings-keymap*)
+(define-major-mode customize-mode nil
+    (:name "customize"
+     :keymap *customize-keymap*)
   (setf (buffer-read-only-p (current-buffer)) t))
 
-(define-key *settings-keymap* "Return" 'settings-default-action)
-(define-key *settings-keymap* "Tab" 'settings-forward-button)
-(define-key *settings-keymap* "q" 'quit-active-window)
-(define-key *settings-keymap* "M-q" 'quit-active-window)
+(define-key *customize-keymap* "Return" 'customize-default-action)
+(define-key *customize-keymap* "Tab" 'customize-forward-button)
+(define-key *customize-keymap* "q" 'quit-active-window)
+(define-key *customize-keymap* "M-q" 'quit-active-window)
 
-(define-command settings-default-action () ()
+(define-command customize-default-action () ()
   (let ((button (button-at (current-point))))
     (when button (button-action button))))
 
-(define-command settings-forward-button () ()
+(define-command customize-forward-button () ()
   (let ((p (current-point)))
     (or (forward-button p)
         (progn
@@ -399,12 +399,12 @@
 
 (defgroup lem
   ()
-  "Top-level Lem settings."
+  "Top-level Lem customize."
   )
 
 (defgroup files
   ()
-  "Files settings."
+  "Files customize."
   :group lem)
 
 (customize-defvar 'lem-core/commands/file::*find-program-timeout*
@@ -434,7 +434,7 @@
                           :horizontally-above-window))
 (defgroup grep
   ()
-  "Grep settings"
+  "Grep settings."
   :group lem)
 
 (customize-defvar 'lem/grep:*grep-command* 'grep

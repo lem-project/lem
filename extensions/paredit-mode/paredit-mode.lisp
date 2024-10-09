@@ -316,7 +316,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (with-point ((from p))
                (skip-whitespace-backward from)
                (delete-between-points from p)))
-           (forward-char))
+           (character-offset (current-point) 1))
           ((ignore-errors (or (scan-lists p 1 1)) t)
            (with-point ((new-p p))
              (character-offset new-p -1)
@@ -324,7 +324,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
              (with-point ((p new-p))
                (skip-whitespace-backward p)
                (delete-between-points p new-p)
-               (forward-char))))
+               (character-offset (current-point) 1))))
           (t
            (insert-character p c)))))
 

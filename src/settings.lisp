@@ -5,7 +5,8 @@
   (:import-from :lem/button
                 :button-at
                 :button-action
-                :forward-button)
+                :forward-button
+                :insert-button)
   (:export #:customize-variable
            #:customize-group
            #:defcustom
@@ -47,7 +48,6 @@
      :initform (error "Provide the variable default value")
      :documentation "The variable default value")
    (group :initarg :group
-          :accessor group-of
           :type symbol
           :initform (error "Provide the group for the variable")
           :documentation "The group the variable belongs to")
@@ -78,6 +78,9 @@
                   :type (or string null)
                   :initform nil
                   :documentation "The group documentation")))
+
+(defmethod group-of ((var custom-variable))
+  (find-group (slot-value var 'group)))
 
 ;; TODO: perhaps rethink this implementation: variables and groups could form a graph with
 ;; actual references stored in the CLOS object slots (parent, group, members, etc).
@@ -236,15 +239,19 @@
                                    (buffer-end-point buf)))
           (write-string "Customize: " stream)
           (insert-string (current-point) (prin1-to-string (variable-name variable)) :attribute 'document-header1-attribute)
+          (write-string " in: " stream)
+          (insert-button (current-point) (string (group-name (group-of variable)))
+                         (lambda ()
+                           (customize-group (group-of variable)))
+                         :attribute 'document-link-attribute)
           (terpri stream)
           (insert-string (current-point) "Value: " :attribute 'settings-label-attribute)
           (insert-string (current-point) (prin1-to-string (get-variable-value variable)) :attribute 'settings-value-attribute)
           (write-string " " stream)
-          (lem/button:insert-button 
-           (current-point) "[Set]"
-           (lambda ()
-             (customize-variable variable))
-           :attribute 'settings-action-attribute)
+          (insert-button (current-point) "[Set]"
+                         (lambda ()
+                           (customize-variable variable))
+                         :attribute 'settings-action-attribute)
           (write-string " " stream)
           (lem/button:insert-button 
            (current-point) "[Reset]"
@@ -256,11 +263,7 @@
           (insert-string (current-point) (documentation-of variable)
                          :attribute 'settings-docs-attribute)
         
-          (setf (lem-core::buffer-read-only-p buf) t)
-          ;;(lem-core:switch-to-buffer buf)
-          (lem-core:pop-to-buffer buf)
-          ;;(lem-core:change-buffer-mode )
-          )))))
+          (lem-core:switch-to-buffer buf))))))
 
 (defun open-customize-group-buffer (group)
   (let ((buf (make-settings-buffer (format nil "*Customize group: ~a*" (group-name group)))))
@@ -287,10 +290,7 @@
               (terpri stream)
               (write-string (string (group-name subgroup)) stream)))           
                 
-          (setf (lem-core::buffer-read-only-p buf) t)
-          ;;(lem-core:switch-to-buffer buf)
-          (lem-core:pop-to-buffer buf)
-          ;;(lem-core:change-buffer-mode )
+          (lem-core:switch-to-buffer buf)
           )))))
 
 (define-major-mode settings-mode nil

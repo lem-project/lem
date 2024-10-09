@@ -238,37 +238,44 @@
   (let* ((variable (or (and var-designator (ensure-variable var-designator))
                        (prompt-for-variable "Customize variable: ")))
          (buf (make-settings-buffer (format nil "*Customize variable: ~a*" (variable-name variable)))))
-    (with-current-buffer buf
+    (labels ((render-buffer ()
+               (with-current-buffer buf
+                 (with-open-stream (stream (make-buffer-output-stream
+                                            (buffer-end-point buf)))
+                   (write-string "Customize: " stream)
+                   (insert-string (current-point) (prin1-to-string (variable-name variable)) :attribute 'document-header1-attribute)
+                   (write-string " in: " stream)
+                   (insert-button (current-point) (string (group-name (group-of variable)))
+                                  (lambda ()
+                                    (customize-group (group-of variable)))
+                                  :attribute 'document-link-attribute)
+                   (terpri stream)
+                   (insert-string (current-point) "Value: " :attribute 'settings-label-attribute)
+                   (insert-string (current-point) (prin1-to-string (get-variable-value variable)) :attribute 'settings-value-attribute)
+                   (write-string " " stream)
+                   (insert-button (current-point) "[Set]"
+                                  (lambda ()
+                                    (set-variable variable)
+                                    (with-buffer-read-only buf nil 
+                                      (erase-buffer buf)
+                                      (render-buffer)))
+                                  :attribute 'settings-action-attribute)
+                   (write-string " " stream)
+                   (lem/button:insert-button 
+                    (current-point) "[Reset]"
+                    (lambda ()
+                      (reset-variable variable)
+                      (with-buffer-read-only buf nil 
+                        (erase-buffer buf)
+                        (render-buffer)))
+                    :attribute 'settings-action-attribute)
+                   (terpri stream)
+                   (terpri stream)
+                   (insert-string (current-point) (documentation-of variable)
+                                  :attribute 'settings-docs-attribute)))))
       (with-buffer-read-only buf nil 
-        (with-open-stream (stream (make-buffer-output-stream
-                                   (buffer-end-point buf)))
-          (write-string "Customize: " stream)
-          (insert-string (current-point) (prin1-to-string (variable-name variable)) :attribute 'document-header1-attribute)
-          (write-string " in: " stream)
-          (insert-button (current-point) (string (group-name (group-of variable)))
-                         (lambda ()
-                           (customize-group (group-of variable)))
-                         :attribute 'document-link-attribute)
-          (terpri stream)
-          (insert-string (current-point) "Value: " :attribute 'settings-label-attribute)
-          (insert-string (current-point) (prin1-to-string (get-variable-value variable)) :attribute 'settings-value-attribute)
-          (write-string " " stream)
-          (insert-button (current-point) "[Set]"
-                         (lambda ()
-                           (set-variable variable))
-                         :attribute 'settings-action-attribute)
-          (write-string " " stream)
-          (lem/button:insert-button 
-           (current-point) "[Reset]"
-           (lambda ()
-             (reset-variable variable))
-           :attribute 'settings-action-attribute)
-          (terpri stream)
-          (terpri stream)
-          (insert-string (current-point) (documentation-of variable)
-                         :attribute 'settings-docs-attribute)
-        
-          (switch-to-buffer buf))))))
+        (render-buffer))
+      (switch-to-buffer buf))))
 
 (defun open-customize-group-buffer (group)
   (let ((buf (make-settings-buffer (format nil "*Customize group: ~a*" (group-name group)))))

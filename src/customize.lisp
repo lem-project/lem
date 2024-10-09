@@ -1,4 +1,10 @@
+;; A customization system for Lem based on Emacs
 ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Customization.html
+;; Author: Mariano Montone <marianomontone@gmail.com>
+
+;; TODO:
+;; - Better lisp evaluation prompt (use correct package, etc).
+;; - Adjustments to UI. Strip long documentation strings, etc.
 
 (defpackage :lem/customize
   (:use :cl :lem-core)

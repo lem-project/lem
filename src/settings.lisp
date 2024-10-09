@@ -158,6 +158,12 @@
 (defun reset-variable-value (var)
   (set-variable-value var (variable-default var)))
 
+(defun list-variables ()
+  (alexandria:hash-table-values *custom-vars*))
+
+(defun list-groups ()
+  (alexandria:hash-table-values *custom-groups*))
+
 (defgeneric %prompt-for-type-instance (type-discriminator type-arguments prompt &rest args))
 
 (defmethod %prompt-for-type-instance ((type (eql 'string)) type-args prompt &rest args)
@@ -374,3 +380,11 @@
         (progn
           (buffer-start p)
           (forward-button p)))))
+
+(defun load-variables ()
+  "Load the value of variables from disk."
+  (dolist (var (list-variables))
+    (load-variable var)))
+
+;; Load the value of saved variables after initialization
+(lem/common/hooks:add-hook lem-core:*after-init-hook* #'load-variables)

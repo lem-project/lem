@@ -71,7 +71,6 @@
          :initform (error "Provide the group name")
          :documentation "The group name")
    (group :initarg :group
-          :accessor group-of
           :type (or null symbol)
           :initform nil
           :documentation "The parent group of this group. If it is NIL, then this is a top-level group.")
@@ -82,20 +81,23 @@
                   :documentation "The group documentation")))
 
 (defmethod group-of ((var custom-variable))
-  (find-group (slot-value var 'group)))
+  (find-group (slot-value var 'group) nil))
+
+(defmethod group-of ((group custom-group))
+  (find-group (slot-value group 'group) nil))
 
 ;; TODO: perhaps rethink this implementation: variables and groups could form a graph with
 ;; actual references stored in the CLOS object slots (parent, group, members, etc).
 (defun group-variables (group)
   (remove-if-not (lambda (var)
-                   (eql (group-of var) (group-name group)))
+                   (eq (group-of var) group))
                  (alexandria:hash-table-values *custom-vars*)))
 
 ;; TODO: perhaps rethink this implementation: variables and groups could form a graph with
 ;; actual references stored in the CLOS object slots (parent, group, members, etc).
 (defun subgroups (group)
   (remove-if-not (lambda (g)
-                   (eql (group-of g) (group-name group)))
+                   (eq (group-of g) group))
                  (alexandria:hash-table-values *custom-groups*)))
 
 (defmacro defcustom (symbol default doc &rest args)
@@ -239,58 +241,73 @@
                        (prompt-for-variable "Customize variable: ")))
          (buf (make-settings-buffer (format nil "*Customize variable: ~a*" (variable-name variable)))))
     (labels ((render-buffer ()
-               (with-current-buffer buf
-                 (with-open-stream (stream (make-buffer-output-stream
-                                            (buffer-end-point buf)))
-                   (write-string "Customize: " stream)
-                   (insert-string (current-point) (prin1-to-string (variable-name variable)) :attribute 'document-header1-attribute)
-                   (write-string " in: " stream)
-                   (insert-button (current-point) (string (group-name (group-of variable)))
-                                  (lambda ()
-                                    (customize-group (group-of variable)))
-                                  :attribute 'document-link-attribute)
-                   (terpri stream)
-                   (insert-string (current-point) "Value: " :attribute 'settings-label-attribute)
-                   (insert-string (current-point) (prin1-to-string (get-variable-value variable)) :attribute 'settings-value-attribute)
-                   (write-string " " stream)
-                   (insert-button (current-point) "[Set]"
-                                  (lambda ()
-                                    (set-variable variable)
-                                    (with-buffer-read-only buf nil 
-                                      (erase-buffer buf)
-                                      (render-buffer)))
-                                  :attribute 'settings-action-attribute)
-                   (write-string " " stream)
-                   (lem/button:insert-button 
-                    (current-point) "[Reset]"
-                    (lambda ()
-                      (reset-variable variable)
-                      (with-buffer-read-only buf nil 
-                        (erase-buffer buf)
-                        (render-buffer)))
-                    :attribute 'settings-action-attribute)
-                   (terpri stream)
-                   (terpri stream)
-                   (insert-string (current-point) (documentation-of variable)
-                                  :attribute 'settings-docs-attribute)))))
-      (with-buffer-read-only buf nil 
-        (render-buffer))
+               (with-buffer-read-only buf nil 
+                 (erase-buffer buf)
+                 (with-current-buffer buf
+                   (with-open-stream (stream (make-buffer-output-stream
+                                              (buffer-end-point buf)))
+                     (write-string "Customize: " stream)
+                     (insert-string (current-point) (prin1-to-string (variable-name variable)) :attribute 'document-header1-attribute)
+                     (write-string " in: " stream)
+                     (insert-button (current-point) (string (group-name (group-of variable)))
+                                    (lambda ()
+                                      (customize-group (group-of variable)))
+                                    :attribute 'document-link-attribute)
+                     (terpri stream)
+                     (insert-string (current-point) "Value: " :attribute 'settings-label-attribute)
+                     (insert-button (current-point) 
+                                    (prin1-to-string (get-variable-value variable))
+                                    (lambda ()
+                                      (lem-lisp-mode/inspector:lisp-inspect (prin1-to-string (variable-name variable))))
+                                    :attribute 'settings-value-attribute)
+                     (write-string " " stream)
+                     (insert-button (current-point) "[Set]"
+                                    (lambda ()
+                                      (set-variable variable)
+                                      (render-buffer))
+                                    :attribute 'settings-action-attribute)
+                     (write-string " " stream)
+                     (lem/button:insert-button 
+                      (current-point) "[Reset]"
+                      (lambda ()
+                        (reset-variable variable)
+                        (render-buffer))
+                      :attribute 'settings-action-attribute)
+                     (terpri stream)
+                     (terpri stream)
+                     (insert-string (current-point) (documentation-of variable)
+                                    :attribute 'settings-docs-attribute))))))
+      (render-buffer)
       (switch-to-buffer buf))))
 
-(defun open-customize-group-buffer (group)
-  (let ((buf (make-settings-buffer (format nil "*Customize group: ~a*" (group-name group)))))
+(define-command customize-group (group-designator) (:universal-nil)
+  (let* ((group (or (and group-designator (ensure-group group-designator))
+                    (prompt-for-group "Customize group: ")))
+         (buf (make-settings-buffer (format nil "*Customize group: ~a*" (group-name group)))))
     (with-current-buffer buf
-      (with-buffer-read-only buf nil 
+      (with-buffer-read-only buf nil
+        (erase-buffer buf)
         (with-open-stream (stream (make-buffer-output-stream
                                    (buffer-end-point buf)))
           (write-string "Customize group: " stream)
-          (prin1 (group-name group) stream)
+          (insert-string (current-point) (string (group-name group))
+                         :attribute 'document-bold-attribute)
+          (when (group-of group)
+            (write-string " in: " stream)
+            (insert-button (current-point) (string (group-name (group-of group)))
+                           (lambda ()
+                             (customize-group (group-of group)))
+                           :attribute 'document-link-attribute))
           (terpri stream) (terpri stream)
           (write-string (documentation-of group) stream)
           (terpri stream) 
           (dolist (var (group-variables group))
             (terpri stream)
-            (prin1 (variable-name var) stream)
+            (insert-button (current-point) 
+                           (string (variable-name var))
+                           (lambda ()
+                             (customize-variable var))
+                           :attribute 'document-link-attribute)
             (write-string " - " stream)
             (write-string (documentation-of var) stream))
 
@@ -300,10 +317,13 @@
             (terpri stream)
             (dolist (subgroup (subgroups group))
               (terpri stream)
-              (write-string (string (group-name subgroup)) stream)))           
+              (insert-button (current-point) 
+                             (string (group-name subgroup))
+                             (lambda ()
+                               (customize-group subgroup))
+                             :attribute 'document-link-attribute))))))
                 
-          (switch-to-buffer buf)
-          )))))
+    (switch-to-buffer buf)))
 
 (define-major-mode settings-mode nil
     (:name "settings"

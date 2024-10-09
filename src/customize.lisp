@@ -64,6 +64,10 @@
                   :initform nil
                   :documentation "The variable documentation")))
 
+(defmethod print-object ((var custom-variable) stream)
+  (print-unreadable-object (var stream :type t :identity t)
+    (format stream "~s" (variable-name var))))
+
 (defclass custom-group ()
   ((name :initarg :name
          :accessor group-name
@@ -79,6 +83,10 @@
                   :type (or string null)
                   :initform nil
                   :documentation "The group documentation")))
+
+(defmethod print-object ((group custom-group) stream)
+  (print-unreadable-object (group stream :type t :identity t)
+    (format stream "~s" (group-name group))))
 
 (defmethod group-of ((var custom-variable))
   (find-group (slot-value var 'group) nil))

@@ -172,7 +172,8 @@
 (defun list-groups ()
   (alexandria:hash-table-values *custom-groups*))
 
-(defgeneric %prompt-for-type-instance (type-discriminator type-arguments prompt &rest args))
+(defgeneric %prompt-for-type-instance (type-discriminator type-arguments prompt &rest args)
+  (:documentation "This is the generic-function to extend to support more customization types."))
 
 (defmethod %prompt-for-type-instance ((type (eql 'string)) type-args prompt &rest args)
   (prompt-for-string prompt :initial-value (getf args :initial-value)))
@@ -217,7 +218,8 @@
 (define-command set-variable (var-designator) (:universal-nil)
   (let* ((variable (or (and var-designator (ensure-variable var-designator))
                        (prompt-for-variable "Customize variable: ")))
-         (value (prompt-for-type-instance (variable-type variable) "Value: ")))
+         (value (prompt-for-type-instance (variable-type variable) "Value: "
+                                          :initial-value (get-variable-value variable))))
     (set-variable-value variable value)))
 
 (defun prompt-for-group (prompt &optional group-names)
@@ -308,10 +310,12 @@
                       (lambda ()
                         (save-variable variable))
                       :attribute 'customize-action-attribute)
-                     (terpri stream)
-                     (terpri stream)
-                     (insert-string (current-point) (documentation-of variable)
-                                    :attribute 'customize-docs-attribute))))))
+                     (when (documentation-of variable)
+                       (terpri stream)
+                       (terpri stream)
+                       (insert-string (current-point) (documentation-of variable)
+                                      :attribute 'customize-docs-attribute))
+                     )))))
       (render-buffer)
       (switch-to-buffer buf))))
 
@@ -343,8 +347,9 @@
                            (lambda ()
                              (customize-variable var))
                            :attribute 'document-link-attribute)
-            (write-string " - " stream)
-            (write-string (documentation-of var) stream))
+            (when (documentation-of var)
+              (write-string " - " stream)
+              (write-string (documentation-of var) stream)))
 
           (when (subgroups group)
             (terpri stream) (terpri stream)
@@ -439,7 +444,8 @@
                           :vertically-adjacent-window
                           :vertically-adjacent-window-dynamic
                           :horizontally-adjacent-window
-                          :horizontally-above-window))
+                          :horizontally-above-window)
+                  :documentation )
 (defgroup grep
   ()
   "Grep settings."

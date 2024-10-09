@@ -202,7 +202,7 @@
   (let* ((variable (or (and var-designator (ensure-variable var-designator))
                        (prompt-for-variable "Customize variable: ")))
          (value (prompt-for-type-instance (variable-type variable) "Value: ")))
-      (set-variable-value variable value)))
+    (set-variable-value variable value)))
 
 (defun prompt-for-group (prompt &optional group-names)
   (let* ((actual-group-names (or group-names

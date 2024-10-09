@@ -1,10 +1,12 @@
-;; A customization system for Lem based on Emacs
+;; A customization system for Lem inspired by Emacs'es
 ;; https://www.gnu.org/software/emacs/manual/html_node/elisp/Customization.html
 ;; Author: Mariano Montone <marianomontone@gmail.com>
 
 ;; TODO:
 ;; - Better lisp evaluation prompt (use correct package, etc).
 ;; - Adjustments to UI. Strip long documentation strings, etc.
+;; - Documentation strings. For commands specially.
+;; - Implement apropos.
 
 (defpackage :lem/customize
   (:use :cl :lem-core)
@@ -15,11 +17,13 @@
                 :insert-button)
   (:import-from :lem-core/commands/window
                 :quit-active-window)
-  (:export #:customize-variable
+  (:export #:customize
+           #:customize-variable
            #:customize-group
+           #:reset-variable
+           #:set-variable
            #:defcustom
            #:defgroup
-           #:set-variable
            #:find-variable
            #:find-group))
 

@@ -1,14 +1,14 @@
-(uiop:define-package :lem-copilot/login
+(uiop:define-package :lem-copilot/sign-in
   (:use :cl :lem)
   (:local-nicknames (:lem-copilot :lem-copilot)
                     (:client :lem-copilot/client)
                     (:copilot :lem-copilot))
-  (:export :copilot-login))
-(in-package :lem-copilot/login)
+  (:export :copilot-signin))
+(in-package :lem-copilot/sign-in)
 
 (define-condition already-sign-in (editor-error) ())
 
-(defvar *login-message* nil)
+(defvar *sign-in-message* nil)
 
 (defun make-verification-buffer (user-code verification-uri)
   (let* ((buffer (make-buffer "*GitHub Copilot Verification*" :temporary t))
@@ -24,23 +24,23 @@
     (buffer-start point)
     buffer))
 
-(defun start-login (user-code verification-uri)
-  (setf *login-message* (display-popup-message
+(defun start-sign-in (user-code verification-uri)
+  (setf *sign-in-message* (display-popup-message
                          (make-verification-buffer user-code verification-uri)
                          :style '(:gravity :center)
                          :timeout nil))
-  (add-hook *editor-abort-hook* 'abort-login))
+  (add-hook *editor-abort-hook* 'abort-sign-in))
 
-(defun abort-login ()
-  (delete-login-message)
-  (remove-hook *editor-abort-hook* 'abort-login))
+(defun abort-sign-in ()
+  (delete-sign-in-message)
+  (remove-hook *editor-abort-hook* 'abort-sign-in))
 
-(defun delete-login-message ()
-  (when *login-message*
-    (delete-popup-message *login-message*)
-    (setf *login-message* nil)))
+(defun delete-sign-in-message ()
+  (when *sign-in-message*
+    (delete-popup-message *sign-in-message*)
+    (setf *sign-in-message* nil)))
 
-(define-command copilot-login () ()
+(define-command copilot-signin () ()
   (unless (copilot::installed-copilot-server-p)
     (copilot::copilot-install-server))
   (copilot::setup-client-async
@@ -53,7 +53,7 @@
        (when (equal status "AlreadySignedIn")
          (error 'already-sign-in :message (format nil "Already sign in as ~A" user)))
        (copy-to-clipboard user-code)
-       (start-login user-code verification-uri)
+       (start-sign-in user-code verification-uri)
        (open-external-file verification-uri)
        (redraw-display)
        (let ((finished nil))
@@ -65,12 +65,12 @@
                                     (assert (equal "OK" (gethash "status" response)))
                                     (show-message (format nil "Authenticated as ~A" (gethash "user" response))
                                                   :style '(:gravity :center))
-                                    (delete-login-message)
+                                    (delete-sign-in-message)
                                     (setf finished t)
                                     (redraw-display)))))
          (handler-bind ((editor-abort (lambda (c)
                                         (declare (ignore c))
-                                        (delete-login-message))))
+                                        (delete-sign-in-message))))
 
            (loop :until finished
                  :do (sit-for 1)))

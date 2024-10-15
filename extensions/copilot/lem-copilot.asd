@@ -5,6 +5,6 @@
                (:file "client")
                (:file "copilot")
                (:file "install")
-               (:file "login")
+               (:file "sign-in")
                (:file "languages")
                (:file "test-commands")))

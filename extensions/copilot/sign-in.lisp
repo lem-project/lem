@@ -42,7 +42,7 @@
 
 (define-command copilot-signin () ()
   (unless (copilot::installed-copilot-server-p)
-    (copilot::copilot-install-server))
+    (lem-copilot/install:copilot-install-server))
   (copilot::setup-client-async
    (lambda ()
      (let* ((response (client:sign-in-initiate (copilot::client)))

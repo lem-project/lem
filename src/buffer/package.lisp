@@ -191,6 +191,7 @@
    :syntax-open-paren-char-p
    :syntax-closed-paren-char-p
    :syntax-string-quote-char-p
+   :syntax-equal-paren-p
    :syntax-escape-char-p
    :syntax-expr-prefix-char-p
    :syntax-skip-expr-prefix-forward

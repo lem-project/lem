@@ -10,14 +10,10 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-mailbox.git")
   :version "git-12d629541da440fadf771b0225a051ae65fa342a"))
-("lem-base16-themes" .
- (:class qlot/source/git:source-git
-  :initargs (:remote-url "https://github.com/lem-project/lem-base16-themes.git")
-  :version "git-e09618e2f3a4ba9977167d3ea90123ecabd884ab"))
 ("async-process" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/async-process.git")
-  :version "git-9690530fc92b59636d9f17d821afa7697e7c8ca4"))
+  :version "git-8067007e283745b94a36a51320b41b65ac296e24"))
 ("sblint" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/sblint.git")
@@ -41,7 +37,7 @@
 ("jsonrpc" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/jsonrpc.git")
-  :version "git-62e25f0e0059e57e6ab4abe677e466a76052c439"))
+  :version "git-a43dd933838bb9596a2bf40e821af0bafd3d5356"))
 ("dissect" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/Shinmera/dissect.git")

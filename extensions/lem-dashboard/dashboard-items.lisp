@@ -32,9 +32,9 @@
 
 (defmethod draw-dashboard-item ((item dashboard-url) point)
   (button:insert-button point 
-                            (create-centered-string (display-text item))
-                            (lambda () (open-external-file (url item)))
-                            :attribute (item-attribute item)))
+                        (create-centered-string (display-text item))
+                        (lambda () (open-external-file (url item)))
+                        :attribute (item-attribute item)))
 
 ;; Working dir
 (defclass dashboard-working-dir (dashboard-item)
@@ -79,9 +79,9 @@
 
 (defmethod draw-dashboard-item ((item dashboard-command) point)
   (button:insert-button point 
-                            (create-centered-string (display-text item))
-                            (lambda () (funcall (action-command item)))
-                            :attribute (item-attribute item)))
+                        (create-centered-string (display-text item))
+                        (lambda () (funcall (action-command item)))
+                        :attribute (item-attribute item)))
 
 ;; Recent projects
 (defclass dashboard-recent-projects (dashboard-item)
@@ -90,7 +90,8 @@
   (:default-initargs
    :item-attribute 'document-text-attribute
    :action (lambda ()
-             (let ((project (str:trim (line-string (current-point)))))
+             (let* ((point (current-point))
+                    (project (text-property-at point :project-path)))
                (when project
                  (uiop:with-current-directory (project)
                    (project:project-find-file project)))))))
@@ -111,12 +112,14 @@
     (let* ((projects (reverse (project:saved-projects)))
            (display-projects (subseq projects 0 (min (project-count item) (length projects)))))
       (when display-projects
-          (let* ((longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) display-projects))
-                 (max-length (length longest-project))
-                 (left-padding (floor (- (window-width (current-window)) max-length) 2)))
-            (loop for project in display-projects
-                  do (insert-string point (format nil "~v@{~A~:*~}" left-padding " "))
-                     (insert-string point (format nil "~A~%" project))))))))
+        (let* ((longest-project (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) display-projects))
+               (max-length (length longest-project))
+               (left-padding (floor (- (window-width (current-window)) max-length) 2)))
+          (loop for project in display-projects
+                do (let ((line-start (copy-point point :temporary)))
+                     (insert-string point (str:fit left-padding " "))
+                     (insert-string point (format nil "~A~%" project))
+                     (put-text-property line-start point :project-path project))))))))
 
 ;; Recent files
 (defclass dashboard-recent-files (dashboard-item)
@@ -125,7 +128,8 @@
   (:default-initargs
    :item-attribute 'document-text-attribute
    :action (lambda ()
-             (let ((file (str:trim (line-string (current-point)))))
+             (let* ((point (current-point))
+                    (file (text-property-at point :file-path)))
                (when file
                  (find-file file))))))
 
@@ -145,9 +149,11 @@
     (insert-character point #\Newline)
     (let ((display-files (subseq recent-files 0 (min (file-count item) (length recent-files)))))
       (when display-files
-          (let* ((longest-file (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) display-files))
-                 (max-length (length longest-file))
-                 (left-padding (floor (- (window-width (current-window)) max-length) 2)))
-            (loop for file in display-files
-                  do (insert-string point (str:fit left-padding " "))
-                     (insert-string point (format nil "~A~%" file))))))))
+        (let* ((longest-file (reduce #'(lambda (a b) (if (> (length a) (length b)) a b)) display-files))
+               (max-length (length longest-file))
+               (left-padding (floor (- (window-width (current-window)) max-length) 2)))
+          (loop for file in display-files
+                do (let ((line-start (copy-point point :temporary)))
+                     (insert-string point (str:fit left-padding " "))
+                     (insert-string point (format nil "~A~%" file))
+                     (put-text-property line-start point :file-path file))))))))

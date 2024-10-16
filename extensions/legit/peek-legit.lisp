@@ -334,6 +334,12 @@ Notes:
         (window-see (current-window))))))
 
 (defmethod execute :after ((mode peek-legit-mode) command argument)
+  "After a command is run in this mode, apply an effect.
+
+  In the case of `peek-legit-mode', it is run after `peek-legit-next',
+  in order to show the file content on the right window.
+
+  The method is to subclass for all legit modes."
   (when (eq (current-window) *peek-window*)
     (show-matched-line)))
 
@@ -348,7 +354,8 @@ Notes:
 (define-command peek-legit-select () ()
   (alexandria:when-let ((path (get-matched-file)))
     (%legit-quit)
-    (with-current-project ()
+    (with-current-project (vcs)
+      (declare (ignore vcs))
       (let ((full-path (merge-pathnames path (uiop:getcwd))))
         (if (or (uiop:file-exists-p full-path)
                 (uiop:directory-exists-p full-path))
@@ -356,6 +363,9 @@ Notes:
             (editor-error "Path ~a doesn't exist." full-path))))))
 
 (define-command peek-legit-next () ()
+  "Find the next line with a :move-marker text property.
+
+  After finding it, our :after method of `execute' is run, to apply an effect, showing the new diff on the right."
   (next-move-point (current-point)))
 
 (define-command peek-legit-next-header () ()
@@ -372,7 +382,7 @@ Notes:
                          (point (funcall stage)))
     ;; Update the buffer, to see that a staged file goes to the staged section.
     ;; This calls git again and refreshes everything.
-    (uiop:symbol-call :lem/legit :legit-status)
+    (lem/legit:legit-status)
     point))
 
 (define-command peek-legit-unstage-file () ()
@@ -380,15 +390,16 @@ Notes:
                          (point (funcall unstage)))
     ;; Update the buffer, to see that a staged file goes to the staged section.
     ;; This calls git again and refreshes everything.
-    (uiop:symbol-call :lem/legit :legit-status)
-                        point))
+    (lem/legit:legit-status)
+    point))
+
 (define-command peek-legit-discard-file () ()
   "Discard the changes in this file. The file should not be stage."
   (alexandria:when-let* ((fn (get-discard-file-function (buffer-point (window-buffer *peek-window*))))
                          (point (funcall fn)))
     ;; Update the buffer.
     ;; This calls git again and refreshes everything.
-    (uiop:symbol-call :lem/legit :legit-status)
+    (lem/legit:legit-status)
     point))
 
 (defun %legit-quit ()

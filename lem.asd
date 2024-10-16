@@ -255,12 +255,14 @@
                "lem-erlang-mode"
                "lem-documentation-mode"
                "lem-elisp-mode"
+               "lem-terraform-mode"
                "lem-markdown-mode"
                "lem-color-preview"
                "lem-lua-mode"
                "lem-terminal"
                "lem-legit"
                "lem-dashboard"
+               "lem-copilot"
                "lem-multiple-cursors"))
 
 (defsystem "lem/executable"

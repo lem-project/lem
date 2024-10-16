@@ -194,6 +194,7 @@
     (check-initargs instance)
     instance))
 
+#+(or)
 (defmacro define-enum (name (&rest fields) &body options)
   (declare (ignore options))
   (alexandria:with-unique-names (f x anon-name)
@@ -208,6 +209,16 @@
                  :for variable := (intern (format nil "~A-~A" name field-name))
                  :collect `(defparameter ,variable ,value))
          ',name))))
+
+(defmacro define-enum (name (&rest fields) &body options)
+  (declare (ignore options))
+  `(progn
+     (deftype ,name ()
+       t)
+     ,@(loop :for (field-name value) :in fields
+             :for variable := (intern (format nil "~A-~A" name field-name))
+             :collect `(defparameter ,variable ,value))
+     ',name))
 
 (defmacro define-type-alias (name type &body options)
   (let ((doc (second (assoc :documentation options))))

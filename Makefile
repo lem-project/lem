@@ -85,3 +85,4 @@ lint:
 	.qlot/bin/sblint extensions/welcome/lem-welcome.asd
 	.qlot/bin/sblint extensions/xml-mode/lem-xml-mode.asd
 	.qlot/bin/sblint extensions/yaml-mode/lem-yaml-mode.asd
+	.qlot/bin/sblint extensions/ruby-mode/lem-ruby-mode.asd

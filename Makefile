@@ -65,6 +65,7 @@ lint:
 	.qlot/bin/sblint extensions/lua-mode/lem-lua-mode.asd
 	.qlot/bin/sblint extensions/makefile-mode/lem-makefile-mode.asd
 	.qlot/bin/sblint extensions/markdown-mode/lem-markdown-mode.asd
+	.qlot/bin/sblint extensions/multiple-cursors/lem-multiple-cursors.asd
 	.qlot/bin/sblint extensions/nim-mode/lem-nim-mode.asd
 	.qlot/bin/sblint extensions/ocaml-mode/lem-ocaml-mode.asd
 	.qlot/bin/sblint extensions/paredit-mode/lem-paredit-mode.asd

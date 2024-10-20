@@ -32,7 +32,19 @@
 
 (defun clack-handler (env)
   (unless (wsd:websocket-p env)
-    '(200 () ("ok"))))
+    (let ((path (getf env :path-info)))
+      (cond ((string= "/" path)
+             `(200 (:content-type "text/html")
+                   ,(asdf:system-relative-pathname :lem-server
+                                                    #p"frontend/dist/index.html")))
+            ((alexandria:starts-with-subseq "/assets/" path)
+             `(200 (:content-type "application/javascript")
+                   ,(asdf:system-relative-pathname :lem-server
+                                                   (format nil
+                                                           "frontend/dist/~A"
+                                                           (string-left-trim "/" path)))))
+            (t
+             '(200 () ("ok")))))))
 
 ;;;
 (defclass stdio-server-runner (server-runner)

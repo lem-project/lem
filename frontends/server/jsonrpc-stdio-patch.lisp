@@ -1,7 +1,7 @@
 (in-package :jsonrpc/transport/stdio)
 
 (defmethod send-message-using-transport ((transport stdio-transport) connection message)
-  (let ((json (trivial-utf-8:string-to-utf-8-bytes
+  (let ((json (babel:string-to-octets
                (with-output-to-string (s)
                  (yason:encode message s))))
         (stream (connection-socket connection)))

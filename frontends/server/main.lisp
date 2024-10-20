@@ -27,7 +27,12 @@
   (jsonrpc:server-listen server
                          :mode :websocket
                          :port (websocket-server-runner-port runner)
-                         :host (websocket-server-runner-host runner)))
+                         :host (websocket-server-runner-host runner)
+                         :clack-handler 'clack-handler))
+
+(defun clack-handler (env)
+  (unless (wsd:websocket-p env)
+    '(200 () ("ok"))))
 
 ;;;
 (defclass stdio-server-runner (server-runner)

@@ -17,9 +17,3 @@
                (:file "view")
                (:file "mouse")
                (:file "main")))
-
-(defsystem "lem-server/executable"
-  :build-operation program-op
-  :build-pathname "../lem-server"
-  :entry-point "lem-server:main"
-  :depends-on ("lem-server"))

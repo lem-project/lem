@@ -12,6 +12,10 @@ sdl2-ncurses:
 	qlot install
 	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2-ncurses.lisp
 
+server:
+	qlot install
+	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-server.lisp
+
 install:
 	qlot install
 	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2-ncurses.lisp

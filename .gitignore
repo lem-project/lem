@@ -27,7 +27,7 @@ GIT_IGNORE.*
 
 lem
 lem-ncurses
-lem-rpc
+lem-server
 
 *.abcl
 build/*

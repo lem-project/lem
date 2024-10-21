@@ -1,11 +1,11 @@
 ("quicklisp" .
  (:class qlot/source/dist:source-dist
   :initargs (:distribution "https://beta.quicklisp.org/dist/quicklisp.txt" :%version :latest)
-  :version "2023-10-21"))
+  :version "2024-10-12"))
 ("micros" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/micros.git")
-  :version "git-9fc7f1e5b0dbf1b9218a3f0aca7ed46e90aa86fd"))
+  :version "git-af94fe5d6688f67a092f604765fb706ebae44e99"))
 ("lem-mailbox" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-mailbox.git")
@@ -29,7 +29,7 @@
 ("cl-sdl2-ttf" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2-ttf.git")
-  :version "git-e61bb2119003d8ae7792d38aa11f7728d3ee5a00"))
+  :version "git-f43344efe89cf9ce509e6ce4f7303ebb2ff14434"))
 ("cl-sdl2-image" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2-image.git")
@@ -37,7 +37,7 @@
 ("jsonrpc" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/jsonrpc.git")
-  :version "git-a43dd933838bb9596a2bf40e821af0bafd3d5356"))
+  :version "git-2af1e0fad429ee8c706b86c4a853248cdd1be933"))
 ("dissect" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/Shinmera/dissect.git")

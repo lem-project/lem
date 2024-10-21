@@ -443,7 +443,8 @@ Move the cursor to the first non-blank character of the line."
          (t
           (insert-character (current-point) #\Newline)))
        (indent-line (current-point)))
-      (t (skip-whitespace-backward end)
+      (t (unless (eql (character-at (current-point)) #\Space)
+           (skip-whitespace-backward end))
          (vi-delete beg end type))))
   (change-state 'insert))
 

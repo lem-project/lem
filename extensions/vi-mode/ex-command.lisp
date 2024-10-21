@@ -10,15 +10,20 @@
                 :execute-set-command)
   (:import-from :lem-vi-mode/utils
                 :change-directory*
-                :expand-filename-modifiers))
+                :expand-filename-modifiers)
+  (:export :*edit-buffer-directory*))
 (in-package :lem-vi-mode/ex-command)
+
+(defvar *edit-buffer-directory* nil)
 
 (defun ex-edit (filename force)
   (if (string= filename "")
       (lem:revert-buffer force)
       (with-jumplist
         (lem:find-file (merge-pathnames (expand-filename-modifiers filename)
-                                        (uiop:getcwd))))))
+                                        (if *edit-buffer-directory*
+                                            (lem:buffer-directory)
+                                            (uiop:getcwd)))))))
 
 (defun ex-write (range filename touch)
   (case (length range)

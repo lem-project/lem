@@ -433,15 +433,18 @@ Move the cursor to the first non-blank character of the line."
   (when (point= beg end)
     (return-from vi-change))
   (let ((end-with-newline (char= (character-at end -1) #\Newline)))
-    (vi-delete beg end type)
-    (when (eq type :line)
-      (cond
-        (end-with-newline
-         (insert-character (current-point) #\Newline)
-         (character-offset (current-point) -1))
-        (t
-         (insert-character (current-point) #\Newline)))
-      (indent-line (current-point))))
+    (case type
+      (:line
+       (vi-delete beg end type)
+       (cond
+         (end-with-newline
+          (insert-character (current-point) #\Newline)
+          (character-offset (current-point) -1))
+         (t
+          (insert-character (current-point) #\Newline)))
+       (indent-line (current-point)))
+      (t (skip-whitespace-backward end)
+         (vi-delete beg end type))))
   (change-state 'insert))
 
 (define-operator vi-change-whole-line (beg end) ("<r>")

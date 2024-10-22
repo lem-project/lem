@@ -336,11 +336,34 @@
   ;; TODO
   1)
 
-(defmethod lem-if:js-eval ((jsonrpc jsonrpc) view code)
-  (notify (lem:implementation)
-          "js-eval"
-          (hash "viewInfo" view
-                "code" code)))
+(defmethod lem-if:js-eval ((jsonrpc jsonrpc) view code &key wait)
+  (let ((params (hash "viewInfo" view "code" code)))
+    (if wait
+        (let ((mailbox (sb-concurrency:make-mailbox :name "js-eval-mailbox")))
+          (apply #'values
+                 (loop :for connection
+                       :in (jsonrpc/server::server-client-connections
+                            (jsonrpc-server (lem:implementation)))
+                       :do (jsonrpc:call-async-to
+                            (jsonrpc-server (lem:implementation))
+                            connection
+                            "js-eval"
+                            params
+                            (lambda (res)
+                              (sb-concurrency:send-message mailbox (list t res)))
+                            (lambda (message code)
+                              (sb-concurrency:send-message
+                               mailbox
+                               (list nil
+                                     (make-condition 'jsonrpc/errors:jsonrpc-callback-error
+                                                     :message message
+                                                     :code code)))))))
+          (destructuring-bind (ok value)
+              (sb-concurrency:receive-message mailbox)
+            (if ok
+                value
+                (error value))))
+        (notify (lem:implementation) "js-eval" params))))
 
 (lem:add-hook lem:*switch-to-buffer-hook* 'on-switch-to-buffer)
 

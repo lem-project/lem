@@ -18,7 +18,8 @@
     (change-class buffer 'html-buffer :html html)
     buffer))
 
-(defun js-eval (window code)
+(defun js-eval (window code &key (wait nil))
   (lem-if:js-eval (implementation)
                   (window-view window)
-                  code))
+                  code
+                  :wait wait))

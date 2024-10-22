@@ -292,7 +292,7 @@ class BaseSurface {
   }
 
   evalIn(code) {
-    eval(code);
+    return eval(code);
   }
 }
 
@@ -438,7 +438,7 @@ class HTMLSurface extends BaseSurface {
   }
 
   evalIn(code) {
-    this.iframe.contentWindow.eval(code);
+    return this.iframe.contentWindow.eval(code);
   }
 }
 
@@ -707,7 +707,7 @@ class View {
   }
 
   evalIn(code) {
-    this.mainSurface.evalIn(code);
+    return this.mainSurface.evalIn(code);
   }
 }
 
@@ -1205,6 +1205,10 @@ export class Editor {
 
   jsEval({ viewInfo: { id }, code }) {
     const view = this.findViewById(id);
-    view.evalIn(code);
+    const result = view.evalIn(code);
+    if (result) {
+      return result.toString();
+    }
+    return result;
   }
 }

@@ -112,7 +112,7 @@
     (notify jsonrpc "bulk" argument)))
 
 (defun handle-login (jsonrpc logged-in-callback params)
-  (pdebug "ready: ~A ~A" jsonrpc/connection:*connection* (pretty-json params))
+  (log:info "ready: ~A ~A" jsonrpc/connection:*connection* (pretty-json params))
   (with-error-handler ()
     (let* ((size (gethash "size" params))
            (foreground (gethash "foreground" params))
@@ -135,7 +135,7 @@
                             "background" (lem-core::background-color)
                             "size" (hash "width" (lem:display-width)
                                          "height" (lem:display-height)))))
-        (pdebug "login response: ~A" (pretty-json response))
+        (log:info "login response: ~A" (pretty-json response))
         response))))
 
 (defun login (jsonrpc logged-in-callback)
@@ -143,7 +143,7 @@
     (handle-login jsonrpc logged-in-callback params)))
 
 (defun redraw (args)
-  (pdebug "redraw: ~A" (pretty-json args))
+  (log:info "redraw: ~A" (pretty-json args))
   (with-error-handler ()
     (let ((size (and args (gethash "size" args))))
       (when size
@@ -636,7 +636,7 @@
                  :do (lem:send-event key)))
           (otherwise (error "unexpected input kind: ~D" kind))))
     (error (e)
-      (pdebug "input-callback: ~A ~A" e
+      (log:info "input-callback: ~A ~A" e
               (with-output-to-string (stream)
                 (let ((stream (yason:make-json-output-stream stream)))
                   (yason:encode args stream)))))))

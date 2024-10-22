@@ -679,6 +679,9 @@
      (vom:config t :info)
      (cond ((string= mode "websocket")
             (check-port-specified port)
+            (format t
+                    "~%~4Topen http://localhost:~D/ in your browser~2%"
+                    port)
             (run-websocket-server :port port
                                   :hostname host))
            ((string= mode "stdio")

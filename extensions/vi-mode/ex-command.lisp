@@ -54,6 +54,14 @@
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))
 
+(define-ex-command "^wa(?:ll)$" (range argument)
+  (declare (ignore range argument))
+  (ex-write-all nil))
+
+(define-ex-command "^wa(?:ll)!$" (range argument)
+  (declare (ignore range argument))
+  (ex-write-all t))
+
 (define-ex-command "^update$" (range filename)
   (when (lem:buffer-modified-p (lem:current-buffer))
     (ex-write range filename t)))

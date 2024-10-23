@@ -4,7 +4,9 @@ import { JSONRPC } from './jsonrpc.js';
 import * as keyevent from './keyevent.js';
 import * as meaw from 'meaw';
 
-const textOffsetY = 0;
+const textOffsetY = 5;
+
+const isSafari = /^((?!chrome|android).)*safari/i.test(navigator.userAgent);
 
 function isWideChar(c) {
   switch (meaw.getEAW(c)) {
@@ -726,6 +728,7 @@ class Input {
     this.editor = editor;
 
     this.composition = false;
+    this.ignoreKeydownAfterCompositionend = false;
 
     this.span = document.createElement('span');
     this.span.style.color = option.foreground;
@@ -756,17 +759,22 @@ class Input {
     });
 
     this.input.addEventListener('input', (event) => {
+      //console.log('input', event);
       if (this.editor.inputEnabled) {
         if (this.composition === false) {
           this.input.value = '';
           this.span.innerHTML = '';
           this.input.style.width = '0';
-          this.editor.emitInputString(event.data);
+          if (!isMacOS()) {
+            this.editor.emitInputString(event.data);
+          }
+          //console.log('>>> input', event.data);
         }
       }
     });
 
     this.input.addEventListener('keydown', (event) => {
+      //console.log('keydown', event, event.isComposing, this.composition);
       if (this.editor.inputEnabled) {
 
         if (isPasteKeyEvent(event)) {
@@ -783,6 +791,15 @@ class Input {
           return;
         }
 
+        if (this.ignoreKeydownAfterCompositionend && isSafari) {
+          // safariではIMの入力中にバックスペースやエンターキーの入力によってcompositionendイベントが来ると
+          // その後にkeydownイベントが即座に来る
+          // それを処理してしまうと余分に改行されたり文字が消えるので無視する
+          event.preventDefault();
+          this.ignoreKeydownAfterCompositionend = false;
+          return;
+        }
+
         if (!isMacOS()) {
           // 修飾キーなしで、ReturnやBackspaceではなく'a'などの入力であるか(event.key.length === 1)
           if (!event.ctrlKey && !event.altKey && event.key.length === 1) {
@@ -794,14 +811,22 @@ class Input {
         event.preventDefault();
 
         if (event.isComposing !== true && event.code !== '') {
-          this.editor.emitInput(event);
-          this.input.value = '';
+          // mac/chromium系のブラウザで"あ"と入力すると、
+          // keydownの後にcompositionstartが来るので、
+          // それを逆転するためにsetTimeoutを使う
+          setTimeout(() => {
+            if (!this.composition) {
+              this.editor.emitInput(event);
+              this.input.value = '';
+            }
+          }, 0);
           return false;
         }
       }
     });
 
     this.input.addEventListener('compositionstart', (event) => {
+      //console.log('compositionstart', event);
       if (this.editor.inputEnabled) {
         this.composition = true;
         this.span.innerHTML = this.input.value;
@@ -810,6 +835,7 @@ class Input {
     });
 
     this.input.addEventListener('compositionupdate', (event) => {
+      //console.log('compositionupdate', event);
       if (this.editor.inputEnabled) {
         this.span.innerHTML = event.data;
         this.input.style.width = this.span.offsetWidth + 'px';
@@ -817,12 +843,14 @@ class Input {
     });
 
     this.input.addEventListener('compositionend', (event) => {
+      //console.log('compositionend', event);
       if (this.editor.inputEnabled) {
         this.composition = false;
         this.editor.emitInputString(this.input.value);
         this.input.value = '';
         this.span.innerHTML = this.input.value;
         this.input.style.width = '0';
+        this.ignoreKeydownAfterCompositionend = true;
       }
     });
 

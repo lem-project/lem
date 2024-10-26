@@ -1,4 +1,4 @@
-(defpackage :lem/buffer/fundamental-mode
+(uiop:define-package :lem/buffer/fundamental-mode
   (:export :fundamental-mode))
 
 (uiop:define-package :lem/buffer/internal
@@ -275,7 +275,7 @@
    :check-all-buffers-corruption
    :check-buffer-corruption))
 
-(defpackage :lem/buffer/indent
+(uiop:define-package :lem/buffer/indent
   (:use :cl
         :lem/buffer/internal
         :lem/common/var)
@@ -289,7 +289,7 @@
    :indent-buffer
    :insert-string-and-indent))
 
-(defpackage :lem/buffer/encodings
+(uiop:define-package :lem/buffer/encodings
   (:use :cl
         :lem/buffer/internal
         :lem/common/var)
@@ -306,7 +306,7 @@
    :encoding-read-detect-eol
    :encoding-check))
 
-(defpackage :lem/buffer/file
+(uiop:define-package :lem/buffer/file
   (:use :cl
         :lem/buffer/internal
         :lem/buffer/encodings

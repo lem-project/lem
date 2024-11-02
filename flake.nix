@@ -177,8 +177,8 @@
               mkdir -p $out/bin
               cp -v lem $out/bin
               wrapProgram $out/bin/lem \
-                --prefix LD_LIBRARY_PATH : $LD_LIBRARY_PATH \
-                --prefix DYLD_LIBRARY_PATH : $DYLD_LIBRARY_PATH \
+                --prefix LD_LIBRARY_PATH : "$LD_LIBRARY_PATH" \
+                --prefix DYLD_LIBRARY_PATH : "$DYLD_LIBRARY_PATH" \
             '';
           });
         in {

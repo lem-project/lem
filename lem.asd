@@ -258,6 +258,7 @@
                "lem-documentation-mode"
                "lem-elisp-mode"
                "lem-terraform-mode"
+               "lem-nix-mode"
                "lem-markdown-mode"
                "lem-color-preview"
                "lem-lua-mode"

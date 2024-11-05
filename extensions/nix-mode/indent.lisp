@@ -17,6 +17,6 @@
 
 (defun calc-indent (point)
   (with-point ((point point))
-    (let ((tab-width (variable-value 'tab-width :default point))
+    (let ((tab-width 2)
           (column (point-column point)))
       (+ column (- tab-width (rem column tab-width))))))

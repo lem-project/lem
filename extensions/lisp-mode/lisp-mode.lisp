@@ -683,7 +683,7 @@
         :do (let* ((pos (xref-location-position xref-location))
                    (buffer (xref-filespec-to-buffer (xref-location-filespec xref-location))))
               (push (make-highlight-overlay pos buffer message source-context)
-                    (buffer-compilation-notes-overlays (current-buffer)))))
+                    (buffer-compilation-notes-overlays buffer))))
 
   (setf (buffer-compilation-notes-timer (current-buffer))
         (start-timer (make-idle-timer 'show-compilation-notes :name "lisp-show-compilation-notes")

@@ -2,23 +2,23 @@ LISP ?= ${shell which sbcl}
 
 ncurses:
 	qlot install
-	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-ncurses.lisp
+	$(LISP) --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-ncurses.lisp
 
 sdl2:
 	qlot install
-	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2.lisp
+	$(LISP) --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2.lisp
 
 sdl2-ncurses:
 	qlot install
-	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2-ncurses.lisp
+	$(LISP) --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2-ncurses.lisp
 
 server:
 	qlot install
-	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-server.lisp
+	$(LISP) --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-server.lisp
 
 install:
 	qlot install
-	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2-ncurses.lisp
+	$(LISP) --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2-ncurses.lisp
 	sudo install -m 755 lem /usr/local/bin/
 	sudo install -m 644 scripts/install/lem.svg /usr/share/icons/hicolor/scalable/apps/
 	sudo gtk-update-icon-cache /usr/share/icons/hicolor
@@ -33,7 +33,7 @@ test:
 
 doc:
 	qlot install
-	$(LISP) --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/generate-documentation-tests.lisp --eval '(progn (lem-documentation-mode/tests::generate-markdown-file "test.md" :test) (quit))'
+	$(LISP) --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/generate-documentation-tests.lisp --eval '(progn (lem-documentation-mode/tests::generate-markdown-file "test.md" :test) (quit))'
 
 update:
 	git pull

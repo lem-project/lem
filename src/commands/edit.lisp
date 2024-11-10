@@ -232,7 +232,8 @@
   (let ((string (if (null arg)
                     (yank-from-clipboard-or-killring)
                     (peek-killring-item (current-killring) (1- arg)))))
-    (yank-string (current-point) string)))
+    (when string
+      (yank-string (current-point) string))))
 
 (define-command yank (&optional arg) (:universal-nil)
   "Paste the copied text."

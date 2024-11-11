@@ -206,7 +206,7 @@
                              (:file "deepl")
                              (:file "themes")
                              (:file "detective")
-                             (:file "extension-commands")))))
+                             (:file "extension-commands")))
 
                (:module "ui"
                 :serial t

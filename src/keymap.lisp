@@ -179,9 +179,9 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
       (push *special-keymap* keymaps))
     (delete-duplicates (nreverse keymaps))))
 
-(defun lookup-keybind (key)
+(defun lookup-keybind (key &key (keymaps (all-keymaps)))
   (let (cmd)
-    (loop :for keymap :in (all-keymaps)
+    (loop :for keymap :in keymaps
           :do (setf cmd (keymap-find-keybind keymap key cmd)))
     cmd))
 

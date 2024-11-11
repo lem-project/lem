@@ -8,7 +8,10 @@
            :collector-buffer
            :get-move-function
            :show-matched-line
-           :highlight-matched-line)
+           :highlight-matched-line
+           :peek-source-next
+           :peek-source-previous
+           :*peek-source-keymap*)
   #+sbcl
   (:lock t))
 (in-package :lem/peek-source)

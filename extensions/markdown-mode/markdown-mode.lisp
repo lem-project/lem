@@ -23,9 +23,13 @@
         (variable-value 'tab-width) 4
         (variable-value 'calc-indent-function) 'markdown-calc-indent)
   (add-hook (variable-value 'after-save-hook :buffer (current-buffer))
-            'lem-markdown-mode/internal:on-save)
+            'lem-markdown-mode/internal:on-save-default)
   (add-hook (variable-value 'kill-buffer-hook :buffer (current-buffer))
-            'lem-markdown-mode/internal:on-kill))
+            'lem-markdown-mode/internal:on-kill-default)
+  (add-hook (variable-value 'after-change-functions :buffer (current-buffer))
+            (lambda (start end old-len)
+              (declare (ignore end old-len))
+              (lem-markdown-mode/internal:on-change-default (point-buffer start)))))
 
 (define-key *markdown-mode-keymap* "C-c C-l" 'markdown-insert-link)
 

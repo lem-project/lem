@@ -8,7 +8,9 @@
            :quick-exit
            :execute-command
            :show-context-menu
-           :load-library))
+           :load-library)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/other)
 
 (define-key *global-keymap* "NopKey" 'nop-command)

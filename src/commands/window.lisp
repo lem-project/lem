@@ -28,7 +28,9 @@
            :read-file-next-window
            :select-buffer-next-window
            :switch-to-last-focused-window
-           :compare-windows))
+           :compare-windows)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/window)
 
 (define-key *global-keymap* "C-x b" 'select-buffer)

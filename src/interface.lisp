@@ -38,6 +38,9 @@
 
 (defvar lem-if:*background-color-of-drawing-window* nil)
 
+(deftype cursor-type ()
+  '(member :box :bar :underline))
+
 (defgeneric lem-if:invoke (implementation function))
 (defgeneric lem-if:get-background-color (implementation))
 (defgeneric lem-if:get-foreground-color (implementation))
@@ -114,6 +117,11 @@
 (defgeneric lem-if:object-height (implementation drawing-object))
 (defgeneric lem-if:clear-to-end-of-window (implementation view y))
 
+(defgeneric lem-if:js-eval (implementation view code &key wait)
+  (:method (implementation view code &key wait)
+    (declare (ignore wait))
+    (error "unimplemented")))
+
 (defvar *display-background-mode* nil)
 
 (defun implementation ()
@@ -121,10 +129,10 @@
 
 (defmacro with-implementation (implementation &body body)
   `(let* ((*implementation* ,implementation)
-          (bt:*default-special-bindings*
+          (bt2:*default-special-bindings*
             (acons '*implementation*
                    *implementation*
-                   bt:*default-special-bindings*)))
+                   bt2:*default-special-bindings*)))
      ,@body))
 
 (defun display-background-mode ()

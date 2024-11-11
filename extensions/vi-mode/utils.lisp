@@ -2,7 +2,7 @@
   (:use :cl
         :lem)
   (:import-from :cl-ppcre)
-  (:export :change-directory
+  (:export :change-directory*
            :expand-filename-modifiers
            :kill-region-without-appending
            :save-column))
@@ -10,7 +10,7 @@
 
 (defvar *previous-cwd* nil)
 
-(defun change-directory (new-directory)
+(defun change-directory* (new-directory)
   (check-type new-directory (or string pathname))
   (let* ((previous-directory (uiop:getcwd))
          (new-directory (cond

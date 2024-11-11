@@ -18,7 +18,8 @@
   (:local-nicknames (:context-menu :lem/context-menu))
   (:local-nicknames (:spinner :lem/loading-spinner))
   (:local-nicknames (:language-mode :lem/language-mode))
-  (:export :get-buffer-from-text-document-identifier
+  (:export :*inhibit-highlight-diagnotics*
+           :get-buffer-from-text-document-identifier
            :spec-initialization-options
            :register-lsp-method
            :define-language-spec))
@@ -60,7 +61,7 @@
                   (point (buffer-point buffer)))
              (buffer-end point)
              (insert-string point string))))
-    (let* ((port (or (spec-port spec) (lem-socket-utils:random-available-port)))
+    (let* ((port (or (spec-port spec) (lem/common/socket:random-available-port)))
            (process (when-let (command (get-spec-command spec port))
                       (check-exist-program (first command) spec)
                       (lem-process:run-process command :output-callback #'output-callback))))
@@ -360,8 +361,7 @@
                 (funcall continuation workspace))))
 
 (defun connect (client continuation)
-  (lem-lsp-base/yason-utils:update-jsonrpc-yason-parameters)
-  (bt:make-thread
+  (bt2:make-thread
    (lambda ()
      (loop :with condition := nil
            :repeat 20
@@ -488,13 +488,16 @@
 (defmethod apply-document-change ((document-change lsp:delete-file))
   (error "deleteFile is not yet supported"))
 
+(defun apply-change (uri text-edits)
+  (let ((buffer (find-buffer-from-uri uri)))
+    (apply-text-edits buffer text-edits)))
+
 (defun apply-workspace-edit (workspace-edit)
   (labels ((apply-document-changes (document-changes)
              (do-sequence (document-change document-changes)
                (apply-document-change document-change)))
            (apply-changes (changes)
-             (declare (ignore changes))
-             (error "Not yet implemented")))
+             (maphash #'apply-change changes)))
     (if-let ((document-changes (handler-case
                                    (lsp:workspace-edit-document-changes workspace-edit)
                                  (unbound-slot () nil))))
@@ -726,7 +729,8 @@
                                      (unbound-slot ()
                                        'diagnostic-error-attribute)
                                      (:no-error (severity)
-                                       (diagnostic-severity-attribute severity))))))
+                                       (diagnostic-severity-attribute severity)))
+                                   :end-point-kind :right-inserting)))
         (overlay-put overlay
                      'diagnostic
                      (make-diagnostic :buffer buffer
@@ -756,7 +760,8 @@
 (defun text-document/publish-diagnostics (params)
   (request::do-request-log "textDocument/publishDiagnostics" params :from :server)
   (let ((params (convert-from-json params 'lsp:publish-diagnostics-params)))
-    (send-event (lambda () (highlight-diagnostics params)))))
+    (send-event (lambda ()
+                  (highlight-diagnostics params)))))
 
 (define-command lsp-document-diagnostics () ()
   (when-let ((diagnostics (buffer-diagnostics (current-buffer))))
@@ -1773,7 +1778,8 @@
 
 ;;;
 (define-command lsp-restart-server () ()
-  (dispose-workspace (buffer-workspace (current-buffer)))
+  (when-let (workspace (buffer-workspace (current-buffer) nil))
+    (dispose-workspace workspace))
   ;; TODO:
   ;; 現在のバッファを開き直すだけでは不十分
   ;; buffer-listを全て見る必要がある

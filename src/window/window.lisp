@@ -14,6 +14,9 @@
 
 (defvar *last-focused-window* nil)
 
+(defvar *switch-to-buffer-hook* '())
+(defvar *switch-to-window-hook* '())
+
 (defgeneric %delete-window (window))
 (defgeneric window-parent (window)
   (:method (window)
@@ -214,6 +217,7 @@ This is the content area in which the buffer is displayed, without any side marg
 (defun switch-to-window (new-window)
   (unless (eq (current-window) new-window)
     (run-hooks (window-leave-hook (current-window)) (current-window))
+    (run-hooks *switch-to-window-hook* (current-window) new-window)
     (setf *last-focused-window* (current-window)))
   (setf (current-window) new-window))
 
@@ -456,7 +460,8 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                         (window-view window)
                         width
                         (- height
-                           (if (window-use-modeline-p window) 1 0))))
+                           (if (window-use-modeline-p window) 1 0)))
+  (run-hooks *window-size-change-functions* window))
 
 (defun window-move (window dx dy)
   (window-set-pos window
@@ -828,6 +833,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (when (or (not-switchable-buffer-p (window-buffer (current-window)))
             (not-switchable-buffer-p buffer))
     (editor-error "This buffer is not switchable"))
+  (run-hooks *switch-to-buffer-hook* buffer)
   (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)
   (%switch-to-buffer buffer record move-prev-point))
 

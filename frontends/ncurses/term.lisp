@@ -498,6 +498,7 @@
   (charms/ll:delscreen charms/ll:*stdscr*))
 
 (defun update-cursor-shape (cursor-type)
+  (check-type cursor-type lem:cursor-type)
   (uiop:run-program `("printf"
                       ,(format nil "~C[~D q"
                                #\Esc

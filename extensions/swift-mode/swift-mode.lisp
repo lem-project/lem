@@ -26,6 +26,7 @@
 
 (define-major-mode swift-mode language-mode
     (:name "Swift"
+     :keymap *swfit-mode-keymap*
      :syntax-table *swift-syntax-table*
      :mode-hook *swift-mode-hook*)
   (setf (variable-value 'enable-syntax-highlight) t)
@@ -34,8 +35,3 @@
   (setf (variable-value 'insertion-line-comment) "// "))
 
 (define-file-type ("swift") swift-mode)
-
-
-
-
-

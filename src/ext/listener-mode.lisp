@@ -21,6 +21,8 @@
    :listener-return
    :listener-previous-input
    :listener-next-input
+   :listener-previous-startswith-input
+   :listener-next-startswith-input
    :listener-previous-matching-input
    :listener-clear-buffer
    :listener-clear-input)
@@ -167,6 +169,47 @@
       (lem/common/history:restore-edit-string (listener-history buffer))
     (when win
       (replace-textarea buffer str))))
+
+(define-command listener-previous-startswith-input () ()
+  (block nil
+    (let* ((buffer (current-buffer))
+           (point (buffer-point buffer))
+           (charpos (point-charpos point))
+           (prefix (points-to-string (input-start-point buffer) point)))
+      (backup-edit-string (current-buffer))
+      (flet ((commit (str)
+               (replace-textarea buffer str)
+               (setf (point-charpos point) charpos)
+               (return)))
+        (loop
+          (multiple-value-bind (str win)
+              (lem/common/history:previous-history (current-listener-history))
+            (if win
+                (when (eql 0 (search prefix str :test #'string=))
+                  (commit str))
+                (return))))))))
+
+(define-command listener-next-startswith-input () ()
+  (block nil
+    (let* ((buffer (current-buffer))
+           (point (buffer-point buffer))
+           (charpos (point-charpos point))
+           (prefix (points-to-string (input-start-point buffer) point)))
+      (backup-edit-string (current-buffer))
+      (flet ((commit (str)
+               (replace-textarea buffer str)
+               (setf (point-charpos point) charpos)
+               (return))
+             (rollback ()
+               (restore-edit-string buffer)
+               (return)))
+        (loop
+          (multiple-value-bind (str win)
+              (lem/common/history:next-history (current-listener-history))
+            (if win
+                (when (eql 0 (search prefix str :test #'string=))
+                  (commit str))
+                (rollback))))))))
 
 (define-command listener-previous-input () ()
   (backup-edit-string (current-buffer))

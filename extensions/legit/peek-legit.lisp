@@ -1,37 +1,19 @@
-(defpackage :lem/peek-legit
-  (:use :cl :lem)
-  (:export :*peek-legit-keymap*
-           :collector-buffer
-           :collector-insert
-           :filename-attribute
-           :get-move-function
-           :highlight-matched-line
-           :position-attribute
-           :show-matched-line
-           :with-appending-source
-           :with-collecting-sources
-           :with-insert
-           :peek-legit-next-header
-           :peek-legit-next
-           :peek-legit-select
-           :peek-legit-previous-header
-           :peek-legit-previous
-           :peek-legit-stage-file
-           :peek-legit-unstage-file
-           :quit)
-  (:documentation "Defines the left window of the legit interface.
-
-   Writes on the window the VCS components that are sent by the :legit package: untracked files, changes, staged changes, latest commits… They are displayed with custom attributes (read-only colors…) and text properties (on this line, the function to call on Enter is this lambda function…).
-   Cursor mouvements and keybindings send changes to the right window."))
-
 #|
+peek-legit defines the left window of the legit interface.
+
+It writes on the window the VCS components: untracked files, changes, staged changes, latest commits… They are displayed with custom attributes (read-only colors…) and text properties (on this line, the function to call on Enter is this lambda function…).
+
+Cursor mouvements and keybindings send changes to the right window.
+
+
 Notes:
 
 - if names don't conflict, use a :keyword for text properties, not a 'symbol (:commit-hash vs 'commit-hash). Keywords are easier to manipulate from another source file (no home package).
+- the dichotomoy peek-legit / legit originally follows grep-mode.
 
 |#
 
-(in-package :lem/peek-legit)
+(in-package :lem/legit)
 
 
 (define-minor-mode peek-legit-mode
@@ -212,7 +194,7 @@ Notes:
                                        :use-border t)))
     (list peek-window source-window)))
 
-(defun display (collector)
+(defun display (collector &key (minor-mode 'peek-legit-mode))
   (when (boundp '*peek-window*)
     (delete-window *peek-window*))
   (when (boundp '*source-window*)
@@ -228,32 +210,61 @@ Notes:
     (setf *source-window* source-window)
 
     (setf (current-window) peek-window)
-    (peek-legit-mode t)
+
+    (funcall minor-mode t)
+    ;; aka:
+    ;; (peek-legit-mode t)
 
     (start-move-point (buffer-point (collector-buffer collector)))
     (show-matched-line)))
 
-(defun make-peek-legit-buffer ()
-  (let ((buffer (make-buffer "*peek-legit*"
+(defun make-peek-legit-buffer (&key (name "*peek-legit*"))
+  "Get or create a buffer of name NAME. By default, use a `*peek-legit*' buffer.
+  This is where we will display legit information (status…)."
+  (let ((buffer (make-buffer name
                              :temporary t
                              :enable-undo-p t
                              :directory (uiop:getcwd))))
     (setf (variable-value 'line-wrap :buffer buffer) nil)
     buffer))
 
-(defun call-with-collecting-sources (function &key read-only)
-  (let* ((*collector* (make-instance 'collector :buffer (make-peek-legit-buffer)))
+(defun call-with-collecting-sources (function &key read-only buffer (minor-mode 'peek-legit-mode))
+  "Initialize variables to display things on a legit buffer.
+
+  BUFFER: either :status or :commits-log.
+  READ-ONLY: boolean.
+  MINOR-MODE: the minor mode to activate after we displayed things in the buffer. Defaults to the main peek-legit-mode. The mode is activated with:
+
+    (peek-legit-mode t)
+  or
+    (funcall minor-mode t)"
+  (let* ((*collector* (make-instance 'collector
+                                     :buffer
+                                     (make-peek-legit-buffer
+                                      :name
+                                      (case buffer
+                                        (:status "*peek-legit*")
+                                        (:commits-log "*legit-commits-log*")
+                                        (t (error "Unknown buffer name to display legit data: ~a" buffer))))))
          (point (buffer-point (collector-buffer *collector*))))
     (declare (ignorable point))
     (funcall function *collector*)
     (when read-only
       (setf (buffer-read-only-p (collector-buffer *collector*)) t))
-      (display *collector*)))
+      (display *collector* :minor-mode minor-mode)))
 
-(defmacro with-collecting-sources ((collector &key (read-only t)) &body body)
+(defmacro with-collecting-sources ((collector &key (buffer :status)
+                                                (read-only t)
+                                                (minor-mode 'peek-legit-mode))
+                                   &body body)
+  "Top-level macro that prepares a buffer to print stuff on and activates a minor-mode.
+
+  Then see `with-appending-source' and `collector-insert'."
   `(call-with-collecting-sources (lambda (,collector)
                                    (declare (ignorable ,collector))
                                    ,@body)
+                                 :buffer ,buffer
+                                 :minor-mode ,minor-mode
                                  :read-only ,read-only))
 
 (defun call-with-appending-source (insert-function
@@ -279,6 +290,7 @@ Notes:
                                              stage-function
                                              unstage-function
                                              discard-file-function) &body body)
+  "Macro to use inside `with-collecting-sources' to print stuff."
   `(call-with-appending-source (lambda (,point) ,@body)
                                ,move-function
                                ,visit-file-function
@@ -322,6 +334,12 @@ Notes:
         (window-see (current-window))))))
 
 (defmethod execute :after ((mode peek-legit-mode) command argument)
+  "After a command is run in this mode, apply an effect.
+
+  In the case of `peek-legit-mode', it is run after `peek-legit-next',
+  in order to show the file content on the right window.
+
+  The method is to subclass for all legit modes."
   (when (eq (current-window) *peek-window*)
     (show-matched-line)))
 
@@ -334,19 +352,20 @@ Notes:
 
 
 (define-command peek-legit-select () ()
-  (alexandria:when-let ((file (get-matched-file)))
-    (quit)
-    (alexandria:if-let
-        ((buffer (or (and (uiop:file-exists-p file)
-                          (find-file-buffer file))
-                     (find-file-buffer
-                      (merge-pathnames
-                       (lem-core/commands/project:find-root (buffer-filename))
-                       file)))))
-      (switch-to-buffer buffer)
-      (editor-error "File ~a doesn't exist." file))))
+  (alexandria:when-let ((path (get-matched-file)))
+    (%legit-quit)
+    (with-current-project (vcs)
+      (declare (ignore vcs))
+      (let ((full-path (merge-pathnames path (uiop:getcwd))))
+        (if (or (uiop:file-exists-p full-path)
+                (uiop:directory-exists-p full-path))
+            (find-file (namestring full-path))
+            (editor-error "Path ~a doesn't exist." full-path))))))
 
 (define-command peek-legit-next () ()
+  "Find the next line with a :move-marker text property.
+
+  After finding it, our :after method of `execute' is run, to apply an effect, showing the new diff on the right."
   (next-move-point (current-point)))
 
 (define-command peek-legit-next-header () ()
@@ -363,7 +382,7 @@ Notes:
                          (point (funcall stage)))
     ;; Update the buffer, to see that a staged file goes to the staged section.
     ;; This calls git again and refreshes everything.
-    (uiop:symbol-call :lem/legit :legit-status)
+    (lem/legit:legit-status)
     point))
 
 (define-command peek-legit-unstage-file () ()
@@ -371,18 +390,19 @@ Notes:
                          (point (funcall unstage)))
     ;; Update the buffer, to see that a staged file goes to the staged section.
     ;; This calls git again and refreshes everything.
-    (uiop:symbol-call :lem/legit :legit-status)
-                        point))
+    (lem/legit:legit-status)
+    point))
+
 (define-command peek-legit-discard-file () ()
   "Discard the changes in this file. The file should not be stage."
   (alexandria:when-let* ((fn (get-discard-file-function (buffer-point (window-buffer *peek-window*))))
                          (point (funcall fn)))
     ;; Update the buffer.
     ;; This calls git again and refreshes everything.
-    (uiop:symbol-call :lem/legit :legit-status)
+    (lem/legit:legit-status)
     point))
 
-(defun quit ()
+(defun %legit-quit ()
   "Delete the two side windows."
   (setf (current-window) *parent-window*)
   (start-timer

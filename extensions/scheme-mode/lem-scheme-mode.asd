@@ -6,8 +6,7 @@
                "uiop"
                "swank"
                #+#.(cl:if (asdf:find-system :async-process cl:nil) '(and) '(or)) "lem-process"
-               "lem"
-               "lem-socket-utils")
+               "lem")
   :serial t
   :components ((:file "syntax-data")
                (:file "syntax-indent")

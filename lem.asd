@@ -49,6 +49,7 @@
                              (:file "queue")
                              (:file "hooks")
                              (:file "var")
+                             (:file "socket")
                              (:file "utils")
                              (:module "character"
                               :serial t
@@ -73,6 +74,7 @@
                                            (:file "point")
                                            (:file "edit")
                                            (:file "mark")
+                                           (:file "undo")
                                            (:file "buffer-insert")
                                            (:file "basic")
                                            (:file "syntax-predicates")
@@ -132,6 +134,7 @@
                (:file "command-advices")
                (:file "interface")
                (:file "highlight-line")
+               (:file "html-buffer")
                (:file "site-init")
                (:file "lem")
 
@@ -205,6 +208,10 @@
                              (:file "detective")
                              (:file "extension-commands")))))
 
+               (:module "ui"
+                :serial t
+                :components ((:file "theme-list")))))
+
 (defsystem "lem/extensions"
   :depends-on (#+sbcl
                "lem-welcome"
@@ -248,24 +255,19 @@
                "lem-base16-themes"
                #+sbcl
                "lem-elixir-mode"
+               "lem-ruby-mode"
                "lem-erlang-mode"
                "lem-documentation-mode"
                "lem-elisp-mode"
+               "lem-terraform-mode"
+               "lem-nix-mode"
                "lem-markdown-mode"
                "lem-color-preview"
-               "lem-lua-mode"))
-
-(defsystem "lem/legit"
-  :serial t
-  :depends-on ("lem" "lem-patch-mode" "lem-yaml-mode" "lem-markdown-mode")
-  :components ((:module "extensions/legit"
-                :components ((:file "porcelain")
-                             (:file "peek-legit")
-                             (:file "legit")
-                             (:file "legit-rebase")
-                             (:file "legit-commit")))
-               (:module "scripts"
-                :components ((:static-file "dumbrebaseeditor.sh")))))
+               "lem-lua-mode"
+               "lem-terminal"
+               "lem-legit"
+               "lem-dashboard"
+               "lem-copilot"))
 
 (defsystem "lem/executable"
   :build-operation program-op

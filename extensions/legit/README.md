@@ -16,22 +16,9 @@ at your own risk.
 
 However it should run a few operations smoothly.
 
-
-## Load
-
-`legit` is built into Lem but it isn't loaded by default. To load it, open a Lisp REPL (`M-x start-lisp-repl`) or evaluate Lisp code (`M-:`) and type:
-
-    (ql:quickload "lem/legit")
-
-Now you can start it with `C-x g` or `M-x legit-status`.
-
-![](lem-status.png)
-
-## Help
-
-Press `?` or `C-x ?` to call `legit-help`.
-
 ## M-x legit-status
+
+Bound to `C-x g` by default.
 
 The status windows show us, on the left:
 
@@ -45,6 +32,12 @@ It also warns us if a rebase is in process.
 and the window on the right shows us the file diffs or the commits' content.
 
 Refresh the status content with `g`.
+
+![](lem-status.png)
+
+## Help
+
+Press `?` or `C-x ?` to call `legit-help`.
 
 ## Navigation
 
@@ -84,6 +77,22 @@ Create a new branch with `b c`.
 You can push to the current remote branch with `P p` and pull changes (fetch) with `F p`.
 
 Note: after pressing "P" or "F", you will not see an intermediate window giving you choices. Just press "P p" one after the other.
+
+## Show commits log
+
+Press `l l` (lowercase "L", twice) to show the commits log in a dedicated buffer, with pagination.
+
+It defaults to showing the first 200 commits. Press `f` or `b` to see
+the next or the previous page of the commits history.
+
+Press `F` and `B` to go to the last or first page of commits.
+
+Configuration:
+
+- you can set `lem/porcelain:*commits-log-page-size*` to another length (defaults to 200).
+
+Note that going to the last page with `B` might take a few seconds on large repositories.
+
 
 ## Interactive rebase
 
@@ -166,41 +175,25 @@ Same with `*fossil-base-args*` and `*hg-base-arglist*`.
 - `*branch-sort-by*`: when listing branches, sort by this field name. Prefix with "-" to sort in descending order. Defaults to "-creatordate", to list the latest used branches first.
 - `*file-diff-args*`: defaults to `(list "diff" "--no-color")`. Arguments to display the file diffs. Will be surrounded by the git binary and the file path. For staged files, --cached is added by the command.
 
-If a project is managed by more than one VCS, `legit` takes the first VCS defined in `*vcs-existence-order*`:
+If a project is managed by more than one VCS, `legit` takes the first VCS defined in `lem/legit:*vcs-existence-order*`. You can change it like so:
 
 ~~~lisp
-(defvar *vcs-existence-order*
-  '(
-    git-project-p
-    fossil-project-p
-    hg-project-p
-    ))
+(setf lem/legit:*vcs-existence-order* '(:git :fossil :hg))
 ~~~
 
-where these symbols are functions with no arguments that return two values: a truthy value if the current project is considered a Git/Fossil/Mercurial project, and a keyword representing the VCS: `:git`, `:fossil`, `:hg`.
+You could also use a function to decide of your own order. It would
+take no arguments and it must return one value: an instance of the VCS
+object, such as `lem/porcelain/git::vcs-git`, if the current project is considered a
+Git/Fossil/Mercurial project, and nil otherwise.
 
-For example:
-
-~~~lisp
-(defun hg-project-p ()
-  "Return t if we find a .hg/ directory in the current directory (which should be the project root. Use `lem/legit::with-current-project`)."
-  (values (uiop:directory-exists-p ".hg")
-          :hg))
-~~~
-
-
-Variables and parameters in the `lem/legit` package. They might not be exported.
-
-- `*legit-verbose*`: If non nil, print some logs on standard output (terminal) and create the hunk patch file on disk at (lem-home)/lem-hunk-latest.patch.
-
-=> to help debugging
+Variables and parameters for customization are defined in the `lem/legit` package. They might not be exported.
 
 see sources in `/extensions/legit/`
 
 
 ## Implementation details
 
-Repository data is retrieved with calls to the VCS binary. We have a POC to read some data directly from the Git objects (and improve efficiency).
+Repository data is retrieved with calls to the VCS binary, but currently only 2 or 3 calls are made for a legit status window, so it works fine with big repositories. We have a POC to read some data directly from the Git objects (and improve efficiency).
 
 The interactive rebase currently uses a Unix-only shell script.
 
@@ -217,7 +210,6 @@ Please report any bug, and please let's discuss before you open a Github issue f
 and then:
 
 - visual submenu to pick subcommands
-- view log
 - stage only selected region (more precise than hunks)
 - unstage/stage/discard multiple files
 - stashes

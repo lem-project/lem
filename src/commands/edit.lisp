@@ -32,7 +32,9 @@
            :transpose-characters
            :undo
            :redo
-           :delete-trailing-whitespace))
+           :delete-trailing-whitespace)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/edit)
 
 (setf (keymap-undef-hook *global-keymap*) 'self-insert)
@@ -218,16 +220,20 @@
      (kill-region start end))
    (delete-previous-char))
 
+(defun yank-string (point string)
+  (change-yank-start point
+                     (copy-point point :right-inserting))
+  (insert-string-and-indent point string)
+  (change-yank-end point
+                   (copy-point point :left-inserting))
+  (continue-flag :yank))
+
 (defun yank-1 (arg)
   (let ((string (if (null arg)
                     (yank-from-clipboard-or-killring)
                     (peek-killring-item (current-killring) (1- arg)))))
-    (change-yank-start (current-point)
-                                 (copy-point (current-point) :right-inserting))
-    (insert-string-and-indent (current-point) string)
-    (change-yank-end (current-point)
-                               (copy-point (current-point) :left-inserting))
-    (continue-flag :yank)))
+    (when string
+      (yank-string (current-point) string))))
 
 (define-command yank (&optional arg) (:universal-nil)
   "Paste the copied text."
@@ -449,3 +455,6 @@
   (with-enable-clipboard (and (enable-clipboard-p)
                               (null (buffer-fake-cursors (current-buffer))))
     (process-each-cursors #'call-next-method)))
+
+(defmethod lem-core:paste-using-mode (mode text)
+  (yank-string (current-point) text))

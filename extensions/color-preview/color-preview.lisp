@@ -27,11 +27,7 @@
                                    (move-to-position start start-pos)
                                    (move-to-position end end-pos)
                                    (delete-between-points start end)
-                                   (insert-string start
-                                                  (format nil "#~2,'0X~2,'0X~2,'0X"
-                                                          (color-red color)
-                                                          (color-green color)
-                                                          (color-blue color)))
+                                   (insert-string start (color-to-hex-string color))
                                    (scan-color-in-window window)))))))))
 
 (define-overlay-accessors color-ovelray

@@ -1,23 +1,23 @@
 ("quicklisp" .
  (:class qlot/source/dist:source-dist
-  :initargs (:distribution "http://beta.quicklisp.org/dist/quicklisp.txt" :%version :latest)
-  :version "2023-06-18"))
+  :initargs (:distribution "https://beta.quicklisp.org/dist/quicklisp.txt" :%version :latest)
+  :version "2024-10-12"))
+("uiop" .
+ (:class qlot/source/ql:source-ql
+  :initargs (:%version :latest)
+  :version "ql-2024-10-12"))
 ("micros" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/micros.git")
-  :version "git-994d4d67467ec1b6eddacad9dba385b42101679e"))
+  :version "git-af94fe5d6688f67a092f604765fb706ebae44e99"))
 ("lem-mailbox" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-mailbox.git")
   :version "git-12d629541da440fadf771b0225a051ae65fa342a"))
-("lem-base16-themes" .
- (:class qlot/source/git:source-git
-  :initargs (:remote-url "https://github.com/lem-project/lem-base16-themes.git")
-  :version "git-07dacae6c1807beaeffc730063b54487d5c82eb0"))
 ("async-process" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/async-process.git")
-  :version "git-9690530fc92b59636d9f17d821afa7697e7c8ca4"))
+  :version "git-3b16b91d417530dac03559980fb5703206e20c55"))
 ("sblint" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/sblint.git")
@@ -25,7 +25,7 @@
 ("rove" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/fukamachi/rove.git")
-  :version "git-f168cd177b5f83f171dd970dc1a9abb6eb43f044"))
+  :version "git-cacea7331c10fe9d8398d104b2dfd579bf7ea353"))
 ("cl-sdl2" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2.git")
@@ -33,7 +33,7 @@
 ("cl-sdl2-ttf" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2-ttf.git")
-  :version "git-e61bb2119003d8ae7792d38aa11f7728d3ee5a00"))
+  :version "git-f43344efe89cf9ce509e6ce4f7303ebb2ff14434"))
 ("cl-sdl2-image" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2-image.git")

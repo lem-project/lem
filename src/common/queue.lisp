@@ -39,30 +39,30 @@
   (null (queue-list queue)))
 
 (defstruct (concurrent-queue (:constructor %make-concurrent-queue))
-  (wait (bt:make-condition-variable))
-  (lock (bt:make-lock))
+  (wait (bt2:make-condition-variable))
+  (lock (bt2:make-lock))
   (queue (make-queue)))
 
 (defun make-concurrent-queue ()
   (%make-concurrent-queue))
 
 (defmethod len ((queue concurrent-queue))
-  (bt:with-lock-held ((concurrent-queue-lock queue))
+  (bt2:with-lock-held ((concurrent-queue-lock queue))
     (len (concurrent-queue-queue queue))))
 
 (defmethod enqueue ((queue concurrent-queue) obj)
-  (bt:with-lock-held ((concurrent-queue-lock queue))
+  (bt2:with-lock-held ((concurrent-queue-lock queue))
     (enqueue (concurrent-queue-queue queue) obj)
-    (bt:condition-notify (concurrent-queue-wait queue))))
+    (bt2:condition-notify (concurrent-queue-wait queue))))
 
 (defmethod dequeue ((queue concurrent-queue) &key timeout timeout-value)
-  (bt:with-lock-held ((concurrent-queue-lock queue))
+  (bt2:with-lock-held ((concurrent-queue-lock queue))
     (if (not (empty-p (concurrent-queue-queue queue)))
         (dequeue (concurrent-queue-queue queue))
         (cond ((if timeout
-                   (bt:condition-wait (concurrent-queue-wait queue) (concurrent-queue-lock queue)
+                   (bt2:condition-wait (concurrent-queue-wait queue) (concurrent-queue-lock queue)
                                       :timeout timeout)
-                   (bt:condition-wait (concurrent-queue-wait queue) (concurrent-queue-lock queue)))
+                   (bt2:condition-wait (concurrent-queue-wait queue) (concurrent-queue-lock queue)))
                (dequeue (concurrent-queue-queue queue)))
               (t
                timeout-value)))))

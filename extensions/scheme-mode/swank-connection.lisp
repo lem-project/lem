@@ -77,6 +77,7 @@
                                            (connection-implementation-version c)
                                            (connection-command c)))
                   :select-callback (lambda (menu c)
+                                     (declare (ignore menu))
                                      (change-current-connection c)))))
 
 (defun check-connection ()
@@ -120,7 +121,7 @@
       (buffer-package (current-buffer))
       (connection-package *connection*)))
 
-(defun current-swank-thread ()
+(defun current-micros-thread ()
   (or (buffer-value (current-buffer) 'thread)
       t))
 
@@ -144,7 +145,7 @@
 
 (defun scheme-rex (form &key
                         continuation
-                        (thread (current-swank-thread))
+                        (thread (current-micros-thread))
                         (package (current-package)))
   (emacs-rex *connection*
              form
@@ -154,7 +155,7 @@
 
 (defun scheme-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym))
-        (thread-id (current-swank-thread)))
+        (thread-id (current-micros-thread)))
     (catch tag
       (funcall emacs-rex-fun
                *connection*
@@ -196,7 +197,7 @@
                                    (unless *suppress-error-disp*
                                      (message "Evaluation aborted on ~A." condition))))
                                 (setf *suppress-error-disp* nil))
-                :thread (current-swank-thread)
+                :thread (current-micros-thread)
                 :package package)))
 
 (defun eval-with-transcript (form)
@@ -298,7 +299,7 @@
   (check-connection)
   (send-message-string
    *connection*
-   (format nil "(:emacs-interrupt ~A)" (current-swank-thread))))
+   (format nil "(:emacs-interrupt ~A)" (current-micros-thread))))
 
 (defun prompt-for-sexp (string &optional initial)
   (prompt-for-string string
@@ -737,13 +738,13 @@
 (defvar *wait-message-thread* nil)
 
 (defun notify-change-connection-to-wait-message-thread ()
-  (bt:interrupt-thread *wait-message-thread*
+  (bt2:interrupt-thread *wait-message-thread*
                        (lambda () (error 'change-connection))))
 
 (defun start-thread ()
   (unless *wait-message-thread*
     (setf *wait-message-thread*
-          (bt:make-thread
+          (bt2:make-thread
            (lambda () (loop
                         :named exit
                         :do
@@ -975,7 +976,7 @@
     (write-line "(loop (sleep most-positive-fixnum))" out)))
 
 (defun run-swank-server (command port &key (directory (buffer-directory)))
-  (bt:make-thread
+  (bt2:make-thread
    (lambda ()
      (with-input-from-string
          (input (initialize-forms-string port))
@@ -1008,8 +1009,8 @@
 (defun run-slime (command &key (directory (buffer-directory)))
   ;;(unless command
   ;;  (setf command (get-lisp-command :impl *impl-name*)))
-  (let ((port (or (lem-socket-utils:port-available-p *default-port*)
-                  (lem-socket-utils:random-available-port))))
+  (let ((port (or (lem/common/socket:port-available-p *default-port*)
+                  (lem/common/socket:random-available-port))))
 
     ;; for r7rs-swank (make command)
     (unless command
@@ -1023,7 +1024,7 @@
 
     (let ((thread (run-swank-server command port :directory directory)))
       (sleep 0.5)
-      (unless (bt:thread-alive-p thread)
+      (unless (bt2:thread-alive-p thread)
         (editor-error "Scheme swank server start error")))
 
     (let ((successp)

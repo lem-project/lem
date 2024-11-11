@@ -152,15 +152,15 @@
            (sdl2:with-window (window :title "Lem"
                                      :w window-width
                                      :h window-height
-                                     :flags '(:shown :resizable #+darwin :allow-highdpi))
+                                     :flags '(:shown :resizable :allow-highdpi))
              (init-application-icon window)
              (sdl2:with-renderer (renderer window :index -1 :flags '(:accelerated))
-               (let* (#+darwin (renderer-size (multiple-value-list
+               (let* ((renderer-size (multiple-value-list
                                                (sdl2:get-renderer-output-size renderer)))
-                      #+darwin (renderer-width (first renderer-size))
-                      #+darwin(renderer-height (second renderer-size))
-                      (scale-x #-darwin 1 #+darwin (/ renderer-width window-width))
-                      (scale-y #-darwin 1 #+darwin (/ renderer-height window-height))
+                      (renderer-width (first renderer-size))
+                      (renderer-height (second renderer-size))
+                      (scale-x (/ renderer-width window-width))
+                      (scale-y (/ renderer-height window-height))
                       (texture (lem-sdl2/utils:create-texture renderer
                                                               (* scale-x window-width)
                                                               (* scale-y window-height)))
@@ -174,7 +174,6 @@
                                               :char-height (font-char-height font)
                                               :scale (list scale-x scale-y))))
                  (setf (display:current-display) display)
-                 #+darwin
                  (display:adapt-high-dpi-font-size display)
                  (sdl2:start-text-input)
                  (funcall function)
@@ -244,6 +243,11 @@
     (display:with-display (display)
       (setf (display:display-background-color display)
             (lem:parse-color color)))))
+
+(defmethod lem-if:update-cursor-shape ((implementation sdl2) cursor-type)
+  (with-debug ("lem-if:update-cursor-type")
+    (display:with-display (display)
+      (setf (display:display-cursor-type display) cursor-type))))
 
 (defmethod lem-if:display-width ((implementation sdl2))
   (with-debug ("lem-if:display-width")

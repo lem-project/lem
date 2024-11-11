@@ -20,13 +20,21 @@
            :change-directory
            :current-directory
            :prompt-for-files-recursively
-           :format-current-buffer))
+           :format-current-buffer
+           :file-history
+           :find-history-file
+           :*file-history-limit*
+           :get-file-mode
+           :format-current-buffer)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/file)
 
 (define-key *global-keymap* "C-x C-f" 'find-file)
 (define-key *global-keymap* "C-x C-r" 'read-file)
 (define-key *global-keymap* "C-x C-s" 'save-current-buffer)
 (define-key *global-keymap* "C-x C-w" 'write-file)
+(define-key *global-keymap* "C-x C-h" 'find-history-file)
 (define-key *global-keymap* "C-x Tab" 'insert-file)
 (define-key *global-keymap* "C-x s" 'save-some-buffers)
 
@@ -92,7 +100,7 @@
           (setf buffer (execute-find-file *find-file-executor*
                                           (get-file-mode pathname)
                                           pathname)))
-        (when buffer
+        (when (bufferp buffer)
           (switch-to-buffer buffer t nil))))))
 
 (defmethod execute-find-file :before (executor mode pathname)
@@ -176,15 +184,15 @@
   If finding files times out, such as in a HOME directory, stop the operation.
 
   Return a list of files or signal a FALLBACK-TO-FIND-FILE simple condition."
-  (let ((thread (bt:make-thread
+  (let ((thread (bt2:make-thread
                  (lambda ()
                    (get-files-recursively find-program))
                  :name "Lem get-files-recursively")))
     (handler-case
-        (bt:with-timeout (timeout)
-          (bt:join-thread thread))
-      (bt:timeout ()
-        (bt:destroy-thread thread)
+        (bt2:with-timeout (timeout)
+          (bt2:join-thread thread))
+      (bt2:timeout ()
+        (bt2:destroy-thread thread)
         (signal 'fallback-to-find-file)))))
 
 (defun prompt-for-files-recursively ()
@@ -204,7 +212,7 @@
     (let ((candidates (get-files-recursively-with-timeout (find-program))))
       (prompt-for-string
        "File: "
-       :completion-function (lambda (x) (completion-strings x candidates))
+       :completion-function (lambda (x) (completion-files x candidates))
        :test-function (lambda (name) (member name candidates :test #'string=))))))
 
 (define-command find-file-recursively (arg) (:universal)
@@ -389,3 +397,41 @@ With prefix argument INSERT, insert the directory of the active buffer at point.
 
 Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode and json-mode with prettier, and lisp-mode. Additionally rust-mode uses rustfmt."
   (format-buffer))
+
+(defvar *files-history*)
+(defvar *file-history-limit* 10
+  "The maximum number of files to keep in the file history.")
+  
+(defun file-history ()
+  "Return or create the files' history struct.
+  The history file is saved on (lem-home)/history/files"
+  (unless (boundp '*files-history*)
+    (let* ((pathname (merge-pathnames "history/files" (lem-home)))
+           (history (lem/common/history:make-history :pathname pathname :limit *file-history-limit*)))
+      (setf *files-history* history)))
+  *files-history*)
+
+(defun add-to-file-history (buffer)
+  "Add the buffer's filename to the file history."
+  (let ((filename (buffer-filename buffer)))
+    (when filename
+      (lem/common/history:add-history (file-history) 
+                                      (namestring filename)
+                                      :allow-duplicates nil
+                                      :move-to-top t)
+      (lem/common/history:save-file (file-history)))))
+
+(add-hook *find-file-hook* 'add-to-file-history)
+
+(define-command find-history-file () ()
+  "Prompt for a file from the file history and open it."
+  (let* ((history (file-history))
+         (candidates (lem/common/history:history-data-list history)))
+    (if candidates
+        (let ((filename (prompt-for-string
+                         "File: "
+                         :completion-function (lambda (x) (completion-strings x (reverse candidates)))
+                         :test-function (lambda (name) (member name candidates :test #'string=)))))
+          (when filename
+            (find-file filename)))
+        (editor-error "No file history."))))

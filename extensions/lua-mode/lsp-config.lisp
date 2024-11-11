@@ -1,6 +1,5 @@
 (defpackage :lem-lua-mode/lsp-config
   (:use :cl :lem-lsp-mode :lem-lsp-base/type))
-
 (in-package :lem-lua-mode/lsp-config)
 
 (define-language-spec (lua-spec lem-lua-mode:lua-mode)

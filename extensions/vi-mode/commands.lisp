@@ -65,6 +65,8 @@
            :vi-scroll-line-to-bottom-back-to-indentation
            :vi-scroll-bottom-line-to-top
            :vi-scroll-top-line-to-bottom
+           :vi-scroll-down
+           :vi-scroll-up
            :vi-back-to-indentation
            :vi-indent
            :vi-substitute
@@ -187,6 +189,20 @@
 (define-motion vi-previous-display-line (&optional (n 1)) (:universal)
     (:type :line)
   (previous-line n))
+
+(define-motion vi-scroll-down (&optional (n nil)) (:universal-nil)
+    (:type :inclusive :default-n-arg nil)
+  (unless n
+    (setf n (floor (window-height (current-window)) 2)))
+  (next-line n)
+  (scroll-down n))
+
+(define-motion vi-scroll-up (&optional (n nil)) (:universal-nil)
+    (:default-n-arg nil)
+  (unless n
+    (setf n (floor (window-height (current-window)) 2)))
+  (previous-line n)
+  (scroll-up n))
 
 (defun on-only-space-line-p (point)
   (with-point ((p point))
@@ -417,15 +433,19 @@ Move the cursor to the first non-blank character of the line."
   (when (point= beg end)
     (return-from vi-change))
   (let ((end-with-newline (char= (character-at end -1) #\Newline)))
-    (vi-delete beg end type)
-    (when (eq type :line)
-      (cond
-        (end-with-newline
-         (insert-character (current-point) #\Newline)
-         (character-offset (current-point) -1))
-        (t
-         (insert-character (current-point) #\Newline)))
-      (indent-line (current-point))))
+    (case type
+      (:line
+       (vi-delete beg end type)
+       (cond
+         (end-with-newline
+          (insert-character (current-point) #\Newline)
+          (character-offset (current-point) -1))
+         (t
+          (insert-character (current-point) #\Newline)))
+       (indent-line (current-point)))
+      (t (unless (eql (character-at (current-point)) #\Space)
+           (skip-whitespace-backward end))
+         (vi-delete beg end type))))
   (change-state 'insert))
 
 (define-operator vi-change-whole-line (beg end) ("<r>")
@@ -686,6 +706,16 @@ Move the cursor to the first non-blank character of the line."
     (editor-error "No keyboard macro is recorded yet"))
   (vi-execute-macro n *last-recorded-macro*))
 
+(defun find-next-paren (point)
+  "Returns the point either on the following opening/closing paren/bracket/brace
+on the same line or at eol if there are none."
+  (with-point ((point point))
+    (loop :until (or (syntax-open-paren-char-p (character-at point))
+                     (syntax-closed-paren-char-p (character-at point))
+                     (end-line-p point))
+          :do (character-offset point 1))
+    point))
+
 (defun vi-forward-matching-paren (window point &optional (offset -1))
   (declare (ignore window))
   (with-point ((point point))
@@ -695,8 +725,9 @@ Move the cursor to the first non-blank character of the line."
 
 (defun vi-backward-matching-paren (window point &optional (offset -1))
   (declare (ignore window offset))
-  (when (syntax-closed-paren-char-p (character-at point))
-    (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t)))
+  (with-point ((point point))
+    (when (syntax-closed-paren-char-p (character-at point))
+      (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t))))
 
 (define-motion vi-move-to-matching-item (&optional n) (:universal-nil)
     (:type :inclusive
@@ -712,8 +743,9 @@ Move the cursor to the first non-blank character of the line."
        (skip-whitespace-forward (current-point) t)))
     ;; No argument - move to matching paren
     (t
-     (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))
-                                  (vi-forward-matching-paren  (current-window) (current-point)))))
+     (alexandria:when-let* ((paren-point (find-next-paren (current-point)))
+                            (p (or (vi-backward-matching-paren (current-window) paren-point)
+                                   (vi-forward-matching-paren  (current-window) paren-point))))
        (move-point (current-point) p)))))
 
 (let ((old-forward-matching-paren)

@@ -9,16 +9,21 @@
   (:import-from :lem-vi-mode/options
                 :execute-set-command)
   (:import-from :lem-vi-mode/utils
-                :change-directory
-                :expand-filename-modifiers))
+                :change-directory*
+                :expand-filename-modifiers)
+  (:export :*edit-buffer-directory*))
 (in-package :lem-vi-mode/ex-command)
+
+(defvar *edit-buffer-directory* nil)
 
 (defun ex-edit (filename force)
   (if (string= filename "")
       (lem:revert-buffer force)
       (with-jumplist
         (lem:find-file (merge-pathnames (expand-filename-modifiers filename)
-                                        (uiop:getcwd))))))
+                                        (if *edit-buffer-directory*
+                                            (lem:buffer-directory)
+                                            (uiop:getcwd)))))))
 
 (defun ex-write (range filename touch)
   (case (length range)
@@ -48,6 +53,14 @@
 
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))
+
+(define-ex-command "^wa(?:ll)$" (range argument)
+  (declare (ignore range argument))
+  (ex-write-all nil))
+
+(define-ex-command "^wa(?:ll)!$" (range argument)
+  (declare (ignore range argument))
+  (ex-write-all t))
 
 (define-ex-command "^update$" (range filename)
   (when (lem:buffer-modified-p (lem:current-buffer))
@@ -236,7 +249,7 @@
 
 (define-ex-command "^cd$" (range new-directory)
   (declare (ignore range))
-  (let ((new-directory (change-directory (expand-filename-modifiers new-directory))))
+  (let ((new-directory (change-directory* (expand-filename-modifiers new-directory))))
     (lem:message "~A" new-directory)))
 
 (define-ex-command "^noh(?:lsearch)?$" (range argument)

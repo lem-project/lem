@@ -139,17 +139,6 @@
 (defmethod handle-key-up ((platform lem-sdl2/platform:linux) key-event)
   (handle-key-up-unix key-event))
 
-;; freebsd
-(defmethod handle-text-input ((platform lem-sdl2/platform:freebsd) text)
-  (handle-text-input-unix text))
-
-(defmethod handle-key-down ((platform lem-sdl2/platform:freebsd) key-event)
-  (handle-key-down-unix key-event))
-
-(defmethod handle-key-up ((platform lem-sdl2/platform:freebsd) key-event)
-  (handle-key-up-unix key-event))
-
-;; shared freebsd, linux
 (defun handle-text-input-unix (text)
   (when (modifier-is-accept-text-input-p *modifier*)
     (loop :for c :across text
@@ -271,7 +260,7 @@
     (loop :for c :across text
           :do (let ((key (make-key :ctrl (modifier-ctrl *modifier*)
                                    :meta (modifier-meta *modifier*)
-                                   ;; :super (modifier-super *modifier*)
+                                   :super (modifier-super *modifier*)
                                    :shift nil
                                    :sym (convert-to-sym (char-code c)))))
                 (send-key-event key)))))
@@ -286,11 +275,12 @@
                    (or (not text-input-p)
                        (modifier-ctrl modifier)
                        (modifier-meta modifier)
+                       (modifier-super modifier)
                        (< 256 code)))
           (let ((key (make-key-with-shift-careful :shift (modifier-shift modifier)
                                                   :ctrl (modifier-ctrl modifier)
                                                   :meta (modifier-meta modifier)
-                                                  ;; :super (modifier-super modifier)
+                                                  :super (modifier-super modifier)
                                                   :sym sym)))
             (send-key-event key)))))))
 

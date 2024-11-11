@@ -1,13 +1,13 @@
-(defpackage :lem/buffer/fundamental-mode
+(uiop:define-package :lem/buffer/fundamental-mode
   (:export :fundamental-mode))
 
 (uiop:define-package :lem/buffer/internal
   (:use :cl
-        :lem/buffer/line
         :lem/common/utils
         :lem/common/hooks
         :lem/common/var
         :lem/common/character)
+  (:local-nicknames (:line :lem/buffer/line))
   (:use-reexport :lem/buffer/errors)
   (:use-reexport :lem/buffer/file-utils)
   (:use-reexport :lem/buffer/buffer-list-manager)
@@ -81,6 +81,9 @@
    ;; TODO: delete ugly exports
    :%buffer-clear-keep-binfo
    :%buffer-keep-binfo)
+  ;; undo.lisp
+  (:export
+   :with-inhibit-undo)
   (:export
    :buffer-list
    :any-modified-buffer-p
@@ -188,6 +191,7 @@
    :syntax-open-paren-char-p
    :syntax-closed-paren-char-p
    :syntax-string-quote-char-p
+   :syntax-equal-paren-p
    :syntax-escape-char-p
    :syntax-expr-prefix-char-p
    :syntax-skip-expr-prefix-forward
@@ -264,9 +268,14 @@
    :make-tm-patterns
    :make-tm-name
    :add-tm-repository
-   :add-tm-pattern))
+   :add-tm-pattern)
+  ;; check-corruption.lisp
+  (:export
+   :corruption-warning
+   :check-all-buffers-corruption
+   :check-buffer-corruption))
 
-(defpackage :lem/buffer/indent
+(uiop:define-package :lem/buffer/indent
   (:use :cl
         :lem/buffer/internal
         :lem/common/var)
@@ -280,7 +289,7 @@
    :indent-buffer
    :insert-string-and-indent))
 
-(defpackage :lem/buffer/encodings
+(uiop:define-package :lem/buffer/encodings
   (:use :cl
         :lem/buffer/internal
         :lem/common/var)
@@ -297,7 +306,7 @@
    :encoding-read-detect-eol
    :encoding-check))
 
-(defpackage :lem/buffer/file
+(uiop:define-package :lem/buffer/file
   (:use :cl
         :lem/buffer/internal
         :lem/buffer/encodings

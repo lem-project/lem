@@ -331,3 +331,5 @@
 
 (defmacro with-major-mode (mode &body body)
   `(call-with-major-mode (current-buffer) ,mode (lambda () ,@body)))
+
+(defgeneric paste-using-mode (mode text))

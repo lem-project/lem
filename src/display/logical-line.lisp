@@ -151,7 +151,8 @@
   string)
 
 (defstruct eol-cursor-item
-  attribute)
+  attribute
+  true-cursor-p)
 
 (defstruct extend-to-eol-item
   color)
@@ -226,7 +227,8 @@
             items))
     (alexandria:when-let (attribute
                           (logical-line-end-of-line-cursor-attribute logical-line))
-      (push (make-eol-cursor-item :attribute attribute)
+      (push (make-eol-cursor-item :attribute attribute
+                                  :true-cursor-p (cursor-attribute-p attribute))
             items))
     (values (nreverse items)
             (alexandria:when-let (overlay

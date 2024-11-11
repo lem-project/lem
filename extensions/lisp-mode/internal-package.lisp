@@ -6,13 +6,13 @@
         :lem/button
         :lem/loading-spinner
         :lem-lisp-mode/errors
-        :lem-lisp-mode/swank-protocol
+        :lem-lisp-mode/connection
         :lem-lisp-mode/connections
         :lem-lisp-mode/message-dispatcher
         :lem-lisp-mode/ui-mode
         :lem-lisp-mode/grammar)
   (:export
-   ;; reexport swank-protocol.lisp
+   ;; reexport micros-protocol.lisp
    :connection-value)
   (:export
    ;; lisp-ui-mode.lisp
@@ -41,6 +41,7 @@
    :with-remote-eval
    :lisp-eval-from-string
    :lisp-eval
+   :lisp-scratch
    :lisp-eval-async
    :eval-with-transcript
    :re-eval-defvar
@@ -67,7 +68,8 @@
    :show-description
    :lisp-eval-describe
    :lisp-describe-symbol
-   :connect-to-swank
+   :connect-to-micros
+   :connect-to-multiple-servers
    :slime-connect
    :show-source-location
    :source-location-to-xref-location
@@ -100,6 +102,8 @@
    :lisp-apropos-package
    ;; message.lisp
    :display-message
+   ;; package.lisp
+   :lisp-listen-in-current-package
    ;;
    :self-connection
    :self-connection-p

@@ -2,7 +2,9 @@
   (:use :cl :lem-core)
   (:export :mark-set
            :exchange-point-mark
-           :mark-set-whole-buffer))
+           :mark-set-whole-buffer)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/mark)
 
 (define-key *global-keymap* "C-@" 'mark-set)

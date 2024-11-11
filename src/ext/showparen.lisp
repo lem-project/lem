@@ -2,7 +2,8 @@
   (:use :cl
         :alexandria
         :lem)
-  (:export :showparen-attribute
+  (:export :enable
+           :showparen-attribute
            :forward-matching-paren
            :backward-matching-paren)
   #+sbcl
@@ -16,6 +17,7 @@
 
 (define-editor-variable forward-matching-paren 'forward-matching-paren-default)
 (define-editor-variable backward-matching-paren 'backward-matching-paren-default)
+(define-editor-variable enable t)
 
 (defun forward-matching-paren-default (window point)
   (when (syntax-open-paren-char-p (character-at point))
@@ -51,15 +53,16 @@
           (show-paren-at-point window point 0))))))
 
 (defun update-show-paren ()
-  (mapc #'delete-overlay *brackets-overlays*)
-  (setq *brackets-overlays* nil)
-  (let ((highlight-points (show-paren-at-point (current-window) (current-point))))
-    (nconcf highlight-points (mouse-hover-highlight))
-    (dolist (point highlight-points)
-      (push (make-overlay point
-                          (character-offset (copy-point point :temporary) 1)
-                          'showparen-attribute)
-            *brackets-overlays*))))
+  (when (variable-value 'enable)
+    (mapc #'delete-overlay *brackets-overlays*)
+    (setq *brackets-overlays* nil)
+    (let ((highlight-points (show-paren-at-point (current-window) (current-point))))
+      (nconcf highlight-points (mouse-hover-highlight))
+      (dolist (point highlight-points)
+        (push (make-overlay point
+                            (character-offset (copy-point point :temporary) 1)
+                            'showparen-attribute)
+              *brackets-overlays*)))))
 
 (defvar *show-paren-timer* nil)
 

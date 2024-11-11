@@ -7,6 +7,7 @@
   (:export :with-display
            :display
            :current-display
+           :display-cursor-type
            :display-latin-font
            :display-cjk-normal-font
            :display-redraw-at-least-once-p
@@ -55,8 +56,11 @@
   `(call-with-display (lambda (,display) ,@body)))
 
 (defclass display ()
-  ((mutex :initform (bt:make-lock "lem-sdl2 display mutex")
+  ((mutex :initform (bt2:make-lock :name "lem-sdl2 display mutex")
           :reader display-mutex)
+   (cursor-type :initform :box
+                :accessor display-cursor-type
+                :type lem:cursor-type)
    (font-config :initarg :font-config
                 :accessor display-font-config)
    (font :initarg :font
@@ -108,7 +112,7 @@
 
 (defun call-with-renderer (display function)
   (sdl2:in-main-thread ()
-    (bt:with-recursive-lock-held ((display-mutex display))
+    (bt2:with-recursive-lock-held ((display-mutex display))
       (funcall function))))
 
 (defmacro with-renderer ((display) &body body)
@@ -174,7 +178,7 @@
   (nth-value 1 (sdl2:get-window-size (display-window display))))
 
 (defmethod update-texture ((display display))
-  (bt:with-lock-held ((display-mutex display))
+  (bt2:with-lock-held ((display-mutex display))
     (sdl2:destroy-texture (display-texture display))
     (setf (display-texture display)
           (utils:create-texture (display-renderer display)

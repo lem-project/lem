@@ -13,4 +13,4 @@
             (hsv-to-rgb h
                         s
                         (max 0 (- v 2)))
-          (format nil "#~2,'0X~2,'0X~2,'0X" r g b))))))
+          (color-to-hex-string (make-color r g b)))))))

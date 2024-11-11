@@ -29,8 +29,8 @@
 
 (defun open-external-file (pathname)
   #+linux
-  (uiop:run-program (list "xdg-open" (namestring pathname)))
+  (uiop:launch-program (list "xdg-open" (namestring pathname)))
   #+darwin
-  (uiop:run-program (list "open" (namestring pathname)))
+  (uiop:launch-program (list "open" (namestring pathname)))
   #+windows
-  (uiop:run-program (list "explorer" (namestring pathname)) :ignore-error-status t))
+  (uiop:launch-program (list "explorer" (namestring pathname)) :ignore-error-status t))

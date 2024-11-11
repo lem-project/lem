@@ -3,7 +3,7 @@
         :lem
         :split-sequence)
   (:import-from :lem-vi-mode/utils
-                :change-directory)
+                :change-directory*)
   (:import-from :parse-number
                 :parse-number)
   (:import-from :cl-ppcre
@@ -284,9 +284,9 @@
              ',name))))))
 
 (defun auto-change-directory (buffer-or-window)
-  (change-directory (etypecase buffer-or-window
-                      (lem:buffer (lem:buffer-directory buffer-or-window))
-                      (lem:window (lem:buffer-directory (lem:window-buffer buffer-or-window))))))
+  (change-directory* (etypecase buffer-or-window
+                       (lem:buffer (lem:buffer-directory buffer-or-window))
+                       (lem:window (lem:buffer-directory (lem:window-buffer buffer-or-window))))))
 
 (define-option "autochdir" (nil :type boolean :aliases ("acd"))
   (:documentation "Boolean to change the current directory to the buffer's directory automatically.

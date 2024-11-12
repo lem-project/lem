@@ -178,5 +178,15 @@
       (let ((directory (buffer-directory)))
         (make-leftside-window (make-filer-buffer directory)))))
 
+(define-command filer-at-directory () ()
+  "Prompt for a directory and open the filer tree view at this directory."
+  (let ((directory (prompt-for-directory "Directory: "
+                                         :directory (buffer-directory)
+                                         :gravity :cursor
+                                         :use-border t)))
+    (when (filer-active-p)
+      (deactive-filer)
+    (make-leftside-window (make-filer-buffer directory)))))
+
 (define-command filer-select () ()
   (select (back-to-indentation (current-point))))

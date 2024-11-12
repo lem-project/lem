@@ -450,7 +450,9 @@
           (return nil))))))
 
 (define-command isearch-next-highlight (n) (:universal)
-  (search-next-matched (current-point) n))
+  (cond ((zerop n) nil)
+        ((minusp n) (search-next-matched (current-point) (1+ n)))
+        (t (search-next-matched (current-point) n))))
 
 (define-command isearch-prev-highlight (n) (:universal)
   (isearch-next-highlight (- n)))

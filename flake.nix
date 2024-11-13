@@ -67,6 +67,9 @@
 
               dontBuild = true;
               dontFixup = true;
+              outputHashMode = "recursive";
+              outputHash =
+                "sha256-wRK5dU+mieajaA55cXbLoH2hvgP3wp61PN1pdooXD7o=";
             };
 
             configurePhase = ''

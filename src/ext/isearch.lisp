@@ -443,7 +443,7 @@
                    (end point))
         (funcall search-fn end string)
         (funcall search-previous-fn (move-point start end) string)
-        (when (point<= start point)
+        (when (point< end point)
           (move-point point end)))
       (dotimes (_ (abs n) point)
         (unless (funcall search-fn point string)

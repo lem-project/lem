@@ -69,7 +69,7 @@
               dontFixup = true;
               outputHashMode = "recursive";
               outputHash =
-                "sha256-wRK5dU+mieajaA55cXbLoH2hvgP3wp61PN1pdooXD7o=";
+                "sha256-Ya1f0GcDBIRuJDgIC03Mp325ns393zwQ9DNGlbAhqOY=";
             };
 
             configurePhase = ''
@@ -154,11 +154,13 @@
         in {
           packages.lem-ncurses = lem.overrideLispAttrs (o: {
             pname = "lem-ncurses";
+            meta.mainProgram = "lem";
             systems = [ "lem-ncurses" ];
             nativeLibs = with pkgs; o.nativeLibs ++ [ ncurses ];
           });
           packages.lem-sdl2 = lem.overrideLispAttrs (o: {
             pname = "lem-sdl2";
+            meta.mainProgram = "lem";
             systems = [ "lem-sdl2" ];
             nativeLibs = with pkgs;
               o.nativeLibs ++ [ SDL2 SDL2_ttf SDL2_image ];

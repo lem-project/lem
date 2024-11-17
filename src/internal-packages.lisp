@@ -275,6 +275,7 @@
    :*window-show-buffer-functions*
    :*switch-to-buffer-hook*
    :*switch-to-window-hook*
+   :*default-split-action*
    :window-parent
    :scroll
    :window-view-point

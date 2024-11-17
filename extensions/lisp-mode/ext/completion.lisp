@@ -8,7 +8,7 @@
            :*documentation-popup-gravity*))
 (in-package :lem-lisp-mode/completion)
 
-(defvar *documentation-popup-gravity* :vertically-adjacent-window-dynamic
+(defvar *documentation-popup-gravity* :vertically-adjacent-window
   "The `gravity` (anchor position) used for documentation popup windows.
 To prevent the window from going off screen the default choice tries to place
 the window to the right of the completion window, unless the space is insuficient.

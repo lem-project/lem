@@ -17,6 +17,8 @@
 (defvar *switch-to-buffer-hook* '())
 (defvar *switch-to-window-hook* '())
 
+(defvar *default-split-action* :sensibly)
+
 (defgeneric %delete-window (window))
 (defgeneric window-parent (window)
   (:method (window)
@@ -756,7 +758,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
     (run-hooks *window-show-buffer-functions* window)))
 
 (deftype split-action ()
-  '(or null (member :sensibly :negative)))
+  '(or null (member :sensibly :negative :no-split)))
 
 (defmethod split-window-using-split-action ((split-action null) window)
   (split-window-sensibly window))
@@ -771,6 +773,9 @@ You can pass in the optional argument WINDOW-LIST to replace the default
         (ecase (window-node-split-type node)
           (:hsplit (split-window-vertically window))
           (:vsplit (split-window-horizontally window))))))
+
+(defmethod split-window-using-split-action ((split-action (eql :no-split)) window)
+  )
 
 (defstruct pop-to-buffer-state
   (split-action nil :type split-action)
@@ -837,7 +842,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)
   (%switch-to-buffer buffer record move-prev-point))
 
-(defun pop-to-buffer (buffer &key split-action)
+(defun pop-to-buffer (buffer &key (split-action *default-split-action*))
   (check-type split-action split-action)
   (if (eq buffer (current-buffer))
       (return-from pop-to-buffer (current-window))

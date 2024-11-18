@@ -17,7 +17,7 @@
 (defvar *switch-to-buffer-hook* '())
 (defvar *switch-to-window-hook* '())
 
-(defvar *default-split-action* :sensibly)
+(defvar *default-split-action* nil)
 
 (defgeneric %delete-window (window))
 (defgeneric window-parent (window)

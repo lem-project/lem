@@ -10,6 +10,8 @@
         :lem-vi-mode/registers
         :lem-vi-mode/text-objects
         :lem-vi-mode/commands/utils)
+  (:import-from :lem-vi-mode/options
+                :option-value)
   (:import-from :lem-vi-mode/states
                 :*motion-keymap*
                 :normal
@@ -735,7 +737,7 @@ on the same line or at eol if there are none."
      :default-n-arg nil)
   (cond
     ;; Argument n supplied (e.g. 10%) - move to line that represents n% of the buffer
-    (n 
+    (n
      (let* ((buffer-size (line-number-at-point (buffer-end-point (current-buffer))))
             (new-line-pos (ceiling (* buffer-size n) 100)))
        (goto-line new-line-pos)
@@ -771,17 +773,27 @@ on the same line or at eol if there are none."
 (define-command vi-search-forward () ()
   (setf *last-search-direction* :forward)
   (add-hook *isearch-finish-hooks* 'vi-isearch-finish-hook)
-  (with-jumplist
-    (lem/isearch::isearch-start "/"
-                                (lambda (point string)
-                                  (alexandria:when-let (p (lem/isearch::search-forward-regexp
-                                                           (copy-point lem/isearch::*isearch-start-point* :temporary)
-                                                           string))
-                                    (character-offset p (- (length string)))
-                                    (move-point point p)))
-                                #'lem/isearch::search-forward-regexp
-                                #'lem/isearch::search-backward-regexp
-                                "")))
+  (let ((case-insensitive (option-value "ignorecase")))
+    (with-jumplist
+      (lem/isearch::isearch-start
+       "/"
+       (lambda (point string)
+         (alexandria:when-let (p (lem/isearch::search-forward-regexp
+                                  (copy-point lem/isearch::*isearch-start-point* :temporary)
+                                  (ppcre:create-scanner string :case-insensitive-mode case-insensitive)))
+           (character-offset p (- (length string)))
+           (move-point point p)))
+       (lambda (point regex &optional limit-point)
+         (lem/isearch::search-forward-regexp
+          point
+          (ppcre:create-scanner regex :case-insensitive-mode case-insensitive)
+          limit-point))
+       (lambda (point regex &optional limit-point)
+         (lem/isearch::search-backward-regexp
+          point
+          (ppcre:create-scanner regex :case-insensitive-mode case-insensitive)
+          limit-point))
+       ""))))
 
 (define-command vi-search-backward () ()
   (setf *last-search-direction* :backward)

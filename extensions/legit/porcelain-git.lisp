@@ -164,7 +164,7 @@ allows to learn about the file state: modified, deleted, ignored… "
 
 (defmethod pull ((vcs vcs-git))
   ;; xxx: recurse submodules, etc.
-  (run-git (list "pull" "HEAD")))
+  (run-git (list "pull")))
 
 (defmethod push ((vcs vcs-git))
   (run-git (list "push")))

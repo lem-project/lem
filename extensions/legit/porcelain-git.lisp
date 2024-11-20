@@ -454,6 +454,15 @@ I am stopping in case you still have something valuable there."))
                  (format nil "stash@{~a}" position) ;; position alone works too.
                  )))
 
+(defmethod stash-drop ((vcs vcs-git) &key position)
+  "drop this stash."
+  (when (not (and (numberp position)
+                  (not (minusp position))))
+    (porcelain-error "Bad stash index: ~a. We expect a non-negative number." position))
+  (run-git (list "stash"
+                 "drop"
+                 (format nil "stash@{~a}" position))))
+
 (defmethod stash-list ((vcs vcs-git))
   ;; each line is like
   ;; stash@{7}: On main: notes: legit vim interference

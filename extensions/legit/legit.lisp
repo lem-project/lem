@@ -27,7 +27,7 @@ Done:
 - basic Fossil support (current branch, add change, commit)
 - basic Mercurial support
 - show the commits log, with pagination
-- view stashes, stash push, stash pop
+- view stashes, stash push, pop and drop stash at point
 
 Ongoing:
 
@@ -185,9 +185,19 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
       (cond
         ((and (numberp stash)
               (not (minusp stash)))
-         ;; (message (format nil "let's unstash n° ~s" stash))
          (lem/porcelain:stash-pop vcs :position stash)
          )
+        (t
+         (message (format nil "=== this stash reference is not valid: ~s" stash)))))))
+
+(defun make-stash-drop-function (stash)
+  (lambda ()
+    (with-current-project (vcs)
+      (cond
+        ((and (numberp stash)
+              (not (minusp stash)))
+         (when (prompt-for-y-or-n-p "Drop stash? "))
+             (lem/porcelain:stash-drop vcs :position stash))
         (t
          (message (format nil "=== this stash reference is not valid: ~s" stash)))))))
 
@@ -548,7 +558,8 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                                         ;; Have a side effect,
                                                         ;; don't try to open a file.
                                                         (values))
-                                 :stage-function (make-stash-pop-function position))
+                                 :stage-function (make-stash-pop-function position)
+                                 :discard-file-function (make-stash-drop-function position))
                         (insert-string point line
                                        :attribute 'filename-attribute :read-only t)))))
 
@@ -838,7 +849,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (format s "(P)push      -> (p) to remote branch~&")
     (format s "(r)ebase     -> (i)nteractively from commit at point, (a)bort~&")
     (format s "(z) stashes  -> (z) stash changes (p)op latest stash~&")
-    (format s "             -> also use (s) on a stash.~&")
+    (format s "             -> also use (s) and (k) on a stash.~&")
     (format s "(g) -> refresh~&")
     (format s "~%")
     (format s "Navigate: n and p, C-n and C-p, M-n and M-p.~&")

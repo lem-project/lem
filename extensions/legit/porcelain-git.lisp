@@ -446,8 +446,13 @@ I am stopping in case you still have something valuable there."))
 
 (defmethod stash-pop ((vcs vcs-git) &key (position 0))
   "Pop the latest stashed changes."
-  (declare (ignorable position))
-  (run-git (list "stash" "pop")))
+  (when (not (and (numberp position)
+                  (not (minusp position))))
+    (porcelain-error "Bad stash index: ~a. We expect a non-negative number." position))
+  (run-git (list "stash"
+                 "pop"
+                 (format nil "stash@{~a}" position) ;; position alone works too.
+                 )))
 
 (defmethod stash-list ((vcs vcs-git))
   ;; each line is like

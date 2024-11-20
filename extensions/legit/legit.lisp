@@ -179,6 +179,18 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (t
          (show-diff (format nil "=== this stash reference is not valid: ~s" stash)))))))
 
+(defun make-stash-pop-function (stash)
+  (lambda ()
+    (with-current-project (vcs)
+      (cond
+        ((and (numberp stash)
+              (not (minusp stash)))
+         ;; (message (format nil "let's unstash n° ~s" stash))
+         (lem/porcelain:stash-pop vcs :position stash)
+         )
+        (t
+         (message (format nil "=== this stash reference is not valid: ~s" stash)))))))
+
 (defun make-diff-function (file &key cached type)
   (lambda ()
     (with-current-project (vcs)
@@ -530,7 +542,13 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
             (loop :for line :in stashes
                   :for position := 0 :then (incf position)
                   :do (with-appending-source
-                          (point :move-function (make-stash-show-function position))
+                          (point :move-function (make-stash-show-function position)
+                                 :visit-file-function (lambda ()
+                                                        (message "Apply this stash with (s)")
+                                                        ;; Have a side effect,
+                                                        ;; don't try to open a file.
+                                                        (values))
+                                 :stage-function (make-stash-pop-function position))
                         (insert-string point line
                                        :attribute 'filename-attribute :read-only t)))))
 
@@ -808,7 +826,8 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (format s "~%")
     (format s "Commands:~&")
     (format s "(s)tage and (u)nstage a file. Inside a diff, (s)tage or (u)nstage a hunk.~&")
-    (format s "(k) discard changes.~&")
+    (format s "  pop the stash at point.~&")
+    (format s "(k) discard changes, drop the stash at point.~&")
     (format s "(c)ommit~&")
     (format s "(b)ranches-> checkout another (b)ranch.~&")
     (format s "          -> (c)reate.~&")
@@ -819,6 +838,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (format s "(P)push      -> (p) to remote branch~&")
     (format s "(r)ebase     -> (i)nteractively from commit at point, (a)bort~&")
     (format s "(z) stashes  -> (z) stash changes (p)op latest stash~&")
+    (format s "             -> also use (s) on a stash.~&")
     (format s "(g) -> refresh~&")
     (format s "~%")
     (format s "Navigate: n and p, C-n and C-p, M-n and M-p.~&")

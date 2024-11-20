@@ -292,6 +292,18 @@
           (sdl2:set-window-fullscreen (display:display-window display)
                                       (if fullscreen-p :desktop)))))))
 
+(defmethod lem-if:maximize-frame ((implementation sdl2))
+  (with-debug ("lem-if:maximize-frame")
+    (sdl2:in-main-thread ()
+      (display:with-display (display)
+        (sdl2:maximize-window (lem-sdl2/display::display-window display))))))
+
+(defmethod lem-if:minimize-frame ((implementation sdl2))
+  (with-debug ("lem-if:minimize-frame")
+    (sdl2:in-main-thread ()
+      (display:with-display (display)
+        (sdl2:minimize-window (lem-sdl2/display::display-window display))))))
+
 (defmethod lem-if:make-view ((implementation sdl2) window x y width height use-modeline)
   (with-debug ("lem-if:make-view" window x y width height use-modeline)
     (display:with-display (display)

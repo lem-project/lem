@@ -683,6 +683,8 @@
    :set-display-title
    :display-fullscreen-p
    :set-display-fullscreen-p
+   :maximize-frame
+   :minimize-frame
    :make-view
    :view-width
    :view-height

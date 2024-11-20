@@ -6,10 +6,22 @@
 (define-attribute repl-result-attribute
   (t :foreground :base06 :bold t))
 
+(define-attribute warning-attribute
+  (:dark :foreground "yellow")
+  (:light :foreground "orange"))
+
+(defvar *repl-syntax-table* (lem/buffer/syntax-table::copy-syntax-table lem-lisp-syntax:*syntax-table*))
+(set-syntax-parser *repl-syntax-table*
+                   (make-tmlanguage-lisp :extra-patterns
+                                         (list (make-tm-region
+                                                "^WARNING:"
+                                                "$"
+                                                :name 'warning-attribute))))
+
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"
      :keymap *lisp-repl-mode-keymap*
-     :syntax-table lem-lisp-syntax:*syntax-table*
+     :syntax-table *repl-syntax-table*
      :mode-hook *lisp-repl-mode-hook*)
   (cond
     ((eq (repl-buffer) (current-buffer))
@@ -490,7 +502,9 @@
         (attribute
          (setf current-attribute token))
         (string
-         (insert-string point token :sticky-attribute current-attribute))))))
+         (if current-attribute
+             (insert-string point token :sticky-attribute current-attribute)
+             (insert-string point token)))))))
 
 (define-command backward-prompt () ()
   (when (equal (current-buffer) (repl-buffer))

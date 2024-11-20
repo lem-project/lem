@@ -2,8 +2,6 @@
   (:use :cl
     ;; let's import all the classes and methods defined in the main porcelain:
     :lem/porcelain)
-  ;; beware, we still shadow cl:push to have a "push" method:
-  (:shadow :push)
   (:import-from :trivial-types
                 :proper-list)
   (:export :git-project-p)
@@ -166,7 +164,7 @@ allows to learn about the file state: modified, deleted, ignored… "
   ;; xxx: recurse submodules, etc.
   (run-git (list "pull")))
 
-(defmethod push ((vcs vcs-git))
+(defmethod push-default ((vcs vcs-git))
   (run-git (list "push")))
 
 (defmethod current-branch ((vcs vcs-git))

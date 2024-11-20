@@ -700,7 +700,9 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-command legit-push () ()
   "Push changes to the current remote."
   (with-current-project (vcs)
-    (run-function (lambda () (lem/porcelain:push vcs)))))
+    (run-function (lambda ()
+                    (lem/porcelain:push-default vcs))
+                  :message "Done")))
 
 (define-command legit-rebase-interactive () ()
   "Rebase interactively, from the commit the point is on.

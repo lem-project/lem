@@ -1,8 +1,6 @@
 
 (uiop:define-package :lem/porcelain
   (:use :cl)
-  ;; beware, we shadow cl:push to have a "push" method:
-  (:shadow :push)
   (:import-from :trivial-types
                 :proper-list)
   (:export
@@ -19,7 +17,7 @@
    :file-diff
    :latest-commits
    :pull
-   :push
+   :push-default
    :rebase-abort
    :rebase-continue
    :rebase-interactively
@@ -237,10 +235,10 @@ M	src/ext/porcelain.lisp
   (:method (vcs)
     (porcelain-error "lem/porcelain:pull not implemented for vcs ~a" (vcs-name vcs))))
 
-(defgeneric push (vcs)
-  (:documentation "Pushes to remotes")
+(defgeneric push-default (vcs)
+  (:documentation "Pushes to default remote.")
   (:method (vcs)
-    (porcelain-error "lem/porcelain:push not implemented for vcs ~a" (vcs-name vcs))))
+    (porcelain-error "lem/porcelain:push-default not implemented for vcs ~a" (vcs-name vcs))))
 
 ;; Interactive rebase
 (defgeneric rebase-interactively (vcs &key from)

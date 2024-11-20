@@ -20,6 +20,7 @@
                (:file "utils")
                (:file "display")
                (:file "view")
+               (:file "frame")
                (:file "main")
                (:file "drawing")
                (:file "graphics")

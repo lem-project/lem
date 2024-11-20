@@ -27,6 +27,7 @@ Done:
 - basic Fossil support (current branch, add change, commit)
 - basic Mercurial support
 - show the commits log, with pagination
+- view stashes, stash push, stash pop
 
 Ongoing:
 
@@ -167,6 +168,16 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (insert-string (buffer-point buffer) diff)
     (setf (buffer-read-only-p buffer) t)
     (move-to-line (buffer-point buffer) 1)))
+
+(defun make-stash-show-function (stash)
+  (lambda ()
+    (with-current-project (vcs)
+      (cond
+        ((and (numberp stash)
+              (not (minusp stash)))
+         (show-diff (lem/porcelain:stash-show vcs :position stash)))
+        (t
+         (show-diff (format nil "=== this stash reference is not valid: ~s" stash)))))))
 
 (defun make-diff-function (file &key cached type)
   (lambda ()
@@ -516,8 +527,12 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
         (let ((stashes (lem/porcelain:stash-list vcs)))
           (collector-insert (format nil "Stashes (~a)" (length stashes)) :header t)
           (when *show-stashes*
-            (loop for line in stashes
-                  do (collector-insert line))))
+            (loop :for line :in stashes
+                  :for position := 0 :then (incf position)
+                  :do (with-appending-source
+                          (point :move-function (make-stash-show-function position))
+                        (insert-string point line
+                                       :attribute 'filename-attribute :read-only t)))))
 
         ;; Unstaged changes
         (collector-insert "")

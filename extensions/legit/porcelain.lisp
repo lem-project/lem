@@ -31,6 +31,7 @@
    :stash-list
    :stash-pop
    :stash-push
+   :stash-show
    :*diff-context-lines*
    :commits-log
    :*commits-log-page-size*
@@ -280,3 +281,9 @@ M	src/ext/porcelain.lisp
   (:method (vcs)
     (values))
   (:documentation "List stashes"))
+
+(defgeneric stash-show (vcs &key position)
+  (:method (vcs &key position)
+    (declare (ignorable position))
+    (porcelain-error "lem/porcelain:stash-show not implement for vcs ~a" (vcs-name vcs)))
+  (:documentation "Show this stash, as a diff. Return text."))

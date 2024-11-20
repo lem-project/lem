@@ -455,3 +455,12 @@ I am stopping in case you still have something valuable there."))
   ;; just display them.
   (str:lines
    (run-git (list "stash" "list"))))
+
+(defmethod stash-show ((vcs vcs-git) &key position)
+  (if (and (numberp position)
+           (not (minusp position)))
+      (run-git (list "stash"
+                     "show"
+                     "-p" ;; view as patch = view diff
+                     (princ-to-string position)))
+      (format nil "Invalid stash reference: ~s. We expect a positive number." position)))

@@ -437,3 +437,21 @@ I am stopping in case you still have something valuable there."))
      (run-git (list "rebase" "--skip")))
     (t
      (porcelain-error  "No git rebase in process? PID not found."))))
+
+(defmethod stash-push ((vcs vcs-git) &key message)
+  "Stash the current changes. Ask for a stash message."
+  (if message
+      (run-git (list "stash" "push" "-m" message))
+      (run-git (list "stash" "push"))))
+
+(defmethod stash-pop ((vcs vcs-git) &key (position 0))
+  "Pop the latest stashed changes."
+  (declare (ignorable position))
+  (run-git (list "stash" "pop")))
+
+(defmethod stash-list ((vcs vcs-git))
+  ;; each line is like
+  ;; stash@{7}: On main: notes: legit vim interference
+  ;; just display them.
+  (str:lines
+   (run-git (list "stash" "list"))))

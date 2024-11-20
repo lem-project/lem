@@ -28,6 +28,9 @@
    :show-commit-diff
    :stage
    :unstage
+   :stash-list
+   :stash-pop
+   :stash-push
    :*diff-context-lines*
    :commits-log
    :*commits-log-page-size*
@@ -257,3 +260,23 @@ M	src/ext/porcelain.lisp
 (defgeneric rebase-skip (vcs)
   (:method (vcs)
     (porcelain-error "lem/porcelain:rebase-skip not implemented for vcs ~a" (vcs-name vcs))))
+
+;;;
+;;; Stash.
+;;;
+(defgeneric stash-push (vcs &key message)
+  (:method (vcs &key message)
+    (declare (ignorable message))
+    (porcelain-error "lem/porcelain:stash not implemented for vcs ~a" (vcs-name vcs)))
+  (:documentation "Stash the current changes. Ask for a stash message."))
+
+(defgeneric stash-pop (vcs &key position)
+  (:method (vcs &key position)
+    (declare (ignorable position))
+    (porcelain-error "lem/porcelain:stash-pop not implemented for vcs ~a" (vcs-name vcs)))
+  (:documentation "Pop saved stashes. Defaults to the latest stash."))
+
+(defgeneric stash-list (vcs)
+  (:method (vcs)
+    (values))
+  (:documentation "List stashes"))

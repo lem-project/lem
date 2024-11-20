@@ -44,6 +44,9 @@ Ongoing:
 
 Currently Git-only. Concretely, this calls Git with the -w option.")
 
+(defvar *show-stashes* t "List stashes on the Legit status buffer.")
+
+
 ;; Supercharge patch-mode with our keys.
 (define-major-mode legit-diff-mode lem-patch-mode:patch-mode
     (:name "legit-diff"
@@ -102,6 +105,10 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-key *peek-legit-keymap* "r a" 'rebase-abort)
 (define-key *peek-legit-keymap* "r c" 'rebase-continue)
 (define-key *peek-legit-keymap* "r s" 'rebase-skip)
+
+;; Stashes
+(define-key *peek-legit-keymap* "z z" 'legit-stash-push)
+(define-key *peek-legit-keymap* "z p" 'legit-stash-pop)
 
 ;; redraw everything:
 (define-key *peek-legit-keymap* "g" 'legit-status)
@@ -466,7 +473,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 
 (define-command legit-status () ()
-  "Show changes, untracked files and latest commits in an interactive window."
+  "Show changes, untracked files, stashes and latest commits in an interactive window."
   (with-current-project (vcs)
     (multiple-value-bind (untracked-files unstaged-files staged-files)
         (lem/porcelain:components vcs)
@@ -502,6 +509,15 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                  :unstage-function (lambda () (message "File is not tracked, can't be unstaged.")))
                         (insert-string point file :attribute 'filename-attribute :read-only t)))
             (collector-insert "<none>"))
+
+
+        ;; Stashes.
+        (collector-insert "")
+        (let ((stashes (lem/porcelain:stash-list vcs)))
+          (collector-insert (format nil "Stashes (~a)" (length stashes)) :header t)
+          (when *show-stashes*
+            (loop for line in stashes
+                  do (collector-insert line))))
 
         ;; Unstaged changes
         (collector-insert "")
@@ -748,6 +764,21 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                 commits-per-page)))
       (display-commits-log vcs last-page-offset))))
 
+(define-command legit-stash-push () ()
+  "Ask for a message and stash the current changes."
+  (with-current-project (vcs)
+    (let ((message (prompt-for-string "Stash message: ")))
+      (lem/porcelain::stash-push vcs :message message)
+      (legit-status))))
+
+(define-command legit-stash-pop () ()
+  "Pop the latest staged changes"
+  (with-current-project (vcs)
+    (let ((confirm (prompt-for-y-or-n-p "Pop the latest stash to the current branch? ")))
+      (when confirm
+        (lem/porcelain::stash-pop vcs)
+        (legit-status)))))
+
 (define-command legit-quit () ()
   "Quit"
   (%legit-quit)
@@ -767,10 +798,12 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (format s "(b)ranches-> checkout another (b)ranch.~&")
     (format s "          -> (c)reate.~&")
     (format s "(l)og-> (l) commits log~&")
-    (format s "     -> (F) first page of the commits history~&")
+    (format s "     -> (F) first page of the commits history.~&")
+    (format s "     Navigate commit pages with (b) and (f).~&")
     (format s "(F)etch, pull-> (p) from remote branch~&")
     (format s "(P)push      -> (p) to remote branch~&")
     (format s "(r)ebase     -> (i)nteractively from commit at point, (a)bort~&")
+    (format s "(z) stashes  -> (z) stash changes (p)op latest stash~&")
     (format s "(g) -> refresh~&")
     (format s "~%")
     (format s "Navigate: n and p, C-n and C-p, M-n and M-p.~&")
@@ -781,6 +814,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (format s "~%")
     (format s "You can customize:~&")
     (format s "~%")
+    (format s "lem/legit:*show-stashes* : set to nil to not see the list of stashes in the status buffer~&")
     (format s "lem/porcelain:*nb-latest-commits* which defaults to 10~&")
     (format s "(and more)~&")
     ))

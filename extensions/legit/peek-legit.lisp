@@ -290,7 +290,22 @@ Notes:
                                              stage-function
                                              unstage-function
                                              discard-file-function) &body body)
-  "Macro to use inside `with-collecting-sources' to print stuff."
+  "Macro to use inside `with-collecting-sources' to print stuff.
+
+  Save the lambda functions :move-function etc to their corresponding string properties.
+
+  A keybinding is associated to these functions.
+  They will dig up the lambda functions associated with these markers and run them.
+
+  Devel note 2024: the key arguments move-function, visit-file-function etc
+  are now badly named. They should represent a function tied to an action:
+  - what to do when the point moves on this line (this is currently move-function to show diffs)
+  - what to do on Enter (this is currently visit-file-function)
+  - what to do on the `s` keybinding (currently stage-function)
+  etc
+
+  Not everything represented on legit status represents a file.
+  We now use :visit-file-function and :stage-function to have actions on stashes."
   `(call-with-appending-source (lambda (,point) ,@body)
                                ,move-function
                                ,visit-file-function
@@ -352,6 +367,16 @@ Notes:
 
 
 (define-command peek-legit-select () ()
+  "Run the action stored in the :visit-file-function marker. Bound to Enter.
+
+  By default, this function works on files:
+  - execute the lambda function from the marker,
+  - expect its return value is a file name
+  - and visit the file, in the context of the current VCS.
+
+  It is possible to run actions not tied to files, for example do
+  something when pressing Enter on a line representing a commit stash.
+  The lambda function needs to return nil or (values)."
   (alexandria:when-let ((path (get-matched-file)))
     (%legit-quit)
     (with-current-project (vcs)
@@ -378,6 +403,7 @@ Notes:
   (previous-move-point (current-point)))
 
 (define-command peek-legit-stage-file () ()
+  "Get the lambda function associated with the :stage-function marker, call it, ignore side effects and refresh legit status."
   (alexandria:when-let* ((stage (get-stage-function (buffer-point (window-buffer *peek-window*))))
                          (point (funcall stage)))
     ;; Update the buffer, to see that a staged file goes to the staged section.
@@ -386,6 +412,7 @@ Notes:
     point))
 
 (define-command peek-legit-unstage-file () ()
+  "Get the lambda function associated with the :unstage-function marker, call it, ignore side effects and refresh legit status."
   (alexandria:when-let* ((unstage (get-unstage-function (buffer-point (window-buffer *peek-window*))))
                          (point (funcall unstage)))
     ;; Update the buffer, to see that a staged file goes to the staged section.

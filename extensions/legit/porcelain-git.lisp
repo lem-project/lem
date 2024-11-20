@@ -2,8 +2,6 @@
   (:use :cl
     ;; let's import all the classes and methods defined in the main porcelain:
     :lem/porcelain)
-  ;; beware, we still shadow cl:push to have a "push" method:
-  (:shadow :push)
   (:import-from :trivial-types
                 :proper-list)
   (:export :git-project-p)
@@ -166,7 +164,7 @@ allows to learn about the file state: modified, deleted, ignored… "
   ;; xxx: recurse submodules, etc.
   (run-git (list "pull")))
 
-(defmethod push ((vcs vcs-git))
+(defmethod push-default ((vcs vcs-git))
   (run-git (list "push")))
 
 (defmethod current-branch ((vcs vcs-git))
@@ -437,3 +435,44 @@ I am stopping in case you still have something valuable there."))
      (run-git (list "rebase" "--skip")))
     (t
      (porcelain-error  "No git rebase in process? PID not found."))))
+
+(defmethod stash-push ((vcs vcs-git) &key message)
+  "Stash the current changes. Ask for a stash message."
+  (if message
+      (run-git (list "stash" "push" "-m" message))
+      (run-git (list "stash" "push"))))
+
+(defmethod stash-pop ((vcs vcs-git) &key (position 0))
+  "Pop the latest stashed changes."
+  (when (not (and (numberp position)
+                  (not (minusp position))))
+    (porcelain-error "Bad stash index: ~a. We expect a non-negative number." position))
+  (run-git (list "stash"
+                 "pop"
+                 (format nil "stash@{~a}" position) ;; position alone works too.
+                 )))
+
+(defmethod stash-drop ((vcs vcs-git) &key position)
+  "drop this stash."
+  (when (not (and (numberp position)
+                  (not (minusp position))))
+    (porcelain-error "Bad stash index: ~a. We expect a non-negative number." position))
+  (run-git (list "stash"
+                 "drop"
+                 (format nil "stash@{~a}" position))))
+
+(defmethod stash-list ((vcs vcs-git))
+  ;; each line is like
+  ;; stash@{7}: On main: notes: legit vim interference
+  ;; just display them.
+  (str:lines
+   (run-git (list "stash" "list"))))
+
+(defmethod stash-show ((vcs vcs-git) &key position)
+  (if (and (numberp position)
+           (not (minusp position)))
+      (run-git (list "stash"
+                     "show"
+                     "-p" ;; view as patch = view diff
+                     (princ-to-string position)))
+      (format nil "Invalid stash reference: ~s. We expect a positive number." position)))

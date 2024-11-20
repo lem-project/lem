@@ -5,6 +5,7 @@
   (:export :legit-status
            :*prompt-for-commit-abort-p*
            :*ignore-all-space*
+           :*show-stashes*
            :*vcs-existence-order*
 	   :*peek-legit-keymap*
            :peek-legit-discard-file

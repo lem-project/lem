@@ -20,6 +20,9 @@
    :variable-reference
    :variable-reference-value
 
+   :macro-reference
+   :macro-reference-value
+
    :misc-reference
    :misc-custom-type
 
@@ -100,6 +103,9 @@
   ((value :initarg :variable-reference-value
           :reader variable-reference-value)))
 
+(defclass macro-reference (reference)
+  ((value :initarg :macro-reference-value
+          :reader macro-reference-value)))
 
 (defclass misc-reference (reference)
   ((custom-type :initarg :misc-custom-type
@@ -131,6 +137,10 @@
                    :initarg :variable-regex
                    :writer set-variable-regex
                    :reader search-variable-regex )
+   (macro-regex :type (or capture-regex null)
+                :initform nil
+                :initarg :macro-regex
+                :reader search-macro-regex)
    (misc-regex :type (or capture-regex null)
                :initform nil
                :initarg :misc-regex
@@ -174,6 +184,7 @@
     (with-accessors ((function-regex search-function-regex)
                      (package-regex search-package-regex)
                      (class-regex search-class-regex)
+                     (macro-regex search-macro-regex)
                      (variable-regex search-variable-regex)
                      (misc-regex search-misc-regex))
         search
@@ -182,6 +193,7 @@
                     (cons (cons "classes" class-regex) :class-reference)
                     (cons (cons "packages" package-regex) :package-reference)
                     (cons (cons "variables" variable-regex) :variable-reference)
+                    (cons (cons "macros" macro-regex) :macro-reference)
                     (cons (cons "misc" misc-regex) :misc-reference))))
 
         (setf (buffer-references (current-buffer))
@@ -287,6 +299,12 @@
   "Prompt for a function defined in this buffer and move to it."
   (check-change)
   (let ((reference (navigate-reference "functions")))
+    (move-to-reference reference)))
+
+(define-command detective-macro () ()
+  "Prompt for a macro defined in this buffer and move to it."
+  (check-change)
+  (let ((reference (navigate-reference "macros")))
     (move-to-reference reference)))
 
 (define-command detective-class () ()

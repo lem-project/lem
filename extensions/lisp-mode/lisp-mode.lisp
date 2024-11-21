@@ -57,6 +57,10 @@
                        (lem/detective:make-capture-regex
                         :regex "^(?:\\(defvar |\\(defparameter )"
                         :function #'lem-lisp-mode/detective:capture-reference)
+                       :macro-regex
+                       (lem/detective:make-capture-regex
+                        :regex "^\\(defmacro "
+                        :function #'lem-lisp-mode/detective:capture-reference)
                        :misc-regex
                        (lem/detective:make-capture-regex
                         :regex "^\\(deftest "

@@ -30,6 +30,9 @@
 (defmethod capture-reference ((position lem:point) (class (eql :package-reference)))
   (%default-capture 'lem/detective:package-reference position))
 
+(defmethod capture-reference ((position lem:point) (class (eql :macro-reference)))
+  (%default-capture 'lem/detective:macro-reference position))
+
 (defmethod capture-reference ((position lem:point) (class (eql :misc-reference)))
   (ppcre:register-groups-bind (type name)
       ("^\\s*\\(\\s*(\\w+)\\s+(.*)\\s*" (line-string position))

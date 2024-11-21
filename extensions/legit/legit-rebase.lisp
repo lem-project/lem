@@ -40,6 +40,11 @@ and
      :keymap *legit-rebase-mode-keymap*)
   (setf (variable-value 'enable-syntax-highlight) t))
 
+(define-file-associations legit-rebase-mode
+  ((:file-namestring "git-rebase-todo")
+   (:file-namestring "git-rebase-todo.backup")))
+
+
 ;; Use commits with a keypress:
 (define-key *legit-rebase-mode-keymap* "p" 'rebase-mark-line-pick)
 (define-key *legit-rebase-mode-keymap* "r" 'rebase-mark-line-reword)

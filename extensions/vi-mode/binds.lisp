@@ -128,6 +128,7 @@
 (define-key *normal-keymap* "g U" 'vi-upcase)
 (define-key *normal-keymap* "g u" 'vi-downcase)
 (define-key *normal-keymap* "g ~" 'vi-swapcase)
+(define-key *normal-keymap* "~" 'vi-swapcase-and-forward-char)
 (define-key *normal-keymap* "u" 'vi-undo)
 (define-key *normal-keymap* "C-r" 'vi-redo)
 (define-key *motion-keymap* 'delete-previous-char 'vi-backward-char)

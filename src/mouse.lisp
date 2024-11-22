@@ -215,6 +215,15 @@
     (funcall callback window point)
     t))
 
+(defun sync-mark-start-point-for-vi-mode (start-point)
+  (when (typep (lem:current-global-mode) 'lem-vi-mode:vi-mode)
+    ;; Ensure current main state is visual-char.
+    (unless (lem-vi-mode/visual:visual-char-p)
+      (lem-vi-mode/commands::vi-visual-char))
+    ;; Override the *start-point* in vi-visual mode.
+    (setf lem-vi-mode/visual::*start-point* start-point)
+    ))
+
 (defmethod handle-mouse-hover (buffer mouse-event &key window x y)
   (case (mouse-event-button mouse-event)
     ((nil)
@@ -224,6 +233,8 @@
            (handle-mouse-unhover-buffer window point))))
     (:button-1
      (when (window-last-mouse-button-down-point window)
+       (sync-mark-start-point-for-vi-mode (window-last-mouse-button-down-point window))
+       
        (move-current-point-to-x-y-position window x y)
        (set-current-mark (window-last-mouse-button-down-point window))))))
 
@@ -310,6 +321,8 @@
   (multiple-value-bind (start end)
       (get-select-expression-points (current-point))
     (when start
+      (sync-mark-start-point-for-vi-mode start) 
+      
       (set-current-mark start)
       (move-point (current-point) end))))
 

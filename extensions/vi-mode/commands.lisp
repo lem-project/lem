@@ -90,6 +90,7 @@
            :vi-upcase
            :vi-downcase
            :vi-swapcase
+           :vi-swapcase-and-forward-char
            :vi-undo
            :vi-redo
            :vi-record-macro
@@ -638,6 +639,13 @@ Move the cursor to the first non-blank character of the line."
     (if (eq type :block)
         (apply-visual-range #'swapcase-region)
         (swapcase-region start end))))
+
+(define-command vi-swapcase-and-forward-char () ()
+  (with-point ((start (current-point))
+                            (end (current-point)))
+    (character-offset end 1)
+    (vi-swapcase start end (current-state)))
+  (vi-forward-char))
 
 (define-command vi-undo (&optional (n 1)) (:universal)
   (undo n))

@@ -641,8 +641,9 @@ Move the cursor to the first non-blank character of the line."
         (swapcase-region start end))))
 
 (define-command vi-swapcase-and-forward-char () ()
-  (let*  ((start (copy-point (current-point)))
-          (end (character-offset (current-point) 1)))
+  (with-point ((start (current-point))
+                            (end (current-point)))
+    (character-offset end 1)
     (vi-swapcase start end (current-state)))
   (vi-forward-char))
 

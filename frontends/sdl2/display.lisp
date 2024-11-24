@@ -35,6 +35,7 @@
            :update-display
            :display-width
            :display-height
+           :display-window-width
            :adapt-high-dpi-font-size
            :change-font
            :with-renderer

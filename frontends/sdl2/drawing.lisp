@@ -235,16 +235,18 @@
     surface-width))
 
 (defun redraw-physical-line (display view x y objects height)
-  (loop :with current-x := x
-        :for object :in objects
-        :do (if (and (typep object 'text-object)
-                     (< (display:display-window-width display)
-                        (+ current-x (object-width object display))))
-                (loop :for c :across (text-object-string object)
-                      :do (let ((object (lem-core::make-letter-object c (text-object-attribute object))))
-                            (incf current-x (draw-object object current-x (+ y height) display view)))
-                      :while (< current-x (display:display-window-width display)))
-                (incf current-x (draw-object object current-x (+ y height) display view)))))
+  (let ((display-width (round (* (display:display-window-width display)
+                                 (first (display:display-scale display))))))
+    (loop :with current-x := x
+          :for object :in objects
+          :do (if (and (typep object 'text-object)
+                       (< display-width
+                          (+ current-x (object-width object display))))
+                  (loop :for c :across (text-object-string object)
+                        :do (let ((object (lem-core::make-letter-object c (text-object-attribute object))))
+                              (incf current-x (draw-object object current-x (+ y height) display view)))
+                        :while (< current-x display-width))
+                  (incf current-x (draw-object object current-x (+ y height) display view))))))
 
 (defun redraw-physical-line-from-behind (display view objects)
   (loop :with current-x := (lem-if:view-width (lem-core:implementation) view)

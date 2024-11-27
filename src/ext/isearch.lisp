@@ -307,6 +307,7 @@
           (subseq *isearch-string*
                   0
                   (1- (length *isearch-string*))))
+    (funcall *isearch-search-function* (current-point) *isearch-string*)
     (isearch-update-display)))
 
 (define-command isearch-raw-insert () ()
@@ -396,6 +397,7 @@
   (let ((str (yank-from-clipboard-or-killring)))
     (when str
       (setq *isearch-string* str)
+      (funcall *isearch-search-function* (current-point) *isearch-string*)
       (isearch-update-display))))
 
 (defun isearch-add-char (c)

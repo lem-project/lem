@@ -212,13 +212,17 @@
            (let ((end (current-point)))
              (kill-region start end))))))))
 
-(define-command kill-whole-line () ()
-  "Kill the entire line and the remaining whitespace"
-   (with-point ((start (current-point))
-                (end (current-point)))
-     (line-end end)
-     (kill-region start end))
-   (delete-previous-char))
+(define-command kill-whole-line (n) (:universal)
+  "If n is positive, kill n whole lines forward starting
+at the beginning of the current line.  If n is 0, do nothing.
+And if n is negative, kill n lines above without deleting
+anything the current line."
+  (cond ((zerop n) nil)
+        ((minusp n) (save-excursion
+                      (move-to-beginning-of-logical-line)
+                      (kill-line n)))
+        (t (progn (move-to-beginning-of-logical-line)
+                  (kill-line n)))))
 
 (defun yank-string (point string)
   (change-yank-start point

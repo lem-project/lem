@@ -51,7 +51,7 @@
 (defun compute-border-window-position (x y border-size border-shape)
   (case border-shape
     (:left-border
-     (list (- x border-size) (- y border-size)))
+     (list (- x border-size) y))
     (otherwise
      (let ((x (- x border-size))
            (y (- y border-size)))
@@ -60,7 +60,7 @@
 (defun compute-border-window-size (width height border-size border-shape)
   (case border-shape
     (:left-border
-     (list width (+ height border-size)))
+     (list 1 height))
     (otherwise
      (let ((width (+ width (* border-size 2)))
            (height (+ height (* border-size 2))))

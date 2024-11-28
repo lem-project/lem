@@ -48,15 +48,23 @@
   size
   (shape nil :type border-shape))
 
-(defun compute-border-window-position (x y border-size)
-  (let ((x (- x border-size))
-        (y (- y border-size)))
-    (list x y)))
+(defun compute-border-window-position (x y border-size border-shape)
+  (case border-shape
+    (:left-border
+     (list (- x border-size) (- y border-size)))
+    (otherwise
+     (let ((x (- x border-size))
+           (y (- y border-size)))
+       (list x y)))))
 
-(defun compute-border-window-size (width height border-size)
-  (let ((width (+ width (* border-size 2)))
-        (height (+ height (* border-size 2))))
-    (list width height)))
+(defun compute-border-window-size (width height border-size border-shape)
+  (case border-shape
+    (:left-border
+     (list width (+ height border-size)))
+    (otherwise
+     (let ((width (+ width (* border-size 2)))
+           (height (+ height (* border-size 2))))
+       (list width height)))))
 
 (defun make-view (x y width height &key modeline type border border-shape cursor-invisible)
   (check-type type (or null (member :tile :floating)))
@@ -69,9 +77,9 @@
     (make-instance 'view
                    :border (when (and border (< 0 border))
                              (destructuring-bind (x y)
-                                 (compute-border-window-position x y border)
+                                 (compute-border-window-position x y border border-shape)
                                (destructuring-bind (width height)
-                                   (compute-border-window-size width height border)
+                                   (compute-border-window-size width height border border-shape)
                                  (let ((win (newwin height width y x)))
                                    (make-border :win win
                                                 :width width
@@ -102,7 +110,7 @@
   (charms/ll:wresize (view-scrwin view) height width)
   (alexandria:when-let (border (view-border view))
     (destructuring-bind (b-width b-height)
-        (compute-border-window-size width height (border-size border))
+        (compute-border-window-size width height (border-size border) (border-shape border))
       (setf (border-width border) b-width
             (border-height border) b-height)
       (charms/ll:wresize (border-win border) b-height b-width)))
@@ -120,8 +128,11 @@
   (charms/ll:mvwin (view-scrwin view) y x)
   (alexandria:when-let (border (view-border view))
     (destructuring-bind (b-x b-y)
-        (compute-border-window-position x y (border-size border))
-      (charms/ll:mvwin (border-win border) b-y b-x)))
+        (compute-border-window-position x y (border-size border) (border-shape border))
+      (cond ((eq :left-border (border-shape (view-border view)))
+             (charms/ll:mvwin (border-win border) b-y b-x))
+            (t
+             (charms/ll:mvwin (border-win border) b-y b-x)))))
   (when (view-modeline-scrwin view)
     (charms/ll:mvwin (view-modeline-scrwin view)
                      (+ y (view-height view))

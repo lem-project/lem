@@ -71,4 +71,11 @@
   (setf (frame-rightside-window (current-frame)) nil)
   (balance-windows))
 
-;; TODO: resize rightside window
+(defun resize-rightside-window (window)
+  (check-type window rightside-window)
+  (window-set-size window
+                   (window-width window)
+                   (max-window-height (current-frame)))
+  (window-set-pos window
+                  (- (display-width) (window-width window))
+                  (topleft-window-y (current-frame))))

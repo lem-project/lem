@@ -205,6 +205,7 @@
    :frame-prompt-window
    :frame-message-window
    :frame-leftside-window
+   :frame-rightside-window
    :notify-frame-redisplay-required
    :map-frame
    :get-frame

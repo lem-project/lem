@@ -162,6 +162,9 @@
                         (mouse-event-x mouse-event)
                         (mouse-event-y mouse-event)
                         (mouse-button-down-clicks mouse-event)))
+      (:rightside
+       ;; TODO
+       (error "unimplemented"))
       (otherwise
        (multiple-value-bind (window x y)
            (focus-window-position (current-frame)

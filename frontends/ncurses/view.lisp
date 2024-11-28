@@ -39,7 +39,7 @@
         (view-last-print-cursor-y view) y))
 
 (deftype border-shape ()
-  '(member nil :drop-curtain))
+  '(member nil :drop-curtain :left-border))
 
 (defstruct border
   win
@@ -133,20 +133,35 @@
         (w (1- (border-width border)))
         (attr (lem-ncurses/attribute:attribute-to-bits (border-attribute))))
     (charms/ll:wattron win attr)
-    (cond ((eq :drop-curtain (border-shape border))
-           (charms/ll:mvwaddstr win 0 0 (border-vertical-and-right))
-           (charms/ll:mvwaddstr win 0 w (border-vertical-and-left)))
-          (t
-           (charms/ll:mvwaddstr win 0 0 (border-upleft))
-           (charms/ll:mvwaddstr win 0 w (border-upright))))
-    (charms/ll:mvwaddstr win h 0 (border-downleft))
-    (charms/ll:mvwaddstr win h w (border-downright))
-    (loop :for x :from 1 :below w
-          :do (charms/ll:mvwaddstr win 0 x (border-up))
-              (charms/ll:mvwaddstr win (1- (border-height border)) x (border-down)))
-    (loop :for y :from 1 :below h
-          :do (charms/ll:mvwaddstr win y 0 (border-left))
-              (charms/ll:mvwaddstr win y w (border-right)))
+    (flet ((drop-curtain ()
+             (charms/ll:mvwaddstr win 0 0 (border-vertical-and-right))
+             (charms/ll:mvwaddstr win 0 w (border-vertical-and-left))
+             (charms/ll:mvwaddstr win h 0 (border-downleft))
+             (charms/ll:mvwaddstr win h w (border-downright))
+             (loop :for x :from 1 :below w
+                   :do (charms/ll:mvwaddstr win 0 x (border-up))
+                       (charms/ll:mvwaddstr win (1- (border-height border)) x (border-down)))
+             (loop :for y :from 1 :below h
+                   :do (charms/ll:mvwaddstr win y 0 (border-left))
+                       (charms/ll:mvwaddstr win y w (border-right))))
+           (left-border ()
+             (loop :for y :from 0 :to h
+                   :do (charms/ll:mvwaddstr win y 0 (border-left))))
+           (normal ()
+             (charms/ll:mvwaddstr win 0 0 (border-upleft))
+             (charms/ll:mvwaddstr win 0 w (border-upright))
+             (charms/ll:mvwaddstr win h 0 (border-downleft))
+             (charms/ll:mvwaddstr win h w (border-downright))
+             (loop :for x :from 1 :below w
+                   :do (charms/ll:mvwaddstr win 0 x (border-up))
+                       (charms/ll:mvwaddstr win (1- (border-height border)) x (border-down)))
+             (loop :for y :from 1 :below h
+                   :do (charms/ll:mvwaddstr win y 0 (border-left))
+                       (charms/ll:mvwaddstr win y w (border-right)))))
+      (case (border-shape border)
+        (:drop-curtain (drop-curtain))
+        (:left-border (left-border))
+        (otherwise (normal))))
     (charms/ll:attroff attr)
     (charms/ll:wnoutrefresh win)))
 

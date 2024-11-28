@@ -212,7 +212,7 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
              (= x (window-width (frame-leftside-window frame))))
     (return-from focus-separator-position (values :leftside (frame-leftside-window frame))))
   (when (and (frame-rightside-window frame)
-             (= x (window-x (frame-leftside-window frame))))
+             (= x (1- (window-x (frame-rightside-window frame)))))
     (return-from focus-separator-position (values :rightside (frame-rightside-window frame))))
   (dolist (window (window-list frame))
     (when (and (= x (1- (window-x window)))

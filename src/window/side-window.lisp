@@ -56,7 +56,7 @@
          (setf (frame-rightside-window (current-frame))
                (make-instance 'rightside-window
                               :buffer buffer
-                              :x (1+ (- (display-width) width))
+                              :x (- (display-width) width)
                               :y (topleft-window-y (current-frame))
                               :width width
                               :height (max-window-height (current-frame))
@@ -79,3 +79,18 @@
   (window-set-pos window
                   (- (display-width) (window-width window))
                   (topleft-window-y (current-frame))))
+
+(defun resize-rightside-window-relative (offset)
+  (log:info offset)
+  (let* ((window (frame-rightside-window (current-frame)))
+         (new-x (+ (window-x window) offset))
+         (new-width (- (window-width window) offset)))
+    (when (< 2 new-width)
+      (window-set-pos window
+                      new-x
+                      (window-y window))
+      (window-set-size window
+                       new-width
+                       (window-height window))
+      (balance-windows)
+      t)))

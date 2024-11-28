@@ -105,11 +105,11 @@
              (< 0 (lem:floating-window-border window)))
     (sdl2:set-render-target (display:display-renderer display) (display:display-texture display))
     (display:render-border display
-                                     (lem:window-x window)
-                                     (lem:window-y window)
-                                     (lem:window-width window)
-                                     (lem:window-height window)
-                                     :without-topline (eq :drop-curtain (lem:floating-window-border-shape window)))))
+                           (lem:window-x window)
+                           (lem:window-y window)
+                           (lem:window-width window)
+                           (lem:window-height window)
+                           :border-type (lem:floating-window-border-shape window))))
 
 (defmethod draw-window-border (view display (window lem:window))
   (when (< 0 (lem:window-x window))

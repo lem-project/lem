@@ -244,7 +244,7 @@
     (set-render-color display color)
     (sdl2:render-fill-rect (display-renderer display) rect)))
 
-(defmethod render-border ((display display) x y w h &key without-topline)
+(defmethod render-border ((display display) x y w h &key border-type)
   (let* ((x1 (- (* x (display-char-width display)) (floor (display-char-width display) 2)))
          (y1 (- (* y (display-char-height display)) (floor (display-char-height display) 2)))
          (x2 (1- (+ x1 (* (+ w 1) (display-char-width display)))))
@@ -256,15 +256,18 @@
                        (downleft x1 y2)
                        (downright x2 y2)
                        (upright x2 y1))
-      (if without-topline
-          (progn
-            (set-render-color display (display-foreground-color display))
-            (sdl2:render-draw-lines (display-renderer display) (sdl2:points* downleft upleft) 2)
-            (set-render-color display (display-foreground-color display))
-            (sdl2:render-draw-lines (display-renderer display) (sdl2:points* upleft upright) 2))
-          (progn
-            (set-render-color display (display-foreground-color display))
-            (sdl2:render-draw-lines (display-renderer display) (sdl2:points* downleft upleft upright) 3)))
+      (case border-type
+        (:drop-curtain
+         (set-render-color display (display-foreground-color display))
+         (sdl2:render-draw-lines (display-renderer display) (sdl2:points* downleft upleft) 2)
+         (set-render-color display (display-foreground-color display))
+         (sdl2:render-draw-lines (display-renderer display) (sdl2:points* upleft upright) 2))
+        (:left-border
+         (set-render-color display (display-foreground-color display))
+         (sdl2:render-draw-lines (display-renderer display) (sdl2:points* downleft upleft) 2))
+        (otherwise
+         (set-render-color display (display-foreground-color display))
+         (sdl2:render-draw-lines (display-renderer display) (sdl2:points* downleft upleft upright) 3)))
       (set-render-color display (display-foreground-color display))
       (sdl2:render-draw-lines (display-renderer display) (sdl2:points* upright downright downleft) 3))))
 

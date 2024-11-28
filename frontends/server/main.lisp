@@ -238,7 +238,9 @@
                                    "floating"
                                    "tile")
                          :border (and (lem:floating-window-p window)
-                                      (lem:floating-window-border window)))))
+                                      (lem:floating-window-border window))
+                         :border-shape (and (lem:floating-window-p window)
+                                            (lem:floating-window-border-shape window)))))
     (notify* jsonrpc "make-view" view)
     view))
 

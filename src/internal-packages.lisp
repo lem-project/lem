@@ -365,7 +365,9 @@
    :side-window
    :side-window-p
    :make-leftside-window
-   :delete-leftside-window)
+   :delete-leftside-window
+   :make-rightside-window
+   :delete-rightside-window)
   ;; popup.lisp
   (:export
    :*default-popup-message-timeout*

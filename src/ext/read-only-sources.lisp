@@ -1,6 +1,7 @@
 (uiop:define-package :lem/read-only-sources
   (:use :cl :lem)
-  (:export :define-read-only-source))
+  (:export :read-only-sources
+           :define-read-only-source))
 (in-package :lem/read-only-sources)
 
 (define-editor-variable read-only-sources t)

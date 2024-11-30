@@ -1,6 +1,7 @@
 (in-package :lem-core)
 
 (define-editor-variable line-wrap t)
+(define-editor-variable impl-source-read-only t)
 
 (defparameter *window-sufficient-width* 150)
 (defparameter *scroll-recenter-p* t)

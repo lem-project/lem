@@ -303,3 +303,17 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
                   (insert-string (buffer-point buffer) warning)
                   (insert-character (buffer-point buffer) #\newline))
                 (pop-to-buffer buffer)))))
+
+
+(defun impl-source-buffer-p (buffer)
+  (pathname-match-p (buffer-directory buffer)
+                    (second (assoc "SYS:SRC;**;*.*.*" (logical-pathname-translations "SYS") :test 'equal)))
+  )
+
+(add-hook *after-init-hook*
+          (lambda ()
+            (when (variable-value 'impl-source-read-only)
+              (add-hook *switch-to-buffer-hook* (lambda (buffer)
+                                                  (when (impl-source-buffer-p buffer)
+                                                    (setf (buffer-read-only-p buffer) t)))))
+            ))

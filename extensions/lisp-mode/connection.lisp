@@ -21,6 +21,7 @@
            :connection-command
            :connection-process
            :connection-process-directory
+           :connection-system-file-patterns
            :connection-plist
            :self-connection-p)
   (:export :new-connection

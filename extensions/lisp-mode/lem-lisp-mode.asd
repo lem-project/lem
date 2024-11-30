@@ -53,6 +53,9 @@
                (:file "ext/test-runner")
                (:file "ext/utopian")
                (:file "ext/highlight")
+
+               (:file "read-only-sources")
+
                (:file "package")))
 
 (defsystem "lem-lisp-mode/v2"

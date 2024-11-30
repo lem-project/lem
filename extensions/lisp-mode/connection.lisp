@@ -118,6 +118,7 @@
                   :type string
                   :documentation "The server's Swank version.")
    (features :accessor connection-features)
+   (system-file-patterns :accessor connection-system-file-patterns)
    (info :accessor connection-info)
    (command :initform nil :accessor connection-command)
    (process :initform nil :accessor connection-process)
@@ -200,7 +201,9 @@
                       (connection-package connection)
                       (getf (getf data :package) :name)
                       (connection-prompt-string connection)
-                      (getf (getf data :package) :prompt)))
+                      (getf (getf data :package) :prompt)
+                      (connection-system-file-patterns connection)
+                      (getf data :system-file-patterns)))
               (return)))
 
   (log:debug "Creating the REPL" connection)

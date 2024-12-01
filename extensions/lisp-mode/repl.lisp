@@ -522,7 +522,8 @@
 (defvar *lisp-repl-shortcuts* '())
 
 (defmacro with-repl-prompt (() &body body)
-  `(let ((lem/prompt-window:*prompt-completion-window-shape* nil))
+  `(let ((lem/prompt-window:*prompt-completion-window-shape* nil)
+         (lem/prompt-window::*fill-width* nil))
      ,@body))
 
 (defun repl-prompt-for-string (prompt &rest args)

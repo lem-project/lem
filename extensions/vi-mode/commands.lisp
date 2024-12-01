@@ -642,7 +642,7 @@ Move the cursor to the first non-blank character of the line."
 
 (define-command vi-swapcase-and-forward-char () ()
   (with-point ((start (current-point))
-                            (end (current-point)))
+               (end (current-point)))
     (character-offset end 1)
     (vi-swapcase start end (current-state)))
   (vi-forward-char))
@@ -788,18 +788,18 @@ on the same line or at eol if there are none."
        (lambda (point string)
          (alexandria:when-let (p (lem/isearch::search-forward-regexp
                                   (copy-point lem/isearch::*isearch-start-point* :temporary)
-                                  (ppcre:create-scanner string :case-insensitive-mode case-insensitive)))
+                                  (ignore-errors (ppcre:create-scanner string :case-insensitive-mode case-insensitive))))
            (character-offset p (- (length string)))
            (move-point point p)))
        (lambda (point regex &optional limit-point)
          (lem/isearch::search-forward-regexp
-          point
-          (ppcre:create-scanner regex :case-insensitive-mode case-insensitive)
-          limit-point))
+               point
+               (ignore-errors (ppcre:create-scanner regex :case-insensitive-mode case-insensitive))
+               limit-point))
        (lambda (point regex &optional limit-point)
          (lem/isearch::search-backward-regexp
           point
-          (ppcre:create-scanner regex :case-insensitive-mode case-insensitive)
+          (ignore-errors (ppcre:create-scanner regex :case-insensitive-mode case-insensitive))
           limit-point))
        ""))))
 

@@ -348,7 +348,7 @@
           (*history-matched-string* nil)
           (*listener-window* (current-window)))
       (unwind-protect
-           (progn
+           (let ((lem/prompt-window::*fill-width* nil))
              (prompt-for-string
               "(reverse-i-search) "
               :special-keymap *history-isearch-keymap*

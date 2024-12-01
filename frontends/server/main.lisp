@@ -395,9 +395,13 @@
 (defun bool (x) (if x 'yason:true 'yason:false))
 
 (defun ensure-rgb (color)
-  (if (typep color 'lem:color)
-      (lem:color-to-hex-string color)
-      color))
+  (typecase color
+    (lem:color
+     (lem:color-to-hex-string color))
+    (string
+     (lem:color-to-hex-string (lem:parse-color color)))
+    (otherwise
+     color)))
 
 (defmethod yason:encode ((attribute lem:attribute) &optional (stream *standard-output*))
   (with-error-handler ()
@@ -439,6 +443,13 @@
 
 (defvar *put-target* :edit-area)
 
+(defun ensure-attribute (attribute)
+  (let ((attribute (lem:ensure-attribute attribute nil)))
+    (when (and lem-if:*background-color-of-drawing-window*
+               (null attribute))
+      (setf attribute (lem:make-attribute :background lem-if:*background-color-of-drawing-window*)))
+    attribute))
+
 (defun put (jsonrpc view x y string attribute)
   (with-error-handler ()
     (notify* jsonrpc
@@ -450,7 +461,7 @@
                    "y" y
                    "text" string
                    "textWidth" (lem:string-width string)
-                   "attribute" (lem:ensure-attribute attribute nil)))))
+                   "attribute" (ensure-attribute attribute)))))
 
 (defmethod draw-object (jsonrpc (object display:text-object) x y view)
   (let* ((string (display:text-object-string object))

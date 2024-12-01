@@ -154,11 +154,18 @@
       (uncomment-region)
       (comment-region)))
 
+(defun select-current-line-if-no-region-is-selected (start end)
+  (when (point= start end)
+    (setf start (line-start start))
+    (setf end (line-end end))))
+
 (defun commented-region-p ()
   (alexandria:when-let ((line-comment (variable-value 'line-comment :buffer)))
     (with-point ((start (current-point))
                  (end (current-point)))
       (set-region-point-using-global-mode (current-global-mode) start end)
+      (select-current-line-if-no-region-is-selected start end)
+      
       (loop
         (skip-whitespace-forward start)
         (when (point>= start end)
@@ -176,6 +183,8 @@
         (with-point ((start (current-point) :right-inserting)
                      (end (current-point) :left-inserting))
           (set-region-point-using-global-mode (current-global-mode) start end)
+          (select-current-line-if-no-region-is-selected start end)
+          
           (skip-whitespace-forward start)
           (when (point>= start end)
             (insert-string (current-point) line-comment)
@@ -203,6 +212,8 @@
         (with-point ((start (current-point) :right-inserting)
                      (end (current-point) :right-inserting))
           (set-region-point-using-global-mode (current-global-mode) start end)
+          (select-current-line-if-no-region-is-selected start end)
+          
           (let ((p start))
             (loop
               (parse-partial-sexp p end nil t)

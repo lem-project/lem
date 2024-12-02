@@ -93,7 +93,7 @@
 (define-key *language-mode-keymap* "M-," 'pop-definition-stack)
 (define-key *language-mode-keymap* "C-M-i" 'complete-symbol)
 (define-key *global-keymap* "M-(" 'insert-\(\)-or-wrap)
-(define-key *global-keymap* "M-)" 'move-over-\))
+(define-key *global-keymap* "M-)" 'move-over-\)-or-wrap)
 
 (defun beginning-of-defun-1 (n)
   (alexandria:when-let ((fn (variable-value 'beginning-of-defun-function :buffer)))
@@ -505,16 +505,23 @@
       (delete-character p)
       (character-offset p -1))))
 
-(define-command (move-over-\) (:advice-classes movable-advice editable-advice)) () ()
-  (let ((rper (backward-search-rper)))
-    (if rper
-        (progn
-          (backward-delete-to-rper)
-          (scan-lists (current-point) 1 1 T)
-          (newline-and-indent 1))
-        (progn
-          (scan-lists (current-point) 1 1 T)
-          (newline-and-indent 1)))))
+(define-command (move-over-\)-or-wrap (:advice-classes movable-advice editable-advice)) () ()
+  (if (mark-active-p (cursor-mark (current-point)))
+      (with-point ((start (cursor-region-beginning (current-point)))
+                   (end (cursor-region-end (current-point))))
+        (when (point> end (current-point))
+          (exchange-point-mark))
+        (insert-character end #\))
+        (insert-character start #\())
+      (let ((rper (backward-search-rper)))
+        (if rper
+            (progn
+              (backward-delete-to-rper)
+              (scan-lists (current-point) 1 1 T)
+              (newline-and-indent 1))
+            (progn
+              (scan-lists (current-point) 1 1 T)
+              (newline-and-indent 1))))))
 
 (defun match-pattern-p (pattern file)
   (etypecase pattern

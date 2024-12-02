@@ -92,7 +92,7 @@
 (define-key *language-mode-keymap* "M-?" 'find-references)
 (define-key *language-mode-keymap* "M-," 'pop-definition-stack)
 (define-key *language-mode-keymap* "C-M-i" 'complete-symbol)
-(define-key *global-keymap* "M-(" 'insert-\(\))
+(define-key *global-keymap* "M-(" 'insert-\(\)-or-wrap)
 (define-key *global-keymap* "M-)" 'move-over-\))
 
 (defun beginning-of-defun-1 (n)
@@ -471,11 +471,18 @@
           (complete-symbol)))
       (complete-symbol)))
 
-(define-command (insert-\(\) (:advice-classes editable-advice)) () ()
-  (let ((p (current-point)))
-    (insert-character p #\()
-    (insert-character p #\))
-    (character-offset p -1)))
+(define-command (insert-\(\)-or-wrap (:advice-classes editable-advice)) () ()
+  (if (mark-active-p (cursor-mark (current-point)))
+      (with-point ((start (cursor-region-beginning (current-point)))
+                   (end (cursor-region-end (current-point))))
+        (when (point< start (current-point))
+          (exchange-point-mark))
+        (insert-character end #\))
+        (insert-character start #\())
+      (let ((p (current-point)))
+        (insert-character p #\()
+        (insert-character p #\))
+        (character-offset p -1))))
 
 (defun backward-search-rper ()
   (save-excursion

@@ -568,7 +568,11 @@ Move the cursor to the first non-blank character of the line."
          (insert-character (current-point) #\Newline)))
       (t
        (when (eq type :line)
-         (line-start (current-point)))))
+         (if (last-line-p (current-point))
+             (progn
+               (line-start (current-point))
+               (open-line 1))
+             (line-start (current-point))))))
     (paste-yank string type :before)))
 
 (defun read-key-to-replace ()

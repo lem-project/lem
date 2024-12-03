@@ -259,3 +259,7 @@
 (define-ex-command "^pwd?$" (range argument)
   (declare (ignore range argument))
   (lem:current-directory))
+
+(define-ex-command "^new?$" (range argument)
+  (declare (ignore range argument))
+  (lem/frame-multiplexer:frame-multiplexer-create-with-new-buffer-list))

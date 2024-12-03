@@ -69,7 +69,7 @@
               dontFixup = true;
               outputHashMode = "recursive";
               outputHash =
-                "sha256-Ya1f0GcDBIRuJDgIC03Mp325ns393zwQ9DNGlbAhqOY=";
+                "sha256-NtCSBxEo/4uuhlLc9Xqlq+PM1fAbDfRBH64imMLvKYE=";
             };
 
             configurePhase = ''

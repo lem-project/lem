@@ -180,7 +180,9 @@ redraw-display関数でキャッシュを捨てて画面全体を再描画しま
   (- (display-width)
      (topleft-window-x frame)
      (if (frame-rightside-window frame)
-         (window-width (frame-rightside-window frame))
+         (+ (window-width (frame-rightside-window frame))
+            1 ; border
+            )
          0)))
 
 (defun max-window-height (frame)

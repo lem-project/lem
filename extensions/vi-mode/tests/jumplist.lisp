@@ -83,7 +83,7 @@
                    (lines "  3: (1, 0)  NIL"
                           "  2: (2, 0)  NIL"
                           "  1: (3, 0)  NIL"
-                          "> 0: NIL")))
+                          "> 0: (4, 0)  NIL")))
         (ok (not (signals (jumplist-history-next jumplist))))))))
 
 (deftest jumplist-delete-newer-history
@@ -107,8 +107,10 @@
         (jumplist-history-push jumplist (copy-point (buffer-end-point (current-buffer))))
         (ok (equal (with-output-to-string (s)
                      (print-jumplist jumplist s))
-                   (lines "  3: (1, 0)  NIL"
-                          "  2: (2, 0)  NIL"
+                   (lines "  5: (1, 0)  NIL"
+                          "  4: (2, 0)  NIL"
+                          "  3: (3, 0)  NIL"
+                          "  2: (4, 0)  NIL"
                           "  1: (6, 0)  NIL"
                           "> 0: NIL")))))))
 
@@ -147,3 +149,28 @@
                      (lines "  2: (2, 0)  NIL"
                             "  1: (3, 0)  NIL"
                             "> 0: NIL"))))))))
+
+(deftest jumplist-push-current-point-into-jumplist-before-jump-history-back
+  (with-fake-interface ()
+    (with-vi-buffer (#?"second-location\n[s]tart\n\nfirst-location\n\n\nthird-location")
+      (let ((jumplist (current-jumplist)))
+        (cmd "2gg")
+        (cmd "4gg")
+        (cmd "gg")
+        (cmd "G")
+        (cmd "gg")
+        (ok (equal (with-output-to-string (s)
+                     (print-jumplist jumplist s))
+                   (lines "  4: (2, 0)  NIL"
+                          "  3: (4, 0)  NIL"
+                          "  2: (1, 0)  NIL"
+                          "  1: (7, 0)  NIL"
+                          "> 0: NIL")))
+        (cmd "<C-o>")
+        (ok (equal (with-output-to-string (s)
+                     (print-jumplist jumplist s))
+                   (lines "  2: (2, 0)  NIL"
+                          "  1: (4, 0)  NIL"
+                          "> 0: (7, 0)  NIL"
+                          "  1: (1, 0)  NIL")))))))
+

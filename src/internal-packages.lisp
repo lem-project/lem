@@ -492,6 +492,7 @@
    :exit-editor
    :interactive-p
    :continue-flag
+   :nullify-last-flags
    :pop-up-backtrace
    :call-background-job
    :command-loop-counter

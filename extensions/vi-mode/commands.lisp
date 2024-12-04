@@ -123,6 +123,7 @@
            :vi-append-line
            :vi-open-below
            :vi-open-above
+           :vi-jumps
            :vi-jump-back
            :vi-jump-next
            :vi-a-word
@@ -1014,6 +1015,11 @@ on the same line or at eol if there are none."
                                          (back-to-indentation p))
                                     (line-start p))))))
     (move-to-column (current-point) column t)))
+
+(define-command vi-jumps () ()
+  (line-end (current-point))
+  (lem:message (with-output-to-string (s)
+                 (lem-vi-mode/jumplist::print-jumplist (current-jumplist) s))))
 
 (define-command vi-jump-back (&optional (n 1)) (:universal)
   (dotimes (i n)

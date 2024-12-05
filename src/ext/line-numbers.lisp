@@ -2,7 +2,7 @@
   (:use :cl :lem)
   (:export :*relative-line*
            :line-number-format
-           :relative-line-numbers-current-line-value
+           :current-line-display-function
            :line-numbers-attribute
            :active-line-number-attribute
            :line-numbers
@@ -22,16 +22,15 @@
   "Set to desired format, for example, \"~2D \" for a
 two-character line-number column.")
 
-(define-editor-variable relative-line-numbers-current-line-value 
-  '(line-number-at-point (current-point))
-  "Set to desired current-line value when relative line numbers
-are active, for example, 0 or \"->\".")
+(define-editor-variable current-line-display-function
+  (lambda () (line-number-at-point (current-point)))
+  "Set to desired current-line display when relative line numbers are active, for example, (lambda () 0) or (lambda () (string \" ->\")).")
 
 (define-attribute line-numbers-attribute
-    (t :foreground :base07 :background :base01))
+  (t :foreground :base07 :background :base01))
 
 (define-attribute active-line-number-attribute
-    (t :foreground :base07 :background :base01))
+  (t :foreground :base07 :background :base01))
 
 (define-editor-variable line-numbers nil ""
   (lambda (value)
@@ -57,9 +56,10 @@ With a positive universal argument, use relative line numbers. Also obey the glo
 (defun compute-line (buffer point)
   (if *relative-line*
       (let ((cursor-line (line-number-at-point (buffer-point buffer)))
-            (line (line-number-at-point point)))
+            (line (line-number-at-point point))
+            (current-line-display (funcall (variable-value 'current-line-display-function :default buffer))))
         (if (= cursor-line line)
-            (eval (variable-value'relative-line-numbers-current-line-value :default buffer))
+            current-line-display
             (abs (- cursor-line line))))
       (line-number-at-point point)))
 

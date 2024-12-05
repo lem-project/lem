@@ -1,6 +1,8 @@
 (defpackage :lem/line-numbers
   (:use :cl :lem)
   (:export :*relative-line*
+           :line-number-format
+           :relative-line-numbers-current-line-value
            :line-numbers-attribute
            :active-line-number-attribute
            :line-numbers
@@ -15,7 +17,15 @@
 (defvar *previous-relative-line* nil)
 
 (defvar *initialized* nil)
-(defvar *line-number-format* nil)
+
+(define-editor-variable line-number-format "~6D "
+  "Set to desired format, for example, \"~2D \" for a
+two-character line-number column.")
+
+(define-editor-variable relative-line-numbers-current-line-value 
+  '(line-number-at-point (current-point))
+  "Set to desired current-line value when relative line numbers
+are active, for example, 0 or \"->\".")
 
 (define-attribute line-numbers-attribute
     (t :foreground :base07 :background :base01))
@@ -46,16 +56,16 @@ With a positive universal argument, use relative line numbers. Also obey the glo
 
 (defun compute-line (buffer point)
   (if *relative-line*
-      (let* ((cursor-line (line-number-at-point (buffer-point buffer)))
-             (line (line-number-at-point point)))
+      (let ((cursor-line (line-number-at-point (buffer-point buffer)))
+            (line (line-number-at-point point)))
         (if (= cursor-line line)
-            line
+            (eval (variable-value'relative-line-numbers-current-line-value :default buffer))
             (abs (- cursor-line line))))
       (line-number-at-point point)))
 
 (defmethod lem-core:compute-left-display-area-content ((mode line-numbers-mode) buffer point)
   (when (buffer-filename (point-buffer point))
-    (let* ((string (format nil "~6D " (compute-line buffer point)))
+    (let* ((string (format nil (variable-value 'line-number-format :default buffer) (compute-line buffer point)))
            (attribute (if (eq (compute-line buffer point)
                               (compute-line buffer (buffer-point buffer)))
                           `((0 ,(length string) active-line-number-attribute))

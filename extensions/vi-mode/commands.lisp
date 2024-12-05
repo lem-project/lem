@@ -530,46 +530,52 @@ Move the cursor to the first non-blank character of the line."
                   (t :char)))
         (and (enable-clipboard-p) (get-clipboard-data)))))
 
-(define-command vi-paste-after () ()
-  (multiple-value-bind (string type)
-      (vi-yank-from-clipboard-or-killring)
-    (cond
-      ((visual-p)
-       (let ((visual-line (visual-line-p)))
+(define-command vi-paste-after (&optional (n 1)) (:universal)
+  (dotimes (i n) 
+    (multiple-value-bind (string type)
+        (vi-yank-from-clipboard-or-killring)
+      (cond
+        ((visual-p)
+         (let ((visual-line (visual-line-p)))
+           (lem-core::with-enable-clipboard nil
+             (multiple-value-bind (beg end type)
+                 (visual-region)
+               (vi-delete beg end type))
+             (rotate-killring (current-killring)))
+           (when (and (not visual-line)
+                      (eq type :line))
+             (insert-character (current-point) #\Newline))))
+        (t
+         (if (eq type :line)
+             (progn
+               (or (line-offset (current-point) 1 0)
+                   (progn
+                     (line-end (current-point))
+                     (insert-character (current-point) #\Newline))))
+             (character-offset (current-point) 1))))
+      (paste-yank string type :after))))
+
+(define-command vi-paste-before (&optional (n 1)) (:universal)
+  (dotimes (i n) 
+    (multiple-value-bind (string type)
+        (vi-yank-from-clipboard-or-killring)
+      (cond
+        ((visual-p)
          (lem-core::with-enable-clipboard nil
            (multiple-value-bind (beg end type)
                (visual-region)
              (vi-delete beg end type))
            (rotate-killring (current-killring)))
-         (when (and (not visual-line)
-                    (eq type :line))
-           (insert-character (current-point) #\Newline))))
-      (t
-       (if (eq type :line)
-           (progn
-             (or (line-offset (current-point) 1 0)
-                 (progn
-                   (line-end (current-point))
-                   (insert-character (current-point) #\Newline))))
-           (character-offset (current-point) 1))))
-    (paste-yank string type :after)))
-
-(define-command vi-paste-before () ()
-  (multiple-value-bind (string type)
-      (vi-yank-from-clipboard-or-killring)
-    (cond
-      ((visual-p)
-       (lem-core::with-enable-clipboard nil
-         (multiple-value-bind (beg end type)
-             (visual-region)
-           (vi-delete beg end type))
-         (rotate-killring (current-killring)))
-       (when (eq type :line)
-         (insert-character (current-point) #\Newline)))
-      (t
-       (when (eq type :line)
-         (line-start (current-point)))))
-    (paste-yank string type :before)))
+         (when (eq type :line)
+           (insert-character (current-point) #\Newline)))
+        (t
+         (when (eq type :line)
+           (if (last-line-p (current-point))
+               (progn
+                 (line-start (current-point))
+                 (open-line 1))
+               (line-start (current-point))))))
+      (paste-yank string type :before))))
 
 (defun read-key-to-replace ()
   (with-temporary-state 'replace-state

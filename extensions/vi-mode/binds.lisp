@@ -96,6 +96,7 @@
 (define-key *motion-keymap* "C-w C-j" 'undefined-key)
 (define-key *motion-keymap* "C-o" 'vi-jump-back)
 (define-key *motion-keymap* "C-i" 'vi-jump-next)
+(define-key *motion-keymap* "' '" 'vi-jump-previous)
 (define-key *motion-keymap* ":" 'vi-ex)
 
 (define-key *motion-keymap* "v" 'vi-visual-char)

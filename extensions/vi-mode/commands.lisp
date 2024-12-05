@@ -126,6 +126,7 @@
            :vi-jumps
            :vi-jump-back
            :vi-jump-next
+           :vi-jump-previous
            :vi-a-word
            :vi-a-word
            :vi-a-broad-word
@@ -1028,6 +1029,10 @@ on the same line or at eol if there are none."
 (define-command vi-jump-next (&optional (n 1)) (:universal)
   (dotimes (i n)
     (jump-next)))
+
+(define-motion vi-jump-previous () ()
+    (:jump t)
+  (jump-back))
 
 (define-command vi-repeat (n) (:universal-nil)
   (when *last-repeat-keys*

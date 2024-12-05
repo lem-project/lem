@@ -174,3 +174,60 @@
                           "> 0: (7, 0)  NIL"
                           "  1: (1, 0)  NIL")))))))
 
+
+(deftest jumplist-go-previous-only-once
+  (with-fake-interface ()
+    (with-vi-buffer (#?"second-location\n[s]tart\n\nfirst-location\n\n\nthird-location")
+      (let ((jumplist (current-jumplist)))
+        (cmd "2gg")
+        (cmd "4gg")
+        (cmd "gg")
+        (cmd "G")
+        (cmd "gg")
+        (cmd "''")
+        (ok (equal (with-output-to-string (s)
+                     (print-jumplist jumplist s))
+                   (lines "  4: (2, 0)  NIL"
+                          "  3: (4, 0)  NIL"
+                          "  2: (7, 0)  NIL"
+                          "  1: (1, 0)  NIL"
+                          "> 0: NIL")))))))
+
+(deftest jumplist-go-previous-twice
+  (with-fake-interface ()
+    (with-vi-buffer (#?"second-location\n[s]tart\n\nfirst-location\n\n\nthird-location")
+      (let ((jumplist (current-jumplist)))
+        (cmd "2gg")
+        (cmd "4gg")
+        (cmd "gg")
+        (cmd "G")
+        (cmd "gg")
+        (cmd "''")
+        (cmd "''")
+        (ok (equal (with-output-to-string (s)
+                     (print-jumplist jumplist s))
+                   (lines "  4: (2, 0)  NIL"
+                          "  3: (4, 0)  NIL"
+                          "  2: (1, 0)  NIL"
+                          "  1: (7, 0)  NIL"
+                          "> 0: NIL")))))))
+
+(deftest jumplist-go-previous-while-navigating-history
+  (with-fake-interface ()
+    (with-vi-buffer (#?"second-location\n[s]tart\n\nfirst-location\n\n\nthird-location")
+      (let ((jumplist (current-jumplist)))
+        (cmd "2gg")
+        (cmd "4gg")
+        (cmd "gg")
+        (cmd "G")
+        (cmd "gg")
+        (cmd "<C-o>")
+        (cmd "<C-o>")
+        (cmd "''")
+        (ok (equal (with-output-to-string (s)
+                     (print-jumplist jumplist s))
+                   (lines "  4: (2, 0)  NIL"
+                          "  3: (7, 0)  NIL"
+                          "  2: (1, 0)  NIL"
+                          "  1: (4, 0)  NIL"
+                          "> 0: NIL")))))))

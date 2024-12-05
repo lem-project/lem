@@ -24,7 +24,8 @@ two-character line-number column.")
 
 (define-editor-variable current-line-display-function
   (lambda () (line-number-at-point (current-point)))
-  "Set to desired current-line display when relative line numbers are active, for example, (lambda () 0) or (lambda () (string \" ->\")).")
+  "Set to desired current-line display when relative line numbers are
+active, for example, (lambda () 0) or (lambda () (string \" ->\")).")
 
 (define-attribute line-numbers-attribute
   (t :foreground :base07 :background :base01))

@@ -57,10 +57,11 @@ With a positive universal argument, use relative line numbers. Also obey the glo
 (defun compute-line (buffer point)
   (if *relative-line*
       (let ((cursor-line (line-number-at-point (buffer-point buffer)))
-            (line (line-number-at-point point)))
+            (line (line-number-at-point point))
+            (custom-line (variable-value 'custom-current-line :default buffer)))
         (if (= cursor-line line)
-            (if (variable-value 'custom-current-line)
-                (variable-value 'custom-current-line :default buffer)
+            (if custom-line
+                custom-line
                 line)
             (abs (- cursor-line line))))
       (line-number-at-point point)))

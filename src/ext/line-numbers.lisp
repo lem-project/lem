@@ -68,8 +68,9 @@ With a positive universal argument, use relative line numbers. Also obey the glo
 
 (defmethod lem-core:compute-left-display-area-content ((mode line-numbers-mode) buffer point)
   (when (buffer-filename (point-buffer point))
-    (let* ((string (format nil (variable-value 'line-number-format :default buffer) (compute-line buffer point)))
-           (attribute (if (eq (compute-line buffer point)
+    (let* ((computed-line (compute-line buffer point))
+           (string (format nil (variable-value 'line-number-format :default buffer) computed-line))
+           (attribute (if (eq computed-line
                               (compute-line buffer (buffer-point buffer)))
                           `((0 ,(length string) active-line-number-attribute))
                           `((0 ,(length string) line-numbers-attribute)))))

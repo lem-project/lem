@@ -20,11 +20,11 @@
 
 (define-editor-variable line-number-format "~6D "
   "Set to desired format, for example, \"~2D \" for a
-two-character line-number column.")
+two-character line-number column and a margin of one space.")
 
 (define-editor-variable custom-current-line nil
   "Set to desired current-line value when relative line
-numbers are active, for example, \"->\".  NIL will make the
+numbers are active, for example, \"->\".  NIL will make
 the absolute value of the current line display.")
 
 (define-attribute line-numbers-attribute

@@ -66,13 +66,25 @@
   (fall-within-line (current-point)))
 
 (defmethod post-command-hook ((state insert))
-  (let ((command (this-command)))
+  (let* ((command (this-command))
+         (this-command-keys (vi-this-command-keys))
+         (pending-keys (cdr this-command-keys)))
+    
+    ;; For the command `self-insert`, the `this-command-keys` is typically only 1 char. (pending-keys = nil)
+    ;; If pending-keys is NOT nil, then these keys are used to disguish the keys between `self-insert` command and other commands. 
+    ;; For other commands, we can simply ignore the pending-keys.
+    ;; For self-insert command, we should also flusthese pending-keys.
+    (when (and
+           (typep command 'self-insert)
+           pending-keys)
+      (dolist (key pending-keys) (self-insert 1 (key-to-char key))))
+    
     (when *enable-repeat-recording*
       (unless (or (and (typep command 'vi-command)
                        (eq (vi-command-repeat command) nil))
                   (eq (command-name (this-command)) 'vi-end-insert))
         (appendf *last-repeat-keys*
-                 (vi-this-command-keys)))))
+                 this-command-keys))))
   (adjust-window-scroll))
 
 (defmethod post-command-hook :after ((state visual))

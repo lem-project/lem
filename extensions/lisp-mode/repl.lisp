@@ -16,7 +16,11 @@
                                          (list (make-tm-region
                                                 "^WARNING:"
                                                 "$"
-                                                :name 'warning-attribute))))
+                                                :name 'warning-attribute)
+                                               (make-tm-match "^; caught WARNING:"
+                                                              :name 'warning-attribute)
+                                               (make-tm-match "^; caught ERROR:"
+                                                              :name 'warning-attribute))))
 
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"

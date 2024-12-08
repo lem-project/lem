@@ -59,6 +59,12 @@
                        :super super
                        :shift shift
                        :sym "Tab"))
+        ((and ctrl (equal sym "["))
+         (lem:make-key :ctrl nil
+                       :meta meta
+                       :super super
+                       :shift shift
+                       :sym "Escape"))
         ((and ctrl (equal sym "m"))
          (lem:make-key :ctrl nil
                        :meta meta

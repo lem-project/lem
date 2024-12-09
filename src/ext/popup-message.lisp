@@ -33,9 +33,10 @@
                      :buffer buffer
                      :width width
                      :height height
-                     ;; NOTE: Simply ban the mouse-click event for a popup-window, to avoid the popup-window gain the mouse focus, being the only window as current-window in window-tree, causing lem unable to delete it.
-                     ;; However, since the popup-message is a window used to display string, you can still use mouse-scroll to scroll the text.
-                     :clickable nil
+                     ;; NOTE: Block mouse clicks on popup windows to prevent them from gaining focus.
+                     ;; If a popup window gains focus, it becomes the only active window in the window-tree,
+                     ;; which prevents Lem from being able to close it.
+                     ;; Mouse scrolling remains enabled since popup windows are used for displaying text content.                     :clickable nil
                      :style style)))
         (buffer-start (window-view-point window))
         (window-see window)

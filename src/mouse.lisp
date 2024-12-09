@@ -178,7 +178,8 @@
            (focus-window-position (current-frame)
                                   (mouse-event-x mouse-event)
                                   (mouse-event-y mouse-event))
-         (when window
+         (when (and window
+                    (window-clickable window))
            (handle-mouse-button-down (window-buffer window)
                                      mouse-event
                                      :window window

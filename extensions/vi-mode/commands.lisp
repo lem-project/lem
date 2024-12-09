@@ -1031,13 +1031,12 @@ on the same line or at eol if there are none."
 
 (define-command vi-jump-back (&optional (n 1)) (:universal)
   (dotimes (i n)
-    (let ((target-point (jump-back)))
-      (recenter-line-if-point-not-inside-window target-point))))
+    ;; The return value of jump-back is target jump point.
+    (recenter-line-if-point-not-inside-window (jump-back))))
 
 (define-command vi-jump-next (&optional (n 1)) (:universal)
   (dotimes (i n)
-    (let ((target-point (jump-next)))
-      (recenter-line-if-point-not-inside-window target-point))))
+    (recenter-line-if-point-not-inside-window (jump-next))))
 
 (define-motion vi-jump-previous () ()
     (:jump t)

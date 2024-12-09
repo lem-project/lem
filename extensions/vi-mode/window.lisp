@@ -89,7 +89,7 @@ The SCROLL-POSITION is influenced by the scrolloff option."
   (clear-screens-of-window-list)
   (when line-number
     (save-column
-      (goto-line line-number)))
+     (goto-line line-number)))
   (let* ((window (current-window))
          (scrolloff (scroll-offset window)))
     (case scroll-position

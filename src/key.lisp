@@ -72,6 +72,7 @@
               :sym sym))))
 
 (defun make-key (&rest args &key ctrl meta super hypher shift sym)
+  (declare (ignore ctrl meta super hypher shift sym))
   (let ((hashkey (apply #'convert-key args)))
     (or (gethash hashkey *key-constructor-cache*)
         (setf (gethash hashkey *key-constructor-cache*)

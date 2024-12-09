@@ -38,7 +38,7 @@
          (<= line end-line-num))))
 
 (defun point-inside-window-p (point &optional (window (current-window)))
-  (line-inside-window-p (line-number-at-point point)))
+  (line-inside-window-p (line-number-at-point point) window))
 
 (defun window-has-following-lines-p (&optional (window (current-window)))
   (let ((end-point (window-end-point window)))
@@ -89,7 +89,7 @@ The SCROLL-POSITION is influenced by the scrolloff option."
   (clear-screens-of-window-list)
   (when line-number
     (save-column
-     (goto-line line-number)))
+      (goto-line line-number)))
   (let* ((window (current-window))
          (scrolloff (scroll-offset window)))
     (case scroll-position

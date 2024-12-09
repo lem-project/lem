@@ -29,6 +29,16 @@
 
 (defmethod print-object ((object key) stream)
   (with-slots (ctrl meta super hypher shift sym) object
+    (write-string (key-to-string :ctrl ctrl
+                                 :meta meta
+                                 :super super
+                                 :hypher hypher
+                                 :shift shift
+                                 :sym sym)
+                  stream)))
+
+(defun key-to-string (&key ctrl meta super hypher shift sym)
+  (with-output-to-string (stream)
     (when hypher (write-string "H-" stream))
     (when super (write-string "S-" stream))
     (when meta (write-string "M-" stream))
@@ -38,10 +48,31 @@
         (write-string "Space" stream)
         (write-string sym stream))))
 
+(defvar *key-conversions* '(("C-m" . "Return")
+                            ("C-i" . "Tab")
+                            ("C-[" . "Escape")))
+
 (defvar *key-constructor-cache* (make-hash-table :test 'equal))
 
+(defun convert-key (&rest args &key ctrl meta super hypher shift sym)
+  (let ((elt (assoc (apply #'key-to-string args) *key-conversions* :test #'equal)))
+    (if elt
+        (let ((key (first (parse-keyspec (cdr elt)))))
+          (list :ctrl (key-ctrl key)
+                :meta (key-meta key)
+                :super (key-super key)
+                :hypher (key-hypher key)
+                :shift (key-shift key)
+                :sym (key-sym key)))
+        (list :ctrl ctrl
+              :meta meta
+              :super super
+              :hypher hypher
+              :shift shift
+              :sym sym))))
+
 (defun make-key (&rest args &key ctrl meta super hypher shift sym)
-  (let ((hashkey (list ctrl meta super hypher shift sym)))
+  (let ((hashkey (apply #'convert-key args)))
     (or (gethash hashkey *key-constructor-cache*)
         (setf (gethash hashkey *key-constructor-cache*)
               (apply #'%make-key args)))))

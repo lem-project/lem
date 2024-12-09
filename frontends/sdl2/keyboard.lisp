@@ -53,24 +53,11 @@
 (defun make-key (&key ctrl meta shift super sym)
   (when (equal sym (string #\yen_sign))
     (setf sym "\\"))
-  (cond ((and ctrl (equal sym "i"))
-         (lem:make-key :ctrl nil
-                       :meta meta
-                       :super super
-                       :shift shift
-                       :sym "Tab"))
-        ((and ctrl (equal sym "m"))
-         (lem:make-key :ctrl nil
-                       :meta meta
-                       :super super
-                       :shift shift
-                       :sym "Return"))
-        (t
-         (lem:make-key :ctrl ctrl
-                       :meta meta
-                       :super super
-                       :shift shift
-                       :sym sym))))
+  (lem:make-key :ctrl ctrl
+                :meta meta
+                :super super
+                :shift shift
+                :sym sym))
 
 (defstruct modifier
   shift

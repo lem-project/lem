@@ -72,7 +72,7 @@
   (lem/peek-source:show-matched-line))
 
 (defvar *grep-command* "git grep")
-(defvar *grep-args* "-nHI")
+(defvar *grep-args* "-niHI")
 (defvar *last-query* (str:concat *grep-command* " " *grep-args* " "))
 (defvar *last-directory* nil)
 

@@ -31,6 +31,15 @@
     (move-to-next-virtual-line point (1- (window-height* window)) window)
     point))
 
+(defun line-inside-window-p (line &optional (window (current-window)))
+  (let ((start-line-num (line-number-at-point (window-start-point window)))
+        (end-line-num (line-number-at-point (window-end-point window))))
+    (and (>= line start-line-num)
+         (<= line end-line-num))))
+
+(defun point-inside-window-p (point &optional (window (current-window)))
+  (line-inside-window-p (line-number-at-point point)))
+
 (defun window-has-following-lines-p (&optional (window (current-window)))
   (let ((end-point (window-end-point window)))
     (with-point ((p end-point))

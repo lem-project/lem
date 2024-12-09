@@ -1019,6 +1019,11 @@ on the same line or at eol if there are none."
                                     (line-start p))))))
     (move-to-column (current-point) column t)))
 
+(defun recenter-line-if-point-not-inside-window (point &optional (window (current-window)))
+  (when point
+    (unless (lem-vi-mode/window::point-inside-window-p point window)
+      (vi-scroll-line-to-center))))
+
 (define-command vi-jumps () ()
   (line-end (current-point))
   (lem:message-buffer (with-output-to-string (s)
@@ -1026,15 +1031,16 @@ on the same line or at eol if there are none."
 
 (define-command vi-jump-back (&optional (n 1)) (:universal)
   (dotimes (i n)
-    (jump-back)))
+    ;; The return value of jump-back is target jump point.
+    (recenter-line-if-point-not-inside-window (jump-back))))
 
 (define-command vi-jump-next (&optional (n 1)) (:universal)
   (dotimes (i n)
-    (jump-next)))
+    (recenter-line-if-point-not-inside-window (jump-next))))
 
 (define-motion vi-jump-previous () ()
     (:jump t)
-  (jump-back))
+  (vi-jump-back))
 
 (define-command vi-repeat (n) (:universal-nil)
   (when *last-repeat-keys*

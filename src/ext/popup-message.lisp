@@ -36,7 +36,8 @@
                      ;; NOTE: Block mouse clicks on popup windows to prevent them from gaining focus.
                      ;; If a popup window gains focus, it becomes the only active window in the window-tree,
                      ;; which prevents Lem from being able to close it.
-                     ;; Mouse scrolling remains enabled since popup windows are used for displaying text content.                     :clickable nil
+                     ;; Mouse scrolling remains enabled since popup windows are used for displaying text content.
+                     :clickable nil
                      :style style)))
         (buffer-start (window-view-point window))
         (window-see window)

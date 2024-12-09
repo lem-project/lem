@@ -404,10 +404,10 @@ Move the cursor to the first non-blank character of the line."
                          (max 0
                               (min (1- (length (line-string (current-point)))) pos))))
         (:block
-         (move-to-line (current-point) (min (line-number-at-point start)
-                                            (line-number-at-point end)))
-         (move-to-column (current-point) (min column-start
-                                              column-end))))
+            (move-to-line (current-point) (min (line-number-at-point start)
+                                               (line-number-at-point end)))
+          (move-to-column (current-point) (min column-start
+                                               column-end))))
       ;; After 'dw' or 'dW', move to the first non-blank char
       (when (and (this-motion-command)
                  (member (command-name (this-motion-command))
@@ -508,10 +508,10 @@ Move the cursor to the first non-blank character of the line."
   (yank-region start end :type type)
   (case type
     (:block
-     (move-to-line (current-point) (min (line-number-at-point start)
-                                        (line-number-at-point end)))
-     (move-to-column (current-point) (min (point-column start)
-                                          (point-column end))))
+        (move-to-line (current-point) (min (line-number-at-point start)
+                                           (line-number-at-point end)))
+      (move-to-column (current-point) (min (point-column start)
+                                           (point-column end))))
     (:line
      (move-to-column start (point-charpos (current-point)))
      (move-point (current-point) start))
@@ -801,9 +801,9 @@ on the same line or at eol if there are none."
            (move-point point p)))
        (lambda (point regex &optional limit-point)
          (lem/isearch::search-forward-regexp
-               point
-               (ignore-errors (ppcre:create-scanner regex :case-insensitive-mode case-insensitive))
-               limit-point))
+          point
+          (ignore-errors (ppcre:create-scanner regex :case-insensitive-mode case-insensitive))
+          limit-point))
        (lambda (point regex &optional limit-point)
          (lem/isearch::search-backward-regexp
           point
@@ -928,7 +928,7 @@ on the same line or at eol if there are none."
                                         (string c)
                                         limit)
                   unless result
-                    do (return nil)
+                  do (return nil)
                   finally (return t))
         (character-offset p offset)
         (move-point (current-point) p)))))
@@ -1041,7 +1041,7 @@ on the same line or at eol if there are none."
 
 (define-motion vi-jump-previous () ()
     (:jump t)
-  (jump-back))
+  (vi-jump-back))
 
 (define-command vi-repeat (n) (:universal-nil)
   (when *last-repeat-keys*
@@ -1069,7 +1069,7 @@ on the same line or at eol if there are none."
 
 (define-text-object-command vi-a-broad-word (count) ("p")
     (:expand-selection t)
-  (a-range-of 'broad-word-object (current-state) count))
+  )
 
 (define-text-object-command vi-inner-broad-word (count) ("p")
     (:expand-selection t)

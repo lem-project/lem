@@ -1069,7 +1069,7 @@ on the same line or at eol if there are none."
 
 (define-text-object-command vi-a-broad-word (count) ("p")
     (:expand-selection t)
-  )
+  (a-range-of 'broad-word-object (current-state) count))
 
 (define-text-object-command vi-inner-broad-word (count) ("p")
     (:expand-selection t)

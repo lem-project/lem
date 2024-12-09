@@ -179,8 +179,7 @@
                                   (mouse-event-x mouse-event)
                                   (mouse-event-y mouse-event))
          (when (and window
-                    ;; NOTE: Simply ban the mouse-click event for a popup-window, to avoid the popup-window gain the mouse focus, being the only window as current-window in window-tree, causing lem unable to delete it.
-                    (not (typep window 'lem/popup-window::popup-window)))
+                    (window-clickable window))
            (handle-mouse-button-down (window-buffer window)
                                      mouse-event
                                      :window window

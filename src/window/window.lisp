@@ -105,6 +105,10 @@
    (deleted
     :initform nil
     :accessor window-deleted-p)
+   (clickable
+    :initarg :clickable
+    :initform t
+    :reader window-clickable)
    (parameters
     :initform nil
     :accessor window-parameters)))

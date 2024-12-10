@@ -2,8 +2,8 @@
   (:use :cl :lem)
   (:import-from :lem-core
                 :*universal-argument*)
-  (:export :*base*
-           :*universal-argument-keymap*
+  (:export :*universal-argument-keymap*
+           :universal-argument-function
            :universal-argument
            :universal-argument-0
            :universal-argument-1
@@ -22,22 +22,27 @@
   (:lock t))
 (in-package :lem/universal-argument)
 
-(defparameter *base* 4)
-
 (defstruct arg-state
   (type nil)
   (u 1)
   (n '()))
 
 (defvar *argument* (make-arg-state))
+
 (defvar *universal-argument-keymap*
   (make-keymap :name '*universal-argument-keymap*
                :undef-hook 'universal-argument-default))
 
+(define-editor-variable universal-argument-function
+  (lambda (x) (expt 4 x))
+  "Set function to be called when UNIVERSAL-ARGUMENT is
+invoked, which will receive an argument of 1 on the first
+call, increasing thereafter by 1 on each successive call.")
+
 (defun to-integer (arg-state)
   (case (arg-state-type arg-state)
     ((nil)
-     (expt *base* (arg-state-u arg-state)))
+     (funcall (variable-value 'universal-argument-function) (arg-state-u arg-state)))
     ((t)
      (if (equal (arg-state-n arg-state) '(#\-))
          -1

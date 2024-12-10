@@ -77,7 +77,10 @@
     (when (and
            (typep command 'self-insert)
            pending-keys)
-      (dolist (key pending-keys) (self-insert 1 (key-to-char key))))
+      (loop :for key :in pending-keys
+            :until (named-key-sym-p (key-sym key))
+            :do 
+               (self-insert 1 (key-to-char key))))
     
     (when *enable-repeat-recording*
       (unless (or (and (typep command 'vi-command)

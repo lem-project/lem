@@ -76,20 +76,23 @@
     ;;   a. If `<second-key>` is print-able-key, taken `e` key for example, then will self-insert `j` and self-insert `e`.
     ;;   b. If `<second-key>` is un-print-able-key, taken `Backspace` key for example, then will cancel the self-insert `j` and remain in vi-insert-mode.
     
-    ;; FIXME: In `lem` impl, the `2.b` case will not cancel the self-insert of `j` key, because the code is written in post-command-hook, we have no change to cancel the executing of `self-insert` command for the first-key.
-    
-    ;; For the command `self-insert`, the `this-command-keys` is typically only 1 key. (pending-keys = nil)
-    ;; If pending-keys is NOT nil, then these keys are used to disguish the keys between `self-insert` command and other commands. 
-    ;; For other commands, we can simply ignore the pending-keys.
-    ;; For self-insert command, we should also flusthese pending-keys.
+    ;; FIXME: In `lem` impl, the `2.b` case will not cancel the self-insert of `j` key, because the code is written in post-command-hook, we have no chance to cancel the executing of `self-insert` command for the first-key.
+    ;;
+    ;;
+    ;;
+    ;; For self-insert command, we should also flush the pending-keys.
+    ;; 1. Typically, the length of`this-command-keys` is only 1 key. (pending-keys = nil)
+    ;; 2. If the length of `this-command-keys` > 1 key (pending-keys is not nil, they are used to disguish `self-insert` command and other commands), we need to flush `pending-keys`.
     (when (and
            (typep command 'self-insert)
            pending-keys)
       (loop :for key :in pending-keys
-            ;; FIXME: the `named-key` is no identical to `print-able-key`. (Taken `Tab` key for example)
+            ;; FIXME: the `named-key` is not identical to `print-able-key`. (Taken `Tab` key for example)
             :until (named-key-sym-p (key-sym key))
             :do 
                (self-insert 1 (key-to-char key))))
+    
+    
     
     (when *enable-repeat-recording*
       (unless (or (and (typep command 'vi-command)

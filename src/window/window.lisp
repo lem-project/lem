@@ -105,6 +105,10 @@
    (deleted
     :initform nil
     :accessor window-deleted-p)
+   (clickable
+    :initarg :clickable
+    :initform t
+    :reader window-clickable)
    (parameters
     :initform nil
     :accessor window-parameters)))
@@ -163,6 +167,7 @@ This is the content area in which the buffer is displayed, without any side marg
            (need-to-redraw window)
            (lem-if:clear (implementation) (window-view window))))
     (mapc #'clear-screen (uiop:ensure-list (frame-leftside-window (current-frame))))
+    (mapc #'clear-screen (uiop:ensure-list (frame-rightside-window (current-frame))))
     (mapc #'clear-screen (window-list))
     (mapc #'clear-screen (frame-floating-windows (current-frame)))))
 
@@ -231,6 +236,8 @@ This is the content area in which the buffer is displayed, without any side marg
            (active-prompt-window))
           (alexandria:ensure-list
            (frame-leftside-window (current-frame)))
+          (alexandria:ensure-list
+           (frame-rightside-window (current-frame)))
           (remove-if-not #'floating-window-focusable-p
                          (frame-floating-windows (current-frame)))
           (window-list)))
@@ -275,6 +282,7 @@ This is the content area in which the buffer is displayed, without any side marg
   (mapc #'%free-window (window-list frame))
   (mapc #'%free-window (frame-floating-windows frame))
   (mapc #'%free-window (uiop:ensure-list (frame-leftside-window frame)))
+  (mapc #'%free-window (uiop:ensure-list (frame-rightside-window frame)))
   (values))
 
 (defun adjust-view-point (window)
@@ -729,7 +737,9 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                                 (when include-floating-windows
                                   (frame-floating-windows frame))
                                 (when include-floating-windows
-                                  (uiop:ensure-list (frame-leftside-window frame))))
+                                  (uiop:ensure-list (frame-leftside-window frame)))
+                                (when include-floating-windows
+                                  (uiop:ensure-list (frame-rightside-window frame))))
         :when (eq buffer (window-buffer window))
         :collect window))
 
@@ -949,6 +959,8 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 (defun adjust-all-window-size ()
   (dolist (window (frame-header-windows (current-frame)))
     (window-set-size window (display-width) 1))
+  (alexandria:when-let (window (frame-rightside-window (current-frame)))
+    (resize-rightside-window window))
   (balance-windows))
 
 (defun update-on-display-resized ()

@@ -204,7 +204,8 @@
                              (:file "filer")
                              (:file "deepl")
                              (:file "themes")
-                             (:file "detective")))
+                             (:file "detective")
+                             (:file "read-only-sources")))
 
                (:module "ui"
                 :serial t

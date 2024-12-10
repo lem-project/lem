@@ -20,11 +20,10 @@ Future:
 |#
 
 ;; major-mode for the commit buffer.
-(define-major-mode legit-commit-mode lem-markdown-mode:markdown-mode
+(define-major-mode legit-commit-mode ()
     (:name "legit-commit-mode"
-     :syntax-table lem-markdown-mode::*markdown-syntax-table*
      :keymap *legit-commit-mode-keymap*)
-  ;; no syntax highlihgt in fact.
+  ;; no syntax highlight in fact.
   (setf (variable-value 'enable-syntax-highlight) t))
 
 (define-file-associations legit-commit-mode

@@ -17,6 +17,9 @@
 (defclass leftside-window-separator (window-separator)
   ())
 
+(defclass rightside-window-separator (window-separator)
+  ())
+
 ;;;;;;;;;;;;;;;;;;
 
 (defparameter *scroll-speed* 3)
@@ -162,12 +165,21 @@
                         (mouse-event-x mouse-event)
                         (mouse-event-y mouse-event)
                         (mouse-button-down-clicks mouse-event)))
+      (:rightside
+       (handle-button-1 (make-instance 'rightside-window-separator
+                                       :start-x (mouse-event-x mouse-event)
+                                       :start-y (mouse-event-y mouse-event)
+                                       :grabbed-window first-window)
+                        (mouse-event-x mouse-event)
+                        (mouse-event-y mouse-event)
+                        (mouse-button-down-clicks mouse-event)))
       (otherwise
        (multiple-value-bind (window x y)
            (focus-window-position (current-frame)
                                   (mouse-event-x mouse-event)
                                   (mouse-event-y mouse-event))
-         (when window
+         (when (and window
+                    (window-clickable window))
            (handle-mouse-button-down (window-buffer window)
                                      mouse-event
                                      :window window
@@ -285,6 +297,14 @@
              (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
                (unless (zerop diff-x)
                  (when (resize-leftside-window-relative diff-x)
+                   (setf (window-separator-start-x *last-dragged-separator*) x)))))))
+        ((typep *last-dragged-separator* 'rightside-window-separator)
+         (let ((x (mouse-event-x mouse-event))
+               (button (mouse-event-button mouse-event)))
+           (when (eq button :button-1)
+             (let ((diff-x (- x (window-separator-start-x *last-dragged-separator*))))
+               (unless (zerop diff-x)
+                 (when (resize-rightside-window-relative diff-x)
                    (setf (window-separator-start-x *last-dragged-separator*) x)))))))))
 
 (defmethod handle-mouse-event ((mouse-event mouse-wheel))

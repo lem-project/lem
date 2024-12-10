@@ -463,7 +463,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
             (message "Could not parse hunk information"))))))
 
 (defparameter *commit-buffer-message*
-  "~%# Please enter the commit message for your changes.~%~
+  "~%~%# Please enter the commit message for your changes.~%~
   # Lines starting with '#' will be discarded, and an empty message does nothing.~%~
   # Validate with C-c C-c, quit with M-q or C-c C-k")
 

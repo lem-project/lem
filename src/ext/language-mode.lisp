@@ -92,8 +92,8 @@
 (define-key *language-mode-keymap* "M-?" 'find-references)
 (define-key *language-mode-keymap* "M-," 'pop-definition-stack)
 (define-key *language-mode-keymap* "C-M-i" 'complete-symbol)
-(define-key *global-keymap* "M-(" 'insert-\(\))
-(define-key *global-keymap* "M-)" 'move-over-\))
+(define-key *global-keymap* "M-(" 'insert-\(\)-or-wrap)
+(define-key *global-keymap* "M-)" 'move-over-\)-or-wrap)
 
 (defun beginning-of-defun-1 (n)
   (alexandria:when-let ((fn (variable-value 'beginning-of-defun-function :buffer)))
@@ -154,11 +154,18 @@
       (uncomment-region)
       (comment-region)))
 
+(defun select-current-line-if-no-region-is-selected (start end)
+  (when (point= start end)
+    (setf start (line-start start))
+    (setf end (line-end end))))
+
 (defun commented-region-p ()
   (alexandria:when-let ((line-comment (variable-value 'line-comment :buffer)))
     (with-point ((start (current-point))
                  (end (current-point)))
       (set-region-point-using-global-mode (current-global-mode) start end)
+      (select-current-line-if-no-region-is-selected start end)
+      
       (loop
         (skip-whitespace-forward start)
         (when (point>= start end)
@@ -176,6 +183,8 @@
         (with-point ((start (current-point) :right-inserting)
                      (end (current-point) :left-inserting))
           (set-region-point-using-global-mode (current-global-mode) start end)
+          (select-current-line-if-no-region-is-selected start end)
+          
           (skip-whitespace-forward start)
           (when (point>= start end)
             (insert-string (current-point) line-comment)
@@ -203,6 +212,8 @@
         (with-point ((start (current-point) :right-inserting)
                      (end (current-point) :right-inserting))
           (set-region-point-using-global-mode (current-global-mode) start end)
+          (select-current-line-if-no-region-is-selected start end)
+          
           (let ((p start))
             (loop
               (parse-partial-sexp p end nil t)
@@ -460,11 +471,18 @@
           (complete-symbol)))
       (complete-symbol)))
 
-(define-command (insert-\(\) (:advice-classes editable-advice)) () ()
-  (let ((p (current-point)))
-    (insert-character p #\()
-    (insert-character p #\))
-    (character-offset p -1)))
+(define-command (insert-\(\)-or-wrap (:advice-classes editable-advice)) () ()
+  (if (mark-active-p (cursor-mark (current-point)))
+      (with-point ((start (cursor-region-beginning (current-point)))
+                   (end (cursor-region-end (current-point))))
+        (when (point< start (current-point))
+          (exchange-point-mark))
+        (insert-character end #\))
+        (insert-character start #\())
+      (let ((p (current-point)))
+        (insert-character p #\()
+        (insert-character p #\))
+        (character-offset p -1))))
 
 (defun backward-search-rper ()
   (save-excursion
@@ -487,16 +505,23 @@
       (delete-character p)
       (character-offset p -1))))
 
-(define-command (move-over-\) (:advice-classes movable-advice editable-advice)) () ()
-  (let ((rper (backward-search-rper)))
-    (if rper
-        (progn
-          (backward-delete-to-rper)
-          (scan-lists (current-point) 1 1 T)
-          (newline-and-indent 1))
-        (progn
-          (scan-lists (current-point) 1 1 T)
-          (newline-and-indent 1)))))
+(define-command (move-over-\)-or-wrap (:advice-classes movable-advice editable-advice)) () ()
+  (if (mark-active-p (cursor-mark (current-point)))
+      (with-point ((start (cursor-region-beginning (current-point)))
+                   (end (cursor-region-end (current-point))))
+        (when (point> end (current-point))
+          (exchange-point-mark))
+        (insert-character end #\))
+        (insert-character start #\())
+      (let ((rper (backward-search-rper)))
+        (if rper
+            (progn
+              (backward-delete-to-rper)
+              (scan-lists (current-point) 1 1 T)
+              (newline-and-indent 1))
+            (progn
+              (scan-lists (current-point) 1 1 T)
+              (newline-and-indent 1))))))
 
 (defun match-pattern-p (pattern file)
   (etypecase pattern

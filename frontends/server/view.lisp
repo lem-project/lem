@@ -16,6 +16,9 @@
 
 (defvar *view-id-counter* 0)
 
+(deftype border-shape ()
+  '(member nil :drop-curtain :left-border))
+
 (defstruct (view (:constructor %make-view))
   (id (incf *view-id-counter*))
   window
@@ -25,10 +28,11 @@
   height
   use-modeline
   kind ; "tile" / "floating"
-  border)
+  border
+  (border-shape nil :type border-shape))
 
-(defun make-view (&rest args &key window x y width height use-modeline kind border)
-  (declare (ignore window x y width height use-modeline kind border))
+(defun make-view (&rest args &key window x y width height use-modeline kind border border-shape)
+  (declare (ignore window x y width height use-modeline kind border border-shape))
   (apply #'%make-view args))
 
 (defun move-view (view x y)
@@ -59,4 +63,7 @@
                                    (let ((buffer (lem:window-buffer (view-window view))))
                                      (when (typep buffer 'lem:html-buffer)
                                        (lem:html-buffer-html buffer))))
-      (yason:encode-object-element "border" (view-border view)))))
+      (yason:encode-object-element "border" (view-border view))
+      (yason:encode-object-element "border_shape" (if (view-border-shape view)
+                                                      (string-downcase (view-border-shape view)))))))
+

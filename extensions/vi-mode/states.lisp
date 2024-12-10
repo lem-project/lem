@@ -70,7 +70,6 @@
 (define-state insert () ()
   (:default-initargs
    :name "INSERT"
-   :cursor-color "IndianRed"
    :cursor-type :bar
    :modeline-color 'state-modeline-aqua
    :keymaps (list *insert-keymap*)))
@@ -89,6 +88,7 @@
 
 (define-state operator (normal) ()
   (:default-initargs
+   :cursor-type :underline
    :keymaps (list *operator-keymap* *normal-keymap*)))
 
 ;;

@@ -62,6 +62,18 @@
 (define-key *keymap* "p" 'frame-multiplexer-prev)
 (define-key *keymap* "n" 'frame-multiplexer-next)
 (define-key *keymap* "r" 'frame-multiplexer-rename)
+(define-key *keymap* "C-z" 'frame-multiplexer-recent)
+(define-key *keymap* "z" 'frame-multiplexer-recent)
+(define-key *keymap* "0" 'frame-multiplexer-switch-0)
+(define-key *keymap* "1" 'frame-multiplexer-switch-1)
+(define-key *keymap* "2" 'frame-multiplexer-switch-2)
+(define-key *keymap* "3" 'frame-multiplexer-switch-3)
+(define-key *keymap* "4" 'frame-multiplexer-switch-4)
+(define-key *keymap* "5" 'frame-multiplexer-switch-5)
+(define-key *keymap* "6" 'frame-multiplexer-switch-6)
+(define-key *keymap* "7" 'frame-multiplexer-switch-7)
+(define-key *keymap* "8" 'frame-multiplexer-switch-8)
+(define-key *keymap* "9" 'frame-multiplexer-switch-9)
 (define-key *global-keymap* "C-z" *keymap*)
 
 (defstruct tab

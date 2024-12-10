@@ -83,6 +83,8 @@
 (define-key *global-keymap* "M-s p" 'isearch-prev-highlight)
 (define-key *global-keymap* "F3" 'isearch-next-highlight)
 (define-key *global-keymap* "Shift-F3" 'isearch-prev-highlight)
+(define-key *global-keymap* "M-s t" 'isearch-toggle-highlighting)
+(define-key *global-keymap* "M-s M-t" 'isearch-toggle-highlighting)
 (define-key *isearch-keymap* "C-M-n" 'isearch-add-cursor-to-next-match)
 
 (defun disable-hook ()
@@ -305,6 +307,7 @@
           (subseq *isearch-string*
                   0
                   (1- (length *isearch-string*))))
+    (funcall *isearch-search-function* (current-point) *isearch-string*)
     (isearch-update-display)))
 
 (define-command isearch-raw-insert () ()
@@ -394,6 +397,7 @@
   (let ((str (yank-from-clipboard-or-killring)))
     (when str
       (setq *isearch-string* str)
+      (funcall *isearch-search-function* (current-point) *isearch-string*)
       (isearch-update-display))))
 
 (defun isearch-add-char (c)

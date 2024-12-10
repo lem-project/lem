@@ -39,7 +39,7 @@
         (view-last-print-cursor-y view) y))
 
 (deftype border-shape ()
-  '(member nil :drop-curtain))
+  '(member nil :drop-curtain :left-border))
 
 (defstruct border
   win
@@ -48,15 +48,23 @@
   size
   (shape nil :type border-shape))
 
-(defun compute-border-window-position (x y border-size)
-  (let ((x (- x border-size))
-        (y (- y border-size)))
-    (list x y)))
+(defun compute-border-window-position (x y border-size border-shape)
+  (case border-shape
+    (:left-border
+     (list (- x border-size) y))
+    (otherwise
+     (let ((x (- x border-size))
+           (y (- y border-size)))
+       (list x y)))))
 
-(defun compute-border-window-size (width height border-size)
-  (let ((width (+ width (* border-size 2)))
-        (height (+ height (* border-size 2))))
-    (list width height)))
+(defun compute-border-window-size (width height border-size border-shape)
+  (case border-shape
+    (:left-border
+     (list 1 height))
+    (otherwise
+     (let ((width (+ width (* border-size 2)))
+           (height (+ height (* border-size 2))))
+       (list width height)))))
 
 (defun make-view (x y width height &key modeline type border border-shape cursor-invisible)
   (check-type type (or null (member :tile :floating)))
@@ -69,9 +77,9 @@
     (make-instance 'view
                    :border (when (and border (< 0 border))
                              (destructuring-bind (x y)
-                                 (compute-border-window-position x y border)
+                                 (compute-border-window-position x y border border-shape)
                                (destructuring-bind (width height)
-                                   (compute-border-window-size width height border)
+                                   (compute-border-window-size width height border border-shape)
                                  (let ((win (newwin height width y x)))
                                    (make-border :win win
                                                 :width width
@@ -102,7 +110,7 @@
   (charms/ll:wresize (view-scrwin view) height width)
   (alexandria:when-let (border (view-border view))
     (destructuring-bind (b-width b-height)
-        (compute-border-window-size width height (border-size border))
+        (compute-border-window-size width height (border-size border) (border-shape border))
       (setf (border-width border) b-width
             (border-height border) b-height)
       (charms/ll:wresize (border-win border) b-height b-width)))
@@ -120,8 +128,11 @@
   (charms/ll:mvwin (view-scrwin view) y x)
   (alexandria:when-let (border (view-border view))
     (destructuring-bind (b-x b-y)
-        (compute-border-window-position x y (border-size border))
-      (charms/ll:mvwin (border-win border) b-y b-x)))
+        (compute-border-window-position x y (border-size border) (border-shape border))
+      (cond ((eq :left-border (border-shape (view-border view)))
+             (charms/ll:mvwin (border-win border) b-y b-x))
+            (t
+             (charms/ll:mvwin (border-win border) b-y b-x)))))
   (when (view-modeline-scrwin view)
     (charms/ll:mvwin (view-modeline-scrwin view)
                      (+ y (view-height view))
@@ -133,20 +144,35 @@
         (w (1- (border-width border)))
         (attr (lem-ncurses/attribute:attribute-to-bits (border-attribute))))
     (charms/ll:wattron win attr)
-    (cond ((eq :drop-curtain (border-shape border))
-           (charms/ll:mvwaddstr win 0 0 (border-vertical-and-right))
-           (charms/ll:mvwaddstr win 0 w (border-vertical-and-left)))
-          (t
-           (charms/ll:mvwaddstr win 0 0 (border-upleft))
-           (charms/ll:mvwaddstr win 0 w (border-upright))))
-    (charms/ll:mvwaddstr win h 0 (border-downleft))
-    (charms/ll:mvwaddstr win h w (border-downright))
-    (loop :for x :from 1 :below w
-          :do (charms/ll:mvwaddstr win 0 x (border-up))
-              (charms/ll:mvwaddstr win (1- (border-height border)) x (border-down)))
-    (loop :for y :from 1 :below h
-          :do (charms/ll:mvwaddstr win y 0 (border-left))
-              (charms/ll:mvwaddstr win y w (border-right)))
+    (flet ((drop-curtain ()
+             (charms/ll:mvwaddstr win 0 0 (border-vertical-and-right))
+             (charms/ll:mvwaddstr win 0 w (border-vertical-and-left))
+             (charms/ll:mvwaddstr win h 0 (border-downleft))
+             (charms/ll:mvwaddstr win h w (border-downright))
+             (loop :for x :from 1 :below w
+                   :do (charms/ll:mvwaddstr win 0 x (border-up))
+                       (charms/ll:mvwaddstr win (1- (border-height border)) x (border-down)))
+             (loop :for y :from 1 :below h
+                   :do (charms/ll:mvwaddstr win y 0 (border-left))
+                       (charms/ll:mvwaddstr win y w (border-right))))
+           (left-border ()
+             (loop :for y :from 0 :to h
+                   :do (charms/ll:mvwaddstr win y 0 (border-left))))
+           (normal ()
+             (charms/ll:mvwaddstr win 0 0 (border-upleft))
+             (charms/ll:mvwaddstr win 0 w (border-upright))
+             (charms/ll:mvwaddstr win h 0 (border-downleft))
+             (charms/ll:mvwaddstr win h w (border-downright))
+             (loop :for x :from 1 :below w
+                   :do (charms/ll:mvwaddstr win 0 x (border-up))
+                       (charms/ll:mvwaddstr win (1- (border-height border)) x (border-down)))
+             (loop :for y :from 1 :below h
+                   :do (charms/ll:mvwaddstr win y 0 (border-left))
+                       (charms/ll:mvwaddstr win y w (border-right)))))
+      (case (border-shape border)
+        (:drop-curtain (drop-curtain))
+        (:left-border (left-border))
+        (otherwise (normal))))
     (charms/ll:attroff attr)
     (charms/ll:wnoutrefresh win)))
 

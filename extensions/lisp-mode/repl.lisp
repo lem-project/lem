@@ -16,7 +16,11 @@
                                          (list (make-tm-region
                                                 "^WARNING:"
                                                 "$"
-                                                :name 'warning-attribute))))
+                                                :name 'warning-attribute)
+                                               (make-tm-match "^; caught WARNING:"
+                                                              :name 'warning-attribute)
+                                               (make-tm-match "^; caught ERROR:"
+                                                              :name 'warning-attribute))))
 
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"
@@ -522,7 +526,8 @@
 (defvar *lisp-repl-shortcuts* '())
 
 (defmacro with-repl-prompt (() &body body)
-  `(let ((lem/prompt-window:*prompt-completion-window-shape* nil))
+  `(let ((lem/prompt-window:*prompt-completion-window-shape* nil)
+         (lem/prompt-window::*fill-width* nil))
      ,@body))
 
 (defun repl-prompt-for-string (prompt &rest args)

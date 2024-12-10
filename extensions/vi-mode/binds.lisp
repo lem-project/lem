@@ -96,6 +96,7 @@
 (define-key *motion-keymap* "C-w C-j" 'undefined-key)
 (define-key *motion-keymap* "C-o" 'vi-jump-back)
 (define-key *motion-keymap* "C-i" 'vi-jump-next)
+(define-key *motion-keymap* "' '" 'vi-jump-previous)
 (define-key *motion-keymap* ":" 'vi-ex)
 
 (define-key *motion-keymap* "v" 'vi-visual-char)
@@ -128,6 +129,7 @@
 (define-key *normal-keymap* "g U" 'vi-upcase)
 (define-key *normal-keymap* "g u" 'vi-downcase)
 (define-key *normal-keymap* "g ~" 'vi-swapcase)
+(define-key *normal-keymap* "~" 'vi-swapcase-and-forward-char)
 (define-key *normal-keymap* "u" 'vi-undo)
 (define-key *normal-keymap* "C-r" 'vi-redo)
 (define-key *motion-keymap* 'delete-previous-char 'vi-backward-char)

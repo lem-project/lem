@@ -622,6 +622,7 @@
   (:export
    :color-theme-names
    :define-color-theme
+   :*after-load-theme-hook*
    :load-theme
    :current-theme
    :find-color-theme

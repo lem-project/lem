@@ -1,5 +1,9 @@
 (in-package :lem-core)
 
+(defvar *after-load-theme-hook* '()
+  "For functions that should run after a theme is loaded,
+for example, to maintain an attribute like CURSOR.")
+
 (defvar *current-theme* nil)
 
 (defun current-theme ()
@@ -96,7 +100,8 @@
     (redraw-display :force t)
     (setf (current-theme) name)
     (when save-theme
-      (setf (config :color-theme) (current-theme)))))
+      (setf (config :color-theme) (current-theme))))
+  (run-hooks *after-load-theme-hook*))
 
 (defun get-color-theme-color (color-theme key)
   (second (assoc key (color-theme-specs color-theme))))

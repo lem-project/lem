@@ -51,7 +51,7 @@
     (push (cons flag t) *curr-flags*)))
 
 (defun nullify-last-flags (flag &rest more-flags)
-  "Set FLAG and FLAGS to nil in *LAST-FLAGS*."
+  "Set FLAG and MORE-FLAGS to nil in *LAST-FLAGS*."
   (push (cons flag nil) *last-flags*)
   (when more-flags
     (dotimes (i (length more-flags))

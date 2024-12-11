@@ -583,8 +583,10 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
       (with-point ((start (current-point))
                    (end (current-point)))
         (unless (in-string-or-comment-p start)
-          ;; Forward sexp to select the end.
-          (forward-sexp)
+          ;; Forward sexp to select the end, unless current-point it not at end-char. 
+          (unless (equal (character-at (current-point))
+                         end-char)
+            (forward-sexp))
           (setf end (copy-point (current-point) :temporary))
 
           ;; Backward sexp to select the start.

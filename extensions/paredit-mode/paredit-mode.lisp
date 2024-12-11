@@ -562,7 +562,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 
 (defun %paredit-wrap (begin-char end-char)
-  ;; FIXME: the buffer-mark-p always be nil for marks that set by vi-mode. (The mark state in vi-mode and emacs-mode is not set.
+  ;; FIXME: the buffer-mark-p always be nil for marks that set by vi-mode. (The mark state in vi-mode and emacs-mode is not synced.)
   (if (buffer-mark-p (current-buffer))
       (with-point ((begin (region-beginning (current-buffer)))
                    (end (region-end (current-buffer))))

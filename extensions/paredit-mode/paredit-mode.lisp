@@ -2,6 +2,7 @@
 link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 |#
 
+
 (defpackage :lem-paredit-mode
   (:use :cl
         :lem)
@@ -473,7 +474,11 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
            (delete-character end)
            (delete-character start))))
       (t
-       (scan-lists start -1 1)
+       ;; If current-point is already at open-char, simply select current list.
+       (unless
+           (syntax-open-paren-char-p (character-at start))
+         (scan-lists start -1 1))
+       
        (when (syntax-open-paren-char-p (character-at start))
          (with-point ((end start))
            (scan-lists end 1 0)

@@ -592,13 +592,15 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
           (setf start (copy-point (current-point) :temporary))
 
           ;; Insert the one `open-char` before `start`.
+          (insert-character start #\Space)
           (insert-character start begin-char)
 
-          ;; Because we have inserted the one `open-char`, the `end` should + 1.
-          (character-offset end 1)
+          ;; Because we have inserted the one `space` and one `open-char`, the `end` should + 2.
+          (character-offset end 2)
           (insert-character end end-char)
 
-          ;; Move current-point to the inserted `open-char`. (After we inserted the `open-char` before `start`, the char in `start` is not the `open-char`.)
+          ;; Move current-point to the `inserted space char`.
+          (character-offset start 1)
           (move-point (current-point) start)))))
 
 (define-command paredit-wrap-round () ()

@@ -562,6 +562,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
 
 
 (defun %paredit-wrap (begin-char end-char)
+  ;; FIXME: the buffer-mark-p always be nil for marks that set by vi-mode. (The mark state in vi-mode and emacs-mode is not set.
   (if (buffer-mark-p (current-buffer))
       (with-point ((begin (region-beginning (current-buffer)))
                    (end (region-end (current-buffer))))
@@ -579,14 +580,26 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
                  (insert-character (current-point) end-char)
                  (insert-character (current-point) #\Space)
                  (move-point (current-point) (character-offset begin 1))))))
-      (with-point ((origin (current-point)))
-        (unless (in-string-or-comment-p origin)
+      (with-point ((start (current-point))
+                   (end (current-point)))
+        (unless (in-string-or-comment-p start)
+          ;; Forward sexp to select the end.
           (forward-sexp)
-          (insert-character origin begin-char)
-          (unless (non-space-following-context-p origin)
-            (insert-character origin #\Space))
-          (insert-character (current-point) end-char)
-          (move-point (current-point) (character-offset origin 1))))))
+          (setf end (copy-point (current-point) :temporary))
+
+          ;; Backward sexp to select the start.
+          (backward-sexp)
+          (setf start (copy-point (current-point) :temporary))
+
+          ;; Insert the one `open-char` before `start`.
+          (insert-character start begin-char)
+
+          ;; Because we have inserted the one `open-char`, the `end` should + 1.
+          (character-offset end 1)
+          (insert-character end end-char)
+
+          ;; Move current-point to the inserted `open-char`. (After we inserted the `open-char` before `start`, the char in `start` is not the `open-char`.)
+          (move-point (current-point) start)))))
 
 (define-command paredit-wrap-round () ()
   (%paredit-wrap #\( #\)))
@@ -595,7 +608,7 @@ link : http://www.daregada.sakuraweb.com/paredit_tutorial_ja.html
   (%paredit-wrap #\" #\"))
 
 (define-command paredit-vertical-line-wrap () ()
-  (lem-paredit-mode::%paredit-wrap #\| #\|))
+  (%paredit-wrap #\| #\|))
 
 (define-keys *paredit-mode-keymap*
   ('forward-sexp          'paredit-forward)

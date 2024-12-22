@@ -116,6 +116,7 @@
            :vi-write
            :vi-quit
            :vi-write-quit
+           :vi-close
            :vi-end-insert
            :vi-insert
            :vi-insert-line
@@ -138,7 +139,17 @@
            :vi-inner-paren
            :vi-repeat
            :vi-normal
-           :vi-keyboard-quit))
+           :vi-keyboard-quit
+           :vi-window-move-left
+           :vi-window-move-down
+           :vi-window-move-up
+           :vi-window-move-right
+           :vi-window-split-horizontally
+           :vi-window-split-vertically
+           :vi-window-split-new-buffer
+           :vi-window-split-horizontally-new
+           :vi-window-split-vertically-new
+           :vi-switch-to-buffer))
 (in-package :lem-vi-mode/commands)
 
 (defun extract-count-keys (keys)
@@ -979,6 +990,12 @@ on the same line or at eol if there are none."
   (vi-write)
   (vi-quit nil))
 
+(define-command vi-close (&optional (n 1)) (:universal)
+  (dotimes (i n)
+    (if (one-window-p)
+        (lem:message "Cannot close last window")
+        (delete-active-window))))
+
 (define-command vi-end-insert () ()
   (change-state 'normal)
   (vi-backward-char 1))
@@ -1092,3 +1109,50 @@ on the same line or at eol if there are none."
     (error 'editor-abort))
   (vi-visual-end)
   (keyboard-quit))
+
+(define-command vi-window-move-left (&optional (n 1)) (:universal)
+  "Go to the window on the left N times."
+  (dotimes (i n) (window-move-left)))
+
+(define-command vi-window-move-down (&optional (n 1)) (:universal)
+  "Go to the window on the down N times."
+  (dotimes (i n) (window-move-down)))
+
+(define-command vi-window-move-up (&optional (n 1)) (:universal)
+  "Go to the window on the up N times."
+  (dotimes (i n) (window-move-up)))
+
+(define-command vi-window-move-right (&optional (n 1)) (:universal)
+  "Go to the window on the right N times."
+  (dotimes (i n) (window-move-right)))
+
+(define-command vi-window-split-horizontally (&optional (n 1)) (:universal)
+  "Split the window horizontally and moves N times."
+  (dotimes (i n)
+    (split-active-window-horizontally)
+    (window-move-right)))
+
+(define-command vi-window-split-vertically (&optional (n 1)) (:universal)
+  "Split the window vertically and moves N times."
+  (dotimes (i n)
+    (split-active-window-vertically)
+    (window-move-down)))
+
+(define-command vi-switch-to-buffer (&optional (filename nil)) (:universal-nil)
+  "Opens the specified file name or creates a blank buffer."
+  ;; TODO LL Switch to buffer if it exists? Does this make dupe buffers?
+  (switch-to-buffer (if (or (null filename) (string= filename "lee"))
+    (make-buffer nil :temporary t)
+    (execute-find-file *find-file-executor* (get-file-mode filename) filename))))
+
+(define-command vi-window-split-horizontally-new (&optional (n 1) (filename nil)) (:universal)
+  "Creates an empty buffer in a new window N times."
+  (dotimes (i (or n 1))
+    (vi-window-split-horizontally)
+    (vi-switch-to-buffer filename)))
+
+(define-command vi-window-split-vertically-new (&optional (n 1) (filename nil)) (:universal)
+  "Creates an empty buffer in a new window N times."
+  (dotimes (i n)
+    (vi-window-split-vertically)
+    (vi-switch-to-buffer filename)))

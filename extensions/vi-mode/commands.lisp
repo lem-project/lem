@@ -116,7 +116,6 @@
            :vi-write
            :vi-quit
            :vi-write-quit
-           :vi-close
            :vi-end-insert
            :vi-insert
            :vi-insert-line
@@ -140,6 +139,7 @@
            :vi-repeat
            :vi-normal
            :vi-keyboard-quit
+           :vi-close
            :vi-window-move-left
            :vi-window-move-down
            :vi-window-move-up

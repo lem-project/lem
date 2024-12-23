@@ -119,7 +119,8 @@
   (lem:exit-lem nil))
 
 (define-ex-command "^clo(?:se)?$" (range filename)
-  (lem-vi-mode/commands:vi-close nil))
+  (declare (ignore range filename))
+  (lem-vi-mode/commands:vi-close 1))
 
 (define-ex-command "^(x|xit)$" (range filename)
   (ex-write-quit range filename nil nil))
@@ -128,7 +129,8 @@
   (ex-write-quit range filename t nil))
 
 (define-ex-command "^on(?:ly)?$" (range filename)
-  (lem-vi-mode/commands:vi-quit nil))
+  (declare (ignore range filename))
+  (lem:delete-other-windows))
 
 (defun copy-current-jumplist-to-next-window ()
   (let* ((window-list

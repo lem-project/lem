@@ -1140,10 +1140,9 @@ on the same line or at eol if there are none."
 
 (define-command vi-switch-to-buffer (&optional (filename nil)) (:universal-nil)
   "Opens the specified file name or creates a blank buffer."
-  ;; TODO LL Switch to buffer if it exists? Does this make dupe buffers?
-  (switch-to-buffer (if (or (null filename) (string= filename "lee"))
-    (make-buffer nil :temporary t)
-    (execute-find-file *find-file-executor* (get-file-mode filename) filename))))
+  (switch-to-buffer (if (or (null filename) (string= filename ""))
+      (make-buffer nil :temporary t)
+      (execute-find-file *find-file-executor* (get-file-mode filename) filename))))
 
 (define-command vi-window-split-horizontally-new (&optional (n 1) (filename nil)) (:universal)
   "Creates an empty buffer in a new window N times."

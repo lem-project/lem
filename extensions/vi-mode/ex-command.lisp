@@ -67,7 +67,7 @@
   (lem-vi-mode/commands:vi-window-split-vertically-new 1 filename))
 
 (define-ex-command "^vne(?:w)?$" (range filename)
-  (declare (ignore range filename))
+  (declare (ignore range))
   (lem-vi-mode/commands:vi-window-split-horizontally-new 1 filename))
 
 (define-ex-command "^ene(?:w)?$" (range filename)

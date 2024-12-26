@@ -46,4 +46,20 @@
       (ok (buf= " \"foo\"< \"bar[\"]>")))
     (with-vi-buffer (" \"foo\" \"bar[\"]")
       (cmd "va\"")
-      (ok (buf= " \"foo\"< \"bar[\"]>")))))
+      (ok (buf= " \"foo\"< \"bar[\"]>")))
+
+    ;; Escape Character 
+    ; v i
+    (with-vi-buffer (" \" f[o]o \\\" bar \"")
+      (cmd "vi\"")
+      (ok (buf= " \"< foo \\\" bar[ ]>\"")))
+    (with-vi-buffer (" \" foo \\\" b[a]r \"")
+      (cmd "vi\"")
+      (ok (buf= " \"< foo \\\" bar[ ]>\"")))
+    ; v a
+    (with-vi-buffer (" \" f[o]o \\\" bar \"")
+      (cmd "va\"")
+      (ok (buf= " <\" foo \\\" bar [\"]>")))
+    (with-vi-buffer (" \" foo \\\" b[a]r \"")
+      (cmd "va\"")
+      (ok (buf= " <\" foo \\\" bar [\"]>")))))

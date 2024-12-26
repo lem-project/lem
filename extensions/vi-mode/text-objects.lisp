@@ -289,10 +289,14 @@
              ;; No quote-char found
              ((null prev-char)
               (keyboard-quit))
-             ;; Skip escaped quote-char
-             ((and escape-char
-                   (char= prev-char escape-char)))
-             ;; Successfully found
+             
+             ;; Skip escape & quote-char
+             ((and escape-char 
+                   (character-at point -2) ;; Bound check
+                   (char= (character-at point -2) escape-char))
+              (character-offset point -2))
+       
+             ;; Successfully found unescaped quote
              (t
               (character-offset point -1)
               (return))))))
@@ -304,9 +308,13 @@
              ;; No quote-char found
              ((null next-char)
               (keyboard-quit))
-             ;; Skip escaped quote-char
+             
+             ;; Skip escape & quote-char
              ((and escape-char
-                   (char= (character-at point -1) escape-char)))
+                   (character-at point 2) ;; Bound Check
+                   (char= (character-at point -1) escape-char))
+              (character-offset point 2))             
+             
              ;; Successfully found
              (t
               (character-offset point 1)

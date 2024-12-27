@@ -39,9 +39,18 @@ Here's a list of all options currently implemented:
   * Default: `nil` (don't show)
   * Aliases: `nu`
 
-## Unittests
-
-```
+## Unit Tests
+    
+### Command Line
+    
+```bash
 qlot install
 .qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd
+```
+    
+### In Lem
+    
+Use `C-c C-r` or:
+```common-lisp Example Test
+  (rove:run-test 'lem-vi-mode/tests/text-objects::word-object)
 ```

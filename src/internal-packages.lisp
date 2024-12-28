@@ -94,7 +94,7 @@
    :key-ctrl
    :key-meta
    :key-super
-   :key-hypher
+   :key-hyper
    :key-shift
    :key-sym
    :match-key

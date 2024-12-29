@@ -23,23 +23,23 @@
   (ctrl nil :type boolean)
   (meta nil :type boolean)
   (super nil :type boolean)
-  (hypher nil :type boolean)
+  (hyper nil :type boolean)
   (shift nil :type boolean)
   (sym 0 :type string))
 
 (defmethod print-object ((object key) stream)
-  (with-slots (ctrl meta super hypher shift sym) object
+  (with-slots (ctrl meta super hyper shift sym) object
     (write-string (key-to-string :ctrl ctrl
                                  :meta meta
                                  :super super
-                                 :hypher hypher
+                                 :hyper hyper
                                  :shift shift
                                  :sym sym)
                   stream)))
 
-(defun key-to-string (&key ctrl meta super hypher shift sym)
+(defun key-to-string (&key ctrl meta super hyper shift sym)
   (with-output-to-string (stream)
-    (when hypher (write-string "H-" stream))
+    (when hyper (write-string "H-" stream))
     (when super (write-string "S-" stream))
     (when meta (write-string "M-" stream))
     (when ctrl (write-string "C-" stream))
@@ -54,35 +54,35 @@
 
 (defvar *key-constructor-cache* (make-hash-table :test 'equal))
 
-(defun convert-key (&rest args &key ctrl meta super hypher shift sym)
+(defun convert-key (&rest args &key ctrl meta super hyper shift sym)
   (let ((elt (assoc (apply #'key-to-string args) *key-conversions* :test #'equal)))
     (if elt
         (let ((key (first (parse-keyspec (cdr elt)))))
           (list :ctrl (key-ctrl key)
                 :meta (key-meta key)
                 :super (key-super key)
-                :hypher (key-hypher key)
+                :hyper (key-hyper key)
                 :shift (key-shift key)
                 :sym (key-sym key)))
         (list :ctrl ctrl
               :meta meta
               :super super
-              :hypher hypher
+              :hyper hyper
               :shift shift
               :sym sym))))
 
-(defun make-key (&rest args &key ctrl meta super hypher shift sym)
-  (declare (ignore ctrl meta super hypher shift sym))
+(defun make-key (&rest args &key ctrl meta super hyper shift sym)
+  (declare (ignore ctrl meta super hyper shift sym))
   (let ((hashkey (apply #'convert-key args)))
     (or (gethash hashkey *key-constructor-cache*)
         (setf (gethash hashkey *key-constructor-cache*)
               (apply #'%make-key args)))))
 
-(defun match-key (key &key ctrl meta super hypher shift sym)
+(defun match-key (key &key ctrl meta super hyper shift sym)
   (and (eq (key-ctrl key) ctrl)
        (eq (key-meta key) meta)
        (eq (key-super key) super)
-       (eq (key-hypher key) hypher)
+       (eq (key-hyper key) hyper)
        (eq (key-shift key) shift)
        (equal (key-sym key) sym)))
 

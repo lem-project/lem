@@ -80,14 +80,14 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
   (labels ((fail ()
              (editor-error "parse error: ~A" string))
            (parse (str)
-             (loop :with ctrl :and meta :and super :and hypher :and shift
+             (loop :with ctrl :and meta :and super :and hyper :and shift
                    :do (cond
                          ((ppcre:scan "^[cmshCMSH]-" str)
                           (ecase (char-downcase (char str 0))
                             ((#\c) (setf ctrl t))
                             ((#\m) (setf meta t))
                             ((#\s) (setf super t))
-                            ((#\h) (setf hypher t)))
+                            ((#\h) (setf hyper t)))
                           (setf str (subseq str 2)))
                          ((ppcre:scan "^[sS]hift-" str)
                           (setf shift t)
@@ -107,7 +107,7 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
                           (return (make-key :ctrl ctrl
                                             :meta meta
                                             :super super
-                                            :hypher hypher
+                                            :hyper hyper
                                             :shift shift
                                             :sym (or (named-key-sym-p str)
                                                      str))))))))

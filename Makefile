@@ -1,28 +1,36 @@
-LISP ?= ${shell which sbcl}
+LISP ?= sbcl --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit
+PREFIX ?= /usr/local
 
 ncurses:
 	qlot install
-	$(LISP) --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-ncurses.lisp
+	$(LISP) --load .qlot/setup.lisp \
+		--load scripts/build-ncurses.lisp
 
 sdl2:
 	qlot install
-	$(LISP) --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2.lisp
+	$(LISP) --load .qlot/setup.lisp \
+		--load scripts/build-sdl2.lisp
 
 sdl2-ncurses:
 	qlot install
-	$(LISP) --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2-ncurses.lisp
+	$(LISP) --load .qlot/setup.lisp \
+		--load scripts/build-sdl2-ncurses.lisp
 
 server:
 	qlot install
-	$(LISP) --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-server.lisp
+	$(LISP) --load .qlot/setup.lisp \
+		--load scripts/build-server.lisp
 
-install:
-	qlot install
-	$(LISP) --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/build-sdl2-ncurses.lisp
-	sudo install -m 755 lem /usr/local/bin/
-	sudo install -m 644 scripts/install/lem.svg /usr/share/icons/hicolor/scalable/apps/
-	sudo gtk-update-icon-cache /usr/share/icons/hicolor
-	sudo desktop-file-install --dir=/usr/share/applications scripts/install/lem.desktop
+lem: sdl2-ncurses
+
+install-bin: lem
+	install -m 755 lem $(PREFIX)/bin
+
+# TODO: on the fly edit lem.desktop depends on $(PREFIX)
+install: install-bin
+	install -m 644 scripts/install/lem.svg /usr/share/icons/hicolor/scalable/apps/
+	gtk-update-icon-cache /usr/share/icons/hicolor
+	desktop-file-install --dir=/usr/share/applications scripts/install/lem.desktop
 	@echo "+--------------------------------+"
 	@echo "|   Lem installation complete!   |"
 	@echo "+--------------------------------+"
@@ -33,7 +41,7 @@ test:
 
 doc:
 	qlot install
-	$(LISP) --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit --load .qlot/setup.lisp --load scripts/generate-documentation-tests.lisp --eval '(progn (lem-documentation-mode/tests::generate-markdown-file "test.md" :test) (quit))'
+	$(LISP) --load .qlot/setup.lisp --load scripts/generate-documentation-tests.lisp --eval '(progn (lem-documentation-mode/tests::generate-markdown-file "test.md" :test) (quit))'
 
 update:
 	git pull

@@ -25,8 +25,11 @@
            :word-object
            :broad-word-object
            :paren-object
-           :double-quoted-object))
+           :double-quoted-object
+           :vi-operator-surrounding-blanks))
 (in-package :lem-vi-mode/text-objects)
+
+(define-editor-variable vi-operator-surrounding-blanks nil)
 
 (defclass text-object () ())
 
@@ -328,8 +331,9 @@
     range))
 
 (defmethod include-surrounding-blanks ((object quoted-text-object) beg end direction on-object)
+  (when (variable-value 'vi-operator-surrounding-blanks)
   ;; Trailing first
-  (or (/= 0 (if (eq direction :backward)
+    (or (/= 0 (if (eq direction :backward)
                 (skip-chars-backward end '(#\Space #\Tab))
                 (skip-chars-forward end '(#\Space #\Tab))))
       ;; If no trailing spaces, delete leading spaces unless it's the beginning indentation
@@ -343,7 +347,7 @@
             (progn
               (skip-chars-backward p '(#\Space #\Tab))
               (unless (zerop (point-charpos p))
-                (move-point beg p)))))))
+                (move-point beg p))))))))
 
 ;;
 ;; word-object

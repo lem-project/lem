@@ -447,10 +447,12 @@ The prefix argument ID defaults to 1."
   ;; and asking for the frame name (or buffer of the frame, if it has no name)
   (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
-         (entry (aref (virtual-frame-id/frame-table vf) id)))
-    (if entry
-        (switch-current-frame vf (frame-table-entry-frame entry))
-        (editor-error "No frame with ID ~a" id))))
+         (entry (aref (virtual-frame-id/frame-table vf) id))
+         (same-frame-p (eq (current-frame) (frame-table-entry-frame entry))))
+    (unless same-frame-p
+      (if entry
+          (switch-current-frame vf (frame-table-entry-frame entry))
+          (editor-error "No frame with ID ~a" id)))))
 
 (macrolet ((def (command-name n)
              `(define-command (,command-name (:advice-classes frame-multiplexer-advice))

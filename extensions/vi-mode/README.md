@@ -20,6 +20,27 @@ To enable, add the following code to `~/.lem/init.lisp`:
 (define-key lem-vi-mode:*insert-keymap* ")" 'paredit-close-parenthesis)
 ```
 
+## User Settings
+
+### vi-operator-surrounding-blanks
+
+This is an editor variable that allows capturing the surround blanks (Space/Tab) in operator pending mode (eg da", ya", va"))
+This currently only works for double quotes. This feature is not in vanilla vi/vim.
+
+```common-lisp To enable this variable:
+(setf (variable-value 'lem-vi-mode/text-objects:vi-operator-surrounding-blanks :global) t)
+```
+
+#### Example
+
+```
+"cursor inside these quotes"    "but not inside these"
+```
+Here va" will select inside < >:
+```
+<"cursor inside these quotes"    >"but not inside these"
+```
+
 ## Options
 
 Vi-mode options are global settings, similarly to Vim.

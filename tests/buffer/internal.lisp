@@ -79,3 +79,17 @@ qrstuvwxyz"
       (ok (= 5 (lem:point-charpos end-point)))
       (ok (= 1 (lem:line-number-at-point point))))
     (check-corruption buffer)))
+
+(deftest call-after-change-hook
+  (let ((buffer (lem:make-buffer "test" :temporary t))
+        received-parameters)
+    (lem:add-hook (lem:variable-value 'lem:after-change-functions :buffer buffer)
+                  (lambda (start end old-len)
+                    (setf received-parameters (list start end old-len))))
+    (lem:insert-string (lem:buffer-point buffer) "a")
+    (when (ok received-parameters)
+      (destructuring-bind (start end old-len)
+          received-parameters
+        (ok (= 1 (lem:position-at-point start)))
+        (ok (= 2 (lem:position-at-point end)))
+        (ok (= 0 old-len))))))

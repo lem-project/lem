@@ -13,6 +13,7 @@
            :project-kill-buffers
            :project-switch
            :project-save
+           :project-save-prompt
            :project-unsave)
   #+sbcl
   (:lock t)
@@ -251,8 +252,10 @@
          ;; Project roots (pathnames) are converted to strings for the
          ;; string completion prompt.
          (input (namestring input)))
-    (lem/common/history:add-history history input :allow-duplicates nil)
-    (lem/common/history:save-file history)))
+    (if (and (lem/common/history:add-history history input :allow-duplicates nil)
+             (lem/common/history:save-file history))
+        (message "Saved project: ~A" input)
+        (message "Failed saving project: ~A" input))))
 
 (defun forget-project (input)
   "Remove this project (string) from the projects' history file.
@@ -268,9 +271,12 @@
   (lem/common/history:history-data-list (history)))
 
 (define-command project-save () ()
-  "Remember the current project for later sessions."
-  (when (remember-project (find-root (buffer-directory)))
-    (message "Project saved.")))
+  "Remember the current project to the projects list."
+  (remember-project (find-root (buffer-directory))))
+
+(define-command project-save-prompt () ()
+  "Prompts for a directory to save to the projects list."
+  (remember-project (prompt-for-directory "Save Project: " :directory (buffer-directory))))
 
 (define-command project-unsave () ()
   "Prompt for a project and remove it from the list of saved projects."
@@ -278,7 +284,7 @@
     (and
      (forget-project choice)
      (lem/common/history:save-file (history))
-     (message "Project removed."))))
+     (message "Project removed: ~A" choice))))
 
 (defun prompt-for-project ()
   "Prompt for a project saved in the projects history."

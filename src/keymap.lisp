@@ -76,6 +76,40 @@ Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
                            (setf (gethash k table) new-table)
                            (setf table new-table))))))))
 
+(defun undefine-key (keymap keyspec)
+  "Remove a binding for a KEYSPEC in a KEYMAP.
+
+If KEYSPEC argument is a `string', valid prefixes are:
+H (Hyper), S (Super), M (Meta), C (Ctrl), Shift
+
+Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
+  (check-type keyspec (or symbol string))
+  (typecase keyspec
+    (symbol
+     (remhash keyspec (keymap-function-table keymap)))
+    (string
+     (let ((keys (parse-keyspec keyspec)))
+       (undefine-key-internal keymap keys))))
+  (values))
+
+(defmacro undefine-keys (keymap &body bindings)
+  `(progn ,@(mapcar
+             (lambda (binding)
+               `(undefine-key ,keymap
+                              ,(first binding)))
+             bindings)))
+
+(defun undefine-key-internal (keymap keys)
+  (loop :with table := (keymap-table keymap)
+        :for rest :on (uiop:ensure-list keys)
+        :for k := (car rest)
+        :do (cond ((null (cdr rest))
+                   (remhash k table))
+                  (t
+                   (let ((next (gethash k table)))
+                     (when (prefix-command-p next)
+                       (setf table next)))))))
+
 (defun parse-keyspec (string)
   (labels ((fail ()
              (editor-error "parse error: ~A" string))

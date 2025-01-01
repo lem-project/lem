@@ -459,6 +459,8 @@
    :*global-keymap*
    :define-key
    :define-keys
+   :undefine-key
+   :undefine-keys
    :keyseq-to-string
    :find-keybind
    :insertion-key-p

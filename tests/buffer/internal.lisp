@@ -123,7 +123,7 @@ qrstuvwxyz"
            (point (lem:buffer-point buffer)))
       (print-buffer point :cursor cursor))))
 
-(deftest multiuser-undo
+(deftest multiuser-undo-case-1
   ;; Arrange
   (let* ((alice-buffer (lem:make-buffer "Alice's buffer" :temporary t))
          (bob-buffer (lem:make-buffer "Bob's buffer" :temporary t)))
@@ -202,6 +202,53 @@ qrstuvwxyz"
       (format t "Bob:   ")
       (print-buffer bob-point :cursor #'cl-ansi-text:green)
 
+      ;; Assertion
       (terpri)
       (ok (equal "___" (lem:buffer-text alice-buffer)))
       (ok (equal "___" (lem:buffer-text bob-buffer))))))
+
+(deftest multiuser-undo-case-2
+  ;; Arrange
+  (let* ((alice-buffer (lem:make-buffer "Alice's buffer" :temporary t))
+         (bob-buffer (lem:make-buffer "Bob's buffer" :temporary t)))
+
+    (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer alice-buffer)
+                  (on-before-change "Alice"))
+    (lem:add-hook (lem:variable-value 'lem:after-change-functions :buffer alice-buffer)
+                  (on-after-change  #'cl-ansi-text:red))
+
+    (lem:add-hook (lem:variable-value 'lem:before-change-functions :buffer bob-buffer)
+                  (on-before-change "Bob"))
+    (lem:add-hook (lem:variable-value 'lem:after-change-functions :buffer bob-buffer)
+                  (on-after-change  #'cl-ansi-text:green))
+
+    (format t "~%## Arrange~%")
+
+    (lem:with-point ((alice-point (lem:buffer-point alice-buffer) :right-inserting)
+                     (alice-temporary-point (lem:buffer-point alice-buffer) :left-inserting)
+                     (bob-point (lem:buffer-point bob-buffer) :right-inserting)
+                     (bob-temporary-point (lem:buffer-point bob-buffer) :left-inserting))
+
+      ;; Act
+      (format t "~%## Act~%")
+
+      (write-line "### Alice inserts \"abc\"")
+      (lem:insert-string alice-point "abc")
+      (lem:with-inhibit-undo ()
+        (lem:insert-string (lem:move-to-position bob-temporary-point
+                                                 (lem:position-at-point alice-point))
+                           "abc"))
+
+      (terpri)
+
+      (write-line "### Bob deletes \"abc\"")
+      (lem:delete-character (lem:buffer-start bob-point) 3)
+      (lem:with-inhibit-undo ()
+        (lem:delete-character (lem:move-to-position alice-temporary-point
+                                                    (lem:position-at-point bob-point))
+                              3))
+
+      (terpri)
+
+      ;; Assertion
+      (pass "No internal errors within recompute-undo-position-offset"))))

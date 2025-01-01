@@ -8,7 +8,7 @@
         :type edit-kind
         :read-only t)
   (position (alexandria:required-argument :position)
-            :type (integer 0 *))
+            :type (integer 1 *))
   (string (alexandria:required-argument :string)
           :type string
           :read-only t))
@@ -45,6 +45,7 @@
     ((:delete-string)
      (when (< (edit-position src)
               (edit-position dest))
-       (decf (edit-position dest) (length (edit-string src)))
+       (setf (edit-position dest)
+             (max 1 (- (edit-position dest) (length (edit-string src)))))
        (when (< (edit-position dest) (edit-position src))
          (setf (edit-position dest) (edit-position src)))))))

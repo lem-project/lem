@@ -2,18 +2,12 @@
 
 (in-package :cl-charms/low-level)
 
-(export '(getch
-          color-pair
-          resizeterm
-          *escdelay*
+(export '(*escdelay*
           *pdcurses-version-number*
           *pdcurses-version-info*
           PDC-save-key-modifiers))
 
 ;; add missing definitions
-(defun getch () (wgetch *stdscr*))
-(defun color-pair (n) (logand (ash n 24) #xff000000))
-(setf (fdefinition 'resizeterm) #'resize-term)
 (defvar *escdelay-dummy* 0)
 (define-symbol-macro *escdelay* *escdelay-dummy*)
 

@@ -16,6 +16,10 @@
 (defgeneric compute-left-display-area-content (mode buffer point)
   (:method (mode buffer point) nil))
 
+(defgeneric compute-wrap-left-area-content (left-side-width left-side-characters)
+  (:method (left-side-width left-side-characters)
+    nil))
+
 (defvar *in-redraw-display* nil
   "T if the screen is currently being redrawn by `redraw-display`.
 Used to prevent recursive `redraw-display` calls.")

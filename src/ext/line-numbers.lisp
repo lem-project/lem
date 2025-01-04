@@ -18,9 +18,10 @@
 
 (defvar *initialized* nil)
 
-(define-editor-variable line-number-format "~6D "
+(define-editor-variable line-number-format nil
   "Set to desired format, for example, \"~2D \" for a
-two-character line-number column and a margin of one space.")
+two-character line-number column and a margin of one space.
+The default NIL will use a number format matching the current buffer length.")
 
 (define-editor-variable custom-current-line nil
   "Set to desired current-line value when relative line
@@ -64,13 +65,28 @@ With a positive universal argument, use relative line numbers. Also obey the glo
             (abs (- cursor-line line))))
       (line-number-at-point point)))
 
+(defun get-buffer-num-format (buffer)
+  (let* ((last-line (lem/buffer/internal::point-linum (buffer-end-point buffer)))
+         (digit-count (1+ (floor (log (abs last-line) 10)))))
+    (format nil " ~~~aD " digit-count)))
+
 (defmethod lem-core:compute-left-display-area-content ((mode line-numbers-mode) buffer point)
   (when (buffer-filename (point-buffer point))
     (let* ((computed-line (compute-line buffer point))
-           (string (format nil (variable-value 'line-number-format :default buffer) computed-line))
+           (num-format (or (variable-value 'line-number-format :default buffer)
+                           (get-buffer-num-format buffer)))
+           (string (format nil num-format computed-line))
            (attribute (if (eq computed-line
                               (compute-line buffer (buffer-point buffer)))
                           `((0 ,(length string) active-line-number-attribute))
                           `((0 ,(length string) line-numbers-attribute)))))
       (lem/buffer/line:make-content :string string
                                     :attributes attribute))))
+
+(defmethod lem-core:compute-wrap-left-area-content (left-side-width left-side-characters)
+  (if (< 0 left-side-width)
+      (list (lem-core::make-object-with-type
+             (make-string left-side-characters :initial-element #\space)
+             'line-numbers-attribute
+             (lem-core::char-type #\space)))
+      nil))

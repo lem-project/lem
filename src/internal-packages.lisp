@@ -601,7 +601,8 @@
    :wrap-line-attribute
    :inactive-window-background-color
    :redraw-buffer
-   :compute-left-display-area-content)
+   :compute-left-display-area-content
+   :compute-wrap-left-area-content)
   ;; interface.lisp
   (:export
    :with-implementation

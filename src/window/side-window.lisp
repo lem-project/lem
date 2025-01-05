@@ -51,20 +51,23 @@
 (defun make-rightside-window (buffer &key (width 30))
   (cond ((frame-rightside-window (current-frame))
          (with-current-window (frame-rightside-window (current-frame))
-           (switch-to-buffer buffer)))
+           (switch-to-buffer buffer))
+         (frame-rightside-window (current-frame)))
         (t
-         (setf (frame-rightside-window (current-frame))
-               (make-instance 'rightside-window
-                              :buffer buffer
-                              :x (- (display-width) width)
-                              :y (topleft-window-y (current-frame))
-                              :width width
-                              :height (max-window-height (current-frame))
-                              :use-modeline-p nil
-                              :background-color nil
-                              :border 1
-                              :border-shape :left-border))
-         (balance-windows))))
+         (let ((window
+                 (make-instance 'rightside-window
+                                :buffer buffer
+                                :x (- (display-width) width)
+                                :y (topleft-window-y (current-frame))
+                                :width width
+                                :height (max-window-height (current-frame))
+                                :use-modeline-p nil
+                                :background-color nil
+                                :border 1
+                                :border-shape :left-border)))
+           (setf (frame-rightside-window (current-frame)) window)
+           (balance-windows)
+           window))))
 
 (defun delete-rightside-window ()
   (delete-window (frame-rightside-window (current-frame)))

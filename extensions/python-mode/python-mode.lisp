@@ -91,10 +91,21 @@
            (column (point-column (back-to-indentation point)))
            (next-indent-column (+ last-line-indent-column tab-width))
            (previous-indent-column
-             (max (- last-line-indent-column tab-width) 0)))
+             (max (- last-line-indent-column tab-width) 0))
+           (last-line-end-with-delimiter-start-p
+             (progn
+               (line-end last-line-point)
+               (skip-whitespace-backward last-line-point t)
+               (when (> (point-charpos last-line-point) 0)
+                 (character-offset last-line-point -1)
+                 (member (character-at last-line-point)
+                         '(#\: #\( #\[ #\{)
+                         :test #'char=)))))
       (cond
-        ((and (>= column last-line-indent-column)
-              (< column next-indent-column))
+        ((or last-line-end-with-delimiter-start-p
+             (and (>= column last-line-indent-column)
+                  (< column next-indent-column)
+                  (not (zerop column))))
          next-indent-column)
         ((>= column next-indent-column)
          previous-indent-column)

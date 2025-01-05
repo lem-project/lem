@@ -111,7 +111,11 @@
     :reader window-clickable)
    (parameters
     :initform nil
-    :accessor window-parameters)))
+    :accessor window-parameters)
+   (buffer-switchable
+    :initform t
+    :initarg :buffer-switchable
+    :accessor window-buffer-switchable-p)))
 
 (defun need-to-redraw (window)
   (setf (window-need-to-redraw-p window) t))
@@ -846,7 +850,8 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (when (deleted-buffer-p buffer)
     (editor-error "This buffer has been deleted"))
   (when (or (not-switchable-buffer-p (window-buffer (current-window)))
-            (not-switchable-buffer-p buffer))
+            (not-switchable-buffer-p buffer)
+            (not (window-buffer-switchable-p (current-window))))
     (editor-error "This buffer is not switchable"))
   (run-hooks *switch-to-buffer-hook* buffer)
   (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)

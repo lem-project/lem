@@ -480,7 +480,7 @@ If 'test' is a function, it takes one character at that position as an argument 
   (skip-chars-internal point test t))
 
 (defun skip-chars-backward (point test)
-  "Move the character before the position from 'point' to the previous direction while non-NIL by evaluating it with "test".
+  "Move the character before the position from 'point' to the previous direction while non-NIL by evaluating it with \"test\".
 If 'test' is a list of characters, is the character before that position in the list of 'test'?
 If 'test' is a function, it takes one of the characters before its position as its argument and returns non-NIL."
   ;; `point`からその位置の前の文字を`test`で評価して非NILの間、前の方向に移動します。

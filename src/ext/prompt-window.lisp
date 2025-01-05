@@ -216,11 +216,11 @@
                                   :source-window (prompt-window-caller-of-prompt-window window))
       (unless (and (= x (window-x window))
                    (= y (window-y window)))
-        (lem-core::window-set-pos window x y))
+        (window-set-pos window x y))
       (let ((width (max width child-width)))
         (unless (and (= width (window-width window))
                      (= height (window-height window)))
-          (lem-core::window-set-size window width height))))))
+          (window-set-size window width height))))))
 
 (defun initialize-prompt-buffer (buffer)
   (let ((*inhibit-read-only* t)

@@ -1,8 +1,6 @@
 
 (uiop:define-package :lem/porcelain
   (:use :cl)
-  (:import-from :trivial-types
-                :proper-list)
   (:export
    :porcelain-error
    :message

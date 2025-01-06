@@ -81,10 +81,36 @@
 
 #| link : https://www.python.org/dev/peps/pep-0008/ |#
 (defun python-calc-indent (point)
-  (with-point ((point point))
-    (let ((tab-width (variable-value 'tab-width :default point))
-          (column (point-column point)))
-      (+ column (- tab-width (rem column tab-width))))))
+  (with-point ((point point) (last-line-point point))
+    (let* ((tab-width (variable-value 'tab-width :default point))
+           (last-line-indent-column
+             (progn
+               (line-offset last-line-point -1)
+               (back-to-indentation last-line-point)
+               (point-column last-line-point)))
+           (column (point-column (back-to-indentation point)))
+           (next-indent-column (+ last-line-indent-column tab-width))
+           (previous-indent-column
+             (max (- last-line-indent-column tab-width) 0))
+           (last-line-end-with-delimiter-start-p
+             (progn
+               (line-end last-line-point)
+               (skip-whitespace-backward last-line-point t)
+               (when (> (point-charpos last-line-point) 0)
+                 (character-offset last-line-point -1)
+                 (member (character-at last-line-point)
+                         '(#\: #\( #\[ #\{)
+                         :test #'char=)))))
+      (cond
+        ((or last-line-end-with-delimiter-start-p
+             (and (>= column last-line-indent-column)
+                  (< column next-indent-column)
+                  (not (zerop column))))
+         next-indent-column)
+        ((>= column next-indent-column)
+         previous-indent-column)
+        (t
+         last-line-indent-column)))))
 
 (defun beginning-of-defun (point n)
   (loop :repeat n :do (search-backward-regexp point "^\\w")))

@@ -170,10 +170,15 @@
   "Kill the text of region."
   (when (point< end start)
     (rotatef start end))
-  (let ((repeat-command (continue-flag :kill)))
-    (let ((killed-string (delete-character start (count-characters start end))))
-      (with-killring-context (:appending repeat-command)
-        (copy-to-clipboard-with-killring killed-string)))))
+  (let ((repeat-command (continue-flag :kill))
+        (killed-string (delete-character start (count-characters start end))))
+    (with-killring-context (:appending repeat-command)
+      (when (and (not repeat-command)
+                 (enable-clipboard-p))
+        (let ((clipboard-string (get-clipboard-data)))
+          (unless (string= clipboard-string (peek-killring-item (current-killring) 0))
+            (push-killring-item (current-killring) clipboard-string))))
+      (copy-to-clipboard-with-killring killed-string))))
 
 (define-command kill-region-to-clipboard (start end) (:region)
   "Kill the text of region and copy to the clipboard."
@@ -215,7 +220,7 @@
 (define-command kill-whole-line (&optional (n 1)) (:universal)
   "If n is positive, kill n whole lines forward starting at the
 beginning of the current line.  If n is 0, do nothing.  And if n
-is negative, kill n lines above without deleting anything on the 
+is negative, kill n lines above without deleting anything on the
 current line."
   (cond ((zerop n) nil)
         ((minusp n) (save-excursion

@@ -61,9 +61,10 @@ With a positive universal argument, use relative line numbers. Also obey the glo
             (line (line-number-at-point point))
             (custom-line (variable-value 'custom-current-line :default buffer)))
         (if (= cursor-line line)
-            (or custom-line line)
-            (abs (- cursor-line line))))
-      (line-number-at-point point)))
+            (values (or custom-line line) t)
+            (values (abs (- cursor-line line)) nil)))
+      (let ((line (line-number-at-point point)))
+        (values line (= (line-number-at-point (buffer-point buffer)) line)))))
 
 (defun get-buffer-num-format (buffer)
   (let* ((last-line (lem/buffer/internal::point-linum (buffer-end-point buffer)))
@@ -72,16 +73,15 @@ With a positive universal argument, use relative line numbers. Also obey the glo
 
 (defmethod lem-core:compute-left-display-area-content ((mode line-numbers-mode) buffer point)
   (when (buffer-filename (point-buffer point))
-    (let* ((computed-line (compute-line buffer point))
-           (num-format (or (variable-value 'line-number-format :default buffer)
-                           (get-buffer-num-format buffer)))
-           (string (format nil num-format computed-line))
-           (attribute (if (eq computed-line
-                              (compute-line buffer (buffer-point buffer)))
-                          `((0 ,(length string) active-line-number-attribute))
-                          `((0 ,(length string) line-numbers-attribute)))))
-      (lem/buffer/line:make-content :string string
-                                    :attributes attribute))))
+    (multiple-value-bind (computed-line active-line-p) (compute-line buffer point)
+      (let* ((num-format (or (variable-value 'line-number-format :default buffer)
+                             (get-buffer-num-format buffer)))
+             (string (format nil num-format computed-line))
+             (attribute (if active-line-p
+                            `((0 ,(length string) active-line-number-attribute))
+                            `((0 ,(length string) line-numbers-attribute)))))
+        (lem/buffer/line:make-content :string string
+                                      :attributes attribute)))))
 
 (defmethod lem-core:compute-wrap-left-area-content (left-side-width left-side-characters)
   (if (< 0 left-side-width)

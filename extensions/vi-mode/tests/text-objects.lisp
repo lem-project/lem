@@ -76,3 +76,12 @@
         (cmd "va\"")
         (ok (buf= " <\"foo\"  [ ]>\"bar\""))))))
 
+(deftest paragraph-object
+  (with-fake-interface ()
+    (with-vi-buffer (#?" \n \n f[o]o \n bar \n \n \n")
+      (cmd "vip")
+      (ok (buf= #?" \n \n< foo \n bar [\n]> \n \n")))
+    (with-vi-buffer (#?" \n \n f[o]o \n bar \n \n \n")
+      (cmd "vap")
+      (ok (buf= #?" \n \n< foo \n bar \n \n [\n]>")))))
+

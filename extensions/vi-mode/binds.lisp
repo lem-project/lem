@@ -194,6 +194,8 @@
 (define-key *inner-text-objects-keymap* "(" 'vi-inner-paren)
 (define-key *inner-text-objects-keymap* ")" 'vi-inner-paren)
 (define-key *inner-text-objects-keymap* "b" 'vi-inner-paren)
+(define-key *outer-text-objects-keymap* "p" 'vi-a-paragraph)
+(define-key *inner-text-objects-keymap* "p" 'vi-inner-paragraph)
 
 (setf (gethash (lem:make-key :sym "a") (keymap-table *operator-keymap*))
       (keymap-table *outer-text-objects-keymap*))

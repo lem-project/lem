@@ -25,6 +25,7 @@
            :word-object
            :broad-word-object
            :paren-object
+           :paragraph-object
            :double-quoted-object
            :vi-operator-surrounding-blanks))
 (in-package :lem-vi-mode/text-objects)
@@ -292,13 +293,13 @@
              ;; No quote-char found
              ((null prev-char)
               (keyboard-quit))
-             
+
              ;; Skip escape & quote-char
-             ((and escape-char 
+             ((and escape-char
                    (character-at point -2) ;; Bound check
                    (char= (character-at point -2) escape-char))
               (character-offset point -2))
-       
+
              ;; Successfully found unescaped quote
              (t
               (character-offset point -1)
@@ -311,13 +312,13 @@
              ;; No quote-char found
              ((null next-char)
               (keyboard-quit))
-             
+
              ;; Skip escape & quote-char
              ((and escape-char
                    (character-at point 2) ;; Bound Check
                    (char= (character-at point -1) escape-char))
-              (character-offset point 2))             
-             
+              (character-offset point 2))
+
              ;; Successfully found
              (t
               (character-offset point 1)
@@ -392,3 +393,32 @@
 (defclass double-quoted-object (quoted-text-object) ()
   (:default-initargs
    :quote-char #\"))
+
+;;
+;; paragraph-object
+(defclass paragraph-object (text-object) ())
+
+(defmethod inner-range-of ((object paragraph-object) state count)
+  (with-point ((start (current-point))
+               (end (current-point)))
+    ;; Start
+    (loop until (or (start-buffer-p start)
+                    (blank-line-p start))
+          do (line-offset start -1))
+    (when (blank-line-p start) ;; pull back into paragraph
+      (line-offset start 1))
+
+    ;; End
+    (loop until (or (end-buffer-p end)
+                    (blank-line-p end))
+          do (line-offset end 1))
+    (make-range start end)))
+
+;; adds on additional blank lines for inner paragraph-object
+(defmethod a-range-of ((object paragraph-object) state count)
+  (let ((range (inner-range-of 'paragraph-object state count)))
+    (line-offset (range-end range) 1)
+    (loop until (or (end-buffer-p (range-end range))
+                    (not (blank-line-p (range-end range))))
+          do (line-offset (range-end range) 1))
+    range))

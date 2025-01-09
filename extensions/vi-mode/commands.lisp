@@ -136,6 +136,8 @@
            :vi-inner-double-quote
            :vi-a-paren
            :vi-inner-paren
+           :vi-a-paragraph
+           :vi-inner-paragraph
            :vi-repeat
            :vi-normal
            :vi-keyboard-quit
@@ -1100,6 +1102,14 @@ on the same line or at eol if there are none."
 (define-text-object-command vi-inner-paren (count) ("p")
     (:expand-selection t)
   (inner-range-of 'paren-object (current-state) count))
+
+(define-text-object-command vi-a-paragraph (count) ("p")
+    (:expand-selection t)
+  (a-range-of 'paragraph-object (current-state) count))
+
+(define-text-object-command vi-inner-paragraph (count) ("p")
+    (:expand-selection t)
+  (inner-range-of 'paragraph-object (current-state) count))
 
 (define-command vi-normal () ()
   (change-state 'normal))

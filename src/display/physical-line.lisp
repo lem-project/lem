@@ -141,10 +141,11 @@
                               string))
                    :attribute (case type
                                 ((:control :zero-width)
-                                 (merge-attribute attribute
-                                                  (ensure-attribute 'special-char-attribute nil)))
-                                (otherwise
-                                 attribute))
+                                 (let ((attr (ensure-attribute 'special-char-attribute nil)))
+                                   (if attribute
+                                       (merge-attribute attribute attr)
+                                       attr)))
+                                (otherwise attribute))
                    :type type
                    :within-cursor (and attribute
                                        (cursor-attribute-p attribute)))))

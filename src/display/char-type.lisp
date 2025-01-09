@@ -28,7 +28,9 @@
   (icon-value code :font))
 
 (defun zero-width-char-code-p (code)
-  (or (<= #x200B code #x200D) (= code #xFEFF)))
+  (or (<= #x200B code #x200D)
+      (<= #xFE00 code #xFE0F)
+      (= code #xFEFF)))
 
 (defun char-type (char)
   (let ((code (char-code char)))

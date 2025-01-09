@@ -50,7 +50,7 @@
     table))
 
 (defun control-char (char)
-  (values (gethash char *char-replacement*)))
+  (gethash char *char-replacement*))
 
 (defun wide-char-p (char)
   (declare (character char))

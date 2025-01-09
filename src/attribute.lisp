@@ -70,9 +70,9 @@
                   :background (or (attribute-background over)
                                   (attribute-background under))
                   :bold (or (attribute-bold over)
-                              (attribute-bold under))
+                            (attribute-bold under))
                   :reverse (or (attribute-reverse over)
-                                 (attribute-reverse under))
+                               (attribute-reverse under))
                   :underline (or (attribute-underline over)
                                  (attribute-underline under))
                   :plist (append (attribute-plist over)
@@ -195,6 +195,9 @@
   (t :bold t :background "#212121" :foreground "#707070"))
 
 (define-attribute truncate-attribute)
+
+(define-attribute special-char-attribute
+  (t :foreground "red"))
 
 (define-attribute compiler-note-attribute
   (t :underline "red"))

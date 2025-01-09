@@ -1,7 +1,7 @@
 (in-package :lem-core)
 
 (deftype char-type ()
-  '(member :latin :cjk :braille :emoji :icon :control))
+  '(member :latin :cjk :braille :emoji :icon :control :zero-width))
 
 (defun cjk-char-code-p (code)
   (or (<= #x4E00 code #x9FFF)
@@ -27,6 +27,9 @@
 (defun icon-char-code-p (code)
   (icon-value code :font))
 
+(defun zero-width-char-code-p (code)
+  (or (<= #x200B code #x200D) (= code #xFEFF)))
+
 (defun char-type (char)
   (let ((code (char-code char)))
     (cond ((control-char char)
@@ -47,5 +50,7 @@
            :emoji)
           ((icon-code-p code)
            :latin)
+          ((zero-width-char-code-p code)
+           :zero-width)
           (t
            :cjk))))

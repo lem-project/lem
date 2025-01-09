@@ -147,13 +147,13 @@
         ((eq type :braille)
          (display-braille-font display))
         (bold
-         (if (eq type :latin)
-             (display-latin-bold-font display)
-             (display-cjk-bold-font display)))
+         (case type
+           ((:latin :zero-width) (display-latin-bold-font display))
+           (otherwise (display-cjk-bold-font display))))
         (t
-         (if (eq type :latin)
-             (display-latin-font display)
-             (display-cjk-normal-font display)))))
+         (case type
+           ((:latin :zero-width) (display-latin-font display))
+           (otherwise (display-cjk-normal-font display))))))
 
 (defmethod scaled-char-width ((display display) x)
   (let ((scale-x (round (first (display-scale display)))))

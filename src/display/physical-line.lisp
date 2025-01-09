@@ -132,10 +132,19 @@
                      (:emoji 'emoji-object)
                      (:control 'control-character-object)
                      (otherwise 'text-object))
-                   :string (if (eq type :control)
-                               (control-char (char string 0))
-                               string)
-                   :attribute attribute
+                   :string (case type
+                             (:control
+                              (control-char (char string 0)))
+                             (:zero-width
+                              (make-string (length string) :initial-element #\·))
+                             (otherwise
+                              string))
+                   :attribute (case type
+                                ((:control :zero-width)
+                                 (merge-attribute attribute
+                                                  (ensure-attribute 'special-char-attribute nil)))
+                                (otherwise
+                                 attribute))
                    :type type
                    :within-cursor (and attribute
                                        (cursor-attribute-p attribute)))))

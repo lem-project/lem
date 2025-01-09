@@ -399,6 +399,7 @@
 (defclass paragraph-object (text-object) ())
 
 (defmethod inner-range-of ((object paragraph-object) state count)
+  (declare (ignore state count))
   (with-point ((start (current-point))
                (end (current-point)))
     ;; Start

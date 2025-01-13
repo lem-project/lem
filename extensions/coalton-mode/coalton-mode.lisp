@@ -340,6 +340,7 @@
       (coalton-compile-region start end))))
 
 (define-key *coalton-mode-keymap* "C-c C-c" 'coalton-compile-defun)
+(define-key *coalton-mode-keymap* "Return" 'newline-and-indent)
 
 (load-static-indentation-rules)
 (define-file-type ("coal") coalton-mode)

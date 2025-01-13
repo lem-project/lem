@@ -265,7 +265,8 @@
         (variable-value 'insertion-line-comment) ";; "
         (variable-value 'language-mode-tag) 'coalton-mode
         (variable-value 'idle-function) 'coalton-idle-function)
-  (set-syntax-parser *syntax-table* (make-tmlanguage-coalton)))
+  (set-syntax-parser *syntax-table* (make-tmlanguage-coalton))
+  (lem-lisp-mode/internal::check-connection))
 
 (defun guess-current-position-package (point)
   (with-point ((p point))
@@ -339,6 +340,7 @@
       (coalton-compile-region start end))))
 
 (define-key *coalton-mode-keymap* "C-c C-c" 'coalton-compile-defun)
+(define-key *coalton-mode-keymap* "Return" 'newline-and-indent)
 
 (load-static-indentation-rules)
 (define-file-type ("coal") coalton-mode)

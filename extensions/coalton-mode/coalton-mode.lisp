@@ -265,7 +265,8 @@
         (variable-value 'insertion-line-comment) ";; "
         (variable-value 'language-mode-tag) 'coalton-mode
         (variable-value 'idle-function) 'coalton-idle-function)
-  (set-syntax-parser *syntax-table* (make-tmlanguage-coalton)))
+  (set-syntax-parser *syntax-table* (make-tmlanguage-coalton))
+  (lem-lisp-mode/internal::check-connection))
 
 (defun guess-current-position-package (point)
   (with-point ((p point))

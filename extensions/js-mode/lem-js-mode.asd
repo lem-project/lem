@@ -3,4 +3,6 @@
                "lem-xml-mode")
   :serial t
   :components ((:file "js-mode")
-               (:file "eslint")))
+               (:file "eslint")
+               (:file "lsp-config")))
+

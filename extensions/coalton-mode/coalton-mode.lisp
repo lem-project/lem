@@ -350,20 +350,25 @@
   (when (eql #\space (get-self-insert-char))
     (lem-lisp-mode/autodoc:lisp-autodoc)))
 
+(defvar *recursive* nil)
+
 (defun after-syntax-scan (start end)
-  (ignore-errors
-    (when (eq 'lem-lisp-mode:lisp-mode
-              (buffer-major-mode (point-buffer start)))
-      (with-point ((p start))
-        (loop while (lem:search-forward p "(coalton-toplevel" end)
-              unless (lem:in-string-or-comment-p p)
-              do (with-point ((start p))
-                   (lem:scan-lists p -1 1)
-                   (lem:scan-lists p 1 0)
-                   (lem:character-offset p -1)
-                   (set-region-major-mode start p 'coalton-mode)
-                   (syntax-scan-region start p
-                                       :syntax-table *syntax-table*
-                                       :recursive-check nil)))))))
+  (unless *recursive*
+    (ignore-errors
+      (when (eq 'lem-lisp-mode:lisp-mode
+                (buffer-major-mode (point-buffer start)))
+        (with-point ((p start))
+          (lem-lisp-syntax:beginning-of-defun p -1)
+          (loop while (lem:search-forward p "(coalton-toplevel" end)
+                unless (lem:in-string-or-comment-p p)
+                do (with-point ((start p))
+                     (lem:scan-lists p -1 1)
+                     (lem:scan-lists p 1 0)
+                     (lem:character-offset p -1)
+                     (set-region-major-mode start p 'coalton-mode)
+                     (let ((*recursive* t))
+                       (syntax-scan-region start p
+                                           :syntax-table *syntax-table*
+                                           :recursive-check nil)))))))))
 
 (add-hook (variable-value 'after-syntax-scan-hook :global) 'after-syntax-scan)

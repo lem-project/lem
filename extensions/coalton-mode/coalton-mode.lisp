@@ -264,8 +264,14 @@
         (variable-value 'line-comment) ";"
         (variable-value 'insertion-line-comment) ";; "
         (variable-value 'language-mode-tag) 'coalton-mode
-        (variable-value 'idle-function) 'coalton-idle-function)
+        (variable-value 'idle-function) 'coalton-idle-function
+        (variable-value 'completion-spec)
+        (lem/completion-mode:make-completion-spec 'completion-symbol-async :async t))
   (lem-lisp-mode/internal::check-connection))
+
+(defun completion-symbol-async (point then)
+  (let ((lem-lisp-mode/internal::*current-package* (current-package)))
+    (lem-lisp-mode/internal::completion-symbol-async point then)))
 
 (set-syntax-parser *syntax-table* (make-tmlanguage-coalton))
 

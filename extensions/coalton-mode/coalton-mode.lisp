@@ -161,6 +161,7 @@
     ("while" 1)
     ("while-let" . "let")
     ("progn" (&rest &body))
+    ("do" . "progn")
     ("package" (4 &rest (&whole 2 &rest coalton-package-body)))))
 
 (defun coalton-package-body (path indent-point sexp-column)

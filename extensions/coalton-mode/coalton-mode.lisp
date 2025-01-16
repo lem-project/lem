@@ -5,6 +5,7 @@
   (:import-from #:lem-lisp-mode/grammar
                 #:wrap-symbol-names
                 #:symbol-boundary-begin
+                #:maybe-package-prefix
                 #:symbol-boundary-end)
   (:import-from #:lem-lisp-mode/internal
                 #:check-connection
@@ -114,6 +115,7 @@
                    (make-tm-match
                     `(:sequence
                       symbol-boundary-begin
+                      maybe-package-prefix
                       ,(ppcre:parse-string "[A-Z]") symbol
                       symbol-boundary-end)
                     :name 'syntax-type-attribute))))
@@ -159,6 +161,7 @@
     ("while" 1)
     ("while-let" . "let")
     ("progn" (&rest &body))
+    ("do" . "progn")
     ("package" (4 &rest (&whole 2 &rest coalton-package-body)))))
 
 (defun coalton-package-body (path indent-point sexp-column)

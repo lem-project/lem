@@ -101,13 +101,14 @@
                     `(:sequence
                       "("
                       ,(wrap-symbol-names
-                        "declare" "package" "define-type" "define-struct" "define-class" "define-instance")
+                        "declare" "package" "define-type" "define-type-alias" "define-struct" "define-class" "define-instance")
                       (:greedy-repetition 0 1 (:register symbol)))
                     :captures (vector nil
                                       (make-tm-name 'syntax-keyword-attribute)
                                       (make-tm-name 'syntax-type-attribute)))
                    (make-tm-match
                     `(:sequence
+                      symbol-boundary-begin
                       ":"
                       symbol
                       symbol-boundary-end)

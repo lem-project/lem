@@ -85,8 +85,8 @@
 
          (editor-abort-handler (c)
            (declare (ignore c))
-           (run-hooks *editor-abort-hook*)
            (buffer-mark-cancel (current-buffer)) ; TODO: define handler
+           (run-hooks *editor-abort-hook*)
            )
 
          (editor-condition-handler (c)

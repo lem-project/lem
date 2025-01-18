@@ -80,7 +80,8 @@
    (cursor-invisible
     :initform nil
     :initarg :cursor-invisible
-    :reader window-cursor-invisible-p)
+    :reader window-cursor-invisible-p
+    :writer set-window-cursor-invisible)
    (last-mouse-button-down-point
     :initform nil
     :accessor window-last-mouse-button-down-point)
@@ -204,6 +205,12 @@ This is the content area in which the buffer is displayed, without any side marg
 
 (defun (setf window-parameter) (value window parameter)
   (setf (getf (window-parameters window) parameter) value))
+
+(defmethod hide-cursor ((window window))
+  (set-window-cursor-invisible t window))
+
+(defmethod show-cursor ((window window))
+  (set-window-cursor-invisible nil window))
 
 (defun current-window ()
   (frame-current-window (current-frame)))

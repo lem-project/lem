@@ -293,6 +293,8 @@
    :window-view
    :window-point
    :window-cursor-invisible-p
+   :show-cursor
+   :hide-cursor
    :window-buffer-switchable-p
    :set-last-print-cursor
    :last-print-cursor-x

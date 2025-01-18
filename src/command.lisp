@@ -35,8 +35,13 @@
     (unless *this-command*
       (editor-error "~A: command not found" this-command))
     (run-hooks *pre-command-hook*)
-    (prog1 (execute (get-active-modes-class-instance (current-buffer))
-                    *this-command*
-                    universal-argument)
-      (buffer-undo-boundary)
-      (run-hooks *post-command-hook*))))
+    (flet ((post-command ()
+             (buffer-undo-boundary)
+             (run-hooks *post-command-hook*)))
+      (prog1 (handler-bind ((editor-error (lambda (e)
+                                            (declare (ignore e))
+                                            (post-command))))
+               (execute (get-active-modes-class-instance (current-buffer))
+                        *this-command*
+                        universal-argument))
+        (post-command)))))

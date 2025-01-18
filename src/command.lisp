@@ -38,9 +38,9 @@
     (flet ((post-command ()
              (buffer-undo-boundary)
              (run-hooks *post-command-hook*)))
-      (prog1 (handler-bind ((editor-error (lambda (e)
-                                            (declare (ignore e))
-                                            (post-command))))
+      (prog1 (handler-bind ((editor-condition (lambda (e)
+                                                (declare (ignore e))
+                                                (post-command))))
                (execute (get-active-modes-class-instance (current-buffer))
                         *this-command*
                         universal-argument))

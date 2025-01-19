@@ -8,6 +8,7 @@
 
 (defvar *prompt-buffer-completion-function* nil)
 (defvar *prompt-file-completion-function* nil)
+(defvar *prompt-command-completion-function* 'completion-command)
 
 (defgeneric caller-of-prompt-window (prompt))
 (defgeneric prompt-active-p (prompt))
@@ -125,6 +126,20 @@
     (if (string= result "")
         default
         result)))
+
+(defun completion-command (str)
+  (sort
+   (if (find #\- str)
+       (completion-hyphen str (all-command-names))
+       (completion str (all-command-names)))
+   #'string-lessp))
+
+(defun prompt-for-command (prompt)
+  (prompt-for-string
+   prompt
+   :completion-function *prompt-command-completion-function*
+   :test-function 'exist-command-p
+   :history-symbol 'mh-execute-command))
 
 (defun prompt-for-library (prompt &key history-symbol)
   (macrolet ((ql-symbol-value (symbol)

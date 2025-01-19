@@ -247,6 +247,7 @@
    :*prompt-deactivate-hook*
    :*prompt-buffer-completion-function*
    :*prompt-file-completion-function*
+   :*prompt-command-completion-function*
    :caller-of-prompt-window
    :prompt-active-p
    :active-prompt-window
@@ -258,6 +259,7 @@
    :prompt-for-buffer
    :prompt-for-file
    :prompt-for-directory
+   :prompt-for-command
    :prompt-for-encodings
    :prompt-for-library)
   ;; buffer.lisp

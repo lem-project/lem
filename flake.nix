@@ -182,7 +182,7 @@
           devShells =
             {
               lem-ncurses = lem-ncurses-shell;
-              lem-sdl2 = lem-ncurses-shell;
+              lem-sdl2 = lem-sdl2-shell;
               default = lem-ncurses-shell;
             };
           packages.lem-ncurses = lem.overrideLispAttrs (o: {

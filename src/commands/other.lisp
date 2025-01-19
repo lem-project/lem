@@ -56,18 +56,10 @@
 
 (define-command execute-command (arg) (:universal-nil)
   "Read a command name, then read the ARG and call the command."
-  (let* ((name (prompt-for-string
+  (let* ((name (prompt-for-command
                 (if arg
                     (format nil "~D M-x " arg)
-                    "M-x ")
-                :completion-function (lambda (str)
-                                       (sort
-                                        (if (find #\- str)
-                                            (completion-hyphen str (all-command-names))
-                                            (completion str (all-command-names)))
-                                        #'string-lessp))
-                :test-function 'exist-command-p
-                :history-symbol 'mh-execute-command))
+                    "M-x ")))
          (command (find-command name)))
     (if command
         (call-command command arg)

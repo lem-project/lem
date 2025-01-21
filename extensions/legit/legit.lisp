@@ -382,7 +382,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
    - exit code (integer)
 
   Use with-current-project in the caller too.
-  Typicaly used to run an external process in the context of a diff buffer command."
+  Typically used to run an external process in the context of a diff buffer command."
   (multiple-value-bind (output error-output exit-code)
       (funcall fn)
     (cond

@@ -1,6 +1,8 @@
 (defpackage :lem/isearch
   (:use :cl :lem)
-  (:export :*isearch-keymap*
+  (:export :handle-current-highlight
+           :get-current-highlight-overlay
+           :*isearch-keymap*
            :*isearch-finish-hooks*
            :isearch-mode
            :isearch-highlight-attribute
@@ -103,6 +105,23 @@
         *isearch-previous-string* string))
 
 
+(defgeneric handle-current-highlight (mode overlay))
+
+(defmethod handle-current-highlight (mode overlay)
+  nil)
+
+(defun on-current-highlight (overlay)
+  (handle-current-highlight
+   (lem-core::get-active-modes-class-instance (point-buffer (overlay-start overlay)))
+   overlay)
+  overlay)
+
+(defun get-current-highlight-overlay (buffer)
+  (dolist (ov (buffer-value buffer 'isearch-overlays))
+    (when (attribute-equal (overlay-attribute ov) 'isearch-highlight-active-attribute)
+      (return ov))))
+
+
 (defun isearch-overlays (buffer)
   (buffer-value buffer 'isearch-overlays))
 
@@ -143,7 +162,8 @@
   (alexandria:when-let (ov (isearch-current-overlay point))
     (dolist (ov (buffer-value point 'isearch-overlays))
       (set-overlay-attribute 'isearch-highlight-attribute ov))
-    (set-overlay-attribute 'isearch-highlight-active-attribute ov)))
+    (set-overlay-attribute 'isearch-highlight-active-attribute ov)
+    (on-current-highlight ov)))
 
 
 (defun isearch-update-buffer (&optional (point (current-point))
@@ -168,13 +188,16 @@
                         (return))
                       (when (point= before curr)
                         (return))
-                      (isearch-add-overlay buffer
-                                           (make-overlay
-                                            before curr
-                                            (if (and (point<= before point)
-                                                     (point<= point curr))
-                                                'isearch-highlight-active-attribute
-                                                'isearch-highlight-attribute)))))))
+                      (let* ((active (and (point<= before point)
+                                          (point<= point curr)))
+                             (ov (make-overlay before
+                                               curr
+                                               (if active
+                                                   'isearch-highlight-active-attribute
+                                                   'isearch-highlight-attribute))))
+                        (isearch-add-overlay buffer ov)
+                        (when active
+                          (on-current-highlight ov)))))))
       (isearch-sort-overlays buffer))))
 
 (defun highlight-region (start-point end-point search-string)

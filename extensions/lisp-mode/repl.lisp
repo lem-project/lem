@@ -101,10 +101,10 @@
    :callback (lambda (&rest args)
                (declare (ignore args))
                (copy-down-to-repl 'pathname
-                                  (lem/directory-mode/buffer::get-pathname (current-point))))))
+                                  (lem/directory-mode/internal::get-pathname (current-point))))))
 
 (defun repl-compute-context-menu-items ()
-  (if (lem/directory-mode/buffer::get-pathname (current-point))
+  (if (lem/directory-mode/internal::get-pathname (current-point))
       (list (context-menu-copy-down-pathname-to-repl))
       (remove
        nil
@@ -612,7 +612,7 @@
 
 (define-repl-shortcut ls ()
   (insert-character (current-point) #\newline)
-  (lem/directory-mode/buffer::insert-directories-and-files (current-point)
+  (lem/directory-mode/internal::insert-directories-and-files (current-point)
                                                            (buffer-directory (current-buffer)))
   (lem/listener-mode:refresh-prompt (current-buffer)))
 

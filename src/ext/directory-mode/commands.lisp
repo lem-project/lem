@@ -1,7 +1,7 @@
 (uiop:define-package :lem/directory-mode/commands
   (:use :cl
         :lem
-        :lem/directory-mode/buffer
+        :lem/directory-mode/internal
         :lem/directory-mode/attributes)
   (:import-from :lem/directory-mode/mode
                 :directory-mode)

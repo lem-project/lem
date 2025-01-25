@@ -89,10 +89,10 @@
 (defun insert-item (point item)
   (with-point ((start point))
     (back-to-indentation start)
-    (lem/directory-mode/buffer::insert-icon point (item-pathname item))
+    (lem/directory-mode/internal::insert-icon point (item-pathname item))
     (insert-string point
                    (item-content item)
-                   :attribute (lem/directory-mode/buffer::get-file-attribute (item-pathname item)))
+                   :attribute (lem/directory-mode/internal::get-file-attribute (item-pathname item)))
     (put-text-property start point :item item)
     (lem-core::set-clickable start
                              point

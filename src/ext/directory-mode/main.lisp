@@ -2,7 +2,7 @@
   (:use :cl)
   (:use-reexport :lem/directory-mode/commands)
   (:use-reexport :lem/directory-mode/mode)
-  (:import-from :lem/directory-mode/buffer
+  (:import-from :lem/directory-mode/internal
                 :*default-sort-method*)
   (:export :*default-sort-method*
            :*directory-mode-keymap*))
@@ -11,4 +11,4 @@
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (sb-ext:lock-package :lem/directory-mode))
 
-(setf lem:*find-directory-function* 'lem/directory-mode/buffer:directory-buffer)
+(setf lem:*find-directory-function* 'lem/directory-mode/internal:directory-buffer)

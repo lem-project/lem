@@ -200,7 +200,7 @@
                               :components ((:file "file")
                                            (:file "attributes")
                                            (:file "mode")
-                                           (:file "buffer")
+                                           (:file "internal")
                                            (:file "commands")
                                            (:file "keybinds")
                                            (:file "main")))

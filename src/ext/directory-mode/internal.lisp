@@ -1,4 +1,4 @@
-(uiop:define-package :lem/directory-mode/buffer
+(uiop:define-package :lem/directory-mode/internal
   (:use :cl
         :lem)
   (:import-from :lem/directory-mode/file
@@ -29,10 +29,10 @@
            :selected-files
            :update-all-buffers
            :update-highlight-line-overlay))
-(in-package :lem/directory-mode/buffer)
+(in-package :lem/directory-mode/internal)
 
 (eval-when (:compile-toplevel :load-toplevel :execute)
-  (sb-ext:lock-package :lem/directory-mode/buffer))
+  (sb-ext:lock-package :lem/directory-mode/internal))
 
 (deftype sort-method ()
   '(member :pathname :mtime :size))

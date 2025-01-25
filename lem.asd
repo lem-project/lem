@@ -199,6 +199,7 @@
                               :serial t
                               :components ((:file "package")
                                            (:file "utils")
+                                           (:file "file")
                                            (:file "directory-mode")))
                              (:file "abbrev")
                              (:file "rectangle")

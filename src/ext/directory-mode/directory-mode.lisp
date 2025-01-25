@@ -67,6 +67,12 @@
 (defun move-to-start-line (point)
   (move-to-line point 3))
 
+(defun insert-spaces-with-property (point pathname name)
+  (insert-string point
+                 "  "
+                 'pathname pathname
+                 'name name))
+
 (defun get-line-property (p key)
   (with-point ((p p))
     (text-property-at (line-start p) key)))
@@ -205,25 +211,29 @@
     (when (symbolic-link-p pathname)
       (insert-string point (format nil " -> ~A" (probe-file pathname))))))
 
+(defparameter *file-entry-inserters*
+  (list #'insert-file-size
+        #'insert-file-write-date
+        #'insert-file-name))
+
 (defun insert-item (point item)
-  (insert-file-size point item)
-  (insert-file-write-date point item)
-  (insert-file-name point item))
+  (dolist (inserter *file-entry-inserters*)
+    (funcall inserter point item)))
 
 (defun insert-pathname (point item)
   (let ((pathname (item-pathname item)))
     (with-point ((start point))
-      (let ((name (item-name item)))
-        (insert-string point "  " 'pathname pathname 'name name)
-        (insert-item point item)
-        (back-to-indentation start)
-        (lem/button:apply-button-between-points
-         start point
-         (lambda ()
-           (lem/button:with-context ()
-             (directory-mode-find-file))))
-        (insert-character point #\newline)
-        (put-text-property start point :read-only t)))))
+      (insert-spaces-with-property point pathname (item-name item))
+      (insert-item point item)
+      (back-to-indentation start)
+      (lem/button:apply-button-between-points
+       start
+       point
+       (lambda ()
+         (lem/button:with-context ()
+           (directory-mode-find-file))))
+      (insert-character point #\newline)
+      (put-text-property start point :read-only t))))
 
 (defun insert-directories-and-files (point
                                      directory

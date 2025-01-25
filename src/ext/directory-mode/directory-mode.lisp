@@ -1,9 +1,3 @@
-(defpackage :lem/directory-mode
-  (:use :cl :lem)
-  #+sbcl
-  (:lock t)
-  (:export
-   :*default-sort-method*))
 (in-package :lem/directory-mode)
 
 (deftype sort-method ()
@@ -69,17 +63,6 @@
 (define-key *directory-mode-keymap* "s" 'directory-mode-sort-files)
 (define-key *directory-mode-keymap* "+" 'make-directory)
 (define-key *directory-mode-keymap* "C-k" 'directory-mode-kill-lines)
-
-(defun run-command (command)
-  (when (consp command)
-    (setf command (mapcar #'princ-to-string command)))
-  (let ((error-string
-         (with-output-to-string (error-output)
-           (uiop:run-program command
-                             :ignore-error-status t
-                             :error-output error-output))))
-    (when (string/= error-string "")
-      (editor-error "~A" error-string))))
 
 (defun remove-line-overlay-when-buffer-change (point arg)
   (declare (ignore arg))
@@ -200,36 +183,64 @@
              (insert-string point string)
              t)))))
 
-(defun insert-pathname (point pathname directory &optional content)
-  (let ((file-size (handler-case (file-size pathname)
-                     (error ()
-                       (return-from insert-pathname)))))
+(defstruct item
+  directory
+  pathname
+  content)
+
+(defun item-name (item)
+  (or (item-content item)
+      (namestring (enough-namestring (item-pathname item)
+                                     (item-directory item)))))
+
+(defun insert-file-size (point item)
+  (let ((pathname (item-pathname item)))
+    (let ((file-size (handler-case (file-size pathname)
+                       (error ()
+                         (return-from insert-file-size)))))
+
+      (insert-string point
+                     (format nil " ~5@A "
+                             (if file-size (human-readable-file-size file-size) ""))
+                     :attribute 'file-size-attribute))))
+
+(defun insert-file-write-date (point item)
+  (let ((pathname (item-pathname item)))
+    (multiple-value-bind (second minute hour day month year week)
+        (let ((date (file-write-date pathname)))
+          (if date
+              (decode-universal-time date)
+              (values 0 0 0 0 0 0 nil)))
+      (insert-string point
+                     (format nil "~4,'0D/~2,'0D/~2,'0D ~2,'0D:~2,'0D:~2,'0D ~A "
+                             year month day hour minute second
+                             (if week (aref #("Mon" "Tue" "Wed" "Thr" "Fri" "Sat" "Sun") week)
+                                 "   "))
+                     :attribute 'file-date-attribute))))
+
+(defun insert-file-name (point item)
+  (let ((name (item-name item))
+        (pathname (item-pathname item)))
+    (unless (string= name "..")
+      (insert-icon point name))
+    (insert-string point
+                   name
+                   :attribute (get-file-attribute pathname)
+                   :file pathname)
+    (when (symbolic-link-p pathname)
+      (insert-string point (format nil " -> ~A" (probe-file pathname))))))
+
+(defun insert-item (point item)
+  (insert-file-size point item)
+  (insert-file-write-date point item)
+  (insert-file-name point item))
+
+(defun insert-pathname (point item)
+  (let ((pathname (item-pathname item)))
     (with-point ((start point))
-      (let ((name (or content (namestring (enough-namestring pathname directory)))))
+      (let ((name (item-name item)))
         (insert-string point "  " 'pathname pathname 'name name)
-        (insert-string point
-                       (format nil " ~5@A "
-                               (if file-size (human-readable-file-size file-size) ""))
-                       :attribute 'file-size-attribute)
-        (multiple-value-bind (second minute hour day month year week)
-            (let ((date (file-write-date pathname)))
-              (if date
-                  (decode-universal-time date)
-                  (values 0 0 0 0 0 0 nil)))
-          (insert-string point
-                         (format nil "~4,'0D/~2,'0D/~2,'0D ~2,'0D:~2,'0D:~2,'0D ~A "
-                                 year month day hour minute second
-                                 (if week (aref #("Mon" "Tue" "Wed" "Thr" "Fri" "Sat" "Sun") week)
-                                     "   "))
-                         :attribute 'file-date-attribute))
-        (unless (string= name "..")
-          (insert-icon point name))
-        (insert-string point
-                       name
-                       :attribute (get-file-attribute pathname)
-                       :file pathname)
-        (when (symbolic-link-p pathname)
-          (insert-string point (format nil " -> ~A" (probe-file pathname))))
+        (insert-item point item)
         (back-to-indentation start)
         (lem/button:apply-button-between-points
          start point
@@ -245,9 +256,9 @@
                                           (without-parent-directory t))
   (unless without-parent-directory
     (alexandria:when-let (pathname (probe-file (merge-pathnames "../" directory)))
-      (insert-pathname point pathname directory "..")))
+      (insert-pathname point (make-item :directory directory :pathname pathname :content ".."))))
   (dolist (pathname (list-directory directory :sort-method sort-method))
-    (insert-pathname point pathname directory)))
+    (insert-pathname point (make-item :directory directory :pathname pathname))))
 
 (defun update (buffer &key (sort-method *default-sort-method*))
   "Update this directory buffer content."
@@ -689,5 +700,3 @@ This does not delete the marked entries, but only remove them from the buffer."
 (defmethod execute :after ((mode directory-mode) command argument)
   (when (mode-active-p (current-buffer) 'directory-mode)
     (update-line (current-point))))
-
-

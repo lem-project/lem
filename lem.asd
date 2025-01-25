@@ -195,7 +195,11 @@
                              (:file "link")
                              (:file "thingatp")
                              (:file "gtags")
-                             (:file "directory-mode")
+                             (:module "directory-mode"
+                              :serial t
+                              :components ((:file "package")
+                                           (:file "utils")
+                                           (:file "directory-mode")))
                              (:file "abbrev")
                              (:file "rectangle")
                              (:file "auto-save")

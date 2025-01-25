@@ -197,8 +197,7 @@
                              (:file "gtags")
                              (:module "directory-mode"
                               :serial t
-                              :components ((:file "package")
-                                           (:file "utils")
+                              :components ((:file "utils")
                                            (:file "file")
                                            (:file "directory-mode")))
                              (:file "abbrev")

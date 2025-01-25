@@ -1,3 +1,16 @@
+(defpackage :lem/directory-mode
+  (:use :cl
+        :lem
+        :lem/directory-mode/utils)
+  (:import-from :lem/directory-mode/file
+                :delete-file*
+                :rename-file*
+                :copy-files
+                :rename-files)
+  #+sbcl
+  (:lock t)
+  (:export
+   :*default-sort-method*))
 (in-package :lem/directory-mode)
 
 (deftype sort-method ()

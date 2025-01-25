@@ -1,4 +1,9 @@
-(in-package :lem/directory-mode)
+(uiop:define-package :lem/directory-mode/utils
+  (:use :cl)
+  (:export :run-command
+           :symbolic-link-p
+           :pathname-directory-last-name))
+(in-package :lem/directory-mode/utils)
 
 (defun run-command (command)
   (when (consp command)
@@ -9,7 +14,7 @@
                               :ignore-error-status t
                               :error-output error-output))))
     (when (string/= error-string "")
-      (editor-error "~A" error-string))))
+      (lem:editor-error "~A" error-string))))
 
 (defun symbolic-link-p (pathname)
   (not (uiop:pathname-equal pathname (probe-file pathname))))

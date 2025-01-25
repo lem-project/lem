@@ -1,4 +1,13 @@
-(in-package :lem/directory-mode)
+(uiop:define-package :lem/directory-mode/file
+  (:use :cl
+        :lem
+        :lem/directory-mode/utils)
+  (:export
+   :delete-file*
+   :rename-file*
+   :copy-files
+   :rename-files))
+(in-package :lem/directory-mode/file)
 
 (defvar *rename-p* nil)
 

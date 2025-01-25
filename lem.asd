@@ -199,7 +199,12 @@
                               :serial t
                               :components ((:file "utils")
                                            (:file "file")
-                                           (:file "directory-mode")))
+                                           (:file "attributes")
+                                           (:file "mode")
+                                           (:file "buffer")
+                                           (:file "commands")
+                                           (:file "keybinds")
+                                           (:file "main")))
                              (:file "abbrev")
                              (:file "rectangle")
                              (:file "auto-save")

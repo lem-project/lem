@@ -5,6 +5,9 @@
            :pathname-directory-last-name))
 (in-package :lem/directory-mode/utils)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (sb-ext:lock-package :lem/directory-mode/utils))
+
 (defun run-command (command)
   (when (consp command)
     (setf command (mapcar #'princ-to-string command)))

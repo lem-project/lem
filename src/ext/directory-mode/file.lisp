@@ -9,6 +9,9 @@
    :rename-files))
 (in-package :lem/directory-mode/file)
 
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (sb-ext:lock-package :lem/directory-mode/file))
+
 (defvar *rename-p* nil)
 
 (defun delete-file* (file)

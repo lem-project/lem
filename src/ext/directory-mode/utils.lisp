@@ -10,3 +10,6 @@
                               :error-output error-output))))
     (when (string/= error-string "")
       (editor-error "~A" error-string))))
+
+(defun symbolic-link-p (pathname)
+  (not (uiop:pathname-equal pathname (probe-file pathname))))

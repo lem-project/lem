@@ -64,27 +64,6 @@
 (define-key *directory-mode-keymap* "+" 'make-directory)
 (define-key *directory-mode-keymap* "C-k" 'directory-mode-kill-lines)
 
-(defun remove-line-overlay-when-buffer-change (point arg)
-  (declare (ignore arg))
-  (alexandria:when-let (ov (buffer-value (point-buffer point) 'line-overlay))
-    (setf (buffer-value (point-buffer point) 'line-overlay) nil)
-    (delete-overlay ov)))
-
-(defun update-line (point)
-  (with-point ((start point)
-               (end point))
-    (back-to-indentation start)
-    (line-end end)
-    (let ((ov (buffer-value point 'line-overlay)))
-      (cond (ov
-             (move-point (overlay-start ov) start)
-             (move-point (overlay-end ov) end))
-            (t
-             (add-hook (variable-value 'before-change-functions :buffer (point-buffer point))
-                       'remove-line-overlay-when-buffer-change)
-             (setf ov (make-overlay start end 'region))
-             (setf (buffer-value point 'line-overlay) ov))))))
-
 (defun move-to-start-line (point)
   (move-to-line point 3))
 
@@ -122,7 +101,6 @@
      (funcall function p)
      (unless (line-offset p 1) (return)))))
 
-
 (defun marked-lines (p)
   (with-point ((p p))
     (let ((points '()))
@@ -152,37 +130,6 @@
   (alexandria:when-let (pathname (get-pathname (current-point)))
     (funcall function pathname)))
 
-(defun symbolic-link-p (pathname)
-  (not (uiop:pathname-equal pathname (probe-file pathname))))
-
-(defun get-file-attribute (pathname)
-  (cond ((symbolic-link-p pathname)
-         'link-attribute)
-        ((uiop:directory-pathname-p pathname)
-         'directory-attribute)
-        (t
-         'file-attribute)))
-
-(defun human-readable-file-size (size)
-  (loop :for sign :in '(#\Y #\Z #\E #\P #\T #\G #\M #\k)
-        :for val := (expt 1024 8) :then (/ val 1024)
-        :do (when (>= size val)
-              (return (format nil "~D~C" (1+ (floor size val)) sign)))
-        :finally (return (princ-to-string size))))
-
-(defun insert-icon (point pathname)
-  (cond ((uiop:directory-pathname-p pathname)
-         (insert-string point (icon-string "folder")))
-        ((let ((string (icon-string-by-ext (pathname-type pathname))))
-           (when string
-             (insert-string point string)
-             t)))
-        (t
-         (let ((string (icon-string-by-ext "txt")))
-           (when string
-             (insert-string point string)
-             t)))))
-
 (defstruct item
   directory
   pathname
@@ -192,6 +139,13 @@
   (or (item-content item)
       (namestring (enough-namestring (item-pathname item)
                                      (item-directory item)))))
+
+(defun human-readable-file-size (size)
+  (loop :for sign :in '(#\Y #\Z #\E #\P #\T #\G #\M #\k)
+        :for val := (expt 1024 8) :then (/ val 1024)
+        :do (when (>= size val)
+              (return (format nil "~D~C" (1+ (floor size val)) sign)))
+        :finally (return (princ-to-string size))))
 
 (defun insert-file-size (point item)
   (let ((pathname (item-pathname item)))
@@ -217,6 +171,27 @@
                              (if week (aref #("Mon" "Tue" "Wed" "Thr" "Fri" "Sat" "Sun") week)
                                  "   "))
                      :attribute 'file-date-attribute))))
+
+(defun insert-icon (point pathname)
+  (cond ((uiop:directory-pathname-p pathname)
+         (insert-string point (icon-string "folder")))
+        ((let ((string (icon-string-by-ext (pathname-type pathname))))
+           (when string
+             (insert-string point string)
+             t)))
+        (t
+         (let ((string (icon-string-by-ext "txt")))
+           (when string
+             (insert-string point string)
+             t)))))
+
+(defun get-file-attribute (pathname)
+  (cond ((symbolic-link-p pathname)
+         'link-attribute)
+        ((uiop:directory-pathname-p pathname)
+         'directory-attribute)
+        (t
+         'file-attribute)))
 
 (defun insert-file-name (point item)
   (let ((name (item-name item))
@@ -697,6 +672,31 @@ This does not delete the marked entries, but only remove them from the buffer."
 
 (setf *find-directory-function* 'directory-buffer)
 
+
+;;; Highlight the current line
+
+(defun remove-line-overlay-when-buffer-change (point arg)
+  (declare (ignore arg))
+  (alexandria:when-let (ov (buffer-value (point-buffer point) 'line-overlay))
+    (setf (buffer-value (point-buffer point) 'line-overlay) nil)
+    (delete-overlay ov)))
+
+(defun update-highlight-line-overlay (point)
+  (with-point ((start point)
+               (end point))
+    (back-to-indentation start)
+    (line-end end)
+    (let ((ov (buffer-value point 'line-overlay)))
+      (cond (ov
+             (move-point (overlay-start ov) start)
+             (move-point (overlay-end ov) end))
+            (t
+             (add-hook (variable-value 'before-change-functions :buffer (point-buffer point))
+                       'remove-line-overlay-when-buffer-change)
+             (setf ov (make-overlay start end 'region))
+             (setf (buffer-value point 'line-overlay) ov))))))
+
+
 (defmethod execute :after ((mode directory-mode) command argument)
   (when (mode-active-p (current-buffer) 'directory-mode)
-    (update-line (current-point))))
+    (update-highlight-line-overlay (current-point))))

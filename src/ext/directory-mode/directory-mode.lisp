@@ -149,6 +149,11 @@
   (alexandria:when-let (pathname (get-pathname (current-point)))
     (funcall function pathname)))
 
+(defun open-selected-file (&key read-only next-window)
+  (if read-only
+      (process-current-line-pathname (if next-window 'read-file-next-window 'read-file))
+      (process-current-line-pathname (if next-window 'find-file-next-window 'find-file))))
+
 (defstruct item
   directory
   pathname
@@ -244,7 +249,7 @@
        point
        (lambda ()
          (lem/button:with-context ()
-           (directory-mode-find-file))))
+           (open-selected-file :read-only nil :next-window nil))))
       (insert-character point #\newline)
       (put-text-property start point :read-only t))))
 
@@ -318,18 +323,13 @@
       (string (uiop:directory-separator-for-host))))))
 
 (define-command directory-mode-find-file () ()
-  (process-current-line-pathname 'find-file))
+  (open-selected-file :read-only nil :next-window nil))
 
 (define-command directory-mode-read-file () ()
-  (process-current-line-pathname 'read-file))
+  (open-selected-file :read-only t :next-window nil))
 
 (define-command directory-mode-find-file-next-window () ()
-  (process-current-line-pathname (lambda (pathname)
-                                   (let ((buffer (execute-find-file *find-file-executor*
-                                                                    (get-file-mode pathname)
-                                                                    pathname)))
-                                     (switch-to-window
-                                           (pop-to-buffer buffer))))))
+  (open-selected-file :read-only nil :next-window t))
 
 (define-command directory-mode-next-line (p) (:universal)
   (line-offset (current-point) p))

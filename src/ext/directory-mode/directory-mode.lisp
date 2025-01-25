@@ -235,7 +235,7 @@
   (dolist (pathname (list-directory directory :sort-method sort-method))
     (insert-pathname point (make-item :directory directory :pathname pathname))))
 
-(defun update (buffer &key (sort-method *default-sort-method*))
+(defun update-buffer (buffer &key (sort-method *default-sort-method*))
   "Update this directory buffer content."
   (with-buffer-read-only buffer nil
     (let ((*inhibit-read-only* t))
@@ -253,13 +253,13 @@
 (defun update-all ()
   (dolist (buffer (buffer-list))
     (when (eq 'directory-mode (buffer-major-mode buffer))
-      (update buffer))))
+      (update-buffer buffer))))
 
 (defun create-directory-buffer (name filename)
   (let ((buffer (make-buffer name :enable-undo-p nil :read-only-p t)))
     (change-buffer-mode buffer 'directory-mode)
     (setf (buffer-directory buffer) filename)
-    (update buffer)
+    (update-buffer buffer)
     (move-to-start-line (buffer-point buffer))
     buffer))
 
@@ -378,7 +378,7 @@
       (copy-or-rename-file file dst-file))))
 
 (define-command directory-mode-update-buffer () ()
-  (update (current-buffer)))
+  (update-buffer (current-buffer)))
 
 (define-command directory-mode-up-directory () ()
   (let ((dir (buffer-directory)))
@@ -623,17 +623,17 @@ With prefix argument ARG, unmark all those files."
       ((eql (buffer-value (current-buffer) :sort-method) :mtime)
        (message "Sorting by size")
        (setf (buffer-value (current-buffer) :sort-method) :size)
-       (update (current-buffer) :sort-method :size))
+       (update-buffer (current-buffer) :sort-method :size))
       ;; size -> pathname
       ((eql (buffer-value (current-buffer) :sort-method) :size)
        (message "Sorting by name")
        (setf (buffer-value (current-buffer) :sort-method) :pathname)
-       (update (current-buffer) :sort-method :pathname))
+       (update-buffer (current-buffer) :sort-method :pathname))
       (t
        ;; At first call, the buffer's sort-method is not set.
        (message "Sorting by last modification time")
        (setf (buffer-value (current-buffer) :sort-method) :mtime)
-       (update (current-buffer) :sort-method :mtime)))
+       (update-buffer (current-buffer) :sort-method :mtime)))
 
     ;; Follow file name.
     (when (and path (str:non-blank-string-p (file-namestring path)))

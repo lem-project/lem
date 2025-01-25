@@ -197,8 +197,7 @@
                              (:file "gtags")
                              (:module "directory-mode"
                               :serial t
-                              :components ((:file "utils")
-                                           (:file "file")
+                              :components ((:file "file")
                                            (:file "attributes")
                                            (:file "mode")
                                            (:file "buffer")

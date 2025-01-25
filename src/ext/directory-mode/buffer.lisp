@@ -1,12 +1,9 @@
 (uiop:define-package :lem/directory-mode/buffer
   (:use :cl
-        :lem
-        :lem/directory-mode/utils)
+        :lem)
   (:import-from :lem/directory-mode/file
-                :delete-file*
-                :rename-file*
-                :copy-files
-                :rename-files)
+                :symbolic-link-p
+                :pathname-directory-last-name)
   (:import-from :lem/directory-mode/attributes
                 :current-directory-attribute
                 :file-size-attribute

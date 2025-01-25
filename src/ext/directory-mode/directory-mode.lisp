@@ -250,7 +250,7 @@
                                       :without-parent-directory nil)
         (move-to-line p line-number)))))
 
-(defun update-all ()
+(defun update-all-buffers ()
   (dolist (buffer (buffer-list))
     (when (eq 'directory-mode (buffer-major-mode buffer))
       (update-buffer buffer))))
@@ -542,7 +542,7 @@ With prefix argument ARG, unmark all those files."
     (when (prompt-for-y-or-n-p (format nil "Really delete files~%~{- ~A~%~}" files))
       (dolist (file files)
         (delete-file* file))
-      (update-all))))
+      (update-all-buffers))))
 
 (defun get-dest-directory ()
   (dolist (window (window-list) (buffer-directory))
@@ -554,12 +554,12 @@ With prefix argument ARG, unmark all those files."
   (let ((dst-file (prompt-for-file "Destination Filename: " :directory (get-dest-directory)))
         (files (selected-files (current-point))))
     (copy-files files dst-file))
-  (update-all))
+  (update-all-buffers))
 
 (define-command directory-mode-rename-files () ()
   (let ((dst-file (prompt-for-file "Destination Filename: " :directory (get-dest-directory))))
     (rename-files (selected-files (current-point)) dst-file))
-  (update-all))
+  (update-all-buffers))
 
 (defun move-to-file-position (point)
   (with-point ((limit point))
@@ -639,7 +639,7 @@ With prefix argument ARG, unmark all those files."
 (define-command make-directory (filename) ((:new-file "Make directory: "))
   (setf filename (uiop:ensure-directory-pathname filename))
   (ensure-directories-exist filename)
-  (update-all))
+  (update-all-buffers))
 
 (define-command find-file-directory () ()
   "Open this file's directory and place point on the filename."

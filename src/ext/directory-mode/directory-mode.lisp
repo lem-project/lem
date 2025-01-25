@@ -306,9 +306,6 @@
           :do (return nil)
           :finally (return t)))))
 
-(defun pathname-directory-last-name (pathname)
-  (enough-namestring pathname (uiop:pathname-parent-directory-pathname pathname)))
-
 (defvar *rename-p* nil)
 
 (defun copy-directory (src dst)

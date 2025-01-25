@@ -13,3 +13,6 @@
 
 (defun symbolic-link-p (pathname)
   (not (uiop:pathname-equal pathname (probe-file pathname))))
+
+(defun pathname-directory-last-name (pathname)
+  (enough-namestring pathname (uiop:pathname-parent-directory-pathname pathname)))

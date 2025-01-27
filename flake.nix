@@ -162,6 +162,7 @@
               pkg-config
               sbcl
               sbcl.pkgs.qlot-cli
+              which # this is available in the stdenv and most sane systems
             ];
             # Normally we would include pkg-config and list these dependencies
             # in the packages attribute, but it does not appear that pkg-config

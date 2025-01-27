@@ -151,40 +151,29 @@
               runHook postInstall
             '';
           };
-          lem-sdl2-shell = pkgs.mkShell {
+
+          devShell = pkgs.mkShell {
             packages = with pkgs; [
-              sbcl
-              sbcl.pkgs.qlot-cli
-            ];
-            # Normally we would include pkg-config and list these dependencies
-            # in packages, but it does not appear that pkg-config is being used
-            # when available.
-            shellHook = with pkgs; ''
-              export LD_LIBRARY_PATH="''${LD_LIBRARY_PATH}:${SDL2}/lib:${SDL2_ttf}/lib:${SDL2_image}/lib:${libffi}/lib:${openssl.out}/lib"
-            '';
-          };
-          lem-ncurses-shell = pkgs.mkShell {
-            packages = with pkgs; [
-              sbcl
-              sbcl.pkgs.qlot-cli
-              pkg-config
+              autoconf
+              automake
+              libffi.dev
+              libtool
               ncurses.dev
+              pkg-config
+              sbcl
+              sbcl.pkgs.qlot-cli
+              which # this is available in the stdenv and most sane systems
             ];
             # Normally we would include pkg-config and list these dependencies
-            # in packages, but it does not appear that pkg-config is being used
-            # when available.
+            # in the packages attribute, but it does not appear that pkg-config
+            # is being used when available.
             shellHook = with pkgs; ''
-              export LD_LIBRARY_PATH="''${LD_LIBRARY_PATH}:${ncurses.out}/lib:${libffi}/lib:${openssl.out}/lib"
+              export LD_LIBRARY_PATH="''${LD_LIBRARY_PATH}:${ncurses.out}/lib:${SDL2}/lib:${SDL2_ttf}/lib:${SDL2_image}/lib:${libffi}/lib:${openssl.out}/lib"
             '';
           };
         in
         {
-          devShells =
-            {
-              lem-ncurses = lem-ncurses-shell;
-              lem-sdl2 = lem-sdl2-shell;
-              default = lem-ncurses-shell;
-            };
+          devShells.default = devShell;
           packages.lem-ncurses = lem.overrideLispAttrs (o: {
             pname = "lem-ncurses";
             meta.mainProgram = "lem";

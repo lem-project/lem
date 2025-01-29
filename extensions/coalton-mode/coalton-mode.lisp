@@ -51,6 +51,8 @@
                     :patterns (make-tm-patterns
                                (make-tm-match "\\\\.")))
                    (make-tm-match
+                    "\\\\.")
+                   (make-tm-match
                     `(:sequence
                       "("
                       ,(wrap-symbol-names "define")

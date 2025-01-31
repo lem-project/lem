@@ -232,7 +232,9 @@ current line."
 (defun yank-string (point string)
   (change-yank-start point
                      (copy-point point :right-inserting))
-  (insert-string-and-indent point string)
+  (if (in-string-or-comment-p point)
+      (insert-string point string)
+      (insert-string-and-indent point string))
   (change-yank-end point
                    (copy-point point :left-inserting))
   (continue-flag :yank))

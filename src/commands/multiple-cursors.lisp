@@ -15,12 +15,13 @@
 (define-key *global-keymap* "C-<" 'mark-previous-like-this)
 
 (defun add-cursors-to-offset-line (offset buffer)
-  (let ((cursors (buffer-cursors buffer)))
-    (loop :for (cursor next-cursor) :on cursors
+  (let* ((cursors (buffer-cursors buffer))
+         (sorted-cursors (if (> offset 0) cursors (reverse cursors))))
+    (loop :for (cursor next-cursor) :on sorted-cursors
           :do (with-point ((p cursor))
                 (when (and (line-offset p offset (point-charpos p))
-                           (or (null next-cursor)
-                               (not (same-line-p p next-cursor))))
+                           (not (find-if (lambda (c) (same-line-p c p)) cursors))
+                           (null next-cursor))
                   (make-fake-cursor p))))))
 
 (define-command add-cursors-to-next-line () ()
@@ -46,8 +47,9 @@
                           ((point= end cur-p) (* -1 (length str)))
                           (t 0)))
          (re (concatenate 'string "(?:" str ")"))
-         (search-function (if is-forward #'search-forward-regexp #'search-backward-regexp)))
-    (loop :for (cursor next-cursor) :on cursors
+         (search-function (if is-forward #'search-forward-regexp #'search-backward-regexp))
+         (sorted-cursors (if is-forward cursors (reverse cursors))))
+    (loop :for (cursor next-cursor) :on sorted-cursors
           :do (with-point ((p cursor))
                 (character-offset p offset-pos)
                 (if (and (apply search-function (list p re))
@@ -55,8 +57,8 @@
                     (progn
                       (character-offset p (* -1 offset-pos))
                       (set-cursor-mark (make-fake-cursor p) (character-offset p offset-region))
-                      (message (concatenate 'string "Marked " (write-to-string (+ (length cursors) 1)))))
-                    (message "No more mark"))))))
+                      (message (concatenate 'string "Mark set " (write-to-string (+ (length cursors) 1)))))
+                    (message "No more matches found"))))))
 
 (define-command mark-next-like-this () ()
   "Duplicate the cursor the next matched string selected in region or next line."
@@ -88,8 +90,14 @@
 (add-hook *post-command-hook* 'garbage-collection-cursors)
 
 (defun clear-cursors-when-aborted ()
-  (let ((string (merge-cursor-killrings (current-buffer))))
-    (clear-cursors (current-buffer))
-    (copy-to-clipboard-with-killring string)))
+  (let* ((buffer (current-buffer))
+         (cursors (buffer-cursors buffer))
+         (is-marked (find-if (lambda (c) (mark-active-p (cursor-mark c))) cursors)))
+    (if is-marked
+        (loop :for (cursor) :on cursors
+                :do (mark-cancel (cursor-mark cursor)))
+        (let ((string (merge-cursor-killrings buffer)))
+          (clear-cursors buffer)
+          (copy-to-clipboard-with-killring string)))))
 
 (add-hook *editor-abort-hook* 'clear-cursors-when-aborted)

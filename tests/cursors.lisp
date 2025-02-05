@@ -189,7 +189,6 @@
         (ok (positions-set-equal '((1 4) (3 4) (5 4))
                                  (all-positions buffer)))))))
 
-
 (deftest mark-by-direction-backward/forward-the-same-line
   (lem-fake-interface:with-fake-interface ()
     (lem-core::save-continue-flags
@@ -211,5 +210,3 @@
 
         (ok (positions-set-equal '((1 0) (1 21) (1 48))
                                  (all-positions buffer)))))))
-
-;;TODO: region with regexp symbols ()

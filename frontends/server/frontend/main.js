@@ -10,7 +10,7 @@ function main() {
       fontName: 'Monospace',
       fontSize: 19,
       onLoaded: null,
-      url: `${protocol}://${window.location.hostname}:50000`,
+      url: `${protocol}://${window.location.hostname}:${window.location.port}`,
       onExit: null,
       onClosed: null,
       onRestart: null,

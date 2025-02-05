@@ -4,6 +4,7 @@
         :lem-core/commands/move)
   (:export :add-cursors-to-next-line
            :add-cursors-to-prev-line
+           :clear-cursors-when-aborted
            :mark-next-like-this
            :mark-previous-like-this)
   #+sbcl
@@ -46,35 +47,36 @@
                           ((point= start cur-p) (length str))
                           ((point= end cur-p) (* -1 (length str)))
                           (t 0)))
-         (re (concatenate 'string "(?:" str ")"))
-         (search-function (if is-forward #'search-forward-regexp #'search-backward-regexp))
+         (search-function (if is-forward #'search-forward #'search-backward))
          (sorted-cursors (if is-forward cursors (reverse cursors))))
     (loop :for (cursor next-cursor) :on sorted-cursors
           :do (with-point ((p cursor))
                 (character-offset p offset-pos)
-                (if (and (apply search-function (list p re))
+                (if (and (apply search-function (list p str))
                          (null next-cursor))
                     (progn
                       (character-offset p (* -1 offset-pos))
                       (set-cursor-mark (make-fake-cursor p) (character-offset p offset-region))
-                      (message (concatenate 'string "Mark set " (write-to-string (+ (length cursors) 1)))))
-                    (message "No more matches found"))))))
+                      (uiop:println (concatenate 'string "Mark set " (write-to-string (+ (length cursors) 1)))))
+                    (uiop:println "No more matches found"))))))
 
 (define-command mark-next-like-this () ()
   "Duplicate the cursor the next matched string selected in region or next line."
-  (if (mark-active-p (cursor-mark (current-point)))
-      (let ((start (buffer-mark (current-buffer)))
-            (end (buffer-point (current-buffer))))
-        (mark-by-direction start end t (current-buffer)))
-      (add-cursors-to-offset-line 1 (current-buffer))))
+  (let* ((buffer (current-buffer))
+         (start (buffer-mark buffer))
+         (end (buffer-point buffer)))
+    (if (mark-active-p (cursor-mark end))
+      (mark-by-direction start end t buffer)
+      (add-cursors-to-offset-line 1 buffer))))
 
 (define-command mark-previous-like-this () ()
   "Duplicate the cursor the previous matched string selected in region or previous line."
-  (if (mark-active-p (cursor-mark (current-point)))
-      (let ((start (buffer-mark (current-buffer)))
-            (end (buffer-point (current-buffer))))
-        (mark-by-direction start end nil (current-buffer)))
-      (add-cursors-to-offset-line -1 (current-buffer))))
+  (let* ((buffer (current-buffer))
+         (start (buffer-mark buffer))
+         (end (buffer-point buffer)))
+    (if (mark-active-p (cursor-mark end))
+        (mark-by-direction start end nil buffer)
+        (add-cursors-to-offset-line -1 buffer))))
 
 (defun clear-duplicate-cursors (buffer)
   (loop :for (cursor next-cursor) :on (buffer-cursors buffer)
@@ -95,7 +97,7 @@
          (is-marked (find-if (lambda (c) (mark-active-p (cursor-mark c))) cursors)))
     (if is-marked
         (loop :for (cursor) :on cursors
-                :do (mark-cancel (cursor-mark cursor)))
+              :do (mark-cancel (cursor-mark cursor)))
         (let ((string (merge-cursor-killrings buffer)))
           (clear-cursors buffer)
           (copy-to-clipboard-with-killring string)))))

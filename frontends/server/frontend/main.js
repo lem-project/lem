@@ -5,6 +5,7 @@ const canvas = document.querySelector('#editor');
 function main() {
   document.fonts.ready.then(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
+    console.log(`${protocol}://${window.location.hostname}:${window.location.port}`);
     const editor = new Editor({
       canvas: canvas,
       fontName: 'Monospace',

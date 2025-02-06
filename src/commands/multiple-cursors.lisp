@@ -48,17 +48,16 @@
                           ((point= end cur-p) (* -1 (length str)))
                           (t 0)))
          (search-function (if is-forward #'search-forward #'search-backward))
-         (sorted-cursors (if is-forward cursors (reverse cursors))))
-    (loop :for (cursor next-cursor) :on sorted-cursors
-          :do (with-point ((p cursor))
-                (character-offset p offset-pos)
-                (if (and (apply search-function (list p str))
-                         (null next-cursor))
-                    (progn
-                      (character-offset p (* -1 offset-pos))
-                      (set-cursor-mark (make-fake-cursor p) (character-offset p offset-region))
-                      (uiop:println (concatenate 'string "Mark set " (write-to-string (+ (length cursors) 1)))))
-                    (uiop:println "No more matches found"))))))
+         (sorted-cursors (if is-forward (reverse cursors) cursors))
+         (cursor (first sorted-cursors)))
+    (with-point ((p cursor))
+          (character-offset p offset-pos)
+          (if (funcall search-function p str)
+              (progn
+                (character-offset p (* -1 offset-pos))
+                (set-cursor-mark (make-fake-cursor p) (character-offset p offset-region))
+                (uiop:println (concatenate 'string "Mark set " (write-to-string (+ (length cursors) 1)))))
+              (uiop:println "No more matches found")))))
 
 (define-command mark-next-like-this () ()
   "Duplicate the cursor the next matched string selected in region or next line."

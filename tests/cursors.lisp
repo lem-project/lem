@@ -5,7 +5,9 @@
   (:import-from :lem/common/killring
                 :make-killring
                 :push-killring-item
-                :peek-killring-item))
+                :peek-killring-item)
+  (:export :all-positions
+           :positions-set-equal))
 (in-package :lem-tests/cursors)
 
 (defun make-testing-killring ()
@@ -108,105 +110,4 @@
                      (make-instance 'lem:next-line)
                      nil)
         (ok (positions-set-equal '((2 12) (3 10) (4 10))
-                                 (all-positions buffer)))))))
-
-(deftest mark-by-direction-backward/forward
-  (lem-fake-interface:with-fake-interface ()
-    (lem-core::save-continue-flags
-      (with-testing-buffer (buffer (make-text-buffer (lines "case 1"
-                                                            "//some code here"
-                                                            "case 3"
-                                                            "//some other code here"
-                                                            "case 4"
-                                                            "//some other code here")))
-        (lem-core::set-window-buffer buffer (lem:current-window))
-        (lem:execute (lem:buffer-major-mode buffer)
-                     (make-instance 'lem:next-line)
-                     2)
-
-        (lem:execute (lem:buffer-major-mode buffer)
-                     (make-instance 'lem:mark-sexp)
-                     nil)
-
-        (ok (positions-set-equal '((3 0))
-                                 (all-positions buffer)))
-
-        (lem:execute (lem:buffer-major-mode buffer)
-                     (make-instance 'lem-core/commands/multiple-cursors:mark-next-like-this)
-                     nil)
-
-        (ok (positions-set-equal '((3 0) (5 0))
-                                 (all-positions buffer)))
-
-        (lem:execute (lem:buffer-major-mode buffer)
-                     (make-instance 'lem-core/commands/multiple-cursors:mark-previous-like-this)
-                     nil)
-
-
-        (ok (positions-set-equal '((1 0) (3 0) (5 0))
-                                 (all-positions buffer)))
-
-        (ok (lem:mark-active-p (lem:cursor-mark (lem:current-point))))
-
-        (lem-core/commands/multiple-cursors:clear-cursors-when-aborted)
-
-        ;; First call clear-cursors-when-aborted cancel region first
-        ;; Cursors should stay in the same place
-        (ng (lem:mark-active-p (lem:cursor-mark (lem:current-point))))
-        (ok (positions-set-equal '((1 0) (3 0) (5 0))
-                                 (all-positions buffer)))
-
-        (lem-core/commands/multiple-cursors:clear-cursors-when-aborted)
-
-        ;; Second call clear-cursors-when-aborted remove fake cursors
-        (ng (lem:mark-active-p (lem:cursor-mark (lem:current-point))))
-        (ok (positions-set-equal '((3 0))
-                                 (all-positions buffer)))
-
-        ;;call (message) in mark-set is cause of an exception
-        (handler-case
-            (lem:execute (lem:buffer-major-mode buffer)
-                         (make-instance 'lem:mark-set)
-                         nil)
-          (error (c)
-            (uiop:println c)))
-
-        (lem:execute (lem:buffer-major-mode buffer)
-                     (make-instance 'lem:forward-word)
-                     nil)
-
-        (lem:execute (lem:buffer-major-mode buffer)
-                     (make-instance 'lem-core/commands/multiple-cursors:mark-previous-like-this)
-                     nil)
-
-        (ok (positions-set-equal '((1 4) (3 4))
-                                 (all-positions buffer)))
-
-        (lem:execute (lem:buffer-major-mode buffer)
-                     (make-instance 'lem-core/commands/multiple-cursors:mark-next-like-this)
-                     nil)
-
-        (ok (positions-set-equal '((1 4) (3 4) (5 4))
-                                 (all-positions buffer)))))))
-
-(deftest mark-by-direction-backward/forward-the-same-line
-  (lem-fake-interface:with-fake-interface ()
-    (lem-core::save-continue-flags
-      (with-testing-buffer (buffer (make-text-buffer (lines "case 1 /* comment */ case 2 /* other comment */ case 3")))
-        (lem-core::set-window-buffer buffer (lem:current-window))
-
-        (lem:execute (lem:buffer-major-mode buffer)
-                     (make-instance 'lem:forward-char)
-                     21)
-        (lem:execute (lem:buffer-major-mode buffer)
-                     (make-instance 'lem:mark-sexp)
-                     nil)
-        (lem:execute (lem:buffer-major-mode buffer)
-                     (make-instance 'lem-core/commands/multiple-cursors:mark-next-like-this)
-                     nil)
-        (lem:execute (lem:buffer-major-mode buffer)
-                     (make-instance 'lem-core/commands/multiple-cursors:mark-previous-like-this)
-                     nil)
-
-        (ok (positions-set-equal '((1 0) (1 21) (1 48))
                                  (all-positions buffer)))))))

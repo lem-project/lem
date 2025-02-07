@@ -1125,11 +1125,11 @@ on the same line or at eol if there are none."
   (dotimes (i n) (window-move-left)))
 
 (define-command vi-window-move-down (&optional (n 1)) (:universal)
-  "Go to the window on the down N times."
+  "Go to the window below N times."
   (dotimes (i n) (window-move-down)))
 
 (define-command vi-window-move-up (&optional (n 1)) (:universal)
-  "Go to the window on the up N times."
+  "Go to the window above N times."
   (dotimes (i n) (window-move-up)))
 
 (define-command vi-window-move-right (&optional (n 1)) (:universal)

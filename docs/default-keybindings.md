@@ -140,8 +140,8 @@ Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode a
 | [next-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L139)                      | C-x o, M-o     | Go to the next window.                                                |
 | [previous-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L151)                  | M-O            |                                                                       |
 | [switch-to-last-focused-window](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L154)    |                | Go to the window that was last in focus.                              |
-| [window-move-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L162)                 |                | Go to the window on the down.                                         |
-| [window-move-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L167)                   |                | Go to the window on the up.                                           |
+| [window-move-down](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L162)                 |                | Go to the window below.                                         |
+| [window-move-up](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L167)                   |                | Go to the window above.                                           |
 | [window-move-right](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L172)                |                | Go to the window on the right.                                        |
 | [window-move-left](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L177)                 |                | Go to the window on the left.                                         |
 | [delete-other-windows](https://github.com/lem-project/lem/blob/main/src/commands/window.lisp#L182)             | C-x 1          | Delete all other windows.                                             |

@@ -160,12 +160,12 @@
     (switch-to-window window)))
 
 (define-command window-move-down () ()
-  "Go to the window on the down."
+  "Go to the window below."
   (alexandria:when-let ((window (down-window (current-window))))
     (switch-to-window window)))
 
 (define-command window-move-up () ()
-  "Go to the window on the up."
+  "Go to the window above."
   (alexandria:when-let ((window (up-window (current-window))))
     (switch-to-window window)))
 

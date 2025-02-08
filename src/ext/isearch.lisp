@@ -520,10 +520,6 @@
                          ((and (point= start cur-p) is-forward) (length string))
                          ((and (point= end cur-p) (not is-forward)) (* -1 (length string)))
                          (t 0)))
-           (offset-region (cond
-                            ((point= start cur-p) (length string))
-                            ((point= end cur-p) (* -1 (length string)))
-                            (t 0)))
            (cursors (buffer-cursors buffer))
            (sorted-cursors (if is-forward (reverse cursors) cursors))
            (cursor (first sorted-cursors)))

@@ -37,7 +37,7 @@
 (define-key *global-keymap* "C-x k" 'kill-buffer)
 (define-key *global-keymap* "C-x Left" 'previous-buffer)
 (define-key *global-keymap* "C-x Right" 'next-buffer)
-(define-key *global-keymap* "C-l" 'recenter)
+(define-key *global-keymap* "C-l" 'recenter-top-bottom)
 (define-key *global-keymap* "C-x 2" 'split-active-window-vertically)
 (define-key *global-keymap* "C-x 3" 'split-active-window-horizontally)
 (define-key *global-keymap* "C-x o" 'next-window)
@@ -121,6 +121,13 @@
   "Scroll so that the cursor is in the middle."
   (clear-screens-of-window-list)
   (unless p (window-recenter (current-window)))
+  (redraw-display)
+  t)
+
+(define-command recenter-top-bottom (p) (:universal-nil)
+  "Scroll so that the cursor is in the middle/top/bottom."
+  (clear-screens-of-window-list)
+  (unless p (window-recenter-top-bottom (current-window)))
   (redraw-display)
   t)
 

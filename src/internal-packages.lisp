@@ -353,6 +353,7 @@
   ;; virtual-line
   (:export
    :window-recenter
+   :window-recenter-top-bottom
    :window-cursor-x
    :window-cursor-y
    :backward-line-wrap

@@ -21,6 +21,22 @@ If FROM-BOTTOM is T, start counting from the bottom."
       (window-scroll window n)
       n)))
 
+(defun window-recenter-top-bottom (window)
+  "In first call recenter WINDOW to the middle line.
+If cursor is already in the middle of WINDOW then move cursor in the top position.
+If cursor is on top then move move WINDOW to the bottom."
+  (let* ((line (window-cursor-y window))
+         (window-height (window-height-without-modeline window))
+         (middle (floor window-height 2))
+         (bottom (window-height-without-modeline window))
+         (scrolloff (min (floor (/ (window-height window) 2)) 0))
+         (top 0))
+    (cond
+      ((= line middle) (window-recenter window :line scrolloff :from-bottom nil))
+      ((= line top) (window-recenter window :line scrolloff :from-bottom t))
+      (t (window-recenter window :line nil :from-bottom nil)))
+    (redraw-display)))
+
 (defun %calc-window-cursor-x (point window)
   "Return (values cur-x next). the 'next' is a flag if the cursor goes to
 next line because it is at the end of width."

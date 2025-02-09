@@ -34,8 +34,7 @@ If cursor is on top then move move WINDOW to the bottom."
     (cond
       ((= line middle) (window-recenter window :line scrolloff :from-bottom nil))
       ((= line top) (window-recenter window :line scrolloff :from-bottom t))
-      (t (window-recenter window :line nil :from-bottom nil)))
-    (redraw-display)))
+      (t (window-recenter window :line nil :from-bottom nil)))))
 
 (defun %calc-window-cursor-x (point window)
   "Return (values cur-x next). the 'next' is a flag if the cursor goes to

@@ -27,6 +27,8 @@
            :isearch-next-highlight
            :isearch-prev-highlight
            :isearch-toggle-highlighting
+           :isearch-add-cursor-to-next-match
+           :isearch-add-cursor-to-prev-match
            :read-query-replace-args
            :query-replace
            :query-replace-regexp
@@ -88,6 +90,7 @@
 (define-key *global-keymap* "M-s t" 'isearch-toggle-highlighting)
 (define-key *global-keymap* "M-s M-t" 'isearch-toggle-highlighting)
 (define-key *isearch-keymap* "C-M-n" 'isearch-add-cursor-to-next-match)
+(define-key *isearch-keymap* "C-M-p" 'isearch-add-cursor-to-prev-match)
 
 (defun disable-hook ()
   (setf (variable-value 'isearch-next-last :buffer) nil)
@@ -320,7 +323,8 @@
   t)
 
 (define-command isearch-abort () ()
-  (move-point (current-point) *isearch-start-point*)
+  (when (null (buffer-fake-cursors (current-buffer)))
+    (move-point (current-point) *isearch-start-point*))
   (isearch-reset-overlays (current-buffer))
   (isearch-end)
   t)
@@ -492,11 +496,47 @@
     ((boundp '*isearch-string*)
      (isearch-update-buffer))))
 
+(defun determine-start-end-current-search (point string is-forward)
+  (with-point ((start point)
+               (end point))
+    (if is-forward
+        (progn
+          (funcall *isearch-search-forward-function* end string)
+          (funcall *isearch-search-backward-function* (move-point start end) string))
+        (progn
+          (funcall *isearch-search-backward-function* start string)
+          (funcall *isearch-search-forward-function* (move-point end start) string)))
+    (list start end)))
+
+(defun mark-by-direction (is-forward buffer)
+  (alexandria:when-let* ((string (or (buffer-value (current-buffer) 'isearch-redisplay-string)
+                                     (and (boundp '*isearch-string*)
+                                          *isearch-string*))))
+    (let* ((cur-p (current-point))
+           (start-end (determine-start-end-current-search cur-p string is-forward))
+           (start (first start-end))
+           (end (second start-end))
+           (offset-pos (cond
+                         ((and (point= start cur-p) is-forward) (length string))
+                         ((and (point= end cur-p) (not is-forward)) (* -1 (length string)))
+                         (t 0)))
+           (cursors (buffer-cursors buffer))
+           (sorted-cursors (if is-forward (reverse cursors) cursors))
+           (cursor (first sorted-cursors)))
+      (with-point ((point cursor))
+        (character-offset point offset-pos)
+        (if (search-next-matched point (if is-forward 1 0))
+            (progn
+              (character-offset point (* -1 offset-pos))
+              (make-fake-cursor point)
+              (uiop:println (concatenate 'string "Mark set " (write-to-string (+ (length cursors) 1)))))
+            (uiop:println "No more matches found"))))))
+
 (define-command isearch-add-cursor-to-next-match () ()
-  (dolist (point (buffer-cursors (current-buffer)))
-    (with-point ((point point))
-      (when (search-next-matched point 1)
-        (make-fake-cursor point)))))
+  (mark-by-direction t (current-buffer)))
+
+(define-command isearch-add-cursor-to-prev-match () ()
+  (mark-by-direction nil (current-buffer)))
 
 
 (defvar *replace-before-string* nil)

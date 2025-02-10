@@ -529,8 +529,8 @@
             (progn
               (character-offset point (* -1 offset-pos))
               (make-fake-cursor point)
-              (uiop:println (concatenate 'string "Mark set " (write-to-string (+ (length cursors) 1)))))
-            (uiop:println "No more matches found"))))))
+              (message "Mark set ~A" (+ (length cursors) 1)))
+            (message "No more matches found"))))))
 
 (define-command isearch-add-cursor-to-next-match () ()
   (mark-by-direction t (current-buffer)))

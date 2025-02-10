@@ -37,7 +37,7 @@
 (define-key *global-keymap* "C-x k" 'kill-buffer)
 (define-key *global-keymap* "C-x Left" 'previous-buffer)
 (define-key *global-keymap* "C-x Right" 'next-buffer)
-(define-key *global-keymap* "C-l" 'recenter-top-bottom)
+(define-key *global-keymap* "C-l" 'recenter)
 (define-key *global-keymap* "C-x 2" 'split-active-window-vertically)
 (define-key *global-keymap* "C-x 3" 'split-active-window-horizontally)
 (define-key *global-keymap* "C-x o" 'next-window)

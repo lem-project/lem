@@ -28,7 +28,6 @@ If cursor is on top then move move WINDOW to the bottom."
   (let* ((line (window-cursor-y window))
          (window-height (window-height-without-modeline window))
          (middle (floor window-height 2))
-         (bottom (window-height-without-modeline window))
          (scrolloff (min (floor (/ (window-height window) 2)) 0))
          (top 0))
     (cond

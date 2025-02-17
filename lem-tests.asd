@@ -36,6 +36,7 @@
                (:file "self-insert-command")
                (:file "interp")
                (:file "file")
+               (:file "scala-mode")
                (:file "completion"))
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

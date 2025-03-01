@@ -176,30 +176,30 @@
   (declare (ignorable arg))
   (let* ((cwd (buffer-directory))
          (project-root (find-root cwd))
-         (root (or project-root cwd))
-         (filename (if (and *respect-gitignore* (git-repository-p root))
-                       ;; In a git repo and respecting gitignore, use git ls-files
-                       (uiop:with-current-directory (root)
-                         (let ((files (list-project-files-git root)))
-                           (if files
-                               (prompt-for-string
-                                "Find file: "
-                                :completion-function (lambda (x) 
-                                                       (completion-strings x files))
-                                :test-function (lambda (name) 
-                                                 (member name files :test #'string=)))
-                               ;; Fallback if ls-files fails
-                               (prompt-for-files-recursively))))
-                       ;; Use regular prompt
-                       (uiop:with-current-directory (root)
-                         (prompt-for-files-recursively))))
-         buffer)
-    (when filename
-      (setf buffer (execute-find-file *find-file-executor*
-                                      (get-file-mode filename)
-                                      filename))
-      (when buffer
-        (switch-to-buffer buffer t nil)))))
+         (root (or project-root cwd)))
+    (uiop:with-current-directory (root)
+      (let ((filename 
+              (if (and *respect-gitignore* (git-repository-p root))
+                  ;; In a git repo and respecting gitignore, use git ls-files
+                  (let ((files (list-project-files-git root)))
+                    (if files
+                        (prompt-for-string
+                         "Find file: "
+                         :completion-function (lambda (x) 
+                                                (completion-strings x files))
+                         :test-function (lambda (name) 
+                                          (member name files :test #'string=)))
+                        ;; Fallback if ls-files fails
+                        (prompt-for-files-recursively)))
+                  ;; Use regular prompt
+                  (prompt-for-files-recursively))))
+        (when filename
+          (let* ((absolute-filename (merge-pathnames filename root))
+                 (buffer (execute-find-file *find-file-executor*
+                                            (get-file-mode absolute-filename)
+                                            absolute-filename)))
+            (when buffer
+              (switch-to-buffer buffer t nil))))))))
 
 (define-command project-root () ()
   "Display this buffer's project directory."

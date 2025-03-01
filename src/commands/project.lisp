@@ -4,6 +4,7 @@
            :*root-files*
            :*delete-repl-buffer*
            :*delete-last-buffer*
+           :*respect-gitignore*
            :root-p
            :find-root
            :saved-projects

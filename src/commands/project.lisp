@@ -99,7 +99,7 @@
                        ;; (try to) handle non-unix platforms path separators.
                        (add-directory-separator marker) pathname)
         if (member subpath subdirectories :test #'equal)
-          return t
+        return t
         finally (return)))
 
 (defvar *recurse* t)
@@ -136,22 +136,70 @@
         (find-root (parent-directory pathname) :recurse recurse :recursing t)
         pathname)))))
 
+(defvar *respect-gitignore* nil
+  "If non-nil, project-find-file will respect .gitignore files.")
+
+(defun git-repository-p (pathname)
+  (let ((subdirectories (list-subdirectories pathname)))
+    (member (uiop:merge-pathnames* 
+             (add-directory-separator ".git") pathname)
+            subdirectories
+            :test #'equal)))
+
+(defun list-project-files-git (directory)
+  "List all files in a git project using git ls-files."
+  (handler-case
+      (let ((cmd "git ls-files --cached --others --exclude-standard"))
+        (multiple-value-bind (output error-output status)
+            (uiop:run-program cmd
+                              :directory directory
+                              :output :string
+                              :error-output :string
+                              :ignore-error-status t)
+          (if (zerop status)
+              ;; Remove empty lines
+              (remove-if #'uiop:emptyp 
+                         (uiop:split-string output :separator '(#\newline)))
+              (progn
+                (message "Error using git ls-files: ~A" 
+                         (string-right-trim '(#\newline #\space) error-output))
+                nil))))
+    (error (e)
+      (message "Error running git ls-files: ~A" e)
+      nil)))
+
 (define-command project-find-file (arg) (:universal)
-  "Open a file, from the list of all files in this project."
+  "Open a file, from the list of all files in this project.
+   Respects .gitignore files by default when in a git repository."
   ;; ARG is currently not used, use it when needed.
   (declare (ignorable arg))
   (let* ((cwd (buffer-directory))
          (project-root (find-root cwd))
-         (root (or project-root cwd)))
-    (uiop:with-current-directory (root)
-      (let ((filename (prompt-for-files-recursively))
-            buffer)
-        (when filename
-          (setf buffer (execute-find-file *find-file-executor*
-                                          (get-file-mode filename)
-                                          filename))
-          (when buffer
-            (switch-to-buffer buffer t nil)))))))
+         (root (or project-root cwd))
+         (is-git-repo )
+         (filename (if (and *respect-gitignore* (git-repository-p root))
+                       ;; In a git repo and respecting gitignore, use git ls-files
+                       (uiop:with-current-directory (root)
+                         (let ((files (list-project-files-git root)))
+                           (if files
+                               (prompt-for-string
+                                "Find file: "
+                                :completion-function (lambda (x) 
+                                                       (completion-strings x files))
+                                :test-function (lambda (name) 
+                                                 (member name files :test #'string=)))
+                               ;; Fallback if ls-files fails
+                               (prompt-for-files-recursively))))
+                       ;; Use regular prompt
+                       (uiop:with-current-directory (root)
+                         (prompt-for-files-recursively))))
+         buffer)
+    (when filename
+      (setf buffer (execute-find-file *find-file-executor*
+                                      (get-file-mode filename)
+                                      filename))
+      (when buffer
+        (switch-to-buffer buffer t nil)))))
 
 (define-command project-root () ()
   "Display this buffer's project directory."
@@ -168,8 +216,6 @@
          (root (or project-root cwd)))
     (find-file root)))
 
-
-
 (defun list-project-buffers (&optional (root (find-root (buffer-directory))) (buffers (buffer-list)))
   "List all buffers pertaining to this project root."
   (assert buffers)
@@ -177,7 +223,7 @@
         with root = (namestring root)
         for project = (namestring (find-root (buffer-directory buffer)))
         if (equal project root)
-          collect buffer))
+        collect buffer))
 
 (defun maybe-delete-repl-buffer (buffer)
   (if *delete-repl-buffer*
@@ -210,15 +256,15 @@
         for i = all-count then (decf i)
         ;; Deleting the very last buffer makes Lem quit, so we don't do it by default.
         if (= 1 i)
-          do (maybe-delete-last-buffer buffer)
+        do (maybe-delete-last-buffer buffer)
         else
-          ;; We might want to keep the REPL buffer around,
-          ;; even if it seems that by deleting it we don't loose its history.
-          do (if (buffer-repl-p buffer)
-                 (maybe-delete-repl-buffer buffer)
-                 (progn
-                   (delete-buffer buffer)
-                   (signal 'buffer-deleted-p)))))
+        ;; We might want to keep the REPL buffer around,
+        ;; even if it seems that by deleting it we don't loose its history.
+        do (if (buffer-repl-p buffer)
+               (maybe-delete-repl-buffer buffer)
+               (progn
+                 (delete-buffer buffer)
+                 (signal 'buffer-deleted-p)))))
 
 (define-command project-kill-buffers () ()
   "Delete all this project's buffers, except:
@@ -231,8 +277,6 @@
                                        (incf count))))
       (delete-buffers (list-project-buffers)))
     (message "~a buffers deleted." count)))
-
-
 
 (defvar *projects-history*)
 

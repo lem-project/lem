@@ -137,7 +137,7 @@
         (find-root (parent-directory pathname) :recurse recurse :recursing t)
         pathname)))))
 
-(defvar *respect-gitignore* nil
+(defvar *respect-gitignore* t
   "If non-nil, project-find-file will respect .gitignore files.")
 
 (defun git-repository-p (pathname)
@@ -177,7 +177,6 @@
   (let* ((cwd (buffer-directory))
          (project-root (find-root cwd))
          (root (or project-root cwd))
-         (is-git-repo )
          (filename (if (and *respect-gitignore* (git-repository-p root))
                        ;; In a git repo and respecting gitignore, use git ls-files
                        (uiop:with-current-directory (root)

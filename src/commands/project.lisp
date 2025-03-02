@@ -140,13 +140,6 @@
 (defvar *respect-gitignore* t
   "If non-nil, project-find-file will respect .gitignore files.")
 
-(defun git-repository-p (pathname)
-  (let ((subdirectories (list-subdirectories pathname)))
-    (member (uiop:merge-pathnames* 
-             (add-directory-separator ".git") pathname)
-            subdirectories
-            :test #'equal)))
-
 (defun list-project-files-git (directory)
   "List all files in a git project using git ls-files."
   (handler-case
@@ -178,21 +171,20 @@
          (project-root (find-root cwd))
          (root (or project-root cwd)))
     (uiop:with-current-directory (root)
-      (let ((filename 
-              (if (and *respect-gitignore* (git-repository-p root))
-                  ;; In a git repo and respecting gitignore, use git ls-files
-                  (let ((files (list-project-files-git root)))
-                    (if files
-                        (prompt-for-string
-                         "Find file: "
-                         :completion-function (lambda (x) 
-                                                (completion-strings x files))
-                         :test-function (lambda (name) 
-                                          (member name files :test #'string=)))
-                        ;; Fallback if ls-files fails
-                        (prompt-for-files-recursively)))
-                  ;; Use regular prompt
-                  (prompt-for-files-recursively))))
+      (let* ((use-git-ls (and *respect-gitignore*
+                              (uiop:directory-exists-p (uiop:merge-pathnames* ".git/" root))))
+             (git-files (when use-git-ls (list-project-files-git root)))
+             (filename 
+               (if (and use-git-ls git-files)
+                   ;; In a git repo and respecting gitignore, use git ls-files
+                   (prompt-for-string
+                    "Find file: "
+                    :completion-function (lambda (x) 
+                                           (completion-strings x git-files))
+                    :test-function (lambda (name) 
+                                     (member name git-files :test #'string=)))
+                   ;; Fallback
+                   (prompt-for-files-recursively))))
         (when filename
           (let* ((absolute-filename (merge-pathnames filename root))
                  (buffer (execute-find-file *find-file-executor*

@@ -180,7 +180,7 @@
                    (prompt-for-string
                     "Find file: "
                     :completion-function (lambda (x) 
-                                           (completion-strings x git-files))
+                                           (completion-files x git-files))
                     :test-function (lambda (name) 
                                      (member name git-files :test #'string=)))
                    ;; Fallback

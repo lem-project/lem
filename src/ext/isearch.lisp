@@ -214,12 +214,12 @@
       (with-point ((p start-point))
         (loop
           (unless (or (funcall *isearch-search-forward-function* p search-string end-point)
-                      (point= start-point end-point)))
-          (return))
-        (with-point ((before p))
-          (funcall *isearch-search-backward-function* before search-string)
-          (isearch-add-overlay buffer
-                                 (make-overlay before p 'isearch-highlight-attribute))))
+                      (point= start-point end-point))
+            (return))
+          (with-point ((before p))
+            (funcall *isearch-search-backward-function* before search-string)
+            (isearch-add-overlay buffer
+                                 (make-overlay before p 'isearch-highlight-attribute)))))
       (isearch-sort-overlays buffer))))
 
 (defun isearch-update-display ()

@@ -1,6 +1,6 @@
 (in-package :lem-core)
 
-(defvar *set-location-hook* '())
+(defvar *set-location-hook* '((push-buffer-point . 0)))
 (defvar *before-init-hook* '())
 (defvar *after-init-hook* '())
 (defvar *splash-function* nil)

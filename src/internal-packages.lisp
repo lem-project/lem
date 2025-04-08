@@ -559,6 +559,8 @@
    :completion-buffer)
   ;; cursors.lisp
   (:export
+   :push-buffer-point
+   :pop-buffer-point
    :fake-cursor
    :cursor-saved-column
    :cursor-yank-start

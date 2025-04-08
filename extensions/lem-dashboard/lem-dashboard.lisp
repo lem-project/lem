@@ -118,7 +118,7 @@
 
 (defun handle-resize (window)
   "Handle resizing; in this case, redraw the dashboard to keep it centered."
-  (when (string= (buffer-name (window-buffer window)) *dashboard-buffer-name*)
+  (when (get-buffer *dashboard-buffer-name*)
     (redraw-dashboard)))
 
 (define-key *dashboard-mode-keymap* "n" 'next-line)

@@ -543,7 +543,7 @@ Move the cursor to the first non-blank character of the line."
                   ((member :vi-line options) :line)
                   ((member :vi-block options) :block)
                   (t :char)))
-        (and (enable-clipboard-p) (get-clipboard-data)))))
+        (and (enable-clipboard-p) (values (get-clipboard-data) :block)))))
 
 (define-command vi-paste-after (&optional (n 1)) (:universal)
   (dotimes (i n) 

@@ -261,28 +261,29 @@
 
 (defun paste-yank (string type &optional (position :after))
   (check-type position (member :before :after))
-  (let ((point (current-point)))
-    (ecase type
-      (:line
-       (lem:yank)
-       (move-point point (cursor-yank-start point))
-       (back-to-indentation point))
-      (:block
-        (setf (cursor-yank-start point) (copy-point point :right-inserting))
-        (let ((col (point-charpos point))
-              (first-line t))
-          (dolist (row (split-sequence #\Newline string))
-            (if first-line
-                (setf first-line nil)
-                (line-offset point 1 col))
-            (dotimes (i (max 0 (- col (point-charpos point))))
-              (insert-character point #\Space))
-            (insert-string point row)))
-        (setf (cursor-yank-end point) (copy-point point :left-inserting))
-        (move-point point (cursor-yank-start point)))
-      (:char
-       (lem:yank)
-       (character-offset point -1)))))
+  (when string
+    (let ((point (current-point)))
+      (ecase type
+        (:line
+         (lem:yank)
+         (move-point point (cursor-yank-start point))
+         (back-to-indentation point))
+        (:block
+            (setf (cursor-yank-start point) (copy-point point :right-inserting))
+          (let ((col (point-charpos point))
+                (first-line t))
+            (dolist (row (split-sequence #\Newline string))
+              (if first-line
+                  (setf first-line nil)
+                  (line-offset point 1 col))
+              (dotimes (i (max 0 (- col (point-charpos point))))
+                (insert-character point #\Space))
+              (insert-string point row)))
+          (setf (cursor-yank-end point) (copy-point point :left-inserting))
+          (move-point point (cursor-yank-start point)))
+        (:char
+         (lem:yank)
+         (character-offset point -1))))))
 
 (defun register (name)
   (let ((name (ensure-char name)))

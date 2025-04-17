@@ -202,7 +202,7 @@
       (when (and file
                  (prompt-for-y-or-n-p (format nil "Do you really want to delete \"~A\"?" file)))
         (handler-case
-            (delete-file file)
+            (lem/directory-mode/file:delete-file* file)
           (sb-ext:delete-file-error (e)
             (editor-error (format nil "~A" e))))
         (when (not (uiop:file-exists-p file))

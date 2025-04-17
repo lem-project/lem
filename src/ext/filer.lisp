@@ -13,6 +13,7 @@
 
 (define-key *global-keymap* "C-x d" 'filer)
 (define-key *filer-mode-keymap* "Return" 'filer-select)
+(define-key *filer-mode-keymap* "C-c C-d" 'filer-delete-select)
 
 (defclass item ()
   ((pathname :initarg :pathname
@@ -190,3 +191,21 @@
 
 (define-command filer-select () ()
   (select (back-to-indentation (current-point))))
+
+(define-command filer-delete-select () ()
+  "Delete the selected file in the filer."
+  (let ((item (text-property-at (back-to-indentation (current-point)) :item)))
+    (unless item
+      (editor-error "No file selected")
+      (return-from filer-delete-select))
+    (let ((file (item-pathname item)))
+      (when (and file
+                 (prompt-for-y-or-n-p (format nil "Do you really want to delete \"~A\"?" file)))
+        (handler-case
+            (delete-file file)
+          (sb-ext:delete-file-error (e)
+            (editor-error (format nil "~A" e))))
+        (when (not (uiop:file-exists-p file))
+          (with-buffer-read-only (current-buffer) nil
+            (line-start (current-point))
+            (kill-line 1)))))))

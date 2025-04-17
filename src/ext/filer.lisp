@@ -13,7 +13,7 @@
 
 (define-key *global-keymap* "C-x d" 'filer)
 (define-key *filer-mode-keymap* "Return" 'filer-select)
-(define-key *filer-mode-keymap* "C-c C-d" 'filer-delete-select)
+(define-key *filer-mode-keymap* "D" 'filer-delete-select)
 
 (defclass item ()
   ((pathname :initarg :pathname

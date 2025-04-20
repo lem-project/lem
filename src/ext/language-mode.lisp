@@ -16,6 +16,7 @@
    :buffer-language-mode
    :completion-spec
    :complete-symbol
+   :pop-definition-stack
    :indent-size
    :root-uri-patterns
    :detective-search

@@ -188,6 +188,8 @@
 
 (define-command delete-other-windows () ()
   "Delete all other windows."
+  (when (floating-window-p (current-window))
+    (editor-error "Can not keep active window as the only one"))
   (dolist (win (window-list))
     (unless (eq win (current-window))
       (delete-window win)))

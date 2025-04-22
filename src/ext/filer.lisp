@@ -205,6 +205,9 @@
             (lem/directory-mode/file:delete-file* file)
           #+sbcl
           (sb-ext:delete-file-error (e)
+            (editor-error (format nil "~A" e)))
+          #-sbcl
+          (error (e)
             (editor-error (format nil "~A" e))))
         (when (not (uiop:file-exists-p file))
           (with-buffer-read-only (current-buffer) nil

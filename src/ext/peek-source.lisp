@@ -35,7 +35,7 @@
 
 (defvar *peek-window*)
 (defvar *source-window*)
-(defvar *parent-window*)
+(defvar *parent-window* nil)
 
 (define-minor-mode peek-source-mode
     (:name "Peek"
@@ -64,13 +64,14 @@
 (defmethod compute-window-list ((current-window source-window))
   (list *source-window* *peek-window*))
 
-(defvar *is-finalzing* nil)
+(defvar *is-finalizing* nil)
 
 (defun finalize-peek-source ()
-  (unless *is-finalzing*
-    (let ((*is-finalzing* t))
-      (finalize-highlight-overlays)
+  (when (and *parent-window* (not *is-finalizing*))
+    (let ((*is-finalizing* t))
       (setf (current-window) *parent-window*)
+      (setf *parent-window* nil)
+      (finalize-highlight-overlays)
       (delete-window *source-window*)
       (delete-window *peek-window*))))
 
@@ -122,6 +123,8 @@
     (list peek-window source-window)))
 
 (defun display (collector)
+  (when *parent-window* ; Clear existing peek window
+    (peek-source-quit))
   (destructuring-bind (peek-window source-window)
       (make-two-side-by-side-windows (collector-buffer collector))
 
@@ -219,12 +222,7 @@
   (previous-move-point (current-point)))
 
 (define-command peek-source-quit () ()
-  (setf (current-window) *parent-window*)
-  (start-timer
-   (make-idle-timer (lambda ()
-                      (delete-window *peek-window*)
-                      (delete-window *source-window*)))
-   0))
+  (finalize-peek-source))
 
 ;;;
 (defvar *highlight-overlays* '())

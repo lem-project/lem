@@ -2,6 +2,7 @@
   (:use :cl :lem-core)
   (:export :describe-key
            :describe-bindings
+           :describe-mode
            :apropos-command
            :lem-version
            :list-modes)

@@ -8,6 +8,10 @@
 (defvar *bypass-commands*
   '(next-window
     previous-window
+    window-move-up
+    window-move-down
+    window-move-left
+    window-move-right
     split-active-window-vertically
     split-active-window-horizontally
     delete-other-windows

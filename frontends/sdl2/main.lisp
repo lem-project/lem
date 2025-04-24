@@ -471,7 +471,7 @@
   (lem-sdl2/log:with-debug ("clipboard-paste")
     (display:with-display (display)
       (display:with-renderer (display)
-        (sdl2-ffi.functions:sdl-get-clipboard-text)))))
+        (multiple-value-bind (str _) (sdl2-ffi.functions:sdl-get-clipboard-text) str)))))
 
 #+windows
 (defmethod lem-if:clipboard-paste ((implementation sdl2))

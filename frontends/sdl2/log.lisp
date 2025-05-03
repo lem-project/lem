@@ -5,12 +5,17 @@
 (in-package :lem-sdl2/log)
 
 (defun do-log (value)
-  (let ((log-file (merge-pathnames "logs/error.log" (lem:lem-home))))
+  (let ((log-file (merge-pathnames "logs/error.log" (lem:lem-home)))
+        (current-time
+          (multiple-value-bind (seconds minutes hours day month year)
+              (get-decoded-time)
+            (format nil "~%~2,'0D:~2,'0D:~2,'0D - ~D/~D/~D~% " hours minutes seconds day month year))))
     (ensure-directories-exist log-file)
     (with-open-file (out log-file
                          :direction :output
                          :if-exists :append
                          :if-does-not-exist :create)
+      (uiop:println current-time out)
       (uiop:println value out))))
 
 (defun call-with-debug (log-function body-function)

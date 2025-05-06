@@ -88,7 +88,10 @@
     :accessor buffer-encoding)
    (last-write-date
     :initform nil
-    :accessor buffer-last-write-date)))
+    :accessor buffer-last-write-date)
+   (points-ring
+    :initform (lem/common/ring::make-ring 16)
+    :accessor buffer-points-ring)))
 
 (defclass text-buffer (buffer)
   ())

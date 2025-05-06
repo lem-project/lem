@@ -55,6 +55,7 @@
    :buffer-mark-p
    :buffer-mark
    :buffer-point
+   :buffer-points-ring
    :buffer-nlines
    :buffer-encoding
    :buffer-last-write-date

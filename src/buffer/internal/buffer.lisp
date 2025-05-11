@@ -90,6 +90,11 @@
     :initform nil
     :accessor buffer-last-write-date)))
 
+(defvar *buffer-mark-activate-hook* '()
+  "Hook run when mark is activated.")
+(defvar *buffer-mark-deactivate-hook* '()
+  "Hook run when mark is inactivated.")
+
 (defclass text-buffer (buffer)
   ())
 
@@ -232,8 +237,16 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   "Unflag the change flag of 'buffer'."
   (setf (buffer-%modified-p buffer) 0))
 
+(defun (setf buffer-mark) (point &optional (buffer (current-buffer)))
+  (let ((already-active (buffer-mark-p buffer)))
+    (mark-set-point (buffer-mark-object buffer) point)
+    (unless already-active
+      (run-hooks *buffer-mark-activate-hook* buffer))))
+
 (defun buffer-mark-cancel (buffer)
-  (mark-cancel (buffer-mark-object buffer)))
+  (when (buffer-mark-p buffer)
+    (mark-cancel (buffer-mark-object buffer))
+    (run-hooks *buffer-mark-deactivate-hook* buffer)))
 
 (defun buffer-attributes (buffer)
   (concatenate 'string

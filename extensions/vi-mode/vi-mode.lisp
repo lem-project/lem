@@ -51,7 +51,6 @@
            :normal
            :insert
            :visual
-           :change-state
            :option-value
            :leader-key))
 (in-package :lem-vi-mode)
@@ -105,13 +104,13 @@
 (defmethod post-command-hook :after ((state visual))
   (adjust-window-scroll))
 
-(defmethod state-enabled-hook ((state insert))
+(defmethod buffer-state-enabled-hook ((state insert) buffer)
   (when *enable-repeat-recording*
     (setf *last-repeat-keys* nil))
   (unless *macro-running-p*
-    (buffer-undo-boundary)
-    (buffer-disable-undo-boundary (lem:current-buffer))))
+    (buffer-undo-boundary buffer)
+    (buffer-disable-undo-boundary buffer)))
 
-(defmethod state-disabled-hook ((state insert))
+(defmethod buffer-state-disabled-hook ((state insert) buffer)
   (unless *macro-running-p*
-    (buffer-enable-undo-boundary (lem:current-buffer))))
+    (buffer-enable-undo-boundary buffer)))

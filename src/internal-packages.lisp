@@ -609,6 +609,9 @@
    :redraw-buffer
    :compute-left-display-area-content
    :compute-wrap-left-area-content)
+  ;; display/logical-line.lisp
+  (:export
+    :make-region-overlays-using-global-mode)
   ;; interface.lisp
   (:export
    :with-implementation

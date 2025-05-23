@@ -644,6 +644,7 @@
    :background-color)
   ;; region.lisp
   (:export
+   :*region-end-offset*
    :check-marked-using-global-mode
    :region-beginning-using-global-mode
    :region-end-using-global-mode

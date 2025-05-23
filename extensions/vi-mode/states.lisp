@@ -127,6 +127,7 @@
     (setf (current-state) state)))
 
 (defun vi-enable-hook ()
+  (setf *region-end-offset* -1)
   (setf (current-state) (or (buffer-state (current-buffer)) (ensure-state 'normal)))
   (add-hook *switch-to-buffer-hook* 'vi-switch-to-buffer)
   (add-hook *switch-to-window-hook* 'vi-switch-to-window)
@@ -134,6 +135,7 @@
   (add-hook *prompt-deactivate-hook* 'exit-prompt))
 
 (defun vi-disable-hook ()
+  (setf *region-end-offset* 0)
   (remove-hook *switch-to-buffer-hook* 'vi-switch-to-buffer)
   (remove-hook *switch-to-window-hook* 'vi-switch-to-window)
   (remove-hook *prompt-after-activate-hook* 'enter-prompt)

@@ -67,6 +67,11 @@
 
               dontBuild = true;
               dontFixup = true;
+              outputHashMode = "recursive";
+              outputHash = if pkgs.stdenv.isDarwin then
+                "sha256-BV1m58fUe1zfLH5iKbDP7KTNhv1p+g3W99tFQFYxPqs="
+              else
+                "sha256-NtCSBxEo/4uuhlLc9Xqlq+PM1fAbDfRBH64imMLvKYE=";
             };
 
             configurePhase = ''
@@ -148,14 +153,38 @@
               runHook postInstall
             '';
           };
-        in {
+
+          devShell = pkgs.mkShell {
+            packages = with pkgs; [
+              autoconf
+              automake
+              libffi.dev
+              libtool
+              ncurses.dev
+              pkg-config
+              sbcl
+              sbcl.pkgs.qlot-cli
+              which # this is available in the stdenv and most sane systems
+            ];
+            # Normally we would include pkg-config and list these dependencies
+            # in the packages attribute, but it does not appear that pkg-config
+            # is being used when available.
+            shellHook = with pkgs; ''
+              export LD_LIBRARY_PATH="''${LD_LIBRARY_PATH}:${ncurses.out}/lib:${SDL2}/lib:${SDL2_ttf}/lib:${SDL2_image}/lib:${libffi}/lib:${openssl.out}/lib"
+            '';
+          };
+        in
+        {
+          devShells.default = devShell;
           packages.lem-ncurses = lem.overrideLispAttrs (o: {
             pname = "lem-ncurses";
+            meta.mainProgram = "lem";
             systems = [ "lem-ncurses" ];
             nativeLibs = with pkgs; o.nativeLibs ++ [ ncurses ];
           });
           packages.lem-sdl2 = lem.overrideLispAttrs (o: {
             pname = "lem-sdl2";
+            meta.mainProgram = "lem";
             systems = [ "lem-sdl2" ];
             nativeLibs = with pkgs;
               o.nativeLibs ++ [ SDL2 SDL2_ttf SDL2_image ];

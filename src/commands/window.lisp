@@ -124,6 +124,13 @@
   (redraw-display)
   t)
 
+(define-command recenter-top-bottom (p) (:universal-nil)
+  "Scroll so that the cursor is in the middle/top/bottom."
+  (clear-screens-of-window-list)
+  (unless p (window-recenter-top-bottom (current-window)))
+  (redraw-display)
+  t)
+
 (define-command split-active-window-vertically (&optional n) (:universal-nil)
   "Split the current window vertically."
   (split-window-vertically (current-window) :height n)
@@ -160,12 +167,12 @@
     (switch-to-window window)))
 
 (define-command window-move-down () ()
-  "Go to the window on the down."
+  "Go to the window below."
   (alexandria:when-let ((window (down-window (current-window))))
     (switch-to-window window)))
 
 (define-command window-move-up () ()
-  "Go to the window on the up."
+  "Go to the window above."
   (alexandria:when-let ((window (up-window (current-window))))
     (switch-to-window window)))
 
@@ -181,6 +188,8 @@
 
 (define-command delete-other-windows () ()
   "Delete all other windows."
+  (when (floating-window-p (current-window))
+    (editor-error "Can not keep active window as the only one"))
   (dolist (win (window-list))
     (unless (eq win (current-window))
       (delete-window win)))

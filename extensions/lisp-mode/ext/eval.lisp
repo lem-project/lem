@@ -79,7 +79,7 @@
 
 ;; copied from src/display.lisp, TODO: extract this utils
 (defun compute-evaluated-background-color ()
-  (let ((color (parse-color (background-color))))
+  (alexandria:when-let (color (parse-color (background-color)))
     (multiple-value-bind (h s v)
         (rgb-to-hsv (color-red color)
                     (color-green color)

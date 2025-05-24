@@ -501,6 +501,7 @@ class View {
     type,
     content,
     border,
+    borderShape,
     option,
     editor,
   }) {
@@ -514,6 +515,7 @@ class View {
     this.kind = kind;
     this.type = type;
     this.border = border;
+    this.borderShape = borderShape;
     this.editor = editor;
 
     this.leftsideBar = null;
@@ -531,6 +533,16 @@ class View {
         break;
       case 'floating':
         this.mainSurface = this.makeSurface(type, content);
+        console.log(borderShape);
+        if (borderShape === 'left-border') {
+          this.leftSideBar = new VerticalBorder({
+            x: x,
+            y: y,
+            height: height,
+            option: option,
+            editor: editor,
+          });
+        }
         break;
     }
 
@@ -669,7 +681,7 @@ class View {
       height: this.height,
       styles: getViewStyle(this.kind, this.option),
       editor: this.editor,
-      border: this.border,
+      border: this.borderShape === 'left-border' ? 0 : this.border,
       isFloating: this.kind === 'floating',
       view: this,
     })
@@ -1085,7 +1097,7 @@ export class Editor {
     element.style.backgroundColor = color;
   }
 
-  makeView({ id, x, y, width, height, use_modeline, kind, type, content, border }) {
+  makeView({ id, x, y, width, height, use_modeline, kind, type, content, border, border_shape }) {
     const view = new View({
       option: this.option,
       id: id,
@@ -1098,6 +1110,7 @@ export class Editor {
       type: type,
       content: content,
       border: border,
+      borderShape: border_shape,
       editor: this
     });
     this.viewMap.set(id, view);

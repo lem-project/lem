@@ -69,6 +69,16 @@
         (ok (buf= #?"abcd\nefgh\n[a]bcd\n"))
         (cmd "P")
         (ok (buf= #?"abcd\nefgh\n[a]bcd\nabcd\n"))))
+    (testing "paste line before - not at last line"
+      (with-vi-buffer (#?"first\nsecond\nthird1 th[i]rd2 third3\nend")
+        (cmd "yy")
+        (cmd "P")
+        (ok (buf= #?"first\nsecond\n[t]hird1 third2 third3\nthird1 third2 third3\nend"))))
+    (testing "paste line before - at last line"
+      (with-vi-buffer (#?"first\nsecond\nthird1 th[i]rd2 third3")
+        (cmd "yy")
+        (cmd "P")
+        (ok (buf= #?"first\nsecond\n[t]hird1 third2 third3\nthird1 third2 third3"))))
     (testing "paste block"
       (with-vi-buffer (#?"a[b]cd\nefgh\n")
         (cmd "<C-v>jly")

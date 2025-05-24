@@ -411,3 +411,5 @@
   (:documentation "The minimal number of lines to keep above of below the cursor.
 Default: 0
 Aliases: so"))
+
+(define-option "ignorecase" (nil :type boolean))

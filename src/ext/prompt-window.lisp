@@ -216,11 +216,11 @@
                                   :source-window (prompt-window-caller-of-prompt-window window))
       (unless (and (= x (window-x window))
                    (= y (window-y window)))
-        (lem-core::window-set-pos window x y))
+        (window-set-pos window x y))
       (let ((width (max width child-width)))
         (unless (and (= width (window-width window))
                      (= height (window-height window)))
-          (lem-core::window-set-size window width height))))))
+          (window-set-size window width height))))))
 
 (defun initialize-prompt-buffer (buffer)
   (let ((*inhibit-read-only* t)
@@ -430,5 +430,39 @@
                     :start s
                     :end (line-end e)))))
 
+(defun collect-command-all-keybindings (buffer command)
+  (let ((command-name (command-name command)))
+    (flet ((find-keybindings (keymap)
+             (alexandria:when-let (keybindings (collect-command-keybindings command-name keymap))
+               (mapcar (lambda (keybinding)
+                         (format nil "~{~A~^ ~}" keybinding))
+                       keybindings))))
+      (format nil "~{~A~^, ~}"
+              (append (find-keybindings (mode-keymap (buffer-major-mode buffer)))
+                      (loop :for mode :in (buffer-minor-modes buffer)
+                            :for keymap := (mode-keymap mode)
+                            :when keymap
+                            :append (find-keybindings keymap))
+                      (find-keybindings *global-keymap*))))))
+
+(defun prompt-command-completion (string)
+  (let ((items (loop :for name :in (all-command-names)
+                     :collect (lem/completion-mode:make-completion-item
+                               :label name
+                               :detail (collect-command-all-keybindings
+                                        (current-buffer)
+                                        (find-command name))))))
+    (sort
+     (if (find #\- string)
+         (completion-hyphen string
+                            items
+                            :key #'lem/completion-mode:completion-item-label)
+         (completion string
+                     items
+                     :key #'lem/completion-mode:completion-item-label))
+     #'string-lessp
+     :key #'lem/completion-mode:completion-item-label)))
+
 (setf *prompt-file-completion-function* 'prompt-file-completion)
 (setf *prompt-buffer-completion-function* 'prompt-buffer-completion)
+(setf *prompt-command-completion-function* 'prompt-command-completion)

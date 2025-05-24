@@ -6,10 +6,26 @@
 (define-attribute repl-result-attribute
   (t :foreground :base06 :bold t))
 
+(define-attribute warning-attribute
+  (:dark :foreground "yellow")
+  (:light :foreground "orange"))
+
+(defvar *repl-syntax-table* (lem/buffer/syntax-table::copy-syntax-table lem-lisp-syntax:*syntax-table*))
+(set-syntax-parser *repl-syntax-table*
+                   (make-tmlanguage-lisp :extra-patterns
+                                         (list (make-tm-region
+                                                "^WARNING:"
+                                                "$"
+                                                :name 'warning-attribute)
+                                               (make-tm-match "^; caught WARNING:"
+                                                              :name 'warning-attribute)
+                                               (make-tm-match "^; caught ERROR:"
+                                                              :name 'warning-attribute))))
+
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"
      :keymap *lisp-repl-mode-keymap*
-     :syntax-table lem-lisp-syntax:*syntax-table*
+     :syntax-table *repl-syntax-table*
      :mode-hook *lisp-repl-mode-hook*)
   (cond
     ((eq (repl-buffer) (current-buffer))
@@ -85,10 +101,10 @@
    :callback (lambda (&rest args)
                (declare (ignore args))
                (copy-down-to-repl 'pathname
-                                  (lem/directory-mode::get-pathname (current-point))))))
+                                  (lem/directory-mode/internal::get-pathname (current-point))))))
 
 (defun repl-compute-context-menu-items ()
-  (if (lem/directory-mode::get-pathname (current-point))
+  (if (lem/directory-mode/internal::get-pathname (current-point))
       (list (context-menu-copy-down-pathname-to-repl))
       (remove
        nil
@@ -490,7 +506,9 @@
         (attribute
          (setf current-attribute token))
         (string
-         (insert-string point token :sticky-attribute current-attribute))))))
+         (if current-attribute
+             (insert-string point token :sticky-attribute current-attribute)
+             (insert-string point token)))))))
 
 (define-command backward-prompt () ()
   (when (equal (current-buffer) (repl-buffer))
@@ -508,7 +526,8 @@
 (defvar *lisp-repl-shortcuts* '())
 
 (defmacro with-repl-prompt (() &body body)
-  `(let ((lem/prompt-window:*prompt-completion-window-shape* nil))
+  `(let ((lem/prompt-window:*prompt-completion-window-shape* nil)
+         (lem/prompt-window::*fill-width* nil))
      ,@body))
 
 (defun repl-prompt-for-string (prompt &rest args)
@@ -593,8 +612,8 @@
 
 (define-repl-shortcut ls ()
   (insert-character (current-point) #\newline)
-  (lem/directory-mode::insert-directories-and-files (current-point)
-                                                    (buffer-directory (current-buffer)))
+  (lem/directory-mode/internal::insert-directories-and-files (current-point)
+                                                           (buffer-directory (current-buffer)))
   (lem/listener-mode:refresh-prompt (current-buffer)))
 
 (define-repl-shortcut pwd ()

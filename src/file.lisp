@@ -12,6 +12,21 @@
   (get mode 'file-mode-associations))
 
 (defmacro define-file-associations (mode specs)
+  "Associate a mode to a list of file names so that the files are always open in this mode.
+
+  Specs are in the form (:spec \"filename\"),
+
+  Available specs:
+
+  :file-namestring
+
+  Example:
+
+  (define-file-associations makefile-mode
+    ((:file-namestring \"Makefile\")
+     (:file-namestring \"makefile\")))
+
+  See also DEFINE-FILE-TYPE."
   `(setf (file-mode-associations ',mode) ',specs))
 
 (defun get-file-mode (pathname)

@@ -94,7 +94,7 @@
    :key-ctrl
    :key-meta
    :key-super
-   :key-hypher
+   :key-hyper
    :key-shift
    :key-sym
    :match-key
@@ -205,6 +205,7 @@
    :frame-prompt-window
    :frame-message-window
    :frame-leftside-window
+   :frame-rightside-window
    :notify-frame-redisplay-required
    :map-frame
    :get-frame
@@ -246,6 +247,7 @@
    :*prompt-deactivate-hook*
    :*prompt-buffer-completion-function*
    :*prompt-file-completion-function*
+   :*prompt-command-completion-function*
    :caller-of-prompt-window
    :prompt-active-p
    :active-prompt-window
@@ -257,6 +259,7 @@
    :prompt-for-buffer
    :prompt-for-file
    :prompt-for-directory
+   :prompt-for-command
    :prompt-for-encodings
    :prompt-for-library)
   ;; buffer.lisp
@@ -275,6 +278,7 @@
    :*window-show-buffer-functions*
    :*switch-to-buffer-hook*
    :*switch-to-window-hook*
+   :*default-split-action*
    :window-parent
    :scroll
    :window-view-point
@@ -291,6 +295,9 @@
    :window-view
    :window-point
    :window-cursor-invisible-p
+   :show-cursor
+   :hide-cursor
+   :window-buffer-switchable-p
    :set-last-print-cursor
    :last-print-cursor-x
    :last-print-cursor-y
@@ -346,6 +353,7 @@
   ;; virtual-line
   (:export
    :window-recenter
+   :window-recenter-top-bottom
    :window-cursor-x
    :window-cursor-y
    :backward-line-wrap
@@ -363,7 +371,9 @@
    :side-window
    :side-window-p
    :make-leftside-window
-   :delete-leftside-window)
+   :delete-leftside-window
+   :make-rightside-window
+   :delete-rightside-window)
   ;; popup.lisp
   (:export
    :*default-popup-message-timeout*
@@ -455,6 +465,8 @@
    :*global-keymap*
    :define-key
    :define-keys
+   :undefine-key
+   :undefine-keys
    :keyseq-to-string
    :find-keybind
    :insertion-key-p
@@ -488,6 +500,7 @@
    :exit-editor
    :interactive-p
    :continue-flag
+   :nullify-last-flags
    :pop-up-backtrace
    :call-background-job
    :command-loop-counter
@@ -594,7 +607,8 @@
    :wrap-line-attribute
    :inactive-window-background-color
    :redraw-buffer
-   :compute-left-display-area-content)
+   :compute-left-display-area-content
+   :compute-wrap-left-area-content)
   ;; interface.lisp
   (:export
    :with-implementation
@@ -617,6 +631,7 @@
   (:export
    :color-theme-names
    :define-color-theme
+   :*after-load-theme-hook*
    :load-theme
    :current-theme
    :find-color-theme
@@ -682,6 +697,8 @@
    :set-display-title
    :display-fullscreen-p
    :set-display-fullscreen-p
+   :maximize-frame
+   :minimize-frame
    :make-view
    :view-width
    :view-height

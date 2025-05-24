@@ -308,6 +308,7 @@
                                (buffer (alexandria:required-argument :buffer))
                                (width (alexandria:required-argument :width))
                                (height (alexandria:required-argument :height))
+                               (clickable t)
                                style)
   (let* ((style (ensure-style style))
          (border-size (if (style-use-border style) +border-size+ 0))
@@ -335,6 +336,7 @@
                      :border-shape (style-shape style)
                      :background-color (style-background-color style)
                      :cursor-invisible (style-cursor-invisible style)
+                     :clickable clickable
                      :style style))))
 
 (defun update-popup-window (&key (source-window (alexandria:required-argument :source-window))

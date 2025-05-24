@@ -17,6 +17,8 @@
 (defvar *switch-to-buffer-hook* '())
 (defvar *switch-to-window-hook* '())
 
+(defvar *default-split-action* nil)
+
 (defgeneric %delete-window (window))
 (defgeneric window-parent (window)
   (:method (window)
@@ -78,7 +80,8 @@
    (cursor-invisible
     :initform nil
     :initarg :cursor-invisible
-    :reader window-cursor-invisible-p)
+    :reader window-cursor-invisible-p
+    :writer set-window-cursor-invisible)
    (last-mouse-button-down-point
     :initform nil
     :accessor window-last-mouse-button-down-point)
@@ -103,9 +106,17 @@
    (deleted
     :initform nil
     :accessor window-deleted-p)
+   (clickable
+    :initarg :clickable
+    :initform t
+    :reader window-clickable)
    (parameters
     :initform nil
-    :accessor window-parameters)))
+    :accessor window-parameters)
+   (buffer-switchable
+    :initform t
+    :initarg :buffer-switchable
+    :accessor window-buffer-switchable-p)))
 
 (defun need-to-redraw (window)
   (setf (window-need-to-redraw-p window) t))
@@ -161,6 +172,7 @@ This is the content area in which the buffer is displayed, without any side marg
            (need-to-redraw window)
            (lem-if:clear (implementation) (window-view window))))
     (mapc #'clear-screen (uiop:ensure-list (frame-leftside-window (current-frame))))
+    (mapc #'clear-screen (uiop:ensure-list (frame-rightside-window (current-frame))))
     (mapc #'clear-screen (window-list))
     (mapc #'clear-screen (frame-floating-windows (current-frame)))))
 
@@ -193,6 +205,12 @@ This is the content area in which the buffer is displayed, without any side marg
 
 (defun (setf window-parameter) (value window parameter)
   (setf (getf (window-parameters window) parameter) value))
+
+(defmethod hide-cursor ((window window))
+  (set-window-cursor-invisible t window))
+
+(defmethod show-cursor ((window window))
+  (set-window-cursor-invisible nil window))
 
 (defun current-window ()
   (frame-current-window (current-frame)))
@@ -229,6 +247,8 @@ This is the content area in which the buffer is displayed, without any side marg
            (active-prompt-window))
           (alexandria:ensure-list
            (frame-leftside-window (current-frame)))
+          (alexandria:ensure-list
+           (frame-rightside-window (current-frame)))
           (remove-if-not #'floating-window-focusable-p
                          (frame-floating-windows (current-frame)))
           (window-list)))
@@ -273,6 +293,7 @@ This is the content area in which the buffer is displayed, without any side marg
   (mapc #'%free-window (window-list frame))
   (mapc #'%free-window (frame-floating-windows frame))
   (mapc #'%free-window (uiop:ensure-list (frame-leftside-window frame)))
+  (mapc #'%free-window (uiop:ensure-list (frame-rightside-window frame)))
   (values))
 
 (defun adjust-view-point (window)
@@ -727,7 +748,9 @@ You can pass in the optional argument WINDOW-LIST to replace the default
                                 (when include-floating-windows
                                   (frame-floating-windows frame))
                                 (when include-floating-windows
-                                  (uiop:ensure-list (frame-leftside-window frame))))
+                                  (uiop:ensure-list (frame-leftside-window frame)))
+                                (when include-floating-windows
+                                  (uiop:ensure-list (frame-rightside-window frame))))
         :when (eq buffer (window-buffer window))
         :collect window))
 
@@ -756,7 +779,7 @@ You can pass in the optional argument WINDOW-LIST to replace the default
     (run-hooks *window-show-buffer-functions* window)))
 
 (deftype split-action ()
-  '(or null (member :sensibly :negative)))
+  '(or null (member :sensibly :negative :no-split)))
 
 (defmethod split-window-using-split-action ((split-action null) window)
   (split-window-sensibly window))
@@ -771,6 +794,9 @@ You can pass in the optional argument WINDOW-LIST to replace the default
         (ecase (window-node-split-type node)
           (:hsplit (split-window-vertically window))
           (:vsplit (split-window-horizontally window))))))
+
+(defmethod split-window-using-split-action ((split-action (eql :no-split)) window)
+  )
 
 (defstruct pop-to-buffer-state
   (split-action nil :type split-action)
@@ -831,13 +857,14 @@ You can pass in the optional argument WINDOW-LIST to replace the default
   (when (deleted-buffer-p buffer)
     (editor-error "This buffer has been deleted"))
   (when (or (not-switchable-buffer-p (window-buffer (current-window)))
-            (not-switchable-buffer-p buffer))
+            (not-switchable-buffer-p buffer)
+            (not (window-buffer-switchable-p (current-window))))
     (editor-error "This buffer is not switchable"))
   (run-hooks *switch-to-buffer-hook* buffer)
   (run-hooks (window-switch-to-buffer-hook (current-window)) buffer)
   (%switch-to-buffer buffer record move-prev-point))
 
-(defun pop-to-buffer (buffer &key split-action)
+(defun pop-to-buffer (buffer &key (split-action *default-split-action*))
   (check-type split-action split-action)
   (if (eq buffer (current-buffer))
       (return-from pop-to-buffer (current-window))
@@ -944,6 +971,8 @@ You can pass in the optional argument WINDOW-LIST to replace the default
 (defun adjust-all-window-size ()
   (dolist (window (frame-header-windows (current-frame)))
     (window-set-size window (display-width) 1))
+  (alexandria:when-let (window (frame-rightside-window (current-frame)))
+    (resize-rightside-window window))
   (balance-windows))
 
 (defun update-on-display-resized ()

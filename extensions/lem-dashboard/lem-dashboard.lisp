@@ -90,15 +90,18 @@
   "Redraws the dashboard, clearing and redrawing all content while attempting to maintain point position."
   (let* ((buffer (create-dashboard-buffer))
          (old-line (line-number-at-point (buffer-point buffer)))
-         (old-column (point-column (buffer-point buffer))))
-    (with-buffer-read-only buffer nil
-      (erase-buffer buffer)
-      (let ((point (buffer-point buffer)))
-        (dolist (item *dashboard-layout*)
-          (draw-dashboard-item item point)))
-      (change-buffer-mode buffer 'dashboard-mode)
-      (move-to-line (buffer-point buffer) old-line)
-      (move-to-column (buffer-point buffer) old-column))))
+         (old-column (point-column (buffer-point buffer)))
+         (window (or (first (get-buffer-windows (get-buffer *dashboard-buffer-name*)))
+                     (current-window))))
+    (with-current-window window
+      (with-buffer-read-only buffer nil
+        (erase-buffer buffer)
+        (let ((point (buffer-point buffer)))
+          (dolist (item *dashboard-layout*)
+            (draw-dashboard-item item point)))
+        (change-buffer-mode buffer 'dashboard-mode)
+        (move-to-line (buffer-point buffer) old-line)
+        (move-to-column (buffer-point buffer) old-column)))))
 
 (define-command open-dashboard () ()
   "Opens the dashboard if it doesn't exist, or switches to it if it does."
@@ -118,7 +121,11 @@
 
 (defun handle-resize (window)
   "Handle resizing; in this case, redraw the dashboard to keep it centered."
-  (when (string= (buffer-name (window-buffer window)) *dashboard-buffer-name*)
+  (when (get-buffer *dashboard-buffer-name*)
+    (redraw-dashboard)))
+
+(defun handle-show-buffer (window)
+  (when (eq (window-buffer window) (get-buffer *dashboard-buffer-name*))
     (redraw-dashboard)))
 
 (define-key *dashboard-mode-keymap* "n" 'next-line)
@@ -129,3 +136,4 @@
 
 (setf lem:*splash-function* #'open-dashboard)
 (add-hook *window-size-change-functions* 'handle-resize)
+(add-hook *window-show-buffer-functions* 'handle-show-buffer)

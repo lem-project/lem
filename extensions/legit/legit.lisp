@@ -27,6 +27,7 @@ Done:
 - basic Fossil support (current branch, add change, commit)
 - basic Mercurial support
 - show the commits log, with pagination
+- view stashes, stash push, pop and drop stash at point
 
 Ongoing:
 
@@ -43,6 +44,9 @@ Ongoing:
 (defvar *ignore-all-space* nil "If non t, show all spaces in a diff. Spaces are ignored by default.
 
 Currently Git-only. Concretely, this calls Git with the -w option.")
+
+(defvar *show-stashes* t "List stashes on the Legit status buffer.")
+
 
 ;; Supercharge patch-mode with our keys.
 (define-major-mode legit-diff-mode lem-patch-mode:patch-mode
@@ -103,6 +107,10 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-key *peek-legit-keymap* "r c" 'rebase-continue)
 (define-key *peek-legit-keymap* "r s" 'rebase-skip)
 
+;; Stashes
+(define-key *peek-legit-keymap* "z z" 'legit-stash-push)
+(define-key *peek-legit-keymap* "z p" 'legit-stash-pop)
+
 ;; redraw everything:
 (define-key *peek-legit-keymap* "g" 'legit-status)
 
@@ -160,6 +168,38 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (insert-string (buffer-point buffer) diff)
     (setf (buffer-read-only-p buffer) t)
     (move-to-line (buffer-point buffer) 1)))
+
+(defun make-stash-show-function (stash)
+  (lambda ()
+    (with-current-project (vcs)
+      (cond
+        ((and (numberp stash)
+              (not (minusp stash)))
+         (show-diff (lem/porcelain:stash-show vcs :position stash)))
+        (t
+         (show-diff (format nil "=== this stash reference is not valid: ~s" stash)))))))
+
+(defun make-stash-pop-function (stash)
+  (lambda ()
+    (with-current-project (vcs)
+      (cond
+        ((and (numberp stash)
+              (not (minusp stash)))
+         (lem/porcelain:stash-pop vcs :position stash)
+         )
+        (t
+         (message (format nil "=== this stash reference is not valid: ~s" stash)))))))
+
+(defun make-stash-drop-function (stash)
+  (lambda ()
+    (with-current-project (vcs)
+      (cond
+        ((and (numberp stash)
+              (not (minusp stash)))
+         (when (prompt-for-y-or-n-p "Drop stash? "))
+             (lem/porcelain:stash-drop vcs :position stash))
+        (t
+         (message (format nil "=== this stash reference is not valid: ~s" stash)))))))
 
 (defun make-diff-function (file &key cached type)
   (lambda ()
@@ -342,7 +382,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
    - exit code (integer)
 
   Use with-current-project in the caller too.
-  Typicaly used to run an external process in the context of a diff buffer command."
+  Typically used to run an external process in the context of a diff buffer command."
   (multiple-value-bind (output error-output exit-code)
       (funcall fn)
     (cond
@@ -423,7 +463,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
             (message "Could not parse hunk information"))))))
 
 (defparameter *commit-buffer-message*
-  "~%# Please enter the commit message for your changes.~%~
+  "~%~%# Please enter the commit message for your changes.~%~
   # Lines starting with '#' will be discarded, and an empty message does nothing.~%~
   # Validate with C-c C-c, quit with M-q or C-c C-k")
 
@@ -466,7 +506,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 
 
 (define-command legit-status () ()
-  "Show changes, untracked files and latest commits in an interactive window."
+  "Show changes, untracked files, stashes and latest commits in an interactive window."
   (with-current-project (vcs)
     (multiple-value-bind (untracked-files unstaged-files staged-files)
         (lem/porcelain:components vcs)
@@ -502,6 +542,26 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                  :unstage-function (lambda () (message "File is not tracked, can't be unstaged.")))
                         (insert-string point file :attribute 'filename-attribute :read-only t)))
             (collector-insert "<none>"))
+
+
+        ;; Stashes.
+        (collector-insert "")
+        (let ((stashes (lem/porcelain:stash-list vcs)))
+          (collector-insert (format nil "Stashes (~a)" (length stashes)) :header t)
+          (when *show-stashes*
+            (loop :for line :in stashes
+                  :for position := 0 :then (incf position)
+                  :do (with-appending-source
+                          (point :move-function (make-stash-show-function position)
+                                 :visit-file-function (lambda ()
+                                                        (message "Apply this stash with (s)")
+                                                        ;; Have a side effect,
+                                                        ;; don't try to open a file.
+                                                        (values))
+                                 :stage-function (make-stash-pop-function position)
+                                 :discard-file-function (make-stash-drop-function position))
+                        (insert-string point line
+                                       :attribute 'filename-attribute :read-only t)))))
 
         ;; Unstaged changes
         (collector-insert "")
@@ -640,7 +700,9 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
 (define-command legit-push () ()
   "Push changes to the current remote."
   (with-current-project (vcs)
-    (run-function (lambda () (lem/porcelain:push vcs)))))
+    (run-function (lambda ()
+                    (lem/porcelain:push-default vcs))
+                  :message "Done")))
 
 (define-command legit-rebase-interactive () ()
   "Rebase interactively, from the commit the point is on.
@@ -748,6 +810,21 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
                                 commits-per-page)))
       (display-commits-log vcs last-page-offset))))
 
+(define-command legit-stash-push () ()
+  "Ask for a message and stash the current changes."
+  (with-current-project (vcs)
+    (let ((message (prompt-for-string "Stash message: ")))
+      (lem/porcelain::stash-push vcs :message message)
+      (legit-status))))
+
+(define-command legit-stash-pop () ()
+  "Pop the latest staged changes"
+  (with-current-project (vcs)
+    (let ((confirm (prompt-for-y-or-n-p "Pop the latest stash to the current branch? ")))
+      (when confirm
+        (lem/porcelain::stash-pop vcs)
+        (legit-status)))))
+
 (define-command legit-quit () ()
   "Quit"
   (%legit-quit)
@@ -762,15 +839,19 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (format s "~%")
     (format s "Commands:~&")
     (format s "(s)tage and (u)nstage a file. Inside a diff, (s)tage or (u)nstage a hunk.~&")
-    (format s "(k) discard changes.~&")
+    (format s "  pop the stash at point.~&")
+    (format s "(k) discard changes, drop the stash at point.~&")
     (format s "(c)ommit~&")
     (format s "(b)ranches-> checkout another (b)ranch.~&")
     (format s "          -> (c)reate.~&")
     (format s "(l)og-> (l) commits log~&")
-    (format s "     -> (F) first page of the commits history~&")
+    (format s "     -> (F) first page of the commits history.~&")
+    (format s "     Navigate commit pages with (b) and (f).~&")
     (format s "(F)etch, pull-> (p) from remote branch~&")
     (format s "(P)push      -> (p) to remote branch~&")
     (format s "(r)ebase     -> (i)nteractively from commit at point, (a)bort~&")
+    (format s "(z) stashes  -> (z) stash changes (p)op latest stash~&")
+    (format s "             -> also use (s) and (k) on a stash.~&")
     (format s "(g) -> refresh~&")
     (format s "~%")
     (format s "Navigate: n and p, C-n and C-p, M-n and M-p.~&")
@@ -781,6 +862,7 @@ Currently Git-only. Concretely, this calls Git with the -w option.")
     (format s "~%")
     (format s "You can customize:~&")
     (format s "~%")
+    (format s "lem/legit:*show-stashes* : set to nil to not see the list of stashes in the status buffer~&")
     (format s "lem/porcelain:*nb-latest-commits* which defaults to 10~&")
     (format s "(and more)~&")
     ))

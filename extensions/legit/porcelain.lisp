@@ -1,8 +1,6 @@
 
 (uiop:define-package :lem/porcelain
   (:use :cl)
-  ;; beware, we shadow cl:push to have a "push" method:
-  (:shadow :push)
   (:import-from :trivial-types
                 :proper-list)
   (:export
@@ -19,7 +17,7 @@
    :file-diff
    :latest-commits
    :pull
-   :push
+   :push-default
    :rebase-abort
    :rebase-continue
    :rebase-interactively
@@ -28,12 +26,17 @@
    :show-commit-diff
    :stage
    :unstage
+   :stash-list
+   :stash-pop
+   :stash-push
+   :stash-show
    :*diff-context-lines*
    :commits-log
    :*commits-log-page-size*
    :commit-count
    :*nb-latest-commits*
-   :vcs-project)
+   :vcs-project
+   :stash-drop)
   (:documentation "Functions to run VCS operations: get the list of changes, of untracked files, commit, push… Git support is the main goal, a simple layer is used with other VCS systems (Fossil, Mercurial).
 
 On interactive commands, Legit will check what VCS is in use in the current project.
@@ -232,10 +235,10 @@ M	src/ext/porcelain.lisp
   (:method (vcs)
     (porcelain-error "lem/porcelain:pull not implemented for vcs ~a" (vcs-name vcs))))
 
-(defgeneric push (vcs)
-  (:documentation "Pushes to remotes")
+(defgeneric push-default (vcs)
+  (:documentation "Pushes to default remote.")
   (:method (vcs)
-    (porcelain-error "lem/porcelain:push not implemented for vcs ~a" (vcs-name vcs))))
+    (porcelain-error "lem/porcelain:push-default not implemented for vcs ~a" (vcs-name vcs))))
 
 ;; Interactive rebase
 (defgeneric rebase-interactively (vcs &key from)
@@ -257,3 +260,35 @@ M	src/ext/porcelain.lisp
 (defgeneric rebase-skip (vcs)
   (:method (vcs)
     (porcelain-error "lem/porcelain:rebase-skip not implemented for vcs ~a" (vcs-name vcs))))
+
+;;;
+;;; Stash.
+;;;
+(defgeneric stash-push (vcs &key message)
+  (:method (vcs &key message)
+    (declare (ignorable message))
+    (porcelain-error "lem/porcelain:stash not implemented for vcs ~a" (vcs-name vcs)))
+  (:documentation "Stash the current changes. Ask for a stash message."))
+
+(defgeneric stash-pop (vcs &key position)
+  (:method (vcs &key position)
+    (declare (ignorable position))
+    (porcelain-error "lem/porcelain:stash-pop not implemented for vcs ~a" (vcs-name vcs)))
+  (:documentation "Pop saved stashes. Defaults to the latest stash."))
+
+(defgeneric stash-drop (vcs &key position)
+  (:method (vcs &key position)
+    (declare (ignorable position))
+    (porcelain-error "lem/porcelain:stash-drop not implemented for vcs ~a" (vcs-name vcs)))
+  (:documentation "drop this stash."))
+
+(defgeneric stash-list (vcs)
+  (:method (vcs)
+    (values))
+  (:documentation "List stashes"))
+
+(defgeneric stash-show (vcs &key position)
+  (:method (vcs &key position)
+    (declare (ignorable position))
+    (porcelain-error "lem/porcelain:stash-show not implement for vcs ~a" (vcs-name vcs)))
+  (:documentation "Show this stash, as a diff. Return text."))

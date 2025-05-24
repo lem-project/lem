@@ -293,3 +293,12 @@
     (with-vi-buffer (#?"Hello\nWor[l]d")
       (cmd "<C-v>khg~")
       (ok (buf= #?"He[L]Lo\nWoRLd")))))
+
+(deftest vi-swapcase-and-forward
+  (with-fake-interface ()
+    (with-vi-buffer ("[H]ello World")
+      (cmd "~")
+      (ok (buf= "h[e]llo World")))
+    (with-vi-buffer ("[H]ello World")
+      (cmd "~~~~~~")
+      (ok (buf= "hELLO [W]orld")))))

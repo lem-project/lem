@@ -54,25 +54,37 @@
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))
 
-(define-ex-command "^wa(?:ll)$" (range argument)
+(define-ex-command "^wa(?:ll)?$" (range argument)
   (declare (ignore range argument))
   (ex-write-all nil))
 
-(define-ex-command "^wa(?:ll)!$" (range argument)
+(define-ex-command "^wa(?:ll)?!$" (range argument)
   (declare (ignore range argument))
   (ex-write-all t))
+
+(define-ex-command "^new$" (range filename)
+  (declare (ignore range))
+  (lem-vi-mode/commands:vi-window-split-vertically-new 1 filename))
+
+(define-ex-command "^vne(?:w)?$" (range filename)
+  (declare (ignore range))
+  (lem-vi-mode/commands:vi-window-split-horizontally-new 1 filename))
+
+(define-ex-command "^ene(?:w)?$" (range filename)
+  (declare (ignore range))
+    (lem-vi-mode/commands:vi-switch-to-buffer filename))
 
 (define-ex-command "^update$" (range filename)
   (when (lem:buffer-modified-p (lem:current-buffer))
     (ex-write range filename t)))
 
 (define-ex-command "^bn$" (range argument)
-    (declare (ignore range argument))
-    (lem:next-buffer))
+  (declare (ignore range argument))
+  (lem:next-buffer))
 
 (define-ex-command "^bp$" (range argument)
-    (declare (ignore range argument))
-    (lem:previous-buffer))
+  (declare (ignore range argument))
+  (lem:previous-buffer))
 
 (define-ex-command "^wq$" (range filename)
   (ex-write-quit range filename nil t))
@@ -106,11 +118,19 @@
   (ex-write-all t)
   (lem:exit-lem nil))
 
+(define-ex-command "^clo(?:se)?$" (range filename)
+  (declare (ignore range filename))
+  (lem-vi-mode/commands:vi-close 1))
+
 (define-ex-command "^(x|xit)$" (range filename)
   (ex-write-quit range filename nil nil))
 
 (define-ex-command "^(x|xit)!$" (range filename)
   (ex-write-quit range filename t nil))
+
+(define-ex-command "^on(?:ly)?$" (range filename)
+  (declare (ignore range filename))
+  (lem:delete-other-windows))
 
 (defun copy-current-jumplist-to-next-window ()
   (let* ((window-list
@@ -190,8 +210,8 @@
   (declare (ignore range))
   (lem:pipe-command
    (format nil "~A ~A"
-          (subseq lem-vi-mode/ex-core:*command* 1)
-          command)))
+           (subseq lem-vi-mode/ex-core:*command* 1)
+           command)))
 
 (define-ex-command "^(buffers|ls|files)$" (range argument)
   (declare (ignore range argument))
@@ -259,3 +279,7 @@
 (define-ex-command "^pwd?$" (range argument)
   (declare (ignore range argument))
   (lem:current-directory))
+
+(define-ex-command "^jumps?$" (range argument)
+  (declare (ignore range argument))
+  (lem-vi-mode/commands:vi-jumps))

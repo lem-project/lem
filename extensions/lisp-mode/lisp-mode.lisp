@@ -57,6 +57,10 @@
                        (lem/detective:make-capture-regex
                         :regex "^(?:\\(defvar |\\(defparameter )"
                         :function #'lem-lisp-mode/detective:capture-reference)
+                       :macro-regex
+                       (lem/detective:make-capture-regex
+                        :regex "^\\(defmacro "
+                        :function #'lem-lisp-mode/detective:capture-reference)
                        :misc-regex
                        (lem/detective:make-capture-regex
                         :regex "^\\(deftest "
@@ -88,6 +92,10 @@
 (define-key *lisp-mode-keymap* "Return" 'newline-and-indent)
 (define-key *lisp-mode-keymap* "C-c C-j" 'lisp-eval-expression-in-repl)
 (define-key *lisp-mode-keymap* "C-c ~" 'lisp-listen-in-current-package)
+(define-key *lisp-mode-keymap* "C-c m s" 'slime)
+(define-key *lisp-mode-keymap* "C-c m r" 'slime-restart)
+(define-key *lisp-mode-keymap* "C-c m q" 'slime-quit)
+(define-key *lisp-mode-keymap* "C-c m c" 'slime-connect)
 
 (defmethod convert-modeline-element ((element (eql 'lisp-mode)) window)
   (format nil "  ~A~A" (buffer-package (window-buffer window) "CL-USER")
@@ -887,7 +895,7 @@
 
 (defun notify-change-connection-to-wait-message-thread ()
   (bt2:interrupt-thread *wait-message-thread*
-                       (lambda () (error 'change-connection))))
+                        (lambda () (error 'change-connection))))
 
 (defun message-waiting-some-connections-p (&key (timeout 0))
   (with-broadcast-connections (connection)

@@ -98,6 +98,7 @@
                (:file "clipboard")
                (:file "save-excursion")
                (:file "killring")
+               (:file "named-point")
                (:file "file")
                (:file "frame")
                (:file "echo")

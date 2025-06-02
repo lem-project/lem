@@ -185,7 +185,12 @@ Other argument descriptors are available (old-style char in parenthesis):
 
            (register-command (make-instance ',class-name)
                              :mode-name ',mode-name
-                             :command-name ,command-name))))))
+                             :command-name ,command-name)
+           ',name)))))
+
+(defmacro lambda-command (params (&rest arg-descriptors) &body body)
+  (let ((name (gensym "LAMBDA-COMMAND")))
+    `(define-command ,name ,params ,arg-descriptors ,@body)))
 
 #|
 (defclass foo-advice () ())

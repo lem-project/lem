@@ -5,7 +5,8 @@
            :handle-textediting
            :handle-text-input
            :handle-key-down
-           :handle-key-up))
+           :handle-key-up
+           :right-alt-is-meta))
 (in-package :lem-sdl2/keyboard)
 
 (defstruct (keyinfo (:type list))
@@ -90,6 +91,13 @@
   (let ((code (sdl2:sym-value keysym))
         (modifier (get-modifier keysym)))
     (make-key-event code modifier)))
+
+(defun right-alt-is-meta (on)
+  (let ((val (if on
+                  `(:meta ,sdl2-ffi:+kmod-lalt+ ,sdl2-ffi:+kmod-ralt+)
+                  `(:meta ,sdl2-ffi:+kmod-lalt+))))
+    (unless (equal (assoc :meta *modifier-code-table*) val)
+      (setf *modifier-code-table* (cons val *modifier-code-table*)))))
 
 (defparameter *modifier-code-table*
   `((:shift ,sdl2-ffi:+kmod-lshift+ ,sdl2-ffi:+kmod-rshift+)

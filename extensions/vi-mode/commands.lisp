@@ -380,7 +380,7 @@ Move the cursor to the first non-blank character of the line."
 (define-operator vi-substitute (beg end type) ("<R>")
     (:motion vi-forward-char)
   (vi-delete beg end type)
-  (change-state 'insert))
+  (setf (buffer-state) 'insert))
 
 (define-operator vi-delete-next-char (beg end type) ("<R>")
     (:motion vi-forward-char)
@@ -447,7 +447,7 @@ Move the cursor to the first non-blank character of the line."
       (kill-region-without-appending start end)))
 
 (define-operator vi-change (beg end type) ("<R>")
-    ()
+    (:move-point nil)
   (when (point= beg end)
     (return-from vi-change))
   (let ((end-with-newline (char= (character-at end -1) #\Newline)))
@@ -464,7 +464,7 @@ Move the cursor to the first non-blank character of the line."
       (t (unless (eql (character-at (current-point)) #\Space)
            (skip-whitespace-backward end))
          (vi-delete beg end type))))
-  (change-state 'insert))
+  (setf (buffer-state) 'insert))
 
 (define-operator vi-change-whole-line (beg end) ("<r>")
     (:motion vi-line)
@@ -476,7 +476,7 @@ Move the cursor to the first non-blank character of the line."
 (define-operator vi-change-line (beg end type) ("<R>")
     (:motion vi-move-to-end-of-line)
   (vi-change beg end type)
-  (change-state 'insert))
+  (setf (buffer-state) 'insert))
 
 (define-operator vi-join (start end) ("<r>")
     (:motion vi-line)
@@ -489,7 +489,8 @@ Move the cursor to the first non-blank character of the line."
       (delete-next-char))))
 
 (define-operator vi-join-line (start end type) ("<R>")
-    (:motion vi-line)
+  (:move-point nil
+   :motion vi-line)
   (when (and (eq type :line)
              (point/= start end)
              (zerop (point-charpos end)))
@@ -622,10 +623,11 @@ Move the cursor to the first non-blank character of the line."
                                       "~v@{~C~:*~}~*~@[~%~]"
                                       (length string)
                                       char
-                                      (not lastp)))))))
+                                      (not lastp))))))
+            (to-start (visual-p)))
         (delete-between-points start end)
         (insert-string start string-to-replace)
-        (if (visual-p)
+        (if to-start
             (move-point (current-point) start)
             (character-offset (current-point) *cursor-offset*)))))
 
@@ -999,38 +1001,38 @@ on the same line or at eol if there are none."
         (delete-active-window))))
 
 (define-command vi-end-insert () ()
-  (change-state 'normal)
+  (setf (buffer-state) 'normal)
   (vi-backward-char 1))
 
 (define-command vi-insert () ()
-  (change-state 'insert))
+  (setf (buffer-state) 'insert))
 
 (define-command vi-insert-line () ()
   (vi-move-to-beginning-of-line)
   (skip-whitespace-forward (current-point) t)
-  (change-state 'insert))
+  (setf (buffer-state) 'insert))
 
 (define-command vi-append () ()
   (let ((p (current-point)))
     (unless (or (end-line-p p)
                 (end-buffer-p p))
       (forward-char 1))
-    (change-state 'insert)))
+    (setf (buffer-state) 'insert)))
 
 (define-command vi-append-line () ()
   (line-end (current-point))
-  (change-state 'insert))
+  (setf (buffer-state) 'insert))
 
 (define-command vi-open-below () ()
   (let ((p (current-point)))
     (line-end p)
-    (change-state 'insert)
+    (setf (buffer-state) 'insert)
     (insert-character p #\Newline)
     (indent-line (current-point))))
 
 (define-command vi-open-above () ()
   (line-start (current-point))
-  (change-state 'insert)
+  (setf (buffer-state) 'insert)
   (open-line 1)
   (let ((column (with-point ((p (current-point)))
                   (point-column (or (and (line-offset p 1)
@@ -1069,7 +1071,7 @@ on the same line or at eol if there are none."
             (lem/universal-argument::*argument* (lem/universal-argument::make-arg-state)))
         (execute-key-sequence keyseq)
         (unless (state= prev-state (current-state))
-          (change-state prev-state))))))
+          (setf (buffer-state) prev-state))))))
 
 (define-text-object-command vi-a-word (count) ("p")
     (:expand-selection t)
@@ -1112,7 +1114,7 @@ on the same line or at eol if there are none."
   (inner-range-of 'paragraph-object (current-state) count))
 
 (define-command vi-normal () ()
-  (change-state 'normal))
+  (setf (buffer-state) 'normal))
 
 (define-command vi-keyboard-quit () ()
   (when (eq (current-state) 'modeline)

@@ -62,4 +62,4 @@
       (handler-case
           (cmd "10@a")
         (end-of-buffer ()))
-      (ok (buf= #?"set-command\nset-command\nset-command\nset[]")))))
+      (ok (buf= #?"set-command\nset-command\nset-command\nse[t]")))))

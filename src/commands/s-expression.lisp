@@ -66,7 +66,7 @@
      (form-offset (mark-point (cursor-mark (current-point))) 1))
     (t
      (save-excursion
-       (form-offset (current-point) 1)
+       (character-offset (form-offset (current-point) 1) *region-end-offset*)
        (set-cursor-mark (current-point) (current-point))))))
 
 (define-command (kill-sexp (:advice-classes editable-advice)) (&optional (n 1)) (:universal)

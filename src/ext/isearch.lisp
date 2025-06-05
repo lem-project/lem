@@ -215,7 +215,8 @@
         (loop 
           (unless (funcall *isearch-search-forward-function* p search-string end-point)
             (return))
-          (when (point= start-point p)
+          (when (or (point= start-point p)
+                    (end-line-p p))
             (return))
           (with-point ((before p))
             (funcall *isearch-search-backward-function* before search-string)

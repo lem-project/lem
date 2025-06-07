@@ -331,7 +331,7 @@
       (get-select-expression-points (current-point))
     (when start
       (set-current-mark start)
-      (move-point (current-point) end))))
+      (move-point (current-point) (character-offset end *region-end-offset*)))))
 
 (defun select-form-at-current-point ()
   (with-point ((start (current-point))
@@ -341,7 +341,7 @@
       (move-point end start)
       (form-offset end 1)
       (set-current-mark start)
-      (move-point (current-point) end))))
+      (move-point (current-point) (character-offset end *region-end-offset*)))))
 
 
 (define-command <mouse-event> () ()

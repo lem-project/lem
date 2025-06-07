@@ -255,6 +255,18 @@
       (cmd "<C-v>klrx")
       (ok (buf= #?"a[x]xd\nexxh\n")))))
 
+(deftest vi-replace
+  (with-fake-interface ()
+    (with-vi-buffer ("a[n]t")
+      (cmd "Rr<Esc>")
+      (ok (buf= "a[r]t")))
+    (with-vi-buffer ("sh[o]ut")
+      (cmd "Rame<Esc>")
+      (ok (buf= "sham[e]")))
+    (with-vi-buffer ("[m]eat")
+      (cmd "Rfruits<Esc>")
+      (ok (buf= "fruit[s]")))))
+
 (deftest vi-swapcase
   (with-fake-interface ()
     (with-vi-buffer ("[H]ello World")

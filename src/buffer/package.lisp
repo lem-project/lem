@@ -79,6 +79,8 @@
    :with-buffer-point
    :with-current-buffer
    :clear-buffer-edit-history
+   :*buffer-mark-activate-hook*
+   :*buffer-mark-deactivate-hook*
    ;; TODO: delete ugly exports
    :%buffer-clear-keep-binfo
    :%buffer-keep-binfo)

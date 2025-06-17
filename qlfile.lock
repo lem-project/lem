@@ -9,7 +9,7 @@
 ("micros" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/micros.git")
-  :version "git-25177e04a946365397a0848a6545399860d310d0"))
+  :version "git-7dc9b46d3aad13661468863dc21ea1b599890487"))
 ("lem-mailbox" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/lem-mailbox.git")
@@ -25,7 +25,7 @@
 ("rove" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/fukamachi/rove.git")
-  :version "git-cacea7331c10fe9d8398d104b2dfd579bf7ea353"))
+  :version "git-9868028edf511da5fe61355881af9f4c35f051df"))
 ("cl-sdl2" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2.git")

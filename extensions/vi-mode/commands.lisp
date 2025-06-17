@@ -16,7 +16,8 @@
                 :*motion-keymap*
                 :normal
                 :insert
-                :replace-state)
+                :replace-state
+                :replace-char-state)
   (:import-from :lem-vi-mode/commands/utils
                 :visual-region)
   (:import-from :lem/common/killring
@@ -123,6 +124,7 @@
            :vi-append-line
            :vi-open-below
            :vi-open-above
+           :vi-replace
            :vi-jumps
            :vi-jump-back
            :vi-jump-next
@@ -597,7 +599,7 @@ Move the cursor to the first non-blank character of the line."
       (paste-yank string type :before))))
 
 (defun read-key-to-replace ()
-  (with-temporary-state 'replace-state
+  (with-temporary-state 'replace-char-state
     (let ((command (read-command)))
       (unless command
         (escape))
@@ -1042,6 +1044,9 @@ on the same line or at eol if there are none."
                                          (back-to-indentation p))
                                     (line-start p))))))
     (move-to-column (current-point) column t)))
+
+(define-command vi-replace () ()
+  (setf (buffer-state) 'replace-state))
 
 (define-command vi-jumps () ()
   (line-end (current-point))

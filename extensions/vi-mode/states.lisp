@@ -17,6 +17,7 @@
                 :state-modeline-yellow
                 :state-modeline-aqua
                 :state-modeline-green
+                :state-modeline-orange
                 :change-element-by-state)
   (:export :*normal-keymap*
            :*command-keymap*
@@ -24,13 +25,14 @@
            :*insert-keymap*
            :*inactive-keymap*
            :*operator-keymap*
-           :*replace-state-keymap*
+           :*replace-char-state-keymap*
            :*outer-text-objects-keymap*
            :*inner-text-objects-keymap*
            :normal
            :insert
            :operator
-           :replace-state))
+           :replace-state
+           :replace-char-state))
 (in-package :lem-vi-mode/states)
 
 (defmethod state-changed-hook (state) :after
@@ -45,7 +47,7 @@
 (define-keymap *normal-keymap* :parent *motion-keymap*)
 (define-keymap *insert-keymap*)
 (define-keymap *operator-keymap*)
-(define-keymap *replace-state-keymap* :undef-hook 'return-last-read-char)
+(define-keymap *replace-char-state-keymap* :undef-hook 'return-last-read-char)
 (define-keymap *outer-text-objects-keymap*)
 (define-keymap *inner-text-objects-keymap*)
 
@@ -80,6 +82,15 @@
    :keymaps (list *insert-keymap*)))
 
 ;;
+;; Replace state
+
+(define-state replace-state (insert) ()
+  (:default-initargs
+   :name "REPLACE"
+   :cursor-type :underline
+   :modeline-color 'state-modeline-orange))
+
+;;
 ;; Ex state
 
 (define-state vi-modeline () ()
@@ -97,12 +108,12 @@
    :keymaps (list *operator-keymap* *normal-keymap*)))
 
 ;;
-;; Replace state
+;; Replace char state
 
-(define-state replace-state (normal) ()
+(define-state replace-char-state (normal) ()
   (:default-initargs
    :cursor-type :underline
-   :keymaps (list *replace-state-keymap*)))
+   :keymaps (list *replace-char-state-keymap*)))
 
 ;;
 ;; Setup hooks

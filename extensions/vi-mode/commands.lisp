@@ -142,6 +142,9 @@
            :vi-normal
            :vi-keyboard-quit
            :vi-close
+           :vi-set-mark
+           :vi-delete-mark
+           :vi-goto-mark
            :vi-window-move-left
            :vi-window-move-down
            :vi-window-move-up
@@ -1167,3 +1170,23 @@ on the same line or at eol if there are none."
   (dotimes (i n)
     (vi-window-split-vertically)
     (vi-switch-to-buffer filename)))
+
+(define-command vi-set-mark () ()
+    "Set mark to current point"
+  (when-let (c (key-to-char (read-key)))
+    (lem/named-point:set-named-point c)))
+
+(define-command vi-delete-mark () ()
+  "Delete mark"
+  (when-let (c (key-to-char (read-key)))
+    (when (lem/named-point:delete-named-point c)
+      (message (format nil "Mark ~A deleted" c)))))
+
+(define-motion vi-goto-mark () ()
+  (:jump t)
+  "Move to mark"
+  (when-let (c (key-to-char (read-key)))
+    (flet ((move () (lem/named-point:goto-named-point c :global (not (operator-pending-mode-p)))))
+      (if (eq c #\') ; Support "' '" as jump-previous if ' is not marked
+        (or (move) (vi-jump-previous))
+        (move)))))

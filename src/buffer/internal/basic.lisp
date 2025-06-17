@@ -442,7 +442,7 @@ If 'line-number' is out of the buffer, 'point' does not move and returns NIL."
 (defun set-current-mark (point)
   "Set 'point' to the current mark."
   (let ((buffer (point-buffer point)))
-    (mark-set-point (buffer-mark-object buffer) point))
+    (setf (buffer-mark buffer) point))
   point)
 
 (defun blank-line-p (point)

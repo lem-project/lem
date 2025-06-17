@@ -1,5 +1,7 @@
 (in-package :lem-core)
 
+(defvar *region-end-offset* 0)
+
 (defgeneric check-marked-using-global-mode (global-mode buffer))
 (defgeneric region-beginning-using-global-mode (global-mode &optional buffer))
 (defgeneric region-end-using-global-mode (global-mode &optional buffer))

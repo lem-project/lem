@@ -6,6 +6,9 @@
    :idle-function
    :beginning-of-defun-function
    :end-of-defun-function
+   :comment-region
+   :uncomment-region
+   :comment-or-uncomment-region
    :line-comment
    :insertion-line-comment
    :find-definitions-function

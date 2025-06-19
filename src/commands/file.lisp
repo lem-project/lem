@@ -134,6 +134,11 @@
                 (setf *find-program* key)
                 (return key)))))
 
+(defun parse-find-program-output (output)
+  (mapcar #'namestring
+          (mapcar #'uiop:parse-native-namestring
+                  (str:lines output))))
+
 (defgeneric get-files-recursively (program)
   (:documentation "Find files recursively on the current working
   directory with the program set in `*find-program*'.
@@ -143,15 +148,15 @@
 
 (defmethod get-files-recursively ((finder (eql :fdfind)))
   ;; fdfind excludes .git, node_modules and such by default.
-  (str:lines
+  (parse-find-program-output
    (uiop:run-program (list "fdfind") :output :string)))
 
 (defmethod get-files-recursively ((finder (eql :fd)))
-  (str:lines
+  (parse-find-program-output
    (uiop:run-program (list "fd") :output :string)))
 
 (defmethod get-files-recursively ((finder (eql :find)))
-  (str:lines
+  (parse-find-program-output
    (uiop:run-program (list "find" ".") :output :string)))
 
 (defun %shorten-path (cwd path)

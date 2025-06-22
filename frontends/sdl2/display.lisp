@@ -314,7 +314,7 @@
                        (search (format nil "~a.ttf" kind) font))
              :collect font)))
 
-(defmethod lem-if:set-font-by-name ((implementation lem-sdl2/sdl2:sdl2) font-name)
+(defmethod lem-if:set-font-with-implementation ((implementation lem-sdl2/sdl2:sdl2) font-name)
   (lem-sdl2/display:change-font
    (lem-sdl2/display:current-display)
    (lem-sdl2/font:make-font-config :latin-normal-file (get-font-by-name-and-kind font-name "Regular")

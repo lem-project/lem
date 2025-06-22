@@ -732,7 +732,8 @@
    :set-font-size
    :resize-display-before
    :get-font-list
-   :set-font-by-name
+   :set-font-with-implementation
+   :set-font-name
    :get-mouse-position
    :get-char-width
    :get-char-height

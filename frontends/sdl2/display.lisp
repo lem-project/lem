@@ -38,6 +38,7 @@
            :display-window-width
            :adapt-high-dpi-font-size
            :change-font
+           :set-font-by-name
            :with-renderer
            :with-display-render-target))
 (in-package :lem-sdl2/display)
@@ -306,3 +307,16 @@
   (utils:create-texture (display-renderer display)
                         (* width (display-char-width display))
                         (* height (display-char-height display))))
+
+
+(defun get-font-by-name-and-kind (name kind)
+  (car (loop :for font in (lem-if:get-font-list (lem-core:implementation))
+             :when (and (search name font)
+                       (search (format nil "~a.ttf" kind) font))
+             :collect font)))
+
+(defun set-font-by-name (font-name)
+  (change-font
+   (current-display)
+   (make-font-config :latin-normal-file (get-font-by-name-and-kind font-name "Regular")
+                     :latin-bold-file (get-font-by-name-and-kind font-name "Bold"))))

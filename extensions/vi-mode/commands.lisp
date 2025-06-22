@@ -10,6 +10,8 @@
         :lem-vi-mode/registers
         :lem-vi-mode/text-objects
         :lem-vi-mode/commands/utils)
+  (:import-from :lem-vi-mode/core
+                :ensure-state)
   (:import-from :lem-vi-mode/options
                 :option-value)
   (:import-from :lem-vi-mode/states
@@ -760,10 +762,11 @@ on the same line or at eol if there are none."
         (character-offset point offset)))))
 
 (defun vi-backward-matching-paren (window point &optional (offset -1))
-  (declare (ignore window offset))
-  (with-point ((point point))
-    (when (syntax-closed-paren-char-p (character-at point))
-      (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t))))
+  (declare (ignore window))
+  (let ((offset (if (state= (current-state) (ensure-state 'insert)) offset 0)))
+    (with-point ((point point))
+      (when (syntax-closed-paren-char-p (character-at point offset))
+        (scan-lists (character-offset (copy-point point :temporary) (+ offset 1)) -1 0 t)))))
 
 (define-motion vi-move-to-matching-item (&optional n) (:universal-nil)
     (:type :inclusive

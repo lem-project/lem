@@ -107,6 +107,9 @@
 (defgeneric lem-if:get-font-list (implementation)
   (:method (implementation) '()))
 
+(defgeneric lem-if:set-font-by-name (implementation font-name)
+  (:method (implementation font-name) '()))
+
 (defgeneric lem-if:get-mouse-position (implementation)
   (:method (implementation)
     (values 0 0)))

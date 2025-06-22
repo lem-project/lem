@@ -38,7 +38,6 @@
            :display-window-width
            :adapt-high-dpi-font-size
            :change-font
-           :set-font-by-name
            :with-renderer
            :with-display-render-target))
 (in-package :lem-sdl2/display)
@@ -315,8 +314,8 @@
                        (search (format nil "~a.ttf" kind) font))
              :collect font)))
 
-(defun set-font-by-name (font-name)
-  (change-font
-   (current-display)
-   (make-font-config :latin-normal-file (get-font-by-name-and-kind font-name "Regular")
-                     :latin-bold-file (get-font-by-name-and-kind font-name "Bold"))))
+(defmethod lem-if:set-font-by-name ((implementation lem-sdl2/sdl2:sdl2) font-name)
+  (lem-sdl2/display:change-font
+   (lem-sdl2/display:current-display)
+   (lem-sdl2/font:make-font-config :latin-normal-file (get-font-by-name-and-kind font-name "Regular")
+                                   :latin-bold-file (get-font-by-name-and-kind font-name "Bold"))))

@@ -307,15 +307,9 @@
                         (* width (display-char-width display))
                         (* height (display-char-height display))))
 
-
-(defun get-font-by-name-and-kind (name kind)
-  (car (loop :for font in (lem-if:get-font-list (lem-core:implementation))
-             :when (and (search name font)
-                       (search (format nil "~a.ttf" kind) font))
-             :collect font)))
-
 (defmethod lem-if:set-font-with-implementation ((implementation lem-sdl2/sdl2:sdl2) font-name)
   (lem-sdl2/display:change-font
-   (lem-sdl2/display:current-display)
-   (lem-sdl2/font:make-font-config :latin-normal-file (get-font-by-name-and-kind font-name "Regular")
-                                   :latin-bold-file (get-font-by-name-and-kind font-name "Bold"))))
+    (lem-sdl2/display:current-display)
+    (lem-sdl2/font:make-font-config 
+      :latin-normal-file (lem-if:get-font-by-name-and-kind font-name "Regular")
+      :latin-bold-file (lem-if:get-font-by-name-and-kind font-name "Bold"))))

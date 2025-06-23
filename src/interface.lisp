@@ -194,3 +194,13 @@
 
 (defun lem-if:set-font-name (font-name)
   (lem-if:set-font-with-implementation (implementation) font-name))
+
+(defun lem-if:get-font-by-name-and-kind (name kind)
+  "GET-FONT-BY-NAME-AND-KIND searchs for a font with NAME in the path and termination <KIND>.ttf"
+  (let ((fonts (loop :for font in (lem-if:get-font-list (implementation))
+                     :when (and (search name font)
+                                (search (format nil "~a.ttf" kind) font))
+                     :collect font)))
+    (if fonts
+        (car fonts)
+        (error "font not found for font-name=~s and kind=~s" name kind))))

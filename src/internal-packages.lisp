@@ -732,6 +732,7 @@
    :set-font-size
    :resize-display-before
    :get-font-list
+   :get-font-by-name-and-kind
    :set-font-with-implementation
    :set-font-name
    :get-mouse-position

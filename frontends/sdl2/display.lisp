@@ -311,5 +311,5 @@
   (lem-sdl2/display:change-font
     (lem-sdl2/display:current-display)
     (lem-sdl2/font:make-font-config 
-      :latin-normal-file (lem-if:get-font-by-name-and-kind font-name "Regular")
-      :latin-bold-file (lem-if:get-font-by-name-and-kind font-name "Bold"))))
+      :latin-normal-file (lem-if:get-font-by-name-and-style font-name "Regular")
+      :latin-bold-file (lem-if:get-font-by-name-and-style font-name "Bold"))))

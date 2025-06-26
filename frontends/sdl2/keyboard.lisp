@@ -140,7 +140,8 @@
 
 ;; linux
 (defun modifier-is-accept-text-input-p (modifier)
-  (not (modifier-ctrl modifier)))
+  (and (not (modifier-ctrl modifier))
+       (not (modifier-meta modifier))))
 
 (defmethod handle-text-input ((platform lem-sdl2/platform:linux) text)
   (handle-text-input-unix text))

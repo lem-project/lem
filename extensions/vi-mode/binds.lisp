@@ -112,7 +112,7 @@
 
 (define-key *motion-keymap* "C-o" 'vi-jump-back)
 (define-key *motion-keymap* "C-i" 'vi-jump-next)
-(define-key *motion-keymap* "' '" 'vi-jump-previous)
+(define-key *motion-keymap* "'" 'vi-goto-mark)
 (define-key *motion-keymap* ":" 'vi-ex)
 
 (define-key *motion-keymap* "v" 'vi-visual-char)
@@ -135,6 +135,8 @@
 (define-key *normal-keymap* "D" 'vi-delete-line)
 (define-key *normal-keymap* "c" 'vi-change)
 (define-key *normal-keymap* "C" 'vi-change-line)
+(define-key *normal-keymap* "m" 'vi-set-mark)
+(define-key *normal-keymap* "M-m" 'vi-delete-mark)
 (define-key *normal-keymap* "g J" 'vi-join)
 (define-key *normal-keymap* "J" 'vi-join-line)
 (define-key *normal-keymap* "y" 'vi-yank)
@@ -142,6 +144,7 @@
 (define-key *normal-keymap* "p" 'vi-paste-after)
 (define-key *normal-keymap* "P" 'vi-paste-before)
 (define-key *normal-keymap* "r" 'vi-replace-char)
+(define-key *normal-keymap* "R" 'vi-replace)
 (define-key *normal-keymap* "g U" 'vi-upcase)
 (define-key *normal-keymap* "g u" 'vi-downcase)
 (define-key *normal-keymap* "g ~" 'vi-swapcase)
@@ -176,8 +179,8 @@
 (define-key *visual-keymap* "o" 'vi-visual-swap-points)
 (define-key *visual-keymap* "O" 'vi-visual-opposite-side)
 
-(define-key *replace-state-keymap* "C-g" 'escape)
-(define-key *replace-state-keymap* "Escape" 'escape)
+(define-key *replace-char-state-keymap* "C-g" 'escape)
+(define-key *replace-char-state-keymap* "Escape" 'escape)
 
 (define-key *ex-keymap* "C-p" 'prompt-previous-history)
 (define-key *ex-keymap* "C-n" 'prompt-next-history)

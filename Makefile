@@ -1,5 +1,6 @@
 LISP ?= sbcl --dynamic-space-size 4GiB --noinform --no-sysinit --no-userinit
 PREFIX ?= /usr/local
+VARIANT ?= sdl2
 
 ncurses:
 	qlot install
@@ -21,20 +22,32 @@ server:
 	$(LISP) --load .qlot/setup.lisp \
 		--load scripts/build-server.lisp
 
-lem: sdl2-ncurses
+lem: sdl2
 
-install-bin: lem
+install-bin: $(VARIANT)
 	install -m 755 lem $(PREFIX)/bin
 
 # TODO: on the fly edit lem.desktop depends on $(PREFIX)
-install: install-bin
+install-desktop: 
 	install -m 644 scripts/install/lem.svg /usr/share/icons/hicolor/scalable/apps/
 	gtk-update-icon-cache /usr/share/icons/hicolor
-	desktop-file-install --dir=/usr/share/applications scripts/install/lem.desktop
+	install -m 644 scripts/install/lem-$(VARIANT).desktop /usr/share/applications/lem.desktop
+
+install: install-bin install-desktop
 	@echo "+--------------------------------+"
 	@echo "|   Lem installation complete!   |"
 	@echo "+--------------------------------+"
 
+# Install targets
+install-sdl2:
+	$(MAKE) install VARIANT=sdl2
+
+install-ncurses:
+	$(MAKE) install VARIANT=ncurses
+
+install-sdl2-ncurses:
+	$(MAKE) install VARIANT=sdl2-ncurses
+	
 test:
 	qlot install
 	.qlot/bin/rove lem-tests.asd

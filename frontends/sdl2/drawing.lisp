@@ -15,9 +15,6 @@
 (defun make-text-surface (display string attribute type)
   (cffi:with-foreign-string (c-string string)
     (let ((foreground (lem-core:attribute-foreground-with-reverse attribute)))
-      (when (lem:cursor-attribute-p attribute)
-        (when (eq :box (display:display-cursor-type display))
-          (setf foreground (lem-if:get-background-color (lem:implementation)))))
       (sdl2-ttf:render-utf8-blended
        (or (lem-core:attribute-font attribute)
            (display:get-display-font display
@@ -39,6 +36,12 @@
   (let ((string (text-object-string drawing-object))
         (attribute (text-object-attribute drawing-object))
         (type (text-object-type drawing-object)))
+    (when (and (lem-core:cursor-attribute-p attribute)
+               (eq :box (display:display-cursor-type display)))
+      (setf attribute
+            (lem-core:merge-attribute
+             attribute (lem-core:make-attribute
+                        :foreground (lem-if:get-background-color (lem:implementation))))))
     (make-text-surface-with-cache display string attribute type)))
 
 (defmethod get-surface ((drawing-object icon-object) display)

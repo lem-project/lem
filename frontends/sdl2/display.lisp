@@ -306,3 +306,10 @@
   (utils:create-texture (display-renderer display)
                         (* width (display-char-width display))
                         (* height (display-char-height display))))
+
+(defmethod lem-if:set-font-with-implementation ((implementation lem-sdl2/sdl2:sdl2) font-name)
+  (lem-sdl2/display:change-font
+    (lem-sdl2/display:current-display)
+    (lem-sdl2/font:make-font-config 
+      :latin-normal-file (lem-if:get-font-by-name-and-style font-name "Regular")
+      :latin-bold-file (lem-if:get-font-by-name-and-style font-name "Bold"))))

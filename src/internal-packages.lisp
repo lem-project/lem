@@ -559,6 +559,8 @@
    :completion-buffer)
   ;; cursors.lisp
   (:export
+   :push-buffer-point
+   :pop-buffer-point
    :fake-cursor
    :cursor-saved-column
    :cursor-yank-start
@@ -609,6 +611,9 @@
    :redraw-buffer
    :compute-left-display-area-content
    :compute-wrap-left-area-content)
+  ;; display/logical-line.lisp
+  (:export
+    :make-region-overlays-using-global-mode)
   ;; interface.lisp
   (:export
    :with-implementation
@@ -641,6 +646,7 @@
    :background-color)
   ;; region.lisp
   (:export
+   :*region-end-offset*
    :check-marked-using-global-mode
    :region-beginning-using-global-mode
    :region-end-using-global-mode
@@ -726,6 +732,9 @@
    :set-font-size
    :resize-display-before
    :get-font-list
+   :get-font-by-name-and-style
+   :set-font-with-implementation
+   :set-font-name
    :get-mouse-position
    :get-char-width
    :get-char-height

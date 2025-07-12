@@ -51,6 +51,7 @@ install-sdl2-ncurses:
 test:
 	qlot install
 	.qlot/bin/rove lem-tests.asd
+	.qlot/bin/rove extensions/vi-mode/lem-vi-mode.asd
 
 doc:
 	qlot install

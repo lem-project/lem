@@ -8,6 +8,7 @@
            :link-attribute))
 (in-package :lem/directory-mode/attributes)
 
+#+sbcl
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (sb-ext:lock-package :lem/directory-mode/attributes))
 

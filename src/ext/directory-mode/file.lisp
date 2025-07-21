@@ -10,6 +10,7 @@
    :pathname-directory-last-name))
 (in-package :lem/directory-mode/file)
 
+#+sbcl
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (sb-ext:lock-package :lem/directory-mode/file))
 
@@ -18,7 +19,7 @@
 (defun delete-file* (file)
   #+windows
   (if (uiop:directory-pathname-p file)
-      (sb-ext:delete-directory file :recursive t)
+      (uiop:delete-directory-tree file)
       (delete-file file))
   #-windows
   (if (and (not (string= (namestring file)

@@ -1,7 +1,7 @@
 ("quicklisp" .
  (:class qlot/source/dist:source-dist
   :initargs (:distribution "https://beta.quicklisp.org/dist/quicklisp.txt" :%version :latest)
-  :version "2024-10-12"))
+  :version "2025-06-22"))
 ("uiop" .
  (:class qlot/source/ql:source-ql
   :initargs (:%version :latest)
@@ -25,7 +25,7 @@
 ("rove" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/fukamachi/rove.git")
-  :version "git-cacea7331c10fe9d8398d104b2dfd579bf7ea353"))
+  :version "git-9868028edf511da5fe61355881af9f4c35f051df"))
 ("cl-sdl2" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/cl-sdl2.git")
@@ -42,3 +42,7 @@
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/cxxxr/jsonrpc.git")
   :version "git-2af1e0fad429ee8c706b86c4a853248cdd1be933"))
+("lem-extension-manager" .
+ (:class qlot/source/git:source-git
+  :initargs (:remote-url "https://github.com/lem-project/lem-extension-manager.git")
+  :version "git-13e0e1d476d1e1c827360b9a789fd7df2cb1ef1c"))

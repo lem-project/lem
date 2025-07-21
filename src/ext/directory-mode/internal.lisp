@@ -31,6 +31,7 @@
            :update-highlight-line-overlay))
 (in-package :lem/directory-mode/internal)
 
+#+sbcl
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (sb-ext:lock-package :lem/directory-mode/internal))
 

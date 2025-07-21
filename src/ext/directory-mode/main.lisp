@@ -8,6 +8,7 @@
            :*directory-mode-keymap*))
 (in-package :lem/directory-mode)
 
+#+sbcl
 (eval-when (:compile-toplevel :load-toplevel :execute)
   (sb-ext:lock-package :lem/directory-mode))
 

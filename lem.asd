@@ -215,7 +215,7 @@
                              (:file "deepl")
                              (:file "themes")
                              (:file "detective")
-                             (:file "extension-commands")
+                             (:file "extension-commands" :if-feature :quicklisp)
                              (:file "read-only-sources")))
 
                (:module "ui"

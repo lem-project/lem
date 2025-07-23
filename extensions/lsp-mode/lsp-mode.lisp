@@ -1789,12 +1789,12 @@
 (defun enable-lsp-mode ()
   (lsp-mode t))
 
-(defmacro define-language-spec ((spec-name major-mode) &body initargs)
+(defmacro define-language-spec ((spec-name major-mode &key (parent-spec 'lem-lsp-mode/spec::spec)) &body initargs)
   `(progn
      ,(when (mode-hook-variable major-mode)
         `(add-hook ,(mode-hook-variable major-mode) 'enable-lsp-mode))
      (eval-when (:compile-toplevel :load-toplevel :execute)
-       (defclass ,spec-name (lem-lsp-mode/spec::spec) ()
+       (defclass ,spec-name (,parent-spec) ()
          (:default-initargs ,@initargs
           :mode ',major-mode)))
      (register-language-spec ',major-mode (make-instance ',spec-name))))

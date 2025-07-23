@@ -239,6 +239,7 @@
                "lem-python-mode"
                "lem-posix-shell-mode"
                "lem-js-mode"
+               "lem-vue-mode"
                "lem-typescript-mode"
                "lem-json-mode"
                "lem-css-mode"

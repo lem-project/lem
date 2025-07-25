@@ -1,4 +1,4 @@
-# Lem is the editor/IDE well-tuned for Common Lisp.
+# Lem is a general-purpose editor/IDE extensible in Common Lisp.
 
 ![](https://raw.githubusercontent.com/Shinmera/lem-icon/gh-pages/icon-blue.svg)
 
@@ -6,20 +6,21 @@
 [![Backers on Open Collective](https://opencollective.com/lem/backers/badge.svg)](#backers) [![Sponsors on Open Collective](https://opencollective.com/lem/sponsors/badge.svg)](#sponsors)
 [![GitHub Sponsors](https://img.shields.io/badge/-Sponsor-fafbfc?logo=GitHub-Sponsors)](https://github.com/sponsors/cxxxr)
 
-After installing lem, you can start developing in Common Lisp at once.
+Many languages are supported with Lem's **built-in LSP support**.
 
-You can skip over writing tidy settings or installing many plugins as you do on Emacs.
+After installing lem, you can start developing in Common Lisp and extend the editor while it runs.
 
-Lem supports other programming languages thanks to its built-in LSP
-client. You can choose between an Emacs and a Vim mode.
+Other features include:
 
-Other Lem features include:
-
+- Emacs and Vim modes
+- ncurses and SDL2 interfaces
 - a **project explorer** tree view
-- project-aware commands
+- **project**-aware commands
 - interactive **grep** and **git** interfaces
 - **multiple cursors**
-- tetris
+- **terminal integration** with libvterm
+- keyboard macros
+- **tetris**
 - and more…
 
 ## Install

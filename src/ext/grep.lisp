@@ -3,11 +3,45 @@
         :lem)
   (:export
    :grep
+   :change-grep-command
    :*grep-command*
    :*grep-args*)
   #+sbcl
   (:lock t))
 (in-package :lem/grep)
+
+(defvar *default-grep-command* "git grep")
+(defvar *default-grep-args* "-nHI")
+
+(defvar *grep-command* "git grep")
+(defvar *grep-args* "-nHI")
+(defvar *last-query* (str:concat *grep-command* " " *grep-args* " "))
+(defvar *last-directory* nil)
+
+(defun change-grep-command (command &key (args *default-grep-args*) input directory)
+  "Change the default grep command, arguments and user input.
+
+  Key arguments:
+  :args also changes the default grep arguments.
+  :input adds a default user input to the grep command.
+  :directory changes the last directory.
+
+  In a config file, one can set *grep-command*, *grep-args* and *last-directory*.
+  In an interactive session, the benefit of this function is that is also sets *last-query*, so the grep prompt shows us the new grep command."
+  (when (listp command)
+    (setf command (str:unwords command)))
+  (when (listp args)
+    (setf args (str:unwords args)))
+  (setf *grep-command* command
+        *last-query* nil)
+  (when args
+    (setf *grep-args* args))
+  (when directory
+    (setf *last-directory* directory))
+  (setf *last-query* (str:concat *grep-command* " " *grep-args* " " input))
+  (values *grep-command*
+          *grep-args*
+          *last-query*))
 
 (defun run-grep (string directory)
   (multiple-value-bind (output error-output status-code)
@@ -70,11 +104,6 @@
           (insert-string start string)
           (buffer-undo-boundary (point-buffer start))))))
   (lem/peek-source:show-matched-line))
-
-(defvar *grep-command* "git grep")
-(defvar *grep-args* "-nHI")
-(defvar *last-query* (str:concat *grep-command* " " *grep-args* " "))
-(defvar *last-directory* nil)
 
 (define-command grep (query &optional (directory (buffer-directory)))
     ((prompt-for-string "" :initial-value *last-query* :history-symbol 'grep)

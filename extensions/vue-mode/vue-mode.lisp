@@ -25,9 +25,9 @@
   (setf (variable-value 'enable-syntax-highlight) t
         (variable-value 'indent-tabs-mode) nil
         (variable-value 'tab-width) 2
-        (variable-value 'calc-indent-function) 'js-calc-indent
+        (variable-value 'calc-indent-function) 'lem-js-mode::js-calc-indent
         (variable-value 'line-comment) "//"
-        (variable-value 'beginning-of-defun-function) 'beginning-of-defun
-        (variable-value 'end-of-defun-function) 'end-of-defun))
+        (variable-value 'beginning-of-defun-function) 'lem-js-mode::beginning-of-defun
+        (variable-value 'end-of-defun-function) 'lem-js-mode::end-of-defun))
 
 (define-file-type ("vue") vue-mode)

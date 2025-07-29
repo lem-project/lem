@@ -81,9 +81,7 @@
 (defun compute-evaluated-background-color ()
   (alexandria:when-let (color (parse-color (background-color)))
     (multiple-value-bind (h s v)
-        (rgb-to-hsv (color-red color)
-                    (color-green color)
-                    (color-blue color))
+        (rgb-to-hsv color)
       (multiple-value-bind (r g b)
           (hsv-to-rgb h
                       s

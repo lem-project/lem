@@ -84,13 +84,11 @@
   code
   modifier)
 
-(defun make-key-event (code modifier)
-  (%make-key-event :code code :modifier modifier))
-
 (defun keysym-to-key-event (keysym)
   (let ((code (sdl2:sym-value keysym))
         (modifier (get-modifier keysym)))
-    (make-key-event code modifier)))
+    (%make-key-event :code code
+                     :modifier modifier)))
 
 (defun right-alt-is-meta (on)
   (let ((val (if on
@@ -140,7 +138,8 @@
 
 ;; linux
 (defun modifier-is-accept-text-input-p (modifier)
-  (not (modifier-ctrl modifier)))
+  (and (not (modifier-ctrl modifier))
+       (modifier-meta modifier)))
 
 (defmethod handle-text-input ((platform lem-sdl2/platform:linux) text)
   (handle-text-input-unix text))

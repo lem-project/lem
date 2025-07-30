@@ -44,8 +44,8 @@
     (call-next-method)))
 
 (defun %markdown-insert-link (&optional arg)
-  "Insert a Markdown link. 
-Can be 
+  "Insert a Markdown link.
+Can be
 - <https://lem-project.github.io>
 - [Lem](https://lem-project.github.io), or
 - [Lem](https://lem-project.github.io \"Lem Project website\").
@@ -77,9 +77,9 @@ With ARG (pressing C-u) will prompt for a title/tooltip text."
                                   title)))))))
 
 (defun %markdown-insert-link-with-region (start end &optional arg)
-  "Insert a Markdown link using the text within a selected region. 
-Can be 
-- <https://lem-project.github.io>
+  "Insert a Markdown link using the text within a selected region.
+Will use the text in the region as default.
+Can be:
 - [Lem](https://lem-project.github.io), or
 - [Lem](https://lem-project.github.io \"Lem Project website\").
 
@@ -88,20 +88,20 @@ With ARG (pressing C-u) will prompt for a title/tooltip text."
                                  :history-symbol 'mh-markdown-url))
          (text (points-to-string start end))
          (change-text (prompt-for-string "Link text: " :initial-value text))
-         (title (if (not (uiop:emptyp arg)) 
+         (title (if (not (uiop:emptyp arg))
                     (prompt-for-string "Title: ")
                   nil)))
     (delete-between-points start end)
     (if (not (null title))
         (insert-string start
                        (format nil
-                               "[~a](~a \"~a\")" 
+                               "[~a](~a \"~a\")"
                                change-text
                                url
                                title))
       (insert-string start
                      (format nil
-                             "[~a](~a)" 
+                             "[~a](~a)"
                              change-text
                              url)))))
 

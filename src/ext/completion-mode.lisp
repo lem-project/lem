@@ -7,7 +7,8 @@
            :completion-item-detail
            :run-completion
            :completion-end
-           :completion-mode)
+           :completion-mode
+           :completion-refresh)
   #+sbcl
   (:lock t))
 (in-package :lem/completion-mode)
@@ -185,13 +186,18 @@
           (t (unread-key-sequence (last-read-key-sequence))
              (completion-end)))))
 
+(defun completion-refresh ()
+  "This will refresh the contents of the completion window using any changes made in the interim"
+  (when *completion-context*
+    (continue-completion *completion-context*)))
+
 (define-command completion-delete-previous-char (n) (:universal)
   (delete-previous-char n)
-  (continue-completion *completion-context*))
+  (completion-refresh))
 
 (define-command completion-backward-delete-word (n) (:universal)
   (backward-delete-word n)
-  (continue-completion *completion-context*))
+  (completion-refresh))
 
 (define-command completion-next-line () ()
   (popup-menu-down (context-popup-menu *completion-context*))

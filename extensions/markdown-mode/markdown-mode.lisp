@@ -43,13 +43,21 @@
   (with-major-mode (current-major-mode-at-point (current-point))
     (call-next-method)))
 
-(define-command markdown-insert-link () ()
+(defun %markdown-insert-link (&optional arg)
+  "Insert a Markdown link.
+Can be
+- <https://lem-project.github.io>
+- [Lem](https://lem-project.github.io), or
+- [Lem](https://lem-project.github.io \"Lem Project website\").
+
+With ARG (pressing C-u) will prompt for a title/tooltip text."
   (let ((url (prompt-for-string "URL: "
                                 :history-symbol 'mh-markdown-url))
         (text
           (prompt-for-string "Link text (blank for plain URL): "))
-        (title
-          (prompt-for-string "Title (tooltip text, optional): ")))
+        (title (if (not (uiop:emptyp arg))
+                   (prompt-for-string "Title (tooltip text, optional): ")
+                   nil)))
     (with-point ((p (current-point)))
       (cond
         ((and url
@@ -67,5 +75,43 @@
                                   text
                                   url
                                   title)))))))
+
+(defun %markdown-insert-link-with-region (start end &optional arg)
+  "Insert a Markdown link using the text within a selected region.
+Will use the text in the region as default.
+Can be:
+- [Lem](https://lem-project.github.io), or
+- [Lem](https://lem-project.github.io \"Lem Project website\").
+
+With ARG (pressing C-u) will prompt for a title/tooltip text."
+  (let* ((url (prompt-for-string "URL: "
+                                 :history-symbol 'mh-markdown-url))
+         (text (points-to-string start end))
+         (change-text (prompt-for-string "Link text: " :initial-value text))
+         (title (if (not (uiop:emptyp arg))
+                    (prompt-for-string "Title: ")
+                  nil)))
+    (delete-between-points start end)
+    (if (not (null title))
+        (insert-string start
+                       (format nil
+                               "[~a](~a \"~a\")"
+                               change-text
+                               url
+                               title))
+      (insert-string start
+                     (format nil
+                             "[~a](~a)"
+                             change-text
+                             url)))))
+
+(define-command markdown-insert-link (&optional arg) (:universal-nil)
+  "Insert a Markdown link at the current point."
+  (let ((is-mark (lem/buffer/internal:mark-active-p (cursor-mark (current-point)))))
+    (if (not is-mark)
+        (%markdown-insert-link arg)
+      (let ((start   (region-end (current-buffer)))
+            (end     (region-beginning (current-buffer))))
+        (%markdown-insert-link-with-region start end arg)))))
 
 (define-file-type ("md" "markdown") markdown-mode)

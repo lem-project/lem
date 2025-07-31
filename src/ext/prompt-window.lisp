@@ -397,7 +397,7 @@
           *special-paths*
           :initial-value path))
 
-
+
 (defun prompt-file-completion (string directory &key directory-only)
   (replace-prompt-input (normalize-path-input string))
   (flet ((move-to-file-start (point)
@@ -466,3 +466,44 @@
 (setf *prompt-file-completion-function* 'prompt-file-completion)
 (setf *prompt-buffer-completion-function* 'prompt-buffer-completion)
 (setf *prompt-command-completion-function* 'prompt-command-completion)
+
+(defvar *file-prompt-keymap* (make-keymap :name '*file-mode-prompt-keymap*))
+(define-key *file-prompt-keymap* "Backspace" 'file-prompt-delete-previous-char)
+
+(define-command file-prompt-delete-previous-char (n) (:universal)
+  (if (and (= n 1) (char= (character-at (current-point) -1) #\/))
+      (progn
+        (delete-previous-char)
+        (with-point ((end (current-point)))
+          (let ((point (search-backward (current-point) "/")))
+            (when point
+              (call-command 'forward-char nil)
+              (with-point ((start (current-point)))
+                (delete-between-points start end)))))
+        (lem/completion-mode:completion-refresh))
+      (progn
+        (lem:delete-previous-char n)
+        (lem/completion-mode:completion-refresh))))
+
+(defmethod lem-core::%prompt-for-file (prompt directory default existing gravity)
+  (let ((result
+          (lem-core::%prompt-for-line (if default
+                                (format nil "~a(~a) " prompt default)
+                                prompt)
+                            :initial-value (when directory (princ-to-string directory))
+                            :completion-function
+                            (when *prompt-file-completion-function*
+                              (lambda (str)
+                                (funcall *prompt-file-completion-function*
+                                         (if (alexandria:emptyp str)
+                                             "./"
+                                             str)
+                                         (or directory
+                                             (namestring (user-homedir-pathname))))))
+                            :test-function (and existing #'virtual-probe-file)
+                            :history-symbol 'prompt-for-file
+                            :gravity gravity
+                            :special-keymap *file-prompt-keymap*)))
+    (if (string= result "")
+        default
+        result)))

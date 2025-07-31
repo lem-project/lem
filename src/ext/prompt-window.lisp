@@ -468,9 +468,11 @@
 (setf *prompt-command-completion-function* 'prompt-command-completion)
 
 (defvar *file-prompt-keymap* (make-keymap :name '*file-mode-prompt-keymap*))
-(define-key *file-prompt-keymap* "Backspace" 'file-prompt-delete-previous-char)
+(define-key *file-prompt-keymap* "C-Backspace" 'file-prompt-delete-previous-char)
 
 (define-command file-prompt-delete-previous-char (n) (:universal)
+  "When the cursor is after a '/', the prompt will go up to the parent folder. 
+Otherwise it behaves identically to delete-previous-char"
   (if (and (= n 1) (char= (character-at (current-point) -1) #\/))
       (progn
         (delete-previous-char)

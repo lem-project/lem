@@ -3,7 +3,7 @@
 (in-package :lem-typescript-mode/lsp-config)
 
 (lem-lsp-mode:define-language-spec (typescript-spec lem-typescript-mode:typescript-mode)
-  :language-id "typescript"
+  :language-id "typescript-tsx"
   :root-uri-patterns '("package.json" "tsconfig.json")
   :command '("typescript-language-server" "--stdio")
   :install-command "npm install -g typescript-language-server typescript"

@@ -18,6 +18,7 @@
 (defgeneric %prompt-for-line (prompt &key initial-value completion-function test-function
                                           history-symbol syntax-table gravity edit-callback
                                           special-keymap use-border))
+(defgeneric %prompt-for-file (prompt directory default existing gravity))
 
 (flet ((f (c1 c2 step-fn)
          (when c1
@@ -119,26 +120,7 @@
 
 (defun prompt-for-file (prompt &key directory (default (buffer-directory)) existing
                                     (gravity *default-prompt-gravity*))
-  (let ((result
-          (prompt-for-string (if default
-                                 (format nil "~a(~a) " prompt default)
-                                 prompt)
-                             :initial-value (when directory (princ-to-string directory))
-                             :completion-function
-                             (when *prompt-file-completion-function*
-                               (lambda (str)
-                                 (funcall *prompt-file-completion-function*
-                                          (if (alexandria:emptyp str)
-                                              "./"
-                                              str)
-                                          (or directory
-                                              (namestring (user-homedir-pathname))))))
-                             :test-function (and existing #'virtual-probe-file)
-                             :history-symbol 'prompt-for-file
-                             :gravity gravity)))
-    (if (string= result "")
-        default
-        result)))
+  (%prompt-for-file prompt directory default existing gravity))
 
 (defun prompt-for-directory (prompt &rest args
                                     &key directory (default (buffer-directory)) existing

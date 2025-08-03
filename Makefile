@@ -22,6 +22,11 @@ server:
 	$(LISP) --load .qlot/setup.lisp \
 		--load scripts/build-server.lisp
 
+webview:
+	qlot install
+	$(LISP) --load .qlot/setup.lisp \
+		--load scripts/build-webview.lisp
+
 lem: sdl2
 
 install-bin: $(VARIANT)

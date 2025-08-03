@@ -28,6 +28,8 @@
                          :mode :websocket
                          :port (websocket-server-runner-port runner)
                          :host (websocket-server-runner-host runner)
+                         :debug nil
+                         :silent t
                          :clack-handler 'clack-handler))
 
 (defun clack-handler (env)

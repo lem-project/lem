@@ -24,13 +24,16 @@
          :reader websocket-server-runner-host)))
 
 (defmethod server-listen ((runner websocket-server-runner) server)
-  (jsonrpc:server-listen server
-                         :mode :websocket
-                         :port (websocket-server-runner-port runner)
-                         :host (websocket-server-runner-host runner)
-                         :debug nil
-                         :silent t
-                         :clack-handler 'clack-handler))
+  (let* ((null-stream (make-broadcast-stream))
+         (*trace-output* null-stream)
+         (*error-output* null-stream))
+    (jsonrpc:server-listen server
+                           :mode :websocket
+                           :port (websocket-server-runner-port runner)
+                           :host (websocket-server-runner-host runner)
+                           :debug nil
+                           :silent t
+                           :clack-handler 'clack-handler)))
 
 (defun clack-handler (env)
   (unless (wsd:websocket-p env)

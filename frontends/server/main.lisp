@@ -689,12 +689,12 @@
     ("host" :type string :optional t)
     ("address" :type string :optional t :documentation "address of \"local-domain-socket\"")))
 
-(defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1"))
+(defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1") args)
   (let ((*server-runner*
           (make-instance 'websocket-server-runner
                          :port port
                          :host hostname)))
-    (lem:lem)))
+    (apply #'lem:lem args)))
 
 (defun run-stdio-server ()
   (let ((*server-runner* (make-instance 'stdio-server-runner)))

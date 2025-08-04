@@ -14,9 +14,9 @@
              (webview:webview-run w))
         (webview:webview-destroy w)))))
 
-(defun main ()
+(defun main (&optional (args (uiop:command-line-arguments)))
   (let ((port (lem/common/socket:random-available-port)))
-    (bt2:make-thread (lambda () (lem-server:run-websocket-server :port port))
+    (bt2:make-thread (lambda () (lem-server:run-websocket-server :port port :args args))
                      :name "lem-server")
     (run-webview :title "Lem"
                  :url (format nil "http://localhost:~D" port)

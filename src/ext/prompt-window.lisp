@@ -477,7 +477,7 @@
   (with-point ((end (current-point)))
     (let ((point (search-backward (current-point) "/")))
       (when point
-        (call-command 'forward-char nil)
+        (lem:character-offset point 1)
         (with-point ((start (current-point)))
           (delete-between-points start end)))))
   (lem/completion-mode:completion-refresh))

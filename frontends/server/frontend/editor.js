@@ -85,46 +85,6 @@ function getLemEditorElement() {
   return document.getElementById('lem-editor');
 }
 
-class Cursor {
-  constructor(editor, name, color) {
-    this.editor = editor;
-    this.name = name;
-    this.color = color;
-
-    this.span = document.createElement('span');
-    this.span.style.all = 'none';
-    this.span.style.position = 'absolute';
-    this.span.style.zIndex = '';
-    this.span.style.top = '0';
-    this.span.style.left = '0';
-    this.span.style.fontFamily = editor.option.font;
-    this.span.style.backgroundColor = color;
-    this.span.style.color = 'white';
-    this.span.innerHTML = '';
-    document.body.appendChild(this.span);
-
-    this.timerId = null;
-  }
-
-  move(x, y) {
-    const [x0, y0] = this.editor.getDisplayRectangle();
-    this.span.style.visibility = 'visible';
-    this.span.textContent = this.name;
-    this.span.style.left = (x + x0) + 'px';
-    this.span.style.top = (y + y0) + 'px';
-    this.span.style.padding = '3px 1%'
-    if (this.timerId) {
-      clearTimeout(this.timerId);
-    }
-    this.timerId = setTimeout(
-      () => {
-        this.span.style.visibility = 'hidden';
-      },
-      500,
-    );
-  }
-}
-
 function addMouseEventListeners({dom, editor, isDraggable, draggableStyle}) {
   dom.addEventListener('contextmenu', (event) => {
     event.preventDefault();
@@ -1152,22 +1112,9 @@ export class Editor {
     view.clearEob(x, y);
   }
 
-  put({ viewInfo: { id }, x, y, text, textWidth, attribute, cursorInfo }) {
+  put({ viewInfo: { id }, x, y, text, textWidth, attribute }) {
     const view = this.findViewById(id);
     view.print(x, y, text, textWidth, attribute);
-    if (cursorInfo) {
-      const { name, color } = cursorInfo;
-      let cursor = this.cursors.get(name);
-      if (!cursor) {
-        cursor = new Cursor(this, name, color);
-        this.cursors.set(name, cursor);
-      }
-
-      cursor.move(
-        (view.x + x) * this.option.fontWidth,
-        (view.y + y - 1) * this.option.fontHeight,
-      );
-    }
   }
 
   modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute }) {

@@ -969,7 +969,8 @@
 (defun connect-to-multiple-servers (host-and-ports)
   (dolist (host-and-port host-and-ports)
     (destructuring-bind (&key host port) host-and-port
-      (connect-to-micros host port))))
+      (connect-to-micros host port)))
+  (setf *broadcast* t))
 
 (defun pull-events ()
   (when (connected-p)

@@ -12,4 +12,5 @@
                (:file "utils")
                (:file "view")
                (:file "mouse")
+               (:file "icon")
                (:file "main")))

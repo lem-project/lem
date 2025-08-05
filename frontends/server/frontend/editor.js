@@ -73,6 +73,7 @@ class Option {
   constructor({ fontName, fontSize }) {
     const font = fontSize + 'px ' + fontName;
     this.font = font;
+    this.fontSize = fontSize;
     const [width, height] = computeFontSize(font);
     this.fontWidth = width;
     this.fontHeight = height;
@@ -297,9 +298,10 @@ class CanvasSurface extends BaseSurface {
     });
   }
 
-  drawText(x, y, text, textWidth, attribute) {
+  drawText(x, y, text, textWidth, attribute, font) {
     const option = this.editor.option;
     this.drawingQueue.push(function(ctx) {
+      font = font ? `${option.fontSize}px ${font}` : option.font;
       if (!attribute) {
         drawBlock({
           ctx,
@@ -315,7 +317,7 @@ class CanvasSurface extends BaseSurface {
           y: y * option.fontHeight,
           text: text,
           style: option.foreground,
-          font: option.font,
+          font: font,
           option,
         });
       } else {
@@ -347,7 +349,7 @@ class CanvasSurface extends BaseSurface {
           y: gy,
           text: text,
           style: foreground,
-          font: bold ? ('bold ' + option.font) : option.font,
+          font: bold ? ('bold ' + font) : font,
           option,
         });
         if (underline) {
@@ -578,13 +580,14 @@ class View {
     );
   }
 
-  print(x, y, text, textWidth, attribute) {
+  print(x, y, text, textWidth, attribute, font) {
     this.mainSurface.drawText(
       x,
       y,
       text,
       textWidth,
       attribute,
+      font,
     );
   }
 
@@ -1112,9 +1115,9 @@ export class Editor {
     view.clearEob(x, y);
   }
 
-  put({ viewInfo: { id }, x, y, text, textWidth, attribute }) {
+  put({ viewInfo: { id }, x, y, text, textWidth, attribute, font }) {
     const view = this.findViewById(id);
-    view.print(x, y, text, textWidth, attribute);
+    view.print(x, y, text, textWidth, attribute, font);
   }
 
   modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute }) {

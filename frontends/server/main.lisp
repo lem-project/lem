@@ -455,7 +455,7 @@
       (setf attribute (lem:make-attribute :background lem-if:*background-color-of-drawing-window*)))
     attribute))
 
-(defun put (jsonrpc view x y string attribute)
+(defun put (jsonrpc view x y string attribute &key font)
   (with-error-handler ()
     (notify* jsonrpc
              (ecase *put-target*
@@ -466,14 +466,36 @@
                    "y" y
                    "text" string
                    "textWidth" (lem:string-width string)
-                   "attribute" (ensure-attribute attribute)))))
+                   "attribute" (ensure-attribute attribute)
+                   "font" font))))
 
 (defmethod draw-object (jsonrpc (object display:text-object) x y view)
   (let* ((string (display:text-object-string object))
-         (attribute (display:text-object-attribute object)))
+         (attribute (display:text-object-attribute object))
+         (type (display:text-object-type object)))
     (when (and attribute (lem-core:cursor-attribute-p attribute))
       (lem-core::set-last-print-cursor (view-window view) x y))
-    (put jsonrpc view x y string attribute)))
+    (put jsonrpc
+         view
+         x
+         y
+         string
+         attribute)))
+
+(defmethod draw-object (jsonrpc (object display:icon-object) x y view)
+  (let* ((string (display:text-object-string object))
+         (attribute (display:text-object-attribute object))
+         (type (display:text-object-type object)))
+    (when (and attribute (lem-core:cursor-attribute-p attribute))
+      (lem-core::set-last-print-cursor (view-window view) x y))
+    (put jsonrpc
+         view
+         x
+         y
+         string
+         attribute
+         :font (lem:icon-value (char-code (char string 0))
+                               :font))))
 
 (defmethod draw-object (jsonrpc (object display:eol-cursor-object) x y view)
   (lem-core::set-last-print-cursor (view-window view) x y)

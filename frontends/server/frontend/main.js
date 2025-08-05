@@ -2,7 +2,7 @@ import { Editor } from './editor.js';
 
 const canvas = document.querySelector('#editor');
 
-function main() {
+async function main() {
   document.fonts.ready.then(() => {
     const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';
     const editor = new Editor({

@@ -80,12 +80,16 @@
         (setf input (symbol-name (command-name input))))
       ;; find-command wants downcase strings.
       (setf input (str:downcase input))
-      (and (lem/common/history:add-history history input :allow-duplicates nil)
+      (and (lem/common/history:add-history history input
+                                           :move-to-top t
+                                           :allow-duplicates nil
+                                           )
            (lem/common/history:save-file history)))))
 
 (defun saved-commands ()
   "Return persisted commands names as a list."
-  (lem/common/history:history-data-list (commands-history)))
+  (reverse
+   (lem/common/history:history-data-list (commands-history))))
 
 
 (define-command execute-command (arg) (:universal-nil)

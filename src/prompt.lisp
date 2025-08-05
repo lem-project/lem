@@ -169,13 +169,29 @@
        (completion str (all-command-names)))
    #'string-lessp))
 
-(defun prompt-for-command (prompt)
-  (prompt-for-string
-   prompt
-   :completion-function *prompt-command-completion-function*
-   :test-function 'exist-command-p
-   :history-symbol 'mh-execute-command
-   :syntax-table *prompt-syntax-table*))
+(defun prompt-for-command (prompt &key candidates)
+  (if candidates
+      (prompt-for-string
+       prompt
+       ;; :completion-function *prompt-command-completion-function*
+
+       ;; TODO: what do we want? List our persisted commands first,
+       ;; but, of course, be able to TAB-complete all commands.
+       
+       :completion-function (lambda (x) 
+                              (completion-strings 
+                               x
+                               ;; testing: merging our candidates to all the command names.
+                               (append candidates (all-command-names))))
+       :test-function 'exist-command-p
+       :history-symbol 'mh-execute-command
+       :syntax-table *prompt-syntax-table*)
+      (prompt-for-string
+       prompt
+       :completion-function *prompt-command-completion-function*
+       :test-function 'exist-command-p
+       :history-symbol 'mh-execute-command
+       :syntax-table *prompt-syntax-table*)))
 
 (defun prompt-for-library (prompt &key history-symbol)
   (macrolet ((ql-symbol-value (symbol)

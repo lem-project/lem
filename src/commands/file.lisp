@@ -13,6 +13,7 @@
            :write-file
            :write-region-file
            :insert-file
+           :insert-filename
            :save-some-buffers
            :sync-buffer-with-file-content
            :revert-buffer
@@ -314,6 +315,16 @@
   (insert-file-contents (current-point)
                         (expand-file-name filename))
   t)
+
+(define-command insert-filename (filename &optional arg) ((:file "Insert file name:") :universal-nil)
+  "Prompt for a file and insert its full filename at the current point.
+
+  With universal argument C-u, print it inside double quotes."
+  ;; note: insert-file-name exists as a function in directory-mode/internals.lisp
+  (when filename
+    (when arg (insert-string (current-point) "\""))
+    (insert-string (current-point) filename)
+    (when arg (insert-string (current-point) "\""))))
 
 (define-command save-some-buffers (&optional save-silently-p) (:universal-nil)
   "Save some files in the open buffer."

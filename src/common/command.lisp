@@ -11,7 +11,6 @@
            :add-command
            :remove-command
            :all-command-names
-           :all-command-names-append
            :all-commands
            :find-command
            :exist-command-p)
@@ -63,13 +62,6 @@
 (defun all-command-names (&optional (command-table *command-table*))
   "Return all existing command names."
   (alexandria:hash-table-keys (command-table-table command-table)))
-
-(defun all-command-names-append (candidates)
-  "Return a list of commands names (strings), but append CANDIDATES (list of strings) to the list and remove possible duplicates."
-  (remove-duplicates
-   (append candidates (all-command-names))
-   :test #'equal
-   :from-end t))
 
 (defun all-commands (&optional (command-table *command-table*))
   (alexandria:hash-table-values (command-table-table command-table)))

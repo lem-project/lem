@@ -477,16 +477,14 @@
                            items
                            :key #'lem/completion-mode:completion-item-label))))
 
-    (let ((all-items (collect-items (all-command-names-append candidates)))
-          (candidate-items (collect-items candidates)))
-      (append
-       ;; Our own items are already sorted (last used first).
-       (filter-items candidate-items)
-       ;; Sort the rest of the commands by name.
-       (sort
-        (filter-items all-items)
-        #'string-lessp
-        :key #'lem/completion-mode:completion-item-label)))))
+    (let* ((all-items (collect-items (all-command-names)))
+           (candidate-items (collect-items candidates))
+           (items (remove-duplicates
+                   (append candidate-items all-items)
+                   :test #'equal
+                   :key #'lem/completion-mode:completion-item-label
+                   :from-end t)))
+      (filter-items items))))
 
 (setf *prompt-file-completion-function* 'prompt-file-completion)
 (setf *prompt-buffer-completion-function* 'prompt-buffer-completion)

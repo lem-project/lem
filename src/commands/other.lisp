@@ -72,7 +72,7 @@
   *commands-history*)
 
 (defun remember-command (input)
-  "Add this command (string) to the history file."
+  "Add this command (string) to the history file if *persist-commands* is non nil."
   (when *persist-commands*
     (let ((history (commands-history)))
       (unless (stringp input)
@@ -94,7 +94,7 @@
 
 (define-command execute-command (arg) (:universal-nil)
   "Read a command name, then read the ARG and call the command."
-  (let* ((candidates (saved-commands))
+  (let* ((candidates (when *persist-commands* (saved-commands)))
          (name (prompt-for-command 
                 (if arg
                     (format nil "~D M-x " arg)
@@ -103,8 +103,7 @@
          (command (find-command name)))
     (if command
         (progn
-          (when *persist-commands*
-            (remember-command command))
+          (remember-command command)
           (call-command command arg))
         (message "invalid command"))))
 

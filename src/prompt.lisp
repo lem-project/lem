@@ -170,20 +170,15 @@
    #'string-lessp))
 
 (defun prompt-for-command (prompt &key candidates)
-  (let ((completion-function (if candidates
-                                 (lambda (input)
-                                   ;; Use the built-in function (it properly creates completion items,
-                                   ;; it displays the command's key bindings),
-                                   ;; but display our candidates first.
-                                   (funcall *prompt-command-completion-function* input :candidates candidates))
-                                 *prompt-command-completion-function*)))
-
-    (prompt-for-string
-         prompt
-         :completion-function completion-function
-         :test-function 'exist-command-p
-         :history-symbol 'mh-execute-command
-         :syntax-table *prompt-syntax-table*)))
+  (prompt-for-string
+   prompt
+   :completion-function (if candidates
+                            (lambda (input)
+                              (funcall *prompt-command-completion-function* input :candidates candidates))
+                            *prompt-command-completion-function*)
+   :test-function 'exist-command-p
+   :history-symbol 'mh-execute-command
+   :syntax-table *prompt-syntax-table*))
 
 (defun prompt-for-library (prompt &key history-symbol)
   (macrolet ((ql-symbol-value (symbol)

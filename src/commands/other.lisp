@@ -1,6 +1,9 @@
 (defpackage :lem-core/commands/other
   (:use :cl :lem-core)
-  (:export :nop-command
+  (:export :*persist-M-x-commands*
+           :*history-limit*
+           :*max-persisted-M-x-commands-prompt-candidates*
+           :nop-command
            :undefined-key
            :keyboard-quit
            :escape
@@ -9,13 +12,20 @@
            :execute-command
            :show-context-menu
            :load-library)
+  (:documentation "Implements the mechanism to execute commands (M-x aka execute-command), load libraries, and a few global keybindings.
+
+By default, persist M-x commands to disk. See *persist-M-x-commands*.")
   #+sbcl
   (:lock t))
 (in-package :lem-core/commands/other)
 
-(defparameter *persist-commands* t
+(defparameter *persist-M-x-commands* t
   "If non true, don't persist the history of commands called with M-x into Lem's home config directory.")
-(defparameter *max-persisted-commands-candidates* 10
+
+(defparameter *history-limit* 1000
+  "The maximum number of commands to persist in (lem-home)/history/commands.")
+
+(defparameter *max-persisted-M-x-commands-prompt-candidates* 10
   "Number of command names from the history we show on M-x completion. Set to NIL to show all of them.")
 
 (define-key *global-keymap* "NopKey" 'nop-command)
@@ -61,21 +71,20 @@
 
 (defvar *commands-history*) ;; unbound
 
-#+(or)
-(makunbound '*commands-history*)
-
 (defun commands-history ()
   "Return or create the commands' history struct.
   The history file is saved on (lem-home)/history/commands"
   (unless (boundp '*commands-history*)
     (let* ((pathname (merge-pathnames "history/commands" (lem-home)))
-           (history (lem/common/history:make-history :pathname pathname)))
+           (history (lem/common/history:make-history
+                     :pathname pathname
+                     :limit *history-limit*)))
       (setf *commands-history* history)))
   *commands-history*)
 
 (defun remember-command (input)
-  "Add this command (string) to the history file if *persist-commands* is non nil."
-  (when *persist-commands*
+  "Add this command (string) to the history file if *persist-M-x-commands* is non nil."
+  (when *persist-M-x-commands*
     (let ((history (commands-history)))
       (unless (stringp input)
         ;; Save a string, not a command object.
@@ -84,26 +93,25 @@
       (setf input (str:downcase input))
       (and (lem/common/history:add-history history input
                                            :move-to-top t
-                                           :allow-duplicates nil
-                                           )
+                                           :allow-duplicates nil)
            (lem/common/history:save-file history)))))
 
 (defun saved-commands ()
   "Return persisted commands names as a list.
-  
+
   Return a maximum of *max-persisted-commands-candidates* items."
   (alexandria-2:subseq*
    (reverse
     (lem/common/history:history-data-list (commands-history)))
    0
    ;; subseq* is ok with the end index being greater than the sequence length.
-   *max-persisted-commands-candidates*))
+   *max-persisted-M-x-commands-prompt-candidates*))
 
 
 (define-command execute-command (arg) (:universal-nil)
   "Read a command name, then read the ARG and call the command."
-  (let* ((candidates (when *persist-commands* (saved-commands)))
-         (name (prompt-for-command 
+  (let* ((candidates (when *persist-M-x-commands* (saved-commands)))
+         (name (prompt-for-command
                 (if arg
                     (format nil "~D M-x " arg)
                     "M-x ")

@@ -15,6 +15,8 @@
 
 (defparameter *persist-commands* t
   "If non true, don't persist the history of commands called with M-x into Lem's home config directory.")
+(defparameter *max-persisted-commands-candidates* 10
+  "Number of command names from the history we show on M-x completion. Set to NIL to show all of them.")
 
 (define-key *global-keymap* "NopKey" 'nop-command)
 (define-key *global-keymap* "C-g" 'keyboard-quit)
@@ -87,9 +89,15 @@
            (lem/common/history:save-file history)))))
 
 (defun saved-commands ()
-  "Return persisted commands names as a list."
-  (reverse
-   (lem/common/history:history-data-list (commands-history))))
+  "Return persisted commands names as a list.
+  
+  Return a maximum of *max-persisted-commands-candidates* items."
+  (alexandria-2:subseq*
+   (reverse
+    (lem/common/history:history-data-list (commands-history)))
+   0
+   ;; subseq* is ok with the end index being greater than the sequence length.
+   *max-persisted-commands-candidates*))
 
 
 (define-command execute-command (arg) (:universal-nil)

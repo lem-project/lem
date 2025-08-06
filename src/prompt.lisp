@@ -180,23 +180,20 @@
    :test #'equal :from-end t))
 
 (defun prompt-for-command (prompt &key candidates)
-  (if candidates
-      (prompt-for-string
-       prompt
-       :completion-function (lambda (x)
-                              (completion-strings
-                               x
-                               ;; We list the persisted commands first (if any).
-                               (append-completion-candidates candidates)))
-       :test-function 'exist-command-p
-       :history-symbol 'mh-execute-command
-       :syntax-table *prompt-syntax-table*)
-      (prompt-for-string
-       prompt
-       :completion-function *prompt-command-completion-function*
-       :test-function 'exist-command-p
-       :history-symbol 'mh-execute-command
-       :syntax-table *prompt-syntax-table*)))
+  (let ((completion-function (if candidates
+                                 (lambda (x)
+                                   (completion-strings
+                                    x
+                                    ;; We list the persisted commands first (if any).
+                                    (append-completion-candidates candidates)))
+                                 *prompt-command-completion-function*)))
+
+    (prompt-for-string
+         prompt
+         :completion-function completion-function
+         :test-function 'exist-command-p
+         :history-symbol 'mh-execute-command
+         :syntax-table *prompt-syntax-table*)))
 
 (defun prompt-for-library (prompt &key history-symbol)
   (macrolet ((ql-symbol-value (symbol)

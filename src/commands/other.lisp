@@ -2,7 +2,7 @@
   (:use :cl :lem-core)
   (:export :*persist-M-x-commands*
            :*history-limit*
-           :*max-persisted-M-x-commands-prompt-candidates*
+           :*max-M-x-candidates-from-history*
            :nop-command
            :undefined-key
            :keyboard-quit
@@ -25,7 +25,7 @@ By default, persist M-x commands to disk. See *persist-M-x-commands*.")
 (defparameter *history-limit* 1000
   "The maximum number of commands to persist in (lem-home)/history/commands.")
 
-(defparameter *max-persisted-M-x-commands-prompt-candidates* 10
+(defparameter *max-M-x-candidates-from-history* 10
   "Number of command names from the history we show on M-x completion. Set to NIL to show all of them.")
 
 (define-key *global-keymap* "NopKey" 'nop-command)
@@ -99,13 +99,13 @@ By default, persist M-x commands to disk. See *persist-M-x-commands*.")
 (defun saved-commands ()
   "Return persisted commands names as a list.
 
-  Return a maximum of *max-persisted-commands-candidates* items."
+  Return a maximum of *max-M-x-candidates-from-history* items."
   (alexandria-2:subseq*
    (reverse
     (lem/common/history:history-data-list (commands-history)))
    0
    ;; subseq* is ok with the end index being greater than the sequence length.
-   *max-persisted-M-x-commands-prompt-candidates*))
+   *max-M-x-candidates-from-history*))
 
 
 (define-command execute-command (arg) (:universal-nil)

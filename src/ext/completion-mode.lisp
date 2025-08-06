@@ -112,6 +112,8 @@
 (define-key *completion-mode-keymap* "Space"    'completion-insert-space-and-cancel)
 (define-key *completion-mode-keymap* 'delete-previous-char 'completion-delete-previous-char)
 (define-key *completion-mode-keymap* 'backward-delete-word 'completion-backward-delete-word)
+(define-key *completion-mode-keymap* "Up" 'completion-previous-line)
+(define-key *completion-mode-keymap* "Down" 'completion-next-line)
 
 (define-attribute detail-attribute
   (t :foreground :base03))

@@ -169,20 +169,25 @@
        (completion str (all-command-names)))
    #'string-lessp))
 
+(defun append-completion-candidates (candidates)
+  "Return a list of commands where our command candidates (list of strings) are appended to the list of all existing commands.
+
+  Return a list of strings, our candidates first, with no duplicates.
+
+  Only used when M-x commnands are persisted."
+  (remove-duplicates
+   (append candidates (all-command-names))
+   :test #'equal :from-end t))
+
 (defun prompt-for-command (prompt &key candidates)
   (if candidates
       (prompt-for-string
        prompt
-       ;; :completion-function *prompt-command-completion-function*
-
-       ;; TODO: what do we want? List our persisted commands first,
-       ;; but, of course, be able to TAB-complete all commands.
-       
-       :completion-function (lambda (x) 
-                              (completion-strings 
+       :completion-function (lambda (x)
+                              (completion-strings
                                x
-                               ;; testing: merging our candidates to all the command names.
-                               (append candidates (all-command-names))))
+                               ;; We list the persisted commands first (if any).
+                               (append-completion-candidates candidates)))
        :test-function 'exist-command-p
        :history-symbol 'mh-execute-command
        :syntax-table *prompt-syntax-table*)

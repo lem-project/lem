@@ -459,11 +459,14 @@
   The rest of commands are sorted by name."
   (flet ((collect-items (candidates)
            (loop :for name :in candidates
+                 :for command := (find-command name)
+                 ;; avoid commands created in a REPL session but now non-existent.
+                 :unless (null command)
                  :collect (lem/completion-mode:make-completion-item
                            :label name
                            :detail (collect-command-all-keybindings
                                     (current-buffer)
-                                    (find-command name)))))
+                                    command))))
 
          (filter-items (items)
            (if (find #\- string)

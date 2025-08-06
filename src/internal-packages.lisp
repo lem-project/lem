@@ -420,7 +420,8 @@
    :universal-argument-of-this-command
    :execute
    :call-command
-   :all-command-names)
+   :all-command-names
+   :all-command-names-append)
   ;; defcommand.lisp
   (:export
    :define-command)

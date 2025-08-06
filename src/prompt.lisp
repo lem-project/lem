@@ -169,23 +169,13 @@
        (completion str (all-command-names)))
    #'string-lessp))
 
-(defun append-completion-candidates (candidates)
-  "Return a list of commands where our command candidates (list of strings) are appended to the list of all existing commands.
-
-  Return a list of strings, our candidates first, with no duplicates.
-
-  Only used when M-x commnands are persisted."
-  (remove-duplicates
-   (append candidates (all-command-names))
-   :test #'equal :from-end t))
-
 (defun prompt-for-command (prompt &key candidates)
   (let ((completion-function (if candidates
-                                 (lambda (x)
-                                   (completion-strings
-                                    x
-                                    ;; We list the persisted commands first (if any).
-                                    (append-completion-candidates candidates)))
+                                 (lambda (input)
+                                   ;; Use the built-in function (it properly creates completion items,
+                                   ;; it displays the command's key bindings),
+                                   ;; but display our candidates first.
+                                   (funcall *prompt-command-completion-function* input :candidates candidates))
                                  *prompt-command-completion-function*)))
 
     (prompt-for-string

@@ -451,55 +451,39 @@
                         :append (find-command-keybindings-in-keymap command keymap))
                   (find-command-keybindings-in-keymap command *global-keymap*))))
 
-;; (defun append-completion-candidates (candidates)
-;;   "Return a list of commands where our command candidates (list of strings) are appended to the list of all existing commands.
-
-;;   Return a list of strings, our candidates first, with no duplicates.
-
-;;   Only used when M-x commnands are persisted."
-;;   (remove-duplicates
-;;    (append candidates (all-command-names))
-;;    :test #'equal :from-end t))
-
 (defun prompt-command-completion (string &key candidates)
   "Filter the list of commands from an input string and return a list of command completion items.
 
   For each command, find and display its available keybindings for the current keymaps.
   Display CANDIDATES command names (list of strings) before the rest of all commands.
   The rest of commands are sorted by name."
-  (let ((items (loop :for name :in (all-command-names-append candidates)
-                     :collect (lem/completion-mode:make-completion-item
-                               :label name
-                               :detail (collect-command-all-keybindings
-                                        (current-buffer)
-                                        (find-command name)))))
-        (candidate-items (loop :for name :in candidates
-                               :collect (lem/completion-mode:make-completion-item
-                                         :label name
-                                         :detail (collect-command-all-keybindings
-                                                  (current-buffer)
-                                                  (find-command name))))))
-    (append
-     ;; don't sort our candidates (they are already last used first).
-     (if (find #\- string)
-          (completion-hyphen string
-                             candidate-items
-                             :key #'lem/completion-mode:completion-item-label)
-          (completion string
-                      candidate-items
-                      :key #'lem/completion-mode:completion-item-label))
+  (flet ((collect-items (candidates)
+           (loop :for name :in candidates
+                 :collect (lem/completion-mode:make-completion-item
+                           :label name
+                           :detail (collect-command-all-keybindings
+                                    (current-buffer)
+                                    (find-command name)))))
 
-     ;; sort the rest of the commands by name.
-     (sort
-      (if (find #\- string)
-          (completion-hyphen string
-                             items
-                             :key #'lem/completion-mode:completion-item-label)
-          (completion string
-                      items
-                      :key #'lem/completion-mode:completion-item-label))
-      #'string-lessp
-      :key #'lem/completion-mode:completion-item-label))))
+         (filter-items (items)
+           (if (find #\- string)
+               (completion-hyphen string
+                                  items
+                                  :key #'lem/completion-mode:completion-item-label)
+               (completion string
+                           items
+                           :key #'lem/completion-mode:completion-item-label))))
+
+    (let ((all-items (collect-items (all-command-names-append candidates)))
+          (candidate-items (collect-items candidates)))
+      (append
+       ;; Our own items are already sorted (last used first).
+       (filter-items candidate-items)
+       ;; Sort the rest of the commands by name.
+       (sort
+        (filter-items all-items)
+        #'string-lessp
+        :key #'lem/completion-mode:completion-item-label)))))
 
 (setf *prompt-file-completion-function* 'prompt-file-completion)
 (setf *prompt-buffer-completion-function* 'prompt-buffer-completion)

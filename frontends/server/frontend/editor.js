@@ -883,23 +883,15 @@ export class Editor {
     getDisplayRectangle = getDisplayRectangleDefault,
     fontName,
     fontSize,
-    onLoaded,
     url,
     onExit,
     onClosed,
-    onRestart,
-    onUserInput,
-    onSwitchFile,
   }) {
     this.getDisplayRectangle = getDisplayRectangle;
 
     this.option = new Option({ fontName, fontSize });
 
     this.onExit = onExit;
-    this.onLoaded = onLoaded;
-    this.onRestart = onRestart;
-    this.onUserInput = onUserInput;
-    this.onSwitchFile = onSwitchFile;
     this.inputEnabled = true;
 
     this.input = new Input(this);
@@ -915,7 +907,6 @@ export class Editor {
 
     this.messageTable = new MessageTable();
     this.messageTable.register(this.jsonrpc, {
-      'startup': this.startup.bind(this),
       'update-foreground': this.updateForeground.bind(this),
       'update-background': this.updateBackground.bind(this),
       'make-view': this.makeView.bind(this),
@@ -934,8 +925,6 @@ export class Editor {
       'resize-display': this.resizeDisplay.bind(this),
       'bulk': this.bulk.bind(this),
       'exit': this.exitEditor.bind(this),
-      'user-input': this.userInput.bind(this),
-      'switch-file': this.switchFile.bind(this),
       'get-clipboard-text': this.getClipboardText.bind(this),
       'set-clipboard-text': this.setClipboardText.bind(this),
       'js-eval': this.jsEval.bind(this),
@@ -1038,17 +1027,7 @@ export class Editor {
       }
 
       this.jsonrpc.notify('redraw', { size: this.getDisplaySize() });
-
-      this.jsonrpc.request('user-file-map', {}, response => {
-        this.onSwitchFile(response);
-      });
     });
-  }
-
-  startup() {
-    if (this.onRestart) {
-      this.onRestart();
-    }
   }
 
   updateForeground(color) {
@@ -1158,10 +1137,6 @@ export class Editor {
   }
 
   bulk(messages) {
-    if (this.onLoaded) {
-      this.onLoaded();
-      this.onLoaded = null;
-    }
     for (const { method, argument } of messages) {
       this.callMessage(method, argument);
     }
@@ -1170,18 +1145,6 @@ export class Editor {
   exitEditor() {
     if (this.onExit) {
       this.onExit();
-    }
-  }
-
-  userInput({ value }) {
-    if (this.onUserInput) {
-      this.onUserInput(value);
-    }
-  }
-
-  switchFile(userFileMap) {
-    if (this.onSwitchFile) {
-      this.onSwitchFile(userFileMap);
     }
   }
 

@@ -165,8 +165,7 @@
     (setf (jsonrpc-editor-thread jsonrpc)
           (funcall function
                    (lambda ()
-                     (loop :until ready)
-                     (notify jsonrpc "startup" nil))))
+                     (loop :until ready))))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
                     "login"
                     (login jsonrpc
@@ -615,9 +614,6 @@
            (lem:send-abort-event (jsonrpc-editor-thread jsonrpc) nil))
           ("key"
            (when value
-             (notify jsonrpc
-                     "user-input"
-                     (hash "value" value))
              (let ((key (convert-keyevent value)))
                (lem:send-event key))))
           ("clipboard-paste"
@@ -689,9 +685,6 @@
                            (gethash "height" value))
            (lem:send-event :resize))
           ("input-string"
-           (notify jsonrpc
-                   "user-input"
-                   (hash "value" value))
            (loop :for c :across value
                  :for key := (convert-keyevent
                               (alexandria:plist-hash-table (list "key" (string c))

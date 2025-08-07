@@ -297,6 +297,10 @@
                    gensyms
                    bindings)))))
 
+(defun exit-prompt (old-window)
+  (declare (ignore old-window))
+  (error 'editor-abort :message nil))
+
 (defun prompt-for-aux (&key (prompt-string (alexandria:required-argument :prompt-string))
                             (initial-string (alexandria:required-argument :initial-string))
                             (parameters (alexandria:required-argument :parameters))
@@ -312,6 +316,7 @@
                                          initial-string
                                          parameters)))
       (switch-to-prompt-window prompt-window)
+      (add-hook (window-leave-hook prompt-window) #'exit-prompt)
       (handler-case
           (with-unwind-setf (((frame-floating-prompt-window (current-frame))
                               prompt-window))
@@ -328,6 +333,7 @@
                         (funcall body-function))
                       (funcall body-function))))
             (lem/completion-mode:completion-end)
+            (remove-hook (window-leave-hook prompt-window) #'exit-prompt)
             (delete-prompt prompt-window)
             (run-hooks *prompt-deactivate-hook*))
         (execute-condition (e)

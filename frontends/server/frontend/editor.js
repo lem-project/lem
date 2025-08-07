@@ -969,6 +969,9 @@ export class Editor {
       return;
     }
 
+    if (key.key === 'Unidentified') {
+      return;
+    }
     this.jsonrpc.notify('input', { kind: 'key', value: key });
   }
 

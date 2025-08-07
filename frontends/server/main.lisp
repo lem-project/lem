@@ -24,11 +24,16 @@
          :reader websocket-server-runner-host)))
 
 (defmethod server-listen ((runner websocket-server-runner) server)
-  (jsonrpc:server-listen server
-                         :mode :websocket
-                         :port (websocket-server-runner-port runner)
-                         :host (websocket-server-runner-host runner)
-                         :clack-handler 'clack-handler))
+  (let* ((null-stream (make-broadcast-stream))
+         (*trace-output* null-stream)
+         (*error-output* null-stream))
+    (jsonrpc:server-listen server
+                           :mode :websocket
+                           :port (websocket-server-runner-port runner)
+                           :host (websocket-server-runner-host runner)
+                           :debug nil
+                           :silent t
+                           :clack-handler 'clack-handler)))
 
 (defun clack-handler (env)
   (unless (wsd:websocket-p env)
@@ -160,8 +165,7 @@
     (setf (jsonrpc-editor-thread jsonrpc)
           (funcall function
                    (lambda ()
-                     (loop :until ready)
-                     (notify jsonrpc "startup" nil))))
+                     (loop :until ready))))
     (jsonrpc:expose (jsonrpc-server jsonrpc)
                     "login"
                     (login jsonrpc
@@ -450,7 +454,7 @@
       (setf attribute (lem:make-attribute :background lem-if:*background-color-of-drawing-window*)))
     attribute))
 
-(defun put (jsonrpc view x y string attribute)
+(defun put (jsonrpc view x y string attribute &key font)
   (with-error-handler ()
     (notify* jsonrpc
              (ecase *put-target*
@@ -461,14 +465,36 @@
                    "y" y
                    "text" string
                    "textWidth" (lem:string-width string)
-                   "attribute" (ensure-attribute attribute)))))
+                   "attribute" (ensure-attribute attribute)
+                   "font" font))))
 
 (defmethod draw-object (jsonrpc (object display:text-object) x y view)
   (let* ((string (display:text-object-string object))
-         (attribute (display:text-object-attribute object)))
+         (attribute (display:text-object-attribute object))
+         (type (display:text-object-type object)))
     (when (and attribute (lem-core:cursor-attribute-p attribute))
       (lem-core::set-last-print-cursor (view-window view) x y))
-    (put jsonrpc view x y string attribute)))
+    (put jsonrpc
+         view
+         x
+         y
+         string
+         attribute)))
+
+(defmethod draw-object (jsonrpc (object display:icon-object) x y view)
+  (let* ((string (display:text-object-string object))
+         (attribute (display:text-object-attribute object))
+         (type (display:text-object-type object)))
+    (when (and attribute (lem-core:cursor-attribute-p attribute))
+      (lem-core::set-last-print-cursor (view-window view) x y))
+    (put jsonrpc
+         view
+         x
+         y
+         string
+         attribute
+         :font (lem:icon-value (char-code (char string 0))
+                               :font))))
 
 (defmethod draw-object (jsonrpc (object display:eol-cursor-object) x y view)
   (lem-core::set-last-print-cursor (view-window view) x y)
@@ -549,11 +575,6 @@
 
 
 ;;;
-(defconstant +abort+ 0)
-(defconstant +keyevent+ 1)
-(defconstant +resize+ 2)
-(defconstant +input-string+ 3)
-
 (defun convert-keyevent (e)
   (let ((key (gethash "key" e))
         (ctrl (gethash "ctrl" e))
@@ -588,9 +609,6 @@
            (lem:send-abort-event (jsonrpc-editor-thread jsonrpc) nil))
           ("key"
            (when value
-             (notify jsonrpc
-                     "user-input"
-                     (hash "value" value))
              (let ((key (convert-keyevent value)))
                (lem:send-event key))))
           ("clipboard-paste"
@@ -662,9 +680,6 @@
                            (gethash "height" value))
            (lem:send-event :resize))
           ("input-string"
-           (notify jsonrpc
-                   "user-input"
-                   (hash "value" value))
            (loop :for c :across value
                  :for key := (convert-keyevent
                               (alexandria:plist-hash-table (list "key" (string c))
@@ -684,12 +699,12 @@
     ("host" :type string :optional t)
     ("address" :type string :optional t :documentation "address of \"local-domain-socket\"")))
 
-(defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1"))
+(defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1") args)
   (let ((*server-runner*
           (make-instance 'websocket-server-runner
                          :port port
                          :host hostname)))
-    (lem:lem)))
+    (apply #'lem:lem args)))
 
 (defun run-stdio-server ()
   (let ((*server-runner* (make-instance 'stdio-server-runner)))

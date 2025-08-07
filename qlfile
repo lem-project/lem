@@ -9,3 +9,4 @@ git cl-sdl2-ttf https://github.com/lem-project/cl-sdl2-ttf.git
 git cl-sdl2-image https://github.com/lem-project/cl-sdl2-image.git
 git jsonrpc https://github.com/cxxxr/jsonrpc.git
 git lem-extension-manager https://github.com/lem-project/lem-extension-manager.git
+git webview https://github.com/lem-project/webview.git

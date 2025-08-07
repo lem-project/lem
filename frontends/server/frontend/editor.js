@@ -73,6 +73,7 @@ class Option {
   constructor({ fontName, fontSize }) {
     const font = fontSize + 'px ' + fontName;
     this.font = font;
+    this.fontSize = fontSize;
     const [width, height] = computeFontSize(font);
     this.fontWidth = width;
     this.fontHeight = height;
@@ -83,46 +84,6 @@ class Option {
 
 function getLemEditorElement() {
   return document.getElementById('lem-editor');
-}
-
-class Cursor {
-  constructor(editor, name, color) {
-    this.editor = editor;
-    this.name = name;
-    this.color = color;
-
-    this.span = document.createElement('span');
-    this.span.style.all = 'none';
-    this.span.style.position = 'absolute';
-    this.span.style.zIndex = '';
-    this.span.style.top = '0';
-    this.span.style.left = '0';
-    this.span.style.fontFamily = editor.option.font;
-    this.span.style.backgroundColor = color;
-    this.span.style.color = 'white';
-    this.span.innerHTML = '';
-    document.body.appendChild(this.span);
-
-    this.timerId = null;
-  }
-
-  move(x, y) {
-    const [x0, y0] = this.editor.getDisplayRectangle();
-    this.span.style.visibility = 'visible';
-    this.span.textContent = this.name;
-    this.span.style.left = (x + x0) + 'px';
-    this.span.style.top = (y + y0) + 'px';
-    this.span.style.padding = '3px 1%'
-    if (this.timerId) {
-      clearTimeout(this.timerId);
-    }
-    this.timerId = setTimeout(
-      () => {
-        this.span.style.visibility = 'hidden';
-      },
-      500,
-    );
-  }
 }
 
 function addMouseEventListeners({dom, editor, isDraggable, draggableStyle}) {
@@ -337,9 +298,10 @@ class CanvasSurface extends BaseSurface {
     });
   }
 
-  drawText(x, y, text, textWidth, attribute) {
+  drawText(x, y, text, textWidth, attribute, font) {
     const option = this.editor.option;
     this.drawingQueue.push(function(ctx) {
+      font = font ? `${option.fontSize}px ${font}` : option.font;
       if (!attribute) {
         drawBlock({
           ctx,
@@ -355,7 +317,7 @@ class CanvasSurface extends BaseSurface {
           y: y * option.fontHeight,
           text: text,
           style: option.foreground,
-          font: option.font,
+          font: font,
           option,
         });
       } else {
@@ -387,7 +349,7 @@ class CanvasSurface extends BaseSurface {
           y: gy,
           text: text,
           style: foreground,
-          font: bold ? ('bold ' + option.font) : option.font,
+          font: bold ? ('bold ' + font) : font,
           option,
         });
         if (underline) {
@@ -618,13 +580,14 @@ class View {
     );
   }
 
-  print(x, y, text, textWidth, attribute) {
+  print(x, y, text, textWidth, attribute, font) {
     this.mainSurface.drawText(
       x,
       y,
       text,
       textWidth,
       attribute,
+      font,
     );
   }
 
@@ -920,23 +883,15 @@ export class Editor {
     getDisplayRectangle = getDisplayRectangleDefault,
     fontName,
     fontSize,
-    onLoaded,
     url,
     onExit,
     onClosed,
-    onRestart,
-    onUserInput,
-    onSwitchFile,
   }) {
     this.getDisplayRectangle = getDisplayRectangle;
 
     this.option = new Option({ fontName, fontSize });
 
     this.onExit = onExit;
-    this.onLoaded = onLoaded;
-    this.onRestart = onRestart;
-    this.onUserInput = onUserInput;
-    this.onSwitchFile = onSwitchFile;
     this.inputEnabled = true;
 
     this.input = new Input(this);
@@ -952,7 +907,6 @@ export class Editor {
 
     this.messageTable = new MessageTable();
     this.messageTable.register(this.jsonrpc, {
-      'startup': this.startup.bind(this),
       'update-foreground': this.updateForeground.bind(this),
       'update-background': this.updateBackground.bind(this),
       'make-view': this.makeView.bind(this),
@@ -971,8 +925,6 @@ export class Editor {
       'resize-display': this.resizeDisplay.bind(this),
       'bulk': this.bulk.bind(this),
       'exit': this.exitEditor.bind(this),
-      'user-input': this.userInput.bind(this),
-      'switch-file': this.switchFile.bind(this),
       'get-clipboard-text': this.getClipboardText.bind(this),
       'set-clipboard-text': this.setClipboardText.bind(this),
       'js-eval': this.jsEval.bind(this),
@@ -1006,6 +958,9 @@ export class Editor {
       return;
     }
 
+    if (key.key === 'Unidentified') {
+      return;
+    }
     this.jsonrpc.notify('input', { kind: 'key', value: key });
   }
 
@@ -1072,17 +1027,7 @@ export class Editor {
       }
 
       this.jsonrpc.notify('redraw', { size: this.getDisplaySize() });
-
-      this.jsonrpc.request('user-file-map', {}, response => {
-        this.onSwitchFile(response);
-      });
     });
-  }
-
-  startup() {
-    if (this.onRestart) {
-      this.onRestart();
-    }
   }
 
   updateForeground(color) {
@@ -1152,22 +1097,9 @@ export class Editor {
     view.clearEob(x, y);
   }
 
-  put({ viewInfo: { id }, x, y, text, textWidth, attribute, cursorInfo }) {
+  put({ viewInfo: { id }, x, y, text, textWidth, attribute, font }) {
     const view = this.findViewById(id);
-    view.print(x, y, text, textWidth, attribute);
-    if (cursorInfo) {
-      const { name, color } = cursorInfo;
-      let cursor = this.cursors.get(name);
-      if (!cursor) {
-        cursor = new Cursor(this, name, color);
-        this.cursors.set(name, cursor);
-      }
-
-      cursor.move(
-        (view.x + x) * this.option.fontWidth,
-        (view.y + y - 1) * this.option.fontHeight,
-      );
-    }
+    view.print(x, y, text, textWidth, attribute, font);
   }
 
   modelinePut({ viewInfo: { id }, x, y, text, textWidth, attribute }) {
@@ -1205,10 +1137,6 @@ export class Editor {
   }
 
   bulk(messages) {
-    if (this.onLoaded) {
-      this.onLoaded();
-      this.onLoaded = null;
-    }
     for (const { method, argument } of messages) {
       this.callMessage(method, argument);
     }
@@ -1217,18 +1145,6 @@ export class Editor {
   exitEditor() {
     if (this.onExit) {
       this.onExit();
-    }
-  }
-
-  userInput({ value }) {
-    if (this.onUserInput) {
-      this.onUserInput(value);
-    }
-  }
-
-  switchFile(userFileMap) {
-    if (this.onSwitchFile) {
-      this.onSwitchFile(userFileMap);
     }
   }
 

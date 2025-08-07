@@ -32,7 +32,11 @@
            :transpose-characters
            :undo
            :redo
-           :delete-trailing-whitespace)
+           :delete-trailing-whitespace
+           :mark-and-forward-char
+           :mark-and-backward-char
+           :mark-and-previous-line
+           :mark-and-next-line)
   #+sbcl
   (:lock t))
 (in-package :lem-core/commands/edit)
@@ -469,3 +473,23 @@ current line."
 
 (defmethod lem-core:paste-using-mode (mode text)
   (yank-string (current-point) text))
+
+(define-command mark-and-forward-char (n) (:universal)
+  (unless (buffer-mark-p (current-buffer))
+    (set-cursor-mark (current-point) (current-point)))
+  (character-offset (current-point) n))
+
+(define-command mark-and-backward-char (n) (:universal)
+  (unless (buffer-mark-p (current-buffer))
+    (set-cursor-mark (current-point) (current-point)))
+  (character-offset (current-point) (- n)))
+
+(define-command mark-and-previous-line (n) (:universal)
+  (unless (buffer-mark-p (current-buffer))
+    (set-cursor-mark (current-point) (current-point)))
+  (next-line (- n)))
+
+(define-command mark-and-next-line (n) (:universal)
+  (unless (buffer-mark-p (current-buffer))
+    (set-cursor-mark (current-point) (current-point)))
+  (next-line n))

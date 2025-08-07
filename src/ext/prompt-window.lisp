@@ -77,6 +77,8 @@
 (define-key *prompt-mode-keymap* "Tab" 'prompt-completion)
 (define-key *prompt-mode-keymap* "M-p" 'prompt-previous-history)
 (define-key *prompt-mode-keymap* "M-n" 'prompt-next-history)
+(define-key *prompt-mode-keymap* "Up" 'prompt-previous-history)
+(define-key *prompt-mode-keymap* "Down" 'prompt-next-history)
 (define-key *prompt-mode-keymap* 'delete-active-window 'prompt-quit)
 
 (defun current-prompt-window ()

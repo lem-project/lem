@@ -2,7 +2,9 @@
   (:use :cl :lem-core)
   (:export :mark-set
            :exchange-point-mark
-           :mark-set-whole-buffer))
+           :mark-set-whole-buffer)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/mark)
 
 (define-key *global-keymap* "C-@" 'mark-set)
@@ -10,11 +12,13 @@
 (define-key *global-keymap* "C-x C-x" 'exchange-point-mark)
 (define-key *global-keymap* "C-x h" 'mark-set-whole-buffer)
 
-(define-command mark-set () ()
+(define-command mark-set (p) (:universal-nil)
   "Sets a mark at the current cursor position."
-  (run-hooks *set-location-hook* (current-point))
-  (set-cursor-mark (current-point) (current-point))
-  (message "Mark set"))
+  (if p
+      (move-point (current-point) (pop-buffer-point))
+      (progn
+        (set-cursor-mark (current-point) (current-point))
+        (message "Mark set"))))
 
 (define-command exchange-point-mark () ()
   "Exchange the current cursor position with the marked position."

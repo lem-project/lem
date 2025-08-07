@@ -1,5 +1,9 @@
 (in-package :lem-core)
 
+(defvar *after-load-theme-hook* '()
+  "For functions that should run after a theme is loaded,
+for example, to maintain an attribute like CURSOR.")
+
 (defvar *current-theme* nil)
 
 (defun current-theme ()
@@ -72,7 +76,9 @@
                  ((:foreground)
                   (apply #'set-foreground args))
                  ((:background)
-                  (apply #'set-background args))
+                  (destructuring-bind (color) args
+                    (when color
+                      (set-background color))))
                  ((:inactive-window-background)
                   (setf (inactive-window-background-color) (first args)))
                  (otherwise
@@ -94,65 +100,35 @@
     (redraw-display :force t)
     (setf (current-theme) name)
     (when save-theme
-      (setf (config :color-theme) (current-theme)))))
+      (setf (config :color-theme) (current-theme))))
+  (run-hooks *after-load-theme-hook*))
+
+(defun get-color-theme-color (color-theme key)
+  (second (assoc key (color-theme-specs color-theme))))
 
 (defun background-color ()
   (when (current-theme)
-    (second (assoc :background (color-theme-specs (find-color-theme (current-theme)))))))
+    (get-color-theme-color (find-color-theme (current-theme)) :background)))
 
 (defun foreground-color ()
   (when (current-theme)
-    (second (assoc :foreground (color-theme-specs (find-color-theme (current-theme)))))))
+    (get-color-theme-color (find-color-theme (current-theme)) :foreground)))
 
 (defun base-color (name)
   (check-type name base-color)
   (when (current-theme)
-    (second (assoc name (color-theme-specs (find-color-theme (current-theme)))))))
+    (get-color-theme-color (find-color-theme (current-theme)) name)))
 
-(defun maybe-base-color (name)
-  (if (typep name 'base-color)
-      (base-color name)
-      name))
+(defun ensure-color (color)
+  (typecase color
+    (base-color
+     (base-color color))
+    (color
+     (color-to-hex-string color))
+    (otherwise
+     color)))
 
-(define-major-mode color-theme-selector-mode ()
-    (:name "Themes"
-     :keymap *color-theme-selector-keymap*))
-
-(define-key *color-theme-selector-keymap* "Return" 'color-theme-selector-select)
-
-(define-command color-theme-selector-select () ()
-  (with-point ((point (current-point)))
-    (line-start point)
-    (let ((theme (text-property-at point 'theme)))
-      (load-theme theme))))
-
-(define-command list-color-themes () ()
-  (let* ((buffer (make-buffer "*Color Themes*"))
-         (point (buffer-point buffer))
-         (dark-themes '())
-         (light-themes '()))
-    (with-buffer-read-only buffer nil
-      (erase-buffer buffer)
-      (dolist (name (all-color-themes))
-        (let ((theme (find-color-theme name)))
-          (if (eq :dark (second (assoc :display-background-mode (color-theme-specs theme))))
-              (push (cons name theme) dark-themes)
-              (push (cons name theme) light-themes))))
-      (loop :for (name . theme) :in (append dark-themes light-themes)
-            :do (insert-string
-                 point name
-                 :attribute (make-attribute
-                             :foreground (second (assoc :foreground (color-theme-specs theme)))
-                             :background (second (assoc :background (color-theme-specs theme))))
-                 'theme name)
-                (insert-character point #\newline)))
-    (buffer-start point)
-    (setf (buffer-read-only-p buffer) t)
-    (switch-to-buffer buffer)
-    (change-buffer-mode buffer 'color-theme-selector-mode)))
-
-
 (defun initialize-color-theme ()
-  (load-theme (config :color-theme "decaf") nil))
+  (load-theme (config :color-theme "lem-default") nil))
 
 (add-hook *after-init-hook* 'initialize-color-theme)

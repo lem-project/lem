@@ -46,11 +46,11 @@
 
 (defun make-attribute (&key foreground background reverse bold underline plist)
   (make-instance 'attribute
-                 :foreground (or (maybe-base-color foreground) nil)
-                 :background (or (maybe-base-color background) nil)
+                 :foreground (or (ensure-color foreground) nil)
+                 :background (or (ensure-color background) nil)
                  :reverse reverse
                  :bold bold
-                 :underline (or (maybe-base-color underline) underline)
+                 :underline (or (ensure-color underline) underline)
                  :plist plist))
 
 (defun ensure-attribute (x &optional (errorp t))
@@ -70,9 +70,9 @@
                   :background (or (attribute-background over)
                                   (attribute-background under))
                   :bold (or (attribute-bold over)
-                              (attribute-bold under))
+                            (attribute-bold under))
                   :reverse (or (attribute-reverse over)
-                                 (attribute-reverse under))
+                               (attribute-reverse under))
                   :underline (or (attribute-underline over)
                                  (attribute-underline under))
                   :plist (append (attribute-plist over)
@@ -177,8 +177,8 @@
      ',name))
 
 (define-attribute cursor
-  (:light :foreground "white" :background "black")
-  (:dark :foreground "black" :background "white"))
+  (:light :background "black")
+  (:dark :background "white"))
 
 (define-attribute fake-cursor
   (:light :foreground "white" :background "blue")
@@ -195,6 +195,9 @@
   (t :bold t :background "#212121" :foreground "#707070"))
 
 (define-attribute truncate-attribute)
+
+(define-attribute special-char-attribute
+  (t :foreground "red"))
 
 (define-attribute compiler-note-attribute
   (t :underline "red"))
@@ -233,7 +236,72 @@
 (define-attribute syntax-builtin-attribute
   (t :foreground "#FF87FF"))
 
-
+(define-attribute document-header1-attribute
+  (:light :foreground "#000000" :bold t)
+  (:dark :foreground "#FFFFFF" :bold t))
+
+(define-attribute document-header2-attribute
+  (:light :foreground "#005A9C" :bold t)
+  (:dark :foreground "#87CEFA" :bold t))
+
+(define-attribute document-header3-attribute
+  (:light :foreground "#0000FF" :bold t)
+  (:dark :foreground "#ADD8E6" :bold t))
+
+(define-attribute document-header4-attribute
+  (:light :foreground "#8B008B" :bold t)
+  (:dark :foreground "#DDA0DD" :bold t))
+
+(define-attribute document-header5-attribute
+  (:light :foreground "#A0522D" :bold t)
+  (:dark :foreground "#F4A460" :bold t))
+
+(define-attribute document-header6-attribute
+  (:light :foreground "#2E8B57" :bold t)
+  (:dark :foreground "#98FB98" :bold t))
+
+(define-attribute document-bold-attribute
+  (t :bold t))
+
+(define-attribute document-italic-attribute
+  (:light :foreground "#8B4513")
+  (:dark :foreground "#DEB887"))
+
+(define-attribute document-underline-attribute
+  (t :underline t))
+
+(define-attribute document-link-attribute
+  (:light :foreground "#0000EE" :underline t)
+  (:dark :foreground "#87CEFA" :underline t))
+
+(define-attribute document-list-attribute
+  (:light :foreground "#8B4513")
+  (:dark :foreground "#DEB887"))
+
+(define-attribute document-code-block-attribute
+  (:light :background "#F0F0F0" :foreground "#000000")
+  (:dark :background "#2F4F4F" :foreground "#E0FFFF"))
+
+(define-attribute document-inline-code-attribute
+  (:light :background "#F0F0F0" :foreground "#8B008B")
+  (:dark :background "#2F4F4F" :foreground "#FF69B4"))
+
+(define-attribute document-blockquote-attribute
+  (:light :foreground "#696969")
+  (:dark :foreground "#D3D3D3"))
+
+(define-attribute document-table-attribute
+  (:light :foreground "#000000" :background "#E6E6FA")
+  (:dark :foreground "#FFFFFF" :background "#4B0082"))
+
+(define-attribute document-task-list-attribute
+  (:light :foreground "#228B22")
+  (:dark :foreground "#98FB98"))
+
+(define-attribute document-metadata-attribute
+  (:light :foreground "#4682B4")
+  (:dark :foreground "#87CEEB"))
+
 (defun attribute-value* (attribute key)
   (let ((attribute (ensure-attribute attribute nil)))
     (when attribute
@@ -255,5 +323,5 @@
   (and (attribute-p attribute)
        (attribute-value attribute :cursor)))
 
-(defun set-cursor-attribute (attribute)
-  (setf (attribute-value attribute :cursor) t))
+(defun set-cursor-attribute (attribute &key (value t))
+  (setf (attribute-value attribute :cursor) value))

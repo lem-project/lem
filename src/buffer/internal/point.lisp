@@ -1,5 +1,8 @@
 (in-package :lem/buffer/internal)
 
+(deftype point-kind ()
+  '(member :temporary :left-inserting :right-inserting))
+
 (defclass point ()
   ((buffer
     :reader point-buffer
@@ -15,7 +18,7 @@
     :type fixnum)
    (kind
     :reader point-kind
-    :type (member :temporary :left-inserting :right-inserting)))
+    :type point-kind))
   (:documentation
    "`point` is an object that points to the position of the text in the buffer.
 It has a `buffer` slot, a `line` number, and `charpos` is an offset from the beginning of the line, starting at zero.
@@ -43,18 +46,18 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
     (format stream "(~D, ~D) ~S"
             (point-linum object)
             (point-charpos object)
-            (line-str (point-line object)))))
+            (line:line-string (point-line object)))))
 
 (defun pointp (x)
-  "`x`が`point`ならT、それ以外ならNILを返します。"
+  "Returns T if `x` is a `point`, otherwise returns NIL."
   (typep x 'point))
 
 (defun initialize-point-slot-values
     (point &key (buffer (alexandria:required-argument :buffer))
                 (linum (alexandria:required-argument :linum))
                 (line (alexandria:required-argument :line))
-                (charpos (alexandria:required-argument :line))
-                (kind (alexandria:required-argument :line)))
+                (charpos (alexandria:required-argument :charpos))
+                (kind (alexandria:required-argument :kind)))
   (setf (slot-value point 'buffer) buffer
         (slot-value point 'linum) linum
         (slot-value point 'line) line
@@ -64,11 +67,11 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
 
 (defun initialize-point (point kind)
   (unless (eq :temporary kind)
-    (push point (line-points (point-line point)))
+    (push point (line:line-points (point-line point)))
     (push point (buffer-points (point-buffer point)))))
 
 (defun make-point (buffer linum line charpos &key (kind :right-inserting))
-  (check-type kind (member :temporary :left-inserting :right-inserting))
+  (check-type kind point-kind)
   (let ((point (make-instance 'point)))
     (initialize-point-slot-values point
                                   :buffer buffer
@@ -80,7 +83,7 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
     point))
 
 (defmethod copy-point-using-class ((point point) from-point kind)
-  (check-type kind (member :temporary :left-inserting :right-inserting))
+  (check-type kind point-kind)
   (initialize-point-slot-values point
                                 :buffer (point-buffer from-point)
                                 :linum (point-linum from-point)
@@ -91,19 +94,19 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
   point)
 
 (defun copy-point (point &optional kind)
-  "`point`のコピーを作って返します。
-`kind`は`:temporary`、`:left-inserting`または `right-inserting`です。
-省略された場合は`point`と同じ値です。"
+  "Make and return a copy of `point`
+`kind` is `:temporary`, `:left-inserting` or `:right-inserting`.
+If omitted, is copied from `point`."
   (copy-point-using-class (make-instance 'point)
                           point
                           (or kind (point-kind point))))
 
 (defun delete-point (point)
-  "`point`を削除します。
-`point-kind`が:temporaryの場合はこの関数を使う必要はありません。"
+  "Delete `point`.
+If `point-kind` is `:temporary` this is unnecessary."
   (unless (point-temporary-p point)
-    (setf (line-points (point-line point))
-          (delete point (line-points (point-line point))))
+    (setf (line:line-points (point-line point))
+          (delete point (line:line-points (point-line point))))
     (let ((buffer (point-buffer point)))
       (setf (buffer-points buffer)
             (delete point (buffer-points buffer))))
@@ -111,22 +114,22 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
 
 (defun alive-point-p (point)
   (alexandria:when-let (line (point-line point))
-    (line-alive-p line)))
+    (line:line-alive-p line)))
 
 (defun point-change-line (point new-linum new-line)
   (unless (point-temporary-p point)
     (let ((old-line (point-line point)))
-      (if (line-alive-p old-line)
-          (do ((scan (line-points old-line) (cdr scan))
+      (if (line:line-alive-p old-line)
+          (do ((scan (line:line-points old-line) (cdr scan))
                (prev nil scan))
               ((eq (car scan) point)
                (if prev
                    (setf (cdr prev) (cdr scan))
-                   (setf (line-points old-line) (cdr scan)))
-               (setf (cdr scan) (line-points new-line)
-                     (line-points new-line) scan))
+                   (setf (line:line-points old-line) (cdr scan)))
+               (setf (cdr scan) (line:line-points new-line)
+                     (line:line-points new-line) scan))
             (assert (not (null scan))))
-          (push point (line-points new-line)))))
+          (push point (line:line-points new-line)))))
   (setf (point-linum point) new-linum)
   (setf (point-line point) new-line))
 
@@ -274,4 +277,4 @@ Example:
 
 ;; TODO: delete this ugly function
 (defun get-string-and-attributes-at-point (point)
-  (line-string/attributes (point-line point)))
+  (line:line-string/attributes (point-line point)))

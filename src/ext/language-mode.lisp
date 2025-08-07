@@ -6,6 +6,9 @@
    :idle-function
    :beginning-of-defun-function
    :end-of-defun-function
+   :comment-region
+   :uncomment-region
+   :comment-or-uncomment-region
    :line-comment
    :insertion-line-comment
    :find-definitions-function
@@ -15,6 +18,8 @@
    :language-mode-tag
    :buffer-language-mode
    :completion-spec
+   :complete-symbol
+   :pop-definition-stack
    :indent-size
    :root-uri-patterns
    :detective-search
@@ -91,26 +96,26 @@
 (define-key *language-mode-keymap* "M-?" 'find-references)
 (define-key *language-mode-keymap* "M-," 'pop-definition-stack)
 (define-key *language-mode-keymap* "C-M-i" 'complete-symbol)
-(define-key *global-keymap* "M-(" 'insert-\(\))
-(define-key *global-keymap* "M-)" 'move-over-\))
+(define-key *global-keymap* "M-(" 'insert-\(\)-or-wrap)
+(define-key *global-keymap* "M-)" 'move-over-\)-or-wrap)
 
 (defun beginning-of-defun-1 (n)
   (alexandria:when-let ((fn (variable-value 'beginning-of-defun-function :buffer)))
     (when fn (funcall fn (current-point) n))))
 
-(define-command (beginning-of-defun (:advice-classes movable-advice)) (n) ("p")
+(define-command (beginning-of-defun (:advice-classes movable-advice)) (n) (:universal)
   (if (minusp n)
       (end-of-defun (- n))
       (beginning-of-defun-1 n)))
 
-(define-command (end-of-defun (:advice-classes movable-advice)) (n) ("p")
+(define-command (end-of-defun (:advice-classes movable-advice)) (n) (:universal)
   (if (minusp n)
       (beginning-of-defun (- n))
       (alexandria:if-let ((fn (variable-value 'end-of-defun-function :buffer)))
         (funcall fn (current-point) n)
         (beginning-of-defun-1 (- n)))))
 
-(define-command (indent (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+(define-command (indent (:advice-classes editable-advice)) (&optional (n 1)) (:universal)
   (if (variable-value 'calc-indent-function)
       (indent-line (current-point))
       (self-insert n)))
@@ -122,12 +127,12 @@
     (line-end end)
     (delete-between-points start end)))
 
-(define-command (newline-and-indent (:advice-classes editable-advice)) (n) ("p")
+(define-command (newline-and-indent (:advice-classes editable-advice)) (n) (:universal)
   (trim-eol (current-point))
   (insert-character (current-point) #\newline n)
   (indent-line (current-point)))
 
-(define-command indent-region (start end) ("r")
+(define-command indent-region (start end) (:region)
   (indent-points start end))
 
 (defmethod execute :around (mode
@@ -153,11 +158,18 @@
       (uncomment-region)
       (comment-region)))
 
+(defun select-current-line-if-no-region-is-selected (start end)
+  (when (point= start end)
+    (setf start (line-start start))
+    (setf end (line-end end))))
+
 (defun commented-region-p ()
   (alexandria:when-let ((line-comment (variable-value 'line-comment :buffer)))
     (with-point ((start (current-point))
                  (end (current-point)))
       (set-region-point-using-global-mode (current-global-mode) start end)
+      (select-current-line-if-no-region-is-selected start end)
+      
       (loop
         (skip-whitespace-forward start)
         (when (point>= start end)
@@ -175,6 +187,8 @@
         (with-point ((start (current-point) :right-inserting)
                      (end (current-point) :left-inserting))
           (set-region-point-using-global-mode (current-global-mode) start end)
+          (select-current-line-if-no-region-is-selected start end)
+          
           (skip-whitespace-forward start)
           (when (point>= start end)
             (insert-string (current-point) line-comment)
@@ -202,6 +216,8 @@
         (with-point ((start (current-point) :right-inserting)
                      (end (current-point) :right-inserting))
           (set-region-point-using-global-mode (current-global-mode) start end)
+          (select-current-line-if-no-region-is-selected start end)
+          
           (let ((p start))
             (loop
               (parse-partial-sexp p end nil t)
@@ -459,11 +475,18 @@
           (complete-symbol)))
       (complete-symbol)))
 
-(define-command (insert-\(\) (:advice-classes editable-advice)) () ()
-  (let ((p (current-point)))
-    (insert-character p #\()
-    (insert-character p #\))
-    (character-offset p -1)))
+(define-command (insert-\(\)-or-wrap (:advice-classes editable-advice)) () ()
+  (if (mark-active-p (cursor-mark (current-point)))
+      (with-point ((start (cursor-region-beginning (current-point)))
+                   (end (cursor-region-end (current-point))))
+        (when (point< start (current-point))
+          (exchange-point-mark))
+        (insert-character end #\))
+        (insert-character start #\())
+      (let ((p (current-point)))
+        (insert-character p #\()
+        (insert-character p #\))
+        (character-offset p -1))))
 
 (defun backward-search-rper ()
   (save-excursion
@@ -486,16 +509,23 @@
       (delete-character p)
       (character-offset p -1))))
 
-(define-command (move-over-\) (:advice-classes movable-advice editable-advice)) () ()
-  (let ((rper (backward-search-rper)))
-    (if rper
-        (progn
-          (backward-delete-to-rper)
-          (scan-lists (current-point) 1 1 T)
-          (newline-and-indent 1))
-        (progn
-          (scan-lists (current-point) 1 1 T)
-          (newline-and-indent 1)))))
+(define-command (move-over-\)-or-wrap (:advice-classes movable-advice editable-advice)) () ()
+  (if (mark-active-p (cursor-mark (current-point)))
+      (with-point ((start (cursor-region-beginning (current-point)))
+                   (end (cursor-region-end (current-point))))
+        (when (point> end (current-point))
+          (exchange-point-mark))
+        (insert-character end #\))
+        (insert-character start #\())
+      (let ((rper (backward-search-rper)))
+        (if rper
+            (progn
+              (backward-delete-to-rper)
+              (scan-lists (current-point) 1 1 T)
+              (newline-and-indent 1))
+            (progn
+              (scan-lists (current-point) 1 1 T)
+              (newline-and-indent 1))))))
 
 (defun match-pattern-p (pattern file)
   (etypecase pattern

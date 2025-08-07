@@ -4,13 +4,27 @@
         :lem/button
         :lem/common/ring)
   (:export :*keymap*
+           :frame-multiplexer-active-frame-name-attribute
+           :frame-multiplexer-frame-name-attribute
+           :frame-multiplexer-background-attribute
+           :frame-multiplexer-advice
            :frame-multiplexer-next
            :frame-multiplexer-prev
            :frame-multiplexer-switch
+           :frame-multiplexer-switch-0
+           :frame-multiplexer-switch-1
+           :frame-multiplexer-switch-2
+           :frame-multiplexer-switch-3
+           :frame-multiplexer-switch-4
+           :frame-multiplexer-switch-5
+           :frame-multiplexer-switch-6
+           :frame-multiplexer-switch-7
+           :frame-multiplexer-switch-8
+           :frame-multiplexer-switch-9
            :frame-multiplexer-create-with-new-buffer-list
            :frame-multiplexer-delete
            :frame-multiplexer-recent
-           :frame-mulitplexer-rename
+           :frame-multiplexer-rename
            :toggle-frame-multiplexer
            :frame-multiplexer-normalize-ids)
   #+sbcl
@@ -43,10 +57,23 @@
   "Keymap for commands related to the frame-multiplexer.")
 
 (define-key *keymap* "c" 'frame-multiplexer-create-with-new-buffer-list)
+(define-key *keymap* "C" 'frame-multiplexer-create-with-previous-buffer)
 (define-key *keymap* "d" 'frame-multiplexer-delete)
 (define-key *keymap* "p" 'frame-multiplexer-prev)
 (define-key *keymap* "n" 'frame-multiplexer-next)
-(define-key *keymap* "r" 'frame-mulitplexer-rename)
+(define-key *keymap* "r" 'frame-multiplexer-rename)
+(define-key *keymap* "C-z" 'frame-multiplexer-recent)
+(define-key *keymap* "z" 'frame-multiplexer-recent)
+(define-key *keymap* "0" 'frame-multiplexer-switch-0)
+(define-key *keymap* "1" 'frame-multiplexer-switch-1)
+(define-key *keymap* "2" 'frame-multiplexer-switch-2)
+(define-key *keymap* "3" 'frame-multiplexer-switch-3)
+(define-key *keymap* "4" 'frame-multiplexer-switch-4)
+(define-key *keymap* "5" 'frame-multiplexer-switch-5)
+(define-key *keymap* "6" 'frame-multiplexer-switch-6)
+(define-key *keymap* "7" 'frame-multiplexer-switch-7)
+(define-key *keymap* "8" 'frame-multiplexer-switch-8)
+(define-key *keymap* "9" 'frame-multiplexer-switch-9)
 (define-key *global-keymap* "C-z" *keymap*)
 
 (defstruct tab
@@ -293,9 +320,11 @@
 (defun enabled-frame-multiplexer-p ()
   (variable-value 'frame-multiplexer :global))
 
-(defun check-frame-multiplexer-enabled ()
+(defun check-frame-multiplexer-usable ()
   (unless (enabled-frame-multiplexer-p)
-    (editor-error "frame-multiplexer-mode is not enabled")))
+    (editor-error "frame-multiplexer-mode is not enabled"))
+  (when (lem/prompt-window:current-prompt-window)
+    (editor-error "prompt window is active")))
 
 (defun frame-multiplexer-on ()
   (unless (enabled-frame-multiplexer-p)
@@ -309,15 +338,19 @@
              *virtual-frame-map*)
     (clrhash *virtual-frame-map*)))
 
-(define-command toggle-frame-multiplexer () ()
+(defclass frame-multiplexer-advice () ())
+
+(define-command (toggle-frame-multiplexer (:advice-classes frame-multiplexer-advice)) () ()
   (setf (variable-value 'frame-multiplexer :global)
         (not (variable-value 'frame-multiplexer :global))))
 
-(define-command frame-multiplexer-normalize-ids () ()
+(define-command (frame-multiplexer-normalize-ids (:advice-classes frame-multiplexer-advice))
+    ()
+    ()
   "Normalize the IDs of all the frames.
 Assigns a smaller ID to a frame, if there is a smaller unused ID.
 This does not change the order of the frames."
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*)))
     (flet ((next-free (start)
              (loop :for x :upfrom start :below (length (virtual-frame-id/frame-table vf))
@@ -332,8 +365,11 @@ This does not change the order of the frames."
                 (setf (aref (virtual-frame-id/frame-table vf) index) nil)
                 (setq free-index (next-free (1+ free-index)))))))
 
-(define-command frame-multiplexer-create-with-new-buffer-list () ()
-  (check-frame-multiplexer-enabled)
+(define-command (frame-multiplexer-create-with-new-buffer-list
+                 (:advice-classes frame-multiplexer-advice))
+    ()
+    ()
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (id (find-unused-frame-id vf)))
     (when (null id)
@@ -342,10 +378,28 @@ This does not change the order of the frames."
       (allocate-frame vf frame)
       (switch-current-frame vf frame))))
 
-(define-command frame-multiplexer-delete (&optional id) ("P")
+(define-command (frame-multiplexer-create-with-previous-buffer
+                 (:advice-classes frame-multiplexer-advice))
+    ()
+    ()
+  "Create a new frame with the previously opened buffer."
+  (check-frame-multiplexer-usable)
+  (let* ((vf (gethash (implementation) *virtual-frame-map*))
+         (id (find-unused-frame-id vf)))
+    (when (null id)
+      (editor-error "It's full of frames in virtual frame"))
+    (let* ((prev-buffer (current-buffer))
+           (new-frame (make-frame (current-frame))))
+      (allocate-frame vf new-frame)
+      (switch-current-frame vf new-frame)
+      (when prev-buffer
+        (switch-to-buffer prev-buffer)))))
+
+(define-command (frame-multiplexer-delete (:advice-classes frame-multiplexer-advice))
+    (&optional id) (:universal-nil)
   "Delete the current frame.
 With prefix argument ID, delete the frame with the given ID."
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (num (num-frames vf)))
     (when (= num 1)
@@ -359,10 +413,11 @@ With prefix argument ID, delete the frame with the given ID."
         (switch-current-frame vf (search-previous-frame vf frame-now)))
       (free-frame vf frame-now))))
 
-(define-command frame-multiplexer-prev (&optional (n 1)) ("p")
+(define-command (frame-multiplexer-prev (:advice-classes frame-multiplexer-advice))
+    (&optional (n 1)) (:universal)
   "Switch to the Nth previous frame.
 The prefix argument N defaults to 1."
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (frame (virtual-frame-current vf)))
     (loop :repeat n
@@ -371,10 +426,11 @@ The prefix argument N defaults to 1."
     (when frame
       (switch-current-frame vf frame))))
 
-(define-command frame-multiplexer-next (&optional (n 1)) ("p")
+(define-command (frame-multiplexer-next (:advice-classes frame-multiplexer-advice))
+    (&optional (n 1)) (:universal)
   "Switch to the Nth next frame.
 The prefix argument N defaults to 1."
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (frame (virtual-frame-current vf)))
     (loop :repeat n
@@ -383,22 +439,41 @@ The prefix argument N defaults to 1."
     (when frame
       (switch-current-frame vf frame))))
 
-(define-command frame-multiplexer-switch (&optional (id 1)) ("p")
+(define-command (frame-multiplexer-switch (:advice-classes frame-multiplexer-advice))
+    (&optional (id 1)) (:universal)
   "Switch to the frame with ID.
 The prefix argument ID defaults to 1."
   ;; TODO: It would be great to enhance this by showing a prompt
   ;; and asking for the frame name (or buffer of the frame, if it has no name)
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
-         (entry (aref (virtual-frame-id/frame-table vf) id)))
-    (if entry
-        (switch-current-frame vf (frame-table-entry-frame entry))
-        (editor-error "No frame with ID ~a" id))))
+         (entry (aref (virtual-frame-id/frame-table vf) id))
+         (same-frame-p (eq (current-frame) (frame-table-entry-frame entry))))
+    (unless same-frame-p
+      (if entry
+          (switch-current-frame vf (frame-table-entry-frame entry))
+          (editor-error "No frame with ID ~a" id)))))
 
-(define-command frame-multiplexer-recent (&optional (n 1)) ("p")
+(macrolet ((def (command-name n)
+             `(define-command (,command-name (:advice-classes frame-multiplexer-advice))
+                  () ()
+                (frame-multiplexer-switch ,n))))
+  (def frame-multiplexer-switch-0 0)
+  (def frame-multiplexer-switch-1 1)
+  (def frame-multiplexer-switch-2 2)
+  (def frame-multiplexer-switch-3 3)
+  (def frame-multiplexer-switch-4 4)
+  (def frame-multiplexer-switch-5 5)
+  (def frame-multiplexer-switch-6 6)
+  (def frame-multiplexer-switch-7 7)
+  (def frame-multiplexer-switch-8 8)
+  (def frame-multiplexer-switch-9 9))
+
+(define-command (frame-multiplexer-recent (:advice-classes frame-multiplexer-advice))
+    (&optional (n 1)) (:universal)
   "Switch to the Nth most recent frame selected.
 The prefix argument N defaults to 1."
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (unless (or (ring-empty-p *recent-list*)
               (>= 0 n))
     (let* ((vf (gethash (implementation) *virtual-frame-map*))
@@ -416,10 +491,11 @@ The prefix argument N defaults to 1."
           (let ((entry (aref (virtual-frame-id/frame-table vf) recent-frame-id)))
             (switch-current-frame vf (frame-table-entry-frame entry)))))))
 
-(define-command frame-mulitplexer-rename (name &optional id) ("sNew name: " "P")
+(define-command (frame-multiplexer-rename (:advice-classes frame-multiplexer-advice))
+    (name &optional id) ((:string "New name: ") :universal-nil)
   "Rename the current frame to NAME.
 With prefix argument ID, rename the frame with the given ID."
-  (check-frame-multiplexer-enabled)
+  (check-frame-multiplexer-usable)
   (let* ((vf (gethash (implementation) *virtual-frame-map*))
          (entry (if (null id)
                     (find-frame-table-entry vf (virtual-frame-current vf))

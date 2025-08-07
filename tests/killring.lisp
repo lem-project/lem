@@ -16,7 +16,7 @@
             (lem-core::*killring* killring))
         (ok (equal '("baz" (:test))
                    (multiple-value-list (yank-from-clipboard-or-killring)))))
-    
+
       ;; clipboard enabled
       (let ((lem-core::*enable-clipboard-p* t)
             (lem-core::*killring* killring)

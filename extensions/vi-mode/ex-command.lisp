@@ -9,16 +9,21 @@
   (:import-from :lem-vi-mode/options
                 :execute-set-command)
   (:import-from :lem-vi-mode/utils
-                :change-directory
-                :expand-filename-modifiers))
+                :change-directory*
+                :expand-filename-modifiers)
+  (:export :*edit-buffer-directory*))
 (in-package :lem-vi-mode/ex-command)
+
+(defvar *edit-buffer-directory* nil)
 
 (defun ex-edit (filename force)
   (if (string= filename "")
       (lem:revert-buffer force)
       (with-jumplist
         (lem:find-file (merge-pathnames (expand-filename-modifiers filename)
-                                        (uiop:getcwd))))))
+                                        (if *edit-buffer-directory*
+                                            (lem:buffer-directory)
+                                            (uiop:getcwd)))))))
 
 (defun ex-write (range filename touch)
   (case (length range)
@@ -49,9 +54,37 @@
 (define-ex-command "^(w|write)$" (range filename)
   (ex-write range filename t))
 
+(define-ex-command "^wa(?:ll)?$" (range argument)
+  (declare (ignore range argument))
+  (ex-write-all nil))
+
+(define-ex-command "^wa(?:ll)?!$" (range argument)
+  (declare (ignore range argument))
+  (ex-write-all t))
+
+(define-ex-command "^new$" (range filename)
+  (declare (ignore range))
+  (lem-vi-mode/commands:vi-window-split-vertically-new 1 filename))
+
+(define-ex-command "^vne(?:w)?$" (range filename)
+  (declare (ignore range))
+  (lem-vi-mode/commands:vi-window-split-horizontally-new 1 filename))
+
+(define-ex-command "^ene(?:w)?$" (range filename)
+  (declare (ignore range))
+    (lem-vi-mode/commands:vi-switch-to-buffer filename))
+
 (define-ex-command "^update$" (range filename)
   (when (lem:buffer-modified-p (lem:current-buffer))
     (ex-write range filename t)))
+
+(define-ex-command "^bn$" (range argument)
+  (declare (ignore range argument))
+  (lem:next-buffer))
+
+(define-ex-command "^bp$" (range argument)
+  (declare (ignore range argument))
+  (lem:previous-buffer))
 
 (define-ex-command "^wq$" (range filename)
   (ex-write-quit range filename nil t))
@@ -85,11 +118,19 @@
   (ex-write-all t)
   (lem:exit-lem nil))
 
+(define-ex-command "^clo(?:se)?$" (range filename)
+  (declare (ignore range filename))
+  (lem-vi-mode/commands:vi-close 1))
+
 (define-ex-command "^(x|xit)$" (range filename)
   (ex-write-quit range filename nil nil))
 
 (define-ex-command "^(x|xit)!$" (range filename)
   (ex-write-quit range filename t nil))
+
+(define-ex-command "^on(?:ly)?$" (range filename)
+  (declare (ignore range filename))
+  (lem:delete-other-windows))
 
 (defun copy-current-jumplist-to-next-window ()
   (let* ((window-list
@@ -148,7 +189,8 @@
                   (cond
                     (replace-all-in-line
                      (lem:line-start start)
-                     (lem:line-end end)
+                     (unless (lem:start-line-p end)
+                       (lem:line-end end))
                      (rep start end nil))
                     (t
                      (lem:move-point (lem:current-point) start)
@@ -168,8 +210,8 @@
   (declare (ignore range))
   (lem:pipe-command
    (format nil "~A ~A"
-          (subseq lem-vi-mode/ex-core:*command* 1)
-          command)))
+           (subseq lem-vi-mode/ex-core:*command* 1)
+           command)))
 
 (define-ex-command "^(buffers|ls|files)$" (range argument)
   (declare (ignore range argument))
@@ -227,7 +269,7 @@
 
 (define-ex-command "^cd$" (range new-directory)
   (declare (ignore range))
-  (let ((new-directory (change-directory (expand-filename-modifiers new-directory))))
+  (let ((new-directory (change-directory* (expand-filename-modifiers new-directory))))
     (lem:message "~A" new-directory)))
 
 (define-ex-command "^noh(?:lsearch)?$" (range argument)
@@ -237,3 +279,7 @@
 (define-ex-command "^pwd?$" (range argument)
   (declare (ignore range argument))
   (lem:current-directory))
+
+(define-ex-command "^jumps?$" (range argument)
+  (declare (ignore range argument))
+  (lem-vi-mode/commands:vi-jumps))

@@ -20,23 +20,26 @@
     :initarg :window-left-margin
     :reader window-left-margin)))
 
-(defun get-default-implementation (&key (errorp t))
+(defun get-default-implementation (&key (errorp t) (implementation :ncurses))
   (let* ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))
          (class (case (length classes)
                   (0
                    (when errorp
                      (error "Implementation does not exist.~
-                             (probably because you didn't quickload lem-ncurses)")))
+                             (probably because you didn't load the lem-ncurses system)")))
                   (1
                    (first classes))
                   (otherwise
                    (dolist (class classes (first classes))
-                     (when (string= :ncurses (class-name class))
+                     (when (string= implementation (class-name class))
                        (return class)))))))
     (when class
       (make-instance class))))
 
 (defvar lem-if:*background-color-of-drawing-window* nil)
+
+(deftype cursor-type ()
+  '(member :box :bar :underline))
 
 (defgeneric lem-if:invoke (implementation function))
 (defgeneric lem-if:get-background-color (implementation))
@@ -51,6 +54,10 @@
 (defgeneric lem-if:set-display-title (implementation title))
 (defgeneric lem-if:display-fullscreen-p (implementation))
 (defgeneric lem-if:set-display-fullscreen-p (implementation fullscreen-p))
+(defgeneric lem-if:maximize-frame (implementation)
+  (:method (implementation)))
+(defgeneric lem-if:minimize-frame (implementation)
+  (:method (implementation)))
 (defgeneric lem-if:make-view (implementation window x y width height use-modeline))
 (defgeneric lem-if:view-width (implementation view))
 (defgeneric lem-if:view-height (implementation view))
@@ -100,6 +107,9 @@
 (defgeneric lem-if:get-font-list (implementation)
   (:method (implementation) '()))
 
+(defgeneric lem-if:set-font-with-implementation (implementation font-name)
+  (:method (implementation font-name) '()))
+
 (defgeneric lem-if:get-mouse-position (implementation)
   (:method (implementation)
     (values 0 0)))
@@ -114,6 +124,11 @@
 (defgeneric lem-if:object-height (implementation drawing-object))
 (defgeneric lem-if:clear-to-end-of-window (implementation view y))
 
+(defgeneric lem-if:js-eval (implementation view code &key wait)
+  (:method (implementation view code &key wait)
+    (declare (ignore wait))
+    (error "unimplemented")))
+
 (defvar *display-background-mode* nil)
 
 (defun implementation ()
@@ -121,10 +136,10 @@
 
 (defmacro with-implementation (implementation &body body)
   `(let* ((*implementation* ,implementation)
-          (bt:*default-special-bindings*
+          (bt2:*default-special-bindings*
             (acons '*implementation*
                    *implementation*
-                   bt:*default-special-bindings*)))
+                   bt2:*default-special-bindings*)))
      ,@body))
 
 (defun display-background-mode ()
@@ -176,3 +191,18 @@
                                        (get-default-implementation)))
   (setf *implementation* implementation)
   (lem-if:invoke implementation function))
+
+(defun lem-if:set-font-name (font-name)
+  (lem-if:set-font-with-implementation (implementation) font-name))
+
+(defun lem-if:get-font-by-name-and-style (name style)
+  "GET-FONT-BY-NAME-AND-STYLE searches for a font with NAME in the path and ends with STYLE"
+  (flet ((equal-downcase (s1 s2) (equal (string-downcase s1) (string-downcase s2))))
+    (let ((fonts (loop :for font in (lem-if:get-font-list (implementation))
+                       :for style-termination := (format nil "~a." style)
+                       :when (and (search name font :test #'equal-downcase)
+                                  (search style-termination font :test #'equal-downcase))
+                       :collect font)))
+      (if fonts
+          (car fonts)
+          (error "font not found for font-name=~s and style=~s" name style)))))

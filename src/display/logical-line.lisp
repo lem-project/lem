@@ -151,7 +151,8 @@
   string)
 
 (defstruct eol-cursor-item
-  attribute)
+  attribute
+  true-cursor-p)
 
 (defstruct extend-to-eol-item
   color)
@@ -226,7 +227,8 @@
             items))
     (alexandria:when-let (attribute
                           (logical-line-end-of-line-cursor-attribute logical-line))
-      (push (make-eol-cursor-item :attribute attribute)
+      (push (make-eol-cursor-item :attribute attribute
+                                  :true-cursor-p (cursor-attribute-p attribute))
             items))
     (values (nreverse items)
             (alexandria:when-let (overlay
@@ -243,13 +245,15 @@
                          (make-attribute :background color)
                          :temporary t))))
 
-(defun make-temporary-region-overlay-from-cursor (cursor)
+(defgeneric make-region-overlays-using-global-mode (global-mode cursor))
+
+(defmethod make-region-overlays-using-global-mode ((global-mode emacs-mode) cursor)
   (let ((mark (cursor-mark cursor)))
     (when (mark-active-p mark)
-      (make-overlay cursor
+      (list (make-overlay cursor
                     (mark-point mark)
                     'region
-                    :temporary t))))
+                    :temporary t)))))
 
 (defun make-cursor-overlay* (point)
   (make-cursor-overlay
@@ -264,8 +268,8 @@
          (overlays (buffer-overlays buffer)))
     (when (eq (current-window) window)
       (dolist (cursor (buffer-cursors buffer))
-        (if-push (make-temporary-region-overlay-from-cursor cursor)
-                 overlays))
+        (alexandria:when-let ((region-overlays (make-region-overlays-using-global-mode (current-global-mode) cursor)))
+          (dolist (ol region-overlays) (push ol overlays))))
       (if-push (make-temporary-highlight-line-overlay buffer)
                overlays))
     (if (and (eq window (current-window))

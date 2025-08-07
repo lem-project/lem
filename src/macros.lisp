@@ -32,12 +32,13 @@
 
 #+sbcl
 (defmacro with-profile (&body body)
-  `(progn
-     (sb-profile:profile "LEM" "LEM-BASE" "LEM-INTERFACE")
-     ,@body
-     (with-debug-output ("PROFILE")
-       (sb-profile:report))
-     (sb-profile:unprofile)))
+  (let ((names '("LEM" "LEM-CORE" "LEM-INTERFACE")))
+    `(progn
+       (sb-profile:profile ,@names)
+       ,@body
+       (with-debug-output ("PROFILE")
+         (sb-profile:report))
+       (sb-profile:unprofile ,@names))))
 
 (defmacro with-editor-stream (() &body body)
   (alexandria:with-gensyms (stream)

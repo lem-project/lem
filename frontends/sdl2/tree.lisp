@@ -256,12 +256,12 @@
 (define-key *tree-view-keymap* 'move-to-end-of-buffer 'tree-view-scroll-bottom)
 (define-key *tree-view-keymap* 'move-to-beginning-of-buffer 'tree-view-scroll-top)
 
-(define-command tree-view-scroll-right (n) ("p")
+(define-command tree-view-scroll-right (n) (:universal)
   (tree-view-scroll-horizontally (current-buffer)
                                  (current-window)
                                  (* n +scroll-unit+)))
 
-(define-command tree-view-scroll-left (n) ("p")
+(define-command tree-view-scroll-left (n) (:universal)
   (tree-view-scroll-horizontally (current-buffer)
                                  (current-window)
                                  (* (- n) +scroll-unit+)))
@@ -269,12 +269,12 @@
 (define-command tree-view-scroll-horizontally-start () ()
   (tree-view-scroll-horizontally-first (current-buffer)))
 
-(define-command tree-view-scroll-down (n) ("p")
+(define-command tree-view-scroll-down (n) (:universal)
   (tree-view-scroll-vertically (current-buffer)
                                (current-window)
                                (* n +scroll-unit+)))
 
-(define-command tree-view-scroll-up (n) ("p")
+(define-command tree-view-scroll-up (n) (:universal)
   (tree-view-scroll-vertically (current-buffer)
                                (current-window)
                                (* (- n) +scroll-unit+)))
@@ -311,7 +311,7 @@
                                (current-window)
                                (* argument +scroll-unit+)))
 
-(defmethod lem-core::handle-mouse-button-down ((buffer tree-view-buffer) mouse-event &key window)
+(defmethod lem:handle-mouse-button-down ((buffer tree-view-buffer) mouse-event &key window)
   (multiple-value-bind (x y)
       (lem-core::get-relative-mouse-coordinates-pixels mouse-event window)
     (let ((node (get-node-at-coordinates buffer x y)))
@@ -321,7 +321,7 @@
              (funcall (node-click-callback (text-node-node node))
                       (text-node-node node)))))))
 
-(defmethod lem-core::handle-mouse-hover ((buffer tree-view-buffer) mouse-event &key window)
+(defmethod lem:handle-mouse-hover ((buffer tree-view-buffer) mouse-event &key window)
   (multiple-value-bind (x y)
       (lem-core::get-relative-mouse-coordinates-pixels mouse-event window)
     (let ((node (get-node-at-coordinates buffer x y)))

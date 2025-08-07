@@ -9,6 +9,7 @@
    :listener-start
    :change-input-start-point
    :refresh-prompt
+   :clear-listener-using-mode
    :clear-listener
    ;; editor variables
    :listener-prompt-attribute
@@ -20,6 +21,8 @@
    :listener-return
    :listener-previous-input
    :listener-next-input
+   :listener-previous-startswith-input
+   :listener-next-startswith-input
    :listener-previous-matching-input
    :listener-clear-buffer
    :listener-clear-input)
@@ -167,6 +170,47 @@
     (when win
       (replace-textarea buffer str))))
 
+(define-command listener-previous-startswith-input () ()
+  (block nil
+    (let* ((buffer (current-buffer))
+           (point (buffer-point buffer))
+           (charpos (point-charpos point))
+           (prefix (points-to-string (input-start-point buffer) point)))
+      (backup-edit-string (current-buffer))
+      (flet ((commit (str)
+               (replace-textarea buffer str)
+               (setf (point-charpos point) charpos)
+               (return)))
+        (loop
+          (multiple-value-bind (str win)
+              (lem/common/history:previous-history (current-listener-history))
+            (if win
+                (when (eql 0 (search prefix str :test #'string=))
+                  (commit str))
+                (return))))))))
+
+(define-command listener-next-startswith-input () ()
+  (block nil
+    (let* ((buffer (current-buffer))
+           (point (buffer-point buffer))
+           (charpos (point-charpos point))
+           (prefix (points-to-string (input-start-point buffer) point)))
+      (backup-edit-string (current-buffer))
+      (flet ((commit (str)
+               (replace-textarea buffer str)
+               (setf (point-charpos point) charpos)
+               (return))
+             (rollback ()
+               (restore-edit-string buffer)
+               (return)))
+        (loop
+          (multiple-value-bind (str win)
+              (lem/common/history:next-history (current-listener-history))
+            (if win
+                (when (eql 0 (search prefix str :test #'string=))
+                  (commit str))
+                (rollback))))))))
+
 (define-command listener-previous-input () ()
   (backup-edit-string (current-buffer))
   (multiple-value-bind (str win)
@@ -190,10 +234,14 @@
     (when win
       (replace-textarea (current-buffer) str))))
 
-(defun clear-listener (buffer)
+(defmethod clear-listener-using-mode (mode buffer)
   (let ((*inhibit-read-only* t))
     (erase-buffer buffer))
   (refresh-prompt buffer))
+
+(defun clear-listener (buffer)
+  (clear-listener-using-mode (lem-core::get-active-modes-class-instance (current-buffer))
+                             buffer))
 
 (define-command listener-clear-buffer () ()
   (clear-listener (current-buffer)))
@@ -300,7 +348,7 @@
           (*history-matched-string* nil)
           (*listener-window* (current-window)))
       (unwind-protect
-           (progn
+           (let ((lem/prompt-window::*fill-width* nil))
              (prompt-for-string
               "(reverse-i-search) "
               :special-keymap *history-isearch-keymap*

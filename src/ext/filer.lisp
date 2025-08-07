@@ -13,6 +13,7 @@
 
 (define-key *global-keymap* "C-x d" 'filer)
 (define-key *filer-mode-keymap* "Return" 'filer-select)
+(define-key *filer-mode-keymap* "D" 'filer-delete-file)
 
 (defclass item ()
   ((pathname :initarg :pathname
@@ -89,10 +90,10 @@
 (defun insert-item (point item)
   (with-point ((start point))
     (back-to-indentation start)
-    (lem/directory-mode::insert-icon point (item-pathname item))
+    (lem/directory-mode/internal::insert-icon point (item-pathname item))
     (insert-string point
                    (item-content item)
-                   :attribute (lem/directory-mode::get-file-attribute (item-pathname item)))
+                   :attribute (lem/directory-mode/internal::get-file-attribute (item-pathname item)))
     (put-text-property start point :item item)
     (lem-core::set-clickable start
                              point
@@ -178,5 +179,37 @@
       (let ((directory (buffer-directory)))
         (make-leftside-window (make-filer-buffer directory)))))
 
+(define-command filer-at-directory () ()
+  "Prompt for a directory and open the filer tree view at this directory."
+  (let ((directory (prompt-for-directory "Directory: "
+                                         :directory (buffer-directory)
+                                         :gravity :cursor
+                                         :use-border t)))
+    (when (filer-active-p)
+      (deactive-filer)
+    (make-leftside-window (make-filer-buffer directory)))))
+
 (define-command filer-select () ()
   (select (back-to-indentation (current-point))))
+
+(define-command filer-delete-file () ()
+  "Delete the selected file in the filer."
+  (let ((item (text-property-at (back-to-indentation (current-point)) :item)))
+    (unless item
+      (editor-error "No file selected")
+      (return-from filer-delete-file))
+    (let ((file (item-pathname item)))
+      (when (and file
+                 (prompt-for-y-or-n-p (format nil "Do you really want to delete \"~A\"?" file)))
+        (handler-case
+            (lem/directory-mode/file:delete-file* file)
+          #+sbcl
+          (sb-ext:delete-file-error (e)
+            (editor-error (format nil "~A" e)))
+          #-sbcl
+          (error (e)
+            (editor-error (format nil "~A" e))))
+        (when (not (uiop:file-exists-p file))
+          (with-buffer-read-only (current-buffer) nil
+            (line-start (current-point))
+            (kill-line 1)))))))

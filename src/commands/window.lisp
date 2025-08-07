@@ -28,7 +28,9 @@
            :read-file-next-window
            :select-buffer-next-window
            :switch-to-last-focused-window
-           :compare-windows))
+           :compare-windows)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/window)
 
 (define-key *global-keymap* "C-x b" 'select-buffer)
@@ -82,7 +84,7 @@
            (format nil "Buffer ~a does not exist. Create" name))
       (make-buffer name)))
 
-  (define-command select-buffer (name) ("BUse Buffer: ")
+  (define-command select-buffer (name) ((:other-buffer "Use Buffer: "))
     "Switches to the selected buffer."
     (let ((buffer (or (get-buffer name)
                       (maybe-create-buffer name)
@@ -90,7 +92,7 @@
       (switch-to-buffer buffer))
     t))
 
-(define-command kill-buffer (buffer-or-name) ("bKill buffer: ")
+(define-command kill-buffer (buffer-or-name) ((:buffer "Kill buffer: "))
   "Delete buffer."
   (let ((buffer (get-buffer buffer-or-name)))
     (unless buffer
@@ -115,26 +117,33 @@
                         (car (buffer-list)))
                     nil))
 
-(define-command recenter (p) ("P")
+(define-command recenter (p) (:universal-nil)
   "Scroll so that the cursor is in the middle."
   (clear-screens-of-window-list)
   (unless p (window-recenter (current-window)))
   (redraw-display)
   t)
 
-(define-command split-active-window-vertically (&optional n) ("P")
+(define-command recenter-top-bottom (p) (:universal-nil)
+  "Scroll so that the cursor is in the middle/top/bottom."
+  (clear-screens-of-window-list)
+  (unless p (window-recenter-top-bottom (current-window)))
+  (redraw-display)
+  t)
+
+(define-command split-active-window-vertically (&optional n) (:universal-nil)
   "Split the current window vertically."
   (split-window-vertically (current-window) :height n)
   (unless n
     (maybe-balance-windows)))
 
-(define-command split-active-window-horizontally (&optional n) ("P")
+(define-command split-active-window-horizontally (&optional n) (:universal-nil)
   "Split the current window horizontally."
   (split-window-horizontally (current-window) :width n)
   (unless n
     (maybe-balance-windows)))
 
-(define-command next-window (&optional (n 1)) ("p")
+(define-command next-window (&optional (n 1)) (:universal)
   "Go to the next window."
   (let ((window-list
           (compute-window-list (current-window))))
@@ -146,7 +155,7 @@
               (get-next-window window window-list)))
       (switch-to-window window))))
 
-(define-command previous-window (&optional (n 1)) ("p")
+(define-command previous-window (&optional (n 1)) (:universal)
   (next-window (- n)))
 
 (define-command switch-to-last-focused-window () ()
@@ -158,12 +167,12 @@
     (switch-to-window window)))
 
 (define-command window-move-down () ()
-  "Go to the window on the down."
+  "Go to the window below."
   (alexandria:when-let ((window (down-window (current-window))))
     (switch-to-window window)))
 
 (define-command window-move-up () ()
-  "Go to the window on the up."
+  "Go to the window above."
   (alexandria:when-let ((window (up-window (current-window))))
     (switch-to-window window)))
 
@@ -179,6 +188,8 @@
 
 (define-command delete-other-windows () ()
   "Delete all other windows."
+  (when (floating-window-p (current-window))
+    (editor-error "Can not keep active window as the only one"))
   (dolist (win (window-list))
     (unless (eq win (current-window))
       (delete-window win)))
@@ -195,12 +206,12 @@
   (delete-window (current-window))
   (maybe-balance-windows))
 
-(define-command quit-active-window (&optional kill-buffer) ("P")
+(define-command quit-active-window (&optional kill-buffer) (:universal-nil)
   "Quit the active window. This is a command for a popped-up window."
   (quit-window (current-window)
                :kill-buffer kill-buffer))
 
-(define-command grow-window (n) ("p")
+(define-command grow-window (n) (:universal)
   "Grow the window's height."
   (when (< n 0)
     (return-from grow-window (shrink-window (- n))))
@@ -208,7 +219,7 @@
     (editor-error "Only one window"))
   (grow-window-height (current-window) n))
 
-(define-command shrink-window (n) ("p")
+(define-command shrink-window (n) (:universal)
   "Shrink the window's height."
   (when (< n 0)
     (return-from shrink-window (grow-window (- n))))
@@ -216,7 +227,7 @@
     (editor-error "Only one window"))
   (shrink-window-height (current-window) n))
 
-(define-command grow-window-horizontally (n) ("p")
+(define-command grow-window-horizontally (n) (:universal)
   "Grow the window's width."
   (when (< n 0)
     (return-from grow-window-horizontally (shrink-window-horizontally (- n))))
@@ -224,7 +235,7 @@
     (editor-error "Only one window"))
   (grow-window-width (current-window) n))
 
-(define-command shrink-window-horizontally (n) ("p")
+(define-command shrink-window-horizontally (n) (:universal)
   "Shrink the window's width."
   (when (< n 0)
     (return-from shrink-window-horizontally (grow-window-horizontally (- n))))
@@ -235,7 +246,7 @@
 (defmethod lem-core:scroll (window n)
   (scroll-down n window))
 
-(define-command scroll-down (n &optional (window (current-window))) ("p")
+(define-command scroll-down (n &optional (window (current-window))) (:universal)
   "Scroll down."
   (cond
     ((zerop n))
@@ -249,7 +260,7 @@
      (with-current-window window
        (next-line (- (window-offset-view window)))))))
 
-(define-command scroll-up (n &optional (window (current-window))) ("p")
+(define-command scroll-up (n &optional (window (current-window))) (:universal)
   "Scroll up."
   (cond
     ((zerop n))
@@ -261,13 +272,13 @@
      (with-current-window window
        (previous-line (window-offset-view window))))))
 
-(define-next-window-command lem-core/commands/file:find-file "FFind File Other Window: " "Open a file in another window. Split the screen vertically if needed.")
-(define-next-window-command lem-core/commands/file:read-file "FREAD File Other Window: " "Read a file in another window.")
-(define-next-window-command lem-core/commands/window:select-buffer "BUse Buffer Other Window: " "Select a buffer in another window.")
-(define-next-window-command lem-core/commands/project:project-find-file "pFind File in Project in Other Window: " "Open a file from the current project in another window. Split the screen vertically if needed.")
-(define-next-window-command lem-core/commands/project:project-root-directory "pOpen Project Directory in Other Window: " "Open this project directory in another window. Split the screen vertically if needed.")
+(define-next-window-command lem-core/commands/file:find-file (:new-file "Find File Other Window: ") "Open a file in another window. Split the screen vertically if needed.")
+(define-next-window-command lem-core/commands/file:read-file (:new-file "READ File Other Window: ") "Read a file in another window.")
+(define-next-window-command lem-core/commands/window:select-buffer (:other-buffer "Use Buffer Other Window: ") "Select a buffer in another window.")
+(define-next-window-command lem-core/commands/project:project-find-file (:universal "Find File in Project in Other Window: ") "Open a file from the current project in another window. Split the screen vertically if needed.")
+(define-next-window-command lem-core/commands/project:project-root-directory (:universal "Open Project Directory in Other Window: ") "Open this project directory in another window. Split the screen vertically if needed.")
 
-(define-command compare-windows (ignore-whitespace) ("p")
+(define-command compare-windows (ignore-whitespace) (:universal)
   (setf ignore-whitespace (/= ignore-whitespace 1))
   (when (one-window-p)
     (editor-error "Separate window for compare-windows."))

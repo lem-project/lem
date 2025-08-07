@@ -23,7 +23,7 @@
 (defun end-line-p (point)
   "Return t if POINT is at the end of a line."
   (= (point-charpos point)
-     (line-length (point-line point))))
+     (line:line-length (point-line point))))
 
 (defun start-buffer-p (point)
   "Return t if POINT is at the beginning of the buffer."
@@ -34,11 +34,11 @@
   (point<= (buffer-end-point (point-buffer point)) point))
 
 (defun %move-to-position (point linum line charpos)
-  (assert (line-alive-p line))
+  (assert (line:line-alive-p line))
   (assert (<= 0 charpos))
   (without-interrupts
     (point-change-line point linum line)
-    (setf (point-charpos point) (min (line-length line) charpos)))
+    (setf (point-charpos point) (min (line:line-length line) charpos)))
   point)
 
 (defun move-point (point new-point)
@@ -58,7 +58,7 @@
 (defun line-end (point)
   "Move POINT to the end of the line."
   (setf (point-charpos point)
-        (line-length (point-line point)))
+        (line:line-length (point-line point)))
   point)
 
 (defun buffer-start (point)
@@ -70,14 +70,13 @@
   (move-point point (buffer-end-point (point-buffer point))))
 
 (defun line-offset (point n &optional (charpos 0))
-  "`point`を`n`が正の数なら下に、負の数なら上に行を移動し、移動後の`point`を返します。
-`n`行先に行が無ければ`point`の位置はそのままでNILを返します。
-`charpos`は移動後の行頭からのオフセットです。
-"
+  "If 'point' is a positive number, move the line down. If it is a negative number, move the line up and return the moved 'point'.
+If there is no line at the 'n' destination, the position of 'point' is left as it is and NIL is returned.
+'charpos' is the offset from the start of the line after the move."
   (cond
     ((plusp n)
      (do ((i n (1- i))
-          (line (point-line point) (line-next line)))
+          (line (point-line point) (line:line-next line)))
          ((null line) nil)
        (when (zerop i)
          (%move-to-position point (+ (point-linum point) n)
@@ -85,7 +84,7 @@
          (return point))))
     ((minusp n)
      (do ((i n (1+ i))
-          (line (point-line point) (line-prev line)))
+          (line (point-line point) (line:line-previous line)))
          ((null line) nil)
        (when (zerop i)
          (%move-to-position point (+ (point-linum point) n)
@@ -96,34 +95,34 @@
            (if (< charpos 0)
                0
                (min charpos
-                    (line-length (point-line point)))))
+                    (line:line-length (point-line point)))))
      point)))
 
 (declaim (inline %character-offset))
 (defun %character-offset (point n fn zero-fn)
   (cond ((zerop n) (when zero-fn (funcall zero-fn)))
         ((plusp n)
-         (do ((line (point-line point) (line-next line))
+         (do ((line (point-line point) (line:line-next line))
               (linum (point-linum point) (1+ linum))
               (charpos (point-charpos point) 0))
              ((null line) nil)
-           (let ((w (- (line-length line) charpos)))
+           (let ((w (- (line:line-length line) charpos)))
              (when (<= n w)
                (return (funcall fn linum line (+ charpos n))))
              (decf n (1+ w)))))
         (t
          (setf n (- n))
-         (do* ((line (point-line point) (line-prev line))
+         (do* ((line (point-line point) (line:line-previous line))
                (linum (point-linum point) (1- linum))
-               (charpos (point-charpos point) (and line (line-length line))))
+               (charpos (point-charpos point) (and line (line:line-length line))))
              ((null line) nil)
            (when (<= n charpos)
              (return (funcall fn linum line (- charpos n))))
            (decf n (1+ charpos))))))
 
 (defun character-offset (point n)
-  "`point`を`n`が正の数なら後に、負の数なら前に移動し、移動後の`point`を返します。
-`n`文字先がバッファの範囲外なら`point`の位置はそのままでNILを返します。"
+  "If 'n' is a positive number, move it forward. If it is a negative number, move it backward. Return the moved 'point'.
+If the 'n' character is beyond the buffer, the position of 'point' is left as it is and NIL is returned."
   (%character-offset point n
                      (lambda (linum line charpos)
                        (%move-to-position point linum line charpos)
@@ -132,28 +131,28 @@
                        point)))
 
 (defun character-at (point &optional (offset 0))
-  "`point`から`offset`ずらした位置の文字を返します。
-バッファの範囲外ならNILを返します。"
+  "Return the character at the offset.
+Return NIL if the buffer is out of range."
   (%character-offset point offset
                      (lambda (linum line charpos)
                        (declare (ignore linum))
-                       (line-char line charpos))
+                       (line:line-char line charpos))
                      (lambda ()
-                       (line-char (point-line point)
+                       (line:line-char (point-line point)
                                   (point-charpos point)))))
 
 (defun line-string (point)
   "Return the string at POINT."
-  (line-str (point-line point)))
+  (line:line-string (point-line point)))
 
 (defun text-property-at (point prop &optional (offset 0))
-  "`point`から`offset`ずらした位置の`prop`のプロパティを返します。"
+  "Return the property of 'prop' at the offset position from 'point' to 'offset'."
   (%character-offset point offset
                      (lambda (linum line charpos)
                        (declare (ignore linum))
-                       (line-search-property line prop charpos))
+                       (line:line-search-property line prop charpos))
                      (lambda ()
-                       (line-search-property (point-line point)
+                       (line:line-search-property (point-line point)
                                              prop
                                              (point-charpos point)))))
 
@@ -165,10 +164,10 @@ The third and fourth arguments PROP and VALUE specify the property to add."
               (point-buffer end-point)))
   (%map-region start-point end-point
                (lambda (line start end)
-                 (line-add-property line
+                 (line:line-add-property line
                                     start
                                     (if (null end)
-                                        (line-length line)
+                                        (line:line-length line)
                                         end)
                                     prop
                                     value
@@ -177,22 +176,24 @@ The third and fourth arguments PROP and VALUE specify the property to add."
 (defun remove-text-property (start-point end-point prop)
   "Remove one property from text from START-POINT to END-POINT.
 
-The thrid argument PROP is a property to remove."
+The third argument PROP is a property to remove."
   (assert (eq (point-buffer start-point)
               (point-buffer end-point)))
   (%map-region start-point end-point
                (lambda (line start end)
-                 (line-remove-property line
+                 (line:line-remove-property line
                                        start
                                        (if (null end)
-                                           (line-length line)
+                                           (line:line-length line)
                                            end)
                                        prop))))
 
 (defun next-single-property-change (point prop &optional limit-point)
-  "`point`からテキストプロパティ`prop`の値が異なる位置まで後の方向に移動し、
-移動後の`point`を返します。
-バッファの最後まで走査が止まらないか、`limit-point`を越えると走査を中断しNILを返します。"
+  "Move the value of the text property 'prop' from 'point' to a different position.
+Return the translated version of 'point'.
+If the scan does not stop until the end of the buffer, or if 'limit-point' is exceeded, the scan is interrupted and NIL is returned."
+  ;; 移動後の`point`を返します。
+  ;; バッファの最後まで走査が止まらないか、`limit-point`を越えると走査を中断しNILを返します。"
   (let ((first-value (text-property-at point prop)))
     (with-point ((curr point))
       (loop
@@ -204,9 +205,9 @@ The thrid argument PROP is a property to remove."
           (return nil))))))
 
 (defun previous-single-property-change (point prop &optional limit-point)
-  "`point`からテキストプロパティ`prop`の値が異なる位置まで前の方向に移動し、
-移動後の`point`を返します。
-バッファの最初の位置まで走査が止まらないか、`limit-point`を越えると走査を中断しNILを返します。"
+  "Move the text property 'prop' from 'point' forward to a different position.
+Return the translated version of 'point'.
+If the scan does not stop to the first position of the buffer, or if 'limit-point' is exceeded, the scan is interrupted and NIL is returned."
   (let ((first-value (text-property-at point prop -1)))
     (with-point ((curr point))
       (loop
@@ -218,13 +219,13 @@ The thrid argument PROP is a property to remove."
           (return nil))))))
 
 (defun insert-character (point char &optional (n 1))
-  "`point`に文字`char`を`n`回挿入します。"
-  (loop :repeat n :do (insert-char/point point char))
+  "Insert the character 'char' into 'point' 'n' times."
+  (insert-string/point point (str:repeat n (string char)))
   t)
 
 (defun insert-string (point string &rest plist)
-  "`point`に文字列`string`を挿入します。
-`plist`を指定すると`string`を挿入した範囲にテキストプロパティを設定します。"
+  "Insert the string 'string' into 'point'.
+If 'plist' is specified, the text property is set to the range where 'string' is inserted."
   (if (null plist)
       (insert-string/point point string)
       (with-point ((start-point point))
@@ -240,8 +241,8 @@ The thrid argument PROP is a property to remove."
   t)
 
 (defun delete-character (point &optional (n 1))
-  "`point`から`n`個文字を削除し、削除した文字列を返します。
-`n`個の文字を削除する前にバッファの末尾に達した場合はNILを返します。"
+  "Delete the 'n'th character from the 'point' and return the deleted string.
+Return NIL if the end of the buffer has been reached before deleting 'n' characters."
   (when (minusp n)
     (unless (character-offset point n)
       (return-from delete-character nil))
@@ -273,7 +274,7 @@ The thrid argument PROP is a property to remove."
     (rotatef start end))
   (let ((start-line (point-line start))
         (end-line (point-line end)))
-    (loop :for line := start-line :then (line-next line)
+    (loop :for line := start-line :then (line:line-next line)
           :for firstp := (eq line start-line)
           :for lastp := (eq line end-line)
           :do (funcall function
@@ -291,11 +292,11 @@ The thrid argument PROP is a property to remove."
   (%map-region start end
                (lambda (line start end)
                  (funcall function
-                          (subseq (line-str line) start end)
+                          (line:line-substring line :start start :end end)
                           (not (null end))))))
 
 (defun points-to-string (start-point end-point)
-  "`start-point`から`end-point`までの範囲の文字列を返します。"
+  "Return a string between 'start-point' and 'end-point'."
   (assert (eq (point-buffer start-point)
               (point-buffer end-point)))
   (with-output-to-string (out)
@@ -333,8 +334,7 @@ The thrid argument PROP is a property to remove."
           (point-linum end-point))))
 
 (defun apply-region-lines (start-point end-point function)
-  "`start-point`から`end-point`の各行に対して
-ポイントを引数に取る`function`を適用します。"
+  "For each line of 'start-point' to 'end-point' apply 'function' which takes a point as an argument."
   (when (point< end-point start-point)
     (rotatef start-point end-point))
   (with-point ((start-point start-point :right-inserting)
@@ -378,15 +378,15 @@ short to reach COLUMN, add spaces/tabs to get there."
            (line-end point)))))
 
 (defun position-at-point (point)
-  "`point`のバッファの先頭からの1始まりのオフセットを返します。"
+  "Return the offset of 'point' from the beginning of the buffer."
   (let ((offset (point-charpos point)))
-    (do ((line (line-prev (point-line point)) (line-prev line)))
+    (do ((line (line:line-previous (point-line point)) (line:line-previous line)))
         ((null line) (1+ offset))
-      (incf offset (1+ (line-length line))))))
+      (incf offset (1+ (line:line-length line))))))
 
 (defun move-to-position (point position)
-  "`point`をバッファの先頭からの1始まりのオフセット`position`に移動してその位置を返します。
-`position`がバッファの範囲外なら`point`は移動せず、NILを返します。"
+  "Move 'point' to the offset of 'position' from the beginning of the buffer and return its position.
+If 'position' is out of the buffer, 'point' does not move and returns NIL."
   (let ((line-number (line-number-at-point point))
         (charpos (point-charpos point)))
     (or (character-offset (buffer-start point) (1- position))
@@ -396,7 +396,7 @@ short to reach COLUMN, add spaces/tabs to get there."
           nil))))
 
 (defun point-bytes (point)
-  "`point`のバイト単位のバッファ先頭からのオフセットを返します。"
+  "Return the offset of 'point' from the beginning of the buffer in bytes."
   (with-point ((point point))
     (let ((nbytes 0))
       (incf nbytes
@@ -421,8 +421,8 @@ short to reach COLUMN, add spaces/tabs to get there."
       (unless (line-offset point 1) (return)))))
 
 (defun move-to-line (point line-number)
-  "`point`を行番号`line-number`に移動し、移動後の位置を返します。
-`line-number`がバッファの範囲外なら`point`は移動せず、NILを返します。"
+  "Move 'point' to line number 'line-number' and return the position after the move.
+If 'line-number' is out of the buffer, 'point' does not move and returns NIL."
   (let ((cur-linum (line-number-at-point point))
         (nlines (buffer-nlines (point-buffer point))))
     (cond ((or (> 1 line-number)
@@ -440,13 +440,13 @@ short to reach COLUMN, add spaces/tabs to get there."
                (line-offset (buffer-end point) (- line-number nlines)))))))
 
 (defun set-current-mark (point)
-  "`point`を現在のマークに設定します。"
+  "Set 'point' to the current mark."
   (let ((buffer (point-buffer point)))
-    (mark-set-point (buffer-mark-object buffer) point))
+    (setf (buffer-mark buffer) point))
   point)
 
 (defun blank-line-p (point)
-  "`point`のある行が空白だけなら、その空白の個数、それ以外ならnilを返します。"
+  "If the line containing 'point' is only blank, it returns the number of blanks, otherwise it returns nil."
   (let ((string (line-string point))
         (eof-p (last-line-p point))
         (count 0))
@@ -471,26 +471,30 @@ short to reach COLUMN, add spaces/tabs to get there."
               (return count))))
 
 (defun skip-chars-forward (point test)
-  "`point`からその位置の文字を`test`で評価して非NILの間、後の方向に移動します。
-`test`が文字のリストならその位置の文字が`test`のリスト内に含まれるか
-`test`が関数ならその位置の文字を引数として一つ取り、返り値が非NILであるか
-"
+  "From 'point', the character at that position is evaluated by 'test' and moved in the following direction during non-NIL.
+If 'test' is a list of characters, is the character at that position in the list of 'test'?
+If 'test' is a function, it takes one character at that position as an argument and returns non-NIL."
+  ;; `point`からその位置の文字を`test`で評価して非NILの間、後の方向に移動します。
+  ;; `test`が文字のリストならその位置の文字が`test`のリスト内に含まれるか
+  ;; `test`が関数ならその位置の文字を引数として一つ取り、返り値が非NILであるか
   (skip-chars-internal point test t))
 
 (defun skip-chars-backward (point test)
-  "`point`からその位置の前の文字を`test`で評価して非NILの間、前の方向に移動します。
-`test`が文字のリストならその位置の前の文字が`test`のリスト内に含まれるか
-`test`が関数ならその位置の前の文字を引数として一つ取り、返り値が非NILであるか
-"
+  "Move the character before the position from 'point' to the previous direction while non-NIL by evaluating it with \"test\".
+If 'test' is a list of characters, is the character before that position in the list of 'test'?
+If 'test' is a function, it takes one of the characters before its position as its argument and returns non-NIL."
+  ;; `point`からその位置の前の文字を`test`で評価して非NILの間、前の方向に移動します。
+  ;; `test`が文字のリストならその位置の前の文字が`test`のリスト内に含まれるか
+  ;; `test`が関数ならその位置の前の文字を引数として一つ取り、返り値が非NILであるか
   (skip-chars-internal point test nil))
 
 (defun insert-buffer (point buffer)
-  "`point`の位置に`buffer`内のテキストを挿入します。
-`insert-string`との違いは`buffer`内のテキストプロパティも反映することです。"
-  (loop :for line := (point-line (buffer-start-point buffer)) :then (line-next line)
+  "Insert the text in 'buffer' at the position of 'point'.
+The difference from 'insert-string' is that the text properties in 'buffer' are also reflected."
+  (loop :for line := (point-line (buffer-start-point buffer)) :then (line:line-next line)
         :while line
-        :do (insert-string point (line-str line))
-            (setf (line-plist (point-line point)) (line-plist line))
+        :do (insert-string point (line:line-string line))
+            (setf (line:line-plist (point-line point)) (line:line-plist line))
             (insert-character point #\newline)))
 
 (defun buffer-text (buffer)

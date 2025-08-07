@@ -2,6 +2,7 @@
 
 (defvar *site-init-name* "lem-site-init")
 (defvar *site-init-comment ";; don't edit !!!")
+(defvar *inits-directory-name* "lisp")
 
 (defun site-init-path ()
   (let ((path (merge-pathnames (format nil "~A.asd"
@@ -15,12 +16,12 @@
               `(asdf:defsystem ,*site-init-name*)))
     path))
 
+(defun raw-init-files ()
+  (directory (merge-pathnames "inits/*.lisp" (lem-home))))
+
 (defun site-init-list-inits ()
-  (loop for i in (sort (mapcar #'pathname-name
-                               (directory (merge-pathnames "inits/*.lisp"
-                                                           (lem-home))))
-                       #'string<)
-     collect (list :file (format nil "inits/~A" i))))
+  (loop for i in (sort (mapcar #'pathname-name (raw-init-files)) #'string<)
+        collect (list :file (format nil "inits/~A" i))))
 
 (defun site-init ()
   (with-open-file (i (site-init-path))
@@ -46,11 +47,16 @@
 
 (defun load-site-init (&key force)
   (let* ((asdf:*central-registry*
-           (union (mapcar #'pathname
-                          (mapcar #'directory-namestring
-                                  (directory
-                                   (merge-pathnames "**/*.asd"
-                                                    (lem-home)))))
+           (union (remove-duplicates
+                   (mapcar #'pathname
+                           (mapcar #'directory-namestring
+                                   (directory
+                                    (merge-pathnames
+                                     "**/*.asd"
+                                     (pathname (str:concat
+                                                (directory-namestring (lem-home))
+                                                *inits-directory-name*
+                                                (string  (uiop:directory-separator-for-host)))))))))
                   asdf:*central-registry*
                   :test #'equal))
          (system-name *site-init-name*)
@@ -61,7 +67,7 @@
       (update-site-init-inits)
       (asdf:load-asd (site-init-path))
       (let ((*package* (find-package :lem-user)))
-        (maybe-quickload system-name :silent t)))))
+        (maybe-load-systems system-name :silent t)))))
 
 (define-command site-init-add-dependency (symbols)
     ((prompt-for-library "library: " :history-symbol 'load-library))
@@ -71,13 +77,13 @@
         :for s :in (uiop:split-string symbols)
         :for key := (read-from-string (format nil ":lem-~A" s))
         :do (unless (find key depends-on)
-              (maybe-quickload key :silent t)
+              (maybe-load-systems key :silent t)
               (push key depends-on))
         :finally (setf (getf (cddr site-init) :depends-on) depends-on)
                  (setf (site-init) site-init)
                  (message "~A" depends-on)))
 
-(define-command site-init-remove-dependency (symbols) ("sPackage:")
+(define-command site-init-remove-dependency (symbols) ((:string "Package:"))
   "Remove system name from site-init depends-on"
   ;;TBD prepare prompt-site-init-depends-on like function
   (loop :with site-init := (site-init)

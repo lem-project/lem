@@ -13,13 +13,8 @@
 (defparameter *default-port* 4005)
 (defparameter *localhost* "127.0.0.1")
 
-(defvar *connection* nil)
-
-(defun current-connection ()
-  *connection*)
-
-(defun (setf current-connection) (connection)
-  (setf *connection* connection))
+(set-syntax-parser lem-lisp-syntax:*syntax-table*
+                   (make-tmlanguage-lisp))
 
 (define-major-mode lisp-mode language-mode
     (:name "Lisp"
@@ -62,12 +57,14 @@
                        (lem/detective:make-capture-regex
                         :regex "^(?:\\(defvar |\\(defparameter )"
                         :function #'lem-lisp-mode/detective:capture-reference)
+                       :macro-regex
+                       (lem/detective:make-capture-regex
+                        :regex "^\\(defmacro "
+                        :function #'lem-lisp-mode/detective:capture-reference)
                        :misc-regex
                        (lem/detective:make-capture-regex
                         :regex "^\\(deftest "
                         :function #'lem-lisp-mode/detective:capture-reference)))
-  (set-syntax-parser lem-lisp-syntax:*syntax-table*
-                     (make-tmlanguage-lisp))
   (unless (connected-p) (self-connect))
 
   (setf (buffer-context-menu (current-buffer))
@@ -93,13 +90,20 @@
 (define-key *lisp-mode-keymap* "C-c g" 'lisp-interrupt)
 (define-key *lisp-mode-keymap* "C-c C-q" 'lisp-quickload)
 (define-key *lisp-mode-keymap* "Return" 'newline-and-indent)
+(define-key *lisp-mode-keymap* "C-c C-j" 'lisp-eval-expression-in-repl)
+(define-key *lisp-mode-keymap* "C-c ~" 'lisp-listen-in-current-package)
+(define-key *lisp-mode-keymap* "C-c m s" 'slime)
+(define-key *lisp-mode-keymap* "C-c m r" 'slime-restart)
+(define-key *lisp-mode-keymap* "C-c m q" 'slime-quit)
+(define-key *lisp-mode-keymap* "C-c m c" 'slime-connect)
 
 (defmethod convert-modeline-element ((element (eql 'lisp-mode)) window)
   (format nil "  ~A~A" (buffer-package (window-buffer window) "CL-USER")
           (if (current-connection)
               (format nil " ~A:~A"
                       (connection-implementation-name (current-connection))
-                      (or (self-connection-p (current-connection))
+                      (if (self-connection-p (current-connection))
+                          "SELF"
                           (connection-pid (current-connection))))
               "")))
 
@@ -155,8 +159,9 @@
        :label "Export symbol"
        :callback (lambda (&rest args)
                    (declare (ignore args))
-                   (lem-lisp-mode/exporter:lisp-add-export
-                    (symbol-string-at-point point)))))))
+                   (uiop:symbol-call :lem-lisp-mode/exporter
+                                     :lisp-add-export
+                                     (symbol-string-at-point point)))))))
 
 (defun context-menu-browse-class-as-tree ()
   (let ((point (point-over-symbol-with-menu-opened-p)))
@@ -186,7 +191,17 @@
   (when (current-connection)
     (abort-all (current-connection) "change connection")
     (notify-change-connection-to-wait-message-thread))
-  (setf (current-connection) connection))
+  (setf (current-connection) connection)
+  (when (repl-buffer)
+    (write-string-to-repl
+     (if (self-connection-p connection)
+         (format nil
+                 "~%; changed connection (self connection)")
+         (format nil
+                 "~%; changed connection (~A ~A)"
+                 (connection-implementation-name connection)
+                 (connection-implementation-version connection)))
+     :attribute 'syntax-comment-attribute)))
 
 (defmethod switch-connection ((connection connection))
   (change-current-connection connection))
@@ -214,11 +229,11 @@
 
 (defun self-connect ()
   (unless lem-lisp-mode/test-api:*disable-self-connect*
-    (let ((port (lem-socket-utils:random-available-port)))
+    (let ((port (lem/common/socket:random-available-port)))
       (log:debug "Starting internal SWANK and connecting to it" micros:*communication-style*)
       (let ((micros::*swank-debug-p* nil))
         (micros:create-server :port port :style :spawn))
-      (connect-to-swank *localhost* port)
+      (connect-to-micros *localhost* port)
       (update-buffer-package)
 
       ;; XXX:
@@ -227,14 +242,6 @@
       (asdf:clear-source-registry)
 
       (setf *self-connected-port* port))))
-
-(defun self-connection-p (connection)
-  (and (typep connection 'connection)
-       (integerp (self-connected-port))
-       (member (connection-hostname connection) '("127.0.0.1" "localhost") :test 'equal)
-       (ignore-errors (equal (connection-pid connection) (micros/backend:getpid)))
-       (= (connection-port connection) (self-connected-port))
-       :self))
 
 (defun self-connection ()
   (find-if #'self-connection-p (connection-list)))
@@ -246,7 +253,9 @@
 (defun buffer-package (buffer &optional default)
   (let ((package-name (buffer-value buffer "package" default)))
     (typecase package-name
-      (null default)
+      (null (alexandria:if-let (package-name (guess-current-position-package (buffer-point buffer)))
+              (string-upcase package-name)
+              default))
       ((or symbol string)
        (string-upcase package-name))
       ((cons (or symbol string))
@@ -268,7 +277,7 @@
 (defun (setf buffer-thread-id) (value buffer)
   (setf (buffer-value buffer 'thread) value))
 
-(defun current-swank-thread ()
+(defun current-micros-thread ()
   (or (buffer-thread-id (current-buffer))
       t))
 
@@ -284,29 +293,29 @@
   (lem-lisp-syntax:calc-indent point))
 
 (defun call-with-remote-eval (form continuation
-                               &key (connection (current-connection))
-                                    (thread (current-swank-thread))
-                                    (package (current-package))
-                                    request-id)
+                              &key (connection (current-connection))
+                                   (thread (current-micros-thread))
+                                   (package (current-package))
+                                   request-id)
   (remote-eval connection
-                form
-                :continuation continuation
-                :thread thread
-                :package package
-                :request-id request-id))
+               form
+               :continuation continuation
+               :thread thread
+               :package package
+               :request-id request-id))
 
 (defmacro with-remote-eval ((form &rest args
-                                   &key connection
-                                        thread
-                                        package
-                                        request-id)
-                             continuation)
+                                  &key connection
+                                       thread
+                                       package
+                                       request-id)
+                            continuation)
   (declare (ignore connection thread package request-id))
   `(call-with-remote-eval ,form ,continuation ,@args))
 
 (defun lisp-eval-internal (emacs-rex-fun rex-arg package)
   (let ((tag (gensym))
-        (thread-id (current-swank-thread)))
+        (thread-id (current-micros-thread)))
     (catch tag
       (funcall emacs-rex-fun
                (current-connection)
@@ -333,28 +342,30 @@
 
 (defun lisp-eval-async (form &optional cont (package (current-package)))
   (let ((buffer (current-buffer)))
-    (with-remote-eval (form :package package)
-      (lambda (value)
-        (alexandria:destructuring-ecase value
-          ((:ok result)
-           (when cont
-             (let ((prev (current-buffer)))
-               (setf (current-buffer) buffer)
-               (funcall cont result)
-               (unless (eq (current-buffer)
-                           (window-buffer (current-window)))
-                 (setf (current-buffer) prev)))))
-          ((:abort condition)
-           (display-message "Evaluation aborted on ~A." condition)))))))
+    (with-broadcast-connections (connection)
+      (with-remote-eval (form :package package :connection connection)
+        (lambda (value)
+          (alexandria:destructuring-ecase value
+            ((:ok result)
+             (when cont
+               (let ((prev (current-buffer)))
+                 (setf (current-buffer) buffer)
+                 (funcall cont result)
+                 (unless (eq (current-buffer)
+                             (window-buffer (current-window)))
+                   (setf (current-buffer) prev)))))
+            ((:abort condition)
+             (display-message "Evaluation aborted on ~A." condition))))))))
 
 (defun eval-with-transcript (form &key (package (current-package)))
-  (with-remote-eval (form :package package)
-    (lambda (value)
-      (alexandria:destructuring-ecase value
-        ((:ok x)
-         (display-message "~A" x))
-        ((:abort condition)
-         (display-message "Evaluation aborted on ~A." condition))))))
+  (with-broadcast-connections (connection)
+    (with-remote-eval (form :package package :connection connection)
+      (lambda (value)
+        (alexandria:destructuring-ecase value
+          ((:ok x)
+           (display-message "~A" x))
+          ((:abort condition)
+           (display-message "Evaluation aborted on ~A." condition)))))))
 
 (defun re-eval-defvar (string)
   (eval-with-transcript `(micros:re-evaluate-defvar ,string)))
@@ -468,14 +479,20 @@
 (define-command lisp-listen-in-current-package () ()
   (check-connection)
   (alexandria:when-let ((repl-buffer (repl-buffer))
-                        (package (buffer-package (current-buffer))))
+                        (package (buffer-package (current-buffer)))
+                        (original-buffer (current-buffer)))
     (save-excursion
-      (setf (current-buffer) repl-buffer)
-      (destructuring-bind (name prompt-string)
-          (lisp-eval `(micros:set-package ,package))
-        (new-package name prompt-string)))
-    (start-lisp-repl)
-    (buffer-end (buffer-point repl-buffer))))
+      (cond ((lisp-eval `(not (null (cl:find-package ,package))))
+             (save-excursion
+               (setf (current-buffer) repl-buffer)
+               (destructuring-bind (name prompt-string)
+                   (lisp-eval `(micros:set-package ,package))
+                 (new-package name prompt-string)))
+             (start-lisp-repl)
+             (buffer-end (buffer-point repl-buffer)))
+            (t
+             (message "Package ~A not found" package)
+             (setf (current-buffer) original-buffer))))))
 
 (define-command lisp-current-directory () ()
   (message "Current directory: ~a"
@@ -490,9 +507,10 @@
      (micros/backend:filename-to-pathname ,directory))))
 
 (define-command lisp-interrupt () ()
-  (send-message-string
-   (current-connection)
-   (format nil "(:emacs-interrupt ~A)" (current-swank-thread))))
+  (with-broadcast-connections (connection)
+    (send-message-string
+     connection
+     (format nil "(:emacs-interrupt ~A)" (current-micros-thread)))))
 
 (defun prompt-for-sexp (string &optional initial)
   (prompt-for-string string
@@ -510,7 +528,7 @@
 (defun self-current-package ()
   (or (find (or *current-package*
                 (buffer-package (current-buffer))
-                (scan-current-package (current-point)))
+                (guess-current-position-package (current-point)))
             (list-all-packages)
             :test 'equalp
             :key 'package-name)
@@ -568,10 +586,10 @@
     (highlight-notes notes)
     (cond ((and loadp fastfile successp)
            (lisp-eval-async `(micros:load-file ,(convert-local-to-remote-file fastfile))
-                             (lambda (result)
-                               (declare (ignore result))
-                               (uiop:delete-file-if-exists
-                                (convert-remote-to-local-file fastfile)))))
+                            (lambda (result)
+                              (declare (ignore result))
+                              (uiop:delete-file-if-exists
+                               (convert-remote-to-local-file fastfile)))))
           (fastfile
            (uiop:delete-file-if-exists
             (convert-remote-to-local-file fastfile))))))
@@ -579,30 +597,30 @@
 (defun show-compile-result (notes secs successp)
   (display-message (format nil "~{~A~^ ~}"
                            (remove-if #'null
-                                       (list (if successp
-                                                 "Compilation finished"
-                                                 "Compilation failed")
-                                             (unless notes
-                                               "(No warnings)")
-                                             (when secs
-                                               (format nil "[~,2f secs]" secs)))))))
+                                      (list (if successp
+                                                "Compilation finished"
+                                                "Compilation failed")
+                                            (unless notes
+                                              "(No warnings)")
+                                            (when secs
+                                              (format nil "[~,2f secs]" secs)))))))
 
 (defun make-highlight-overlay (pos buffer message source-context)
   (with-point ((point (buffer-point buffer)))
     (move-to-position point pos)
     (skip-chars-backward point #'syntax-symbol-char-p)
     (let ((overlay (make-overlay point
-                                   (or (form-offset (copy-point point :temporary) 1)
-                                       (buffer-end-point buffer))
-                                   'compiler-note-attribute))
+                                 (or (form-offset (copy-point point :temporary) 1)
+                                     (buffer-end-point buffer))
+                                 'compiler-note-attribute))
           (message (with-output-to-string (out)
                      (write-string message out)
                      (when source-context
                        (terpri out)
                        (write-string source-context out)))))
       (set-hover-message overlay
-                          message
-                          :style '(:gravity :mouse-cursor :offset-y 1))
+                         message
+                         :style '(:gravity :mouse-cursor :offset-y 1))
       (overlay-put overlay 'message message)
       overlay)))
 
@@ -645,18 +663,18 @@
 
 (defun move-to-next-compilation-notes (point)
   (alexandria:when-let ((overlay (loop :for overlay :in (buffer-compilation-notes-overlays
-                                                           (point-buffer point))
-                                        :when (point< point (overlay-start overlay))
-                                        :return overlay)))
+                                                         (point-buffer point))
+                                       :when (point< point (overlay-start overlay))
+                                       :return overlay)))
     (move-point point (overlay-start overlay))))
 
 (defun move-to-previous-compilation-notes (point)
   (alexandria:when-let ((overlay (loop :for last-overlay := nil :then overlay
-                                        :for overlay :in (buffer-compilation-notes-overlays
-                                                           (point-buffer point))
-                                        :when (point<= point (overlay-start overlay))
-                                        :return last-overlay
-                                        :finally (return last-overlay))))
+                                       :for overlay :in (buffer-compilation-notes-overlays
+                                                         (point-buffer point))
+                                       :when (point<= point (overlay-start overlay))
+                                       :return last-overlay
+                                       :finally (return last-overlay))))
     (move-point point (overlay-start overlay))))
 
 (defun remove-compilation-notes-overlay-in-the-changed-point (point arg)
@@ -673,7 +691,7 @@
         :do (let* ((pos (xref-location-position xref-location))
                    (buffer (xref-filespec-to-buffer (xref-location-filespec xref-location))))
               (push (make-highlight-overlay pos buffer message source-context)
-                    (buffer-compilation-notes-overlays (current-buffer)))))
+                    (buffer-compilation-notes-overlays buffer))))
 
   (setf (buffer-compilation-notes-timer (current-buffer))
         (start-timer (make-idle-timer 'show-compilation-notes :name "lisp-show-compilation-notes")
@@ -700,12 +718,17 @@
   (check-connection)
   (when (buffer-modified-p (current-buffer))
     (save-current-buffer))
-  (let ((file (buffer-filename (current-buffer))))
+  (let* ((buffer (current-buffer))
+         (file (buffer-filename buffer)))
     (run-hooks (variable-value 'load-file-functions) file)
-    (lisp-eval-async `(micros:compile-file-for-emacs ,(convert-local-to-remote-file file) t)
-                      #'compilation-finished)))
+    (if (str:starts-with-p "#!" (buffer-text buffer))
+        (let ((real-start (copy-point (buffer-start-point buffer) :temporary)))
+          (move-to-line real-start 2)
+          (lisp-compile-region real-start (buffer-end-point buffer)))
+        (lisp-eval-async `(micros:compile-file-for-emacs ,(convert-local-to-remote-file file) t)
+                         #'compilation-finished))))
 
-(define-command lisp-compile-region (start end) ("r")
+(define-command lisp-compile-region (start end) (:region)
   (check-connection)
   (let ((string (points-to-string start end))
         (position `((:position ,(position-at-point start))
@@ -714,11 +737,11 @@
                      ,(point-charpos (current-point))))))
     (run-hooks (variable-value 'before-compile-functions) start end)
     (lisp-eval-async `(micros:compile-string-for-emacs ,string
-                                                        ,(buffer-name (current-buffer))
-                                                        ',position
-                                                        ,(buffer-filename (current-buffer))
-                                                        nil)
-                      #'compilation-finished)))
+                                                       ,(buffer-name (current-buffer))
+                                                       ',position
+                                                       ,(buffer-filename (current-buffer))
+                                                       nil)
+                     #'compilation-finished)))
 
 (define-command lisp-compile-defun () ()
   (check-connection)
@@ -728,6 +751,16 @@
                  (end point))
       (scan-lists end 1 0)
       (lisp-compile-region start end))))
+
+(define-command lisp-eval-expression-in-repl () ()
+  (check-connection)
+  (with-point ((point (current-point)))
+    (top-of-defun-with-annotation point)
+    (with-point ((start point)
+                 (end point))
+      (scan-lists end 1 0)
+      (send-string-to-listener (points-to-string start end)
+                               (buffer-package (current-buffer))))))
 
 (defun form-string-at-point ()
   (with-point ((point (current-point)))
@@ -790,8 +823,8 @@
   (let* ((name (or (symbol-string-at-point point)
                    (prompt-for-symbol-name "Edit uses of: ")))
          (data (lisp-eval `(micros:xrefs '(:calls :macroexpands :binds
-                                            :references :sets :specializes)
-                                          ,name))))
+                                           :references :sets :specializes)
+                                         ,name))))
     (display-xref-references
      (loop
        :for (type . definitions) :in data
@@ -829,7 +862,7 @@
                                       end))))
                          ((:abort condition)
                           (editor-error "abort ~A" condition))))
-       :thread (current-swank-thread)
+       :thread (current-micros-thread)
        :package (current-package)))))
 
 (defun describe-symbol (symbol-name)
@@ -861,13 +894,18 @@
 (defvar *wait-message-thread* nil)
 
 (defun notify-change-connection-to-wait-message-thread ()
-  (bt:interrupt-thread *wait-message-thread*
-                       (lambda () (error 'change-connection))))
+  (bt2:interrupt-thread *wait-message-thread*
+                        (lambda () (error 'change-connection))))
+
+(defun message-waiting-some-connections-p (&key (timeout 0))
+  (with-broadcast-connections (connection)
+    (when (message-waiting-p connection :timeout timeout)
+      (return-from message-waiting-some-connections-p t))))
 
 (defun start-thread ()
   (unless *wait-message-thread*
     (setf *wait-message-thread*
-          (bt:make-thread
+          (bt2:make-thread
            (lambda () (loop
                         :named exit
                         :do
@@ -883,12 +921,12 @@
                                     (unless (connected-p)
                                       (setf *wait-message-thread* nil)
                                       (return-from exit))
-                                    (when (message-waiting-p (current-connection) :timeout 1)
+                                    (when (message-waiting-some-connections-p :timeout 1)
                                       (let ((barrior t))
                                         (send-event (lambda ()
-                                                       (unwind-protect (progn (pull-events)
-                                                                              (redraw-display))
-                                                         (setq barrior nil))))
+                                                      (unwind-protect (progn (pull-events)
+                                                                             (redraw-display))
+                                                        (setq barrior nil))))
                                         (loop
                                           (unless (connected-p)
                                             (return))
@@ -906,7 +944,7 @@
    :timeout 1
    :style '(:gravity :center)))
 
-(defun connect-to-swank (hostname port)
+(defun connect-to-micros (hostname port)
   (let ((connection
           (handler-case (if (eq hostname *localhost*)
                             (or (ignore-errors (new-connection "127.0.0.1" port))
@@ -924,26 +962,23 @@
             (parse-integer
              (prompt-for-string "Port: "
                                 :initial-value (princ-to-string *default-port*))))))
-  (let ((connection (connect-to-swank hostname port)))
+  (let ((connection (connect-to-micros hostname port)))
     (when start-repl (start-lisp-repl))
     (connected-slime-message connection)))
 
+(defun connect-to-multiple-servers (host-and-ports)
+  (dolist (host-and-port host-and-ports)
+    (destructuring-bind (&key host port) host-and-port
+      (connect-to-micros host port)))
+  (setf *broadcast* t))
+
 (defun pull-events ()
   (when (connected-p)
-    (handler-case (loop :while (message-waiting-p (current-connection))
-                        :do (dispatch-message (read-message (current-connection))))
-      (disconnected ()
-        (remove-and-change-connection (current-connection))))))
-
-(defvar *event-hooks* '())
-
-(defun dispatch-message (message)
-  (log-message (prin1-to-string message))
-  (dolist (e *event-hooks*)
-    (when (funcall e message)
-      (return-from dispatch-message)))
-  (alexandria:when-let (dispatcher (get-message-dispatcher (first message)))
-    (funcall dispatcher message)))
+    (with-broadcast-connections (connection)
+      (handler-case (loop :while (message-waiting-p connection)
+                          :do (dispatch-message (read-message connection)))
+        (disconnected ()
+          (remove-and-change-connection connection))))))
 
 (defun read-from-minibuffer (thread tag prompt initial-value)
   (let ((input (prompt-for-sexp prompt initial-value)))
@@ -1041,7 +1076,7 @@
     command))
 
 (defun lisp-process-buffer-name (port)
-  (format nil "*Run Lisp swank/~D*" port))
+  (format nil "*Run Lisp/~D*" port))
 
 (defun get-lisp-process-buffer (port)
   (get-buffer (lisp-process-buffer-name port)))
@@ -1059,25 +1094,28 @@
             (lem-process:run-process (uiop:split-string command)
                                      :directory directory
                                      :output-callback #'output-callback)))
+      (lem-process:process-send-input process (format nil "(require :asdf)~%"))
       process)))
 
-(defun send-swank-create-server (process port)
+(defun send-micros-create-server (process port)
   (let ((file (asdf:system-source-file (asdf:find-system :micros))))
     (lem-process:process-send-input
      process
      (format nil "(asdf:load-asd ~S)" file)))
+  ;; Try to quickload micros, but fallback to asdf:load-system if ql not installed
   (lem-process:process-send-input
    process
-   "(ql:quickload :micros)")
+   "(handler-case (eval (read-from-string \"(ql:quickload :micros)\"))
+      (error (c) (asdf:load-system :micros)))")
   (lem-process:process-send-input
    process
    (format nil "(micros:create-server :port ~D :dont-close t)~%" port)))
 
 (defun run-slime (command &key (directory (buffer-directory)))
-  (let* ((port (lem-socket-utils:random-available-port))
+  (let* ((port (lem/common/socket:random-available-port))
          (process (run-lisp :command command :directory directory :port port)))
-    (send-swank-create-server process port)
-    (start-lisp-repl)
+    (send-micros-create-server process port)
+    (start-lisp-repl-internal :new-process t)
     (let ((spinner
             (start-loading-spinner :modeline
                                    :buffer (repl-buffer)
@@ -1086,7 +1124,7 @@
             (retry-count 0))
         (labels ((interval ()
                    (handler-case
-                       (let ((conn (connect-to-swank *localhost* port)))
+                       (let ((conn (connect-to-micros *localhost* port)))
                          (setf (connection-command conn) command)
                          (setf (connection-process conn) process)
                          (setf (connection-process-directory conn) directory)
@@ -1118,7 +1156,7 @@
                    (stop-loading-spinner spinner)))
           (setf timer (start-timer (make-timer #'interval) 500 :repeat t)))))))
 
-(define-command slime (&optional ask-command) ("P")
+(define-command slime (&optional ask-command) (:universal-nil)
   (let ((command (if ask-command
                      (prompt-for-lisp-command)
                      (lem-lisp-mode/implementation:default-command))))
@@ -1131,7 +1169,7 @@
            (lem-process:delete-process (connection-process connection))
            t)
     (remove-and-change-connection connection)
-    (usocket:socket-close (lem-lisp-mode/swank-protocol::connection-socket connection))))
+    (usocket:socket-close (lem-lisp-mode/connection::connection-socket connection))))
 
 (define-command slime-quit () ()
   (when (self-connection-p (current-connection))
@@ -1156,8 +1194,8 @@
   (loop :with end-time := (+ (get-internal-real-time)
                              (* second internal-time-units-per-second))
         :for e := (receive-event (float
-                                    (/ (- end-time (get-internal-real-time))
-                                       internal-time-units-per-second)))
+                                  (/ (- end-time (get-internal-real-time))
+                                     internal-time-units-per-second)))
         :while (key-p e)))
 
 (define-command slime-restart () ()
@@ -1174,7 +1212,11 @@
   (when start-repl (start-lisp-repl)))
 
 
-(defun scan-current-package (point)
+(defun buffer-pathname-type (buffer)
+  (alexandria:when-let (pathname (buffer-filename buffer))
+    (pathname-type pathname)))
+
+(defun guess-current-position-package (point)
   (with-point ((p point))
     (loop
       (ppcre:register-groups-bind (package-name)
@@ -1182,10 +1224,12 @@
            (string-downcase (line-string p)))
         (return package-name))
       (unless (line-offset p -1)
-        (return)))))
+        (if (equal "asd" (buffer-pathname-type (point-buffer point)))
+            (return "ASDF-USER")
+            (return))))))
 
 (defun update-buffer-package ()
-  (let ((package (scan-current-package (current-point))))
+  (let ((package (guess-current-position-package (current-point))))
     (when package
       (lisp-set-package package))))
 
@@ -1242,7 +1286,7 @@
       (progn
         (sleep 0.5)
         (dolist (c conn-list)
-          (let* ((s  (lem-lisp-mode/swank-protocol::connection-socket c))
+          (let* ((s  (lem-lisp-mode/connection::connection-socket c))
                  (fd (sb-bsd-sockets::socket-file-descriptor (usocket:socket s))))
             (ignore-errors
               ;;(usocket:socket-shutdown s :IO)

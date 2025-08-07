@@ -1,9 +1,12 @@
 (uiop/package:define-package :lem-mouse-sgr1006/main
   (:nicknames :lem-mouse-sgr1006) (:use :cl :lem)
-  (:shadow) (:export :parse-mouse-event) (:intern))
+  (:shadow) (:export :parse-mouse-event
+                     :*scroll-unfocused-window*)
+  (:intern))
 (in-package :lem-mouse-sgr1006/main)
 ;;;don't edit above
 (defparameter *message-on-mouse-event* nil)
+(defparameter *scroll-unfocused-window* nil)
 
 (defvar *dragging-window* ())
 (defvar *min-cols*  5)
@@ -25,7 +28,23 @@
 (defun move-to-cursor (window x y)
   (lem:move-point (lem:current-point) (lem:window-view-point window))
   (lem:move-to-next-virtual-line (lem:current-point) y)
-  (lem:move-to-virtual-line-column (lem:current-point) x))
+  (lem:move-to-virtual-line-column (lem:current-point)
+                                   (- x (lem:window-left-width window))))
+
+(defun all-window-list ()
+  "returns a list of all windows including side windows"
+  (let ((side-window (lem:frame-leftside-window (lem:current-frame)))
+        (window-list (lem:window-list)))
+    (if side-window
+        (cons side-window window-list)
+        window-list)))
+
+(defun find-window-containing-pos (x1 y1)
+  (or (find-if (lambda (o)
+                 (multiple-value-bind (x y w h) (get-window-rect o)
+                   (and (<= x x1 (+ x w)) (<= y y1 (+ y h)))))
+               (all-window-list))
+      (current-window)))
 
 (defun parse-mouse-event (getch-fn)
   (let ((msg (loop :for c := (code-char (funcall getch-fn))
@@ -65,7 +84,8 @@
     ;; process mouse event
     (cond
       ;; button-1 down
-      ((and (not (lem:floating-window-p (lem:current-window)))
+      ((and (or (not (lem:floating-window-p (lem:current-window)))
+                (lem:side-window-p (lem:current-window)))
             (eql btype *mouse-button-1*)
             (eql bstate #\M))
        (or
@@ -105,7 +125,7 @@
                 (lem:redraw-display)
                 t)
                (t nil))))
-         (lem:window-list))))
+         (all-window-list))))
       ;; button-1 up
       ((and (eql btype *mouse-button-1*)
             (eql bstate #\m))
@@ -143,13 +163,19 @@
       ;; wheel up
       ((and (eql btype *mouse-wheel-up*)
             (eql bstate #\M))
-       (lem:scroll-up *wheel-scroll-size*)
-       (lem:redraw-display))
+       (let ((target-window (if *scroll-unfocused-window*
+                                (find-window-containing-pos x1 y1)
+                                (current-window))))
+         (lem:scroll-up *wheel-scroll-size* target-window)
+         (lem:redraw-display)))
       ;; wheel down
       ((and (eql btype *mouse-wheel-down*)
             (eql bstate #\M))
-       (lem:scroll-down *wheel-scroll-size*)
-       (lem:redraw-display))
+       (let ((target-window (if *scroll-unfocused-window*
+                                (find-window-containing-pos x1 y1)
+                                (current-window))))
+         (lem:scroll-down *wheel-scroll-size* target-window)
+         (lem:redraw-display)))
       )
     (when *message-on-mouse-event*
       (lem:message "mouse:~s ~s ~s ~s" bstate btype x1 y1)
@@ -161,23 +187,23 @@
 (defun enable-hook ()
   (format lem-ncurses:*terminal-io-saved* "~A[?1000h~A[?1002h~A[?1006h~%" #\esc #\esc #\esc)
   (ignore-errors
-   (dolist (window (lem:window-list))
-     (lem:screen-clear (lem:window-screen window)))
-   (lem:redraw-display))
+    (dolist (window (lem:window-list))
+      (lem:screen-clear (lem:window-screen window)))
+    (lem:redraw-display))
   (lem:run-hooks *enable-hook*))
 
 (defun disable-hook ()
   (format lem-ncurses:*terminal-io-saved* "~A[?1006l~A[?1002l~A[?1000l~%" #\esc #\esc #\esc)
   (ignore-errors
-   (dolist (window (lem:window-list))
-     (lem:screen-clear (lem:window-screen window)))
-   (lem:redraw-display))
+    (dolist (window (lem:window-list))
+      (lem:screen-clear (lem:window-screen window)))
+    (lem:redraw-display))
   (run-hooks *disable-hook*))
 
 (define-minor-mode mouse-sgr-1006-mode
-  (:global t
-   :enable-hook #'enable-hook
-   :disable-hook #'disable-hook))
+    (:global t
+     :enable-hook #'enable-hook
+     :disable-hook #'disable-hook))
 
 (defun enable-mouse-sgr-1006-mode ()
   (mouse-sgr-1006-mode t))

@@ -1,10 +1,47 @@
 (defpackage :lem/grep
   (:use :cl
         :lem)
-  (:export :grep)
+  (:export
+   :grep
+   :change-grep-command
+   :*grep-command*
+   :*grep-args*)
   #+sbcl
   (:lock t))
 (in-package :lem/grep)
+
+(defvar *default-grep-command* "git grep")
+(defvar *default-grep-args* "-nHI")
+
+(defvar *grep-command* "git grep")
+(defvar *grep-args* "-nHI")
+(defvar *last-query* (str:concat *grep-command* " " *grep-args* " "))
+(defvar *last-directory* nil)
+
+(defun change-grep-command (command &key (args *default-grep-args*) input directory)
+  "Change the default grep command, arguments and user input.
+
+  Key arguments:
+  :args also changes the default grep arguments.
+  :input adds a default user input to the grep command.
+  :directory changes the last directory.
+
+  In a config file, one can set *grep-command*, *grep-args* and *last-directory*.
+  In an interactive session, the benefit of this function is that is also sets *last-query*, so the grep prompt shows us the new grep command."
+  (when (listp command)
+    (setf command (str:unwords command)))
+  (when (listp args)
+    (setf args (str:unwords args)))
+  (setf *grep-command* command
+        *last-query* nil)
+  (when args
+    (setf *grep-args* args))
+  (when directory
+    (setf *last-directory* directory))
+  (setf *last-query* (str:concat *grep-command* " " *grep-args* " " input))
+  (values *grep-command*
+          *grep-args*
+          *last-query*))
 
 (defun run-grep (string directory)
   (multiple-value-bind (output error-output status-code)
@@ -56,19 +93,17 @@
   (declare (ignore end old-len))
   (let ((string (get-content-string start))
         (move (lem/peek-source:get-move-function start)))
-    (with-point ((point (funcall move)))
-      (with-point ((start point)
-                   (end point))
-        (line-start start)
-        (line-end end)
-        (buffer-undo-boundary (point-buffer start))
-        (delete-between-points start end)
-        (insert-string start string)
-        (buffer-undo-boundary (point-buffer start)))))
+    (when move
+      (with-point ((point (funcall move)))
+        (with-point ((start point)
+                     (end point))
+          (line-start start)
+          (line-end end)
+          (buffer-undo-boundary (point-buffer start))
+          (delete-between-points start end)
+          (insert-string start string)
+          (buffer-undo-boundary (point-buffer start))))))
   (lem/peek-source:show-matched-line))
-
-(defvar *last-query* "git grep -nH ")
-(defvar *last-directory* nil)
 
 (define-command grep (query &optional (directory (buffer-directory)))
     ((prompt-for-string "" :initial-value *last-query* :history-symbol 'grep)
@@ -85,7 +120,9 @@
           (loop :for (file line-number content) :in result
                 :do (lem/peek-source:with-appending-source
                         (point :move-function (make-move-function directory file line-number))
-                      (insert-string point file :attribute 'lem/peek-source:filename-attribute :read-only t)
+                      (insert-string point file :attribute 'lem/peek-source:filename-attribute
+                                     :mode 'peek-grep-mode
+                                     :read-only t)
                       (insert-string point ":" :read-only t)
                       (insert-string point (princ-to-string line-number)
                                      :attribute 'lem/peek-source:position-attribute
@@ -97,6 +134,26 @@
     (setf *last-query* query
           *last-directory* directory)))
 
+(define-command project-grep () ()
+  "Run grep at the project root directory."
+  (let* ((cwd (buffer-directory))
+         (project-root (lem-core/commands/project:find-root cwd))
+         (root (or project-root cwd))
+         (query (prompt-for-string "" :initial-value *last-query* :history-symbol 'grep)))
+    (grep query root)))
+
+(define-command grep-move-to-content-start () ()
+  "Move to the first non-whitespace content character in the current line."
+  (with-point ((p (current-point)))
+    (line-start p)
+    (loop while (and (not (end-line-p p))
+                     (not (text-property-at p :content-start)))
+          do (character-offset p 1))
+    (move-point (current-point) p)
+    ;; Skip trailing ":" and whitespace
+    (forward-char)
+    (skip-whitespace-forward (current-point) t)))
+
 (define-command grep-help () ()
   "Show grep help."
   (with-pop-up-typeout-window (s (make-buffer "*Help*") :erase t)
@@ -105,7 +162,8 @@
     (format s "The left window shows grep results, the right window shows a result in its source file.~&")
     (format s "~%")
     (format s "Available keybindings:~&")
-    (format s "- up/down arrows or C-p/C-n: go to the previous/next line~&")
+    (format s "- up/down arrows, n/p, or C-p/C-n: go to the previous/next line~&")
+    (format s "- a: move to the content in the current line~&")
     (format s "- C-x o or M-o: go to the other window~&")
     (format s "- Enter: visit the file of the result at point~&")
     (format s "- Escape or C-x 0: quit~&")
@@ -115,5 +173,14 @@
     (format s "You can use editing tools such as M-x query-replace in the results buffer.~&")
     (format s "~%")))
 
-;; TODO: Prepare keymap for grep-mode
-(define-key lem/peek-source::*peek-source-keymap* "C-x ?" 'grep-help)  ;; originally bound to describe-key.
+(defvar *peek-grep-mode-keymap* (make-keymap :name '*peek-grep-mode-keymap* 
+                                             :parent lem/peek-source:*peek-source-keymap*))
+(define-minor-mode peek-grep-mode
+    (:name "Peek"
+     :keymap *peek-grep-mode-keymap*))
+
+(define-key *global-keymap* "C-x p g" 'project-grep)
+(define-key *peek-grep-mode-keymap* "C-x ?" 'grep-help)  ;; originally bound to describe-key.
+(define-key *peek-grep-mode-keymap* "n" 'lem/peek-source:peek-source-next)
+(define-key *peek-grep-mode-keymap* "p" 'lem/peek-source:peek-source-previous)
+(define-key *peek-grep-mode-keymap* "a" 'grep-move-to-content-start)

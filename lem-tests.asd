@@ -8,6 +8,8 @@
                "rove")
   :pathname "tests"
   :components ((:file "utilities")
+               (:module "buffer"
+                :components ((:file "internal")))
                (:module "common"
                 :components ((:file "ring")
                              (:file "killring")
@@ -29,11 +31,12 @@
                (:file "buffer-list-test")
                (:file "popup-window")
                (:file "prompt")
-               (:file "isearch")
                (:file "cursors")
+               (:file "isearch")
                (:file "self-insert-command")
                (:file "interp")
                (:file "file")
+               (:file "scala-mode")
                (:file "completion"))
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

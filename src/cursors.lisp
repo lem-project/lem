@@ -12,6 +12,29 @@
   (let ((cursor (make-instance 'cursor)))
     (copy-point-using-class cursor point :left-inserting)))
 
+(defun push-buffer-point (point)
+  (let ((pt (copy-point point :right-inserting)))
+    (lem/common/ring:ring-push (buffer-points-ring (point-buffer pt)) pt))
+  point)
+
+(defun pop-buffer-point ()
+  (let ((ring (buffer-points-ring (current-buffer))))
+    (if (lem/common/ring:ring-empty-p ring)
+        (editor-error "No mark set in this buffer")
+        (prog1 (lem/common/ring:ring-ref ring 0)
+          (unless (lem/common/ring::ring-empty-p ring)
+            (loop :do (setf (lem/common/ring::ring-rear ring)
+                            (mod (1- (lem/common/ring::ring-rear ring))
+                                 (lem/common/ring::ring-size ring)))
+                  :until (pointp (aref (lem/common/ring::ring-data ring)
+                                       (mod (1- (lem/common/ring::ring-rear ring))
+                                            (lem/common/ring::ring-size ring)))))
+            (loop :do (setf (lem/common/ring::ring-front ring)
+                            (mod (1- (lem/common/ring::ring-front ring))
+                                 (lem/common/ring::ring-size ring)))
+                  :until (pointp (aref (lem/common/ring::ring-data ring)
+                                       (lem/common/ring::ring-front ring)))))))))
+
 (defmethod change-yank-start (cursor point)
   (when (cursor-yank-start cursor)
     (delete-point (cursor-yank-start cursor)))
@@ -36,7 +59,8 @@
   (fake-cursor-mark cursor))
 
 (defmethod set-cursor-mark ((cursor cursor) point)
-  (set-current-mark point))
+  (set-current-mark point)
+  (push-buffer-point point))
 
 (defmethod set-cursor-mark ((cursor fake-cursor) point)
   (mark-set-point (fake-cursor-mark cursor) point))
@@ -89,11 +113,13 @@
 
 (defun merge-cursor-killrings (buffer)
   (with-output-to-string (out)
-    (dolist (cursor (buffer-cursors buffer))
-      (let ((killring (cursor-killring cursor)))
-        (multiple-value-bind (string options)
-            (peek-killring-item killring 0)
-          (declare (ignore options))
-          ;; TODO: consider options
-          (when string
-            (write-line string out)))))))
+    (loop :for (cursor . not-lastp) :on (buffer-cursors buffer)
+          :do (let ((killring (cursor-killring cursor)))
+                (multiple-value-bind (string options)
+                    (peek-killring-item killring 0)
+                  (declare (ignore options))
+                  ;; TODO: consider options
+                  (when string
+                    (if not-lastp
+                        (write-line string out)
+                        (write-string string out))))))))

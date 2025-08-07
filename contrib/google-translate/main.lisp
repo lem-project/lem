@@ -3,7 +3,7 @@
 ;;;don't edit above
 (defvar lem-user::*google-api-key* nil)
 
-(define-command popup-google-translate (start end) ("r")
+(define-command popup-google-translate (start end) (:region)
   (display-popup-message 
    (translate-client:translate 
     (points-to-string start end)

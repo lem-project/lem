@@ -187,17 +187,18 @@
            (region-string (start end end-col)
              (concatenate 'string
                           (points-to-string start end)
-                          (make-string (- end-col (point-charpos end))
+                          (make-string (- end-col (point-column end))
                                        :initial-element #\Space))))
     (destructuring-bind (start-line end-line)
         (sort (list (line-number-at-point start)
                     (line-number-at-point end))
               #'<)
       (destructuring-bind (start-col end-col)
-          (sort (list (point-column start)
-                      (point-column end))
-                #'<)
-        (incf end-col)
+          (sort (list start end) #'< :key #'point-column)
+        (setf start-col (point-column start-col))
+        (with-point ((e end-col))
+          (character-offset e 1)
+          (setf end-col (point-column e)))
         (with-point ((s (current-point))
                      (e (current-point)))
           (loop for line from start-line to end-line
@@ -260,28 +261,29 @@
 
 (defun paste-yank (string type &optional (position :after))
   (check-type position (member :before :after))
-  (let ((point (current-point)))
-    (ecase type
-      (:line
-       (lem:yank)
-       (move-point point (cursor-yank-start point))
-       (back-to-indentation point))
-      (:block
-        (setf (cursor-yank-start point) (copy-point point :right-inserting))
-        (let ((col (point-charpos point))
-              (first-line t))
-          (dolist (row (split-sequence #\Newline string))
-            (if first-line
-                (setf first-line nil)
-                (line-offset point 1 col))
-            (dotimes (i (max 0 (- col (point-charpos point))))
-              (insert-character point #\Space))
-            (insert-string point row)))
-        (setf (cursor-yank-end point) (copy-point point :left-inserting))
-        (move-point point (cursor-yank-start point)))
-      (:char
-       (lem:yank)
-       (character-offset point -1)))))
+  (when string
+    (let ((point (current-point)))
+      (ecase type
+        (:line
+         (lem:yank)
+         (move-point point (cursor-yank-start point))
+         (back-to-indentation point))
+        (:block
+            (setf (cursor-yank-start point) (copy-point point :right-inserting))
+          (let ((col (point-charpos point))
+                (first-line t))
+            (dolist (row (split-sequence #\Newline string))
+              (if first-line
+                  (setf first-line nil)
+                  (line-offset point 1 col))
+              (dotimes (i (max 0 (- col (point-charpos point))))
+                (insert-character point #\Space))
+              (insert-string point row)))
+          (setf (cursor-yank-end point) (copy-point point :left-inserting))
+          (move-point point (cursor-yank-start point)))
+        (:char
+         (lem:yank)
+         (character-offset point -1))))))
 
 (defun register (name)
   (let ((name (ensure-char name)))

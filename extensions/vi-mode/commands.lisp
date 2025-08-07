@@ -10,15 +10,21 @@
         :lem-vi-mode/registers
         :lem-vi-mode/text-objects
         :lem-vi-mode/commands/utils)
+  (:import-from :lem-vi-mode/core
+                :ensure-state)
+  (:import-from :lem-vi-mode/options
+                :option-value)
   (:import-from :lem-vi-mode/states
                 :*motion-keymap*
                 :normal
                 :insert
-                :replace-state)
+                :replace-state
+                :replace-char-state)
   (:import-from :lem-vi-mode/commands/utils
                 :visual-region)
   (:import-from :lem/common/killring
-                :peek-killring-item)
+                :peek-killring-item
+                :rotate-killring)
   (:import-from :lem-vi-mode/window
                 :move-to-window-top
                 :move-to-window-middle
@@ -64,6 +70,8 @@
            :vi-scroll-line-to-bottom-back-to-indentation
            :vi-scroll-bottom-line-to-top
            :vi-scroll-top-line-to-bottom
+           :vi-scroll-down
+           :vi-scroll-up
            :vi-back-to-indentation
            :vi-indent
            :vi-substitute
@@ -85,12 +93,13 @@
            :vi-upcase
            :vi-downcase
            :vi-swapcase
+           :vi-swapcase-and-forward-char
            :vi-undo
            :vi-redo
            :vi-record-macro
            :vi-execute-macro
            :vi-execute-last-recorded-macro
-           :vi-move-to-matching-paren
+           :vi-move-to-matching-item
            :vi-search-forward
            :vi-search-backward
            :vi-search-next
@@ -117,8 +126,11 @@
            :vi-append-line
            :vi-open-below
            :vi-open-above
+           :vi-replace
+           :vi-jumps
            :vi-jump-back
            :vi-jump-next
+           :vi-jump-previous
            :vi-a-word
            :vi-a-word
            :vi-a-broad-word
@@ -128,9 +140,25 @@
            :vi-inner-double-quote
            :vi-a-paren
            :vi-inner-paren
+           :vi-a-paragraph
+           :vi-inner-paragraph
            :vi-repeat
            :vi-normal
-           :vi-keyboard-quit))
+           :vi-keyboard-quit
+           :vi-close
+           :vi-set-mark
+           :vi-delete-mark
+           :vi-goto-mark
+           :vi-window-move-left
+           :vi-window-move-down
+           :vi-window-move-up
+           :vi-window-move-right
+           :vi-window-split-horizontally
+           :vi-window-split-vertically
+           :vi-window-split-new-buffer
+           :vi-window-split-horizontally-new
+           :vi-window-split-vertically-new
+           :vi-switch-to-buffer))
 (in-package :lem-vi-mode/commands)
 
 (defun extract-count-keys (keys)
@@ -154,38 +182,52 @@
       (universal-argument-0)
       (vi-move-to-beginning-of-line)))
 
-(define-command vi-forward-char (&optional (n 1)) ("p")
+(define-command vi-forward-char (&optional (n 1)) (:universal)
   (let* ((p (current-point))
          (max-offset (- (length (line-string p))
                         (point-charpos p))))
     (character-offset p (min n max-offset))))
 
-(define-command vi-backward-char (&optional (n 1)) ("p")
+(define-command vi-backward-char (&optional (n 1)) (:universal)
   (let ((p (current-point)))
     (dotimes (_ n)
       (if (bolp p)
           (return)
           (character-offset p -1)))))
 
-(define-motion vi-next-line (&optional (n 1)) ("p")
+(define-motion vi-next-line (&optional (n 1)) (:universal)
     (:type :line)
   (next-logical-line n))
 
-(define-motion vi-line (&optional (n 1)) ("p")
+(define-motion vi-line (&optional (n 1)) (:universal)
     ()
   (line-offset (current-point) (1- n)))
 
-(define-motion vi-next-display-line (&optional (n 1)) ("p")
+(define-motion vi-next-display-line (&optional (n 1)) (:universal)
     (:type :line)
   (next-line n))
 
-(define-motion vi-previous-line (&optional (n 1)) ("p")
+(define-motion vi-previous-line (&optional (n 1)) (:universal)
     (:type :line)
   (previous-logical-line n))
 
-(define-motion vi-previous-display-line (&optional (n 1)) ("p")
+(define-motion vi-previous-display-line (&optional (n 1)) (:universal)
     (:type :line)
   (previous-line n))
+
+(define-motion vi-scroll-down (&optional (n nil)) (:universal-nil)
+    (:type :inclusive :default-n-arg nil)
+  (unless n
+    (setf n (floor (window-height (current-window)) 2)))
+  (next-line n)
+  (scroll-down n))
+
+(define-motion vi-scroll-up (&optional (n nil)) (:universal-nil)
+    (:default-n-arg nil)
+  (unless n
+    (setf n (floor (window-height (current-window)) 2)))
+  (previous-line n)
+  (scroll-up n))
 
 (defun on-only-space-line-p (point)
   (with-point ((p point))
@@ -193,7 +235,7 @@
     (skip-whitespace-backward p t)
     (bolp p)))
 
-(define-command vi-forward-word-begin (&optional (n 1)) ("p")
+(define-command vi-forward-word-begin (&optional (n 1)) (:universal)
   (let ((start-line (line-number-at-point (current-point))))
     (with-point ((origin (current-point)))
       (dotimes (i n)
@@ -221,33 +263,33 @@
               (character-offset p 1))
             (move-point (current-point) p)))))))
 
-(define-command vi-backward-word-begin (&optional (n 1)) ("p")
+(define-command vi-backward-word-begin (&optional (n 1)) (:universal)
   (dotimes (i n)
     (backward-word-begin #'word-char-type)))
 
-(define-motion vi-forward-word-end (&optional (n 1)) ("p")
+(define-motion vi-forward-word-end (&optional (n 1)) (:universal)
     (:type :inclusive)
   (dotimes (i n)
     (forward-word-end #'word-char-type)))
 
-(define-command vi-forward-word-begin-broad (&optional (n 1)) ("p")
+(define-command vi-forward-word-begin-broad (&optional (n 1)) (:universal)
   (dotimes (i n)
     (forward-word-begin #'broad-word-char-type)))
 
-(define-command vi-backward-word-begin-broad (&optional (n 1)) ("p")
+(define-command vi-backward-word-begin-broad (&optional (n 1)) (:universal)
   (dotimes (i n)
     (backward-word-begin #'broad-word-char-type)))
 
-(define-motion vi-forward-word-end-broad (&optional (n 1)) ("p")
+(define-motion vi-forward-word-end-broad (&optional (n 1)) (:universal)
     (:type :inclusive)
   (dotimes (i n)
     (forward-word-end #'broad-word-char-type)))
 
-(define-command vi-backward-word-end (&optional (n 1)) ("p")
+(define-command vi-backward-word-end (&optional (n 1)) (:universal)
   (dotimes (i n)
     (backward-word-end #'word-char-type)))
 
-(define-command vi-backward-word-end-broad (&optional (n 1)) ("p")
+(define-command vi-backward-word-end-broad (&optional (n 1)) (:universal)
   (dotimes (i n)
     (backward-word-end #'broad-word-char-type)))
 
@@ -260,7 +302,7 @@
                                          start)
         (move-point (current-point) start))))
 
-(define-command vi-move-to-end-of-line (&optional (n 1)) ("p")
+(define-command vi-move-to-end-of-line (&optional (n 1)) (:universal)
   (vi-line n)
   (line-end (current-point)))
 
@@ -286,42 +328,42 @@
      :jump t)
   (move-to-window-bottom))
 
-(define-command vi-scroll-line-to-center (&optional n) ("P")
+(define-command vi-scroll-line-to-center (&optional n) (:universal-nil)
   "Scroll line number N (or the current line) to the center of the screen."
   (scroll-line n :center))
 
-(define-command vi-scroll-line-to-center-back-to-indentation (&optional n) ("P")
+(define-command vi-scroll-line-to-center-back-to-indentation (&optional n) (:universal-nil)
   "Scroll line number N (or the current line) to the center of the screen.
 Move the cursor to the first non-blank character of the line."
   (scroll-line n :center)
   (vi-back-to-indentation))
 
-(define-command vi-scroll-line-to-top (&optional n) ("P")
+(define-command vi-scroll-line-to-top (&optional n) (:universal-nil)
   "Scroll line number N (or the current line) to the top of the screen."
   (scroll-line n :top))
 
-(define-command vi-scroll-line-to-top-back-to-indentation (&optional n) ("P")
+(define-command vi-scroll-line-to-top-back-to-indentation (&optional n) (:universal-nil)
   "Scroll line number N (or the current line) to the top of the screen.
 Move the cursor to the first non-blank character of the line."
   (scroll-line n :top)
   (vi-back-to-indentation))
 
-(define-command vi-scroll-line-to-bottom (&optional n) ("P")
+(define-command vi-scroll-line-to-bottom (&optional n) (:universal-nil)
   "Scroll line number N (or the current line) to the bottom of the screen."
   (scroll-line n :bottom))
 
-(define-command vi-scroll-line-to-bottom-back-to-indentation (&optional n) ("P")
+(define-command vi-scroll-line-to-bottom-back-to-indentation (&optional n) (:universal-nil)
   "Scroll line number N (or the current line) to the bottom of the screen.
 Move the cursor to the first non-blank character of the line."
   (scroll-line n :bottom)
   (vi-back-to-indentation))
 
-(define-command vi-scroll-bottom-line-to-top (&optional n) ("P")
+(define-command vi-scroll-bottom-line-to-top (&optional n) (:universal-nil)
   (unless n
     (move-to-window-bottom-below))
   (vi-scroll-line-to-top-back-to-indentation n))
 
-(define-command vi-scroll-top-line-to-bottom (&optional n) ("P")
+(define-command vi-scroll-top-line-to-bottom (&optional n) (:universal-nil)
   (if n
       (progn
         (vi-scroll-line-to-bottom n)
@@ -345,7 +387,7 @@ Move the cursor to the first non-blank character of the line."
 (define-operator vi-substitute (beg end type) ("<R>")
     (:motion vi-forward-char)
   (vi-delete beg end type)
-  (change-state 'insert))
+  (setf (buffer-state) 'insert))
 
 (define-operator vi-delete-next-char (beg end type) ("<R>")
     (:motion vi-forward-char)
@@ -358,9 +400,18 @@ Move the cursor to the first non-blank character of the line."
 (define-operator vi-delete (start end type) ("<R>")
     (:move-point nil)
   (when (point= start end)
-    (return-from vi-delete))
+    ;; 'dd' on the empty line at the end of a buffer deletes trailing newlines,
+    ;; but only if the buffer is not empty (i.e. cursor is not at the start of buffer)
+    (if (and (eq 'vi-delete (command-name (this-command)))
+             (not (this-motion-command))
+             (not (start-buffer-p end)))
+        (character-offset end -1)
+        (return-from vi-delete)))
   (let ((pos (point-charpos (current-point)))
-        (ends-with-newline (char= (character-at end -1) #\Newline)))
+        (ends-with-newline (and (character-at end -1)
+                                (char= (character-at end -1) #\Newline)))
+        (column-start (point-column start))
+        (column-end (point-column end)))
     (delete-region start end :type type)
     (when (and (eq type :line)
                (not ends-with-newline)
@@ -375,8 +426,8 @@ Move the cursor to the first non-blank character of the line."
         (:block
          (move-to-line (current-point) (min (line-number-at-point start)
                                             (line-number-at-point end)))
-         (move-to-column (current-point) (min (point-column start)
-                                              (point-column end)))))
+         (move-to-column (current-point) (min column-start
+                                              column-end))))
       ;; After 'dw' or 'dW', move to the first non-blank char
       (when (and (this-motion-command)
                  (member (command-name (this-motion-command))
@@ -403,20 +454,24 @@ Move the cursor to the first non-blank character of the line."
       (kill-region-without-appending start end)))
 
 (define-operator vi-change (beg end type) ("<R>")
-    ()
+    (:move-point nil)
   (when (point= beg end)
     (return-from vi-change))
   (let ((end-with-newline (char= (character-at end -1) #\Newline)))
-    (vi-delete beg end type)
-    (when (eq type :line)
-      (cond
-        (end-with-newline
-         (insert-character (current-point) #\Newline)
-         (character-offset (current-point) -1))
-        (t
-         (insert-character (current-point) #\Newline)))
-      (indent-line (current-point))))
-  (change-state 'insert))
+    (case type
+      (:line
+       (vi-delete beg end type)
+       (cond
+         (end-with-newline
+          (insert-character (current-point) #\Newline)
+          (character-offset (current-point) -1))
+         (t
+          (insert-character (current-point) #\Newline)))
+       (indent-line (current-point)))
+      (t (unless (eql (character-at (current-point)) #\Space)
+           (skip-whitespace-backward end))
+         (vi-delete beg end type))))
+  (setf (buffer-state) 'insert))
 
 (define-operator vi-change-whole-line (beg end) ("<r>")
     (:motion vi-line)
@@ -428,7 +483,7 @@ Move the cursor to the first non-blank character of the line."
 (define-operator vi-change-line (beg end type) ("<R>")
     (:motion vi-move-to-end-of-line)
   (vi-change beg end type)
-  (change-state 'insert))
+  (setf (buffer-state) 'insert))
 
 (define-operator vi-join (start end) ("<r>")
     (:motion vi-line)
@@ -441,7 +496,8 @@ Move the cursor to the first non-blank character of the line."
       (delete-next-char))))
 
 (define-operator vi-join-line (start end type) ("<R>")
-    (:motion vi-line)
+  (:move-point nil
+   :motion vi-line)
   (when (and (eq type :line)
              (point/= start end)
              (zerop (point-charpos end)))
@@ -495,47 +551,57 @@ Move the cursor to the first non-blank character of the line."
                   ((member :vi-line options) :line)
                   ((member :vi-block options) :block)
                   (t :char)))
-        (and (enable-clipboard-p) (get-clipboard-data)))))
+        (and (enable-clipboard-p) (values (get-clipboard-data) :block)))))
 
-(define-command vi-paste-after () ()
-  (multiple-value-bind (string type)
-      (vi-yank-from-clipboard-or-killring)
-    (cond
-      ((visual-p)
-       (let ((visual-line (visual-line-p)))
-         (multiple-value-bind (beg end type)
-             (visual-region)
-           (vi-delete beg end type))
-         (when (and (not visual-line)
-                    (eq type :line))
-           (insert-character (current-point) #\Newline))))
-      (t
-       (if (eq type :line)
-           (progn
-             (or (line-offset (current-point) 1 0)
-                 (progn
-                   (line-end (current-point))
-                   (insert-character (current-point) #\Newline))))
-           (character-offset (current-point) 1))))
-    (paste-yank string type :after)))
+(define-command vi-paste-after (&optional (n 1)) (:universal)
+  (dotimes (i n) 
+    (multiple-value-bind (string type)
+        (vi-yank-from-clipboard-or-killring)
+      (cond
+        ((visual-p)
+         (let ((visual-line (visual-line-p)))
+           (lem-core::with-enable-clipboard nil
+             (multiple-value-bind (beg end type)
+                 (visual-region)
+               (vi-delete beg end type))
+             (rotate-killring (current-killring)))
+           (when (and (not visual-line)
+                      (eq type :line))
+             (insert-character (current-point) #\Newline))))
+        (t
+         (if (eq type :line)
+             (progn
+               (or (line-offset (current-point) 1 0)
+                   (progn
+                     (line-end (current-point))
+                     (insert-character (current-point) #\Newline))))
+             (character-offset (current-point) 1))))
+      (paste-yank string type :after))))
 
-(define-command vi-paste-before () ()
-  (multiple-value-bind (string type)
-      (vi-yank-from-clipboard-or-killring)
-    (cond
-      ((visual-p)
-       (multiple-value-bind (beg end type)
-           (visual-region)
-         (vi-delete beg end type))
-       (when (eq type :line)
-         (insert-character (current-point) #\Newline)))
-      (t
-       (when (eq type :line)
-         (line-start (current-point)))))
-    (paste-yank string type :before)))
+(define-command vi-paste-before (&optional (n 1)) (:universal)
+  (dotimes (i n) 
+    (multiple-value-bind (string type)
+        (vi-yank-from-clipboard-or-killring)
+      (cond
+        ((visual-p)
+         (lem-core::with-enable-clipboard nil
+           (multiple-value-bind (beg end type)
+               (visual-region)
+             (vi-delete beg end type))
+           (rotate-killring (current-killring)))
+         (when (eq type :line)
+           (insert-character (current-point) #\Newline)))
+        (t
+         (when (eq type :line)
+           (if (last-line-p (current-point))
+               (progn
+                 (line-start (current-point))
+                 (open-line 1))
+               (line-start (current-point))))))
+      (paste-yank string type :before))))
 
 (defun read-key-to-replace ()
-  (with-temporary-state 'replace-state
+  (with-temporary-state 'replace-char-state
     (let ((command (read-command)))
       (unless command
         (escape))
@@ -564,10 +630,11 @@ Move the cursor to the first non-blank character of the line."
                                       "~v@{~C~:*~}~*~@[~%~]"
                                       (length string)
                                       char
-                                      (not lastp)))))))
+                                      (not lastp))))))
+            (to-start (visual-p)))
         (delete-between-points start end)
         (insert-string start string-to-replace)
-        (if (visual-p)
+        (if to-start
             (move-point (current-point) start)
             (character-offset (current-point) *cursor-offset*)))))
 
@@ -603,10 +670,17 @@ Move the cursor to the first non-blank character of the line."
         (apply-visual-range #'swapcase-region)
         (swapcase-region start end))))
 
-(define-command vi-undo (&optional (n 1)) ("p")
+(define-command vi-swapcase-and-forward-char () ()
+  (with-point ((start (current-point))
+               (end (current-point)))
+    (character-offset end 1)
+    (vi-swapcase start end (current-state)))
+  (vi-forward-char))
+
+(define-command vi-undo (&optional (n 1)) (:universal)
   (undo n))
 
-(define-command vi-redo (&optional (n 1)) ("p")
+(define-command vi-redo (&optional (n 1)) (:universal)
   (redo n))
 
 (defvar *kbdmacro-recording-register* nil)
@@ -650,7 +724,7 @@ Move the cursor to the first non-blank character of the line."
     (t
      (editor-error "Invalid register: ~A" register))))
 
-(define-command vi-execute-macro (n macro) ("p" (read-register))
+(define-command vi-execute-macro (n macro) (:universal (read-register))
   (cond
     ((macro-register-p macro)
      (let ((keyseq (register macro)))
@@ -667,10 +741,20 @@ Move the cursor to the first non-blank character of the line."
     (t
      (editor-error "Invalid register: ~A" macro))))
 
-(define-command vi-execute-last-recorded-macro (&optional (n 1)) ("p")
+(define-command vi-execute-last-recorded-macro (&optional (n 1)) (:universal)
   (unless *last-recorded-macro*
     (editor-error "No keyboard macro is recorded yet"))
   (vi-execute-macro n *last-recorded-macro*))
+
+(defun find-next-paren (point)
+  "Returns the point either on the following opening/closing paren/bracket/brace
+on the same line or at eol if there are none."
+  (with-point ((point point))
+    (loop :until (or (syntax-open-paren-char-p (character-at point))
+                     (syntax-closed-paren-char-p (character-at point))
+                     (end-line-p point))
+          :do (character-offset point 1))
+    point))
 
 (defun vi-forward-matching-paren (window point &optional (offset -1))
   (declare (ignore window))
@@ -680,16 +764,30 @@ Move the cursor to the first non-blank character of the line."
         (character-offset point offset)))))
 
 (defun vi-backward-matching-paren (window point &optional (offset -1))
-  (declare (ignore window offset))
-  (when (syntax-closed-paren-char-p (character-at point))
-    (scan-lists (character-offset (copy-point point :temporary) 1) -1 0 t)))
+  (declare (ignore window))
+  (let ((offset (if (state= (current-state) (ensure-state 'insert)) offset 0)))
+    (with-point ((point point))
+      (when (syntax-closed-paren-char-p (character-at point offset))
+        (scan-lists (character-offset (copy-point point :temporary) (+ offset 1)) -1 0 t)))))
 
-(define-motion vi-move-to-matching-paren () ()
+(define-motion vi-move-to-matching-item (&optional n) (:universal-nil)
     (:type :inclusive
-     :jump t)
-  (alexandria:when-let ((p (or (vi-backward-matching-paren (current-window) (current-point))
-                               (vi-forward-matching-paren (current-window) (current-point)))))
-    (move-point (current-point) p)))
+     :jump t
+     :default-n-arg nil)
+  (cond
+    ;; Argument n supplied (e.g. 10%) - move to line that represents n% of the buffer
+    (n
+     (let* ((buffer-size (line-number-at-point (buffer-end-point (current-buffer))))
+            (new-line-pos (ceiling (* buffer-size n) 100)))
+       (goto-line new-line-pos)
+       (vi-move-to-beginning-of-line)
+       (skip-whitespace-forward (current-point) t)))
+    ;; No argument - move to matching paren
+    (t
+     (alexandria:when-let* ((paren-point (find-next-paren (current-point)))
+                            (p (or (vi-backward-matching-paren (current-window) paren-point)
+                                   (vi-forward-matching-paren  (current-window) paren-point))))
+       (move-point (current-point) p)))))
 
 (let ((old-forward-matching-paren)
       (old-backward-matching-paren))
@@ -714,17 +812,27 @@ Move the cursor to the first non-blank character of the line."
 (define-command vi-search-forward () ()
   (setf *last-search-direction* :forward)
   (add-hook *isearch-finish-hooks* 'vi-isearch-finish-hook)
-  (with-jumplist
-    (lem/isearch::isearch-start "/"
-                                (lambda (point string)
-                                  (alexandria:when-let (p (lem/isearch::search-forward-regexp
-                                                           (copy-point lem/isearch::*isearch-start-point* :temporary)
-                                                           string))
-                                    (character-offset p (- (length string)))
-                                    (move-point point p)))
-                                #'lem/isearch::search-forward-regexp
-                                #'lem/isearch::search-backward-regexp
-                                "")))
+  (let ((case-insensitive (option-value "ignorecase")))
+    (with-jumplist
+      (lem/isearch::isearch-start
+       "/"
+       (lambda (point string)
+         (alexandria:when-let (p (lem/isearch::search-forward-regexp
+                                  (copy-point lem/isearch::*isearch-start-point* :temporary)
+                                  (ignore-errors (ppcre:create-scanner string :case-insensitive-mode case-insensitive))))
+           (character-offset p (- (length string)))
+           (move-point point p)))
+       (lambda (point regex &optional limit-point)
+         (lem/isearch::search-forward-regexp
+               point
+               (ignore-errors (ppcre:create-scanner regex :case-insensitive-mode case-insensitive))
+               limit-point))
+       (lambda (point regex &optional limit-point)
+         (lem/isearch::search-backward-regexp
+          point
+          (ignore-errors (ppcre:create-scanner regex :case-insensitive-mode case-insensitive))
+          limit-point))
+       ""))))
 
 (define-command vi-search-backward () ()
   (setf *last-search-direction* :backward)
@@ -752,17 +860,17 @@ Move the cursor to the first non-blank character of the line."
     (with-jumplist
       (dotimes (i n) (lem/isearch:isearch-prev)))))
 
-(define-command vi-search-next (n) ("p")
+(define-command vi-search-next (n) (:universal)
   (case *last-search-direction*
     (:forward (vi-search-repeat-forward n))
     (:backward (vi-search-repeat-backward n))))
 
-(define-command vi-search-previous (n) ("p")
+(define-command vi-search-previous (n) (:universal)
   (case *last-search-direction*
     (:forward (vi-search-repeat-backward n))
     (:backward (vi-search-repeat-forward n))))
 
-(define-command vi-search-forward-symbol-at-point (&optional (n 1)) ("p")
+(define-command vi-search-forward-symbol-at-point (&optional (n 1)) (:universal)
   (with-jumplist
     (lem/isearch:isearch-forward-symbol-at-point)
     (lem/isearch:isearch-finish)
@@ -776,7 +884,7 @@ Move the cursor to the first non-blank character of the line."
       (when wrapped
         (message "Search wrapped around from bottom to top")))))
 
-(define-command vi-search-backward-symbol-at-point (&optional (n 1)) ("p")
+(define-command vi-search-backward-symbol-at-point (&optional (n 1)) (:universal)
   (with-jumplist
     (lem/isearch:isearch-forward-symbol-at-point)
     (lem/isearch:isearch-finish)
@@ -790,14 +898,14 @@ Move the cursor to the first non-blank character of the line."
       (when wrapped
         (message "Search wrapped around from top to bottom")))))
 
-(define-motion vi-goto-first-line (&optional (n 1)) ("p")
+(define-motion vi-goto-first-line (&optional (n 1)) (:universal)
     (:type :line
      :jump t)
   (let ((col (point-charpos (current-point))))
     (goto-line n)
     (move-to-column (current-point) col)))
 
-(define-motion vi-goto-line (&optional n) ("P")
+(define-motion vi-goto-line (&optional n) (:universal-nil)
     (:type :line
      :jump t
      :default-n-arg nil)
@@ -811,12 +919,12 @@ Move the cursor to the first non-blank character of the line."
       (t (goto-line n)))
     (move-to-column (current-point) col)))
 
-(define-motion vi-goto-column (&optional (n 1)) ("p")
+(define-motion vi-goto-column (&optional (n 1)) (:universal)
     (:type :exclusive
      :jump t)
   (move-to-column (current-point) (1- n)))
 
-(define-command vi-return (&optional (n 1)) ("p")
+(define-command vi-return (&optional (n 1)) (:universal)
   (vi-next-line n)
   (vi-move-to-beginning-of-line))
 
@@ -848,32 +956,32 @@ Move the cursor to the first non-blank character of the line."
         (character-offset p offset)
         (move-point (current-point) p)))))
 
-(define-motion vi-find-char (&optional (n 1)) ("p")
+(define-motion vi-find-char (&optional (n 1)) (:universal)
     (:type :inclusive)
   (alexandria:when-let (c (key-to-char (read-key)))
     (%vi-find-char n c :forward -1)))
 
-(define-motion vi-find-char-backward (&optional (n 1)) ("p")
+(define-motion vi-find-char-backward (&optional (n 1)) (:universal)
     ()
   (alexandria:when-let (c (key-to-char (read-key)))
     (%vi-find-char n c :backward 0)))
 
-(define-motion vi-find-char-before (&optional (n 1)) ("p")
+(define-motion vi-find-char-before (&optional (n 1)) (:universal)
     (:type :inclusive)
   (alexandria:when-let (c (key-to-char (read-key)))
     (%vi-find-char n c :forward -2)))
 
-(define-motion vi-find-char-backward-after (&optional (n 1)) ("p")
+(define-motion vi-find-char-backward-after (&optional (n 1)) (:universal)
     ()
   (alexandria:when-let (c (key-to-char (read-key)))
     (%vi-find-char n c :backward 1)))
 
-(define-motion vi-find-char-repeat (&optional (n 1)) ("p")
+(define-motion vi-find-char-repeat (&optional (n 1)) (:universal)
     (:type :inclusive)
   (when *find-char-args*
     (apply #'%vi-find-char n *find-char-args*)))
 
-(define-motion vi-find-char-repeat-backward (&optional (n 1)) ("p")
+(define-motion vi-find-char-repeat-backward (&optional (n 1)) (:universal)
     ()
   (when *find-char-args*
     (destructuring-bind (c direction offset)
@@ -894,39 +1002,45 @@ Move the cursor to the first non-blank character of the line."
   (vi-write)
   (vi-quit nil))
 
+(define-command vi-close (&optional (n 1)) (:universal)
+  (dotimes (i n)
+    (if (one-window-p)
+        (lem:message "Cannot close last window")
+        (delete-active-window))))
+
 (define-command vi-end-insert () ()
-  (change-state 'normal)
+  (setf (buffer-state) 'normal)
   (vi-backward-char 1))
 
 (define-command vi-insert () ()
-  (change-state 'insert))
+  (setf (buffer-state) 'insert))
 
 (define-command vi-insert-line () ()
   (vi-move-to-beginning-of-line)
   (skip-whitespace-forward (current-point) t)
-  (change-state 'insert))
+  (setf (buffer-state) 'insert))
 
 (define-command vi-append () ()
   (let ((p (current-point)))
     (unless (or (end-line-p p)
                 (end-buffer-p p))
       (forward-char 1))
-    (change-state 'insert)))
+    (setf (buffer-state) 'insert)))
 
 (define-command vi-append-line () ()
   (line-end (current-point))
-  (change-state 'insert))
+  (setf (buffer-state) 'insert))
 
 (define-command vi-open-below () ()
   (let ((p (current-point)))
     (line-end p)
-    (change-state 'insert)
+    (setf (buffer-state) 'insert)
     (insert-character p #\Newline)
     (indent-line (current-point))))
 
 (define-command vi-open-above () ()
   (line-start (current-point))
-  (change-state 'insert)
+  (setf (buffer-state) 'insert)
   (open-line 1)
   (let ((column (with-point ((p (current-point)))
                   (point-column (or (and (line-offset p 1)
@@ -934,15 +1048,27 @@ Move the cursor to the first non-blank character of the line."
                                     (line-start p))))))
     (move-to-column (current-point) column t)))
 
-(define-command vi-jump-back (&optional (n 1)) ("p")
+(define-command vi-replace () ()
+  (setf (buffer-state) 'replace-state))
+
+(define-command vi-jumps () ()
+  (line-end (current-point))
+  (lem:message-buffer (with-output-to-string (s)
+                        (lem-vi-mode/jumplist::print-jumplist (current-jumplist) s))))
+
+(define-command vi-jump-back (&optional (n 1)) (:universal)
   (dotimes (i n)
     (jump-back)))
 
-(define-command vi-jump-next (&optional (n 1)) ("p")
+(define-command vi-jump-next (&optional (n 1)) (:universal)
   (dotimes (i n)
     (jump-next)))
 
-(define-command vi-repeat (n) ("P")
+(define-motion vi-jump-previous () ()
+    (:jump t)
+  (jump-back))
+
+(define-command vi-repeat (n) (:universal-nil)
   (when *last-repeat-keys*
     (let ((*enable-repeat-recording* nil)
           (prev-state (current-state)))
@@ -956,7 +1082,7 @@ Move the cursor to the first non-blank character of the line."
             (lem/universal-argument::*argument* (lem/universal-argument::make-arg-state)))
         (execute-key-sequence keyseq)
         (unless (state= prev-state (current-state))
-          (change-state prev-state))))))
+          (setf (buffer-state) prev-state))))))
 
 (define-text-object-command vi-a-word (count) ("p")
     (:expand-selection t)
@@ -990,11 +1116,85 @@ Move the cursor to the first non-blank character of the line."
     (:expand-selection t)
   (inner-range-of 'paren-object (current-state) count))
 
+(define-text-object-command vi-a-paragraph (count) ("p")
+    (:expand-selection t)
+  (a-range-of 'paragraph-object (current-state) count))
+
+(define-text-object-command vi-inner-paragraph (count) ("p")
+    (:expand-selection t)
+  (inner-range-of 'paragraph-object (current-state) count))
+
 (define-command vi-normal () ()
-  (change-state 'normal))
+  (setf (buffer-state) 'normal))
 
 (define-command vi-keyboard-quit () ()
   (when (eq (current-state) 'modeline)
     (error 'editor-abort))
   (vi-visual-end)
   (keyboard-quit))
+
+(define-command vi-window-move-left (&optional (n 1)) (:universal)
+  "Go to the window on the left N times."
+  (dotimes (i n) (window-move-left)))
+
+(define-command vi-window-move-down (&optional (n 1)) (:universal)
+  "Go to the window below N times."
+  (dotimes (i n) (window-move-down)))
+
+(define-command vi-window-move-up (&optional (n 1)) (:universal)
+  "Go to the window above N times."
+  (dotimes (i n) (window-move-up)))
+
+(define-command vi-window-move-right (&optional (n 1)) (:universal)
+  "Go to the window on the right N times."
+  (dotimes (i n) (window-move-right)))
+
+(define-command vi-window-split-horizontally (&optional (n 1)) (:universal)
+  "Split the window horizontally and moves N times."
+  (dotimes (i n)
+    (split-active-window-horizontally)
+    (window-move-right)))
+
+(define-command vi-window-split-vertically (&optional (n 1)) (:universal)
+  "Split the window vertically and moves N times."
+  (dotimes (i n)
+    (split-active-window-vertically)
+    (window-move-down)))
+
+(define-command vi-switch-to-buffer (&optional (filename nil)) (:universal-nil)
+  "Opens the specified file name or creates a blank buffer."
+  (switch-to-buffer (if (or (null filename) (string= filename ""))
+      (make-buffer nil :temporary t)
+      (execute-find-file *find-file-executor* (get-file-mode filename) filename))))
+
+(define-command vi-window-split-horizontally-new (&optional (n 1) (filename nil)) (:universal)
+  "Creates an empty buffer in a new window N times."
+  (dotimes (i (or n 1))
+    (vi-window-split-horizontally)
+    (vi-switch-to-buffer filename)))
+
+(define-command vi-window-split-vertically-new (&optional (n 1) (filename nil)) (:universal)
+  "Creates an empty buffer in a new window N times."
+  (dotimes (i n)
+    (vi-window-split-vertically)
+    (vi-switch-to-buffer filename)))
+
+(define-command vi-set-mark () ()
+    "Set mark to current point"
+  (when-let (c (key-to-char (read-key)))
+    (lem/named-point:set-named-point c)))
+
+(define-command vi-delete-mark () ()
+  "Delete mark"
+  (when-let (c (key-to-char (read-key)))
+    (when (lem/named-point:delete-named-point c)
+      (message (format nil "Mark ~A deleted" c)))))
+
+(define-motion vi-goto-mark () ()
+  (:jump t)
+  "Move to mark"
+  (when-let (c (key-to-char (read-key)))
+    (flet ((move () (lem/named-point:goto-named-point c :global (not (operator-pending-mode-p)))))
+      (if (eq c #\') ; Support "' '" as jump-previous if ' is not marked
+        (or (move) (vi-jump-previous))
+        (move)))))

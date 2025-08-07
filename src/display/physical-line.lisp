@@ -34,7 +34,12 @@
 
 (defclass eol-cursor-object (drawing-object)
   ((color :initarg :color
-          :reader eol-cursor-object-color)))
+          :reader eol-cursor-object-color)
+   (attribute :initarg :attribute
+              :reader eol-cursor-object-attribute)
+   (true-cursor-p :initarg :true-cursor-p
+                  :initform nil
+                  :reader eol-cursor-object-true-cursor-p)))
 
 (defclass extend-to-eol-object (drawing-object)
   ((color :initarg :color
@@ -86,8 +91,9 @@
          (extend-to-eol-object-color drawing-object-2)))
 
 (defmethod drawing-object-equal ((drawing-object-1 line-end-object) (drawing-object-2 line-end-object))
-  (equal (line-end-object-offset drawing-object-1)
-         (line-end-object-offset drawing-object-2)))
+  (and (call-next-method)
+       (equal (line-end-object-offset drawing-object-1)
+              (line-end-object-offset drawing-object-2))))
 
 (defmethod drawing-object-equal ((drawing-object-1 image-object) (drawing-object-2 image-object))
   nil)
@@ -126,10 +132,20 @@
                      (:emoji 'emoji-object)
                      (:control 'control-character-object)
                      (otherwise 'text-object))
-                   :string (if (eq type :control)
-                               (control-char (char string 0))
-                               string)
-                   :attribute attribute
+                   :string (case type
+                             (:control
+                              (control-char (char string 0)))
+                             (:zero-width
+                              (make-string (length string) :initial-element #\·))
+                             (otherwise
+                              string))
+                   :attribute (case type
+                                ((:control :zero-width)
+                                 (let ((attr (ensure-attribute 'special-char-attribute nil)))
+                                   (if attribute
+                                       (merge-attribute attribute attr)
+                                       attr)))
+                                (otherwise attribute))
                    :type type
                    :within-cursor (and attribute
                                        (cursor-attribute-p attribute)))))
@@ -137,9 +153,11 @@
 (defun create-drawing-object (item)
   (cond ((and *line-wrap* (typep item 'eol-cursor-item))
          (list (make-instance 'eol-cursor-object
+                              :attribute (eol-cursor-item-attribute item)
                               :color (parse-color
                                       (attribute-background
-                                       (eol-cursor-item-attribute item))))))
+                                       (eol-cursor-item-attribute item)))
+                              :true-cursor-p (eol-cursor-item-true-cursor-p item))))
         ((typep item 'extend-to-eol-item)
          (list (make-instance 'extend-to-eol-object :color (extend-to-eol-item-color item))))
         ((typep item 'line-end-item)
@@ -180,7 +198,7 @@
                          attribute
                          (char-type character)))
 
-(defun separate-objects-by-width (objects view-width)
+(defun separate-objects-by-width (objects view-width buffer)
   (flet ((explode-object (text-object)
            (check-type text-object text-object)
            (let* ((string (text-object-string text-object))
@@ -192,25 +210,28 @@
                    :collect (make-object-with-type
                              part-string
                              (text-object-attribute text-object) char-type)))))
-    (loop
-      :until (null objects)
-      :collect (loop :with total-width := 0
-                     :and physical-line-objects := '()
-                     :for object := (pop objects)
-                     :while object
-                     :do (cond ((and (typep object 'text-object)
-                                     (<= view-width (+ total-width (object-width object))))
-                                (cond ((< 1 (length (text-object-string object)))
-                                       (setf objects (nconc (explode-object object) objects)))
-                                      (t
-                                       (push object objects)
-                                       (push (make-letter-object #\\ nil)
-                                             physical-line-objects)
-                                       (return (nreverse physical-line-objects)))))
-                               (t
-                                (incf total-width (object-width object))
-                                (push object physical-line-objects)))
-                     :finally (return (nreverse physical-line-objects))))))
+    (let ((wrap-line-character (variable-value 'wrap-line-character :default buffer))
+          (wrap-line-attribute (variable-value 'wrap-line-attribute :default buffer)))
+      (loop
+        :until (null objects)
+        :collect (loop :with total-width := 0
+                       :and physical-line-objects := '()
+                       :for object := (pop objects)
+                       :while object
+                       :do (cond ((and (typep object 'text-object)
+                                       (<= view-width (+ total-width (object-width object))))
+                                  (cond ((< 1 (length (text-object-string object)))
+                                         (setf objects (nconc (explode-object object) objects)))
+                                        (t
+                                         (push object objects)
+                                         (push (make-letter-object wrap-line-character
+                                                                   wrap-line-attribute)
+                                               physical-line-objects)
+                                         (return (nreverse physical-line-objects)))))
+                                 (t
+                                  (incf total-width (object-width object))
+                                  (push object physical-line-objects)))
+                       :finally (return (nreverse physical-line-objects)))))))
 
 (defun render-line (view x y objects height)
   (lem-if:render-line (implementation) view x y objects height))
@@ -260,19 +281,15 @@
                                      :sum (length (text-object-string obj))))
          (objects-per-physical-line
            (separate-objects-by-width (create-drawing-objects logical-line)
-                                      (- (window-view-width window) left-side-width)))
-         (empty-left-side-object (if (< 0 left-side-width)
-                                     (list (make-object-with-type
-                                            (make-string left-side-characters :initial-element #\space)
-                                            nil
-                                            (char-type #\space)))
-                                     nil)))
+                                      (- (window-view-width window) left-side-width)
+                                      (window-buffer window))))
     (loop :for objects :in objects-per-physical-line
           :for all-objects := (append left-side-objects objects)
           :for height := (max-height-of-objects all-objects)
           :do (render-line-with-caching window 0 y all-objects height)
               (incf y height)
-              (setq left-side-objects (copy-list empty-left-side-object))
+              (setq left-side-objects (copy-list (compute-wrap-left-area-content
+                                                  left-side-width left-side-characters)))
           :sum height)))
 
 (defun find-cursor-object (objects)
@@ -356,7 +373,8 @@
             (incf y (funcall redraw-fn window y logical-line left-side-objects left-side-width))
             (unless (< y height)
               (return-from outer)))))
-      (lem-if:clear-to-end-of-window (implementation) (window-view window) y)
+      (when (< y height)
+        (lem-if:clear-to-end-of-window (implementation) (window-view window) y))
       (setf (window-left-width window)
             (floor left-side-width (lem-if:get-char-width (implementation)))))))
 

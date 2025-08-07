@@ -32,7 +32,9 @@
            :transpose-characters
            :undo
            :redo
-           :delete-trailing-whitespace))
+           :delete-trailing-whitespace)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/edit)
 
 (setf (keymap-undef-hook *global-keymap*) 'self-insert)
@@ -70,7 +72,7 @@
 
 (define-command (self-insert (:advice-classes self-insert-advice editable-advice))
     (&optional (n 1) (char (get-self-insert-char)))
-    ("p" (get-self-insert-char))
+    (:universal (get-self-insert-char))
   "Processes the key entered."
   (process-input-character char n))
 
@@ -86,15 +88,15 @@
   (when sticky
     (character-offset (current-point) (- n))))
 
-(define-command (newline (:advice-classes editable-advice)) (&optional (n 1)) ("p")
+(define-command (newline (:advice-classes editable-advice)) (&optional (n 1)) (:universal)
   "Insert a new line."
   (self-insert-aux #\newline n))
 
-(define-command (open-line (:advice-classes editable-advice)) (n) ("p")
+(define-command (open-line (:advice-classes editable-advice)) (n) (:universal)
   "Insert a new line without moving the cursor position."
   (self-insert-aux #\newline n t))
 
-(define-command quoted-insert (&optional (n 1)) ("p")
+(define-command quoted-insert (&optional (n 1)) (:universal)
   "Insert the next entered key (including control characters)."
   (let* ((key (read-key))
          (char (or (key-to-char key) (code-char 0))))
@@ -109,7 +111,7 @@
       (self-insert-aux char (or argument 1)))))
 
 
-(define-command (delete-next-char (:advice-classes editable-advice)) (&optional n) ("P")
+(define-command (delete-next-char (:advice-classes editable-advice)) (&optional n) (:universal-nil)
   "Delete the next character."
   (unless (end-buffer-p (current-point))
     (let ((repeat-command (continue-flag :kill))
@@ -132,7 +134,7 @@
       (forward-char (or n 1))
       (error e))))
 
-(define-command (delete-previous-char (:advice-classes editable-advice)) (&optional n) ("P")
+(define-command (delete-previous-char (:advice-classes editable-advice)) (&optional n) (:universal-nil)
   "Delete the previous character."
   (cond ((mark-active-p (cursor-mark (current-point)))
          (delete-cursor-region (current-point)))
@@ -146,13 +148,13 @@
       (copy-to-clipboard-with-killring (points-to-string start end)))
     (mark-cancel (cursor-mark point))))
 
-(define-command copy-region (start end) ("r")
+(define-command copy-region (start end) (:region)
   "Copy the text of region."
   (with-killring-context (:appending (continue-flag :kill))
     (copy-to-clipboard-with-killring (points-to-string start end)))
   (buffer-mark-cancel (current-buffer)))
 
-(define-command copy-region-to-clipboard (start end) ("r")
+(define-command copy-region-to-clipboard (start end) (:region)
   "Copy the selected text to the clipboard."
   (copy-to-clipboard (points-to-string start end)))
 
@@ -164,21 +166,26 @@
       (copy-to-clipboard-with-killring killed-string))
     (mark-cancel (cursor-mark point))))
 
-(define-command kill-region (start end) ("r")
+(define-command kill-region (start end) (:region)
   "Kill the text of region."
   (when (point< end start)
     (rotatef start end))
-  (let ((repeat-command (continue-flag :kill)))
-    (let ((killed-string (delete-character start (count-characters start end))))
-      (with-killring-context (:appending repeat-command)
-        (copy-to-clipboard-with-killring killed-string)))))
+  (let ((repeat-command (continue-flag :kill))
+        (killed-string (delete-character start (count-characters start end))))
+    (with-killring-context (:appending repeat-command)
+      (when (and (not repeat-command)
+                 (enable-clipboard-p))
+        (let ((clipboard-string (get-clipboard-data)))
+          (unless (string= clipboard-string (peek-killring-item (current-killring) 0))
+            (push-killring-item (current-killring) clipboard-string))))
+      (copy-to-clipboard-with-killring killed-string))))
 
-(define-command kill-region-to-clipboard (start end) ("r")
+(define-command kill-region-to-clipboard (start end) (:region)
   "Kill the text of region and copy to the clipboard."
   (copy-region-to-clipboard start end)
   (delete-character start (count-characters start end)))
 
-(define-command (kill-line (:advice-classes editable-advice)) (&optional arg) ("P")
+(define-command (kill-line (:advice-classes editable-advice)) (&optional arg) (:universal-nil)
   "Kill from the current cursor position to the end of the line."
   (flet ((end-line-p* (p)
            (with-point ((p p))
@@ -210,30 +217,40 @@
            (let ((end (current-point)))
              (kill-region start end))))))))
 
-(define-command kill-whole-line () ()
-  "Kill the entire line and the remaining whitespace"
-   (with-point ((start (current-point))
-                (end (current-point)))
-     (line-end end)
-     (kill-region start end))
-   (delete-previous-char))
+(define-command kill-whole-line (&optional (n 1)) (:universal)
+  "If n is positive, kill n whole lines forward starting at the
+beginning of the current line.  If n is 0, do nothing.  And if n
+is negative, kill n lines above without deleting anything on the
+current line."
+  (cond ((zerop n) nil)
+        ((minusp n) (save-excursion
+                      (move-to-beginning-of-logical-line)
+                      (kill-line n)))
+        (t (progn (move-to-beginning-of-logical-line)
+                  (kill-line n)))))
+
+(defun yank-string (point string)
+  (change-yank-start point
+                     (copy-point point :right-inserting))
+  (if (in-string-or-comment-p point)
+      (insert-string point string)
+      (insert-string-and-indent point string))
+  (change-yank-end point
+                   (copy-point point :left-inserting))
+  (continue-flag :yank))
 
 (defun yank-1 (arg)
   (let ((string (if (null arg)
                     (yank-from-clipboard-or-killring)
                     (peek-killring-item (current-killring) (1- arg)))))
-    (change-yank-start (current-point)
-                                 (copy-point (current-point) :right-inserting))
-    (insert-string-and-indent (current-point) string)
-    (change-yank-end (current-point)
-                               (copy-point (current-point) :left-inserting))
-    (continue-flag :yank)))
+    (when string
+      (yank-string (current-point) string))))
 
-(define-command yank (&optional arg) ("P")
+(define-command yank (&optional arg) (:universal-nil)
   "Paste the copied text."
   (yank-1 arg))
 
-(define-command (yank-pop (:advice-classes editable-advice)) (&optional n) ("p")
+(define-command (yank-pop (:advice-classes editable-advice)) (&optional n) (:universal)
   "Replaces the immediately pasted text with the next text in the killring."
   (let ((start (cursor-yank-start (current-point)))
         (end (cursor-yank-end (current-point)))
@@ -246,7 +263,7 @@
            (message "Previous command was not a yank")
            nil))))
 
-(define-command (yank-pop-next (:advice-classes editable-advice)) (&optional n) ("p")
+(define-command (yank-pop-next (:advice-classes editable-advice)) (&optional n) (:universal)
   "Replaces the immediately preceding yank-pop text with the text before the kill ring."
   (let ((start (cursor-yank-start (current-point)))
         (end (cursor-yank-end (current-point)))
@@ -259,7 +276,7 @@
            (message "Previous command was not a yank")
            nil))))
 
-(define-command yank-to-clipboard (&optional arg) ("p")
+(define-command yank-to-clipboard (&optional arg) (:universal)
   "Copy the text of the killring to the clipboard."
   (let ((string
           (peek-killring-item (current-killring)
@@ -284,13 +301,13 @@
         (unless (line-offset p 1)
           (return))))))
 
-(define-command (entab-line (:advice-classes editable-advice)) (n) ("p")
+(define-command (entab-line (:advice-classes editable-advice)) (n) (:universal)
   "Replaces the indent of the current line from space to tab."
   (tab-line-aux n
                 #'(lambda (n)
                     (make-string n :initial-element #\tab))))
 
-(define-command (detab-line (:advice-classes editable-advice)) (n) ("p")
+(define-command (detab-line (:advice-classes editable-advice)) (n) (:universal)
   "Replaces the indent of the current line from tab to space."
   (tab-line-aux n
                 (lambda (n)
@@ -364,14 +381,14 @@
              (delete-character point -1)
              (insert-string point (format nil "~C~C" c1 c2)))))))
 
-(define-command undo (n) ("p")
+(define-command undo (n) (:universal)
   "Undo."
   ;; TODO: multiple cursors
   (dotimes (_ n t)
     (unless (buffer-undo (current-point))
       (editor-error "Undo Error"))))
 
-(define-command redo (n) ("p")
+(define-command redo (n) (:universal)
   "Redo."
   ;; TODO: multiple cursors
   (dotimes (_ n t)
@@ -449,3 +466,6 @@
   (with-enable-clipboard (and (enable-clipboard-p)
                               (null (buffer-fake-cursors (current-buffer))))
     (process-each-cursors #'call-next-method)))
+
+(defmethod lem-core:paste-using-mode (mode text)
+  (yank-string (current-point) text))

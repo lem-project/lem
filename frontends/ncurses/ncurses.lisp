@@ -1,9 +1,8 @@
 (uiop:define-package :lem-ncurses
   (:use :cl)
   (:use-reexport :lem-ncurses/config)
-  (:export :*terminal-io-saved*
-           ;; ncurses-pdcurseswin32.lisp
-           :input-polling-interval))
+  (:export :*terminal-io-saved*))
+
 (in-package :lem-ncurses)
 
 (pushnew :lem-ncurses *features*)

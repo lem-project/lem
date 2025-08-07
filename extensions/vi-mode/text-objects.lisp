@@ -25,8 +25,12 @@
            :word-object
            :broad-word-object
            :paren-object
-           :double-quoted-object))
+           :paragraph-object
+           :double-quoted-object
+           :vi-operator-surrounding-blanks))
 (in-package :lem-vi-mode/text-objects)
+
+(define-editor-variable vi-operator-surrounding-blanks nil)
 
 (defclass text-object () ())
 
@@ -289,10 +293,14 @@
              ;; No quote-char found
              ((null prev-char)
               (keyboard-quit))
-             ;; Skip escaped quote-char
+
+             ;; Skip escape & quote-char
              ((and escape-char
-                   (char= prev-char escape-char)))
-             ;; Successfully found
+                   (character-at point -2) ;; Bound check
+                   (char= (character-at point -2) escape-char))
+              (character-offset point -2))
+
+             ;; Successfully found unescaped quote
              (t
               (character-offset point -1)
               (return))))))
@@ -304,9 +312,13 @@
              ;; No quote-char found
              ((null next-char)
               (keyboard-quit))
-             ;; Skip escaped quote-char
+
+             ;; Skip escape & quote-char
              ((and escape-char
-                   (char= (character-at point -1) escape-char)))
+                   (character-at point 2) ;; Bound Check
+                   (char= (character-at point -1) escape-char))
+              (character-offset point 2))
+
              ;; Successfully found
              (t
               (character-offset point 1)
@@ -320,8 +332,9 @@
     range))
 
 (defmethod include-surrounding-blanks ((object quoted-text-object) beg end direction on-object)
+  (when (variable-value 'vi-operator-surrounding-blanks)
   ;; Trailing first
-  (or (/= 0 (if (eq direction :backward)
+    (or (/= 0 (if (eq direction :backward)
                 (skip-chars-backward end '(#\Space #\Tab))
                 (skip-chars-forward end '(#\Space #\Tab))))
       ;; If no trailing spaces, delete leading spaces unless it's the beginning indentation
@@ -335,7 +348,7 @@
             (progn
               (skip-chars-backward p '(#\Space #\Tab))
               (unless (zerop (point-charpos p))
-                (move-point beg p)))))))
+                (move-point beg p))))))))
 
 ;;
 ;; word-object
@@ -380,3 +393,33 @@
 (defclass double-quoted-object (quoted-text-object) ()
   (:default-initargs
    :quote-char #\"))
+
+;;
+;; paragraph-object
+(defclass paragraph-object (text-object) ())
+
+(defmethod inner-range-of ((object paragraph-object) state count)
+  (declare (ignore state count))
+  (with-point ((start (current-point))
+               (end (current-point)))
+    ;; Start
+    (loop until (or (start-buffer-p start)
+                    (blank-line-p start))
+          do (line-offset start -1))
+    (when (blank-line-p start) ;; pull back into paragraph
+      (line-offset start 1))
+
+    ;; End
+    (loop until (or (end-buffer-p end)
+                    (blank-line-p end))
+          do (line-offset end 1))
+    (make-range start end)))
+
+;; adds on additional blank lines for inner paragraph-object
+(defmethod a-range-of ((object paragraph-object) state count)
+  (let ((range (inner-range-of 'paragraph-object state count)))
+    (line-offset (range-end range) 1)
+    (loop until (or (end-buffer-p (range-end range))
+                    (not (blank-line-p (range-end range))))
+          do (line-offset (range-end range) 1))
+    range))

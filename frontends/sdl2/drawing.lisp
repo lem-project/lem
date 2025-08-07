@@ -36,6 +36,12 @@
   (let ((string (text-object-string drawing-object))
         (attribute (text-object-attribute drawing-object))
         (type (text-object-type drawing-object)))
+    (when (and (lem-core:cursor-attribute-p attribute)
+               (eq :box (display:display-cursor-type display)))
+      (setf attribute
+            (lem-core:merge-attribute
+             attribute (lem-core:make-attribute
+                        :foreground (lem-if:get-background-color (lem:implementation))))))
     (make-text-surface-with-cache display string attribute type)))
 
 (defmethod get-surface ((drawing-object icon-object) display)
@@ -137,6 +143,20 @@
 (defmethod draw-object ((drawing-object void-object) x bottom-y display view)
   0)
 
+(defun draw-rect (display x y width height color)
+  (sdl2:with-rects ((rect x y width height))
+    (display:set-render-color display color)
+    (sdl2:render-fill-rect (display:display-renderer display) rect)))
+
+(defun draw-cursor (display x y surface-width surface-height background)
+  (ecase (display:display-cursor-type display)
+    (:box
+     (draw-rect display x y surface-width surface-height background))
+    (:bar
+     (draw-rect display x y 1 surface-height background))
+    (:underline
+     (draw-rect display x (+ y surface-height -1) surface-width 1 background))))
+
 (defmethod draw-object ((drawing-object text-object) x bottom-y display view)
   (let* ((surface-width (object-width drawing-object display))
          (surface-height (object-height drawing-object display))
@@ -146,11 +166,11 @@
                    (display:display-renderer display)
                    (get-surface drawing-object display)))
          (y (- bottom-y surface-height)))
-    (when (and attribute (lem-core:cursor-attribute-p attribute))
-      (lem-sdl2/view:set-cursor-position view x y))
-    (sdl2:with-rects ((rect x y surface-width surface-height))
-      (display:set-render-color display background)
-      (sdl2:render-fill-rect (display:display-renderer display) rect))
+    (cond ((and attribute (lem-core:cursor-attribute-p attribute))
+           (lem-sdl2/view:set-cursor-position view x y)
+           (draw-cursor display x y surface-width surface-height background))
+          (t
+           (draw-rect display x y surface-width surface-height background)))
     (lem-sdl2/utils:render-texture (display:display-renderer display)
                                    texture
                                    x
@@ -176,11 +196,12 @@
   (display:set-render-color display (eol-cursor-object-color drawing-object))
   (let ((y (- bottom-y (object-height drawing-object display))))
     (lem-sdl2/view:set-cursor-position view x y)
-    (sdl2:with-rects ((rect x
-                            y
-                            (display:display-char-width display)
-                            (object-height drawing-object display)))
-      (sdl2:render-fill-rect (display:display-renderer display) rect)))
+    (draw-cursor display
+                 x
+                 y
+                 (display:display-char-width display)
+                 (object-height drawing-object display)
+                 (eol-cursor-object-color drawing-object)))
   (object-width drawing-object display))
 
 (defmethod draw-object ((drawing-object extend-to-eol-object) x bottom-y display view)
@@ -217,9 +238,18 @@
     surface-width))
 
 (defun redraw-physical-line (display view x y objects height)
-  (loop :with current-x := x
-        :for object :in objects
-        :do (incf current-x (draw-object object current-x (+ y height) display view))))
+  (let ((display-width (round (* (display:display-window-width display)
+                                 (first (display:display-scale display))))))
+    (loop :with current-x := x
+          :for object :in objects
+          :do (if (and (typep object 'text-object)
+                       (< display-width
+                          (+ current-x (object-width object display))))
+                  (loop :for c :across (text-object-string object)
+                        :do (let ((object (lem-core::make-letter-object c (text-object-attribute object))))
+                              (incf current-x (draw-object object current-x (+ y height) display view)))
+                        :while (< current-x display-width))
+                  (incf current-x (draw-object object current-x (+ y height) display view))))))
 
 (defun redraw-physical-line-from-behind (display view objects)
   (loop :with current-x := (lem-if:view-width (lem-core:implementation) view)

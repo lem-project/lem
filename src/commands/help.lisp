@@ -2,9 +2,12 @@
   (:use :cl :lem-core)
   (:export :describe-key
            :describe-bindings
+           :describe-mode
            :apropos-command
            :lem-version
-           :list-modes))
+           :list-modes)
+  #+sbcl
+  (:lock t))
 (in-package :lem-core/commands/help)
 
 (define-key *global-keymap* "C-x ?" 'describe-key)
@@ -107,12 +110,16 @@
                   (mode-name mode)
                   (mode-description mode)))))))
 
-(define-command apropos-command (str) ("sApropos: ")
+(define-command apropos-command () ()
   "Find all symbols in the running Lisp image whose names match a given string."
-  (with-pop-up-typeout-window (out (make-buffer "*Apropos*") :erase t)
-    (dolist (name (all-command-names))
-      (when (search str name)
-        (describe (command-name (find-command name)) out)))))
+  (let ((str (prompt-for-string
+              "Apropos: "
+              :completion-function
+              (lambda (str) (completion str (all-command-names))))))
+    (with-pop-up-typeout-window (out (make-buffer "*Apropos*") :erase t)
+      (dolist (name (all-command-names))
+        (when (search str name)
+          (describe (command-name (find-command name)) out))))))
 
 (define-command lem-version () ()
   "Display Lem's version."

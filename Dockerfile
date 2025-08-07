@@ -1,11 +1,17 @@
-FROM docker.io/fukamachi/qlot
+FROM alpine:latest
+
+WORKDIR /app
 
 COPY . .
 
-RUN apt-get update && apt-get install gcc libncurses-dev -y
+RUN apk add --no-cache curl bash build-base ncurses-dev sbcl git xdg-utils
 
-RUN qlot install
+RUN curl -o quicklisp.lisp https://beta.quicklisp.org/quicklisp.lisp
+RUN sbcl --noinform --no-userinit --no-sysinit --non-interactive --load quicklisp.lisp --eval "(quicklisp-quickstart:install)" --eval "(ql-util:without-prompting (ql:add-to-init-file))"
 
-RUN qlot exec sbcl --noinform --load scripts/build-ncurses.lisp
+RUN curl -L https://qlot.tech/installer | bash
+
+RUN qlot install && \
+    qlot exec sbcl --noinform --load scripts/build-ncurses.lisp
 
 ENTRYPOINT qlot exec sbcl --noinform --eval "(ql:quickload :lem-ncurses)" --eval "(lem:lem)" --quit

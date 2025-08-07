@@ -3,10 +3,12 @@
 (defparameter *default-prompt-gravity* :center)
 
 (defvar *prompt-activate-hook* '())
+(defvar *prompt-after-activate-hook* '())
 (defvar *prompt-deactivate-hook* '())
 
 (defvar *prompt-buffer-completion-function* nil)
 (defvar *prompt-file-completion-function* nil)
+(defvar *prompt-command-completion-function* 'completion-command)
 
 (defgeneric caller-of-prompt-window (prompt))
 (defgeneric prompt-active-p (prompt))
@@ -16,6 +18,42 @@
 (defgeneric %prompt-for-line (prompt &key initial-value completion-function test-function
                                           history-symbol syntax-table gravity edit-callback
                                           special-keymap use-border))
+(defgeneric %prompt-for-file (prompt directory default existing gravity))
+
+(flet ((f (c1 c2 step-fn)
+         (when c1
+           (when (and (member c1 '(#\#))
+                      (or (alphanumericp c2)
+                          (member c2 '(#\+ #\-))))
+             (funcall step-fn)))))
+
+  (defun skip-expr-prefix-forward (point)
+    (f (character-at point 0)
+       (character-at point 1)
+       (lambda ()
+         (character-offset point 2))))
+
+  (defun skip-expr-prefix-backward (point)
+    (f (character-at point -2)
+       (character-at point -1)
+       (lambda ()
+         (character-offset point -2)))))
+
+(defvar *prompt-syntax-table*
+  (make-syntax-table
+   :space-chars '(#\space #\tab #\newline #\page)
+   :symbol-chars '(#\+ #\- #\< #\> #\/ #\* #\& #\= #\. #\? #\_ #\! #\$ #\% #\: #\@ #\[ #\]
+                   #\^ #\{ #\} #\~ #\# #\|)
+   :paren-pairs '((#\( . #\))
+                  (#\[ . #\])
+                  (#\{ . #\}))
+   :string-quote-chars '(#\")
+   :escape-chars '(#\\)
+   :fence-chars '(#\|)
+   :expr-prefix-chars '(#\' #\, #\@ #\# #\`)
+   :expr-prefix-forward-function 'skip-expr-prefix-forward
+   :expr-prefix-backward-function 'skip-expr-prefix-backward))
+
 
 (defun prompt-for-character (prompt &key (gravity *default-prompt-gravity*))
   (%prompt-for-character prompt :gravity gravity))
@@ -82,26 +120,7 @@
 
 (defun prompt-for-file (prompt &key directory (default (buffer-directory)) existing
                                     (gravity *default-prompt-gravity*))
-  (let ((result
-          (prompt-for-string (if default
-                                 (format nil "~a(~a) " prompt default)
-                                 prompt)
-                             :initial-value (when directory (princ-to-string directory))
-                             :completion-function
-                             (when *prompt-file-completion-function*
-                               (lambda (str)
-                                 (funcall *prompt-file-completion-function*
-                                          (if (alexandria:emptyp str)
-                                              "./"
-                                              str)
-                                          (or directory
-                                              (namestring (user-homedir-pathname))))))
-                             :test-function (and existing #'virtual-probe-file)
-                             :history-symbol 'prompt-for-file
-                             :gravity gravity)))
-    (if (string= result "")
-        default
-        result)))
+  (%prompt-for-file prompt directory default existing gravity))
 
 (defun prompt-for-directory (prompt &rest args
                                     &key directory (default (buffer-directory)) existing
@@ -124,6 +143,21 @@
     (if (string= result "")
         default
         result)))
+
+(defun completion-command (str)
+  (sort
+   (if (find #\- str)
+       (completion-hyphen str (all-command-names))
+       (completion str (all-command-names)))
+   #'string-lessp))
+
+(defun prompt-for-command (prompt)
+  (prompt-for-string
+   prompt
+   :completion-function *prompt-command-completion-function*
+   :test-function 'exist-command-p
+   :history-symbol 'mh-execute-command
+   :syntax-table *prompt-syntax-table*))
 
 (defun prompt-for-library (prompt &key history-symbol)
   (macrolet ((ql-symbol-value (symbol)

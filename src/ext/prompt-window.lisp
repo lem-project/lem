@@ -5,13 +5,15 @@
   #+sbcl
   (:lock t)
   (:export :prompt-attribute
-           :*prompt-completion-window-shape*))
+           :*prompt-completion-window-shape*
+           :current-prompt-window))
 (in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)
 (defconstant +min-width+   10)
 (defconstant +min-height+  1)
 
+(defvar *fill-width* nil)
 (defvar *history-table* (make-hash-table))
 
 (defvar *special-paths*
@@ -129,6 +131,7 @@
       (error 'execute-condition :input input))))
 
 (defvar *prompt-completion-window-shape* :drop-curtain)
+(defvar *prompt-completion-window-gravity* :horizontally-adjacent-window)
 
 (define-command prompt-completion () ()
   (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
@@ -149,7 +152,7 @@
                            (lem/completion-mode:completion-item
                             item))
                    :collect :it))))
-       :style `(:gravity :horizontally-adjacent-window
+       :style `(:gravity ,*prompt-completion-window-gravity*
                 :offset-y -1
                 :shape ,*prompt-completion-window-shape*)))))
 
@@ -165,7 +168,9 @@
         (replace-if-history-exists #'lem/common/history:restore-edit-string))))
 
 (defun min-width ()
-  +min-width+)
+  (if *fill-width*
+      (1- (display-width))
+      +min-width+))
 
 (defun compute-window-rectangle (buffer &key gravity source-window)
   (destructuring-bind (width height) (lem/popup-window::compute-buffer-size buffer)
@@ -211,11 +216,11 @@
                                   :source-window (prompt-window-caller-of-prompt-window window))
       (unless (and (= x (window-x window))
                    (= y (window-y window)))
-        (lem-core::window-set-pos window x y))
+        (window-set-pos window x y))
       (let ((width (max width child-width)))
         (unless (and (= width (window-width window))
                      (= height (window-height window)))
-          (lem-core::window-set-size window width height))))))
+          (window-set-size window width height))))))
 
 (defun initialize-prompt-buffer (buffer)
   (let ((*inhibit-read-only* t)
@@ -316,6 +321,7 @@
                             (lambda ()
                               (when (typep (this-command) 'lem:editable-advice)
                                 (funcall edit-callback (get-input-string))))))
+                (run-hooks *prompt-after-activate-hook*)
                 (with-special-keymap (special-keymap)
                   (if syntax-table
                       (with-current-syntax syntax-table
@@ -351,15 +357,15 @@
     (command-loop)))
 
 (defmethod lem-core::%prompt-for-line (prompt-string
-                                           &key initial-value
-                                                completion-function
-                                                test-function
-                                                history-symbol
-                                                (syntax-table (current-syntax))
-                                                gravity
-                                                edit-callback
-                                                special-keymap
-                                                (use-border t))
+                                       &key initial-value
+                                            completion-function
+                                            test-function
+                                            history-symbol
+                                            (syntax-table (current-syntax))
+                                            gravity
+                                            edit-callback
+                                            special-keymap
+                                            (use-border t))
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string initial-value
                   :parameters (make-instance 'prompt-parameters
@@ -367,7 +373,7 @@
                                              :existing-test-function test-function
                                              :caller-of-prompt-window (current-window)
                                              :history (get-history history-symbol)
-                                             :gravity (or gravity :center)
+                                             :gravity (or gravity lem-core::*default-prompt-gravity*)
                                              :use-border use-border)
                   :syntax-table syntax-table
                   :body-function #'prompt-for-line-command-loop
@@ -383,15 +389,15 @@
 (defun normalize-path-marker (path marker replace)
   (let ((split (str:split marker path)))
     (if (= 1 (length split))
-        path 
+        path
         (concatenate 'string replace (car (last split))))))
 
 (defun normalize-path-input (path)
   (reduce (lambda (ag pair) (normalize-path-marker ag (car pair) (cdr pair)))
-          *special-paths* 
+          *special-paths*
           :initial-value path))
 
-
+
 (defun prompt-file-completion (string directory &key directory-only)
   (replace-prompt-input (normalize-path-input string))
   (flet ((move-to-file-start (point)
@@ -424,5 +430,77 @@
                     :start s
                     :end (line-end e)))))
 
+(defun collect-command-all-keybindings (buffer command)
+  (let ((command-name (command-name command)))
+    (flet ((find-keybindings (keymap)
+             (alexandria:when-let (keybindings (collect-command-keybindings command-name keymap))
+               (mapcar (lambda (keybinding)
+                         (format nil "~{~A~^ ~}" keybinding))
+                       keybindings))))
+      (format nil "~{~A~^, ~}"
+              (append (find-keybindings (mode-keymap (buffer-major-mode buffer)))
+                      (loop :for mode :in (buffer-minor-modes buffer)
+                            :for keymap := (mode-keymap mode)
+                            :when keymap
+                            :append (find-keybindings keymap))
+                      (find-keybindings *global-keymap*))))))
+
+(defun prompt-command-completion (string)
+  (let ((items (loop :for name :in (all-command-names)
+                     :collect (lem/completion-mode:make-completion-item
+                               :label name
+                               :detail (collect-command-all-keybindings
+                                        (current-buffer)
+                                        (find-command name))))))
+    (sort
+     (if (find #\- string)
+         (completion-hyphen string
+                            items
+                            :key #'lem/completion-mode:completion-item-label)
+         (completion string
+                     items
+                     :key #'lem/completion-mode:completion-item-label))
+     #'string-lessp
+     :key #'lem/completion-mode:completion-item-label)))
+
 (setf *prompt-file-completion-function* 'prompt-file-completion)
 (setf *prompt-buffer-completion-function* 'prompt-buffer-completion)
+(setf *prompt-command-completion-function* 'prompt-command-completion)
+
+(defvar *file-prompt-keymap* (make-keymap :name '*file-mode-prompt-keymap*))
+(define-key *file-prompt-keymap* "C-Backspace" 'file-prompt-parent-folder)
+
+(define-command file-prompt-parent-folder () ()
+  "In file prompt jump the parent folder and show the completion results for that folder."
+  (when (char= (character-at (current-point) -1) #\/)
+      (delete-previous-char))
+  (with-point ((end (current-point)))
+    (let ((point (search-backward (current-point) "/")))
+      (when point
+        (lem:character-offset point 1)
+        (with-point ((start (current-point)))
+          (delete-between-points start end)))))
+  (lem/completion-mode:completion-refresh))
+
+(defmethod lem-core::%prompt-for-file (prompt directory default existing gravity)
+  (let ((result
+          (lem-core::%prompt-for-line (if default
+                                (format nil "~a(~a) " prompt default)
+                                prompt)
+                            :initial-value (when directory (princ-to-string directory))
+                            :completion-function
+                            (when *prompt-file-completion-function*
+                              (lambda (str)
+                                (funcall *prompt-file-completion-function*
+                                         (if (alexandria:emptyp str)
+                                             "./"
+                                             str)
+                                         (or directory
+                                             (namestring (user-homedir-pathname))))))
+                            :test-function (and existing #'virtual-probe-file)
+                            :history-symbol 'prompt-for-file
+                            :gravity gravity
+                            :special-keymap *file-prompt-keymap*)))
+    (if (string= result "")
+        default
+        result)))

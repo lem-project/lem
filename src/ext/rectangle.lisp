@@ -126,7 +126,7 @@
   (let ((rectangle-command-name (alexandria:symbolicate '#:rectangle- name)))
     `(progn
        (define-key *rectangle-mark-mode-keymap* ',name ',rectangle-command-name)
-       (define-command ,rectangle-command-name (arg) ("p")
+       (define-command ,rectangle-command-name (arg) (:universal)
          (declare (ignorable arg))
          (,name ,@args)
          (update-overlay)))))

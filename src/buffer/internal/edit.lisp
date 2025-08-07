@@ -1,36 +1,51 @@
 (in-package :lem/buffer/internal)
 
-(defun make-edit (kind linum charpos value)
-  (list kind linum charpos value))
+(deftype edit-kind ()
+  '(member :insert-string :delete-string))
 
-(defun %apply-edit (point kind linum charpos value)
-  (ecase kind
-    ((:insert-char)
-     (move-to-line point linum)
-     (line-offset point 0 charpos)
-     (insert-char/point point value))
+(defstruct (edit (:constructor make-edit (kind position string)))
+  (kind (alexandria:required-argument :kind)
+        :type edit-kind
+        :read-only t)
+  (position (alexandria:required-argument :position)
+            :type (integer 1 *))
+  (string (alexandria:required-argument :string)
+          :type string
+          :read-only t))
+
+(defun apply-edit (point edit)
+  (ecase (edit-kind edit)
     ((:insert-string)
-     (move-to-line point linum)
-     (line-offset point 0 charpos)
+     (move-to-position point (edit-position edit))
      (with-point ((p point))
-       (insert-string/point point value)
+       (insert-string/point point (edit-string edit))
        (move-point point p)))
-    ((:delete-char)
-     (move-to-line point linum)
-     (line-offset point 0 charpos)
-     (delete-char/point point value))))
+    ((:delete-string)
+     (move-to-position point (edit-position edit))
+     (delete-char/point point (length (edit-string edit))))))
 
-(defun apply-inverse-edit (edit point)
-  (destructuring-bind (kind linum charpos value) edit
-    (ecase kind
-      ((:insert-char)
-       (%apply-edit point :delete-char linum charpos 1))
-      ((:insert-string)
-       (%apply-edit point :delete-char linum charpos (length value)))
-      ((:delete-char)
-       (let ((charp (= 1 (length value))))
-         (%apply-edit point
-                      (if charp :insert-char :insert-string)
-                      linum
-                      charpos
-                      (if charp (aref value 0) value)))))))
+(defun apply-inverse-edit (point edit)
+  (ecase (edit-kind edit)
+    ((:insert-string)
+     (apply-edit point
+                 (make-edit :delete-string
+                            (edit-position edit)
+                            (edit-string edit))))
+    ((:delete-string)
+     (apply-edit point
+                 (make-edit :insert-string
+                            (edit-position edit)
+                            (edit-string edit))))))
+
+(defun compute-edit-offset (dest src)
+  (ecase (edit-kind src)
+    ((:insert-string)
+     (when (<= (edit-position src) (edit-position dest))
+       (incf (edit-position dest) (length (edit-string src)))))
+    ((:delete-string)
+     (when (< (edit-position src)
+              (edit-position dest))
+       (setf (edit-position dest)
+             (max 1 (- (edit-position dest) (length (edit-string src)))))
+       (when (< (edit-position dest) (edit-position src))
+         (setf (edit-position dest) (edit-position src)))))))

@@ -4,8 +4,16 @@
 Done:
 
 - start a rebase process from the commit at point,
+  - abort the ongoing rebase:
+   - with C-c C-k in the interactive buffer
+   - or "r a" (M-x rebase-abort), which works when the rebase was started by another process.
+  - continue the ongoing rebase:
+   - with C-c C-c in the interactive buffer
+   - or "r c" (M-x rebase-continue)
+  - skip it with "r s"
 - open a rebase buffer and press p, f… to pick, fixup… the commit at point.
 - validate it, stop it.
+- show in legit-status when a rebase is in process.
 
 Nice to have:
 
@@ -16,8 +24,7 @@ Nice to have:
 TODOs:
 
 - when (e)dit or (r)eword are used, we need to handle another operation.
-- show in legit-status when a rebase is in process.
-- add commands to continue or abort the rebase in process.
+- show rebase conflicts: when a rebase is interrupted with conflicts we don't see them in legit-status.
 
 and
 
@@ -33,18 +40,23 @@ and
      :keymap *legit-rebase-mode-keymap*)
   (setf (variable-value 'enable-syntax-highlight) t))
 
+(define-file-associations legit-rebase-mode
+  ((:file-namestring "git-rebase-todo")
+   (:file-namestring "git-rebase-todo.backup")))
+
+
 ;; Use commits with a keypress:
-(define-key *legit-rebase-mode-keymap* "p" 'rebase-pick)
-(define-key *legit-rebase-mode-keymap* "r" 'rebase-reword)
-(define-key *legit-rebase-mode-keymap* "e" 'rebase-edit)
-(define-key *legit-rebase-mode-keymap* "s" 'rebase-squash)
-(define-key *legit-rebase-mode-keymap* "f" 'rebase-fixup)
-(define-key *legit-rebase-mode-keymap* "x" 'rebase-exec)
-(define-key *legit-rebase-mode-keymap* "b" 'rebase-break)
-(define-key *legit-rebase-mode-keymap* "d" 'rebase-drop)
-(define-key *legit-rebase-mode-keymap* "l" 'rebase-label)
-(define-key *legit-rebase-mode-keymap* "t" 'rebase-reset)
-(define-key *legit-rebase-mode-keymap* "m" 'rebase-merge)
+(define-key *legit-rebase-mode-keymap* "p" 'rebase-mark-line-pick)
+(define-key *legit-rebase-mode-keymap* "r" 'rebase-mark-line-reword)
+(define-key *legit-rebase-mode-keymap* "e" 'rebase-mark-line-edit)
+(define-key *legit-rebase-mode-keymap* "s" 'rebase-mark-line-squash)
+(define-key *legit-rebase-mode-keymap* "f" 'rebase-mark-line-fixup)
+(define-key *legit-rebase-mode-keymap* "x" 'rebase-mark-line-exec)
+(define-key *legit-rebase-mode-keymap* "b" 'rebase-mark-line-break)
+(define-key *legit-rebase-mode-keymap* "d" 'rebase-mark-line-drop)
+(define-key *legit-rebase-mode-keymap* "l" 'rebase-mark-line-label)
+(define-key *legit-rebase-mode-keymap* "t" 'rebase-mark-line-reset)
+(define-key *legit-rebase-mode-keymap* "m" 'rebase-mark-line-merge)
 
 ;; Validate, abort.
 (define-key *legit-rebase-mode-keymap* "C-c C-c" 'rebase-continue)
@@ -64,18 +76,24 @@ and
 (define-key *legit-rebase-mode-keymap* "?" 'rebase-help)
 (define-key *legit-rebase-mode-keymap* "C-x ?" 'rebase-help)
 
-(define-command rebase-continue () ()
-  (run-function #'lem/porcelain::rebase-continue)
-  (kill-buffer "git-rebase-todo"))
-
 (define-command rebase-abort () ()
-  (run-function #'lem/porcelain::rebase-kill)
-  (kill-buffer "git-rebase-todo"))
+  (with-current-project (vcs)
+    (run-function (lambda () (lem/porcelain:rebase-abort vcs)))
+    (when (get-buffer "git-rebase-todo")
+      (kill-buffer "git-rebase-todo"))
+    (message "rebase aborted.")))
 
-(define-command rebase-abort-yes-or-no () ()
-  ;; TODO: prompt for confirmation.
-  (run-function #'lem/porcelain::rebase-kill)
-  (kill-buffer "git-rebase-todo"))
+(define-command rebase-continue () ()
+  (with-current-project (vcs)
+    (run-function (lambda () (lem/porcelain:rebase-continue vcs)))
+    (when (get-buffer "git-rebase-todo")
+      (kill-buffer "git-rebase-todo"))))
+
+(define-command rebase-skip () ()
+  (with-current-project (vcs)
+    (run-function (lambda () (lem/porcelain:rebase-skip vcs)))
+    (when (get-buffer "git-rebase-todo")
+      (kill-buffer "git-rebase-todo"))))
 
 (defun %rebase-change-command (command)
   "Insert this command (string, such as \"fixup\") at the beginning of this line."
@@ -86,37 +104,37 @@ and
     (save-buffer (current-buffer)))
   (move-to-next-virtual-line (current-point)))
 
-(define-command rebase-pick () ()
+(define-command rebase-mark-line-pick () ()
   (%rebase-change-command "pick"))
 
-(define-command rebase-reword () ()
+(define-command rebase-mark-line-reword () ()
   (%rebase-change-command "reword"))
 
-(define-command rebase-edit () ()
+(define-command rebase-mark-line-edit () ()
   (%rebase-change-command "edit"))
 
-(define-command rebase-squash () ()
+(define-command rebase-mark-line-squash () ()
   (%rebase-change-command "squash"))
 
-(define-command rebase-fixup () ()
+(define-command rebase-mark-line-fixup () ()
   (%rebase-change-command "fixup"))
 
-(define-command rebase-exec () ()
+(define-command rebase-mark-line-exec () ()
   (%rebase-change-command "exec"))
 
-(define-command rebase-break () ()
+(define-command rebase-mark-line-break () ()
   (%rebase-change-command "break"))
 
-(define-command rebase-drop () ()
+(define-command rebase-mark-line-drop () ()
   (%rebase-change-command "drop"))
 
-(define-command rebase-label () ()
+(define-command rebase-mark-line-label () ()
   (%rebase-change-command "label"))
 
-(define-command rebase-reset () ()
+(define-command rebase-mark-line-reset () ()
   (%rebase-change-command "reset"))
 
-(define-command rebase-merge () ()
+(define-command rebase-mark-line-merge () ()
   (%rebase-change-command "merge"))
 
 (define-command rebase-help () ()
@@ -128,6 +146,7 @@ and
     (format s "(p)ick commit, (f)ixup... WARN: other commands like reword are not implemented.")
     (format s "~%")
     (format s "Validate: C-Return, C-c C-c~&")
+    (format s "Abort: C-c C-k~&")
     (format s "Stop and quit: Escape, M-q.~&")
     (format s "Navigate: C-n and C-p.~&")
     (format s "~%")

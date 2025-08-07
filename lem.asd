@@ -15,7 +15,7 @@
     (set (intern (string :*local-project-directories*) :ql) local-project-dir)))
 
 (defsystem "lem"
-  :version "2.1.0"
+  :version "2.3.0"
   :depends-on ("iterate"
                "closer-mop"
                "trivia"
@@ -35,7 +35,8 @@
                ;; "lem-encodings"
                #+sbcl
                sb-concurrency
-               "lem-mailbox")
+               "lem-mailbox"
+               "lem-extension-manager")
   :pathname "src"
   :serial t
   :components ((:module "common"
@@ -48,6 +49,7 @@
                              (:file "queue")
                              (:file "hooks")
                              (:file "var")
+                             (:file "socket")
                              (:file "utils")
                              (:module "character"
                               :serial t
@@ -72,6 +74,7 @@
                                            (:file "point")
                                            (:file "edit")
                                            (:file "mark")
+                                           (:file "undo")
                                            (:file "buffer-insert")
                                            (:file "basic")
                                            (:file "syntax-predicates")
@@ -85,7 +88,7 @@
                              (:file "file")
                              (:file "indent")))
                (:file "internal-packages")
-               (:file "quicklisp-utils")
+               (:file "system-utils")
                (:file "version")
                (:file "config")
                (:file "errors")
@@ -96,6 +99,7 @@
                (:file "clipboard")
                (:file "save-excursion")
                (:file "killring")
+               (:file "named-point")
                (:file "file")
                (:file "frame")
                (:file "echo")
@@ -131,6 +135,7 @@
                (:file "command-advices")
                (:file "interface")
                (:file "highlight-line")
+               (:file "html-buffer")
                (:file "site-init")
                (:file "lem")
 
@@ -192,7 +197,15 @@
                              (:file "link")
                              (:file "thingatp")
                              (:file "gtags")
-                             (:file "directory-mode")
+                             (:module "directory-mode"
+                              :serial t
+                              :components ((:file "file")
+                                           (:file "attributes")
+                                           (:file "mode")
+                                           (:file "internal")
+                                           (:file "commands")
+                                           (:file "keybinds")
+                                           (:file "main")))
                              (:file "abbrev")
                              (:file "rectangle")
                              (:file "auto-save")
@@ -201,7 +214,13 @@
                              (:file "filer")
                              (:file "deepl")
                              (:file "themes")
-                             (:file "detective")))))
+                             (:file "detective")
+                             (:file "extension-commands" :if-feature :quicklisp)
+                             (:file "read-only-sources")))
+
+               (:module "ui"
+                :serial t
+                :components ((:file "theme-list")))))
 
 (defsystem "lem/extensions"
   :depends-on (#+sbcl
@@ -220,8 +239,9 @@
                "lem-html-mode"
                "lem-python-mode"
                "lem-posix-shell-mode"
-               "lem-markdown-mode"
                "lem-js-mode"
+               "lem-vue-mode"
+               "lem-typescript-mode"
                "lem-json-mode"
                "lem-css-mode"
                "lem-rust-mode"
@@ -247,21 +267,19 @@
                "lem-base16-themes"
                #+sbcl
                "lem-elixir-mode"
+               "lem-ruby-mode"
+               "lem-erlang-mode"
                "lem-documentation-mode"
                "lem-elisp-mode"
-               "lem-color-preview"))
-
-(defsystem "lem/legit"
-  :serial t
-  :depends-on ("lem")
-  :components ((:module "extensions/legit"
-                :components ((:file "porcelain")
-                             (:file "peek-legit")
-                             (:file "legit")
-                             (:file "legit-rebase")
-                             (:file "legit-commit")))
-               (:module "scripts"
-                :components ((:static-file "dumbrebaseeditor.sh")))))
+               "lem-terraform-mode"
+               "lem-nix-mode"
+               "lem-markdown-mode"
+               "lem-color-preview"
+               "lem-lua-mode"
+               "lem-terminal"
+               "lem-legit"
+               "lem-dashboard"
+               "lem-copilot"))
 
 (defsystem "lem/executable"
   :build-operation program-op

@@ -1,6 +1,6 @@
 (in-package :lem-core)
 
-(defvar *set-location-hook* '())
+(defvar *set-location-hook* '((push-buffer-point . 0)))
 (defvar *before-init-hook* '())
 (defvar *after-init-hook* '())
 (defvar *splash-function* nil)
@@ -10,14 +10,15 @@
 (defvar *syntax-scan-window-recursive-p* nil)
 (defvar *help* "Usage: lem [ OPTION-OR-FILENAME ] ...
 Options:
-        -q, --no-init-file      do not load ~/.lem/init.lisp
-        --slime PORT            start slime on PORT
-        --eval EXPR             evaluate lisp expression EXPR
-        --debug                 enable debugger
-        --log-filename FILENAME file name of the log file
-        --kill                  immediately exit
-        -v, --version           print the version number and exit
-        -h, --help              display this help and exit"
+        -q, --no-init-file        do not load ~/.lem/init.lisp
+        --slime PORT              start slime on PORT
+        --eval EXPR               evaluate lisp expression EXPR
+        --debug                   enable debugger
+        --log-filename FILENAME   file name of the log file
+        --kill                    immediately exit
+        -i, --interface INTERFACE interface to use, either sdl2 or ncurses
+        -v, --version             print the version number and exit
+        -h, --help                display this help and exit"
 "Help output for cli")
 
 (defun syntax-scan-window (window)
@@ -89,7 +90,8 @@ Options:
   args
   (debug nil)
   (log-filename nil)
-  (no-init-file nil))
+  (no-init-file nil)
+  (interface nil))
 
 (defun parse-args (args)
   (let ((parsed-args
@@ -122,6 +124,13 @@ Options:
                                      (error "Please, specify a filename to log to."))
                                    (setf (command-line-arguments-log-filename parsed-args)
                                          filename)))
+                                ((member arg '("-i" "--interface") :test #'equal)
+                                 (let ((interface (pop args)))
+                                   (if (and interface (plusp (length interface)))
+                                       (setf (command-line-arguments-interface parsed-args)
+                                             (alexandria:make-keyword (string-upcase interface)))
+                                       (write-line "Please specify an interface to use."
+                                                   *error-output*))))
                                 ((equal arg "--kill")
                                  `(uiop:quit))
                                 ((member arg '("-v" "--version") :test #'equal)
@@ -204,7 +213,8 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
 (defun init (args)
   (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
                  *original-home*)
-    (init-quicklisp (merge-pathnames "quicklisp/" (lem-home))))
+    (when (uiop:featurep :quicklisp)
+      (init-quicklisp (merge-pathnames "quicklisp/" (lem-home)))))
   (run-hooks *before-init-hook*)
   (unless (command-line-arguments-no-init-file args)
     (load-init-file))
@@ -212,7 +222,7 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
   (apply-args args))
 
 (defun run-editor-thread (initialize args finalize)
-  (bt:make-thread
+  (bt2:make-thread
    (lambda ()
      (when initialize (funcall initialize))
      (unwind-protect
@@ -228,9 +238,9 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
    :name "editor"))
 
 (defun find-editor-thread ()
-  (find "editor" (bt:all-threads)
+  (find "editor" (bt2:all-threads)
         :test #'equal
-        :key #'bt:thread-name))
+        :key #'bt2:thread-name))
 
 (defun lem (&rest args)
 
@@ -257,9 +267,16 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
   (cond (*in-the-editor*
          (apply-args args))
         (t
-         (let ((implementation (get-default-implementation :errorp nil)))
+         (let ((implementation
+                (get-default-implementation
+                 :errorp nil
+                 :implementation
+                 (or (command-line-arguments-interface args)
+                     (if (interactive-stream-p *standard-input*)
+                         :ncurses
+                         :sdl2)))))
            (unless implementation
-             (ql:quickload :lem-ncurses)
+             (maybe-load-systems :lem-ncurses)
              (setf implementation (get-default-implementation)))
            (invoke-frontend
             (lambda (&optional initialize finalize)
@@ -276,3 +293,13 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
               (lem))
           t)
       sb-ext:*ed-functions*)
+
+
+(add-hook *after-init-hook*
+          (lambda ()
+            (when *editor-warnings*
+              (let ((buffer (make-buffer "*EDITOR WARNINGS*")))
+                (dolist (warning *editor-warnings*)
+                  (insert-string (buffer-point buffer) warning)
+                  (insert-character (buffer-point buffer) #\newline))
+                (pop-to-buffer buffer)))))

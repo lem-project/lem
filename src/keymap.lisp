@@ -35,6 +35,14 @@
   (hash-table-p command))
 
 (defun define-key (keymap keyspec command-name)
+  "Bind a command COMMAND-NAME to a KEYSPEC in a KEYMAP.
+
+Global bindings use `*global-keymap*' as KEYMAP argument.
+
+If KEYSPEC argument is a `string', valid prefixes are:
+H (Hyper), S (Super), M (Meta), C (Ctrl), Shift
+
+Example: (define-key *global-keymap* \"C-'\" 'list-modes)"
   (check-type keyspec (or symbol string))
   (check-type command-name (or symbol keymap))
   (typecase keyspec
@@ -47,10 +55,10 @@
   (values))
 
 (defmacro define-keys (keymap &body bindings)
-  `(progn ,@(mapcar 
+  `(progn ,@(mapcar
              (lambda (binding)
                `(define-key ,keymap
-                  ,(first binding) 
+                  ,(first binding)
                   ,(second binding)))
              bindings)))
 
@@ -68,18 +76,52 @@
                            (setf (gethash k table) new-table)
                            (setf table new-table))))))))
 
+(defun undefine-key (keymap keyspec)
+  "Remove a binding for a KEYSPEC in a KEYMAP.
+
+If KEYSPEC argument is a `string', valid prefixes are:
+H (Hyper), S (Super), M (Meta), C (Ctrl), Shift
+
+Example: (undefine-key *paredit-mode-keymap* \"C-k\")"
+  (check-type keyspec (or symbol string))
+  (typecase keyspec
+    (symbol
+     (remhash keyspec (keymap-function-table keymap)))
+    (string
+     (let ((keys (parse-keyspec keyspec)))
+       (undefine-key-internal keymap keys))))
+  (values))
+
+(defmacro undefine-keys (keymap &body bindings)
+  `(progn ,@(mapcar
+             (lambda (binding)
+               `(undefine-key ,keymap
+                              ,(first binding)))
+             bindings)))
+
+(defun undefine-key-internal (keymap keys)
+  (loop :with table := (keymap-table keymap)
+        :for rest :on (uiop:ensure-list keys)
+        :for k := (car rest)
+        :do (cond ((null (cdr rest))
+                   (remhash k table))
+                  (t
+                   (let ((next (gethash k table)))
+                     (when (prefix-command-p next)
+                       (setf table next)))))))
+
 (defun parse-keyspec (string)
   (labels ((fail ()
              (editor-error "parse error: ~A" string))
            (parse (str)
-             (loop :with ctrl :and meta :and super :and hypher :and shift
+             (loop :with ctrl :and meta :and super :and hyper :and shift
                    :do (cond
                          ((ppcre:scan "^[cmshCMSH]-" str)
                           (ecase (char-downcase (char str 0))
                             ((#\c) (setf ctrl t))
                             ((#\m) (setf meta t))
                             ((#\s) (setf super t))
-                            ((#\h) (setf hypher t)))
+                            ((#\h) (setf hyper t)))
                           (setf str (subseq str 2)))
                          ((ppcre:scan "^[sS]hift-" str)
                           (setf shift t)
@@ -90,16 +132,10 @@
                                (not (named-key-sym-p str)))
                           (fail))
                          (t
-                          (cond ((and ctrl (string= str "i"))
-                                 (setf ctrl nil
-                                       str "Tab"))
-                                ((and ctrl (string= str "m"))
-                                 (setf ctrl nil
-                                       str "Return")))
                           (return (make-key :ctrl ctrl
                                             :meta meta
                                             :super super
-                                            :hypher hypher
+                                            :hyper hyper
                                             :shift shift
                                             :sym (or (named-key-sym-p str)
                                                      str))))))))
@@ -161,6 +197,9 @@
   (let* ((keymaps (compute-keymaps (current-global-mode)))
          (keymaps
            (append keymaps
+                   (alexandria:when-let* ((mode (major-mode-at-point (current-point)))
+                                          (keymap (mode-keymap mode)))
+                     (list keymap))
                    (loop :for mode :in (all-active-modes (current-buffer))
                          :when (mode-keymap mode)
                          :collect :it))))
@@ -168,10 +207,9 @@
       (push *special-keymap* keymaps))
     (delete-duplicates (nreverse keymaps))))
 
-(defun lookup-keybind (key)
+(defun lookup-keybind (key &key (keymaps (all-keymaps)))
   (let (cmd)
-    (loop :with buffer := (current-buffer)
-          :for keymap :in (all-keymaps)
+    (loop :for keymap :in keymaps
           :do (setf cmd (keymap-find-keybind keymap key cmd)))
     cmd))
 

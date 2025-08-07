@@ -88,7 +88,15 @@
     :accessor buffer-encoding)
    (last-write-date
     :initform nil
-    :accessor buffer-last-write-date)))
+    :accessor buffer-last-write-date)
+   (points-ring
+    :initform (lem/common/ring::make-ring 16)
+    :accessor buffer-points-ring)))
+
+(defvar *buffer-mark-activate-hook* '()
+  "Hook run when mark is activated.")
+(defvar *buffer-mark-deactivate-hook* '()
+  "Hook run when mark is inactivated.")
 
 (defclass text-buffer (buffer)
   ())
@@ -105,10 +113,13 @@
   "set default buffer encoding to utf-8"
   (setf (buffer-encoding buffer) (encoding :utf-8 :lf)))
 
-(setf (documentation 'buffer-point 'function) "`buffer`の現在の`point`を返します。")
-(setf (documentation 'buffer-mark 'function) "`buffer`の現在のマークの`point`を返します。")
-(setf (documentation 'buffer-start-point 'function) "`buffer`の最初の位置の`point`を返します。")
-(setf (documentation 'buffer-end-point 'function) "`buffer`の最後の位置の`point`を返します。")
+(setf (documentation 'buffer-point 'function) "Returns the current `point` of `buffer`.")
+(setf (documentation 'buffer-mark 'function)
+      "Returns the `point` of the current mark in the `buffer`")
+(setf (documentation 'buffer-start-point 'function)
+      "Returns the `point` at the start of the `buffer`.")
+(setf (documentation 'buffer-end-point 'function)
+      "Returns the `point` at the end of the `buffer`.")
 
 (defvar *current-buffer*)
 
@@ -116,14 +127,14 @@
   (make-buffer +primordial-buffer-name+))
 
 (defun current-buffer ()
-  "現在の`buffer`を返します。"
+  "Return the current buffer."
   (unless (boundp '*current-buffer*)
     (setf *current-buffer*
           (primordial-buffer)))
   *current-buffer*)
 
 (defun (setf current-buffer) (buffer)
-  "現在の`buffer`を変更します。"
+  "Change the current buffer."
   (check-type buffer buffer)
   (setf *current-buffer* buffer))
 
@@ -161,7 +172,7 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
                                :%enable-undo-p enable-undo-p
                                :temporary temporary
                                :syntax-table syntax-table)))
-    (let* ((temp-point (make-point buffer 1 (make-empty-line) 0 :kind :temporary))
+    (let* ((temp-point (make-point buffer 1 (line:make-empty-line) 0 :kind :temporary))
            (start-point (make-buffer-start-point temp-point))
            (end-point (make-buffer-end-point temp-point))
            (point (make-buffer-point temp-point)))
@@ -172,11 +183,11 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
     buffer))
 
 (defun bufferp (x)
-  "`x`が`buffer`ならT、それ以外ならNILを返します。"
+  "Return T if 'x' is a buffer, NIL otherwise."
   (typep x 'buffer))
 
 (defun buffer-modified-p (&optional (buffer (current-buffer)))
-  "`buffer`が変更されていたらT、それ以外ならNILを返します。"
+  "Return T if 'buffer' has been modified, NIL otherwise."
   (/= 0 (buffer-%modified-p buffer)))
 
 (defmethod print-object ((buffer buffer) stream)
@@ -201,11 +212,11 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   (null (buffer-point buffer)))
 
 (defun buffer-name (&optional (buffer (current-buffer)))
-  "`buffer`の名前を返します。"
+  "Return the name of 'buffer'. Defaults to the current buffer."
   (buffer-%name buffer))
 
 (defun buffer-filename (&optional (buffer (current-buffer)))
-  "`buffer`のファイル名を返します。"
+  "Return the filename (string) of 'buffer'. Defaults to the current buffer."
   (alexandria:when-let (filename (buffer-%filename buffer))
     (namestring filename)))
 
@@ -214,7 +225,7 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   (setf (buffer-%filename buffer) filename))
 
 (defun buffer-directory (&optional (buffer (current-buffer)))
-  "`buffer`のディレクトリを返します。"
+  "Return the directory (string) of 'buffer' or the current working directory. Defaults to the current buffer."
   (or (buffer-%directory buffer)
       (namestring (uiop:getcwd))))
 
@@ -226,11 +237,19 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
           (namestring result))))
 
 (defun buffer-unmark (buffer)
-  "`buffer`の変更フラグを下ろします。"
+  "Unflag the change flag of 'buffer'."
   (setf (buffer-%modified-p buffer) 0))
 
+(defun (setf buffer-mark) (point &optional (buffer (current-buffer)))
+  (let ((already-active (buffer-mark-p buffer)))
+    (mark-set-point (buffer-mark-object buffer) point)
+    (unless already-active
+      (run-hooks *buffer-mark-activate-hook* buffer))))
+
 (defun buffer-mark-cancel (buffer)
-  (mark-cancel (buffer-mark-object buffer)))
+  (when (buffer-mark-p buffer)
+    (mark-cancel (buffer-mark-object buffer))
+    (run-hooks *buffer-mark-deactivate-hook* buffer)))
 
 (defun buffer-attributes (buffer)
   (concatenate 'string
@@ -247,7 +266,7 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
     (error 'read-only-error)))
 
 (defun buffer-rename (buffer name)
-  "`buffer`の名前を`name`に変更します。"
+  "Rename 'buffer' to 'name'."
   (check-type buffer buffer)
   (check-type name string)
   (when (get-buffer name)
@@ -262,27 +281,28 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
         where)))
 
 (defun buffer-value (buffer name &optional default)
-  "`buffer`のバッファ変数`name`に束縛されている値を返します。
-`buffer`の型は`buffer`または`point`です。
-変数が設定されていない場合は`default`を返します。"
+  "Return the value bound to the buffer variable 'name' in 'buffer'.
+
+  The type of 'buffer' is 'buffer' or 'point'.
+  If the variable is not set, 'default' is returned."
   (setf buffer (ensure-buffer buffer))
   (multiple-value-bind (value foundp)
       (gethash name (buffer-variables buffer))
     (if foundp value default)))
 
-(defun (setf buffer-value) (value buffer name &optional default)
-  "`buffer`のバッファ変数`name`に`value`を束縛します。
-`buffer`の型は`buffer`または`point`です。"
+(defun (setf buffer-value) (value buffer variable &optional default)
+  "Bind 'value' to the buffer variable 'variable' of 'buffer'.
+  The type of 'buffer' is 'buffer' or 'point'."
   (declare (ignore default))
   (setf buffer (ensure-buffer buffer))
-  (setf (gethash name (buffer-variables buffer)) value))
+  (setf (gethash variable (buffer-variables buffer)) value))
 
-(defun buffer-unbound (buffer name)
-  "`buffer`のバッファ変数`name`の束縛を消します。"
-  (remhash name (buffer-variables buffer)))
+(defun buffer-unbound (buffer variable)
+  "Remove the binding of the buffer variable 'variable' in 'buffer'."
+  (remhash variable (buffer-variables buffer)))
 
 (defun clear-buffer-variables (&key (buffer (current-buffer)))
-  "`buffer`に束縛されているすべてのバッファ変数を消します。"
+  "Clear all buffer variables bound to 'buffer'. Defaults to the current buffer."
   (clrhash (buffer-variables buffer)))
 
 (defun call-with-buffer-point (buffer point function)
@@ -310,7 +330,7 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
 
 ;;;
 (defun buffer-list ()
-  "`buffer`のリストを返します。"
+  "Return a list of buffers."
   (lem/buffer/buffer-list-manager::buffer-list-manager-buffers (buffer-list-manager)))
 
 (defun set-buffer-list (buffer-list)
@@ -335,8 +355,8 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
              (buffer-list)))
 
 (defun get-buffer (buffer-or-name)
-  "`buffer-or-name`がバッファならそのまま返し、
-文字列ならその名前のバッファを返します。"
+  "If 'buffer-or-name' is a buffer, it is returned.
+  If it is a string, it returns the buffer with that name."
   (check-type buffer-or-name (or buffer string))
   (if (bufferp buffer-or-name)
       buffer-or-name
@@ -359,18 +379,18 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   (set-buffer-list (delete buffer (buffer-list))))
 
 (defun delete-buffer (buffer)
-  "`buffer`をバッファのリストから消します。"
+  "Remove 'buffer' from the list of buffers."
   (check-type buffer buffer)
   (delete-buffer-using-manager (buffer-list-manager) buffer))
 
 (defun get-next-buffer (buffer)
-  "バッファリスト内にある`buffer`の次のバッファを返します。"
+  "Return the next buffer of 'buffer' in the buffer list."
   (check-type buffer buffer)
   (let ((rest (member buffer (buffer-list))))
     (cadr rest)))
 
 (defun get-previous-buffer (buffer)
-  "バッファリスト内にある`buffer`の前のバッファを返します。"
+  "Return the buffer before 'buffer' in the buffer list."
   (check-type buffer buffer)
   (loop :for prev := nil :then curr
         :for curr :in (buffer-list)
@@ -386,7 +406,7 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   buffer)
 
 (defun bury-buffer (buffer)
-  "`buffer`をバッファリストの一番最後に移動させ、バッファリストの先頭を返します。"
+  "Move 'buffer' to the end of the buffer list and return the beginning of the buffer list."
   (check-type buffer buffer)
   (unless (buffer-temporary-p buffer)
     (set-buffer-list
@@ -395,8 +415,7 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
   (car (buffer-list)))
 
 (defun get-file-buffer (filename)
-  "`filename`に対応するバッファを返します。
-見つからなければNILを返します。"
+  "Return the buffer corresponding to 'filename' or NIL if not found."
   (check-type filename (or string pathname))
   (dolist (buffer (buffer-list))
     (when (uiop:pathname-equal filename (buffer-filename buffer))

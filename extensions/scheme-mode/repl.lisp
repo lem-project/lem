@@ -1,7 +1,7 @@
 (in-package :lem-scheme-mode)
 
 (define-major-mode scheme-repl-mode scheme-mode
-    (:name "scheme-repl"
+    (:name "Scheme REPL"
      :keymap *scheme-repl-mode-keymap*)
   (cond
     ((or (eq (scheme-repl-type :kind :current) :scheme-process)
@@ -97,7 +97,7 @@
                         '(:string :fence :block-string :block-comment)))
            (>= 0 (pps-state-paren-depth state))))))
 
-(define-command scheme-eval-last-expression (p) ("P")
+(define-command scheme-eval-last-expression (p) (:universal-nil)
   (declare (ignore p))
   (cond
     ((eq (scheme-repl-type) :scheme-slime)
@@ -121,7 +121,7 @@
     (t
      (editor-error "Scheme repl is not available."))))
 
-(define-command scheme-eval-region (start end) ("r")
+(define-command scheme-eval-region (start end) (:region)
   (cond
     ((eq (scheme-repl-type) :scheme-slime)
      (check-connection)
@@ -205,7 +205,7 @@
                  :history-symbol 'mh-scheme-repl-shortcuts)
                 *scheme-repl-shortcuts* :test #'equal))))
 
-(define-command scheme-repl-shortcut (n) ("p")
+(define-command scheme-repl-shortcut (n) (:universal)
   (cond
     ((not *use-scheme-repl-shortcut*)
      (insert-character (current-point) #\,))
@@ -361,7 +361,7 @@
        ;(repl-buffer-width)
        )
     (error () (scheme-slime-quit)
-              (editor-error "No connection for repl. (eval failed)"))))
+      (editor-error "No connection for repl. (eval failed)"))))
 
 (defun repl-read-string (thread tag)
   (unless (repl-buffer) (start-scheme-repl))

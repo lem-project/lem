@@ -4,14 +4,15 @@
            :content-string
            :content-attributes
            :line
-           :line-prev
+           :line-previous
            :line-next
-           :line-str
+           :line-string
            :line-plist
            :line-syntax-context
            :line-points
            :make-line
            :make-empty-line
+           :line-free
            :line-alive-p
            :line-char
            :line-length
@@ -29,54 +30,88 @@
            :line-search-property
            :line-search-property-range
            :line-property-insert-pos
-           :line-property-insert-newline
-           :line-property-delete-pos
-           :line-property-delete-line
+           :line-delete-property-region
            :line-string/attributes
-           :line-free))
+           :line-substring
+           :insert-string
+           :insert-newline
+           :delete-region
+           :merge-with-next-line))
 (in-package :lem/buffer/line)
 
 (defstruct content
   string
   attributes)
 
-(defstruct (line (:constructor %make-line))
-  prev
-  next
-  str
-  plist
-  syntax-context
-  points)
+(defclass line ()
+  ((previous
+    :initarg :previous
+    :initform nil
+    :accessor line-previous)
+   (next
+    :initarg :next
+    :initform nil
+    :accessor line-next)
+   (string
+    :initarg :string
+    :initform nil
+    :reader line-string
+    :writer set-line-string)
+   (plist
+    :initarg :plist
+    :initform nil
+    :accessor line-plist)
+   (syntax-context
+    :initarg :syntax-context
+    :initform nil
+    :accessor line-syntax-context)
+   (points
+    :initarg :points
+    :initform nil
+    :accessor line-points)))
 
 (defmethod print-object ((object line) stream)
   (print-unreadable-object (object stream :identity t :type t)
     (format stream "string: ~S, plist: ~S"
-            (line-str object)
+            (line-string object)
             (line-plist object))))
 
-(defun make-line (prev next str)
-  (let ((line (%make-line :next next
-                          :prev prev
-                          :str str)))
+(defun make-line (previous next string)
+  (let ((line (make-instance 'line
+                             :next next
+                             :previous previous
+                             :string string)))
     (when next
-      (setf (line-prev next) line))
-    (when prev
-      (setf (line-next prev) line))
+      (setf (line-previous next) line))
+    (when previous
+      (setf (line-next previous) line))
     line))
 
 (defun make-empty-line ()
   (make-line nil nil ""))
 
+(defun line-free (line)
+  (when (line-previous line)
+    (setf (line-next (line-previous line))
+          (line-next line)))
+  (when (line-next line)
+    (setf (line-previous (line-next line))
+          (line-previous line)))
+  (setf (line-previous line) nil)
+  (setf (line-next line) nil)
+  (setf (line-points line) nil)
+  (set-line-string nil line))
+
 (defun line-alive-p (line)
-  (not (null (line-str line))))
+  (not (null (line-string line))))
 
 (defun line-char (line i)
   (if (= i (line-length line))
       #\newline
-      (char (line-str line) i)))
+      (char (line-string line) i)))
 
 (defun line-length (line)
-  (length (line-str line)))
+  (length (line-string line)))
 
 (defun remove-elements (elements start end)
   (iter:iter (iter:for (start1 end1 value1) iter:in elements)
@@ -143,7 +178,7 @@
       (f plist2))
     new-plist))
 
-(defun line-merge (curr-line next-line pos)
+(defun line-merge-plist (curr-line next-line pos)
   (setf (line-plist curr-line)
         (merge-plist
          (line-plist curr-line)
@@ -230,45 +265,36 @@
                   (setf (getf new-plist (car plist-rest)) new-values))))
     (setf (line-plist next-line) new-plist)))
 
-(defun line-property-delete-pos (line pos n)
+(defun line-delete-property-region (line start &optional end)
+  (unless end (setf end (line-length line)))
+  (assert (<= start end))
   (loop :for plist-rest :on (line-plist line) :by #'cddr
         :do (setf (cadr plist-rest)
                   (loop :for elt :in (cadr plist-rest)
-                        :for (start end value) := elt
+                        :for (start1 end1 value) := elt
 
-                        :if (<= pos start end (+ pos n -1))
+                        :if (<= start start1 end1 (1- end))
                         :do (progn)
 
-                        :else :if (<= pos (+ pos n) start)
-                        :collect (list (- start n) (- end n) value)
+                        :else :if (<= start end start1)
+                        :collect (list (- start1 (- end start))
+                                       (- end1 (- end start))
+                                       value)
 
-                        :else :if (< pos start (+ pos n))
-                        :collect (list pos (- end n) value)
+                        :else :if (< start start1 end)
+                        :collect (list start (- end1 (- end start)) value)
 
-                        :else :if (<= start pos (+ pos n) end)
-                        :collect (list start (- end n) value)
+                        :else :if (<= start1 start end end1)
+                        :collect (list start1 (- end1 (- end start)) value)
 
-                        :else :if (<= start pos end (+ pos n))
-                        :collect (list start pos value)
+                        :else :if (<= start1 start end1 end)
+                        :collect (list start1 start value)
 
                         :else
                         :collect elt))))
 
-(defun line-property-delete-line (line pos)
-  (loop :for plist-rest :on (line-plist line) :by #'cddr
-        :do (setf (cadr plist-rest)
-                  (loop :for elt :in (cadr plist-rest)
-                        :for (start end value) := elt
-                        :if (<= pos start)
-                        :do (progn)
-                        :else :if (<= pos end)
-                        :collect (list start pos value)
-                        :else
-                        :collect elt
-                        ))))
-
 (defun line-string/attributes (line)
-  (cons (line-str line)
+  (cons (line-string line)
         (alexandria:if-let (sticky-attribute (getf (line-plist line) :sticky-attribute))
           (loop :with attributes := (getf (line-plist line) :attribute)
                 :for (start end value contp) :in sticky-attribute
@@ -276,14 +302,40 @@
                 :finally (return attributes))
           (getf (line-plist line) :attribute))))
 
-(defun line-free (line)
-  (when (line-prev line)
-    (setf (line-next (line-prev line))
-          (line-next line)))
-  (when (line-next line)
-    (setf (line-prev (line-next line))
-          (line-prev line)))
-  (setf (line-prev line) nil
-        (line-next line) nil
-        (line-str line) nil
-        (line-points line) nil))
+(defun line-substring (line &key (start 0) end)
+  (cond ((and (= start 0) (or (null end) (= end (line-length line))))
+         (line-string line))
+        (t
+         (subseq (line-string line) start end))))
+
+(defun insert-string (line string index)
+  (line-property-insert-pos line index (length string))
+  (set-line-string (concatenate 'string
+                                (line-substring line :start 0 :end index)
+                                string
+                                (line-substring line :start index))
+                   line))
+
+(defun insert-newline (line position)
+  (let ((before-string (line-substring line :start 0 :end position))
+        (after-string (line-substring line :start position)))
+    (set-line-string before-string line)
+    (let ((next (make-line line (line-next line) after-string)))
+      (line-property-insert-newline line next position))))
+
+(defun delete-region (line &key start end)
+  (line-delete-property-region line start end)
+  (set-line-string (concatenate 'string
+                                (line-substring line :start 0 :end start)
+                                (line-substring line :start (or end (line-length line))))
+                   line))
+
+(defun merge-with-next-line (line &key (start 0))
+  (assert (line-next line))
+  (line-delete-property-region line start)
+  (line-merge-plist line (line-next line) start)
+  (set-line-string (concatenate 'string
+                                (line-substring line :start 0 :end start)
+                                (line-string (line-next line)))
+                   line)
+  (line-free (line-next line)))

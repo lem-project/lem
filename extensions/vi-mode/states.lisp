@@ -1,17 +1,23 @@
 (defpackage :lem-vi-mode/states
   (:use :cl
         :lem)
+  (:import-from :alexandria
+                :when-let
+                :when-let*)
   (:import-from :lem-vi-mode/core
                 :define-state
                 :*enable-hook*
                 :*disable-hook*
-                :change-state
-                :state-enabled-hook
+                :current-state
+                :buffer-state
+                :state-changed-hook
+                :ensure-state
                 :define-keymap)
   (:import-from :lem-vi-mode/modeline
                 :state-modeline-yellow
                 :state-modeline-aqua
                 :state-modeline-green
+                :state-modeline-orange
                 :change-element-by-state)
   (:export :*normal-keymap*
            :*command-keymap*
@@ -19,16 +25,17 @@
            :*insert-keymap*
            :*inactive-keymap*
            :*operator-keymap*
-           :*replace-state-keymap*
+           :*replace-char-state-keymap*
            :*outer-text-objects-keymap*
            :*inner-text-objects-keymap*
            :normal
            :insert
            :operator
-           :replace-state))
+           :replace-state
+           :replace-char-state))
 (in-package :lem-vi-mode/states)
 
-(defmethod state-enabled-hook :after (state)
+(defmethod state-changed-hook (state) :after
   (change-element-by-state state))
 
 ;;
@@ -40,7 +47,7 @@
 (define-keymap *normal-keymap* :parent *motion-keymap*)
 (define-keymap *insert-keymap*)
 (define-keymap *operator-keymap*)
-(define-keymap *replace-state-keymap* :undef-hook 'return-last-read-char)
+(define-keymap *replace-char-state-keymap* :undef-hook 'return-last-read-char)
 (define-keymap *outer-text-objects-keymap*)
 (define-keymap *inner-text-objects-keymap*)
 
@@ -70,10 +77,18 @@
 (define-state insert () ()
   (:default-initargs
    :name "INSERT"
-   :cursor-color "IndianRed"
    :cursor-type :bar
    :modeline-color 'state-modeline-aqua
    :keymaps (list *insert-keymap*)))
+
+;;
+;; Replace state
+
+(define-state replace-state (insert) ()
+  (:default-initargs
+   :name "REPLACE"
+   :cursor-type :underline
+   :modeline-color 'state-modeline-orange))
 
 ;;
 ;; Ex state
@@ -89,32 +104,53 @@
 
 (define-state operator (normal) ()
   (:default-initargs
+   :cursor-type :underline
    :keymaps (list *operator-keymap* *normal-keymap*)))
 
 ;;
-;; Replace state
+;; Replace char state
 
-(define-state replace-state (normal) ()
+(define-state replace-char-state (normal) ()
   (:default-initargs
    :cursor-type :underline
-   :keymaps (list *replace-state-keymap*)))
+   :keymaps (list *replace-char-state-keymap*)))
 
 ;;
 ;; Setup hooks
 
-(defun enable-normal-state ()
-  (change-state 'normal))
-(defun enable-vi-modeline-state ()
-  (change-state 'vi-modeline))
+(defun enter-prompt ()
+  (setf (buffer-state) 'vi-modeline))
+(defun exit-prompt ()
+  (when-let* ((cb (window-buffer (current-window)))
+              (state (buffer-state cb)))
+   (setf (current-state) state)))
+
+(defun vi-switch-to-buffer (&optional (buffer (current-buffer)))
+  (let ((buffer-state (buffer-state buffer)))
+    (if buffer-state
+        (setf (current-state) buffer-state)
+        (let ((n (ensure-state 'normal)))
+          (setf (buffer-state buffer) n)))))
+
+(defun vi-switch-to-window (old new)
+  (declare (ignore old))
+  (when-let ((state (buffer-state (window-buffer new))))
+    (setf (current-state) state)))
 
 (defun vi-enable-hook ()
-  (change-state 'normal)
-  (add-hook *prompt-activate-hook* 'enable-vi-modeline-state)
-  (add-hook *prompt-deactivate-hook* 'enable-normal-state))
+  (setf *region-end-offset* -1)
+  (setf (current-state) (or (buffer-state (current-buffer)) (ensure-state 'normal)))
+  (add-hook *switch-to-buffer-hook* 'vi-switch-to-buffer)
+  (add-hook *switch-to-window-hook* 'vi-switch-to-window)
+  (add-hook *prompt-after-activate-hook* 'enter-prompt)
+  (add-hook *prompt-deactivate-hook* 'exit-prompt))
 
 (defun vi-disable-hook ()
-  (remove-hook *prompt-activate-hook* 'enable-vi-modeline-state)
-  (remove-hook *prompt-deactivate-hook* 'enable-normal-state))
+  (setf *region-end-offset* 0)
+  (remove-hook *switch-to-buffer-hook* 'vi-switch-to-buffer)
+  (remove-hook *switch-to-window-hook* 'vi-switch-to-window)
+  (remove-hook *prompt-after-activate-hook* 'enter-prompt)
+  (remove-hook *prompt-deactivate-hook* 'exit-prompt))
 
 (add-hook *enable-hook* 'vi-enable-hook)
 (add-hook *disable-hook* 'vi-disable-hook)

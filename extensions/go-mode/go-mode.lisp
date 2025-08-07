@@ -138,12 +138,9 @@
                  (decf indent tab-width)))
              indent)))))
 
-(define-command go-electric-close (n) ("p")
+(define-command go-electric-close (n) (:universal)
   (self-insert n)
   (indent))
-
-(define-command gofmt () ()
-  (filter-buffer "gofmt"))
 
 (define-command godoc (command)
     ((prompt-for-string "godoc "))
@@ -280,10 +277,10 @@
 (defvar *fly-thread* nil)
 
 (defun run-flymake (fn)
-  (when (and *fly-thread* (bt:thread-alive-p *fly-thread*))
-    (bt:destroy-thread *fly-thread*))
+  (when (and *fly-thread* (bt2:thread-alive-p *fly-thread*))
+    (bt2:destroy-thread *fly-thread*))
   (setf *fly-thread*
-        (bt:make-thread fn :name "go-flymake")))
+        (bt2:make-thread fn :name "go-flymake")))
 
 (define-command goflymake (buffer)
     ((current-buffer))

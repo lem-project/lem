@@ -6,10 +6,17 @@
            :*delete-last-buffer*
            :root-p
            :find-root
+           :saved-projects
            :project-find-file
            :project-root-directory
            :project-root
-           :project-kill-buffers)
+           :project-kill-buffers
+           :project-switch
+           :project-save
+           :project-save-prompt
+           :project-unsave)
+  #+sbcl
+  (:lock t)
   (:documentation "Defines utilities to find a project root directory and related user-facing commands: project-find-file, project-kill-buffers, project-switch etc."))
 
 (in-package :lem-core/commands/project)
@@ -129,7 +136,7 @@
         (find-root (parent-directory pathname) :recurse recurse :recursing t)
         pathname)))))
 
-(define-command project-find-file (arg) ("p")
+(define-command project-find-file (arg) (:universal)
   "Open a file, from the list of all files in this project."
   ;; ARG is currently not used, use it when needed.
   (declare (ignorable arg))
@@ -153,7 +160,7 @@
          (root (or project-root cwd)))
     (message "Current project root: ~a" root)))
 
-(define-command project-root-directory (arg) ("p")
+(define-command project-root-directory (arg) (:universal)
   "Open this project's root directory."
   (declare (ignorable arg))
   (let* ((cwd (buffer-directory))
@@ -245,8 +252,10 @@
          ;; Project roots (pathnames) are converted to strings for the
          ;; string completion prompt.
          (input (namestring input)))
-    (lem/common/history:add-history history input :allow-duplicates nil)
-    (lem/common/history:save-file history)))
+    (if (and (lem/common/history:add-history history input :allow-duplicates nil)
+             (lem/common/history:save-file history))
+        (message "Saved project: ~A" input)
+        (message "Failed saving project: ~A" input))))
 
 (defun forget-project (input)
   "Remove this project (string) from the projects' history file.
@@ -262,9 +271,12 @@
   (lem/common/history:history-data-list (history)))
 
 (define-command project-save () ()
-  "Remember the current project for later sessions."
-  (when (remember-project (find-root (buffer-directory)))
-    (message "Project saved.")))
+  "Remember the current project to the projects list."
+  (remember-project (find-root (buffer-directory))))
+
+(define-command project-save-prompt () ()
+  "Prompts for a directory to save to the projects list."
+  (remember-project (prompt-for-directory "Save Project: " :directory (buffer-directory))))
 
 (define-command project-unsave () ()
   "Prompt for a project and remove it from the list of saved projects."
@@ -272,7 +284,7 @@
     (and
      (forget-project choice)
      (lem/common/history:save-file (history))
-     (message "Project removed."))))
+     (message "Project removed: ~A" choice))))
 
 (defun prompt-for-project ()
   "Prompt for a project saved in the projects history."

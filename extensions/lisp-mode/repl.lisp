@@ -6,10 +6,26 @@
 (define-attribute repl-result-attribute
   (t :foreground :base06 :bold t))
 
+(define-attribute warning-attribute
+  (:dark :foreground "yellow")
+  (:light :foreground "orange"))
+
+(defvar *repl-syntax-table* (lem/buffer/syntax-table::copy-syntax-table lem-lisp-syntax:*syntax-table*))
+(set-syntax-parser *repl-syntax-table*
+                   (make-tmlanguage-lisp :extra-patterns
+                                         (list (make-tm-region
+                                                "^WARNING:"
+                                                "$"
+                                                :name 'warning-attribute)
+                                               (make-tm-match "^; caught WARNING:"
+                                                              :name 'warning-attribute)
+                                               (make-tm-match "^; caught ERROR:"
+                                                              :name 'warning-attribute))))
+
 (define-major-mode lisp-repl-mode lisp-mode
     (:name "REPL"
      :keymap *lisp-repl-mode-keymap*
-     :syntax-table lem-lisp-syntax:*syntax-table*
+     :syntax-table *repl-syntax-table*
      :mode-hook *lisp-repl-mode-hook*)
   (cond
     ((eq (repl-buffer) (current-buffer))
@@ -85,10 +101,10 @@
    :callback (lambda (&rest args)
                (declare (ignore args))
                (copy-down-to-repl 'pathname
-                                  (lem/directory-mode::get-pathname (current-point))))))
+                                  (lem/directory-mode/internal::get-pathname (current-point))))))
 
 (defun repl-compute-context-menu-items ()
-  (if (lem/directory-mode::get-pathname (current-point))
+  (if (lem/directory-mode/internal::get-pathname (current-point))
       (list (context-menu-copy-down-pathname-to-repl))
       (remove
        nil
@@ -115,7 +131,7 @@
   (setf (buffer-value (repl-buffer) 'read-string-tag-stack) val))
 
 (define-command lisp-repl-interrupt () ()
-  (send-message-string *connection*
+  (send-message-string (current-connection)
                        (format nil "(:emacs-interrupt ~(~S~))"
                                (or (car (read-string-thread-stack))
                                    :repl-thread))))
@@ -148,8 +164,9 @@
     buffer))
 
 (defun repl-set-prompt (point)
+  (update-repl-buffer-write-point point)
   (insert-string point
-                 (format nil "~A> " (connection-prompt-string *connection*)))
+                 (format nil "~A> " (connection-prompt-string (current-connection))))
   point)
 
 (defun repl-paren-correspond-p (point)
@@ -222,7 +239,7 @@
                                         :buffer (repl-buffer)
                                         :loading-message "Evaluating...")))
     (request-listener-eval
-     *connection*
+     (current-connection)
      string
      (lambda (value)
        (declare (ignore value))
@@ -262,22 +279,52 @@
                                          string
                                          (string #\newline))))))
 
-(defun send-string-to-listener (string)
-  (lisp-switch-to-repl-buffer)
-  (buffer-end (current-point))
-  (insert-string (current-point) string)
-  (lem/listener-mode:listener-return))
+(defun send-string-to-listener (string &optional package-name)
+  (with-current-window (current-window)
+    (lisp-switch-to-repl-buffer)
+    (buffer-end (current-point))
+    (when package-name (lisp-set-package package-name))
+    (insert-string (current-point) string)
+    (lem/listener-mode:listener-return)))
 
-(define-command start-lisp-repl (&optional (use-this-window nil)) ("P")
-  (check-connection)
+(defparameter *welcome-text*
+  ";; Welcome to the REPL!
+;;
+;; The current REPL is running in the same process as the editor.
+;; If you don't need to hack the editor,
+;; please start a new process with `M-x slime`.
+
+")
+
+(defun insert-repl-header (buffer self-connection)
+  (when self-connection
+    (insert-string (buffer-point buffer)
+                   *welcome-text*
+                   :sticky-attribute 'syntax-comment-attribute)
+    (update-repl-buffer-write-point (buffer-end-point buffer))))
+
+(defun make-repl-buffer (self-connection)
+  (or (get-buffer "*lisp-repl*")
+      (let ((buffer (make-buffer "*lisp-repl*")))
+        (insert-repl-header buffer self-connection)
+        buffer)))
+
+(defun start-lisp-repl-internal (&key use-this-window new-process)
   (flet ((switch (buffer split-window-p)
            (if split-window-p
                (switch-to-window (pop-to-buffer buffer))
                (switch-to-buffer buffer))))
-    (lem/listener-mode:listener-start
-     "*lisp-repl*"
-     'lisp-repl-mode
-     :switch-to-buffer-function (alexandria:rcurry #'switch (not use-this-window)))))
+    (let ((buffer (make-repl-buffer (if new-process
+                                        nil
+                                        (self-connected-p)))))
+      (lem/listener-mode:listener-start
+       buffer
+       'lisp-repl-mode
+       :switch-to-buffer-function (alexandria:rcurry #'switch (not use-this-window))))))
+
+(define-command start-lisp-repl (&optional (use-this-window nil)) (:universal-nil)
+  (check-connection)
+  (start-lisp-repl-internal :use-this-window use-this-window))
 
 (define-command lisp-switch-to-repl-buffer () ()
   (let ((buffer (repl-buffer)))
@@ -305,25 +352,39 @@
             (let ((point (copy-point (buffer-point buffer) :left-inserting)))
               (buffer-start point)))))
 
+(defun update-repl-buffer-write-point (point)
+  (move-point (repl-buffer-write-point (point-buffer point))
+              point))
+
+(defun see-repl-writing (buffer)
+  (when (end-buffer-p (buffer-point buffer))
+    (dolist (window (get-buffer-windows buffer))
+      (window-see window))))
+
 (defun call-with-repl-point (function)
   (let* ((buffer (ensure-repl-buffer-exist))
          (point (repl-buffer-write-point buffer)))
-    (cond (*repl-evaluating*
-           (buffer-end point))
-          (t
-           (when (point<= (lem/listener-mode:input-start-point buffer) point)
-             (move-point point (lem/listener-mode:input-start-point buffer))
-             (previous-single-property-change point :field))))
-    (with-buffer-read-only buffer nil
-      (let ((*inhibit-read-only* t))
-        (funcall function point)))))
+    (when (lem/listener-mode:input-start-point buffer)
+      (cond (*repl-evaluating*
+             (buffer-end point))
+            (t
+             (when (point<= (lem/listener-mode:input-start-point buffer) point)
+               (move-point point (lem/listener-mode:input-start-point buffer))
+               (previous-single-property-change point :field))))
+      (unless (eq (current-buffer) buffer)
+        (see-repl-writing buffer))
+      (with-buffer-read-only buffer nil
+        (let ((*inhibit-read-only* t))
+          (funcall function point))))))
 
 (defmacro with-repl-point ((point) &body body)
   `(call-with-repl-point (lambda (,point) ,@body)))
 
-(defun write-string-to-repl (string)
+(defun write-string-to-repl (string &key attribute)
   (with-repl-point (point)
-    (insert-escape-sequence-string point string)
+    (if attribute
+        (insert-string point string attribute)
+        (insert-escape-sequence-string point string))
     (when (text-property-at point :field)
       (insert-character point #\newline)
       (character-offset point -1))))
@@ -413,15 +474,21 @@
         (pos 0))
     (loop
       (multiple-value-bind (start end reg-starts reg-ends)
-          (ppcre:scan "\\e\\[([^m]*)m" string :start pos)
-        (unless (and start end reg-starts reg-ends) (return))
+          (ppcre:scan "[\\x07-\\x0d]|\\e(?:[^\\[]|(?:\\[(.*?)([\\x40-\\x7e])))" string :start pos)
+        (unless start (return))
         (unless (= pos start)
           (push (subseq string pos start) acc))
-        (push (raw-seq-to-attribute
-               (subseq string
-                       (aref reg-starts 0)
-                       (aref reg-ends 0)))
-              acc)
+        (when (equal (string #\newline)
+                     (subseq string start end))
+          (push (string #\newline) acc))
+        (alexandria:when-let* ((final-ref (aref reg-starts 1))
+                               (final (elt string final-ref)))
+          (when (char= #\m final)
+            (push (raw-seq-to-attribute
+                   (subseq string
+                           (aref reg-starts 0)
+                           (aref reg-ends 0)))
+                  acc)))
         (setf pos end)))
     (push (subseq string pos) acc)
     (nreverse acc)))
@@ -439,7 +506,9 @@
         (attribute
          (setf current-attribute token))
         (string
-         (insert-string point token :sticky-attribute current-attribute))))))
+         (if current-attribute
+             (insert-string point token :sticky-attribute current-attribute)
+             (insert-string point token)))))))
 
 (define-command backward-prompt () ()
   (when (equal (current-buffer) (repl-buffer))
@@ -457,7 +526,8 @@
 (defvar *lisp-repl-shortcuts* '())
 
 (defmacro with-repl-prompt (() &body body)
-  `(let ((lem/prompt-window:*prompt-completion-window-shape* nil))
+  `(let ((lem/prompt-window:*prompt-completion-window-shape* nil)
+         (lem/prompt-window::*fill-width* nil))
      ,@body))
 
 (defun repl-prompt-for-string (prompt &rest args)
@@ -478,7 +548,7 @@
                  :history-symbol 'mh-lisp-repl-shortcuts)
                 *lisp-repl-shortcuts* :test #'equal))))
 
-(define-command lisp-repl-shortcut (n) ("p")
+(define-command lisp-repl-shortcut (n) (:universal)
   (with-point ((point (current-point)))
     (if (point>= (lem/listener-mode:input-start-point (current-buffer)) point)
         (let ((fun (prompt-for-shortcuts)))
@@ -502,7 +572,7 @@
          (defun ,name ,lambda-list ,@body))))
 
 (define-repl-shortcut sayonara ()
-  (if (self-connection-p *connection*)
+  (if (self-connection-p (current-connection))
       (message "Can't say sayonara because it's self connection.")
       (interactive-eval "(micros:quit-lisp)")))
 
@@ -538,12 +608,12 @@
 
 (define-repl-shortcut quickload ()
   (let ((system (prompt-for-system "Quickload System: ")))
-    (listener-eval (prin1-to-string `(ql:quickload ,system)))))
+    (listener-eval (prin1-to-string `(maybe-load-systems ,system)))))
 
 (define-repl-shortcut ls ()
   (insert-character (current-point) #\newline)
-  (lem/directory-mode::insert-directories-and-files (current-point)
-                                                    (buffer-directory (current-buffer)))
+  (lem/directory-mode/internal::insert-directories-and-files (current-point)
+                                                           (buffer-directory (current-buffer)))
   (lem/listener-mode:refresh-prompt (current-buffer)))
 
 (define-repl-shortcut pwd ()

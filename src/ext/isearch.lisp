@@ -1,6 +1,8 @@
 (defpackage :lem/isearch
   (:use :cl :lem)
-  (:export :*isearch-keymap*
+  (:export :handle-current-highlight
+           :get-current-highlight-overlay
+           :*isearch-keymap*
            :*isearch-finish-hooks*
            :isearch-mode
            :isearch-highlight-attribute
@@ -25,6 +27,8 @@
            :isearch-next-highlight
            :isearch-prev-highlight
            :isearch-toggle-highlighting
+           :isearch-add-cursor-to-next-match
+           :isearch-add-cursor-to-prev-match
            :read-query-replace-args
            :query-replace
            :query-replace-regexp
@@ -83,7 +87,10 @@
 (define-key *global-keymap* "M-s p" 'isearch-prev-highlight)
 (define-key *global-keymap* "F3" 'isearch-next-highlight)
 (define-key *global-keymap* "Shift-F3" 'isearch-prev-highlight)
+(define-key *global-keymap* "M-s t" 'isearch-toggle-highlighting)
+(define-key *global-keymap* "M-s M-t" 'isearch-toggle-highlighting)
 (define-key *isearch-keymap* "C-M-n" 'isearch-add-cursor-to-next-match)
+(define-key *isearch-keymap* "C-M-p" 'isearch-add-cursor-to-prev-match)
 
 (defun disable-hook ()
   (setf (variable-value 'isearch-next-last :buffer) nil)
@@ -99,6 +106,23 @@
 (defun change-previous-string (string)
   (setf (config :isearch-previous-string) string
         *isearch-previous-string* string))
+
+
+(defgeneric handle-current-highlight (mode overlay))
+
+(defmethod handle-current-highlight (mode overlay)
+  nil)
+
+(defun on-current-highlight (overlay)
+  (handle-current-highlight
+   (lem-core::get-active-modes-class-instance (point-buffer (overlay-start overlay)))
+   overlay)
+  overlay)
+
+(defun get-current-highlight-overlay (buffer)
+  (dolist (ov (buffer-value buffer 'isearch-overlays))
+    (when (attribute-equal (overlay-attribute ov) 'isearch-highlight-active-attribute)
+      (return ov))))
 
 
 (defun isearch-overlays (buffer)
@@ -141,7 +165,8 @@
   (alexandria:when-let (ov (isearch-current-overlay point))
     (dolist (ov (buffer-value point 'isearch-overlays))
       (set-overlay-attribute 'isearch-highlight-attribute ov))
-    (set-overlay-attribute 'isearch-highlight-active-attribute ov)))
+    (set-overlay-attribute 'isearch-highlight-active-attribute ov)
+    (on-current-highlight ov)))
 
 
 (defun isearch-update-buffer (&optional (point (current-point))
@@ -166,13 +191,16 @@
                         (return))
                       (when (point= before curr)
                         (return))
-                      (isearch-add-overlay buffer
-                                           (make-overlay
-                                            before curr
-                                            (if (and (point<= before point)
-                                                     (point<= point curr))
-                                                'isearch-highlight-active-attribute
-                                                'isearch-highlight-attribute)))))))
+                      (let* ((active (and (point<= before point)
+                                          (point<= point curr)))
+                             (ov (make-overlay before
+                                               curr
+                                               (if active
+                                                   'isearch-highlight-active-attribute
+                                                   'isearch-highlight-attribute))))
+                        (isearch-add-overlay buffer ov)
+                        (when active
+                          (on-current-highlight ov)))))))
       (isearch-sort-overlays buffer))))
 
 (defun highlight-region (start-point end-point search-string)
@@ -184,8 +212,11 @@
       (when (string= search-string "")
         (return-from highlight-region nil))
       (with-point ((p start-point))
-        (loop
+        (loop 
           (unless (funcall *isearch-search-forward-function* p search-string end-point)
+            (return))
+          (when (or (point= start-point p)
+                    (end-line-p p))
             (return))
           (with-point ((before p))
             (funcall *isearch-search-backward-function* before search-string)
@@ -294,7 +325,8 @@
   t)
 
 (define-command isearch-abort () ()
-  (move-point (current-point) *isearch-start-point*)
+  (when (null (buffer-fake-cursors (current-buffer)))
+    (move-point (current-point) *isearch-start-point*))
   (isearch-reset-overlays (current-buffer))
   (isearch-end)
   t)
@@ -305,6 +337,7 @@
           (subseq *isearch-string*
                   0
                   (1- (length *isearch-string*))))
+    (funcall *isearch-search-function* (current-point) *isearch-string*)
     (isearch-update-display)))
 
 (define-command isearch-raw-insert () ()
@@ -394,6 +427,7 @@
   (let ((str (yank-from-clipboard-or-killring)))
     (when str
       (setq *isearch-string* str)
+      (funcall *isearch-search-function* (current-point) *isearch-string*)
       (isearch-update-display))))
 
 (defun isearch-add-char (c)
@@ -443,16 +477,18 @@
                    (end point))
         (funcall search-fn end string)
         (funcall search-previous-fn (move-point start end) string)
-        (when (point<= start point)
+        (when (point< end point)
           (move-point point end)))
       (dotimes (_ (abs n) point)
         (unless (funcall search-fn point string)
           (return nil))))))
 
-(define-command isearch-next-highlight (n) ("p")
-  (search-next-matched (current-point) n))
+(define-command isearch-next-highlight (n) (:universal)
+  (cond ((zerop n) nil)
+        ((minusp n) (search-next-matched (current-point) (1+ n)))
+        (t (search-next-matched (current-point) n))))
 
-(define-command isearch-prev-highlight (n) ("p")
+(define-command isearch-prev-highlight (n) (:universal)
   (isearch-next-highlight (- n)))
 
 (define-command isearch-toggle-highlighting () ()
@@ -462,11 +498,47 @@
     ((boundp '*isearch-string*)
      (isearch-update-buffer))))
 
+(defun determine-start-end-current-search (point string is-forward)
+  (with-point ((start point)
+               (end point))
+    (if is-forward
+        (progn
+          (funcall *isearch-search-forward-function* end string)
+          (funcall *isearch-search-backward-function* (move-point start end) string))
+        (progn
+          (funcall *isearch-search-backward-function* start string)
+          (funcall *isearch-search-forward-function* (move-point end start) string)))
+    (list start end)))
+
+(defun mark-by-direction (is-forward buffer)
+  (alexandria:when-let* ((string (or (buffer-value (current-buffer) 'isearch-redisplay-string)
+                                     (and (boundp '*isearch-string*)
+                                          *isearch-string*))))
+    (let* ((cur-p (current-point))
+           (start-end (determine-start-end-current-search cur-p string is-forward))
+           (start (first start-end))
+           (end (second start-end))
+           (offset-pos (cond
+                         ((and (point= start cur-p) is-forward) (length string))
+                         ((and (point= end cur-p) (not is-forward)) (* -1 (length string)))
+                         (t 0)))
+           (cursors (buffer-cursors buffer))
+           (sorted-cursors (if is-forward (reverse cursors) cursors))
+           (cursor (first sorted-cursors)))
+      (with-point ((point cursor))
+        (character-offset point offset-pos)
+        (if (search-next-matched point (if is-forward 1 0))
+            (progn
+              (character-offset point (* -1 offset-pos))
+              (make-fake-cursor point)
+              (message "Mark set ~A" (+ (length cursors) 1)))
+            (message "No more matches found"))))))
+
 (define-command isearch-add-cursor-to-next-match () ()
-  (dolist (point (buffer-cursors (current-buffer)))
-    (with-point ((point point))
-      (when (search-next-matched point 1)
-        (make-fake-cursor point)))))
+  (mark-by-direction t (current-buffer)))
+
+(define-command isearch-add-cursor-to-prev-match () ()
+  (mark-by-direction nil (current-buffer)))
 
 
 (defvar *replace-before-string* nil)

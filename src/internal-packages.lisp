@@ -631,7 +631,8 @@
    :attribute-foreground-with-reverse
    :attribute-background-with-reverse
    :cursor-type
-   :display-background-mode)
+   :display-background-mode
+   :set-font-name)
   ;; color-theme.lisp
   (:export
    :color-theme-names
@@ -736,8 +737,7 @@
    :resize-display-before
    :get-font-list
    :get-font-by-name-and-style
-   :set-font-with-implementation
-   :set-font-name
+   :set-font
    :get-mouse-position
    :get-char-width
    :get-char-height

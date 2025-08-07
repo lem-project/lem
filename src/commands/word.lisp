@@ -188,6 +188,15 @@
   "Move cursor to backward paragraph."
   (forward-paragraph (- n)))
 
+(define-command select-paragraph () ()
+  "Visually select paragraph."
+  (unless (buffer-mark-p (current-buffer))
+    (backward-paragraph)
+    (character-offset (current-point) 1)
+    (set-cursor-mark (current-point) (current-point))
+    (forward-paragraph)
+    (character-offset (current-point) -1)))
+
 (define-command (kill-paragraph (:advice-classes editable-advice)) (&optional (n 1)) (:universal)
   "Kill the forward paragraph."
   (dotimes (_ n t)

@@ -89,6 +89,10 @@
     :reader completion-item-focus-action
     :type (or null function))))
 
+(defmethod print-object ((obj completion-item) stream)
+  (print-unreadable-object (obj stream :type t)
+    (format stream "label: ~a" (completion-item-label obj))))
+
 (defun make-completion-item (&rest initargs
                              &key label chunks detail start end focus-action)
   (declare (ignore label chunks detail start end focus-action))

@@ -151,10 +151,13 @@
        (completion str (all-command-names)))
    #'string-lessp))
 
-(defun prompt-for-command (prompt)
+(defun prompt-for-command (prompt &key candidates)
   (prompt-for-string
    prompt
-   :completion-function *prompt-command-completion-function*
+   :completion-function (if candidates
+                            (lambda (input)
+                              (funcall *prompt-command-completion-function* input :candidates candidates))
+                            *prompt-command-completion-function*)
    :test-function 'exist-command-p
    :history-symbol 'mh-execute-command
    :syntax-table *prompt-syntax-table*))

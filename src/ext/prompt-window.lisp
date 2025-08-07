@@ -438,38 +438,61 @@
                     :start s
                     :end (line-end e)))))
 
-(defun collect-command-all-keybindings (buffer command)
-  (let ((command-name (command-name command)))
-    (flet ((find-keybindings (keymap)
-             (alexandria:when-let (keybindings (collect-command-keybindings command-name keymap))
-               (mapcar (lambda (keybinding)
-                         (format nil "~{~A~^ ~}" keybinding))
-                       keybindings))))
-      (format nil "~{~A~^, ~}"
-              (append (find-keybindings (mode-keymap (buffer-major-mode buffer)))
-                      (loop :for mode :in (buffer-minor-modes buffer)
-                            :for keymap := (mode-keymap mode)
-                            :when keymap
-                            :append (find-keybindings keymap))
-                      (find-keybindings *global-keymap*))))))
+(declaim (inline find-command-keybindings-in-keymap))
+(defun find-command-keybindings-in-keymap (command &optional (keymap *global-keymap*))
+  "Return a list of keybindings (strings) for a COMMAND (command object or string).
 
-(defun prompt-command-completion (string)
-  (let ((items (loop :for name :in (all-command-names)
-                     :collect (lem/completion-mode:make-completion-item
-                               :label name
-                               :detail (collect-command-all-keybindings
-                                        (current-buffer)
-                                        (find-command name))))))
-    (sort
-     (if (find #\- string)
-         (completion-hyphen string
-                            items
-                            :key #'lem/completion-mode:completion-item-label)
-         (completion string
-                     items
-                     :key #'lem/completion-mode:completion-item-label))
-     #'string-lessp
-     :key #'lem/completion-mode:completion-item-label)))
+  Search in the given KEYMAP. See also collect-command-all-keybindings."
+  (when (stringp command)
+    (setf command (find-command command)))
+  (alexandria:when-let (keybindings (collect-command-keybindings (command-name command) keymap))
+    (mapcar (lambda (keybinding)
+              (format nil "~{~A~^ ~}" keybinding))
+            keybindings)))
+
+(defun collect-command-all-keybindings (buffer command)
+  (format nil "~{~A~^, ~}"
+          (append (find-command-keybindings-in-keymap command (mode-keymap (buffer-major-mode buffer)))
+                  (loop :for mode :in (buffer-minor-modes buffer)
+                        :for keymap := (mode-keymap mode)
+                        :when keymap
+                        :append (find-command-keybindings-in-keymap command keymap))
+                  (find-command-keybindings-in-keymap command *global-keymap*))))
+
+(defun prompt-command-completion (string &key candidates)
+  "Filter the list of commands from an input string and return a list of command completion items.
+
+  For each command, find and display its available keybindings for the current keymaps.
+  Display CANDIDATES command names (list of strings) before the rest of all commands.
+  The rest of commands are sorted by name."
+  (flet ((collect-items (candidates)
+           (loop :for name :in candidates
+                 :for command := (find-command name)
+                 ;; avoid commands created in a REPL session but now non-existent.
+                 :unless (null command)
+                 :collect (lem/completion-mode:make-completion-item
+                           :label name
+                           :detail (collect-command-all-keybindings
+                                    (current-buffer)
+                                    command))))
+
+         (filter-items (items)
+           (if (find #\- string)
+               (completion-hyphen string
+                                  items
+                                  :key #'lem/completion-mode:completion-item-label)
+               (completion string
+                           items
+                           :key #'lem/completion-mode:completion-item-label))))
+
+    (let* ((all-items (collect-items (all-command-names)))
+           (candidate-items (collect-items candidates))
+           (items (remove-duplicates
+                   (append candidate-items all-items)
+                   :test #'equal
+                   :key #'lem/completion-mode:completion-item-label
+                   :from-end t)))
+      (filter-items items))))
 
 (setf *prompt-file-completion-function* 'prompt-file-completion)
 (setf *prompt-buffer-completion-function* 'prompt-buffer-completion)

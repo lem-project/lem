@@ -107,7 +107,7 @@
 (defgeneric lem-if:get-font-list (implementation)
   (:method (implementation) '()))
 
-(defgeneric lem-if:set-font-with-implementation (implementation font-name)
+(defgeneric lem-if:set-font (implementation font-name)
   (:method (implementation font-name) '()))
 
 (defgeneric lem-if:get-mouse-position (implementation)
@@ -187,13 +187,13 @@
 (defun (setf display-fullscreen-p) (fullscreen-p)
   (lem-if:set-display-fullscreen-p (implementation) fullscreen-p))
 
+(defun set-font-name (font-name)
+  (lem-if:set-font (implementation) font-name))
+
 (defun invoke-frontend (function &key (implementation
                                        (get-default-implementation)))
   (setf *implementation* implementation)
   (lem-if:invoke implementation function))
-
-(defun lem-if:set-font-name (font-name)
-  (lem-if:set-font-with-implementation (implementation) font-name))
 
 (defun lem-if:get-font-by-name-and-style (name style)
   "GET-FONT-BY-NAME-AND-STYLE searches for a font with NAME in the path and ends with STYLE"

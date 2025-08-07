@@ -4,11 +4,11 @@ const canvas = document.querySelector('#editor');
 
 async function main() {
   await Promise.all([
-    document.fonts.load('16px file-icons'),
-    document.fonts.load('16px AllTheIcons'),
-    document.fonts.load('16px fontawesome'),
-    document.fonts.load('16px material-design-icons'),
-    document.fonts.load('16px octicons')
+    document.fonts.load('19px file-icons'),
+    document.fonts.load('19px AllTheIcons'),
+    document.fonts.load('19px fontawesome'),
+    document.fonts.load('19px material-design-icons'),
+    document.fonts.load('19px octicons')
   ]);
   await document.fonts.ready;
   const protocol = window.location.protocol === 'https:' ? 'wss' : 'ws';

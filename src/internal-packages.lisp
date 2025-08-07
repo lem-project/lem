@@ -669,7 +669,10 @@
   ;; site-init.lisp
   (:export
    :*inits-directory-name*
-   :load-site-init))
+   :load-site-init)
+  ;; system.lisp
+  (:export 
+   :exec-path))
 #+sbcl
 (sb-ext:lock-package :lem-core)
 

@@ -575,11 +575,6 @@
 
 
 ;;;
-(defconstant +abort+ 0)
-(defconstant +keyevent+ 1)
-(defconstant +resize+ 2)
-(defconstant +input-string+ 3)
-
 (defun convert-keyevent (e)
   (let ((key (gethash "key" e))
         (ctrl (gethash "ctrl" e))

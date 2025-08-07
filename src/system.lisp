@@ -65,9 +65,3 @@ Note:
                           (split-sequence:split-sequence #\: (uiop:getenv "PATH")))
                #-(or darwin linux)
                (error "Don't know how to get PATH env. Please hack me! "))))))
-
-#+darwin
-(add-hook *after-init-hook* 
-          (lambda ()
-            (setf (uiop:getenv "PATH") 
-                  (format nil "~{~A~^:~}" (exec-path)))))

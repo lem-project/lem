@@ -48,6 +48,10 @@
                                                    (format nil
                                                            "frontend/dist/~A"
                                                            (string-left-trim "/" path)))))
+            ((alexandria:starts-with-subseq "/local/" path)
+             (let ((file (pathname (subseq path (length "/local")))))
+               `(200 (:content-type "image/png")
+                     ,file)))
             (t
              '(200 () ("ok")))))))
 
@@ -86,7 +90,8 @@
   (:default-initargs
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
-   :window-left-margin 1))
+   :window-left-margin 1
+   :html-support t))
 
 (defun get-all-views ()
   (if (null (lem:current-frame))

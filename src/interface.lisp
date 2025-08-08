@@ -18,7 +18,11 @@
    (window-left-margin
     :initform 1
     :initarg :window-left-margin
-    :reader window-left-margin)))
+    :reader window-left-margin)
+   (html-support
+    :initform nil
+    :initarg :html-support
+    :reader html-support-p)))
 
 (defun get-default-implementation (&key (errorp t) (implementation :ncurses))
   (let* ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))

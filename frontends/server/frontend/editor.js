@@ -119,6 +119,7 @@ function addMouseEventListeners({dom, editor, isDraggable, draggableStyle}) {
 
   dom.addEventListener('mousedown', (event) => {
     if (isDraggable) document.body.style.cursor = draggableStyle;
+    editor.focusHiddenInput();
     handleMouseDownUp(event, 'mousedown');
   });
 
@@ -506,7 +507,7 @@ class View {
         break;
       case 'floating':
         this.mainSurface = this.makeSurface(type, content);
-        console.log(borderShape);
+        //console.log(borderShape);
         if (borderShape === 'left-border') {
           this.leftSideBar = new VerticalBorder({
             x: x,
@@ -947,6 +948,7 @@ export class Editor {
     this.login();
 
     this.boundedHandleResize = this.handleResize.bind(this);
+    this.focusHiddenInput = this.focusHiddenInput.bind(this);
   }
 
   init() {
@@ -993,6 +995,19 @@ export class Editor {
     } else {
       this.jsonrpc.notify('redraw');
     }
+  }
+
+  focusHiddenInput() {
+    const el = this.input?.input;
+    if (!el) return;
+    try { window.focus(); } catch (_) {}
+    // mousedown 内で即座に focus() するとブラウザのデフォルト処理に負けることがある
+    requestAnimationFrame(() => {
+      // 一部環境ではさらに 1tick 遅らせると安定する
+      setTimeout(() => {
+        el.focus({ preventScroll: true });
+      }, 0);
+    });
   }
 
   enableInput() {

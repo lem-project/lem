@@ -13,4 +13,5 @@
                (:file "view")
                (:file "mouse")
                (:file "icon")
-               (:file "main")))
+               (:file "main")
+               (:file "color-picker")))

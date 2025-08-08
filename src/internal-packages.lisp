@@ -632,7 +632,10 @@
    :attribute-background-with-reverse
    :cursor-type
    :display-background-mode
-   :set-font-name)
+   :get-font
+   :set-font
+   :set-font-name
+   :set-font-size)
   ;; color-theme.lisp
   (:export
    :color-theme-names
@@ -731,13 +734,15 @@
    :display-context-menu
    :clipboard-paste
    :clipboard-copy
+   :update-screen-size
    :increase-font-size
    :decrease-font-size
+   :set-font-name
    :set-font-size
    :resize-display-before
    :get-font-list
    :get-font-by-name-and-style
-   :set-font
+   :get-font
    :get-mouse-position
    :get-char-width
    :get-char-height

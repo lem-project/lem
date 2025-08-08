@@ -19,4 +19,7 @@
 
 (define-command font-size-set (size) ((:number "Size: "))
   "Set the font size to an integer (this currently only works with SDL2 frontend)"
-  (lem-if:set-font-size (implementation) size))
+  (set-font-size size))
+
+(define-command font-set (font-name) ((:string "Font: "))
+  (set-font :name font-name))

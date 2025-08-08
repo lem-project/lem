@@ -393,6 +393,12 @@ class HTMLSurface extends BaseSurface {
     iframe.style.backgroundColor = 'white';
     iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
     iframe.srcdoc = html;
+    iframe.addEventListener('load', () => {
+      const win = iframe.contentWindow;
+      win.invokeLem = (method, args) => parent.postMessage(
+        { type: 'invoke-lem', method, args }
+      );
+    });
 
     this.iframe = iframe;
 
@@ -1210,5 +1216,9 @@ export class Editor {
       name: this.option.fontName,
       size: this.option.fontSize,
     };
+  }
+
+  notifyToServer(method, args) {
+    this.jsonrpc.notify('invoke', { method, args });
   }
 }

@@ -21,6 +21,12 @@ async function main() {
     onClosed: null,
   });
 
+  window.addEventListener('message', (event) => {
+    if (event.data.type === 'invoke-lem') {
+      editor.notifyToServer(event.data.method, event.data.args);
+    }
+  });
+
   editor.init();
 }
 

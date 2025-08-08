@@ -5,7 +5,8 @@
   (:local-nicknames (:display :lem-core/display)
                     (:queue :lem/common/queue)
                     (:mouse :lem-server/mouse))
-  (:export :run-tcp-server
+  (:export :register-method
+           :run-tcp-server
            :run-stdio-server
            :run-websocket-server
            :main))
@@ -165,6 +166,17 @@
                         (lem-core::adjust-all-window-size)
                         (lem:redraw-display :force t))))))
 
+(defvar *invoke-method-table* (make-hash-table :test 'equal))
+
+(defun register-method (method function)
+  (setf (gethash method *invoke-method-table*) function))
+
+(defun invoke (params)
+  (alexandria:when-let ((method (gethash "method" params))
+                        (args (gethash "args" params)))
+    (funcall (gethash method *invoke-method-table*)
+             args)))
+
 (defmethod lem-if:invoke ((jsonrpc jsonrpc) function)
   (let ((ready nil))
     (setf (jsonrpc-editor-thread jsonrpc)
@@ -186,6 +198,9 @@
     (jsonrpc:expose (jsonrpc-server jsonrpc)
                     "got-clipboard-text"
                     'got-clipboard-text)
+    (jsonrpc:expose (jsonrpc-server jsonrpc)
+                    "invoke"
+                    'invoke)
 
     (lem:add-hook lem:*exit-editor-hook*
                   (lambda ()

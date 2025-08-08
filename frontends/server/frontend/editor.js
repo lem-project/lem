@@ -1006,8 +1006,8 @@ export class Editor {
 
   getDisplaySize() {
     const [_x, _y, displayWidth, displayHeight] = this.getDisplayRectangle();
-    const width = Math.round(displayWidth / this.option.fontWidth);
-    const height = Math.round(displayHeight / this.option.fontHeight);
+    const width = Math.floor(displayWidth / this.option.fontWidth);
+    const height = Math.floor(displayHeight / this.option.fontHeight);
     return { width, height };
   }
 

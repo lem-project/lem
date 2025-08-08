@@ -194,7 +194,7 @@
 
 (defun set-font-name (font-name)
   (lem-if:set-font-name (implementation) font-name)
-  (lem-if:update-screen-size implementation))
+  (lem-if:update-screen-size (implementation)))
 
 (defun set-font-size (font-size)
   (lem-if:set-font-size (implementation) font-size)

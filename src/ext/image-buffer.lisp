@@ -33,7 +33,6 @@ let currentWidth = img.width;
 
 function scaleImage(factor) {
   currentWidth *= factor;
-console.log(currentWidth);
   img.width = currentWidth;
 }
 

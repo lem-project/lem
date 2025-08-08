@@ -235,16 +235,12 @@ class BaseSurface {
     }
   }
 
-  resize(width, height) {
+  _resize(width, height) {
     const ratio = window.devicePixelRatio || 1;
     this.mainDOM.width = width * this.editor.option.fontWidth * ratio;
     this.mainDOM.height = height * this.editor.option.fontHeight * ratio;
     this.mainDOM.style.width = width * this.editor.option.fontWidth + 'px';
     this.mainDOM.style.height = height * this.editor.option.fontHeight + 'px';
-
-    const ctx = this.mainDOM.getContext('2d');
-    ctx.scale(ratio, ratio);
-
     if (this.wrapper) {
       this.wrapper.style.width = width * this.editor.option.fontWidth + borderOffsetX * 2 + 'px';
       this.wrapper.style.height = height * this.editor.option.fontHeight + borderOffsetY * 2 + 'px';
@@ -286,6 +282,13 @@ class CanvasSurface extends BaseSurface {
       }
     }
     return canvas;
+  }
+
+  resize(width, height) {
+    this._resize(width, height);
+    const ratio = window.devicePixelRatio || 1;
+    const ctx = this.mainDOM.getContext('2d');
+    ctx.scale(ratio, ratio);
   }
 
   drawBlock(x, y, width, height, color) {
@@ -394,6 +397,10 @@ class HTMLSurface extends BaseSurface {
 
     this.move(x, y);
     this.resize(width, height);
+  }
+
+  resize(width, height) {
+    this._resize(width, height);
   }
 
   update(content) {

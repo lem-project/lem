@@ -203,7 +203,7 @@
 (defun set-font (&key (name nil name-p) (size nil size-p))
   (when name-p (lem-if:set-font-name (implementation) name))
   (when size-p (lem-if:set-font-size (implementation) size))
-  (lem-if:update-screen-size implementation))
+  (lem-if:update-screen-size (implementation)))
 
 (defun invoke-frontend (function &key (implementation
                                        (get-default-implementation)))

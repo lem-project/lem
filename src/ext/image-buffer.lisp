@@ -31,9 +31,10 @@ img {
 (defclass find-file-executor (lem:find-file-executor) ())
 
 (defmethod lem:execute-find-file ((executor find-file-executor) mode pathname)
-  (cond ((member (pathname-type pathname)
-                 '("png" "jpg" "jpeg" "bmp" "gif")
-                 :test #'equal)
+  (cond ((and (lem:html-support-p (lem:implementation))
+              (member (pathname-type pathname)
+                      '("png" "jpg" "jpeg" "bmp" "gif")
+                      :test #'equal))
          (open-image-buffer pathname))
         (t
          (call-next-method))))

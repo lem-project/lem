@@ -620,6 +620,7 @@
    :implementation
    :redraw-after-modifying-floating-window
    :support-floating-window
+   :html-support-p
    :set-foreground
    :set-background
    :display-width

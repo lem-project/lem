@@ -32,6 +32,7 @@
                "split-sequence"
                "str"
                "dexador"
+               "cl-mustache"
                ;; "lem-encodings"
                #+sbcl
                sb-concurrency
@@ -216,7 +217,8 @@
                              (:file "themes")
                              (:file "detective")
                              (:file "extension-commands" :if-feature :quicklisp)
-                             (:file "read-only-sources")))
+                             (:file "read-only-sources")
+                             (:file "image-buffer")))
 
                (:module "ui"
                 :serial t

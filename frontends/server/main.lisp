@@ -48,6 +48,10 @@
                                                    (format nil
                                                            "frontend/dist/~A"
                                                            (string-left-trim "/" path)))))
+            ((alexandria:starts-with-subseq "/local/" path)
+             (let ((file (pathname (subseq path (length "/local")))))
+               `(200 (:content-type "image/png")
+                     ,file)))
             (t
              '(200 () ("ok")))))))
 

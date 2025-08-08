@@ -24,7 +24,6 @@ function isMacOS() {
 }
 
 function computeFontSize(font) {
-
   const canvas = document.createElement('canvas');
   const ctx = canvas.getContext('2d');
   ctx.font = font;
@@ -71,14 +70,19 @@ function drawHorizontalLine({ ctx, x, y, width, style, lineWidth = 1 }) {
 
 class Option {
   constructor({ fontName, fontSize }) {
-    const font = fontSize + 'px ' + fontName;
-    this.font = font;
-    this.fontSize = fontSize;
-    const [width, height] = computeFontSize(font);
-    this.fontWidth = width;
-    this.fontHeight = height;
+    this.setFont(fontName, fontSize);
     this.foreground = '#333';
     this.background = '#ccc';
+  }
+
+  setFont(fontName, fontSize) {
+    const font = fontSize + 'px ' + fontName;
+    const [width, height] = computeFontSize(font);
+    this.fontName = fontName;
+    this.fontSize = fontSize;
+    this.fontWidth = width;
+    this.fontHeight = height;
+    this.font = font;
   }
 }
 
@@ -928,6 +932,9 @@ export class Editor {
       'get-clipboard-text': this.getClipboardText.bind(this),
       'set-clipboard-text': this.setClipboardText.bind(this),
       'js-eval': this.jsEval.bind(this),
+      'set-font': this.setFont.bind(this),
+      'get-font': this.getFont.bind(this),
+      'get-display-size': this.getDisplaySize.bind(this),
     });
 
     this.login();
@@ -1167,5 +1174,19 @@ export class Editor {
       return result.toString();
     }
     return result;
+  }
+
+  setFont({ fontName, fontSize }) {
+    this.option.setFont(
+      fontName || this.option.fontName,
+      fontSize || this.option.fontSize,
+    );
+  }
+
+  getFont() {
+    return {
+      name: this.option.fontName,
+      size: this.option.fontSize,
+    };
   }
 }

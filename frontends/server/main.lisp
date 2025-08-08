@@ -231,6 +231,13 @@
   ;; TODO
   )
 
+(defmethod lem-if:update-screen-size ((jsonrpc jsonrpc))
+  (let* ((response (call "get-display-size" nil))
+         (width (gethash "width" response))
+         (height (gethash "height" response)))
+    (resize-display jsonrpc width height)
+    (lem:send-event :resize)))
+
 (defmethod lem-if:make-view ((jsonrpc jsonrpc) window x y width height use-modeline)
   (let ((view (make-view :window window
                          :x x
@@ -319,12 +326,13 @@
   (notify jsonrpc "set-clipboard-text" (hash "text" text)))
 
 (defmethod lem-if:increase-font-size ((jsonrpc jsonrpc))
-  ;; TODO
-  )
+  (let ((size (nth-value 1 (lem-if:get-font jsonrpc))))
+    (lem:set-font-size (1+ size))))
 
 (defmethod lem-if:decrease-font-size ((jsonrpc jsonrpc))
-  ;; TODO
-  )
+  (let ((size (nth-value 1 (lem-if:get-font jsonrpc))))
+    (when (< 0 size)
+      (lem:set-font-size (1- size)))))
 
 (defmethod lem-if:resize-display-before ((jsonrpc jsonrpc))
   )
@@ -342,34 +350,47 @@
   ;; TODO
   1)
 
+(defun call (method params)
+  (let ((mailbox (sb-concurrency:make-mailbox :name "lem-server-call-async")))
+    (loop :for connection
+          :in (jsonrpc/server::server-client-connections
+               (jsonrpc-server (lem:implementation)))
+          :do (jsonrpc:call-async-to
+               (jsonrpc-server (lem:implementation))
+               connection
+               method
+               params
+               (lambda (res)
+                 (sb-concurrency:send-message mailbox (list t res)))
+               (lambda (message code)
+                 (sb-concurrency:send-message
+                  mailbox
+                  (list nil
+                        (make-condition 'jsonrpc/errors:jsonrpc-callback-error
+                                        :message message
+                                        :code code))))))
+    (destructuring-bind (ok value)
+        (sb-concurrency:receive-message mailbox)
+      (if ok
+          value
+          (error value)))))
+
 (defmethod lem-if:js-eval ((jsonrpc jsonrpc) view code &key wait)
   (let ((params (hash "viewInfo" view "code" code)))
     (if wait
-        (let ((mailbox (sb-concurrency:make-mailbox :name "js-eval-mailbox")))
-          (apply #'values
-                 (loop :for connection
-                       :in (jsonrpc/server::server-client-connections
-                            (jsonrpc-server (lem:implementation)))
-                       :do (jsonrpc:call-async-to
-                            (jsonrpc-server (lem:implementation))
-                            connection
-                            "js-eval"
-                            params
-                            (lambda (res)
-                              (sb-concurrency:send-message mailbox (list t res)))
-                            (lambda (message code)
-                              (sb-concurrency:send-message
-                               mailbox
-                               (list nil
-                                     (make-condition 'jsonrpc/errors:jsonrpc-callback-error
-                                                     :message message
-                                                     :code code)))))))
-          (destructuring-bind (ok value)
-              (sb-concurrency:receive-message mailbox)
-            (if ok
-                value
-                (error value))))
+        (call "js-eval" params)
         (notify (lem:implementation) "js-eval" params))))
+
+(defmethod lem-if:set-font-name ((jsonrpc jsonrpc) font-name)
+  (notify (lem:implementation) "set-font" (hash "fontName" font-name)))
+
+(defmethod lem-if:set-font-size ((jsonrpc jsonrpc) font-size)
+  (notify (lem:implementation) "set-font" (hash "fontSize" font-size)))
+
+(defmethod lem-if:get-font ((jsonrpc jsonrpc))
+  (let ((response (call "get-font" nil)))
+    (values (gethash "name" response)
+            (gethash "size" response))))
 
 (lem:add-hook lem:*switch-to-buffer-hook* 'on-switch-to-buffer)
 

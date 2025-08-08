@@ -2,17 +2,46 @@
   (:use :cl))
 (in-package :lem/image-buffer)
 
+(lem:define-major-mode image-viewer-mode ()
+    (:name "Image Viewer"
+     :keymap *image-viewer-keymap*)
+  (setf (lem:buffer-read-only-p (lem:current-buffer)) t))
+
+(lem:define-key *image-viewer-keymap* "+" 'image-zoom-in)
+(lem:define-key *image-viewer-keymap* "-" 'image-zoom-out)
+(lem:define-key *image-viewer-keymap* "0" 'image-zoom-reset)
+(lem:define-key *image-viewer-keymap* "?" 'image-usage)
+
 (defclass image-buffer (lem:html-buffer) ())
 
 (defparameter *html-template*
   "
 <style>
 img {
-  max-width: 100%;
-  height: auto;
+  transition: width 0.2s ease, height 0.2s ease;
 }
 </style>
-<img src=\"{{image}}\" />")
+<img id='image' src=\"/local{{image}}\" />
+
+<p> Press '?' to usage </p>
+<script>
+
+const img = document.getElementById('image');
+img.width = window.innerWidth;
+
+let currentWidth = img.width;
+
+function scaleImage(factor) {
+  currentWidth *= factor;
+console.log(currentWidth);
+  img.width = currentWidth;
+}
+
+function resetImage() {
+  currentWidth = window.innerWidth;
+  img.width = currentWidth;
+}
+</script>")
 
 (defun open-image-buffer (pathname)
   (let ((buffer (lem:make-buffer
@@ -24,9 +53,8 @@ img {
                   'image-buffer
                   :html
                   (mustache:render* *html-template*
-                                    `((image . ,(format nil
-                                                        "/local~A"
-                                                        pathname)))))))
+                                    `((image . ,(namestring pathname)))))
+    (lem:change-buffer-mode buffer 'image-viewer-mode)))
 
 (defclass find-file-executor (lem:find-file-executor) ())
 
@@ -38,5 +66,22 @@ img {
          (open-image-buffer pathname))
         (t
          (call-next-method))))
+
+(lem:define-command image-zoom-in () ()
+  (lem:js-eval (lem:current-window) "scaleImage(1.2)"))
+
+(lem:define-command image-zoom-out () ()
+  (lem:js-eval (lem:current-window) "scaleImage(0.8)"))
+
+(lem:define-command image-zoom-reset () ()
+  (lem:js-eval (lem:current-window) "resetImage()"))
+
+(lem:define-command image-usage () ()
+  (lem:with-pop-up-typeout-window
+      (s (lem:make-buffer "*image-help*" :temporary t) :erase t)
+    (format s "Open an image file in Lem and use these keys to zoom in and out:~&")
+    (format s "Zoom in: + (M-x image-zoom-in)~&")
+    (format s "Zoom out: - (M-x image-zoom-out)~&")
+    (format s "Reset: 0 (M-x image-zoom-reset)~&")))
 
 (setf lem:*find-file-executor* (make-instance 'find-file-executor))

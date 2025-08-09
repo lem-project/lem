@@ -151,33 +151,6 @@ Options:
 (defun apply-args (args)
   (mapc #'eval (command-line-arguments-args args)))
 
-(defvar *original-home* (user-homedir-pathname))
-
-(defun init-quicklisp (path)
-  (macrolet ((ql-symbol-value (symbol)
-               `(symbol-value (uiop:find-symbol* ,symbol :quicklisp))))
-    (symbol-macrolet
-        ((ql-home (ql-symbol-value :*quicklisp-home*))
-         (ql-local-dir (ql-symbol-value :*local-project-directories*))
-         (ql-dist-url (ql-symbol-value :*initial-dist-url*)))
-      (flet ((replace-homedir (x)
-               (let ((subpath (uiop:subpathp x *original-home*)))
-                 (if subpath
-                     (merge-pathnames subpath (user-homedir-pathname))
-                     x)))
-             (qmerge (pathname)
-               (uiop:symbol-call :quicklisp :qmerge pathname))
-             (ql-install-dist (url &key (prompt t))
-               (uiop:symbol-call :quicklisp :install-dist url :prompt prompt)))
-        (setf ql-home (ensure-directories-exist path)
-              ql-local-dir (mapcar #'replace-homedir ql-local-dir)
-              asdf:*central-registry* (mapcar #'replace-homedir asdf:*central-registry*)
-              asdf:*user-cache* (replace-homedir asdf:*user-cache*))
-        (asdf:initialize-source-registry)
-        (asdf:clear-output-translations)
-        (unless (uiop:directory-exists-p (qmerge (format nil "dists/~A/" (pathname-name ql-dist-url))))
-          (ql-install-dist ql-dist-url :prompt nil))))))
-
 (defun load-init-file ()
   (flet ((maybe-load (path)
            (when (probe-file path)
@@ -211,10 +184,6 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
       (load file))))
 
 (defun init (args)
-  (unless (equal (funcall 'user-homedir-pathname) ;; funcall for sbcl optimization
-                 *original-home*)
-    (when (uiop:featurep :quicklisp)
-      (init-quicklisp (merge-pathnames "quicklisp/" (lem-home)))))
   (run-hooks *before-init-hook*)
   (unless (command-line-arguments-no-init-file args)
     (load-init-file))

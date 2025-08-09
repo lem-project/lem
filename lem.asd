@@ -14,8 +14,7 @@
     ;;   ref. https://github.com/roswell/roswell/blob/5b267381a66d36a514e2eee7283543f828541a63/lisp/util-install-quicklisp.lisp#L146
     (set (intern (string :*local-project-directories*) :ql) local-project-dir)))
 
-(defsystem "lem"
-  :version "2.3.0"
+(defsystem "lem/core"
   :depends-on ("iterate"
                "closer-mop"
                "trivia"
@@ -282,8 +281,15 @@
                "lem-dashboard"
                "lem-copilot"))
 
-(defsystem "lem/executable"
-  :build-operation program-op
-  :build-pathname "lem"
-  :entry-point "lem:main"
+(defsystem "lem"
+  :version "2.3.0"
   :depends-on ("lem-ncurses"))
+
+(defsystem "lem/deploy"
+  :defsystem-depends-on ("deploy")
+  :build-operation "deploy-op"
+  :build-pathname "lem"
+  :entry-point "lem-webview:lem-main"
+  :depends-on ("lem-webview"
+               "lem-server"
+               "lem"))

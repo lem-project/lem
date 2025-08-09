@@ -1,7 +1,7 @@
 (defsystem "lem-vi-mode"
   :depends-on ("esrap"
                "closer-mop"
-               "lem"
+               "lem/core"
                "cl-ppcre"
                "parse-number"
                "cl-package-locks"
@@ -36,7 +36,7 @@
   :in-order-to ((test-op (test-op "lem-vi-mode/tests"))))
 
 (defsystem "lem-vi-mode/tests"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "lem-vi-mode"
                "lem-fake-interface"
                "rove"

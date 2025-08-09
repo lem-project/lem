@@ -1,5 +1,5 @@
 (defsystem "lem-lsp-base"
-  :depends-on ("lem" "cl-change-case" "bordeaux-threads" "jsonrpc" "trivia.level2" "quri")
+  :depends-on ("lem/core" "cl-change-case" "bordeaux-threads" "jsonrpc" "trivia.level2" "quri")
   :serial t
   :components ((:file "yason-utils")
                (:file "type")

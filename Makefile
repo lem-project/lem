@@ -122,3 +122,6 @@ lint:
 	.qlot/bin/sblint extensions/xml-mode/lem-xml-mode.asd
 	.qlot/bin/sblint extensions/yaml-mode/lem-yaml-mode.asd
 	.qlot/bin/sblint extensions/ruby-mode/lem-ruby-mode.asd
+
+AppImage:
+	docker buildx build -f docker/Dockerfile-AppImage --progress=plain --target artifact --output type=local,dest=./artifacts .

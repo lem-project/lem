@@ -757,16 +757,16 @@
           (make-instance 'websocket-server-runner
                          :port port
                          :host hostname)))
-    (apply #'lem:lem args)))
+    (apply #'lem:lem "--interface" "server" args)))
 
 (defun run-stdio-server ()
   (let ((*server-runner* (make-instance 'stdio-server-runner)))
-    (lem:lem)))
+    (lem:lem "--interface" "server")))
 
 (defun run-local-domain-socket-server (&key address)
   (let ((*server-runner* (make-instance 'local-domain-socket-server-runner
                                         :address address)))
-    (lem:lem)))
+    (lem:lem "--interface" "server")))
 
 (defun check-port-specified (port)
   (unless port

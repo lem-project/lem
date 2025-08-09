@@ -1,6 +1,17 @@
 (uiop:define-package :lem/buffer/fundamental-mode
   (:export :fundamental-mode))
 
+;; workaround for package-locks error.
+;; Locked at the end of this file.
+#+sbcl
+(eval-when (:compile-toplevel :load-toplevel :execute)
+  (ignore-errors
+    (sb-ext:unlock-package :lem/buffer/internal)
+    (sb-ext:unlock-package :lem/buffer/indent)
+    (sb-ext:unlock-package :lem/buffer/encodings)
+    (sb-ext:unlock-package :lem/buffer/file)
+    (sb-ext:unlock-package :lem/buffer)))
+
 (uiop:define-package :lem/buffer/internal
   (:use :cl
         :lem/common/utils

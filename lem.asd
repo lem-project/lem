@@ -283,5 +283,9 @@
 
 (defsystem "lem"
   :version "2.3.0"
-  :depends-on ("lem/core"
+  :defsystem-depends-on ("deploy")
+  :build-operation "deploy-op"
+  :build-pathname "lem"
+  :entry-point "lem-webview:lem-main"
+  :depends-on ("lem-webview"
                "lem/extensions"))

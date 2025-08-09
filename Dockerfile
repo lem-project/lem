@@ -14,4 +14,4 @@ RUN curl -L https://qlot.tech/installer | bash
 RUN qlot install && \
     qlot exec sbcl --noinform --load scripts/build-ncurses.lisp
 
-ENTRYPOINT qlot exec sbcl --noinform --eval "(ql:quickload :lem-ncurses)" --eval "(lem:lem)" --quit
+ENTRYPOINT qlot exec sbcl --noinform --eval "(ql:quickload :lem)" --eval "(lem:lem)" --quit

@@ -283,10 +283,14 @@
 
 (defsystem "lem"
   :version "2.3.0"
+  :depends-on ("lem-ncurses"
+               "lem/extensions"))
+
+(defsystem "lem/deploy"
   :defsystem-depends-on ("deploy")
   :build-operation "deploy-op"
   :build-pathname "lem"
   :entry-point "lem-webview:lem-main"
-  :depends-on ("lem-ncurses"
-               "lem-webview"
-               "lem/extensions"))
+  :depends-on ("lem-webview"
+               "lem-server"
+               "lem"))

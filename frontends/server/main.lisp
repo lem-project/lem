@@ -757,16 +757,16 @@
           (make-instance 'websocket-server-runner
                          :port port
                          :host hostname)))
-    (apply #'lem:lem "--interface" "server" args)))
+    (apply #'lem:lem "--interface" "JSONRPC" args)))
 
 (defun run-stdio-server ()
   (let ((*server-runner* (make-instance 'stdio-server-runner)))
-    (lem:lem "--interface" "server")))
+    (lem:lem "--interface" "JSONRPC")))
 
 (defun run-local-domain-socket-server (&key address)
   (let ((*server-runner* (make-instance 'local-domain-socket-server-runner
                                         :address address)))
-    (lem:lem "--interface" "server")))
+    (lem:lem "--interface" "JSONRPC")))
 
 (defun check-port-specified (port)
   (unless port

@@ -20,7 +20,7 @@
     (bt2:make-thread (lambda () (lem-server:run-websocket-server :port port :args args))
                      :name "lem-server")
     (run-webview :title "Lem"
-                 :url (format nil "http://localhost:~D" port)
+                 :url (format nil "http://127.0.0.1:~D" port)
                  :width 1024
                  :height 768)
     (uiop:quit)))

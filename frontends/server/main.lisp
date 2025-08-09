@@ -36,19 +36,31 @@
                            :silent t
                            :clack-handler 'clack-handler)))
 
+(defun collect-files (directory)
+  (append (uiop:directory-files directory)
+          (mapcan #'collect-files (uiop:subdirectories directory))))
+
+(defun dump-files ()
+  (loop :for file :in (collect-files (asdf:system-relative-pathname :lem-server #p"frontend/dist/"))
+        :collect (cons (enough-namestring file (asdf:system-source-directory :lem-server))
+                       (alexandria:read-file-into-byte-vector file))))
+
+(defvar *dist* (dump-files))
+
+(defun find-dist-by-path (path)
+  (cdr (assoc path *dist* :test #'equal)))
+
 (defun clack-handler (env)
   (unless (wsd:websocket-p env)
     (let ((path (getf env :path-info)))
       (cond ((string= "/" path)
              `(200 (:content-type "text/html")
-                   ,(asdf:system-relative-pathname :lem-server
-                                                    #p"frontend/dist/index.html")))
+                   ,(find-dist-by-path "frontend/dist/index.html")))
             ((alexandria:starts-with-subseq "/assets/" path)
              `(200 (:content-type "application/javascript")
-                   ,(asdf:system-relative-pathname :lem-server
-                                                   (format nil
-                                                           "frontend/dist/~A"
-                                                           (string-left-trim "/" path)))))
+                   ,(find-dist-by-path (format nil
+                                               "frontend/dist/~A"
+                                               (string-left-trim "/" path)))))
             ((alexandria:starts-with-subseq "/local/" path)
              (let ((file (pathname (subseq path (length "/local")))))
                `(200 (:content-type "image/png")

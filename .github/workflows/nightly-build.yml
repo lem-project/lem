@@ -1,0 +1,49 @@
+name: Nightly Build (Linux)
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+        
+    - name: Build AppImage
+      run: make AppImage
+      
+    - name: Get current date
+      id: date
+      run: echo "date=$(date +'%Y%m%d-%H%M')" >> $GITHUB_OUTPUT
+      
+    - name: Create nightly release
+      uses: actions/create-release@v1
+      id: create_release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: nightly-${{ steps.date.outputs.date }}
+        release_name: Nightly Build (Linux) - ${{ steps.date.outputs.date }}
+        body: |
+          Automatic nightly build from main branch
+          
+          Commit: ${{ github.sha }}
+        draft: false
+        prerelease: true
+        
+    - name: Upload AppImage
+      uses: actions/upload-release-asset@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        upload_url: ${{ steps.create_release.outputs.upload_url }}
+        asset_path: artifacts/Lem-x86_64.AppImage
+        asset_name: Lem-x86_64-nightly.AppImage
+        asset_content_type: application/octet-stream

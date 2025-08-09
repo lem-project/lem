@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Lem
+Exec=lem %F
+Icon=lem
+Categories=Utility;TextEditor;
+Terminal=false

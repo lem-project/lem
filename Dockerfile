@@ -1,17 +1,33 @@
-FROM alpine:latest
+FROM ubuntu:24.04
 
-WORKDIR /app
+RUN apt-get update && apt-get install -y curl bzip2 git libzstd-dev file
 
-COPY . .
+# development
+#RUN apt-get install -y libgtk-4-dev libwebkitgtk-6.0-dev
 
-RUN apk add --no-cache curl bash build-base ncurses-dev sbcl git xdg-utils
+# production
+RUN apt-get install -y libgtk-4-1 libwebkitgtk-6.0-4
 
-RUN curl -o quicklisp.lisp https://beta.quicklisp.org/quicklisp.lisp
-RUN sbcl --noinform --no-userinit --no-sysinit --non-interactive --load quicklisp.lisp --eval "(quicklisp-quickstart:install)" --eval "(ql-util:without-prompting (ql:add-to-init-file))"
+RUN apt-get install -y libwebkit2gtk-4.1-0
 
+WORKDIR /opt
+RUN curl -L -O https://github.com/roswell/sbcl_bin/releases/download/2.5.7/sbcl-2.5.7-x86-64-linux-binary.tar.bz2
+RUN tar xf sbcl-2.5.7-x86-64-linux-binary.tar.bz2
+RUN cd sbcl-2.5.7-x86-64-linux && INSTALL_ROOT=/sbcl sh install.sh
+ENV PATH="/sbcl/bin:$PATH"
+RUN echo $PATH
+RUN ls -l /sbcl/bin
 RUN curl -L https://qlot.tech/installer | bash
 
-RUN qlot install && \
-    qlot exec sbcl --noinform --load scripts/build-ncurses.lisp
+WORKDIR /usr/local/bin
+RUN curl -L -O https://github.com/linuxdeploy/linuxdeploy/releases/download/1-alpha-20250213-2/linuxdeploy-x86_64.AppImage
+RUN curl -L -O https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+RUN chmod u+x linuxdeploy-x86_64.AppImage appimagetool-x86_64.AppImage
 
-ENTRYPOINT qlot exec sbcl --noinform --eval "(ql:quickload :lem-ncurses)" --eval "(lem:lem)" --quit
+WORKDIR /app
+COPY . . 
+RUN qlot install
+RUN qlot exec sbcl --load build.lisp
+RUN bash -ex make_appdir.sh
+
+ENTRYPOINT ["/bin/bash"]

@@ -1,5 +1,5 @@
 (defsystem "lem-server"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "lem/extensions"
                "jsonrpc"
                "jsonrpc/transport/stdio"

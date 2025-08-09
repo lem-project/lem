@@ -1,5 +1,5 @@
 (defsystem "lem-documentation-mode"
-  :depends-on ("lem" "lem-lisp-syntax")
+  :depends-on ("lem/core" "lem-lisp-syntax")
   :serial t
   :components ((:file "utils")
 	       (:file "internal")

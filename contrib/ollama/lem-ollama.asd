@@ -3,6 +3,6 @@
   :description "An ollama client for Lem."
   :license "MIT"
   :class :package-inferred-system
-  :depends-on (:lem :alexandria :bordeaux-threads :dexador :cl-json :chunga)
+  :depends-on (:lem/core :alexandria :bordeaux-threads :dexador :cl-json :chunga)
   :components ((:file "ollama")
                (:file "listener")))

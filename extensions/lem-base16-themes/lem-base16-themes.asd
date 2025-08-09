@@ -1,7 +1,7 @@
 (asdf:defsystem "lem-base16-themes"
   :author "Łukasz Pankowski"
   :license "MIT"
-  :depends-on (#:lem)
+  :depends-on (#:lem/core)
   :components ((:module "src"
                 :components
                 ((:file "package")

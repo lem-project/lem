@@ -1,5 +1,5 @@
 (defsystem "lem-markdown-mode"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "3bmd"
                "3bmd-ext-code-blocks"
                "lisp-preprocessor"

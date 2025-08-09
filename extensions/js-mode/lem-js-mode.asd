@@ -1,5 +1,5 @@
 (defsystem "lem-js-mode"
-  :depends-on ("lem"
+  :depends-on ("lem/core"
                "lem-lsp-mode"
                "lem-xml-mode")
   :serial t

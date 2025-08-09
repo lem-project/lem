@@ -287,5 +287,6 @@
   :build-operation "deploy-op"
   :build-pathname "lem"
   :entry-point "lem-webview:lem-main"
-  :depends-on ("lem-webview"
+  :depends-on ("lem-ncurses"
+               "lem-webview"
                "lem/extensions"))

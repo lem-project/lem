@@ -75,6 +75,6 @@ if otool -L "$LIBDIR/libssl.3.dylib"    | grep -q '/opt/homebrew' \
 fi
 
 # ===== 5) 配布用 ZIP =====
-rm -f lem.zip
-( cd bin && zip -r ../lem.zip "lem.app" )
-echo "Packaged: $(pwd)/lem.zip"
+rm -f lem-macos.zip
+( cd bin && zip -r ../lem-macos.zip "lem.app" )
+echo "Packaged: $(pwd)/lem-macos.zip"

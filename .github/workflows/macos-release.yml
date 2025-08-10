@@ -73,4 +73,4 @@ jobs:
           prerelease: true
           generate_release_notes: false
           files: |
-            lem.zip
+            lem-macos.zip

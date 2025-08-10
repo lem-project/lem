@@ -338,7 +338,8 @@
                               (when (typep (this-command) 'lem:editable-advice)
                                 (funcall edit-callback (get-input-string))))))
                 (run-hooks *prompt-after-activate-hook*)
-                (open-prompt-completion)
+                (when *automatic-tab-completion*
+                  (open-prompt-completion))
                 (with-special-keymap (special-keymap)
                   (if syntax-table
                       (with-current-syntax syntax-table

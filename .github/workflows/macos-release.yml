@@ -48,7 +48,7 @@ jobs:
 
       - name: Build Lem executable
         if: steps.diff.outputs.skip != 'true'
-        run: make macos-deploy
+        run: scripts/macos-deploy.bash
 
       - name: Get current date
         if: steps.diff.outputs.skip != 'true'

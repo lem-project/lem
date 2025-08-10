@@ -82,12 +82,10 @@ jobs:
           </plist>
           EOF
           chmod +x Lem.app/Contents/MacOS/lem
-          # Sign each library individually first
-          find Lem.app/Contents/MacOS -name "*.so*" -o -name "*.dylib*" | xargs -I {} codesign --force --sign - {} || true
-          # Then sign the main executable
-          codesign --force --sign - Lem.app/Contents/MacOS/lem
-          # Finally sign the entire app bundle
-          codesign --force --sign - Lem.app || true
+          # Sign with relaxed requirements for ad-hoc signing
+          find Lem.app/Contents/MacOS -name "*.so*" -o -name "*.dylib*" | xargs -I {} codesign --force --sign - --options=runtime {} || true
+          codesign --force --sign - --options=runtime Lem.app/Contents/MacOS/lem || true
+          codesign --force --deep --sign - --options=runtime Lem.app || true
 
       - name: Create DMG
         if: steps.diff.outputs.skip != 'true'

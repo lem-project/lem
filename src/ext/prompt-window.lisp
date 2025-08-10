@@ -6,12 +6,17 @@
   (:lock t)
   (:export :prompt-attribute
            :*prompt-completion-window-shape*
+           :*automatic-tab-completion*
            :current-prompt-window))
 (in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)
 (defconstant +min-width+   10)
 (defconstant +min-height+  1)
+
+(defvar *automatic-tab-completion* t 
+  "When set to true, the completion list is opened instantly.
+When set to false, the completion list only opens when the user presses TAB")
 
 (defvar *fill-width* nil)
 (defvar *history-table* (make-hash-table))
@@ -135,7 +140,7 @@
 (defvar *prompt-completion-window-shape* :drop-curtain)
 (defvar *prompt-completion-window-gravity* :horizontally-adjacent-window)
 
-(define-command prompt-completion () ()
+(defun open-prompt-completion ()
   (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
     (with-point ((start (current-prompt-start-point)))
       (lem/completion-mode:run-completion
@@ -157,6 +162,10 @@
        :style `(:gravity ,*prompt-completion-window-gravity*
                 :offset-y -1
                 :shape ,*prompt-completion-window-shape*)))))
+
+(define-command prompt-completion () ()
+  (open-prompt-completion))
+
 
 (define-command prompt-previous-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))
@@ -313,15 +322,18 @@
   (when (frame-floating-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (run-hooks *prompt-activate-hook*)
+
   (with-current-window (current-window)
     (let* ((prompt-window (create-prompt prompt-string
                                          initial-string
                                          parameters)))
       (switch-to-prompt-window prompt-window)
+
       (add-hook (window-leave-hook prompt-window) #'exit-prompt)
       (handler-case
           (with-unwind-setf (((frame-floating-prompt-window (current-frame))
                               prompt-window))
+
               (let ((*post-command-hook* *post-command-hook*))
                 (when edit-callback
                   (add-hook *post-command-hook*
@@ -329,11 +341,14 @@
                               (when (typep (this-command) 'lem:editable-advice)
                                 (funcall edit-callback (get-input-string))))))
                 (run-hooks *prompt-after-activate-hook*)
+                (when *automatic-tab-completion*
+                  (open-prompt-completion))
                 (with-special-keymap (special-keymap)
                   (if syntax-table
                       (with-current-syntax syntax-table
                         (funcall body-function))
                       (funcall body-function))))
+          
             (lem/completion-mode:completion-end)
             (remove-hook (window-leave-hook prompt-window) #'exit-prompt)
             (delete-prompt prompt-window)

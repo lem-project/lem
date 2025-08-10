@@ -319,15 +319,18 @@
   (when (frame-floating-prompt-window (current-frame))
     (editor-error "recursive use of prompt window"))
   (run-hooks *prompt-activate-hook*)
+
   (with-current-window (current-window)
     (let* ((prompt-window (create-prompt prompt-string
                                          initial-string
                                          parameters)))
       (switch-to-prompt-window prompt-window)
+
       (add-hook (window-leave-hook prompt-window) #'exit-prompt)
       (handler-case
           (with-unwind-setf (((frame-floating-prompt-window (current-frame))
                               prompt-window))
+
               (let ((*post-command-hook* *post-command-hook*))
                 (when edit-callback
                   (add-hook *post-command-hook*
@@ -335,11 +338,13 @@
                               (when (typep (this-command) 'lem:editable-advice)
                                 (funcall edit-callback (get-input-string))))))
                 (run-hooks *prompt-after-activate-hook*)
+                (open-prompt-completion)
                 (with-special-keymap (special-keymap)
                   (if syntax-table
                       (with-current-syntax syntax-table
                         (funcall body-function))
                       (funcall body-function))))
+          
             (lem/completion-mode:completion-end)
             (remove-hook (window-leave-hook prompt-window) #'exit-prompt)
             (delete-prompt prompt-window)

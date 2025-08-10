@@ -59,6 +59,8 @@ jobs:
           cp bin/*.so* Lem.app/Contents/MacOS/ || true
           cp bin/*.dylib* Lem.app/Contents/MacOS/ || true
           cp resources/lem.png Lem.app/Contents/Resources/
+          chmod +x Lem.app/Contents/MacOS/lem
+          codesign --force --deep --sign - Lem.app
           cat > Lem.app/Contents/Info.plist << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>
           <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">

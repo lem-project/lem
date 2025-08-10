@@ -23,6 +23,7 @@ jobs:
         run: git fetch --tags --force
 
       - name: Check changes since last nightly
+        if: github.event_name != 'workflow_dispatch'
         id: diff
         shell: bash
         run: |

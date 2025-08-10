@@ -86,6 +86,7 @@
          (editor-abort-handler (c)
            (declare (ignore c))
            (buffer-mark-cancel (current-buffer)) ; TODO: define handler
+           (clear-overlays)
            (run-hooks *editor-abort-hook*)
            )
 

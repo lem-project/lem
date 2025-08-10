@@ -49,4 +49,4 @@
 ("webview" .
  (:class qlot/source/git:source-git
   :initargs (:remote-url "https://github.com/lem-project/webview.git")
-  :version "git-291194f510ec8755280d2561872f8260a43bde28"))
+  :version "git-bff8a0fab9352945e72a430454578d658e1b35d9"))

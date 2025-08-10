@@ -125,3 +125,7 @@ lint:
 
 AppImage:
 	docker buildx build -f docker/Dockerfile-AppImage --progress=plain --target artifact --output type=local,dest=./artifacts .
+
+macos-deploy:
+	qlot install
+	qlot exec sbcl --eval '(ql:quickload :lem/deploy)' --eval '(asdf:make :lem/deploy)'

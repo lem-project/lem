@@ -283,7 +283,8 @@
 
 (defsystem "lem"
   :version "2.3.0"
-  :depends-on ("lem-ncurses"))
+  :depends-on (#-macosx ; workaround: because (adf:make :lem/deploy) fails
+               "lem-ncurses"))
 
 (defsystem "lem/deploy"
   :defsystem-depends-on ("deploy")

@@ -1,0 +1,114 @@
+name: Nightly Build (macOS)
+
+on:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: macos-latest
+    concurrency: nightly-macos-${{ github.workflow }}
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --tags --force
+
+      - name: Check changes since last nightly
+        id: diff
+        shell: bash
+        run: |
+          TAG=nightly-macos-latest
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            if git diff --quiet "$TAG"...HEAD -- .; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: No changes — skip build
+        if: steps.diff.outputs.skip == 'true'
+        run: echo "No changes since last nightly. Skipping."
+
+      - name: Set up Common Lisp environment
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          brew install sbcl
+          curl -O https://beta.quicklisp.org/quicklisp.lisp
+          sbcl --non-interactive --load quicklisp.lisp --eval "(quicklisp-quickstart:install)"
+          curl -L https://github.com/fukamachi/qlot/releases/latest/download/qlot-macos.tar.gz | tar xz
+          sudo install qlot /usr/local/bin
+
+      - name: Build Lem executable
+        if: steps.diff.outputs.skip != 'true'
+        run: make macos-deploy
+
+      - name: Create app bundle
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          mkdir -p Lem.app/Contents/MacOS
+          mkdir -p Lem.app/Contents/Resources
+          cp lem Lem.app/Contents/MacOS/
+          cp resources/lem.png Lem.app/Contents/Resources/
+          cat > Lem.app/Contents/Info.plist << 'EOF'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>CFBundleExecutable</key>
+            <string>lem</string>
+            <key>CFBundleIdentifier</key>
+            <string>com.lem.editor</string>
+            <key>CFBundleName</key>
+            <string>Lem</string>
+            <key>CFBundleVersion</key>
+            <string>1.0</string>
+            <key>CFBundleShortVersionString</key>
+            <string>1.0</string>
+            <key>CFBundleIconFile</key>
+            <string>lem.png</string>
+            <key>CFBundlePackageType</key>
+            <string>APPL</string>
+          </dict>
+          </plist>
+          EOF
+          chmod +x Lem.app/Contents/MacOS/lem
+
+      - name: Create DMG
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          mkdir dmg-staging
+          cp -r Lem.app dmg-staging/
+          ln -s /Applications dmg-staging/Applications
+          hdiutil create -srcfolder dmg-staging -format UDZO -volname "Lem Editor" Lem.dmg
+
+      - name: Get current date
+        if: steps.diff.outputs.skip != 'true'
+        id: date
+        run: echo "date=$(date +'%Y%m%d-%H%M')" >> "$GITHUB_OUTPUT"
+
+      - name: Move/update nightly tag to current commit
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f nightly-macos-latest
+          git push -f origin nightly-macos-latest
+
+      - name: Create/Update nightly pre-release
+        if: steps.diff.outputs.skip != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nightly-macos-latest
+          name: Nightly Build (macOS) - ${{ steps.date.outputs.date }}
+          prerelease: true
+          generate_release_notes: false
+          files: |
+            Lem.dmg

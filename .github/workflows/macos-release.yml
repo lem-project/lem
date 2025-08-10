@@ -41,7 +41,7 @@ jobs:
       - name: Set up Common Lisp environment
         if: steps.diff.outputs.skip != 'true'
         run: |
-          brew install sbcl
+          brew install sbcl openssl
           curl -O https://beta.quicklisp.org/quicklisp.lisp
           sbcl --non-interactive --load quicklisp.lisp --eval "(quicklisp-quickstart:install)"
           curl -L https://qlot.tech/installer | sh

@@ -55,7 +55,9 @@ jobs:
         run: |
           mkdir -p Lem.app/Contents/MacOS
           mkdir -p Lem.app/Contents/Resources
-          cp lem Lem.app/Contents/MacOS/
+          cp bin/lem Lem.app/Contents/MacOS/
+          cp bin/*.so* Lem.app/Contents/MacOS/ || true
+          cp bin/*.dylib* Lem.app/Contents/MacOS/ || true
           cp resources/lem.png Lem.app/Contents/Resources/
           cat > Lem.app/Contents/Info.plist << 'EOF'
           <?xml version="1.0" encoding="UTF-8"?>

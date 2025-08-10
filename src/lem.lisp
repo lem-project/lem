@@ -276,7 +276,7 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
 ;;; PATH injection for macOS
 
 #+darwin
-(add-hook *after-init-hook* 
+(add-hook *after-init-hook*
           (lambda ()
-            (setf (uiop:getenv "PATH") 
+            (setf (uiop:getenv "PATH")
                   (format nil "~{~A~^:~}" (exec-path)))))

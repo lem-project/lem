@@ -27,7 +27,7 @@ RUN chmod u+x linuxdeploy-x86_64.AppImage appimagetool-x86_64.AppImage
 WORKDIR /app
 COPY . . 
 RUN qlot install
-RUN qlot exec sbcl --eval '(ql:quickload :lem/deploy)' --eval '(asdf:make :lem/deploy)'
+RUN qlot exec sbcl --eval '(ql:quickload :lem)' --eval '(asdf:make :lem)'
 RUN bash -ex docker/make_appdir.sh
 
 RUN mkdir -p /artifacts

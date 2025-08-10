@@ -128,4 +128,4 @@ AppImage:
 
 macos-deploy:
 	qlot install
-	qlot exec sbcl --eval '(ql:quickload :lem/deploy)' --eval '(asdf:make :lem/deploy)'
+	qlot exec sbcl --eval '(ql:quickload :lem)' --eval '(asdf:make :lem)'

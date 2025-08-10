@@ -50,51 +50,6 @@ jobs:
         if: steps.diff.outputs.skip != 'true'
         run: make macos-deploy
 
-      - name: Create app bundle
-        if: steps.diff.outputs.skip != 'true'
-        run: |
-          mkdir -p Lem.app/Contents/MacOS
-          mkdir -p Lem.app/Contents/Resources
-          cp bin/lem Lem.app/Contents/MacOS/
-          cp bin/*.so* Lem.app/Contents/MacOS/ || true
-          cp bin/*.dylib* Lem.app/Contents/MacOS/ || true
-          cp resources/lem.png Lem.app/Contents/Resources/
-          cat > Lem.app/Contents/Info.plist << 'EOF'
-          <?xml version="1.0" encoding="UTF-8"?>
-          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
-          <plist version="1.0">
-          <dict>
-            <key>CFBundleExecutable</key>
-            <string>lem</string>
-            <key>CFBundleIdentifier</key>
-            <string>com.lem.editor</string>
-            <key>CFBundleName</key>
-            <string>Lem</string>
-            <key>CFBundleVersion</key>
-            <string>1.0</string>
-            <key>CFBundleShortVersionString</key>
-            <string>1.0</string>
-            <key>CFBundleIconFile</key>
-            <string>lem.png</string>
-            <key>CFBundlePackageType</key>
-            <string>APPL</string>
-          </dict>
-          </plist>
-          EOF
-          chmod +x Lem.app/Contents/MacOS/lem
-          # Sign with relaxed requirements for ad-hoc signing
-          find Lem.app/Contents/MacOS -name "*.so*" -o -name "*.dylib*" | xargs -I {} codesign --force --sign - --options=runtime {} || true
-          codesign --force --sign - --options=runtime Lem.app/Contents/MacOS/lem || true
-          codesign --force --deep --sign - --options=runtime Lem.app || true
-
-      - name: Create DMG
-        if: steps.diff.outputs.skip != 'true'
-        run: |
-          mkdir dmg-staging
-          cp -r Lem.app dmg-staging/
-          ln -s /Applications dmg-staging/Applications
-          hdiutil create -srcfolder dmg-staging -format UDZO -volname "Lem Editor" Lem.dmg
-
       - name: Get current date
         if: steps.diff.outputs.skip != 'true'
         id: date
@@ -117,4 +72,4 @@ jobs:
           prerelease: true
           generate_release_notes: false
           files: |
-            Lem.dmg
+            bin/lem.app

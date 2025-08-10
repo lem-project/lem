@@ -283,14 +283,11 @@
 
 (defsystem "lem"
   :version "2.3.0"
-  :depends-on (#-os-macosx ; workaround: because (adf:make :lem/deploy) fails
-               "lem-ncurses"))
-
-(defsystem "lem/deploy"
   :defsystem-depends-on ("deploy")
-  :build-operation "deploy-op"
+  :build-operation #+os-macosx "osx-app-deploy-op" #-os-macosx "deploy-op"
   :build-pathname "lem"
   :entry-point "lem-webview:lem-main"
   :depends-on ("lem-webview"
                "lem-server"
-               "lem"))
+               #-os-macosx ; workaround: because (adf:make :lem) fails
+               "lem-ncurses"))

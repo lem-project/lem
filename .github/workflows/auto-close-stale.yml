@@ -1,0 +1,49 @@
+name: Auto-close stale PRs and Issues
+on:
+  schedule:
+    - cron: '0 18 * * *'   # Runs every day at 18:00 UTC (03:00 JST)
+  workflow_dispatch: {}
+
+permissions:
+  issues: write            # Required for labeling/commenting/closing issues
+  pull-requests: write     # Required for labeling/commenting/closing PRs
+
+jobs:
+  stale:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/stale@v9
+        with:
+          repo-token: ${{ secrets.GITHUB_TOKEN }}
+
+          # ---------- Pull Requests ----------
+          days-before-pr-stale: 30            # Mark PR stale after 30 days of inactivity
+          days-before-pr-close: 7              # Close PR 7 days after being marked stale
+          stale-pr-label: stale
+          stale-pr-message: >
+            This pull request has been inactive for {days} days.
+            If there is no activity within the next 7 days, it will be automatically closed.
+            Please comment or push new commits to keep it open.
+          close-pr-message: >
+            Closing this pull request due to inactivity.
+            Please reopen it if you want to continue working on it.
+          exempt-pr-labels: "keep-open,work-in-progress"
+          exempt-draft-pr: true
+
+          # ---------- Issues ----------
+          days-before-issue-stale: 45          # Mark Issue stale after 45 days of inactivity
+          days-before-issue-close: 14          # Close Issue 14 days after being marked stale
+          stale-issue-label: stale
+          stale-issue-message: >
+            This issue has been inactive for {days} days.
+            If there is no activity within the next 14 days, it will be automatically closed.
+            Please add a comment if it is still relevant.
+          close-issue-message: >
+            Closing this issue due to inactivity.
+            Please reopen or create a new issue if the problem persists.
+          exempt-issue-labels: "keep-open,security,help-wanted"
+
+          # ---------- Common options ----------
+          remove-stale-when-updated: true      # Remove 'stale' label if there is new activity
+          operations-per-run: 200              # Adjust for repository size
+          debug-only: false

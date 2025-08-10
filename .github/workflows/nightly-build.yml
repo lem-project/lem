@@ -1,49 +1,70 @@
 name: Nightly Build (Linux)
 
 on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
 
 jobs:
   build:
     runs-on: ubuntu-latest
-    
+    concurrency: nightly-${{ github.workflow }}
+
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-      
-    - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-        
-    - name: Build AppImage
-      run: make AppImage
-      
-    - name: Get current date
-      id: date
-      run: echo "date=$(date +'%Y%m%d-%H%M')" >> $GITHUB_OUTPUT
-      
-    - name: Create nightly release
-      uses: actions/create-release@v1
-      id: create_release
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: nightly-${{ steps.date.outputs.date }}
-        release_name: Nightly Build (Linux) - ${{ steps.date.outputs.date }}
-        body: |
-          Automatic nightly build from main branch
-          
-          Commit: ${{ github.sha }}
-        draft: false
-        prerelease: true
-        
-    - name: Upload AppImage
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: artifacts/Lem-x86_64.AppImage
-        asset_name: Lem-x86_64-nightly.AppImage
-        asset_content_type: application/octet-stream
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --tags --force
+
+      - name: Check changes since last nightly
+        id: diff
+        shell: bash
+        run: |
+          TAG=nightly-latest
+          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
+            if git diff --quiet "$TAG"...HEAD -- .; then
+              echo "skip=true" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+
+      - name: No changes — skip build
+        if: steps.diff.outputs.skip == 'true'
+        run: echo "No changes since last nightly. Skipping."
+
+      - name: Set up Docker Buildx
+        if: steps.diff.outputs.skip != 'true'
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build AppImage
+        if: steps.diff.outputs.skip != 'true'
+        run: make AppImage
+
+      - name: Get current date
+        if: steps.diff.outputs.skip != 'true'
+        id: date
+        run: echo "date=$(date +'%Y%m%d-%H%M')" >> "$GITHUB_OUTPUT"
+
+      - name: Move/update nightly tag to current commit
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          git config user.name  "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git tag -f nightly-latest
+          git push -f origin nightly-latest
+
+      - name: Create/Update nightly pre-release
+        if: steps.diff.outputs.skip != 'true'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: nightly-latest
+          name: Nightly Build (Linux) - ${{ steps.date.outputs.date }}
+          prerelease: true
+          generate_release_notes: false
+          files: |
+            artifacts/Lem-x86_64.AppImage

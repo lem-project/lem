@@ -26,6 +26,11 @@ jobs:
         id: diff
         shell: bash
         run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
           TAG=nightly-macos-latest
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
             if git diff --quiet "$TAG"...HEAD -- .; then

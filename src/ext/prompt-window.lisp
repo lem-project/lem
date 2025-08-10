@@ -6,6 +6,7 @@
   (:lock t)
   (:export :prompt-attribute
            :*prompt-completion-window-shape*
+           :*automatic-tab-completion*
            :current-prompt-window))
 (in-package :lem/prompt-window)
 
@@ -13,6 +14,7 @@
 (defconstant +min-width+   10)
 (defconstant +min-height+  1)
 
+(defvar *automatic-tab-completion* t)
 (defvar *fill-width* nil)
 (defvar *history-table* (make-hash-table))
 

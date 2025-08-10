@@ -272,11 +272,3 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
                   (insert-string (buffer-point buffer) warning)
                   (insert-character (buffer-point buffer) #\newline))
                 (pop-to-buffer buffer)))))
-
-;;; PATH injection for macOS
-
-#+darwin
-(add-hook *after-init-hook*
-          (lambda ()
-            (setf (uiop:getenv "PATH")
-                  (format nil "~{~A~^:~}" (exec-path)))))

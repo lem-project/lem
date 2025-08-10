@@ -64,12 +64,6 @@ jobs:
           git tag -f nightly-macos-latest
           git push -f origin nightly-macos-latest
 
-      - name: Package .app
-        if: steps.diff.outputs.skip != 'true'
-        run: |
-          rm -f lem.zip
-          (cd bin && zip -r ../lem.zip lem.app)
-
       - name: Create/Update nightly pre-release
         if: steps.diff.outputs.skip != 'true'
         uses: softprops/action-gh-release@v2

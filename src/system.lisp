@@ -61,7 +61,9 @@ Note:
                                        (uiop:directory-files #P"/etc/paths.d/")))
                        (uiop:read-file-lines #P"/etc/paths")
                        (when (uiop:directory-exists-p "/opt/homebrew/bin/")
-                         (list "/opt/homebrew/bin/")))
+                         (list "/opt/homebrew/bin/"))
+                       (delete-if (lambda (str) (zerop (length str)))
+                                  (split-sequence:split-sequence #\: (uiop:getenv "PATH"))))
                #+linux
                (delete-if (lambda (str) (zerop (length str)))
                           (split-sequence:split-sequence #\: (uiop:getenv "PATH")))

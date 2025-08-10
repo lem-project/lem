@@ -137,7 +137,7 @@
 (defvar *prompt-completion-window-shape* :drop-curtain)
 (defvar *prompt-completion-window-gravity* :horizontally-adjacent-window)
 
-(define-command prompt-completion () ()
+(defun open-prompt-completion ()
   (alexandria:when-let (completion-fn (prompt-window-completion-function (current-prompt-window)))
     (with-point ((start (current-prompt-start-point)))
       (lem/completion-mode:run-completion
@@ -159,6 +159,10 @@
        :style `(:gravity ,*prompt-completion-window-gravity*
                 :offset-y -1
                 :shape ,*prompt-completion-window-shape*)))))
+
+(define-command prompt-completion () ()
+  (open-prompt-completion))
+
 
 (define-command prompt-previous-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))

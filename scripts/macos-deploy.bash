@@ -75,6 +75,16 @@ if otool -L "$LIBDIR/libssl.3.dylib"    | grep -q '/opt/homebrew' \
 fi
 
 # ===== 5) 配布用 ZIP =====
+README_PATH="bin/README.md"
+echo "The following command must be executed for lem.app to start.
+```
+xattr -dr com.apple.quarantine lem.app/
+```
+" > "$README_PATH"
+
 rm -f lem-macos.zip
-( cd bin && zip -r ../lem-macos.zip "lem.app" )
+(
+  cd bin
+  zip -r ../lem-macos.zip "lem.app" "README.md"
+)
 echo "Packaged: $(pwd)/lem-macos.zip"

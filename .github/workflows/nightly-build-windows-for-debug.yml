@@ -82,7 +82,7 @@ jobs:
           sbcl --non-interactive \
                --load quicklisp.lisp \
                --eval "(quicklisp-quickstart:install)" \
-               --eval "(ql:add-to-init-file)"
+               --eval "(ql::without-prompting (ql:add-to-init-file))"
 
       - name: Prepare $HOME/common-lisp and move lem
         if: steps.diff.outputs.skip != 'true'

@@ -138,9 +138,9 @@ jobs:
   publish:
     name: Publish unified Nightly pre-release
     runs-on: ubuntu-latest
-    needs: [linux, macos, windows]
+    needs: [linux, macos]
     if: |
-      needs.linux.result != 'cancelled' || needs.macos.result != 'cancelled' || needs.windows.result != 'cancelled'
+      needs.linux.result != 'cancelled' || needs.macos.result != 'cancelled'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -167,7 +167,6 @@ jobs:
           files=""
           [ -f download/Lem-x86_64.AppImage ] && files="$files"$'\n'"download/Lem-x86_64.AppImage"
           [ -f download/lem-macos.zip ] && files="$files"$'\n'"download/lem-macos.zip"
-          [ -f download/lem-windows.zip ] && files="$files"$'\n'"download/lem-windows.zip"
           files="${files#"${files%%[!$'\n']*}"}"
           echo "files<<EOF" >> "$GITHUB_OUTPUT"
           echo "$files" >> "$GITHUB_OUTPUT"
@@ -189,7 +188,7 @@ jobs:
         if: steps.collect.outputs.files != ''
         with:
           tag_name: ${{ env.NIGHTLY_TAG }}
-          name: Nightly Build (Linux/macOS/Windows) - ${{ steps.date.outputs.date }}
+          name: Nightly Build - ${{ steps.date.outputs.date }}
           prerelease: true
           generate_release_notes: false
           files: ${{ steps.collect.outputs.files }}

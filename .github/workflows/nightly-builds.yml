@@ -229,6 +229,13 @@ jobs:
             Write-Host "qlfile not found — skipping git/uiop clones."
           }
 
+      - name: Link repo into quicklisp/local-projects
+        shell: pwsh
+        run: |
+          $lp = Join-Path $env:USERPROFILE "quicklisp\local-projects"
+          New-Item -ItemType Directory -Force -Path $lp | Out-Null
+          cmd /c mklink /D "$lp\lem" "${{ github.workspace }}" 2>$null || robocopy "${{ github.workspace }}" "$lp\lem" /E /NFL /NDL /NJH /NJS /nc /ns /np | Out-Null
+
       - name: Build Lem (Windows)
         if: steps.diff.outputs.skip != 'true'
         shell: pwsh

@@ -13,10 +13,6 @@ on:
         description: 'Run macOS build'
         type: boolean
         default: true
-      windows:
-        description: 'Run Windows build'
-        type: boolean
-        default: true
       force:
         description: 'Force build even if no changes since last nightly'
         type: boolean
@@ -139,152 +135,12 @@ jobs:
         id: flag
         run: echo "built=true" >> "$GITHUB_OUTPUT"
 
-  windows:
-    name: Nightly Build (Windows)
-    if: github.event_name == 'schedule' || inputs.windows == true
-    runs-on: windows-latest
-    outputs:
-      built: ${{ steps.flag.outputs.built }}
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-
-      - name: Ensure LF line endings (global)
-        shell: pwsh
-        run: |
-          git config --global core.autocrlf false
-          git config --global core.eol lf
-
-      - name: Fetch tags
-        shell: bash
-        run: git fetch --tags --force
-
-      - name: Check changes since last nightly
-        id: diff
-        if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.force != true)
-        shell: bash
-        run: |
-          TAG="${{ env.NIGHTLY_TAG }}"
-          if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
-            if git diff --quiet "$TAG"...HEAD -- .; then
-              echo "skip=true" >> "$GITHUB_OUTPUT"
-            fi
-          fi
-
-      - name: No changes — skip build
-        if: steps.diff.outputs.skip == 'true'
-        shell: pwsh
-        run: echo "No changes since last nightly. Skipping."
-
-      - name: Install SBCL (latest MSI)
-        if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
-        run: |
-          $rel = Invoke-RestMethod -Uri "https://api.github.com/repos/roswell/sbcl_bin/releases/latest" -Headers @{ "User-Agent" = "gh-actions" }
-          $asset = $rel.assets | Where-Object { $_.name -match '\.msi$' -and $_.name -match 'windows' } | Select-Object -First 1
-          if (-not $asset) { throw "SBCL MSI not found in latest release." }
-          $msi = Join-Path $env:RUNNER_TEMP "sbcl.msi"
-          Invoke-WebRequest $asset.browser_download_url -OutFile $msi
-          Start-Process msiexec.exe -Wait -ArgumentList "/i `"$msi`" /qn /norestart"
-          $sbcl = Get-Command sbcl.exe -ErrorAction SilentlyContinue
-          if (-not $sbcl) {
-            # PATHに入っていない場合はインストール先を探索して追加
-            $sbclExe = Get-ChildItem "C:\Program Files\Steel Bank Common Lisp" -Recurse -Filter sbcl.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-            if (-not $sbclExe) { throw "sbcl.exe not found after install." }
-            echo ($sbclExe.DirectoryName) | Out-File -FilePath $env:GITHUB_PATH -Append
-          }
-
-      - name: Install Quicklisp
-        if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
-        run: |
-          Invoke-WebRequest https://beta.quicklisp.org/quicklisp.lisp -OutFile quicklisp.lisp
-          & sbcl --load quicklisp.lisp --eval "(quicklisp-quickstart:install)" --eval "(ql::without-prompting (ql:add-to-init-file))" || exit $LASTEXITCODE
-
-      - name: Resolve qlfile dependencies
-        if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
-        run: |
-          $qlfile = Join-Path $PWD "qlfile"
-          $dst = Join-Path $env:USERPROFILE "common-lisp"
-          New-Item -ItemType Directory -Force -Path $dst | Out-Null
-          if (Test-Path $qlfile) {
-            Get-Content $qlfile | ForEach-Object {
-              $line = $_.Trim()
-              if ($line -eq "" -or $line.StartsWith("#")) { return }
-              if ($line -match '^git\s+(\S+)\s+(\S+)$') {
-                $name = $Matches[1]; $url = $Matches[2]
-                $target = Join-Path $dst $name
-                if (-not (Test-Path $target)) {
-                  git -c core.autocrlf=false clone --depth 1 $url $target
-                }
-              }
-              elseif ($line -match '^ql\s+uiop$') {
-                $asdfDir = Join-Path $dst "asdf"
-                if (-not (Test-Path $asdfDir)) {
-                  git -c core.autocrlf=false clone --depth 1 https://gitlab.common-lisp.net/asdf/asdf.git $asdfDir
-                }
-                # 念のため CRLF→LF に正規化（ASDF は ~<newline> を多用）
-                Get-ChildItem -Path $asdfDir -Recurse -Include *.lisp,*.asd,*.sh | ForEach-Object {
-                  (Get-Content $_.FullName -Raw).Replace("`r`n","`n") | Set-Content -NoNewline $_.FullName
-                }
-                bash -lc "cd '$asdfDir' && sh make-asdf.sh"
-              }
-            }
-          } else {
-            Write-Host "qlfile not found — skipping git/uiop clones."
-          }
-
-      - name: Link repo into quicklisp/local-projects
-        shell: pwsh
-        run: |
-          $lp = Join-Path $env:USERPROFILE "quicklisp\local-projects"
-          New-Item -ItemType Directory -Force -Path $lp | Out-Null
-          cmd /c mklink /D "$lp\lem" "${{ github.workspace }}" 2>$null || robocopy "${{ github.workspace }}" "$lp\lem" /E /NFL /NDL /NJH /NJS /nc /ns /np | Out-Null
-
-      - name: Build Lem (Windows)
-        if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
-        run: |
-          & sbcl --non-interactive `
-                 --eval "(require :asdf)" `
-                 --eval "(ql:quickload :lem)" `
-                 --eval "(asdf:make :lem)"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: Package artifacts (Windows)
-        if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
-        run: |
-          $outDir = Join-Path $PWD "dist"
-          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-          $binDir = Join-Path $PWD "bin"
-          if (-not (Test-Path $binDir)) { throw "bin directory not found." }
-          $zip = Join-Path $outDir "lem-windows.zip"
-          if (Test-Path $zip) { Remove-Item $zip -Force }
-          Compress-Archive -Path (Join-Path $binDir '*') -DestinationPath $zip
-          Write-Host "Packaged: $zip"
-
-      - name: Upload artifact (Windows)
-        if: steps.diff.outputs.skip != 'true'
-        uses: actions/upload-artifact@v4
-        with:
-          name: lem-windows
-          path: dist/lem-windows.zip
-          if-no-files-found: error
-
-      - name: Flag built
-        id: flag
-        shell: pwsh
-        run: echo "built=true" >> $env:GITHUB_OUTPUT
-
   publish:
     name: Publish unified Nightly pre-release
     runs-on: ubuntu-latest
-    needs: [linux, macos, windows]
+    needs: [linux, macos]
     if: |
-      needs.linux.result != 'cancelled' || needs.macos.result != 'cancelled' || needs.windows.result != 'cancelled'
+      needs.linux.result != 'cancelled' || needs.macos.result != 'cancelled'
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -311,7 +167,6 @@ jobs:
           files=""
           [ -f download/Lem-x86_64.AppImage ] && files="$files"$'\n'"download/Lem-x86_64.AppImage"
           [ -f download/lem-macos.zip ] && files="$files"$'\n'"download/lem-macos.zip"
-          [ -f download/lem-windows.zip ] && files="$files"$'\n'"download/lem-windows.zip"
           files="${files#"${files%%[!$'\n']*}"}"
           echo "files<<EOF" >> "$GITHUB_OUTPUT"
           echo "$files" >> "$GITHUB_OUTPUT"
@@ -333,7 +188,7 @@ jobs:
         if: steps.collect.outputs.files != ''
         with:
           tag_name: ${{ env.NIGHTLY_TAG }}
-          name: Nightly Build (Linux/macOS/Windows) - ${{ steps.date.outputs.date }}
+          name: Nightly Build - ${{ steps.date.outputs.date }}
           prerelease: true
           generate_release_notes: false
           files: ${{ steps.collect.outputs.files }}

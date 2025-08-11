@@ -113,8 +113,8 @@ By default, persist M-x commands to disk. See *persist-M-x-commands*.")
   (let* ((candidates (when *persist-M-x-commands* (saved-commands)))
          (name (prompt-for-command
                 (if arg
-                    (format nil "~D M-x " arg)
-                    "M-x ")
+                    (format nil "Command (Argument: ~D): " arg)
+                    "Command: ")
                 :candidates candidates))
          (command (find-command name)))
     (if command

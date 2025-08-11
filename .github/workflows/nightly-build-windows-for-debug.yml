@@ -61,7 +61,19 @@ jobs:
           [ -z "$url" ] && { echo "SBCL MSI not found"; exit 1; }
           curl -L "$url" -o sbcl.msi
           msiexec //i sbcl.msi //qn //norestart
-          echo "/c/Program Files/Steel Bank Common Lisp/1.*/" >> $GITHUB_PATH
+
+          # インストール先を探す（"Program Files" or "Program Files (x86)"）
+          sbcl_dir=$(find "/c/Program Files" "/c/Program Files (x86)" -type f -name sbcl.exe 2>/dev/null | head -n1)
+          if [ -z "$sbcl_dir" ]; then
+            echo "sbcl.exe not found after install."
+            exit 1
+          fi
+          sbcl_bin=$(dirname "$sbcl_dir")
+          echo "$sbcl_bin" >> $GITHUB_PATH
+          export PATH="$sbcl_bin:$PATH"
+
+          # 確認
+          sbcl --version
 
       - name: Install Quicklisp
         if: steps.diff.outputs.skip != 'true'

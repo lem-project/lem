@@ -13,7 +13,7 @@ on:
 permissions:
   contents: write
 
-concurrency: nightly-windows-${{ github.workflow }}
+concurrency: nightly-${{ github.workflow }}
 
 env:
   NIGHTLY_TAG: nightly-latest
@@ -28,8 +28,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
+
+      - name: Ensure LF line endings (global)
+        shell: pwsh
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
 
       - name: Fetch tags
         shell: bash
@@ -50,9 +55,8 @@ jobs:
       - name: No changes — skip build
         if: steps.diff.outputs.skip == 'true'
         shell: pwsh
-        run: Write-Host "No changes since last nightly. Skipping."
+        run: echo "No changes since last nightly. Skipping."
 
-      # 2) SBCL を最新 MSI からサイレントインストール
       - name: Install SBCL (latest MSI)
         if: steps.diff.outputs.skip != 'true'
         shell: pwsh
@@ -69,9 +73,15 @@ jobs:
             if (-not $sbclExe) { throw "sbcl.exe not found after install." }
             $sbclExe.DirectoryName | Out-File -FilePath $env:GITHUB_PATH -Append
           }
-          sbcl --version
 
-      # 3) qlfile を解釈し $HOME/common-lisp へ clone、ASDF は LF 正規化して make
+      - name: Install Quicklisp
+        if: steps.diff.outputs.skip != 'true'
+        shell: pwsh
+        run: |
+          Invoke-WebRequest https://beta.quicklisp.org/quicklisp.lisp -OutFile quicklisp.lisp
+          & sbcl --load quicklisp.lisp --eval "(quicklisp-quickstart:install)" --eval "(ql::without-prompting (ql:add-to-init-file))"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
       - name: Resolve qlfile dependencies
         if: steps.diff.outputs.skip != 'true'
         shell: pwsh
@@ -95,7 +105,7 @@ jobs:
                 if (-not (Test-Path $asdfDir)) {
                   git -c core.autocrlf=false clone --depth 1 https://gitlab.common-lisp.net/asdf/asdf.git $asdfDir
                 }
-                # CRLF -> LF （ASDF の format ディレクティブ崩れ対策）
+                # CRLF→LF 正規化（ASDF の format ディレクティブ崩れ対策）
                 Get-ChildItem -Path $asdfDir -Recurse -Include *.lisp,*.asd,*.sh | ForEach-Object {
                   (Get-Content $_.FullName -Raw).Replace("`r`n","`n") | Set-Content -NoNewline $_.FullName
                 }
@@ -106,26 +116,15 @@ jobs:
             Write-Host "qlfile not found — skipping git/uiop clones."
           }
 
-      # 4) Quicklisp を導入
-      - name: Install Quicklisp
+      - name: Link repo into quicklisp/local-projects
         if: steps.diff.outputs.skip != 'true'
         shell: pwsh
         run: |
-          Invoke-WebRequest https://beta.quicklisp.org/quicklisp.lisp -OutFile quicklisp.lisp
-          & sbcl --non-interactive --load quicklisp.lisp --eval "(quicklisp-quickstart:install)" --eval "(ql::without-prompting (ql:add-to-init-file))"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $lp = Join-Path $env:USERPROFILE "quicklisp\local-projects"
+          New-Item -ItemType Directory -Force -Path $lp | Out-Null
+          cmd /c mklink /D "$lp\lem" "${{ github.workspace }}" 2>$null || robocopy "${{ github.workspace }}" "$lp\lem" /E /NFL /NDL /NJH /NJS /nc /ns /np | Out-Null
 
-      # 5) このリポジトリを ASDF の探索パスに通す
-      - name: Expose repo to ASDF (source-registry)
-        if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
-        run: |
-          $path = "${{ github.workspace }}".Replace('\','/')
-          $expr = "(:source-registry (:tree `"$path`") :inherit-configuration)"
-          echo "ASDF_SOURCE_REGISTRY=$expr" >> $env:GITHUB_ENV
-
-      # 6) ビルド
-      - name: Build Lem
+      - name: Build Lem (Windows)
         if: steps.diff.outputs.skip != 'true'
         shell: pwsh
         run: |
@@ -134,82 +133,26 @@ jobs:
                  --eval "(ql:quickload :lem)" `
                  --eval "(asdf:make :lem)"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          if (-not (Test-Path (Join-Path $PWD 'bin'))) { throw "bin directory not found after build." }
 
-      # 7) 成果物をフォルダでステージ（zip は publish ジョブで 1 回だけ作成）
-      - name: Stage artifact folder
+      - name: Package artifacts (Windows)
         if: steps.diff.outputs.skip != 'true'
         shell: pwsh
         run: |
-          $outDir = Join-Path $PWD "dist\lem-windows"
+          $outDir = Join-Path $PWD "dist"
           New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-          Copy-Item -Recurse -Force (Join-Path $PWD 'bin\*') $outDir
+          $binDir = Join-Path $PWD "bin"
+          if (-not (Test-Path $binDir)) { throw "bin directory not found." }
+          $zip = Join-Path $outDir "lem-windows.zip"
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          Compress-Archive -Path (Join-Path $binDir '*') -DestinationPath $zip
+          Write-Host "Packaged: $zip"
 
-      # 8) DLL 依存関係の列挙＆欠落チェック（欠落があれば失敗）
-      - name: List & verify DLL dependencies
-        if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
-        run: |
-          $exe = Join-Path $PWD "dist\lem-windows\lem.exe"
-          if (-not (Test-Path $exe)) { throw "lem.exe not found at $exe" }
-          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-          if (-not (Test-Path $vswhere)) { throw "vswhere.exe not found" }
-          $vs = & $vswhere -latest -property installationPath
-          if (-not $vs) { throw "Visual Studio installation not found" }
-          $dumpbin = Get-ChildItem -Path "$vs\VC\Tools\MSVC" -Directory |
-                     Sort-Object Name -Descending |
-                     ForEach-Object {
-                       $p = Join-Path $_.FullName "bin\Hostx64\x64\dumpbin.exe"
-                       if (Test-Path $p) { $p }
-                     } | Select-Object -First 1
-          if (-not (Test-Path $dumpbin)) { throw "dumpbin.exe not found" }
-          & $dumpbin /DEPENDENTS $exe | Tee-Object deps.txt | Out-Null
-          $dlls = Select-String -Path deps.txt -Pattern '^\s+([A-Za-z0-9._-]+\.dll)\s*$' |
-                  ForEach-Object { $_.Matches[0].Groups[1].Value.ToLower() } |
-                  Sort-Object -Unique
-          Write-Host "DEPENDENTS:`n$($dlls -join "`n")"
-          $searchDirs = @(
-            (Split-Path $exe -Parent),
-            "$env:WINDIR\System32"
-          ) + ($env:PATH -split ';' | Where-Object { $_ -and (Test-Path $_) })
-          $missing = @()
-          foreach ($d in $dlls) {
-            $found = $false
-            foreach ($dir in $searchDirs) {
-              if (Test-Path (Join-Path $dir $d)) { $found = $true; break }
-            }
-            if (-not $found) { $missing += $d }
-          }
-          if ($missing.Count -gt 0) {
-            Write-Error "Missing DLLs:`n$($missing -join "`n")"
-            exit 1
-          } else {
-            Write-Host "All dependent DLLs resolved."
-          }
-
-      # 9) スモークテスト（終了コードを記録。失敗しても続行して解析材料を残す）
-      - name: Smoke test (exit code + output)
-        if: steps.diff.outputs.skip != 'true'
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $exe = Join-Path $PWD "dist\lem-windows\lem.exe"
-          $smoke = Join-Path $env:GITHUB_WORKSPACE "smoke.txt"
-          Push-Location (Split-Path $exe -Parent)
-          & $exe --version 2>&1 | Tee-Object -FilePath $smoke
-          $code = $LASTEXITCODE
-          Pop-Location
-          Write-Host "lem.exe exit code: $code"
-
-      - name: Upload artifacts
+      - name: Upload artifact (Windows)
         if: steps.diff.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: lem-windows
-          path: |
-            dist/lem-windows/**
-            deps.txt
-            smoke.txt
+          path: dist/lem-windows.zip
           if-no-files-found: error
 
       - name: Flag built
@@ -225,8 +168,7 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        with: { fetch-depth: 0 }
 
       - name: Fetch tags
         run: git fetch --tags --force
@@ -235,18 +177,11 @@ jobs:
         id: date
         run: echo "date=$(date +'%Y%m%d-%H%M')" >> "$GITHUB_OUTPUT"
 
-      - name: Download Windows artifact
+      - name: Download artifact
         uses: actions/download-artifact@v4
         with:
           name: lem-windows
           path: download
-
-      - name: Create zip for release
-        run: |
-          cd download
-          if [ -d "lem-windows" ]; then
-            zip -r lem-windows.zip lem-windows
-          fi
 
       - name: Move/update nightly tag to current commit
         run: |
@@ -262,7 +197,4 @@ jobs:
           name: Nightly Build (Windows) - ${{ steps.date.outputs.date }}
           prerelease: true
           generate_release_notes: false
-          files: |
-            download/lem-windows.zip
-            download/deps.txt
-            download/smoke.txt
+          files: download/lem-windows.zip

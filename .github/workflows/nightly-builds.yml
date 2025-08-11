@@ -150,6 +150,12 @@ jobs:
         uses: actions/checkout@v4
         with: { fetch-depth: 0 }
 
+      - name: Ensure LF line endings (global)
+        shell: pwsh
+        run: |
+          git config --global core.autocrlf false
+          git config --global core.eol lf
+
       - name: Fetch tags
         shell: bash
         run: git fetch --tags --force
@@ -196,8 +202,6 @@ jobs:
           Invoke-WebRequest https://beta.quicklisp.org/quicklisp.lisp -OutFile quicklisp.lisp
           & sbcl --load quicklisp.lisp --eval "(quicklisp-quickstart:install)" --eval "(ql::without-prompting (ql:add-to-init-file))" || exit $LASTEXITCODE
 
-      # qlfile を解釈して $HOME/common-lisp へ clone
-      # "git <name> <url>" と "ql uiop" のケースのみを処理
       - name: Resolve qlfile dependencies
         if: steps.diff.outputs.skip != 'true'
         shell: pwsh
@@ -213,14 +217,17 @@ jobs:
                 $name = $Matches[1]; $url = $Matches[2]
                 $target = Join-Path $dst $name
                 if (-not (Test-Path $target)) {
-                  git clone --depth 1 $url $target
+                  git -c core.autocrlf=false clone --depth 1 $url $target
                 }
               }
               elseif ($line -match '^ql\s+uiop$') {
-                # asdf/uiop 最新を取得し make-asdf.sh を実行
                 $asdfDir = Join-Path $dst "asdf"
                 if (-not (Test-Path $asdfDir)) {
-                  git clone --depth 1 https://gitlab.common-lisp.net/asdf/asdf.git $asdfDir
+                  git -c core.autocrlf=false clone --depth 1 https://gitlab.common-lisp.net/asdf/asdf.git $asdfDir
+                }
+                # 念のため CRLF→LF に正規化（ASDF は ~<newline> を多用）
+                Get-ChildItem -Path $asdfDir -Recurse -Include *.lisp,*.asd,*.sh | ForEach-Object {
+                  (Get-Content $_.FullName -Raw).Replace("`r`n","`n") | Set-Content -NoNewline $_.FullName
                 }
                 bash -lc "cd '$asdfDir' && sh make-asdf.sh"
               }
@@ -241,8 +248,10 @@ jobs:
         shell: pwsh
         run: |
           & sbcl --non-interactive `
+                 --eval "(require :asdf)" `
                  --eval "(ql:quickload :lem)" `
-                 --eval "(asdf:make :lem)" || exit $LASTEXITCODE
+                 --eval "(asdf:make :lem)"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
       - name: Package artifacts (Windows)
         if: steps.diff.outputs.skip != 'true'

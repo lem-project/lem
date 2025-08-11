@@ -25,9 +25,9 @@
          :reader websocket-server-runner-host)))
 
 (defmethod server-listen ((runner websocket-server-runner) server)
-  (let* ((null-stream (make-broadcast-stream))
-         (*trace-output* null-stream)
-         (*error-output* null-stream))
+  (let* (#+(or)(null-stream (make-broadcast-stream))
+         #+(or)(*trace-output* null-stream)
+         #+(or)(*error-output* null-stream))
     (jsonrpc:server-listen server
                            :mode :websocket
                            :port (websocket-server-runner-port runner)

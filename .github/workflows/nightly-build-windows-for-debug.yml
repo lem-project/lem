@@ -129,10 +129,76 @@ jobs:
         shell: pwsh
         run: |
           & sbcl --non-interactive `
-                 --eval "(require :asdf)" `
                  --eval "(ql:quickload :lem)" `
                  --eval "(asdf:make :lem)"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: List & verify DLL dependencies
+        if: steps.diff.outputs.skip != 'true'
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD "bin\lem.exe"
+          if (-not (Test-Path $exe)) { throw "lem.exe not found at $exe" }
+      
+          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+          if (-not (Test-Path $vswhere)) { throw "vswhere.exe not found" }
+          $vs = & $vswhere -latest -property installationPath
+          if (-not $vs) { throw "Visual Studio installation not found" }
+          $dumpbin = Get-ChildItem -Path "$vs\VC\Tools\MSVC" -Directory |
+                     Sort-Object Name -Descending |
+                     ForEach-Object {
+                       $p = Join-Path $_.FullName "bin\Hostx64\x64\dumpbin.exe"
+                       if (Test-Path $p) { $p }
+                     } | Select-Object -First 1
+          if (-not (Test-Path $dumpbin)) { throw "dumpbin.exe not found" }
+      
+          & $dumpbin /DEPENDENTS $exe | Tee-Object deps.txt | Out-Null
+      
+          $dlls = Select-String -Path deps.txt -Pattern '^\s+([A-Za-z0-9._-]+\.dll)\s*$' |
+                  ForEach-Object { $_.Matches[0].Groups[1].Value.ToLower() } |
+                  Sort-Object -Unique
+      
+          $searchDirs = @(
+            (Split-Path $exe -Parent),
+            "$env:WINDIR\System32"
+          ) + ($env:PATH -split ';' | Where-Object { $_ -and (Test-Path $_) })
+      
+          $missing = @()
+          foreach ($d in $dlls) {
+            $found = $false
+            foreach ($dir in $searchDirs) {
+              if (Test-Path (Join-Path $dir $d)) { $found = $true; break }
+            }
+            if (-not $found) { $missing += $d }
+          }
+      
+          if ($missing.Count -gt 0) {
+            "Missing DLLs:`r`n$($missing -join "`r`n")" | Out-File -FilePath deps-missing.txt
+            Write-Error "Missing DLLs:`n$($missing -join "`n")"
+            exit 1
+          } else {
+            "All dependent DLLs resolved." | Out-File -FilePath deps-missing.txt
+          }
+
+      - name: Smoke run & capture logs
+        if: steps.diff.outputs.skip != 'true'
+        continue-on-error: true
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD "bin\lem.exe"
+          $out = Join-Path $PWD "run.stdout.txt"
+          $err = Join-Path $PWD "run.stderr.txt"
+          $exit = Join-Path $PWD "run.exit.txt"
+      
+          # まずはヘルプ（あれば）
+          & $exe --help 1> $out 2> $err
+          $code = $LASTEXITCODE
+          if ($code -ne 0 -or -not (Get-Content $out -ErrorAction SilentlyContinue)) {
+            # 引数なしでもう一度
+            & $exe 1>> $out 2>> $err
+            $code = $LASTEXITCODE
+          }
+          "exit=$code" | Out-File -FilePath $exit -Encoding ascii
 
       # --- Defender 事前スキャン（検出なしでも defender.txt を1行で作成） ---
       - name: Pre-release scan with Windows Defender (no remediation)

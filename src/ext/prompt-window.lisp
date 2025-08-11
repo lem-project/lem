@@ -14,10 +14,6 @@
 (defconstant +min-width+   10)
 (defconstant +min-height+  1)
 
-(defvar *automatic-tab-completion* t 
-  "When set to true, the completion list is opened instantly.
-When set to false, the completion list only opens when the user presses TAB")
-
 (defvar *fill-width* nil)
 (defvar *history-table* (make-hash-table))
 

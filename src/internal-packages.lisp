@@ -248,6 +248,7 @@
    :*prompt-buffer-completion-function*
    :*prompt-file-completion-function*
    :*prompt-command-completion-function*
+   :*automatic-tab-completion*
    :caller-of-prompt-window
    :prompt-active-p
    :active-prompt-window

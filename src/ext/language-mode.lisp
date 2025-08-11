@@ -199,12 +199,17 @@
                 (cond ((space*-p start))
                       ((indentation-point-p end))
                       (t
+                       (line-start start)
+                       (skip-whitespace-forward start)
                        (insert-string start line-comment)
                        (unless (space*-p end)
-                         (insert-character end #\newline))))
+                           (insert-character end #\newline))))
                 (return))
               (unless (space*-p start)
-                (insert-string start line-comment))
+                (progn
+                  (line-start start)
+                  (skip-whitespace-forward start)
+                  (insert-string start line-comment)))
               (line-offset start 1 charpos))))))))
 
 (define-command (uncomment-region (:advice-classes editable-advice)) () ()

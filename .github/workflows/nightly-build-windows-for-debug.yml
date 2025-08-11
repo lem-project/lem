@@ -238,20 +238,28 @@ jobs:
           Compress-Archive -Path (Join-Path $binDir '*') -DestinationPath $zip
           Write-Host "Packaged: $zip"
 
+      - name: Stage diagnostic logs (txt) into dist
+        if: steps.diff.outputs.skip != 'true'
+        shell: pwsh
+        run: |
+          $dist = Join-Path $PWD "dist"
+          New-Item -ItemType Directory -Force -Path $dist | Out-Null
+          $files = @("defender.txt","deps.txt","deps-missing.txt","run.stdout.txt","run.stderr.txt","run.exit.txt")
+          foreach ($f in $files) {
+            if (Test-Path $f) {
+              Copy-Item $f -Destination (Join-Path $dist $f) -Force
+            } else {
+              Write-Host "skip staging: $f not found"
+            }
+          }
+
       - name: Upload artifact (Windows)
         if: steps.diff.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: lem-windows
-          path: |
-            dist/lem-windows.zip
-            defender.txt
-            deps.txt
-            deps-missing.txt
-            run.stdout.txt
-            run.stderr.txt
-            run.exit.txt
-          if-no-files-found: warn
+          path: dist/**
+          if-no-files-found: error
 
       - name: Flag built
         id: flag

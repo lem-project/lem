@@ -246,6 +246,11 @@ jobs:
           path: |
             dist/lem-windows.zip
             defender.txt
+            deps.txt
+            deps-missing.txt
+            run.stdout.txt
+            run.stderr.txt
+            run.exit.txt
           if-no-files-found: warn
 
       - name: Flag built

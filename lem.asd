@@ -284,7 +284,10 @@
 (defsystem "lem"
   :version "2.3.0"
   :defsystem-depends-on ("deploy")
-  :build-operation #+os-macosx "osx-app-deploy-op" #+os-windows "deploy-console-op" #+linux "deploy-op"
+  :build-operation 
+  #+os-macosx "osx-app-deploy-op"
+  #+os-windows "deploy-op"
+  #+linux "deploy-op"
   :build-pathname "lem"
   :entry-point "lem-webview:lem-main"
   :depends-on ("lem-webview"

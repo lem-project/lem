@@ -22,8 +22,9 @@ jobs:
   windows:
     name: Nightly Build (Windows)
     runs-on: windows-latest
-    outputs:
-      built: ${{ steps.flag.outputs.built }}
+    defaults:
+      run:
+        shell: bash
     env:
       WINDOWS_CERT_PFX_B64: ${{ secrets.WINDOWS_CERT_PFX_B64 }}
       WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
@@ -31,24 +32,17 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-
-      - name: Ensure LF line endings (global)
-        shell: pwsh
-        run: |
-          git config --global core.autocrlf false
-          git config --global core.eol lf
+        with:
+          fetch-depth: 0
 
       - name: Fetch tags
-        shell: bash
         run: git fetch --tags --force
 
       - name: Check changes since last nightly
         id: diff
         if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.force != true)
-        shell: bash
         run: |
-          TAG="${{ env.NIGHTLY_TAG }}"
+          TAG="${NIGHTLY_TAG}"
           if git rev-parse -q --verify "refs/tags/$TAG" >/dev/null; then
             if git diff --quiet "$TAG"...HEAD -- .; then
               echo "skip=true" >> "$GITHUB_OUTPUT"
@@ -57,281 +51,79 @@ jobs:
 
       - name: No changes — skip build
         if: steps.diff.outputs.skip == 'true'
-        shell: pwsh
         run: echo "No changes since last nightly. Skipping."
 
       - name: Install SBCL (latest MSI)
         if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
         run: |
-          $rel = Invoke-RestMethod -Uri "https://api.github.com/repos/roswell/sbcl_bin/releases/latest" -Headers @{ "User-Agent" = "gh-actions" }
-          $asset = $rel.assets | Where-Object { $_.name -match '\.msi$' -and $_.name -match 'windows' } | Select-Object -First 1
-          if (-not $asset) { throw "SBCL MSI not found in latest release." }
-          $msi = Join-Path $env:RUNNER_TEMP "sbcl.msi"
-          Invoke-WebRequest $asset.browser_download_url -OutFile $msi
-          Start-Process msiexec.exe -Wait -ArgumentList "/i `"$msi`" /qn /norestart"
-          $sbcl = Get-Command sbcl.exe -ErrorAction SilentlyContinue
-          if (-not $sbcl) {
-            $sbclExe = Get-ChildItem "C:\Program Files\Steel Bank Common Lisp" -Recurse -Filter sbcl.exe -ErrorAction SilentlyContinue | Select-Object -First 1
-            if (-not $sbclExe) { throw "sbcl.exe not found after install." }
-            $sbclExe.DirectoryName | Out-File -FilePath $env:GITHUB_PATH -Append
-          }
+          rel=$(curl -s https://api.github.com/repos/roswell/sbcl_bin/releases/latest)
+          url=$(echo "$rel" | grep browser_download_url | grep -i windows | grep -i msi | cut -d '"' -f 4 | head -n1)
+          [ -z "$url" ] && { echo "SBCL MSI not found"; exit 1; }
+          curl -L "$url" -o sbcl.msi
+          msiexec //i sbcl.msi //qn //norestart
+          echo "/c/Program Files/Steel Bank Common Lisp/1.*/" >> $GITHUB_PATH
 
       - name: Install Quicklisp
         if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
         run: |
-          Invoke-WebRequest https://beta.quicklisp.org/quicklisp.lisp -OutFile quicklisp.lisp
-          & sbcl --load quicklisp.lisp --eval "(quicklisp-quickstart:install)" --eval "(ql::without-prompting (ql:add-to-init-file))"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          curl -O https://beta.quicklisp.org/quicklisp.lisp
+          sbcl --non-interactive \
+               --load quicklisp.lisp \
+               --eval "(quicklisp-quickstart:install)" \
+               --eval "(ql:add-to-init-file)"
+
+      - name: Prepare $HOME/common-lisp and move lem
+        if: steps.diff.outputs.skip != 'true'
+        run: |
+          mkdir -p "$HOME/common-lisp"
+          mv "$GITHUB_WORKSPACE" "$HOME/common-lisp/lem"
 
       - name: Resolve qlfile dependencies
         if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
+        working-directory: $HOME/common-lisp/lem
         run: |
-          $qlfile = Join-Path $PWD "qlfile"
-          $dst = Join-Path $env:USERPROFILE "common-lisp"
-          New-Item -ItemType Directory -Force -Path $dst | Out-Null
-          if (Test-Path $qlfile) {
-            Get-Content $qlfile | ForEach-Object {
-              $line = $_.Trim()
-              if ($line -eq "" -or $line.StartsWith("#")) { return }
-              if ($line -match '^git\s+(\S+)\s+(\S+)$') {
-                $name = $Matches[1]; $url = $Matches[2]
-                $target = Join-Path $dst $name
-                if (-not (Test-Path $target)) { git -c core.autocrlf=false clone --depth 1 $url $target }
-              }
-              elseif ($line -match '^ql\s+uiop$') {
-                $asdfDir = Join-Path $dst "asdf"
-                if (-not (Test-Path $asdfDir)) {
-                  git -c core.autocrlf=false clone --depth 1 https://gitlab.common-lisp.net/asdf/asdf.git $asdfDir
-                }
-                Get-ChildItem -Path $asdfDir -Recurse -Include *.lisp,*.asd,*.sh | ForEach-Object {
-                  (Get-Content $_.FullName -Raw).Replace("`r`n","`n") | Set-Content -NoNewline $_.FullName
-                }
-                bash -lc "cd '$asdfDir' && sh make-asdf.sh"
-              }
-            }
-          } else {
-            Write-Host "qlfile not found — skipping git/uiop clones."
-          }
+          if [ -f qlfile ]; then
+            while read -r line; do
+              [ -z "$line" ] && continue
+              case "$line" in
+                git\ *)
+                  name=$(echo "$line" | awk '{print $2}')
+                  url=$(echo "$line" | awk '{print $3}')
+                  git clone --depth 1 "$url" "$HOME/common-lisp/$name"
+                  ;;
+                "ql uiop")
+                  git clone --depth 1 https://gitlab.common-lisp.net/asdf/asdf.git "$HOME/common-lisp/asdf"
+                  (cd "$HOME/common-lisp/asdf" && sh make-asdf.sh)
+                  ;;
+              esac
+            done < qlfile
+          fi
 
-      - name: Link repo into quicklisp/local-projects
+      - name: Build Lem
         if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
+        working-directory: $HOME/common-lisp/lem
         run: |
-          $lp = Join-Path $env:USERPROFILE "quicklisp\local-projects"
-          New-Item -ItemType Directory -Force -Path $lp | Out-Null
-          cmd /c mklink /D "$lp\lem" "${{ github.workspace }}" 2>$null || robocopy "${{ github.workspace }}" "$lp\lem" /E /NFL /NDL /NJH /NJS /nc /ns /np | Out-Null
+          sbcl --eval "(ql:quickload :lem)" \
+               --eval "(asdf:make :lem)"
 
-      - name: Build Lem (Windows)
+      - name: Code sign lem.exe
         if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
         run: |
-          & sbcl --non-interactive `
-                 --eval "(ql:quickload :lem)" `
-                 --eval "(asdf:make :lem)"
-          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-
-      - name: List & verify DLL dependencies
-        if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
-        run: |
-          $exe = Join-Path $PWD "bin\lem.exe"
-          if (-not (Test-Path $exe)) { throw "lem.exe not found at $exe" }
-      
-          $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
-          if (-not (Test-Path $vswhere)) { throw "vswhere.exe not found" }
-          $vs = & $vswhere -latest -property installationPath
-          if (-not $vs) { throw "Visual Studio installation not found" }
-          $dumpbin = Get-ChildItem -Path "$vs\VC\Tools\MSVC" -Directory |
-                     Sort-Object Name -Descending |
-                     ForEach-Object {
-                       $p = Join-Path $_.FullName "bin\Hostx64\x64\dumpbin.exe"
-                       if (Test-Path $p) { $p }
-                     } | Select-Object -First 1
-          if (-not (Test-Path $dumpbin)) { throw "dumpbin.exe not found" }
-      
-          & $dumpbin /DEPENDENTS $exe | Tee-Object deps.txt | Out-Null
-      
-          $dlls = Select-String -Path deps.txt -Pattern '^\s+([A-Za-z0-9._-]+\.dll)\s*$' |
-                  ForEach-Object { $_.Matches[0].Groups[1].Value.ToLower() } |
-                  Sort-Object -Unique
-      
-          $searchDirs = @(
-            (Split-Path $exe -Parent),
-            "$env:WINDIR\System32"
-          ) + ($env:PATH -split ';' | Where-Object { $_ -and (Test-Path $_) })
-      
-          $missing = @()
-          foreach ($d in $dlls) {
-            $found = $false
-            foreach ($dir in $searchDirs) {
-              if (Test-Path (Join-Path $dir $d)) { $found = $true; break }
-            }
-            if (-not $found) { $missing += $d }
-          }
-      
-          if ($missing.Count -gt 0) {
-            "Missing DLLs:`r`n$($missing -join "`r`n")" | Out-File -FilePath deps-missing.txt
-            Write-Error "Missing DLLs:`n$($missing -join "`n")"
-            exit 1
-          } else {
-            "All dependent DLLs resolved." | Out-File -FilePath deps-missing.txt
-          }
-
-      - name: Smoke run & capture logs
-        if: steps.diff.outputs.skip != 'true'
-        continue-on-error: true
-        shell: pwsh
-        run: |
-          $exe = Join-Path $PWD "bin\lem.exe"
-          $out = Join-Path $PWD "run.stdout.txt"
-          $err = Join-Path $PWD "run.stderr.txt"
-          $exit = Join-Path $PWD "run.exit.txt"
-      
-          # まずはヘルプ（あれば）
-          & $exe --help 1> $out 2> $err
-          $code = $LASTEXITCODE
-          if ($code -ne 0 -or -not (Get-Content $out -ErrorAction SilentlyContinue)) {
-            # 引数なしでもう一度
-            & $exe 1>> $out 2>> $err
-            $code = $LASTEXITCODE
-          }
-          "exit=$code" | Out-File -FilePath $exit -Encoding ascii
-
-      # --- Defender 事前スキャン（検出なしでも defender.txt を1行で作成） ---
-      - name: Pre-release scan with Windows Defender (no remediation)
-        if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
-        run: |
-          $exe = Join-Path $PWD "bin\lem.exe"
-          $log = Join-Path $PWD "defender.txt"
-          if (-not (Test-Path $exe)) { throw "lem.exe not found at $exe" }
-          $mp = "${env:ProgramFiles}\Windows Defender\MpCmdRun.exe"
-          if (-not (Test-Path $mp)) {
-            $plat = Get-ChildItem "C:\ProgramData\Microsoft\Windows Defender\Platform" -Directory -ErrorAction SilentlyContinue | Sort-Object Name -Descending | Select-Object -First 1
-            if ($plat) { $mp = Join-Path $plat.FullName "MpCmdRun.exe" }
-          }
-          if (Test-Path $mp) {
-            & "$mp" -Scan -ScanType 3 -File "$exe" -DisableRemediation
-            $det = Get-MpThreatDetection -ErrorAction SilentlyContinue
-            if ($det) {
-              $det | Format-List | Out-File -FilePath $log
-            } else {
-              "No detections" | Out-File -FilePath $log
-            }
-          } else {
-            "MpCmdRun.exe not found; scan skipped" | Out-File -FilePath $log
-          }
+          CERT_PATH="$RUNNER_TEMP/cert.pfx"
+          echo "$WINDOWS_CERT_PFX_B64" | base64 -d > "$CERT_PATH"
+          # signtool.exe は Windows SDK の bin にある
+          SIGNTOOL=$(cmd /c "where signtool.exe" | head -n1 | tr -d '\r')
+          "$SIGNTOOL" sign /f "$CERT_PATH" /p "$WINDOWS_CERT_PASSWORD" /tr "http://timestamp.digicert.com" /td sha256 /fd sha256 "$HOME/common-lisp/lem/bin/lem.exe"
 
       - name: Package artifacts (Windows)
         if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
         run: |
-          $outDir = Join-Path $PWD "dist"
-          New-Item -ItemType Directory -Force -Path $outDir | Out-Null
-          $binDir = Join-Path $PWD "bin"
-          if (-not (Test-Path $binDir)) { throw "bin directory not found." }
-          $zip = Join-Path $outDir "lem-windows.zip"
-          if (Test-Path $zip) { Remove-Item $zip -Force }
-          Compress-Archive -Path (Join-Path $binDir '*') -DestinationPath $zip
-          Write-Host "Packaged: $zip"
+          mkdir -p dist
+          zip -j dist/lem-windows.zip "$HOME/common-lisp/lem/bin/"*
 
-      - name: Stage diagnostic logs (txt) into dist
-        if: steps.diff.outputs.skip != 'true'
-        shell: pwsh
-        run: |
-          $dist = Join-Path $PWD "dist"
-          New-Item -ItemType Directory -Force -Path $dist | Out-Null
-          $files = @("defender.txt","deps.txt","deps-missing.txt","run.stdout.txt","run.stderr.txt","run.exit.txt")
-          foreach ($f in $files) {
-            if (Test-Path $f) {
-              Copy-Item $f -Destination (Join-Path $dist $f) -Force
-            } else {
-              Write-Host "skip staging: $f not found"
-            }
-          }
-
-      - name: Upload artifact (Windows)
+      - name: Upload artifact
         if: steps.diff.outputs.skip != 'true'
         uses: actions/upload-artifact@v4
         with:
           name: lem-windows
-          path: dist/**
-          if-no-files-found: error
-
-      - name: Flag built
-        id: flag
-        shell: pwsh
-        run: echo "built=true" >> $env:GITHUB_OUTPUT
-
-  publish:
-    name: Publish Nightly (Windows)
-    runs-on: ubuntu-latest
-    needs: [windows]
-    if: needs.windows.outputs.built == 'true'
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-        with: { fetch-depth: 0 }
-
-      - name: Fetch tags
-        run: git fetch --tags --force
-
-      - name: Get current date
-        id: date
-        run: echo "date=$(date +'%Y%m%d-%H%M')" >> "$GITHUB_OUTPUT"
-
-      - name: Download artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: lem-windows
-          path: download
-
-      # 実在するパスを検出して multi-line 出力へ
-      - name: Collect files
-        id: collect
-        shell: bash
-        run: |
-          set -euo pipefail
-          files=""
-          # zip を探索（階層差異を吸収）
-          zip_path="$(find download -type f -name 'lem-windows.zip' | head -n1 || true)"
-          if [ -n "${zip_path}" ]; then
-            files="${files}"$'\n'"${zip_path}"
-          fi
-          # defender.txt は中身がある時だけ添付（任意）
-          if [ -s "download/defender.txt" ]; then
-            files="${files}"$'\n'"download/defender.txt"
-          else
-            # フォルダ下にある可能性も見る
-            det_path="$(find download -maxdepth 2 -type f -name 'defender.txt' -size +0c | head -n1 || true)"
-            if [ -n "${det_path}" ]; then
-              files="${files}"$'\n'"${det_path}"
-            fi
-          fi
-          files="${files#"${files%%[!$'\n']*}"}"  # 先頭の改行除去
-          echo "files<<EOF" >> "$GITHUB_OUTPUT"
-          echo "${files}" >> "$GITHUB_OUTPUT"
-          echo "EOF" >> "$GITHUB_OUTPUT"
-          if [ -z "${files}" ]; then
-            echo "No artifacts found to release." >&2
-            exit 78
-          fi
-
-      - name: Move/update nightly tag to current commit
-        run: |
-          git config user.name  "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git tag -f "${{ env.NIGHTLY_TAG }}"
-          git push -f origin "${{ env.NIGHTLY_TAG }}"
-
-      - name: Create/Update nightly pre-release
-        uses: softprops/action-gh-release@v2
-        with:
-          tag_name: ${{ env.NIGHTLY_TAG }}
-          name: Nightly Build (Windows) - ${{ steps.date.outputs.date }}
-          prerelease: true
-          generate_release_notes: false
-          files: ${{ steps.collect.outputs.files }}
+          path: dist/lem-windows.zip

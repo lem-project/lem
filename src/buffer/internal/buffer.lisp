@@ -107,12 +107,6 @@
 (defmethod buffer-mark-p ((buffer buffer))
   (mark-active-p (buffer-mark-object buffer)))
 
-;; workaround for windows
-#+win32
-(defmethod initialize-instance :after ((buffer buffer) &rest initargs)
-  "set default buffer encoding to utf-8"
-  (setf (buffer-encoding buffer) (encoding :utf-8 :lf)))
-
 (setf (documentation 'buffer-point 'function) "Returns the current `point` of `buffer`.")
 (setf (documentation 'buffer-mark 'function)
       "Returns the `point` of the current mark in the `buffer`")

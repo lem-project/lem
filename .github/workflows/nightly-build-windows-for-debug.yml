@@ -24,6 +24,10 @@ jobs:
     runs-on: windows-latest
     outputs:
       built: ${{ steps.flag.outputs.built }}
+    env:
+      # 署名に使う秘密情報（無ければ空文字になり、署名ステップはスキップされます）
+      WINDOWS_CERT_PFX_B64: ${{ secrets.WINDOWS_CERT_PFX_B64 }}
+      WINDOWS_CERT_PASSWORD: ${{ secrets.WINDOWS_CERT_PASSWORD }}
 
     steps:
       - name: Checkout
@@ -134,6 +138,54 @@ jobs:
                  --eval "(asdf:make :lem)"
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
 
+      # --- ここから Defender 対策 ---
+
+      # 署名（任意）：PFX（base64）とパスワードが指定されていれば実行
+      - name: Code sign binaries (optional)
+        if: steps.diff.outputs.skip != 'true' && env.WINDOWS_CERT_PFX_B64 != ''
+        shell: pwsh
+        run: |
+          $pfxPath = Join-Path $env:RUNNER_TEMP "codesign.pfx"
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:WINDOWS_CERT_PFX_B64))
+          # signtool 検出
+          $signtool = (Get-Command signtool.exe -ErrorAction SilentlyContinue).Source
+          if (-not $signtool) {
+            $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+            $vs = & $vswhere -latest -property installationPath
+            $signtool = Get-ChildItem -Path "$vs" -Recurse -Filter signtool.exe -ErrorAction SilentlyContinue | Select-Object -ExpandProperty FullName -First 1
+            if (-not $signtool) { throw "signtool.exe not found" }
+          }
+          $stage = Join-Path $PWD "bin"
+          $targets = Get-ChildItem $stage -Recurse -Include *.exe,*.dll | ForEach-Object { $_.FullName }
+          if ($targets.Count -eq 0) { throw "No binaries to sign under $stage" }
+          & "$signtool" sign /fd SHA256 /td SHA256 /tr http://timestamp.digicert.com /f "$pfxPath" /p "$env:WINDOWS_CERT_PASSWORD" $targets
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      # Defender で公開前スキャン（駆除無し）
+      - name: Pre-release scan with Windows Defender (no remediation)
+        if: steps.diff.outputs.skip != 'true'
+        shell: pwsh
+        run: |
+          $exe = Join-Path $PWD "bin\lem.exe"
+          if (-not (Test-Path $exe)) { throw "lem.exe not found at $exe" }
+          $mp = "${env:ProgramFiles}\Windows Defender\MpCmdRun.exe"
+          if (-not (Test-Path $mp)) { $mp = "${env:ProgramFiles(x86)}\Windows Defender\MpCmdRun.exe" }
+          if (Test-Path $mp) {
+            & "$mp" -Scan -ScanType 3 -File "$exe" -DisableRemediation
+            $code = $LASTEXITCODE
+            # 検出の詳細を取得（検出が無ければ空）
+            $det = Get-MpThreatDetection | Select-Object -Property ThreatName, Resources, InitialDetectionTime, ActionSuccess -ErrorAction SilentlyContinue
+            $det | Format-List | Out-File -FilePath defender.txt
+            if ($det) {
+              Write-Error "Windows Defender reported detections. See defender.txt"
+              exit 1
+            }
+          } else {
+            Write-Host "MpCmdRun.exe not found; skipping Defender scan."
+          }
+
+      # --- ここまで Defender 対策 ---
+
       - name: Package artifacts (Windows)
         if: steps.diff.outputs.skip != 'true'
         shell: pwsh
@@ -152,8 +204,10 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: lem-windows
-          path: dist/lem-windows.zip
-          if-no-files-found: error
+          path: |
+            dist/lem-windows.zip
+            defender.txt
+          if-no-files-found: warn
 
       - name: Flag built
         id: flag
@@ -197,4 +251,6 @@ jobs:
           name: Nightly Build (Windows) - ${{ steps.date.outputs.date }}
           prerelease: true
           generate_release_notes: false
-          files: download/lem-windows.zip
+          files: |
+            download/lem-windows.zip
+            download/defender.txt

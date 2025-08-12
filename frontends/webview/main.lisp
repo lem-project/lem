@@ -1,6 +1,6 @@
 (uiop:define-package :lem-webview
   (:use :cl)
-  (:export :lem-main
+  (:export :main
            :webview-main))
 (in-package :lem-webview)
 
@@ -15,15 +15,24 @@
              (webview:webview-run w))
         (webview:webview-destroy w)))))
 
-(defun lem-main (&optional (args (uiop:command-line-arguments)))
-  (let ((port (lem/common/socket:random-available-port)))
-    (bt2:make-thread (lambda () (lem-server:run-websocket-server :port port :args args))
-                     :name "lem-server")
-    (run-webview :title "Lem"
-                 :url (format nil "http://127.0.0.1:~D" port)
-                 :width 1024
-                 :height 768)
-    (uiop:quit)))
+(defun main (&optional (args (uiop:command-line-arguments)))
+  (let ((parsed-args (lem:parse-args args)))
+    (cond ((eq :jsonrpc (or (lem:command-line-arguments-interface parsed-args)
+                            :jsonrpc))
+           (let ((port (lem/common/socket:random-available-port)))
+             (bt2:make-thread (lambda ()
+                                (lem-server:run-websocket-server
+                                 :port port
+                                 :args args))
+                              :name "lem-server")
+             (run-webview :title "Lem"
+                          :url (format nil "http://127.0.0.1:~D" port)
+                          :width 1024
+                          :height 768)
+             (uiop:quit)))
+          (t
+           (setf (lem:command-line-arguments-interface parsed-args) :ncurses)
+           (lem:launch parsed-args)))))
 
 (defun webview-main (&optional (args (uiop:command-line-arguments)))
   (let ((spec '((("url") :type string :optional nil :documentation "url")

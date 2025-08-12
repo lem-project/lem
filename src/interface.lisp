@@ -24,17 +24,14 @@
     :initarg :html-support
     :reader html-support-p)))
 
-(defun get-default-implementation (&key (errorp t) (implementation :ncurses))
+(defun get-default-implementation (&key (implementation :ncurses))
   (let* ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))
          (class (case (length classes)
                   (0
-                   (when errorp
-                     (error "Implementation does not exist.~
-                             (probably because you didn't load the lem-ncurses system)")))
-                  (1
-                   (first classes))
+                   (error "Implementation does not exist.~
+                             (probably because you didn't load the lem-ncurses system)"))
                   (otherwise
-                   (dolist (class classes (first classes))
+                   (dolist (class classes)
                      (when (string= implementation (class-name class))
                        (return class)))))))
     (when class

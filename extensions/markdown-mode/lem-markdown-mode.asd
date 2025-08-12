@@ -18,4 +18,5 @@
                 :serial t
                 :components ((:file "preview")
                              (:file "external-browser")
-                             (:file "html-buffer")))))
+                             (:file "html-buffer")))
+               (:file "interactive")))

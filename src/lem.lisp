@@ -9,16 +9,6 @@
 
 (defvar *syntax-scan-window-recursive-p* nil)
 
-(defvar *help* "Usage: lem [ OPTION-OR-FILENAME ] ...
-Options:
-        -q, --without-init-file        do not load ~/.lem/init.lisp
-        --debug                   enable debugger
-        --log-filename FILENAME   file name of the log file
-        -i, --interface INTERFACE interface to use, either sdl2 or ncurses
-        -v, --version             print the version number and exit
-        -h, --help                display this help and exit"
-"Help output for cli")
-
 (defun syntax-scan-window (window)
   (check-type window window)
   (when (and (enable-syntax-highlight-p (window-buffer window))
@@ -155,7 +145,7 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
   (setf sb-impl::*default-external-format* :utf-8)
 
   (when (command-line-arguments-help args)
-    (uiop:println *help*)
+    (show-help)
     (return-from launch))
 
   (when (command-line-arguments-version args)

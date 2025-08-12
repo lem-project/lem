@@ -1,5 +1,7 @@
 (in-package :lem-core)
 
+(define-condition command-line-arguments-error (simple-error) ())
+
 (defvar *set-location-hook* '((push-buffer-point . 0)))
 (defvar *before-init-hook* '())
 (defvar *after-init-hook* '())
@@ -8,9 +10,10 @@
 (defvar *in-the-editor* nil)
 
 (defvar *syntax-scan-window-recursive-p* nil)
+
 (defvar *help* "Usage: lem [ OPTION-OR-FILENAME ] ...
 Options:
-        -q, --no-init-file        do not load ~/.lem/init.lisp
+        -q, --without-init-file        do not load ~/.lem/init.lisp
         --debug                   enable debugger
         --log-filename FILENAME   file name of the log file
         -i, --interface INTERFACE interface to use, either sdl2 or ncurses
@@ -85,58 +88,68 @@ Options:
 
 (defstruct command-line-arguments
   args
+  (help nil)
   (debug nil)
+  (version nil)
+  (without-init-file nil)
   (log-filename nil)
-  (no-init-file nil)
-  (interface nil))
+  (interface nil)
+  (filenames '()))
+
+(defun use-spash-screen-p (args)
+  (null (command-line-arguments-filenames args)))
+
+(defun command-line-arguments-error (fmt &rest args)
+  (error 'command-line-arguments-error :format-control fmt :format-arguments args))
 
 (defun parse-args (args)
-  (let ((parsed-args
-          (make-command-line-arguments))
-        (file-count 0))
-    (setf (command-line-arguments-args parsed-args)
-          `(,@(loop :while args
-                    :for arg := (pop args)
-                    :when (cond ((member arg '("-h" "--help") :test #'equal)
-                                 (format t "~a~%" *help*)
-                                 (uiop:quit))
-                                ((member arg '("-q" "--no-init-file") :test #'equal)
-                                 (setf (command-line-arguments-no-init-file parsed-args)
-                                       t)
-                                 nil)
-                                ((equal arg "--debug")
-                                 (setf (command-line-arguments-debug parsed-args)
-                                       t))
-                                ((equal arg "--log-filename")
-                                 (let ((filename (pop args)))
-                                   (unless filename
-                                     (error "Please, specify a filename to log to."))
-                                   (setf (command-line-arguments-log-filename parsed-args)
-                                         filename)))
-                                ((member arg '("-i" "--interface") :test #'equal)
-                                 (let ((interface (pop args)))
-                                   (if (and interface (plusp (length interface)))
-                                       (setf (command-line-arguments-interface parsed-args)
-                                             (alexandria:make-keyword (string-upcase interface)))
-                                       (write-line "Please specify an interface to use."
-                                                   *error-output*))))
-                                ((member arg '("-v" "--version") :test #'equal)
-                                 (format t "~A~%" (get-version-string))
-                                 (uiop:quit)
-                                 nil)
-                                ((or (stringp arg) (pathnamep arg))
-                                 (incf file-count)
-                                 `(uiop:symbol-call :lem :find-file ,(merge-pathnames arg (uiop:getcwd))))
-                                (t
-                                 arg))
-                    :collect it)
-            ,@(and (zerop file-count)
-                   *splash-function*
-                   `((funcall ,*splash-function*)))))
-    parsed-args))
+  (let ((help nil)
+        (debug nil)
+        (version nil)
+        (without-init-file nil)
+        (log-filename nil)
+        (interface nil)
+        (filenames '()))
+    (loop :while args
+          :for arg := (pop args)
+          :do (cond ((member arg '("-h" "--help") :test #'equal)
+                     (setf help t))
+                    ;; TODO: without-intt-fileの方がよさそう
+                    ((member arg '("-q" "--without-init-file") :test #'equal)
+                     (setf without-init-file t))
+                    ((equal arg "--debug")
+                     (setf debug t))
+                    ((equal arg "--log-filename")
+                     (let ((filename (pop args)))
+                       (unless filename
+                         (command-line-arguments-error "Please, specify a filename to log to."))
+                       (setf log-filename filename)))
+                    ((member arg '("-i" "--interface") :test #'equal)
+                     (let ((arg (pop args)))
+                       (if arg
+                           (setf interface
+                                 (alexandria:make-keyword (string-upcase arg)))
+                           (command-line-arguments-error "Please specify an interface to use."))))
+                    ((member arg '("-v" "--version") :test #'equal)
+                     (setf version t))
+                    ((or (stringp arg) (pathnamep arg))
+                     (push arg filenames))
+                    (t
+                     (command-line-arguments-error "unexpected arg: ~A" arg))))
+    (make-command-line-arguments :help help
+                                 :debug debug
+                                 :version version
+                                 :without-init-file without-init-file
+                                 :log-filename log-filename
+                                 :interface interface
+                                 :filenames (nreverse filenames))))
 
 (defun apply-args (args)
-  (mapc #'eval (command-line-arguments-args args)))
+  (if (and (use-spash-screen-p args)
+           *splash-function*)
+      (funcall *splash-function*)
+      (loop :for filename :in (command-line-arguments-filenames args)
+            :do (uiop:symbol-call :lem :find-file (merge-pathnames filename (uiop:getcwd))))))
 
 (defun load-init-file ()
   (flet ((maybe-load (path)
@@ -172,7 +185,7 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
 
 (defun init (args)
   (run-hooks *before-init-hook*)
-  (unless (command-line-arguments-no-init-file args)
+  (unless (command-line-arguments-without-init-file args)
     (load-init-file))
   (run-hooks *after-init-hook*)
   (apply-args args))
@@ -198,6 +211,9 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
         :test #'equal
         :key #'bt2:thread-name))
 
+;; NOTE: so that it can be processed during compilation.
+(defvar *version* (get-version-string))
+
 (defun lem (&rest args)
 
   ;; for sbcl, set the default file encoding to utf-8
@@ -206,6 +222,14 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
   (setf sb-impl::*default-external-format* :utf-8)
 
   (setf args (parse-args args))
+
+  (when (command-line-arguments-help args)
+    (uiop:println *help*)
+    (return-from lem))
+
+  (when (command-line-arguments-version args)
+    (uiop:println *version*)
+    (return-from lem))
 
   (cond
     ((command-line-arguments-log-filename args)

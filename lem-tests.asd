@@ -15,7 +15,7 @@
                              (:file "killring")
                              (:file "history")
                              (:file "timer")))
-	       #+sbcl
+               #+sbcl
                (:module "language-server"
                 :components ((:file "utils")
                              (:file "micros-tests")
@@ -37,6 +37,7 @@
                (:file "interp")
                (:file "file")
                (:file "scala-mode")
-               (:file "completion"))
+               (:file "completion")
+               (:file "command-line-arguments"))
   :perform (test-op (o c)
                     (symbol-call :rove :run c)))

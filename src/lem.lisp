@@ -11,11 +11,8 @@
 (defvar *help* "Usage: lem [ OPTION-OR-FILENAME ] ...
 Options:
         -q, --no-init-file        do not load ~/.lem/init.lisp
-        --slime PORT              start slime on PORT
-        --eval EXPR               evaluate lisp expression EXPR
         --debug                   enable debugger
         --log-filename FILENAME   file name of the log file
-        --kill                    immediately exit
         -i, --interface INTERFACE interface to use, either sdl2 or ncurses
         -v, --version             print the version number and exit
         -h, --help                display this help and exit"
@@ -101,20 +98,12 @@ Options:
           `(,@(loop :while args
                     :for arg := (pop args)
                     :when (cond ((member arg '("-h" "--help") :test #'equal)
-				 (format t "~a~%" *help*)
-				 (uiop:quit))
-				((member arg '("-q" "--no-init-file") :test #'equal)
+                                 (format t "~a~%" *help*)
+                                 (uiop:quit))
+                                ((member arg '("-q" "--no-init-file") :test #'equal)
                                  (setf (command-line-arguments-no-init-file parsed-args)
                                        t)
                                  nil)
-                                ((equal arg "--slime")
-                                 (let ((host-port (pop args)))
-                                   ;; TODO: handle incorrect input
-                                   (destructuring-bind (host port)
-                                       (uiop:split-string (string-trim " " host-port) :separator ":")
-                                     `(uiop:symbol-call :lem-lisp-mode :slime-connect ,host ,(parse-integer port) nil))))
-                                ((equal arg "--eval")
-                                 `(eval ,(read-from-string (pop args))))
                                 ((equal arg "--debug")
                                  (setf (command-line-arguments-debug parsed-args)
                                        t))
@@ -131,8 +120,6 @@ Options:
                                              (alexandria:make-keyword (string-upcase interface)))
                                        (write-line "Please specify an interface to use."
                                                    *error-output*))))
-                                ((equal arg "--kill")
-                                 `(uiop:quit))
                                 ((member arg '("-v" "--version") :test #'equal)
                                  (format t "~A~%" (get-version-string))
                                  (uiop:quit)

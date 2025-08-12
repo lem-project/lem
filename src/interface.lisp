@@ -22,7 +22,12 @@
    (html-support
     :initform nil
     :initarg :html-support
-    :reader html-support-p)))
+    :reader html-support-p)
+   (underline-color-support
+    :initform nil
+    :initarg :underline-color-support
+    :reader underline-color-support-p
+    :documentation "If a color different from the foreground color can be assigned to the underline, then it is T (in Terminal, it becomes nil).")))
 
 (defun get-default-implementation (&key (implementation :ncurses))
   (let* ((classes (c2mop:class-direct-subclasses (find-class 'implementation)))

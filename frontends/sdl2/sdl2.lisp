@@ -9,6 +9,4 @@
    :name :sdl2
    :redraw-after-modifying-floating-window nil))
 
-(setf (lem-core:variable-value 'lem-core:highlight-line :global) t)
-
 (pushnew :lem-sdl2 *features*)

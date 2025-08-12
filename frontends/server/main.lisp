@@ -104,7 +104,8 @@
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
    :window-left-margin 1
-   :html-support t))
+   :html-support t
+   :underline-color-support t))
 
 (defun get-all-views ()
   (if (null (lem:current-frame))

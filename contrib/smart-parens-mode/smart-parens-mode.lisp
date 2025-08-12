@@ -8,6 +8,7 @@
     (:name "smart-parens-mode"
      :keymap *smart-parens-keymap*))
 
+;;; From paredit
 (defun bolp (point)
   (zerop (point-charpos point)))
 
@@ -73,6 +74,8 @@
              (insert-character p #\Space)
              (character-offset p -1))
            (character-offset p -1)))))
+
+;;; smart parens specific code
 
 (define-command smart-parens-insert-paren () ()
   (editor-insert-pair #\( #\)))

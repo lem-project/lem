@@ -70,7 +70,8 @@
     (:name "prompt"
      :keymap *prompt-mode-keymap*)
   (setf (not-switchable-buffer-p (current-buffer)) t)
-  (setf (variable-value 'line-wrap :buffer (current-buffer)) nil))
+  (setf (variable-value 'line-wrap :buffer (current-buffer)) nil)
+  (setf (variable-value 'highlight-line :buffer (current-buffer)) nil)))
 
 (define-attribute prompt-attribute
   (t :foreground :base07 :bold t))

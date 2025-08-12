@@ -190,6 +190,8 @@
 
 (define-key *global-keymap* "C-x p g" 'project-grep)
 (define-key *peek-grep-mode-keymap* "C-x ?" 'grep-help)  ;; originally bound to describe-key.
-(define-key *peek-grep-mode-keymap* "n" 'lem/peek-source:peek-source-next)
-(define-key *peek-grep-mode-keymap* "p" 'lem/peek-source:peek-source-previous)
-(define-key *peek-grep-mode-keymap* "a" 'grep-move-to-content-start)
+
+;; Comment out because it conflicts with isearch.
+;; (define-key *peek-grep-mode-keymap* "n" 'lem/peek-source:peek-source-next)
+;; (define-key *peek-grep-mode-keymap* "p" 'lem/peek-source:peek-source-previous)
+;; (define-key *peek-grep-mode-keymap* "a" 'grep-move-to-content-start)

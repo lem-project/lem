@@ -757,7 +757,7 @@
           (make-instance 'websocket-server-runner
                          :port port
                          :host hostname)))
-    (apply #'lem:lem "--interface" "JSONRPC" args)))
+    (apply #'lem:lem (append args (list "--interface" "JSONRPC")))))
 
 (defun run-stdio-server ()
   (let ((*server-runner* (make-instance 'stdio-server-runner)))

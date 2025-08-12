@@ -287,10 +287,10 @@
   :defsystem-depends-on ("deploy")
   :build-operation #+os-macosx "osx-app-deploy-op" #-os-macosx "deploy-op"
   :build-pathname "lem"
-  :entry-point "lem-webview:lem-main"
+  :entry-point "lem-webview:main"
   :depends-on ("lem-webview"
                "lem-server"
-               #+linux ; workaround: because (adf:make :lem) fails
+               #+(and os-unix (not os-macosx)) ; workaround: because (adf:make :lem) fails
                "lem-ncurses")
   :pathname "src"
   :components ((:file "macosx" :if-feature :os-macosx)))

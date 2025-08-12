@@ -147,22 +147,20 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
 ;; NOTE: so that it can be processed during compilation.
 (defvar *version* (get-version-string))
 
-(defun lem (&rest args)
-
+(defun launch (args)
+  (check-type args command-line-arguments)
   ;; for sbcl, set the default file encoding to utf-8
   ;; (on windows, the default is determined by code page (e.g. :cp932))
   #+sbcl
   (setf sb-impl::*default-external-format* :utf-8)
 
-  (setf args (parse-args args))
-
   (when (command-line-arguments-help args)
     (uiop:println *help*)
-    (return-from lem))
+    (return-from launch))
 
   (when (command-line-arguments-version args)
     (uiop:println *version*)
-    (return-from lem))
+    (return-from launch))
 
   (cond
     ((command-line-arguments-log-filename args)
@@ -180,21 +178,22 @@ See scripts/build-ncurses.lisp or scripts/build-sdl2.lisp"
   (cond (*in-the-editor*
          (apply-args args))
         (t
-         (let ((implementation
-                (get-default-implementation
-                 :errorp nil
-                 :implementation
-                 (or (command-line-arguments-interface args)
-                     (if (interactive-stream-p *standard-input*)
-                         :ncurses
-                         :sdl2)))))
+         (let* ((implementation-keyword (or (command-line-arguments-interface args)
+                                            (if (interactive-stream-p *standard-input*)
+                                                :ncurses
+                                                :sdl2)))
+                (implementation (get-default-implementation
+                                 :implementation
+                                 implementation-keyword)))
            (unless implementation
-             (maybe-load-systems :lem-ncurses)
-             (setf implementation (get-default-implementation)))
+             (error "implementation ~A not found" implementation-keyword))
            (invoke-frontend
             (lambda (&optional initialize finalize)
               (run-editor-thread initialize args finalize))
             :implementation implementation)))))
+
+(defun lem (&rest args)
+  (launch (parse-args args)))
 
 (defun main (&optional (args (uiop:command-line-arguments)))
   (apply #'lem args))

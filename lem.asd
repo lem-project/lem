@@ -137,6 +137,7 @@
                (:file "highlight-line")
                (:file "html-buffer")
                (:file "site-init")
+               (:file "command-line-arguments")
                (:file "lem")
 
                (:file "color-theme")

@@ -1,6 +1,6 @@
 (in-package :lem-core)
 
-(define-editor-variable highlight-line nil)
+(define-editor-variable highlight-line t)
 (define-editor-variable highlight-line-color nil)
 
 (defun highlight-line-color ()

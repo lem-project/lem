@@ -27,6 +27,7 @@
            :find-history-file
            :*file-history-limit*
            :get-file-mode
+           :recent-files
            :format-current-buffer)
   #+sbcl
   (:lock t))
@@ -439,7 +440,6 @@ Supported modes include: c-mode with clang-format, go-mode with gofmt, js-mode a
       (lem/common/history:save-file (file-history)))))
 
 (add-hook *find-file-hook* 'add-to-file-history)
-
 
 (defun recent-files ()
   "Return a list of the recent files (as strings), the last accessed first.

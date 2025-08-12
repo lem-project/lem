@@ -1,6 +1,6 @@
 (defpackage :lem-markdown-mode/interactive
   (:use :cl :lem)
-  (:import-from #:alexandria :if-let :when-let)
+  (:import-from #:alexandria :if-let :when-let #:once-only #:with-unique-names)
   (:export :register-block-evaluator))
 (in-package :lem-markdown-mode/interactive)
 
@@ -21,10 +21,12 @@
 
 (defmacro with-constant-position ((point) &body body)
   "This allows you to move around the point without worry."
-  `(let ((tmp (copy-point ,point)))
-     (unwind-protect (progn ,@body)
-       (move-point ,point tmp)
-       (delete-point tmp))))
+  (once-only (point)
+    (with-unique-names (tmp)
+      `(let ((,tmp (copy-point ,point)))
+         (unwind-protect (progn ,@body)
+           (move-point ,point ,tmp)
+           (delete-point ,tmp))))))
 
 (defmacro when-markdown-mode (&body body)
   "Ensure the major mode is markdown-mode and alert the user if not."

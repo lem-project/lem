@@ -47,3 +47,4 @@
 (register-icon "lock" #x1F512)
 (register-icon "right-pointing-triangle" #x25B8)
 (register-icon "down-pointing-triangle" #x25BE)
+(register-icon "bullet-point" #x2022)

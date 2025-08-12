@@ -7,7 +7,8 @@
   (:export :prompt-attribute
            :*prompt-completion-window-shape*
            :*automatic-tab-completion*
-           :current-prompt-window))
+           :current-prompt-window
+           :find-command-keybindings-in-keymap))
 (in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)

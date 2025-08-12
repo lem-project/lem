@@ -119,8 +119,12 @@ two
     (format s "Legit commit.~&")
     (format s "~%")
     (format s "Commands:~&")
-    (format s "Validate: C-Return, C-c C-c~&")
-    (format s "Stop and quit: Escape, M-q.~&")
+    (format s "Validate: ~{~A~^, ~}~&"
+            (or (lem/prompt-window:find-command-keybindings-in-keymap "commit-continue" *legit-commit-mode-keymap*) 
+                " (unbound)"))
+    (format s "Stop and quit: ~{~A~^, ~}~&"
+            (lem/prompt-window:find-command-keybindings-in-keymap "commit-abort" *legit-commit-mode-keymap*))
     (format s "~%")
-    (format s "Show this help: C-x ? or ?, M-x legit-commit-help")
+    (format s "Show this help: Alt-x legit-commit-help (~{~A~^, ~})"
+            (lem/prompt-window:find-command-keybindings-in-keymap "commit-help" *legit-commit-mode-keymap*))
     ))

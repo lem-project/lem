@@ -145,10 +145,14 @@ and
     (format s "Commands:~&")
     (format s "(p)ick commit, (f)ixup... WARN: other commands like reword are not implemented.")
     (format s "~%")
-    (format s "Validate: C-Return, C-c C-c~&")
-    (format s "Abort: C-c C-k~&")
-    (format s "Stop and quit: Escape, M-q.~&")
-    (format s "Navigate: C-n and C-p.~&")
+    (format s "Validate: ~{~A~^, ~}~&"
+            (lem/prompt-window:find-command-keybindings-in-keymap "rebase-continue" *legit-rebase-mode-keymap*))
+    (format s "Abort: ~{~A~^, ~}~&"
+            (lem/prompt-window:find-command-keybindings-in-keymap "rebase-abort" *legit-rebase-mode-keymap*))
+    (format s "Navigate: ~{~A~^, ~}, ~{~A~^, ~}.~&"
+            (lem/prompt-window:find-command-keybindings-in-keymap "next-line" *legit-rebase-mode-keymap*)
+            (lem/prompt-window:find-command-keybindings-in-keymap "previous-line" *legit-rebase-mode-keymap*))
     (format s "~%")
-    (format s "Show this help: C-x ? or ?, M-x legit-rebase-help")
+    (format s "Show this help: ~{~A~^, ~}, Alt-x rebase-help"
+            (lem/prompt-window:find-command-keybindings-in-keymap "rebase-help" *legit-rebase-mode-keymap*))
     ))

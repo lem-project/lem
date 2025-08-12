@@ -23,13 +23,21 @@
     (mapc #'save-buffer (collect-checked-items multi-column-list))
     (update multi-column-list)))
 
+(defun buffer-attributes (buffer)
+  (cond ((buffer-read-only-p buffer)
+         (icon-string "lock"))
+        ((buffer-modified-p buffer)
+         (icon-string "bullet-point"))
+        (t
+         " ")))
+
 (define-command list-buffers () ()
   (display
    (make-instance 'multi-column-list
                   :columns '("" "Buffer" "File")
                   :column-function (lambda (component buffer)
                                      (declare (ignore component))
-                                     (list (string-trim " " (buffer-attributes buffer))
+                                     (list (buffer-attributes buffer)
                                            (buffer-name buffer)
                                            (or (buffer-filename buffer) "")))
                   :items (buffer-list)

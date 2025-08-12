@@ -62,9 +62,9 @@
 (defun modeline-write-info (window)
   (let ((buffer (window-buffer window)))
     (cond ((buffer-read-only-p buffer)
-           (format nil " ~a " (icon-string "lock")))
+           (format nil " ~a" (icon-string "lock")))
           ((buffer-modified-p buffer)
-           " * ")
+           (format nil " ~a" (icon-string "bullet-point")))
           (t
            "   "))))
 

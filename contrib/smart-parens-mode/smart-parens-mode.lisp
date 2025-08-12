@@ -1,8 +1,8 @@
-(defpackage :lem-smart-parens-mode
+(defpackage :smart-parens-mode
   (:use :cl :lem)
   (:export :smart-parens-mode))
 
-(in-package :lem-smart-parens-mode)
+(in-package :smart-parens-mode)
 
 (define-minor-mode smart-parens-mode
     (:name "smart-parens-mode"
@@ -36,6 +36,12 @@
       (and (integer-char-p (character-at p))
            (eql (character-at p -1) #\#)))))
 
+(defparameter *non-space-following-chars*
+  '(#\Space #\( #\' #\` #\, #\[ #\{))
+
+(defparameter *non-space-preceding-chars*
+  '(#\Space #\) #\] #\}))
+
 (defun non-space-following-context-p (&optional (p (current-point)))
   (or (bolp p)
       (find (character-at p -1)
@@ -68,23 +74,23 @@
              (character-offset p -1))
            (character-offset p -1)))))
 
-(define-command paredit-insert-paren () ()
+(define-command smart-parens-insert-paren () ()
   (editor-insert-pair #\( #\)))
 
-(define-command paredit-insert-bracket () ()
+(define-command smart-parens-insert-bracket () ()
   (editor-insert-pair #\[ #\]))
 
-(define-command paredit-insert-brace () ()
+(define-command smart-parens-insert-brace () ()
   (editor-insert-pair #\{ #\}))
 
-(define-command insert-double-quote () ()
+(define-command smart-parens-insert-double-quote () ()
   (editor-insert-pair #\" #\"))
 
-(define-command insert-single-quote () ()
+(define-command smart-parens-insert-single-quote () ()
   (editor-insert-pair #\' #\'))
 
-(define-key *smart-parens-keymap* "\"" 'insert-double-quote)
-(define-key *smart-parens-keymap* "'" 'insert-single-quote)
-(define-key *smart-parens-keymap* "(" 'insert-paren)
-(define-key *smart-parens-keymap* "[" 'insert-bracket)
-(define-key *smart-parens-keymap* "{" 'insert-brace)
+(define-key *smart-parens-keymap* "\"" 'smart-parens-insert-double-quote)
+(define-key *smart-parens-keymap* "'" 'smart-parens-insert-single-quote)
+(define-key *smart-parens-keymap* "(" 'smart-parens-insert-paren)
+(define-key *smart-parens-keymap* "[" 'smart-parens-insert-bracket)
+(define-key *smart-parens-keymap* "{" 'smart-parens-insert-brace)

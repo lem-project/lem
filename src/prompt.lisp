@@ -77,7 +77,8 @@ When set to false, the completion list only opens when the user presses TAB")
                                       (gravity *default-prompt-gravity*)
                                       edit-callback
                                       special-keymap
-                                      use-border)
+                                      use-border
+                                      default)
   (declare (ignore initial-value
                    completion-function
                    test-function
@@ -86,7 +87,8 @@ When set to false, the completion list only opens when the user presses TAB")
                    gravity
                    edit-callback
                    special-keymap
-                   use-border))
+                   use-border
+                   default))
   (apply #'%prompt-for-line prompt args))
 
 (defun prompt-for-integer (prompt &key initial-value min max (gravity *default-prompt-gravity*))
@@ -114,7 +116,8 @@ When set to false, the completion list only opens when the user presses TAB")
                                        (or (alexandria:emptyp name)
                                            (get-buffer name))))
                  :history-symbol 'prompt-for-buffer
-                 :gravity gravity)))
+                 :gravity gravity
+                 :default default)))
     (if (string= result "")
         default
         result)))

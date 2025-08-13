@@ -52,7 +52,11 @@
    (use-border
     :initarg :use-border
     :initform t
-    :reader prompt-use-border-p)))
+    :reader prompt-use-border-p)
+   (default
+     :initarg :default
+     :initform nil
+     :reader prompt-default)))
 
 (defclass floating-prompt (floating-window prompt-parameters)
   ((start-charpos
@@ -323,7 +327,15 @@
 
   (with-current-window (current-window)
     (let* ((prompt-window (create-prompt prompt-string
-                                         initial-string
+                                         (if *automatic-tab-completion*
+                                             initial-string
+                                             (concatenate 'string
+                                                          initial-string
+                                                          (prompt-default parameters)))
+                                         ;; (if *automatic-tab-completion*
+                                             ;; initial-string
+                                             ;; (append initial-string 
+                                                     ;; (prompt-default parameters)))
                                          parameters)))
       (switch-to-prompt-window prompt-window)
 
@@ -346,7 +358,7 @@
                       (with-current-syntax syntax-table
                         (funcall body-function))
                       (funcall body-function))))
-          
+            
             (lem/completion-mode:completion-end)
             (remove-hook (window-leave-hook prompt-window) #'exit-prompt)
             (delete-prompt prompt-window)
@@ -386,7 +398,8 @@
                                             gravity
                                             edit-callback
                                             special-keymap
-                                            (use-border t))
+                                            (use-border t)
+                                            default)
   (prompt-for-aux :prompt-string prompt-string
                   :initial-string initial-value
                   :parameters (make-instance 'prompt-parameters
@@ -395,7 +408,8 @@
                                              :caller-of-prompt-window (current-window)
                                              :history (get-history history-symbol)
                                              :gravity (or gravity lem-core::*default-prompt-gravity*)
-                                             :use-border use-border)
+                                             :use-border use-border
+                                             :default default)
                   :syntax-table syntax-table
                   :body-function #'prompt-for-line-command-loop
                   :edit-callback edit-callback

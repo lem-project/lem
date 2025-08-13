@@ -59,7 +59,7 @@
 
 (define-command markdown-kill-block-result (&optional (point (current-point))) ()
   "Searches for a result block below the current code block, and kills it."
-  (lem/buffer/internal:with-constant-position (point)
+  (save-excursion
     (when (block-at-point point)
       (search-forward-regexp point "```")
       (line-offset point 2)

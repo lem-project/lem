@@ -179,6 +179,24 @@
    (column-width-list :initarg :column-width-list
                       :reader print-spec-column-width-list)))
 
+(defun darken-color (color &key (factor 0.5))
+  (let ((color (parse-color color)))
+    (multiple-value-bind (h s v)
+        (rgb-to-hsv color)
+      (multiple-value-bind (r g b)
+          (hsv-to-rgb h
+                      s
+                      (* v (- 1 factor)))
+        (make-color r g b)))))
+
+(defun put-header-attribute (start end)
+  (put-text-property start
+                     end
+                     :attribute (make-attribute
+                                 :underline (if (underline-color-support-p (implementation))
+                                                (darken-color (foreground-color) :factor 0.6)
+                                                t))))
+
 (defmethod lem/popup-menu:write-header ((print-spec print-spec) point)
   (let* ((multi-column-list (print-spec-multi-column-list print-spec))
          (search-string (multi-column-list-search-string multi-column-list))
@@ -191,7 +209,7 @@
                              (1+ (loop :for width :in (print-spec-column-width-list print-spec)
                                        :sum (1+ width)))
                              t)
-             (put-text-property start point :attribute (make-attribute :underline t))))
+             (put-header-attribute start point)))
           (columns
            (with-point ((start point))
              (loop :for width :in (print-spec-column-width-list print-spec)
@@ -201,7 +219,7 @@
                          (insert-string point column-header)
                          (move-to-column point (+ column width) t)))
              (insert-string point " ")
-             (put-text-property start point :attribute (make-attribute :underline t)))))))
+             (put-header-attribute start point))))))
 
 (defmethod lem/popup-menu:apply-print-spec ((print-spec print-spec) point item)
   (check-type item multi-column-list-item)

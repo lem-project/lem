@@ -157,20 +157,29 @@
 (define-command grep-help () ()
   "Show grep help."
   (with-pop-up-typeout-window (s (make-buffer "*Help*") :erase t)
-    (format s "grep command (M-x grep)~&")
+    (format s "grep: show lines that match a pattern.~&")
     (format s "~%")
+    (format s "Run grep on the current directory: Alt-x grep (~{~A~^, ~})~&"
+            (or (lem/prompt-window:find-command-keybindings-in-keymap "grep") (list "unbound")))
+    (format s "Run grep on the current project root: Alt-x project-grep (~{~A~^, ~})~&"
+      (or (lem/prompt-window:find-command-keybindings-in-keymap "project-grep") (list "unbound")))
+  (format s "~%")
     (format s "The left window shows grep results, the right window shows a result in its source file.~&")
     (format s "~%")
     (format s "Available keybindings:~&")
     (format s "- up/down arrows, n/p, or C-p/C-n: go to the previous/next line~&")
     (format s "- a: move to the content in the current line~&")
-    (format s "- C-x o or M-o: go to the other window~&")
+    (format s "- C-x o or Alt-o: go to the other window~&")
     (format s "- Enter: visit the file of the result at point~&")
     (format s "- Escape or C-x 0: quit~&")
-    (format s "- C-x ?: bring this help~&")
+    (format s "- Bring this help: Alt-x grep-help (~{~A~^, ~})~&"
+            (or (lem/prompt-window::find-command-keybindings-in-keymap "grep-help") 
+                (list "unbound")))
     (format s "~%")
     (format s "The results buffer on the left is editable. Any change is written to file and is reflected immediately on the right.~&")
-    (format s "You can use editing tools such as M-x query-replace in the results buffer.~&")
+    (format s "You can use editing tools such as Alt-x query-replace~a in the results buffer.~&"
+            (format nil " ~a" (or (lem/prompt-window:find-command-keybindings-in-keymap "query-replace")
+                                  "")))
     (format s "~%")))
 
 (defvar *peek-grep-mode-keymap* (make-keymap :name '*peek-grep-mode-keymap* 
@@ -181,6 +190,8 @@
 
 (define-key *global-keymap* "C-x p g" 'project-grep)
 (define-key *peek-grep-mode-keymap* "C-x ?" 'grep-help)  ;; originally bound to describe-key.
-(define-key *peek-grep-mode-keymap* "n" 'lem/peek-source:peek-source-next)
-(define-key *peek-grep-mode-keymap* "p" 'lem/peek-source:peek-source-previous)
-(define-key *peek-grep-mode-keymap* "a" 'grep-move-to-content-start)
+
+;; Comment out because it conflicts with isearch.
+;; (define-key *peek-grep-mode-keymap* "n" 'lem/peek-source:peek-source-next)
+;; (define-key *peek-grep-mode-keymap* "p" 'lem/peek-source:peek-source-previous)
+;; (define-key *peek-grep-mode-keymap* "a" 'grep-move-to-content-start)

@@ -75,12 +75,15 @@ function resetImage() {
 (lem:define-command image-zoom-reset () ()
   (lem:js-eval (lem:current-window) "resetImage()"))
 
-(lem:define-command image-usage () ()
+(lem:define-command image-viewer-help () ()
   (lem:with-pop-up-typeout-window
       (s (lem:make-buffer "*image-help*" :temporary t) :erase t)
-    (format s "Open an image file in Lem and use these keys to zoom in and out:~&")
-    (format s "Zoom in: + (M-x image-zoom-in)~&")
-    (format s "Zoom out: - (M-x image-zoom-out)~&")
-    (format s "Reset: 0 (M-x image-zoom-reset)~&")))
+    (format s "Open an image file in Lem and use these keys to zoom in and out.~2&")
+    (format s "Zoom in: Alt-x image-zoom-in (~{~A~^, ~})~&"
+            (lem/prompt-window:find-command-keybindings-in-keymap "image-zoom-in" *image-viewer-keymap*))
+    (format s "Zoom out: Alt-x image-zoom-out (~{~A~^, ~})~&"
+            (lem/prompt-window:find-command-keybindings-in-keymap "image-zoom-out" *image-viewer-keymap*))
+    (format s "Reset: Alt-x image-zoom-reset (~{~A~^, ~})~&"
+            (lem/prompt-window:find-command-keybindings-in-keymap "image-zoom-reset" *image-viewer-keymap*))))
 
 (setf lem:*find-file-executor* (make-instance 'find-file-executor))

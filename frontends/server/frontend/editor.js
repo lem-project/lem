@@ -211,8 +211,10 @@ class BaseSurface {
       this.wrapper = document.createElement('div');
       this.wrapper.style.position = 'absolute';
       this.wrapper.style.padding = '10px';
-      this.wrapper.style.border = '1px solid';
-      this.wrapper.style.borderColor = this.editor.option.foreground;
+      this.wrapper.style.border = 'none';
+      this.wrapper.style.borderRadius = '8px';
+      this.wrapper.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 1), 0 0 0 1px rgba(128, 128, 128, 0.2)';
+      this.wrapper.style.backdropFilter = 'blur(8px)';
       this.wrapper.style.backgroundColor = this.editor.option.background;
       this.wrapper.appendChild(dom);
       getLemEditorElement().appendChild(this.wrapper);
@@ -429,10 +431,12 @@ class VerticalBorder {
     this.option = option;
     this.editor = editor;
     this.line = document.createElement('div');
-    this.line.style.backgroundColor = option.foreground;
-    this.line.style.width = '5px';
+    this.line.style.background = 'linear-gradient(to right, rgba(128, 128, 128, 0.3), rgba(128, 128, 128, 0.6), rgba(128, 128, 128, 0.3))';
+    this.line.style.width = '1px';
     this.line.style.height = height * option.fontHeight + 'px';
     this.line.style.position = 'absolute';
+    this.line.style.boxShadow = '0 0 3px rgba(128, 128, 128, 0.2)';
+    this.line.style.borderRadius = '0.5px';
 
     getLemEditorElement().appendChild(this.line);
 

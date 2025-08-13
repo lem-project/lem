@@ -245,16 +245,6 @@ Options that can be specified by arguments are ignored if `temporary` is NIL and
     (mark-cancel (buffer-mark-object buffer))
     (run-hooks *buffer-mark-deactivate-hook* buffer)))
 
-(defun buffer-attributes (buffer)
-  (concatenate 'string
-               " "
-               (cond ((buffer-read-only-p buffer)
-                      "% ")
-                     ((buffer-modified-p buffer)
-                      "* ")
-                     (t
-                      "  "))))
-
 (defun check-read-only-buffer (buffer)
   (when (buffer-read-only-p buffer)
     (error 'read-only-error)))

@@ -7,7 +7,8 @@
   (:export :prompt-attribute
            :*prompt-completion-window-shape*
            :*automatic-tab-completion*
-           :current-prompt-window))
+           :current-prompt-window
+           :find-command-keybindings-in-keymap))
 (in-package :lem/prompt-window)
 
 (defconstant +border-size+ 1)
@@ -69,7 +70,8 @@
     (:name "prompt"
      :keymap *prompt-mode-keymap*)
   (setf (not-switchable-buffer-p (current-buffer)) t)
-  (setf (variable-value 'line-wrap :buffer (current-buffer)) nil))
+  (setf (variable-value 'line-wrap :buffer (current-buffer)) nil)
+  (setf (variable-value 'highlight-line :buffer (current-buffer)) nil))
 
 (define-attribute prompt-attribute
   (t :foreground :base07 :bold t))
@@ -496,7 +498,7 @@
                            items
                            :key #'lem/completion-mode:completion-item-label))))
 
-    (let* ((all-items (collect-items (all-command-names)))
+    (let* ((all-items (collect-items (sort (all-command-names) #'string<)))
            (candidate-items (collect-items candidates))
            (items (remove-duplicates
                    (append candidate-items all-items)

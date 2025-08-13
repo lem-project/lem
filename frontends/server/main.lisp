@@ -104,7 +104,8 @@
    :name :jsonrpc
    :redraw-after-modifying-floating-window t
    :window-left-margin 1
-   :html-support t))
+   :html-support t
+   :underline-color-support t))
 
 (defun get-all-views ()
   (if (null (lem:current-frame))
@@ -757,7 +758,7 @@
           (make-instance 'websocket-server-runner
                          :port port
                          :host hostname)))
-    (apply #'lem:lem "--interface" "JSONRPC" args)))
+    (apply #'lem:lem (append args (list "--interface" "JSONRPC")))))
 
 (defun run-stdio-server ()
   (let ((*server-runner* (make-instance 'stdio-server-runner)))

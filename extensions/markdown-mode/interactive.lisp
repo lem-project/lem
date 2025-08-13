@@ -4,6 +4,8 @@
   (:export :register-block-evaluator))
 (in-package :lem-markdown-mode/interactive)
 
+(defparameter *python* "python")
+
 (define-keys lem-markdown-mode::*markdown-mode-keymap*
   ("C-c C-e" 'markdown-eval-block)
   ("C-c C-r" 'markdown-eval-block-nop)
@@ -21,6 +23,8 @@
 
 (defmacro when-markdown-mode (&body body)
   "Ensure the major mode is markdown-mode and alert the user if not."
+  ;; xxx: since markdown code blocks take the language's major mode,
+  ;; since simple check isn't enough any more.
   `(if (eq 'lem-markdown-mode:markdown-mode
            (buffer-major-mode (current-buffer)))
        (progn ,@body)
@@ -55,17 +59,16 @@
 
 (define-command markdown-kill-block-result (&optional (point (current-point))) ()
   "Searches for a result block below the current code block, and kills it."
-  (when-markdown-mode
-    (lem/buffer/internal:with-constant-position (point)
-      (when (block-at-point point)
-        (search-forward-regexp point "```")
-        (line-offset point 2)
-        (when (equal "result" (block-fence-lang (line-string point)))
-          (loop :while (not (equal "```" (line-string point)))
-                :do (kill-whole-line)
-                :do (line-offset point 1))
-          (kill-whole-line)
-          (kill-whole-line))))))
+  (lem/buffer/internal:with-constant-position (point)
+    (when (block-at-point point)
+      (search-forward-regexp point "```")
+      (line-offset point 2)
+      (when (equal "result" (block-fence-lang (line-string point)))
+        (loop :while (not (equal "```" (line-string point)))
+              :do (kill-whole-line)
+              :do (line-offset point 1))
+        (kill-whole-line)
+        (kill-whole-line)))))
 
 (defun pop-up-eval-result (point result)
   "Display results of evaluation in a pop-up buffer."
@@ -92,12 +95,12 @@
 
 (defun eval-block-internal (point handler)
   "Evaluate code block and apply handler to result."
-  (when-markdown-mode
-    (multiple-value-bind (lang block) (block-at-point point)
-      (when lang
-        (if-let ((evaluator (gethash lang *block-evaluators*)))
-          (funcall evaluator block (wrap-handler handler point))
-          (message "No evaluator registered for ~a." lang))))))
+  ;; xxx: check markdown-mode.
+  (multiple-value-bind (lang block) (block-at-point point)
+    (when lang
+      (if-let ((evaluator (gethash lang *block-evaluators*)))
+        (funcall evaluator block (wrap-handler handler point))
+        (message "No evaluator registered for ~a." lang)))))
 
 (define-command markdown-eval-block () ()
   "Evaluate current markdown code block and display results in pop-up."
@@ -111,6 +114,15 @@
   "Evaluate current markdown code block and insert its result below the block."
   (markdown-kill-block-result)
   (eval-block-internal (copy-point (current-point)) #'insert-eval-result))
+
+;;
+;; Utils
+;;
+(defun check-program (name)
+  (let ((program (lem:exist-program-p name)))
+    (unless program
+      (lem:editor-error "The executable for ~a was not found on your system. Please check lem-markdown-mode/interactive parameters."))
+    name))
 
 ;;
 ;; Default evaluators:
@@ -128,6 +140,13 @@
   (lem-lisp-mode:lisp-eval-async
    (read-from-string (format nil "(progn ~a)" string))
    callback))
+
+(register-block-evaluator "python" (string callback)
+  "Register evaluator for Python blocks."
+  (bt:make-thread
+   (lambda ()
+     (funcall callback (uiop:run-program (list (check-program *python*) "-c" string)
+                                         :output :string)))))
 
 ;; `(handler-case (eval (read-from-string (format nil "(progn ~a)" ,string)))
 ;;    (error (c) (format nil "Error: ~a" c)))

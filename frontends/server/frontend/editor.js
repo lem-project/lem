@@ -97,6 +97,7 @@ function addMouseEventListeners({dom, editor, isDraggable, draggableStyle}) {
 
   const handleMouseDownUp = (event, eventName) => {
     event.preventDefault();
+
     const [displayX, displayY] = editor.getDisplayRectangle();
 
     const pixelX = (event.clientX - displayX);
@@ -448,18 +449,20 @@ class VerticalBorder {
     this.option = option;
     this.editor = editor;
     this.line = document.createElement('div');
-    this.line.style.background = 'linear-gradient(to right, rgba(128, 128, 128, 0.3), rgba(128, 128, 128, 0.6), rgba(128, 128, 128, 0.3))';
-    this.line.style.width = '1px';
+    this.line.className = 'lem-editor__vertical-border';
     this.line.style.height = height * option.fontHeight + 'px';
     this.line.style.position = 'absolute';
-    this.line.style.boxShadow = '0 0 3px rgba(128, 128, 128, 0.2)';
-    this.line.style.borderRadius = '0.5px';
 
     getLemEditorElement().appendChild(this.line);
 
     this.move(x, y);
 
-    addMouseEventListeners({dom:this.line, editor, isDraggable: true, draggableStyle: 'col-resize'});
+    addMouseEventListeners({
+      dom:this.line,
+      editor,
+      isDraggable: true,
+      draggableStyle: 'col-resize',
+    });
   }
 
   delete() {

@@ -164,8 +164,18 @@
              (charms/ll:mvwaddstr win h 0 (border-downleft))
              (charms/ll:mvwaddstr win h w (border-downright))
              (loop :for x :from 1 :below w
-                   :do (charms/ll:mvwaddstr win 0 x (border-up))
-                       (charms/ll:mvwaddstr win (1- (border-height border)) x (border-down)))
+                   :do (charms/ll:mvwaddstr win
+                                            0
+                                            x
+                                            (if (and (evenp x) (character-ligature-p))
+                                                (border-up)
+                                                (border-down)))
+                       (charms/ll:mvwaddstr win
+                                            (1- (border-height border))
+                                            x
+                                            (if (and (evenp x) (character-ligature-p))
+                                                (border-down)
+                                                (border-up))))
              (loop :for y :from 1 :below h
                    :do (charms/ll:mvwaddstr win y 0 (border-left))
                        (charms/ll:mvwaddstr win y w (border-right)))))

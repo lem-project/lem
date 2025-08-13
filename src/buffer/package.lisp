@@ -18,7 +18,6 @@
         :lem/common/hooks
         :lem/common/var
         :lem/common/character)
-  (:import-from #:alexandria #:once-only #:with-unique-names)
   (:local-nicknames (:line :lem/buffer/line))
   (:use-reexport :lem/buffer/errors)
   (:use-reexport :lem/buffer/file-utils)
@@ -110,8 +109,7 @@
    :get-previous-buffer
    :unbury-buffer
    :bury-buffer
-   :get-file-buffer
-   :with-constant-position)
+   :get-file-buffer)
   ;; buffer-insert.lisp
   (:export
    :*inhibit-read-only*

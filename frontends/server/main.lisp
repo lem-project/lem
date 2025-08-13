@@ -57,13 +57,14 @@
              `(200 (:content-type "text/html")
                    ,(find-dist-by-path "frontend/dist/index.html")))
             ((alexandria:starts-with-subseq "/assets/" path)
-             `(200 (:content-type "application/javascript")
+             `(200 (:content-type ,(hunchentoot:mime-type path))
                    ,(find-dist-by-path (format nil
                                                "frontend/dist/~A"
                                                (string-left-trim "/" path)))))
             ((alexandria:starts-with-subseq "/local/" path)
-             (let ((file (pathname (subseq path (length "/local")))))
-               `(200 (:content-type "image/png")
+             (let* ((file (pathname (subseq path (length "/local"))))
+                    (mime-type (hunchentoot:mime-type file)))
+               `(200 (:content-type ,mime-type)
                      ,file)))
             (t
              '(200 () ("ok")))))))
@@ -425,6 +426,9 @@
     (values (gethash "name" response)
             (gethash "size" response))))
 
+(defun load-css (css-content)
+  (notify (lem:implementation) "load-css" (hash "content" css-content)))
+
 (lem:add-hook lem:*switch-to-buffer-hook* 'on-switch-to-buffer)
 
 (defun on-switch-to-buffer (buffer)
@@ -489,7 +493,7 @@
   0)
 
 (defmethod object-width ((drawing-object display:line-end-object))
-  0)
+  (lem-core:string-width (lem-core/display:text-object-string drawing-object)))
 
 (defmethod object-width ((drawing-object display:image-object))
   0)

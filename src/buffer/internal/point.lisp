@@ -32,7 +32,7 @@ When using `:left-inserting` or `:right-inserting`, you must explicitly delete t
 
 Use `with-points` to define points to use in the macro body, to ensure they are deleted.
 
-Use `with-constant-position` to move around the given point in the macro body, and come back to it once done.
+Use `save-excursion` to move around the given point in the macro body, and come back to it once done.
 "))
 
 (setf (documentation 'point-buffer 'function)
@@ -278,15 +278,6 @@ Example:
             `(unwind-protect (progn ,@body)
                ,@cleanups)
             `(progn ,@body)))))
-
-(defmacro with-constant-position ((point) &body body)
-  "This allows you to move the point around in body, but to come back at its initial position afterwards."
-  (once-only (point)
-    (with-unique-names (tmp)
-      `(let ((,tmp (copy-point ,point)))
-         (unwind-protect (progn ,@body)
-           (move-point ,point ,tmp)
-           (delete-point ,tmp))))))
 
 ;; TODO: delete this ugly function
 (defun get-string-and-attributes-at-point (point)

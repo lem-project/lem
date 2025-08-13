@@ -498,7 +498,7 @@
                            items
                            :key #'lem/completion-mode:completion-item-label))))
 
-    (let* ((all-items (collect-items (all-command-names)))
+    (let* ((all-items (collect-items (sort (all-command-names) #'string<)))
            (candidate-items (collect-items candidates))
            (items (remove-duplicates
                    (append candidate-items all-items)

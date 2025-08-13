@@ -57,7 +57,7 @@
              `(200 (:content-type "text/html")
                    ,(find-dist-by-path "frontend/dist/index.html")))
             ((alexandria:starts-with-subseq "/assets/" path)
-             `(200 (:content-type "application/javascript")
+             `(200 (:content-type ,(hunchentoot:mime-type path))
                    ,(find-dist-by-path (format nil
                                                "frontend/dist/~A"
                                                (string-left-trim "/" path)))))
@@ -425,6 +425,9 @@
   (let ((response (call "get-font" nil)))
     (values (gethash "name" response)
             (gethash "size" response))))
+
+(defun load-css (css-content)
+  (notify (lem:implementation) "load-css" (hash "content" css-content)))
 
 (lem:add-hook lem:*switch-to-buffer-hook* 'on-switch-to-buffer)
 

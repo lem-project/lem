@@ -209,12 +209,8 @@ class BaseSurface {
 
     if (isFloating && border) {
       this.wrapper = document.createElement('div');
+      this.wrapper.className = 'lem-editor__floating-window--bordered';
       this.wrapper.style.position = 'absolute';
-      this.wrapper.style.padding = '10px';
-      this.wrapper.style.border = 'none';
-      this.wrapper.style.borderRadius = '8px';
-      this.wrapper.style.boxShadow = '0 4px 16px rgba(0, 0, 0, 1), 0 0 0 1px rgba(128, 128, 128, 0.2)';
-      this.wrapper.style.backdropFilter = 'blur(8px)';
       this.wrapper.style.backgroundColor = this.editor.option.background;
       this.wrapper.appendChild(dom);
       getLemEditorElement().appendChild(this.wrapper);
@@ -953,6 +949,7 @@ export class Editor {
       'set-font': this.setFont.bind(this),
       'get-font': this.getFont.bind(this),
       'get-display-size': this.getDisplaySize.bind(this),
+      'load-css': this.loadCSS.bind(this),
     });
 
     this.login();
@@ -1220,6 +1217,12 @@ export class Editor {
       name: this.option.fontName,
       size: this.option.fontSize,
     };
+  }
+
+  loadCSS({ content }) {
+    const style = document.createElement('style');
+    style.textContent = content;
+    document.head.appendChild(style);
   }
 
   notifyToServer(method, args) {

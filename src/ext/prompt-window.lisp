@@ -86,6 +86,7 @@
 (define-key *prompt-mode-keymap* "M-n" 'prompt-next-history)
 (define-key *prompt-mode-keymap* "Up" 'prompt-previous-history)
 (define-key *prompt-mode-keymap* "Down" 'prompt-next-history)
+(define-key *prompt-mode-keymap* "C-Backspace" 'prompt-clear)
 (define-key *prompt-mode-keymap* 'delete-active-window 'prompt-quit)
 
 (defun current-prompt-window ()
@@ -168,6 +169,8 @@
 (define-command prompt-completion () ()
   (open-prompt-completion))
 
+(define-command prompt-clear () ()
+  (replace-prompt-input ""))
 
 (define-command prompt-previous-history () ()
   (let ((history (prompt-window-history (current-prompt-window))))

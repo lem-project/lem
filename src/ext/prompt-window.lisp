@@ -565,3 +565,22 @@
     (if (string= result "")
         default
         result)))
+
+(defmethod lem-core::%prompt-for-directory (prompt directory existing
+                                           &rest args)
+  (apply #'prompt-for-string
+         prompt
+         :initial-value directory
+         :completion-function
+         (when *prompt-file-completion-function*
+           (lambda (str)
+             (funcall *prompt-file-completion-function*
+                      (if (alexandria:emptyp str)
+                          "./"
+                          str)
+                      directory :directory-only t)))
+         :test-function (and existing #'virtual-probe-file)
+         :history-symbol 'prompt-for-directory
+         :special-keymap *file-prompt-keymap*
+         args))
+    

@@ -23,6 +23,8 @@ When set to false, the completion list only opens when the user presses TAB")
                                           history-symbol syntax-table gravity edit-callback
                                           special-keymap use-border))
 (defgeneric %prompt-for-file (prompt directory default existing gravity))
+(defgeneric lem-core::%prompt-for-directory (prompt directory existing
+                                            &rest args))
 
 (flet ((f (c1 c2 step-fn)
          (when c1
@@ -130,23 +132,16 @@ When set to false, the completion list only opens when the user presses TAB")
                                     &key directory (default (buffer-directory)) existing
                                     &allow-other-keys)
   (let ((result
-          (apply #'prompt-for-string
+          (apply #'%prompt-for-directory
                  prompt
-                 :initial-value directory
-                 :completion-function
-                 (when *prompt-file-completion-function*
-                   (lambda (str)
-                     (funcall *prompt-file-completion-function*
-                              (if (alexandria:emptyp str)
-                                  "./"
-                                  str)
-                              directory :directory-only t)))
-                 :test-function (and existing #'virtual-probe-file)
-                 :history-symbol 'prompt-for-directory
+                 directory
+                 existing
                  (alexandria:remove-from-plist args :directory :default :existing))))
+ 
     (if (string= result "")
         default
         result)))
+
 
 (defun completion-command (str)
   (sort

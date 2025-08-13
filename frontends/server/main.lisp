@@ -426,6 +426,9 @@
     (values (gethash "name" response)
             (gethash "size" response))))
 
+(defun load-css (css-content)
+  (notify (lem:implementation) "load-css" (hash "content" css-content)))
+
 (lem:add-hook lem:*switch-to-buffer-hook* 'on-switch-to-buffer)
 
 (defun on-switch-to-buffer (buffer)

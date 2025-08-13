@@ -949,6 +949,7 @@ export class Editor {
       'set-font': this.setFont.bind(this),
       'get-font': this.getFont.bind(this),
       'get-display-size': this.getDisplaySize.bind(this),
+      'load-css': this.loadCSS.bind(this),
     });
 
     this.login();
@@ -1216,6 +1217,12 @@ export class Editor {
       name: this.option.fontName,
       size: this.option.fontSize,
     };
+  }
+
+  loadCSS({ content }) {
+    const style = document.createElement('style');
+    style.textContent = content;
+    document.head.appendChild(style);
   }
 
   notifyToServer(method, args) {

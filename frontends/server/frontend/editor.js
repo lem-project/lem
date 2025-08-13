@@ -186,6 +186,15 @@ function addMouseEventListeners({dom, editor, isDraggable, draggableStyle}) {
   });
 }
 
+const zIndexTable = {
+  'floating-window': 200,
+  'modeline': 100,
+};
+
+function zindex(type) {
+  return zIndexTable[type] || 0;
+}
+
 const borderOffsetX = 5;
 const borderOffsetY = 10;
 
@@ -204,17 +213,21 @@ class BaseSurface {
     }
   }
 
-  setupDOM({ dom, isFloating, border }) {
+  setupDOM({ dom, isFloating, border, cssClassName }) {
     this.mainDOM = dom;
 
     if (isFloating && border) {
       this.wrapper = document.createElement('div');
-      this.wrapper.className = 'lem-editor__floating-window--bordered';
+      if (cssClassName) this.wrapper.className = cssClassName;
       this.wrapper.style.position = 'absolute';
       this.wrapper.style.backgroundColor = this.editor.option.background;
+      this.wrapper.style.zIndex = zindex('floating-window');
       this.wrapper.appendChild(dom);
       getLemEditorElement().appendChild(this.wrapper);
     } else {
+      if (cssClassName) {
+        dom.className = cssClassName;
+      }
       getLemEditorElement().appendChild(dom);
     }
   }
@@ -259,11 +272,11 @@ class BaseSurface {
 }
 
 class CanvasSurface extends BaseSurface {
-  constructor({ editor, view, x, y, width, height, styles, isFloating, border }) {
+  constructor({ editor, view, x, y, width, height, styles, isFloating, border, cssClassName }) {
     super({ editor });
 
     const canvas = this.setupCanvas(styles);
-    this.setupDOM({ dom: canvas, isFloating, border });
+    this.setupDOM({ dom: canvas, isFloating, border, cssClassName });
     this.move(x, y);
     this.resize(width, height);
 
@@ -378,6 +391,14 @@ class CanvasSurface extends BaseSurface {
       fn(ctx);
     }
     this.drawingQueue = [];
+  }
+
+  activate() {
+    this.mainDOM.dataset.store = 'active';
+  }
+
+  deactivate() {
+    this.mainDOM.dataset.store = 'inactive';
   }
 }
 
@@ -621,10 +642,15 @@ class View {
     }
   }
 
-  touch() {
+  touch(isActive) {
     this.mainSurface.touch();
     if (this.modelineSurface) {
       this.modelineSurface.touch();
+      if (isActive) {
+        this.modelineSurface.activate();
+      } else {
+        this.modelineSurface.deactivate();
+      }
     }
   }
 
@@ -654,6 +680,9 @@ class View {
   }
 
   makeEditorSurface() {
+    const border = this.borderShape === 'left-border' ? 0 : this.border;
+    const isFloating = this.kind === 'floating';
+
     return new CanvasSurface({
       option: this.editor.option,
       x: this.x,
@@ -662,10 +691,11 @@ class View {
       height: this.height,
       styles: getViewStyle(this.kind, this.option),
       editor: this.editor,
-      border: this.borderShape === 'left-border' ? 0 : this.border,
-      isFloating: this.kind === 'floating',
+      border,
+      isFloating,
       view: this,
-    })
+      cssClassName: ((isFloating && border) ? 'lem-editor__floating-window--bordered' : null),
+    });
   }
 
   makeModelineSurface() {
@@ -677,6 +707,8 @@ class View {
       height: 1,
       editor: this.editor,
       view: this,
+      styles: { zIndex: zindex('modeline') },
+      cssClassName: 'lem-editor__mode-line',
     });
     addMouseEventListeners({
       dom: surface.mainDOM,
@@ -1113,9 +1145,9 @@ export class Editor {
     view.move(x, y);
   }
 
-  redrawViewAfter({ viewInfo: { id }, html }) {
+  redrawViewAfter({ viewInfo: { id }, isActive }) {
     const view = this.findViewById(id);
-    view.touch();
+    view.touch(isActive);
   }
 
   clear({ viewInfo: { id } }) {

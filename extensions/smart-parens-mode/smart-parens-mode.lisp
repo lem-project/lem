@@ -1,4 +1,4 @@
-(defpackage :lem-smart-parens-mode
+(defpackage :smart-parens-mode
   (:use :cl :lem)
   (:export :smart-parens-mode))
 

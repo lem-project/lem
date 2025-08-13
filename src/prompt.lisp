@@ -107,10 +107,7 @@ When set to false, the completion list only opens when the user presses TAB")
                       :gravity gravity)))
 
 (defun prompt-for-buffer (prompt &key default existing (gravity *default-prompt-gravity*))
-  (let ((result (prompt-for-string
-                 (if default
-                     (format nil "~a(~a) " prompt default)
-                     prompt)
+  (let ((result (prompt-for-string prompt
                  :completion-function *prompt-buffer-completion-function*
                  :test-function (and existing
                                      (lambda (name)

@@ -10,7 +10,7 @@
   border: none;
   border-radius: 4px;
   box-shadow: 0px 4px 4px rgba(0, 0, 0, 1), 0 0 0 1px rgba(128, 128, 128, 0.2);
-  transition: all 0.1s ease-out;
+  /* transition: all 0.1s ease-out; */
 }
 
 .lem-editor__vertical-border {

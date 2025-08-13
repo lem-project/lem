@@ -490,7 +490,7 @@
   0)
 
 (defmethod object-width ((drawing-object display:line-end-object))
-  0)
+  (lem-core:string-width (lem-core/display:text-object-string drawing-object)))
 
 (defmethod object-width ((drawing-object display:image-object))
   0)

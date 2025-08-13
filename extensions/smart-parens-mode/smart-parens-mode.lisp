@@ -1,23 +1,13 @@
-(defpackage :smart-parens-mode
+(defpackage :lem-smart-parens-mode
   (:use :cl :lem)
   (:export :smart-parens-mode))
-
-(in-package :smart-parens-mode)
+(in-package :lem-smart-parens-mode)
 
 (define-minor-mode smart-parens-mode
     (:name "smart-parens-mode"
      :keymap *smart-parens-keymap*))
 
 ;;; From paredit
-(defun bolp (point)
-  (zerop (point-charpos point)))
-
-(defun eolp (point)
-  (let ((len (length (line-string point))))
-    (or (zerop len)
-        (>= (point-charpos point)
-            (1- len)))))
-
 (defun integer-char-p (char)
   (< (char-code #\0) (char-code char) (char-code #\9)))
 
@@ -44,7 +34,7 @@
   '(#\Space #\) #\] #\}))
 
 (defun non-space-following-context-p (&optional (p (current-point)))
-  (or (bolp p)
+  (or (start-line-p p)
       (find (character-at p -1)
             *non-space-following-chars*)
       (eql (character-at p -1) #\#)
@@ -70,7 +60,7 @@
              (insert-character p #\Space))
            (insert-character p open)
            (insert-character p close)
-           (unless (or (eolp p) (find (character-at p) *non-space-preceding-chars*))
+           (unless (or (end-line-p p) (find (character-at p) *non-space-preceding-chars*))
              (insert-character p #\Space)
              (character-offset p -1))
            (character-offset p -1)))))
@@ -91,6 +81,10 @@
 
 (define-command smart-parens-insert-single-quote () ()
   (editor-insert-pair #\' #\'))
+
+(defun close-paren (given-char)
+  (when (lem:syntax-open-paren-char-p given-char)
+    (apply #'editor-insert-pair (lem:syntax-open-paren-char-p given-char))))
 
 (define-key *smart-parens-keymap* "\"" 'smart-parens-insert-double-quote)
 (define-key *smart-parens-keymap* "'" 'smart-parens-insert-single-quote)

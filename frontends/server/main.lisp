@@ -57,7 +57,7 @@
              `(200 (:content-type "text/html")
                    ,(find-dist-by-path "frontend/dist/index.html")))
             ((alexandria:starts-with-subseq "/assets/" path)
-             `(200 (:content-type "application/javascript")
+             `(200 (:content-type ,(hunchentoot:mime-type path))
                    ,(find-dist-by-path (format nil
                                                "frontend/dist/~A"
                                                (string-left-trim "/" path)))))

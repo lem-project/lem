@@ -117,7 +117,7 @@
   (eval-block-internal (copy-point (current-point)) #'nop-eval-result))
 
 (define-command markdown-eval-block-and-insert () ()
-  "Evaluate current markdown code block and display results in pop-up."
+  "Evaluate current markdown code block and insert its result below the block."
   (markdown-kill-block-result)
   (eval-block-internal (copy-point (current-point)) #'insert-eval-result))
 

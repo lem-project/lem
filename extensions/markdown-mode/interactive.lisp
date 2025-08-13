@@ -19,15 +19,6 @@
          (lambda (,string ,callback)
            ,@body)))
 
-(defmacro with-constant-position ((point) &body body)
-  "This allows you to move around the point without worry."
-  (once-only (point)
-    (with-unique-names (tmp)
-      `(let ((,tmp (copy-point ,point)))
-         (unwind-protect (progn ,@body)
-           (move-point ,point ,tmp)
-           (delete-point ,tmp))))))
-
 (defmacro when-markdown-mode (&body body)
   "Ensure the major mode is markdown-mode and alert the user if not."
   `(if (eq 'lem-markdown-mode:markdown-mode
@@ -65,7 +56,7 @@
 (define-command markdown-kill-block-result (&optional (point (current-point))) ()
   "Searches for a result block below the current code block, and kills it."
   (when-markdown-mode
-    (with-constant-position (point)
+    (lem/buffer/internal:with-constant-position (point)
       (when (block-at-point point)
         (search-forward-regexp point "```")
         (line-offset point 2)

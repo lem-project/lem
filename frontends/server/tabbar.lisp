@@ -34,15 +34,8 @@
 (defvar *tabbar* nil)
 
 (defun tabbar-init ()
-  (let ((buffer (make-buffer "*tabbar*" :enable-undo-p nil :temporary t)))
-    (when (display-light-p)
-      (set-attribute-foreground 'tabbar-active-tab-attribute (foreground-color))
-      (set-attribute-foreground 'tabbar-attribute (foreground-color)))
-    (when (display-dark-p)
-      (set-attribute-foreground 'tabbar-active-tab-attribute (foreground-color))
-      (set-attribute-background 'tabbar-active-tab-attribute "light gray")
-      (set-attribute-foreground 'tabbar-attribute (foreground-color)))
-    (setf (variable-value 'line-wrap :buffer buffer) nil)
+  (let ((buffer (make-buffer "*tabbar*" :temporary t :enable-undo-p nil)))
+    (change-class buffer 'html-buffer :html "")
     (setf *tabbar* (make-instance 'tabbar-window :buffer buffer))))
 
 (defun tabbar-require-update ()
@@ -57,32 +50,19 @@
 
 (defmethod window-redraw ((window tabbar-window) force)
   (when (or force (tabbar-require-update))
-    (let* ((buffer (tabbar-buffer *tabbar*))
-           (p (buffer-point buffer))
-           (charpos (point-charpos p)))
-      (erase-buffer buffer)
-      (dolist (buffer (buffer-list))
-        (let ((focusp (eq buffer (current-buffer))))
-          (let ((start-pos (point-charpos p)))
-            (insert-button p
-                           (let ((name (buffer-name buffer)))
-                             (if (< 20 (length name))
-                                 (format nil " ~A... " (subseq name 0 17))
-                                 (format nil " ~A " name)))
-                           (let ((buffer buffer))
-                             (lambda () (switch-to-buffer buffer nil)))
-                           :attribute (if focusp
-                                          'tabbar-active-tab-attribute
-                                          'tabbar-attribute))
-            (when focusp
-              (let ((end-pos (point-charpos p)))
-                (unless (<= start-pos charpos (1- end-pos))
-                  (setf charpos start-pos)))))))
-      (let ((n (- (display-width) (point-column p))))
-        (when (> n 0)
-          (insert-string p (make-string n :initial-element #\space)
-                         :attribute 'tabbar-background-attribute)))
-      (line-offset p 0 charpos))
+    (lem-server::change-view-to-html
+     window
+     (with-output-to-string (out)
+       (format out "<div class='lem-editor__tabbar'>~%")
+       (loop :for buffer :in (buffer-list)
+             :do (if (eq buffer (current-buffer))
+                     (format out
+                             "<button class=lem-editor__tabbar-button active>~A</button>~%"
+                             (buffer-name buffer))
+                     (format out
+                             "<button class=lem-editor__tabbar-button>~A</button>~%"
+                             (buffer-name buffer))))
+       (format out "</div>")))
     (setf (tabbar-prev-buffer-list *tabbar*) (buffer-list))
     (setf (tabbar-prev-current-buffer *tabbar*) (current-buffer))
     (setf (tabbar-prev-display-width *tabbar*) (display-width))
@@ -136,7 +116,5 @@
       (when button
         (button-action button)))))
 
-(add-hook *after-init-hook*
-          (lambda ()
-            (when (variable-value 'tabbar :global)
-              (tabbar-init))))
+(defun enable-tabbar ()
+  (setf (variable-value 'tabbar :global) t))

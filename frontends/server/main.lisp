@@ -753,33 +753,41 @@
                 (let ((stream (yason:make-json-output-stream stream)))
                   (yason:encode args stream)))))))
 
-;;;
-(defparameter +command-line-spec+
-  '(("mode" :type string :optional t :documentation "\"websocket\", \"stdio\", \"local-domain-socket\"")
-    ("port" :type integer :optional nil :documentation "port of \"websocket\"")
-    ("host" :type string :optional t)
-    ("address" :type string :optional t :documentation "address of \"local-domain-socket\"")))
+(defun init ()
+  ;; TODO: Fix this problem: frame-multiplexer cannot be used with lem-server, disable them for now.
+  (lem:remove-hook lem:*after-init-hook* 'lem/frame-multiplexer::enable-frame-multiplexer)
+  ;; Enable tabbar instead of the above issue
+  (lem:add-hook lem:*after-init-hook* (find-symbol "ENABLE-TABBAR" :lem/tabbar)))
 
 (defun run-websocket-server (&key (port 50000) (hostname "127.0.0.1") args)
   (let ((*server-runner*
           (make-instance 'websocket-server-runner
                          :port port
                          :host hostname)))
+    (init)
     (apply #'lem:lem (append args (list "--interface" "JSONRPC")))))
 
 (defun run-stdio-server ()
   (let ((*server-runner* (make-instance 'stdio-server-runner)))
+    (init)
     (lem:lem "--interface" "JSONRPC")))
 
 (defun run-local-domain-socket-server (&key address)
   (let ((*server-runner* (make-instance 'local-domain-socket-server-runner
                                         :address address)))
+    (init)
     (lem:lem "--interface" "JSONRPC")))
 
 (defun check-port-specified (port)
   (unless port
     (command-line-arguments:show-option-help +command-line-spec+)
     (uiop:quit 1)))
+
+(defparameter +command-line-spec+
+  '(("mode" :type string :optional t :documentation "\"websocket\", \"stdio\", \"local-domain-socket\"")
+    ("port" :type integer :optional nil :documentation "port of \"websocket\"")
+    ("host" :type string :optional t)
+    ("address" :type string :optional t :documentation "address of \"local-domain-socket\"")))
 
 (defun main (&optional (args (uiop:command-line-arguments)))
   (command-line-arguments:handle-command-line

@@ -404,13 +404,13 @@ class CanvasSurface extends BaseSurface {
 }
 
 class HTMLSurface extends BaseSurface {
-  constructor({ editor, x, y, width, height, styles, isFloating, border, html }) {
+  constructor({ editor, x, y, width, height, styles, option, isFloating, border, html }) {
     super({ editor });
 
     const iframe = document.createElement('iframe');
     this.setupDOM({ dom: iframe, isFloating, border });
     iframe.style.position = 'absolute';
-    iframe.style.backgroundColor = 'white';
+    iframe.style.backgroundColor = option.background;
     iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin');
     iframe.srcdoc = html;
     iframe.addEventListener('load', () => {
@@ -676,6 +676,7 @@ class View {
       width: this.width,
       height: this.height,
       styles: getViewStyle(this.kind, this.option),
+      option: this.option,
       isFloating: this.kind === 'floating',
       border: this.border,
       html: content,

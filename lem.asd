@@ -210,7 +210,6 @@
                              (:file "abbrev")
                              (:file "rectangle")
                              (:file "auto-save")
-                             (:file "tabbar")
                              (:file "frame-multiplexer")
                              (:file "filer")
                              (:file "deepl")
